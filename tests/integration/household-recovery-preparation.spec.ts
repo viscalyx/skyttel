@@ -1,12 +1,23 @@
+import { execFile } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 import { expect, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
+import { seedRecoveryContent } from '../support/household-recovery-reading.js';
 import { createInstallation } from '../support/installation.js';
 
 const preparation = readFileSync('docs/manual-tests/household-recovery-faults.md', 'utf8').match(
   /```javascript\n([\s\S]*?)\n```/,
 )?.[1];
 if (!preparation) throw new Error('Missing runnable recovery preparation');
+const filesystemPreparation = [
+  ...readFileSync('docs/manual-tests/household-recovery-filesystem.md', 'utf8').matchAll(
+    /```sh\n([\s\S]*?)\n```/g,
+  ),
+][1]?.[1];
+if (!filesystemPreparation) throw new Error('Missing runnable filesystem preparation');
+const runShell = promisify(execFile);
 
 for (const seeded of [false, true]) {
   test(`documented recovery delivery preparation uses real responses with ${seeded ? 'seeded' : 'empty'} content`, {
@@ -123,6 +134,80 @@ for (const seeded of [false, true]) {
       expect(await read()).toEqual(confirmed);
       expect(writes).toEqual([`${path}/imports`, `${path}/imports/${ready.body.id}/confirm`]);
     } finally {
+      await installation.close();
+    }
+  });
+}
+
+for (const seeded of [false, true]) {
+  test(`documented filesystem preparation blocks and restores only the selected ${seeded ? 'seeded' : 'empty'} import cleanup`, {
+    tag: '@technical',
+  }, async ({ page }) => {
+    const installation = await createInstallation();
+    let readyId = '';
+    const run = async (action: 'block' | 'restore' | 'check') =>
+      runShell('bash', ['-c', `${filesystemPreparation}\nskyttel_recovery_files ${action}`], {
+        env: {
+          ...process.env,
+          SKYTTEL_RECOVERY_DATABASE: join(installation.directory, 'skyttel.db'),
+          SKYTTEL_RECOVERY_PREPARATION: readyId,
+        },
+      });
+    try {
+      await signIn(page.request, installation.origin);
+      const { household } = await (await createHousehold(page.request, installation.origin)).json();
+      const path = `${installation.origin}/api/households/${household.id}`;
+      const headers = { origin: installation.origin };
+      if (seeded) await seedRecoveryContent(page.request, path);
+      const read = async () => (await page.request.get(`${path}/map`)).json();
+      const before = await read();
+      const exported = await (
+        await page.request.post(`${path}/exports`, { headers, data: {} })
+      ).json();
+      const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
+      await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
+      await page.getByLabel('Skyttel-export (ZIP)').setInputFiles({
+        name: 'skyttel.zip',
+        mimeType: 'application/zip',
+        buffer: archive,
+      });
+      const writes: string[] = [];
+      page.on('request', (request) => {
+        if (request.method() === 'POST' && request.url().startsWith(`${path}/imports`))
+          writes.push(request.url());
+      });
+      const preparing = page.waitForResponse(
+        (response) =>
+          response.url() === `${path}/imports` && response.request().method() === 'POST',
+      );
+      await page.getByRole('button', { name: 'Kontrollera importfil' }).click();
+      readyId = (await (await preparing).json()).id;
+      expect((await run('block')).stdout).toContain('Rensningsfel förberett');
+      const cancelling = page.waitForResponse(`${path}/imports/${readyId}/cancel`);
+      await page.getByRole('button', { name: 'Avbryt förberedelsen', exact: true }).click();
+      expect(await (await cancelling).json()).toMatchObject({
+        id: readyId,
+        status: 'cancel-cleanup',
+      });
+      await expect(page.getByText(/Förberedelsen kan inte längre användas/)).toBeVisible();
+      expect(await read()).toEqual(before);
+      expect((await run('restore')).stdout).toContain('Rensning tillåten');
+      const cleaned = page.waitForResponse(`${path}/imports/${readyId}/cancel`);
+      await page.getByRole('button', { name: 'Slutför förberedelsens rensning' }).click();
+      expect(await (await cleaned).json()).toEqual({ cancelled: true });
+      await expect(page.getByText(/Förberedelsen är avbruten/)).toBeVisible();
+      expect((await run('check')).stdout).toContain(
+        'Rätt förberedelses tillfälliga katalog är borttagen',
+      );
+      expect((await run('restore')).stdout).toContain('Katalogen är redan borttagen');
+      expect(await read()).toEqual(before);
+      expect(writes).toEqual([
+        `${path}/imports`,
+        `${path}/imports/${readyId}/cancel`,
+        `${path}/imports/${readyId}/cancel`,
+      ]);
+    } finally {
+      if (readyId) await run('restore');
       await installation.close();
     }
   });

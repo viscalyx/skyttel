@@ -130,13 +130,12 @@ assigns private ownership and remains portable after restart”.
     historiska ID till profil C:s verifierade medlem. Starta om tredje
     servern med samma konfiguration; behåll begäransblockeringen aktiv.
     Kontrollera samma privata bild och
-    historik. Kör **Avvisa de gamla försöken** nedan med de två JSON-filerna.
-    Båda ska få 409 trots att den nya aktuella innehållsgenerationen används.
-12. Hämta en tredje fullständig export. Kör **Jämför arkiven** nedan med
-    källans, målets och den tredje installationens arkiv. Kontrollera att
-    bildbytesföljden, borttaget objekt, definitioner och kvitton bevarats,
-    att båda väntande försök fortfarande är historiska och att Robins
-    privata arbete finns kvar utan ägare. Detta kräver ingen gammal databas.
+    historik. Invänta den separata tekniska kontrollen av gamla försök
+    innan nästa export.
+12. Hämta en tredje fullständig export genom
+    **Inställningar → Fullständig export → Förbered fullständig export →
+    Hämta ZIP-fil**. Behåll filen och invänta den separata arkivkontrollen
+    innan någon innehållskoppling ändras.
 13. Först efter jämförelsen: koppla Robins tidigare privata identitet till
     profil C:s medlem. Läs in kartan och kontrollera **Nytt privat arbete**.
     Koppla tillbaka källidentiteten och kontrollera det privata bildförslaget.
@@ -185,7 +184,11 @@ gammal databas, session eller historisk inloggningsbehörighet kopieras.
 
 **Avvisa de gamla försöken:**
 
-I profil C:s Console, efter import, ägarbyte och omstart, kör blocket.
+Separat tekniskt underlag efter UI-steg 11, före exporten i steg 12:
+i profil C:s Console, efter import, ägarbyte och omstart, kör blocket.
+Använd de två ursprungliga JSON-filerna från profilerna A och B. Båda
+gamla försök ska få HTTP 409 trots aktuell innehållsgeneration; utkast
+och historik ska vara oförändrade. Anteckna detta separat från UI-resultatet.
 Välj de två lokala JSON-filerna. Koden jämför aktuell karta och historik
 före och efter varje försök; inget gammalt lyckat kvitto får returneras.
 
@@ -197,6 +200,10 @@ för FLYTT-01 i det angivna läget.
 Kör [arkivjämförelsen](household-recovery-console.md#flytt-01-arkivjämförelse)
 efter den tredje exporten, innan nytt arbete sparas. Den jämför de tre
 privata ZIP-filerna och redovisas separat från de synliga UI-resultaten.
+Kör efter UI-steg 12 och före första bytet i steg 13. Kontrollen jämför
+exakta bildbytesföljder, objekt inklusive borttagningar, definitioner och
+fullständiga kvitton. Den kräver också båda historiska väntande försöken
+och Robins undanträngda privata förslag. Inga gamla databaser används.
 
 **Förväntat resultat:**
 
@@ -278,7 +285,11 @@ back while both private states and historical receipts remain intact”.
    kopplingen. Hämtningen ska inte påstå att den bekräftar en tidigare
    begäran och ska inte skicka ett nytt ägarbyte.
 6. Kontrollera källans privata utkast och placering i Robins aktuella
-   karta. Ta bort begäransblockeringen och återvänd till den extra fliken.
+   karta. Öppna **Skriv till Skyttel → Utkast → Visa förslaget** för
+   källans privata objekt och läs hela beskrivningen. Robins oberoende
+   privata namn och uppgifter får inte visas i detta utkast. Stäng
+   läsningen utan att spara. Ta bort begäransblockeringen och återvänd till
+   den extra fliken.
    Dess gamla oskickade formulär ska försvinna och
    historikens kvitto ska vara oförändrat. Avvisning av den gamla
    begäran kontrolleras separat i automationens tekniska underlag.
@@ -286,6 +297,10 @@ back while both private states and historical receipts remain intact”.
    och bekräfta uttryckligen igen. Robins oberoende privata utkast och
    placering ska återkomma. Starta om målet med samma databas och kontrollera
    båda dessa uppgifter samt det oförändrade historiska kvittot.
+   Öppna **Utkast → Visa förslaget** igen och läs Robins fullständiga
+   privata beskrivning. Källans privata namn och uppgifter får inte visas.
+   Öppna **Rapporter → Visa ändringarna** för det tidigare sparandet;
+   kontrollera den delade lampan, författaren och tidpunkten.
 
 Kör [den separata förberedelsen 1](household-recovery-console.md#flytt-02-förberedelse-1)
 för FLYTT-02 i det angivna läget.

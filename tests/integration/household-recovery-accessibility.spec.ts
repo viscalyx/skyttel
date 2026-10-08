@@ -1,6 +1,12 @@
 import { expect, type Locator, test } from '@playwright/test';
 import { createHousehold, openSettings, signIn } from '../support/client.js';
 import { expectContentOwnerReview } from '../support/content-owners.js';
+import {
+  expectEmptyRecoveryDraft,
+  expectRecoveryContent,
+  expectRecoveryDraft,
+  seedRecoveryContent,
+} from '../support/household-recovery-reading.js';
 import { createInstallation } from '../support/installation.js';
 
 async function expectUncoveredFocus(control: Locator) {
@@ -82,6 +88,7 @@ for (const { caseId, width, height } of [
       ).json();
       const path = `${installation.origin}/api/households/${household.id}`;
       const headers = { origin: installation.origin };
+      await seedRecoveryContent(page.request, path);
       const initial = await (await page.request.get(`${path}/map`)).json();
       expect(
         (
@@ -89,11 +96,11 @@ for (const { caseId, width, height } of [
             headers,
             data: {
               id: 'private',
-              version: 0,
+              version: initial.draft.version,
               baseRevision: null,
               value: {
                 name: 'Bevarat privat arbete',
-                description: '',
+                description: 'Privat uppgift för Bevarat privat arbete',
                 typeId: initial.types[0].id,
               },
             },
@@ -136,6 +143,12 @@ for (const { caseId, width, height } of [
           ...original,
           contentVersion: expectedVersion,
         });
+        const reader = await page.context().newPage();
+        await reader.setViewportSize({ width, height });
+        await reader.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+        await reader.goto(installation.origin);
+        await expectRecoveryContent(reader);
+        await expectRecoveryDraft(reader, 'Bevarat privat arbete');
         await file.setInputFiles({
           name: 'skyttel.zip',
           mimeType: 'application/zip',
@@ -183,6 +196,9 @@ for (const { caseId, width, height } of [
           ...original,
           contentVersion: expectedVersion,
         });
+        await reader.reload();
+        await expectRecoveryContent(reader);
+        await expectRecoveryDraft(reader, 'Bevarat privat arbete');
         await file.setInputFiles({
           name: 'skyttel.zip',
           mimeType: 'application/zip',
@@ -215,6 +231,9 @@ for (const { caseId, width, height } of [
           ...original,
           contentVersion: expectedVersion,
         });
+        await reader.reload();
+        await expectRecoveryContent(reader);
+        await expectRecoveryDraft(reader, 'Bevarat privat arbete');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );
@@ -268,6 +287,10 @@ for (const { caseId, width, height } of [
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );
+        await reader.reload();
+        await expectRecoveryContent(reader);
+        await expectEmptyRecoveryDraft(reader, 'Bevarat privat arbete');
+        await reader.close();
         await member.selectOption(user.id);
         await expectContentOwnerReview(
           owners,
@@ -286,6 +309,10 @@ for (const { caseId, width, height } of [
           ...original,
           contentVersion: expectedVersion,
         });
+        await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+        await page.reload();
+        await expectRecoveryContent(page);
+        await expectRecoveryDraft(page, 'Bevarat privat arbete');
       }
     } finally {
       release();

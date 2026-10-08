@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openNewObject, signIn } from '../support/client.js';
+import { createHousehold, openNewObject, signIn, utilityButton } from '../support/client.js';
 import { expectContentOwnerReview } from '../support/content-owners.js';
+import {
+  expectEmptyRecoveryDraft,
+  expectRecoveryContent,
+  expectRecoveryDraft,
+} from '../support/household-recovery-reading.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('FLYTT-02: an uncertain explicit identity assignment is read back while both private states and historical receipts remain intact', async ({
@@ -37,7 +42,7 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
             id: 'shared',
             version: 0,
             baseRevision: null,
-            value: { name: 'Delad lampa', description: '', typeId },
+            value: { name: 'Delad lampa', description: 'Delad sparad uppgift', typeId },
           },
         })
       ).status(),
@@ -107,6 +112,11 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
     const restored = await (await targetClient.get(`${path}/map`)).json();
     expect(restored.userId).not.toBe(historic.userId);
     expect(restored.draft.changes).toEqual([]);
+    const reader = await targetContext.newPage();
+    await reader.setViewportSize({ width: 390, height: 900 });
+    await reader.goto(destination.origin);
+    await expectRecoveryContent(reader, 'Delad lampa', 'Delad sparad uppgift');
+    await expectEmptyRecoveryDraft(reader, 'Privat från källan');
     expect((await (await targetClient.get(`${path}/map/history`)).json()).history).toEqual(
       historicHistory,
     );
@@ -119,7 +129,11 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
             version: restored.draft.version,
             contentVersion: restored.contentVersion,
             baseRevision: null,
-            value: { name: 'Oberoende privat arbete', description: '', typeId },
+            value: {
+              name: 'Oberoende privat arbete',
+              description: 'Privat uppgift för Oberoende privat arbete',
+              typeId,
+            },
           },
         })
       ).status(),
@@ -259,6 +273,14 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
     expect((await (await targetClient.get(`${path}/map/view`)).json()).positions).toEqual(
       historicView.positions,
     );
+    await reader.reload();
+    await expectRecoveryContent(reader, 'Delad lampa', 'Delad sparad uppgift');
+    await expectRecoveryDraft(
+      reader,
+      'Privat från källan',
+      'Oberoende privat arbete',
+      'Visas aldrig i ägargranskningen',
+    );
     expect((await targetClient.post(`${path}/map/save`, { headers, data: pending })).status()).toBe(
       409,
     );
@@ -279,6 +301,15 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
     expect((await (await targetClient.get(`${path}/map/history`)).json()).history).toEqual(
       historicHistory,
     );
+    await reader.reload();
+    await expectRecoveryContent(reader, 'Delad lampa', 'Delad sparad uppgift');
+    await expectRecoveryDraft(
+      reader,
+      'Oberoende privat arbete',
+      'Privat från källan',
+      'Privat uppgift för Oberoende privat arbete',
+      'Visas aldrig i ägargranskningen',
+    );
     await destination.restart();
     await page.reload();
     expect((await (await targetClient.get(`${path}/map`)).json()).draft).toEqual(independent.draft);
@@ -286,6 +317,22 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
       historicHistory,
     );
     expect(writes).toBe(1);
+    await reader.reload();
+    await expectRecoveryContent(reader, 'Delad lampa', 'Delad sparad uppgift');
+    await expectRecoveryDraft(
+      reader,
+      'Oberoende privat arbete',
+      'Privat från källan',
+      'Privat uppgift för Oberoende privat arbete',
+      'Visas aldrig i ägargranskningen',
+    );
+    await (await utilityButton(reader, 'Rapporter')).click();
+    const receipt = reader.locator(`article[data-save="${historicHistory[0].operationId}"]`);
+    await expect(receipt).toContainText('Alex Exempel');
+    await expect(receipt.locator('time')).toHaveAttribute('datetime', historicHistory[0].savedAt);
+    await receipt.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(receipt).toContainText('Delad lampa');
+    await reader.close();
   } finally {
     releaseRecovery();
     await sourceContext.close();

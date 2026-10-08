@@ -2,6 +2,13 @@ import { chmodSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
+import {
+  expectEmptyRecoveryDraft,
+  expectRecoveryContent,
+  expectRecoveryDraft,
+  reloadRestoredHousehold,
+  seedRecoveryContent,
+} from '../support/household-recovery-reading.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
 
 test('IMPORT-09: another administrator discovers the same committed import after a lost response and restart', async ({
@@ -37,6 +44,7 @@ test('IMPORT-09: another administrator discovers the same committed import after
         })
       ).status(),
     ).toBe(200);
+    await seedRecoveryContent(page.request, path);
     const before = await (await page.request.get(`${path}/map`)).json();
     expect(
       (
@@ -48,7 +56,7 @@ test('IMPORT-09: another administrator discovers the same committed import after
             baseRevision: null,
             value: {
               name: 'Privat arbete från exporten',
-              description: '',
+              description: 'Privat uppgift för Privat arbete från exporten',
               typeId: before.types[0].id,
             },
           },
@@ -103,6 +111,14 @@ test('IMPORT-09: another administrator discovers the same committed import after
       ...original,
       contentVersion: 2,
     });
+    const alexReader = await page.context().newPage();
+    const robinReader = await other.newPage();
+    await alexReader.goto(installation.origin);
+    await expectRecoveryContent(alexReader);
+    await expectRecoveryDraft(alexReader, 'Privat arbete från exporten');
+    await robinReader.goto(installation.origin);
+    await expectRecoveryContent(robinReader);
+    await expectEmptyRecoveryDraft(robinReader, 'Privat arbete från exporten');
     await installation.restart();
     await fresh.reload();
     await expect(fresh.getByText(committedId, { exact: true })).toBeVisible();
@@ -114,6 +130,14 @@ test('IMPORT-09: another administrator discovers the same committed import after
       contentVersion: 2,
     });
     expect(confirmations).toBe(1);
+    await alexReader.reload();
+    await expectRecoveryContent(alexReader);
+    await expectRecoveryDraft(alexReader, 'Privat arbete från exporten');
+    await robinReader.reload();
+    await expectRecoveryContent(robinReader);
+    await expectEmptyRecoveryDraft(robinReader, 'Privat arbete från exporten');
+    await alexReader.close();
+    await robinReader.close();
   } finally {
     await other.close();
     await installation.close();
@@ -160,6 +184,7 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
         })
       ).status(),
     ).toBe(200);
+    await seedRecoveryContent(page.request, path);
     const initial = await (await page.request.get(`${path}/map`)).json();
     expect(
       (
@@ -171,7 +196,7 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
             baseRevision: null,
             value: {
               name: 'Privat arbete genom rensningen',
-              description: '',
+              description: 'Privat uppgift för Privat arbete genom rensningen',
               typeId: initial.types[0].id,
             },
           },
@@ -248,10 +273,26 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
       ...original,
       contentVersion: 2,
     });
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await expectRecoveryContent(reader);
+    await expectRecoveryDraft(reader, 'Privat arbete genom rensningen');
+    const robinReader = await other.newPage();
+    await robinReader.goto(installation.origin);
+    await expectRecoveryContent(robinReader);
+    await expectEmptyRecoveryDraft(robinReader, 'Privat arbete genom rensningen');
     await installation.restart();
     await fresh.reload();
     await expect(fresh.getByText(ready.id, { exact: true })).toBeVisible();
     expect((await (await page.request.get(`${path}/map`)).json()).contentVersion).toBe(2);
+    await reader.reload();
+    await expectRecoveryContent(reader);
+    await expectRecoveryDraft(reader, 'Privat arbete genom rensningen');
+    await reloadRestoredHousehold(fresh);
+    await expectRecoveryContent(fresh);
+    await expectEmptyRecoveryDraft(fresh, 'Privat arbete genom rensningen');
+    await reader.close();
+    await robinReader.close();
   } finally {
     if (directory && existsSync(directory)) chmodSync(directory, 0o700);
     await other.close();
@@ -381,6 +422,7 @@ test('IMPORT-14: a locally known uncertain import keeps its exact identity after
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}`;
     const headers = { origin: installation.origin };
+    await seedRecoveryContent(page.request, path);
     const initial = await (await page.request.get(`${path}/map`)).json();
     expect(
       (
@@ -388,11 +430,11 @@ test('IMPORT-14: a locally known uncertain import keeps its exact identity after
           headers,
           data: {
             id: 'retained',
-            version: 0,
+            version: initial.draft.version,
             baseRevision: null,
             value: {
               name: 'Privat arbete i båda ersättningarna',
-              description: '',
+              description: 'Privat uppgift för Privat arbete i båda ersättningarna',
               typeId: initial.types[0].id,
             },
           },
@@ -487,6 +529,11 @@ test('IMPORT-14: a locally known uncertain import keeps its exact identity after
       ...original,
       contentVersion: 3,
     });
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await expectRecoveryContent(reader);
+    await expectRecoveryDraft(reader, 'Privat arbete i båda ersättningarna');
+    await reader.close();
   } finally {
     await other.close();
     await installation.close();

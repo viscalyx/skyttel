@@ -2,6 +2,11 @@ import { chmodSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, type Page, test } from '@playwright/test';
 import { createHousehold, openNewObject, openSettings, signIn } from '../support/client.js';
+import {
+  expectRecoveryContent,
+  expectRecoveryDraft,
+  seedRecoveryContent,
+} from '../support/household-recovery-reading.js';
 import { createInstallation } from '../support/installation.js';
 
 async function prepareReview(page: Page, path: string, archive: Buffer) {
@@ -84,7 +89,11 @@ test('IMPORT-16: an administrator explicitly cancels only an unconfirmed prepara
             id: 'cancel-private',
             version: changed.draft.version,
             baseRevision: null,
-            value: { ...value, name: 'Privat arbete efter exporten' },
+            value: {
+              ...value,
+              name: 'Privat arbete efter exporten',
+              description: 'Privat uppgift för Privat arbete efter exporten',
+            },
           },
         })
       ).status(),
@@ -150,12 +159,23 @@ test('IMPORT-16: an administrator explicitly cancels only an unconfirmed prepara
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
     await expect(unsent).toHaveCount(0);
+    await expectRecoveryContent(page, 'Senare namn', '');
+    await expectRecoveryDraft(
+      page,
+      'Privat arbete efter exporten',
+      'Oskickat arbete under avbrottet',
+    );
     await openSettings(page);
     await page.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();
     await page.reload();
     await expect(importer.getByRole('group', { name: 'Granska ersättningen' })).toHaveCount(0);
     await expect(file).toBeEnabled();
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await expectRecoveryContent(reader, 'Senare namn', '');
+    await expectRecoveryDraft(reader, 'Privat arbete efter exporten');
+    await reader.close();
   } finally {
     await installation.close();
   }
@@ -319,13 +339,17 @@ test('IMPORT-20: a retired unavailable status response cannot forget a newer pre
     const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
     await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
     const first = await prepareReview(page, path, archive);
-    // Another current administrator client cancels this same unconfirmed preparation.
-    const cancelled = await page.request.post(`${path}/imports/${first.id}/cancel`, {
-      headers: { origin: installation.origin },
-      data: {},
-    });
+    // A distinct browser tab cancels exactly the first tab's preparation.
+    const second = await page.context().newPage();
+    await second.goto(`${installation.origin}/households/${household.id}/settings/import`);
+    await expect(second.getByText(first.id, { exact: true })).toBeVisible();
+    const cancelling = second.waitForResponse(`${path}/imports/${first.id}/cancel`);
+    await second.getByRole('button', { name: 'Avbryt förberedelsen', exact: true }).click();
+    const cancelled = await cancelling;
     expect(cancelled.status()).toBe(200);
     expect(await cancelled.json()).toEqual({ cancelled: true });
+    await expect(second.getByText(/Förberedelsen är avbruten/)).toBeVisible();
+    await second.close();
     expect(existsSync(join(installation.directory, '.skyttel-imports', first.id))).toBe(false);
     const held = new Promise<void>((resolve) => {
       release = resolve;
@@ -400,6 +424,7 @@ test('IMPORT-17: failed cancellation cleanup and a lost success remain bound to 
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}`;
     const headers = { origin: installation.origin };
+    await seedRecoveryContent(page.request, path);
     const initial = await (await page.request.get(`${path}/map`)).json();
     expect(
       (
@@ -407,9 +432,13 @@ test('IMPORT-17: failed cancellation cleanup and a lost success remain bound to 
           headers,
           data: {
             id: 'cleanup-private',
-            version: 0,
+            version: initial.draft.version,
             baseRevision: null,
-            value: { name: 'Privat under avbrottet', description: '', typeId: initial.types[0].id },
+            value: {
+              name: 'Privat under avbrottet',
+              description: 'Privat uppgift för Privat under avbrottet',
+              typeId: initial.types[0].id,
+            },
           },
         })
       ).status(),
@@ -445,6 +474,10 @@ test('IMPORT-17: failed cancellation cleanup and a lost success remain bound to 
     await expect(page.getByText(/Förberedelsen är avbruten/)).toHaveCount(0);
     expect(existsSync(directory)).toBe(true);
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await expectRecoveryContent(reader);
+    await expectRecoveryDraft(reader, 'Privat under avbrottet');
     expect(
       (
         await page.request.post(`${path}/imports/${ready.id}/confirm`, {
@@ -508,6 +541,10 @@ test('IMPORT-17: failed cancellation cleanup and a lost success remain bound to 
       importer.getByRole('button', { name: 'Slutför förberedelsens rensning' }),
     ).toHaveCount(0);
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    await reader.reload();
+    await expectRecoveryContent(reader);
+    await expectRecoveryDraft(reader, 'Privat under avbrottet');
+    await reader.close();
   } finally {
     if (directory && existsSync(directory)) chmodSync(directory, 0o700);
     await freshContext.close();

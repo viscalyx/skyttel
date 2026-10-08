@@ -2,13 +2,16 @@ import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import {
+  closeSupportDialog,
   createHousehold,
   openDraftReview,
   openNewObject,
   openTable,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { readDraftProposal } from '../support/domain-work.js';
 import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -203,6 +206,43 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     expect(await imageBytes(copiedImage)).toEqual(originalBytes);
     expect(await imageBytes(privateImage)).toEqual(privateBytes);
 
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await openTable(reader);
+    await expect(reader.getByRole('button', { name: 'Lo Exempel', exact: true })).toHaveCount(2);
+    await expect(reader.getByRole('button', { name: 'Senare objekt', exact: true })).toHaveCount(0);
+    const privateProposal = await readDraftProposal(reader, 'Lo Exempel');
+    const privatePreview = privateProposal.locator(`img[src$="/profile-images/${privateImage}"]`);
+    await expect(privatePreview).toBeVisible();
+    await expect
+      .poll(() =>
+        privatePreview.evaluate(
+          (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await closeSupportDialog(reader, 'Lo Exempel');
+    await reader.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    await (await utilityButton(reader, 'Rapporter')).click();
+    const historicalReceipt = reader.locator(`article[data-save="${historicalSave.operationId}"]`);
+    await expect(historicalReceipt).toContainText('Alex Exempel');
+    await expect(historicalReceipt.locator('time')).toHaveAttribute(
+      'datetime',
+      historicalSave.savedAt,
+    );
+    await historicalReceipt.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(historicalReceipt).toContainText('Lo Exempel');
+    const historicalImage = historicalReceipt.locator(`img[src$="/profile-images/${copiedImage}"]`);
+    await expect(historicalImage).toBeVisible();
+    await expect
+      .poll(() =>
+        historicalImage.evaluate(
+          (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await reader.close();
+
     for (const oldReceipt of [lostReceipt, historicalSave]) {
       const retried = await post('save', {
         operationId: oldReceipt.operationId,
@@ -268,6 +308,34 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     await importer.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     expect((await staging).status()).toBe(200);
     const staged = await read();
+    const nativeCorrection = staged.draft.changes.find((change) => change.id === current.id);
+    expect(nativeCorrection?.before).toEqual(current);
+    const { id: _id, householdId: _householdId, revision: _revision, ...currentValue } = current;
+    expect(nativeCorrection?.after).toEqual({ ...currentValue, description: 'Ny vanlig rättelse' });
+    const nativeReview = await openDraftReview(importer);
+    await expect(nativeReview).toContainText('Ny vanlig rättelse');
+    const proposal = await readDraftProposal(importer, 'Lo Exempel');
+    await expect(proposal).toContainText('Ny vanlig rättelse');
+    const proposalImage = proposal
+      .locator('dl')
+      .filter({ hasText: 'Ny vanlig rättelse' })
+      .getByRole('img', {
+        name: 'Profilbild för Lo Exempel',
+        exact: true,
+      });
+    await expect(proposalImage).toHaveAttribute(
+      'src',
+      `${new URL(householdPath).pathname}/profile-images/${originalImage}`,
+    );
+    await expect
+      .poll(() =>
+        proposalImage.evaluate(
+          (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await closeSupportDialog(importer, 'Lo Exempel');
+    await importer.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
     // Retain the original direct-route protection beside the native proposal.
     expect(
       (
@@ -316,6 +384,23 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     expect(state.objects.find((object) => object.id === 'second')?.description).toBe(
       'Ny vanlig rättelse',
     );
+    await importer.reload();
+    await openTable(importer);
+    const restoredObject = importer.locator(
+      '[data-table-object="second"][data-table-action="expand"]',
+    );
+    await restoredObject.click();
+    const details = importer.locator(`#${await restoredObject.getAttribute('aria-controls')}`);
+    await expect(details).toContainText('Ny vanlig rättelse');
+    const restoredImage = details.locator(`img[src$="/profile-images/${originalImage}"]`);
+    await expect(restoredImage).toBeVisible();
+    await expect
+      .poll(() =>
+        restoredImage.evaluate(
+          (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
   } finally {
     await installation.close();
   }

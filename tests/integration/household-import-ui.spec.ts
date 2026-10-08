@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, signIn } from '../support/client.js';
+import { createHousehold, openSettings, signIn } from '../support/client.js';
+import {
+  expectRecoveryContent,
+  reloadRestoredHousehold,
+} from '../support/household-recovery-reading.js';
 import { createInstallation } from '../support/installation.js';
 import { denyRecoveryStorage, restoreRecoveryStorage } from '../support/recovery-storage.js';
 
@@ -58,6 +62,9 @@ test('IMPORT-01: an administrator reviews and explicitly replaces household cont
     expect((await (await page.request.get(`${path}/map`)).json()).objects[0].name).toBe(
       'Senare namn',
     );
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await expectRecoveryContent(reader, 'Senare namn', '');
     await page.getByRole('checkbox', { name: 'Jag vill ersätta allt hushållsinnehåll' }).focus();
     await page.keyboard.press('Space');
     await replace.focus();
@@ -68,12 +75,28 @@ test('IMPORT-01: an administrator reviews and explicitly replaces household cont
     const restored = await (await page.request.get(`${path}/map`)).json();
     expect(restored.contentVersion).toBe(2);
     expect(restored.objects[0].name).toBe('Lampa från exporten');
+    await reloadRestoredHousehold(page);
+    await expectRecoveryContent(page, 'Lampa från exporten', '');
+    await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
     await installation.restart();
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Återimportera hushållet' })).toBeVisible();
     expect((await (await page.request.get(`${path}/map`)).json()).objects[0].name).toBe(
       'Lampa från exporten',
     );
+    await reader.reload();
+    await expectRecoveryContent(reader, 'Lampa från exporten', '');
+    await openSettings(reader);
+    await reader.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
+    await expect(
+      reader.getByRole('heading', { name: 'Administrera tillgång', exact: true }),
+    ).toBeVisible();
+    await expect(
+      reader
+        .getByRole('list', { name: 'Medlemmar', exact: true })
+        .getByText('Administratör', { exact: true }),
+    ).toBeVisible();
+    await reader.close();
   } finally {
     await installation.close();
   }
@@ -138,6 +161,9 @@ test('IMPORT-21: unavailable recovery storage preserves the file, exact review a
     await expect(file).toHaveValue(/skyttel.zip$/);
     expect(preparations).toBe(0);
     expect(await read()).toEqual(before);
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await expectRecoveryContent(reader, 'Senare namn', '');
     await restoreRecoveryStorage(page);
     await denyRecoveryStorage(page, 'skyttel-import:', 'setItem');
     const prepared = page.waitForResponse(
@@ -161,6 +187,8 @@ test('IMPORT-21: unavailable recovery storage preserves the file, exact review a
     await expect(importer.getByRole('alert')).toContainText('Ingen ersättning har startats');
     expect(confirmations).toEqual([]);
     expect(await read()).toEqual(before);
+    await reader.reload();
+    await expectRecoveryContent(reader, 'Senare namn', '');
     const statusRead = page.waitForResponse(
       (response) => response.url() === `${path}/imports/${ready.id}`,
     );
@@ -194,6 +222,11 @@ test('IMPORT-21: unavailable recovery storage preserves the file, exact review a
     ).toBeVisible();
     expect(preparations).toBe(1);
     expect(confirmations).toHaveLength(1);
+    await reloadRestoredHousehold(page);
+    await expectRecoveryContent(page, 'Lampan i exporten', '');
+    expect(preparations).toBe(1);
+    expect(confirmations).toHaveLength(1);
+    await reader.close();
   } finally {
     await installation.close();
   }

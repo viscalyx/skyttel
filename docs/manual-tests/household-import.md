@@ -27,6 +27,20 @@ steg anger respektive roll. Ingen publik webbadress eller tunnel behövs.
    Vid omstart ska samma databas användas: följ bara guidens
    omstartskommando och behåll dess terminal öppen.
 
+## Läs sparat och privat innehåll
+
+När ett fall anger kartläsning: välj **Tillbaka till kartan**, sedan
+**Tabell**. Vid **Läs in det återställda hushållet** läses importsidan om;
+invänta omladdningen och välj därefter **Tillbaka till kartan → Tabell**.
+Fäll ut det namngivna
+objektet och läs hela namnet, beskrivningen och de värden som fallet anger.
+Ett namn i en meny räcker inte för att verifiera objektets övriga värden.
+När ett fall anger privat arbete: öppna **Skriv till Skyttel → Utkast**,
+välj **Visa förslaget** för det aktuella objektet och läs dess fullständiga
+uppgifter. Stäng dialogen och textvyn utan att spara eller kasta något.
+Jämför med antecknade värden från förberedelsen. Använd en extra flik när
+importsidan måste behålla sitt exakta försöks-ID eller sin felstatus.
+
 ## Bekräftad ersättning
 
 ### IMPORT-01: Ersätt hushållet med tangentbordet
@@ -344,6 +358,13 @@ webbläsarprofiler. Bjud först in Robin och ge rollen administratör.
 allmänna förberedelsen. Robin har inte öppnat importen tidigare. Använd
 Chromium med utvecklarverktyg i Alex profil.
 
+**Separat dataförberedelse:** Före exporten: skapa ett osparat objekt **Privat
+arbete från exporten**
+med beskrivningen **Privat uppgift för Privat arbete från exporten**.
+Alex ska läsa detta förslag, medan Robins eget utkast ska vara tomt.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
 testfallet “IMPORT-09: another administrator discovers the same committed
@@ -460,6 +481,19 @@ Bjud in Robin och ge rollen administratör. Kör servern utan rootbehörighet.
 Driftansvarig behöver kunna ändra rättigheter för provets tillfälliga filer.
 Gör aldrig detta i en installation som används för riktigt hushållsarbete.
 
+**Separat förberedelse:** Driftansvarig följer
+[filförberedelsens IMPORT-11-tidpunkter](household-recovery-filesystem.md#tidpunkter-för-import-11).
+Den anger exakta indata, rättigheter, kontroll av borttagna filer och
+återställning. UI-stegen fortsätter först efter respektive förberedelsebesked.
+
+**Separat dataförberedelse:** Före exporten: skapa ett osparat objekt **Privat
+arbete genom rensningen**
+med beskrivningen **Privat uppgift för Privat arbete genom rensningen**.
+Anteckna det sparade objektets beskrivning. Efter rensningen läser Alex
+sitt privata förslag och Robin sin egen tomma utkastvy.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
 testfallet “IMPORT-11: another administrator finishes the same gated
@@ -475,6 +509,20 @@ cleanup after the original administrator loses authority”.
   "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
   "outcomes": [
     "Kontrollera att en verklig rensningsspärr består efter ersättningen och kan lösas av en annan aktuell administratör."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring."
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring."
+    }
   ]
 }
 ```
@@ -484,21 +532,20 @@ cleanup after the original administrator loses authority”.
 
 1. Alex väljer exportfilen och **Kontrollera importfil**. Anteckna
    försökets visade ID före bekräftelsen.
-2. Driftansvarig hittar katalogen `.skyttel-imports` bredvid provets
-   SQLite-fil och dess underkatalog med samma ID. Sätt endast den
-   underkatalogens rättigheter till `500` med `chmod`. Behåll terminalen.
+2. Invänta **Rensningsfel förberett** enligt den separata förberedelsen,
+   innan Alex bekräftar.
 3. Alex bekräftar ersättningen. Kontrollera beskedet att innehållet är
    ersatt men att tillfälliga filer behöver rensas. Försök öppna kartan
    och göra en export i Robins profil; båda ska vara spärrade.
 4. Robin ändrar Alex roll till medlem genom administrationen. Öppna
    sedan importen i Robins profil. Samma ID och väntande rensning ska
    visas automatiskt. Ny uppladdning ska vara spärrad.
-5. Driftansvarig återställer underkatalogens rättigheter till `700`.
+5. Invänta **Rensning tillåten** enligt den separata förberedelsen.
    Robin väljer **Slutför importens rensning**. Kontrollera att samma
-   försök blir slutfört och att katalogen försvinner.
+   försök blir slutfört. Filkontrollen redovisas separat.
 6. Läs in kartan igen. Kontrollera återställt innehåll och privat arbete.
    Starta om med samma databas och kontrollera försökets resultat igen.
-   Vid avbrutet test: återställ alltid katalogens rättigheter till `700`.
+   Vid avbrutet test följs den separata förberedelsens återställning.
 
 **Förväntat resultat:**
 
@@ -518,6 +565,13 @@ vid administrativ läsning och uttrycklig innehållsersättning.
 **Förutsättningar:** En separat provinstallation och en fullständig export.
 Använd tangentbord på dator i Chromiums vanliga fönster.
 Mobilnavigation och smala återhämtningskontroller följs i IMPORT-22–24.
+
+**Separat dataförberedelse:** Före exporten: skapa ett osparat objekt **Redan
+privat arbete** med
+beskrivningen **Privat uppgift för Redan privat arbete**. Läs detta
+förslag före och efter ersättningen, utan att spara det.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
 
 **Integrationstest:**
 [household-import-settings.spec.ts](../../tests/integration/household-import-settings.spec.ts),
@@ -631,6 +685,13 @@ ID, även när en annan klient genomför en ny ersättning.
 **Förutsättningar:** En separat provinstallation och samma giltiga export
 i båda profilerna. Använd utvecklarverktygen i den första profilen.
 
+**Separat dataförberedelse:** Före exporten: skapa ett osparat objekt **Privat
+arbete i båda ersättningarna**
+med beskrivningen **Privat uppgift för Privat arbete i båda ersättningarna**.
+Anteckna även det sparade objektets beskrivning.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
 testfallet “IMPORT-14: a locally known uncertain import keeps its exact
@@ -688,6 +749,16 @@ och en fullständig export av samma hushåll. Skapa också en vanlig textfil
 med namnet `invalid.zip`; den ska inte vara ett ZIP-arkiv. Kör i 1280×900, ljust
 och mörkt tema. Välj minskad rörelse.
 De smala och korta fönstren har egna fall IMPORT-22–24.
+
+**Separat dataförberedelse:** Det privata objektet ska heta **Bevarat privat
+arbete** och ha
+beskrivningen **Privat uppgift för Bevarat privat arbete**. Anteckna också
+det sparade objektets beskrivning. Läs båda fullständigt efter filfel,
+avbrott och ersättning i en extra flik. Efter valet utan aktuell ägare
+ska ditt aktuella utkast vara tomt; efter återkopplingen ska samma
+namn och privata beskrivning återkomma.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
 
 **Integrationstest:**
 [household-recovery-accessibility.spec.ts](../../tests/integration/household-recovery-accessibility.spec.ts),
@@ -765,6 +836,14 @@ ersätta hushållets innehåll.
 **Förutsättningar:** En separat provinstallation och giltig export enligt
 den allmänna förberedelsen. Ingen ersättning har bekräftats.
 
+**Separat dataförberedelse:** Efter exporten, före provet: skapa det osparade
+objektet
+**Privat arbete efter exporten** med beskrivningen
+**Privat uppgift för Privat arbete efter exporten**. Behåll förslaget
+under avbrottet och läs hela beskrivningen efteråt.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
 testfallet “IMPORT-16: an administrator explicitly cancels only an
@@ -820,6 +899,18 @@ skilj ett saknat svar från ett bekräftat avbrott.
 ändra filrättigheter och starta om servern. En giltig export och ett
 privat utkast ska finnas. Använd aldrig en produktionsinstallation.
 
+**Separat förberedelse:** Driftansvarig följer
+[filförberedelsens IMPORT-17-tidpunkter](household-recovery-filesystem.md#tidpunkter-för-import-17)
+före avbrott och rensning. Den innehåller exakta indata, filkontroller och
+återställning även vid avbrutet prov.
+
+**Separat dataförberedelse:** Skapa det osparade objektet **Privat under
+avbrottet** med beskrivningen
+**Privat uppgift för Privat under avbrottet**. Läs dess fullständiga
+uppgifter i en extra flik medan rensning återstår och efter omstart.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
 testfallet “IMPORT-17: failed cancellation cleanup and a lost success
@@ -835,6 +926,20 @@ remain bound to the same unconfirmed preparation”.
   "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
   "outcomes": [
     "Behåll samma obekräftade förberedelse vid rensningsfel och skilj ett saknat svar från ett bekräftat avbrott."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring."
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring."
+    }
   ]
 }
 ```
@@ -843,17 +948,17 @@ remain bound to the same unconfirmed preparation”.
 **Steg:**
 
 1. Kontrollera exportfilen utan att bekräfta ersättningen. Anteckna
-   förberedelsens ID. Driftansvarig sätter dess underkatalog i
-   `.skyttel-imports` till läs- och sökbehörighet, men tar bort
-   skrivbehörighet (`chmod 500`).
+   förberedelsens ID. Invänta **Rensningsfel förberett** enligt den
+   separata förberedelsen innan nästa steg.
 2. Välj **Avbryt förberedelsen**. Kontrollera att förberedelsen inte
    längre kan användas och att rensning återstår. Kartan och utkastet
    ska gå att läsa. Inget lyckat avbrott ska påstås.
 3. Logga in med samma konto i den andra profilen och öppna importen.
    Samma ID och **Slutför förberedelsens rensning** ska visas. Filval och
    ersättning ska vara spärrade.
-4. Driftansvarig återställer katalogens rättigheter till `chmod 700`.
-   Kör koden nedan i den andra profilens Console. Aktivera rensningen.
+4. Invänta **Rensning tillåten** enligt den separata förberedelsen.
+   Kör svarsförberedelsen nedan i den andra profilens Console. Aktivera
+   rensningen.
    Fortsätt endast om konsolen visar **Avbrott utfört, svar dolt**.
 5. Välj **Hämta importens status**. Det första lässvaret försvinner också;
    samma ID och spärrat filval ska finnas kvar. Välj status en gång till.
@@ -883,6 +988,10 @@ en ny klient utan att förlora en annan obekräftad granskning.
 **Förutsättningar:** Provinstallation och filrättigheter enligt IMPORT-17.
 Ingen ersättning bekräftas under provet.
 
+**Separat förberedelse:** Driftansvarig följer
+[filförberedelsens IMPORT-18-tidpunkter](household-recovery-filesystem.md#tidpunkter-för-import-18)
+med första granskningens ID. Den andra granskningens katalog ändras inte.
+
 **Integrationstest:**
 [household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
 testfallet “IMPORT-18: a fresh administrator client can find cancelled
@@ -898,6 +1007,20 @@ files even when another review is ready”.
   "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
   "outcomes": [
     "Hitta och rensa en avbruten förberedelses kvarvarande filer i en ny klient utan att förlora en annan obekräftad granskning."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring."
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring."
+    }
   ]
 }
 ```
@@ -908,12 +1031,12 @@ files even when another review is ready”.
 1. Kontrollera exportfilen i första profilen och anteckna ID.
 2. Öppna importen i andra profilen. Kontrollera samma fil på nytt och
    anteckna det nya ID:t. Den första profilens granskning ska vara kvar.
-3. Driftansvarig tar bort skrivbehörigheten från första förberedelsens
-   underkatalog (`chmod 500`). Avbryt den i första profilen och läs att
+3. Invänta **Rensningsfel förberett** enligt den separata förberedelsen.
+   Avbryt första granskningen i första profilen och läs att
    rensning återstår.
 4. Öppna importen i en helt ny flik utan kopierad fliklagring. Det första
    ID:t och dess väntande rensning ska gå att hitta. Filval är spärrat.
-5. Återställ första katalogens rättigheter (`chmod 700`) och välj
+5. Invänta **Rensning tillåten** enligt den separata förberedelsen och välj
    **Slutför förberedelsens rensning** i den nya fliken.
 6. Ladda om den nya fliken. Den andra granskningen ska finnas kvar med
    sitt eget ID och omarkerad bekräftelse. Avbryt även den uttryckligen.

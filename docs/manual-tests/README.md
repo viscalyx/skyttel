@@ -317,6 +317,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   och fördröjda avbrotts- och statussvar efter navigering. Ersättning och
   innehållskoppling följs i båda teman. Fel i webbläsarens återhämtningsminne
   bevarar vald fil, faktisk granskning och bekräftat serverresultat.
+  [Separat filförberedelse](household-recovery-filesystem.md) anger rensningsfel,
+  exakta katalogindata och återställning utanför UI-stegen.
   IMPORT-07 använder typ- och objektformulär samt Rapporter med separat
   request-underlag. IMPORT-15 och IMPORT-22–24 har varsin automatiserad
   motsvarighet vid 1280, 390, 320 respektive 640 CSS-pixlar; fysisk zoom
