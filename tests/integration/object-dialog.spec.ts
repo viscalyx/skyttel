@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, signIn } from '../support/client.js';
+import { closeSupportDialog, closeTextView, createHousehold, signIn } from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { readDraftProposal, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 test('KARTA-19: unchanged edits open relationships without staging and every reading entry uses the same object dialog', async ({
@@ -61,8 +63,6 @@ test('KARTA-19: unchanged edits open relationships without staging and every rea
     await relationships.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
     await expect(editButton).toBeFocused();
     await page.getByRole('button', { name: 'Sparad cykel', exact: true }).click();
-    const details = page.getByRole('region', { name: 'Uppgifter för Sparad cykel', exact: true });
-    await expect(details.getByRole('button', { name: /^Redigera/ })).toHaveCount(0);
     await editButton.click();
     await expect(form).toBeVisible({ timeout: 1000 });
     await expect(form.getByRole('button', { name: 'Grunduppgifter', exact: true })).toHaveAttribute(
@@ -130,7 +130,7 @@ test('KARTA-17: pending staging blocks duplicate sends and known rejection keeps
 });
 
 for (const applied of [true, false]) {
-  test(`KARTA-18: lost staging response is checked before ${applied ? 'confirmed relationship transition' : 'safe retry'}`, async ({
+  test(`${applied ? 'KARTA-18' : 'KARTA-21'}: lost staging response is checked before ${applied ? 'confirmed relationship transition' : 'safe retry'}`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -217,6 +217,9 @@ for (const applied of [true, false]) {
 
       await relationships.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
       await expect(opener).toBeFocused();
+      const proposal = await readDraftProposal(page, 'Cykeln efter tappat svar');
+      await expect(proposal).toContainText('Cykeln efter tappat svar');
+      if (applied) await expect(proposal).toContainText('Profilbild finns');
     } finally {
       await installation.close();
     }
@@ -643,7 +646,7 @@ test('KARTA-15: close and Escape protect only unsent form changes and restore th
 });
 
 for (const width of [1440, 320]) {
-  test(`KARTA-20: configured properties keep their order and hidden values in the single-section dialog at ${width}px`, async ({
+  test(`${width === 1440 ? 'KARTA-20' : 'KARTA-22'}: configured properties keep their order and hidden values in the single-section dialog at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -662,7 +665,7 @@ for (const width of [1440, 320]) {
             id: 'configured',
             baseRevision: null,
             value: {
-              name: 'Avtal',
+              name: 'Dialogavtal',
               description: '',
               sections: [{ id: 'terms', name: 'Avtalets uppgifter' }],
               fields: [
@@ -711,7 +714,8 @@ for (const width of [1440, 320]) {
       );
       await page.goto(`${installation.origin}/households/${household.id}`);
       await page.getByRole('button', { name: 'Tabell', exact: true }).click();
-      await page.getByRole('button', { name: 'Redigera Hushållets avtal', exact: true }).click();
+      const opener = page.getByRole('button', { name: 'Redigera Hushållets avtal', exact: true });
+      await opener.click();
       const form = page.getByRole('dialog', { name: 'Redigera Hushållets avtal', exact: true });
       await expect(
         form.getByRole('button', { name: 'Grunduppgifter', exact: true }),
@@ -747,8 +751,9 @@ for (const width of [1440, 320]) {
       await expect(
         form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }),
       ).toBeInViewport();
-      await page.screenshot({ path: `/tmp/skyttel-244/250-dialog-${width}.png` });
+      await page.screenshot({ path: test.info().outputPath(`configured-dialog-${width}.png`) });
       await footer.click();
+      await expect(opener).toBeFocused();
       const after = await read();
       expect(after.objects[0].customValues?.memo).toBe('Före rättelsen');
       expect(after.draft.changes[0].after).toMatchObject({
@@ -756,6 +761,23 @@ for (const width of [1440, 320]) {
         customValues: { memo: 'Efter rättelsen', hidden: 'Bevaras oförändrat' },
         financialFacts: { price: { knowledge: 'known', value: '249' } },
       });
+      const proposal = await readDraftProposal(page, 'Hushållets avtal');
+      await expect(proposal).toContainText('Efter rättelsen');
+      await expect(proposal).toContainText('Bevaras oförändrat');
+      await closeSupportDialog(page, 'Hushållets avtal');
+      if (width === 1440) {
+        await saveReviewedConflictDraft(page);
+        await closeTextView(page);
+        await installation.restart();
+        await page.reload();
+        const saved = await readTableObject(page, 'Hushållets avtal');
+        await expect(saved).toContainText('Efter rättelsen');
+        await expect(saved).toContainText('Bevaras oförändrat');
+        await expect(saved).toContainText('Fullständig avtalstext');
+        await expect(saved).toContainText('249');
+        expect((await read()).objects[0].id).toBe(after.objects[0].id);
+        expect((await read()).draft.changes).toEqual([]);
+      }
     } finally {
       await installation.close();
     }

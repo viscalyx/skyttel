@@ -173,6 +173,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   prisunderlag, månadens antaganden, okända värden, kumulativa mätningar,
   omstart, hämtningsfel, okänt sparresultat, tangentbordsfokus och
   installationens särskilda kostnadsbehörighet på mobil och dator.
+  KOST-04 har fullständig 1280px-återhämtning med omstart; KOST-05–06
+  bevarar smala fokus- och prisflöden med dokumenterad referensförlust.
   En lokal startguide ger kontrollerade leverantörssvar och två identiteter.
 
 - [Återställning och flytt](household-recovery.md): tomma lokala installationer,
@@ -365,7 +367,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   skilja lika namn åt och bevara ofullständiga uppgifter; det gemensamma
   objektformuläret med fullständiga värden, stängda avsnitts fel, typbyte,
   bild och ikon, förlustvarning, återfokus samt väntande, avvisat och oklart
-  tillägg till utkastet på dator och mobil.
+  tillägg till utkastet på dator och mobil. KARTA-18 och KARTA-21 skiljer
+  tillämpat och uteblivet tillägg; KARTA-20 och KARTA-22 har skilda
+  ordnings- och fokusreferenser, med fullständigt sparande och omstart vid 1440px.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon, flera flyttbara uppgiftsfönster och
   högerklickets sju ikoner och uppgiftsfönstrens fem åtgärdsikoner.
@@ -404,7 +408,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
-  kommando förbereder äldre provdata för uppgraderingen.
+  kommando förbereder äldre provdata för uppgraderingen. AVTAL-07 provar
+  saknat känt skuldbelopp i formuläret och AVTAL-08 riktiga konfliktval;
+  HTTP-validering, kvitton och historik anges som separat tekniskt underlag.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
   långa fältnamn och sammanfattningar som skiljer giltighet från statusläge,

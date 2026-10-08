@@ -32,6 +32,21 @@ fallen anger formulär, samtal, profil eller administration.
 
 ### KOST-01: separata kostnader och månadens antaganden återläses efter omstart
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-01"
+  },
+  "reference": "1280×900; ljust tema. KOST-04 växlar till ljust efter fördröjt sparande. Kontrollerade leverantörer, inga betalda anrop.",
+  "outcomes": [
+    "Uppdelade kostnader och månadsantaganden består efter omstart."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Förstå uppdelning, totalsumma, prisunderlag och sparade
 månadsantaganden utan att förväxla uppskattning med faktura.
 
@@ -46,7 +61,7 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 **Steg:**
 
 1. Välj **Prata med Skyttel**, vänta på **Lyssnar** och kör `delegate` i
-   terminalen. Uppdraget går genom röstens verkliga Terra-arbete. Vänta på
+   terminalen. Uppdraget går genom serverns kontrollerade Terra-arbete. Vänta på
    **Det kontrollerade kostnadsprovet är klart.**
 2. Kör `usage 90` och stäng av mikrofonen med **Prata med Skyttel**.
    Vänta tills röstrutan har försvunnit och röstanslutningen har stängts,
@@ -82,6 +97,21 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 
 ### KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan dubbelräkning
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-02"
+  },
+  "reference": "1280×900; ljust tema. KOST-04 växlar till ljust efter fördröjt sparande. Kontrollerade leverantörer, inga betalda anrop.",
+  "outcomes": [
+    "Saknade slutvärden förblir osäkra; hämtningsfel behåller känt underlag utan dubbelräkning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Visa okänd förbrukning och bevara tidigare kända värden vid fel.
 
 **Användare:** Alex.
@@ -90,7 +120,8 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 
 **Integrationstest:**
 [costs.spec.ts](../../tests/integration/costs.spec.ts),
-“KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan dubbelräkning”.
+“KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan
+dubbelräkning”.
 
 **Steg:**
 
@@ -118,22 +149,36 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 
 ### KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-04"
+  },
+  "reference": "1280×900; ljust tema. KOST-04 växlar till ljust efter fördröjt sparande. Kontrollerade leverantörer, inga betalda anrop.",
+  "outcomes": [
+    "Tappat svar efter sparande återhämtas, historik består efter omstart och fokus skyddas."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Återhämta ett sparat antagande efter tappat svar utan en extra
 skrivning och nå hela flödet med tangentbord på mobil och dator.
 
 **Användare:** Alex, utan hushåll.
 
-**Förutsättningar:** Ny installation. Prova dator, 390 och 320 pixlars bredd,
-ljust och mörkt tema samt verklig webbläsarzoom på 200 och 400 procent.
-För tappat svar behövs en lokal felproxy som låter servern slutföra
-`POST /api/operator/costs/assumptions` men släpper svaret. Att blockera
-anropet före servern provar inte samma fall. Det länkade testet ordnar detta
-automatiskt mot den riktiga servern och dess tillfälliga databas.
+**Förutsättningar:** Ny kontrollerad installation och 1280×900.
+
+**Separat förberedelse:** Förbered nästa verkliga sparande enligt
+[styrt kostnadssvar](#styrt-kostnadssvar). Det tappade svaret släpps först
+sedan servern har svarat med framgång. Återställ `fetch` efter varje prov
+eller ladda om sidan. Avsluta installationen med `quit`.
 
 **Integrationstest:**
-[costs.spec.ts](../../tests/integration/costs.spec.ts),
-“KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer”
-med tilläggen “(1280px)”, “(390px)” och “(320px)”.
+[costs.spec.ts](../../tests/integration/costs.spec.ts), KOST-04.
+390px och 320px har egna fall KOST-05 och KOST-06 nedan.
 
 **Steg:**
 
@@ -144,12 +189,15 @@ med tilläggen “(1280px)”, “(390px)” och “(320px)”.
 3. Aktivera det tappade svaret och välj **Spara månadens antaganden**.
    Kräv **Sparresultatet är okänt**, spärrat sparande och äldre känd summa.
 4. Välj **Uppdatera underlaget**. Kräv 87,00 SEK och besked att aktuella
-   antaganden är hämtade. Inget nytt sparande ska behövas.
+   antaganden är hämtade. Fokus ska stanna på **Uppdatera underlaget**.
+   Inget nytt sparande ska behövas.
 5. Återställ svaret, kör `restart` och ladda om. Öppna **Tidigare
    antaganden för månaden**. Version 1 har kurs 10 och version 2 kurs 12.
 6. Öppna redigeringen, ange 13 och spara. Fokus återgår till **Ändra
    månadens antaganden**. Öppna och stäng redigeringen; fokus återgår igen.
-7. Spara 14 med ett fördröjt svar. Välj tema medan sparandet pågår;
+7. Förbered fördröjt svar enligt **Styrt kostnadssvar**. Spara 14.
+   Öppna **Tema** och välj **Ljust** medan sparandet pågår.
+   Kör `window.releaseCostReply()` i konsolen;
    temaknappens fokus ska bestå när kvittot kommer.
 8. Öppna mätvärden och hela prisunderlaget. Använd Tab och piltangenter
    för pristabellen. Kontrollera läsbarhet, synligt fokus och att övrigt
@@ -163,12 +211,129 @@ med tilläggen “(1280px)”, “(390px)” och “(320px)”.
   från hushållets karta och byter inga leverantörstjänster.
 - Öppning, sparande och stängning behåller ett begripligt tangentbordsfokus.
   Belopp, osäkerhet, mätvärden och fullständiga priser går att läsa på alla
-  provade bredder och zoomnivåer. Fysiska enheter och skärmläsare dokumenteras
+  provade bredder. Fysiska enheter, verklig zoom och skärmläsare dokumenteras
   separat; automatiska prov innebär inte fullständig WCAG-överensstämmelse.
+
+### KOST-05: 390px bevarar återhämtning, priser och senare fokus
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-05"
+  },
+  "reference": "390×900; mörkt efter fördröjt sparande. Felgräns, fokus och prisrullning skyddas.",
+  "outcomes": [
+    "390px behåller återhämtning, synligt besked, tabellrullning och senare fokus."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Skydda läsbara priser och tangentbordsarbete vid smal bredd.
+
+**Användare:** Alex, utan hushåll.
+
+**Förutsättningar:** Starta ny [kontrollerad installation](#controlled-cost-fixture).
+Ställ innehållsytan på 390×900; detta är syntetiskt omflödesprov.
+
+**Separat förberedelse:** Använd [styrt kostnadssvar](#styrt-kostnadssvar)
+för tappat svar och fördröjt svar. Återställ `fetch` och avsluta med `quit`.
+
+**Integrationstest:** [costs.spec.ts](../../tests/integration/costs.spec.ts),
+KOST-05.
+
+**Steg:**
+
+1. Följ KOST-04 steg 1–4 på 390px: ange 12, tappa svaret efter
+   verkligt sparande, läs okänt utfall och hämta aktuellt underlag.
+2. Öppna redigeringen, ange 13 och spara. Kräv sparbesked och fokus på
+   **Ändra månadens antaganden**. Öppna och stäng redigeringen; samma
+   knapp får fokus igen.
+3. Förbered fördröjt svar, ange 14 och spara. Öppna **Tema**, välj
+   **Mörkt** och släpp svaret med `window.releaseCostReply()`.
+   Temaknappen ska behålla fokus när beskedet kommer.
+4. Öppna **Prisunderlag** och modellpriserna. Fokusera Terra-tabellens
+   rullbara region och tryck högerpil. Nå alla kolumner och priser utan
+   att hela sidan måste rullas i sidled.
+
+**Förväntat resultat:**
+
+- Det tappade svaret ger okänt utfall med spärrat sparande. Uppdatering
+  återläser 87,00 SEK och tillåter fortsatt arbete utan upprepat sparande.
+- Priser och sparbesked är läsbara. Öppning och stängning återger fokus;
+  fördröjd framgång tar inte fokus från senare temaåtgärd.
+
+### KOST-06: 320px bevarar återhämtning, priser och senare fokus
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-06"
+  },
+  "reference": "320×900; ljust efter fördröjt sparande. Felgräns, fokus och prisrullning skyddas.",
+  "outcomes": [
+    "320px behåller återhämtning, synligt besked, tabellrullning och senare fokus."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Skydda läsbara priser och tangentbordsarbete vid smal bredd.
+
+**Användare:** Alex, utan hushåll.
+
+**Förutsättningar:** Starta ny [kontrollerad installation](#controlled-cost-fixture).
+Ställ innehållsytan på 320×900; detta är syntetiskt omflödesprov.
+
+**Separat förberedelse:** Använd [styrt kostnadssvar](#styrt-kostnadssvar)
+för tappat svar och fördröjt svar. Återställ `fetch` och avsluta med `quit`.
+
+**Integrationstest:** [costs.spec.ts](../../tests/integration/costs.spec.ts),
+KOST-06.
+
+**Steg:**
+
+1. Följ KOST-04 steg 1–4 på 320px: ange 12, tappa svaret efter
+   verkligt sparande, läs okänt utfall och hämta aktuellt underlag.
+2. Öppna redigeringen, ange 13 och spara. Kräv sparbesked och fokus på
+   **Ändra månadens antaganden**. Öppna och stäng redigeringen; samma
+   knapp får fokus igen.
+3. Förbered fördröjt svar, ange 14 och spara. Öppna **Tema**, välj
+   **Ljust** och släpp svaret med `window.releaseCostReply()`.
+   Temaknappen ska behålla fokus när beskedet kommer.
+4. Öppna **Prisunderlag** och modellpriserna. Fokusera Terra-tabellens
+   rullbara region och tryck högerpil. Nå alla kolumner och priser utan
+   att hela sidan måste rullas i sidled.
+
+**Förväntat resultat:**
+
+- Det tappade svaret ger okänt utfall med spärrat sparande. Uppdatering
+  återläser 87,00 SEK och tillåter fortsatt arbete utan upprepat sparande.
+- Priser och sparbesked är läsbara. Öppning och stängning återger fokus;
+  fördröjd framgång tar inte fokus från senare temaåtgärd.
 
 ## Åtkomst
 
 ### KOST-03: endast driftansvarig har åtkomst oberoende av hushållets roller
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-03"
+  },
+  "reference": "1280×900; ljust tema. KOST-04 växlar till ljust efter fördröjt sparande. Kontrollerade leverantörer, inga betalda anrop.",
+  "outcomes": [
+    "Endast driftansvarig får kostnadsåtkomst; återkallat hushållsmedlemskap påverkar inte denna behörighet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja installationens kostnadsbehörighet från hushållstillgång.
 
@@ -321,3 +486,65 @@ The exact browser workflows are in
 [KOST-01–KOST-04](costs.md). Current operator configuration,
 rate maintenance and limits are described in the
 [operator runbook](../operations/costs.md).
+
+## Styrt kostnadssvar
+
+Kör följande i webbläsarens konsol på den disponibla installationens
+kostnadssida. `drop` tappar nästa framgångsrika svar efter verkligt
+sparande; `hold` håller nästa framgångsrika svar tills det släpps.
+Felaktiga svar passerar normalt. Välj läge före sparande, ett i taget.
+Inga riktiga kostnadskonton eller modellnycklar behövs.
+
+```javascript
+(() => {
+  const original = window.fetch.bind(window);
+  let mode;
+  window.armCostReply = next => { mode = next; };
+  window.restoreCostReplies = () => { window.fetch = original; };
+  window.fetch = async (...args) => {
+    const input = args[0];
+    const url = input instanceof Request ? input.url : input;
+    const method = args[1]?.method ?? input?.method ?? 'GET';
+    if (new URL(url, location.href).pathname === '/api/operator/costs/assumptions'
+        && method === 'POST' && mode) {
+      const selected = mode;
+      mode = undefined;
+      const response = await original(...args);
+      if (!response.ok) return response;
+      if (selected === 'hold') {
+        await new Promise(resolve => { window.releaseCostReply = resolve; });
+        return response;
+      }
+      throw new TypeError('Synthetic lost reply after completed cost save');
+    }
+    return original(...args);
+  };
+})();
+window.armCostReply('drop');
+```
+
+Efter återhämtning, kör `window.armCostReply('hold')` före det fördröjda
+sparandet. Släpp med `window.releaseCostReply()`. Avsluta alltid med
+`window.restoreCostReplies()` eller omladdning. Starta en ny fixture per
+fall; behåll samma databas bara inom dess omstartsprov. Vanligt offlineläge
+provar inte ett tappat svar efter slutförd transaktion.
+
+## Referenser och accepterad förlust
+
+KOST-04 behåller 1280px och hela kedjan med tappat verkligt sparresultat,
+återhämtning, omstart och versionshistorik. De befintliga 390px- och
+320px-scenarierna får KOST-05 och KOST-06. De behåller verkligt tillämpat
+sparande med tappat svar, återhämtning, synlig återkoppling, redigeringens
+fokus, fördröjd framgång utan stulen fokus och pristabellens rullning.
+Deras upprepade omstart och versionshistorik tas bort. Fel som bara uppstår
+vid dessa bredder i den kombinerade omstarts- och historikkedjan kan därför
+undgå referensen. Inget ID pensioneras eller återanvänds.
+
+KOST-01–03 behåller ofullständiga mätningar, hämtningsfel och separat
+driftåtkomst. Det separata
+[tekniska mätunderlaget](../../tests/integration/accessibility-measurements.spec.ts)
+provar färgtolkning och opaka ytor för kontrastmätaren. Det utför inget
+kostnadsflöde och ingen kostnadsspecifik kontrastmätning. Belopp och
+återkoppling granskas i de verkliga kostnadsflödena; manuell läsbarhet ska
+redovisas separat. Syntetiska ljudspår utför ingen fysisk mikrofon-,
+ljud- eller skärmläsarobservation.

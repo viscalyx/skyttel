@@ -472,6 +472,21 @@ Vanlig tabelläsning och återgång provas i LISTA-02 och LISTA-05.
 
 ### LISTA-07: textåtgärder tar bort valt objekt utan kartgrafik
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-actions.spec.ts",
+    "caseId": "LISTA-07"
+  },
+  "reference": "320×640, kontrollerat WebGL-avbrott; tangentbordsaktivering skyddar textalternativet.",
+  "outcomes": [
+    "Avbruten redigering behåller oskickat arbete; borttagningen omfattar valt objekt och fyra samband, med oberoende förslag kvar."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Nå vanliga objektåtgärder utan kartgrafik och föreslå en
 borttagning med verkliga beroenden utan att ändra sparade uppgifter.
 
@@ -508,8 +523,8 @@ only the chosen removal without map graphics”.
    i raden och kontrollera att papperskorgen nu är inaktiv. Fokus går till
    nästa tillgängliga borttagningsknapp, **Ta bort Garage**.
 7. Öppna **Utkast** och granska objektets och de fyra sambandens
-   borttagningsförslag samt **Behåll mig**. Läs **Rapporter → Ändringshistorik**
-   och kontrollera att inget nytt gemensamt sparande finns.
+   borttagningsförslag samt **Behåll mig**. Spara inte hela utkastet.
+   Oförändrad historik kontrolleras av automationen via HTTP.
 
 **Förväntat resultat:**
 

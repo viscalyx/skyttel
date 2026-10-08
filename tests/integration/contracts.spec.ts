@@ -3,9 +3,9 @@ import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, signIn } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
 
-test('AVTAL-04: dated debt and credit facts survive draft recovery, correction and history', async ({
-  page,
-}) => {
+test('HTTP: dated debt and credit facts survive draft recovery, correction and history', {
+  tag: '@technical',
+}, async ({ page }) => {
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
@@ -92,10 +92,9 @@ test('AVTAL-04: dated debt and credit facts survive draft recovery, correction a
   }
 });
 
-test('AVTAL-08: resolving financial conflicts preserves independent facts and requires a whole new save', async ({
-  page,
-  browser,
-}) => {
+test('HTTP: resolving financial conflicts preserves independent facts and requires a whole new save', {
+  tag: '@technical',
+}, async ({ page, browser }) => {
   const installation = await createInstallation();
   const other = await browser.newContext();
   try {
@@ -239,9 +238,9 @@ test('AVTAL-08: resolving financial conflicts preserves independent facts and re
   }
 });
 
-test('AVTAL-07: invalid financial facts preserve the entire current draft and saved map', async ({
-  page,
-}) => {
+test('HTTP: invalid financial facts preserve the entire current draft and saved map', {
+  tag: '@technical',
+}, async ({ page }) => {
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);

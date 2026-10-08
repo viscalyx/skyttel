@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openTable } from '../support/client.js';
+import { openDraftReview, openTable } from '../support/client.js';
 import { prepareHouseholdReading } from '../support/household-reading.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -92,6 +92,10 @@ test('LISTA-07: text object actions preserve cancellation and stage only the cho
     await expect(table.getByRole('row', { name: /Cykel/ }).first()).toContainText(
       'Föreslagen borttagning',
     );
+    const draft = await openDraftReview(page);
+    await expect(draft).toContainText('Cykel');
+    await expect(draft).toContainText('Behåll mig');
+    await expect(draft.getByRole('button', { name: /^Visa förslaget:/ })).toHaveCount(6);
   } finally {
     await installation.close();
   }
