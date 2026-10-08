@@ -834,9 +834,9 @@ await (async () => {
     'X-Skyttel-Build': `${identity.commit}:${identity.version}`,
   };
   const before = await read();
-  if (before.draft.changes.length || before.draft.objectTypes.length ||
-      before.draft.relationships.length ||
-      before.draft.relationshipTypes.length) {
+  if (before.draft.changes.length || (before.draft.objectTypes ?? []).length ||
+      (before.draft.relationships ?? []).length ||
+      (before.draft.relationshipTypes ?? []).length) {
     throw new Error('Börja med ett tomt utkast');
   }
   const staged = await fetch(`${path}/object-type`, {
