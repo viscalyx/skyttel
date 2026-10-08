@@ -907,7 +907,7 @@ hits through return and table visits”.
   bevarar däremot utforskningen. Återgången behåller söktext och filter,
   visar Alex och cykeln och ger användbart fokus i kartan.
 - Karta, utkast och gemensam historik ändras inte.
-- Riktmärkesikonen återställer sökning och filter; sambandsikonen behåller
+- Kartikonen **Visa i kartan** återställer sökning och filter; sambandsikonen behåller
   dem. Ingen av åtgärderna ändrar hushållets information.
 
 ### SÖK-07: sammanhang går utanför träfffilter men följer upphört
