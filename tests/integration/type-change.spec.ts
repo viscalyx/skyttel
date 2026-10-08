@@ -595,7 +595,9 @@ test('TYP-07: a native type change requires fresh definition review and preserve
     const draft = await openDraftReview(page);
     await draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     const rejected = page.getByRole('dialog', { name: 'Spara utkastet', exact: true });
-    await expect(rejected).toBeVisible();
+    await expect(rejected).toContainText(
+      'Avvisat: Förslaget eller kartan har ändrats. Inget sparades av detta försök.',
+    );
     expect((await read()).objects).toEqual(own.objects);
     expect((await read()).draft).toEqual(own.draft);
     await page.keyboard.press('Escape');
