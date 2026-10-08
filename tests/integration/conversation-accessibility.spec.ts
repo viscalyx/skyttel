@@ -101,11 +101,12 @@ for (const width of [1280, 390])
       const checkOrder = async () => {
         const readingOrder = await page.evaluate(() => {
           const controls = [
+            '.workspace-tools [aria-label="Navigera"]',
             '.workspace-talk',
             '.workspace-text',
             '.voice-stop',
             '.conversation-notice-close',
-            '.workspace-tools [aria-label="Navigera"]',
+            '.workspace-tools-footer button',
           ].map((selector) => document.querySelector(selector));
           return controls.every(
             (node, index) =>
@@ -126,7 +127,12 @@ for (const width of [1280, 390])
         await page.keyboard.press('Tab');
         await expect(close).toBeFocused();
         await page.keyboard.press('Tab');
-        await expect(page.getByRole('button', { name: 'Navigera', exact: true })).toBeFocused();
+        await expect(
+          page.getByRole('button', {
+            name: width > 700 ? 'Rapporter' : 'Information och hjälp',
+            exact: true,
+          }),
+        ).toBeFocused();
       };
       await checkOrder();
       const card = await notice(page).boundingBox();

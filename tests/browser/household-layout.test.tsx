@@ -773,7 +773,7 @@ test('landscape toolbar controls preserve canvas height and reachable navigation
   await reset.click();
   const height = () => document.querySelector('canvas')?.getBoundingClientRect().height;
   await expect.poll(height).toBeGreaterThan(200);
-  await page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }).click();
+  await page.getByRole('button', { name: 'Markera objekt: Alex', exact: true }).click();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   const heightHelp = page.getByLabelText('Visa höjdhjälp', { exact: true });
   await heightHelp.click();

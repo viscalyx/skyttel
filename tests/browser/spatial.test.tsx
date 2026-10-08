@@ -105,6 +105,8 @@ state.draft.relationships = state.relationships.map((edge, index) => ({
   objectNames: {},
 }));
 
+const selectionStatus = () => page.getByRole('status', { name: 'Kartans urval', exact: true });
+
 function MapView({
   mapState = state,
   relationships = mapState.relationships,
@@ -133,7 +135,9 @@ function MapView({
   const [message, setMessage] = useState('Ingen vald');
   return (
     <>
-      <p role="status">{message}</p>
+      <p role="status" aria-label="Kartans urval">
+        {message}
+      </p>
       <pre data-placement>{JSON.stringify(view.positions)}</pre>
       <div ref={setSettingsMount} />
       <SpatialMap
@@ -405,7 +409,7 @@ test('changing a relationship retains its prior route while the current route re
   });
   await expect.element(priorLabel).toHaveTextContent('× → använder');
   await priorLabel.click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Tidigare: lo');
+  await expect.element(selectionStatus()).toHaveTextContent('Tidigare: lo');
   await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
   await page
     .getByRole('button', {
@@ -413,7 +417,7 @@ test('changing a relationship retains its prior route while the current route re
       exact: true,
     })
     .click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+  await expect.element(selectionStatus()).toHaveTextContent('Samband: known');
 });
 
 test.each([
@@ -488,9 +492,9 @@ test('reversing directed endpoints shows a red old connection and green new conn
   expect(document.querySelectorAll('.connection.added')).toHaveLength(1);
   expect(document.querySelectorAll('.connection.removed')).toHaveLength(1);
   await old.click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Tidigare: lo');
+  await expect.element(selectionStatus()).toHaveTextContent('Tidigare: lo');
   await current.click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+  await expect.element(selectionStatus()).toHaveTextContent('Samband: known');
 });
 
 test('navigation keeps height help beside movement controls and respects the manual choice', async () => {
@@ -1114,9 +1118,9 @@ test('graphics navigation and label modes expose selectable objects and directed
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await expect.element(lo).toBeVisible();
   await lo.click({ button: 'right', modifiers: ['Control'] });
-  await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
+  await expect.element(selectionStatus()).toHaveTextContent('Lo Exempel');
   await lo.click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
+  await expect.element(selectionStatus()).toHaveTextContent('Lo Exempel');
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   for (const name of [
     'Panorera höger',
@@ -1147,16 +1151,16 @@ test('graphics navigation and label modes expose selectable objects and directed
       exact: true,
     })
     .click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+  await expect.element(selectionStatus()).toHaveTextContent('Samband: known');
   await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
   await page
     .getByRole('button', { name: 'Välj samband: Kim Exempel → använder → Okänt', exact: true })
     .click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: unknown');
+  await expect.element(selectionStatus()).toHaveTextContent('Samband: unknown');
   await page
     .getByRole('img', { name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller tabellen.' })
     .click({ position: { x: 5, y: 5 } });
-  await expect.element(page.getByRole('status')).toHaveTextContent('Hela rymden');
+  await expect.element(selectionStatus()).toHaveTextContent('Hela rymden');
 });
 
 test('dense labels remain readable and explicit all-label mode retains access to every label', async () => {
@@ -1427,7 +1431,7 @@ test('a selected relationship keeps its directed label readable in a dense map',
     exact: true,
   });
   await label.click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+  await expect.element(selectionStatus()).toHaveTextContent('Samband: known');
   await expect.element(label).toBeVisible();
 });
 
@@ -1476,7 +1480,7 @@ test('direction rendering retains selectable self references and explicitly abse
       exact: true,
     })
     .click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+  await expect.element(selectionStatus()).toHaveTextContent('Samband: known');
   await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
   await page
     .getByRole('button', {
@@ -1484,14 +1488,14 @@ test('direction rendering retains selectable self references and explicitly abse
       exact: true,
     })
     .click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: none');
+  await expect.element(selectionStatus()).toHaveTextContent('Samband: none');
 });
 
 test('context icons edit, focus, dismiss and remove only the chosen object', async () => {
   render(<MapView />);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await lo.click({ button: 'right', modifiers: ['Control'] });
-  await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
+  await expect.element(selectionStatus()).toHaveTextContent('Lo Exempel');
   expect(document.querySelector('dialog[open]')).toBeNull();
   await lo.click({ button: 'right' });
   const actions = page.getByRole('toolbar', { name: 'Åtgärder för Lo Exempel', exact: true });
@@ -1512,19 +1516,19 @@ test('context icons edit, focus, dismiss and remove only the chosen object', asy
     .element(page.getByRole('button', { name: 'Redigera objekt', exact: true }))
     .toHaveFocus();
   await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
+  await expect.element(selectionStatus()).toHaveTextContent('Lo Exempel');
   await lo.click({ button: 'right' });
   await page.getByRole('button', { name: 'Visa uppgifter för Lo Exempel', exact: true }).click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Uppgifter för Lo Exempel');
+  await expect.element(selectionStatus()).toHaveTextContent('Uppgifter för Lo Exempel');
   await lo.click({ button: 'right' });
   await page.getByRole('button', { name: 'Samband för Lo Exempel', exact: true }).click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Samband för Lo Exempel');
+  await expect.element(selectionStatus()).toHaveTextContent('Samband för Lo Exempel');
   await lo.click({ button: 'right' });
   await page.getByRole('button', { name: 'Visa i kartan', exact: true }).click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Visar Lo Exempel i kartan');
+  await expect.element(selectionStatus()).toHaveTextContent('Visar Lo Exempel i kartan');
   await lo.click({ button: 'right' });
   await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Kopplingar för lo');
+  await expect.element(selectionStatus()).toHaveTextContent('Kopplingar för lo');
   await lo.click({ button: 'right' });
   await userEvent.keyboard('{Escape}');
   await expect.element(lo).toHaveFocus();
@@ -1548,7 +1552,7 @@ test('context icons edit, focus, dismiss and remove only the chosen object', asy
   await lo.click({ button: 'right' });
   await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
   await expect.element(actions).not.toBeInTheDocument();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Kim Exempel');
+  await expect.element(selectionStatus()).toHaveTextContent('Kim Exempel');
   await lo.click({ button: 'right' });
   await expect
     .element(page.getByRole('button', { name: 'Ta bort objekt', exact: true }))
@@ -1613,9 +1617,9 @@ test('long press does not activate a menu action on release and movement cancels
   await expect
     .element(page.getByRole('button', { name: 'Redigera objekt', exact: true }))
     .toBeVisible();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Ingen vald');
+  await expect.element(selectionStatus()).toHaveTextContent('Ingen vald');
   await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
-  await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
+  await expect.element(selectionStatus()).toHaveTextContent('Lo Exempel');
 });
 
 test('reduced motion overrides a saved star choice and follows system changes', async () => {

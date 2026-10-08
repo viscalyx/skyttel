@@ -83,7 +83,7 @@ afterEach(() => {
 });
 
 test('the consent box opens next to the chosen button, on the side that has room', async () => {
-  const starts = await open(1280, 1000);
+  const starts = await open(1280, 1200);
   for (const name of ['Prata med Skyttel']) {
     await tool(name).click();
     await expect.element(box()).toBeVisible();
@@ -115,8 +115,8 @@ test('the consent box opens next to the chosen button, on the side that has room
     await userEvent.keyboard('{Escape}');
     await expect.element(box()).not.toBeInTheDocument();
     await expect.element(tool(name)).toHaveFocus();
-    await page.viewport(1280, 1000);
-    await expect.poll(() => window.innerHeight).toBe(1000);
+    await page.viewport(1280, 1200);
+    await expect.poll(() => window.innerHeight).toBe(1200);
   }
 
   expect(starts).toEqual([]);
