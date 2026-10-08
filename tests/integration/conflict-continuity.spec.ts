@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openDraftReview } from '../support/client.js';
 import {
   prepareConflictContinuity,
   prepareConflictReferenceContinuity,
@@ -7,6 +8,7 @@ import {
   saveConflictElsewhere,
   saveNewerConflictType,
 } from '../support/conflict-continuity.js';
+import { expectConflictDraftValues } from '../support/current-conflict-reading.js';
 
 test('UTKAST-55: reopening discovers new saved data before stale choices can be confirmed', async ({
   page,
@@ -391,6 +393,14 @@ for (const surface of ['Karta', 'Tabell'] as const)
           expect(
             (await (await page.request.get(`${app.path}/history`)).json()).history,
           ).toHaveLength(2);
+          await page.keyboard.press('Escape');
+          const privateDraft = await openDraftReview(page);
+          if (side === 'saved') await expect(privateDraft).toContainText('Utkastet är tomt.');
+          else
+            await expectConflictDraftValues(page, 'Lo Lind', {
+              Namn: 'Lo Lind',
+              Beskrivning: 'Min anteckning',
+            });
         } finally {
           await other.close();
           await app.installation.close();

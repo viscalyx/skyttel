@@ -2577,13 +2577,17 @@ UTKAST-23.
 1. Kör `arm resolve:after` i transportens terminal. Öppna Tabell och **1
    konflikt i ditt utkast**. Välj ditt föreslagna
    namn och övriga aktuella värden. Bekräfta **Lägg valen i utkastet**.
-2. Invänta `application-completed` med status 200 och `held-after`. Kontrollera
-   väntande besked och inaktiva bekräftelse-
-   och stängknappar. Tryck Escape; dialogen ska finnas kvar.
+2. När operatören meddelar att svaret hålls, läs väntande besked och
+   inaktiva bekräftelse- och stängknappar. Tryck Escape; dialogen ska
+   finnas kvar.
 3. Kör `release` i transportens terminal. Kontrollera resultatet och rubrikens
    fokus.
 4. Stäng med Escape och skriv Lo i **Sök objekt i tabellen**.
    Kontrollera söktext och fokus samt utkast, Robins karta och historik.
+
+**Separat tekniskt underlag:** Operatörens kontroll av status och
+leverans sker enligt [tidsordningen för tekniskt underlag](current-conflict-preparation.md#tidsordning-för-tekniskt-underlag).
+Automationen jämför separat sparade uppgifter, privat utkast och historik.
 
 **Förväntat resultat:**
 
@@ -2622,10 +2626,10 @@ UTKAST-24.
   },
   "reference": "1440 × 844; genomfört konfliktval och sparande med tappade svar.",
   "outcomes": [
-    "Ett tappat konfliktvalssvar skapar inget sparförsök eller kvitto. Den gemensamma kartan behåller Lo Berg och saknar Privat stol.",
+    "Konfliktvalet gör inte Lo Lind eller Privat stol gemensamma. Robins karta behåller Lo Berg och saknar Privat stol.",
     "Uppdatering och omladdning återfinner Lo Lind, den oberoende beskrivningen och stolen i samma privata utkast. Ett nytt sparbesked krävs fortfarande.",
     "Det uttryckliga sparandet gör båda förslagen gemensamma tillsammans. Ett tappat sparkvitto spärrar ett nytt sparande tills utfallet kontrolleras.",
-    "Återhämtningen ger exakt samma kvitto. Endast ett nytt sparförsök och en historikgrupp tillkommer; kartan sparas inte en andra gång."
+    "Återhämtningen visar bekräftat sparande, tomt utkast och en enda ny historikgrupp med Lo Lind, Spelar piano och Privat stol. Inget nytt sparbesked behövs."
   ]
 }
 ```
@@ -2636,29 +2640,34 @@ UTKAST-24.
 1. Kör `arm resolve:drop-after`. Öppna **1 konflikt i ditt utkast** från Tabell.
    Välj det egna namnet
    och sparade oberoende egenskaper, och bekräfta **Lägg valen i utkastet**.
-   Kräv `application-completed` med status 200 i terminalen. Läs det oklara
-utfallet och
-   kontrollera att en ny bekräftelse är spärrad.
+   Läs det oklara utfallet och kontrollera att en ny bekräftelse är spärrad.
 2. Kontrollera Robins karta och historiken. Välj **Kontrollera om valet
    lades i utkastet**. Läs resultatet och stäng med Escape.
 3. Öppna **Utkast** och hela förslaget Lo Lind. Läs Spelar piano, stäng
    läsningen och ladda om. Kontrollera Lo Lind och Privat stol i utkastet.
-4. Kör `arm save:drop-after`. Välj **Spara hela utkastet**. Kräv status 200 före
-   det tappade svaret.
-   Läs **Sparandet kunde inte bekräftas** i **Spara utkastet**.
+4. Kör `arm save:drop-after`. Välj **Spara hela utkastet** och läs
+   **Sparandet kunde inte bekräftas** i **Spara utkastet**.
 5. Välj **Kontrollera sparandet igen**. Kontrollera bekräftelsen, tomt
    utkast, Robins karta och den enda nya historikgruppen.
 
+**Separat tekniskt underlag:** Operatören verifierar genomförandet vid
+båda tappade svar enligt [tidsordningen](current-conflict-preparation.md#tidsordning-för-tekniskt-underlag).
+Integrationstestet kräver också oförändrade privata sparförsök och
+historikkvitton efter konfliktvalet. Det jämför hela ursprungliga kvittot, samma
+beständiga sparförsök och exakt ett sparanrop. Det kräver ett nytt
+sparförsök och en historikgrupp utan att upprepa transaktionen.
+
 **Förväntat resultat:**
 
-- Ett tappat konfliktvalssvar skapar inget sparförsök eller kvitto.
-  Den gemensamma kartan behåller Lo Berg och saknar Privat stol.
+- Konfliktvalet gör inte Lo Lind eller Privat stol gemensamma. Robins
+  karta behåller Lo Berg och saknar Privat stol.
 - Uppdatering och omladdning återfinner Lo Lind, den oberoende beskrivningen
   och stolen i samma privata utkast. Ett nytt sparbesked krävs fortfarande.
 - Det uttryckliga sparandet gör båda förslagen gemensamma tillsammans.
   Ett tappat sparkvitto spärrar ett nytt sparande tills utfallet kontrolleras.
-- Återhämtningen ger exakt samma kvitto. Endast ett nytt sparförsök och
-  en historikgrupp tillkommer; kartan sparas inte en andra gång.
+- Återhämtningen visar bekräftat sparande, tomt utkast och en enda ny
+  historikgrupp med Lo Lind, Spelar piano och Privat stol. Inget nytt
+  sparbesked behövs.
 
 ### UTKAST-16: använd Navigation och utkastets återkoppling tillsammans
 
@@ -3341,11 +3350,14 @@ UTKAST-60.
 1. Öppna konflikten, läs de berörda uppgifterna och förklaringen.
 2. Läs det förvalda utfallet. Stäng med Escape.
 3. Öppna igen och välj **Ta bort sambandet ur ditt utkast**.
-4. Läs status och kör `result` för att jämföra kartan och övriga förslag.
+4. Läs status och konfliktlistans kvarvarande post med typ, namn och
+   markeringen **Borttaget ur ditt utkast**.
 
-**Separat tekniskt underlag:** Operatörens `result` läser karta,
-privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
-och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
+**Separat tekniskt underlag:** Kör `result` före steg 1, efter stängningen
+i steg 2 och efter bekräftelsen i steg 4 enligt
+[förberedelsens tidsordning](current-conflict-preparation.md#tidsordning-för-tekniskt-underlag).
+Automationen behåller jämförelser av hela kartan, privata förslag och
+historiken; de ingår inte i de vanliga UI-stegen.
 
 **Förväntat resultat:**
 
@@ -4145,7 +4157,7 @@ UTKAST-78.
   },
   "reference": "1280 × 720; Chromium och syntetiska testidentiteter; gå till nästa verkliga konflikt efter bekräftelsen.",
   "outcomes": [
-    "Bekräftelsen ändrar bara Lo-förslaget mot aktuellt underlag och ökar utkastets version en gång. Den sparar inte den gemensamma kartan.",
+    "Bekräftelsen visar att Lo-valen finns i utkastet mot aktuellt underlag. Den sparar inte den gemensamma kartan.",
     "**Nästa konflikt** använder de faktiskt bevarade posterna i listordning och flyttar fokus till nästa posts rubrik utan att ändra något förslag.",
     "Musiktjänstens gjorda egenskapsval och den lösta Lo-postens resultat består. Gemensamma uppgifter och historik ändras inte av navigeringen."
   ]
@@ -4164,14 +4176,16 @@ UTKAST-78.
 4. Välj den lösta Lo-posten i listan. Resultatet är kvar. Välj
    **Nästa konflikt** en gång till och kontrollera samma rubrikfokus.
 
-**Separat tekniskt underlag:** Operatörens `result` läser karta,
-privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
-och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
+**Separat tekniskt underlag:** Automationen kräver att bara bekräftelsen
+ökar utkastets version en gång; nästa konflikt ändrar ingen version.
+För separat operatörsjämförelse, kör `result` före steg 2, efter
+bekräftelsen i steg 2 samt efter steg 3 och 4 enligt
+[förberedelsens tidsordning](current-conflict-preparation.md#tidsordning-för-tekniskt-underlag).
 
 **Förväntat resultat:**
 
-- Bekräftelsen ändrar bara Lo-förslaget mot aktuellt underlag och ökar
-  utkastets version en gång. Den sparar inte den gemensamma kartan.
+- Bekräftelsen visar att Lo-valen finns i utkastet mot aktuellt underlag.
+  Den sparar inte den gemensamma kartan.
 - **Nästa konflikt** använder de faktiskt bevarade posterna i listordning
   och flyttar fokus till nästa posts rubrik utan att ändra något förslag.
 - Musiktjänstens gjorda egenskapsval och den lösta Lo-postens resultat
@@ -5413,8 +5427,8 @@ UTKAST-116.
 
 1. Utför UTKAST-24 en gång. Anpassa och observera under dess
    angivna steg enligt följande: använd 390 × 844 i steg 1–5.
-   Arma resolve och save före deras egna handlingar med status 200
-   efter behandling. Läs nåbara kontrollknappar och besked.
+   Arma resolve och save före deras egna handlingar; operatören följer
+   grundfallets separata tidsordning. Läs nåbara kontrollknappar och besked.
 
 **Förväntat resultat:**
 

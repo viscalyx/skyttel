@@ -1,8 +1,15 @@
 import { expect, test } from '@playwright/test';
 import { conflictBasis } from '../../src/shared/conflict-properties.js';
 import { draftConflicts } from '../../src/shared/draft-conflicts.js';
-import { signIn } from '../support/client.js';
+import { closeTextView, signIn } from '../support/client.js';
 import { conflictCollaborators } from '../support/conflict-properties.js';
+import {
+  expectConflictDraftValues,
+  expectConflictReadValue,
+  expectSavedConflictRelationship,
+  refreshConflictReader,
+} from '../support/current-conflict-reading.js';
+import { readTableObject } from '../support/domain-work.js';
 import { alex, robin } from '../support/installation.js';
 
 for (const width of [1440, 390])
@@ -128,6 +135,29 @@ for (const width of [1440, 390])
         true,
       );
 
+      const tableDetails = await readTableObject(page, 'Lo Lind');
+      await expectConflictReadValue(
+        tableDetails,
+        'Namn',
+        /^Sparat: Lo Berg\s*◇ Ditt förslag: Lo Lind$/,
+      );
+      await expect(tableDetails.locator('.household-table-description')).toHaveText(
+        'Robins anteckning',
+      );
+      await expectConflictReadValue(tableDetails, 'Identitet', 'Identifierat objekt');
+      await expectConflictReadValue(
+        tableDetails,
+        'Status',
+        /^Sparat: Följ slutdatum\s*◇ Ditt förslag: Gäller fortfarande$/,
+      );
+      await expectConflictDraftValues(page, 'Lo Lind', {
+        Namn: 'Lo Lind',
+        Beskrivning: 'Robins anteckning',
+        Identitet: 'Identifierat objekt',
+        Status: 'Gäller fortfarande',
+      });
+      await closeTextView(page);
+
       // Repeat the documented keyboard path from Karta with a fresh conflict.
       const mapOwner = await browser.newContext();
       const mapMember = await browser.newContext();
@@ -229,6 +259,7 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
 }) => {
   const other = await browser.newContext();
   const app = await conflictCollaborators(page.request, other.request);
+  const member = await other.newPage();
   try {
     let state = await app.read();
     const edge = {
@@ -284,6 +315,25 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
       targetId: 'service',
       knowledge: 'uncertain',
     });
+    await page.keyboard.press('Escape');
+    await expectConflictDraftValues(page, 'Lo Exempel → Använder → Molnmusik (osäkert uppgivet)', {
+      Från: 'Lo Exempel',
+      Sambandstyp: 'Använder',
+      Till: 'Molnmusik',
+      'Uppgiftens säkerhet': 'Osäkert uppgivet',
+    });
+    await closeTextView(page);
+    await refreshConflictReader(member, app.installation.origin);
+    await expectSavedConflictRelationship(
+      member,
+      'Lo Exempel',
+      'Lo Exempel → Använder → Uttryckligen inget',
+      {
+        Typ: 'Använder',
+        'Till objekt': 'Uttryckligen inget',
+        'Uppgiftens säkerhet': 'Uttryckligen inget',
+      },
+    );
   } finally {
     await other.close();
     await app.installation.close();
