@@ -114,12 +114,6 @@
   }
 }
 
-@media (max-width: 700px) and (max-height: 450px) {
-  .household-map.workspace-shell:has(.spatial-display-tools[open]) .workspace-context {
-    z-index: 0;
-  }
-}
-
 /* Short screens retain readable status beside the independently scrolling
    navigation controls, including when an ordinary staging message is shown. */
 @media (max-width: 700px) and (max-height: 600px) {

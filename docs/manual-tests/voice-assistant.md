@@ -255,8 +255,9 @@ databasens sparande; redovisa inte det som ett prov av förlorat sådant svar.
    från `held`. Släpp med `tool REQUEST show_map_object {"objectId":"LO-ID"}`.
    Nästa `held` ska visa `displayed:true`. Avsluta med
    `reply REQUEST Objektet visas.`. Kräv synlig markering i kartan.
-   Efter ändrad fönsterstorlek: nå **Fokusera markering** med tangentbordet
-   och välj den för att visa Lo bredvid det öppna uppgiftsfönstret.
+   Efter ändrad fönsterstorlek: fokusera Lo och tryck Shift+F10.
+   Nå **Fokusera markering** med tangentbordet och välj den för att visa Lo
+   bredvid det öppna uppgiftsfönstret.
    Öppna **Navigera**, panorera och välj
    **Stäng navigering** även i de korta vyerna.
    Stängknappen ska gå att klicka på och lämna fokus på
@@ -984,7 +985,7 @@ riktig mikrofon, enhet eller skärmläsare.
    någon annanstans. Lyssna efter dubbla eller avbrutna uppläsningar och
    efter om skärmläsarens röst tolkas som tal.
 5. På iPhone i stående läge: se var röstrutan står och att den inte
-   täcker raden med **Återställ vy** eller kartans status och
+   täcker verktygsfältet med **Återställ vy** eller kartans status och
    teckenförklaring under hushållsnamnet. Gör om på
    iPad och på liggande telefon.
 
@@ -1032,12 +1033,13 @@ höjd och pekmål kontrolleras automatiskt i
 testfall vars titel börjar med “röstrutan står på sin plats”. På riktig
 enhet prövas platsen i TAL-17.
 
-Placeringsproven kräver att hela röstrutan är synlig och står ovanför
-den faktiska raden med **Återställ vy**, utan att täcka kartans status och
-teckenförklaring under hushållsnamnet. På smal skärm kan skyddade ytor
+Placeringsproven kräver att hela röstrutan är synlig utan att täcka
+verktygsfältets **Återställ vy**, kartans status eller teckenförklaringen
+under hushållsnamnet. Panorera med **Navigera** och välj sedan
+**Återställ vy** före placeringsprovet. På smal skärm kan skyddade ytor
 följa den synliga skärmens rullningsflöde; de bestämmer
-gränsen som rutan måste lämna fri. Rutan ska inte hamna under kartans
-rad eller täcka verktygsraden när textvyn stängs. Samtalsdelarnas
+gränsen som rutan måste lämna fri. Rutan ska inte täcka verktygsfältet
+när textvyn stängs. Samtalsdelarnas
 samlade läsordning, statusförekomster och kvarstående hjälpmedelsprov
 finns i [den samlade bedömningen](conversation-accessibility.md).
 

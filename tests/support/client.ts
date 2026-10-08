@@ -25,6 +25,13 @@ export async function openMap(page: Page) {
   await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
 }
 
+/** Set the saved label mode through the map toolbar's toggle button. */
+export async function setAllLabels(page: Page, enabled: boolean) {
+  const button = page.getByRole('button', { name: 'Alla etiketter', exact: true });
+  if ((await button.getAttribute('aria-pressed')) !== String(enabled)) await button.click();
+  await expect(button).toHaveAttribute('aria-pressed', String(enabled));
+}
+
 export async function openNewObject(page: Page) {
   await (await utilityButton(page, 'Nytt objekt')).click();
   const dialog = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });

@@ -259,6 +259,7 @@ export function HouseholdMap({
   const [revealRequest, setRevealRequest] = useState<MapRevealRequest>();
   const [mapAvailable, setMapAvailable] = useState(true);
   const [cameraMount, setCameraMount] = useState<HTMLDivElement | null>(null);
+  const [labelMount, setLabelMount] = useState<HTMLDivElement | null>(null);
   const [toolsExpanded, setToolsExpanded] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [navigationMount, setNavigationMount] = useState<HTMLDivElement | null>(null);
@@ -436,10 +437,7 @@ export function HouseholdMap({
     const measure = () => {
       workspace.current?.style.setProperty('--work-height', `${viewport.height}px`);
       workspace.current?.style.setProperty('--work-offset', `${viewport.offset}px`);
-      for (const [selector, property] of [
-        ['.workspace-feedback', '--feedback-height'],
-        ['.spatial-bottom-bar', '--display-height'],
-      ]) {
+      for (const [selector, property] of [['.workspace-feedback', '--feedback-height']]) {
         const element = workspace.current?.querySelector<HTMLElement>(selector);
         workspace.current?.style.setProperty(property, `${element?.offsetHeight ?? 0}px`);
       }
@@ -520,13 +518,12 @@ export function HouseholdMap({
       );
       const floor = Math.min(
         viewport.height + viewport.offset - 12,
-        ...['.spatial-bottom-bar', '.workspace-feedback', '.workspace-voice-controls']
+        ...['.workspace-feedback', '.workspace-voice-controls']
           .map((selector) => workspace.current?.querySelector<HTMLElement>(selector))
           .filter((element): element is HTMLElement => Boolean(element?.offsetHeight))
           .map((element) => element.getBoundingClientRect().top),
       );
-      // An empty map can place its display row just below the toolbar. A tall
-      // corner must not cover those conversation buttons when text closes.
+      // A tall corner must not cover conversation buttons when text closes.
       workspace.current?.style.setProperty('--conversation-floor', `${floor - 8}px`);
     };
     measure();
@@ -534,7 +531,6 @@ export function HouseholdMap({
     // The toolbar is shown only while the map is the active view.
     const measured = [
       '.workspace-feedback',
-      hasMap && '.spatial-bottom-bar',
       active && '.workspace-tools',
       active && '.workspace-context',
       active && '.map-object-search',
@@ -1466,6 +1462,11 @@ export function HouseholdMap({
                 </button>
               )}
             </section>
+            <div
+              className="workspace-label-feedback"
+              ref={setLabelMount}
+              hidden={workspaceSurface !== 'map'}
+            />
             {state && workspaceSurface === 'map' && (
               <MapSearchContext
                 search={browsing}
@@ -1632,6 +1633,7 @@ export function HouseholdMap({
               requestMapSearch();
             }}
             cameraMount={cameraMount}
+            labelMount={labelMount}
             navigationMount={navigationMount}
             onNavigationChange={(open) => {
               setNavigationOpen(open);
@@ -1644,11 +1646,15 @@ export function HouseholdMap({
             theme={theme.theme}
             revealRequest={revealRequest}
             focusRequest={cameraFocusRequest}
-            onFocusSelection={() => focusSelection()}
-            onShowOverview={() => {
-              setMapUnfiltered(true);
-              setFocusId(null);
-            }}
+            resetAvailable={Boolean(
+              browsing.query ||
+                browsing.types.length ||
+                browsing.proposals?.length ||
+                browsing.onlySelected ||
+                browsing.includeEnded ||
+                selection ||
+                exploredIds.length,
+            )}
             onAvailabilityChange={setMapAvailable}
             personal={personal}
             settingsMount={mapSettingsTarget}
@@ -1844,6 +1850,15 @@ export function HouseholdMap({
           state={state}
           disabled={pending || blocked || dirty}
           mapAvailable={mapAvailable}
+          selectionAvailable={selectedIds.length > 0 && Boolean(personal.view)}
+          onFocusSelection={() => {
+            setToolsExpanded(false);
+            setWorkspaceSurface('map');
+            focusSelection();
+            requestAnimationFrame(() =>
+              workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus(),
+            );
+          }}
           onClose={() => setObjectActions(null)}
           onEdit={edit}
           onFocus={(id) => {

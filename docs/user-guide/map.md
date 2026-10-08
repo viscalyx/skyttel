@@ -138,13 +138,18 @@ inga fler objekt. Upprepa för att följa en längre kedja.
 Ändrad sökning eller ändrade filter börjar också om där. Att stänga
 filterdialogen eller besöka tabellen behåller utforskningen.
 
-Riktmärkesikonen **Visa i kartan** vid högerklick eller på en tabellrad
+Kartikonen **Visa i kartan** vid högerklick eller på en tabellrad
 markerar bara det valda objektet och
 zoomar till dess direkta grannar. Kartans sökning och filter återställs
 så att de går att se; övrig karta finns kvar. Tabellens läge bevaras och
 återfås via **Tabell**, med fokus på den använda kartknappen.
 En föreslagen borttagning har kvar kartknappen; redan borttagna objekt
 har ingen sådan knapp.
+
+**Fokusera markering** i högerklicksmenyn ramar i stället in alla markerade
+objekt och deras direkta grannar. Markering, sökning och filter behålls,
+även om menyn öppnas på ett annat objekt. Kamerans riktning behålls för
+alla tre kartåtgärderna.
 
 ## Skapa och redigera objekt
 

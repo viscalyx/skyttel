@@ -239,13 +239,13 @@ nästa avbrott väntar på ett nytt tryck”.
 
 ### NOT-07: en kontakt-notis täcker inte kartans återkoppling
 
-**Syfte:** Bevara kartans rad med Återställ vy och kartans status.
+**Syfte:** Bevara verktygsfältets Återställ vy och kartans status.
 
 **Användare:** Alex.
 
 **Förutsättningar:** Påslagen mikrofon och stängd textvy. Prova dator,
-telefonbred skärm och kort liggande fönster. I korta fönster öppnas
-**Visningsval** före kontrollen av **Återställ vy**.
+telefonbred skärm och kort liggande fönster. **Återställ vy** finns i
+verktygsfältet även i korta fönster.
 
 **Integrationstest:**
 [conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts),
@@ -261,12 +261,12 @@ har sin plats och täcker inte kartans återkoppling vid 667 × 375”,
 **Steg:**
 
 1. Bryt och återställ kontakten genom webbläsarens nätverksläge.
-2. Läs notisen, kartans status och kartans rad med **Återställ vy**.
+2. Läs notisen, kartans status och verktygsfältets **Återställ vy**.
    Kontrollera att kameraverktyget **Navigera** går att nå utan att täckas.
 3. I korta fönster: gå med Tab till **Kartans sammanhang**. Kontrollera
    den synliga fokusringen och använd PageDown för att läsa teckenförklaringen.
-   Rulla **Visningsval** vid behov i det minsta fönstret för att nå
-   **Återställ vy**.
+   Nå **Återställ vy** i verktygsfältet med tangentbordet även i det
+   minsta fönstret.
 
 **Förväntat resultat:**
 

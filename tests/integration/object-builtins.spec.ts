@@ -9,6 +9,7 @@ import {
   openSettings,
   openTable,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { closeTableObject, editTableObject, readTableObject } from '../support/domain-work.js';
@@ -186,7 +187,7 @@ for (const { width, height } of [
       const changed = await save();
       expect(changed.changes[0].after?.financialFacts).toEqual(original?.financialFacts);
       expect(changed.changes[0].after?.description).toBe('Gemensam avtalstext');
-      await page.getByRole('button', { name: 'Rapporter' }).click();
+      await (await utilityButton(page, 'Rapporter')).click();
       const history = page
         .getByRole('region', { name: 'Ändringshistorik' })
         .getByRole('article')

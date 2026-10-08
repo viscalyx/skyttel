@@ -456,7 +456,7 @@ export function HouseholdTable({
                               disabled={!mapAvailable || workDisabled}
                               onClick={() => onReveal(object)}
                             >
-                              <WorkspaceIcon name="focus" />
+                              <WorkspaceIcon name="reveal" />
                             </button>
                           )}
                           {onFocusRelationships && !row.removed && (

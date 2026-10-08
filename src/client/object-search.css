@@ -414,17 +414,6 @@
     transform: none;
     width: calc(100vw - 136px);
   }
-  .household-map.workspace-shell[data-workspace-surface="map"] .spatial-display-tools {
-    max-height: max(
-      44px,
-      calc(var(--work-height, 100dvh) - var(--map-search-bottom, 132px) - 24px)
-    );
-  }
-  .household-map.workspace-shell[data-workspace-surface="map"] .spatial-display-tools:not([open]) {
-    left: 12px;
-    right: auto;
-    width: calc(50% - 24px);
-  }
 }
 
 @media (min-width: 701px) and (max-width: 1100px) {

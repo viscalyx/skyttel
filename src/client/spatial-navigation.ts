@@ -11,6 +11,8 @@ export function cameraGestures(
     rotate: (x: number, y: number) => void;
     pan: (x: number, y: number) => void;
     zoom: (factor: number) => void;
+    begin?: () => void;
+    end?: () => void;
   },
   surface: HTMLElement = canvas,
 ) {
@@ -18,8 +20,19 @@ export function cameraGestures(
   let enabled = true;
   let multiple = false;
   let dragging = false;
+  let wheelTimer: ReturnType<typeof setTimeout> | undefined;
+  function finishWheel() {
+    if (wheelTimer === undefined) return;
+    clearTimeout(wheelTimer);
+    wheelTimer = undefined;
+    camera.end?.();
+  }
   function down(event: PointerEvent) {
     if (!enabled || (!pointers.size && event.target !== canvas)) return;
+    if (!pointers.size) {
+      finishWheel();
+      camera.begin?.();
+    }
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, button: event.button });
     if (pointers.size > 1) multiple = true;
     canvas.setPointerCapture(event.pointerId);
@@ -61,16 +74,25 @@ export function cameraGestures(
     if (!pointers.size) {
       multiple = false;
       dragging = false;
+      camera.end?.();
     }
   }
   function cancel() {
+    finishWheel();
     pointers.clear();
     multiple = false;
     dragging = false;
+    camera.end?.();
   }
   function wheel(event: WheelEvent) {
     event.preventDefault();
     if (!enabled) return;
+    if (wheelTimer === undefined && !pointers.size) camera.begin?.();
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => {
+      wheelTimer = undefined;
+      if (!pointers.size) camera.end?.();
+    }, 250);
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? surface.clientHeight : 1;
     if (event.ctrlKey) {
       const delta = Math.max(
@@ -95,6 +117,7 @@ export function cameraGestures(
     beginTouch(values: ReadonlyMap<number, { x: number; y: number }>) {
       cancel();
       if (!enabled) return;
+      camera.begin?.();
       multiple = true;
       for (const [id, point] of values) {
         pointers.set(id, { ...point, button: 0 });
@@ -105,7 +128,9 @@ export function cameraGestures(
       enabled = value;
       if (!value) cancel();
     },
+    finish: cancel,
     dispose() {
+      cancel();
       surface.removeEventListener('pointerdown', down);
       surface.removeEventListener('pointermove', move);
       surface.removeEventListener('pointerup', end);

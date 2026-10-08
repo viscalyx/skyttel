@@ -8,6 +8,7 @@ import {
   openDraftReview,
   openMap,
   openTable,
+  setAllLabels,
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
@@ -19,8 +20,8 @@ import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 async function expectContextIcons(page: Page, anchor: Locator) {
   const actions = page.getByRole('toolbar', { name: 'Åtgärder för Molnmusik', exact: true });
   await expect(actions).toBeVisible();
-  await expect(actions.getByRole('button')).toHaveCount(6);
-  expect(await actions.locator('button').allTextContents()).toEqual(['', '', '', '', '', '']);
+  await expect(actions.getByRole('button')).toHaveCount(7);
+  expect(await actions.locator('button').allTextContents()).toEqual(['', '', '', '', '', '', '']);
   await expect(
     actions.getByRole('button', { name: 'Redigera objekt', exact: true }),
   ).toHaveAttribute('title', /redigeringsformulär/);
@@ -30,6 +31,9 @@ async function expectContextIcons(page: Page, anchor: Locator) {
   await expect(
     actions.getByRole('button', { name: 'Visa samband i kartan', exact: true }),
   ).toHaveAccessibleDescription(/Behåller kartans sökning och filter/);
+  await expect(
+    actions.getByRole('button', { name: 'Fokusera markering', exact: true }),
+  ).toHaveAccessibleDescription(/alla markerade objekt.*Behåller markeringen/);
   const bounds = await actions.boundingBox();
   const target = await anchor.boundingBox();
   const viewport = page.viewportSize();
@@ -336,7 +340,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await query.fill('Lo');
     await (await mapFilters(page)).getByRole('checkbox', { name: 'Person', exact: true }).check();
     await search.getByRole('searchbox').press('Escape');
-    await space.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+    await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
     await focusMapSearch(page);
     await expect(query).toHaveValue('');
     await expect(
@@ -346,7 +350,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
       page.getByRole('button', { name: 'Tillbaka till sökträffarna', exact: true }),
     ).toHaveCount(0);
     await search.getByRole('searchbox').press('Escape');
-    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    await setAllLabels(page, true);
     await space
       .getByRole('button', { name: 'Välj samband: Lo Exempel → Använder → Molnmusik', exact: true })
       .dblclick();
@@ -385,11 +389,12 @@ test('RYMD-03: context actions and draft symbols distinguish proposals from save
     await openMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     const music = space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true });
-    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    await setAllLabels(page, true);
     await expect(music).toContainText('+');
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
     await openMap(page);
+    await music.click();
     await music.click({ button: 'right' });
     const actions = await expectContextIcons(page, music);
     await expect(
@@ -408,6 +413,10 @@ test('RYMD-03: context actions and draft symbols distinguish proposals from save
     await page.keyboard.press('ArrowRight');
     await expect(
       actions.getByRole('button', { name: 'Visa samband i kartan', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(
+      actions.getByRole('button', { name: 'Fokusera markering', exact: true }),
     ).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(actions).toHaveCount(0);
@@ -588,7 +597,7 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     await page.goto(installation.origin);
     await openMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
-    await space.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Återställ vy', exact: true })).toBeDisabled();
     await space.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
     const geometry = () =>
       space.evaluate((region) => {
@@ -668,16 +677,16 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
       expect(label.stroke).not.toBe('none');
       expect(label.dash).toBe('1px, 4px');
     }
-    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    await setAllLabels(page, true);
     await expect
       .poll(async () => separation(await geometry()))
       .toBeGreaterThan(separation(overview) * 1.2);
     const labelView = await space.locator('.spatial-node').first().getAttribute('style');
-    await space.getByLabel('Alla etiketter', { exact: true }).uncheck();
-    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    await setAllLabels(page, false);
+    await setAllLabels(page, true);
     expect(await space.locator('.spatial-node').first().getAttribute('style')).toBe(labelView);
     await expect(
-      space.getByText('Närmare utsnitt. Panorera för att se fler etiketter.', { exact: true }),
+      page.getByText('Närmare utsnitt. Panorera för att se fler etiketter.', { exact: true }),
     ).toBeVisible();
     const beforePan = await geometry();
     await page.getByRole('button', { name: 'Navigera', exact: true }).click();
@@ -687,8 +696,11 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
         Math.abs(objectPoints(await geometry())[0].anchor.x - objectPoints(beforePan)[0].anchor.x),
       )
       .toBeGreaterThan(25);
-    await space.getByRole('button', { name: 'Återställ vy', exact: true }).click();
-    await expect(space.getByLabel('Alla etiketter', { exact: true })).toBeChecked();
+    await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Alla etiketter', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await expect
       .poll(async () => Math.abs(separation(await geometry()) - separation(overview)))
       .toBeLessThan(2);
@@ -916,7 +928,7 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await page.goto(installation.origin);
     await openMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
-    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    await setAllLabels(page, true);
     await focusMapSearch(page);
     const search = page.getByRole('region', { name: 'Kartans sökning och filter', exact: true });
     await (await mapFilters(page))
@@ -1370,7 +1382,7 @@ test('RYMD-10: label notices remain stable while a compact map opens its saved a
     await expect
       .poll(() =>
         space.evaluate((element) => {
-          const note = element.querySelector('.label-note');
+          const note = document.querySelector('.label-note');
           if (!note || getComputedStyle(note).visibility === 'hidden') return true;
           const obstacle = note.getBoundingClientRect();
           return [...element.querySelectorAll('.spatial-name')].every((label) => {
@@ -1386,14 +1398,12 @@ test('RYMD-10: label notices remain stable while a compact map opens its saved a
       )
       .toBe(true);
     await page.setViewportSize({ width: 320, height: 250 });
-    const display = space.getByText('Visningsval', { exact: true });
-    await display.click();
-    const allLabels = space.getByLabel('Alla etiketter', { exact: true });
-    await allLabels.check();
+    const allLabels = page.getByRole('button', { name: 'Alla etiketter', exact: true });
+    await setAllLabels(page, true);
     await expect(space.getByRole('button', { name: /^Markera objekt:/ })).toHaveCount(3);
-    await allLabels.uncheck();
-    await display.click();
-    await expect(allLabels).not.toBeVisible();
+    await setAllLabels(page, false);
+    await expect(allLabels).toHaveAttribute('aria-pressed', 'false');
+    await expect(allLabels).toBeVisible();
     await page.setViewportSize({ width: 640, height: 500 });
     await expect(allLabels).toBeVisible();
     await openTable(page);

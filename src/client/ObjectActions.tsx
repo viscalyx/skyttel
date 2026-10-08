@@ -16,24 +16,28 @@ export function ObjectActions({
   state,
   disabled,
   mapAvailable = true,
+  selectionAvailable = false,
   onClose,
   onEdit,
   onReveal,
   onRead,
   onRelationships,
   onFocus,
+  onFocusSelection,
   onRemove,
 }: {
   entry: ObjectActionsEntry;
   state: MapState;
   disabled: boolean;
   mapAvailable?: boolean;
+  selectionAvailable?: boolean;
   onClose: () => void;
   onEdit: (object: MapObject) => void;
   onReveal?: (object: MapObject) => void;
   onRead?: (object: MapObject) => void;
   onRelationships?: (object: MapObject) => void;
   onFocus: (id: string) => void;
+  onFocusSelection?: () => void;
   onRemove: (object: MapObject) => Promise<boolean> | undefined;
 }) {
   const toolbar = useRef<HTMLDivElement>(null);
@@ -133,6 +137,7 @@ export function ObjectActions({
         state={state}
         disabled={disabled}
         mapAvailable={mapAvailable}
+        selectionAvailable={selectionAvailable}
         contextual
         onEdit={(object) => {
           close();
@@ -163,6 +168,13 @@ export function ObjectActions({
           close();
           onFocus(id);
         }}
+        onFocusSelection={
+          onFocusSelection &&
+          (() => {
+            close();
+            onFocusSelection();
+          })
+        }
         onRemove={async (object) => {
           close();
           const origin = document.activeElement;

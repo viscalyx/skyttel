@@ -176,6 +176,7 @@ test('NAVIGATION-01: normal and mini navigation move independently with keyboard
     await expect(handle).toBeFocused();
     await expect(navigation.getByRole('heading', { name: 'Flytta Lo Exempel' })).toBeVisible();
     await expect(navigation.getByRole('button', { name: /^Flytta Lo Exempel:/ })).toHaveCount(6);
+    const defaultRight = await navigation.evaluate((panel) => panel.getBoundingClientRect().right);
     await navigation.getByRole('button', { name: 'Visa mininavigering' }).click({ timeout: 5000 });
     await expect(navigation.getByRole('button', { name: 'Panorera vänster' })).toHaveAttribute(
       'title',
@@ -207,7 +208,9 @@ test('NAVIGATION-01: normal and mini navigation move independently with keyboard
     await navigation
       .getByRole('button', { name: 'Återställ fönstrets placering', exact: true })
       .click();
-    expect((await navigation.boundingBox())?.x).toBe(before?.x);
+    await expect
+      .poll(() => navigation.evaluate((panel) => panel.getBoundingClientRect().right))
+      .toBe(defaultRight);
     expect(await center(lo)).toEqual(projected);
     await handle.focus();
     await handle.press('Escape');
@@ -612,7 +615,8 @@ test('NAVIGATION-05: trackpad pinch zoom follows pinch speed while a Ctrl mouse-
     const baseline = await separation();
     expect(baseline).toBeGreaterThan(20);
     const reset = async () => {
-      await space.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+      const button = page.getByRole('button', { name: 'Återställ vy', exact: true });
+      if (await button.isEnabled()) await button.click();
       await expect.poll(separation).toBeCloseTo(baseline, 0);
     };
     // Browsers send a trackpad pinch as Ctrl + wheel events with small deltas.

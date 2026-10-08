@@ -213,7 +213,7 @@ test.describe('smal mobil med återkoppling', () => {
       await expect(stop).toHaveCount(0);
       const voice = await bounds(voiceBox(page));
       for (const selector of [
-        '.spatial-bottom-bar',
+        '.workspace-tools',
         '.workspace-context',
         '.workspace-voice-controls',
       ]) {

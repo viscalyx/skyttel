@@ -103,12 +103,16 @@ testfallen:
 
 **Förväntat resultat:**
 
-- Ordningen är **Prata med Skyttel**, **Skriv till Skyttel**, röstrutans
+- **Navigera** ligger bland kartverktygen efter **Karta**, före
+  samtalskontrollerna. Samtalets ordning är **Prata med Skyttel**,
+  **Skriv till Skyttel**, röstrutans
   **Avbryt**, **Stäng notisen**, sedan de återstående synliga verktygen.
   En notisknapp, när en sådan finns, föregår stängknappen.
 - Läsordningen är densamma som tabbordningen. På smal skärm går fokus
   från verktygsraden till nederkanten och tillbaka. Dolda extraverktyg
   får inget tabbstopp; vid visade namn ligger de efter notisen.
+  Efter notisen följer **Rapporter** på dator och **Information och hjälp**
+  när extraverktygen är dolda på smal skärm.
 - Öppen textvy visar notisen ovanför meddelandefältet. Stängd textvy
   visar den vid röstrutans plats. Bara en notis finns och flytten
   skapar ingen ny uppläsning.

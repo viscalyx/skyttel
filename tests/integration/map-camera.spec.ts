@@ -1,7 +1,8 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openMap, openTable, signIn } from '../support/client.js';
+import { createHousehold, openMap, openTable, setAllLabels, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+import { mapFilters } from '../support/object-search.js';
 
 async function arrange(page: Page, origin: string) {
   await signIn(page.request, origin);
@@ -77,6 +78,12 @@ async function arrange(page: Page, origin: string) {
   return { map, lo, read, path };
 }
 
+async function openSelectionFocus(page: Page, object: Locator) {
+  await object.focus();
+  await page.keyboard.press('Shift+F10');
+  return page.getByRole('button', { name: 'Fokusera markering', exact: true });
+}
+
 async function center(node: Locator) {
   const box = await node.boundingBox();
   if (!box) throw new Error('The object must have a visible position.');
@@ -117,7 +124,7 @@ test('KAMERA-01: rotation keeps the selected personal position fixed on screen w
   }
 });
 
-test('KAMERA-02: focus fits only selection and direct neighbors while overview retains its return view', async ({
+test('KAMERA-02: focus fits only selection and direct neighbors while camera history preserves work', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -126,7 +133,9 @@ test('KAMERA-02: focus fits only selection and direct neighbors while overview r
     const { map, lo, read } = await arrange(page, installation.origin);
     const content = await read();
     const focus = page.getByRole('button', { name: 'Fokusera markering', exact: true });
+    await openSelectionFocus(page, lo);
     await expect(focus).toBeDisabled();
+    await page.keyboard.press('Escape');
     await lo.click();
     const kim = map.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
     const separation = async () => {
@@ -138,8 +147,9 @@ test('KAMERA-02: focus fits only selection and direct neighbors while overview r
     await lo.dblclick();
     const panel = page.getByRole('region', { name: 'Lo Exempel', exact: true });
     const panelPosition = await panel.boundingBox();
+    await openSelectionFocus(page, lo);
     await focus.click();
-    await expect(focus).toBeFocused();
+    await expect(map.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
     expect(await panel.boundingBox()).toEqual(panelPosition);
     expect(await separation()).toBeGreaterThan(overview * 2);
     await expect(lo).toHaveAttribute('aria-pressed', 'true');
@@ -153,20 +163,18 @@ test('KAMERA-02: focus fits only selection and direct neighbors while overview r
       expect(box.y + box.height).toBeLessThanOrEqual(1000);
       await node.click({ trial: true });
     }
-    const beforeOverview = await center(lo);
-    await page.getByRole('button', { name: 'Visa hela kartan', exact: true }).click();
-    await expect(
-      page.getByRole('button', { name: 'Återgå till föregående vy', exact: true }),
-    ).toBeVisible();
+    const beforeNavigation = await center(lo);
     await page.getByRole('button', { name: 'Navigera', exact: true }).click();
     await page.getByRole('button', { name: 'Panorera höger', exact: true }).click();
-    await focus.click();
     await page.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
-    await page.getByRole('button', { name: 'Återgå till föregående vy', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Visa hela kartan', exact: true })).toBeVisible();
-    expect(await center(lo)).toEqual(beforeOverview);
+    const previous = page.getByRole('button', { name: 'Föregående vy', exact: true });
+    await previous.click();
+    await previous.click();
+    await expect(previous).toBeEnabled();
+    expect((await center(lo)).x).toBeCloseTo(beforeNavigation.x, 5);
+    expect((await center(lo)).y).toBeCloseTo(beforeNavigation.y, 5);
     await expect(lo).toHaveAttribute('aria-pressed', 'true');
-    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
     await panel.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
     const form = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
     await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickat under kamerafokus');
@@ -183,7 +191,7 @@ test('KAMERA-02: focus fits only selection and direct neighbors while overview r
     await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
     await loss.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
     await expect(form).not.toBeVisible();
-    expect(await center(lo)).toEqual(beforeOverview);
+    expect(await center(lo)).toEqual(beforeNavigation);
     expect(await read()).toEqual(content);
   } finally {
     await installation.close();
@@ -217,6 +225,7 @@ test('KAMERA-03: mouse and touch rotation preserve the pivot and narrow focus co
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 1000 });
       await lo.click();
+      await openSelectionFocus(page, lo);
       await focus.click();
       const kim = map.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
       for (const node of [lo, kim]) {
@@ -253,17 +262,17 @@ test('KAMERA-03: mouse and touch rotation preserve the pivot and narrow focus co
       expect(await center(lo)).toEqual(initial);
       await expect(lo).toHaveAttribute('aria-pressed', 'true');
       await openTable(page);
-      await expect(
-        page.getByRole('button', { name: 'Fokusera markering', exact: true, includeHidden: true }),
-      ).toBeDisabled();
       await openMap(page);
+      await openSelectionFocus(page, lo);
       await expect(focus).toBeEnabled();
+      await page.keyboard.press('Escape');
     }
     const extension = await map
       .locator('canvas')
       .evaluateHandle((canvas: HTMLCanvasElement) =>
         canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context'),
       );
+    await openSelectionFocus(page, lo);
     await extension.evaluate((value) => value?.loseContext());
     await expect(focus).toBeDisabled();
     await extension.evaluate((value) => value?.restoreContext());
@@ -285,10 +294,11 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
     await lo.click();
     await page.setViewportSize({ width: 320, height: 250 });
     const focus = page.getByRole('button', { name: 'Fokusera markering', exact: true });
+    await openSelectionFocus(page, lo);
     await focus.click({ trial: true });
     await focus.focus();
     await page.keyboard.press('Enter');
-    await expect(focus).toBeFocused();
+    await expect(map.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
     const kim = map.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
     async function expectUsableFocus() {
       for (const node of [lo, kim]) {
@@ -303,20 +313,19 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
     await page.screenshot({ path: test.info().outputPath('short-focus.png') });
     const expand = page.getByRole('button', { name: 'Visa verktygens namn', exact: true });
     await expand.click();
-    await page.getByRole('button', { name: 'Visa hela kartan', exact: true }).click();
-    await expect(
-      page.getByRole('button', { name: 'Återgå till föregående vy', exact: true }),
-    ).toBeFocused();
+    const previous = page.getByRole('button', { name: 'Föregående vy', exact: true });
+    await previous.click();
+    await expect(previous).toBeFocused();
+    await expect(previous).toBeDisabled();
     await expect(expand).toBeVisible();
     await expand.click();
-    await page.getByRole('button', { name: 'Återgå till föregående vy', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Visa hela kartan', exact: true })).toBeFocused();
+    await openSelectionFocus(page, lo);
+    await focus.click();
+    await expect(map.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
     await expect(expand).toBeVisible();
     await expectUsableFocus();
-    await map.getByText('Visningsval', { exact: true }).click();
-    await map.getByLabel('Alla etiketter', { exact: true }).check();
-    await map.getByLabel('Alla etiketter', { exact: true }).uncheck();
-    await map.getByText('Visningsval', { exact: true }).click();
+    await setAllLabels(page, true);
+    await setAllLabels(page, false);
     const beforeMoves = await read();
     for (const viewport of [
       { width: 640, height: 500 },
@@ -428,15 +437,317 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
     await page
       .getByRole('button', { name: 'Skriv till Skyttel', exact: true })
       .click({ trial: true });
+    await openSelectionFocus(page, lo);
     await focus.focus();
     await page.keyboard.press('Enter');
-    await expect(focus).toBeFocused();
+    await expect(map.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
     await expect(expand).toBeVisible();
     await expectUsableFocus();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
   } finally {
+    await installation.close();
+  }
+});
+
+test('KAMERA-05: context focus preserves multiple selections and filters with distinct described actions', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    const { map, lo, read } = await arrange(page, installation.origin);
+    const before = await read();
+    const search = page.getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true });
+    await search.fill('Exempel');
+    const filters = await mapFilters(page);
+    await filters.getByLabel('Ta med upphörda').check();
+    await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
+    const alex = map.getByRole('button', { name: 'Välj objekt: Alex Exempel', exact: true });
+    const kim = map.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
+    await lo.click();
+    await alex.click({ modifiers: ['Control'] });
+    await expect(lo).toHaveAttribute('aria-pressed', 'true');
+    await expect(alex).toHaveAttribute('aria-pressed', 'true');
+    const far = map.getByRole('button', { name: 'Välj objekt: Långt borta', exact: true });
+    await far.click({ button: 'right' });
+    const actions = page.getByRole('toolbar', { name: 'Åtgärder för Långt borta', exact: true });
+    const focus = actions.getByRole('button', { name: 'Fokusera markering', exact: true });
+    await expect(focus).toHaveAccessibleDescription(/alla markerade objekt.*Behåller markeringen/);
+    const names = ['Visa i kartan', 'Visa samband i kartan', 'Fokusera markering'];
+    const icons = [];
+    for (const name of names) {
+      const button = actions.getByRole('button', { name, exact: true });
+      await expect(button).toHaveAttribute(
+        'title',
+        await button.evaluate((element) => {
+          const description = document.getElementById(
+            element.getAttribute('aria-describedby') ?? '',
+          );
+          return description?.textContent ?? '';
+        }),
+      );
+      icons.push(await button.locator('svg path').getAttribute('d'));
+    }
+    expect(new Set(icons).size).toBe(3);
+    const previous = await center(lo);
+    await focus.focus();
+    await page.keyboard.press('Enter');
+    await expect(map.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
+    await expect(lo).toHaveAttribute('aria-pressed', 'true');
+    await expect(alex).toHaveAttribute('aria-pressed', 'true');
+    await expect(kim).toHaveAttribute('aria-pressed', 'false');
+    await expect.poll(() => center(lo)).not.toEqual(previous);
+    for (const node of [lo, alex, kim]) await node.click({ trial: true });
+    await page.getByRole('button', { name: 'Föregående vy', exact: true }).click();
+    expect((await center(lo)).x).toBeCloseTo(previous.x, 5);
+    expect((await center(lo)).y).toBeCloseTo(previous.y, 5);
+    await expect(lo).toHaveAttribute('aria-pressed', 'true');
+    await expect(alex).toHaveAttribute('aria-pressed', 'true');
+    await expect(search).toHaveValue('Exempel');
+    await expect((await mapFilters(page)).getByLabel('Ta med upphörda')).toBeChecked();
+    expect(await read()).toEqual(before);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('KAMERA-06: toolbar label mode toggles with pointer and keyboard and survives reload', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    const { path, read } = await arrange(page, installation.origin);
+    const before = await read();
+    const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
+    const previous = tools.getByRole('button', { name: 'Föregående vy', exact: true });
+    const labels = tools.getByRole('button', { name: 'Alla etiketter', exact: true });
+    await expect(labels).toHaveAttribute('aria-pressed', 'false');
+    const previousBox = await previous.boundingBox();
+    const labelsBox = await labels.boundingBox();
+    expect(labelsBox?.y).toBeGreaterThanOrEqual((previousBox?.y ?? 0) + (previousBox?.height ?? 0));
+    await labels.click();
+    await expect(labels).toHaveAttribute('aria-pressed', 'true');
+    await expect
+      .poll(async () => (await (await page.request.get(`${path}/view`)).json()).settings.allLabels)
+      .toBe(true);
+    await page.reload();
+    await openMap(page);
+    await expect(labels).toHaveAttribute('aria-pressed', 'true');
+    await expect(previous).toBeDisabled();
+    await page.setViewportSize({ width: 320, height: 250 });
+    await labels.focus();
+    await page.keyboard.press('Space');
+    await expect(labels).toHaveAttribute('aria-pressed', 'false');
+    await expect(labels).toBeFocused();
+    await expect
+      .poll(async () => (await (await page.request.get(`${path}/view`)).json()).settings.allLabels)
+      .toBe(false);
+    await page.reload();
+    await openMap(page);
+    await expect(labels).toHaveAttribute('aria-pressed', 'false');
+    expect(await read()).toEqual(before);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('KAMERA-07: toolbar reset clears map search and selection while preserving label mode and personal positions', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    const { lo, path, read } = await arrange(page, installation.origin);
+    const before = await read();
+    const viewBefore = await (await page.request.get(`${path}/view`)).json();
+    const search = page.getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true });
+    await search.fill('Lo');
+    await lo.click();
+    await setAllLabels(page, true);
+    const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
+    const labels = tools.getByRole('button', { name: 'Alla etiketter', exact: true });
+    const reset = tools.getByRole('button', { name: 'Återställ vy', exact: true });
+    const labelsBox = await labels.boundingBox();
+    const resetBox = await reset.boundingBox();
+    expect(resetBox?.y).toBeGreaterThanOrEqual((labelsBox?.y ?? 0) + (labelsBox?.height ?? 0));
+    await reset.focus();
+    await page.keyboard.press('Enter');
+    await expect(reset).toBeFocused();
+    await expect(search).toHaveValue('');
+    await expect(reset).toBeDisabled();
+    await expect(tools.getByRole('button', { name: 'Föregående vy', exact: true })).toBeDisabled();
+    await expect(labels).toHaveAttribute('aria-pressed', 'true');
+    for (const name of ['Lo Exempel', 'Kim Exempel', 'Alex Exempel', 'Långt borta']) {
+      const node = page.getByRole('button', { name: `Välj objekt: ${name}`, exact: true });
+      await expect(node).toHaveAttribute('aria-pressed', 'false');
+      await node.click({ trial: true });
+    }
+    const viewAfter = await (await page.request.get(`${path}/view`)).json();
+    expect(viewAfter.positions).toEqual(viewBefore.positions);
+    expect(await read()).toEqual(before);
+  } finally {
+    await installation.close();
+  }
+});
+
+async function projection(map: Locator) {
+  return map.locator('.spatial-node').evaluateAll((nodes) =>
+    nodes
+      .map((node) => {
+        const element = node as HTMLElement;
+        return {
+          id: element.dataset.objectId,
+          x: parseFloat(element.style.left),
+          y: parseFloat(element.style.top),
+        };
+      })
+      .sort((a, b) => (a.id ?? '').localeCompare(b.id ?? '')),
+  );
+}
+
+async function expectProjection(map: Locator, expected: Awaited<ReturnType<typeof projection>>) {
+  await expect
+    .poll(async () => {
+      const actual = await projection(map);
+      if (
+        actual.length !== expected.length ||
+        actual.some((point, index) => point.id !== expected[index].id)
+      )
+        return Infinity;
+      return Math.max(
+        ...actual.map((point, index) =>
+          Math.hypot(point.x - expected[index].x, point.y - expected[index].y),
+        ),
+      );
+    })
+    .toBeLessThan(1e-6);
+}
+
+test('KAMERA-08: previous view walks each camera change back to the initial view and reset clears history', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    const { map, read, path } = await arrange(page, installation.origin);
+    const content = await read();
+    const positions = (await (await page.request.get(`${path}/view`)).json()).positions;
+    const previous = page.getByRole('button', { name: 'Föregående vy', exact: true });
+    const reset = page.getByRole('button', { name: 'Återställ vy', exact: true });
+    await expect(previous).toBeDisabled();
+    await expect(reset).toBeDisabled();
+    const initial = await projection(map);
+    const search = page.getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true });
+    await search.fill('Lo');
+    await expect(previous).toBeDisabled();
+    await expect(reset).toBeEnabled();
+    await reset.click();
+    await expect(search).toHaveValue('');
+    await expectProjection(map, initial);
+    await expect(previous).toBeDisabled();
+    await expect(reset).toBeDisabled();
+    const states = [initial];
+    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    for (const name of ['Rotera vänster', 'Panorera uppåt', 'Zooma in']) {
+      await page.getByRole('button', { name, exact: true }).click();
+      const current = await projection(map);
+      expect(current).not.toEqual(states.at(-1));
+      states.push(current);
+      await expect(previous).toBeEnabled();
+      await expect(reset).toBeEnabled();
+    }
+    states.pop();
+    for (const state of states.reverse()) {
+      await previous.focus();
+      await page.keyboard.press('Enter');
+      await expectProjection(map, state);
+      await expect(previous).toBeFocused();
+    }
+    await expect(previous).toBeDisabled();
+    await expect(reset).toBeDisabled();
+    await page.keyboard.press('Enter');
+    await expectProjection(map, initial);
+    await page.getByRole('button', { name: 'Zooma ut', exact: true }).click();
+    await reset.click();
+    await expectProjection(map, initial);
+    await expect(previous).toBeDisabled();
+    await expect(reset).toBeDisabled();
+    await page.getByRole('button', { name: 'Panorera vänster', exact: true }).click();
+    await previous.click();
+    await expectProjection(map, initial);
+    await expect(previous).toBeDisabled();
+    expect((await (await page.request.get(`${path}/view`)).json()).positions).toEqual(positions);
+    expect(await read()).toEqual(content);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('KAMERA-09: mouse drags, wheel bursts and touch pinch create complete previous views', async ({
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const context = await browser.newContext({
+    hasTouch: true,
+    viewport: { width: 1440, height: 1000 },
+  });
+  const page = await context.newPage();
+  try {
+    const { map, read } = await arrange(page, installation.origin);
+    const content = await read();
+    const previous = page.getByRole('button', { name: 'Föregående vy', exact: true });
+    const initial = await projection(map);
+    let point = await emptyPoint(page);
+    await page.mouse.move(point.x, point.y);
+    await page.mouse.down();
+    await page.mouse.move(point.x + 60, point.y + 40, { steps: 6 });
+    await page.mouse.up();
+    const rotated = await projection(map);
+    expect(rotated).not.toEqual(initial);
+    point = await emptyPoint(page);
+    await page.mouse.move(point.x, point.y);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(point.x + 60, point.y + 40, { steps: 6 });
+    await page.mouse.up({ button: 'right' });
+    const panned = await projection(map);
+    expect(panned).not.toEqual(rotated);
+    point = await emptyPoint(page);
+    await page.mouse.move(point.x, point.y);
+    await page.keyboard.down('Control');
+    for (let index = 0; index < 5; index++) await page.mouse.wheel(0, 3);
+    await page.keyboard.up('Control');
+    expect(await projection(map)).not.toEqual(panned);
+    await previous.click();
+    await expectProjection(map, panned);
+    await previous.click();
+    await expectProjection(map, rotated);
+    await previous.click();
+    await expectProjection(map, initial);
+    await expect(previous).toBeDisabled();
+    const cdp = await context.newCDPSession(page);
+    point = await emptyPoint(page);
+    const pair = [
+      { id: 1, ...point },
+      { id: 2, x: point.x + 80, y: point.y },
+    ];
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: pair });
+    for (const offset of [10, 20, 40])
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [pair[0], { ...pair[1], x: pair[1].x + offset, y: pair[1].y + offset / 2 }],
+      });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    expect(await projection(map)).not.toEqual(initial);
+    await previous.click();
+    await expectProjection(map, initial);
+    await expect(previous).toBeDisabled();
+    expect(await read()).toEqual(content);
+    await cdp.detach();
+  } finally {
+    await context.close();
     await installation.close();
   }
 });

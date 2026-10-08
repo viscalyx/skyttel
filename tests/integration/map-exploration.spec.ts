@@ -226,7 +226,7 @@ for (const width of [1280, 390, 320]) {
         .getByRole('button', { name: 'Välj objekt: Blå cykel', exact: true })
         .press('Shift+F10');
       const actions = page.getByRole('toolbar', { name: 'Åtgärder för Blå cykel', exact: true });
-      await expect(actions.getByRole('button')).toHaveCount(6);
+      await expect(actions.getByRole('button')).toHaveCount(7);
       expect(
         await actions
           .getByRole('button', { name: 'Visa i kartan', exact: true })

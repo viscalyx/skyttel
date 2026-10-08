@@ -59,9 +59,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
       )
       .toBe(true);
     await expect(
-      page
-        .getByText(/Alla objekt och deras samband kan läsas via Tabell/)
-        .filter({ visible: true }),
+      page.getByText(/\d+ etiketter döljs för läsbarhet\./).filter({ visible: true }),
     ).toBeVisible();
     await openTable(page);
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });

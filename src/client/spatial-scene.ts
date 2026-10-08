@@ -24,6 +24,9 @@ export type ProjectedPoint = {
   depth: number;
 };
 
+export type CameraHistoryState = { canGoBack: boolean; changed: boolean };
+type CameraView = { position: Vector3; target: Vector3; distance: number };
+
 /** Owns only graphics and the camera. Household content stays in the shared editor. */
 export function spatialScene(
   canvas: HTMLCanvasElement,
@@ -31,6 +34,7 @@ export function spatialScene(
   onOrientation: (axes: Position[]) => void = () => {},
   onMotion: () => void = () => {},
   surface: HTMLElement = canvas,
+  onHistoryChange: (state: CameraHistoryState) => void = () => {},
 ) {
   const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -46,6 +50,39 @@ export function spatialScene(
   let settings: Pick<ViewSettings, 'invertX' | 'invertY'> = { invertX: false, invertY: false };
   let selection: string[] = [];
   let rotating = false;
+  let overviewDistance = 30;
+  let originalView: CameraView | null = null;
+  const history: CameraView[] = [];
+  let gestureStart: CameraView | null = null;
+  function view(): CameraView {
+    return {
+      position: camera.position.clone(),
+      target: controls.target.clone(),
+      distance: overviewDistance,
+    };
+  }
+  function sameView(a: CameraView, b: CameraView) {
+    return (
+      a.position.distanceToSquared(b.position) < 1e-18 &&
+      a.target.distanceToSquared(b.target) < 1e-18 &&
+      Math.abs(a.distance - b.distance) < 1e-9
+    );
+  }
+  function publishHistory() {
+    const current = view();
+    onHistoryChange({
+      canGoBack: history.length > 0 || Boolean(gestureStart && !sameView(gestureStart, current)),
+      changed: Boolean(originalView && !sameView(originalView, current)),
+    });
+  }
+  function remember(before: CameraView) {
+    if (!sameView(before, view())) history.push(before);
+    publishHistory();
+  }
+  function beginChange() {
+    gestures.finish();
+    return view();
+  }
   function rotate(x: number, y: number) {
     const selected = selection.flatMap((id) =>
       locations.has(id) ? [locations.get(id) as Vector3] : [],
@@ -79,18 +116,29 @@ export function spatialScene(
   const gestures = cameraGestures(
     canvas,
     {
+      begin() {
+        gestureStart ??= view();
+      },
+      end() {
+        const before = gestureStart;
+        gestureStart = null;
+        if (before) remember(before);
+      },
       rotate(x, y) {
         rotate(x, y);
+        publishHistory();
         onMotion();
       },
       pan(x, y) {
         controls.pan(x * (settings.invertX ? -1 : 1), y * (settings.invertY ? -1 : 1));
         controls.update();
+        publishHistory();
         onMotion();
       },
       zoom(factor) {
         controls.dollyIn(factor);
         controls.update();
+        publishHistory();
         onMotion();
       },
     },
@@ -166,8 +214,6 @@ export function spatialScene(
   sky.add(stars);
   let lost = false;
   let needsFrame = true;
-  let overviewDistance = 30;
-  let overviewReturn: { position: Vector3; target: Vector3; distance: number } | null = null;
   function draw() {
     if (lost || rotating) return;
     camera.updateMatrixWorld();
@@ -203,6 +249,14 @@ export function spatialScene(
     );
   }
   function reset() {
+    gestures.finish();
+    // Establish the initial view with the real canvas size. A later resize
+    // notification must not overwrite the user's first gesture or its history.
+    if (canvas.clientWidth && canvas.clientHeight) {
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+      needsFrame = false;
+    }
     const center = new Vector3();
     for (const id of nodes) center.add(locations.get(id) as Vector3);
     if (nodes.size) center.divideScalar(nodes.size);
@@ -223,6 +277,9 @@ export function spatialScene(
       );
     controls.update();
     draw();
+    history.length = 0;
+    originalView = view();
+    publishHistory();
   }
   controls.addEventListener('change', draw);
   const resize = new ResizeObserver(() => {
@@ -341,24 +398,19 @@ export function spatialScene(
     select(ids: string[]) {
       selection = [...ids];
     },
-    toggleOverview() {
-      if (overviewReturn) {
-        camera.position.copy(overviewReturn.position);
-        controls.target.copy(overviewReturn.target);
-        overviewDistance = overviewReturn.distance;
-        overviewReturn = null;
-        controls.update();
-        draw();
-      } else {
-        overviewReturn = {
-          position: camera.position.clone(),
-          target: controls.target.clone(),
-          distance: overviewDistance,
-        };
-        reset();
-      }
+    previousView() {
+      gestures.finish();
+      const previous = history.pop();
+      if (!previous) return false;
+      needsFrame = false;
+      camera.position.copy(previous.position);
+      controls.target.copy(previous.target);
+      overviewDistance = previous.distance;
+      controls.update();
+      draw();
+      publishHistory();
       onMotion();
-      return Boolean(overviewReturn);
+      return true;
     },
     focus(ids: string[], area: { left: number; right: number; top: number; bottom: number }) {
       const values = ids.flatMap((id) =>
@@ -373,6 +425,7 @@ export function spatialScene(
         area.bottom <= area.top
       )
         return false;
+      const before = beginChange();
       needsFrame = false;
       camera.aspect = canvas.clientWidth / canvas.clientHeight;
       camera.updateProjectionMatrix();
@@ -410,10 +463,11 @@ export function spatialScene(
         .add(new Vector3(0, 0, distance).applyQuaternion(camera.quaternion));
       controls.update();
       draw();
+      remember(before);
       onMotion();
       return true;
     },
-    openLabelView() {
+    openLabelView(record = true) {
       if (!canvas.clientWidth || !canvas.clientHeight) return false;
       const bounds = new Box3().setFromPoints([...nodes].map((id) => locations.get(id) as Vector3));
       if (bounds.isEmpty()) return false;
@@ -425,8 +479,15 @@ export function spatialScene(
       const panelScale = Math.max(1, 830 / canvas.clientWidth, 540 / canvas.clientHeight);
       const distance = Math.max(2, (extent * 1.6) / Math.min(camera.aspect, 1) / panelScale);
       if (controls.getDistance() <= distance + 0.001) return false;
+      const before = beginChange();
       controls.dollyIn(distance / controls.getDistance());
       controls.update();
+      if (record) remember(before);
+      else {
+        originalView = view();
+        history.length = 0;
+        publishHistory();
+      }
       onMotion();
       return true;
     },
@@ -465,6 +526,7 @@ export function spatialScene(
       };
     },
     navigate(command: string) {
+      const before = beginChange();
       if (command === 'left') controls.pan(50 * (settings.invertX ? -1 : 1), 0);
       if (command === 'right') controls.pan(-50 * (settings.invertX ? -1 : 1), 0);
       if (command === 'up') controls.pan(0, 50 * (settings.invertY ? -1 : 1));
@@ -477,6 +539,7 @@ export function spatialScene(
       if (command === 'out') controls.dollyOut(0.8);
       controls.update();
       draw();
+      remember(before);
       onMotion();
     },
     contextLost(value: boolean) {

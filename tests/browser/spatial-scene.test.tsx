@@ -1,5 +1,9 @@
 import { afterEach, expect, test } from 'vitest';
-import { type ProjectedPoint, spatialScene } from '../../src/client/spatial-scene.js';
+import {
+  type CameraHistoryState,
+  type ProjectedPoint,
+  spatialScene,
+} from '../../src/client/spatial-scene.js';
 import { defaultViewSettings, type Position } from '../../src/shared/personal-view.js';
 
 const cleanups: (() => void)[] = [];
@@ -14,6 +18,7 @@ function openScene() {
   document.body.append(canvas);
   let points: ProjectedPoint[] = [];
   let axes: Position[] = [];
+  let history: CameraHistoryState = { canGoBack: false, changed: false };
   const scene = spatialScene(
     canvas,
     (value) => {
@@ -22,12 +27,17 @@ function openScene() {
     (value) => {
       axes = value;
     },
+    undefined,
+    canvas,
+    (value) => {
+      history = value;
+    },
   );
   cleanups.push(() => {
     scene.dispose();
     canvas.remove();
   });
-  return { scene, canvas, points: () => points, axes: () => axes };
+  return { scene, canvas, points: () => points, axes: () => axes, history: () => history };
 }
 
 function distance(a: Position, b: Position) {
@@ -274,29 +284,86 @@ test('focus fits deep positions inside the free tool rectangle without turning t
   }
 });
 
-test('overview restores the saved complete camera after intervening navigation and focus', async () => {
-  const { scene, canvas, points, axes } = openScene();
+test('camera history restores rotation, pan, zoom and focus in reverse order and resets its baseline', async () => {
+  const { scene, canvas, points, axes, history } = openScene();
   await expect.poll(() => canvas.width).toBe(960);
   scene.update(['a', 'b']);
-  scene.navigate('rotate-left');
-  scene.navigate('up');
-  scene.navigate('in');
-  const initial = points();
-  const direction = axes();
-  expect(scene.toggleOverview()).toBe(true);
-  scene.navigate('left');
-  scene.navigate('out');
+  const snapshot = () => ({ points: points(), axes: axes() });
+  const initial = snapshot();
+  expect(history()).toEqual({ canGoBack: false, changed: false });
+  expect(scene.previousView()).toBe(false);
+  const states = [initial];
+  for (const command of ['rotate-left', 'up', 'in']) {
+    scene.navigate(command);
+    states.push(snapshot());
+  }
   scene.focus(['a'], { left: 80, right: 800, top: 60, bottom: 450 });
-  scene.select(['a']);
+  expect(history()).toEqual({ canGoBack: true, changed: true });
+  for (const expected of states.reverse()) {
+    expect(scene.previousView()).toBe(true);
+    for (const [index, point] of points().entries())
+      for (const key of ['x', 'y', 'depth', 'scale'] as const)
+        expect(point[key]).toBeCloseTo(expected.points[index][key], 9);
+    for (const [index, axis] of axes().entries())
+      for (const key of ['x', 'y', 'z'] as const)
+        expect(axis[key]).toBeCloseTo(expected.axes[index][key], 12);
+  }
+  expect(history()).toEqual({ canGoBack: false, changed: false });
+  expect(scene.previousView()).toBe(false);
+  scene.navigate('left');
+  scene.navigate('in');
+  scene.previousView();
   scene.navigate('tilt-up');
-  expect(scene.toggleOverview()).toBe(false);
+  scene.previousView();
+  scene.previousView();
+  expect(history().canGoBack).toBe(false);
+  scene.place('a', { x: 2, y: 4, z: 6 });
+  expect(history().canGoBack).toBe(false);
+  scene.navigate('out');
+  scene.reset();
+  expect(history()).toEqual({ canGoBack: false, changed: false });
+  expect(scene.previousView()).toBe(false);
+  expect(scene.position('a')).toEqual({ x: 2, y: 4, z: 6 });
+});
+
+test('continuous camera drags and wheel bursts each form one history step while clicks create none', async () => {
+  const { scene, canvas, points, history } = openScene();
+  await expect.poll(() => canvas.width).toBe(960);
+  scene.update(['a', 'b']);
+  const initial = points();
+  const pointer = (type: string, x: number) =>
+    canvas.dispatchEvent(
+      new PointerEvent(type, {
+        pointerId: 1,
+        clientX: x,
+        clientY: 100,
+        button: 0,
+        bubbles: true,
+      }),
+    );
+  // Dispatching synthetic pointers cannot acquire native capture.
+  const capture = canvas.setPointerCapture;
+  canvas.setPointerCapture = () => {};
+  pointer('pointerdown', 100);
+  pointer('pointermove', 102);
+  pointer('pointerup', 102);
+  expect(history().canGoBack).toBe(false);
+  pointer('pointerdown', 100);
+  for (const x of [115, 130, 150]) pointer('pointermove', x);
+  pointer('pointerup', 150);
+  canvas.setPointerCapture = capture;
+  expect(history().canGoBack).toBe(true);
+  const dragged = points();
+  for (let index = 0; index < 5; index++)
+    canvas.dispatchEvent(new WheelEvent('wheel', { deltaY: 3, ctrlKey: true, bubbles: true }));
+  await expect.poll(() => points()).not.toEqual(dragged);
+  expect(scene.previousView()).toBe(true);
+  for (const [index, point] of points().entries())
+    expect(point.depth).toBeCloseTo(dragged[index].depth, 9);
+  expect(scene.previousView()).toBe(true);
   for (const [index, point] of points().entries()) {
     expect(point.x).toBeCloseTo(initial[index].x, 9);
     expect(point.y).toBeCloseTo(initial[index].y, 9);
-    expect(point.depth).toBeCloseTo(initial[index].depth, 9);
-    expect(point.scale).toBeCloseTo(initial[index].scale, 9);
   }
-  for (const [index, axis] of axes().entries())
-    for (const key of ['x', 'y', 'z'] as const)
-      expect(axis[key]).toBeCloseTo(direction[index][key], 12);
+  expect(history()).toEqual({ canGoBack: false, changed: false });
 });

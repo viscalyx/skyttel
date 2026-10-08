@@ -377,3 +377,40 @@ navigation, reduced motion and restart”.
 - Minskad rörelse stänger av stjärnorna utan att radera det sparade valet.
 - Kartans urval, kamera och tidigare placeringar består genom vybytet.
 - Reglaget finns i inställningarna och går att nå med tangentbord.
+
+### PLACERING-09: Sparbekräftelse som toast med bevarat fokus
+
+**Syfte:** Visa en kort bekräftelse efter sparning utan att störa arbetet.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Lampan och Cykeln är sparade enligt förberedelsen.
+Prova på dator och i 390 CSS-pixlars bredd, samt med skärmläsare.
+
+**Integrationstest:**
+[personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
+testfallen “PLACERING-09: personal save toasts expire while preserving
+focus and saved choices at 1440px” och “PLACERING-09: personal save toasts
+expire while preserving focus and saved choices at 390px”.
+
+**Steg:**
+
+1. Markera Lampan och öppna **Navigera**. Fokusera **Flytta Lampan: uppåt**
+   och tryck Enter. Läs **Din personliga vy är sparad.** i toasten.
+2. Vänta tre sekunder utan att flytta fokus. Kontrollera att toasten
+   försvinner och att Lampan behåller den nya placeringen.
+3. Aktivera **Alla etiketter** med tangentbordet. Läs samma sparbekräftelse
+   och vänta tills toasten försvinner. Kontrollera knappens fokus och påläge.
+4. Öppna **Tabell** och återgå till **Karta**. Kontrollera placeringen,
+   etikettvalet och att en gammal sparbekräftelse inte visas igen.
+
+**Förväntat resultat:**
+
+- Bekräftad sparning av både placering och visningsval visar toasten i
+  tre sekunder. En ny bekräftad sparning startar om tiden.
+- Toasten ryms på skärmen och tar inte tangentbordsfokus. Fokus ligger kvar
+  på den använda knappen även när toasten försvinner.
+- Skärmläsaren läser sparbekräftelsen en gång per sparning utan att avbryta
+  pågående uppläsning. Den faktiska uppläsningen provas manuellt.
+- Placering och etikettval består. Hushållets sparade uppgifter och utkast
+  ändras inte. En redan avslutad toast återkommer inte vid vybyte.

@@ -72,7 +72,8 @@ avbrutna gester behåller urvalet.
 Använd sambandsikonen **Visa samband i kartan** vid högerklick eller i listan
 för att utforska ett objekts direkta
 samband med tidigare innehåll kvar. **Tillbaka till sökträffarna** återgår
-till sökningens direkta sammanhang. **Visa hela kartan** visar en överblick.
+till sökningens direkta sammanhang. **Återställ vy** visar hela kartan och
+rensar sökningen.
 Escape på kartbakgrunden rensar sökning och filter; kamerans vinkel,
 zoom och panorering behålls.
 
@@ -130,24 +131,30 @@ behåller sin plats i bilden under rotation. Samma regel gäller mus,
 pekskärm, knappar och tangentbord. Utan markering roterar kameran som
 vanligt; panorering och zoom fungerar också som vanligt.
 
-**Fokusera markering** bredvid överblicksknappen hämtar in markeringen och
+**Fokusera markering** i högerklicksmenyn hämtar in markeringen och
 dess direkta grannar med marginal till kartans verktyg. Kamerariktning,
 markeringar och valda uppgifter behålls. Grannarnas andra samband utökar inte
 utsnittet, och grannarna ändrar inte rotationscentrum. Knappen är inaktiv
-med tomt urval eller dold eller avbruten kartgrafik.
+med tomt urval eller avbruten kartgrafik. Öppna menyn med högerklick,
+långtryck eller Shift+F10 på ett objekt. Åtgärden använder hela ditt urval,
+även när du öppnar menyn på ett annat objekt.
 
-**Visa hela kartan** ramar in hela kartan och växlar till **Återgå till
-föregående vy**. Den tidigare vyn finns kvar även om du panorerar, roterar,
-zoomar eller fokuserar markeringen innan du återgår. Urval och oskickad
-formulärtext behålls.
+**Föregående vy** går tillbaka ett steg i kamerans vyhistorik. Knappen är
+dimmad i startläget. Rotation, panorering, zoom och fokus sparar tidigare
+vyer. En sammanhängande dragning eller zoomning räknas som ett steg;
+varje tryck på en navigeringsknapp räknas som ett steg. Du kan gå tillbaka
+tills du når den första vyn. Sökning, filter, markering, objektplaceringar
+och oskickad formulärtext behålls. Historiken gäller den öppna kartan och
+börjar om vid omladdning.
 
-I en mycket kort och smal vy samlas återställning och etiketter under
-**Visningsval**. **Navigera** finns i verktygsfältet och innehåller
+**Återställ vy** och **Alla etiketter** finns i verktygsfältets kameragrupp
+även i korta vyer. Information om dolda etiketter finns under kartans
+status. **Navigera** finns i verktygsfältet och innehåller
 **Visa höjdhjälp**.
 **Visa verktygens namn** öppnar hela
 verktygsfältet med samtal och detaljer.
-Kamerans fokus, översikt och återgång fäller ihop verktygsnamnen så kartan
-får plats. Valda uppgifter behålls.
+Kameraåtgärder fäller ihop verktygsnamnen så kartan får plats. Fokus och
+**Föregående vy** behåller valda uppgifter.
 
 Navigeringsfönstret har normal- och miniläge. Miniikonen i titelraden
 växlar till ikoner med verktygstips; alla knappar har tillgängliga namn.
@@ -164,9 +171,12 @@ ytor, och innehållet kan rullas inuti respektive yta på en kort skärm.
 En flyttad navigation återgår till sin reserverade yta när valda uppgifter
 öppnas, eller när fönsterstorlek eller navigeringsläge ändras.
 
-**Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
+**Återställ vy** har en cirkelpil i verktygsfältet, under **Alla etiketter**.
+Knappen rensar fokus, sökning och typfilter och ramar in hela
 kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga
-hushållsuppgifter.
+hushållsuppgifter. Återställningen tömmer kamerans vyhistorik. Både
+**Föregående vy** och **Återställ vy** blir dimmade. Återställningsknappen
+aktiveras igen när kameran, sökningen, filtren eller markeringen ändras.
 Översikten visar de etiketter som får plats utan överlappning. Ett valt
 sambands etikett får plats först, sedan objektnamn och därefter automatiska
 sambandsetiketter. Etiketter för nya, borttagna och ändrade samband i
@@ -177,6 +187,11 @@ inte. Sök i tabellen och visa objektet i kartan för att följa ett tätt
 sammanhang.
 Bakgrundens samband tonas ned mer i täta vyer; valda samband framhävs.
 
+**Alla etiketter** finns som en etikettikon i verktygsfältet, direkt under
+**Föregående vy**. Knappen visar om valet är på. Klicka eller tryck
+Enter eller mellanslag för att slå på det, och tryck igen för att slå av.
+Valet sparas i din personliga vy och behålls efter omladdning.
+
 **Alla etiketter** öppnar vid behov ett närmare utsnitt som går att
 panorera och visar även etiketter som överlappar. Ett redan nära utsnitt
 behålls när du slår av och på valet. Korta stödlinjer
@@ -185,8 +200,6 @@ detaljerna ger tillgång till hela innehållet även när etiketter ligger
 utanför det synliga utsnittet. På en smal telefon kan även en mindre
 karta få överlappande eller delvis dolda etiketter. Använd zoom,
 panorering, objektfokus eller tabellen för att nå dem.
-På låga skärmar i liggande läge kan du rulla kartans nedersta verktygsrad
-i sidled för att nå alla val utan att minska kartytan.
 
 ## Ändra och granska
 
@@ -198,15 +211,20 @@ Vid ändrade samband visas både tidigare och föreslagna ändpunkter;
 Välj den tidigare, böjda linjen eller dess etikett med × för att läsa det
 sparade sambandet utan att ändra det.
 
-Högerklick eller långtryck på ett objekt eller dess namn visar sex ikoner
+Högerklick eller långtryck på ett objekt eller dess namn visar sju ikoner
 bredvid det: en penna för **Redigera objekt**, ett dokument för
-**Visa uppgifter**, pilar för **Samband**, ett riktmärke för **Visa i kartan**,
-en nätverksikon för **Visa samband i kartan** och en röd papperskorg för
+**Visa uppgifter**, pilar för **Samband**, en karta för **Visa i kartan**,
+en nätverksikon för **Visa samband i kartan**, en fokusram för
+**Fokusera markering** och en röd papperskorg för
 **Ta bort objekt**. Uppgiftsikonen öppnar ett flyttbart uppgiftsfönster.
 **Samband** öppnar objektets sambandsdialog för läsning och redigering.
-De använder samma ikoner och åtgärder som hushållets lista.
-Riktmärket rensar kartans sökning och filter och tar med upphörda vid behov.
-Nätverksikonen behåller sökning och filter. Legenden visar inga åtgärdsknappar.
+Objektets kartikon rensar kartans sökning och filter och tar med upphörda
+vid behov. Nätverksikonen behåller sökning och filter. Båda markerar det
+valda objektet och ramar in det och dess direkta grannar. Fokusramen ramar
+in hela den befintliga markeringen och dess direkta grannar; markering,
+sökning och filter behålls. Kamerans riktning behålls i alla tre fallen.
+Kart- och nätverksikonerna finns även i hushållets lista.
+Legenden visar inga åtgärdsknappar.
 Ikonerna visas till höger när de ryms och flyttas inåt vid skärmkanten.
 Tooltips förklarar åtgärderna. Escape eller ett klick utanför stänger raden.
 Med tangentbord kan du öppna den med Shift+F10 på ett fokuserat objekt
@@ -322,6 +340,11 @@ De finns kvar efter omladdning, stängd app, enhetsbyte och serveromstart.
 Andra medlemmar har egna placeringar och val. Nya objekt får en enkel
 startplacering utan att flytta befintliga objekt eller kameran. Kameran
 behålls under arbetet och vybyten; en ny sida börjar med en inramad karta.
+
+Efter en bekräftad flytt eller ändring av visningsval visas
+**Din personliga vy är sparad.** som en toast i tre sekunder. En ny
+sparning startar om tiden. Toasten flyttar inte tangentbordsfokus.
+Fel och besked om samtidiga ändringar ligger kvar så att du kan läsa dem.
 
 Samtidiga flyttar av olika objekt bevaras. Om en annan klient redan flyttat
 samma objekt avvisas din äldre flytt. Ett tydligt besked visas tillsammans

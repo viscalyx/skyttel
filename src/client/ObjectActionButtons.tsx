@@ -9,6 +9,7 @@ export type ObjectActionCallbacks = {
   onRelationships?: (object: MapObject) => void;
   onReveal?: (object: MapObject) => void;
   onFocus?: (id: string) => void;
+  onFocusSelection?: () => void;
   onRemove?: (object: MapObject) => Promise<boolean> | undefined;
 };
 
@@ -35,11 +36,13 @@ export function ObjectActionButtons({
   mapAvailable = true,
   contextual = false,
   removed = false,
+  selectionAvailable = false,
   onEdit,
   onRead,
   onRelationships,
   onReveal,
   onFocus,
+  onFocusSelection,
   onRemove,
 }: ObjectActionCallbacks & {
   object: MapObject;
@@ -48,12 +51,13 @@ export function ObjectActionButtons({
   mapAvailable?: boolean;
   contextual?: boolean;
   removed?: boolean;
+  selectionAvailable?: boolean;
 }) {
   const prefix = useId();
-  const revealHelp =
-    'Visa objektet och dess direkta samband i kartan. Rensar kartans sökning och filter och tar med upphörda vid behov.';
-  const contextHelp =
-    'Visa objektets direkta samband i kartan. Behåller kartans sökning och filter, inklusive valet för upphörda.';
+  const revealHelp = `Markera ${object.name} och rama in objektet och dess direkta grannar i kartan. Rensar kartans sökning och filter och tar med upphörda vid behov. Behåller kamerans riktning.`;
+  const contextHelp = `Markera ${object.name}, visa dess direkta grannar och rama in dem i kartan. Behåller kartans sökning och filter, inklusive valet för upphörda, samt tidigare visat innehåll och kamerans riktning.`;
+  const selectionHelp =
+    'Rama in alla markerade objekt och deras direkta grannar genom att panorera och anpassa zoom. Behåller markeringen, kartans sökning och filter samt kamerans riktning. Kräver minst ett markerat objekt.';
   return (
     <>
       <button
@@ -94,7 +98,7 @@ export function ObjectActionButtons({
           disabled={disabled || !mapAvailable || removed}
           onClick={() => onReveal(object)}
         >
-          <WorkspaceIcon name="focus" />
+          <WorkspaceIcon name="reveal" />
         </button>
       )}
       {onFocus && (
@@ -107,6 +111,18 @@ export function ObjectActionButtons({
           onClick={() => onFocus(object.id)}
         >
           <WorkspaceIcon name="connections" />
+        </button>
+      )}
+      {onFocusSelection && (
+        <button
+          type="button"
+          aria-label="Fokusera markering"
+          title={selectionHelp}
+          aria-describedby={`${prefix}-selection`}
+          disabled={!mapAvailable || !selectionAvailable}
+          onClick={onFocusSelection}
+        >
+          <WorkspaceIcon name="focus" />
         </button>
       )}
       {onRemove && (
@@ -131,6 +147,9 @@ export function ObjectActionButtons({
       </span>
       <span id={`${prefix}-context`} hidden>
         {contextHelp}
+      </span>
+      <span id={`${prefix}-selection`} hidden>
+        {selectionHelp}
       </span>
       <div hidden>
         <ObjectRemovalNotice state={state} objectId={object.id} id={`${prefix}-removal`} />

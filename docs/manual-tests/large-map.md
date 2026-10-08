@@ -48,8 +48,9 @@ relationship reachable”.
 
 **Steg:**
 
-1. Börja i **Karta**. Läs beskedet om färre etiketter. Kontrollera att de
-   synliga etiketterna är läsbara och inte ligger över varandra.
+1. Börja i **Karta**. Läs antalet dolda etiketter under kartans status.
+   Kontrollera att de synliga etiketterna är läsbara och inte ligger
+   över varandra.
 2. Välj **Tabell**, **Filter** och **Ta med upphörda**. Stäng filtret.
    Bläddra genom de tio tabellsidorna med **Nästa**. Varje sida visar
    50 objekt, med en namngiven sambandsknapp och rätt antal samband.

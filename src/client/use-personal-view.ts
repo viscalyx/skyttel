@@ -9,7 +9,18 @@ import { MapRequestError, request } from './map-request.js';
 
 export function usePersonalView(path: string, onAccessLost: () => void) {
   const [view, setView] = useState<PersonalView | null>(null);
-  const [message, setMessage] = useState('');
+  const [notice, setNotice] = useState({ message: '', id: 0, toast: false });
+  const noticeId = useRef(0);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const setMessage = useCallback((message: string, toast = false) => {
+    clearTimeout(noticeTimer.current);
+    const id = ++noticeId.current;
+    setNotice({ message, id, toast });
+    if (toast)
+      noticeTimer.current = setTimeout(() => {
+        setNotice((current) => (current.id === id ? { ...current, message: '' } : current));
+      }, 3000);
+  }, []);
   const [pending, setPending] = useState(false);
   const current = useRef(view);
   current.current = view;
@@ -23,10 +34,11 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
       } else
         setMessage('Din vy kunde inte sparas. Läs in aktuella placeringar innan du fortsätter.');
     },
-    [onAccessLost],
+    [onAccessLost, setMessage],
   );
   useEffect(() => {
     alive.current = true;
+    setMessage('');
     const abort = new AbortController();
     void request<PersonalView>(`${path}/view`, undefined, abort.signal)
       .then(setView)
@@ -36,8 +48,9 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     return () => {
       alive.current = false;
       abort.abort();
+      clearTimeout(noticeTimer.current);
     };
-  }, [path, report]);
+  }, [path, report, setMessage]);
   async function refresh() {
     try {
       const latest = await request<PersonalView>(`${path}/view`);
@@ -66,7 +79,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
         const settings = await request<PersonalView['settings']>(`${path}/view/settings`, body);
         if (alive.current) setView((previous) => previous && { ...previous, settings });
       }
-      if (alive.current) setMessage('Din personliga vy är sparad.');
+      if (alive.current) setMessage('Din personliga vy är sparad.', true);
     } catch (error) {
       try {
         const latest = await request<PersonalView>(`${path}/view`);
@@ -91,7 +104,8 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
   }
   return {
     view,
-    message,
+    message: notice.message,
+    ...(notice.toast && notice.message ? { toast: true, messageId: notice.id } : {}),
     pending,
     refresh,
     move(id: string, position: Position) {

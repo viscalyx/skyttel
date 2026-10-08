@@ -310,17 +310,6 @@
   align-items: end;
   background: transparent;
 }
-.household-map.workspace-shell .spatial-bottom-bar {
-  position: absolute;
-  left: 112px;
-  right: 12px;
-  bottom: 12px;
-  z-index: 3;
-  max-height: 60px;
-  overflow: auto;
-  border: 1px solid var(--space-line);
-  border-radius: 12px;
-}
 .household-map.workspace-shell .camera-tools {
   max-height: 40dvh;
 }
@@ -366,21 +355,37 @@
   top: auto;
   bottom: 120px;
 }
+.household-map.workspace-shell .personal-view-status.personal-view-toast {
+  position: fixed;
+  inset: auto;
+  right: 12px;
+  margin: 0;
+  top: max(56px, calc(var(--conversation-corner-bottom, 0px) + 12px));
+}
+@media (max-width: 700px) {
+  .household-map.workspace-shell .personal-view-status.personal-view-toast {
+    top: max(calc(var(--tools-bottom, 124px) + 12px), calc(var(--map-search-bottom, 124px) + 12px));
+    max-width: calc(100% - 24px);
+  }
+}
+.household-map.workspace-shell .workspace-label-feedback .label-note {
+  position: static;
+  max-width: none;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.household-map.workspace-shell .workspace-context .workspace-label-feedback span {
+  display: inline;
+  margin-left: 0;
+  font-size: inherit;
+}
 .household-map.workspace-shell.workspace-revealing :is(.personal-view-status, .label-note) {
   display: none;
 }
 @media (max-width: 700px) {
-  .household-map.workspace-shell .spatial-tools,
-  .household-map.workspace-shell .spatial-bottom-bar {
+  .household-map.workspace-shell .spatial-tools {
     left: 12px;
-  }
-  .household-map.workspace-shell .spatial-bottom-bar {
-    flex-wrap: nowrap;
-    max-height: 52px;
-  }
-  .household-map.workspace-shell .spatial-bottom-bar > * {
-    flex-shrink: 0;
-    white-space: nowrap;
   }
   .workspace-tools {
     left: 12px;
@@ -489,7 +494,6 @@ footer[hidden] {
 .household-map.workspace-shell
   :is(
     .spatial-tools,
-    .spatial-bottom-bar,
     .camera-tools,
     .assistant-empty,
     .assistant-save-note,
@@ -516,8 +520,7 @@ footer[hidden] {
   box-shadow: none;
 }
 @media (max-width: 700px) {
-  .household-map.workspace-shell.workspace-revealing .spatial-tools,
-  .household-map.workspace-shell.workspace-revealing .spatial-bottom-bar {
+  .household-map.workspace-shell.workspace-revealing .spatial-tools {
     display: none;
   }
 }
