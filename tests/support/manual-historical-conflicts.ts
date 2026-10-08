@@ -50,9 +50,18 @@ export async function launchHistoricalPreparation() {
         directories.add(join(tmpdir(), directory));
   }
   async function wait(expected: RegExp, offset = 0) {
-    await expect
-      .poll(() => output.slice(offset), { timeout: 15_000, message: diagnostic })
-      .toMatch(expected);
+    try {
+      await expect
+        .poll(() => output.slice(offset), { timeout: 15_000, message: diagnostic })
+        .toMatch(expected);
+    } catch (error) {
+      console.error(
+        'Preparation wait failed',
+        output.slice(offset),
+        browser.contexts().flatMap((context) => context.pages().map((page) => page.url())),
+      );
+      throw error;
+    }
     return output.slice(offset);
   }
   async function command(line: string, expected: RegExp) {

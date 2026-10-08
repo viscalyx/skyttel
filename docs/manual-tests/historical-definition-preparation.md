@@ -49,8 +49,10 @@ tekniskt underlag, inte uppgifter som användaren ska läsa i UI-fallet.
 
 ## Tidsordning för operatörens kontroller
 
-`result` skriver den faktiska kartan, hela det privata utkastet och
-historiken via offentlig HTTP. Kör det före och efter de gränser nedan som
+`result` skriver den faktiska kartan och hela Robins privata utkast via
+hans session samt historiken via Alex befintliga administratörssession.
+Historiken kräver administratör; Robins session används fortfarande för
+alla egna privata val. Kör det före och efter de gränser nedan som
 ska vara oförändrade. Jämför hela resultatet; vid ett bekräftat privat val
 får bara det uttryckligen berörda förslaget ändras. Vanlig historikläsning,
 Escape och nekade begäranden ändrar inte den gemensamma kartan eller historiken.
@@ -94,6 +96,37 @@ Escape och nekade begäranden ändrar inte den gemensamma kartan eller historike
   Utan faktisk borttagningsrevision krävs HTTP 409 utan ändring. Efter
   kastvalet jämför `result`: bara det ägda definitionsförslaget försvinner.
 
+## Starta om samma installation
+
+Använd `restart` i förberedarens terminal när UI-fallet anger serveromstart.
+Kommandot stoppar och startar den aktiva servern med samma databas, adress
+och båda inloggade sessioner. Det ändrar inte förberedelse, privat utkast,
+historik eller transportinställning. Invänta avslutade begäranden; om du
+använder `hold`, kör `release` och invänta resultatet först.
+
+I UTKAST-65, 66, 67, 68, 69, 71, 72, 74 samt varianterna 138 och 140:
+
+1. Slutför det separata sparandet och läs det bekräftade sparbeskedet.
+   Kör `network-ok` om ett transportfel är aktivt. Kör `result` och behåll
+   utskriften av kartan, hela utkastet och historiken före omstarten.
+2. Skriv `restart` och invänta `Restarted:` med samma förberedelsenamn och
+   exakt samma adress som vid `Ready:`. Kör `result` igen; hela resultatet
+   ska vara lika med utskriften före omstarten. Kör varken `new-…` eller
+   `quit` vid denna gräns; de tar bort den aktiva databasen.
+3. Ladda om fönstret på samma adress. Ingen ny inloggning ska behövas.
+   Läs de sparade objekt- eller sambandsuppgifterna och det oberoende
+   objektet i Tabell enligt fallet. Läs återställda eller nya definitioner
+   genom Inställningar enligt fallet. I UTKAST-67, 68 och 140 läser både
+   Robin och Alex med sina befintliga sessioner.
+
+För en separat kontroll av ett ännu osparat återställningsförslag, kör
+`new-restoration-two`, sedan `probe-definition-guards`. Granska och lägg
+Robins definition i utkastet genom UI. Kör `result`, `restart` och `result`
+före `probe-reused-definition` och `newer-definition`. Resultaten före och
+efter omstarten ska vara lika. Ladda om och läs hela den privata definitionen
+och **Oberoende förslag**; definitionen är fortfarande borttagen gemensamt.
+Fortsätt därefter UTKAST-68:s befintliga tidsordning i samma installation.
+
 ## Tappat svar efter genomfört privat val
 
 UTKAST-70 och 141 använder samma installation under hela kontrollen.
@@ -125,6 +158,6 @@ npm run test:integration -- tests/integration/conflict-external-corrections.spec
 ```
 <!-- markdownlint-enable MD013 -->
 
-Återställ provinstallationerna mellan fall. En serveromstart inom ett fall
-ska behålla samma databas och båda användarnas sessioner. Dokumentera
-manuell körning och automatiserad körning var för sig.
+Återställ provinstallationerna mellan fall med nästa `new-…`; avsluta med
+`quit` efter färdig läsning. Dokumentera manuell körning och automatiserad
+körning var för sig.

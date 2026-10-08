@@ -12,6 +12,7 @@ import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import {
   expectConflictDraftValues,
   expectConflictReadValue,
+  expectNoSavedConflictRelationships,
   expectSavedConflictDefinition,
   expectSavedConflictObject,
   expectSavedConflictRelationship,
@@ -512,6 +513,66 @@ test('KATALOG-03: history reads removed definitions and content without changing
     await expect(group.getByText(`Objekttyp: ${type.name}`, { exact: false })).toBeVisible();
     await expect(group.getByRole('heading', { name: `Samband: ${edgeType.name}` })).toBeVisible();
     expect(await read()).toEqual(before);
+    await expect(group.getByRole('button', { name: 'Ångra sparandet' })).toHaveCount(0);
+    const readCurrentWork = async () => {
+      await openTable(page);
+      const garage = await expectSavedConflictObject(page, 'Garaget');
+      await expectConflictReadValue(garage, 'Typ', initial.types[1].name);
+      await expect(
+        page
+          .getByRole('region', { name: 'Hushållets tabell', exact: true })
+          .getByRole('button', { name: /^Redigera / }),
+      ).toHaveCount(2);
+      await expect(
+        page.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }),
+      ).toHaveCount(0);
+      await expectNoSavedConflictRelationships(page, 'Garaget');
+      await openTypeDefinitions(page);
+      await page.getByText('Objekttyper och egna fält', { exact: true }).click();
+      await expect(
+        page.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }),
+      ).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Ändra typ: / })).toHaveCount(
+        before.types.length,
+      );
+      for (const retained of before.types)
+        await expect(
+          page.getByRole('button', { name: `Ändra typ: ${retained.name}`, exact: true }),
+        ).toBeVisible();
+      await page.getByText('Sambandstyper och riktning', { exact: true }).click();
+      await expect(
+        page.getByRole('button', { name: `Ändra sambandstyp: ${edgeType.name}`, exact: true }),
+      ).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Ändra sambandstyp: / })).toHaveCount(
+        before.relationshipTypes.length,
+      );
+      for (const retained of before.relationshipTypes)
+        await expect(
+          page.getByRole('button', {
+            name: `Ändra sambandstyp: ${retained.name}`,
+            exact: true,
+          }),
+        ).toBeVisible();
+      await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+      const draft = await openDraftReview(page);
+      await expect(draft.getByRole('button', { name: /^Visa förslaget: / })).toHaveCount(1);
+      await expectConflictDraftValues(page, 'Oberoende förslag', {
+        Namn: 'Oberoende förslag',
+        Beskrivning: 'Ej uppgivet',
+        Typ: initial.types[1].name,
+        Gäller: 'Aktuellt',
+        Status: 'Följ slutdatum',
+        Ikon: 'Typens ikon',
+        Profilbild: 'Ej uppgivet',
+        Identitet: 'Identifierat objekt',
+      });
+      await closeTextView(page);
+    };
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    await readCurrentWork();
+    expect(await read()).toEqual(before);
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
+    await group.getByText('Visa ändringarna', { exact: true }).click();
     await installation.restart();
     const current = await read();
     expect(current.draft).toEqual(before.draft);
@@ -536,6 +597,8 @@ test('KATALOG-03: history reads removed definitions and content without changing
     });
     await closeTextView(page);
     await page.reload();
+    await readCurrentWork();
+    expect(await read()).toEqual(before);
     await openTable(page);
     await expectSavedConflictObject(page, 'Garaget');
     await expectConflictDraftValues(page, 'Oberoende förslag', {

@@ -37,7 +37,11 @@ async function stageNativeRestoration(page: Page, expected: Record<string, unkno
   await page.keyboard.press('Escape');
 }
 
-async function saveNativeRestoration(page: Page, state: MapState) {
+async function saveNativeRestoration(
+  page: Page,
+  state: MapState,
+  readHistory?: () => Promise<{ history: { operationId: string }[] }>,
+) {
   const response = page.waitForResponse(
     (response) => response.url().endsWith('/map/save') && response.request().method() === 'POST',
   );
@@ -53,9 +57,9 @@ async function saveNativeRestoration(page: Page, state: MapState) {
   expect(saved.status()).toBe(200);
   const { receipt } = await saved.json();
   expect(receipt.operationId).toBe(requested.operationId);
-  const { history } = await (
-    await page.request.get(saved.url().replace(/\/save$/, '/history'))
-  ).json();
+  const { history } = readHistory
+    ? await readHistory()
+    : await (await page.request.get(saved.url().replace(/\/save$/, '/history'))).json();
   expect(
     history.find((entry: { operationId: string }) => entry.operationId === requested.operationId),
   ).toEqual(receipt);
@@ -789,6 +793,23 @@ test('historical preparation launcher preserves authority guards, applied and ab
       contentVersion: beforeReview.map.contentVersion,
     });
     const reviewed = await preparation.result();
+    const restartedPrivate = await preparation.command('restart', /Restarted:/);
+    expect(restartedPrivate).toContain(`Restarted: new-restoration-two, ${paired.origin}`);
+    expect(await preparation.result()).toEqual(reviewed);
+    await paired.page.reload();
+    await expectSavedConflictObject(paired.page, 'Lo Exempel');
+    await expectSavedConflictObject(paired.page, 'Molnmusik');
+    await openTypeDefinitions(paired.page);
+    await paired.page.getByText('Objekttyper och egna fält', { exact: true }).click();
+    await expect(
+      paired.page.getByRole('button', { name: 'Ändra typ: Solcellsanläggning', exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      paired.page.getByRole('button', { name: 'Ändra typ: Min privata typbenämning', exact: true }),
+    ).toBeVisible();
+    await paired.page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await readHistoricalDefinitionProposal(paired.page, false);
+    await readIndependentHistoricalProposal(paired.page);
     await preparation.command('probe-reused-definition', /Reused comparison: HTTP 409/);
     expect(await preparation.result()).toEqual(reviewed);
     await preparation.command(
@@ -840,6 +861,36 @@ test('historical preparation launcher preserves authority guards, applied and ab
     expect(afterImport.map.draft.relationshipTypes[0].restoration).toBeUndefined();
     await preparation.command('try-restoration-save', /Save response: 409/);
     expect(await preparation.result()).toEqual(afterImport);
+
+    const durable = await preparation.fresh('new-object-restoration');
+    const beforeDurable = await preparation.result();
+    const durableConflict = draftConflicts(beforeDurable.map).find(
+      (conflict) => conflict.kind === 'objectType',
+    );
+    if (!durableConflict) throw new Error('Missing durable launcher conflict');
+    await stageNativeRestoration(durable.page, {
+      conflict: durableConflict,
+      basis: conflictBasis(beforeDurable.map, durableConflict),
+      command: 'definition-choice',
+      definitionChoice: 'proposed',
+      version: beforeDurable.map.draft.version,
+      contentVersion: beforeDurable.map.contentVersion,
+    });
+    await readHistoricalDefinitionProposal(durable.page, false);
+    await readIndependentHistoricalProposal(durable.page);
+    const stagedDurable = await preparation.result();
+    await saveNativeRestoration(
+      durable.page,
+      stagedDurable.map,
+      async () => (await preparation.result()).history,
+    );
+    const savedDurable = await preparation.result();
+    expect(savedDurable.map.draft.changes).toHaveLength(0);
+    expect(savedDurable.map.draft.objectTypes ?? []).toHaveLength(0);
+    const restartedSaved = await preparation.command('restart', /Restarted:/);
+    expect(restartedSaved).toContain(`Restarted: new-object-restoration, ${durable.origin}`);
+    expect(await preparation.result()).toEqual(savedDurable);
+    await readRestoredHousehold(durable.page, durable.origin, false);
 
     for (const delivery of ['lose-applied', 'lose-unsent']) {
       const { page, origin } = await preparation.fresh('new-object-restoration');

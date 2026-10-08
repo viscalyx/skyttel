@@ -178,10 +178,14 @@ changing independent work”.
 
 1. Välj **Rapporter** och hitta borttagningen av Lo och sambandet.
 2. Välj **Visa ändringarna** och läs tidigare namn och typbetydelser.
-3. Kontrollera att aktuell karta, katalog och eget utkast är oförändrade.
-4. Starta om med samma databas, ladda om och läs Garaget genom Tabell,
-   hela det oberoende förslaget genom utkastläsningen och samma historiska
-   namn och typbetydelser i Rapporter.
+3. Återgå till arbetet. Läs Garaget och dess typ genom Tabell; Lo och
+   sambandet saknas fortfarande. Öppna **Inställningar → Typer och egna
+   fält** och kontrollera att Person och Använder saknas i respektive katalog
+   medan de övriga typerna finns kvar. Återgå till kartan och läs hela det
+   oberoende förslaget i utkastet; inga återställningsförslag tillkommer.
+4. Starta om med samma databas och ladda om. Upprepa läsningen av aktuell
+   karta, katalog och hela det oberoende förslaget från steg 3. Läs samma
+   historiska namn och typbetydelser i Rapporter.
 
 **Förväntat resultat:**
 

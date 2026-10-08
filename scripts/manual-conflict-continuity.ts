@@ -38,8 +38,8 @@ const browser = browserEndpoint
 console.log(
   `Browser: ${process.argv.includes('--chrome') ? 'Chrome' : 'Chromium'} ${browser.version()}`,
 );
-const page = await browser.newPage();
-const other = await browser.newContext();
+let page = await browser.newPage();
+let other = await browser.newContext();
 let app: Awaited<ReturnType<typeof conflictCollaborators>> | undefined;
 let historicalDefinition: ObjectType | RelationshipType | undefined;
 let previousDefinitionReview: Record<string, unknown> | undefined;
@@ -94,17 +94,29 @@ let kind = 'new-base';
 process.once('SIGINT', () => input?.close());
 process.once('SIGTERM', () => input?.close());
 async function fresh(command: keyof typeof preparations) {
+  console.log(`Preparing: ${command}`);
   release?.();
   hold = false;
   delivery = 'normal';
   await page.unroute('**/map');
   await page.goto('about:blank');
-  await app?.installation.close();
+  console.log(`Browser cleared: ${command}`);
+  if (app) {
+    // A new installation retires both old sessions and their HTTP socket pools.
+    await page.context().close();
+    await other.close();
+    await app.installation.close();
+    page = await browser.newPage();
+    other = await browser.newContext();
+    await installDeliveryControl();
+  }
+  console.log(`Previous installation closed: ${command}`);
   kind = command;
   const prepared: Awaited<ReturnType<typeof conflictCollaborators>> & {
     historicalType?: ObjectType | RelationshipType;
   } = await preparations[command]();
   app = prepared;
+  console.log(`Installation prepared: ${command}`);
   historicalDefinition = prepared.historicalType;
   previousDefinitionReview = undefined;
   if (command === 'new-two') {
@@ -131,7 +143,7 @@ async function rejectedWithoutChanges(
   const current = async () => ({
     member: await (await page.request.get(prepared.path)).json(),
     administrator: await (await other.request.get(prepared.path)).json(),
-    history: await (await page.request.get(`${prepared.path}/history`)).json(),
+    history: await readHistory(prepared),
   });
   const before = await current();
   const response = await prepared.post(client, route, body);
@@ -139,7 +151,16 @@ async function rejectedWithoutChanges(
   assert.deepEqual(await current(), before);
   console.log(`${label}: HTTP 409; both private drafts, shared facts and history unchanged.`);
 }
-try {
+async function readHistory(prepared: NonNullable<typeof app>) {
+  // Archive fixtures put Robin in the window and Alex in the other session.
+  const client = historicalDefinition ? other.request : page.request;
+  const response = await client.get(`${prepared.path}/history`);
+  assert.equal(response.status(), 200, await response.text());
+  const document = await response.json();
+  assert.ok(Array.isArray(document.history), 'Missing actual administrator history');
+  return document;
+}
+async function installDeliveryControl() {
   await page.route('**/map/resolve', async (route) => {
     if (hold) {
       console.log('Request held before delivery. Use release.');
@@ -153,9 +174,12 @@ try {
     if (delivery === 'lost') await route.abort();
     else await route.fulfill({ response });
   });
+}
+try {
+  await installDeliveryControl();
   await fresh('new-base');
   console.log(
-    `Commands: ${Object.keys(preparations).join(', ')}, remove-new-connection, probe-unavailable-restoration, newer-name, newer-type, newer-reference, newer-private, newer-definition, reimport-restoration, probe-definition-guards, probe-reused-definition, forge-restoration, try-restoration-save, resolve-elsewhere, save-elsewhere, hold, release, lose-applied, lose-unsent, check-error, network-ok, result, quit`,
+    `Commands: ${Object.keys(preparations).join(', ')}, remove-new-connection, probe-unavailable-restoration, newer-name, newer-type, newer-reference, newer-private, newer-definition, reimport-restoration, probe-definition-guards, probe-reused-definition, forge-restoration, try-restoration-save, resolve-elsewhere, save-elsewhere, hold, release, lose-applied, lose-unsent, check-error, network-ok, restart, result, quit`,
   );
   input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const command of input) {
@@ -171,6 +195,9 @@ try {
     else if (command === 'network-ok') {
       delivery = 'normal';
       await page.unroute('**/map');
+    } else if (app && command === 'restart') {
+      await app.installation.restart();
+      console.log(`Restarted: ${kind}, ${app.installation.origin}`);
     } else if (app && command === 'remove-new-connection' && kind === 'new-combined-removal') {
       await app.propose(other.request, 'relationship', 'new-edge', null);
       assert.equal((await app.save(other.request, 'remove-only-connection')).status(), 200);
@@ -349,7 +376,7 @@ try {
         JSON.stringify(
           {
             map: await app.read(),
-            history: await (await page.request.get(`${app.path}/history`)).json(),
+            history: await readHistory(app),
           },
           null,
           2,
