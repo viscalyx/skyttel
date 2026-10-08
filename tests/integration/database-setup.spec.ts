@@ -56,7 +56,8 @@ async function setupDatabase(
 }
 
 for (const provider of ['google', 'microsoft'] as const) {
-  test(`DEMO-01: database setup gives only the configured ${provider} administrator a ready TestHousehold`, async ({
+  const caseId = provider === 'google' ? 'DEMO-01' : 'DEMO-02';
+  test(`${caseId}: database setup gives only the configured ${provider} administrator a ready TestHousehold`, async ({
     page,
   }) => {
     const request = page.request;
@@ -70,13 +71,35 @@ for (const provider of ['google', 'microsoft'] as const) {
       ).toMatchObject({
         status: 'anonymous',
       });
-      await signIn(request, installation.origin, provider === 'google' ? 'microsoft' : 'google');
+      const otherLabel = provider === 'google' ? 'Microsoft' : 'Google';
+      const adminLabel = provider === 'google' ? 'Google' : 'Microsoft';
+      await page.goto(installation.origin);
+      await page.getByRole('button', { name: `Fortsätt med ${otherLabel}` }).click();
+      const otherSignIn = page.waitForResponse(
+        (response) =>
+          response.url() === `${installation.origin}/api/auth/sign-in/social` &&
+          response.request().method() === 'POST',
+      );
+      await page.getByRole('button', { name: `Fortsätt till ${otherLabel}` }).click();
+      expect((await otherSignIn).status()).toBe(200);
+      await expect(
+        page.getByRole('heading', { name: 'Du har inte tillgång till hushållet' }),
+      ).toBeVisible();
       expect(
         await (await request.get(`${installation.origin}/api/bootstrap`)).json(),
       ).toMatchObject({
         status: 'forbidden',
       });
-      await signIn(request, installation.origin, provider);
+      await page.getByRole('button', { name: 'Logga ut' }).click();
+      await page.getByRole('button', { name: `Fortsätt med ${adminLabel}` }).click();
+      const adminSignIn = page.waitForResponse(
+        (response) =>
+          response.url() === `${installation.origin}/api/auth/sign-in/social` &&
+          response.request().method() === 'POST',
+      );
+      await page.getByRole('button', { name: `Fortsätt till ${adminLabel}` }).click();
+      expect((await adminSignIn).status()).toBe(200);
+      await expect(page.getByRole('heading', { name: 'TestHousehold', exact: true })).toBeVisible();
       const { status, household } = await (
         await request.get(`${installation.origin}/api/bootstrap`)
       ).json();
@@ -160,6 +183,11 @@ for (const provider of ['google', 'microsoft'] as const) {
       const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
       await table.getByRole('button', { name: 'Alex blå cykel', exact: true }).click();
       const details = table.getByRole('row').filter({ hasText: 'Dold rammärkning' });
+      await expect(details).toContainText('En påhittad cykel som förvaras i garaget.');
+      await expect(details.getByText('Ikon', { exact: true }).locator('..')).toContainText('Cykel');
+      await expect(details.getByText('Status', { exact: true }).locator('..')).toContainText(
+        'Gäller fortfarande',
+      );
       await expect(details).toContainText('Ramfärg');
       await expect(details).toContainText('Blå');
       await expect(details).toContainText('Kontrolldatum');
@@ -214,13 +242,26 @@ for (const provider of ['google', 'microsoft'] as const) {
         status: 'ready',
         household,
       });
+      expect(
+        await (
+          await request.get(`${installation.origin}/api/households/${household.id}/map`)
+        ).json(),
+      ).toEqual(map);
+      await page.reload();
+      await openTable(page);
+      await expect(page.getByRole('button', { name: 'Alex blå cykel', exact: true })).toBeVisible();
+      const restoredDraft = await openDraftReview(page);
+      await expect(restoredDraft).toContainText('Lo Lind');
+      await expect(restoredDraft).toContainText('musik@example.test');
     } finally {
       await installation.close();
     }
   });
 }
 
-test('repeated setup clears households, members, invitations, sessions and future fixture tables', async () => {
+test('repeated setup clears households, members, invitations, sessions and future fixture tables', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
   const recipient = await request.newContext();
@@ -299,9 +340,9 @@ test('repeated setup clears households, members, invitations, sessions and futur
   }
 });
 
-test('setup rejects unsafe or incomplete configuration before touching existing data', async ({
-  request,
-}) => {
+test('setup rejects unsafe or incomplete configuration before touching existing data', {
+  tag: '@technical',
+}, async ({ request }) => {
   const installation = await createInstallation();
   try {
     await signIn(request, installation.origin);
@@ -334,9 +375,9 @@ test('setup rejects unsafe or incomplete configuration before touching existing 
   }
 });
 
-test('a failed seed rolls back the reset and keeps existing sessions usable', async ({
-  request,
-}) => {
+test('a failed seed rolls back the reset and keeps existing sessions usable', {
+  tag: '@technical',
+}, async ({ request }) => {
   const installation = await createInstallation();
   try {
     await signIn(request, installation.origin);

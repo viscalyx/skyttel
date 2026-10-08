@@ -9,7 +9,7 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 
 - **Alex Exempel** är installationens första administratör med Google.
 - **Robin Exempel** loggar in med Microsoft och saknar medlemskap, utom i
-  den separata installationen för ACCESS-13 där Robin är första administratör.
+  den separata installationen för ACCESS-22 där Robin är första administratör.
 - Alex har även en Microsoft-identitet för länkning. Den får inte tillhöra
   en separat Skyttel-användare. Adressen får skilja sig från Google-adressen.
 - För ACCESS-11 behövs ytterligare en Google-identitet som inte är Alex.
@@ -40,6 +40,42 @@ fallen anger formulär, samtal, profil eller administration.
 
 ## Skapa och öppna hushållet
 
+### ACCESS-23: En tom installation erbjuder båda inloggningssätten
+
+**Syfte:** Kontrollera startsidan innan någon session eller något hushåll finns.
+
+**Användare:** Utloggad besökare i en ny webbläsarprofil.
+
+**Förutsättningar:** En separat tom installation.
+
+**Integrationstest:**
+[bootstrap.spec.ts](../../tests/integration/bootstrap.spec.ts), ACCESS-23.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/bootstrap.spec.ts",
+    "caseId": "ACCESS-23"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Tom installation erbjuder både Google och Microsoft före inloggning"
+  ]
+}
+```
+
+**Steg:**
+
+1. Öppna installationens startsida i den nya profilen.
+2. Läs **Välkommen till Skyttel** och kontrollera knapparna
+   **Fortsätt med Google** och **Fortsätt med Microsoft**.
+
+**Förväntat resultat:**
+
+- Båda inloggningssätten erbjuds före första hushållet.
+- Automationen kontrollerar dessutom att en direkt hushållsbegäran utan
+  session nekas. Det är tekniskt underlag, ingen manuell formulärhandling.
+
 ### ACCESS-01: Första administratören återkommer till samma hushåll
 
 **Syfte:** Kontrollera att hushållet behålls efter omstart och ny inloggning.
@@ -52,6 +88,19 @@ fallen anger formulär, samtal, profil eller administration.
 [bootstrap.spec.ts](../../tests/integration/bootstrap.spec.ts),
 testfallet “ACCESS-01: the configured administrator creates a private
 household and returns after restart”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/bootstrap.spec.ts",
+    "caseId": "ACCESS-01"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Samma trimmade hushållsnamn och adress efter omstart och ny login"
+  ]
+}
+```
 
 **Steg:**
 
@@ -80,6 +129,19 @@ household and returns after restart”.
 testfallet “ACCESS-02: an invalid household name receives focus and can
 be corrected”.
 
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/bootstrap.spec.ts",
+    "caseId": "ACCESS-02"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Ogiltigt namn får fokus och kan rättas utan att skapa tomt hushåll"
+  ]
+}
+```
+
 **Steg:**
 
 1. Skriv tre mellanslag i **Hushållets namn** och välj **Skapa hushåll**.
@@ -101,26 +163,50 @@ inte når gränssnittet.
 **Användare:** Alex.
 
 **Förutsättningar:** Alex är inloggad och **Skapa ditt hushåll** visas.
-Öppna utvecklarverktygens konsol på den isolerade testsidan och kör följande
+
+**Separat förberedelse:** Öppna konsolen på den isolerade testsidan och kör
 felinjicering. Den låter servern slutföra nästa skapande, men döljer svaret
 för gränssnittet. Vanligt offlineläge verifierar inte detta fall.
 
 ```javascript
-const accessOriginalFetch = window.fetch.bind(window);
+window.accessOriginalFetch = window.fetch.bind(window);
 window.fetch = async (...args) => {
-  const response = await accessOriginalFetch(...args);
-  if (args[0] === '/api/households' && args[1]?.method === 'POST') {
-    window.fetch = accessOriginalFetch;
+  const input = args[0];
+  const url = new URL(input instanceof Request ? input.url : input,
+    window.location.href);
+  const method = args[1]?.method ??
+    (input instanceof Request ? input.method : 'GET');
+  const response = await window.accessOriginalFetch(...args);
+  if (url.pathname === '/api/households' && method === 'POST') {
+    await response.clone().arrayBuffer();
+    window.fetch = window.accessOriginalFetch;
     throw new TypeError('Synthetic connection interrupted');
   }
   return response;
 };
 ```
 
+Efter avbruten körning återställer du med
+`window.fetch = window.accessOriginalFetch` eller laddar om sidan.
+Återställ testdatabasen inför nästa skapandefall.
+
 **Integrationstest:**
 [bootstrap.spec.ts](../../tests/integration/bootstrap.spec.ts),
 testfallet “ACCESS-03: checking an uncertain creation recovers the committed
 household”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/bootstrap.spec.ts",
+    "caseId": "ACCESS-03"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Statuskontroll återfinner skapat hushåll efter förlorat lyckat svar"
+  ]
+}
+```
 
 **Steg:**
 
@@ -150,6 +236,21 @@ household”.
 testfallet “ACCESS-04: setup works by keyboard within a narrow phone
 viewport”. Testet kontrollerar även automatisk anpassning till smal skärm.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/usability.spec.ts",
+    "caseId": "ACCESS-04"
+  },
+  "reference": "320 × 568 och 320 × 320; fokus och nåbar utloggning utan overflow",
+  "outcomes": [
+    "Tangentbordet skapar hushållet; fokus och utloggning ryms på smal skärm"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Öppna installationen. Kontrollera att välkomstrubriken får fokus.
@@ -159,6 +260,8 @@ viewport”. Testet kontrollerar även automatisk anpassning till smal skärm.
 3. Efter inloggningen kontrollerar du att **Skapa ditt hushåll** får fokus.
    Tryck Tab till **Hushållets namn** och skriv **Hushallet Linden**.
 4. Tryck Tab till **Skapa hushåll** och aktivera med Enter.
+5. Öppna **Din profil** vid 320 × 568 och 320 × 320. Kontrollera att
+   **Logga ut** går att nå utan sidans horisontella rullning.
 
 **Förväntat resultat:**
 
@@ -178,6 +281,21 @@ kunna hämtas.
 **Integrationstest:**
 [usability.spec.ts](../../tests/integration/usability.spec.ts),
 testfallet “ACCESS-05: failed startup read offers a working retry”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/usability.spec.ts",
+    "caseId": "ACCESS-05"
+  },
+  "reference": "Blockerad bootstrap; fungerande återförsök efter återställd anslutning",
+  "outcomes": [
+    "Anslutningsfelet visar fungerande Försök igen utan omladdning"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -201,6 +319,19 @@ testfallet “ACCESS-05: failed startup read offers a working retry”.
 [usability.spec.ts](../../tests/integration/usability.spec.ts),
 testfallet “ACCESS-06: a signed-in outsider sees an access explanation
 without setup controls”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/usability.spec.ts",
+    "caseId": "ACCESS-06"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Utanförstående får förklaring utan hushållsskapande och kan logga ut"
+  ]
+}
+```
 
 **Steg:**
 
@@ -229,6 +360,19 @@ without setup controls”.
 testfallet “ACCESS-07: failed logout preserves the session and a retry closes
 household access”.
 
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/usability.spec.ts",
+    "caseId": "ACCESS-07"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Misslyckad utloggning behåller sessionen; nytt försök stänger åtkomst"
+  ]
+}
+```
+
 **Steg:**
 
 1. Välj **Logga ut**. Kontrollera felmeddelandet och den öppna hushållssidan.
@@ -253,6 +397,19 @@ household access”.
 **Integrationstest:**
 [usability.spec.ts](../../tests/integration/usability.spec.ts),
 testfallet “ACCESS-08: logout in another tab closes an already open household”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/usability.spec.ts",
+    "caseId": "ACCESS-08"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Öppen flik upptäcker utloggning; ny login når samma hushåll"
+  ]
+}
+```
 
 **Steg:**
 
@@ -279,9 +436,32 @@ Anteckna **Ditt Skyttel-användar-ID** och hushållets adress.
 
 **Integrationstest:**
 [linking.spec.ts](../../tests/integration/linking.spec.ts),
-testfallen “ACCESS-09: the interface verifies the result and lists both login
-methods” och “ACCESS-09: both proven providers return to the same user and
-household”.
+ACCESS-09, den fullständiga länkningen i webbläsaren. Separat tekniskt
+underlag provar samma e-postadress och protokollets behörighetsgränser.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/linking.spec.ts",
+    "caseId": "ACCESS-09"
+  },
+  "reference": "Google → Microsoft med olika adresser; omstart och ny inloggning",
+  "outcomes": [
+    "Båda verifierade inloggningar listas som kopplade",
+    "Microsoft når samma profil-ID och hushåll efter omstart"
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/linking.spec.ts",
+      "title": "both proven providers return to the same user and household",
+      "purpose": "Samma e-postadress länkas bara efter bevis för båda identiteterna"
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -305,7 +485,8 @@ household”.
   **Microsoft – kopplat** efter att båda identiteterna bevisas. Den avslutade
   länkningen visar inte längre ett aktuellt verifieringssteg.
 - Microsoft-inloggningen når samma Skyttel-användare och hushåll efter
-  omstart. Både lika och olika e-postadresser täcks av integrationstesterna.
+  omstart. Webbläsarprovet använder olika e-postadresser. Samma adress
+  täcks separat av det tekniska underlaget.
 
 ### ACCESS-10: Avbruten länkning kräver ny verifiering
 
@@ -319,6 +500,19 @@ household”.
 [linking.spec.ts](../../tests/integration/linking.spec.ts),
 testfallet “ACCESS-10: cancelling a verified link requires fresh proof and
 preserves household access”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/linking.spec.ts",
+    "caseId": "ACCESS-10"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Avbruten länkning behåller tillgång men kräver nytt identitetsbevis"
+  ]
+}
+```
 
 **Steg:**
 
@@ -351,6 +545,19 @@ preserves household access”.
 [linking.spec.ts](../../tests/integration/linking.spec.ts),
 testfallet “ACCESS-11: the wrong existing identity leaves linking retryable
 without changing access”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/linking.spec.ts",
+    "caseId": "ACCESS-11"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Fel Google-identitet ger rättningsbart fel och ändrar inte åtkomst"
+  ]
+}
+```
 
 **Steg:**
 
@@ -385,6 +592,21 @@ identity and private work”. Det automatiserade fallet flyttar endast den
 verkliga testserverns klocka framåt och återställer den före ny verifiering
 och vid avslut. Webbläsarens klocka och testets tidsgränser ändras inte.
 Identitetsleverantören är en lokal testadapter, inte ett verkligt konto.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/linking.spec.ts",
+    "caseId": "ACCESS-19"
+  },
+  "reference": "Utgången Google-verifiering vid omladdning; eget utkast bevaras",
+  "outcomes": [
+    "Omladdad utgången länkning kräver nytt bevis och bevarar eget utkast"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -423,6 +645,21 @@ after the real rejection”. Samma lokala leverantörsadapter och begränsade
 serverklocka som i ACCESS-19 används; klockan återställs före ny verifiering
 och vid avslut. Webbläsarens klocka och testets tidsgränser ändras inte.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/linking.spec.ts",
+    "caseId": "ACCESS-20"
+  },
+  "reference": "Utgången verifiering på öppen sida; verkligt avvisat kopplingsförsök",
+  "outcomes": [
+    "Öppen utgången länkning avvisas utan identitetsbyte eller sparande"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Öppna **Inloggningssätt**, verifiera Alex Google-identitet och kontrollera
@@ -451,20 +688,34 @@ och vid avslut. Webbläsarens klocka och testets tidsgränser ändras inte.
 
 **Användare:** Alex, utloggad.
 
-**Förutsättningar:** Installationen saknar hushåll. Öppna välkomstsidan och
-blockera `*/api/auth/sign-in/social` i utvecklarverktygens nätverksblockering.
-Det manuella fallet avbryter anslutningen när inloggningen startar; den
-automatiserade motsvarigheten orsakar ett fel hos identitetsleverantören.
-Båda verifierar att inloggningens felmeddelande tillåter ett nytt försök.
+**Förutsättningar:** Installationen saknar hushåll. Alex är utloggad.
+
+**Separat förberedelse:** Öppna välkomstsidan och blockera
+`*/api/auth/sign-in/social` i utvecklarverktygens nätverksblockering.
+Endast starten av inloggningen ska blockeras. Återställ blockeringen
+i steg 2 och vid avslut. Leverantörsfel provas separat i ACCESS-21.
 
 **Integrationstest:**
 [usability.spec.ts](../../tests/integration/usability.spec.ts),
-testfallet “ACCESS-12: provider outage gives a readable error and allows
-another login attempt”.
+ACCESS-12, anslutningsavbrott innan inloggningen når leverantören.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/usability.spec.ts",
+    "caseId": "ACCESS-12"
+  },
+  "reference": "Avbrott i inloggningsstarten innan leverantörens verifiering",
+  "outcomes": [
+    "Inloggningsstartens nätverksfel kan följas av en lyckad ny inloggning"
+  ]
+}
+```
 
 **Steg:**
 
-1. Välj **Fortsätt med Google** och kontrollera felmeddelandet.
+1. Välj **Fortsätt med Google**, läs övergången och välj
+   **Fortsätt till Google**. Kontrollera felmeddelandet.
 2. Ta bort blockeringen. Välj **Fortsätt med Google** igen och logga in
    som Alex.
 
@@ -474,39 +725,140 @@ another login attempt”.
   användas igen.
 - Efter nytt försök öppnas **Skapa ditt hushåll**.
 
-### ACCESS-13: Nekat samtycke stänger tillgången och tillåter nytt försök
+### ACCESS-13: Nekat Google-samtycke stänger tillgången
 
-**Syfte:** Kontrollera att nekat samtycke aldrig ger hushållsåtkomst.
+**Syfte:** Kontrollera att nekat Google-samtycke aldrig ger hushållsåtkomst.
 
-**Användare:** Alex med Google respektive Robin med Microsoft.
+**Användare:** Alex med Google som första administratör.
 
-**Förutsättningar:** Kör fallet i två separata tomma installationer. Alex
-ska vara första administratör med Google i den ena; Robin ska vara första
-administratör med Microsoft i den andra. Använd en ny webbläsarprofil eller
-återkalla tidigare samtycke hos leverantören så att det kan nekas.
+**Förutsättningar:** Installationen saknar hushåll.
+
+**Separat förberedelse:** Starta
+[den kontrollerade identitetsinstallationen](#kontrollerad-identitetsinstallation)
+utan `--microsoft`. Skriv `deny-consent` i terminalen före steg 1 och
+`allow-consent` före steg 3. Avsluta med `quit` efter fallet.
 
 **Integrationstest:**
-[usability.spec.ts](../../tests/integration/usability.spec.ts),
-testfallen “ACCESS-13: denied Google consent leaves access closed and allows
-a successful retry” och “ACCESS-13: denied Microsoft consent leaves access
-closed and allows a successful retry”.
+[usability.spec.ts](../../tests/integration/usability.spec.ts), ACCESS-13.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/usability.spec.ts",
+    "caseId": "ACCESS-13"
+  },
+  "reference": "Google som första administratör; nekat och återställt samtycke",
+  "outcomes": [
+    "Nekat Google-samtycke ger ingen åtkomst; nytt försök skapar hushåll"
+  ]
+}
+```
 
 **Steg:**
 
-1. Öppna respektive installation och välj dess administratörs inloggningssätt.
-   Neka samtycke i leverantörens dialog.
-2. Kontrollera felmeddelandet och att formuläret för nytt hushåll saknas.
-3. Välj samma inloggningssätt igen och godkänn denna gång.
+1. Välj **Fortsätt med Google** och sedan **Fortsätt till Google**.
+2. Läs felmeddelandet. Kontrollera att **Hushållets namn** inte visas.
+3. Återställ samtycket enligt förberedelsen. Välj samma inloggningssätt
+   och fortsätt till Google igen.
 4. Ange **Hushållet Linden** och välj **Skapa hushåll**.
 
 **Förväntat resultat:**
 
 - **Inloggningen kunde inte slutföras** visas efter nekat samtycke.
-  Inloggningsknappen kan användas igen och hushållet kan inte skapas än.
-- Godkänt samtycke visar **Skapa ditt hushåll**, och skapandet öppnar
-  **Hushållet Linden**.
-- Integrationstesterna kontrollerar även att direkta försök att läsa eller
-  skapa hushåll nekas före den lyckade inloggningen.
+  Google-knappen kan användas igen. Hushåll kan inte skapas än.
+- Godkänt samtycke visar **Skapa ditt hushåll** och skapandet öppnar
+  **Hushållet Linden**. Automationen kontrollerar även nekad direktåtkomst.
+
+### ACCESS-22: Nekat Microsoft-samtycke stänger tillgången
+
+**Syfte:** Kontrollera Microsofts egen gräns för nekat samtycke och nytt försök.
+
+**Användare:** Robin med Microsoft som första administratör.
+
+**Förutsättningar:** En separat tom installation; återanvänd inte ACCESS-13.
+
+**Separat förberedelse:** Starta
+[den kontrollerade identitetsinstallationen](#kontrollerad-identitetsinstallation)
+med `--microsoft`. Skriv `deny-consent` före steg 1 och `allow-consent`
+före steg 3. Avsluta med `quit` efter fallet.
+
+**Integrationstest:**
+[usability.spec.ts](../../tests/integration/usability.spec.ts), ACCESS-22.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/usability.spec.ts",
+    "caseId": "ACCESS-22"
+  },
+  "reference": "Microsoft som första administratör; nekat och återställt samtycke",
+  "outcomes": [
+    "Nekat Microsoft-samtycke ger ingen åtkomst; nytt försök skapar hushåll"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj **Fortsätt med Microsoft** och sedan **Fortsätt till Microsoft**.
+2. Läs felmeddelandet. Kontrollera att **Hushållets namn** inte visas.
+3. Återställ samtycket enligt förberedelsen. Välj samma inloggningssätt
+   och fortsätt till Microsoft igen.
+4. Ange **Hushållet Linden** och välj **Skapa hushåll**.
+
+**Förväntat resultat:**
+
+- **Inloggningen kunde inte slutföras** visas efter nekat samtycke.
+  Microsoft-knappen kan användas igen. Hushåll kan inte skapas än.
+- Godkänt samtycke visar **Skapa ditt hushåll** och skapandet öppnar
+  **Hushållet Linden**. Automationen kontrollerar även nekad direktåtkomst.
+
+### ACCESS-21: Leverantörsfel tillåter ett nytt inloggningsförsök
+
+**Syfte:** Kontrollera återhämtning efter fel hos leverantören, efter
+att starten av inloggningen lyckas. ACCESS-12 provar avbrott före den gränsen.
+
+**Användare:** Alex med Google som första administratör, utloggad.
+
+**Förutsättningar:** Installationen saknar hushåll.
+
+**Separat förberedelse:** Starta
+[den kontrollerade identitetsinstallationen](#kontrollerad-identitetsinstallation)
+utan `--microsoft`. Skriv `provider-down` före steg 1 och `provider-up`
+före steg 3. Återställ alltid felet eller avsluta med `quit` efter fallet.
+
+**Integrationstest:**
+[usability.spec.ts](../../tests/integration/usability.spec.ts), ACCESS-21.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/usability.spec.ts",
+    "caseId": "ACCESS-21"
+  },
+  "reference": "Leverantörsfel efter lyckad inloggningsstart; återställt Google",
+  "outcomes": [
+    "Leverantörens fel visas läsbart; nästa verifierade försök lyckas"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj **Fortsätt med Google** och sedan **Fortsätt till Google**.
+2. Läs felet på Skyttels välkomstsida och kontrollera Google-knappen.
+3. Återställ leverantören enligt förberedelsen. Välj Google igen och
+   fortsätt till leverantören.
+
+**Förväntat resultat:**
+
+- **Inloggningen kunde inte slutföras** är läsbart och Google-knappen
+  går att använda igen.
+- Ny verifierad inloggning öppnar **Skapa ditt hushåll**.
 
 ## Extern övergång och första användning
 
@@ -522,6 +874,21 @@ closed and allows a successful retry”.
 [access-onboarding.spec.ts](../../tests/integration/access-onboarding.spec.ts),
 testfallet “ACCESS-14: external sign-in explains the return and can be
 cancelled before leaving”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/access-onboarding.spec.ts",
+    "caseId": "ACCESS-14"
+  },
+  "reference": "320 × 568; avbruten Google-övergång och Microsoft utan medlemskap",
+  "outcomes": [
+    "Avbryt ger fokus tillbaka; Microsoft-utomstående får ingen åtkomst"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -549,19 +916,35 @@ cancelled before leaving”.
 med tillgängligt samtal, eller en isolerad installation med verklig röst.
 Inget sparat medgivande finns. Kryssa inte i att medgivandet ska sparas.
 Det kontrollerade provet ersätter bara externa leverantörer och media;
-verklig mikrofon och enhetsbeteende hör till #220.
+verklig mikrofon och enhetsbeteende kräver separat mänsklig observation
+enligt [mikrofonprovet](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare).
 
 **Integrationstest:**
 [access-onboarding.spec.ts](../../tests/integration/access-onboarding.spec.ts),
 testfallet “ACCESS-15: first visits use toolbar entries and optional help”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/access-onboarding.spec.ts",
+    "caseId": "ACCESS-15"
+  },
+  "reference": "1280 tal, 390 text, 320 tabell; hjälp utan samtalsstart eller media",
+  "outcomes": [
+    "Hjälp behåller fokus utan samtal; tal, text och tabell har egna ingångar"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Öppna kartan på dator. Läs kartans verktyg. Öppna
    **Information och hjälp** direkt
    från verktygsfältet. Läs om samtalet och formulären. Tryck Escape.
-2. Välj **Prata med Skyttel** i verktygen. Kontrollera medgivanderutan och
-   att ingen mikrofon lyssnar före **Godkänn och starta**. Godkänn och
+2. Välj **Prata med Skyttel** i verktygen. Kontrollera medgivanderutan
+   före **Godkänn och starta**. Godkänn och
    kontrollera röstrutans **Lyssnar**, utan att textvyn öppnas.
 3. Ladda om på telefon med hopfällda verktyg. Upprepa hjälpkontrollen.
    Välj **Skriv till Skyttel**. Läs textvyn utan medgivande eller startat
@@ -594,6 +977,19 @@ fallet förbereds ett utgånget försök i den tillfälliga testdatabasen.
 testfallet “ACCESS-16: expired provider verification returns to login and
 a fresh attempt succeeds”.
 
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/access-onboarding.spec.ts",
+    "caseId": "ACCESS-16"
+  },
+  "reference": "Utgången Google-verifiering; nytt uttryckligt försök",
+  "outcomes": [
+    "Utgången verifiering ger ingen åtkomst; nytt försök öppnar starten"
+  ]
+}
+```
+
 **Steg:**
 
 1. Fortsätt till Google. Vänta minst elva minuter hos leverantören innan
@@ -619,6 +1015,21 @@ Den andra administratören använder en separat webbläsarprofil.
 [access-onboarding.spec.ts](../../tests/integration/access-onboarding.spec.ts),
 testfallet “ACCESS-17: revoked access retires protected work while the
 operator can open costs”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/access-onboarding.spec.ts",
+    "caseId": "ACCESS-17"
+  },
+  "reference": "Öppen oskickad redigering; återkallelse utan förlust av driftåtkomst",
+  "outcomes": [
+    "Återkallelse stänger kartarbete medan driftansvarig når Månadskostnad"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -646,6 +1057,19 @@ operator can open costs”.
 [access-onboarding.spec.ts](../../tests/integration/access-onboarding.spec.ts),
 testfallet “ACCESS-18: the chosen map theme also applies when returning
 to login”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/access-onboarding.spec.ts",
+    "caseId": "ACCESS-18"
+  },
+  "reference": "Mörkt karttema, utloggning, /costs och /login-methods",
+  "outcomes": [
+    "Mörkt tema behålls på inloggningen även vid skyddade direktadresser"
+  ]
+}
+```
 
 **Steg:**
 
@@ -710,3 +1134,54 @@ Verify the deployed HTTPS origin and callback URLs before release. Local
 HTTP checks do not verify hosted ingress or provider policies for that
 deployment. Test physical mobile devices separately when they are part of
 the release's target platforms; browser viewport emulation is insufficient.
+
+## Kontrollerad identitetsinstallation
+
+Den här förberedelsen använder samma lokala leverantörsadapter som
+integrationstesterna. Den gör inga anrop till verkliga Google- eller
+Microsoft-konton och ersätter inte den separata leverantörsverifieringen.
+Inloggning, sessioner, hushåll och SQLite använder den verkliga applikationen.
+
+I devcontainern följer du
+[anvisningarna för interaktiva fixturer](../development/testing.md#interactive-fixture-processes)
+för privat portvidarebefordran och det exakta loopback-ursprunget.
+
+1. Kör `npm run build` från repositoryts rot.
+2. Kör följande kommando och håll terminalen öppen:
+
+   ```sh
+   npm run test:env -- tsx scripts/manual-access.ts
+   ```
+
+3. Öppna adressen i terminalens `origin` i en ny webbläsarprofil. Google
+   är första administratör, syntetiska Alex. För ACCESS-22 lägger du till
+   `--microsoft` i kommandot; då är Microsoft första administratör, Robin.
+4. Skriv `provider-down` eller `deny-consent` för det fel fallet anger.
+   `provider-up` respektive `allow-consent` återställer felet.
+5. Skriv `restart` endast när samma databas ska behållas. Skriv `quit`
+   för att stänga installationen och ta bort dess tillfälliga databas.
+   Starta kommandot igen inför nästa fall för att få en tom installation.
+
+## Separat tekniskt underlag och observationer
+
+[access.spec.ts](../../tests/integration/access.spec.ts) behåller sex
+requestdrivna kontroller: båda installationernas administratörsidentiteter,
+samma e-postadress före och efter första administratören, atomärt skapande
+med ogiltiga och främmande anrop, verkligt annat hushåll och återkallad
+session samt förfalskade återanrop och stängda inloggningsvägar.
+De är märkta `@technical` och utför inga manuella formulärflöden.
+
+[linking.spec.ts](../../tests/integration/linking.spec.ts) behåller separat
+tekniskt bevis för länkning med samma e-postadress efter omstart. Befintlig
+identitet provas med fel identitet, nekat samtycke, leverantörsfel och
+avbrytande. Ny identitet provas med upptagen identitet, nekat samtycke,
+leverantörsfel och avbrytande. Ursprunglig session, uttryckligt bevis,
+anrop från rätt ursprung och förfalskad verifiering provas separat.
+Ingen av dessa kontroller ersätter ACCESS-09:s klick, profil och nya
+Microsoft-inloggning i webbläsaren.
+
+Tangentbordsfokus, omflöde och läsbara statusbesked är syntetiskt
+webbläsarunderlag. Faktiskt upplästa skärmläsarbesked, fysisk mikrofon,
+ljud och enhetsbehörigheter måste observeras separat; fallen här gör
+ingen sådan verifiering. Verkliga leverantörer dokumenteras i den
+separata förberedelsen ovan och ingår inte i den kontrollerade installationen.

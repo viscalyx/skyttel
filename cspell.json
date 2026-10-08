@@ -4,6 +4,12 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "rättningsbart",
+    "requestdrivna",
+    "requestdrivet",
+    "demovärden",
+    "demoförberedelsen",
+    "demofallens",
     "dimmad",
     "dimmade",
     "nypgest",

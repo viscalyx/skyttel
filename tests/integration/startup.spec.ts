@@ -62,7 +62,9 @@ async function reservePort() {
   };
 }
 
-test('invalid configuration exits with only a redacted diagnostic', async () => {
+test('invalid configuration exits with only a redacted diagnostic', {
+  tag: '@technical',
+}, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-startup-'));
   const server = start(join(directory, 'skyttel.sqlite'), 3000, {
     SKYTTEL_ORIGIN: 'synthetic-private-invalid-origin',
@@ -78,7 +80,9 @@ test('invalid configuration exits with only a redacted diagnostic', async () => 
   }
 });
 
-test('an occupied listener exits without readiness or private diagnostics', async () => {
+test('an occupied listener exits without readiness or private diagnostics', {
+  tag: '@technical',
+}, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-startup-'));
   const reservation = await reservePort();
   const server = start(join(directory, 'skyttel.sqlite'), reservation.port);
@@ -93,9 +97,9 @@ test('an occupied listener exits without readiness or private diagnostics', asyn
 });
 
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {
-  test(`the compiled server closes cleanly on ${signal} and can reopen its SQLite storage`, async ({
-    request,
-  }) => {
+  test(`the compiled server closes cleanly on ${signal} and can reopen its SQLite storage`, {
+    tag: '@technical',
+  }, async ({ request }) => {
     const directory = await mkdtemp(join(tmpdir(), 'skyttel-startup-'));
     const reservation = await reservePort();
     const port = reservation.port;

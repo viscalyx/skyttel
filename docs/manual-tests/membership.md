@@ -60,6 +60,21 @@ att administratören ser resultatet.
 testfallet “MEDLEM-01: an administrator invites an authenticated user who
 joins by keyboard on a phone”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/membership-ui.spec.ts",
+    "caseId": "MEDLEM-01"
+  },
+  "reference": "Mottagare 320 × 568; ID-bunden inbjudan och tangentbordsacceptans",
+  "outcomes": [
+    "Rätt mottagare ansluter med tangentbord; rollen Medlem visas"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Välj **Administrera tillgång** och **Jag har personens användar-ID**
@@ -92,6 +107,19 @@ och att en återkallad inbjudan inte ger tillgång.
 [membership-ui.spec.ts](../../tests/integration/membership-ui.spec.ts),
 testfallet “MEDLEM-02: invitation errors are recoverable and a revoked
 code cannot grant access”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/membership-ui.spec.ts",
+    "caseId": "MEDLEM-02"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Okänt ID kan rättas; återkallad kod ger ingen tillgång"
+  ]
+}
+```
 
 **Steg:**
 
@@ -126,6 +154,19 @@ och att **Avbryt** lämnar den nya inbjudan användbar.
 [membership-ui.spec.ts](../../tests/integration/membership-ui.spec.ts),
 testfallet “MEDLEM-04: replacing an invitation invalidates the old code
 and cancellation keeps the new code usable”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/membership-ui.spec.ts",
+    "caseId": "MEDLEM-04"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Äldre kod nekas; avbruten återkallelse behåller den nya användbar"
+  ]
+}
+```
 
 **Steg:**
 
@@ -166,6 +207,19 @@ Integrationstestet ordnar motsvarande datum i en separat testdatabas.
 testfallet “MEDLEM-05: an expired invitation is visibly unusable and a
 fresh invitation restores the join flow”.
 
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/membership-ui.spec.ts",
+    "caseId": "MEDLEM-05"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Utgången kod nekas; ny inbjudan öppnar samma hushåll"
+  ]
+}
+```
+
 **Steg:**
 
 1. Öppna **Administrera tillgång** och välj **Inbjudningar** som Alex.
@@ -183,47 +237,87 @@ fresh invitation restores the join flow”.
 - Den nya koden öppnar hushållet med rollen **Medlem**.
 - Alex ser Robin bland medlemmarna och en **Accepterad** inbjudan.
 
-### MEDLEM-07: Kontrollera tillgång efter ett avbrott
+### MEDLEM-07: Kontrollera tillgång före och efter förlorad acceptans
 
-**Syfte:** Kontrollera att ett oklart svar ger möjlighet att läsa aktuell
-tillgång och att inbjudan kan användas när anslutningen fungerar igen.
+**Syfte:** Skilja en begäran som inte når servern från en accepterad
+inbjudan vars svar förloras. Båda ska erbjuda kontroll av aktuell tillgång.
 
 **Användare:** Alex som administratör och Robin utan tillgång.
 
 **Förutsättningar:** Alex skapar en inbjudan till Robin och delar koden.
 Använd Chromium eller Chrome med utvecklarverktyg i Robins profil.
 
+**Separat förberedelse:**
+
+1. Blockera `*/api/invitations/accept` i utvecklarverktygens panel
+   **Network request blocking** före steg 1. Ta bort blockeringen i steg 3.
+2. I steg 3 kör du följande i Robins konsol. Nästa riktiga acceptans
+   når servern; hela svaret tas emot innan bara gränssnittets svar döljs.
+   Skriptet återställer `fetch` efter den acceptansen. Använd bara en
+   isolerad installation med påhittade uppgifter.
+
+   ```javascript
+   window.membershipOriginalFetch = window.fetch.bind(window);
+   window.fetch = async (...args) => {
+     const input = args[0];
+     const url = new URL(input instanceof Request ? input.url : input,
+       window.location.href);
+     const method = args[1]?.method ??
+       (input instanceof Request ? input.method : 'GET');
+     const response = await window.membershipOriginalFetch(...args);
+     if (url.pathname === '/api/invitations/accept' && method === 'POST') {
+       await response.clone().arrayBuffer();
+       window.fetch = window.membershipOriginalFetch;
+       throw new TypeError('Synthetic acceptance response interrupted');
+     }
+     return response;
+   };
+   ```
+
+3. Vid avbruten körning återställer du med
+   `window.fetch = window.membershipOriginalFetch` eller laddar om sidan.
+   Ta bort all nätverksblockering. Återställ testdatabasen inför nästa fall;
+   en accepterad inbjudan är förbrukad.
+
 **Integrationstest:**
 [membership-ui.spec.ts](../../tests/integration/membership-ui.spec.ts),
-testfallet “MEDLEM-07: a recipient can check access when the acceptance
-response is lost”.
+MEDLEM-07, båda leveransgränserna i samma återhämtningsflöde.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/membership-ui.spec.ts",
+    "caseId": "MEDLEM-07"
+  },
+  "reference": "Förlorad begäran följd av accepterad inbjudan med förlorat svar",
+  "outcomes": [
+    "Ej levererad acceptans ger ingen tillgång",
+    "Kontroll återfinner serverns acceptans efter förlorat lyckat svar"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna utvecklarverktygen som Robin. Öppna kommandomenyn med
-   `Ctrl+Shift+P` eller `Cmd+Shift+P`, sök efter
-   **Show Network request blocking** och öppna panelen. Aktivera
-   **Enable network request blocking**, lägg till mönstret
-   `*/api/invitations/accept` och aktivera dess kryssruta.
-2. Ange koden i **Inbjudningskod** och välj **Acceptera inbjudan**.
-   Kontrollera felmeddelandet och att koden finns kvar.
-3. Välj **Kontrollera tillgång**. Kontrollera att sidan fortfarande visar
+1. Ange koden i **Inbjudningskod** och välj **Acceptera inbjudan** medan
+   begäran är blockerad. Läs felet och kontrollera att koden finns kvar.
+2. Välj **Kontrollera tillgång**. Kontrollera att sidan fortfarande visar
    **Du har inte tillgång till hushållet**.
-4. Stäng av nätverksblockeringen. Ange koden igen vid behov och välj
-   **Acceptera inbjudan**. Kontrollera att hushållet öppnas.
+3. Ta bort blockeringen och kör konsolskriptet enligt förberedelsen.
+   Ange samma kod igen och välj **Acceptera inbjudan**.
+4. Läs **Inbjudan kunde inte bekräftas** och välj **Kontrollera tillgång**
+   innan den automatiska uppdateringen öppnar hushållet.
 
 **Förväntat resultat:**
 
-- Avbrottet visar **Inbjudan kunde inte bekräftas** och knappen
-  **Kontrollera tillgång**. Koden finns kvar före kontrollen.
-- Kontrollen ger inte tillgång när acceptansen inte når servern.
-- Samma inbjudan kan användas efter att blockeringen stängs av.
-
-Integrationstestet bryter dessutom svaret efter att servern accepterar
-inbjudan. I det fallet ska **Kontrollera tillgång** öppna hushållet utan
-en ny inbjudan eller upprepad acceptans. Det kontrollerade avbrottet efter
-acceptans provas endast automatiserat; de manuella stegen bryter
-begäran innan den når servern.
+- Båda avbrotten ger **Inbjudan kunde inte bekräftas** och knappen
+  **Kontrollera tillgång**. Koden bevaras före kontrollen.
+- Kontrollen ger ingen tillgång när acceptansen inte når servern.
+- När servern accepterar men svaret förloras öppnar kontrollen
+  **Hushållet Linden** utan ny inbjudan eller upprepad acceptans.
+  Vanligt offlineläge etablerar inte detta andra utfall.
 
 ## Roller och återkallad tillgång
 
@@ -241,6 +335,19 @@ Alex håller sidan **Administrera tillgång** öppen.
 [membership-ui.spec.ts](../../tests/integration/membership-ui.spec.ts),
 testfallet “MEDLEM-03: administrators share responsibility and open clients
 lose revoked access without disrupting input”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/membership-ui.spec.ts",
+    "caseId": "MEDLEM-03"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Rolländring och återkallelse gäller öppna sidor utan förlorad inmatning"
+  ]
+}
+```
 
 **Steg:**
 
@@ -285,6 +392,19 @@ Behåll den accepterade koden för steg 4. Kartan saknar **Robin i kartan**.
 [membership-ui.spec.ts](../../tests/integration/membership-ui.spec.ts),
 testfallet “MEDLEM-06: revocation preserves shared objects and only a
 new invitation restores membership”.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/membership-ui.spec.ts",
+    "caseId": "MEDLEM-06"
+  },
+  "reference": "Chromium 1280 × 720; isolerade testdata och angivna roller",
+  "outcomes": [
+    "Gammal accepterad kod återställer inte åtkomst; ny kod bevarar kartan"
+  ]
+}
+```
 
 **Steg:**
 
@@ -333,6 +453,22 @@ Tillåt webbläsarens urklipp vid kopieringen; ett nekat urklipp provas separat.
 [membership-ui.spec.ts](../../tests/integration/membership-ui.spec.ts),
 testfallet “MEDLEM-08: staged invitation copies its one-time code and
 revocation retires an open recipient workspace”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/membership-ui.spec.ts",
+    "caseId": "MEDLEM-08"
+  },
+  "reference": "Två klienter; stegvis kopiering och öppen återkallad redigering",
+  "outcomes": [
+    "Stegvis engångskod accepteras och rensas vid avslut",
+    "Återkallelse avvecklar öppen redigering men bevarar eget utkast"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -396,9 +532,22 @@ i profil B.
 
 **Förutsättningar:** Lägg **Privat under kopiering** med beskrivningen
 **Alex behåller sitt eget förslag** i Alex utkast utan att spara.
-Robin visar sitt faktiska Skyttel-användar-ID. Ordna ett nekat försök att
-skriva till urklipp för Alex sida genom webbläsarens platsinställningar.
-Manuell markering och tangentbordets kopiering ska fortfarande vara tillåtna.
+Robin visar sitt faktiska Skyttel-användar-ID. Manuell markering och
+tangentbordets kopiering ska vara tillåtna.
+
+**Separat förberedelse:** Kör följande i Alex webbläsarkonsol före steg 1.
+Det orsakar samma kontrollerade skrivfel som integrationstestet utan att
+ändra operativsystemets behörigheter. Ladda om sidan efter fallet för att
+återställa den vanliga urklippsknappen.
+
+```javascript
+Object.defineProperty(navigator.clipboard, 'writeText', {
+  configurable: true,
+  value: async () => {
+    throw new DOMException('Synthetic clipboard denial', 'NotAllowedError');
+  },
+});
+```
 
 **Integrationstest:**
 [membership-ui.spec.ts](../../tests/integration/membership-ui.spec.ts),
@@ -407,6 +556,21 @@ by manual copy and acceptance”. Automationen ersätter endast webbläsarens
 skrivning till urklipp med ett kontrollerat fel. Den verifierar felvägen,
 inte webbläsarens verkliga behörighetsbeslut. Tangentbordets kopiering,
 inklistringen och inbjudningstjänsten används på riktigt.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/membership-ui.spec.ts",
+    "caseId": "MEDLEM-09"
+  },
+  "reference": "Kontrollerat urklippsfel; riktig tangentbordskopiering och acceptans",
+  "outcomes": [
+    "Urklippsfelet behåller rätt kod som kan kopieras manuellt och accepteras"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -431,3 +595,17 @@ inklistringen och inbjudningstjänsten används på riktigt.
 - Alex privata förslag och den gemensamma kartan är oförändrade. Robin får
   ett eget tomt utkast och ser inte Alex privata förslag. Automationen
   jämför hela Alex kartunderlag före och efter flödet.
+
+## Separat tekniskt inbjudningsunderlag
+
+[invitations.spec.ts](../../tests/integration/invitations.spec.ts) behåller
+sex requestdrivna kontroller märkta `@technical`: uppgradering med befintlig
+medlemsidentitet och användbar länkning, bunden mottagare och förbrukad kod
+efter omstart, hushållsgränser och medlemskap i annat hushåll, ersättning
+och återkallelse av gamla koder, samtidiga sista-administratörsändringar
+samt medlemsrollen och återkallelse mot gamla sessioner.
+De är separat auktoritetsunderlag, inte manuella formulärmotsvarigheter.
+
+MEDLEM-01 och MEDLEM-08 provar vanliga webbläsarflöden. MEDLEM-09 provar
+kontrollerat urklippsfel och tangentbordets kopiering. Det etablerar inte
+verkligt beslut i operativsystemets eller webbläsarens behörighetsdialog.

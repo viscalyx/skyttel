@@ -49,23 +49,41 @@ inom ett testfall; kör då inte `npm run db:setup`.
 **Syfte:** Kontrollera den gemensamma utvecklingsförberedelsen genom den
 vanliga arbetsytan, med fulla värden, konflikter och bevarade privata förslag.
 
-**Användare:** Den konfigurerade administratören. Prova Google och Microsoft
-var för sig när båda inloggningarna är konfigurerade. Robin Demo är en
+**Användare:** Den konfigurerade Google-administratören och en ännu
+olänkad Microsoft-identitet med samma visningsnamn. Robin Demo är en
 historisk person utan inloggning och ger ingen annan person medlemskap.
 
 **Förutsättningar:** Använd endast den separata utvecklingsdatabasen.
-Kör steg 1–3 i Allmän förberedelse; kasta inte demoutkastet i steg 4.
+Ange `google` som `SKYTTEL_FIRST_ADMIN_PROVIDER` och administratörens
+korrekta subject enligt installationsguiden. Kör steg 1–2 i Allmän
+förberedelse, öppna klienten utloggad och kasta inte demoutkastet i steg 4.
 Databasförberedelsen tar bort tidigare utvecklingsdata och sessioner.
 
 **Integrationstest:**
 [database-setup.spec.ts](../../tests/integration/database-setup.spec.ts),
-testfallen “DEMO-01: database setup gives only the configured google
-administrator a ready TestHousehold” och “DEMO-01: database setup gives
-only the configured microsoft administrator a ready TestHousehold”.
+DEMO-01, Google som konfigurerad administratör.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/database-setup.spec.ts",
+    "caseId": "DEMO-01"
+  },
+  "reference": "Google som första administratör; Microsoft förblir utanför",
+  "outcomes": [
+    "Endast konfigurerad identitet får administratörstillgång",
+    "Fulla demovärden, samband och konflikt går att läsa utan ändring",
+    "Kartdata och privata förslag finns kvar efter omstart"
+  ]
+}
+```
 
 **Steg:**
 
-1. Logga in som den konfigurerade administratören och öppna **Tabell**.
+1. Välj **Fortsätt med Microsoft**, sedan **Fortsätt till Microsoft**,
+   och logga in med den olänkade identiteten. Läs **Du har inte tillgång
+   till hushållet**. Välj **Logga ut**. Välj Google och fortsätt till
+   leverantören som den konfigurerade administratören. Öppna **Tabell**.
    Kontrollera **TestHousehold**, Alex Exempel, Alex blå cykel och
    Familjens garage. Expandera cykelns rad.
 2. Läs Ramfärg **Blå**, Extrahjul **0**, Kontrolldatum **2026-04-03**,
@@ -81,8 +99,9 @@ only the configured microsoft administrator a ready TestHousehold”.
    och den ändrade inloggningsadressen till `musik@example.test`.
    Öppna **Rapporter → Ändringshistorik** och läs de två verkliga
    sparandena med skilda personer. Gör inga ändringar.
-6. Starta om applikationen med samma databas och logga in igen om det
-   behövs. Kontrollera att samma uppgifter och förslag finns kvar.
+6. Starta om applikationen med samma databas och ladda om sidan.
+   Öppna **Tabell** och **Visa utkastet**. Kontrollera cykeln, Lo Lind
+   och `musik@example.test`. Kör inte databasförberedelsen på nytt.
 
 **Förväntat resultat:**
 
@@ -95,6 +114,92 @@ only the configured microsoft administrator a ready TestHousehold”.
 - Endast den konfigurerade inloggningen får administratörstillgång.
   Den andra leverantörens inloggning ger inte tillgång genom samma namn.
   Automatiseringen verifierar denna gräns och bevarande efter omstart.
+
+### DEMO-02: Microsoft-administratören får samma färdiga utvecklingshushåll
+
+**Syfte:** Kontrollera Microsofts egen administratörsgräns och den
+fullständiga demoförberedelsen, med samma läsning och bevarade privata förslag.
+
+**Användare:** Den konfigurerade Microsoft-administratören och en ännu
+olänkad Google-identitet med samma visningsnamn. Robin Demo är en
+historisk person utan inloggning och ger ingen annan person medlemskap.
+
+**Förutsättningar:** Använd endast den separata utvecklingsdatabasen.
+Ange `microsoft` som `SKYTTEL_FIRST_ADMIN_PROVIDER` och administratörens
+korrekta subject enligt installationsguiden. Kör steg 1–2 i Allmän
+förberedelse, öppna klienten utloggad och kasta inte demoutkastet i steg 4.
+Databasförberedelsen tar bort tidigare utvecklingsdata och sessioner.
+
+**Integrationstest:**
+[database-setup.spec.ts](../../tests/integration/database-setup.spec.ts),
+DEMO-02, Microsoft som konfigurerad administratör.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/database-setup.spec.ts",
+    "caseId": "DEMO-02"
+  },
+  "reference": "Microsoft som första administratör; Google förblir utanför",
+  "outcomes": [
+    "Endast konfigurerad identitet får administratörstillgång",
+    "Fulla demovärden, samband och konflikt går att läsa utan ändring",
+    "Kartdata och privata förslag finns kvar efter omstart"
+  ]
+}
+```
+
+**Steg:**
+
+1. Välj **Fortsätt med Google**, sedan **Fortsätt till Google**,
+   och logga in med den olänkade identiteten. Läs **Du har inte tillgång
+   till hushållet**. Välj **Logga ut**. Välj Microsoft och fortsätt till
+   leverantören som den konfigurerade administratören. Öppna **Tabell**.
+   Kontrollera **TestHousehold**, Alex Exempel, Alex blå cykel och
+   Familjens garage. Expandera cykelns rad.
+2. Läs Ramfärg **Blå**, Extrahjul **0**, Kontrolldatum **2026-04-03**,
+   Elcykel **Nej** och Dold rammärkning **Syntetisk ram: DEMO-CYKEL**.
+   Läs hela beskrivningen, priset **4995 SEK**, ikonen och livscykeln.
+3. Öppna **Samband för Alex Exempel** och välj **Alex blå cykel**.
+   Läs de fulla uppgifterna, öppna cykelns samband och välj
+   **Familjens garage**. Stäng med Escape och återgå till tabellen.
+4. Öppna **Granska konflikter** via konfliktantalet. Läs Lo Lind i
+   ditt förslag och Lo Berg i den gemensamma kartan. Stäng utan att välja
+   eller bekräfta något.
+5. Öppna **Visa utkastet**. Läs de två bevarade förslagen: Lo Lind
+   och den ändrade inloggningsadressen till `musik@example.test`.
+   Öppna **Rapporter → Ändringshistorik** och läs de två verkliga
+   sparandena med skilda personer. Gör inga ändringar.
+6. Starta om applikationen med samma databas och ladda om sidan.
+   Öppna **Tabell** och **Visa utkastet**. Kontrollera cykeln, Lo Lind
+   och `musik@example.test`. Kör inte databasförberedelsen på nytt.
+
+**Förväntat resultat:**
+
+- Hushållet innehåller sexton sparade objekt och tjugotre samband.
+  Alex → cykel → garage nås utan visuell kartnavigation.
+- Alla fyra egna fältslag, det dolda fältet, noll och Nej är läsbara
+  tillsammans med de ekonomiska uppgifterna. Inget värde antas saknas.
+- Granskning och läsning ändrar inte kartan, de två privata förslagen
+  eller historiken. De två sparandena behåller sin verkliga upphovsperson.
+- Endast den konfigurerade inloggningen får administratörstillgång.
+  Den andra leverantörens inloggning ger inte tillgång genom samma namn.
+  Automatiseringen verifierar denna gräns och bevarande efter omstart.
+
+## Separat tekniskt installationsunderlag
+
+[database-setup.spec.ts](../../tests/integration/database-setup.spec.ts)
+behåller tre kontroller märkta `@technical`: upprepad återställning rensar
+hushåll, medlemskap, inbjudningar, sessioner och framtida fixturtabeller;
+osäker eller ofullständig konfiguration avvisas före ändring; misslyckad
+sådd rullas tillbaka utan läckta privata diagnoser eller förlorad session.
+De ersätter inga av demofallens webbläsarhandlingar.
+
+[startup.spec.ts](../../tests/integration/startup.spec.ts) behåller
+separat tekniskt underlag för maskerade privata diagnoser vid ogiltig
+konfiguration, upptagen lyssnare utan falsk beredskap och ren avstängning
+med både SIGTERM och SIGINT följd av återöppnad SQLite-lagring.
+Tekniska installationskontroller kräver ingen uppfunnen manuell UI-motsvarighet.
 
 ## Återfinna ett sparande
 

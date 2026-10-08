@@ -341,9 +341,12 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Inloggning och hushållets start](access.md): skapa hushåll, använda
   tangentbord, avbryta extern inloggning, återhämta utgångna försök, börja
   med kartans verktyg utan startdialoger, hantera förlorad tillgång och länka
-  inloggningssätt.
+  inloggningssätt. Inloggningsstartens nätverksavbrott och leverantörsfel
+  har separata fall. Nekat Google- och Microsoft-samtycke provas var för sig.
   Länkningens två steg visar aktuell verifiering, båda tjänsternas status
-  och övergången till respektive tjänst.
+  och övergången till respektive tjänst. Microsoft-inloggning efter
+  omstart behåller profil och hushåll; requestdrivet identitetsbevis redovisas
+  separat som tekniskt underlag.
   Avbruten länkning bekräftas med bevarad tillgång och krav på ny verifiering.
   Utgången länkning förklarar ny verifiering och bevarar eget utkast och
   identitet.
@@ -356,6 +359,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   separata medlems- och inbjudningsvyer samt avvecklat oskickat arbete när en
   redan öppen mottagarklient förlorar tillgång.
   Misslyckad urklippsknapp följs av manuell kopiering och faktisk acceptans.
+  MEDLEM-07 skiljer utebliven begäran från ett förlorat svar efter serverns
+  acceptans genom separat körbar felförberedelse.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt och bevara ofullständiga uppgifter; det gemensamma
   objektformuläret med fullständiga värden, stängda avsnitts fel, typbyte,
@@ -503,8 +508,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   läsa genomförda sparanden i Rapporter och kontrollera privat tillgång;
   SPAR-05 provar styrd leverans av verkliga formulärförslag, avvisat inaktuellt
   sparande och återhämtning av ett tappat lyckat sparkvitto.
-  DEMO-01 provar även färdigt TestHousehold med den
-  konfigurerade Google- eller Microsoft-administratören.
+  DEMO-01 och DEMO-02 provar färdigt TestHousehold med Google respektive
+  Microsoft som konfigurerad administratör. Båda behåller den andra
+  leverantörens åtkomstgräns, fulla värden och privata förslag efter omstart.
+  Teknisk start, säker sådd och återställning redovisas separat.
 - [Ändringshistorik](history.md): Rapporter visar genomförda sparanden
   senaste först, fullständiga historiska värden, direktlänkar och återgång
   till bevarat arbete. Omfattar tangentbord, smala skärmar, återförsök
