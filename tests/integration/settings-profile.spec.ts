@@ -13,7 +13,8 @@ import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 
 for (const width of [1280, 390, 320]) {
-  test(`INST-01: full-page settings protect native form input and retain draft feedback at ${width}px`, async ({
+  const caseId = width === 1280 ? 'INST-01' : width === 390 ? 'INST-09' : 'INST-10';
+  test(`${caseId}: full-page settings protect native form input and retain draft feedback at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -88,6 +89,19 @@ for (const width of [1280, 390, 320]) {
       const draft = await openDraftReview(page);
       await expect(page).toHaveURL(/\/households\/[^/]+$/);
       await expect(draft).toContainText('Oskickad cykel');
+      await draft
+        .getByRole('button', { name: 'Visa förslaget: Oskickad cykel', exact: true })
+        .click();
+      const proposal = page.getByRole('dialog', { name: 'Oskickad cykel', exact: true });
+      await expect(proposal).toContainText('Oskickad cykel');
+      await expect(proposal).toContainText('Person');
+      await expect(
+        proposal
+          .locator('dt')
+          .filter({ hasText: /^Beskrivning$/ })
+          .locator('..')
+          .locator('dd'),
+      ).toHaveText('Ej uppgivet');
     } finally {
       await installation.close();
     }
@@ -369,7 +383,8 @@ test('INST-06: settings form buttons retain readable contrast when hovered in bo
 });
 
 for (const width of [390, 320]) {
-  test(`INST-07: reverse keyboard navigation keeps profile tools reachable at ${width}px`, async ({
+  const caseId = width === 390 ? 'INST-07' : 'INST-11';
+  test(`${caseId}: reverse keyboard navigation keeps profile tools reachable at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();

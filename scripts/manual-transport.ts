@@ -26,7 +26,7 @@ const transport = await createManualTransport({
 console.log(JSON.stringify({ phase: 'ready', address: transport.address, origin: values.origin }));
 console.log('arm ROUTE:BOUNDARY | status | release | drop | clear | quit');
 console.log(
-  'Routes: stage save resolve discard read recover. Boundaries: before after drop-before drop-after.',
+  'Routes: stage save resolve discard read recover read-view position. Boundaries: before after drop-before drop-after.',
 );
 const input = createInterface({ input: process.stdin });
 process.once('SIGINT', () => input.close());

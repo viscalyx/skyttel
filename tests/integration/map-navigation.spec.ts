@@ -1,8 +1,17 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import type { PersonalView } from '../../src/shared/personal-view.js';
-import { createHousehold, openMap, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openMap,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { verifyRestoredPersonalMove } from '../support/personal-view-reading.js';
 
 async function arrange(page: Page, origin: string) {
   await signIn(page.request, origin);
@@ -258,6 +267,8 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
     await expect(item).toContainText('Till objektKim Exempel');
     await item.getByRole('button', { name: 'Kim Exempel', exact: true }).click();
     const reader = page.getByRole('dialog', { name: 'Uppgifter för Kim Exempel', exact: true });
+    await expect(reader).toContainText('Kim Exempel');
+    await expect(reader).toContainText(before.types[0].name);
     await expect(
       reader.getByRole('heading', { name: 'Uppgifter för Kim Exempel', exact: true }),
     ).toBeFocused();
@@ -280,6 +291,14 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
     await expect(
       relationships.getByRole('heading', { name: 'Redigera samband', exact: true }),
     ).toHaveCount(0);
+    await expect(
+      relationships
+        .getByRole('heading', {
+          name: 'Lo Exempel → Använder → Kim Exempel (Osäkert uppgivet)',
+          exact: true,
+        })
+        .locator('..'),
+    ).toContainText('Osäkert uppgivet');
     const after = await read();
     expect(after.objects).toEqual(before.objects);
     expect(after.relationships).toEqual(before.relationships);
@@ -293,25 +312,30 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
   }
 });
 
-test('NAVIGATION-02: navigation and unsent details retain usable work in both opening orders', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  const installation = await createInstallation();
-  try {
-    const { lo, path, read } = await arrange(page, installation.origin);
-    const shared = await read();
-    for (const [width, height] of [
-      [320, 250],
-      [844, 390],
-      [1440, 1000],
-      [390, 1000],
-      [320, 1000],
-      [700, 600],
-      [640, 500],
-    ]) {
-      await page.setViewportSize({ width, height });
-      for (const navigationFirst of [true, false]) {
+const navigationConfigurations = [
+  [1440, 1000],
+  [320, 250],
+  [844, 390],
+  [390, 1000],
+  [320, 1000],
+  [700, 600],
+  [640, 500],
+] as const;
+for (const [configuration, [width, height]] of navigationConfigurations.entries()) {
+  for (const navigationFirst of [true, false]) {
+    const reference = configuration === 0 && navigationFirst;
+    const identity = configuration * 2 + (navigationFirst ? 0 : 1);
+    const caseId = reference
+      ? 'NAVIGATION-02'
+      : `NAVIGATION-${String(identity + 5).padStart(2, '0')}`;
+    test(`${caseId}: navigation and unsent details retain usable work at ${width}x${height} with ${navigationFirst ? 'navigation' : 'details'} first`, async ({
+      page,
+    }) => {
+      test.setTimeout(90_000);
+      const installation = await createInstallation();
+      try {
+        const { lo, path, read } = await arrange(page, installation.origin);
+        const shared = await read();
         await page.reload();
         // Initial graph placement may sit behind the protected display row.
         // Select with the native keyboard control before testing panel pointer access.
@@ -406,6 +430,13 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
             .scrollIntoViewIfNeeded();
         }
         const a = await navigation.boundingBox();
+        await page.evaluate(() => document.fonts.ready);
+        await page.setViewportSize({ width: width - 1, height });
+        await page.setViewportSize({ width, height });
+        await page.evaluate(
+          () =>
+            new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+        );
         const b = await panel.boundingBox();
         if (!a || !b) throw new Error('Both work areas must be visible.');
         if (width > 1000) {
@@ -533,12 +564,41 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
         await page.screenshot({
           path: `/tmp/skyttel-244/259-navigation-${width}x${height}-${navigationFirst ? 'navigation-first' : 'details-first'}.png`,
         });
+        if (reference) {
+          const personal = await (await page.request.get(`${path}/view`)).json();
+          const draft = await openDraftReview(page);
+          await draft
+            .getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true })
+            .click();
+          const proposal = page.getByRole('dialog', { name: 'Lo Exempel', exact: true });
+          await expect(proposal).toContainText(text);
+          await expect(proposal).toContainText(shared.types[0].name);
+          await proposal.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
+          await saveReviewedConflictDraft(page);
+          await closeTextView(page);
+          await openMap(page);
+          await installation.restart();
+          await page.reload();
+          const saved = await readTableObject(page, 'Lo Exempel');
+          await expect(saved.getByText(text, { exact: true })).toBeVisible();
+          await expect(saved).toContainText(shared.types[0].name);
+          expect((await read()).draft.changes).toEqual([]);
+          expect(await (await page.request.get(`${path}/view`)).json()).toEqual(personal);
+          await openMap(page);
+          await expect(lo).toBeVisible();
+          await verifyRestoredPersonalMove(
+            page,
+            'Lo Exempel',
+            personal.positions[0],
+            personal.contentVersion,
+          );
+        }
+      } finally {
+        await installation.close();
       }
-    }
-  } finally {
-    await installation.close();
+    });
   }
-});
+}
 
 test('NAVIGATION-03: six personal directions persist after restart while empty and multiple selections retain camera controls', async ({
   page,
@@ -555,10 +615,12 @@ test('NAVIGATION-03: six personal directions persist after restart while empty a
     let version = 0;
     for (const direction of ['vänster', 'höger', 'uppåt', 'nedåt', 'framåt', 'bakåt']) {
       const previous = (await readView()).positions[0];
+      const rendered = await lo.getAttribute('style');
       await navigation
         .getByRole('button', { name: `Flytta Lo Exempel: ${direction}`, exact: true })
         .click();
       await expect.poll(async () => (await readView()).positions[0]?.version).toBe(++version);
+      await expect.poll(() => lo.getAttribute('style')).not.toBe(rendered);
       const position = (await readView()).positions[0];
       if (direction === 'höger') expect(position.x).toBe(previous.x + 1);
       if (direction === 'uppåt') expect(position.y).toBe(previous.y + 1);
@@ -585,6 +647,7 @@ test('NAVIGATION-03: six personal directions persist after restart while empty a
     await lo.click({ trial: true });
     expect(await readView()).toEqual(saved);
     expect(await read()).toEqual(shared);
+    await verifyRestoredPersonalMove(page, 'Lo Exempel', saved.positions[0], saved.contentVersion);
   } finally {
     await installation.close();
   }

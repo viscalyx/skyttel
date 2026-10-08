@@ -292,7 +292,8 @@ test('YTA-02: theme choice returns focus and System follows the device', async (
 });
 
 for (const theme of ['light', 'dark'] as const) {
-  test(`YTA-06: empty mobile maps keep focused display choices readable and operable in ${theme}`, async ({
+  const caseId = theme === 'light' ? 'YTA-06' : 'YTA-10';
+  test(`${caseId}: empty mobile maps keep focused display choices readable and operable in ${theme}`, async ({
     page,
   }) => {
     const installation = await createInstallation();

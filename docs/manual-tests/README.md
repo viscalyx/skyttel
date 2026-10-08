@@ -70,7 +70,8 @@ Välj **Skriv till Skyttel** för textvyn. Den öppnas utan modellkontakt eller
 nytt medgivande. **Visa utkastet** öppnar läsning, borttagning och sparande av
 hela utkastet. Förslag kan läsas men redigeras via de vanliga formulären
 efter borttagning och nytt förslag. Konflikter granskas från **Karta** eller
-**Tabell**. **Rapporter** och **Ändringshistorik** visar gemensamt sparade fakta.
+**Tabell**. **Rapporter** och **Ändringshistorik** visar gemensamt sparade
+fakta.
 För att starta ett nytt samtal väljer du uttryckligen **Nytt samtal**; om
 medgivande behövs väljer du därefter **Godkänn och starta**.
 
@@ -149,18 +150,25 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   fönsterflytt, samtidiga läsbara detaljer och knapptext på flera rader
   med öppen samtalsnotis, sex
   beständiga personliga riktningar och nypzoom med styrplatta.
+  NAVIGATION-02 har komplett 1440 × 1000-referens; NAVIGATION-06–18
+  skyddar alla sju mått och båda öppningsordningarna. NAVIGATION-19
+  anger faktisk styrplatta och webbläsare.
 
 - [Inställningar och profil](settings-profile.md): helsida, mobilnavigation,
   återgång med fokus, synligt tangentbordsfokus i båda riktningar, läsbara
   teman och typdefinitioner i kartans samlade utkast. INST-02 bevarar
   administratörens oskickade typtext; INST-08 utför samma hela flöde som
-  vanlig medlem.
+  vanlig medlem. INST-09–11 delar de genererade mobilfallen; INST-12
+  anger faktisk zoom och fysisk tangentbordsinmatning.
 
 - [Objektarbete och samtal](workspace-panels.md): kompletta objektförslag,
-  fullständiga uppgifter direkt i raden genom dator- och mobilbyte, bevarat samtal,
+  fullständiga uppgifter direkt i raden genom dator- och mobilbyte, bevarat
+  samtal,
   skyddad formulärförlust, väntande
   objektdialog och åtkomliga samband och typer genom vanliga ingångar.
   Gamla fria fönsters placeringsfall är pensionerade utan återanvända ID:n.
+  PANEL-03 använder två riktiga browserklienter och PANEL-09 anger
+  faktiskt mikrofon- och ljudprov.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
   teman, läsbara hopplänkar och fokus, hjälp i det kompakta verktygsfältet,
   samtalshjälp med
@@ -169,7 +177,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   går att rulla på telefon. På en tom mobilkarta förblir visningsval,
   verktyg och deras tangentbordsfokus nåbara, även med röstruta eller
   samtalsnotis. Höjdhjälpen finns i navigeringen och är inaktiv utan
-  ett objektval.
+  ett objektval. YTA-06 och YTA-10 skiljer ljust och mörkt tema.
+  [Styrd leverans](workspace-preparation.md) förbereder väntande formulär,
+  personliga flyttar och första läsningar utan produktändringar.
 
 - [Bevarat hushållsarbete](household-work.md): avbruten formulärförlust,
   lagda objektförslag, oskickad samtalstext, samtal,
@@ -357,7 +367,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   IKON-06–07 kräver fysisk inmatning med verklig zoom respektive visuell
   igenkänning av cykelsymbolen.
 - [Profilbilder](profile-images.md): privata bildförslag, visning i
-  rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, historikläsning,
+  rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning,
+  historikläsning,
   kvitton och bildåtkomst. Hela bildformulärets väntande tillägg spärrar
   navigering; avvisning behåller lokala värden, tidigare bild och oberoende
   förslag. Förlustvarningen har synligt tangentbordsfokus och läsbar text
@@ -408,7 +419,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   bild och ikon, förlustvarning, återfokus samt väntande, avvisat och oklart
   tillägg till utkastet på dator och mobil. KARTA-18 och KARTA-21 skiljer
   tillämpat och uteblivet tillägg; KARTA-20 och KARTA-22 har skilda
-  ordnings- och fokusreferenser, med fullständigt sparande och omstart vid 1440px.
+  ordnings- och fokusreferenser, med fullständigt sparande och omstart vid
+  1440px.
   KARTA-07 använder verkliga familjeformulär med separat HTTP-underlag;
   KARTA-25 skyddar den samtidiga dubblettdialogen. KARTA-08 har en komplett
   1280px/ljus referens och fem egna native konfigurationsfall.
@@ -433,7 +445,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Rymdkarta](spatial-map.md): gemensam redigering genom Tabell, kompletta
   formulär och utkastets läsning med bevarad kamera och markering;
   samma kartikoner i listan och vid högerklick eller långtryck,
-  skillnaden mellan återställda och bevarade filter samt tangentbord och stängning;
+  skillnaden mellan återställda och bevarade filter samt tangentbord och
+  stängning;
   sökning och direkta samband, läsbara tidigare sparade samband,
   täta etiketter, publicerat medlemsbortfall och återhämtning av grafik.
   RYMD-11–12 skiljer fysisk pekning, orientering, zoom och faktisk
@@ -604,3 +617,14 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sina egna namn, typer och statusuppgifter även när identifierare liknar
   varandra.
   Det gäller även tidigare samband som visas tillsammans med aktuella förslag.
+
+Kamerans KAMERA-10/11, personliga vyns PLACERING-11/12 och profilens
+INST-12/13 och arbetsytans YTA-11/12 redovisar faktisk fysisk inmatning,
+zoom eller uppläsning separat. KAMERA-12 gäller fysiska hela kameragester.
+PLACERING-09 har komplett 1440-referens och PLACERING-10 behåller smal
+återkoppling, utgången toast och fokus. Den samlade omstartskedjan provas
+inte separat vid varje CSS-mått eller öppningsordning; en kombinationsbugg
+specifik för en annan konfiguration kan därför undgå referensen.
+[Kontrastmätningens sex hjälpprov](../../tests/integration/accessibility-measurements.spec.ts)
+är tekniskt underlag för beräkningen. De har ingen påhittad UI-procedur;
+INST-06 och YTA-02 behåller sina egna browserbaserade kontrastkontroller.

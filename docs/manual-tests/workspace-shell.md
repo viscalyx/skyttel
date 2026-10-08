@@ -11,10 +11,15 @@ testidentitet och påhittade hushållsuppgifter.
 
 ## Allmän förberedelse
 
+YTA-11/12 följer
+[faktisk HTTPS-ingång, provdata och återställning](workspace-preparation.md#fysiska-enheter-och-egen-provdata)
+när uppläsning eller fysisk pekning utförs på telefon eller surfplatta.
+
 1. Förbered en
    [separat provdatabas](../development/devcontainer.md#disposable-local-database),
    logga in och skapa ett tomt hushåll.
-2. Börja varje fall med ett tomt hushåll utan öppna dialoger eller textvy. Behåll
+2. Börja varje fall med ett tomt hushåll utan öppna dialoger eller textvy.
+   Behåll
    fliken mellan steg när inget annat anges.
 3. Kör med tangentbord på dator och pekskärm på telefon. Kontrollera
    skärmläsarens namn, läsordning och statusmeddelanden separat. Anteckna
@@ -40,9 +45,22 @@ stängning.
 
 **Integrationstest:**
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts),
-testfallet “YTA-01: map tools protect unsent object loss and preserve staged
-work when
-closed”.
+YTA-01.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-shell.spec.ts",
+    "caseId": "YTA-01"
+  },
+  "reference": "Chromium, angivna mått och teman; syntetiskt samtal enligt separat förberedelse.",
+  "outcomes": [
+    "Verktyg, läsbart innehåll och fokus förblir tillgängliga i det angivna arbetsflödet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -73,8 +91,22 @@ closed”.
 
 **Integrationstest:**
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts),
-testfallet “YTA-02: theme choice returns focus and System follows the
-device”.
+YTA-02.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-shell.spec.ts",
+    "caseId": "YTA-02"
+  },
+  "reference": "Chromium, angivna mått och teman; syntetiskt samtal enligt separat förberedelse.",
+  "outcomes": [
+    "Verktyg, läsbart innehåll och fokus förblir tillgängliga i det angivna arbetsflödet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -106,8 +138,22 @@ device”.
 
 **Integrationstest:**
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts),
-testfallet “YTA-03: narrow screens keep tools, help and text work reachable
-without graphics”.
+YTA-03.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-shell.spec.ts",
+    "caseId": "YTA-03"
+  },
+  "reference": "Chromium, angivna mått och teman; syntetiskt samtal enligt separat förberedelse.",
+  "outcomes": [
+    "Verktyg, läsbart innehåll och fokus förblir tillgängliga i det angivna arbetsflödet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -120,8 +166,9 @@ without graphics”.
 4. Öppna **Skriv till Skyttel** och **Visa utkastet**. Läs det tomma utkastet
    utan samtyckesfråga. Stäng texten, välj **Karta**, öppna texten igen och
    välj uttryckligen **Nytt samtal** före medgivande och samtalsstart.
-5. Upprepa med förstoring och tangentbord; använd hopplänkarna till
-   tabell och samtal före kartgrafiken.
+5. Upprepa vid 390 och 320 CSS-pixlars bredd med tangentbord.
+   Använd hopplänkarna till tabell och samtal före kartgrafiken.
+   Faktisk förstoring och fysisk inmatning provas i YTA-12.
 6. Öppna hjälpen igen och fäll ihop verktygen. Flytta fokus till hjälpen
    och tryck Escape. Kontrollera att fokus är kvar på en synlig knapp.
 
@@ -280,20 +327,34 @@ pekning på iPhone/iPad, kontrast i båda teman och 200/400 procents zoom
 
 **Användare:** Alex.
 
-**Förutsättningar:** Använd webbläsarens nätverkspanel för att pausa eller
-blockera kartans läsbegäran med adressen som slutar på `/map?...`.
-Låt inloggning och övriga begäranden fungera.
+**Förutsättningar:** Tomt provhushåll. Följ
+[kontrollerad kartläsning](workspace-preparation.md#väntande-och-avvisad-kartläsning)
+med håll före applikationen och avbruten leverans. Inloggningen fungerar.
 
 **Integrationstest:**
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts),
-testfallet “YTA-04: loading and a failed map read offer a working next
-action”.
+YTA-04.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-shell.spec.ts",
+    "caseId": "YTA-04"
+  },
+  "reference": "Chromium, angivna mått och teman; syntetiskt samtal enligt separat förberedelse.",
+  "outcomes": [
+    "Verktyg, läsbart innehåll och fokus förblir tillgängliga i det angivna arbetsflödet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Öppna hushållet med kartbegäran pausad. Läs laddningsbeskedet.
 2. Avbryt begäran och kontrollera felmeddelandet.
-3. Ta bort blockeringen och välj **Hämta aktuellt underlag**.
+3. Låt nästa läsning passera utan armering och välj **Hämta aktuellt underlag**.
 
 **Förväntat resultat:**
 
@@ -302,7 +363,7 @@ action”.
   kartan.
 
 Förlorad tillgång och avslutad mikrofon verifieras i
-[bevarat hushållsarbete](household-work.md#arbete-03-återkallad-tillgång-avvecklar-dolt-arbete).
+[bevarat hushållsarbete](household-work.md#arbete-03-återkallad-tillgång-avvecklar-oskickat-arbete).
 
 ### YTA-05: läsbart sparbesked på surfplatta
 
@@ -314,7 +375,22 @@ Förlorad tillgång och avslutad mikrofon verifieras i
 
 **Integrationstest:**
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts),
-testfallet “YTA-05: save results remain readable beside tablet work”.
+YTA-05.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-shell.spec.ts",
+    "caseId": "YTA-05"
+  },
+  "reference": "Chromium, angivna mått och teman; syntetiskt samtal enligt separat förberedelse.",
+  "outcomes": [
+    "Verktyg, läsbart innehåll och fokus förblir tillgängliga i det angivna arbetsflödet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -340,28 +416,44 @@ verktygen är nåbara även på en tom karta.
 **Förutsättningar:**
 
 - Börja i ett nytt tomt hushåll enligt den allmänna förberedelsen.
-- Använd ett 320 pixlar brett webbläsarfönster. Upprepa i ljust och mörkt tema
-  med höjderna 900, 568 och 451 pixlar. Detta är fönstermått, inte ett prov
-  på en fysisk telefon.
+- Använd ett 320 pixlar brett webbläsarfönster i ljust tema med höjderna
+  900, 568 och 451 pixlar. YTA-10 provar mörkt tema. Detta är fönstermått,
+  inte ett prov på en fysisk telefon.
 
 **Integrationstest:**
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts),
-testfallen “YTA-06: empty mobile maps keep focused display choices readable
-and operable in light” och “YTA-06: empty mobile maps keep focused display
-choices readable and operable in dark”.
+YTA-06.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-shell.spec.ts",
+    "caseId": "YTA-06"
+  },
+  "reference": "320 CSS-pixlars bredd, ljust tema och höjder 900, 568 och 451: nåbara kontroller på tom karta.",
+  "outcomes": [
+    "Verktyg, läsbart innehåll och fokus förblir tillgängliga i det angivna arbetsflödet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Använd tangentbordet på den tomma kartan för att fokusera **Återställ vy**
    och etikettikonen **Alla etiketter** i verktygsfältet. Kontrollera
-   synligt fokus och läsbara namn med hjälpmedel för varje kontroll.
+   synligt fokus och läsbara namn för varje kontroll.
+   Faktisk skärmläsaruppläsning prövas i YTA-11.
 2. Öppna **Navigera** med tangentbordet. Rulla vid behov till
    **Visa höjdhjälp** under kameraknapparna. Hela etiketten ska synas.
    Reglaget ska vara av och inaktivt med texten
    **Välj ett objekt för att visa höjdhjälp**. Stäng navigeringen.
    Nå **Tabell** i verktygsfältet
    med tangentbordet och kontrollera att knappen syns.
-3. Öppna Tabell, välj **Nytt objekt**, skriv **Cykeln** och lägg i utkastet.
+3. När steg 1–2 utförts en gång vid varje angiven höjd, behåll 451 pixlars
+   höjd. Öppna Tabell, välj **Nytt objekt**, skriv **Cykeln** och lägg i
+   utkastet.
    Välj **Karta** och öppna **Navigera**. Höjdhjälpen ska
    fortfarande vara avstängd.
    Spara inte utkastet.
@@ -388,8 +480,22 @@ förberedelsen, med ett tomt hushåll och stängda arbetsytor. Använd ett
 
 **Integrationstest:**
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts),
-testfallet “YTA-09: voice and notices leave the empty map entry and lower
-controls reachable”.
+YTA-09.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-shell.spec.ts",
+    "caseId": "YTA-09"
+  },
+  "reference": "Chromium, angivna mått och teman; syntetiskt samtal enligt separat förberedelse.",
+  "outcomes": [
+    "Verktyg, läsbart innehåll och fokus förblir tillgängliga i det angivna arbetsflödet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -411,3 +517,162 @@ controls reachable”.
   hushållets statusyta under hushållsnamnet.
 - Samtalet öppnar ingen arbetsyta automatiskt; listknappen öppnar formuläret
   när Alex väljer den. Installationen provar placering, inte hört tal.
+
+### YTA-10: visningsval på tom karta i mörkt tema
+
+**Syfte:** Kontroller och höjdhjälpsetikett förblir läsbara och nåbara i mörkt
+tema.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som YTA-06.
+
+**Integrationstest:**
+[workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts), YTA-10.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-shell.spec.ts",
+    "caseId": "YTA-10"
+  },
+  "reference": "320 CSS-pixlars bredd, mörkt tema; höjder 900, 568 och 451 skyddar fokus, kontrast och fullständiga kontrollnamn.",
+  "outcomes": [
+    "Kontroller och höjdhjälpsetikett förblir läsbara och nåbara i mörkt tema.",
+    "Förslaget ändrar inte höjdhjälpsvalet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj mörkt tema. Följ YTA-06 steg 1–2 en gång vid varje angiven höjd
+   medan kartan fortfarande är tom.
+2. Följ sedan YTA-06 steg 3 en gång vid 451 pixlars höjd.
+
+**Förväntat resultat:**
+
+- Kontroller och höjdhjälpsetikett förblir läsbara och nåbara i mörkt tema.
+- Förslaget ändrar inte höjdhjälpsvalet.
+
+### YTA-11: arbetsytans verkliga läsordning och status
+
+**Syfte:** NVDA eller VoiceOver läser verktygens namn, hopplänkar, inaktiva
+höjdhjälpen och det faktiska sparbeskedet med logisk fokusordning.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Faktisk NVDA eller VoiceOver, tomt provhushåll och
+kontrollerad samtalstjänst.
+
+**Kräver mänsklig observation:** NVDA eller VoiceOver läser verktygens namn,
+hopplänkar, inaktiva höjdhjälpen och det faktiska sparbeskedet med logisk
+fokusordning.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "NVDA eller VoiceOver läser verktygens namn, hopplänkar, inaktiva höjdhjälpen och det faktiska sparbeskedet med logisk fokusordning."
+  },
+  "reference": "Faktisk NVDA eller VoiceOver, tomt provhushåll och kontrollerad samtalstjänst.",
+  "outcomes": [
+    "NVDA eller VoiceOver läser verktygens namn, hopplänkar, inaktiva höjdhjälpen och det faktiska sparbeskedet med logisk fokusordning."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/workspace-shell.spec.ts",
+      "caseId": "YTA-02",
+      "purpose": "Kontrollerad webbläsarobservation; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/workspace-shell.spec.ts",
+      "caseId": "YTA-06",
+      "purpose": "Kontrollerad webbläsarobservation; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/workspace-shell.spec.ts",
+      "caseId": "YTA-05",
+      "purpose": "Kontrollerad webbläsarobservation; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ YTA-02 steg 1–5 och lyssna på hopplänkarnas namn.
+2. Återställ. Följ YTA-06 steg 1–3 och lyssna på höjdhjälpens namn
+   och inaktiva läge. Återställ igen och följ YTA-05 steg 1–3; lyssna
+   på det sparade resultatet. Anteckna hjälpmedlets version.
+
+**Förväntat resultat:**
+
+- NVDA eller VoiceOver läser verktygens namn, hopplänkar, inaktiva höjdhjälpen
+  och det faktiska sparbeskedet med logisk fokusordning.
+
+### YTA-12: riktig zoom och fysisk arbetsyteinmatning
+
+**Syfte:** Verklig 200 och 400 procents webbläsarzoom samt fysisk pekinmatning
+på surfplatta lämnar formulär, hjälp, sparbesked och fortsatt arbete nåbara.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Dator med riktig webbläsarzoom och fysisk surfplatta;
+använd påhittade uppgifter.
+
+**Kräver mänsklig observation:** Verklig 200 och 400 procents webbläsarzoom samt
+fysisk pekinmatning på surfplatta lämnar formulär, hjälp, sparbesked och
+fortsatt arbete nåbara.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Verklig 200 och 400 procents webbläsarzoom samt fysisk pekinmatning på surfplatta lämnar formulär, hjälp, sparbesked och fortsatt arbete nåbara."
+  },
+  "reference": "Dator med riktig webbläsarzoom och fysisk surfplatta; använd påhittade uppgifter.",
+  "outcomes": [
+    "Verklig 200 och 400 procents webbläsarzoom samt fysisk pekinmatning på surfplatta lämnar formulär, hjälp, sparbesked och fortsatt arbete nåbara."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/workspace-shell.spec.ts",
+      "caseId": "YTA-03",
+      "purpose": "Kontrollerad webbläsarobservation; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/workspace-shell.spec.ts",
+      "caseId": "YTA-05",
+      "purpose": "Kontrollerad webbläsarobservation; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ YTA-03 steg 1–6 en gång vid varje riktig zoomnivå.
+   Använd den vanliga HTTPS-provinstallationen från den fysiska förberedelsen
+   i stället för grundfallets syntetiska röst-launcher. Under steg 4 öppnar
+   du texten och det tomma utkastet; stanna före **Nytt samtal** och fortsätt
+   med steg 5–6. Faktisk samtalsstart hör till ett separat tjänsteprov.
+2. Återställ. Följ YTA-05 steg 1–3 på en faktisk surfplatta med fysisk
+   pekning. Anteckna zoom, CSS-mått, enhet och fokus separat från
+   automatiserad geometri.
+
+**Förväntat resultat:**
+
+- Verklig 200 och 400 procents webbläsarzoom samt fysisk pekinmatning på
+  surfplatta lämnar formulär, hjälp, sparbesked och fortsatt arbete nåbara.
