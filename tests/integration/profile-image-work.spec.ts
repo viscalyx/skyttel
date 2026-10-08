@@ -5,14 +5,15 @@ import { createHousehold, openNewObject, signIn } from '../support/client.js';
 import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
-for (const [width, height] of [
-  [1440, 1000],
-  [1440, 500],
-  [320, 1000],
-  [320, 250],
-]) {
+for (const [width, height, lightId, darkId] of [
+  [1440, 1000, 'BILD-04', 'BILD-07'],
+  [1440, 500, 'BILD-08', 'BILD-09'],
+  [320, 1000, 'BILD-10', 'BILD-11'],
+  [320, 250, 'BILD-12', 'BILD-13'],
+] as const) {
   for (const colorScheme of ['light', 'dark'] as const) {
-    test(`BILD-04: delayed whole-form image rejection retains local values and earlier proposals at ${width}x${height}px ${colorScheme}`, async ({
+    const caseId = colorScheme === 'light' ? lightId : darkId;
+    test(`${caseId}: delayed whole-form image rejection retains local values and earlier proposals at ${width}x${height}px ${colorScheme}`, async ({
       page,
     }) => {
       const installation = await createInstallation();
@@ -187,8 +188,12 @@ for (const [width, height] of [
   }
 }
 
-for (const width of [1440, 390, 320]) {
-  test(`BILD-05: pending image staging blocks navigation and stale rejection preserves the complete form at ${width}px`, async ({
+for (const [width, caseId] of [
+  [1440, 'BILD-05'],
+  [390, 'BILD-14'],
+  [320, 'BILD-15'],
+] as const) {
+  test(`${caseId}: pending image staging blocks navigation and stale rejection preserves the complete form at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();

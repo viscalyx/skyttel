@@ -319,9 +319,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   mäter olästa byte i serverns källfil och kontrollerar borttagna exportfiler.
 
 - [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
-  mobil, korta fönster vid förstoring, bildens företräde, typbyte, omstart
+  smala CSS-vyer, separat verklig zoom, bildens företräde, typbyte, omstart
   och återgång till standardikon, lokalt tangentbordsfokus samt kompletta
   tillägg med bevarade värden vid avvisat eller okänt utfall.
+  IKON-06–07 kräver fysisk inmatning med verklig zoom respektive visuell
+  igenkänning av cykelsymbolen.
 - [Profilbilder](profile-images.md): privata bildförslag, visning i
   rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, historikläsning,
   kvitton och bildåtkomst. Hela bildformulärets väntande tillägg spärrar
@@ -329,8 +331,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   förslag. Förlustvarningen har synligt tangentbordsfokus och läsbar text
   under pekaren i båda teman, också på korta fönster. Avbrutet filval
   ändrar inget och inaktuellt tillägg bevarar hela formuläret.
-  Alla objekttyper delar text, ikon och bild i samma förslag och kvitto;
-  bildborttagning återställer inte en äldre sparad bild.
+  Egen bildtyp är BILD-06:s generiska referens för text, ikon och bild
+  i samma förslag och kvitto; bildborttagning återställer inte en äldre
+  sparad bild. Den utför inte varje förifylld typ. BILD-07–15 identifierar
+  befintliga storleks- och temavarianter; BILD-03 provar faktiskt medlemskap
+  i ett annat hushåll. BILD-16 skiljer verklig zoom från CSS-storlekarna.
 
 - [Externa assistenter](assistants.md): OAuth, separat AI-val, avböjd
   anslutning, avgränsade läsningar, egna utkast, hushållsgränser och
@@ -529,7 +534,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   senaste först, fullständiga historiska värden, direktlänkar och återgång
   till bevarat arbete. Omfattar tangentbord, smala skärmar, återförsök
   och fokus under fördröjd hämtning, sparlänkar med bevarad oskickad text
-  och historiska ikonvärden bredvid profilbilder.
+  samt HISTORIK-14–17:s smala varianter och separat verklig zoom.
+  HISTORIK-13 är avvecklat: ikontext före/efter bredvid oförändrad
+  profilbild saknar sin specifika integrationskontroll.
 - [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
   kända slutdatum och granska, kasta eller spara vanlig borttagning med
   bevarade anslutna objekt och historikunderlag, även efter privata typbyten.

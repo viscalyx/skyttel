@@ -22,6 +22,21 @@ Använd inga verkliga personuppgifter.
 
 ### HISTORIK-01: läs sparanden senaste först och återgå till tabellens arbete
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-01"
+  },
+  "reference": "1280×720; genomförda sparanden senaste först och återgång till tabellsökning.",
+  "outcomes": [
+    "Senaste sparandet visas först; privat förslag, tabellsökning och återgångsfokus bevaras."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Läsa gemensamma sparanden utan att ändra det egna utkastet,
 tabellens sökning eller fokus.
 
@@ -53,23 +68,40 @@ first”.
 
 ### HISTORIK-06: läs fullständiga historiska värden med tangentbord
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-06"
+  },
+  "reference": "1280×850; datorreferens för tangentbord och fullständiga historiska värden.",
+  "outcomes": [
+    "Båda namn, beskrivning, skuld, osäkerhet och datum kan läsas med tangentbord."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Läsa sparandets fullständiga värden på dator och telefon.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Skapa och spara **Familjeabonnemang** med beskrivningen
-**Hushållets musik** och osäkert uppgiven skuld **1 200 SEK**, daterad
-**2026-06-01**. Byt namnet till **Musik för familjen** och spara separat.
-Prova vid 1280, 390 och 320 pixlars bredd samt verklig zoom på 200 och
-400 procent. Registrera manuella zoomresultat separat.
+**Förutsättningar:** Två sparanden för **Familjeabonnemang** och
+**Musik för familjen**, med beskrivning **Hushållets musik**, osäkert
+uppgiven skuld **1 200 SEK** och datum **2026-06-01**.
+Använd 1280 × 850 CSS-bildpunkter, datorreferensen för fullständig
+historikläsning. Smala motsvarigheter har egna fall nedan; verklig zoom
+redovisas i HISTORIK-18.
+
+**Separat förberedelse:** Kör
+[fullständiga historiska värden](#fullständiga-historiska-värden) en gång
+i ett nytt hushåll med tom karta och tomt utkast. Detta förbereder exakt
+de värden som ska läsas; testet provar historikläsningen, inte skuldens
+formulär. Återställ genom ett nytt provhushåll mellan körningar.
 
 **Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts), testfallen
-“HISTORIK-06: Reports exposes complete historical values with keyboard at
-1280px”,
-“HISTORIK-06: Reports exposes complete historical values with keyboard at 390px”
-och “HISTORIK-06: Reports exposes complete historical values with keyboard at
-320px”.
+[history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-06.
 
 **Steg:**
 
@@ -86,13 +118,34 @@ och “HISTORIK-06: Reports exposes complete historical values with keyboard at
 
 ### HISTORIK-07: återförsök bevarar ett senare fokusval
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-07"
+  },
+  "reference": "1280×720; första historikbegäran avbryts och återförsöket fördröjs.",
+  "outcomes": [
+    "Återförsöket visar verkligt sparande utan att stjäla ett senare fokusval."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Återhämta en misslyckad historikhämtning utan påhittade resultat
 eller flytt av användarens senare fokusval.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Ett genomfört sparande. En testproxy kan avbryta
-nästa historikhämtning och fördröja nästa svar.
+**Förutsättningar:** Ett genomfört sparande, öppnad hushållskarta
+och stängda Rapporter.
+
+**Separat förberedelse:** Kör koden i
+[styrd historikhämtning](#styrd-historikhämtning) i konsolen på hushållets
+sida. Den avbryter första historikhämtningen innan servern och håller nästa
+begäran tills `releaseHistoryRead()` körs. Ladda om efter fallet eller om
+du avbryter innan svaret släpps.
 
 **Integrationstest:**
 [history.spec.ts](../../tests/integration/history.spec.ts), testfallet
@@ -101,11 +154,12 @@ real saves”.
 
 **Steg:**
 
-1. Avbryt nästa historikhämtning och välj **Rapporter**. Läs felet.
-2. Fördröj nästa svar och välj **Hämta historik igen**.
+1. Välj **Rapporter** med det förberedda engångsfelet. Läs felet.
+2. Välj **Hämta historik igen**. Den förberedda andra begäran hålls.
 3. Kontrollera fokus på historikens rubrik. Fokusera därefter
    **Tillbaka till arbetet** utan att aktivera knappen.
-4. Släpp fram svaret. Läs det verkliga sparandets kort och kontrollera fokus.
+4. Kör `releaseHistoryRead()` i konsolen. Läs det verkliga sparandets kort
+   och kontrollera fokus.
 
 **Förväntat resultat:**
 
@@ -116,6 +170,21 @@ real saves”.
 ## Direkt åtkomst och historiska typer
 
 ### HISTORIK-10: öppna ett utpekat sparande efter ändrad typdefinition
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-10"
+  },
+  "reference": "1280×720; direktlänk efter sparad ändring av typbenämningen.",
+  "outcomes": [
+    "Utpekat sparande öppnas med fokus och sin historiska typbenämning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa rätt historisk benämning genom en direktlänk.
 
@@ -145,27 +214,46 @@ change”.
 
 ### HISTORIK-11: privata väntande och avvisade sparförsök saknas i historiken
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-11"
+  },
+  "reference": "1280×720; API-förberedda privata avvisade och väntande sparförsök.",
+  "outcomes": [
+    "Bara genomförda sparanden visas; karta, utkast och sparförsök ändras inte av läsningen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Skilja privata sparförsök från genomförda gemensamma sparanden.
 
-**Användare:** Alex Exempel i två webbläsarprofiler med samma inloggning.
+**Användare:** Alex Exempel.
 
-**Förutsättningar:** Ett genomfört sparande och ett osparat objektförslag.
-En testproxy kan hålla nästa sparbegäran innan den når servern.
+**Förutsättningar:** Ett genomfört sparande för **Lo Exempel** och
+**Osparad person** i det egna utkastet. Rapporter är stängda.
+
+**Separat förberedelse:** Kör
+[privata sparförsök](#privata-sparförsök) på hushållets sida. Den skapar
+ett verkligt avvisat och ett väntande försök via API utan att genomföra
+sparande. Detta motsvarar integrationstestets utgångsläge; det är inte
+bevis för att en webbläsarproxy skapar dessa försök. Använd en ny databas
+för nästa fall och ta bort provdatabasen när läsningen är kontrollerad.
 
 **Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts), testfallet
-“HISTORIK-11: private rejected and pending save attempts never enter shared
-Reports”.
+[history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-11.
 
 **Steg:**
 
-1. Öppna samma utkast i båda profilerna. Ändra förslaget i den andra
-   profilen. Försök spara första profilens äldre underlag och läs avslaget.
-2. Hämta aktuellt underlag. Håll nästa sparbegäran med testproxyn och
-   påbörja sparandet, så att det väntande försöket finns kvar.
-3. Välj **Rapporter** och läs gemensam historik. Kontrollera det verkliga
-   sparandet, det osparade förslaget och de båda privata försöken.
-4. Avsluta provinstallationen; använd en ny isolerad databas för nästa fall.
+1. Välj **Rapporter** och läs **Ändringshistorik**.
+2. Kontrollera att bara Lo Exempels genomförda sparande visas, utan
+   Osparad person eller de förberedda försöken.
+3. Välj **Tillbaka till arbetet → Tabell**. Kontrollera att
+   Osparad person finns kvar i ditt arbete utan att spara eller kasta
+   förslaget.
 
 **Förväntat resultat:**
 
@@ -174,6 +262,21 @@ Reports”.
 - Historikläsningen ändrar varken karta, utkast eller sparförsök.
 
 ### HISTORIK-12: följ sparlänkar och behåll pågående arbete
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-12"
+  },
+  "reference": "1280×720; två sparlänkar och pekaråtergång med samtalsnotis.",
+  "outcomes": [
+    "Sökning, utkast och oskickad text bevaras; notisen hindrar inte återgång."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Öppna utpekade sparanden utan att tappa tabellsökningen,
 det egna utkastet eller oskickad samtalstext.
@@ -186,14 +289,8 @@ konfigurerad samtalsleverantör för att kontrollera återgången med en
 synlig samtalsnotis.
 
 **Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts), testfallen:
-
-- “HISTORIK-12: following save links preserves table search and unsent
-  conversation text”.
-- “HISTORIK-12: following save links preserves table search and unsent
-  conversation text at 390px”.
-- “HISTORIK-12: following save links preserves table search and unsent
-  conversation text at 320px”.
+[history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-12.
+Referens: 1280 × 720 CSS-pixlar. Smala varianter har egna fall nedan.
 
 **Steg:**
 
@@ -206,8 +303,6 @@ synlig samtalsnotis.
    adressfältet och att rätt sparandes uppgifter öppnas.
 5. Välj **Tillbaka till arbetet** med pekaren utan att först stänga
    samtalsnotisen. Öppna sedan textvyn igen.
-6. Upprepa med en vy på 390 × 844 och 320 × 640 CSS-pixlar. Kontrollera
-   samma återgång med pekaren och att notisen fortfarande går att läsa.
 
 **Förväntat resultat:**
 
@@ -217,31 +312,335 @@ synlig samtalsnotis.
 - Utkastet och det oskickade meddelandet är oförändrade. Besöket begär
   inget medgivande och skickar inget meddelande.
 
-### HISTORIK-13: läs historiska ikoner bredvid samma profilbild
-
-**Syfte:** Läsa ändrade ikonvärden även när profilbilden är oförändrad.
-
-**Användare:** Alex Exempel.
-
-**Förutsättningar:** Spara **Lo Exempel** med ikonen **Cykel** och en
-syntetisk profilbild. Byt sedan endast ikonen till **Bil** och spara igen.
-
-**Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts), testfallet
-“HISTORIK-13: historical icon changes remain readable beside an unchanged
-profile image”.
-
-**Steg:**
-
-1. Välj **Rapporter** och öppna ikonbytets **Visa ändringarna**.
-2. Läs ikon och profilbild före respektive efter sparandet.
-
-**Förväntat resultat:**
-
-- Samma profilbild visas på båda sidor.
-- **Ikon: Cykel** före och **Ikon: Bil** efter går att läsa som text.
-
 ## Avvecklade fall
 
 HISTORIK-02–05 och HISTORIK-08–09 är avvecklade med historisk ångring.
 Deras identiteter återanvänds inte.
+
+HISTORIK-13 är avvecklat utan ersättande motsvarighet. Därmed finns inget
+inspekterat integrationstest som särskilt upptäcker att historisk ikontext
+före och efter döljs bredvid en oförändrad profilbild. Andra bild- och
+historikfall påstås inte ge samma skydd. Identiteten återanvänds inte.
+
+## Smal historikläsning
+
+Fallen behåller varsin fullständig variant av det ursprungliga arbetsflödet.
+Ställ in CSS-storleken före stegen. Detta utför inte verklig webbläsarzoom,
+fysisk touch eller skärmläsaruppläsning.
+
+### HISTORIK-14: Läs fullständiga historiska värden vid 390px
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-14"
+  },
+  "reference": "390×850; smal bredd skyddar omflöde och tangentbordsåtkomst till hela värden.",
+  "outcomes": [
+    "Namn, beskrivning, skuld, osäkerhet och datum visas utan vågrät sidrullning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Behålla fullständig tangentbordsläsning vid smal bredd.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Ett nytt hushåll med HISTORIK-06:s två sparanden för
+Familjeabonnemang, vid 390 × 850 CSS-bildpunkter.
+
+**Integrationstest:**
+[history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-14.
+
+**Steg:**
+
+1. Utför [HISTORIK-06](#historik-06-läs-fullständiga-historiska-värden-med-tangentbord),
+   steg 1–4 vid den angivna bredden.
+2. Fokusera **Visa ändringarna** med tangentbord och tryck Enter. Läs
+   före- och eftervärdenas namn och beskrivning samt skuldens belopp,
+   osäkerhet och datum.
+
+**Förväntat resultat:**
+
+- Samtliga historiska värden går att läsa utan kartgrafik, ljud eller
+  samtal. Innehållet kräver ingen vågrät rullning av hela sidan.
+
+### HISTORIK-15: Läs fullständiga historiska värden vid 320px
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-15"
+  },
+  "reference": "320×850; smal bredd skyddar omflöde och tangentbordsåtkomst till hela värden.",
+  "outcomes": [
+    "Namn, beskrivning, skuld, osäkerhet och datum visas utan vågrät sidrullning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Behålla fullständig tangentbordsläsning vid smal bredd.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Ett nytt hushåll med HISTORIK-06:s två sparanden för
+Familjeabonnemang, vid 320 × 850 CSS-bildpunkter.
+
+**Integrationstest:**
+[history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-15.
+
+**Steg:**
+
+1. Utför [HISTORIK-06](#historik-06-läs-fullständiga-historiska-värden-med-tangentbord),
+   steg 1–4 vid den angivna bredden.
+2. Fokusera **Visa ändringarna** med tangentbord och tryck Enter. Läs
+   före- och eftervärdenas namn och beskrivning samt skuldens belopp,
+   osäkerhet och datum.
+
+**Förväntat resultat:**
+
+- Samtliga historiska värden går att läsa utan kartgrafik, ljud eller
+  samtal. Innehållet kräver ingen vågrät rullning av hela sidan.
+
+### HISTORIK-16: Bevara arbete genom sparlänkar vid 390px
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-16"
+  },
+  "reference": "390×844; smal vy skyddar pekaråtergång förbi synlig samtalsnotis.",
+  "outcomes": [
+    "Båda sparlänkar öppnar rätt kort; sökning, fokus, utkast och oskickad text bevaras."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Skydda återgångsknappen och pågående arbete i en smal vy.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** HISTORIK-12:s två sparanden och privata förslag.
+Samtalsleverantör saknas. Använd 390 × 844 CSS-bildpunkter.
+
+**Integrationstest:**
+[history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-16.
+
+**Steg:**
+
+1. Utför [HISTORIK-12](#historik-12-följ-sparlänkar-och-behåll-pågående-arbete),
+   steg 1–5 vid den angivna storleken.
+2. Följ båda sparlänkarna, läs rätt kort och kontrollera rubrikfokus.
+3. Rulla vid behov till **Tillbaka till arbetet** och aktivera knappen
+   med pekaren medan samtalsnotisen finns kvar. Öppna textvyn igen.
+
+**Förväntat resultat:**
+
+- Notisen är läsbar och täcker inte återgångsknappen. Sökningen,
+  sökfältets fokus, utkastet och oskickad text finns kvar.
+- Ingen medgivanderuta öppnas och inget samtalsmeddelande skickas.
+
+### HISTORIK-17: Bevara arbete genom sparlänkar vid 320px
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-17"
+  },
+  "reference": "320×640; smal vy skyddar pekaråtergång förbi synlig samtalsnotis.",
+  "outcomes": [
+    "Båda sparlänkar öppnar rätt kort; sökning, fokus, utkast och oskickad text bevaras."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Skydda återgångsknappen och pågående arbete i en smal vy.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** HISTORIK-12:s två sparanden och privata förslag.
+Samtalsleverantör saknas. Använd 320 × 640 CSS-bildpunkter.
+
+**Integrationstest:**
+[history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-17.
+
+**Steg:**
+
+1. Utför [HISTORIK-12](#historik-12-följ-sparlänkar-och-behåll-pågående-arbete),
+   steg 1–5 vid den angivna storleken.
+2. Följ båda sparlänkarna, läs rätt kort och kontrollera rubrikfokus.
+3. Rulla vid behov till **Tillbaka till arbetet** och aktivera knappen
+   med pekaren medan samtalsnotisen finns kvar. Öppna textvyn igen.
+
+**Förväntat resultat:**
+
+- Notisen är läsbar och täcker inte återgångsknappen. Sökningen,
+  sökfältets fokus, utkastet och oskickad text finns kvar.
+- Ingen medgivanderuta öppnas och inget samtalsmeddelande skickas.
+
+## Separat felberedning
+
+### Fullständiga historiska värden
+
+Öppna ett nytt hushåll med tom karta och tomt utkast. Kör i konsolen på
+hushållets sida. Koden förbereder två genomförda sparanden med samma
+historiska uppgifter som integrationstestet, utan samtalsleverantör.
+Ladda om sidan efter kommandot. Kör inte detta i ett vanligt hushåll.
+
+```javascript
+await (async () => {
+  const householdId = location.pathname.match(/households\/([^/]+)/)?.[1];
+  if (!householdId) throw new Error('Öppna provhushållets karta');
+  const path = `/api/households/${householdId}/map`;
+  const read = async () => (await fetch(path)).json();
+  const initial = await read();
+  if ((initial.objects ?? []).length || (initial.relationships ?? []).length ||
+      ['changes', 'relationships', 'objectTypes', 'relationshipTypes']
+        .some(key => (initial.draft[key] ?? []).length))
+    throw new Error('Använd ett nytt hushåll med tom karta och tomt utkast');
+  const build = await (await fetch('/api/version')).json();
+  const headers = { 'Content-Type': 'application/json',
+    'X-Skyttel-Build': `${build.commit}:${build.version}` };
+  const post = async (route, value) => {
+    const response = await fetch(`${path}/${route}`, {
+      method: 'POST', headers, body: JSON.stringify(value) });
+    if (!response.ok) throw new Error(`Förberedelsen misslyckades: ${route}`);
+    return response.json();
+  };
+  for (const [name, operationId] of [
+    ['Familjeabonnemang', 'initial'], ['Musik för familjen', 'rename'],
+  ]) {
+    const state = await read();
+    const before = (state.objects ?? []).find(item => item.id === 'subscription');
+    await post('draft', { version: state.draft.version, id: 'subscription',
+      baseRevision: before?.revision ?? null,
+      value: { typeId: initial.types[0].id, description: 'Hushållets musik',
+        ...before, name, financialFacts: { debt: {
+          knowledge: 'uncertain', value: '1 200 SEK', reportedOn: '2026-06-01'
+        } } } });
+    await post('save', { version: (await read()).draft.version, operationId });
+  }
+  console.log('Två historiska sparanden är förberedda');
+})();
+```
+
+### Styrd historikhämtning
+
+Kör på hushållets sida före HISTORIK-07. Koden gäller bara nästa två
+historikbegäranden. Ladda om sidan efter kontrollen.
+
+```javascript
+(() => {
+  const originalFetch = window.fetch.bind(window);
+  let reads = 0;
+  window.fetch = async (...args) => {
+    const target = args[0] instanceof Request ? args[0].url : args[0];
+    const method = args[1]?.method ?? args[0]?.method ?? 'GET';
+    if (method === 'GET' &&
+        new URL(target, location.href).pathname.endsWith('/map/history')) {
+      reads += 1;
+      if (reads === 1) throw new TypeError('Förberett historikfel');
+      if (reads === 2) {
+        window.fetch = originalFetch;
+        await new Promise(resolve => { window.releaseHistoryRead = resolve; });
+      }
+    }
+    return originalFetch(...args);
+  };
+})();
+```
+
+### Privata sparförsök
+
+Kör en gång i HISTORIK-11:s isolerade hushåll med **Lo Exempel** sparad
+och **Osparad person** i utkastet. Kommandot avbryts om utgångsläget
+saknas. De två försöken använder provnamn; skapa ett nytt hushåll mellan
+körningarna. Koden sparar inga förslag i den gemensamma kartan.
+
+```javascript
+await (async () => {
+  const householdId = location.pathname.match(/households\/([^/]+)/)?.[1];
+  if (!householdId) throw new Error('Öppna provhushållets karta');
+  const path = `/api/households/${householdId}/map`;
+  const state = await (await fetch(path)).json();
+  if (!(state.objects ?? []).some(item => item.name === 'Lo Exempel') ||
+      !(state.draft.changes ?? []).some(item => item.after?.name === 'Osparad person'))
+    throw new Error('Förbered sparad Lo Exempel och Osparad person i utkastet');
+  const build = await (await fetch('/api/version')).json();
+  const headers = { 'Content-Type': 'application/json',
+    'X-Skyttel-Build': `${build.commit}:${build.version}` };
+  for (const [operationId, version, expected] of [
+    ['private-rejected', state.draft.version - 1, 'rejected'],
+    ['private-pending', state.draft.version, 'pending'],
+  ]) {
+    const response = await fetch(`${path}/operations`, { method: 'POST', headers,
+      body: JSON.stringify({ operationId, version,
+        contentVersion: state.contentVersion }) });
+    const result = await response.json();
+    if (!response.ok || result.operation?.status !== expected)
+      throw new Error(`Förberedelsen misslyckades: ${operationId}`);
+    console.log(operationId, result.operation.status);
+  }
+})();
+```
+
+## Identiteter och mänsklig observation
+
+HISTORIK-06 behåller 1280px; dess smala varianter får HISTORIK-14–15.
+HISTORIK-12 behåller 1280px; dess smala varianter får HISTORIK-16–17.
+Alla befintliga kontroller i dessa varianter finns kvar.
+
+### HISTORIK-18: Läs historiska värden med verklig webbläsarzoom
+
+**Syfte:** Kontrollera verklig zoom med tangentbord på testdatorn.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** HISTORIK-06:s sparanden och en vanlig datorwebbläsare.
+
+**Kräver mänsklig observation:** Använd webbläsarens verkliga zoomreglage
+och fysiska tangentbord. Kontrollera att text och fokus går att läsa vid
+200 och 400 procent. CSS-storlekarna i integrationstesterna utför inte
+denna observation.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Använd verklig webbläsarzoom och fysiskt tangentbord; läs historiska värden och synligt fokus vid 200 och 400 procent."
+  },
+  "reference": "Datorwebbläsare, 200 och 400 procent verklig zoom.",
+  "outcomes": ["Alla historiska värden är läsbara och kan öppnas med tangentbord."],
+  "evidence": [{
+    "kind": "overlap", "spec": "tests/integration/history.spec.ts",
+    "caseId": "HISTORIK-15", "purpose": "Automatiskt omflöde vid 320px, utan verklig zoom."
+  }]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ in 200 procents zoom i webbläsaren. Välj **Rapporter**,
+   tabba till namnbytets **Visa ändringarna** och tryck Enter.
+2. Läs båda namnen, beskrivningen, skuldens belopp, osäkerhet och datum.
+   Kontrollera synligt fokus och rullning till hela texten.
+3. Upprepa vid 400 procent och återställ därefter zoom till 100 procent.
+
+**Förväntat resultat:**
+
+- Samtliga värden kan läsas och öppnas utan att först minska zoomen.
+  Ingen vågrät sidrullning eller täckande kontroll hindrar läsningen.

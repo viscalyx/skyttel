@@ -371,6 +371,10 @@ test('BILD-03: private, historical and known image addresses enforce current hou
     for (const id of imageIds)
       expect((await second.request.get(`${images}/${id}`)).status()).toBe(403);
     installation.seedMembership(user.id, 'elsewhere', 'Annat hushåll');
+    expect(
+      (await second.request.get(`${installation.origin}/api/households/elsewhere/map`)).status(),
+    ).toBe(200);
+    expect((await second.request.get(path)).status()).toBe(403);
     for (const id of imageIds)
       expect(
         (
