@@ -6,7 +6,7 @@ import { conflictCollaborators } from '../support/conflict-properties.js';
 import { alex, robin } from '../support/installation.js';
 
 for (const width of [1440, 390])
-  test(`UTKAST-28: mix explicit property choices without saving the shared map at ${width}px`, async ({
+  test(`UTKAST-${width === 1440 ? '28' : '106'}: mix explicit property choices without saving the shared map at ${width}px`, async ({
     page,
     browser,
   }) => {
@@ -127,6 +127,96 @@ for (const width of [1440, 390])
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
+
+      // Repeat the documented keyboard path from Karta with a fresh conflict.
+      const mapOwner = await browser.newContext();
+      const mapMember = await browser.newContext();
+      const mapApp = await conflictCollaborators(mapOwner.request, mapMember.request);
+      try {
+        const mapPage = await mapOwner.newPage();
+        await mapPage.setViewportSize({ width, height: 900 });
+        const mapInitial = await mapApp.read();
+        await mapApp.propose(mapOwner.request, 'draft', 'lo', {
+          typeId: mapInitial.types[0].id,
+          name: 'Lo Lind',
+          description: 'Min anteckning',
+          identity: 'unspecified',
+          lifecycle: 'active',
+        });
+        await mapApp.propose(mapMember.request, 'draft', 'lo', {
+          typeId: mapInitial.types[0].id,
+          name: 'Lo Berg',
+          description: 'Robins anteckning',
+        });
+        expect((await mapApp.save(mapMember.request, 'concurrent')).status()).toBe(200);
+        const mapSaved = await mapApp.read();
+        const mapHistory = await (await mapOwner.request.get(`${mapApp.path}/history`)).json();
+        await mapPage.goto(mapApp.installation.origin);
+        const mapOpener = mapPage.getByRole('button', {
+          name: '1 konflikt i ditt utkast',
+          exact: true,
+        });
+        await mapOpener.focus();
+        await mapPage.keyboard.press('Enter');
+        const mapDialog = mapPage.getByRole('dialog', {
+          name: 'Granska konflikter',
+          exact: true,
+        });
+        await expect(
+          mapDialog.getByRole('heading', { name: 'Granska konflikter', exact: true }),
+        ).toBeFocused();
+        for (const key of ['Shift+Tab', 'Tab']) {
+          await mapPage.keyboard.press(key);
+          expect(
+            await mapPage.evaluate(() => document.activeElement?.closest('dialog') !== null),
+          ).toBe(true);
+        }
+        for (const name of [
+          'Namn: Ditt förslag – Lo Lind',
+          'Beskrivning: Sparat i kartan nu – Robins anteckning',
+          'Identifiering: Sparat i kartan nu – Identifierat objekt',
+          'Giltighet: Ditt förslag – Gäller fortfarande',
+        ]) {
+          await mapDialog.getByRole('button', { name, exact: true }).focus();
+          await mapPage.keyboard.press('Enter');
+        }
+        const mapPreview = mapDialog.getByRole('region', {
+          name: 'Resultat av valen',
+          exact: true,
+        });
+        await expect(mapPreview).toContainText('Lo Lind');
+        await expect(mapPreview).toContainText('Robins anteckning');
+        await expect(mapPreview).toContainText('Identifierat objekt');
+        await expect(mapPreview).toContainText('Gäller fortfarande');
+        await mapDialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).focus();
+        await mapPage.keyboard.press('Enter');
+        await expect(mapDialog.getByRole('status')).toContainText('Valen finns i ditt utkast');
+        const mapAfter = await mapApp.read();
+        expect(mapAfter.objects).toEqual(mapSaved.objects);
+        expect(mapAfter.draft.changes[0].after).toMatchObject({
+          name: 'Lo Lind',
+          description: 'Robins anteckning',
+          lifecycle: 'active',
+        });
+        expect(mapAfter.draft.changes[0].after?.identity ?? 'identified').toBe('identified');
+        expect(await (await mapOwner.request.get(`${mapApp.path}/history`)).json()).toEqual(
+          mapHistory,
+        );
+        await mapPage.keyboard.press('Escape');
+        await expect(mapOpener).toHaveCount(0);
+        await expect(
+          mapPage
+            .getByRole('navigation', { name: 'Kartans verktyg' })
+            .getByRole('button', { name: 'Karta', exact: true }),
+        ).toBeFocused();
+        expect(
+          await mapPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+        ).toBe(true);
+      } finally {
+        await mapOwner.close();
+        await mapMember.close();
+        await mapApp.installation.close();
+      }
     } finally {
       await other.close();
       await app.installation.close();
@@ -200,46 +290,8 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
   }
 });
 
-test('UTKAST-30: a concurrent save rejects an outdated property comparison without changing the draft', async ({
-  page,
-  browser,
-}) => {
-  const other = await browser.newContext();
-  const app = await conflictCollaborators(page.request, other.request);
-  try {
-    const initial = await app.read();
-    const value = { typeId: initial.types[0].id, name: 'Lo Lind', description: '' };
-    await app.propose(page.request, 'draft', 'lo', value);
-    await app.propose(other.request, 'draft', 'lo', { ...value, name: 'Lo Berg' });
-    await app.save(other.request, 'first');
-    await page.goto(app.installation.origin);
-    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
-    const dialog = page.getByRole('dialog', { name: 'Granska konflikter' });
-    await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
-    const before = await app.read();
-    await app.propose(other.request, 'draft', 'lo', { ...value, name: 'Lo Ek' });
-    await app.save(other.request, 'second');
-    await dialog.getByRole('button', { name: 'Lägg valen i utkastet' }).click();
-    await expect(dialog.getByText('Underlaget har ändrats.', { exact: true })).toBeVisible();
-    expect((await app.read()).draft).toEqual(before.draft);
-    await expect(
-      dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind' }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    await dialog.getByRole('button', { name: 'Visa aktuell jämförelse' }).click();
-    await expect(dialog).toContainText('Lo Ek');
-    await expect(dialog.getByRole('button', { name: 'Lägg valen i utkastet' })).toBeDisabled();
-    await page.keyboard.press('Escape');
-    await expect(
-      page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }),
-    ).toBeFocused();
-  } finally {
-    await other.close();
-    await app.installation.close();
-  }
-});
-
 for (const kind of ['object', 'relationship'] as const)
-  test(`UTKAST-33: long unbroken ${kind} names wrap in the conflict heading and list at 320 CSS pixels`, async ({
+  test(`UTKAST-${kind === 'object' ? '33' : '107'}: long unbroken ${kind} names wrap in the conflict heading and list at 320 CSS pixels`, async ({
     page,
     browser,
   }) => {

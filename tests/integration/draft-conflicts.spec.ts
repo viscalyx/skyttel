@@ -124,13 +124,26 @@ async function expectFocusedTargetUncovered(page: Page) {
     .toBe(true);
 }
 
+async function expectUnresolvedSaveRejected(page: Page) {
+  const review = await openDraftReview(page);
+  await review.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Spara utkastet', exact: true });
+  await expect(dialog).toContainText('Inget sparades');
+  await closeSupportDialog(page, 'Spara utkastet');
+  await closeTextView(page);
+  await openMap(page);
+  const refresh = page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true });
+  await refresh.click();
+  await expect(refresh).toHaveCount(0);
+}
+
 for (const { width, height } of [
   { width: 1440, height: 900 },
   { width: 390, height: 844 },
   { width: 320, height: 844 },
   { width: 640, height: 456 },
 ]) {
-  test(`UTKAST-18: status reaches all conflict kinds and preserves complete snapshot values at ${width}px`, async ({
+  test(`UTKAST-${{ 1440: '18', 390: '108', 320: '109', 640: '110' }[width]}: status reaches all conflict kinds and preserves complete snapshot values at ${width}px`, async ({
     page,
     browser,
   }) => {
@@ -489,7 +502,7 @@ test('UTKAST-19: an own object correction preserves staged independent work and 
 });
 
 for (const width of [1440, 390]) {
-  test(`UTKAST-20: a relationship correction replaces a deleted endpoint and still requires a fresh save at ${width}px`, async ({
+  test(`UTKAST-${width === 1440 ? '20' : '111'}: a relationship correction replaces a deleted endpoint and still requires a fresh save at ${width}px`, async ({
     page,
     browser,
   }) => {
@@ -519,6 +532,7 @@ for (const width of [1440, 390]) {
       expect((await app.save(page.request, 'blocked-endpoint')).status()).toBe(409);
       const saved = await app.read();
       await page.goto(app.installation.origin);
+      await expectUnresolvedSaveRejected(page);
       await openMap(page);
       const status = page.getByRole('region', { name: 'Kartans status', exact: true });
       await status.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
@@ -579,7 +593,7 @@ for (const width of [1440, 390]) {
 
 for (const kind of ['object-type', 'relationship-type'] as const) {
   for (const width of [1440, 390]) {
-    test(`UTKAST-21: ${kind} correction opens retained settings and preserves independent edits until a fresh save at ${width}px`, async ({
+    test(`UTKAST-${kind === 'object-type' ? (width === 1440 ? '21' : '112') : width === 1440 ? '113' : '114'}: ${kind} correction opens retained settings and preserves independent edits until a fresh save at ${width}px`, async ({
       page,
       browser,
     }) => {
@@ -626,6 +640,7 @@ for (const kind of ['object-type', 'relationship-type'] as const) {
         expect((await app.save(page.request, 'blocked-type')).status()).toBe(409);
         expect((await app.read()).draft).toEqual(saved.draft);
         await page.goto(app.installation.origin);
+        await expectUnresolvedSaveRejected(page);
         await openTable(page);
         await openMap(page);
         const status = page.getByRole('region', { name: 'Kartans status', exact: true });
@@ -714,7 +729,7 @@ for (const kind of ['object-type', 'relationship-type'] as const) {
 }
 
 for (const choice of ['saved', 'proposed'] as const) {
-  test(`UTKAST-22: a ${choice} conflict choice keeps the review heading focused and restores usable toolbar focus without saving`, async ({
+  test(`UTKAST-${choice === 'saved' ? '22' : '115'}: a ${choice} conflict choice keeps the review heading focused and restores usable toolbar focus without saving`, async ({
     page,
     browser,
   }) => {
@@ -829,7 +844,7 @@ test('UTKAST-23: delayed conflict resolution protects pending focus and allows e
 });
 
 for (const width of [1440, 390]) {
-  test(`UTKAST-24: lost resolution and save responses recover the private choice and one fresh receipt at ${width}px`, async ({
+  test(`UTKAST-${width === 1440 ? '24' : '116'}: lost resolution and save responses recover the private choice and one fresh receipt at ${width}px`, async ({
     page,
     browser,
   }) => {
@@ -1182,6 +1197,7 @@ test('UTKAST-07: overlapping relationship proposals show meanings and can accept
     });
     expect((await app.save(other.request, 'other-edge')).status()).toBe(200);
     await page.goto(app.installation.origin);
+    await expectUnresolvedSaveRejected(page);
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
     const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
     await expect(conflict).toContainText('Osäkert uppgivet');
@@ -1278,7 +1294,7 @@ for (const side of ['proposed', 'saved'] as const) {
   const title =
     side === 'proposed'
       ? 'UTKAST-11: deletion after concurrent type changes retains the matching historical definitions'
-      : 'UTKAST-11: keeping a changed relationship preserves it and reopens the object removal dependency';
+      : 'UTKAST-117: keeping a changed relationship preserves it and reopens the object removal dependency';
   test(title, async ({ page, browser }) => {
     const other = await browser.newContext();
     const app = await collaborators(page.request, other.request);
@@ -1376,6 +1392,8 @@ for (const side of ['proposed', 'saved'] as const) {
         expect((await (await page.request.get(`${app.path}/history`)).json()).history).toEqual(
           historyBefore,
         );
+        await page.keyboard.press('Escape');
+        await expectUnresolvedSaveRejected(page);
         return;
       }
       await page.keyboard.press('Escape');
@@ -1505,10 +1523,9 @@ test('UTKAST-09: a deleted relationship endpoint has an explicit recovery choice
   }
 });
 
-test('HTTP clients reject stale conflict choices and enforce private drafts and revoked membership', async ({
-  page,
-  browser,
-}) => {
+test('HTTP clients reject stale conflict choices and enforce private drafts and revoked membership', {
+  tag: '@technical',
+}, async ({ page, browser }) => {
   const other = await browser.newContext();
   const sameUser = await browser.newContext();
   const app = await collaborators(page.request, other.request);
@@ -1596,7 +1613,7 @@ test('HTTP clients reject stale conflict choices and enforce private drafts and 
   }
 });
 
-test('resolving an object preserves fields changed only by the other user', async ({
+test('UTKAST-118: resolving an object preserves fields changed only by the other user', async ({
   page,
   browser,
 }) => {
@@ -1627,10 +1644,9 @@ test('resolving an object preserves fields changed only by the other user', asyn
   }
 });
 
-test('independent users save unrelated objects without a meaningless conflict', async ({
-  page,
-  browser,
-}) => {
+test('independent users save unrelated objects without a meaningless conflict', {
+  tag: '@technical',
+}, async ({ page, browser }) => {
   const other = await browser.newContext();
   const app = await collaborators(page.request, other.request);
   try {
@@ -1653,6 +1669,43 @@ test('independent users save unrelated objects without a meaningless conflict', 
         'Lo Lind',
         'Ny musiktjänst',
       ]);
+  } finally {
+    await other.close();
+    await app.installation.close();
+  }
+});
+
+test('UTKAST-137: independent browser edits save unrelated objects without a conflict', async ({
+  page,
+  browser,
+}) => {
+  const other = await browser.newContext();
+  const app = await collaborators(page.request, other.request);
+  const member = await other.newPage();
+  try {
+    for (const client of [page, member]) {
+      await client.goto(app.installation.origin);
+      await openTable(client);
+    }
+    await editTableObject(page, 'Lo Exempel');
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Lind');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await editTableObject(member, 'Molnmusik');
+    await member.getByLabel('Namn', { exact: true }).fill('Ny musiktjänst');
+    await member.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await saveReviewedConflictDraft(member);
+    await saveReviewedConflictDraft(page);
+    await closeTextView(member);
+    await closeTextView(page);
+    await app.installation.restart();
+    for (const client of [page, member]) {
+      await client.reload();
+      await openTable(client);
+      const table = client.getByRole('region', { name: 'Hushållets tabell', exact: true });
+      await expect(table).toContainText('Lo Lind');
+      await expect(table).toContainText('Ny musiktjänst');
+      await expect(await openDraftReview(client)).toContainText('Utkastet är tomt.');
+    }
   } finally {
     await other.close();
     await app.installation.close();
@@ -1742,6 +1795,11 @@ test('UTKAST-03: a stale conflict choice requires refreshed review before saving
       review.getByRole('button', { name: 'Stäng konfliktdialogen', exact: true }),
     ).toBeEnabled();
     await expect(review).toContainText('Lo Berg');
+    const proposedName = review.getByRole('button', {
+      name: 'Namn: Ditt förslag – Lo Lind',
+      exact: true,
+    });
+    await proposedName.click();
     const beforeChoice = (await app.read()).draft;
     await app.propose(other.request, 'draft', 'lo', { ...value, name: 'Lo Ek' });
     expect((await app.save(other.request, 'second-change')).status()).toBe(200);
@@ -1752,9 +1810,17 @@ test('UTKAST-03: a stale conflict choice requires refreshed review before saving
       review.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
     ).toBeDisabled();
     expect((await app.read()).draft).toEqual(beforeChoice);
+    await expect(proposedName).toHaveAttribute('aria-pressed', 'true');
     await review.getByRole('button', { name: 'Visa aktuell jämförelse', exact: true }).click();
     await expect(review).toContainText('Lo Ek');
     await expect(review).toContainText('Lo Lind');
+    await expect(
+      review.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
+    ).toBeDisabled();
+    await page.keyboard.press('Escape');
+    const opener = page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true });
+    await expect(opener).toBeFocused();
+    await opener.click();
     await chooseConflictProperties(review, 'proposed');
     await review.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
     await expect(review.getByRole('status')).toContainText('Valen finns i ditt utkast');
@@ -1790,6 +1856,7 @@ test('UTKAST-04: accepting a deleted object preserves an independent proposal', 
     await app.propose(other.request, 'draft', 'lo', null);
     expect((await app.save(other.request, 'delete-lo')).status()).toBe(200);
     await page.goto(app.installation.origin);
+    await expectUnresolvedSaveRejected(page);
     await openTable(page);
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
     const review = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
@@ -1811,6 +1878,7 @@ test('UTKAST-04: accepting a deleted object preserves an independent proposal', 
     await expect(draft).toContainText('Kim Exempel');
     expect((await app.read()).objects.map((object) => object.name)).toEqual(['Molnmusik']);
     await saveReviewedConflictDraft(page);
+    await app.installation.restart();
     await page.reload();
     await openTable(page);
     const objects = page.getByRole('region', { name: 'Hushållets tabell', exact: true });

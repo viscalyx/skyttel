@@ -452,8 +452,14 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   bekräftad kontroll från Karta, behåll senare tangentbordsfokus
   och skilj bekräftat kvitto från fel vid efterföljande hämtning; återuppta
   utkast, hantera gamla kastförsök
-  och konfliktval, kombinera egenskaper i Granska konflikter från karta
-  och tabell, läsa långa namn, bevara konfigurerade egenskapsnamn och
+  och konfliktval, kombinera egenskaper i Granska konflikter,
+  separata Karta- och Tabellvägar för genomförda och uteblivna konfliktval,
+  nyare jämförelser, andra klienters sparande och oberoende formulärarbete;
+  UTKAST-30 är pensionerat med skydd överfört till UTKAST-03;
+  [styrd konfliktleverans](current-conflict-preparation.md), egna identiteter
+  för bredd och valsida samt faktisk skärmläsarobservation i UTKAST-136;
+  UTKAST-57 behåller kontrast och betydelser utan exakta dekorativa värden;
+  läsa långa namn, bevara konfigurerade egenskapsnamn och
   ange varje egenskaps verkliga sparare, förklara ogiltiga kombinationer
   och avvisa inaktuell jämförelse; bevara val mellan konflikter och återöppning,
   göra om endast berörda egenskapsval, pröva ändrade typer och referenser igen

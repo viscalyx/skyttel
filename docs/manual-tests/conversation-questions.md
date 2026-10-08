@@ -95,7 +95,7 @@ med serverns väntesignal”.
 **Användare:** Alex och Robin.
 
 **Förutsättningar:** Följ
-[konfliktförberedelsen UTKAST-17](drafts.md#utkast-17-nå-en-objektkonflikt-från-status-med-oskickat-arbete-kvar).
+[konfliktförberedelsen UTKAST-17](drafts.md#utkast-17-avbruten-formulärförlust-och-oberoende-utkast-består-vid-konflikt).
 Lo Exempel är sparad, Alex föreslår Lo Lind och Robin sparar Lo Berg.
 
 **Integrationstest:**

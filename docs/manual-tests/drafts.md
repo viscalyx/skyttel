@@ -811,7 +811,7 @@ UTKAST-27.
 
 ### UTKAST-28: kombinera aktiva egenskapsval utan att spara kartan
 
-**Syfte:** Granska samma konflikt från karta och tabell och kombinera
+**Syfte:** Granska konflikten från Tabell och sedan Karta med nytt underlag; kombinera
 värden från båda sidor med tydligt fokus och oförändrad gemensam karta.
 
 **Användare:** Administratören och en inbjuden medlem i skilda
@@ -822,25 +822,47 @@ Molnmusik enligt den allmänna förberedelsen. Administratören lägger
 namnet Lo Lind, beskrivningen Min anteckning, Ospecificerat objekt och
 Gäller fortfarande i sitt utkast. Medlemmen
 sparar Lo Berg med beskrivningen Robins anteckning efter detta förslag.
-Ladda om administratörens sida. Upprepa på dator och telefon.
+Ladda om administratörens sida. Använd 1440 × 900 pixlar.
 
 **Integrationstest:**
 [conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
-testfallen “UTKAST-28: mix explicit property choices without saving the
-shared map at 1440px” och motsvarande scenario vid 390px.
+UTKAST-28.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-properties.spec.ts",
+    "caseId": "UTKAST-28"
+  },
+  "reference": "1440 × 900; Tabell och därefter Karta med en ny konflikt och tangentbord; aktiva blandade egenskapsval.",
+  "outcomes": [
+    "Rubriken får fokus vid öppning. Tangentbordsfokus stannar i dialogen. Bakgrunden är inaktiv. Valbara värden har ramar och valda värden har starkare ramar.",
+    "Alla skiljande egenskaper kräver aktiva val. Identiska värden behöver inget val och visas som vanlig text. Resultatet visar Lo Lind och Robins anteckning tillsammans, med uppgift om vilken sida valda värden kommer från.",
+    "Bara utkastet ändras. Kartan visar fortfarande Lo Berg och samma beskrivning som medlemmen sparar. Historiken får ingen ny sparad ändring.",
+    "Konfliktlistan behåller typ och namn med bock till höger och en enda tillgänglig status. Inga värden klipps på telefon.",
+    "När den sista konflikten är löst försvinner ingången. Stängning återför fokus till kartverktygen. En kvarvarande ingång får fokus annars."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Välj Tabell och öppna **1 konflikt i ditt utkast** under hushållets namn.
 2. Kontrollera rubrikens fokus och de två rutorna **Sparat i kartan nu**
    och **Ditt förslag**. Läs förklaringen med medlemmens förnamn.
+   Tryck Shift+Tab och Tab; fokus ska stanna i dialogen.
 3. Välj ditt namn Lo Lind. Kontrollera att bekräftelsen är spärrad.
 4. Välj den sparade beskrivningen Robins anteckning och Identifierat
-   objekt. Välj Gäller fortfarande från ditt förslag. Läs **Efter dina val**.
+   objekt. Välj Gäller fortfarande från ditt förslag. Läs **Resultat av valen**.
 5. Välj **Lägg valen i utkastet**. Läs status och konfliktlistans bock.
 6. Stäng med Escape. Läs den sparade personen i tabellen och ditt utkast.
-7. Förbered konflikten igen och öppna den från Karta. Använd Tab, Shift+Tab
-   och Enter för motsvarande val. Försök nå verktygen bakom dialogen.
+7. Förbered konflikten igen i ett nytt hushåll med samma värden. Öppna den
+   från Karta med Enter. Använd Tab och Shift+Tab; försök nå verktygen bakom
+   dialogen. Välj samma fyra värden med Enter och lägg valen i utkastet.
+   Läs resultat och status, stäng med Escape och kontrollera kartverktygens
+   fokus. Kartan och historiken ska vara oförändrade även efter denna väg.
 
 **Förväntat resultat:**
 
@@ -871,8 +893,24 @@ administratörens sida.
 
 **Integrationstest:**
 [conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
-testfallet “UTKAST-29: invalid relationship property combinations keep
-every choice until corrected”.
+UTKAST-29.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-properties.spec.ts",
+    "caseId": "UTKAST-29"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; ogiltiga sambandsval behålls tills kombinationen rättas.",
+  "outcomes": [
+    "Den ogiltiga kombinationen förklaras och bekräftelsen är spärrad. Ingen annan egenskap ändras och valen finns kvar.",
+    "Den rättade kombinationen blir möjlig att bekräfta. Utifrån utkastet är målobjektet Molnmusik och uppgiften Osäkert uppgivet. Kartan behåller det som medlemmen sparar tills ett separat sparande genomförs.",
+    "Servern avvisar samma ogiltiga kombination även från en äldre klient."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -892,37 +930,10 @@ every choice until corrected”.
   det som medlemmen sparar tills ett separat sparande genomförs.
 - Servern avvisar samma ogiltiga kombination även från en äldre klient.
 
-### UTKAST-30: en samtidig ändring avvisar den gamla jämförelsen
-
-**Syfte:** Förhindra att en kombination läggs i utkastet mot inaktuella
-sparade uppgifter.
-
-**Användare:** Administratören och den inbjudna medlemmen.
-
-**Förutsättningar:** Administratören föreslår Lo Lind. Medlemmen sparar
-Lo Berg. Administratören laddar om och öppnar konfliktfönstret.
-
-**Integrationstest:**
-[conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
-testfallet “UTKAST-30: a concurrent save rejects an outdated property
-comparison without changing the draft”.
-
-**Steg:**
-
-1. Välj Lo Lind i konfliktfönstret utan att bekräfta.
-2. Medlemmen sparar ett nytt namn Lo Ek från sin profil.
-3. Administratören väljer **Lägg valen i utkastet**.
-4. Läs felet. Välj **Visa aktuell jämförelse** och läs det nya namnet.
-5. Stäng med Escape utan att lägga nya val i utkastet.
-
-**Förväntat resultat:**
-
-- Servern avvisar det gamla underlaget. Utifrån utkastet finns det
-  ursprungliga förslaget kvar och inga andra förslag ändras.
-- Felet förklarar att underlaget ändras. Valmarkeringen finns kvar vid
-  avvisningen. Aktuell jämförelse visar Lo Ek och kräver ny granskning.
-- Bekräftelsen är spärrad tills nya giltiga val är gjorda. Stängning
-  återför fokus till den kvarvarande konfliktknappen.
+UTKAST-30 är pensionerat och får inte återanvändas.
+UTKAST-03 behåller markerat val vid avvisning, spärrad bekräftelse efter
+aktuell jämförelse och Escape med fokus tillbaka till konfliktknappen,
+innan nya val och ett uttryckligt sparande görs.
 
 ### UTKAST-31: läs långa egenskapsnamn på smal skärm
 
@@ -1018,11 +1029,12 @@ UTKAST-32.
   De fyra kolumnerna är kvar. Läsningen ändrar inga förslag eller sparade
   uppgifter och Escape återför fokus till den använda läsknappen.
 
-### UTKAST-33: läs långa objektnamn i objekt- och sambandkonflikter
+### UTKAST-33: läs långa objektnamn i objekt- och sambandskonflikter
 
 **Syfte:** Läsa hela namnet i konfliktens rubrik och lista på smal skärm.
 
-**Användare:** Alex och Lo i skilda webbläsarprofiler med tillgång till hushållet.
+**Användare:** Alex och Lo i skilda webbläsarprofiler med tillgång till
+hushållet.
 
 **Förutsättningar:** Ett nytt hushåll med ett objekt vars namn består av
 Föremålsnamn upprepat fjorton gånger utan mellanslag, och objektet Molnmusik.
@@ -1030,25 +1042,35 @@ Spara båda. Gör varje delprov i ett nytt hushåll enligt allmän förberedelse
 
 **Integrationstest:**
 [conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
-testfallen “UTKAST-33: long unbroken object names wrap in the conflict heading
-and list at 320 CSS pixels” och “UTKAST-33: long unbroken relationship names
-wrap in the conflict heading and list at 320 CSS pixels”.
+UTKAST-33.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-properties.spec.ts",
+    "caseId": "UTKAST-33"
+  },
+  "reference": "320 × 900, objektkonflikt; långt obrutet namn.",
+  "outcomes": [
+    "Namnet bryts och hela innehållet kan läsas utan sidledes rullning.",
+    "Escape återför fokus. Läsningen ändrar varken kartan eller utkastet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. I objektprovet föreslår Alex en ny beskrivning av objektet med det långa
-   namnet. Lo sparar en annan beskrivning av samma objekt.
-2. I sambandprovet skapar och sparar Alex ett samband från objektet med
-   det långa namnet till Molnmusik. Alex föreslår sedan Osäkert uppgivet,
-   medan Lo ändrar sambandets status till Avslutat och sparar.
-3. Använd en smal webbläsarvy och öppna **1 konflikt i ditt utkast**.
+1. Alex föreslår en ny beskrivning av objektet med det långa namnet.
+   Lo sparar en annan beskrivning av samma objekt.
+2. Använd 320 × 900 pixlar och öppna **1 konflikt i ditt utkast**.
    Läs hela namnet i rubriken och konfliktlistan utan sidledes rullning.
-4. Stäng med Escape och kontrollera att konfliktknappen får fokus.
+3. Stäng med Escape och kontrollera att konfliktknappen får fokus.
 
 **Förväntat resultat:**
 
-- Namnet bryts och kan läsas i båda delproven. Innehållet kräver ingen
-  sidledes rullning i dialogen.
+- Namnet bryts och hela innehållet kan läsas utan sidledes rullning.
 - Escape återför fokus. Läsningen ändrar varken kartan eller utkastet.
 
 ### UTKAST-34: bevara typens egna benämningar i konflikt och resultat
@@ -1065,8 +1087,23 @@ Lägg definitionen i utkastet och spara.
 
 **Integrationstest:**
 [conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
-testfallet “UTKAST-34: configured builtin labels remain unchanged on both
-conflict sides and the result”.
+UTKAST-34.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-properties.spec.ts",
+    "caseId": "UTKAST-34"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; bevara typens egna benämningar i konflikt och resultat.",
+  "outcomes": [
+    "Båda sidor och resultatet visar Anteckningar och Avtalat pris, utan att ersätta dem med Beskrivning eller Pris.",
+    "Utkastet innehåller Egen anteckning och 240 efter valet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1084,7 +1121,8 @@ conflict sides and the result”.
 
 ### UTKAST-35: ange den verkliga spararen för varje ändrad egenskap
 
-**Syfte:** Bevara korrekt författare när senare sparanden ändrar andra egenskaper.
+**Syfte:** Bevara korrekt författare när senare sparanden ändrar andra
+egenskaper.
 
 **Användare:** Alex, Lo och Robin i tre skilda webbläsarprofiler med egna
 konfigurerade inloggningar och tillgång till samma hushåll.
@@ -1095,8 +1133,24 @@ inte en inloggning. Använd faktiska förnamn om profilerna har andra namn.
 
 **Integrationstest:**
 [conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
-testfallet “UTKAST-35: saved property attribution identifies each actual saver
-after independent later changes”.
+UTKAST-35.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-properties.spec.ts",
+    "caseId": "UTKAST-35"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; ange den verkliga spararen för varje ändrad egenskap.",
+  "outcomes": [
+    "Namnraden anger Lo som sparare, även efter Alex senare sparande.",
+    "Beskrivningsraden anger Alex. Författarnamn hör till den ändrade egenskapen och ersätts inte av hela objektets senaste sparare.",
+    "Efter Robins senare ändring anges samma verkliga sparare, utan att hävda att deras tidigare sparanden sker efter det nya förslaget."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1107,7 +1161,7 @@ after independent later changes”.
    namnrad och beskrivningsrad.
 5. Robin stänger dialogen och ändrar sitt föreslagna namn till
    **Eget senare namn** utan att spara i den gemensamma kartan.
-6. Robin öppnar **Granska konflikter** igen och läser uppgifterna om
+6. Robin laddar om, öppnar **Granska konflikter** igen och läser uppgifterna om
    sparare och ordningen mellan förslag och sparanden.
 
 **Förväntat resultat:**
@@ -1129,13 +1183,27 @@ nytt sparbesked.
 **Förutsättningar:** Aktuell demodata enligt förberedelsen ovan. Inga
 förslag får vara sparade eller kastade efter återställningen.
 
-**Integrationstest:** [family.spec.ts](../../tests/integration/family.spec.ts),
-testfallet “UTKAST-01: demo seed resumes a conflict and preserves independent
-proposals without granting access to map people”.
-[database-setup.spec.ts](../../tests/integration/database-setup.spec.ts)
-kontrollerar även demodatans underlag, historik och administratörens åtkomst.
-Se [testguiden](../development/testing.md#integration-tests) för
-kommandon som kör integrationstesterna.
+**Integrationstest:**
+[family.spec.ts](../../tests/integration/family.spec.ts),
+UTKAST-01.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/family.spec.ts",
+    "caseId": "UTKAST-01"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; återuppta en konflikt och spara oberoende förslag tillsammans.",
+  "outcomes": [
+    "Före konfliktvalet visar fullständig förslagsläsning ursprungsnamnet Lo Exempel och förslaget Lo Lind. Konflikten visar aktuellt sparat Lo Berg. Sparförsöket avvisas utan ändrad karta, utkast eller historik. Konflikten och adressförslaget finns kvar efter omladdning och omstart.",
+    "Konfliktvalet ger inget sparkvitto. Dialogens status visar att valen finns i utkastet. Förslaget innehåller Lo Lind och den oberoende sparade beskrivningen “Spelar piano i musikföreningen.” Adressförslaget finns kvar.",
+    "Sambandets tidigare underlag visar Familjens musikkonto och `familjen@example.test`. Förslaget visar Familjens rättade konto och `musik@example.test`, med samma ändpunktsidentiteter.",
+    "Det uttryckliga sparandet ger ett lyckat sparkvitto. **Utkastet är tomt** även efter omladdning. Det sparade sambandet visar **Familjens rättade konto → Inloggningsadress** → `musik@example.test`."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1185,8 +1253,24 @@ enligt förberedelsen. Båda flikarna använder samma inloggning.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-02: a stale discard preserves newer object and
-relationship proposals”.
+UTKAST-02.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-02"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; ett gammalt kastförsök bevarar nyare förslag.",
+  "outcomes": [
+    "Det första kastförsöket avvisas eftersom förslaget eller kartan ändras. Fortsatt kastande blockeras tills aktuellt underlag hämtas.",
+    "Efter hämtningen finns både **Lo Lind** och det nya sambandet kvar.",
+    "Det andra kastandet tömmer hela utkastet. **Lo Exempel** och **Molnmusik** finns kvar i kartan, utan det föreslagna sambandet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1220,19 +1304,46 @@ relationship proposals”.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-03: a stale conflict choice requires refreshed review
-before saving”.
+UTKAST-03.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-03"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; ett gammalt konfliktval kräver ny granskning.",
+  "outcomes": [
+    "Det gamla konfliktvalet avvisas. Valmarkeringen behålls vid avvisningen; efter aktuell jämförelse krävs ett nytt val och Escape återför fokus. Namnförslaget **Lo Lind** finns kvar när det aktuella underlaget hämtas.",
+    "Det nya konfliktvalet uppmanar till granskning och ändrar bara utkastet. Medlemmen ser fortfarande **Lo Ek** före det uttryckliga sparandet.",
+    "Efter sparandet bekräftar kvittot **Lo Lind** och medlemmen ser det namnet."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/draft-conflicts.spec.ts",
+      "title": "HTTP clients reject stale conflict choices and enforce private drafts and revoked membership",
+      "purpose": "Separata HTTP-prov för inaktuella val, privata utkast och återkallat medlemskap; inga formulärhandlingar."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Lägg namnändringen **Lo Lind** i administratörens utkast utan att spara.
 2. Ändra samma person till **Lo Berg** som medlemmen och spara hela utkastet.
 3. Ladda om administratörens sida och öppna **Granska konflikter**.
-   Låt jämförelsen med Lo Berg och Lo Lind vara öppen.
+   Välj namnet Lo Lind utan att bekräfta. Låt jämförelsen vara öppen.
 4. Ändra personen till **Lo Ek** som medlemmen och spara igen.
 5. Välj namnet Lo Lind i den äldre jämförelsen och välj
    **Lägg valen i utkastet**. Läs att underlaget har ändrats.
-6. Välj **Visa aktuell jämförelse**. Läs aktuellt Lo Ek och eget Lo Lind.
+6. Kontrollera att Lo Lind fortfarande är markerat efter avvisningen.
+   Välj **Visa aktuell jämförelse**. Läs aktuellt Lo Ek och eget Lo Lind.
+   Kontrollera att **Lägg valen i utkastet** är spärrad. Stäng med Escape,
+   kontrollera fokus på konfliktknappen och öppna igen.
 7. Välj det egna namnet och **Lägg valen i utkastet** igen. Stäng med
    Escape. Kontrollera medlemmens karta före något nytt sparande.
 8. Öppna Utkast och spara hela administratörens utkast. Ladda om
@@ -1240,7 +1351,9 @@ before saving”.
 
 **Förväntat resultat:**
 
-- Det gamla konfliktvalet avvisas och sparande blockeras. Namnförslaget
+- Det gamla konfliktvalet avvisas. Valmarkeringen behålls vid avvisningen;
+  efter aktuell jämförelse krävs ett nytt val och Escape återför fokus.
+Namnförslaget
   **Lo Lind** finns kvar när det aktuella underlaget hämtas.
 - Det nya konfliktvalet uppmanar till granskning och ändrar bara utkastet.
   Medlemmen ser fortfarande **Lo Ek** före det uttryckliga sparandet.
@@ -1257,8 +1370,24 @@ objekt och att oberoende förslag kan sparas.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-04: accepting a deleted object preserves an independent
-proposal”.
+UTKAST-04.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-04"
+  },
+  "reference": "1280 × 720; Tabell, avvisat sparande före konfliktvalet, nytt uttryckligt sparande och omstart med samma databas.",
+  "outcomes": [
+    "Konflikten säger att objektet är borttaget. Förslaget är läsbart men inte valbart och hela utkastet kan inte sparas före konfliktvalet.",
+    "Valet tar bort namnförslaget men behåller **Kim Exempel** i utkastet. Kim finns ännu inte i medlemmens karta.",
+    "Efter sparandet finns **Kim Exempel** och **Molnmusik** hos båda användarna. Varken **Lo Exempel** eller **Lo Lind** återkommer."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1266,7 +1395,9 @@ proposal”.
    administratörens utkast utan att spara.
 2. Som medlemmen: expandera Lo Exempels rad i Tabell, välj **Ta bort**
    och spara hela utkastet separat.
-3. Ladda om administratörens sida och öppna **Granska konflikter**.
+3. Ladda om administratörens sida och försök spara hela utkastet. Läs
+   **Inget sparades**, stäng sparmodalen och textvyn och välj Karta och
+   **Hämta aktuellt underlag**. Välj Tabell och öppna **Granska konflikter**.
    Läs Borttaget och det fullständiga namnförslaget.
 4. Välj **Acceptera borttagningen och kasta ditt förslag**. Stäng med
    Escape och läs utkastet och medlemmens karta före något nytt sparande.
@@ -1295,8 +1426,24 @@ konfliktval och sparbesked.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-05: a conflict choice preserves independent proposals
-and requires a new save”.
+UTKAST-05.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-05"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; en namnkonflikt blockerar även oberoende förslag.",
+  "outcomes": [
+    "Det första sparandet avvisas med **Inget sparades**. Medlemmen ser **Lo Berg** och inget **Alex Exempel**.",
+    "Förslagsläsningen visar underlaget **Lo Exempel** och förslaget **Lo Lind**. Konfliktjämförelsen visar det aktuellt sparade namnet **Lo Berg**. Sparande kräver ett uttryckligt val.",
+    "Konfliktvalet behåller **Alex Exempel**, ger inget sparkvitto och finns kvar efter omstart. Det nya sparandet gör båda förslagen gemensamma."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1333,8 +1480,24 @@ en annan användare lägger till.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-06: deleting an object requires reviewing newly saved
-relationships”.
+UTKAST-06.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-06"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; granska nya samband före objektborttagning.",
+  "outcomes": [
+    "Det gamla sparandet avvisas. Konflikten visar sambandet med riktning och säkerheten **Osäkert uppgivet**.",
+    "Konfliktvalet lägger även **Borttagning av samband** i utkastet. Kartan ändras först vid det nya sparandet.",
+    "Både personen och sambandet försvinner efter sparandet. **Molnmusik** finns kvar."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1370,8 +1533,23 @@ säkerheten **Känt** utöver de två objekten enligt förberedelsen.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-07: overlapping relationship proposals show meanings
-and can accept the saved value”.
+UTKAST-07.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-07"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; välj sparad betydelse vid en konflikt om ett samband.",
+  "outcomes": [
+    "Konflikten visar både **Osäkert uppgivet** och **Uttryckligen inget**. Sparande är blockerat före valet.",
+    "Valet tömmer det överlappande förslaget. Kartans samband behåller **Uttryckligen inget** och inget nytt sparande krävs."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1379,10 +1557,12 @@ and can accept the saved value”.
    redigera sambandet. Lägg säkerheten **Osäkert uppgivet** i utkastet.
 2. Öppna samma samband som medlemmen, välj **Uttryckligen inget**, lägg
    det i utkastet och spara separat.
-3. Ladda om administratörens sida och öppna **Granska konflikter**.
+3. Ladda om administratörens sida. Försök spara hela utkastet, läs
+   **Inget sparades** och stäng sparmodalen och textvyn. Välj
+   **Hämta aktuellt underlag** och öppna konflikten.
 4. Välj den sparade sidans värden för varje egenskap som skiljer sig.
    Identiska rader är inaktiva. Välj **Lägg valen i utkastet** och
-   kontrollera utkastet och det sparade sambandet.
+   stäng med Escape och kontrollera utkastet och det sparade sambandet.
 
 **Förväntat resultat:**
 
@@ -1403,8 +1583,24 @@ säkerheten **Känt**, statusen **Följ slutdatum** och utan slutdatum.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-10: relationship choices preserve independent status
-and keep date certainty with its value”.
+UTKAST-10.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-10"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; bevara oberoende status och håll slutdatumets säkerhet samlad.",
+  "outcomes": [
+    "Sparande är blockerat före varje konfliktval. Valet ändrar bara utkastet och kräver ett nytt sparande av hela det granskade utkastet.",
+    "Det första lösta utkastet överlever omstart. Efter sparandet innehåller sambandet både **Manuellt upphört** och det kända slutdatumet **2031-04-12**.",
+    "Efter det andra sparandet innehåller sambandet **Gäller fortfarande** och **2031-04-12 (Osäkert uppgivet)**. Den oberoende statusen bevaras; det valda datumet och dess säkerhet hålls ihop."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1451,9 +1647,25 @@ säkerheten **Känt** utöver de två objekten enligt förberedelsen.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-11: deletion after concurrent type changes retains the
-matching historical definitions” och testfallet “UTKAST-11: keeping a
-changed relationship preserves it and reopens the object removal dependency”.
+UTKAST-11.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-11"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; bevara rätt typdefinition vid borttagning efter ett typbyte.",
+  "outcomes": [
+    "Konflikterna visar de aktuella typerna **Abonnemang** och **Används av**. Hela sparandet är blockerat tills båda valen är gjorda.",
+    "Valen ändrar bara utkastet. Efter det nya sparandet är Lo och sambandet borttagna, medan Molnmusik aktuell finns kvar.",
+    "Automationen läser historikunderlaget via HTTP. Det tidigare objektet och sambandet har sina aktuella typ-ID:n tillsammans med motsvarande definitioner för **Abonnemang** och **Används av**, samt tomma eftervärden. Läsning i gränssnittet provas i [historikfallen](history.md).",
+    "Även en senare namnändring hos ändpunkten kräver aktuell jämförelse. Det gamla valet avvisas utan ändrat utkast. Efter uttrycklig granskning visar hela borttagningsförslaget den aktuella typens betydelse och det aktuella ändpunktsnamnet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1478,9 +1690,6 @@ changed relationship preserves it and reopens the object removal dependency”.
    Kontrollera aktuell typ och Molnmusik aktuell; stäng läsningen.
 8. Kontrollera medlemmens fortfarande oförändrade samband. Spara hela
    administratörens utkast och ladda om hos medlemmen.
-9. Upprepa med ny förberedelse utan namnändringen i steg 5. Efter
-   objektvalet väljer du sparat samband och **Lägg valen i utkastet**.
-   Kontrollera kvarvarande objektborttagning och försök spara hela utkastet.
 
 **Förväntat resultat:**
 
@@ -1496,9 +1705,6 @@ changed relationship preserves it and reopens the object removal dependency”.
   Det gamla valet avvisas utan ändrat utkast. Efter uttrycklig granskning
   visar hela borttagningsförslaget den aktuella typens betydelse och
   det aktuella ändpunktsnamnet.
-- Det sparade sambandsvalet kastar bara dess borttagningsförslag.
-  Objektborttagningen kräver ny granskning av det kvarvarande sambandet;
-  ett försök att spara avvisas utan ändrat utkast, karta eller historik.
 
 ### UTKAST-08: välj ett befintligt samband och behåll andra förslag
 
@@ -1510,8 +1716,24 @@ changed relationship preserves it and reopens the object removal dependency”.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-08: a saved duplicate can be selected without losing
-another proposal”.
+UTKAST-08.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-08"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; välj ett befintligt samband och behåll andra förslag.",
+  "outcomes": [
+    "Granskningen visar **Ett sparat samband har redan samma typ, riktning och objekt.** och det befintliga sambandet med läsbara objektnamn och riktning.",
+    "Valet tar bort dubblettförslaget men behåller **Kim Exempel**.",
+    "Efter sparandet finns Kim och exakt ett sådant samband i kartan."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1519,7 +1741,7 @@ another proposal”.
    **Kim Exempel** i administratörens utkast.
 2. Skapa samma samband som medlemmen och spara det.
 3. Ladda om administratörens sida och granska konflikten.
-4. Välj **Ta bort sambandet ur ditt utkast**. Öppna därefter
+4. Välj **Ta bort sambandet ur ditt utkast**. Stäng med Escape. Öppna därefter
    **Skriv till Skyttel → Visa utkastet** och spara separat.
 
 **Förväntat resultat:**
@@ -1541,8 +1763,24 @@ omstart och tas bort uttryckligen.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-09: a deleted relationship endpoint has an explicit
-recovery choice”.
+UTKAST-09.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-09"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; ta bort ett förslag som hänvisar till ett borttaget objekt.",
+  "outcomes": [
+    "Konflikten säger **Ett objekt som sambandet pekar på saknas.** Förslaget går att läsa.",
+    "Efter omstart visas fortfarande **Lo Exempel → Använder → Molnmusik** med **Osäkert uppgivet**, även om målobjektet saknas i kartan.",
+    "Valet tar bort förslaget och visar **Sambandet har tagits bort ur ditt utkast**. Inget samband skapas och det borttagna objektet återkommer inte."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1938,8 +2176,24 @@ av klienternas utkast innehåller tidigare förslag.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-17: canceled form loss and staged independent work survive
-concurrent conflict review”.
+UTKAST-17.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-17"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; avbruten formulärförlust och oberoende utkast består vid konflikt.",
+  "outcomes": [
+    "Fokus hamnar på dialogens synliga rubrik Granska konflikter. Sparat i kartan nu visar Lo Berg och Ditt förslag visar Lo Lind.",
+    "Avbruten förlust bevarar formulärtexten utan att lägga ett förslag. Efter uttryckligt tillägg finns Oskickad cykel kvar under granskningen.",
+    "Statusnavigeringen varken sparar, ändrar utkastet eller skapar ett kvitto. Den gemensamma kartan innehåller Lo Berg och Alex privata utkast innehåller fortfarande Lo Lind och Oskickad cykel."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1983,12 +2237,27 @@ igen innan respektive typförslag läggs i utkastet.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallen “UTKAST-18: status reaches all conflict kinds and preserves
-complete snapshot values at 1440px”, “UTKAST-18: status reaches all conflict
-kinds and preserves complete snapshot values at 390px”, “UTKAST-18: status
-reaches all conflict kinds and preserves complete snapshot values at 320px”
-och “UTKAST-18: status reaches all conflict kinds and preserves complete
-snapshot values at 640px”. Sista fallet har 456 pixlars höjd.
+UTKAST-18.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-18"
+  },
+  "reference": "1440 × 900; samtliga konfliktslag och fullständiga underlag.",
+  "outcomes": [
+    "Konfliktlistans öppningskontroll är tydlig och går att träffa utan att aktivera knappen för hela utkastet intill.",
+    "Varje listval fokuserar rätt konfliktrubrik med synligt, åtkomligt fokus. Sambandsnamnet visar aktuell sparad riktning och aktuella objekt samt förslagets osäkra uppgift. Förslagets egna namn läses i Utkast.",
+    "Det tidigare underlaget visar Sparad ekonomi och Sparad skuld 1 200. Förslaget visar Mitt ekonomiska avsnitt och Min skuld 1 700. Aktuellt sparat värde visar Sparad ekonomi och Sparad skuld 2 000, med osäkerheten och datumet från Robins sparande.",
+    "Alla tre underlag innehåller sina anteckningar trots att fältet är dolt. Ingen uppgift försvinner eller får fel betydelse från ett annat underlags typdefinition.",
+    "Hela sparförsöket avvisas atomiskt. Navigeringen ändrar inte kartan, privata förslag eller historik, och innehållet kräver ingen vågrät rullning.",
+    "Efter typvalet har konfliktrubriken synligt fokus. De tre återstående konflikterna avvisar fortfarande hela sparförsöket. Valet ändrar bara det privata utkastet; kartan och historiken är oförändrade."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -2007,7 +2276,9 @@ snapshot values at 640px”. Sista fallet har 456 pixlars höjd.
 6. Öppna **4 konflikter i ditt utkast** med tangentbord. Besök objekttyp,
    sambandstyp, samband och objekt i **Alla konflikter** med Enter.
    Läs aktuella sparade och föreslagna värden i dialogens två kolumner.
-7. Stäng med Escape, öppna **Utkast** och hela förslaget Lo Lind.
+7. Välj den sparade skulden och läs Sparad skuld 2 000 i resultatet.
+   Välj sedan den föreslagna skulden och läs Min skuld 1 700.
+   Stäng med Escape, öppna **Utkast** och hela förslaget Lo Lind.
    Läs tidigare sparade och föreslagna värden, inklusive dolda anteckningar.
    Läs Min objekttyps fullständiga förslag för båda avsnittsbenämningarna.
 8. Försök spara hela utkastet. Läs **Inget sparades**, stäng sparmodalen
@@ -2052,8 +2323,24 @@ Lo Berg, lägger till beskrivningen Spelar piano och sparar hela utkastet.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-19: an own object correction preserves staged independent
-work and saved facts until a fresh save”.
+UTKAST-19.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-19"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; rätta objektkonflikten och bevara ett oberoende förslag.",
+  "outcomes": [
+    "Redigera Lo Lind öppnar det befintliga förslaget med fokus i namnfältet. Avbruten förlust bevarar cykelns text. Det oberoende cykelförslaget finns kvar medan Lo rättas och konflikten löses.",
+    "Rättelsen och konfliktvalet ändrar bara Alex utkast. Inget kvitto skapas, och Robin ser fortfarande Lo Berg före det nya sparandet.",
+    "Efter konfliktvalet innehåller förslaget både Lo Alm och den oberoende beskrivningen Spelar piano. Ett nytt uttryckligt sparande ger ett kvitto och gör just dessa uppgifter gemensamma."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -2094,19 +2381,34 @@ work and saved facts until a fresh save”.
 **Förutsättningar:** Lo Exempel, Molnmusik och Garaget finns sparade.
 Alex föreslår Lo Exempel → Använder → Molnmusik med osäker uppgift,
 och lägger det nya objektet Privat stol i samma privata utkast.
-Robin tar bort Molnmusik och sparar. Upprepa på dator och telefon.
+Robin tar bort Molnmusik och sparar.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallen “UTKAST-20: a relationship correction replaces a deleted endpoint
-and still requires a fresh save at 1440px” och “UTKAST-20: a relationship
-correction replaces a deleted endpoint and still requires a fresh save at
-390px”.
+UTKAST-20.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-20"
+  },
+  "reference": "1440 × 900; sambandets vanliga rättelseformulär.",
+  "outcomes": [
+    "Försöket med borttaget mål sparar varken sambandet eller Privat stol. Tabellens ordinarie formulär för samband öppnar samma privata förslag.",
+    "Rättelsen behåller samma samband, riktning och osäkra uppgift. Konflikten försvinner när målet är giltigt. Privat stol finns kvar i utkastet.",
+    "Rättelsen skapar inget kvitto och ändrar inget i den gemensamma kartan. Först ett nytt uttryckligt sparande delar sambandet och stolen.",
+    "Molnmusik förblir borttaget. Det nya sambandet går från Lo till Garaget."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Alex försöker spara hela utkastet. Kontrollera att inget sparas och
-   ladda om sidan.
+1. Alex försöker spara hela utkastet. Läs **Inget sparades**, stäng
+   sparmodalen och textvyn och välj **Hämta aktuellt underlag**.
 2. Öppna **1 konflikt i ditt utkast**. Läs borttaget mål och förslaget.
    Jämförelsen är läsbar, men förslaget kan inte väljas som egenskapsvärde.
 3. Stäng med Escape. Öppna Tabell → **Samband för Lo Exempel** och välj
@@ -2130,7 +2432,7 @@ correction replaces a deleted endpoint and still requires a fresh save at
 
 ### UTKAST-21: rätta typdefinitioner genom inställningarna
 
-**Syfte:** Göra en egen rättelse av objekt- och sambandstyper, bevara
+**Syfte:** Göra en egen rättelse av objekttyper, bevara
 oberoende sparade uppgifter och kräva ett nytt sparbesked.
 
 **Användare:** Alex och Robin i skilda sessioner i samma hushåll.
@@ -2138,27 +2440,38 @@ oberoende sparade uppgifter och kräva ett nytt sparbesked.
 **Förutsättningar:** Ett hushåll med sparade objekt och typer. Alex föreslår
 namnet Min typ för en befintlig typ. Robin ändrar samma typs namn till
 Annans typ och beskrivningen till Oberoende typförklaring, och sparar.
-Upprepa för objekttyp och sambandstyp, på dator och telefon.
+Använd objekttyp vid 1440 × 844 pixlar.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallen “UTKAST-21: object-type correction opens retained settings and
-preserves independent edits until a fresh save at 1440px”, “UTKAST-21:
-object-type correction opens retained settings and preserves independent
-edits until a fresh save at 390px”, “UTKAST-21: relationship-type correction
-opens retained settings and preserves independent edits until a fresh save
-at 1440px” och “UTKAST-21: relationship-type correction opens retained
-settings and preserves independent edits until a fresh save at 390px”.
+UTKAST-21.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-21"
+  },
+  "reference": "Objekttyp, 1440 × 844; rättelse i ordinarie inställningar.",
+  "outcomes": [
+    "Rättelsen öppnar rätt befintligt formulär på den vanliga inställningssidan. Sparade objekt och samband förblir oförändrade genom hela flödet.",
+    "Rättelsen och konfliktvalet ändrar bara Alex utkast. Annans typ och den oberoende beskrivningen är fortfarande gemensamma före ett nytt sparande.",
+    "Konfliktvalet bevarar Oberoende typförklaring tillsammans med Rättad typ. Ett nytt uttryckligt sparande delar dessa uppgifter och skapar ett kvitto."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Alex försöker spara hela utkastet. Kontrollera att inget sparas och
-   ladda om sidan.
+1. Alex försöker spara hela utkastet. Läs **Inget sparades**, stäng
+   sparmodalen och textvyn och välj **Hämta aktuellt underlag**.
 2. Öppna **1 konflikt i ditt utkast**. Läs Min typ, Annans typ och
    Oberoende typförklaring. Stäng med Escape.
 3. Öppna Inställningar → **Typer och egna fält**. På mobil, öppna
-   **Välj inställning** först. Visa rätt typkategori och välj **Ändra typ:
-   Min typ**. Kontrollera det befintliga formulärets namn.
+   **Välj inställning** först. Visa **Objekttyper och egna fält** och välj
+   **Ändra typ: Min typ**. Kontrollera det befintliga formulärets namn.
 4. Ändra till Rättad typ och lägg typförslaget i utkastet.
 5. Välj Tillbaka till kartan och öppna konflikten igen. Välj det egna
    namnet och den sparade oberoende beskrivningen. Bekräfta **Lägg valen
@@ -2183,19 +2496,33 @@ ersätts av resultatet utan att kartan sparas automatiskt.
 **Användare:** Alex och Robin i skilda sessioner i samma hushåll.
 
 **Förutsättningar:** Lo Exempel är sparat. Alex föreslår Lo Lind och
-Robin sparar Lo Berg. Prova på telefon och upprepa för båda sidorna.
+Robin sparar Lo Berg. Använd 390 × 844 pixlar och välj sparade värden.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallen “UTKAST-22: a saved conflict choice keeps the review heading
-focused and restores usable toolbar focus without saving” och “UTKAST-22:
-a proposed conflict choice keeps the review heading focused and restores
-usable toolbar focus without saving”.
+UTKAST-22.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-22"
+  },
+  "reference": "390 × 844, sparade värden; fokus när valknappar försvinner.",
+  "outcomes": [
+    "Rubriken Lo Lind behåller synligt fokus efter bekräftelsen. Resultatet visar att valen finns i utkastet eller att förslaget tagits bort.",
+    "Escape stänger modalgranskningen och återför fokus till en synlig, användbar kontroll i verktygsfältet när öppningsknappen försvinner.",
+    "Sparade värden tar bort namnförslaget. Eget namn behåller Lo Lind. Båda alternativen lämnar Lo Berg sparat och skapar inget kvitto."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Välj **1 konflikt i ditt utkast** och läs **Granska konflikter**.
-2. Välj sparade eller föreslagna värden för de egenskaper som skiljer sig.
+2. Välj sparade värden för de egenskaper som skiljer sig.
    Fokusera **Lägg valen i utkastet** och tryck Enter. Spara inte kartan.
 3. Kontrollera resultatet och fokus på konfliktens rubrik. Tryck Escape.
 4. Kontrollera fokus på **Karta** när den ursprungliga konfliktknappen
@@ -2220,18 +2547,41 @@ utan att ett fördröjt resultat avbryter den fortsatta sökningen.
 **Förutsättningar:** Samma namnkonflikt som i UTKAST-22. Testmiljön kan
 hålla det riktiga svaret efter att servern behandlar konfliktvalet.
 
+**Separat förberedelse:** Använd
+[styrd konfliktleverans](current-conflict-preparation.md) efter att
+konflikten har skapats. Arma den angivna rutten före UI-handlingen.
+
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-23: delayed conflict resolution protects pending focus
-and allows explicit table continuation”.
+UTKAST-23.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-23"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; väntande konfliktval skyddar fokus före fortsatt sökning.",
+  "outcomes": [
+    "Pågående val stannar i modalgranskningen; Escape lämnar inte ett obekräftat kommando. Rubriken behåller synligt fokus när svaret kommer.",
+    "Efter uttrycklig stängning behåller sökfältet texten Lo och fokus.",
+    "Lo Lind finns i eget utkast. Lo Berg är fortfarande sparat och ingen historikgrupp eller kvitto tillkommer."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna Tabell och **1 konflikt i ditt utkast**. Välj ditt föreslagna
+1. Kör `arm resolve:after` i transportens terminal. Öppna Tabell och **1
+   konflikt i ditt utkast**. Välj ditt föreslagna
    namn och övriga aktuella värden. Bekräfta **Lägg valen i utkastet**.
-2. Håll svaret. Kontrollera väntande besked och inaktiva bekräftelse-
+2. Invänta `application-completed` med status 200 och `held-after`. Kontrollera
+   väntande besked och inaktiva bekräftelse-
    och stängknappar. Tryck Escape; dialogen ska finnas kvar.
-3. Släpp fram svaret. Kontrollera resultatet och rubrikens fokus.
+3. Kör `release` i transportens terminal. Kontrollera resultatet och rubrikens
+   fokus.
 4. Stäng med Escape och skriv Lo i **Sök objekt i tabellen**.
    Kontrollera söktext och fokus samt utkast, Robins karta och historik.
 
@@ -2253,25 +2603,48 @@ sparande när deras svar försvinner på vägen till webbläsaren.
 **Förutsättningar:** Lo Exempel är sparat. Alex föreslår Lo Lind och
 det nya objektet Privat stol. Robin sparar Lo Berg med beskrivningen
 Spelar piano. Testmiljön kan släppa fram en riktig förfrågan och avbryta
-enbart svaret efter serverns behandling. Upprepa på dator och telefon.
+enbart svaret efter serverns behandling.
+
+**Separat förberedelse:** Använd
+[styrd konfliktleverans](current-conflict-preparation.md) efter att
+konflikten har skapats. Arma den angivna rutten före UI-handlingen.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallen “UTKAST-24: lost resolution and save responses recover the private
-choice and one fresh receipt at 1440px” och “UTKAST-24: lost resolution and
-save responses recover the private choice and one fresh receipt at 390px”.
+UTKAST-24.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-24"
+  },
+  "reference": "1440 × 844; genomfört konfliktval och sparande med tappade svar.",
+  "outcomes": [
+    "Ett tappat konfliktvalssvar skapar inget sparförsök eller kvitto. Den gemensamma kartan behåller Lo Berg och saknar Privat stol.",
+    "Uppdatering och omladdning återfinner Lo Lind, den oberoende beskrivningen och stolen i samma privata utkast. Ett nytt sparbesked krävs fortfarande.",
+    "Det uttryckliga sparandet gör båda förslagen gemensamma tillsammans. Ett tappat sparkvitto spärrar ett nytt sparande tills utfallet kontrolleras.",
+    "Återhämtningen ger exakt samma kvitto. Endast ett nytt sparförsök och en historikgrupp tillkommer; kartan sparas inte en andra gång."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna **1 konflikt i ditt utkast** från Tabell. Välj det egna namnet
+1. Kör `arm resolve:drop-after`. Öppna **1 konflikt i ditt utkast** från Tabell.
+   Välj det egna namnet
    och sparade oberoende egenskaper, och bekräfta **Lägg valen i utkastet**.
-   Bryt svaret efter serverns behandling. Läs det oklara utfallet och
+   Kräv `application-completed` med status 200 i terminalen. Läs det oklara
+utfallet och
    kontrollera att en ny bekräftelse är spärrad.
 2. Kontrollera Robins karta och historiken. Välj **Kontrollera om valet
    lades i utkastet**. Läs resultatet och stäng med Escape.
 3. Öppna **Utkast** och hela förslaget Lo Lind. Läs Spelar piano, stäng
    läsningen och ladda om. Kontrollera Lo Lind och Privat stol i utkastet.
-4. Välj **Spara hela utkastet**. Bryt svaret efter genomfört sparande.
+4. Kör `arm save:drop-after`. Välj **Spara hela utkastet**. Kräv status 200 före
+   det tappade svaret.
    Läs **Sparandet kunde inte bekräftas** i **Spara utkastet**.
 5. Välj **Kontrollera sparandet igen**. Kontrollera bekräftelsen, tomt
    utkast, Robins karta och den enda nya historikgruppen.
@@ -2354,10 +2727,13 @@ UTKAST-49–78 använder en tillfällig installation med riktig
 SQLite och två
 syntetiska användare: administratören Alex och medlemmen Robin. Starta från
 repo-roten med `npm run build` och
-`npx tsx scripts/manual-conflict-continuity.ts --chrome`. Öppna adressen
+`npm run test:env -- node --import tsx scripts/manual-conflict-continuity.ts
+--chrome`. Öppna adressen
 som skrivs ut.
-För UTKAST-49–63, 73, 77 och 78 är Alex inloggad i det synliga fönstret; konsolkommandon
-för Robin använder hans separata session. Arkivfallen UTKAST-64–72 och 74–76 visar
+För UTKAST-49–63, 73, 77 och 78 är Alex inloggad i det synliga fönstret;
+konsolkommandon
+för Robin använder hans separata session. Arkivfallen UTKAST-64–72 och 74–76
+visar
 i stället medlemmen Robin; administratören Alex använder en separat
 session för export, typändring och import. Inga externa AI-anrop eller
 medgivanden behövs.
@@ -2381,8 +2757,24 @@ sig.
 
 **Integrationstest:**
 [conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
-testfallet “UTKAST-49: switching conflicts and reopening preserves choices and
-never clears another conflict’s stale guard”.
+UTKAST-49.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-49"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; behåll val mellan konflikter och vid återöppning.",
+  "outcomes": [
+    "Valen för respektive post finns kvar över växling och återöppning.",
+    "Lo visar inaktuellt underlag och kräver aktuell jämförelse. Växling till en annan post kan inte häva den spärren; tjänstens opåverkade val består.",
+    "Ingen gemensam ändring eller nytt sparande görs av det avvisade försöket."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -2411,9 +2803,24 @@ never clears another conflict’s stale guard”.
 
 **Integrationstest:**
 [conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
-testfallen “UTKAST-50: refreshed conflict data clears only choices for
-properties that actually changed” och “UTKAST-50: a later save after a lost
-applied reply retains unchanged choices when reviewing the new conflict”.
+UTKAST-50.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-50"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; gör bara om val för ändrade egenskaper.",
+  "outcomes": [
+    "Bara det berörda namnvalet återställs. Beskrivningsvalet behålls.",
+    "Det privata utkastet innehåller Lo Lind och Min anteckning mot nytt underlag.",
+    "Den gemensamma kartan behåller Lo Ås och Robins anteckning. Inget sparande görs."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -2423,13 +2830,10 @@ applied reply retains unchanged choices when reviewing the new conflict”.
    med fokus kvar i dialogen och båda valen bevarade.
 4. Kör `network-ok` och visa aktuell jämförelse igen. Beskrivningen är
    fortfarande vald, namnet kräver val.
-5. Välj Alex namn igen och lägg valen i utkastet. Kör `result`.
-6. Börja om med `new-base` och `lose-applied`. Välj Alex två värden och
-   bekräfta, stäng efter det oklara svaret och kör `newer-name`.
-7. Öppna och kontrollera faktiskt utfall. Den nya konflikten kräver aktuell
-   jämförelse; ingen lösningsbock visas. Visa jämförelsen och kontrollera att
-   beskrivningen är vald medan namnet kräver nytt val. Kör `network-ok`
-   innan du bekräftar igen.
+5. Välj Alex namn igen och lägg valen i utkastet.
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -2445,39 +2849,44 @@ kombination.
 
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
-**Förutsättningar:** Börja med `new-type`, sedan en ny installation med
-`new-reference`.
+**Förutsättningar:** Kör `new-type`.
 
 **Integrationstest:**
 [conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
-testfallen “UTKAST-51: a changed object type revalidates mixed values while
-unaffected choices remain”
-och “UTKAST-51: a changed relationship reference refreshes its meaning without
-clearing unchanged property choices”.
+UTKAST-51.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-51"
+  },
+  "reference": "Objekttyp; omprövning mot ändrad typdefinition.",
+  "outcomes": [
+    "Ändrad typ kräver aktuell jämförelse. Texten passar inte Mätobjekts numeriska fält; orsaken förklaras och bekräftelsen spärras utan automatisk ändring av val.",
+    "En giltig typkombination kan läggas i utkastet. Kartans sparade typ och värden består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. I `new-type`, öppna konflikten. Välj Alex namn, beskrivning och **Min text**.
 2. Kör `newer-type`: Robin sparar Mätobjekt och en ny förklaring för
    Anteckningsobjekt. Försök lägga valen i utkastet och visa aktuell jämförelse.
-3. Namn och beskrivning är kvar. Välj Min text igen och den sparade typen
+3. Beskrivningens val är kvar. Välj Min text igen och den sparade typen
    **Mätobjekt**.
 4. Läs felet. Välj Alex **Anteckningsobjekt** och lägg kombinationen i utkastet.
-5. Kör `new-reference`. Öppna sambandskonflikten och välj Alex **Molnmusik**
-   och **Osäkert uppgivet**.
-6. Kör `newer-reference`. Försök bekräfta och visa aktuell jämförelse.
-   Kontrollera det nya namnet **Ny musiktjänst** och de två valen. Bekräfta.
 
 **Förväntat resultat:**
 
 - Ändrad typ kräver aktuell jämförelse. Texten passar inte Mätobjekts numeriska
   fält; orsaken förklaras och bekräftelsen spärras utan automatisk ändring av
-val.
+  val.
 - En giltig typkombination kan läggas i utkastet. Kartans sparade typ och värden
   består.
-- Ändrad referens upptäcks trots oförändrat objekt-ID. Aktuellt namn visas,
-  opåverkade egenskapsval behålls och prövas mot aktuellt underlag.
-- Sambandet ändras bara i Alex privata utkast, inte i den gemensamma kartan.
 
 ### UTKAST-52: behåll val vid känd avvisning och återförsök efter kontroll
 
@@ -2490,17 +2899,37 @@ förslag.
 
 **Integrationstest:**
 [conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
-testfallet “UTKAST-52: a known version rejection retains choices and retries
-only after a current comparison”.
+UTKAST-52.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-52"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; behåll val vid känd avvisning och återförsök efter kontroll.",
+  "outcomes": [
+    "Ett gammalt versionsförsök avvisas utan ändring; orsaken förklaras och valen består.",
+    "Beskedet om nytt underlag har en enda aktiv kanal för annonsering.",
+    "Efter aktuell jämförelse kan samma val bekräftas utan att göras om.",
+    "Privat stol finns kvar. Bekräftelsen gör en enda privat ändring och skapar ingen historikgrupp."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Välj Alex namn och beskrivning i konflikten.
 2. Kör `newer-private`: en annan klient för Alex lägger Privat stol i utkastet.
 3. Försök lägga konfliktvalen i utkastet. Läs avvisningen och kontrollera
-   spärren. Kontrollera med skärmläsare att beskedet om nytt underlag bara
-   annonseras en gång.
-4. Visa aktuell jämförelse. Båda valen finns kvar. Bekräfta och kör `result`.
+   spärren.
+4. Visa aktuell jämförelse. Båda valen finns kvar. Bekräfta.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -2521,53 +2950,51 @@ only after a current comparison”.
 
 **Integrationstest:**
 [conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
-testfallen “UTKAST-53: a lost resolution reply stays reachable after the last
-conflict disappears in Karta (proposed) at 1280px”, “UTKAST-53: a lost
-resolution reply stays reachable after the last conflict disappears in Karta
-(proposed) at 320px”, “UTKAST-53: a lost resolution reply stays reachable after
-the last conflict disappears in Karta (saved) at 1280px”, “UTKAST-53: a lost
-resolution reply stays reachable after the last conflict disappears in Karta
-(saved) at 320px”, “UTKAST-53: a lost resolution reply stays reachable after the
-last conflict disappears in Tabell (proposed) at 1280px”, “UTKAST-53: a lost
-resolution reply stays reachable after the last conflict disappears in Tabell
-(proposed) at 320px”, “UTKAST-53: a lost resolution reply stays reachable after
-the last conflict disappears in Tabell (saved) at 1280px”, “UTKAST-53: a lost
-resolution reply stays reachable after the last conflict disappears in Tabell
-(saved) at 320px”,
-“UTKAST-53: another client consuming the draft cannot turn an unknown saved
-choice into private success” och “UTKAST-53: another client consuming the
-draft cannot turn an unknown proposed choice into private success”.
+UTKAST-53.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-53"
+  },
+  "reference": "1280 × 900, Karta, båda föreslagna värden; genomförd privat ändring.",
+  "outcomes": [
+    "Uppföljningen förblir åtkomlig när sista konflikten försvinner. Ingen öppning eller kontroll upprepar bekräftelsen.",
+    "Lo Lind och Min anteckning finns i det privata utkastet efter kontrollen. Resultatet visar bock och Vald lösning, utan gemensamt sparkvitto.",
+    "Lo Berg och Robins anteckning förblir sparade. Historiken ändras inte."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Välj Alex namn och beskrivning, bekräfta och läs det oklara utfallet.
-2. Stäng med Escape och öppna igen. Invänta att konfliktantalet försvinner
+1. Använd Karta vid 1280 × 900 pixlar. Öppna **1 konflikt i ditt utkast**.
+   Välj Alex namn Lo Lind och beskrivning Min anteckning. Bekräfta och läs
+   det oklara utfallet efter `lose-applied`.
+2. Stäng med Escape och öppna igen. Invänta att konfliktknappen försvinner
    när aktuellt utkast hämtas. Stäng igen utan att kontrollera.
-3. Välj **Visa konfliktvalet** och sedan **Kontrollera om valet lades i utkastet**.
-   Kör `result`. Upprepa från `new-base` i Tabell med `lose-applied`.
-4. Upprepa även på Karta och Tabell med båda Robins sparade värden valda.
-   Kontrollera att samma kontroll återfinner borttaget privat förslag.
-5. Upprepa båda utfallen från Karta och Tabell på smal skärm.
-6. Börja om med `new-base`, `newer-private` och `lose-unsent`. Välj båda
-   sparade värdena och bekräfta. Stäng efter det oklara svaret och kör
-   `save-elsewhere`: en annan klient för Alex löser med föreslagna värden
-   och sparar hela utkastet. Öppna och kontrollera faktiskt utfall.
-7. Upprepa steg 6 med `lose-applied` och Alex föreslagna värden valda.
+3. Välj **Visa konfliktvalet**. Kontrollera rubrikens fokus och spärrad
+   **Lägg valen i utkastet**. Välj **Kontrollera om valet lades i utkastet**.
+4. Läs **Valen finns i ditt utkast** och bocken. Stäng med Escape och läs
+   Lo Lind och Min anteckning i Utkast. Spara inte kartan.
+
+**Separat tekniskt underlag:** `result` jämför privat utkast, sparade
+uppgifter och historik. Automationen kontrollerar en enda skickad resolution.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
-- Återöppning häver inte spärren för ny bekräftelse. Uppföljningen finns kvar
-  på Karta och Tabell även när sista konflikten försvinner, och öppnar samma
-  kontroll utan automatisk upprepning. Dialogens rubrik får fokus vid öppning.
-- Kontrollen läser utkastet och visar den genomförda privata lösningen med bock.
-  Postens namn och typ finns kvar; **Vald lösning** är en tillgänglig status.
-- Bara en privat ändring har gjorts. Alex val finns i utkastet; när båda
-  sparade värden valdes är i stället det berörda förslaget borttaget.
-  Kartan och historiken har inte ändrats och inget gemensamt sparkvitto har skapats.
-- Om en annan klient har sparat och tömt utkastet visas i stället aktuellt
-  besked i läsläge, utan privat lösningsbock eller uppmaning att upprepa
-  åtgärden. Det gemensamma sparandet framställs inte som osparat.
-  Kontrollen ändrar varken det tömda utkastet, kartan eller historiken.
+- Uppföljningen förblir åtkomlig när sista konflikten försvinner. Ingen
+  öppning eller kontroll upprepar bekräftelsen.
+- Lo Lind och Min anteckning finns i det privata utkastet efter kontrollen.
+  Resultatet visar bock och Vald lösning, utan gemensamt sparkvitto.
+- Lo Berg och Robins anteckning förblir sparade. Historiken ändras inte.
 
 ### UTKAST-54: kontrollera en utebliven ändring före nytt försök
 
@@ -2575,24 +3002,44 @@ draft cannot turn an unknown proposed choice into private success”.
 
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
-**Förutsättningar:** Kör `new-base`, sedan `lose-unsent`. Upprepa på smal skärm.
+**Förutsättningar:** Kör `new-base`, sedan `lose-unsent`. Använd 1280 × 900
+pixlar.
 
 **Integrationstest:**
 [conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
-testfallen “UTKAST-54: an unsent resolution is verified before retrying with the
-retained choices at 1280px”
-och “UTKAST-54: an unsent resolution is verified before retrying with the
-retained choices at 320px”.
+UTKAST-54.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-54"
+  },
+  "reference": "1280 × 900; ändringen når inte servern och kontrollen misslyckas först.",
+  "outcomes": [
+    "Misslyckad kontroll och återöppning ger aldrig tillstånd att upprepa åtgärden.",
+    "En lyckad faktisk kontroll av utebliven ändring tillåter ett nytt försök.",
+    "Valen finns kvar på dator och smal skärm. Ett enda genomfört försök ändrar det privata utkastet; den gemensamma kartan består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Välj Alex namn och beskrivning, bekräfta och läs det oklara utfallet.
+1. Öppna **1 konflikt i ditt utkast**. Välj Alex namn och beskrivning,
+   bekräfta och läs det oklara utfallet.
 2. Stäng och öppna igen. Kör `check-error` och välj **Kontrollera om valet lades
    i utkastet**.
 3. Läs att utfallet fortfarande är oklart. Kör `network-ok` och kontrollera
    igen.
-4. Läs att ändringen inte genomfördes. Bekräfta med de bevarade valen och kör
-   `result`.
+4. Läs att ändringen inte genomfördes. Kör `network-ok` för normal leverans,
+   bekräfta med de bevarade valen.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -2612,27 +3059,40 @@ stängd.
 
 **Integrationstest:**
 [conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
-testfallen “UTKAST-55: reopening discovers new saved data before stale choices
-can be confirmed” och “UTKAST-55: a conflict resolved by another client becomes
-read-only after reopening”.
+UTKAST-55.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-55"
+  },
+  "reference": "Karta; nya sparade uppgifter medan dialogen är stängd.",
+  "outcomes": [
+    "Aktuellt underlag hämtas innan någon gammal lösning kan bekräftas.",
+    "Beskedet om nytt underlag har en enda aktiv kanal för annonsering.",
+    "Bara namnvalet behöver göras om. Beskrivningen behålls.",
+    "Ingen öppning, stängning eller jämförelse ändrar utkastet eller den gemensamma kartan."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Välj Alex namn och beskrivning. Stäng med Escape.
 2. Kör `newer-name`. Öppna konflikten igen och läs beskedet om nytt underlag.
-   Kontrollera med skärmläsare att beskedet bara annonseras en gång.
-3. Visa aktuell jämförelse och granska kvarvarande val. Kör `result`.
-4. Börja om med `new-base`. Välj Alex två värden och stäng. Kör
-   `resolve-elsewhere`: en annan klient för Alex väljer de sparade värdena.
-   Öppna igen och kontrollera att den tidigare jämförelsen nu är i läsläge.
+3. Visa aktuell jämförelse och granska kvarvarande val.
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
 - Aktuellt underlag hämtas innan någon gammal lösning kan bekräftas.
 - Beskedet om nytt underlag har en enda aktiv kanal för annonsering.
 - Bara namnvalet behöver göras om. Beskrivningen behålls.
-- Om en annan klient redan har löst konflikten visas aktuellt besked med
-  fokus kvar på dialogens rubrik. Ingen gammal bekräftelse erbjuds.
 - Ingen öppning, stängning eller jämförelse ändrar utkastet eller den gemensamma
   kartan.
 
@@ -2647,8 +3107,24 @@ livstid.
 
 **Integrationstest:**
 [conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
-testfallet “UTKAST-56: pending and unknown conflict outcomes have one accessible
-status without stealing later focus”.
+UTKAST-56.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-56"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; följ väntan och oklart utfall utan fokusstöld.",
+  "outcomes": [
+    "Under väntan kan begäran inte upprepas och dialogen kan inte lämnas.",
+    "Vid oklart utfall går det att stänga. Ett beständigt tillgängligt statusbesked finns utanför dialogen och flyttar inte fokus från senare arbete.",
+    "Bara en av konfliktflödets statusregioner är aktiv för uppläsning åt gången. Återöppning återställer inte bekräftelse; faktisk kontroll visar den genomförda lösningen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -2666,7 +3142,7 @@ status without stealing later focus”.
   finns utanför dialogen och flyttar inte fokus från senare arbete.
 - Bara en av konfliktflödets statusregioner är aktiv för uppläsning åt gången.
   Återöppning återställer inte bekräftelse; faktisk kontroll visar den
-genomförda lösningen.
+  genomförda lösningen.
 
 ### UTKAST-57: acceptera en redan genomförd objektborttagning
 
@@ -2681,8 +3157,24 @@ objektet. Kör `result` för att läsa utgångsläget.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallet “UTKAST-57: accepting a removed object discards only its proposal
-and preserves the saved removal”.
+UTKAST-57.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-57"
+  },
+  "reference": "1280 och 320 × 900 i samma körning; läsbara skillnader och omflöde.",
+  "outcomes": [
+    "Läsning, öppning och stängning ändrar inget. Förklaringen lyder **Objektet togs bort från den gemensamma kartan medan du redigerade det.** Varningen lyder **Objektet är borttaget. Ditt ändringsförslag kan inte återställa det.**",
+    "Bekräftelsen kastar endast Lo Linds förslag. Det oberoende förslaget består.",
+    "Objektet förblir borttaget och historiken får ingen ny gemensam ändring. Beskedet säger att förslaget tas bort ur utkastet. Namnet och typen står kvar i konfliktlistan med en bock och tillgänglig lösningsstatus."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -2690,10 +3182,14 @@ and preserves the saved removal”.
    borttagningen och varningen att förslaget inte kan återställa objektet.
 2. Läs **Borttaget** och **✓ Förvalt** på den sparade sidan och hela ditt
    förslag på den andra.
-   Under **Efter bekräftelsen** anges **Objekt: Borttaget**.
-3. Stäng med Escape och kör `result`. Öppna konflikten igen.
+   Under **Resultat av valen** anges **Objekt: Borttaget**.
+3. Stäng med Escape. Öppna konflikten igen.
 4. Välj **Acceptera borttagningen och kasta ditt förslag**. Läs statusen och
-   postens kvarvarande namn, typ och lösningsmarkering. Kör `result` igen.
+   postens kvarvarande namn, typ och lösningsmarkering.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -2717,16 +3213,36 @@ för ett sparat samband från Lo till Molnmusik. Robin tar bort sambandet.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallet “UTKAST-58: accepting a removed relationship discards only its
-proposal without restoring the saved edge”.
+UTKAST-58.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-58"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; acceptera ett redan borttaget samband.",
+  "outcomes": [
+    "Förklaringen lyder **Sambandet togs bort från den gemensamma kartan medan du redigerade det.** Varningen lyder **Ett ändringsförslag kan inte återställa ett borttaget samband.**",
+    "Öppning och stängning ändrar inget. Bara det bekräftade förslaget kastas; oberoende förslag består. Säkerheten **Osäkert uppgivet** går att läsa.",
+    "Sambandet förblir borttaget, kartan och historiken ändras inte och den lösta postens namn och typ finns kvar med lösningsmarkering."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Öppna konflikten och läs förklaringen om det borttagna sambandet.
 2. Läs **Borttaget**, **✓ Förvalt** och hela det egna förslaget i läsläge.
-   Under **Efter bekräftelsen** anges **Samband: Borttaget**.
-3. Stäng med Escape, kör `result` och öppna igen.
-4. Välj **Acceptera borttagningen och kasta ditt förslag** och kör `result`.
+   Under **Resultat av valen** anges **Samband: Borttaget**.
+3. Stäng med Escape och öppna igen.
+4. Välj **Acceptera borttagningen och kasta ditt förslag**.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -2749,15 +3265,35 @@ Robin sparar ett annat samband med samma typ, riktning och objekt.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallet “UTKAST-59: a duplicate relationship has a readonly comparison and
-discards only the proposed duplicate”.
+UTKAST-59.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-59"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; kasta bara ett föreslaget dubblettsamband.",
+  "outcomes": [
+    "Förklaringen lyder **Ett sparat samband har redan samma typ, riktning och objekt.** Varningen lyder **Sambandet finns redan. Ta bort det föreslagna sambandet ur ditt utkast.**",
+    "Jämförelsen visar sambandet i läsläge. Utfallet **Sambandet i ditt utkast: Tas bort ur ditt utkast** är markerat **✓ Förvalt**. Det redan sparade sambandet och dess uppgifter behålls. Efter bekräftelsen visas **Borttaget ur ditt utkast**.",
+    "Öppning och stängning ändrar inget. Bekräftelsen kastar bara dubblettens förslag. Sparade uppgifter, historik och oberoende utkast består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Öppna konflikten. Läs det sparade sambandet och det egna förslaget.
-2. Läs varningen och det förvalda utfallet under **Efter bekräftelsen**.
-3. Stäng, kör `result` och öppna igen.
-4. Välj **Ta bort sambandet ur ditt utkast**. Läs status och kör `result`.
+2. Läs varningen och det förvalda utfallet under **Resultat av valen**.
+3. Stäng och öppna igen.
+4. Välj **Ta bort sambandet ur ditt utkast**. Läs status.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -2782,15 +3318,34 @@ Molnmusik efter att Alex föreslår ett samband till det.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallet “UTKAST-60: a missing endpoint has a readonly comparison and
-removes only the unusable relationship proposal”.
+UTKAST-60.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-60"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; kasta ett sambandsförslag med saknat målobjekt.",
+  "outcomes": [
+    "Förklaringen lyder **Ett objekt som sambandet pekar på saknas.** Varningen lyder **Sambandet kan inte läggas till eftersom ett objekt som det pekar på saknas.** Utfallet **Sambandet i ditt utkast: Tas bort ur ditt utkast** är förvalt och hela förslaget går att läsa. Ett nytt samband läggs till den vanliga vägen. Efter bekräftelsen visas **Borttaget ur ditt utkast**.",
+    "Stängning ändrar inget. Bekräftelsen kastar bara sambandsförslaget. Den sparade borttagningen, historiken och det oberoende utkastet består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Öppna konflikten, läs de berörda uppgifterna och förklaringen.
-2. Läs det förvalda utfallet. Stäng med Escape och kör `result`.
+2. Läs det förvalda utfallet. Stäng med Escape.
 3. Öppna igen och välj **Ta bort sambandet ur ditt utkast**.
 4. Läs status och kör `result` för att jämföra kartan och övriga förslag.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -2805,7 +3360,8 @@ removes only the unusable relationship proposal”.
 
 ### UTKAST-61: behåll ett eget borttagningsförslag mot ändrade fakta
 
-**Syfte:** Kräva ett aktivt val innan borttagningen får sparas mot nytt underlag.
+**Syfte:** Kräva ett aktivt val innan borttagningen får sparas mot nytt
+underlag.
 
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
@@ -2814,17 +3370,37 @@ Robin sparar **Lo Berg** och **Nya sparade fakta** innan Alex hinner spara.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallet “UTKAST-61: an own removal is explicitly rebased against changed
-saved facts before a separate save”.
+UTKAST-61.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-61"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; behåll ett eget borttagningsförslag mot ändrade fakta.",
+  "outcomes": [
+    "Förklaringen lyder **Du föreslår borttagning. Robin sparade ändringar i objektet innan du hann spara ditt förslag.**",
+    "Bekräftelsen behåller en föreslagen borttagning mot de faktiskt nya sparade uppgifterna. Kartan ändras först vid separat sparande.",
+    "Det oberoende förslaget består. Det senare atomiska sparandet genomför den uttryckligen valda borttagningen och sparar övriga giltiga förslag."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Öppna konflikten och läs Robins aktuella uppgifter samt förklaringen.
 2. Kontrollera att **Lägg valen i utkastet** är spärrad utan ett aktivt val.
-3. Välj **Föreslagen borttagning** för objektet. Läs **Efter dina val** och
-   lägg valet i utkastet. Kör `result`.
+3. Välj **Föreslagen borttagning** för objektet. Läs **Resultat av valen** och
+   lägg valet i utkastet.
 4. Stäng dialogen. Öppna **Skriv till Skyttel → Visa utkastet** och spara
    hela utkastet från sparikonen.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -2847,16 +3423,38 @@ som berör Lo efter Alex borttagningsförslag.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallet “UTKAST-62: object and new connection removal choices remain
-independent and reject an invalid combination”.
+UTKAST-62.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-62"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; välj objekt och tillkommande samband oberoende.",
+  "outcomes": [
+    "Förklaringen lyder **Du föreslår borttagning. Ytterligare ett sparat samband berör nu objektet.**",
+    "Felet lyder **Objektet kan inte tas bort medan sambandet till det finns kvar. Välj att ta bort sambandet eller behåll objektet.** Inga val ändras automatiskt och inget läggs i utkastet vid den ogiltiga kombinationen.",
+    "Den giltiga kombinationen kastar objektets borttagningsförslag och lägger en uttrycklig sambandsborttagning i utkastet. Kartan ändras först vid sparande.",
+    "Efter sparandet består Lo med samma sparade uppgifter; bara sambandet tas bort och det oberoende objektförslaget sparas."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna konflikten. Välj föreslagen objektborttagning och det sparade sambandet.
+1. Öppna konflikten. Välj föreslagen objektborttagning och det sparade
+   sambandet.
 2. Läs kombinationsfelet och kontrollera att bekräftelsen är spärrad.
 3. Välj det sparade objektet och föreslagen borttagning av sambandet.
-4. Lägg valen i utkastet och kör `result`. Stäng och öppna
+4. Lägg valen i utkastet. Stäng och öppna
    **Skriv till Skyttel → Visa utkastet**. Spara utkastet separat.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -2866,7 +3464,8 @@ independent and reject an invalid combination”.
   kvar. Välj att ta bort sambandet eller behåll objektet.** Inga val ändras
   automatiskt och inget läggs i utkastet vid den ogiltiga kombinationen.
 - Den giltiga kombinationen kastar objektets borttagningsförslag och lägger
-  en uttrycklig sambandsborttagning i utkastet. Kartan ändras först vid sparande.
+  en uttrycklig sambandsborttagning i utkastet. Kartan ändras först vid
+  sparande.
 - Efter sparandet består Lo med samma sparade uppgifter; bara sambandet
   tas bort och det oberoende objektförslaget sparas.
 
@@ -2876,22 +3475,43 @@ independent and reject an invalid combination”.
 
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
-**Förutsättningar:** Kör `new-connections`, sedan `lose-applied`. Prova Karta
-och Tabell var för sig på smal skärm med ny installation mellan körningarna.
+**Förutsättningar:** Kör `new-connections`, sedan `lose-applied`. Använd Karta
+vid 320 × 900 pixlar.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallen “UTKAST-63: a lost reply verifies retained object and connection
-removals without replay in Karta” och “UTKAST-63: a lost reply verifies retained
-object and connection removals without replay in Tabell”.
+UTKAST-63.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-63"
+  },
+  "reference": "320 × 900, Karta; genomförda borttagningsval med tappat svar.",
+  "outcomes": [
+    "Kontroll och återöppning skickar aldrig en ny resolution. Båda borttagningsförslagens faktiska underlag och privata utfall kontrolleras.",
+    "Den genomförda lösningen visas med bock och båda föreslagna borttagningarna. Beskedet säger att valen finns i utkastet och kartan sparas separat.",
+    "Uppföljningen förblir nåbar från Karta och Tabell när sista konflikten försvinner. Sparade objekt, samband och historik är oförändrade."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna konflikten, välj borttagning av både objektet och sambandet och bekräfta.
-2. Läs det oklara utfallet, stäng och öppna igen så att den nya jämförelsen hämtas.
+1. Öppna konflikten, välj borttagning av både objektet och sambandet och
+   bekräfta.
+2. Läs det oklara utfallet, stäng och öppna igen så att den nya jämförelsen
+   hämtas.
 3. Stäng. När konfliktknappen försvinner, välj **Visa konfliktvalet**.
 4. Kontrollera att vanlig bekräftelse är spärrad. Välj **Kontrollera om valet
-   lades i utkastet** och kör `result`.
+   lades i utkastet**.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -3284,21 +3904,42 @@ av Lo. Robin har sparat **Nya sparade fakta** och ett nytt samband för Lo.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallet “UTKAST-73: removing one new connection leaves changed saved facts
-subject to explicit conflict review”.
+UTKAST-73.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-73"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; behåll ändrade fakta när en ny förbindelse försvinner.",
+  "outcomes": [
+    "Den ogiltiga kombinationen spärrar bekräftelsen utan utkaständring.",
+    "Robins borttagning berör bara det nya sambandet. De sparade fakta och deras faktiska sparare finns kvar i jämförelsen. Borttagningen av sambandet löser inte automatiskt objektets återstående konflikt.",
+    "Granskningen lägger objektets val mot det faktiska aktuella underlaget i utkastet. Det oberoende förslaget, sparade objekt och historik består.",
+    "Först separat sparande tar bort Lo ur den gemensamma kartan."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Öppna **1 konflikt i ditt utkast**. Läs det sparade objektets nya fakta
    och taggen **Robin** samt det nya sambandet.
 2. Välj objektets **Föreslagen borttagning** och den sparade sidans samband.
-   Läs varför kombinationen är ogiltig. Kör `result`.
+   Läs varför kombinationen är ogiltig.
 3. Kör `remove-new-connection`. Stäng med Escape, öppna igen och välj
    **Visa aktuell jämförelse**.
 4. Läs att Robin sparade ändringar i objektet. Kontrollera att objektets
    borttagningsval finns kvar men att sambandsraden försvunnit.
-5. Välj **Lägg valen i utkastet** och kör `result`.
+5. Välj **Lägg valen i utkastet**.
 6. Öppna **Skriv till Skyttel → Visa utkastet** och spara separat.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -3433,18 +4074,31 @@ när dess sista konfliktrad försvinner efter att svaret tappats.
 
 **Användare:** Alex i fönstret; Robin har sparat det redan befintliga sambandet.
 
-**Förutsättningar:** Kör `new-duplicate` i ett smalt fönster. Använd Karta
-eller Tabell. `lose-applied` skickar bekräftelsen till den riktiga servern
+**Förutsättningar:** Kör `new-duplicate` i ett smalt fönster. Använd Karta vid
+320 × 900 pixlar. `lose-applied` skickar bekräftelsen till den riktiga servern
 men tappar svaret; `lose-unsent` hindrar leveransen före servern.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallen “UTKAST-77: an applied duplicate-discard reply is explicitly checked
-without replay in Karta”, “UTKAST-77: an unsent duplicate-discard reply is
-explicitly checked without replay in Karta”, “UTKAST-77: an applied
-duplicate-discard reply is explicitly checked without replay in Tabell” och
-“UTKAST-77: an unsent duplicate-discard reply is explicitly checked without
-replay in Tabell”.
+UTKAST-77.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-77"
+  },
+  "reference": "320 × 900, Karta; genomfört kastval med tappat svar.",
+  "outcomes": [
+    "Återöppning och kontroll upprepar ingen mutation. Ny bekräftelse är spärrad tills faktiskt utfall har kontrollerats genom den synliga kontrollen.",
+    "Genomfört kastval ger **Sambandet har tagits bort ur ditt utkast**; Det berörda förslaget är borttaget ur utkastet.",
+    "Det oberoende förslaget, sparade samband, objekt och historik består. Både Karta och Tabell behåller åtkomst även när sista konflikten försvinner.",
+    "Stängning ger synligt användbart fokus utan att välja en dold kontroll."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -3452,18 +4106,18 @@ replay in Tabell”.
    utkast**. Läs det oklara beskedet. Stäng med Escape och öppna igen.
 2. När konfliktraden försvinner, stäng och välj **Visa konfliktvalet**.
    Kontrollera att ny bekräftelse fortfarande är spärrad.
-3. Välj **Kontrollera om valet lades i utkastet** och kör `result`.
+3. Välj **Kontrollera om valet lades i utkastet**.
 4. Stäng med Escape och kontrollera synligt användbart fokus.
-5. Upprepa i en ny installation med `lose-unsent`. Efter återöppning
-   finns konflikten kvar. Gör den uttryckliga kontrollen och läs beskedet
-   att valet inte lades i utkastet. Upprepa båda förloppen i den andra vyn.
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
 - Återöppning och kontroll upprepar ingen mutation. Ny bekräftelse är
-  spärrad tills faktiskt utfall har kontrollerats genom offentlig hämtning.
+  spärrad tills faktiskt utfall har kontrollerats genom den synliga kontrollen.
 - Genomfört kastval ger **Sambandet har tagits bort ur ditt utkast**;
-  uteblivet kastval bevarar hela utkastet och gör bekräftelsen möjlig igen.
+  Det berörda förslaget är borttaget ur utkastet.
 - Det oberoende förslaget, sparade samband, objekt och historik består.
   Både Karta och Tabell behåller åtkomst även när sista konflikten försvinner.
 - Stängning ger synligt användbart fokus utan att välja en dold kontroll.
@@ -3480,20 +4134,39 @@ verklig konflikt enligt den gemensamma förberedelsen.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
-testfallet “UTKAST-78: next conflict preserves retained choices and focuses
-the next real heading without another private mutation”.
+UTKAST-78.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-78"
+  },
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; gå till nästa verkliga konflikt efter bekräftelsen.",
+  "outcomes": [
+    "Bekräftelsen ändrar bara Lo-förslaget mot aktuellt underlag och ökar utkastets version en gång. Den sparar inte den gemensamma kartan.",
+    "**Nästa konflikt** använder de faktiskt bevarade posterna i listordning och flyttar fokus till nästa posts rubrik utan att ändra något förslag.",
+    "Musiktjänstens gjorda egenskapsval och den lösta Lo-postens resultat består. Gemensamma uppgifter och historik ändras inte av navigeringen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Öppna **2 konflikter i ditt utkast**. Välj musiktjänsten och dess
    föreslagna namn **Min musiktjänst** och beskrivning **Min tjänst**.
 2. Välj Lo i listan och välj dess föreslagna namn och beskrivning.
-   Välj **Lägg valen i utkastet**. Läs resultatet och kör `result`.
+   Välj **Lägg valen i utkastet**. Läs resultatet.
 3. Välj **Nästa konflikt** från resultatet. Kontrollera fokus på rubriken
    **Min musiktjänst** och att båda tidigare valen fortfarande är markerade.
-   Kör `result` igen.
 4. Välj den lösta Lo-posten i listan. Resultatet är kvar. Välj
    **Nästa konflikt** en gång till och kontrollera samma rubrikfokus.
+
+**Separat tekniskt underlag:** Operatörens `result` läser karta,
+privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
+och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
@@ -3507,7 +4180,8 @@ the next real heading without another private mutation”.
 ## Separata referenser för granskning, status och sparande
 
 Varje variant har ett eget ID. Ingen automatiserad körning tas bort.
-UTKAST-92–105 reserveras för dessa separata scenarier; inga äldre luckor används.
+UTKAST-92–105 reserveras för dessa separata scenarier; inga äldre luckor
+används.
 
 ### UTKAST-92: läs hela utkastet utan AI eller medgivande
 
@@ -4251,3 +4925,1465 @@ ingår inte i de vanliga UI-stegen.
   modalens uppföljning försvinner.
 - Bekräftelsen finns utan samtal eller medgivande. Automationen jämför
   separat samma enda sparförsök.
+
+## Separata referenser för aktuella konflikter
+
+UTKAST-106–137 har egna stabila identiteter. Bredd, vy, vald sida och
+genomförd eller utebliven leverans skiljs åt. Varje grundprocedur körs
+en gång med observationerna under dess angivna steg. UTKAST-136 kräver
+faktisk skärmläsarobservation; övriga fall har en vanlig motsvarighet.
+
+UTKAST-57 behåller kontrast, varningssymbol, läsbara skillnader och omflöde.
+Dess exakta box-shadow-sträng och bakgrundspixelvärde kontrolleras inte.
+Ett fel som bara ändrar dessa dekorativa värden kan därför undgå testet.
+
+### UTKAST-106: egen referens för UTKAST-28
+
+**Syfte:** 390 × 900; Tabell och Karta med nytt underlag; smalt omflöde
+och tangentbordsfokus vid blandade val.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-28](#utkast-28-kombinera-aktiva-egenskapsval-utan-att-spara-kartan)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
+UTKAST-106.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "390 × 900; Tabell och Karta med nytt underlag; smalt omflöde och tangentbordsfokus vid blandade val.",
+  "outcomes": [
+    "Blandade val ändrar bara utkastet; sparade uppgifter och historik består.",
+    "Fokus stannar i dialogen. Escape återför fokus till Karta."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-properties.spec.ts",
+    "caseId": "UTKAST-106"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-28 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd 390 × 900 i steg 1–7.
+   Under steg 2–5 ska alla egenskaper vara läsbara och nåbara utan
+   vågrät sidrullning. I steg 7 används samma bredd i ett nytt hushåll;
+   kontrollera motsvarande val med tangentbord från Karta utan att spara kartan.
+
+**Förväntat resultat:**
+
+- Blandade val ändrar bara utkastet; sparade uppgifter och historik består.
+- Fokus stannar i dialogen. Escape återför fokus till Karta.
+
+### UTKAST-107: läs långt ändpunktsnamn i en sambandskonflikt
+
+**Syfte:** 320 × 900; sambandets rubrik och lista med långt obrutet namn.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Nytt hushåll med Föremålsnamn upprepat fjorton gånger
+utan mellanslag och Molnmusik. Spara ett känt samband mellan objekten.
+
+**Integrationstest:**
+[conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
+UTKAST-107.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "320 × 900; sambandets rubrik och lista med långt obrutet namn.",
+  "outcomes": [
+    "Hela namnet är läsbart utan vågrät rullning.",
+    "Läsningen ändrar varken utkastet, objekten eller sambanden."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-properties.spec.ts",
+    "caseId": "UTKAST-107"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Alex föreslår Osäkert uppgivet för sambandet. Robin sparar
+   Manuellt upphört för samma samband.
+2. Alex laddar om och öppnar **1 konflikt i ditt utkast**. Läs hela
+   ändpunktsnamnet i rubriken och Alla konflikter.
+3. Stäng med Escape och kontrollera fokus på konfliktknappen.
+
+**Förväntat resultat:**
+
+- Hela namnet är läsbart utan vågrät rullning.
+- Läsningen ändrar varken utkastet, objekten eller sambanden.
+
+### UTKAST-108: egen referens för UTKAST-18
+
+**Syfte:** 390 × 844; alla konfliktslag med nåbar status och synligt fokus.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-18](#utkast-18-hitta-alla-konfliktslag-och-läs-varje-underlags-hela-värden)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-108.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "390 × 844; alla konfliktslag med nåbar status och synligt fokus.",
+  "outcomes": [
+    "Alla fyra konfliktslag, fullständiga värden och typbetydelser bevaras.",
+    "Tre kvarstående konflikter blockerar sparande efter typvalet."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-108"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-18 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd 390 × 844 i steg 1–9.
+   Under steg 5–6 ska konfliktknappen och varje fokuserad rubrik vara
+   synliga. Under steg 7–9 ska underlag och resultat vara läsbara
+   utan vågrät sidrullning.
+
+**Förväntat resultat:**
+
+- Alla fyra konfliktslag, fullständiga värden och typbetydelser bevaras.
+- Tre kvarstående konflikter blockerar sparande efter typvalet.
+
+### UTKAST-109: egen referens för UTKAST-18
+
+**Syfte:** 320 × 844; alla konfliktslag med nåbar status och synligt fokus.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-18](#utkast-18-hitta-alla-konfliktslag-och-läs-varje-underlags-hela-värden)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-109.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "320 × 844; alla konfliktslag med nåbar status och synligt fokus.",
+  "outcomes": [
+    "Alla fyra konfliktslag, fullständiga värden och typbetydelser bevaras.",
+    "Tre kvarstående konflikter blockerar sparande efter typvalet."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-109"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-18 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd 320 × 844 i steg 1–9.
+   Under steg 5–6 ska konfliktknappen och varje fokuserad rubrik vara
+   synliga. Under steg 7–9 ska underlag och resultat vara läsbara
+   utan vågrät sidrullning.
+
+**Förväntat resultat:**
+
+- Alla fyra konfliktslag, fullständiga värden och typbetydelser bevaras.
+- Tre kvarstående konflikter blockerar sparande efter typvalet.
+
+### UTKAST-110: egen referens för UTKAST-18
+
+**Syfte:** 640 × 456; alla konfliktslag med nåbar status och synligt fokus.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-18](#utkast-18-hitta-alla-konfliktslag-och-läs-varje-underlags-hela-värden)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-110.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "640 × 456; alla konfliktslag med nåbar status och synligt fokus.",
+  "outcomes": [
+    "Alla fyra konfliktslag, fullständiga värden och typbetydelser bevaras.",
+    "Tre kvarstående konflikter blockerar sparande efter typvalet."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-110"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-18 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd 640 × 456 i steg 1–9.
+   Under steg 5–6 ska konfliktknappen och varje fokuserad rubrik vara
+   synliga. Under steg 7–9 ska underlag och resultat vara läsbara
+   utan vågrät sidrullning.
+
+**Förväntat resultat:**
+
+- Alla fyra konfliktslag, fullständiga värden och typbetydelser bevaras.
+- Tre kvarstående konflikter blockerar sparande efter typvalet.
+
+### UTKAST-111: egen referens för UTKAST-20
+
+**Syfte:** 390 × 900; rätta borttaget mål genom vanligt sambandsformulär.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-20](#utkast-20-rätta-ett-samband-med-borttaget-mål)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-111.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "390 × 900; rätta borttaget mål genom vanligt sambandsformulär.",
+  "outcomes": [
+    "Sambandets identitet, riktning och osäkerhet samt Privat stol bevaras.",
+    "Nytt sparande delar rättelsen; Molnmusik återkommer inte."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-111"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-20 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd 390 × 900 i steg 1–6.
+   Under steg 3–5 ska samma privata samband öppnas, Molnmusik saknas
+   bland mål och Garaget vara nåbart. Slutför sparandet i steg 6.
+
+**Förväntat resultat:**
+
+- Sambandets identitet, riktning och osäkerhet samt Privat stol bevaras.
+- Nytt sparande delar rättelsen; Molnmusik återkommer inte.
+
+### UTKAST-112: egen referens för UTKAST-21
+
+**Syfte:** Objekttyp, 390 × 844; rätt befintlig definitionsredigering.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-21](#utkast-21-rätta-typdefinitioner-genom-inställningarna)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-112.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Objekttyp, 390 × 844; rätt befintlig definitionsredigering.",
+  "outcomes": [
+    "Rättad typ och Oberoende typförklaring finns tillsammans i utkastet.",
+    "Kartans fakta består; nytt uttryckligt sparande delar definitionen."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-112"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-21 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd objekttyp vid 390 × 844
+   i steg 1–6. I steg 3 öppna
+   **Välj inställning** och kontrollera nåbara fält och knappar. Slutför
+   hela sparandet i steg 6.
+
+**Förväntat resultat:**
+
+- Rättad typ och Oberoende typförklaring finns tillsammans i utkastet.
+- Kartans fakta består; nytt uttryckligt sparande delar definitionen.
+
+### UTKAST-113: egen referens för UTKAST-21
+
+**Syfte:** Sambandstyp, 1440 × 844; rätt befintlig definitionsredigering.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-21](#utkast-21-rätta-typdefinitioner-genom-inställningarna)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-113.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Sambandstyp, 1440 × 844; rätt befintlig definitionsredigering.",
+  "outcomes": [
+    "Rättad typ och Oberoende typförklaring finns tillsammans i utkastet.",
+    "Kartans fakta består; nytt uttryckligt sparande delar definitionen."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-113"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-21 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd sambandstyp vid 1440 × 844
+   i steg 1–6. I steg 3 välj **Sambandstyper och riktning → Ändra
+   sambandstyp: Min typ**. I steg 4 använd **Sambandstypens namn** och
+   **Lägg sambandstypen i mitt utkast**. Slutför
+   hela sparandet i steg 6.
+
+**Förväntat resultat:**
+
+- Rättad typ och Oberoende typförklaring finns tillsammans i utkastet.
+- Kartans fakta består; nytt uttryckligt sparande delar definitionen.
+
+### UTKAST-114: egen referens för UTKAST-21
+
+**Syfte:** Sambandstyp, 390 × 844; rätt befintlig definitionsredigering.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-21](#utkast-21-rätta-typdefinitioner-genom-inställningarna)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-114.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Sambandstyp, 390 × 844; rätt befintlig definitionsredigering.",
+  "outcomes": [
+    "Rättad typ och Oberoende typförklaring finns tillsammans i utkastet.",
+    "Kartans fakta består; nytt uttryckligt sparande delar definitionen."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-114"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-21 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd sambandstyp vid 390 × 844
+   i steg 1–6. I steg 3 välj **Sambandstyper och riktning → Ändra
+   sambandstyp: Min typ**. I steg 4 använd **Sambandstypens namn** och
+   **Lägg sambandstypen i mitt utkast**. I steg 3 öppna
+   **Välj inställning** och kontrollera nåbara fält och knappar. Slutför
+   hela sparandet i steg 6.
+
+**Förväntat resultat:**
+
+- Rättad typ och Oberoende typförklaring finns tillsammans i utkastet.
+- Kartans fakta består; nytt uttryckligt sparande delar definitionen.
+
+### UTKAST-115: egen referens för UTKAST-22
+
+**Syfte:** 390 × 844, föreslaget värde; fokus efter egenskapsval.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-22](#utkast-22-konfliktval-behåller-användbart-fokus-utan-att-spara)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-115.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "390 × 844, föreslaget värde; fokus efter egenskapsval.",
+  "outcomes": [
+    "Lo Lind finns i utkastet; Lo Berg förblir sparat utan nytt kvitto.",
+    "Escape återför fokus till synlig Karta utan konfliktknappen."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-115"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-22 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: välj föreslagna värden i steg 2.
+   Kontrollera Lo Lind och rubrikfokus i steg 3 och Karta-fokus i
+   steg 4. Avsluta utan gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Lo Lind finns i utkastet; Lo Berg förblir sparat utan nytt kvitto.
+- Escape återför fokus till synlig Karta utan konfliktknappen.
+
+### UTKAST-116: egen referens för UTKAST-24
+
+**Syfte:** 390 × 844; tappade svar efter konfliktval och sparande.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-24](#utkast-24-återfinn-konfliktval-och-ett-enda-nytt-sparkvitto)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-116.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "390 × 844; tappade svar efter konfliktval och sparande.",
+  "outcomes": [
+    "Lo Lind, Spelar piano och Privat stol bevaras i utkastet.",
+    "Ett uttryckligt sparande ger ett kvitto och tomt utkast.",
+    "Kartan och historiken innehåller ett enda nytt sparande."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-116"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-24 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd 390 × 844 i steg 1–5.
+   Arma resolve och save före deras egna handlingar med status 200
+   efter behandling. Läs nåbara kontrollknappar och besked.
+
+**Förväntat resultat:**
+
+- Lo Lind, Spelar piano och Privat stol bevaras i utkastet.
+- Ett uttryckligt sparande ger ett kvitto och tomt utkast.
+- Kartan och historiken innehåller ett enda nytt sparande.
+
+### UTKAST-117: behåll ett ändrat samband och ompröva objektborttagningen
+
+**Syfte:** Tabell; sparat samband efter samtidiga typbyten.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered UTKAST-11 med objektets och sambandets
+borttagningsförslag samt Robins sparade Abonnemang och Används av.
+Robin ändrar inte Molnmusiks namn i detta fall.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-117.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Tabell; sparat samband efter samtidiga typbyten.",
+  "outcomes": [
+    "Bara sambandets borttagningsförslag kastas; objektborttagningen finns kvar.",
+    "Objekt och samband är oförändrade. Historiken får ingen ny grupp."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-117"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **2 konflikter i ditt utkast**. Välj objektets föreslagna
+   borttagning och **Lägg valen i utkastet**.
+2. Välj sambandet i Alla konflikter. Läs Används av, välj sparade
+   värden och **Lägg valen i utkastet**.
+3. Stäng med Escape. Läs kvarvarande objektborttagning i Utkast
+   och Robins fortfarande sparade samband. Försök spara hela utkastet,
+   läs **Inget sparades** och stäng sparmodalen och textvyn.
+   Välj Karta och **Hämta aktuellt underlag**; det kvarvarande förslaget består.
+
+**Förväntat resultat:**
+
+- Bara sambandets borttagningsförslag kastas; objektborttagningen finns kvar.
+- Objekt och samband är oförändrade. Historiken får ingen ny grupp.
+
+### UTKAST-118: bevara en beskrivning som bara den andre ändrar
+
+**Syfte:** Karta; eget namn och oberoende sparad beskrivning genom nytt
+  sparande.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Lo Exempel är sparad utan beskrivning. Alex föreslår
+Lo Lind. Robin behåller Lo Exempel, ändrar till Spelar piano och sparar.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-118.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Karta; eget namn och oberoende sparad beskrivning genom nytt sparande.",
+  "outcomes": [
+    "Lo Lind och den oberoende beskrivningen Spelar piano sparas tillsammans."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-118"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna konflikten. Välj föreslagna ändringar och
+   **Lägg valen i utkastet**.
+2. Stäng med Escape. Öppna Utkast och läs Lo Lind.
+3. Spara hela utkastet. Läs Lo Lind och Spelar piano i sparade uppgifter.
+
+**Förväntat resultat:**
+
+- Lo Lind och den oberoende beskrivningen Spelar piano sparas tillsammans.
+
+### UTKAST-119: egen referens för UTKAST-54
+
+**Syfte:** 320 × 900; uteblivet anrop och misslyckad kontroll på smal skärm.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-54](#utkast-54-kontrollera-en-utebliven-ändring-före-nytt-försök)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-119.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "320 × 900; uteblivet anrop och misslyckad kontroll på smal skärm.",
+  "outcomes": [
+    "Lyckad kontroll av utebliven ändring behåller valen och tillåter nytt försök.",
+    "Bekräftelsen ändrar bara utkastet; alla knappar är nåbara."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-119"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-54 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd 320 × 900 i steg 1–4.
+   Under steg 2–3 får återöppning och misslyckad kontroll aldrig göra
+   bekräftelsen möjlig. Återställ leveransen före återförsöket i steg 4.
+
+**Förväntat resultat:**
+
+- Lyckad kontroll av utebliven ändring behåller valen och tillåter nytt försök.
+- Bekräftelsen ändrar bara utkastet; alla knappar är nåbara.
+
+### UTKAST-120: egen referens för UTKAST-53
+
+**Syfte:** Karta, 320 × 900, föreslagna värden; genomfört val med tappat svar.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-53](#utkast-53-kontrollera-ett-tappat-svar-efter-genomförd-ändring)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-120.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Karta, 320 × 900, föreslagna värden; genomfört val med tappat svar.",
+  "outcomes": [
+    "Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.",
+    "Karta och historik är oförändrade; Lo Lind och Min anteckning finns i utkastet."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-120"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-53 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd Karta vid 320 × 900
+   i steg 1–4. Välj Alex
+   föreslagna namn och beskrivning i steg 1. Under steg 2–3 förblir
+   Visa konfliktvalet nåbar utan konfliktknappen. Avsluta efter steg 4
+   utan gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.
+- Karta och historik är oförändrade; Lo Lind och Min anteckning finns i
+  utkastet.
+
+### UTKAST-121: egen referens för UTKAST-53
+
+**Syfte:** Karta, 1280 × 900, sparade värden; genomfört val med tappat svar.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-53](#utkast-53-kontrollera-ett-tappat-svar-efter-genomförd-ändring)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-121.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Karta, 1280 × 900, sparade värden; genomfört val med tappat svar.",
+  "outcomes": [
+    "Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.",
+    "Karta och historik är oförändrade; berört förslag är kastat."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-121"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-53 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd Karta vid 1280 × 900
+   i steg 1–4. Välj Lo Berg
+   och Robins anteckning från sparade sidan i steg 1. I steg 4 visas
+   **Förslaget har tagits bort ur ditt utkast** och utkastet är tomt. Under steg
+2–3 förblir
+   Visa konfliktvalet nåbar utan konfliktknappen. Avsluta efter steg 4
+   utan gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.
+- Karta och historik är oförändrade; berört förslag är kastat.
+
+### UTKAST-122: egen referens för UTKAST-53
+
+**Syfte:** Karta, 320 × 900, sparade värden; genomfört val med tappat svar.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-53](#utkast-53-kontrollera-ett-tappat-svar-efter-genomförd-ändring)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-122.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Karta, 320 × 900, sparade värden; genomfört val med tappat svar.",
+  "outcomes": [
+    "Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.",
+    "Karta och historik är oförändrade; berört förslag är kastat."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-122"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-53 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd Karta vid 320 × 900
+   i steg 1–4. Välj Lo Berg
+   och Robins anteckning från sparade sidan i steg 1. I steg 4 visas
+   **Förslaget har tagits bort ur ditt utkast** och utkastet är tomt. Under steg
+2–3 förblir
+   Visa konfliktvalet nåbar utan konfliktknappen. Avsluta efter steg 4
+   utan gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.
+- Karta och historik är oförändrade; berört förslag är kastat.
+
+### UTKAST-123: egen referens för UTKAST-53
+
+**Syfte:** Tabell, 1280 × 900, föreslagna värden; genomfört val med tappat svar.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-53](#utkast-53-kontrollera-ett-tappat-svar-efter-genomförd-ändring)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-123.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Tabell, 1280 × 900, föreslagna värden; genomfört val med tappat svar.",
+  "outcomes": [
+    "Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.",
+    "Karta och historik är oförändrade; Lo Lind och Min anteckning finns i utkastet."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-123"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-53 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd Tabell vid 1280 × 900
+   i steg 1–4. Välj **Tabell** före konfliktknappen i steg 1. Välj Alex
+   föreslagna namn och beskrivning i steg 1. Under steg 2–3 förblir
+   Visa konfliktvalet nåbar utan konfliktknappen. Avsluta efter steg 4
+   utan gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.
+- Karta och historik är oförändrade; Lo Lind och Min anteckning finns i
+  utkastet.
+
+### UTKAST-124: egen referens för UTKAST-53
+
+**Syfte:** Tabell, 320 × 900, föreslagna värden; genomfört val med tappat svar.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-53](#utkast-53-kontrollera-ett-tappat-svar-efter-genomförd-ändring)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-124.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Tabell, 320 × 900, föreslagna värden; genomfört val med tappat svar.",
+  "outcomes": [
+    "Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.",
+    "Karta och historik är oförändrade; Lo Lind och Min anteckning finns i utkastet."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-124"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-53 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd Tabell vid 320 × 900
+   i steg 1–4. Välj **Tabell** före konfliktknappen i steg 1. Välj Alex
+   föreslagna namn och beskrivning i steg 1. Under steg 2–3 förblir
+   Visa konfliktvalet nåbar utan konfliktknappen. Avsluta efter steg 4
+   utan gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.
+- Karta och historik är oförändrade; Lo Lind och Min anteckning finns i
+  utkastet.
+
+### UTKAST-125: egen referens för UTKAST-53
+
+**Syfte:** Tabell, 1280 × 900, sparade värden; genomfört val med tappat svar.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-53](#utkast-53-kontrollera-ett-tappat-svar-efter-genomförd-ändring)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-125.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Tabell, 1280 × 900, sparade värden; genomfört val med tappat svar.",
+  "outcomes": [
+    "Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.",
+    "Karta och historik är oförändrade; berört förslag är kastat."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-125"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-53 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd Tabell vid 1280 × 900
+   i steg 1–4. Välj **Tabell** före konfliktknappen i steg 1. Välj Lo Berg
+   och Robins anteckning från sparade sidan i steg 1. I steg 4 visas
+   **Förslaget har tagits bort ur ditt utkast** och utkastet är tomt. Under steg
+2–3 förblir
+   Visa konfliktvalet nåbar utan konfliktknappen. Avsluta efter steg 4
+   utan gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.
+- Karta och historik är oförändrade; berört förslag är kastat.
+
+### UTKAST-126: egen referens för UTKAST-53
+
+**Syfte:** Tabell, 320 × 900, sparade värden; genomfört val med tappat svar.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-53](#utkast-53-kontrollera-ett-tappat-svar-efter-genomförd-ändring)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-126.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Tabell, 320 × 900, sparade värden; genomfört val med tappat svar.",
+  "outcomes": [
+    "Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.",
+    "Karta och historik är oförändrade; berört förslag är kastat."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-126"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-53 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: använd Tabell vid 320 × 900
+   i steg 1–4. Välj **Tabell** före konfliktknappen i steg 1. Välj Lo Berg
+   och Robins anteckning från sparade sidan i steg 1. I steg 4 visas
+   **Förslaget har tagits bort ur ditt utkast** och utkastet är tomt. Under steg
+2–3 förblir
+   Visa konfliktvalet nåbar utan konfliktknappen. Avsluta efter steg 4
+   utan gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Resultatet återfinns utan upprepad bekräftelse, även utan konfliktknapp.
+- Karta och historik är oförändrade; berört förslag är kastat.
+
+### UTKAST-127: ompröva ett samband när ändpunktens namn ändras
+
+**Syfte:** Karta; samma ändpunkt med nytt namn och bevarade val.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Kör `new-reference` i den tillfälliga
+konfliktinstallationen.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-127.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Karta; samma ändpunkt med nytt namn och bevarade val.",
+  "outcomes": [
+    "Aktuellt namn visas trots oförändrad ändpunktsidentitet.",
+    "Opåverkade val finns kvar; bara det privata sambandsförslaget ändras."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-127"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna konflikten. Välj Molnmusik och Osäkert uppgivet från
+   Ditt förslag. Operatören kör `newer-reference`.
+2. Försök lägga valen i utkastet, läs avvisningen och välj
+   **Visa aktuell jämförelse**.
+3. Läs Ny musiktjänst. Mål och Osäkert uppgivet är fortfarande
+   markerade. Lägg valen i utkastet.
+
+**Förväntat resultat:**
+
+- Aktuellt namn visas trots oförändrad ändpunktsidentitet.
+- Opåverkade val finns kvar; bara det privata sambandsförslaget ändras.
+
+### UTKAST-128: läs en konflikt som en annan klient redan har löst
+
+**Syfte:** Karta; annan klient för samma ägare löser en stängd konflikt.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Kör `new-base`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-128.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Karta; annan klient för samma ägare löser en stängd konflikt.",
+  "outcomes": [
+    "Återöppningen visar läsläge utan gammal bekräftelse.",
+    "Läsningen ändrar varken aktuellt utkast eller sparad karta."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-128"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna konflikten och välj Alex namn och beskrivning. Stäng med Escape.
+2. Operatören kör `resolve-elsewhere`. Öppna konfliktknappen igen.
+3. Läs **Konflikten finns inte längre**. Kontrollera rubrikfokus och
+   att ingen bekräftelse erbjuds. Stäng med Escape.
+
+**Förväntat resultat:**
+
+- Återöppningen visar läsläge utan gammal bekräftelse.
+- Läsningen ändrar varken aktuellt utkast eller sparad karta.
+
+### UTKAST-129: kontrollera okänt val efter annan klients hela sparande
+
+**Syfte:** Karta, saved; annat fönster för Alex sparar och tömmer utkastet.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Kör `new-base`, `newer-private` och
+`lose-unsent`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-129.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Karta, saved; annat fönster för Alex sparar och tömmer utkastet.",
+  "outcomes": [
+    "Ingen privat lösningsbock, ny bekräftelse eller uppmaning att försöka igen visas.",
+    "Lo Lind och Privat stol är sparade; utkastet är tomt.",
+    "Kontrollen beskriver inte sparandet som osparat och ändrar inget."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-129"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna konflikten. Välj Lo Berg och Robins anteckning.
+   Bekräfta, läs det oklara utfallet och stäng med Escape.
+2. Operatören kör `save-elsewhere`: en annan klient för Alex
+   löser med föreslagna värden och sparar hela utkastet.
+3. Öppna igen och välj **Kontrollera om valet lades i utkastet**.
+   Läs Konflikten finns inte längre och läsläget.
+
+**Förväntat resultat:**
+
+- Ingen privat lösningsbock, ny bekräftelse eller uppmaning att försöka igen
+  visas.
+- Lo Lind och Privat stol är sparade; utkastet är tomt.
+- Kontrollen beskriver inte sparandet som osparat och ändrar inget.
+
+### UTKAST-130: kontrollera okänt val efter annan klients hela sparande
+
+**Syfte:** Karta, proposed; annat fönster för Alex sparar och tömmer utkastet.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Kör `new-base`, `newer-private` och
+`lose-applied`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-130.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Karta, proposed; annat fönster för Alex sparar och tömmer utkastet.",
+  "outcomes": [
+    "Ingen privat lösningsbock, ny bekräftelse eller uppmaning att försöka igen visas.",
+    "Lo Lind och Privat stol är sparade; utkastet är tomt.",
+    "Kontrollen beskriver inte sparandet som osparat och ändrar inget."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-130"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna konflikten. Välj Lo Lind och Min anteckning.
+   Bekräfta, läs det oklara utfallet och stäng med Escape.
+2. Operatören kör `save-elsewhere`: en annan klient för Alex
+   löser med föreslagna värden och sparar hela utkastet.
+3. Öppna igen och välj **Kontrollera om valet lades i utkastet**.
+   Läs Konflikten finns inte längre och läsläget.
+
+**Förväntat resultat:**
+
+- Ingen privat lösningsbock, ny bekräftelse eller uppmaning att försöka igen
+  visas.
+- Lo Lind och Privat stol är sparade; utkastet är tomt.
+- Kontrollen beskriver inte sparandet som osparat och ändrar inget.
+
+### UTKAST-131: granska en ny konflikt efter ett tappat genomfört val
+
+**Syfte:** Karta; senare sparat namn efter faktiskt genomfört privat val.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Kör `new-base` och `lose-applied`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+UTKAST-131.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Karta; senare sparat namn efter faktiskt genomfört privat val.",
+  "outcomes": [
+    "Lo Ås kräver ny granskning trots det tidigare genomförda valet.",
+    "Oförändrat beskrivningsval behålls; bara namnvalet görs om.",
+    "Kartan behåller Lo Ås och Robins anteckning."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-continuity.spec.ts",
+    "caseId": "UTKAST-131"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna konflikten. Välj Alex namn och beskrivning, bekräfta och
+   stäng efter det oklara utfallet.
+2. Operatören kör `newer-name`. Öppna igen och kontrollera om valet
+   lades i utkastet. Bekräftelsen är spärrad och ingen lösningsbock visas.
+3. Visa aktuell jämförelse. Beskrivningen är markerad men namnet
+   kräver nytt val. Välj Lo Lind igen.
+4. Operatören kör `network-ok`. Lägg valen i utkastet utan att spara kartan.
+
+**Förväntat resultat:**
+
+- Lo Ås kräver ny granskning trots det tidigare genomförda valet.
+- Oförändrat beskrivningsval behålls; bara namnvalet görs om.
+- Kartan behåller Lo Ås och Robins anteckning.
+
+### UTKAST-132: kontrollera ett uteblivet kastval för dubblettsamband
+
+**Syfte:** 320 × 900, Karta; kastval stoppat före servern.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Kör `new-duplicate` och `lose-unsent`.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+UTKAST-132.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "320 × 900, Karta; kastval stoppat före servern.",
+  "outcomes": [
+    "Lyckad kontroll skiljer uteblivet kastval från genomfört kastande.",
+    "Hela utkastet, sparade samband, objekt och historik består."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-132"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj Karta. Öppna konflikten och välj
+   **Ta bort sambandet ur ditt utkast**. Läs oklart utfall.
+2. Stäng med Escape och öppna igen. Konflikten finns kvar och
+   kastknappen är spärrad.
+3. Kontrollera om valet lades i utkastet. Läs att det inte lades
+   i utkastet och att kastknappen nu går att använda.
+4. Stäng med Escape och kontrollera synligt fokus. Kasta inte igen.
+
+**Förväntat resultat:**
+
+- Lyckad kontroll skiljer uteblivet kastval från genomfört kastande.
+- Hela utkastet, sparade samband, objekt och historik består.
+
+### UTKAST-133: egen referens för UTKAST-77
+
+**Syfte:** 320 × 900, Tabell; genomfört dubblettkastande med tappat svar.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-77](#utkast-77-kontrollera-ett-oklart-kastval-utan-upprepad-bekräftelse)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+UTKAST-133.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "320 × 900, Tabell; genomfört dubblettkastande med tappat svar.",
+  "outcomes": [
+    "Dubblettförslaget kastas utan ändrat sparat samband.",
+    "Återöppning och kontroll upprepar inte kastvalet; fokus är användbart."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-133"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-77 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: välj Tabell före steg 1.
+   Utför steg 1–4. Under steg 2–3 förblir Visa konfliktvalet nåbar
+   utan konfliktknappen.
+
+**Förväntat resultat:**
+
+- Dubblettförslaget kastas utan ändrat sparat samband.
+- Återöppning och kontroll upprepar inte kastvalet; fokus är användbart.
+
+### UTKAST-134: kontrollera ett uteblivet kastval för dubblettsamband
+
+**Syfte:** 320 × 900, Tabell; kastval stoppat före servern.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Kör `new-duplicate` och `lose-unsent`.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+UTKAST-134.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "320 × 900, Tabell; kastval stoppat före servern.",
+  "outcomes": [
+    "Lyckad kontroll skiljer uteblivet kastval från genomfört kastande.",
+    "Hela utkastet, sparade samband, objekt och historik består."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-134"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj Tabell. Öppna konflikten och välj
+   **Ta bort sambandet ur ditt utkast**. Läs oklart utfall.
+2. Stäng med Escape och öppna igen. Konflikten finns kvar och
+   kastknappen är spärrad.
+3. Kontrollera om valet lades i utkastet. Läs att det inte lades
+   i utkastet och att kastknappen nu går att använda.
+4. Stäng med Escape och kontrollera synligt fokus. Kasta inte igen.
+
+**Förväntat resultat:**
+
+- Lyckad kontroll skiljer uteblivet kastval från genomfört kastande.
+- Hela utkastet, sparade samband, objekt och historik består.
+
+### UTKAST-135: egen referens för UTKAST-63
+
+**Syfte:** 320 × 900, Tabell; båda genomförda borttagningsvalen med tappat svar.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Förbered
+[UTKAST-63](#utkast-63-kontrollera-oklara-föreslagna-borttagningar)
+i ett nytt hushåll.
+Använd konfigurationen som anges här.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+UTKAST-135.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "320 × 900, Tabell; båda genomförda borttagningsvalen med tappat svar.",
+  "outcomes": [
+    "Båda borttagningarna återfinns i utkastet utan upprepat val.",
+    "Objekt, samband och historik är oförändrade."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/conflict-special.spec.ts",
+    "caseId": "UTKAST-135"
+  }
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-63 en gång. Anpassa och observera under dess
+   angivna steg enligt följande: välj Tabell före steg 1.
+   Utför steg 1–4. Kontrollera åtkomsten i steg 2–3 och båda privata
+   borttagningarna i steg 4. Avsluta utan gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Båda borttagningarna återfinns i utkastet utan upprepat val.
+- Objekt, samband och historik är oförändrade.
+
+### UTKAST-136: hör konfliktbesked med riktig skärmläsare
+
+**Syfte:** Riktig skärmläsare; separat talobservation vid avvisning, återöppning
+och väntan.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Tillfällig konfliktinstallation i dokumenterad vy.
+Återställ mellan de tre fallen, inte under ett okänt utfall.
+
+**Kräver mänsklig observation:** Faktiskt tal från en riktig skärmläsare.
+Anteckna program, version och webbläsare.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Riktig skärmläsare; separat talobservation vid avvisning, återöppning och väntan.",
+  "outcomes": [
+    "Beskeden hörs begripligt en gång vid sina tillståndsövergångar.",
+    "Senare fokus består. Anteckna faktiskt hörda ord och eventuella fel."
+  ],
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Lyssna på riktigt skärmläsartal: ett begripligt besked utan dubbla annonseringar och utan att senare fokus flyttas."
+  },
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/conflict-continuity.spec.ts",
+      "caseId": "UTKAST-52",
+      "purpose": "DOM-status och fokus; inget bevis på faktiskt skärmläsartal."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/conflict-continuity.spec.ts",
+      "caseId": "UTKAST-55",
+      "purpose": "DOM-status och fokus; inget bevis på faktiskt skärmläsartal."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/conflict-continuity.spec.ts",
+      "caseId": "UTKAST-56",
+      "purpose": "DOM-status och fokus; inget bevis på faktiskt skärmläsartal."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-52 en gång. Lyssna under steg 3 på ett enda
+   besked om ändrat underlag.
+2. Återställ med new-base och utför UTKAST-55 en gång. Lyssna
+   under steg 2 när dialogen öppnas efter Robins senare sparande.
+3. Återställ och utför UTKAST-56 en gång. Lyssna under steg 1 och 3
+   på väntan och oklart utfall. Under steg 4–5 får status och återöppning
+   inte ge dubbelt tal eller flytta senare fokus.
+
+**Förväntat resultat:**
+
+- Beskeden hörs begripligt en gång vid sina tillståndsövergångar.
+- Senare fokus består. Anteckna faktiskt hörda ord och eventuella fel.
+
+### UTKAST-137: spara oberoende objektändringar från två webbläsare
+
+**Syfte:** Tabell; två medlemmars formulärförslag genom sparande och omstart.
+
+**Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
+
+**Förutsättningar:** Nytt hushåll med Lo Exempel och Molnmusik,
+två aktuella medlemmar och tomma egna utkast.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+UTKAST-137.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "reference": "Tabell; två medlemmars formulärförslag genom sparande och omstart.",
+  "outcomes": [
+    "Båda sparanden bekräftas utan konflikt om det andra objektet.",
+    "Lo Lind och Ny musiktjänst finns hos båda efter omstart.",
+    "Båda egna utkasten är tomma."
+  ],
+  "counterpart": {
+    "spec": "tests/integration/draft-conflicts.spec.ts",
+    "caseId": "UTKAST-137"
+  },
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/draft-conflicts.spec.ts",
+      "title": "independent users save unrelated objects without a meaningless conflict",
+      "purpose": "Bevarat HTTP-prov för samtidiga oberoende förslag; omstart, sparad karta och båda privata utkast jämförs separat."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Tabell i båda profilerna. Alex redigerar Lo Exempel till
+   Lo Lind och väljer **Lägg i utkastet och stäng**.
+2. Robin redigerar Molnmusik till Ny musiktjänst och lägger hela
+   formuläret i sitt eget utkast.
+3. Robin sparar hela sitt utkast, därefter sparar Alex hela sitt utkast.
+   Stäng textvyn i båda profilerna.
+4. Starta om med samma databas. Ladda om båda sidorna
+   och läs Tabell och egna Utkast.
+
+**Förväntat resultat:**
+
+- Båda sparanden bekräftas utan konflikt om det andra objektet.
+- Lo Lind och Ny musiktjänst finns hos båda efter omstart.
+- Båda egna utkasten är tomma.
