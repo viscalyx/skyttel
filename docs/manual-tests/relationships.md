@@ -213,7 +213,9 @@ offers guarded editing without overwrite”.
 **Användare:** Alex.
 
 **Förutsättningar:** Samma sparade objekt och kända samband som i SAMBAND-03.
-Sambandet följer slutdatum och saknar ett manuellt statusval.
+Sambandet har ingen uttryckligen sparad status och följer slutdatum.
+Formuläret erbjuder **Sambandets status**. Valet **Upphört** i steg 1 är
+en oskickad manuell statusändring, skild från förslaget om borttagning.
 
 **Integrationstest:**
 [relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
