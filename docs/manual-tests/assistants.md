@@ -25,7 +25,8 @@ och väljer **Redigera samband**. Formulärets **Lägg i utkastet och stäng**
 lägger hela förslaget i utkastet. Öppna **Visa utkastet** för att granska
 förslagen eller spara hela utkastet.
 
-Följande förberedelser gäller AI-01 till AI-06. För AI-07 används i stället
+Följande förberedelser gäller AI-01 till AI-05. AI-06 använder sin egen
+tomma utgångspunkt nedan. För AI-07 används i stället
 den isolerade installation som anges i testfallet.
 
 1. Använd en testinstallation med enbart påhittade data. Förbered den
@@ -252,7 +253,10 @@ klienten”.
 **Steg:**
 
 1. Öppna **Hushållet Linden** i Robins webbläsarprofil. Kör `read` i Robins
-   klient och jämför hela svaret med Robins förslag i **Visa utkastet**.
+   klient och jämför hela svaret med Robins fulla läsdialog i
+   **Visa utkastet → Visa förslaget: Robins privata förslag**. Kontrollera
+   namn **Robins privata förslag**, typ **Person** och beskrivning
+   **Ej uppgivet**; klientens motsvarande beskrivning är tom.
    Alex privata förslag ska inte följa med.
 2. Kör `tools`: inget verktyg ska erbjuda byte till annan användare eller
    annat hushåll. Kör `map Hushållet Eken` i samma anslutning; namnet
@@ -291,7 +295,10 @@ att hela kartan eller orelaterade typdefinitioner följer med.
 
 **Användare:** Alex och den anslutna textklienten.
 
-**Förutsättningar:** Klienten har läsåtkomst till Linden. Skapa och spara
+**Förutsättningar:** Börja med ny databas och Linden enligt
+[AI-06:s egen förberedelse](assistant-client-preparation.md#avgränsad-läsning-ai-06).
+Skapa inte Läsningens lampa eller Alex och Robins privata personförslag.
+Klienten har läsåtkomst till Linden. Skapa och spara
 fordonen Blå bilen och Cykeln två steg bort samt personerna Kim och Lo.
 Ge personerna egna beskrivningar. Skapa också objekttypen Privat samling
 med en egen beskrivning och ett textfält med beskrivning, och ett objekt
@@ -551,9 +558,8 @@ MCP”, med [separat verklig modellkörning](real-model-tests.md).
    står på avtalet från den som betalar och det kort som används.
 5. Följ samma förberedelses fulla prisrättelse och granska hela utkastet.
    Ge ditt uttryckliga sparbesked med klientens fångade sparbegäran.
-   Kontrollera kvittot och det redan föreslagna adressbytet.
-6. Starta om servern med samma databas enligt klientguiden. Kontrollera
-   samma sparkvitto genom det oförändrade återförsöket. Öppna kartan igen.
+   Kontrollera beskedet att hela utkastet sparas, inklusive adressbytet.
+6. Följ förberedelsens omstart och tekniska återförsök. Öppna kartan igen.
    Kontrollera det tomma utkastet och stäng textvyn.
    Öppna **Tabell** och kontrollera Lo Lind. Välj **Samband** för
    **Familjens musikkonto** och kontrollera den nya inloggningsadressen.
@@ -664,26 +670,30 @@ godkända anslutning för kartarbete enligt förberedelsen.
 testfallet “AI-10: förlorat MCP-kvittosvar återfinns efter omstart
 utan dubbelt sparande”.
 
+**Separat förberedelse:** Följ
+[det tappade kvittots tekniska steg](assistant-client-preparation.md#tappat-kvitto-ai-10)
+vid steg 1–5. Behåll båda klientterminalerna under omstarten. Guiden
+fångar begäran, tappar det genomförda svaret och jämför hela återfunna
+kvittot utan att kräva interna identifierare i webbläsarkontrollerna.
+
 **Steg:**
 
-1. Lägg Lo Exempel i utkastet genom webbläsaren. Kör `capture-save lost`
-   i terminal B och granska hela utkastet. Anteckna bara det syntetiska
-   operations-ID:t från `arguments` för senare jämförelse.
-2. Ge ditt sparbesked genom `drop lost`. Kontrollera händelsen
-   `response-dropped` och `outcome: "unknown"`. Inget kvitto får skrivas
-   ut. Hjälpklientens felpunkt inväntar en lyckad transaktion innan den
-   kastar bort svaret; ett fel eller en avvisning verifierar inte steget.
+1. Lägg Lo Exempel, typ Person och tom beskrivning, i utkastet genom
+   webbläsaren. Granska hela förslaget och fånga sparunderlaget enligt
+   den separata förberedelsen.
+2. Ge ditt sparbesked vid förberedelsens felpunkt. Klienten visar ett
+   okänt utfall utan kvitto. Kontrollera inte ett lyckat sparande förrän
+   en ny läsning ger besked.
 3. Ladda om kartan och kontrollera att Lo Exempel är sparad. Gör inga
    nya ändringar. Stoppa servern i terminal A med Ctrl+C och starta om
    med guidens exakta omstartskommando och samma databas. Behåll terminal
    B öppen så att den ursprungliga begäran finns kvar.
-4. Kör `status lost`. Kontrollera `succeeded` och ett beständigt kvitto
-   med samma operations-ID. Öppna **Rapporter → Ändringshistorik** och
-   kontrollera det enda sparandet av Lo Exempel. Välj
-   **Identifiera sparandet och användaren**
-   och jämför operations-ID:t med det återfunna kvittot.
-5. Kör `send lost`. Jämför kvittots ID, tidpunkt och ändringar med det
-   återfunna kvittot; allt ska vara samma. Ladda om kartan och historiken.
+4. Återfinn resultatet enligt förberedelsen. Öppna
+   **Rapporter → Ändringshistorik** och kontrollera det enda sparandet
+   av Lo Exempel. Välj **Identifiera sparandet och användaren** och
+   kontrollera att sparande, användare och tidpunkt går att läsa.
+5. Följ förberedelsens återförsök och jämförelse. Ladda om kartan och
+   historiken: inget andra sparande ska tillkomma.
    Välj **Tillbaka till arbetet**, öppna **Visa utkastet** och kontrollera
    **Utkastet är tomt.**
 6. Följ guidens återkallelse och städning.

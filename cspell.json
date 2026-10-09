@@ -716,7 +716,9 @@
     "historiksektion",
     "fokusfel",
     "stängmål",
-    "breddåterställning"
+    "breddåterställning",
+    "historikhändelsen",
+    "historikresultaten"
   ],
   "overrides": [
     {

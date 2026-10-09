@@ -21,6 +21,8 @@ node --import tsx scripts/manual-mcp-client.ts http://localhost:3301 47731 read
 ```
 
 Skapa **Hushållet Linden** i stället för **MCP-prov** i dessa fall.
+Följande person- och medlemsförberedelse gäller endast AI-01–05;
+AI-06 använder den egna tomma utgångspunkten längre ned.
 Robin kopierar sitt användar-ID från startsidan i sin separata profil;
 Alex bjuder in detta ID genom hushållets administration och Robin
 accepterar koden. Robin skapar dessutom **Hushållet Eken** i sin profil.
@@ -76,6 +78,11 @@ i webbläsaren; stäng konsolen efter kontrollen.
 
 ### Avgränsad läsning, AI-06
 
+Starta med en ny databas enligt installationsguiden, logga in som Alex
+och skapa Linden. Starta läsklienten med kommandot ovan och godkänn
+läsåtkomst till Linden. Skapa inte Läsningens lampa, privata personförslag
+eller ett andra hushåll. Låt utkastet vara tomt inför följande sparande.
+
 Skapa de fem objekten och fyra sambanden enligt AI-06 i webbläsaren och
 spara hela utkastet. Ge Blå bilen beskrivningen **Bilens sparade uppgifter**,
 Kim **Kims övriga detaljer**, Lo **Los övriga detaljer**, Cykeln två steg
@@ -99,6 +106,59 @@ inte användar-ID eller ett exempel-ID. `missing` är avsiktligt obefintligt.
 Jämför hela svarens direkta samband, ändpunkter och typdefinitioner enligt
 AI-06; ändra ingen data mellan dessa läsningar. Efter formulärrättelsen
 kör du `read` för full jämförelse av sparat och privat innehåll.
+Det enda privata arbetet är då bilens rättelse. Spara inte den rättelsen.
+Vid slutet återkallar du anslutningen, kör `quit` och följer installationens
+städning; serveromstart återställer inte denna utgångspunkt.
+
+## Terminal för fulla tekniska jämförelser
+
+För AI-08, AI-10 och MCP-06 öppnar du terminal C före första sparandet.
+Kör hela kommandot nedan. Det behöver ingen token, fil eller databasåtkomst;
+det jämför endast fullständiga syntetiska JSON-svar som du klistrar in
+från terminal B. Behåll terminal C öppen under omstart och mellan MCP-06:s
+två installationer. Ett `MATCH` kräver samma fulla värde, även före-/eftervärden,
+datum, typer och listordning; objektens egenskapsordning saknar betydelse.
+
+```sh
+node --input-type=module -e '
+import { createInterface } from "node:readline/promises";
+import { isDeepStrictEqual } from "node:util";
+const input = createInterface({ input: process.stdin, output: process.stdout });
+const retained = new Map();
+try {
+  while (true) {
+    const [command, label, path] = (await input.question("check> ")).trim().split(/\s+/);
+    if (command === "quit") break;
+    try {
+      if (!["remember", "compare"].includes(command) || !label || !path)
+        throw new Error("Use remember LABEL PATH, compare LABEL PATH or quit.");
+      if (command === "remember" && retained.has(label))
+        throw new Error("Use a new label; retained evidence is never overwritten.");
+      const raw = JSON.parse(await input.question("JSON> "));
+      const value = path.split(".").reduce((part, key) => part?.[key], raw);
+      if (value === undefined) throw new Error("Missing complete value at PATH.");
+      if (command === "remember") {
+        retained.set(label, value);
+        console.log("RETAINED", label);
+      } else {
+        if (!retained.has(label) || !isDeepStrictEqual(retained.get(label), value))
+          throw new Error("Missing baseline or unequal complete value.");
+        console.log("MATCH", label);
+      }
+    } catch (error) { console.log("FAIL", error.message); }
+  }
+} finally { retained.clear(); input.close(); }
+'
+```
+
+Vid `JSON>` klistrar du in hela enradiga JSON-händelsen från klienten,
+inte bara ett namn, ID eller sammandrag. Kommandots sista ord väljer det
+fulla värdet i den händelsen, till exempel `value.receipt` eller `value`.
+Ett saknat värde, okänd etikett eller ändrat värde ger `FAIL`; det är inte
+godkänt underlag. Klistra aldrig in `authorize`-adressen eller token.
+Efter sista jämförelsen: kör `quit` i terminal C och B, stäng terminalerna,
+töm urklipp och ta bort tillfälliga JSON-/ZIP-filer enligt installationens
+städning. Skapa inga filer för svaren om terminalerna räcker.
 
 ## Typer och avtal
 
@@ -256,6 +316,15 @@ Alex sparbeskedet. Det ska avvisas med
 `definition_in_use`. Starta om med samma databas; inga privata förslag
 får sparas eller försvinna.
 
+Efter omstarten läser Robin sitt fulla utkast med `read` i sin egen
+anslutning. Alex upprepar borttagningsfångsten för Privat använd typ med
+dagens revision och en ny etikett: förvänta `definition_in_use` utan
+Robins privata namn, beskrivningar eller objektidentiteter. Alex fångar
+sedan sparandet av det kvarvarande förslaget för Samtidig typ med
+`capture-save blocked-after-restart` och skickar det. Även detta ska ge
+`definition_in_use` utan privata uppgifter. Läs Robins utkast och den
+sparade historiken igen: båda ska vara oförändrade.
+
 ## Familjeärendet, AI-08
 
 Använd demoguidens server och nya databas, inte samtidigt den tomma
@@ -285,9 +354,37 @@ beskrivningen till **Familjeabonnemang, 189 kr per månad.** och ersätt
 
 Skicka rättelsen, kör `read` och granska de två objekten och adressambandet.
 Kör `capture-save family` och ge sparbeskedet med `send family`.
-Starta om med demoguidens samma databas. Kör `send family` igen utan
-ny fångst; hela svarets kvitto ska vara samma. Fortsätt webbläsarläsningen
+I terminal C kör du `remember family value.receipt` och klistrar vid
+`JSON>` in hela `result`-händelsen från detta sparande. Förvänta
+`RETAINED family`. Starta om med demoguidens samma databas. Kör
+`send family` igen utan ny fångst. I C kör du
+`compare family value.receipt` och klistrar in hela återförsökets
+`result`-händelse: förvänta `MATCH family`. Fortsätt webbläsarläsningen
 i AI-08. Den separata verkliga klientobservationen är AI-14.
+
+## Tappat kvitto, AI-10
+
+Använd ny tom databas, godkänd skrivklient i terminal B och
+jämförelseterminal C. Följ dessa tekniska steg vid motsvarande
+webbläsarsteg i AI-10:
+
+1. Efter Lo-förslaget: kör `capture-save lost`, granska hela `review` och
+   behåll fångsten. I C kör du `remember lost-id arguments.operationId`;
+   klistra in hela `captured`-händelsen vid `JSON>`.
+2. Vid sparbeskedet: kör `drop lost`. Förvänta `response-dropped` med
+   `outcome: "unknown"`, utan kvitto. Felpunkten kastar det lyckade svaret
+   efter genomförd transaktion; avvisning eller `error` verifierar inte
+   detta bortfall. Kör ingen ny fångst.
+3. Efter omstart med samma databas, med B och C kvar: kör `status lost`.
+   Förvänta `result.value.operation.status: "succeeded"`. I C kör du
+   `compare lost-id value.operation.receipt.operationId` och klistrar in hela
+   statusresultatet: förvänta `MATCH lost-id`. Kör sedan
+   `remember lost value.operation.receipt` med samma hela resultat.
+4. Efter den vanliga historikläsningen: kör `send lost` i B. I C kör du
+   `compare lost value.receipt` med hela återförsökets resultat:
+   förvänta `MATCH lost`. Ingen ny version, fångst eller begäran skapas.
+5. Fortsätt webbläsarens kontroll av ett enda sparande och tomt utkast.
+   Återkalla anslutningen och avsluta båda terminalerna enligt städningen.
 
 ## Historikläsning, MCP-06
 
@@ -296,20 +393,50 @@ arkivet. Följ dess vanliga export- och importsteg; detta avsnitt ger
 separata tekniska jämförelser för historikläsningen. Behåll kvittots JSON tills
 jämförelsen är klar och städa det tillsammans med ZIP-filen efter fallet.
 Gör ingen koppling av historisk författare till aktuell användare.
+Starta terminal C innan första databasens skapelse sparas. Efter detta
+`send` kör du `remember imported value.receipt` i C och klistrar in hela
+sparresultatet. Förvänta `RETAINED imported`; behåll C vid databasbytet.
+Behåll också de syntetiska värdena `result.value.receipt.operationId`
+och `result.value.receipt.userId` från just detta originalkvitto.
 
 Före läsningen i steg 6 lägger du ett nytt objektförslag
 **Oberoende utkast**, tom beskrivning ersatt av **Privat lampanteckning**,
 med samma typ som lampan. Använd `propose_object`, ID `private-lamp`,
 `baseRevision: null` och hela värdet. Ladda om kartan innan du läser
 förslaget i webbläsaren. Kör `read` och behåll det fulla
-svaret privat för teknisk jämförelse. Läs hela historiken också.
+svaret privat för teknisk jämförelse. Kör `remember private value` i C
+med hela `read`-resultatet. Läs hela historiken med
+`read-tool read_history {}`; kör `remember history value` med hela
+den händelsen. Kontrollera att utkastets `changes` är icke-tomt.
 
-Välj den importerade skapelsen med `read_history` och dess exakta
-`operationId` och `userId`. Jämför hela `receipt` med originalkvittot,
+I terminal B på den andra installationen kör du följande vid steg 6:
+
+<!-- markdownlint-disable MD013 -->
+```text
+read-tool read_history {"objectId":"manual-lamp"}
+read-tool read_history {"operationId":"originalkvittots faktiska operationId","userId":"originalkvittots faktiska userId"}
+```
+<!-- markdownlint-enable MD013 -->
+
+Ersätt bara de två sista strängvärdena med originalkvittots egna värden,
+inte den nya installationens aktuella användare. Första läsningen ska
+avgränsa sammanfattningen till lampans enda sparande; tidigare sakuppgifter
+ingår först i den andra läsningens hela kvitto. Det här utgångsläget har
+ett enda sparande i historiken. Om fler finns, återställ till fallets nya
+databaser innan jämförelsen.
+Jämför hela `receipt` med originalkvittot,
 inklusive tidpunkt, författare, objekt, före-/eftervärden och definitioner.
+Kör `compare imported value.receipt` i C med hela den valda
+historikhändelsen: förvänta `MATCH imported`.
 Efter både klientens och webbläsarens historikläsning kör du `read` och
 läser hela historiken igen. Båda fulla resultaten ska vara oförändrade;
-det oberoende utkastet måste fortfarande vara icke-tomt.
+det oberoende utkastet måste fortfarande vara icke-tomt. Kör
+`compare private value` respektive `compare history value` i C med
+de nya fulla utkast- och historikresultaten: förvänta båda `MATCH`.
+Sammanfattningarna ensamma jämför inte historiska sakuppgifter. Upprepa
+därför också den exakta kvittoläsningen med samma ursprungliga identiteter
+och kör `compare imported value.receipt` igen: förvänta `MATCH imported`.
+Detta jämför hela det enda historiska kvittot efter båda läsvägarna.
 
 Skicka nu `old-type` utan ny fångst: förvänta `content_conflict`. Kasta
 bara `private-lamp` med `discard private-lamp` efter jämförelsen och

@@ -260,6 +260,7 @@ test('AI-02: uttryckligt AI-val ger läsning och återkallelse stoppar gamla tok
     );
     const nativeCallback = page.waitForRequest('http://127.0.0.1:7777/callback**');
     await page.getByRole('button', { name: 'Godkänn läsåtkomst' }).click();
+    await page.waitForURL('http://127.0.0.1:7777/callback**');
     const nativeToken = await nativeFlow.exchange((await nativeCallback).url());
     expect(nativeToken.status).toBe(200);
     const nativeAccess = (await nativeToken.json()).access_token;
@@ -345,6 +346,7 @@ test('AI-01: OAuth krävs innan assistenten kan läsa kartan', async ({ request,
     );
     const callback = page.waitForRequest('http://127.0.0.1:7777/callback**');
     await page.getByRole('button', { name: 'Nej, anslut inte' }).click();
+    await page.waitForURL('http://127.0.0.1:7777/callback**');
     expect(new URL((await callback).url()).searchParams.get('error')).toBe('access_denied');
     await page.goto(`${app.origin}/assistants`);
     await expect(page.getByText('Inga aktiva assistentanslutningar.')).toBeVisible();
@@ -551,6 +553,7 @@ test('AI-04: inloggning följs av medgivande och ett nej bevarar kartarbete', as
     );
     const callback = page.waitForRequest('http://127.0.0.1:7777/callback**');
     await page.getByRole('button', { name: 'Nej, anslut inte' }).click();
+    await page.waitForURL('http://127.0.0.1:7777/callback**');
     expect(new URL((await callback).url()).searchParams.get('error')).toBe('access_denied');
     await page.goto(`${app.origin}/assistants`);
     await expect(page.getByText('Inga aktiva assistentanslutningar.')).toBeVisible();
@@ -605,6 +608,9 @@ test('AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klient
     await robinPage.goto(`${app.origin}/households/${household.id}`);
     const privateProposal = await readDraftProposal(robinPage, 'Robins privata förslag');
     await expect(privateProposal).toContainText('Robins privata förslag');
+    await expect(
+      privateProposal.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
+    ).toHaveText('Person');
     await expect(privateProposal).not.toContainText('Alex privata förslag');
     await expect(
       privateProposal
@@ -612,6 +618,18 @@ test('AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klient
         .filter({ hasText: /^Beskrivning$/ })
         .locator('..'),
     ).toContainText('Ej uppgivet');
+    for (const [label, value] of [
+      ['Namn', 'Robins privata förslag'],
+      ['Typ', 'Person'],
+      ['Beskrivning', 'Ej uppgivet'],
+    ])
+      await expect(
+        privateProposal
+          .locator('dt')
+          .filter({ hasText: new RegExp(`^${label}$`) })
+          .locator('..')
+          .locator('dd'),
+      ).toHaveText(value);
     await robinPage.keyboard.press('Escape');
     const flow = await beginAssistant(other.request, app.origin);
     const consent = await flow.consent(household.id);
@@ -630,6 +648,14 @@ test('AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klient
       const draft = await client.callTool({ name: 'read_my_draft', arguments: {} });
       expect(JSON.stringify(draft)).toContain('Robins privata förslag');
       expect(JSON.stringify(draft)).not.toContain('Alex privata');
+      expect(JSON.parse((draft.content as { text: string }[])[0].text).changes).toEqual([
+        expect.objectContaining({
+          id: 'robin-private',
+          before: null,
+          after: { typeId: map.types[0].id, name: 'Robins privata förslag', description: '' },
+          type: expect.objectContaining({ id: map.types[0].id, name: 'Person' }),
+        }),
+      ]);
       const denied = await client.callTool({
         name: 'read_map',
         arguments: { householdId: 'other-household' },

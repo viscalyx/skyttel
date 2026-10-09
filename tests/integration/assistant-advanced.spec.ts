@@ -357,6 +357,25 @@ test('MCP-03: typbyte bevarar riktade samband och äldre typers läsbara histori
         .filter({ hasText: /^Nummer · ändrat$/ })
         .locator('..'),
     ).toContainText('42');
+    for (const [values, kind, number] of [
+      [savedValues, 'Cykel', 'SYNTH-42'],
+      [proposedValues, 'Motorfordon', '42'],
+    ] as const) {
+      await expect(
+        values
+          .locator('dt')
+          .filter({ hasText: /^Typ · ändrat$/ })
+          .locator('..')
+          .locator('dd'),
+      ).toHaveText(kind);
+      await expect(
+        values
+          .locator('dt')
+          .filter({ hasText: /^Nummer · ändrat$/ })
+          .locator('..')
+          .locator('dd'),
+      ).toHaveText(number);
+    }
     await page.keyboard.press('Escape');
     const changed = await mcp.save('type-change');
     expect((await mcp.tool('read_map', { objectId: 'bike' })).relationships).toEqual(
@@ -389,6 +408,20 @@ test('MCP-03: typbyte bevarar riktade samband och äldre typers läsbara histori
     await expect(typeChange).toContainText('Motorfordon');
     await expect(typeChange).toContainText('SYNTH-42');
     await expect(typeChange).toContainText('42');
+    for (const [phase, kind, number] of [
+      ['Före sparandet', 'Cykel', 'SYNTH-42'],
+      ['Efter sparandet', 'Motorfordon', '42'],
+    ]) {
+      const values = typeChange
+        .getByRole('heading', { name: phase, exact: true })
+        .locator(
+          `xpath=following-sibling::*[preceding-sibling::h5[1][normalize-space()="${phase}"]]`,
+        );
+      await expect(values.filter({ hasText: new RegExp(`^Objekttyp: ${kind}\\.$`) })).toHaveText(
+        `Objekttyp: ${kind}.`,
+      );
+      await expect(values.getByText(`Nummer: ${number}`, { exact: true })).toBeVisible();
+    }
   } finally {
     await app.close();
   }
@@ -533,7 +566,46 @@ test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ pag
     await otherPage.keyboard.press('Escape');
     const restoredRace = await readDraftProposal(otherPage, 'Senare privat användning');
     await expect(restoredRace).toContainText('Samtidig typ');
+    await expect(
+      restoredRace
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveText('Ej uppgivet');
     await otherPage.keyboard.press('Escape');
+    const persistedPrivate = await otherMcp.tool('read_my_draft');
+    expect(persistedPrivate.changes).toEqual([
+      expect.objectContaining({
+        id: 'secret',
+        before: null,
+        after: {
+          typeId: 'private-type',
+          name: 'Andras privata namn',
+          description: 'Privat hemlig anteckning',
+        },
+      }),
+      expect.objectContaining({
+        id: 'race',
+        before: null,
+        after: { typeId: 'race-type', name: 'Senare privat användning', description: '' },
+      }),
+    ]);
+    const persistedHistory = await mcp.tool('read_history');
+    const restoredBlock = await mcp.type('private-type', null, 'definition_in_use');
+    expect(JSON.stringify(restoredBlock)).not.toMatch(
+      /Andras privata namn|Privat hemlig anteckning|Senare privat användning|"secret"|"race"/,
+    );
+    const restoredSaveBlock = await mcp.propose(
+      'save_draft',
+      { operationId: 'blocked-removal-after-restart' },
+      'definition_in_use',
+    );
+    expect(JSON.stringify(restoredSaveBlock)).not.toMatch(
+      /Andras privata namn|Privat hemlig anteckning|Senare privat användning|"secret"|"race"/,
+    );
+    expect(await otherMcp.tool('read_my_draft')).toEqual(persistedPrivate);
+    expect(await mcp.tool('read_history')).toEqual(persistedHistory);
     expect(
       (await (await page.request.get(`${householdPath}/map`)).json()).types.some(
         (type: { id: string }) => type.id === 'race-type',
@@ -780,6 +852,15 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
     await expect(proposal).toContainText('Ospecificerat objekt');
     await expect(proposal).toContainText('Fordon');
     await page.keyboard.press('Escape');
+    proposal = await readDraftProposal(page, 'Bilens avbetalning');
+    await expect(
+      proposal
+        .locator('dt')
+        .filter({ hasText: /^Senast uppgiven skuld$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveText('Okänt · datum för uppgiften: 2026-09-03');
+    await page.keyboard.press('Escape');
     await mcp.save('agreements');
     const credit = (await mcp.tool('read_map', { objectId: 'credit' })).objects[0];
     await mcp.object('credit', {
@@ -818,7 +899,34 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
       userId: receipt.userId,
     });
     expect(selected.receipt.changes[0].before.financialFacts.usedCredit.value).toBe('12 500');
+    expect(selected.receipt.changes[0].before.financialFacts.usedCredit.reportedOn).toBe(
+      '2026-09-02',
+    );
     await page.keyboard.press('Escape');
+    const creditHistory = await openSavedHistory(page);
+    const creditChange = creditHistory.getByRole('article').filter({ hasText: 'Ändrat objekt' });
+    await creditChange.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(
+      creditChange.getByText('Utnyttjad kredit: 12 500 — datum för uppgiften: 2026-09-02', {
+        exact: true,
+      }),
+    ).toBeVisible();
+    for (const [phase, amount, date] of [
+      ['Före sparandet', '12 500', '2026-09-02'],
+      ['Efter sparandet', '0', '2026-09-20'],
+    ]) {
+      const values = creditChange
+        .getByRole('heading', { name: phase, exact: true })
+        .locator(
+          `xpath=following-sibling::*[preceding-sibling::h5[1][normalize-space()="${phase}"]]`,
+        );
+      await expect(
+        values.getByText(`Utnyttjad kredit: ${amount} — datum för uppgiften: ${date}`, {
+          exact: true,
+        }),
+      ).toBeVisible();
+    }
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     for (const [name, kind, label, knowledge, amount, date] of [
       ['Hyra för lägenheten', 'Hyresavtal', 'Pris', 'known', '9 500', undefined],
       ['Hyra för garaget', 'Hyresavtal', 'Pris', 'uncertain', '650', undefined],
@@ -840,6 +948,7 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
       );
       if (amount !== undefined)
         await expect(form.getByLabel(label, { exact: true })).toHaveValue(amount);
+      else await expect(form.getByLabel(label, { exact: true })).toHaveCount(0);
       if (date !== undefined)
         await expect(form.getByLabel(`${label}: datum för uppgiften`, { exact: true })).toHaveValue(
           date,
@@ -855,13 +964,25 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
       'Bilens avbetalning',
     ])
       await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
-    for (const [source, target] of [
-      ['Bilens avbetalning', 'Familjens bil'],
-      ['Hyra för lägenheten', 'Lägenheten'],
-      ['Hyra för garaget', 'Garaget'],
+    for (const [source, target, kind] of [
+      ['Bilens avbetalning', 'Familjens bil', 'Finansierar'],
+      ['Hyra för lägenheten', 'Lägenheten', 'Gäller'],
+      ['Hyra för garaget', 'Garaget', 'Gäller'],
     ]) {
       const relationships = await openObjectRelationships(page, source);
       await expect(relationships).toContainText(target);
+      for (const [label, value] of [
+        ['Typ', kind],
+        ['Från objekt', source],
+        ['Till objekt', target],
+      ])
+        await expect(
+          relationships
+            .locator('dt')
+            .filter({ hasText: new RegExp(`^${label}$`) })
+            .locator('..')
+            .locator('dd'),
+        ).toHaveText(value);
       await page.keyboard.press('Escape');
     }
   } finally {

@@ -163,7 +163,8 @@ testfallet “MCP-02: daterade avtal kan rättas utan påhittade uppgifter”.
    och sambandet **Bilens avbetalning → Finansierar → Familjens bil**.
    Lämna alla andra ekonomiska uppgifter obesvarade. Granska utkastet i
    samtalet och webbläsaren. Läs fulla förslag för Exempellån,
-   Exempelkredit och Familjens bil; kontrollera osäkert, okänt, inget och
+   Exempelkredit, Bilens avbetalning och Familjens bil; kontrollera
+   osäkert, okänt, inget och
    ospecificerat. Stäng läsdialogen och spara hela utkastet.
 3. Använd klientens fångster för att rätta enbart Exempelkredits utnyttjade
    kredit till **0**,
@@ -173,7 +174,12 @@ testfallet “MCP-02: daterade avtal kan rättas utan påhittade uppgifter”.
    dess redigeringsknapp. Öppna **Ekonomiska uppgifter**. Kontrollera angivna
    belopp, datum och säkerheter. Exempelkredits skuld ska fortfarande
    vara obesvarad, kreditutrymmet **80 000** och utnyttjad kredit **0**.
-   Stäng formuläret. Öppna avtalens namngivna **Samband** och kontrollera
+   Bilens avbetalning ska visa **Okänt** för skuld och datum **2026-09-03**;
+   inget skuldbelopp ska anges. Stäng formuläret. Öppna
+   **Rapporter → Ändringshistorik → Visa ändringarna** för krediträttelsen.
+   Under **Före sparandet** läser du **12 500** och **2026-09-02**;
+   under **Efter sparandet** läser du **0** och **2026-09-20**.
+   Välj **Tillbaka till arbetet**. Öppna avtalens namngivna **Samband** och kontrollera
    finansieringssambandet till bilen och båda hyresavtalens
    riktade samband till rätt bostad respektive garage.
 
@@ -300,8 +306,14 @@ testfallet “MCP-04: upphört innehåll och privata utkast skyddar typer”.
    **Tabell → Filter → Ta med upphörda** och stäng filtret. Robin ska
    fortfarande se båda sina förslag i **Visa utkastet**.
 5. Starta om och ladda om Robins profil. Öppna båda förslagens fulla
-   läsdialoger: typ, namn och **Privat hemlig anteckning** ska finnas kvar.
-   Alex sparade katalog ska fortfarande innehålla Samtidig typ.
+   läsdialoger. **Andras privata namn** ska ha typen **Privat använd typ**
+   och beskrivningen **Privat hemlig anteckning**.
+   **Senare privat användning** ska ha typen **Samtidig typ** och
+   **Ej uppgivet** som beskrivning. Alex försöker åter ta bort Privat
+   använd typ och spara borttagningen av Samtidig typ enligt förberedelsen.
+   Båda försöken ska avvisas utan privata namn, beskrivningar eller
+   objektidentiteter. Alex sparade katalog ska fortfarande innehålla
+   Samtidig typ; Robins båda förslag och historiken ska vara oförändrade.
 
 **Förväntat resultat:**
 
@@ -384,14 +396,13 @@ färskt underlag”.
 6. Lägg ett oberoende förslag **Oberoende utkast**, beskrivning
    **Privat lampanteckning**, i utkastet genom klienten enligt den separata
    förberedelsen. Ladda om kartan efter klientens nya förslag. Läs sedan
-   den importerade lampans historik med
-   `read-tool read_history {"objectId":"manual-lamp"}`. Välj den
-   importerade sparningen. Skriv `read-tool read_history` följt av ett
-   JSON-objekt med exakt dess `operationId` och `userId` som strängvärden.
-   Kontrollera hela kvittot mot originalet enligt den separata
+   den importerade lampans historik enligt den separata
    [historikförberedelsen](assistant-client-preparation.md#historikläsning-mcp-06).
    Öppna **Rapporter → Ändringshistorik → Visa ändringarna** och läs
-   lampans namn, typ och historiska författare. Välj **Tillbaka till arbetet**
+   lampans namn, typ och historiska författare. Öppna
+   **Identifiera sparandet och användaren** och kontrollera att den
+   historiska författaren, sparandet och tidpunkten går att läsa.
+   Välj **Tillbaka till arbetet**
    och läs det oberoende förslagets fulla värden. De ska finnas kvar.
 7. Skicka först den gamla typfångsten enligt förberedelsen: importen
    ska ha gjort dess underlag ogiltigt. Kasta bara det oberoende förslaget
