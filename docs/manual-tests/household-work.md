@@ -33,14 +33,28 @@ fallen anger formulär, samtal, profil eller administration.
    taltransporten och provar inte fysiskt ljud.
 3. Börja varje fall med en ny provinstallation eller ett tomt utkast utan
    pågående sparande. Behåll fliken och databasen under varje fall.
-4. Prova ARBETE-01 på dator och mobil. Använd även tangentbord och
-   skärmläsare: kontrollera logisk ordning, synligt fokus och att dolda
-   kartkontroller inte går att nå. Dokumentera fysiska enheter och
-   hjälpmedel separat från automatiserad Chromium-emulering.
+4. Välj enbart fallets angivna konfiguration. ARBETE-01 använder
+   1280 × 900, ARBETE-10 använder 390 × 900 och ARBETE-11 använder
+   320 × 900. Faktiskt hört skärmläsartal och fysisk mikrofon observeras
+   separat i ARBETE-12/13; automationen utför inte dessa observationer.
 
 ## Tillfälliga vybyten
 
 ### ARBETE-01: avbruten formulärförlust och lagt utkast bevaras vid navigation
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-work.spec.ts",
+    "caseId": "ARBETE-01"
+  },
+  "reference": "1280 × 900; fullständig navigation",
+  "outcomes": [
+    "Formulärtext och fokus bevaras efter Escape",
+    "Förslag och sökning består vid återgång utan gemensamt sparande"
+  ]
+}
+```
 
 **Syfte:** Behåll text vid avbruten förlust och redan lagda förslag vid vybyte.
 
@@ -50,14 +64,7 @@ fallen anger formulär, samtal, profil eller administration.
 
 **Integrationstest:**
 [household-work.spec.ts](../../tests/integration/household-work.spec.ts).
-Följande testfall:
-
-- “ARBETE-01: canceled form loss and staged household work survive ordinary
-  navigation at 1280px”.
-- “ARBETE-01: canceled form loss and staged household work survive ordinary
-  navigation at 390px”.
-- “ARBETE-01: canceled form loss and staged household work survive ordinary
-  navigation at 320px”.
+ARBETE-01 vid 1280 × 900; de två smala fallen har egna identiteter nedan.
 
 **Steg:**
 
@@ -71,17 +78,102 @@ Följande testfall:
 3. Välj **Lägg i utkastet och stäng**. Besök **Inloggningssätt** med
    tangentbord. Kontrollera rubrikfokus och att kartans kontroller är dolda.
 4. Välj **Till startsidan** och öppna **Tabell**. Kontrollera sökningen
-   **cykel**,
+   **cykel**, namn **Oskickad cykel** och typ **Person**,
    expandera raden **Oskickad cykel** och läs beskrivningen direkt i raden.
 
 **Förväntat resultat:**
 
 - Avbruten förlust ändrar varken formulärtext eller utkast.
 - Det kompletta förslaget och tabellens sökning finns kvar efter återgång.
-  Objektets uppgifter går att läsa i raden; dolda kontroller stör inte navigationen.
+  Objektets uppgifter går att läsa i raden; dolda kontroller stör inte
+  navigationen.
 - Inget sparas i den gemensamma kartan och ingen historikpost skapas.
 
+### ARBETE-10: formulärförlust och lagt utkast vid 390 pixlar
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-work.spec.ts",
+    "caseId": "ARBETE-10"
+  },
+  "reference": "390 × 900; mobil navigation och synligt återställt fokus",
+  "outcomes": [
+    "Formulärtext och fokus bevaras efter Escape",
+    "Förslag och sökning består vid återgång utan gemensamt sparande"
+  ]
+}
+```
+
+**Syfte:** Skydda mobil navigation och synligt återställt fokus.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation och tomt utkast, fönster 390 × 900.
+
+**Integrationstest:**
+[household-work.spec.ts](../../tests/integration/household-work.spec.ts),
+ARBETE-10.
+
+**Steg:** Utför ARBETE-01:s fyra steg en gång vid denna bredd. Kontrollera
+förvalt **Fortsätt redigera**, Escape och återställt stängningsfokus vid
+steg 2, samt rubrikfokus och nåbara kontroller vid steg 3. Läs hela objektet
+och den bevarade sökningen vid återgången i steg 4.
+
+**Förväntat resultat:** Samma bevarade formulärtext, kompletta förslag och
+tomma gemensamma karta som ARBETE-01, vid den valda smala bredden.
+
+### ARBETE-11: formulärförlust och lagt utkast vid 320 pixlar
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-work.spec.ts",
+    "caseId": "ARBETE-11"
+  },
+  "reference": "320 × 900; extremt smal navigation och nåbara formulär",
+  "outcomes": [
+    "Formulärtext och fokus bevaras efter Escape",
+    "Förslag och sökning består vid återgång utan gemensamt sparande"
+  ]
+}
+```
+
+**Syfte:** Skydda extremt smal navigation och nåbara formulär.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation och tomt utkast, fönster 320 × 900.
+
+**Integrationstest:**
+[household-work.spec.ts](../../tests/integration/household-work.spec.ts),
+ARBETE-11.
+
+**Steg:** Utför ARBETE-01:s fyra steg en gång vid denna bredd. Kontrollera
+förvalt **Fortsätt redigera**, Escape och återställt stängningsfokus vid
+steg 2, samt rubrikfokus och nåbara kontroller vid steg 3. Läs hela objektet
+och den bevarade sökningen vid återgången i steg 4.
+
+**Förväntat resultat:** Samma bevarade formulärtext, kompletta förslag och
+tomma gemensamma karta som ARBETE-01, vid den valda smala bredden.
+
 ### ARBETE-02: samtal och mikrofon består och avslutas vid utloggning
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-work.spec.ts",
+    "caseId": "ARBETE-02"
+  },
+  "reference": "1280 × 720; samma samtal vid navigation kontra avslut vid utloggning",
+  "outcomes": [
+    "Samtal och mikrofon bevaras vid navigation",
+    "Utloggning avvecklar samtal och mikrofon"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevara samtalet och mikrofonens läge i en annan vy.
 
@@ -116,6 +208,22 @@ end on logout”.
 
 ### ARBETE-03: återkallad tillgång avvecklar oskickat arbete
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-work.spec.ts",
+    "caseId": "ARBETE-03"
+  },
+  "reference": "1280 × 720; återkallelse i annan profil, avveckling före omladdning",
+  "outcomes": [
+    "Återkallelse stoppar mikrofon och formulär före omladdning",
+    "Hushållet kan inte längre öppnas"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Bevarande ger inte fortsatt tillgång efter återkallelse.
 
 **Användare:** Alex och Robin i separata profiler.
@@ -143,6 +251,22 @@ microphone”.
   hushållsinnehållet är inte åtkomligt.
 
 ### ARBETE-04: ersatt innehåll avvecklar tidigare arbete
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-work.spec.ts",
+    "caseId": "ARBETE-04"
+  },
+  "reference": "1280 × 720; verklig ZIP-ersättning i andra fliken",
+  "outcomes": [
+    "Ersättning avvecklar formulär och mikrofon före omladdning",
+    "Ny användning kräver nytt medgivande"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Gamla formulär och samtal får inte fortsätta mot ersatt innehåll.
 
@@ -179,16 +303,33 @@ microphone”.
 
 ### ARBETE-07: väntande radering stoppar tidigare arbete före omladdning
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-work.spec.ts",
+    "caseId": "ARBETE-07"
+  },
+  "reference": "1280 × 720; öppet oskickat formulär och registrerat sparande vid väntande städning",
+  "outcomes": [
+    "Radering avvecklar gammalt arbete före omladdning",
+    "Stolens privata förslag och personliga vy bevaras"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera att oskickat formulär, samtal, mikrofon och ett
-registrerat
-sparförsök avvecklas när radering spärrar innehållet, utan att omladdning
+registrerat sparförsök avvecklas när radering spärrar innehållet, utan att omladdning
 döljer ett fel i avvecklingen.
 
 **Användare:** Alex som aktuell administratör samt provmiljöns operatör.
 
 **Förutsättningar:** Ny kontrollerad kostnadsmiljö enligt allmän förberedelse,
-med `text known`. Anteckna dess utskrivna `directory`. Skapa och spara
-**Lampan att radera** och **Stolen att bevara**, båda av typen **Fordon**.
+med `text known`. Operatören följer
+[den separata förberedelsen](household-work-preparation.md#väntande-radering).
+Skapa och spara
+**Lampan att radera** och **Stolen att bevara**, båda av typen **Person**.
 Ingen bild behövs i detta fall. Flytta lampan åt höger och stolen åt vänster
 med **Navigera**. Redigera stolen, skriv **Oberoende privat förslag** i
 beskrivningen och lägg i utkastet utan att spara hela utkastet.
@@ -209,96 +350,40 @@ an admitted save before reloading”.
    objektdialogen öppen i flik B utan omladdning.
    Ett oskickat objekt spärrar sparandet i sin egen flik; därför används
    separata flikar för formuläret och det väntande sparandet.
-2. I flik A, installera följande utdrag genom **Sources → Snippets** i
-   utvecklarverktygen. Det håller enbart den första sparbegäran efter
-   registreringen; inga svar eller uppgifter ersätts.
-
-   ```js
-   (() => {
-     const originalFetch = window.fetch;
-     let releaseSave = () => {};
-     const held = new Promise((resolve) => { releaseSave = resolve; });
-     function release(event) {
-       if (!event.altKey || !event.shiftKey || event.code !== 'KeyR') return;
-       event.preventDefault();
-       releaseSave();
-       window.removeEventListener('keydown', release);
-     }
-     window.addEventListener('keydown', release);
-     window.fetch = async function (...args) {
-       const input = args[0] instanceof Request ? args[0].url : args[0];
-       const url = new URL(input, location.href);
-       if (url.origin === location.origin &&
-           url.pathname.endsWith('/map/save')) {
-         window.fetch = originalFetch;
-         console.info('ARBETE-07: sparandet väntar');
-         await held;
-       }
-       return originalFetch.apply(this, args);
-     };
-   })();
-   ```
-
+2. Be operatören utföra [väntande sparförberedelse](household-work-preparation.md#väntande-radering)
+   i flik A före nästa steg. Begäran hålls först när du väljer Spara.
 3. I **Utkastet**, välj **Spara hela utkastet**. Invänta konsolens **ARBETE-07:
-   sparandet
-   väntar**. I **Network** ska registreringen under `map/operations`
-   ha HTTP 200 och status `pending`. Anteckna dess `operationId`.
-   Stäng utvecklarverktygen. Stäng **Spara utkastet** med krysset; försöket
+   sparandet väntar**. Stäng utvecklarverktygen. Stäng **Spara utkastet** med
+   krysset; försöket
    fortsätter. Öppna **Inställningar → Permanent radering**.
    Mikrofonen ska fortfarande vara på. Välj endast lampan och granska.
    Stolen och dess privata beskrivning ska inte visas i omfattningen.
-4. Håll en separat verklig databasläsare öppen: kör följande i en andra
-   terminal från projektets rot. När kommandot frågar efter sökvägen,
-   skriv `directory` från provmiljön följt av `/skyttel.db` och tryck Enter.
-   Invänta **Läsningen är öppen**.
-
-   ```sh
-   printf 'Databasens fullständiga sökväg: '
-   read -r work_case_database
-   node --input-type=module -e '
-   import Database from "better-sqlite3";
-   const database = new Database(process.argv[1], {
-     readonly: true,
-     fileMustExist: true,
-   });
-   database.exec("BEGIN");
-   database.prepare("SELECT id FROM map_object LIMIT 1").get();
-   function release() {
-     database.exec("ROLLBACK");
-     database.close();
-     console.log("Läsningen är avslutad.");
-     process.exit(0);
-   }
-   process.stdin.resume();
-   process.stdin.once("data", release);
-   process.once("SIGINT", release);
-   console.log("Läsningen är öppen. Tryck Enter först vid steg 7.");
-   ' "$work_case_database"
-   ```
-
-5. Bekräfta med exakt **RADERA PERMANENT**. Invänta HTTP 202 och besked om
-   väntande städning. Anteckna raderingens fullständiga identifierare.
+4. Be operatören öppna [databasläsaren](household-work-preparation.md#väntande-radering)
+   före bekräftelsen. Invänta **Läsningen är öppen**.
+5. Bekräfta med exakt **RADERA PERMANENT**. Invänta besked om
+   väntande städning. Behåll raderingssidan öppen för samma ärende.
    **Ladda inte om någon flik.** Inom tio sekunder ska mikrofonen i flik A
    stoppas och det oskickade formuläret i flik B avvecklas. Öppna
    **Tillbaka till kartan** i en ny flik:
    innehållet ska vara spärrat. En export i en separat flik ska också avvisas.
-6. I ursprungsfliken, tryck Alt+Skift+R för att släppa den gamla sparbegäran.
-   **Network** ska visa HTTP 409 med `content_maintenance` för denna
-   `map/save`. Den får inte skickas om automatiskt eller återge ett sparat
-   kvitto. Raderingens identifierare och väntande läge ska bestå.
+6. Be operatören släppa den gamla sparbegäran enligt förberedelsen.
+   Ingen sparbekräftelse får visas och inget nytt sparande ska starta.
+   Raderingen ska fortfarande vänta på städning.
 7. Tryck Enter i läsarens terminal. Välj uttryckligen **Försök slutföra
-   raderingen**. Samma identifierare ska slutföras med ett objekt och noll
-   samband, typer och bildversioner.
+   raderingen**. Samma ärende ska slutföras. Bara lampan raderas; stolen
+   behålls.
 8. Välj **Läs in kartan på nytt**. Öppna **Skriv till Skyttel** utan att
    starta ett samtal: tidigare dialog och oskickat svar ska saknas.
    Välj uttryckligen **Nytt samtal** och kontrollera ett nytt medgivande.
-   Avböj, öppna **Visa utkastet** och läs stolens fullständiga privata förslag.
+   Avböj, öppna **Visa utkastet** och läs stolens fullständiga privata förslag:
+   **Stolen att bevara**, **Person**, **Oberoende privat förslag**.
    Det gamla objektformuläret
    och sparförsökets återförsök ska saknas. Stolen, dess privata förslag och
    placering är kvar; lampan är borta och Alex är fortfarande administratör.
 
-Om fallet avbryts: släpp sparbegäran med Alt+Skift+R och databasläsaren med
-Enter eller Ctrl+C. Slutför ett eventuellt väntande raderingsärende innan
+Om fallet avbryts: be operatören släppa både sparbegäran och databasläsaren
+enligt förberedelsens återställning. Slutför ett eventuellt väntande
+raderingsärende innan
 provmiljön avslutas enligt kostnadsfallets stoppanvisningar.
 
 **Förväntat resultat:**
@@ -314,11 +399,28 @@ provmiljön avslutas enligt kostnadsfallets stoppanvisningar.
 
 ### ARBETE-05: samma sparförsök kan återhämtas efter vybyte
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-work.spec.ts",
+    "caseId": "ARBETE-05"
+  },
+  "reference": "1280 × 720; genomförd transaktion med förlorat svar under navigation",
+  "outcomes": [
+    "Okänt genomfört sparande består vid navigation",
+    "Samma sparande återhämtas med ett objekt och en historikhändelse"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Ett okänt utfall får inte glömmas vid navigation.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Separat HTTPS-testinstallation och den styrda
+**Separat förberedelse:** Operatören använder separat HTTPS-testinstallation och
+den styrda
 transporten i [SPAR-05](operations.md), med samma vanliga autentisering.
 Förbered ett tomt hushåll och styr endast dess leverans; ersätt inga svar.
 
@@ -330,12 +432,14 @@ response disappears”.
 **Steg:**
 
 1. Välj **Nytt objekt**, skriv **Sparad cykel** och välj **Lägg i utkastet
-   och stäng**. Skriv `arm save:after` i operatörens transportterminal.
+   och stäng**. Be operatören hålla nästa sparbesked efter transaktionen
+   enligt SPAR-05:s förberedelse.
    Öppna **Visa utkastet** och välj **Spara hela utkastet**. Vänta på
-   `application-completed` med status 200 och `held-after`.
+   operatörens bekräftelse att sparandet genomförts och beskedet hålls kvar.
 2. Stäng **Spara utkastet** med krysset och besök **Inloggningssätt**.
    Kontrollera att återkopplingen fortfarande visar ett väntande sparande.
-   Skriv `drop` i transportterminalen. Kontrollera okänt sparutfall även
+   Be operatören tappa det kvarhållna svaret enligt förberedelsen. Kontrollera
+   okänt sparutfall även
    utanför kartan; starta inget nytt försök.
 3. Återgå med **Till startsidan**. Välj **Visa sparandet**, därefter
    **Kontrollera sparandet igen**. Kontrollera **Utkastet är sparat** och
@@ -355,6 +459,21 @@ response disappears”.
 
 ### ARBETE-06: urval och personlig vy består vid storleksbyte
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-work.spec.ts",
+    "caseId": "ARBETE-06"
+  },
+  "reference": "1280 × 900 till 390 × 844; urval och personlig placering",
+  "outcomes": [
+    "Urval, höjdhjälp och personlig placering består vid storleksbyte"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Behålla valt objekt och egna kartinställningar vid återgång.
 
 **Användare:** Alex.
@@ -371,12 +490,14 @@ and resizing”.
 1. Skapa **Min cykel** med **Nytt objekt**, lägg objektet i utkastet och
    spara genom **Visa utkastet → Spara hela utkastet**. Invänta sparbeskedet,
    stäng textvyn och välj cykelns namngivna kartetikett.
-2. Öppna **Navigera**. Välj **Flytta [objektets namn]: höger**, invänta sparad
+2. Öppna **Navigera**. Välj **Flytta Min cykel: höger**, invänta sparad
    personlig vy och markera **Visa höjdhjälp**.
 3. Besök **Inloggningssätt**, minska fönstret till mobilstorlek och
    återgå med **Till startsidan**.
-4. Fokusera **Min cykel**, tryck Skift+F10 och välj **Visa uppgifter för Min cykel**.
-   Läs uppgifterna. Välj **Stäng uppgifterna**
+4. Fokusera **Min cykel**, tryck Skift+F10 och välj **Visa uppgifter för Min
+   cykel**.
+   Läs **Min cykel**, typ **Person** och **Ej uppgivet** för beskrivning.
+   Välj **Stäng uppgifterna**
    och kontrollera kartans urval, **Visa höjdhjälp** och personlig placering.
 
 **Förväntat resultat:**
@@ -388,9 +509,63 @@ and resizing”.
 
 ### ARBETE-08: familjeabonnemang från inloggning till delad karta
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/connected-work.spec.ts",
+    "caseId": "ARBETE-08"
+  },
+  "reference": "1280 × 720; hela familjekedjan med kontrollerat tal",
+  "outcomes": [
+    "Hela familjeärendet sparas och återläses efter omstart",
+    "Fullständiga fullständiga värden och separat privat arbete för båda medlemmarna"
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistant-work.spec.ts",
+      "caseId": "AI-08",
+      "purpose": "Komplett extern familjekedja med SDK och fullständiga läsning"
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistant-work.spec.ts",
+      "caseId": "AI-09",
+      "purpose": "Nytt utkast stoppar gammalt medgivande"
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistant-work.spec.ts",
+      "caseId": "AI-10",
+      "purpose": "Beständigt kvitto vid förlorat svar och omstart"
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistant-work.spec.ts",
+      "caseId": "AI-11",
+      "purpose": "Identitetsfrågor blockerar sparande och kastade förslag består"
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-work-preparation.spec.ts",
+      "title": "literal household preparation completes the family tools on empty public installation",
+      "purpose": "Exakta publicerade verktyg och grafikavbrott med privat arbete, omstart och återställning"
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-work-preparation.spec.ts",
+      "title": "literal household preparation completes the family tools on seeded public installation",
+      "purpose": "Exakta publicerade verktyg och grafikavbrott med privat arbete, omstart och återställning"
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Prova ett oavbrutet arbete genom inloggning, text, kontrollerat
-tal, privata förslag, fullständiga läsdialoger, rättelse, Inställningar, gemensamt
-sparande, omstart och en annan medlems vy.
+tal, privata förslag, fullständiga läsdialoger, rättelse, Inställningar,
+gemensamt sparande, omstart och en annan medlems vy.
 
 **Användare:** Alex och Robin i separata webbläsarprofiler.
 
@@ -400,13 +575,10 @@ Använd inte `seed-family`. Miljön ersätter inloggningsleverantörer, modell,
 mikrofon och ljudtransport. Den provar inte externa konton eller verkligt tal.
 Behåll samma flikar och databas fram till den uttryckliga omstarten.
 
-Modellsvaren släpps i startterminalen med guidens `tool` och `reply`.
-Använd alltid det aktuella `held`-anropets ID. Kopiera `version` och
-`contentVersion` från dess `draft`; efter ett ändrande verktyg används
-nästa `held.lastToolResult`. Läs typers ID och revisioner från katalogen.
-Använd nya identifierare `family-subscription`, `family-person` och
-`family-payment` för detta tomma prov. I automationen används nya slump-ID
-och sedan de faktiskt returnerade identifierarna.
+**Separat förberedelse:** Operatören följer
+[hela verktygskedjan](household-work-preparation.md#sammanhängande-familjeärende)
+vid de nedan angivna UI-stegen. Kommandon, revisioner och identifierare
+kontrolleras där.
 
 **Integrationstest:**
 [connected-work.spec.ts](../../tests/integration/connected-work.spec.ts),
@@ -417,10 +589,11 @@ till gemensamt kvitto och privat fortsatt arbete”.
 
 1. Börja utloggad. Använd Tab och Enter för **Fortsätt med Google** och
    **Fortsätt till Google**. Kontrollera rubrikfokus, skriv
-   **Hushållet Linden** och välj **Skapa hushåll**. I terminalen, kör
-   `identity robin`. Logga in med Microsoft i Robins separata profil.
-   Kopiera Robins användar-ID från **Din profil**. Kör `identity alex`
-   efter inloggningen. Följ
+   **Hushållet Linden** och välj **Skapa hushåll**. Be operatören välja Robin
+   enligt förberedelsen. Logga in
+   med Microsoft i Robins separata profil. Låt operatören hämta Robins
+   profilidentifierare för inbjudan och återställa Alex som nästa identitet.
+   Följ
    [inbjudningsguiden](../user-guide/access.md#bjud-in-en-skyttel-användare)
    för att bjuda in och acceptera som Robin. Som Robin, välj **Nytt objekt**,
    skriv **Robins notering** och **Lägg i utkastet och stäng**.
@@ -428,46 +601,38 @@ till gemensamt kvitto och privat fortsatt arbete”.
 2. Som Alex, välj **Skriv till Skyttel** och **Nytt samtal**. Kontrollera
    medgivanderutan och välj **Godkänn och starta**. Skicka
    **Föreslå Familjens Molnmusik, ett familjeabonnemang för 179 SEK
-   per månad.** Släpp `read_type_catalog` med `{}`. Nästa resultat ska ge
-   typerna **Abonnemang**, **Person** och **Betalar**. Släpp därefter
-   `propose_object` med katalogens Abonnemang-ID, dess `typeRevision`,
-   aktuell utkastversion och `contentVersion`, objektets nya `id`,
-   `baseRevision: null` samt följande `value` (ersätt typ-ID):
-
-   ```json
-   {
-     "typeId": "Abonnemang-ID från katalogen",
-     "name": "Familjens Molnmusik",
-     "description": "",
-     "financialFacts": {
-       "price": { "knowledge": "known", "value": "179" },
-       "currency": { "knowledge": "known", "value": "SEK" },
-       "paymentInterval": { "knowledge": "known", "value": "månad" }
-     }
-   }
-   ```
-
-   Släpp sedan ett vanligt `reply`. Kontrollera ett privat objekt,
-   inget sparat objekt eller kvitto och Robins oförändrade privata notering.
-3. Välj **Prata med Skyttel**. Kör `user Kim Exempel betalar familjens
-   Molnmusik.`
-   och `delegate` i terminalen. Släpp `propose_object` för **Kim Exempel**,
-   typen **Person**, tom beskrivning och `baseRevision: null`.
-   Använd aktuell version och typrevision. Nästa verktygsresultat ger
-   personens ID och den nya versionen. Släpp `propose_relationship` med
-   den nya versionen, katalogens Betalar-ID och typrevision,
-   `baseRevision: null`, `sourceId` för Kim, `targetId` för abonnemanget
-   och `knowledge: "known"`. Släpp sedan ett vanligt `reply`.
-   Hela utkastet ska visa två objekt och exakt **Kim Exempel → Betalar →
-   Familjens Molnmusik**. Inget ska vara gemensamt sparat.
-4. Stäng textvyn, öppna **Tabell** och **Redigera Familjens Molnmusik**.
+   per månad.** Be operatören släppa katalogläsningen och abonnemangsförslaget
+   enligt
+   förberedelsen. Läs **Familjens Molnmusik**, typ **Abonnemang**, tom
+   beskrivning och **179 / SEK / månad**: stäng textvyn, öppna **Tabell**
+   och välj **Redigera Familjens Molnmusik**. Läs namn, vald **Objekttyp**
+   och beskrivning i **Grunduppgifter**. Öppna **Ekonomiska uppgifter**,
+   läs varje märkt värde och dess **uppgiftens säkerhet: Känt**. Stäng
+   utan ändring med Escape och återgå till textvyn.
+   Inget objekt eller kvitto är gemensamt; Robins notering är oförändrad.
+3. Välj **Prata med Skyttel**. Be operatören släppa transkriptionen,
+   personförslaget och sambandet
+   enligt förberedelsen. Stäng textvyn, öppna **Tabell** och välj
+   **Redigera Kim Exempel**. Läs namn **Kim Exempel**, vald **Objekttyp
+   Person** och tom beskrivning. Stäng med Escape utan ändring. Välj
+   **Samband för Kim Exempel** och läs det fullständiga sambandet:
+   **Från objekt Kim Exempel**, **Typ Betalar**, **Riktning Betalar**,
+   **Till objekt Familjens Molnmusik**, **Uppgiftens säkerhet Känt**.
+   Hela utkastet ska visa två objekt och ett samband. Inget är sparat.
+4. I **Tabell**, välj **Redigera Familjens Molnmusik**.
    Öppna **Ekonomiska uppgifter** och rätta Pris till **189**. Öppna
    **Grunduppgifter**, rätta beskrivningen till **Rättad för hand** och
    välj **Lägg i utkastet och stäng**. Invänta avslutat formulär och
    beskedet **Ändringen finns i ditt utkast. Kartan sparas separat.**
    Fäll ut abonnemangets rad och läs alla uppgifter direkt i raden.
-   Kontrollera rättelsen och fäll ihop raden. Läs Kims fullständiga uppgifter
-   på samma sätt och kontrollera rubriken. Fäll ihop raden och välj
+   Kontrollera namn, typ, beskrivning och alla tre märkta ekonomiska
+   värden i den expanderade raden; fäll ihop raden. Välj
+   **Redigera Familjens Molnmusik**, läs samma grunduppgifter och öppna
+   **Ekonomiska uppgifter**. Kontrollera varje märkt värde och dess
+   **uppgiftens säkerhet: Känt**. Stäng med Escape utan att ändra något.
+   Läs Kims fullständiga uppgifter
+   på samma sätt och kontrollera **Kim Exempel**, **Person** och
+   **Ej uppgivet** för beskrivningen. Fäll ihop raden och välj
    **Redigera Kim Exempel**. Skriv
    **Oskickat om Kim** som beskrivning utan att lägga i utkastet.
    Välj **Avbryt**, kontrollera förvalt **Fortsätt redigera** och tryck
@@ -486,9 +651,13 @@ till gemensamt kvitto och privat fortsatt arbete”.
    kontrollera att röstrutan visar **Lyssnar**.
    Välj **Tillbaka till kartan** och välj
    abonnemanget och Kim genom att expandera deras rader i **Tabell**.
-   Fäll ihop varje rad med namnet innan nästa öppnas. Öppna även
-   **Skriv till Skyttel**. Kontrollera
-   rubriken, den rättade abonnemangsbeskrivningen, samma detaljvy och
+   Fäll ihop varje rad med namnet innan nästa öppnas. Kontrollera
+   båda objektens fullständiga namn, typer och beskrivningar,
+   abonnemangets tre märkta ekonomiska värden i de expanderade raderna.
+   Läs **Känt** för varje ekonomisk uppgift i abonnemangets fullständiga
+   editor enligt steg 4 och stäng utan ändring. Öppna **Samband för
+   Kim Exempel**, läs riktning, ändpunkter och **Känt**, och stäng
+   läsmodalen. Återgå till textvyn och kontrollera samma detaljvy och
    samtalets oskickade text. Kims uttryckligen kastade text återkommer inte.
    Robins notering ska fortfarande vara privat. Automationen kontrollerar
    att samma levande mediespår och anslutning används efter Inställningar.
@@ -496,10 +665,13 @@ till gemensamt kvitto och privat fortsatt arbete”.
    samband. Granska **189 / SEK / månad**, med **Rättad för hand**, i
    abonnemangets uppgifter och återvänd sedan till **Skriv till Skyttel**.
    Ersätt samtalets oskickade text med **Spara hela utkastet nu.** och skicka.
-   Släpp exakt ett `save_draft` med den aktuella granskningens version,
-   innehållsversion och `operationId: "family-save"`. Servern tilldelar
-   sparandets beständiga identifierare; anteckna den från
-   **Rapporter → Ändringshistorik → Visa ändringarna**.
+   Be operatören släppa helhetssparandet enligt förberedelsen.
+   Öppna **Rapporter → Ändringshistorik → Visa ändringarna**.
+   Läs båda objektens namn, typ och beskrivning, abonnemangets märkta
+   **Pris 189**, **Valuta SEK**, **Betalningsintervall månad**, hela
+   **Kim Exempel → Betalar → Familjens Molnmusik**, Alex som sparande
+   användare och den visade tidpunkten. Öppna **Identifiera sparandet
+   och användaren** för samma sparhändelse.
    Läs **Utkastet är sparat** under hushållsnamnet i tre sekunder.
    Kontrollera ett kvitto för båda objekten och sambandet, tomt Alex-utkast
    och välj **Tillbaka till arbetet** i Rapporter. Stäng textvyn och läs
@@ -511,11 +683,15 @@ till gemensamt kvitto och privat fortsatt arbete”.
    ingår inte i kvittot.
 7. Stäng av mikrofonen med **Prata med Skyttel**. Kontrollera att ny
    inspelning är av och att samma anslutning finns kvar för ett eventuellt
-   fördröjt svar. Kör `restart` i terminalen: då avslutas mediespåren.
+   fördröjt svar. Be operatören starta om samma databas enligt förberedelsen: då
+   avslutas mediespåren.
    Ladda om Alex flik och öppna
    **Rapporter → Ändringshistorik → Visa ändringarna** för samma
-   kvitto. Kontrollera namn, rättad beskrivning, hela prisuppgiften,
-   riktningen Kim till abonnemanget och **Betalar**. Oskickad lokal text
+   kvitto. Upprepa hela den märkta historikläsningen från steg 6,
+   inklusive båda typerna, Kims tomma beskrivning, användare och tidpunkt.
+   Läs sedan båda fullständiga objektformulären samt sambandets typ,
+   riktning, ändpunkter och säkerhet i Tabell innan nästa privata rättelse.
+   Oskickad lokal text
    behöver inte överleva den uttryckliga omladdningen.
 8. Välj **Tillbaka till arbetet**. Som Alex, öppna **Tabell** och
    **Redigera Familjens Molnmusik**, rätta beskrivningen till
@@ -523,7 +699,14 @@ till gemensamt kvitto och privat fortsatt arbete”.
    och lägg i utkastet utan att spara. Ladda om Robin. Robin ska se det
    gemensamma abonnemanget med **Rättad för hand**, **189 / SEK / månad**,
    Kim och Betalar-sambandet, samt enbart sin egen privata notering.
-   Kontrollera samma historikkvitto även som Robin. Alex ska inte se
+   Som Robin: välj **Redigera Familjens Molnmusik**, läs grunduppgifterna
+   och de märkta ekonomiska värdena med **Känt** i **Ekonomiska uppgifter**.
+   Stäng med Escape utan ändring. Läs **Kim Exempel**, **Person** och tom
+   beskrivning genom **Redigera Kim Exempel** och stäng. Välj **Samband
+   för Kim Exempel**, läs hela riktningen och **Känt**, och stäng modalens
+   kryss. Kontrollera samma fullständiga historik från steg 6,
+   inklusive typer, beskrivningar, märkta ekonomiska värden, Alex och tidpunkt.
+   Alex ska inte se
    Robins notering. Avsluta provmiljön med `quit` enligt röstguiden.
 
 **Förväntat resultat:**
@@ -540,6 +723,60 @@ till gemensamt kvitto och privat fortsatt arbete”.
 
 ### ARBETE-09: samma familjearbete med text och listor utan grafik eller ljud
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/connected-work.spec.ts",
+    "caseId": "ARBETE-09"
+  },
+  "reference": "1280 × 720; hela text- och listkedjan med faktisk grafikförlust utan ljud",
+  "outcomes": [
+    "Hela familjeärendet slutförs med faktisk grafikförlust utan ljud",
+    "Samma fullständiga historik och privata gränser som röstfallet"
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistant-work.spec.ts",
+      "caseId": "AI-08",
+      "purpose": "Komplett extern familjekedja med SDK och fullständiga läsning"
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistant-work.spec.ts",
+      "caseId": "AI-09",
+      "purpose": "Nytt utkast stoppar gammalt medgivande"
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistant-work.spec.ts",
+      "caseId": "AI-10",
+      "purpose": "Beständigt kvitto vid förlorat svar och omstart"
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistant-work.spec.ts",
+      "caseId": "AI-11",
+      "purpose": "Identitetsfrågor blockerar sparande och kastade förslag består"
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-work-preparation.spec.ts",
+      "title": "literal household preparation completes the family tools on empty public installation",
+      "purpose": "Exakta publicerade verktyg och grafikavbrott med privat arbete, omstart och återställning"
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-work-preparation.spec.ts",
+      "title": "literal household preparation completes the family tools on seeded public installation",
+      "purpose": "Exakta publicerade verktyg och grafikavbrott med privat arbete, omstart och återställning"
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Genomföra samma arbete utan tal, ljuduppspelning eller grafisk karta.
 
 **Användare:** Alex och Robin enligt ARBETE-08.
@@ -552,27 +789,24 @@ Använd dess identiteter, faktiska verktygssvar och samma åtta steg.
 testfallet “ARBETE-09: samma familjearbete fungerar med text och listor
 utan grafik eller ljud”.
 
+**Separat förberedelse:** Operatören använder
+[grafikavbrottet utan ljud](household-work-preparation.md#grafikavbrott-utan-ljud)
+vid varje profils första hushållsvisning och efter dess omladdningar.
+
 **Steg:**
 
-1. Följ ARBETE-08. Välj aldrig **Prata med Skyttel**. I steg 3 skriver och
-   skickar
-   du **Kim Exempel betalar familjens Molnmusik.** i textfältet i stället
-   för terminalens `user` och `delegate`. Släpp samma två verktyg i ordning.
-   Hoppa över mikrofonens påslag och avstängning.
-2. När hushållet är öppet, skapa ett verkligt grafikavbrott i båda profilerna
-   genom webbläsarkonsolen. Upprepa efter omladdning vid omstarten:
-
-   ```js
-   document.querySelector('canvas').getContext('webgl2')
-     .getExtension('WEBGL_lose_context').loseContext();
-   ```
-
-   Kontrollera **Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.**
-   Gör allt fortsatt arbete genom **Tabell**, formulär och samtalets text.
-3. Fullfölj rättelse, läsdialoger, Inställningar, uttryckligt sparande,
-   historik, omstart och båda privata utkasten enligt ARBETE-08.
-   Kör även med tangentbord och tillgänglig skärmläsare. Anteckna den
-   faktiska miljön separat från automatiserade kontroller.
+1. Följ ARBETE-08:s åtta steg en gång med följande ändringar vid respektive
+   steg. Efter vardera profilens första hushållsvisning i steg 1, invänta
+   **Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.** innan arbete.
+   Använd sedan enbart Tabell, formulär och text. Välj aldrig mikrofonen.
+2. I steg 3 skriver och skickar du **Kim Exempel betalar familjens
+   Molnmusik.** i textfältet. Operatören släpper samma person och samband
+   enligt förberedelsen. Alla fullständiga läsningar är kvar.
+3. I steg 5 utelämnas kontrollen **Lyssnar**. I steg 7 utelämnas
+   mikrofonavstängning; omstart med samma databas utförs fortfarande.
+   Invänta operatörens nya grafikavbrott efter Alex omladdning och efter
+   Robins omladdning i steg 8. Fullfölj hela historiken och bådas privata
+   utkast; kör inte om tidigare steg efter avslutat sparande.
 
 **Förväntat resultat:**
 
@@ -582,6 +816,123 @@ utan grafik eller ljud”.
   Automationen räknar dessa medieanrop och kräver noll.
 - Tabellens namngivna åtgärder ersätter grafisk träffning och dragning.
   Ett kontrollerat grafikavbrott är inte ett verkligt skärmläsarprov.
+
+### ARBETE-12: faktiskt hört tal genom navigation och textalternativ
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Hör rubriker, namngivna kontroller, sparbesked och historik med NVDA; dolda kartkontroller får inte förekomma i navigeringen"
+  },
+  "reference": "Separat HTTPS-provinstallation; Windows, Chrome och NVDA",
+  "outcomes": [
+    "Hör rubriker, namngivna kontroller, sparbesked och historik med NVDA; dolda kartkontroller får inte förekomma i navigeringen"
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/household-work.spec.ts",
+      "caseId": "ARBETE-01",
+      "purpose": "Native UI-flöde med syntetisk transport; utför inte den mänskliga observationen"
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Hör rubriker, namngivna kontroller, sparbesked och historik med NVDA;
+dolda kartkontroller får inte förekomma i navigeringen.
+
+**Användare:** Alex och Robin i separata profiler.
+
+**Kräver mänsklig observation:** Hör rubriker, namngivna kontroller, sparbesked
+och historik med NVDA; dolda kartkontroller får inte förekomma i navigeringen.
+
+**Separat förberedelse:** Följ
+[den fysiska HTTPS-förberedelsen](../development/testing.md#physical-device-manual-preparation)
+med nytt provhushåll och två egna testinloggningar. Använd verklig utrustning
+och anteckna versioner. Lägg Robins meningsfulla notering i utkastet och
+behåll den privat. Syntetiska kommandon och loopback används inte här.
+För röst krävs redan godkänd leverantör och särskilt medgivande till dess
+kostnad; konfigurerade nycklar innebär inte medgivande till betalda anrop.
+
+**Steg:** Utför ARBETE-01 och ARBETE-09 med den riktiga utrustningen och fiktiva
+uppgifter.
+I familjekedjan används vanligt samtal för samma två objekt och samband;
+kontrollera och rätta utkastet innan det uttryckliga sparandet. Vid
+navigation ska samma text bestå. Kontrollera det riktiga sparbeskedet och
+fullständig historik efter operatörens omstart med samma databas.
+Lyssna på rubriken **Inloggningssätt**, återgångens namngivna formulär och
+tabell samt **Utkastet är sparat**. Navigera med Tab och skärmläsarens
+rubrik-/reglagenavigation: dolda kartkontroller ska varken nås eller läsas
+upp på profilsidan. Med grafik avbruten ska text, listor och historik
+fortfarande läsas upp. Anteckna faktiskt hörda ord och uteblivet tal;
+DOM-semantik är inte denna observation.
+
+**Förväntat resultat:** De faktiskt observerade orden, kontrollerna och
+ljudgränserna stämmer med stegen. Anteckna godkänt, underkänt eller ej utfört
+för varje observation. Radera provdata och avsluta båda inloggningarna.
+
+### ARBETE-13: fysisk mikrofon och hörbart svar genom familjearbetet
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-microphone-audio",
+    "observation": "Tala svenska i fysisk mikrofon och hör svaret, samma pågående röstläge genom Inställningar samt avslutad inspelning efter utloggning"
+  },
+  "reference": "Separat HTTPS-provinstallation; fysisk dator, mikrofon och högtalare",
+  "outcomes": [
+    "Tala svenska i fysisk mikrofon och hör svaret, samma pågående röstläge genom Inställningar samt avslutad inspelning efter utloggning"
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/connected-work.spec.ts",
+      "caseId": "ARBETE-08",
+      "purpose": "Native UI-flöde med syntetisk transport; utför inte den mänskliga observationen"
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Tala svenska i fysisk mikrofon och hör svaret, samma pågående
+röstläge genom Inställningar samt avslutad inspelning efter utloggning.
+
+**Användare:** Alex och Robin i separata profiler.
+
+**Kräver mänsklig observation:** Tala svenska i fysisk mikrofon och hör svaret,
+samma pågående röstläge genom Inställningar samt avslutad inspelning efter
+utloggning.
+
+**Separat förberedelse:** Följ
+[den fysiska HTTPS-förberedelsen](../development/testing.md#physical-device-manual-preparation)
+med nytt provhushåll och två egna testinloggningar. Använd verklig utrustning
+och anteckna versioner. Lägg Robins meningsfulla notering i utkastet och
+behåll den privat. Syntetiska kommandon och loopback används inte här.
+För röst krävs redan godkänd leverantör och särskilt medgivande till dess
+kostnad; konfigurerade nycklar innebär inte medgivande till betalda anrop.
+
+**Steg:** Utför ARBETE-08 och ARBETE-02 med den riktiga utrustningen och fiktiva
+uppgifter.
+I familjekedjan används vanligt samtal för samma två objekt och samband;
+kontrollera och rätta utkastet innan det uttryckliga sparandet. Vid
+navigation ska samma text bestå. Kontrollera det riktiga sparbeskedet och
+fullständig historik efter operatörens omstart med samma databas.
+Tala **Kim Exempel betalar familjens Molnmusik** och hör svaret i
+högtalaren. Besök Inställningar med mikrofonen på och kontrollera att
+inspelning fortsätter i samma samtal. Stäng av mikrofonen och kontrollera
+att nytt tal inte skickas. Starta ett nytt separat prov för ARBETE-02:
+efter utloggning ska fysisk inspelning upphöra och gammalt tal inte höras
+eller läggas i något utkast. Anteckna verkliga ljudobservationer.
+
+**Förväntat resultat:** De faktiskt observerade orden, kontrollerna och
+ljudgränserna stämmer med stegen. Anteckna godkänt, underkänt eller ej utfört
+för varje observation. Radera provdata och avsluta båda inloggningarna.
 
 ## Bedömning och återstående manuella prov
 
@@ -595,3 +946,11 @@ kontroller och funktionella flöden vid dator- och mobilbredder.
 Kontrast, verklig zoom, skärmläsare, fysiska målplattformar och faktiskt
 svenskt tal kräver separat manuell bedömning. Inga sådana prov eller
 fullständig WCAG 2.2 AA-överensstämmelse intygas av integrationstesterna.
+
+## Identiteter och underlag
+
+ARBETE-01 behåller datorfallet. ARBETE-10 och ARBETE-11 identifierar dess
+två kvarvarande smala konfigurationer; hela förloppet behålls i alla tre.
+ARBETE-12/13 gör tidigare krav på faktisk skärmläsare och mikrofon explicita.
+Inget fall pensioneras och ingen skyddad funktion tas bort. Tekniska
+kvittovärden, nätverksutfall, spår och geometri ligger kvar i automationen.

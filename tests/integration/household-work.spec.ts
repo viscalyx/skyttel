@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import Database from 'better-sqlite3';
 import type { ErasureStatus } from '../../src/shared/household-erasure.js';
 import type { MapState } from '../../src/shared/map.js';
@@ -18,6 +18,7 @@ import {
   consentBox,
   consentBoxFor,
   openConversationText,
+  openSavedHistory,
   startConversationWithText,
   turnMicrophoneOn,
   voiceBox,
@@ -27,6 +28,17 @@ import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
 import { modelMessage, textModel } from '../support/text-model.js';
+
+async function nativeFields(root: Locator, values: readonly (readonly [string, string])[]) {
+  for (const [label, value] of values)
+    await expect(
+      root
+        .locator('dt')
+        .filter({ hasText: new RegExp(`^${label}(?: · ändrat)?$`) })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveText(new RegExp(`^(?:◇ Ditt förslag: )?${value}$`));
+}
 
 async function startConversation(page: Page, origin: string) {
   await page.addInitScript({ content: liveBrowserFixtureSource });
@@ -299,6 +311,16 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
     ).toHaveCount(0);
     const retainedProposal = await readDraftProposal(page, 'Stolen att bevara');
     await expect(retainedProposal).toContainText('Oberoende privat förslag');
+    await nativeFields(
+      retainedProposal
+        .getByRole('heading', { name: 'Föreslagna värden', exact: true })
+        .locator('..'),
+      [
+        ['Namn', 'Stolen att bevara'],
+        ['Typ', 'Person'],
+        ['Beskrivning', 'Oberoende privat förslag'],
+      ],
+    );
     expect(await read()).toEqual(retained);
     expect((await (await page.request.get(path)).json()).household.role).toBe('administrator');
     expect(saveCount).toBe(1);
@@ -317,8 +339,12 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
   }
 });
 
-for (const width of [1280, 390, 320]) {
-  test(`ARBETE-01: canceled form loss and staged household work survive ordinary navigation at ${width}px`, async ({
+for (const [caseId, width] of [
+  ['ARBETE-01', 1280],
+  ['ARBETE-10', 390],
+  ['ARBETE-11', 320],
+] as const) {
+  test(`${caseId}: canceled form loss and staged household work survive ordinary navigation at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -372,6 +398,13 @@ for (const width of [1280, 390, 320]) {
         reading.getByRole('heading', { name: 'Oskickad cykel · alla uppgifter', exact: true }),
       ).toBeVisible();
       await expect(reading).toContainText('Behåll denna text');
+      await nativeFields(reading, [
+        ['Namn', 'Oskickad cykel'],
+        ['Typ', 'Person'],
+      ]);
+      await expect(reading.locator('.household-table-description')).toHaveText(
+        /^(?:◇ Ditt förslag: )?Behåll denna text$/,
+      );
       const state = await (await page.request.get(path)).json();
       expect(state.objects).toEqual([]);
       expect(state.draft.changes).toHaveLength(1);
@@ -469,6 +502,7 @@ test('ARBETE-03: revoked household access retires hidden forms and microphone', 
     await membership.getByRole('button', { name: 'Återkalla tillgång', exact: true }).click();
     await membership.getByRole('button', { name: 'Bekräfta återkallelse' }).click();
     await expect(voiceBox(memberPage)).toHaveCount(0, { timeout: 10000 });
+    await expect(memberPage.getByLabel('Namn', { exact: true })).toHaveCount(0);
     await expect
       .poll(() => memberPage.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks))
       .toEqual([{ enabled: false, state: 'ended' }]);
@@ -596,6 +630,15 @@ test('ARBETE-05: navigation preserves a save attempt after its response disappea
     );
     const history = await (await page.request.get(`${path}/history`)).json();
     expect(history.history).toHaveLength(1);
+    await openSavedHistory(page);
+    const receipt = page.getByRole('region', { name: 'Ändringshistorik' }).getByRole('article');
+    await expect(receipt).toHaveCount(1);
+    await receipt.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(receipt.getByText('Namn: Sparad cykel.', { exact: true })).toBeVisible();
+    await receipt.getByText('Identifiera sparandet och användaren', { exact: true }).click();
+    await expect(
+      receipt.getByText(`Sparande: ${history.history[0].operationId}`, { exact: true }),
+    ).toBeVisible();
     await page.reload();
     await openTable(page);
     await expect(page.getByRole('table')).toContainText('Sparad cykel');
@@ -651,6 +694,15 @@ test('ARBETE-06: selection and personal map view survive navigation and resizing
     await expect(page.getByRole('region', { name: 'Min cykel', exact: true })).toContainText(
       'Min cykel',
     );
+    await nativeFields(page.getByRole('region', { name: 'Min cykel', exact: true }), [
+      ['Namn', 'Min cykel'],
+      ['Typ', 'Person'],
+    ]);
+    await expect(
+      page
+        .getByRole('region', { name: 'Min cykel', exact: true })
+        .locator('.household-table-description'),
+    ).toHaveText('Ej uppgivet');
     await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Min cykel', exact: true }),

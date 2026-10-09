@@ -181,10 +181,14 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   [Styrd leverans](workspace-preparation.md) förbereder väntande formulär,
   personliga flyttar och första läsningar utan produktändringar.
 
-- [Bevarat hushållsarbete](household-work.md): avbruten formulärförlust,
+- [Bevarat hushållsarbete](household-work.md): separata dator-, 390- och
+  320-pixelsfall för avbruten formulärförlust,
   lagda objektförslag, oskickad samtalstext, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
-  sparförsök vid tillfälliga vybyten; avveckling vid utloggning, återkallad
+  sparförsök vid tillfälliga vybyten;
+  [teknisk förberedelse vid rätt steg](household-work-preparation.md), faktiskt
+  hört NVDA-tal och fysisk mikrofon som separata observationer; avveckling vid
+  utloggning, återkallad
   tillgång
   och ersatt hushållsinnehåll. Väntande permanent radering stoppar mikrofon,
   dolt formulär och registrerat sparförsök före omladdning; oberoende privat
@@ -321,7 +325,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sparande och dess kontrollerade ljudkvittens avslutas före röstbytet.
   Mikrofonval, felingång och emulerade pekbredder har skilda identiteter;
   KONTEXT-16/17 avser verklig uppläsning, mikrofon och beröring;
-  KONTEXT-18 bevarar hört hinderbesked vid textens och röstens sammanfattningsfel.
+  KONTEXT-18 bevarar hört hinderbesked vid textens och röstens
+  sammanfattningsfel.
   [Separat samtalsförberedelse](conversation-preparation.md) beskriver
   versionsvärden, paket, registrerat sparande och PCM genom hållen start.
 - [Samtal med Skyttel](text-assistant.md): hela utkast,

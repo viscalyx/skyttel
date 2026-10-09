@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import type { MapState, ObjectType, RelationshipType, SaveReceipt } from '../../src/shared/map.js';
 import type { TextAssistantReview } from '../../src/shared/text-assistant.js';
 import {
@@ -51,6 +51,117 @@ async function loseGraphics(page: Page) {
   });
   await expect(
     page.getByText('Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.', { exact: true }),
+  ).toBeVisible();
+}
+
+async function fieldValues(root: Locator, values: readonly (readonly [string, string])[]) {
+  for (const [label, value] of values)
+    await expect(
+      root
+        .locator('dt')
+        .filter({ hasText: new RegExp(`^${label}$`) })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveText(value);
+}
+
+async function tableValues(root: Locator, name: string, description: string, price?: string) {
+  const values = [
+    ['Namn', name],
+    ['Typ', price ? 'Abonnemang' : 'Person'],
+  ];
+  if (price) values.push(['Pris', price], ['Valuta', 'SEK'], ['Betalningsintervall', 'månad']);
+  for (const [label, value] of values)
+    await expect(
+      root
+        .locator('dt')
+        .filter({ hasText: new RegExp(`^${label}$`) })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveText(new RegExp(`^(?:◇ Ditt förslag: )?${value}$`));
+  await expect(root.locator('.household-table-description')).toHaveText(
+    new RegExp(`^(?:◇ Ditt förslag: )?${description || 'Ej uppgivet'}$`),
+  );
+}
+
+async function objectValues(page: Page, name: string, price?: string, description = '') {
+  const form = await editTableObject(page, name);
+  await expect(form.getByLabel('Namn', { exact: true })).toHaveValue(name);
+  await expect(form.getByLabel('Objekttyp').locator('option:checked')).toHaveText(
+    price ? 'Abonnemang' : 'Person',
+  );
+  await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(description);
+  if (price) {
+    await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    for (const [label, value] of [
+      ['Pris', price],
+      ['Valuta', 'SEK'],
+      ['Betalningsintervall', 'månad'],
+    ]) {
+      await expect(form.getByLabel(label, { exact: true })).toHaveValue(value);
+      await expect(form.getByLabel(`${label}: uppgiftens säkerhet`, { exact: true })).toHaveValue(
+        'known',
+      );
+    }
+  }
+  await page.keyboard.press('Escape');
+}
+
+async function paymentValues(page: Page) {
+  const relationships = await openObjectRelationships(page, 'Kim Exempel');
+  const edge = relationships
+    .getByRole('heading', { name: 'Kim Exempel → Betalar → Familjens Molnmusik', exact: true })
+    .locator('..');
+  await fieldValues(edge, [
+    ['Typ', 'Betalar'],
+    ['Från objekt', 'Kim Exempel'],
+    ['Riktning', 'Betalar'],
+    ['Till objekt', 'Familjens Molnmusik'],
+    ['Uppgiftens säkerhet', 'Känt'],
+  ]);
+  await closeSupportDialog(page, 'Samband för Kim Exempel');
+}
+
+async function historyValues(group: Locator, receipt: SaveReceipt) {
+  await expect(group.locator('time')).toHaveAttribute('datetime', receipt.savedAt);
+  await expect(group.getByRole('heading', { level: 3 })).toContainText('Alex Exempel');
+  const identifiers = group.getByText('Identifiera sparandet och användaren', { exact: true });
+  if (!(await identifiers.locator('..').getAttribute('open'))) await identifiers.click();
+  for (const text of [
+    `Sparande: ${receipt.operationId}`,
+    `Skyttel-användare: ${receipt.userId}.`,
+    `Tidpunkt: ${receipt.savedAt}`,
+  ])
+    await expect(group.getByText(text, { exact: true })).toBeVisible();
+  for (const [name, type, description] of [
+    ['Familjens Molnmusik', 'Abonnemang', 'Rättad för hand'],
+    ['Kim Exempel', 'Person', 'Ingen beskrivning'],
+  ]) {
+    const object = group
+      .getByRole('heading', { name: `Objekt: ${name}`, exact: true })
+      .locator('..');
+    await expect(object.getByText(`Namn: ${name}.`, { exact: true })).toBeVisible();
+    await expect(object.getByText(`Objekttyp: ${type}.`, { exact: true })).toBeVisible();
+    await expect(object.getByText(`Beskrivning: ${description}`, { exact: true })).toBeVisible();
+    if (type === 'Abonnemang')
+      for (const [label, value] of [
+        ['Pris', '189'],
+        ['Valuta', 'SEK'],
+        ['Betalningsintervall', 'månad'],
+      ])
+        await expect(object.getByText(`${label}: ${value}`, { exact: true })).toBeVisible();
+  }
+  const edge = group.getByRole('heading', { name: 'Samband: Betalar', exact: true }).locator('..');
+  await expect(
+    edge.getByText('Kim Exempel → Betalar → Familjens Molnmusik', { exact: true }),
+  ).toBeVisible();
+  await edge.getByText('Sambandets objektidentiteter', { exact: true }).click();
+  const savedEdge = receipt.relationships?.[0].after;
+  if (!savedEdge) throw new Error('Missing actual saved relationship');
+  await expect(
+    edge.getByText(`Från objekt ${savedEdge.sourceId} till objekt ${savedEdge.targetId}.`, {
+      exact: true,
+    }),
   ).toBeVisible();
 }
 
@@ -259,6 +370,10 @@ for (const mode of ['voice', 'text'] as const) {
       expect(await history()).toEqual([]);
       expect((await readMember()).draft).toEqual(robinPrivate);
 
+      await closeTextView(page);
+      await objectValues(page, 'Familjens Molnmusik', '179');
+      await openConversationText(page);
+
       // 4. Controlled transcript crosses the real voice delegation and sequential tools.
       if (mode === 'voice') {
         await turnMicrophoneOn(page);
@@ -300,6 +415,8 @@ for (const mode of ['voice', 'text'] as const) {
 
       // 5. Correct the staged financial values, then retain independent dirty text.
       await closeTextView(page);
+      await objectValues(page, 'Kim Exempel');
+      await paymentValues(page);
       await editTableObject(page, 'Familjens Molnmusik');
       const form = page.locator('dialog.object-dialog-C');
       await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
@@ -347,11 +464,13 @@ for (const mode of ['voice', 'text'] as const) {
       await expect(form).not.toBeVisible();
       const subscription = await readTableObject(page, 'Familjens Molnmusik');
       await expect(subscription).toContainText('Rättad för hand');
+      await tableValues(subscription, 'Familjens Molnmusik', 'Rättad för hand', '189');
       await closeTableObject(page, 'Familjens Molnmusik');
       const person = await readTableObject(page, 'Kim Exempel');
       await expect(
         person.getByRole('heading', { name: 'Kim Exempel · alla uppgifter', exact: true }),
       ).toBeVisible();
+      await tableValues(person, 'Kim Exempel', '');
       await closeTableObject(page, 'Kim Exempel');
       await editTableObject(page, 'Kim Exempel');
       await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickat om Kim');
@@ -370,7 +489,11 @@ for (const mode of ['voice', 'text'] as const) {
       await readTableObject(page, 'Kim Exempel');
       await expect(person).toHaveCount(1);
       await expect(person).not.toContainText('Oskickat om Kim');
+      await tableValues(person, 'Kim Exempel', '');
       await closeTableObject(page, 'Kim Exempel');
+      await objectValues(page, 'Familjens Molnmusik', '189', 'Rättad för hand');
+      await objectValues(page, 'Kim Exempel');
+      await paymentValues(page);
       const corrected = await read();
       const expectedFacts = {
         price: { knowledge: 'known', value: '189' },
@@ -395,6 +518,28 @@ for (const mode of ['voice', 'text'] as const) {
         if (name === 'Familjens Molnmusik')
           for (const value of ['Rättad för hand', '189', 'SEK', 'månad'])
             await expect(proposal).toContainText(value);
+        if (name === 'Familjens Molnmusik')
+          await fieldValues(proposal, [
+            ['Namn', name],
+            ['Typ', 'Abonnemang'],
+            ['Beskrivning', 'Rättad för hand'],
+            ['Pris', '189'],
+            ['Valuta', 'SEK'],
+            ['Betalningsintervall', 'månad'],
+          ]);
+        else if (name === 'Kim Exempel')
+          await fieldValues(proposal, [
+            ['Namn', name],
+            ['Typ', 'Person'],
+            ['Beskrivning', 'Ej uppgivet'],
+          ]);
+        else
+          await fieldValues(proposal, [
+            ['Från', 'Kim Exempel'],
+            ['Sambandstyp', 'Betalar'],
+            ['Till', 'Familjens Molnmusik'],
+            ['Uppgiftens säkerhet', 'Bekräftat'],
+          ]);
         await closeSupportDialog(page, name);
       }
       expect(await read()).toEqual(corrected);
@@ -474,13 +619,18 @@ for (const mode of ['voice', 'text'] as const) {
         }),
       ).toBeVisible();
       await expect(subscription).toContainText('Rättad för hand');
+      await tableValues(subscription, 'Familjens Molnmusik', 'Rättad för hand', '189');
       await closeTableObject(page, 'Familjens Molnmusik');
       await readTableObject(page, 'Kim Exempel');
       await expect(
         person.getByRole('heading', { name: 'Kim Exempel · alla uppgifter', exact: true }),
       ).toBeVisible();
       await expect(person).not.toContainText('Oskickat om Kim');
+      await tableValues(person, 'Kim Exempel', '');
       await closeTableObject(page, 'Kim Exempel');
+      await objectValues(page, 'Familjens Molnmusik', '189', 'Rättad för hand');
+      await objectValues(page, 'Kim Exempel');
+      await paymentValues(page);
       await openConversationText(page);
       await expect(message).toBeVisible();
       await expect(message).toHaveValue('Oskickat i samtalet');
@@ -493,6 +643,11 @@ for (const mode of ['voice', 'text'] as const) {
       await expect(proposals.getByRole('row')).toHaveCount(4);
       await expect(proposals).toContainText('Familjens Molnmusik');
       await expect(proposals).toContainText('Kim Exempel');
+      await closeTextView(page);
+      await readTableObject(page, 'Familjens Molnmusik');
+      await tableValues(subscription, 'Familjens Molnmusik', 'Rättad för hand', '189');
+      await closeTableObject(page, 'Familjens Molnmusik');
+      await openConversationText(page);
       await message.fill('Spara hela utkastet nu.');
       await assistant.getByRole('button', { name: 'Skicka', exact: true }).click();
       await expect.poll(async () => (await history()).length).toBe(1);
@@ -510,6 +665,7 @@ for (const mode of ['voice', 'text'] as const) {
       const receipts = await history();
       expect(receipts).toHaveLength(1);
       const receipt = receipts[0];
+      await historyValues(savedReceipts.getByRole('article'), receipt);
       // The server owns the durable operation identity; model-supplied IDs are not authority.
       const operationId = receipt.operationId;
       await expect(savedReceipts).toContainText(operationId);
@@ -520,6 +676,7 @@ for (const mode of ['voice', 'text'] as const) {
       await closeTextView(page);
       await readTableObject(page, 'Kim Exempel');
       await expect(person).not.toContainText('Oskickat om Kim');
+      await tableValues(person, 'Kim Exempel', '');
       await closeTableObject(page, 'Kim Exempel');
       await openConversationText(page);
       expect(receipt).toMatchObject({
@@ -611,10 +768,14 @@ for (const mode of ['voice', 'text'] as const) {
         'Betalar',
       ])
         await expect(savedGroup).toContainText(value);
+      await historyValues(savedGroup, receipt);
       await page
         .getByRole('region', { name: 'Rapporter', exact: true })
         .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })
         .click();
+      await objectValues(page, 'Familjens Molnmusik', '189', 'Rättad för hand');
+      await objectValues(page, 'Kim Exempel');
+      await paymentValues(page);
       await editTableObject(page, 'Familjens Molnmusik');
       await form.getByLabel('Beskrivning', { exact: true }).fill('Alex privat efteråt');
       await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
@@ -629,6 +790,7 @@ for (const mode of ['voice', 'text'] as const) {
       for (const value of ['189', 'SEK', 'månad'])
         await expect(memberSubscription).toContainText(value);
       await expect(memberSubscription).not.toContainText('Alex privat efteråt');
+      await tableValues(memberSubscription, 'Familjens Molnmusik', 'Rättad för hand', '189');
       await closeTableObject(member, 'Familjens Molnmusik');
       const memberRelationships = await openObjectRelationships(member, 'Kim Exempel');
       await expect(
@@ -637,7 +799,24 @@ for (const mode of ['voice', 'text'] as const) {
           exact: true,
         }),
       ).toBeVisible();
+      await fieldValues(
+        memberRelationships
+          .getByRole('heading', {
+            name: 'Kim Exempel → Betalar → Familjens Molnmusik',
+            exact: true,
+          })
+          .locator('..'),
+        [
+          ['Typ', 'Betalar'],
+          ['Från objekt', 'Kim Exempel'],
+          ['Riktning', 'Betalar'],
+          ['Till objekt', 'Familjens Molnmusik'],
+          ['Uppgiftens säkerhet', 'Känt'],
+        ],
+      );
       await closeSupportDialog(member, 'Samband för Kim Exempel');
+      await objectValues(member, 'Familjens Molnmusik', '189', 'Rättad för hand');
+      await objectValues(member, 'Kim Exempel');
       await (await utilityButton(member, 'Rapporter')).click();
       const memberHistory = member
         .getByRole('region', { name: 'Ändringshistorik' })
@@ -646,6 +825,7 @@ for (const mode of ['voice', 'text'] as const) {
       await memberHistory.getByText('Visa ändringarna', { exact: true }).click();
       for (const value of ['Rättad för hand', '189', 'SEK', 'månad', 'Kim Exempel', 'Betalar'])
         await expect(memberHistory).toContainText(value);
+      await historyValues(memberHistory, receipt);
       const otherState = await readMember();
       expect(otherState.objects).toEqual(saved.objects);
       expect(otherState.relationships).toEqual(saved.relationships);
