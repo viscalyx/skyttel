@@ -188,15 +188,32 @@ utan att ändra utkastet”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 1: kör `user Hållet talat uppdrag.` och `delegate`
+i terminalen. Invänta dess verkliga modellanrop och meddela
+**Första taluppdraget hålls** utan att släppa svaret. Kör sedan
+`user Väntande talat uppdrag.` och `delegate` och meddela
+**Nästa taluppdrag är levererat till kön** före användarens skrivna
+Väntande text. Behåll första svaret genom mikrofon OFF och faktiskt
+Avbryt i steg 2. Släpp det gamla svaret först i steg 3 enligt
+förberedelsen; nästa textuppdrag använder sitt nya aktuella anrop.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Kör `user Hållet talat uppdrag.` och `delegate` i terminalen.
-   Låt modellsvaret vara hållet. Kör sedan `user Väntande talat uppdrag.`
-   och `delegate`. Skicka **Väntande text.** i textvyn.
-2. Läs att två uppdrag väntar. Stäng av mikrofonen med mikrofonknappen
-   och aktivera röstrutans **Avbryt**.
-3. Släpp det första svaret med **För sent.**. Skicka **Ett nytt
-   textuppdrag.** och släpp det med **Textsvaret.**.
+1. Be operatören leverera det första talade uppdraget och behålla dess verkliga
+   modellsvar hållet. Invänta bekräftelse. Be sedan operatören leverera det
+   väntande talade uppdraget och invänta bekräftelse. Skicka **Väntande text.**
+   i textvyn.
+2. Läs att två uppdrag väntar. Stäng av mikrofonen med mikrofonknappen och
+   aktivera röstrutans **Avbryt**.
+3. Släpp det första svaret med **För sent.**. Skicka **Ett nytt textuppdrag.**
+   och släpp det med **Textsvaret.**.
 
 **Förväntat resultat:**
 

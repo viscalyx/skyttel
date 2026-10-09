@@ -200,14 +200,31 @@ FRAGA-03, talat uppdrag.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 1: kör `user Vilken Lo avses?` och `delegate` och
+bekräfta leveransen. Vid steg 2: använd det verkliga hållna uppdragets
+aktuella värden och befintligt `ask_questions`-recept. Återge hela
+frågan med förberedd signal och transporttext, avsluta signalen och
+meddela **Hela frågan är släppt och signalen avslutad**. Bevara
+FRAGA-07:s skrivna ingång: där skickar användaren sitt meddelande
+i grundfallets steg 1 och operatören använder inget talat
+`user Vilken Lo avses?` eller `delegate` för det steget.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Kör `user Vilken Lo avses?` och `delegate`.
-2. Släpp frågan med `ask_questions`. Återge hela frågan med signal och
-   transporttext enligt förberedelsen och avsluta signalen.
+1. Be operatören leverera det kontrollerade taluppdraget och invänta
+   bekräftelse.
+2. Be operatören släppa hela frågan med dess förberedda signal och text. Invänta
+   bekräftelse av släppet och avslutad signal.
 3. Kontrollera **Väntar på ditt svar**. Stäng av mikrofonen och läs rutan.
-4. Välj själv **Skriv till Skyttel**. Läs frågan och svara **Det är Lo
-   Exempel som avses.** Släpp det vanliga svaret enligt förberedelsen.
+4. Välj själv **Skriv till Skyttel**. Läs frågan och svara **Det är Lo Exempel
+   som avses.** Släpp det vanliga svaret enligt förberedelsen.
 
 **Förväntat resultat:**
 
@@ -251,20 +268,42 @@ ljudet innan fyra sekunder börjar”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ [ljudfragment och tid](conversation-preparation.md#ljudfragment-och-tid-för-sparbesked).
+Vid UI-steg 1: kör `user Spara hela utkastet.` och `delegate`.
+Släpp det verkliga hållna uppdragets `save_draft` enligt det befintliga
+receptet och meddela **Samma sparande är bekräftat** efter lyckat
+genomförande, före användarens sparbeskedsläsning.
+Vid steg 2: starta signalen, skicka Spar och avsluta signalen med
+det befintliga fragmentreceptet. Bekräfta varje gräns utan nytt kvitto.
+Vid steg 3: skicka at. med signalen av och bekräfta leveransen;
+vänta minst fyra sekunder innan signalen startas igen. Bekräfta
+starten och behåll signalen minst fyra sekunder. Vid steg 4: avsluta
+signalen och meddela **Signalen är avslutad; starta tidtagningen nu**.
+Användarens tre/fyrasekundersläsning räknas först från detta avslut.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Kör `user Spara hela utkastet.` och `delegate`. Släpp `save_draft`
-   enligt förberedelsen. Läs **Utkastet är sparat** under hushållsnamnet i tre
+1. Be operatören leverera det kontrollerade talade sparuppdraget och släppa
+   samma sparverktyg enligt förberedelsen. Invänta bekräftelse. Läs **Utkastet
+   är sparat** under hushållsnamnet i tre sekunder.
+2. Be operatören starta signalen, leverera fragmentet **Spar** och avsluta
+   signalen enligt förberedelsen. Invänta bekräftelse. Kontrollera att det gröna
+   sparbeskedet inte visas.
+3. Be operatören leverera fragmentet **at.** medan signalen är av och invänta
+   bekräftelse. Vänta minst fyra sekunder. Be sedan operatören starta signalen
+   igen och invänta bekräftelse. Håll provet i minst fyra sekunder.
+4. Be operatören avsluta signalen. Starta tidtagningen vid operatörens
+   bekräftade avslut. Läs röstrutan efter tre sekunder och igen efter drygt fyra
    sekunder.
-2. Starta signalen, skicka fragmentet **Spar** och avsluta signalen.
-   Kontrollera att det gröna sparbeskedet inte visas.
-3. Skicka fragmentet **at.** medan signalen är av. Vänta minst fyra
-   sekunder. Starta signalen igen och håll den på i minst fyra sekunder.
-4. Avsluta signalen och starta tidtagningen. Läs röstrutan efter tre
-   sekunder och igen efter drygt fyra sekunder.
-5. Öppna själv textvyn och läs sparbeskedet. Öppna
-   **Rapporter → Ändringshistorik** och kontrollera det enda sparandet
-   med Lo Exempel.
+5. Öppna själv textvyn och läs sparbeskedet. Öppna **Rapporter →
+   Ändringshistorik** och kontrollera det enda sparandet med Lo Exempel.
 
 **Förväntat resultat:**
 
@@ -308,10 +347,23 @@ fyra sekunderna från avbrottet”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ
+[ljudfragment och tid](conversation-preparation.md#ljudfragment-och-tid-för-sparbesked)
+. Förbered det verkliga sparandet enligt FRAGA-04:s första steg och bekräfta
+kvittot före sparbeskedsläsningen. Vid UI-steg 1 här: starta signalen och skicka
+Spar med det befintliga fragmentreceptet; meddela **Fragmentet är levererat och
+signalen pågår**. Behåll signalen tills användaren själv väljer Avbryt i steg 2.
+Skicka inte at. och avsluta inte signalen enligt grundfallets steg 2–4 i denna
+variant. Återställ signalen efter observationerna och avsluta enligt
+startguiden.
+
 **Steg:**
 
-1. Läs **Utkastet är sparat** under hushållsnamnet när kvittot bekräftas.
-   Starta signalen och skicka fragmentet **Spar** enligt förberedelsen.
+1. Läs **Utkastet är sparat** under hushållsnamnet när kvittot bekräftas. Be
+   operatören starta signalen och leverera fragmentet **Spar** enligt
+   förberedelsen. Invänta bekräftelse att signalen fortfarande pågår.
 2. Välj röstrutans stoppikon **Avbryt** och starta tidtagningen.
 3. Läs rutan efter tre sekunder och efter drygt fyra sekunder.
 
@@ -350,15 +402,30 @@ kvitto ger inget grönt sparbesked”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 1: kör `user Berätta om utkastet.` och `delegate`,
+och släpp just det verkliga hållna anropet med `reply REQUEST Sparat.`.
+Använd inget sparverktyg. Meddela **Påståendet är släppt utan sparande**.
+Vid steg 2: använd det befintliga fragmentreceptet, starta signalen,
+skicka Sparat. som transporttext och avsluta signalen. Meddela
+**Text och avslutad signal är levererade utan sparkvitto**.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Kör `user Berätta om utkastet.` och `delegate` och släpp med
-   `reply REQUEST Sparat.`. Ge inget sparbesked.
-2. Starta signalen, skicka **Sparat.** som transporttext och avsluta den.
-3. Kontrollera röstrutan och förslaget genom **Visa utkastet** i textvyn.
-   Öppna **Rapporter → Ändringshistorik** och kontrollera att inget
-   sparande tillkommer. Fokusera **Tillbaka till arbetet** med tangentbordet
-   och tryck **Enter**.
+1. Be operatören leverera det kontrollerade taluppdraget och dess påstående
+   enligt förberedelsen. Invänta bekräftelse. Ge inget sparbesked.
+2. Be operatören leverera förberedd signal och **Sparat.** som transporttext.
+   Invänta bekräftelse av avslutad signal.
+3. Kontrollera röstrutan och förslaget genom **Visa utkastet** i textvyn. Öppna
+   **Rapporter → Ändringshistorik** och kontrollera att inget sparande
+   tillkommer. Fokusera **Tillbaka till arbetet** med tangentbordet och tryck
+   **Enter**.
 
 **Förväntat resultat:**
 

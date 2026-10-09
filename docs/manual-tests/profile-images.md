@@ -371,27 +371,38 @@ HTTPS-ingången innan `quit`.
 [profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
 BILD-04.
 
+**Separat operatörsförberedelse:**
+
+Använd fallets befintliga separat förberedda `stage:after`.
+Efter UI-steg 3: invänta det verkliga hållna 400-svaret och meddela
+**Avslaget hålls**. Behåll det under spärr- och fokusprovet. Vid steg 4,
+först efter det senare fokusförsöket: kör `release` i transportterminalen
+och meddela **Samma avslag är släppt**. Återställ HTTPS-ingången före
+`quit` enligt den befintliga förberedelsen.
+
 **Steg:**
 
-1. Redigera Garaget, skriv Separat förslag om Garaget och välj **Lägg i
-   utkastet och stäng**.
-2. Redigera Cykeln. Öppna **Livscykel och utseende**, välj första bilden
-   och lägg hela formuläret i utkastet. Upprepa med andra bilden.
+1. Redigera Garaget, skriv Separat förslag om Garaget och välj **Lägg i utkastet
+   och stäng**.
+2. Redigera Cykeln. Öppna **Livscykel och utseende**, välj första bilden och
+   lägg hela formuläret i utkastet. Upprepa med andra bilden.
 3. Redigera Cykeln igen. Skriv Oskickad bildtext i Grunduppgifter. Öppna
-   **Livscykel och utseende** och välj `fel.png`. Håll nästa svar enligt
-   förberedelsen och välj **Lägg i utkastet och stäng**.
+   **Livscykel och utseende** och välj `fel.png`. Be operatören förbereda
+   hållet svar enligt förberedelsen och invänta installationen. Välj **Lägg i
+   utkastet och stäng**. Invänta operatörens bekräftelse att det verkliga
+   avslaget hålls.
 4. Kontrollera spärrade fält och Avbryt. Tryck Escape och försök fokusera
-   bakgrundens sökfält med Tab och Shift+Tab. Släpp svaret i
-   transportterminalen med `release`.
-5. Läs bildfelet. Öppna Grunduppgifter och kontrollera beskrivningen.
-   Välj **Avbryt**. Kontrollera standardfokus, läsbarhet och synligt fokus
-   på **Fortsätt redigera**, även med pekaren över knappen. Tryck Tab
-   och Shift+Tab och kontrollera att fokus återgår till samma knapp.
-6. Tryck Escape i varningen. Kontrollera text och fokus på Avbryt.
-   Välj Avbryt igen och **Kasta ändringarna och fortsätt**.
-7. Redigera Cykeln igen. Kontrollera ursprunglig utkastbeskrivning och
-   andra giltiga bilden. Avbryt det oförändrade formuläret och öppna
-   Garaget igen. Kontrollera dess lagda förslag.
+   bakgrundens sökfält med Tab och Shift+Tab. Be operatören släppa samma avslag
+   enligt förberedelsen och invänta bekräftelse.
+5. Läs bildfelet. Öppna Grunduppgifter och kontrollera beskrivningen. Välj
+   **Avbryt**. Kontrollera standardfokus, läsbarhet och synligt fokus på
+   **Fortsätt redigera**, även med pekaren över knappen. Tryck Tab och Shift+Tab
+   och kontrollera att fokus återgår till samma knapp.
+6. Tryck Escape i varningen. Kontrollera text och fokus på Avbryt. Välj Avbryt
+   igen och **Kasta ändringarna och fortsätt**.
+7. Redigera Cykeln igen. Kontrollera ursprunglig utkastbeskrivning och andra
+   giltiga bilden. Avbryt det oförändrade formuläret och öppna Garaget igen.
+   Kontrollera dess lagda förslag.
 
 **Förväntat resultat:**
 
@@ -434,24 +445,34 @@ Använd 1440 × 900 CSS-bildpunkter för datorns navigeringsreferens.
 [profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts).
 BILD-05.
 
+**Separat operatörsförberedelse:**
+
+Följ fallets befintliga styrda objektleverans. Håll det verkliga
+avslagssvaret enligt förberedelsen och bekräfta hållningen efter
+inskickningen. Först efter navigationsprovet i UI-steg 2: kör `release`
+och meddela **Samma avslag är släppt**. Behåll samma session och utkast
+genom senare redigering; återställ HTTPS-ingången före `quit`.
+
 **Steg:**
 
 1. Öppna Inställningar och följ **Tillbaka till kartan**. Välj Nytt objekt,
    skriv Bildarbete och Behåll bildens text. Öppna Livscykel och utseende.
    Avbryt filväljaren utan fil och kontrollera oförändrat utkast.
-2. Välj `fel.png`, håll nästa svar och lägg hela formuläret i utkastet.
-   Använd webbläsarens Bakåt. Kontrollera att formuläret stannar och är
-   spärrat. Släpp svaret med `release` och vänta tills bildfelet visas.
-   Återställ transporten efter fallet enligt BILD-04.
+2. Välj `fel.png`. Be operatören förbereda hållet avslag och invänta
+   installationen. Lägg hela formuläret i utkastet. Invänta operatörens
+   bekräftelse att samma verkliga avslag hålls. Använd webbläsarens Bakåt.
+   Kontrollera att formuläret stannar och är spärrat. Be operatören släppa samma
+   avslag och invänta bekräftelse. Vänta tills bildfelet visas. Återställ
+   transporten efter fallet enligt BILD-04.
 3. Använd Bakåt igen. Tryck Escape i förlustvarningen och kontrollera att
-   formuläret finns kvar. Använd Bakåt igen och välj **Kasta ändringarna
-   och fortsätt**. Kontrollera återgång till Inställningar.
-4. Återgå till kartan och skapa ett nytt formulär för Bildarbete med
-   Oskickat efter bildfelet och en giltig bild, utan att lägga det i utkastet.
+   formuläret finns kvar. Använd Bakåt igen och välj **Kasta ändringarna och
+   fortsätt**. Kontrollera återgång till Inställningar.
+4. Återgå till kartan och skapa ett nytt formulär för Bildarbete med Oskickat
+   efter bildfelet och en giltig bild, utan att lägga det i utkastet.
 5. Lägg ett oberoende objektförslag, Annat förslag, i utkastet från andra
    fliken. Försök lägga första flikens hela formulär i utkastet.
-6. Kontrollera felet, beskrivningen i Grunduppgifter och filvalet i
-   Livscykel och utseende. Granska det privata utkastet från andra fliken.
+6. Kontrollera felet, beskrivningen i Grunduppgifter och filvalet i Livscykel
+   och utseende. Granska det privata utkastet från andra fliken.
 
 **Förväntat resultat:**
 

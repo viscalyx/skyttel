@@ -58,33 +58,42 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 [costs.spec.ts](../../tests/integration/costs.spec.ts),
 “KOST-01: separata kostnader och månadens antaganden återläses efter omstart”.
 
+**Separat operatörsförberedelse:**
+
+Använd den befintliga [kostnadsinstallationen](#controlled-cost-fixture).
+Vid UI-steg 1, efter **Lyssnar**: kör `delegate` i terminalen. Det går
+genom serverns kontrollerade Terra-arbete. Bekräfta levererat uppdrag.
+Vid steg 2: kör `usage 90` och meddela **90 sekunders förbrukning förberedd**
+innan användaren stänger av mikrofonen. Vid steg 8: kör `restart`, behåll
+samma databas och invänta omstartens bekräftelse innan användaren laddar om.
+Följ startguidens återställning mellan fall och `quit` efter provningen.
+
 **Steg:**
 
-1. Välj **Prata med Skyttel**, vänta på **Lyssnar** och kör `delegate` i
-   terminalen. Uppdraget går genom serverns kontrollerade Terra-arbete. Vänta på
-   **Det kontrollerade kostnadsprovet är klart.**
-2. Kör `usage 90` och stäng av mikrofonen med **Prata med Skyttel**.
-   Vänta tills röstrutan har försvunnit och röstanslutningen har stängts,
-   några sekunder senare.
-3. Öppna **Månadskostnad**. Kontrollera aktuell månad i UTC, Render
-   **72,50 SEK (7,25 USD)**, Live **0,75 SEK (0,075 USD)** och Terra
-   **2,29 SEK (0,229 USD)**. Öppna **Visa mätvärden för Live** och
-   **Visa mätvärden för Terra**. Live visar 90 rapporterade sekunder.
-   Terra visar 100 000 indatatoken med cache och resonemang separat.
-4. Kräv delsumman **75,54 SEK (7,554 USD)** före de tre raderna.
-   Öppna **Visa driftantagandet**. Läs att Render avser hel
-   månad, tidigare förbrukning är okänd och cirka 200 kronor är ett
-   riktmärke utan automatisk spärr.
-5. Öppna modellpriserna under **Prisunderlag**. Kontrollera datum,
-   enheter, tabell, källor och uttryckligt antagande om 10 SEK per USD.
-   Startkrediten för Live ska inte läggas på en gång till.
-6. Öppna **Ändra månadens antaganden**, ändra **SEK per USD** till 11
-   och välj **Spara månadens antaganden**. Kräv **83,09 SEK (7,554 USD)**.
-7. Välj föregående månad. Dess förval är fortfarande 10 SEK per USD och
-   tidigare förbrukning är okänd. Återgå till aktuell månad; den har 11.
-8. Kör `restart`, ladda om webbläsaren och öppna mätvärdena igen.
-   Kontrollera samma uppdelning, ändrade valutantagande och delsumman
-   **83,09 SEK (7,554 USD)**.
+1. Välj **Prata med Skyttel**, vänta på **Lyssnar**. Be operatören leverera det
+   kontrollerade kostnadsuppdraget och invänta bekräftelse. Vänta på **Det
+   kontrollerade kostnadsprovet är klart.**
+2. Be operatören förbereda förbrukningen och invänta bekräftelse. Stäng av
+   mikrofonen med **Prata med Skyttel**. Vänta tills röstrutan har försvunnit
+   och röstanslutningen har stängts, några sekunder senare.
+3. Öppna **Månadskostnad**. Kontrollera aktuell månad i UTC, Render **72,50 SEK
+   (7,25 USD)**, Live **0,75 SEK (0,075 USD)** och Terra **2,29 SEK (0,229
+   USD)**. Öppna **Visa mätvärden för Live** och **Visa mätvärden för Terra**.
+   Live visar 90 rapporterade sekunder. Terra visar 100 000 indatatoken med
+   cache och resonemang separat.
+4. Kräv delsumman **75,54 SEK (7,554 USD)** före de tre raderna. Öppna **Visa
+   driftantagandet**. Läs att Render avser hel månad, tidigare förbrukning är
+   okänd och cirka 200 kronor är ett riktmärke utan automatisk spärr.
+5. Öppna modellpriserna under **Prisunderlag**. Kontrollera datum, enheter,
+   tabell, källor och uttryckligt antagande om 10 SEK per USD. Startkrediten för
+   Live ska inte läggas på en gång till.
+6. Öppna **Ändra månadens antaganden**, ändra **SEK per USD** till 11 och välj
+   **Spara månadens antaganden**. Kräv **83,09 SEK (7,554 USD)**.
+7. Välj föregående månad. Dess förval är fortfarande 10 SEK per USD och tidigare
+   förbrukning är okänd. Återgå till aktuell månad; den har 11.
+8. Be operatören starta om samma installation och invänta bekräftelse. Ladda om
+   webbläsaren och öppna mätvärdena igen. Kontrollera samma uppdelning, ändrade
+   valutantagande och delsumman **83,09 SEK (7,554 USD)**.
 
 **Förväntat resultat:**
 
@@ -123,20 +132,32 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 “KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan
 dubbelräkning”.
 
+**Separat operatörsförberedelse:**
+
+Använd den befintliga [kostnadsinstallationen](#controlled-cost-fixture).
+Efter **Lyssnar** i UI-steg 2: kör `usage 12`, `usage 15`, `usage 15` och
+`finalize off`, en rad i taget. Meddela **Kumulativ förbrukning utan
+slutvärde förberedd** innan mikrofonen stängs av. Vid steg 4: kör
+`restart`, behåll samma databas och invänta omstartens bekräftelse före
+omladdningen. Behåll det separat förberedda `text missing` och guidens
+hämtningsfel. Återställ blockeringen och avsluta enligt startguiden.
+
 **Steg:**
 
 1. Skicka **Prova kostnadsunderlaget.** och vänta på det kontrollerade svaret.
-2. Välj **Prata med Skyttel** och vänta på **Lyssnar**. Kör `usage 12`,
-   `usage 15`, `usage 15` och `finalize off`, en rad i taget. Stäng av
+2. Välj **Prata med Skyttel** och vänta på **Lyssnar**. Be operatören förbereda
+   den kumulativa förbrukningen utan slutvärde och invänta bekräftelse. Stäng av
    mikrofonen och vänta tills röstanslutningen har stängts.
-3. Öppna **Månadskostnad** och **Visa mätvärden för Live** samt
-   **Visa mätvärden för Terra**. Live ska visa ett försök, 15 rapporterade
-   sekunder, osäkert slutunderlag och **0,13 SEK (0,0125 USD)**.
-   Terra ska visa **Belopp saknas** och saknade mätvärden.
-4. Läs texten om ofullständig delsumma. Anteckna delsumman. Kör
-   `restart` och ladda om; kräv samma kända underlag och osäkerhet.
-5. Följ guidens [kontrollerade hämtningsfel](#a-failed-refresh-without-losing-the-last-values).
-   Välj **Uppdatera underlaget**. Kräv synligt fel och inaktuella tidigare
+3. Öppna **Månadskostnad** och **Visa mätvärden för Live** samt **Visa mätvärden
+   för Terra**. Live ska visa ett försök, 15 rapporterade sekunder, osäkert
+   slutunderlag och **0,13 SEK (0,0125 USD)**. Terra ska visa **Belopp saknas**
+   och saknade mätvärden.
+4. Läs texten om ofullständig delsumma. Anteckna delsumman. Be operatören starta
+   om samma installation och invänta bekräftelse. Ladda om; kräv samma kända
+   underlag och osäkerhet.
+5. Följ guidens
+   [kontrollerade hämtningsfel](#a-failed-refresh-without-losing-the-last-values)
+   . Välj **Uppdatera underlaget**. Kräv synligt fel och inaktuella tidigare
    värden med samma delsumma. Ta bort blockeringen och uppdatera igen.
 
 **Förväntat resultat:**
@@ -362,22 +383,31 @@ KOST-06.
 [costs.spec.ts](../../tests/integration/costs.spec.ts),
 “KOST-03: endast driftansvarig har åtkomst oberoende av hushållets roller”.
 
+**Separat operatörsförberedelse:**
+
+Följ [två identiteter](#two-identities). Efter att Alex skapat hushållet
+i UI-steg 2: kör `identity robin` före Microsoft-inloggningen i den andra
+profilen. Meddela **Robins testidentitet är vald**. Byt inte hushåll eller
+databas under rollprovet; behåll skilda verifierade sessioner. Avsluta
+startguiden med `quit` och kontrollera städningen efter fallet.
+
 **Steg:**
 
 1. Logga in som Alex. Öppna **Månadskostnad** redan före hushållets start.
    Kontrollera att Render-underlaget visas.
-2. Återgå och skapa Kostnadsprov. Kör `identity robin`. Logga in som
-   Robin med Microsoft i den andra profilen. Kopiera Robins användar-ID.
-3. Bjud in Robin från Alex medlemskapssida. Acceptera som Robin och ge
-   sedan Robin administratörsrollen som Alex.
+2. Återgå och skapa Kostnadsprov. Be operatören förbereda Robins inloggning och
+   invänta bekräftelse. Logga in som Robin med Microsoft i den andra profilen.
+   Kopiera Robins användar-ID.
+3. Bjud in Robin från Alex medlemskapssida. Acceptera som Robin och ge sedan
+   Robin administratörsrollen som Alex.
 4. Robin ska sakna länken **Månadskostnad**. Skriv `/costs` efter
    installationens adress i Robins profil; inga kostnadsuppgifter visas.
-5. Öppna kostnadsöversikten som Alex. Återkalla Alex hushållstillgång
-   som Robin på medlemskapssidan. Ladda om Alex kostnadssida;
-   kostnadsunderlaget är fortfarande åtkomligt.
+5. Öppna kostnadsöversikten som Alex. Återkalla Alex hushållstillgång som Robin
+   på medlemskapssidan. Ladda om Alex kostnadssida; kostnadsunderlaget är
+   fortfarande åtkomligt.
 6. Öppna en extra flik i Alex profil och logga ut där. Återgå till
-   kostnadsfliken och välj **Uppdatera underlaget**, om den fortfarande
-   visas. Skyddade belopp och kostnadslänken ska försvinna.
+   kostnadsfliken och välj **Uppdatera underlaget**, om den fortfarande visas.
+   Skyddade belopp och kostnadslänken ska försvinna.
 
 **Förväntat resultat:**
 

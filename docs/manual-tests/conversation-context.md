@@ -199,32 +199,56 @@ och kastar utkastet”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 2: kör `user Nytt samtal` och `delegate` efter att
+mikrofonen slagits på. Meddela **Det talade reset-kommandot är levererat**.
+Vid steg 4: kör först `user Nytt samtal` med mikrofonen på och meddela
+**Kommandot väntar på överlämning**. Behåll det tills användaren slagit
+av mikrofonen och skrivit Oskickat under avstängning. Kör först då
+`delegate` och meddela **Överlämningen är släppt med mikrofonen av**.
+Vid steg 5: kör `user Kasta utkastet` och `delegate` efter röststarten;
+bekräfta leveransen före användarens läsning och avstängning.
+Vid steg 7: kör `user Kasta utkastet och nytt samtal` och `delegate`
+med mikrofonen på och bekräfta leveransen. Behåll den befintliga
+separata kontrollen av reset-kommentar och spårägande; den är inget
+påstående om faktiskt hört tal.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Skicka **Ett tillfälligt samtalsord.** och släpp ett vanligt svar.
-   Skicka **Vad betyder ”nytt samtal och kasta utkastet”?** och släpp
-   ett vanligt svar. Läs att Lo-förslaget ligger kvar: ett citerat
-   kommando ska inte börja om samtalet eller kasta utkastet.
-   Slå på mikrofonen och skriv **Oskickat** utan att skicka.
-2. Kör `user Nytt samtal` och `delegate`. Kräv en tömd samtalstext med
-   **Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.**,
-   kvarvarande Lo-förslag, mikrofon på och **Oskickat** kvar.
-3. Slå av mikrofonen och skicka **Nytt samtal** i textvyn. Kontrollera
-   samma resultat med mikrofonen av. Ingen medgivanderuta visas. Kontrollera att
-   inget nytt röstbesked visas för detta skrivna kommando.
-4. Slå på mikrofonen. Kör `user Nytt samtal`, slå av mikrofonen innan
-   du kör `delegate`, och skriv **Oskickat under avstängning** utan att
-   skicka. Släpp delegeringen. Kräv nytt samtal, kvarvarande Lo-förslag,
-   oskickad text kvar och mikrofonen fortsatt av. Det redan talade kommandots
-   svar visas även efter avstängningen.
-   Spårägande och röstpaket kontrolleras som tekniskt underlag.
-5. Slå på mikrofonen, kör `user Kasta utkastet` och `delegate`.
-   Kräv tomt utkast och **Utkastet är kastat.** Stäng av mikrofonen och
-   skicka sedan **Kasta utkastet** i textvyn. Utkastet är fortsatt tomt.
-6. Skicka **Nytt samtal och kasta utkastet**. Kräv enbart
-   **Nytt samtal. Utkastet är tomt.** och mikrofonen fortsatt av.
-7. Slå på mikrofonen. Kör `user Kasta utkastet och nytt samtal` och
-   `delegate`. Kräv tomt utkast, nytt samtal och mikrofon fortsatt på.
+1. Skicka **Ett tillfälligt samtalsord.** och släpp ett vanligt svar. Skicka
+   **Vad betyder ”nytt samtal och kasta utkastet”?** och släpp ett vanligt svar.
+   Läs att Lo-förslaget ligger kvar: ett citerat kommando ska inte börja om
+   samtalet eller kasta utkastet. Slå på mikrofonen och skriv **Oskickat** utan
+   att skicka.
+2. Be operatören leverera det talade nytt-samtal-kommandot och invänta
+   bekräftelse. Kräv en tömd samtalstext med **Nytt samtal. 1 osparad ändring
+   ligger kvar i ditt utkast.**, kvarvarande Lo-förslag, mikrofon på och
+   **Oskickat** kvar.
+3. Slå av mikrofonen och skicka **Nytt samtal** i textvyn. Kontrollera samma
+   resultat med mikrofonen av. Ingen medgivanderuta visas. Kontrollera att inget
+   nytt röstbesked visas för detta skrivna kommando.
+4. Slå på mikrofonen. Be operatören leverera det talade kommandot och invänta
+   bekräftelse att det är förberett för överlämning. Slå av mikrofonen och skriv
+   **Oskickat under avstängning** utan att skicka. Be först därefter operatören
+   släppa överlämningen och invänta bekräftelse. Kräv nytt samtal, kvarvarande
+   Lo-förslag, oskickad text kvar och mikrofonen fortsatt av. Det redan talade
+   kommandots svar visas även efter avstängningen. Spårägande och röstpaket
+   kontrolleras som tekniskt underlag.
+5. Slå på mikrofonen, be operatören leverera det talade kastkommandot och
+   invänta bekräftelse. Kräv tomt utkast och **Utkastet är kastat.** Stäng av
+   mikrofonen och skicka sedan **Kasta utkastet** i textvyn. Utkastet är
+   fortsatt tomt.
+6. Skicka **Nytt samtal och kasta utkastet**. Kräv enbart **Nytt samtal.
+   Utkastet är tomt.** och mikrofonen fortsatt av.
+7. Slå på mikrofonen. Be operatören leverera det kombinerade talade kommandot
+   och invänta bekräftelse. Kräv tomt utkast, nytt samtal och mikrofon fortsatt
+   på.
 8. Skicka **Har vi börjat om?**. Släpp svaret och logga ut via **Din profil**,
    **Inloggningssätt**, **Logga ut**.
 
@@ -288,21 +312,41 @@ samtal tömmer den”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Inför varje meddelande i UI-steg 2: kör först `text-context 70`,
+sedan `text-context 90`, var och en före dess eget skickade meddelande.
+Bekräfta förberedelsen före Skicka, och släpp det verkliga hållna
+modellsvaret efter Skicka innan nästa värde förbereds.
+Kör därefter `text-context 84` före Första provfrågan och bekräfta
+förberedelsen. Efter Skicka: använd `reply ANROP Ett provsvar.`;
+ersätt `ANROP` med ID från just detta `held`. Meddela **Provsvar släppt**.
+Före Nästa provfråga i steg 3: kör `text-context 92`. Efter Skicka:
+använd `reply ANROP Ett nytt provsvar.` med det nya aktuella anropets ID.
+Meddela **Nästa provsvar släppt**. Ingen ny mätning gäller förrän
+dess eget verkliga svar släppts.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Välj **Skriv till Skyttel → Nytt samtal → Godkänn och starta**. Läs **Kontext**
-   under textvyns rubrik. Kräv **0%**. Läs mätarens synliga namn och värde.
-   Uppläsning och beskrivning bedöms separat i KONTEXT-16.
-2. Prova först `text-context 70` och `text-context 90`, med ett nytt
-   skickat meddelande och släppt svar för varje värde. Läs **70%** och
-   **90%**. Kör sedan `text-context 84` i terminalen.
-   Skriv **Första provfrågan** och
-   välj **Skicka**. Släpp det hållna anropet med `reply ANROP Ett provsvar.`;
-   ersätt `ANROP` med ID från `held`. Kräv **84%** efter svaret.
-3. Kör `text-context 92`. Skicka **Nästa provfråga** och släpp nästa
-   anrop med `reply ANROP Ett nytt provsvar.`. Kräv **92%**.
-4. Välj **Nytt samtal**. Kräv **0%** och att provfrågorna och svaren
-   är borta.
+1. Välj **Skriv till Skyttel → Nytt samtal → Godkänn och starta**. Läs
+   **Kontext** under textvyns rubrik. Kräv **0%**. Läs mätarens synliga namn och
+   värde. Uppläsning och beskrivning bedöms separat i KONTEXT-16.
+2. Be operatören förbereda först den lägre och sedan den högre mätningen.
+   Invänta installationen och skicka ett nytt meddelande för varje värde;
+   invänta operatörens bekräftelse av det släppta svaret efter varje meddelande.
+   Läs **70%** och **90%**. Be sedan operatören förbereda nästa mätning och
+   invänta bekräftelse. Skriv **Första provfrågan** och välj **Skicka**. Be
+   operatören släppa det verkliga hållna anropets provsvar och invänta
+   bekräftelse. Kräv **84%** efter svaret.
+3. Be operatören förbereda nästa högre mätning och invänta bekräftelse. Skicka
+   **Nästa provfråga** och be operatören släppa samma anrops provsvar och
+   invänta bekräftelse. Kräv **92%**.
+4. Välj **Nytt samtal**. Kräv **0%** och att provfrågorna och svaren är borta.
 
 **Förväntat resultat:**
 
@@ -346,22 +390,43 @@ tröskeln en gång”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Invänta den aktuella röstanslutningen efter röststarten. Vid
+UI-steg 1: kör `context 84`; steg 2: `context 85`; steg 3: `context 88`.
+Bekräfta varje leverans före användarens läsning. Vid steg 4: kör
+`context 70`, låt användaren läsa symbolens försvinnande, och kör
+sedan `context 85`. Bekräfta innan mikrofonens av/på-prov.
+Efter det verkliga Nytt samtal i steg 5: invänta den nya
+röstanslutningen, kör `context 85` och bekräfta leveransen.
+Tröskelns DOM-annonsering och fysisk uppläsning behåller sina
+separata evidensgränser.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Välj **Prata med Skyttel**. Kör `context 84`. Kräv **84%** i textmätaren
-   och ingen kontextsymbol i röstrutan.
-2. Kör `context 85`. Kräv symbolen och **85%**. Läs den synliga
-   procenten. Tröskelns enda DOM-statusuppdatering är automatiskt
-   underlag; verklig uppläsning bedöms i KONTEXT-16.
-3. Kör `context 88`. Kräv **88%** och namnet **Kontexten är 88 procent
-   full**, utan att procentvisningen fastnar på det gamla värdet.
-4. Kör `context 70` och sedan `context 85`. Symbolen försvinner och kommer
-   tillbaka; Slå av och på mikrofonen. Kräv fortfarande **85%**;
-   uppläsningen bedöms separat i KONTEXT-16.
+1. Välj **Prata med Skyttel**. Be operatören leverera den första mätningen och
+   invänta bekräftelse. Kräv **84%** i textmätaren och ingen kontextsymbol i
+   röstrutan.
+2. Be operatören leverera tröskelmätningen och invänta bekräftelse. Kräv
+   symbolen och **85%**. Läs den synliga procenten. Tröskelns enda
+   DOM-statusuppdatering är automatiskt underlag; verklig uppläsning bedöms i
+   KONTEXT-16.
+3. Be operatören leverera den högre mätningen och invänta bekräftelse. Kräv
+   **88%** och namnet **Kontexten är 88 procent full**, utan att
+   procentvisningen fastnar på det gamla värdet.
+4. Be operatören leverera mätningen under tröskeln och därefter tröskeln igen.
+   Invänta bekräftelse och läs resultatet efter varje mätning. Symbolen
+   försvinner och kommer tillbaka; Slå av och på mikrofonen. Kräv fortfarande
+   **85%**; uppläsningen bedöms separat i KONTEXT-16.
 5. Välj **Nytt samtal**. Kräv **0%** och ingen symbol. När den nya
-   röstanslutningen är klar, kör `context 85`. Kräv symbolen och **85%** för det
-   nya samtalet.
-   Uppläsningen bedöms separat i KONTEXT-16.
+   röstanslutningen är klar, be operatören leverera tröskelmätningen till den
+   nya anslutningen och invänta bekräftelse. Kräv symbolen och **85%** för det
+   nya samtalet. Uppläsningen bedöms separat i KONTEXT-16.
 
 **Förväntat resultat:**
 
@@ -401,15 +466,34 @@ inte den nya kontexten”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 1: kör `context 85` på aktuell röstanslutning och
+bekräfta leveransen. Vid steg 2: kör `context-invalid` och bekräfta
+leveransen; kör därefter `capture-context-source` och meddela
+**Den gamla anslutningen är sparad som testkälla** före Nytt samtal.
+Efter det verkliga bytet och ny röstanslutning i steg 3: kör
+`context-old 99` och bekräfta leveransen från den gamla källan.
+Vid steg 4: kör `context 20` på den nya anslutningen och bekräfta
+leveransen. De separata tekniska felvärdena förblir i automationen.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Kör `context 85` och kräv **85%** och kontextsymbolen.
-2. Kör `context-invalid`. Kräv oförändrade **85%**. Kör sedan
-   `capture-context-source` för att behålla den gamla provleverantörens
-   anslutning som testkälla.
-3. Välj **Nytt samtal** och vänta tills rösten är klar. Kräv **0%** och
-   ingen kontextsymbol. Kör `context-old 99`. Kräv fortfarande **0%**.
-4. Kör `context 20`. Kräv **20%**, utan kontextsymbol.
+1. Be operatören leverera tröskelmätningen och invänta bekräftelse. Kräv **85%**
+   och kontextsymbolen.
+2. Be operatören leverera den ogiltiga mätningen och invänta bekräftelse. Kräv
+   oförändrade **85%**. Be sedan operatören behålla den gamla anslutningen som
+   separat testkälla och invänta bekräftelse före nästa steg.
+3. Välj **Nytt samtal** och vänta tills rösten är klar. Kräv **0%** och ingen
+   kontextsymbol. Be operatören leverera den gamla anslutningens mätning och
+   invänta bekräftelse. Kräv fortfarande **0%**.
+4. Be operatören leverera den nya giltiga mätningen och invänta bekräftelse.
+   Kräv **20%**, utan kontextsymbol.
 
 **Förväntat resultat:**
 
@@ -448,17 +532,32 @@ KONTEXT-07 i gruppen pekskärm 390.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Efter godkännandet men före meddelandet i UI-steg 1: kör
+`text-context 88` och bekräfta förberedelsen. Efter verklig Skicka:
+släpp just det hållna anropet med `reply ANROP Ett provsvar.`, med
+anropets aktuella ID, och meddela **Provsvar släppt**. Efter röststarten
+i steg 2: invänta aktuell anslutning, kör `context 88` och meddela
+**Röstens mätning är levererad**. Samma tidsordning används av
+KONTEXT-13:s emulerade variant; fysisk utrustning provas separat.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn och kör `text-context 88`.
-   Skicka **Ett prov på pekskärm** och släpp anropet med
-   `reply ANROP Ett provsvar.`. Läs **Kontext**, **88%** och beskrivningen.
-2. Välj **Prata med Skyttel** och kör `context 88`. Läs symbolen och
-   procenttalet. Kräv att statusord och **Avbryt**, när det visas,
-   fortfarande går att läsa och använda.
-3. Stäng textvyn och öppna den igen med **Skriv till Skyttel**.
-   Läs samma **88%**. Kontrollera att mätaren och symbolen syns utan
-   rullning i sidled.
+1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn. Be operatören förbereda
+   textmätningen och invänta bekräftelse. Skicka **Ett prov på pekskärm** och be
+   operatören släppa samma hållna provsvar och invänta bekräftelse. Läs
+   **Kontext**, **88%** och beskrivningen.
+2. Välj **Prata med Skyttel** och be operatören leverera röstens mätning.
+   Invänta bekräftelse. Läs symbolen och procenttalet. Kräv att statusord och
+   **Avbryt**, när det visas, fortfarande går att läsa och använda.
+3. Stäng textvyn och öppna den igen med **Skriv till Skyttel**. Läs samma
+   **88%**. Kontrollera att mätaren och symbolen syns utan rullning i sidled.
 
 **Förväntat resultat:**
 
@@ -560,17 +659,32 @@ KONTEXT-09, mikrofonen på.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 2, efter vald mikrofon och aktuell anslutning: kör
+`capture-context-source`, sedan `context 89`. Bekräfta leveransen och
+invänta det verkliga nya sammanfattningsanropet. Släpp just detta anrop
+med det befintliga historiska Lo-sammandraget och bekräfta släppet.
+Behåll den gamla källan för steg 4:s separat förberedda mätning efter
+bytet. KONTEXT-14 använder samma tidsordning med mikrofonen av;
+operatören ändrar inte användarens val.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Skicka **Behåll vårt sammanhang.** och släpp ett vanligt textsvar.
-   Slå på mikrofonen. Låt mikrofonen vara på.
-2. Kör `capture-context-source`, sedan `context 89`. Släpp det nya
-   sammanfattningsanropet med ett kort historiskt Lo-sammandrag.
-3. Kräv sammanfattningsraden en gång, lägre procenttal, gamla repliker
-   kvar och samma mikrofonläge efter bytet. Inget nytt reset- eller sparbesked
-   visas.
-4. Släpp den gamla mätningen enligt den separata förberedelsen.
-   Procenttalet ska inte höjas av den gamla anslutningen.
+1. Skicka **Behåll vårt sammanhang.** och släpp ett vanligt textsvar. Slå på
+   mikrofonen. Låt mikrofonen vara på.
+2. Be operatören förbereda och leverera sammanfattningsgränsen. Invänta
+   bekräftelse av samma nya sammanfattningsanrops släppta historiska
+   Lo-sammandrag.
+3. Kräv sammanfattningsraden en gång, lägre procenttal, gamla repliker kvar och
+   samma mikrofonläge efter bytet. Inget nytt reset- eller sparbesked visas.
+4. Släpp den gamla mätningen enligt den separata förberedelsen. Procenttalet ska
+   inte höjas av den gamla anslutningen.
 5. Stäng av mikrofonen vid behov. Skicka **Ändra den sista.** och släpp
    rättelsen till Lo Senaste enligt KONTEXT-08, steg 3.
 
@@ -614,21 +728,38 @@ KONTEXT-10, text som ingång.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före Fyll kontexten i UI-steg 1: kör `text-context 99` och
+bekräfta förberedelsen. Efter Skicka: släpp det vanliga arbetssvaret.
+Invänta därefter det nya verkliga sammanfattningsanropet; kör
+`fail ANROP` med just dess ID och meddela **Sammanfattningen har
+misslyckats**. Felet får inte läggas på det föregående arbetssvaret.
+Efter verkligt Nytt samtal men före Kan vi fortsätta i steg 5:
+kör `text-context 0` och bekräfta förberedelsen. Släpp det vanliga
+svaret först efter nästa Skicka, enligt den befintliga förberedelsen.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Kör `text-context 99`, skicka **Fyll kontexten.** och
-   släpp ett vanligt svar. Kör `fail ANROP` för sammanfattningsanropet.
+1. Be operatören förbereda sammanfattningsgränsen och invänta bekräftelse.
+   Skicka **Fyll kontexten.**. Be operatören släppa det vanliga svaret och
+   därefter låta just sammanfattningen misslyckas. Invänta bekräftelse.
 2. Kräv notisen **Kontexten är full, och Skyttel kunde inte sammanfatta
-   samtalet. Inget har gått förlorat, och utkastet ligger kvar.**
-   Samtalsrader och Lo-förslaget ligger kvar. Ingen lyckad
-   sammanfattningsrad visas, och det allmänna uppdragsfelet används inte.
+   samtalet. Inget har gått förlorat, och utkastet ligger kvar.** Samtalsrader
+   och Lo-förslaget ligger kvar. Ingen lyckad sammanfattningsrad visas, och det
+   allmänna uppdragsfelet används inte.
 3. Skriv **Detta ska inte skickas.**. **Skicka** är avstängd. Fokusera
-   mikrofonknappen med tangentbord och tryck Enter; den ser avstängd
-   ut och ska inte börja spela in. Inget nytt modelluppdrag skapas.
-4. Välj **Nytt samtal** i notisen med tangentbord. Kräv noll procent,
-   borttagen notis, borttagna gamla samtalsrader och samma Lo-förslag.
-5. Kör `text-context 0`. Skicka **Kan vi fortsätta?** och släpp svaret.
-   Samtalet ska åter gå att använda.
+   mikrofonknappen med tangentbord och tryck Enter; den ser avstängd ut och ska
+   inte börja spela in. Inget nytt modelluppdrag skapas.
+4. Välj **Nytt samtal** i notisen med tangentbord. Kräv noll procent, borttagen
+   notis, borttagna gamla samtalsrader och samma Lo-förslag.
+5. Be operatören återställa nästa textmätning och invänta bekräftelse. Skicka
+   **Kan vi fortsätta?** och släpp svaret. Samtalet ska åter gå att använda.
 
 **Förväntat resultat:**
 
@@ -669,20 +800,38 @@ hörda kvitto”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 1: kör `user Spara hela utkastet nu.` och `delegate`
+och invänta det verkliga hållna uppdraget. Meddela **Sparuppdraget
+är mottaget och hålls**. Behåll uppdraget och kör först därefter
+`context 89`; bekräfta leveransen. Följ sedan det befintliga receptet
+för KONTEXT-11 i [ljudfragment och tid](conversation-preparation.md#ljudfragment-och-tid-för-sparbesked):
+släpp sparverktyget i steg 2; låt användaren läsa hela sparade Lo
+FÖRE fragment och ljud. Leverera först fragmentet, därefter startad
+och avslutad signal i steg 3. Släpp det efterföljande verkliga
+sammanfattningsanropet först i steg 4.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Kör `user Spara hela utkastet nu.` och `delegate`. Låt uppdraget
-   vara hållet. Kör `context 89`. Läs kvarvarande Lo-förslag och att
-   sammanfattning ännu inte visas.
-2. Låt operatören släppa sparverktyget enligt den separata förberedelsen.
-   Läs hela sparade Lo Exempel i Tabell innan ljudsignalen börjar.
-   Läs **Utkastet är sparat** under hushållsnamnet.
-3. Operatören släpper först textfragmentet och därefter ljudaktiviteten
-   enligt förberedelsen. Ett textfragment ensamt ska inte räcka för
-   röstbyte. Läs **Skyttel talar** under signalen.
-4. Släpp det efterföljande sammanfattningsanropet. Kräv
-   sammanfattningsraden, lägre procenttal, sparad Lo, tomt utkast,
-   mikrofon på och inget återspelat sparkvitto.
+1. Be operatören leverera det kontrollerade talade sparuppdraget och behålla det
+   hållet. Invänta bekräftelse. Be sedan operatören leverera
+   sammanfattningsgränsen och invänta bekräftelse. Läs kvarvarande Lo-förslag
+   och att sammanfattning ännu inte visas.
+2. Låt operatören släppa sparverktyget enligt den separata förberedelsen. Läs
+   hela sparade Lo Exempel i Tabell innan ljudsignalen börjar. Läs **Utkastet är
+   sparat** under hushållsnamnet.
+3. Operatören släpper först textfragmentet och därefter ljudaktiviteten enligt
+   förberedelsen. Ett textfragment ensamt ska inte räcka för röstbyte. Läs
+   **Skyttel talar** under signalen.
+4. Släpp det efterföljande sammanfattningsanropet. Kräv sammanfattningsraden,
+   lägre procenttal, sparad Lo, tomt utkast, mikrofon på och inget återspelat
+   sparkvitto.
 
 **Förväntat resultat:**
 
@@ -871,14 +1020,28 @@ KONTEXT-15.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+I stället för KONTEXT-10:s textgräns i UI-steg 1: invänta aktuell
+röstanslutning, kör `context 89` och invänta det verkliga
+sammanfattningsanropet. Kör `fail ANROP` med just detta anrops ID
+och meddela **Röstens sammanfattning har misslyckats**. Textvyn är
+öppen under detta; därefter används grundfallets steg 2–5 med dess
+separata återställning före fortsatt textarbete.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
 1. Följ KONTEXT-10 en gång, med följande ändring vid angivet steg.
 
-Ersätt steg 1 med: slå på mikrofonen, kör `context 89` och låt
-sammanfattningsanropet misslyckas med `fail ANROP`. Textvyn ska vara öppen.
-Följ därefter steg 2–5 en gång. Varianten skyddar blockering och återstart
-vid röstens sammanfattningsfel.
+Ersätt steg 1 med: slå på mikrofonen. Be operatören leverera röstens
+sammanfattningsgräns och låta just sammanfattningen misslyckas. Invänta
+bekräftelse. Textvyn ska vara öppen. Följ därefter steg 2–5 en gång. Varianten
+skyddar blockering och återstart vid röstens sammanfattningsfel.
 
 **Förväntat resultat:**
 

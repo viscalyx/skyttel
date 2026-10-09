@@ -152,14 +152,24 @@ du avbryter innan svaret släpps.
 “HISTORIK-07: failed and delayed Reports reads preserve newer focus and retry
 real saves”.
 
+**Separat operatörsförberedelse:**
+
+Följ [styrd historikhämtning](#styrd-historikhämtning). Installera kontrollen
+före Rapporter i UI-steg 1. Första hämtningen avbryts före servern; nästa
+verkliga svar hålls efter återförsöket. Bekräfta hållningen utan att släppa
+svaret. Stäng konsolen före användarens senare fokusval i steg 3. Först i steg
+4: kör `releaseHistoryRead()` i konsolen och meddela **Historiksvaret är
+släppt**. Ladda om efter fallet eller avbrott enligt den befintliga
+återställningen.
+
 **Steg:**
 
 1. Välj **Rapporter** med det förberedda engångsfelet. Läs felet.
 2. Välj **Hämta historik igen**. Den förberedda andra begäran hålls.
-3. Kontrollera fokus på historikens rubrik. Fokusera därefter
-   **Tillbaka till arbetet** utan att aktivera knappen.
-4. Kör `releaseHistoryRead()` i konsolen. Läs det verkliga sparandets kort
-   och kontrollera fokus.
+3. Kontrollera fokus på historikens rubrik. Fokusera därefter **Tillbaka till
+   arbetet** utan att aktivera knappen.
+4. Be operatören släppa samma historiksvar och invänta bekräftelse. Läs det
+   verkliga sparandets kort och kontrollera fokus.
 
 **Förväntat resultat:**
 

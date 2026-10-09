@@ -401,30 +401,42 @@ PLACERING-06.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ
+[sen första personlig inläsning](workspace-preparation.md#sen-första-personlig-inläsning)
+. Arma efter sparade placeringar men före omladdningen i UI-steg 2. Efter
+omladdningen: invänta det verkliga genomförda personliga svarets hållning och
+meddela **Samma första personliga svar hålls**. Behåll det genom användarens
+inaktiva stjärnval. Vid steg 3: släpp samma personliga svar i
+förberedelseterminalen och meddela **Samma första personliga svar är släppt**.
+Arma inte senare läsningar; återställ transporten efter fallet enligt den
+befintliga guiden.
+
 **Steg:**
 
-1. Välj namnet Lampan via **Tabell** och återgå med **Karta**.
-   Öppna **Navigera**. Använd
-   Flytta [objektets namn]: höger upprepade gånger tills Lampan ligger helt
-   utanför den ursprungliga vyn. Vänta på beskedet att din personliga vy är
-   sparad. Gör samma sak med Cykeln, utan att ändra kameran.
-2. Arma den separata personliga läsningen och ladda om sidan. Kontrollera att
-   **Tabell** och **Karta** kan öppnas.
-Kontrollera
-   Visa stjärnhimmel under Inställningar → Rymdkartan medan valet är
+1. Välj namnet Lampan via **Tabell** och återgå med **Karta**. Öppna
+   **Navigera**. Använd Flytta [objektets namn]: höger upprepade gånger tills
+   Lampan ligger helt utanför den ursprungliga vyn. Vänta på beskedet att din
+   personliga vy är sparad. Gör samma sak med Cykeln, utan att ändra kameran.
+2. Be operatören förbereda den separata personliga läsningen och invänta
+   installationen. Ladda om sidan. Invänta operatörens bekräftelse att samma
+   genomförda svar hålls. Kontrollera att **Tabell** och **Karta** kan öppnas.
+   Kontrollera Visa stjärnhimmel under Inställningar → Rymdkartan medan valet är
    inaktivt i väntan på de personliga placeringarna. Använd inte Återställ vy
    eller kameraknapparna.
-3. Släpp samma personliga svar i förberedelseterminalen.
-   Vänta tills Visa stjärnhimmel går att använda. Välj Tillbaka till kartan
-   och kontrollera att båda objekten syns. Låt senare läsningar passera normalt.
-4. Öppna Navigera och använd Panorera höger så att objekten hamnar
-   tydligt vid sidan av sina första lägen på skärmen. Behåll dem synliga
-   och lägg märke till utsnittet.
-5. Välj Läs in min aktuella vy under Ordna min vy. Vänta tills läsningen
-   är klar och jämför utsnittet med det du valde i föregående steg.
-6. Öppna Inställningar → Rymdkartan och aktivera Visa stjärnhimmel.
-   Återgå med Tillbaka till kartan. Vänta på beskedet att vyn är sparad och
-   jämför utsnittet igen.
+3. Be operatören släppa samma personliga svar enligt förberedelsen och invänta
+   bekräftelse. Vänta tills Visa stjärnhimmel går att använda. Välj Tillbaka
+   till kartan och kontrollera att båda objekten syns. Låt senare läsningar
+   passera normalt.
+4. Öppna Navigera och använd Panorera höger så att objekten hamnar tydligt vid
+   sidan av sina första lägen på skärmen. Behåll dem synliga och lägg märke till
+   utsnittet.
+5. Välj Läs in min aktuella vy under Ordna min vy. Vänta tills läsningen är klar
+   och jämför utsnittet med det du valde i föregående steg.
+6. Öppna Inställningar → Rymdkartan och aktivera Visa stjärnhimmel. Återgå med
+   Tillbaka till kartan. Vänta på beskedet att vyn är sparad och jämför
+   utsnittet igen.
 
 **Förväntat resultat:**
 

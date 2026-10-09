@@ -112,11 +112,25 @@ UTKAST-36.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före UI-steg 1: skriv `hold` i terminalen och meddela
+**Nästa sparande hålls före servern**. Efter den verkliga inskickningen,
+bekräfta att begäran hålls innan användaren provar modalens fokus.
+Först i steg 3: skriv `release` och meddela **Sparandet är släppt**.
+Det är samma begäran, inget ersättningsförsök.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
-1. Skriv `hold` i terminalen. Öppna **Utkast** och välj **Spara hela utkastet**.
+1. Be operatören förbereda väntande sparande och invänta bekräftelse. Öppna
+   **Utkast** och välj **Spara hela utkastet**. Invänta operatörens bekräftelse
+   av den verkliga hållningen.
 2. Läs sparmodalen och prova dess tangentbordsfokus.
-3. Skriv `release`. Läs bekräftelsen, vänta tre sekunder och läs tomt utkast.
+3. Be operatören släppa sparandet och invänta bekräftelse. Läs bekräftelsen,
+   vänta tre sekunder och läs tomt utkast.
 
 **Separat tekniskt underlag:** Integrationstestet jämför utkastet före och
 efter leveransen, kräver ett enda genomfört försök och jämför hela kvittot
@@ -168,14 +182,27 @@ UTKAST-37.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ grundfallets `new-draft` och `hold` före sparandet.
+Bekräfta verkligt hållen begäran efter användarens inskickning. Behåll
+hållningen genom båda vyernas uppföljning. Vid UI-steg 4, först efter
+användarens senare sökfokus: skriv `release` i terminalen och meddela
+**Samma sparande är släppt**.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
-1. Öppna utkastet och spara. Prova Tab och Skift+Tab och stäng med Escape.
+1. Öppna utkastet och spara. Invänta operatörens bekräftelse av den verkliga
+   hållningen. Prova Tab och Skift+Tab och stäng med Escape.
 2. Stäng textvyn. Öppna **Visa sparandet** i kartan och stäng med krysset.
 3. Öppna **Tabell**, välj **Visa sparandet** och stäng med Escape.
-4. Flytta fokus till **Sök objekt i tabellen** och skriv `release` i terminalen.
-5. Invänta bekräftelsen och fortsätt skriva i sökfältet utan att klicka på
-   det igen.
+4. Flytta fokus till **Sök objekt i tabellen** och be operatören släppa samma
+   sparande enligt förberedelsen. Invänta bekräftelse utan att byta fokus.
+5. Invänta bekräftelsen och fortsätt skriva i sökfältet utan att klicka på det
+   igen.
 
 **Separat tekniskt underlag:** Integrationstestet kräver tomt utkast, ett
 enda avslutat sparförsök och en historikpost. Operatören kan samla detta
@@ -286,9 +313,26 @@ UTKAST-39.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ [vanligt sparande](save-preparation.md#vanligt-sparande).
+Före användarens omladdning i UI-steg 1: välj `new-empty` och sedan
+`pending-attempt` i terminalen. Det senare kommandot registrerar
+försöket genom verklig offentlig HTTP, blockerar den automatiska
+kontrollen och laddar om. Invänta registreringen och omladdningen;
+meddela **Samma väntande försök är registrerat och automatisk kontroll
+blockerad**. Behåll samma försök, session och databas genom användarens
+omladdning, öppning, uttryckliga kontroll och återöppning. Använd inget
+nytt sparande, nytt hushåll eller nytt registreringskommando under fallet.
+Den uttryckliga kontrollknappen läser och avvisar det verkliga tomma
+försöket trots blockerad automatisk kontroll. Efter sista observationen
+och separat `result`: återställ med `network-ok` och avsluta med `quit`
+enligt startguiden. Återställ provhushållet först mellan fallen.
+
 **Steg:**
 
-1. Välj `new-empty` och `pending-attempt`. Ladda om sidan igen.
+1. Be operatören förbereda samma registrerade väntande försök i ett
+   tomt utkast. Invänta bekräftelse och ladda om sidan igen.
 2. Kontrollera att Utkast-ikonen saknas men **Visa sparandet** finns.
    Öppna den och välj **Kontrollera sparandet igen**.
 3. Läs det avvisade utfallet. Stäng med Escape, ladda om sidan och öppna
@@ -335,13 +379,26 @@ UTKAST-40.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före sparandet i UI-steg 1: välj `refresh-failure` i terminalen
+och meddela **Hämtningsfel efter bekräftat sparande är förberett**.
+Vid UI-steget som återställer leveransen: välj `network-ok` i
+startguidens terminal och meddela **Normal leverans är återställd**
+innan användaren väljer aktuell hämtning eller omladdning. Bevara
+det redan registrerade eller genomförda försöket; registrera inget nytt.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
-1. Välj `refresh-failure` och spara från Utkast. Läs tomt utkast och
-   bekräftelsen.
+1. Be operatören förbereda hämtningsfelet och invänta bekräftelse. Spara från
+   Utkast. Läs tomt utkast och bekräftelsen.
 2. Stäng textvyn och läs kartans hämtningsfel. Vänta tills toasten försvinner.
-3. Välj `network-ok` och **Hämta aktuellt underlag**. Läs att felet
-   försvinner utan en ny sparbekräftelse.
+3. Be operatören återställa normal leverans och invänta bekräftelse. Välj
+   **Hämta aktuellt underlag**. Läs att felet försvinner utan en ny
+   sparbekräftelse.
 
 **Separat tekniskt underlag:** Integrationstestet kontrollerar tomt utkast
 och ett enda genomfört sparförsök efter karthämtningen. Operatören kan
@@ -816,11 +873,22 @@ UTKAST-45.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 2, efter att användaren öppnat borttagningsdialogen:
+kör `newer-type` i provterminalen och meddela **Nyare oberoende
+typförslag är lagt för samma användare**. Först därefter försöker
+användaren bekräfta den gamla planen.
+Följ [borttagningsförberedelsen](#separat-förberedelse-för-borttagningsfallen).
+Använd samma session och verkliga lagring genom kontrollen. Efter känt
+utfall: `network-ok`, `release` och sedan `new-base` mellan fallen.
+Avsluta med `quit` och kontrollera borttagen provinstallation.
+
 **Steg:**
 
 1. Öppna Utkast och läs samtliga förslag fullständigt enligt förberedelsen.
-2. Öppna Ospecificerat fordons papperskorg. Kör newer-type i provterminalen
-   medan dialogen är öppen.
+2. Öppna Ospecificerat fordons papperskorg. Be operatören lägga det nyare
+   oberoende typförslaget medan dialogen är öppen och invänta bekräftelse.
 3. Välj Ta bort. Läs Borttagningen kunde inte bekräftas och den spärrade Ta
    bort.
 4. Välj Hämta aktuellt utkast. Läs objektet och dess tre samband; Nyare
@@ -904,15 +972,29 @@ UTKAST-145.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före bekräftelsen i UI-steg 2: kör `hold` och bekräfta installationen.
+Efter den verkliga bekräftelsen: invänta **Removal applied; reply held**
+och meddela **Borttagningen är genomförd och samma svar hålls**.
+Behåll svaret genom stängningen och användarens senare fokusval i
+steg 3. Först i steg 4: kör `release` och meddela **Samma svar är släppt**.
+Följ [borttagningsförberedelsen](#separat-förberedelse-för-borttagningsfallen).
+Använd samma session och verkliga lagring genom kontrollen. Efter känt
+utfall: `network-ok`, `release` och sedan `new-base` mellan fallen.
+Avsluta med `quit` och kontrollera borttagen provinstallation.
+
 **Steg:**
 
 1. Öppna Utkast och läs samtliga förslag fullständigt enligt förberedelsen.
-2. Kör hold. Bekräfta Ta bort hela utkastet och invänta terminalens besked att
-   ändringen genomförts och svaret hålls.
+2. Be operatören förbereda hållet borttagningssvar och invänta installationen.
+   Bekräfta Ta bort hela utkastet. Invänta operatörens besked att samma
+   borttagning är genomförd och svaret hålls.
 3. Välj Avbryt och stäng textvyn. Använd tangentbordet för att fokusera Utkast i
    kartverktygen.
-4. Kör release. Kontrollera att Skriv till Skyttel får fokus. Läs Hela ditt
-   utkast har tagits bort. Gör den slutliga gemensamma kontrollen.
+4. Be operatören släppa samma svar och invänta bekräftelse. Kontrollera att
+   Skriv till Skyttel får fokus. Läs Hela ditt utkast har tagits bort. Gör den
+   slutliga gemensamma kontrollen.
 
 **Förväntat resultat:**
 
@@ -947,15 +1029,29 @@ UTKAST-146.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före bekräftelsen i UI-steg 2: kör `hold` och bekräfta installationen.
+Efter den verkliga bekräftelsen: invänta **Removal applied; reply held**
+och meddela **Borttagningen är genomförd och samma svar hålls**.
+Behåll svaret genom stängningen och användarens senare fokusval i
+steg 3. Först i steg 4: kör `release` och meddela **Samma svar är släppt**.
+Följ [borttagningsförberedelsen](#separat-förberedelse-för-borttagningsfallen).
+Använd samma session och verkliga lagring genom kontrollen. Efter känt
+utfall: `network-ok`, `release` och sedan `new-base` mellan fallen.
+Avsluta med `quit` och kontrollera borttagen provinstallation.
+
 **Steg:**
 
 1. Öppna Utkast och läs samtliga förslag fullständigt enligt förberedelsen.
-2. Kör hold. Bekräfta Ta bort hela utkastet och invänta terminalens besked att
-   ändringen genomförts och svaret hålls.
+2. Be operatören förbereda hållet borttagningssvar och invänta installationen.
+   Bekräfta Ta bort hela utkastet. Invänta operatörens besked att samma
+   borttagning är genomförd och svaret hålls.
 3. Välj Avbryt och stäng textvyn. Använd tangentbordet för att fokusera Utkast i
    kartverktygen. Flytta sedan fokus till Tabell.
-4. Kör release. Kontrollera att Tabell behåller fokus. Läs Hela ditt utkast har
-   tagits bort. Gör den slutliga gemensamma kontrollen.
+4. Be operatören släppa samma svar och invänta bekräftelse. Kontrollera att
+   Tabell behåller fokus. Läs Hela ditt utkast har tagits bort. Gör den slutliga
+   gemensamma kontrollen.
 
 **Förväntat resultat:**
 
@@ -1082,11 +1178,23 @@ UTKAST-48.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före borttagningshandlingen i UI-steg 2: kör `lost-response` och
+meddela **Nästa borttagning får tappat svar efter genomförandet**.
+Den befintliga routningen skickar först den verkliga begäran och
+tappar sedan dess svar. Kontrollen läser samma verkliga lagring.
+Följ [borttagningsförberedelsen](#separat-förberedelse-för-borttagningsfallen).
+Använd samma session och verkliga lagring genom kontrollen. Efter känt
+utfall: `network-ok`, `release` och sedan `new-base` mellan fallen.
+Avsluta med `quit` och kontrollera borttagen provinstallation.
+
 **Steg:**
 
 1. Öppna Utkast och läs samtliga förslag fullständigt enligt förberedelsen.
-2. Kör lost-response och bekräfta Ta bort hela utkastet. Läs Borttagningen kunde
-   inte bekräftas. Ta bort hela utkastet är spärrad.
+2. Be operatören förbereda tappat borttagningssvar och invänta bekräftelse.
+   Därefter bekräfta Ta bort hela utkastet. Läs Borttagningen kunde inte
+   bekräftas. Ta bort hela utkastet är spärrad.
 3. Välj Hämta aktuellt utkast. Läs tomt utkast och kontrollera rubrikens fokus.
    Gör den slutliga gemensamma kontrollen.
 
@@ -1124,11 +1232,23 @@ UTKAST-148.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före borttagningshandlingen i UI-steg 2: kör `lost-response` och
+meddela **Nästa borttagning får tappat svar efter genomförandet**.
+Den befintliga routningen skickar först den verkliga begäran och
+tappar sedan dess svar. Kontrollen läser samma verkliga lagring.
+Följ [borttagningsförberedelsen](#separat-förberedelse-för-borttagningsfallen).
+Använd samma session och verkliga lagring genom kontrollen. Efter känt
+utfall: `network-ok`, `release` och sedan `new-base` mellan fallen.
+Avsluta med `quit` och kontrollera borttagen provinstallation.
+
 **Steg:**
 
 1. Öppna Utkast och läs samtliga förslag fullständigt enligt förberedelsen.
-2. Kör lost-response och välj Olöst fordons papperskorg. Läs det oklara utfallet
-   och spärrad Ta bort.
+2. Be operatören förbereda tappat borttagningssvar och invänta bekräftelse.
+   Därefter välj Olöst fordons papperskorg. Läs det oklara utfallet och spärrad
+   Ta bort.
 3. Välj Hämta aktuellt utkast och läs Förslaget finns inte längre. Kontrollera
    att Olöst fordon har försvunnit.
 4. Läs alla kvarvarande förslag fullständigt. Gör den slutliga gemensamma
@@ -1168,13 +1288,29 @@ UTKAST-149.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före borttagningen i UI-steg 2: kör `hold` och bekräfta installationen.
+Efter den verkliga borttagningen: invänta **Removal applied; reply held**
+och meddela **Borttagningen är genomförd och samma svar hålls**.
+Behåll svaret tills användaren skrivit sin senare meddelandetext med
+fokus kvar. Först i steg 3: kör `lost-response` och `release` och
+meddela **Samma genomförda svar tappas**.
+Följ [borttagningsförberedelsen](#separat-förberedelse-för-borttagningsfallen).
+Använd samma session och verkliga lagring genom kontrollen. Efter känt
+utfall: `network-ok`, `release` och sedan `new-base` mellan fallen.
+Avsluta med `quit` och kontrollera borttagen provinstallation.
+
 **Steg:**
 
 1. Öppna Utkast och läs samtliga förslag fullständigt enligt förberedelsen.
-2. Kör hold och ta bort Olöst fordon. Invänta hållet svar. Skriv Min senare text
-   och fokus ska finnas kvar i meddelandefältet.
-3. Kör lost-response och release. Kontrollera fältets fokus, hela texten och det
-   beständiga felbeskedet. Ingen ny dialog öppnas.
+2. Be operatören förbereda hållet borttagningssvar och invänta installationen.
+   Ta bort Olöst fordon och invänta operatörens bekräftelse av genomförd
+   borttagning med hållet svar. Skriv Min senare text och fokus ska finnas kvar
+   i meddelandefältet.
+3. Be operatören tappa samma hållna svar och invänta bekräftelse. Kontrollera
+   fältets fokus, hela texten och det beständiga felbeskedet. Ingen ny dialog
+   öppnas.
 4. Välj Kontrollera borttagningen. Kontrollera fokus på Avbryt. Tryck Escape och
    kontrollera återfokus på kontrollknappen.
 5. Öppna kontrollen igen och välj Hämta aktuellt utkast. Kontrollera att
@@ -1219,26 +1355,40 @@ UTKAST-150.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före borttagningshandlingen i UI-steg 2: kör `lost-unsent` och meddela
+**Nästa borttagning stoppas före servern**. Behåll det felet genom
+stängning, återöppning, båda medlemmarnas fullständiga läsningar och
+den verkliga aktuella kontrollen. Först när kontrollen i UI-steg 4
+ger ett nytt tillåtet försök: kör `network-ok` vid steg 5 och meddela
+**Normal leverans är återställd inför ett nytt uttryckligt försök**.
+Följ [borttagningsförberedelsen](#separat-förberedelse-för-borttagningsfallen).
+Använd samma session och verkliga lagring genom kontrollen. Efter känt
+utfall: `network-ok`, `release` och sedan `new-base` mellan fallen.
+Avsluta med `quit` och kontrollera borttagen provinstallation.
+
 **Steg:**
 
 1. Öppna Utkast och läs samtliga förslag fullständigt enligt förberedelsen.
-2. Kör lost-unsent och välj Olöst fordons papperskorg. Läs det oklara utfallet
-   och spärrad Ta bort.
+2. Be operatören förbereda stopp före servern och invänta bekräftelse. Välj
+   Olöst fordons papperskorg. Läs det oklara utfallet och spärrad Ta bort.
 3. Tryck Escape och läs samtliga förslag fullständigt. Olöst fordon och alla
    övriga värden är kvar.
-4. Välj Kontrollera borttagningen. Ta bort är fortfarande spärrad.
-   Ladda om Robins separata sida, öppna Utkast och läs hela Person-förslaget
-   igen. Gå tillbaka till Alex, välj Hämta aktuellt utkast och granska den
-   kvarvarande enda posten. Upprepa därefter Robins läsning.
-   Namn, hela beskrivningen, identitet och status är oförändrade och osparade.
-   Alex utkast visar enbart Alex förslag och avslöjar inget av Robins arbete.
-5. Först när faktisk kontroll ger ett nytt tillåtet försök: kör network-ok, välj
-   Ta bort och kontrollera att Olöst fordon försvinner.
+4. Välj Kontrollera borttagningen. Ta bort är fortfarande spärrad. Ladda om
+   Robins separata sida, öppna Utkast och läs hela Person-förslaget igen. Gå
+   tillbaka till Alex, välj Hämta aktuellt utkast och granska den kvarvarande
+   enda posten. Upprepa därefter Robins läsning. Namn, hela beskrivningen,
+   identitet och status är oförändrade och osparade. Alex utkast visar enbart
+   Alex förslag och avslöjar inget av Robins arbete.
+5. Först när faktisk kontroll ger ett nytt tillåtet försök: be operatören
+   återställa normal leverans och invänta bekräftelse. Välj Ta bort och
+   kontrollera att Olöst fordon försvinner.
 6. Läs alla kvarvarande förslag fullständigt. Gör den slutliga gemensamma
-   kontrollen enligt förberedelsen.
-   Ladda om Robins sida och läs hela Person-förslaget ännu en gång.
-   Det förblir osparat och oförändrat efter Alex lyckade försök; Alex kan
-   fortfarande inte se det i sitt utkast eller den gemensamma kartan.
+   kontrollen enligt förberedelsen. Ladda om Robins sida och läs hela
+   Person-förslaget ännu en gång. Det förblir osparat och oförändrat efter Alex
+   lyckade försök; Alex kan fortfarande inte se det i sitt utkast eller den
+   gemensamma kartan.
 
 **Förväntat resultat:**
 
@@ -2490,14 +2640,34 @@ UTKAST-26.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Efter att Lo lagts i utkastet, före Spara i UI-steg 1: installera
+förutsättningarnas Network request blocking för endast detta hushålls
+kartläsningsadress. Hämta den exakta adressen från föregående verkliga
+GET i Network. Blockera aldrig sparadressen eller övriga begäranden.
+Meddela **Endast kartläsningen efter sparandet är blockerad** och stäng
+utvecklarverktygen före Spara. Efter den verkliga sparhandlingen:
+bekräfta lyckat sparande med dess kvitto och därefter avbruten kartläsning
+som separat leveransunderlag. Meddela **Sparandet är bekräftat och bara
+den efterföljande hämtningen har misslyckats**. Om denna ordning inte
+kan styras, anteckna begränsningen; ett blockerat sparande ersätter inte
+fallet. Behåll felet under tresekundersläsningen. Vid UI-steg 3:
+ta bort just kartblockeringen och meddela **Kartläsningen är återställd**
+FÖRE Hämta aktuellt underlag. Efter sista historikläsningen återställs
+all nätblockering; behåll samma hushåll och kvitto under hela fallet.
+
 **Steg:**
 
-1. Lägg Lo Exempel i utkastet. Blockera hämtning av kartan och välj Spara
-   hela utkastet från **Utkast**. Stäng **Spara utkastet** med Escape
-   och stäng textvyn.
-2. Läs Utkastet är sparat tillsammans med felet att kartan inte kunde
-   hämtas. Vänta tre sekunder. Sparbeskedet försvinner; felet består.
-3. Ta bort blockeringen och välj Hämta aktuellt underlag. Felet ska
+1. Lägg Lo Exempel i utkastet. Be operatören blockera bara nästa kartläsning
+   efter sparandet. Invänta installationen och välj Spara hela utkastet från
+   **Utkast**. Stäng **Spara utkastet** med Escape och stäng textvyn.
+2. Invänta operatörens besked om bekräftat sparande och misslyckad
+   efterföljande kartläsning. Läs Utkastet är sparat tillsammans med felet
+   att kartan inte kunde hämtas. Vänta tre sekunder. Sparbeskedet försvinner;
+   felet består.
+3. Be operatören återställa kartläsningen och invänta bekräftelse.
+   Välj Hämta aktuellt underlag. Felet ska
    försvinna och det tidigare sparbeskedet ska inte spelas upp igen.
 4. Öppna **Rapporter** och läs den enda genomförda ändringsgruppen
    för Lo Exempel i **Ändringshistorik**.
@@ -2540,21 +2710,35 @@ UTKAST-12.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före sparandet i UI-steg 4: skriv `hold-after` i terminalen och
+bekräfta att nästa svar ska hållas. Vänta inte på slutförandet före
+användarens verkliga Spara. Efter inskickningen: kräv terminalens
+bekräftade status 200 och den verkliga hållningen. Meddela
+**Sparandet är genomfört och samma svar hålls**. Behåll hållningen
+genom användarens stängning och legendkontroll. Först i steg 5: skriv
+`drop` och meddela **Samma genomförda sparkvitto tappas**.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
-1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng textvyn
-   och visa Karta.
-2. Kontrollera grönt plus i teckenförklaringen under hushållets namn.
-   Varken förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
+1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng textvyn och visa
+   Karta.
+2. Kontrollera grönt plus i teckenförklaringen under hushållets namn. Varken
+   förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
 3. Läs kartans status och teckenförklaring under hushållets namn.
-4. Skriv `hold-after` i terminalen. Öppna **Utkast** och välj **Spara hela
-   utkastet**.
-   Stäng **Spara utkastet** med Escape och stäng textvyn.
-   Läs **Väntar på sparkvitto**, det bevarade förslaget och legenden.
-5. Läs **Väntar på sparkvitto** och kvarvarande legend. Skriv `drop`
-   efter terminalens bekräftade status 200. Läs **Sparutfall okänt**. Välj
-   **Hämta samma kvitto igen**. Läs resultatet.
-   Öppna **Rapporter → Ändringshistorik** och läs det genomförda sparandet.
+4. Be operatören förbereda hållet sparkvitto och invänta
+   installationsbekräftelse. Öppna **Utkast** och välj **Spara hela utkastet**.
+   Stäng **Spara utkastet** med Escape och stäng textvyn. Läs **Väntar på
+   sparkvitto**, det bevarade förslaget och legenden.
+5. Läs **Väntar på sparkvitto** och kvarvarande legend. Invänta operatörens
+   bekräftelse att samma sparande är genomfört och dess svar hålls. Be
+   operatören tappa svaret och invänta bekräftelse. Läs **Sparutfall okänt**.
+   Välj **Hämta samma kvitto igen**. Läs resultatet. Öppna **Rapporter →
+   Ändringshistorik** och läs det genomförda sparandet.
 
 **Förväntat resultat:**
 
@@ -2600,14 +2784,26 @@ UTKAST-13.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ fallets `new-empty` och `hold-after` före sparandet. Efter
+inskickningen: kräv verklig status 200 och bekräfta hållet svar.
+Behåll det tills användaren bytt fält i UI-steg 3. Skriv först då
+`release` och meddela **Samma svar är släppt**, utan att ändra
+användarens valda fält.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
-1. Lägg **Lo Exempel** i utkastet och välj **Spara hela utkastet**.
-2. Medan svaret väntar, stäng **Spara utkastet** med Escape och stäng
-   textvyn. I Tabell, skriv **Lo** i **Sök objekt i tabellen**.
-3. Skriv `release` efter fältbytet och invänta sparkvittot och fortsätt skriva
-   ett blanksteg och **Exempel**
-   utan att klicka igen.
+1. Lägg **Lo Exempel** i utkastet och välj **Spara hela utkastet**. Invänta
+   operatörens bekräftelse av genomfört sparande med hållet svar.
+2. Medan svaret väntar, stäng **Spara utkastet** med Escape och stäng textvyn. I
+   Tabell, skriv **Lo** i **Sök objekt i tabellen**.
+3. Be operatören släppa samma svar efter fältbytet och invänta bekräftelse.
+   Invänta sparkvittot och fortsätt skriva ett blanksteg och **Exempel** utan
+   att klicka igen.
 4. Läs Utkastet är sparat under hushållets namn.
 5. Fortsätt skriva i sökfältet utan att klicka på det igen.
 
@@ -2655,37 +2851,46 @@ UTKAST-14.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ [kontrollerat text- och talunderlag](save-preparation.md#kontrollerat-text--och-talunderlag).
+Efter röststarten i UI-steg 3: använd terminalens `user Lo använder
+   Molnmusik.` och `delegate`, och meddela **Taluppdraget är levererat**.
+Släpp dess verkliga modellanrop enligt det befintliga receptet.
+Före Spara i steg 5: arma `save:before` i konsolen och bekräfta
+installationen. Efter den verkliga inskickningen: invänta hållningen
+före servern och meddela **Samma sparbegäran hålls**. Stäng konsolen
+under fokusprovet. Efter medlemsprofilens läsning i steg 6: släpp
+sparandet i konsolen, meddela **Samma sparande är släppt** och behåll
+databasen genom omstarten. Avsluta enligt den befintliga förberedelsen.
+
 **Steg:**
 
-1. Lägg **Lo Exempel** i utkastet genom formuläret med **Lägg i utkastet
-   och stäng**.
-2. Välj **Skriv till Skyttel**, skriv **Lägg Molnmusik i utkastet** och
-   välj **Skicka**. Godkänn samtalsmedgivandet när det efterfrågas.
-   Släpp det hållna textförslaget enligt separat förberedelse.
-   Kontrollera två privata förslag på
+1. Lägg **Lo Exempel** i utkastet genom formuläret med **Lägg i utkastet och
+   stäng**.
+2. Välj **Skriv till Skyttel**, skriv **Lägg Molnmusik i utkastet** och välj
+   **Skicka**. Godkänn samtalsmedgivandet när det efterfrågas. Släpp det hållna
+   textförslaget enligt separat förberedelse. Kontrollera två privata förslag på
    **Visa utkastet**.
-3. Välj **Prata med Skyttel** och använd terminalens `user Lo använder
-   Molnmusik.` och `delegate`.
-   Släpp det hållna förslaget enligt separat förberedelse.
-   Kontrollera att sambandet ingår och att **Visa utkastet** visar tre privata
-   förslag.
+3. Välj **Prata med Skyttel** och be operatören leverera det kontrollerade
+   taluppdraget. Invänta bekräftelse. Släpp det hållna förslaget enligt separat
+   förberedelse. Kontrollera att sambandet ingår och att **Visa utkastet** visar
+   tre privata förslag.
 4. Skriv ett oskickat samtalsmeddelande. Besök Inställningar och återgå till
-   kartan. Stäng textvyn. Kartan ska inte visa påminnelse om
-   oskickad formulärtext. Kontrollera som medlem att den sparade kartan är tom
-   och att
+   kartan. Stäng textvyn. Kartan ska inte visa påminnelse om oskickad
+   formulärtext. Kontrollera som medlem att den sparade kartan är tom och att
    administratörens förslag inte visas i medlemmens utkast.
-5. Öppna Tabell och välj **Nytt objekt**. Skriv **Oskickad cykel** och
-   **Texten ska finnas kvar** i beskrivningen. Välj **Avbryt** och tryck
-   Escape i förlustdialogen. Kontrollera att namn och beskrivning finns
-   kvar utan nytt förslag. Välj **Lägg i utkastet och stäng**.
-   Granska fyra förslag i hela utkastet.
-   Arma `save:before` i konsolen. Välj **Spara hela utkastet** från Utkast,
-   stäng sparmodalen med Escape
-   och stäng textvyn.
-6. Kontrollera vänteläge, oförändrade fyra förslag och tom gemensam karta
-   i medlemsprofilen. Släpp sparandet i konsolen och invänta bekräftat kvitto.
-   Stäng klienterna, starta om servern med samma
-   databas och öppna kartan som medlem.
+5. Öppna Tabell och välj **Nytt objekt**. Skriv **Oskickad cykel** och **Texten
+   ska finnas kvar** i beskrivningen. Välj **Avbryt** och tryck Escape i
+   förlustdialogen. Kontrollera att namn och beskrivning finns kvar utan nytt
+   förslag. Välj **Lägg i utkastet och stäng**. Granska fyra förslag i hela
+   utkastet. Be operatören förbereda det väntande sparandet och invänta
+   bekräftelse. Välj **Spara hela utkastet** från Utkast, stäng sparmodalen med
+   Escape och stäng textvyn.
+6. Kontrollera vänteläge, oförändrade fyra förslag och tom gemensam karta i
+   medlemsprofilen. Invänta operatörens bekräftelse att samma sparande hålls. Be
+   operatören släppa det och invänta bekräftelse samt bekräftat kvitto. Stäng
+   klienterna, starta om servern med samma databas och öppna kartan som medlem.
 
 **Förväntat resultat:**
 
@@ -3175,18 +3380,30 @@ UTKAST-23.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ [fallets exakta tidsordning](current-conflict-preparation.md#tidsordning-för-tekniskt-underlag).
+Före bekräftelsen i UI-steg 1: kör `arm resolve:after` i transportens
+terminal och bekräfta installationen. Efter det verkliga konfliktvalet:
+kräv lyckat genomförande och hållning innan användarens Escape-prov.
+Först i UI-steg 3: kör `release` i samma terminal och meddela
+**Samma genomförda konfliktvalssvar är släppt**.
+Följ [styrd konfliktleverans](current-conflict-preparation.md) och den
+befintliga konfliktinstallationen för fallet. Behåll samma sessioner och
+databas under kontrollen. Återställ leveransen efter känt utfall; välj
+ny installation mellan fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
-1. Kör `arm resolve:after` i transportens terminal. Öppna Tabell och **1
-   konflikt i ditt utkast**. Välj ditt föreslagna
-   namn och övriga aktuella värden. Bekräfta **Lägg valen i utkastet**.
-2. När operatören meddelar att svaret hålls, läs väntande besked och
-   inaktiva bekräftelse- och stängknappar. Tryck Escape; dialogen ska
-   finnas kvar.
-3. Kör `release` i transportens terminal. Kontrollera resultatet och rubrikens
-   fokus.
-4. Stäng med Escape och skriv Lo i **Sök objekt i tabellen**.
-   Kontrollera söktext och fokus samt utkast, Robins karta och historik.
+1. Be operatören förbereda hållet konfliktvalssvar och invänta installationen.
+   Öppna Tabell och **1 konflikt i ditt utkast**. Välj ditt föreslagna namn och
+   övriga aktuella värden. Bekräfta **Lägg valen i utkastet**.
+2. När operatören meddelar att svaret hålls, läs väntande besked och inaktiva
+   bekräftelse- och stängknappar. Tryck Escape; dialogen ska finnas kvar.
+3. Be operatören släppa samma konfliktvalssvar och invänta bekräftelse.
+   Kontrollera resultatet och rubrikens fokus.
+4. Stäng med Escape och skriv Lo i **Sök objekt i tabellen**. Kontrollera
+   söktext och fokus samt utkast, Robins karta och historik.
 
 **Separat tekniskt underlag:** Operatörens kontroll av status och
 leverans sker enligt [tidsordningen för tekniskt underlag](current-conflict-preparation.md#tidsordning-för-tekniskt-underlag).
@@ -3238,20 +3455,36 @@ UTKAST-24.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ [fallets exakta tidsordning](current-conflict-preparation.md#tidsordning-för-tekniskt-underlag).
+Före bekräftelsen i UI-steg 1: kör `arm resolve:drop-after` och
+bekräfta installationen. Efter den verkliga handlingen: kräv status
+200 och meddela **Konfliktvalet är genomfört och svaret tappat** innan
+den vanliga kontrollen. Efter omladdningen i steg 3 men före Spara
+i steg 4: kör `arm save:drop-after` och bekräfta installationen.
+Kräv verklig status 200 efter Spara och meddela **Samma sparande är
+genomfört och dess kvitto tappat** före användarens kontroll i steg 5.
+Följ [styrd konfliktleverans](current-conflict-preparation.md) och den
+befintliga konfliktinstallationen för fallet. Behåll samma sessioner och
+databas under kontrollen. Återställ leveransen efter känt utfall; välj
+ny installation mellan fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
-1. Kör `arm resolve:drop-after`. Öppna **1 konflikt i ditt utkast** från Tabell.
-   Välj det egna namnet
-   och sparade oberoende egenskaper, och bekräfta **Lägg valen i utkastet**.
-   Läs det oklara utfallet och kontrollera att en ny bekräftelse är spärrad.
-2. Kontrollera Robins karta och historiken. Välj **Kontrollera om valet
-   lades i utkastet**. Läs resultatet och stäng med Escape.
+1. Be operatören förbereda tappat konfliktvalssvar och invänta installationen.
+   Öppna **1 konflikt i ditt utkast** från Tabell. Välj det egna namnet och
+   sparade oberoende egenskaper, och bekräfta **Lägg valen i utkastet**. Läs det
+   oklara utfallet och kontrollera att en ny bekräftelse är spärrad.
+2. Kontrollera Robins karta och historiken. Välj **Kontrollera om valet lades i
+   utkastet**. Läs resultatet och stäng med Escape.
 3. Öppna **Utkast** och hela förslaget Lo Lind. Läs Spelar piano, stäng
    läsningen och ladda om. Kontrollera Lo Lind och Privat stol i utkastet.
-4. Kör `arm save:drop-after`. Välj **Spara hela utkastet** och läs
-   **Sparandet kunde inte bekräftas** i **Spara utkastet**.
-5. Välj **Kontrollera sparandet igen**. Kontrollera bekräftelsen, tomt
-   utkast, Robins karta och den enda nya historikgruppen.
+4. Be operatören förbereda tappat sparkvitto och invänta installationen. Välj
+   **Spara hela utkastet** och läs **Sparandet kunde inte bekräftas** i **Spara
+   utkastet**.
+5. Välj **Kontrollera sparandet igen**. Kontrollera bekräftelsen, tomt utkast,
+   Robins karta och den enda nya historikgruppen.
 
 **Separat tekniskt underlag:** Operatören verifierar genomförandet vid
 båda tappade svar enligt [tidsordningen](current-conflict-preparation.md#tidsordning-för-tekniskt-underlag).
@@ -3388,13 +3621,22 @@ UTKAST-49.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 4, med Lo öppnad: kör `newer-name` och meddela **Robins nyare namn
+är sparat** före det gamla bekräftelseförsöket. Följ
+[styrd konfliktleverans](current-conflict-preparation.md) och den befintliga
+konfliktinstallationen för fallet. Behåll samma sessioner och databas under
+kontrollen. Återställ leveransen efter känt utfall; välj ny installation mellan
+fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
 1. Öppna **2 konflikter i ditt utkast**. Välj Alex namn och beskrivning för Lo.
 2. Välj **Min musiktjänst** i konfliktlistan och välj Alex namn och beskrivning.
 3. Stäng med Escape och öppna igen. Tjänstens val är kvar. Växla till Lo.
-4. Kör `newer-name` medan Lo visas. Försök **Lägg valen i utkastet** och läs
-   felet.
+4. Be operatören spara Robins nyare namn medan Lo visas och invänta bekräftelse.
+   Försök **Lägg valen i utkastet** och läs felet.
 5. Växla till tjänsten, sedan tillbaka till Lo. Kontrollera båda posternas val.
 
 **Förväntat resultat:**
@@ -3434,15 +3676,29 @@ UTKAST-50.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 2: kör `newer-name` och meddela **Robins nyare namn är
+sparat**. Före Visa aktuell jämförelse i steg 3: kör `check-error`
+och bekräfta hämtningsfelet. Vid steg 4: kör `network-ok` och meddela
+**Normal hämtning är återställd** före den nya aktuella jämförelsen.
+Följ [styrd konfliktleverans](current-conflict-preparation.md) och den
+befintliga konfliktinstallationen för fallet. Behåll samma sessioner och
+databas under kontrollen. Återställ leveransen efter känt utfall; välj
+ny installation mellan fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
 1. Öppna konflikten och välj Alex namn och beskrivning.
-2. Kör `newer-name`. Försök lägga valen i utkastet; läs att underlaget ändrats.
-3. Kör `check-error` och välj **Visa aktuell jämförelse**. Läs hämtningsfelet
-   med fokus kvar i dialogen och båda valen bevarade.
-4. Kör `network-ok` och visa aktuell jämförelse igen. Beskrivningen är
-   fortfarande vald, namnet kräver val.
+2. Be operatören spara Robins nyare namn och invänta bekräftelse. Försök lägga
+   valen i utkastet; läs att underlaget ändrats.
+3. Be operatören förbereda hämtningsfel och invänta bekräftelse. Välj **Visa
+   aktuell jämförelse**. Läs hämtningsfelet med fokus kvar i dialogen och båda
+   valen bevarade.
+4. Be operatören återställa hämtningen och invänta bekräftelse. Visa aktuell
+   jämförelse igen. Beskrivningen är fortfarande vald, namnet kräver val.
 5. Välj Alex namn igen och lägg valen i utkastet.
+
 **Separat tekniskt underlag:** Operatörens `result` läser karta,
 privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
 och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
@@ -3483,11 +3739,23 @@ UTKAST-51.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 2: kör `newer-type`. Robin sparar Mätobjekt och en ny förklaring
+för Anteckningsobjekt. Meddela **Robins nyare typ och förklaring är sparade**
+före den gamla bekräftelsen. Följ
+[styrd konfliktleverans](current-conflict-preparation.md) och den befintliga
+konfliktinstallationen för fallet. Behåll samma sessioner och databas under
+kontrollen. Återställ leveransen efter känt utfall; välj ny installation mellan
+fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
-1. I `new-type`, öppna konflikten. Välj Alex namn, beskrivning och **Min text**.
-2. Kör `newer-type`: Robin sparar Mätobjekt och en ny förklaring för
-   Anteckningsobjekt. Försök lägga valen i utkastet och visa aktuell jämförelse.
+1. I `new-type`, öppna konflikten. Välj Alex namn, beskrivning och **Min
+   text**.
+2. Be operatören spara Robins nyare typ och förklaring enligt förberedelsen.
+   Invänta bekräftelse. Försök lägga valen i utkastet och visa aktuell
+   jämförelse.
 3. Beskrivningens val är kvar. Välj Min text igen och den sparade typen
    **Mätobjekt**.
 4. Läs felet. Välj Alex **Anteckningsobjekt** och lägg kombinationen i utkastet.
@@ -3531,10 +3799,20 @@ UTKAST-52.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Efter Alex faktiska namn- och beskrivningsval i UI-steg 1, vid steg 2:
+kör `newer-private`; en annan klient för Alex lägger Privat stol i utkastet.
+Meddela **Alex nyare oberoende förslag är lagt** före den gamla bekräftelsen.
+Följ [styrd konfliktleverans](current-conflict-preparation.md) och
+den befintliga konfliktinstallationen för fallet. Behåll samma sessioner och
+databas under kontrollen. Återställ leveransen efter känt utfall; välj ny
+installation mellan fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
 1. Välj Alex namn och beskrivning i konflikten.
-2. Kör `newer-private`: en annan klient för Alex lägger Privat stol i utkastet.
+2. Be operatören lägga Alex nyare oberoende förslag och invänta bekräftelse.
 3. Försök lägga konfliktvalen i utkastet. Läs avvisningen och kontrollera
    spärren.
 4. Visa aktuell jämförelse. Båda valen finns kvar. Bekräfta.
@@ -3638,16 +3916,28 @@ UTKAST-54.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före kontrollen i UI-steg 2: kör `check-error` och bekräfta felet.
+Vid steg 3: kör `network-ok` och meddela **Kontroll kan nå servern**.
+Efter den verkliga kontrollens besked om utebliven ändring, vid steg 4:
+kör `network-ok` för normal leverans och meddela **Nytt uttryckligt
+försök kan skickas normalt**. Ingen återöppning i sig tillåter återförsök.
+Följ [styrd konfliktleverans](current-conflict-preparation.md) och den
+befintliga konfliktinstallationen för fallet. Behåll samma sessioner och
+databas under kontrollen. Återställ leveransen efter känt utfall; välj
+ny installation mellan fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
-1. Öppna **1 konflikt i ditt utkast**. Välj Alex namn och beskrivning,
-   bekräfta och läs det oklara utfallet.
-2. Stäng och öppna igen. Kör `check-error` och välj **Kontrollera om valet lades
-   i utkastet**.
-3. Läs att utfallet fortfarande är oklart. Kör `network-ok` och kontrollera
-   igen.
-4. Läs att ändringen inte genomfördes. Kör `network-ok` för normal leverans,
-   bekräfta med de bevarade valen.
+1. Öppna **1 konflikt i ditt utkast**. Välj Alex namn och beskrivning, bekräfta
+   och läs det oklara utfallet.
+2. Stäng och öppna igen. Be operatören förbereda kontrollfelet och invänta
+   bekräftelse. Välj **Kontrollera om valet lades i utkastet**.
+3. Läs att utfallet fortfarande är oklart. Be operatören återställa kontrollen
+   och invänta bekräftelse. Kontrollera igen.
+4. Läs att ändringen inte genomfördes. Be operatören återställa normal leverans
+   och invänta bekräftelse. Bekräfta med de bevarade valen.
 
 **Separat tekniskt underlag:** Operatörens `result` läser karta,
 privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
@@ -3691,11 +3981,22 @@ UTKAST-55.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Efter stängningen i UI-steg 1 men före återöppningen i steg 2: kör `newer-name`
+och meddela **Robins nyare namn är sparat**. Följ
+[styrd konfliktleverans](current-conflict-preparation.md) och den befintliga
+konfliktinstallationen för fallet. Behåll samma sessioner och databas under
+kontrollen. Återställ leveransen efter känt utfall; välj ny installation mellan
+fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
 1. Välj Alex namn och beskrivning. Stäng med Escape.
-2. Kör `newer-name`. Öppna konflikten igen och läs beskedet om nytt underlag.
+2. Be operatören spara Robins nyare namn och invänta bekräftelse. Öppna
+   konflikten igen och läs beskedet om nytt underlag.
 3. Visa aktuell jämförelse och granska kvarvarande val.
+
 **Separat tekniskt underlag:** Operatörens `result` läser karta,
 privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
 och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
@@ -3738,11 +4039,23 @@ UTKAST-56.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Behåll fallets `hold` och `lose-applied` före bekräftelsen. Bekräfta
+verklig hållning före servern efter inskickningen. Behåll begäran genom
+väntanskontrollerna i UI-steg 2. Först i steg 3: kör `release` och
+meddela **Samma begäran släpps och dess verkliga svar tappas**.
+Följ [styrd konfliktleverans](current-conflict-preparation.md) och den
+befintliga konfliktinstallationen för fallet. Behåll samma sessioner och
+databas under kontrollen. Återställ leveransen efter känt utfall; välj
+ny installation mellan fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
 1. Välj Alex namn och beskrivning och bekräfta. Läs väntestatusen.
 2. Försök växla konflikt, stänga med krysset och använda Escape.
-3. Kör `release`, läs det oklara utfallet och stäng med Escape.
+3. Be operatören släppa samma begäran och invänta bekräftelse. Läs det oklara
+   utfallet och stäng med Escape.
 4. Flytta tangentbordsfokus till Tabell i kartverktygen. Kontrollera att det
    stannar där.
 5. Öppna konflikten och kontrollera faktiskt utfall.
@@ -4669,14 +4982,24 @@ UTKAST-73.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 3: kör `remove-new-connection` och meddela **Robin har sparat
+borttagning av enbart det nya sambandet**. Objektets senare sparade fakta
+kvarstår; hämta sedan aktuell jämförelse i gränssnittet. Följ
+[styrd konfliktleverans](current-conflict-preparation.md) och den befintliga
+konfliktinstallationen för fallet. Behåll samma sessioner och databas under
+kontrollen. Återställ leveransen efter känt utfall; välj ny installation mellan
+fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
-1. Öppna **1 konflikt i ditt utkast**. Läs det sparade objektets nya fakta
-   och taggen **Robin** samt det nya sambandet.
-2. Välj objektets **Föreslagen borttagning** och den sparade sidans samband.
-   Läs varför kombinationen är ogiltig.
-3. Kör `remove-new-connection`. Stäng med Escape, öppna igen och välj
-   **Visa aktuell jämförelse**.
+1. Öppna **1 konflikt i ditt utkast**. Läs det sparade objektets nya fakta och
+   taggen **Robin** samt det nya sambandet.
+2. Välj objektets **Föreslagen borttagning** och den sparade sidans samband. Läs
+   varför kombinationen är ogiltig.
+3. Be operatören låta Robin ta bort det nya sambandet och invänta bekräftelse.
+   Stäng med Escape, öppna igen och välj **Visa aktuell jämförelse**.
 4. Läs att Robin sparade ändringar i objektet. Kontrollera att objektets
    borttagningsval finns kvar men att sambandsraden försvunnit.
 5. Välj **Lägg valen i utkastet**.
@@ -4882,14 +5205,26 @@ UTKAST-77.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före kastvalet i UI-steg 1: kör `lose-applied` och meddela **Nästa verkliga
+kastval får tappat svar efter genomförandet**. Behåll samma utfall genom
+stängning och återöppning; endast verklig kontroll klargör det utan ny
+bekräftelse. Följ [styrd konfliktleverans](current-conflict-preparation.md) och
+den befintliga konfliktinstallationen för fallet. Behåll samma sessioner och
+databas under kontrollen. Återställ leveransen efter känt utfall; välj ny
+installation mellan fallen och avsluta enligt förberedelsens städning.
+
 **Steg:**
 
-1. Öppna konflikten. Kör `lose-applied` och välj **Ta bort sambandet ur ditt
-   utkast**. Läs det oklara beskedet. Stäng med Escape och öppna igen.
+1. Öppna konflikten. Be operatören förbereda tappat kastvalssvar och invänta
+   bekräftelse. Välj **Ta bort sambandet ur ditt utkast**. Läs det oklara
+   beskedet. Stäng med Escape och öppna igen.
 2. När konfliktraden försvinner, stäng och välj **Visa konfliktvalet**.
    Kontrollera att ny bekräftelse fortfarande är spärrad.
 3. Välj **Kontrollera om valet lades i utkastet**.
 4. Stäng med Escape och kontrollera synligt användbart fokus.
+
 **Separat tekniskt underlag:** Operatörens `result` läser karta,
 privat utkast och historik via HTTP. Automationen behåller dessa jämförelser
 och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
@@ -5166,21 +5501,35 @@ UTKAST-96.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före sparandet i UI-steg 4: skriv `hold-after` i terminalen och
+bekräfta att nästa svar ska hållas. Vänta inte på slutförandet före
+användarens verkliga Spara. Efter inskickningen: kräv terminalens
+bekräftade status 200 och den verkliga hållningen. Meddela
+**Sparandet är genomfört och samma svar hålls**. Behåll hållningen
+genom användarens stängning och legendkontroll. Först i steg 5: skriv
+`drop` och meddela **Samma genomförda sparkvitto tappas**.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
-1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng textvyn
-   och visa Karta.
-2. Kontrollera grönt plus i teckenförklaringen under hushållets namn.
-   Varken förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
+1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng textvyn och visa
+   Karta.
+2. Kontrollera grönt plus i teckenförklaringen under hushållets namn. Varken
+   förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
 3. Läs kartans status och teckenförklaring under hushållets namn.
-4. Skriv `hold-after` i terminalen. Öppna **Utkast** och välj **Spara hela
-   utkastet**.
-   Stäng **Spara utkastet** med Escape och stäng textvyn.
-   Läs **Väntar på sparkvitto**, det bevarade förslaget och legenden.
-5. Läs **Väntar på sparkvitto** och kvarvarande legend. Skriv `drop`
-   efter terminalens bekräftade status 200. Läs **Sparutfall okänt**. Välj
-   **Hämta samma kvitto igen**. Läs resultatet.
-   Öppna **Rapporter → Ändringshistorik** och läs det genomförda sparandet.
+4. Be operatören förbereda hållet sparkvitto och invänta
+   installationsbekräftelse. Öppna **Utkast** och välj **Spara hela utkastet**.
+   Stäng **Spara utkastet** med Escape och stäng textvyn. Läs **Väntar på
+   sparkvitto**, det bevarade förslaget och legenden.
+5. Läs **Väntar på sparkvitto** och kvarvarande legend. Invänta operatörens
+   bekräftelse att samma sparande är genomfört och dess svar hålls. Be
+   operatören tappa svaret och invänta bekräftelse. Läs **Sparutfall okänt**.
+   Välj **Hämta samma kvitto igen**. Läs resultatet. Öppna **Rapporter →
+   Ändringshistorik** och läs det genomförda sparandet.
 
 **Förväntat resultat:**
 
@@ -5226,21 +5575,35 @@ UTKAST-97.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före sparandet i UI-steg 4: skriv `hold-after` i terminalen och
+bekräfta att nästa svar ska hållas. Vänta inte på slutförandet före
+användarens verkliga Spara. Efter inskickningen: kräv terminalens
+bekräftade status 200 och den verkliga hållningen. Meddela
+**Sparandet är genomfört och samma svar hålls**. Behåll hållningen
+genom användarens stängning och legendkontroll. Först i steg 5: skriv
+`drop` och meddela **Samma genomförda sparkvitto tappas**.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
-1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng textvyn
-   och visa Karta.
-2. Kontrollera grönt plus i teckenförklaringen under hushållets namn.
-   Varken förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
+1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng textvyn och visa
+   Karta.
+2. Kontrollera grönt plus i teckenförklaringen under hushållets namn. Varken
+   förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
 3. Läs kartans status och teckenförklaring under hushållets namn.
-4. Skriv `hold-after` i terminalen. Öppna **Utkast** och välj **Spara hela
-   utkastet**.
-   Stäng **Spara utkastet** med Escape och stäng textvyn.
-   Läs **Väntar på sparkvitto**, det bevarade förslaget och legenden.
-5. Läs **Väntar på sparkvitto** och kvarvarande legend. Skriv `drop`
-   efter terminalens bekräftade status 200. Läs **Sparutfall okänt**. Välj
-   **Hämta samma kvitto igen**. Läs resultatet.
-   Öppna **Rapporter → Ändringshistorik** och läs det genomförda sparandet.
+4. Be operatören förbereda hållet sparkvitto och invänta
+   installationsbekräftelse. Öppna **Utkast** och välj **Spara hela utkastet**.
+   Stäng **Spara utkastet** med Escape och stäng textvyn. Läs **Väntar på
+   sparkvitto**, det bevarade förslaget och legenden.
+5. Läs **Väntar på sparkvitto** och kvarvarande legend. Invänta operatörens
+   bekräftelse att samma sparande är genomfört och dess svar hålls. Be
+   operatören tappa svaret och invänta bekräftelse. Läs **Sparutfall okänt**.
+   Välj **Hämta samma kvitto igen**. Läs resultatet. Öppna **Rapporter →
+   Ändringshistorik** och läs det genomförda sparandet.
 
 **Förväntat resultat:**
 
@@ -5405,14 +5768,27 @@ UTKAST-100.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ grundfallets `new-draft` och `hold` före sparandet.
+Bekräfta verkligt hållen begäran efter användarens inskickning. Behåll
+hållningen genom båda vyernas uppföljning. Vid UI-steg 4, först efter
+användarens senare sökfokus: skriv `release` i terminalen och meddela
+**Samma sparande är släppt**.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
-1. Öppna utkastet och spara. Prova Tab och Skift+Tab och stäng med Escape.
+1. Öppna utkastet och spara. Invänta operatörens bekräftelse av den verkliga
+   hållningen. Prova Tab och Skift+Tab och stäng med Escape.
 2. Stäng textvyn. Öppna **Visa sparandet** i kartan och stäng med krysset.
 3. Öppna **Tabell**, välj **Visa sparandet** och stäng med Escape.
-4. Flytta fokus till **Sök objekt i tabellen** och skriv `release` i terminalen.
-5. Invänta bekräftelsen och fortsätt skriva i sökfältet utan att klicka på
-   det igen.
+4. Flytta fokus till **Sök objekt i tabellen** och be operatören släppa samma
+   sparande enligt förberedelsen. Invänta bekräftelse utan att byta fokus.
+5. Invänta bekräftelsen och fortsätt skriva i sökfältet utan att klicka på det
+   igen.
 
 **Separat tekniskt underlag:** Integrationstestet kräver tomt utkast, ett
 enda avslutat sparförsök och en historikpost. Operatören kan samla detta
@@ -5460,6 +5836,16 @@ UTKAST-95.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steget som återställer leveransen: välj `network-ok` i
+startguidens terminal och meddela **Normal leverans är återställd**
+innan användaren väljer aktuell hämtning eller omladdning. Bevara
+det redan registrerade eller genomförda försöket; registrera inget nytt.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
 1. Lägg Lo Exempel i utkastet och välj Spara hela utkastet. Stäng sparmodalen
@@ -5467,8 +5853,9 @@ UTKAST-95.
 2. Läs Sparutfall okänt utan sparbekräftelse. Välj Hämta aktuellt underlag.
 3. Läs Utkastet är sparat tillsammans med hämtningsfelet. Vänta tills
    sparbeskedet försvinner.
-4. Välj `network-ok` och Hämta aktuellt underlag. Läs det enda sparandet för Lo
-   i Rapporter → Ändringshistorik.
+4. Be operatören återställa normal leverans och invänta bekräftelse. Välj Hämta
+   aktuellt underlag. Läs det enda sparandet för Lo i Rapporter →
+   Ändringshistorik.
 
 **Förväntat resultat:**
 
@@ -5507,10 +5894,21 @@ UTKAST-101.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Vid UI-steget som återställer leveransen: välj `network-ok` i
+startguidens terminal och meddela **Normal leverans är återställd**
+innan användaren väljer aktuell hämtning eller omladdning. Bevara
+det redan registrerade eller genomförda försöket; registrera inget nytt.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
 1. Ladda om och läs Visa sparandet.
-2. Välj `network-ok` och ladda om för att tillåta automatisk kontroll.
+2. Be operatören återställa normal leverans och invänta bekräftelse. Ladda om
+   för att tillåta automatisk kontroll.
 3. Invänta bekräftelsen. Läs det tomma utkastet genom Skriv till Skyttel → Visa
    utkastet och det enda sparkvittot i Rapporter.
 
@@ -5599,12 +5997,23 @@ UTKAST-103.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Behåll grundfallets verkliga väntande sparande genom stängning och
+återöppning. Först efter fokus på Visa sparandet i UI-steg 2, vid
+steg 3: skriv `release` och meddela **Samma sparande är släppt**.
+Följ [styrd sparleverans](save-preparation.md#vanligt-sparande).
+Behåll samma databas och försök genom kontrollen. Återställ med ett nytt
+provhushåll mellan fallen och avsluta med `quit` efter känt utfall.
+
 **Steg:**
 
-1. Öppna Utkast och spara. Stäng med Escape och stäng textvyn.
+1. Öppna Utkast och spara. Invänta operatörens bekräftelse av den verkliga
+   hållningen. Stäng med Escape och stäng textvyn.
 2. Öppna Tabell och Visa sparandet. Stäng med Escape och behåll fokus på Visa
    sparandet.
-3. Skriv `release` och kontrollera fokus när knappen försvinner.
+3. Be operatören släppa samma sparande och invänta bekräftelse. Kontrollera
+   fokus när knappen försvinner.
 
 **Förväntat resultat:**
 
@@ -7102,14 +7511,34 @@ Anteckna program, version och webbläsare.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ [styrd konfliktleverans](current-conflict-preparation.md) och
+behåll den riktiga skärmläsaren i den dokumenterade webbläsaren.
+Inför UI-steg 1: kör `new-base` och bekräfta grundfallets nya konflikt
+före UTKAST-52. Efter hela UTKAST-52, endast när utfallet är känt:
+återställ med `new-base` och meddela **Grundfallet är återställt inför
+UTKAST-55**. Efter hela UTKAST-55 och känt utfall: återställ med
+`new-base` och meddela **Grundfallet är återställt inför UTKAST-56**.
+Återställ aldrig under ett okänt eller hållet utfall. Följ respektive
+grundfalls separata tidpunkter för nyare privat förslag, Robins sparande
+och hållen/tappad leverans. Låt användaren höra alla angivna övergångar
+själv, inklusive senare fokus i UTKAST-56; DOM-underlaget ersätter inte
+det faktiska talet. Efter sista kända utfall återställs leveransen och
+installationen avslutas enligt förberedelsen. Anteckna faktiskt hörda
+ord, skärmläsarversion, webbläsare och resultat som tidigare.
+
 **Steg:**
 
-1. Utför UTKAST-52 en gång. Lyssna under steg 3 på ett enda
+1. Be operatören förbereda UTKAST-52 och invänta bekräftelse. Utför
+   UTKAST-52 en gång. Lyssna under steg 3 på ett enda
    besked om ändrat underlag.
-2. Återställ med new-base och utför UTKAST-55 en gång. Lyssna
+2. När föregående utfall är känt: be operatören återställa inför
+   UTKAST-55. Invänta bekräftelse och utför UTKAST-55 en gång. Lyssna
    under steg 2 när dialogen öppnas efter Robins senare sparande.
-3. Återställ och utför UTKAST-56 en gång. Lyssna under steg 1 och 3
-   på väntan och oklart utfall. Under steg 4–5 får status och återöppning
+3. När föregående utfall är känt: be operatören återställa inför
+   UTKAST-56. Invänta bekräftelse och utför UTKAST-56 en gång. Lyssna under
+   steg 1 och 3 på väntan och oklart utfall. Under steg 4–5 får status och återöppning
    inte ge dubbelt tal eller flytta senare fokus.
 
 **Förväntat resultat:**

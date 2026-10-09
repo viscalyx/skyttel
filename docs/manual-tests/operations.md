@@ -236,20 +236,31 @@ SPAR-01.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ
+[vanlig installation och annan klient](save-preparation.md#vanlig-installation-och-annan-klient)
+. Arma sparfelet före UI-steg 2 enligt den befintliga förberedelsen. Efter
+användarens verkliga Spara: kräv transportens status 200 och meddela **Samma
+sparande är genomfört och dess svar tappat**. Behåll samma databas genom
+serveromstart och klientbyte. Återställ HTTPS-ingången före `quit`, efter att
+utfallet klargjorts.
+
 **Steg:**
 
-1. Välj **Nytt objekt**, skriv **Återfunnet sparande** som namn och välj
-   **Lägg i utkastet och stäng**.
-2. Öppna **Visa utkastet**, välj **Spara hela utkastet** och läs
-   **Utfallet är okänt** efter transportens status 200. Kontrollera
-   spärrade **Nytt objekt** och **Kasta hela utkastet**. Spara inte igen.
-3. Stäng den första profilen. Stoppa och starta applikationen igen med
-   samma databas.
-4. Öppna appen i den andra profilen och logga in som samma användare.
-   Hitta sparandet i **Rapporter → Ändringshistorik** utan att skriva in
-   kvittots identitet eller kopiera webbläsardata.
-5. Läs händelsens uppgifter. Välj **Tillbaka till
-   arbetet**, läs det tomma utkastet och objektet i **Tabell**.
+1. Välj **Nytt objekt**, skriv **Återfunnet sparande** som namn och välj **Lägg
+   i utkastet och stäng**.
+2. Öppna **Visa utkastet**, välj **Spara hela utkastet** och läs **Utfallet är
+   okänt** efter operatörens bekräftelse att samma genomförda sparandes svar
+   tappas. Kontrollera spärrade **Nytt objekt** och **Kasta hela utkastet**.
+   Spara inte igen.
+3. Stäng den första profilen. Stoppa och starta applikationen igen med samma
+   databas.
+4. Öppna appen i den andra profilen och logga in som samma användare. Hitta
+   sparandet i **Rapporter → Ändringshistorik** utan att skriva in kvittots
+   identitet eller kopiera webbläsardata.
+5. Läs händelsens uppgifter. Välj **Tillbaka till arbetet**, läs det tomma
+   utkastet och objektet i **Tabell**.
 
 **Förväntat resultat:**
 
@@ -507,49 +518,80 @@ SPAR-05.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ
+[vanlig installation och annan klient](save-preparation.md#vanlig-installation-och-annan-klient)
+. Använd operatörens transportterminal och samma verifierade provhushåll.
+
+1. Före tillägget i UI-steg 1: skriv `arm stage:before` och bekräfta
+   installationen. Efter det verkliga tillägget: vänta på `held-before`
+   och meddela **Samma tillägg hålls före servern**. Efter användarens
+   vänteläsning: skriv `release` och bekräfta att samma begäran släpps.
+2. Före tillägget i steg 2: skriv `arm stage:after` och bekräfta
+   installationen. Efter tillägget: kräv `application-completed` med
+   status 200 och `held-after`. Meddela **Tillägget är genomfört och
+   samma svar hålls**. Efter vänteläsningen: skriv `drop` och bekräfta
+   att samma genomförda svar tappas.
+3. Före Spara i steg 3: skriv `arm save:drop-after` och bekräfta
+   installationen. Efter Spara: kräv verklig status 200 innan svaret
+   tappas och meddela **Samma sparande är genomfört och kvittot tappat**.
+4. Före Alex Spara i steg 5: skriv `arm save:before` och bekräfta
+   installationen. Efter Spara: invänta `held-before` och meddela
+   **Alex samma sparbegäran hålls före servern**. Behåll hållningen
+   tills Robin sparat sina verkliga oberoende uppgifter i steg 6.
+   Skriv först då `release` och meddela **Alex samma begäran är släppt**.
+
+Behåll databas och publik adress genom omstart och klientbyte. Återställ
+HTTPS-ingången före `quit` enligt förberedelsen, efter känt utfall.
+
 **Steg:**
 
-1. Skriv `arm stage:before` i operatörens transportterminal. Som Alex,
-   välj **Nytt objekt**, skriv **Lo Exempel** och välj **Lägg i utkastet
-   och stäng**. Vänta på terminalens `held-before`. Formuläret väntar;
-   ändringen finns ännu inte i utkastet. Skriv `release`. Formuläret
-   stängs och exakt ett privat förslag visas. Ingen gemensam ändring eller
+1. Be operatören förbereda väntande tillägg och invänta installationen. Som
+   Alex, välj **Nytt objekt**, skriv **Lo Exempel** och välj **Lägg i utkastet
+   och stäng**. Invänta operatörens bekräftelse att samma begäran hålls före
+   servern. Formuläret väntar; ändringen finns ännu inte i utkastet. Be
+   operatören släppa samma begäran och invänta bekräftelse. Formuläret stängs
+   och exakt ett privat förslag visas. Ingen gemensam ändring eller
    historikhändelse har skapats.
-2. Skriv `arm stage:after`. Skapa **Kim Exempel** på samma sätt. Vänta på
-   `application-completed` med status 200 och `held-after`. Formuläret
-   väntar trots att servern har lagt ändringen i utkastet. Skriv `drop`.
-   Läs beskedet om oklart utfall och kontrollera att namnet ligger kvar.
-   Välj **Kontrollera om ändringen lades i utkastet**. Formuläret stängs;
+2. Be operatören förbereda hållet tilläggssvar och invänta installationen. Skapa
+   **Kim Exempel** på samma sätt. Invänta operatörens bekräftelse att tillägget
+   är genomfört och samma svar hålls. Formuläret väntar trots att servern har
+   lagt ändringen i utkastet. Be operatören tappa samma svar och invänta
+   bekräftelse. Läs beskedet om oklart utfall och kontrollera att namnet ligger
+   kvar. Välj **Kontrollera om ändringen lades i utkastet**. Formuläret stängs;
    utkastet har exakt Lo och Kim, utan dubbletter eller sparhändelser.
-3. Skriv `arm save:drop-after`. Öppna **Visa utkastet** och välj
-   **Spara hela utkastet**. Terminalen visar verklig status 200 innan
-   svaret tappas. Läs **Sparandet kunde inte bekräftas.** i sparmodalen.
-   Spara inte igen. Nytt objekt, sparande och kastande är blockerade.
-4. Stäng Alex första profil. Starta om applikationen med samma databas,
-   utan återställning. Logga in som Alex i den andra profilen. Läs det
-   enda sparandet i **Rapporter → Ändringshistorik** och öppna
-   **Identifiera sparandet och användaren**. Anteckna dess identitet.
-   Kontrollera att Lo och Kim finns en gång i Tabell och att utkastet är
-   tomt. Ladda om och kontrollera samma enda sparande med samma identitet.
-5. Som Alex, ändra Lo till beskrivningen **Alex privata beskrivning**
-   och lägg hela formuläret i utkastet. Skriv `arm save:before`. Välj
-   **Spara hela utkastet** som Alex och invänta `held-before`.
+3. Be operatören förbereda tappat sparkvitto och invänta installationen. Öppna
+   **Visa utkastet** och välj **Spara hela utkastet**. Invänta operatörens
+   bekräftelse att samma sparande är genomfört och dess svar tappas. Läs
+   **Sparandet kunde inte bekräftas.** i sparmodalen. Spara inte igen. Nytt
+   objekt, sparande och kastande är blockerade.
+4. Stäng Alex första profil. Starta om applikationen med samma databas, utan
+   återställning. Logga in som Alex i den andra profilen. Läs det enda sparandet
+   i **Rapporter → Ändringshistorik** och öppna **Identifiera sparandet och
+   användaren**. Anteckna dess identitet. Kontrollera att Lo och Kim finns en
+   gång i Tabell och att utkastet är tomt. Ladda om och kontrollera samma enda
+   sparande med samma identitet.
+5. Som Alex, ändra Lo till beskrivningen **Alex privata beskrivning** och lägg
+   hela formuläret i utkastet. Be operatören förbereda väntande sparande och
+   invänta installationen. Välj **Spara hela utkastet** som Alex och invänta
+   operatörens bekräftelse av hållningen.
 6. Som Robin, öppna Lo i Tabell, ändra beskrivningen till **Robins sparade
    beskrivning**, lägg den i Robins utkast och spara hela hans utkast.
-   Kontrollera hans bekräftade sparande. Skriv sedan `release`.
-7. Läs Alex kända avvisning **Utkastet kunde inte sparas**. Stäng
-   sparmodalen med Escape. Öppna **Visa utkastet → Visa förslaget: Lo
-   Exempel** och läs Alex hela förslag med **Alex privata beskrivning**.
-   Stäng läsningen med Escape och textvyn med krysset. Välj **Hämta aktuellt
-   underlag** och öppna **1 konflikt i ditt utkast** i kartans status.
-   Läs **Robins sparade beskrivning**
-   under **Sparat i kartan nu** och Alex värde under **Ditt förslag**.
-   Stäng med Escape och öppna **Rapporter → Ändringshistorik**. Historiken
-   har bara det ursprungliga sparandet och Robins sparande; Alex avvisade
-   försök skapar ingen historikhändelse.
-8. Låt operatören återställa HTTPS-ingången till applikationen och
-   avsluta transporten med `quit`. Behåll provdatabasen tills alla
-   okända utfall har kontrollerats.
+   Kontrollera hans bekräftade sparande. Be sedan operatören släppa Alex samma
+   sparbegäran och invänta bekräftelse.
+7. Läs Alex kända avvisning **Utkastet kunde inte sparas**. Stäng sparmodalen
+   med Escape. Öppna **Visa utkastet → Visa förslaget: Lo Exempel** och läs Alex
+   hela förslag med **Alex privata beskrivning**. Stäng läsningen med Escape och
+   textvyn med krysset. Välj **Hämta aktuellt underlag** och öppna **1 konflikt
+   i ditt utkast** i kartans status. Läs **Robins sparade beskrivning** under
+   **Sparat i kartan nu** och Alex värde under **Ditt förslag**. Stäng med
+   Escape och öppna **Rapporter → Ändringshistorik**. Historiken har bara det
+   ursprungliga sparandet och Robins sparande; Alex avvisade försök skapar ingen
+   historikhändelse.
+8. Låt operatören återställa HTTPS-ingången till applikationen och be operatören
+   avsluta transporten enligt förberedelsen. Invänta bekräftelse. Behåll
+   provdatabasen tills alla okända utfall har kontrollerats.
 
 **Förväntat resultat:**
 

@@ -154,9 +154,20 @@ ROSTFEL-03.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Använd
+[serverfel och referenser](voice-controls-preparation.md#serverfel-och-referenser)
+. Först när Prata med Skyttel visar Lyssnar, vid begäran i UI-steg 1: skriv
+`drop` i provterminalen och meddela **Aktuell röst har avbrutits**. Följ den
+synliga Felreferens separat i serverloggen utan privat innehåll. Efter
+observationerna återställs installationen enligt förberedelsen; återanslutning i
+steg 4 sker genom användarens mikrofonknapp.
+
 **Steg:**
 
-1. Skriv `drop` i provterminalen. Vänta på samtalsnotisen.
+1. Be operatören avbryta den aktuella rösten. Invänta bekräftelse och
+   samtalsnotisen.
 2. Kontrollera **Rösten avbröts. Tryck på mikrofonknappen för att fortsätta.**
    och att mikrofonknappen är av. Ingen automatisk återanslutning sker.
 3. Läs hela Felreferens. Serveroperatören följer den separat i

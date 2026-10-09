@@ -664,24 +664,38 @@ RADERING-10.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ
+[håll ett gammalt statussvar](household-erasure-preparation.md#håll-ett-gammalt-statussvar)
+. Efter första verkliga slutförandet, före statuskontrollen i UI-steg 2:
+installera utdraget och meddela **Nästa gamla statussvar är förberett**. Efter
+statuskontrollen: invänta `RADERING-10: svaret väntar` för katalogsvaret efter
+den exakta statusläsningen, och meddela **Gamla svaret hålls** före
+navigationen. Behåll det under det nya försöket. Först efter nytt slutfört
+resultat och Översikts tangentbordsfokus i steg 4: tryck Alt+Skift+R och meddela
+**Gamla svaret är släppt**. Avbryt inte det nyare försöket. Utför de separata
+efterkontrollerna; vid avbrott släpp och ladda om enligt utdragets
+återställning.
+
 **Steg:**
 
-1. Granska lampan, bekräfta uttryckligen och invänta slutfört resultat
-   med ett objekt och en bildversion.
+1. Granska lampan, bekräfta uttryckligen och invänta slutfört resultat med ett
+   objekt och en bildversion.
 2. Operatören håller nästa gamla statussvar enligt länken nedan. Välj
    **Kontrollera raderingsstatus och läs in aktuellt innehåll** och invänta
    förberedelsebeskedet innan navigationen.
 3. Välj **Översikt**, återvänd och välj bara **Person**. Granska noll
-   bildversioner, tomt bekräftelsefält och inaktiverad raderingsknapp.
-   Skriv **RADERA PERMANENT** och radera uttryckligen.
-4. Invänta nytt slutfört resultat med en objekttyp och noll objekt,
-   samband, sambandstyper och bilder. Ge **Översikt** tangentbordsfokus
-   utan att aktivera länken. Släpp gamla svaret med Alt+Skift+R.
-   Nyare resultat och fokus ska finnas kvar.
-5. Tryck Enter, återvänd till raderingssidan, ladda om och kontrollera
-   status igen: bara det nyare försöket visas. Välj **Läs in kartan på nytt
-   → Tabell**. Lampan saknas, stolen och dess privata förslag finns kvar.
-   Operatören kontrollerar exakta läsningar och bevarad lagring.
+   bildversioner, tomt bekräftelsefält och inaktiverad raderingsknapp. Skriv
+   **RADERA PERMANENT** och radera uttryckligen.
+4. Invänta nytt slutfört resultat med en objekttyp och noll objekt, samband,
+   sambandstyper och bilder. Ge **Översikt** tangentbordsfokus utan att aktivera
+   länken. Be operatören släppa det gamla svaret och invänta bekräftelse. Nyare
+   resultat och fokus ska finnas kvar.
+5. Tryck Enter, återvänd till raderingssidan, ladda om och kontrollera status
+   igen: bara det nyare försöket visas. Välj **Läs in kartan på nytt → Tabell**.
+   Lampan saknas, stolen och dess privata förslag finns kvar. Operatören
+   kontrollerar exakta läsningar och bevarad lagring.
 
 **Förväntat resultat:**
 
@@ -722,26 +736,57 @@ RADERING-11.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ
+[blockera återhämtningsminnet](household-erasure-preparation.md#blockera-återhämtningsminnet)
+och
+[håll en verklig SQLite-läsare](household-erasure-preparation.md#håll-en-verklig-sqlite-läsare)
+. Före UI-steg 1 installeras det oförändrade utdraget som blockerar borttagning;
+meddela **Borttagning ur återhämtningsminnet blockeras**.
+
+Vid första begäran i steg 2: tryck Alt+Skift+A och meddela **Lagring
+återställd** före markering. Efter granskning och bekräftelsetext men FÖRE
+Radera permanent: tryck Alt+Skift+S och meddela **Skrivning till
+återhämtningsminnet blockeras**. Läsaren ska inte vara öppnad här.
+
+Vid steg 3: öppna den befintliga SQLite-läsaren i samma databas och invänta
+**Läsningen är öppen**. Tryck Alt+Skift+A och meddela **Läsaren är öppen och
+lagringen återställd** före den första verkliga raderingen. Behåll läsaren under
+väntande städning. Vid steg 4: tryck Alt+Skift+S och bekräfta blockeringen FÖRE
+navigation. Behåll den genom navigation och den fortsättning som i steg 5 inte
+får skickas.
+
+Vid steg 6: tryck Alt+Skift+A, avsluta läsaren och invänta **Läsningen är
+avslutad**. Meddela **Lagringen återställd och läsaren avslutad** FÖRE samma
+fortsättningsknapp. Behåll samma ärende, session och databas; ladda inte om
+under felkedjan. Efter sista observationen i gränssnittet: utför de separata
+efterkontrollerna, tillåt lagring och ladda om enligt den befintliga
+återställningen. Vid avbrott avslutas läsaren och samma väntande ärende slutförs
+genom UI före ny provdatabas.
+
 **Steg:**
 
-1. Försök markera lampan. Läs **Webbläsarens återhämtningsminne**;
-   lampan förblir omarkerad och sidan användbar.
-2. Tryck Alt+Skift+A, markera lampan och granska. Skriv **RADERA PERMANENT**,
-   tryck Alt+Skift+S och välj **Radera permanent**. Läs att ingen ny
-   radering startats. Granskningen och bekräftelsetexten finns kvar utan
-   identifierare för ett nytt påstått försök.
-3. Operatören öppnar SQLite-läsaren nu. Tryck Alt+Skift+A och bekräfta
-   samma granskning. Invänta verklig städning med känt försök och spärrat
-innehåll.
-4. Tryck Alt+Skift+S, besök **Översikt** och återvänd. Samma försök och
-   städning visas med separat lagringsfel. Sidan får inte säga att den
-   framgångsrika statusläsningen misslyckades.
-5. Välj **Försök slutföra raderingen**. Läs **Ingen fortsättning har
-   skickats**; ärendet förblir väntande.
-6. Tryck Alt+Skift+A. Operatören avslutar SQLite-läsaren. Välj samma
-   fortsättningsknapp och invänta slutfört resultat för samma ärende.
-   Välj **Läs in kartan på nytt → Tabell**. Lampan saknas, stolen och dess
-   privata förslag finns kvar. Operatören utför tekniska efterkontroller.
+1. Försök markera lampan. Läs **Webbläsarens återhämtningsminne**; lampan
+   förblir omarkerad och sidan användbar.
+2. Be operatören återställa lagringen och invänta bekräftelse. Markera lampan
+   och granska. Skriv **RADERA PERMANENT**. Be operatören blockera nästa lagring
+   och invänta bekräftelse. Välj **Radera permanent**. Läs att ingen ny radering
+   startats. Granskningen och bekräftelsetexten finns kvar utan identifierare
+   för ett nytt påstått försök.
+3. Be operatören öppna läsaren och återställa lagringen. Invänta båda
+   bekräftelserna och bekräfta samma granskning. Invänta verklig städning med
+   känt försök och spärrat innehåll.
+4. Be operatören blockera lagringen och invänta bekräftelse. Besök **Översikt**
+   och återvänd. Samma försök och städning visas med separat lagringsfel. Sidan
+   får inte säga att den framgångsrika statusläsningen misslyckades.
+5. Välj **Försök slutföra raderingen**. Läs **Ingen fortsättning har skickats**;
+   ärendet förblir väntande.
+6. Be operatören återställa lagringen och avsluta läsaren. Invänta båda
+   bekräftelserna. Välj samma fortsättningsknapp och invänta slutfört resultat
+   för samma ärende. Välj **Läs in kartan på nytt → Tabell**. Lampan saknas,
+   stolen och dess privata förslag finns kvar. Operatören utför tekniska
+   efterkontroller.
 
 **Förväntat resultat:**
 

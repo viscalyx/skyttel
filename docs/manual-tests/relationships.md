@@ -188,16 +188,25 @@ offers guarded editing without overwrite”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före Lägg i utkastet i UI-steg 2: kör `relationshipProbe('lost-applied')` i
+konsolen enligt Styrda avbrott. Meddela **Nästa verkliga svar tappas efter
+genomförandet**. Stäng konsolen före det vanliga fokusprovet. Ladda om efter
+avslutad kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
 1. Öppna Samband för Alex och Nytt samband. Välj Använder, Blå cykeln och
-   Osäkert uppgivet. Kör `relationshipProbe('lost-applied')` i konsolen.
-2. Välj Lägg i utkastet. Kontrollera att uppgifterna spärras och att
-   Kontrollera om ändringen lades i utkastet erbjuds. Välj kontrollen.
-3. Kontrollera Sambandet finns redan och bevarad osäkerhet. Välj
-   Redigera befintligt samband, sedan Fortsätt redigera i förlustvarningen.
-4. Välj Redigera befintligt samband igen och bekräfta förlusten. Kontrollera
-   det befintliga kända sambandet och dess målobjekt. Stäng utan att ändra det.
+   Osäkert uppgivet. Be operatören förbereda nästa tappade verkliga svar enligt
+   förberedelsen och invänta bekräftelse före inskickningen.
+2. Välj Lägg i utkastet. Kontrollera att uppgifterna spärras och att Kontrollera
+   om ändringen lades i utkastet erbjuds. Välj kontrollen.
+3. Kontrollera Sambandet finns redan och bevarad osäkerhet. Välj Redigera
+   befintligt samband, sedan Fortsätt redigera i förlustvarningen.
+4. Välj Redigera befintligt samband igen och bekräfta förlusten. Kontrollera det
+   befintliga kända sambandet och dess målobjekt. Stäng utan att ändra det.
 
 **Förväntat resultat:**
 
@@ -335,14 +344,22 @@ and restores the originating table control”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-applied')` enligt
+Styrda avbrott. Meddela **Nästa verkliga svar tappas efter genomförandet** innan
+användaren skickar. Stäng konsolen före det vanliga fokusprovet. Ladda om efter
+avslutad kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Redigera från Samband för Alex. Välj Osäkert uppgivet, kör
-   `relationshipProbe('lost-applied')` och välj Lägg i utkastet.
-2. Följ länken Blå cykeln i de befintliga sambanden. Kontrollera fokus på
-   dess uppgiftsrubrik. Öppna dess samband och välj Tillbaka två gånger.
-3. Kontrollera bevarad osäkerhet och välj Kontrollera om ändringen lades
-   i utkastet. Invänta bekräftelsen och stäng sambandsdialogen.
+1. Redigera från Samband för Alex. Välj Osäkert uppgivet, be operatören
+   förbereda det tappade svaret och invänta bekräftelse. Välj Lägg i utkastet.
+2. Följ länken Blå cykeln i de befintliga sambanden. Kontrollera fokus på dess
+   uppgiftsrubrik. Öppna dess samband och välj Tillbaka två gånger.
+3. Kontrollera bevarad osäkerhet och välj Kontrollera om ändringen lades i
+   utkastet. Invänta bekräftelsen och stäng sambandsdialogen.
 
 **Förväntat resultat:**
 
@@ -379,14 +396,24 @@ relationship retains editable values”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före dubbelklicket i UI-steg 2: kör
+`relationshipProbe('delayed-rejection')` enligt Styrda avbrott. Meddela
+**Nästa inskickning väntar före avslaget**. Efter fokusprovet, vid steg 3:
+kör `relationshipRelease()` och meddela **Avslaget är släppt**.
+Stäng konsolen före det vanliga fokusprovet. Ladda om efter avslutad
+kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Öppna Nytt samband från Alex. Välj Använder och Blå cykeln. Kör
-   `relationshipProbe('delayed-rejection')` i konsolen.
+1. Öppna Nytt samband från Alex. Välj Använder och Blå cykeln. Be operatören
+   förbereda det väntande avslaget och invänta bekräftelse.
 2. Dubbelklicka Lägg i utkastet. Prova Escape och kontrollera spärrade
-  redigeringsfält och stängningsknappar medan begäran väntar.
-3. Kör `relationshipRelease()` i konsolen. Läs avslaget och kontrollera
-   bevarade värden. Välj Lägg i utkastet igen utan styrt avslag.
+   redigeringsfält och stängningsknappar medan begäran väntar.
+3. Be operatören släppa avslaget och invänta bekräftelse. Läs avslaget och
+   kontrollera bevarade värden. Välj Lägg i utkastet igen utan styrt avslag.
 
 **Förväntat resultat:**
 
@@ -423,14 +450,24 @@ earlier successful relationship over later changes”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-applied')` enligt
+Styrda avbrott. Meddela **Nästa verkliga svar tappas efter genomförandet**.
+Behåll första fönstret medan det andra ändrar samma utkast. Stäng konsolen före
+det vanliga fokusprovet. Ladda om efter avslutad kontroll eller avbrott för att
+återställa hooken, enligt den befintliga förberedelsen. Återställ provhushållet
+mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Skapa ett känt samband Använder från Alex till Blå cykeln i första
-   fönstret. Kör `relationshipProbe('lost-applied')` före Lägg i utkastet.
-2. Öppna samma hushåll i det andra fönstret. Redigera det färdiga sambandet
-   till Osäkert uppgivet och lägg hela rättelsen i utkastet.
-3. Kontrollera det ursprungliga försöket i första fönstret. Läs beskedet
-   om ändrat aktuellt underlag och granska förslaget i det andra fönstret.
+1. Skapa ett känt samband Använder från Alex till Blå cykeln i första fönstret.
+   Be operatören förbereda tappat svar och invänta bekräftelse före Lägg i
+   utkastet.
+2. Öppna samma hushåll i det andra fönstret. Redigera det färdiga sambandet till
+   Osäkert uppgivet och lägg hela rättelsen i utkastet.
+3. Kontrollera det ursprungliga försöket i första fönstret. Läs beskedet om
+   ändrat aktuellt underlag och granska förslaget i det andra fönstret.
 
 **Förväntat resultat:**
 
@@ -603,16 +640,29 @@ safe retry and later duplicate removal is reported truthfully”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-before')`
+och meddela **Nästa inskickning stoppas före servern**. Efter det första
+kontrollerade försöket, före inskickningen i steg 3: kör
+`relationshipProbe('lost-applied')` och meddela **Nästa verkliga svar
+tappas efter genomförandet**. Använd Styrda avbrott för båda gränserna.
+Stäng konsolen före det vanliga fokusprovet. Ladda om efter avslutad
+kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Fyll Nytt samband med Använder från Alex till Blå cykeln. Kör
-   `relationshipProbe('lost-before')` och välj Lägg i utkastet.
+1. Fyll Nytt samband med Använder från Alex till Blå cykeln. Be operatören
+   förbereda stopp före servern och invänta bekräftelse. Välj Lägg i utkastet.
 2. Välj Kontrollera om ändringen lades i utkastet. Läs beskedet att ändringen
    inte lades i utkastet. Kontrollera mål och typ och skicka igen utan avbrott.
-3. Stäng dialogen och spara hela utkastet. Öppna Nytt samband med samma typ
-   och ändpunkter igen. Kör `relationshipProbe('lost-applied')` och skicka.
+3. Stäng dialogen och spara hela utkastet. Öppna Nytt samband med samma typ och
+   ändpunkter igen. Be operatören förbereda tappat verkligt svar och invänta
+   bekräftelse. Skicka sedan.
 4. Föreslå borttagning av det befintliga sambandet i andra fönstret. Kontrollera
-   dubblettförsöket i första fönstret och läs beskedet om ändring eller borttagning.
+   dubblettförsöket i första fönstret och läs beskedet om ändring eller
+   borttagning.
 
 **Förväntat resultat:**
 
@@ -760,26 +810,42 @@ focus without stealing later reading focus”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 3: kör `relationshipProbe('lost-applied')`.
+Före inskickningen i steg 4: kör `relationshipProbe('lost-applied')` igen.
+Meddela **Tappat svar förberett** före vardera inskickningen.
+Efter inskickningen i steg 4 men före kontrollknappen: installera det
+separata väntande kontrollreceptet ovan och bekräfta installationen.
+Vänta på den verkliga kontrollens hållning efter knapptryckningen.
+Behåll svaret tills användaren följt Blå cykeln och valt dess rubrikfokus.
+Först i steg 5: kör `relationshipCheckRelease()` och meddela
+**Kontrollsvaret är släppt**.
+Stäng konsolen före det vanliga fokusprovet. Ladda om efter avslutad
+kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Öppna tabellen, Samband för Alex och Nytt samband. Välj Använder och
-   Blå cykeln. Nå Lägg i utkastet med tangentbordet och skicka. Kontrollera
-   fokus på dialogens rubrik och det enda fullständiga privata sambandet.
+1. Öppna tabellen, Samband för Alex och Nytt samband. Välj Använder och Blå
+   cykeln. Nå Lägg i utkastet med tangentbordet och skicka. Kontrollera fokus på
+   dialogens rubrik och det enda fullständiga privata sambandet.
 2. Öppna nästa formulär, skriv cykel i objektsökningen och välj Avbryt
    redigeringen. Bekräfta Kasta ändringarna och fortsätt. Kontrollera
    rubrikfokus och att det tidigare förslaget finns kvar.
-3. Redigera sambandet till Osäkert uppgivet. Kör
-   `relationshipProbe('lost-applied')`, skicka och välj sedan Kontrollera om
-   ändringen lades i utkastet. Kontrollera rubrikfokus och bekräftat förslag.
-4. Redigera igen till Känt. Kör `relationshipProbe('lost-applied')` och
-   skicka. Kör förberedelsen för det väntande kontrollsvaret ovan. Välj
-   Kontrollera om ändringen lades i utkastet och följ därefter Blå cykeln
-   i läsningen medan kontrollen väntar. Kontrollera objektets rubrikfokus
-   och texten Sparade uppgifter och ditt utkast.
-5. Kör `relationshipCheckRelease()` i konsolen. Kontrollera att objektets
-   rubrik fortfarande har fokus och läs bekräftelsen. Välj Tillbaka och
-   kontrollera sambandsdialogens rubrikfokus och texten Ändringar läggs
-   i ditt utkast. Kartan sparas separat.
+3. Redigera sambandet till Osäkert uppgivet. Be operatören förbereda tappat svar
+   och invänta bekräftelse. Skicka och välj sedan Kontrollera om ändringen lades
+   i utkastet. Kontrollera rubrikfokus och bekräftat förslag.
+4. Redigera igen till Känt. Be operatören förbereda tappat svar och invänta
+   bekräftelse. Skicka. Be sedan operatören förbereda det väntande
+   kontrollsvaret och invänta installationsbekräftelse. Välj Kontrollera om
+   ändringen lades i utkastet och följ därefter Blå cykeln i läsningen medan
+   kontrollen väntar. Kontrollera objektets rubrikfokus och texten Sparade
+   uppgifter och ditt utkast.
+5. Be operatören släppa kontrollsvaret efter objektets fokusval och invänta
+   bekräftelse. Kontrollera att objektets rubrik fortfarande har fokus och läs
+   bekräftelsen. Välj Tillbaka och kontrollera sambandsdialogens rubrikfokus och
+   texten Ändringar läggs i ditt utkast. Kartan sparas separat.
 
 **Förväntat resultat:**
 
@@ -823,23 +889,32 @@ requires current-basis review before retry”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-before')` enligt
+Styrda avbrott och meddela **Nästa inskickning stoppas före servern**. Behåll
+första fönstret och dess försöksvärden medan det andra fönstret lägger Lo i
+samma utkast. Stäng konsolen före det vanliga fokusprovet. Ladda om efter
+avslutad kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
 1. I första fönstret, öppna tabellen och Samband för Alex. Välj Nytt samband,
-   Använder, Blå cykeln och Osäkert uppgivet. Kör
-   `relationshipProbe('lost-before')` och välj Lägg i utkastet.
-2. I andra fönstret, skapa Lo som Person med Nytt objekt. Välj Lägg i
-   utkastet och stäng. Kontrollera att Lo finns i ditt utkast.
-3. I första fönstret, välj Kontrollera om ändringen lades i utkastet.
-   Läs beskedet om saknad bevarad bekräftelse och ändrat utkast. Kontrollera
-   att säkerhet och objektval finns kvar och går att läsa eller ändra.
-   Lägg i utkastet är spärrat tills formuläret öppnas med aktuellt underlag.
-4. Välj Stäng samband och sedan Fortsätt redigera. Kontrollera att värdena
-   finns kvar. Anteckna de värden du vill använda. Välj Stäng samband igen
-   och Kasta ändringarna och fortsätt. Kontrollera fokus på öppningsknappen.
-5. Öppna Samband för Alex igen, välj Nytt samband och ange samma typ,
-   ändpunkter och Osäkert uppgivet efter granskning av aktuella uppgifter.
-   Välj Lägg i utkastet och kontrollera bekräftelsen.
+   Använder, Blå cykeln och Osäkert uppgivet. Be operatören förbereda stopp före
+   servern och invänta bekräftelse. Välj Lägg i utkastet.
+2. I andra fönstret, skapa Lo som Person med Nytt objekt. Välj Lägg i utkastet
+   och stäng. Kontrollera att Lo finns i ditt utkast.
+3. I första fönstret, välj Kontrollera om ändringen lades i utkastet. Läs
+   beskedet om saknad bevarad bekräftelse och ändrat utkast. Kontrollera att
+   säkerhet och objektval finns kvar och går att läsa eller ändra. Lägg i
+   utkastet är spärrat tills formuläret öppnas med aktuellt underlag.
+4. Välj Stäng samband och sedan Fortsätt redigera. Kontrollera att värdena finns
+   kvar. Anteckna de värden du vill använda. Välj Stäng samband igen och Kasta
+   ändringarna och fortsätt. Kontrollera fokus på öppningsknappen.
+5. Öppna Samband för Alex igen, välj Nytt samband och ange samma typ, ändpunkter
+   och Osäkert uppgivet efter granskning av aktuella uppgifter. Välj Lägg i
+   utkastet och kontrollera bekräftelsen.
 
 **Förväntat resultat:**
 
@@ -885,21 +960,31 @@ same-owner relationship proposal”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-before')` enligt
+Styrda avbrott och meddela **Nästa inskickning stoppas före servern**. Behåll
+första fönstret och dess gamla redigering medan den andra klienten ändrar samma
+samband och lägger ett oberoende förslag. Stäng konsolen före det vanliga
+fokusprovet. Ladda om efter avslutad kontroll eller avbrott för att återställa
+hooken, enligt den befintliga förberedelsen. Återställ provhushållet mellan
+fall, aldrig under kontrollen.
+
 **Steg:**
 
 1. I första fönstret, öppna tabellen, Samband för Alex och Redigera samband.
-   Ändra säkerheten till Osäkert uppgivet. Kör
-   `relationshipProbe('lost-before')` och välj Lägg i utkastet.
+   Ändra säkerheten till Osäkert uppgivet. Be operatören förbereda stopp före
+   servern och invänta bekräftelse. Välj Lägg i utkastet.
 2. I andra fönstret, redigera samma samband till Obesvarad identitetsfråga och
-   lägg i utkastet. Kontrollera att inget identifierat målobjekt anges.
-   Stäng sambandsdialogen, skapa Lo som Person och lägg även det i utkastet.
+   lägg i utkastet. Kontrollera att inget identifierat målobjekt anges. Stäng
+   sambandsdialogen, skapa Lo som Person och lägg även det i utkastet.
 3. I första fönstret, välj Kontrollera om ändringen lades i utkastet.
-   Kontrollera beskedet om saknad bevarad bekräftelse och ändrat utkast.
-   Det försökta formuläret visar fortfarande Osäkert uppgivet och Blå cykeln.
-   Lägg i utkastet och Föreslå borttagning är spärrade.
-4. Välj Stäng samband och Fortsätt redigera. Kontrollera att de försökta
-   värdena finns kvar. Välj Stäng samband igen och bekräfta Kasta ändringarna
-   och fortsätt. Öppna Samband för Alex och Redigera samband igen.
+   Kontrollera beskedet om saknad bevarad bekräftelse och ändrat utkast. Det
+   försökta formuläret visar fortfarande Osäkert uppgivet och Blå cykeln. Lägg i
+   utkastet och Föreslå borttagning är spärrade.
+4. Välj Stäng samband och Fortsätt redigera. Kontrollera att de försökta värdena
+   finns kvar. Välj Stäng samband igen och bekräfta Kasta ändringarna och
+   fortsätt. Öppna Samband för Alex och Redigera samband igen.
 5. Läs det aktuella formuläret: säkerheten är Obesvarad identitetsfråga och
    ingen väljare för Till objekt visas. Skicka eller ta inte bort något.
 

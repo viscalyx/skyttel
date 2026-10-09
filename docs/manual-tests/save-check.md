@@ -59,6 +59,21 @@ SPARKONTROLL-01.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Använd [leveranskontrollen](save-preparation.md#samtals--och-kontrollsvar)
+i den befintliga provinstallationen. Efter UI-steg 1 kräver operatören det
+verkliga sparandets status
+200 före det tappade kvittot och inväntar `held-before session-recover`.
+Meddela **Kontrollen hålls före servern**. Först efter observationerna
+och oskickad text i steg 2–3: släpp `session-recover` i konsolen med
+`skyttelSaveDelivery.release('session-recover')`. Meddela **Kontrollen
+är släppt** utan att skicka ett nytt sparuppdrag.
+
+Använd samma provdatabas och session under fallet. Återställ kontrollen enligt
+den länkade förberedelsen efter sista observationen; avsluta först när det
+väntande utfallet är känt. Inga verkliga leverantörsanrop ingår.
+
 **Steg:**
 
 1. Skriv Spara hela utkastet. och välj Skicka. Släpp modellresultatet enligt
@@ -67,9 +82,8 @@ SPARKONTROLL-01.
    uppdrag utan att skicka.
 3. Kontrollera spärrad Skicka. Aktivera den nåbara mikrofonknappen: den ska
    förklara att den inte är tillgänglig nu och förbli av. Ingen ny röst startar.
-4. Släpp `session-recover` i konsolen. Läs förklaringen i samtalstexten och
-   kontrollera
-   att nytt arbete blir möjligt.
+4. Be operatören släppa den hållna kontrollen och invänta bekräftelse. Läs
+   förklaringen i samtalstexten och kontrollera att nytt arbete blir möjligt.
 5. Läs det enda sparandet för Lo Exempel i Rapporter → Ändringshistorik.
 
 **Förväntat resultat:**
@@ -170,17 +184,35 @@ SPARKONTROLL-07.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Använd [leveranskontrollen](save-preparation.md#samtals--och-kontrollsvar)
+i den befintliga provinstallationen. Efter det första kontrollfelet i UI-steg 2,
+före Enter i steg 3:
+ta bort den beständiga nätblockeringen, installera konsolkontrollen igen
+och arma `recover:after` med `skyttelSaveDelivery.arm('recover', 'after')`.
+Meddela **Nästa kontroll håller sitt genomförda svar** och stäng
+utvecklarverktygen. Efter Enter: invänta `application-completed recover`
+med status 200 och `held-after recover`; meddela **Kontrollsvaret hålls**.
+Efter användarens kontrollnotis, avstängda mikrofon och aktuella fokus:
+kör `skyttelSaveDelivery.release('recover')` och meddela **Kontrollen
+är släppt**. Inget nytt medgivande eller modelluppdrag används.
+
+Använd samma provdatabas och session under fallet. Återställ kontrollen enligt
+den länkade förberedelsen efter sista observationen; avsluta först när det
+väntande utfallet är känt. Inga verkliga leverantörsanrop ingår.
+
 **Steg:**
 
-1. Förbered ett registrerat försök och aktivera beständig nätblockering
-   enligt förberedelsen. Kör restart och ladda om utan nytt samtalsmedgivande.
-2. Vänta på Skyttel kunde
-   inte kontrollera om utkastet sparades. Kontrollera den enda
-   återförsöksknappen.
-3. Ta bort blockeringen. Installera konsolkontrollen igen och arma
-   `recover:after`. Tabba till Kontrollera om utkastet sparades och tryck Enter.
-   Läs kontrollnotisen utan återförsöksknapp och med mikrofon av. Släpp
-   kontrollsvaret.
+1. Förbered ett registrerat försök och aktivera beständig nätblockering enligt
+   förberedelsen. Kör restart och ladda om utan nytt samtalsmedgivande.
+2. Vänta på Skyttel kunde inte kontrollera om utkastet sparades. Kontrollera den
+   enda återförsöksknappen.
+3. Be operatören förbereda nästa kontroll och invänta bekräftelse. Tabba till
+   Kontrollera om utkastet sparades och tryck Enter. Invänta beskedet att
+   kontrollsvaret hålls. Läs kontrollnotisen utan återförsöksknapp och med
+   mikrofon av. Be därefter operatören släppa kontrollsvaret och invänta
+   bekräftelse.
 4. Läs det enda kvittot för Lo Exempel i Rapporter → Ändringshistorik.
 5. Återgå till arbetet, öppna textsamtalet och godkänn vanligt medgivande om det
    behövs. Läs kontrollens enda förklaring.
@@ -226,18 +258,37 @@ SPARKONTROLL-03.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Använd [leveranskontrollen](save-preparation.md#samtals--och-kontrollsvar)
+i den befintliga provinstallationen. Före vardera Skicka i UI-steg 2 och 5: arma
+`message:drop-after`
+med `skyttelSaveDelivery.arm('message', 'drop-after')` och meddela
+**Nästa mottagna uppdrags svar tappas**. Arma `message:drop-after` igen för det
+andra uppdraget. Efter vardera Skicka: invänta dess verkliga hållna
+modellanrop och avsluta med `reply REQUEST Utkastet är kvar.`; använd
+inget sparverktyg. Kräv `application-completed message` med status 202
+för det mottagna uppdraget och meddela **Uppdraget mottaget, svaret
+tappat och modelltexten levererad utan sparande**. Behåll mikrofonvalet
+och följ fallets separata syntetiska ljudförberedelse.
+
+Använd samma provdatabas och session under fallet. Återställ kontrollen enligt
+den länkade förberedelsen efter sista observationen; avsluta först när det
+väntande utfallet är känt. Inga verkliga leverantörsanrop ingår.
+
 **Steg:**
 
 1. Öppna textsamtalet och behåll mikrofonen av.
-2. Arma `message:drop-after`. Skriv Spara hela utkastet. och välj Skicka.
-   Avsluta modellens anrop med `reply REQUEST Utkastet är kvar.`; använd inget
-   sparverktyg.
+2. Be operatören förbereda första uppdragets tappade svar och invänta
+   bekräftelse. Skriv Spara hela utkastet. och välj Skicka. Be operatören
+   avsluta det verkliga modellanropet utan sparverktyg och invänta bekräftelse.
 3. Läs Kontrollen visar att utkastet inte sparades. Dina osparade ändringar
    ligger kvar. Kontrollera en enda sådan samtalsrad.
-4. Läs samma förklaring i samtalstexten. Slå på
-   mikrofonen; det gamla svaret ska inte skickas till rösten.
-5. Arma `message:drop-after` igen. Skicka Kontrollera ett nytt uppdrag. och
-   svara med samma syntetiska modelltext. Kräv två separata kontrollförklaringar
+4. Läs samma förklaring i samtalstexten. Slå på mikrofonen; det gamla svaret ska
+   inte skickas till rösten.
+5. Be operatören förbereda nästa tappade svar och invänta bekräftelse. Skicka
+   Kontrollera ett nytt uppdrag. Be operatören leverera samma syntetiska
+   modelltext och invänta bekräftelse. Kräv två separata kontrollförklaringar
    totalt.
 6. Läs Lo Exempel i hela Utkastet och tom Ändringshistorik i Rapporter.
 
@@ -285,19 +336,38 @@ Operatören förbereder tyst svarstext och fjärrljud enligt
 [syntetiskt kontrollsvar](save-preparation.md#syntetiskt-kontrollsvar).
 Detta underlag verifierar inte fysisk fångst eller hörbar uppläsning.
 
+**Separat operatörsförberedelse:**
+
+Använd [leveranskontrollen](save-preparation.md#samtals--och-kontrollsvar)
+i den befintliga provinstallationen. Före vardera Skicka i UI-steg 2 och 5: arma
+`message:drop-after`
+med `skyttelSaveDelivery.arm('message', 'drop-after')` och meddela
+**Nästa mottagna uppdrags svar tappas**. Arma `message:drop-after` igen för det
+andra uppdraget. Efter vardera Skicka: invänta dess verkliga hållna
+modellanrop och avsluta med `reply REQUEST Utkastet är kvar.`; använd
+inget sparverktyg. Kräv `application-completed message` med status 202
+för det mottagna uppdraget och meddela **Uppdraget mottaget, svaret
+tappat och modelltexten levererad utan sparande**. Behåll mikrofonvalet
+och följ fallets separata syntetiska ljudförberedelse.
+
+Använd samma provdatabas och session under fallet. Återställ kontrollen enligt
+den länkade förberedelsen efter sista observationen; avsluta först när det
+väntande utfallet är känt. Inga verkliga leverantörsanrop ingår.
+
 **Steg:**
 
 1. Öppna textsamtalet och slå på mikrofonen med Prata med Skyttel.
-2. Arma `message:drop-after`. Skriv Spara hela utkastet. och välj Skicka.
-   Avsluta modellens anrop med `reply REQUEST Utkastet är kvar.`; använd inget
-   sparverktyg.
+2. Be operatören förbereda första uppdragets tappade svar och invänta
+   bekräftelse. Skriv Spara hela utkastet. och välj Skicka. Be operatören
+   avsluta det verkliga modellanropet utan sparverktyg och invänta bekräftelse.
 3. Läs Kontrollen visar att utkastet inte sparades. Dina osparade ändringar
    ligger kvar. Kontrollera en enda sådan samtalsrad.
 4. Låt operatören leverera syntetisk svarstext och hålla fjärrljud enligt
-   separat förberedelse. Läs Skyttel talar. Låt operatören stoppa signalen
-   och läs Lyssnar utan Sparat-symbol.
-5. Arma `message:drop-after` igen. Skicka Kontrollera ett nytt uppdrag. och
-   svara med samma syntetiska modelltext. Kräv två separata kontrollförklaringar
+   separat förberedelse. Läs Skyttel talar. Låt operatören stoppa signalen och
+   läs Lyssnar utan Sparat-symbol.
+5. Be operatören förbereda nästa tappade svar och invänta bekräftelse. Skicka
+   Kontrollera ett nytt uppdrag. Be operatören leverera samma syntetiska
+   modelltext och invänta bekräftelse. Kräv två separata kontrollförklaringar
    totalt.
 6. Läs Lo Exempel i hela Utkastet och tom Ändringshistorik i Rapporter.
 
@@ -561,17 +631,38 @@ SPARKONTROLL-09.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Använd [leveranskontrollen](save-preparation.md#samtals--och-kontrollsvar)
+i den befintliga provinstallationen. Före bekräftelsen av Återkalla i UI-steg 3:
+arma `revoke:drop-after`
+och `recover:after` med `skyttelSaveDelivery.arm('revoke', 'drop-after')`
+och `skyttelSaveDelivery.arm('recover', 'after')`. Meddela **Återkallande
+och kontroll är förberedda**. Efter bekräftelsen krävs återkallandets
+verkliga status 200 före tappat svar. Invänta därefter det genomförda
+kontrollsvarets status 200 och `held-after recover`; meddela
+**Återkallandet är genomfört och kontrollsvaret hålls**. Först efter
+återgången till kartan och mikrofonkontrollen i steg 4: kör
+`skyttelSaveDelivery.release('recover')` och meddela **Kontrollen är
+släppt**. Jämför ursprungligt försök och enda kvitto separat som tidigare.
+
+Använd samma provdatabas och session under fallet. Återställ kontrollen enligt
+den länkade förberedelsen efter sista observationen; avsluta först när det
+väntande utfallet är känt. Inga verkliga leverantörsanrop ingår.
+
 **Steg:**
 
 1. Skriv Spara hela utkastet. och släpp modellen enligt förberedelsen. Vänta på
    kontrollfelet, med ursprungligt försök ännu väntande.
 2. Skriv Text som inte har skickats. Öppna Inställningar → Samtal med Skyttel
    och välj Återkalla medgivandet.
-3. Arma `revoke:drop-after` och `recover:after`. Bekräfta Återkalla och avsluta
-   samtalet. Kontrollera att mikrofonknappen visar av.
+3. Be operatören förbereda återkallandets tappade svar och hållna kontroll.
+   Invänta bekräftelse. Bekräfta Återkalla och avsluta samtalet. Kontrollera att
+   mikrofonknappen visar av.
 4. Gå tillbaka till kartan. Läs kontrollnotisen och försök använda
-   mikrofonknappen; ingen ny fångst eller medgivanderuta ska starta. Släpp
-   kontrollsvaret.
+   mikrofonknappen; ingen ny fångst eller medgivanderuta ska starta. Invänta
+   operatörens besked att kontrollsvaret hålls. Be sedan operatören släppa det
+   och invänta bekräftelse.
 5. Läs det enda genomförda sparandet för Lo i Rapporter.
 6. Återgå, öppna textsamtalet och godkänn nytt medgivande. Läs kvarvarande
    oskickad text och kontrollens enda förklaring.

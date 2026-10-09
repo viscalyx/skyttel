@@ -236,20 +236,31 @@ focus until complete staging”.
 testfallet “IKON-05: rejected and lost complete icon staging preserve the
 local choice and recover one proposal”.
 
+**Separat operatörsförberedelse:**
+
+Följ KARTA-17:s befintliga kontroll för avslag och KARTA-18:s transport.
+Efter inskickningen i UI-steg 2: invänta hållningen och kör
+`releaseObjectStage()` i konsolen. Meddela **Avslaget är släppt**.
+Inför nästa tillägg i steg 3: armera `stage:drop-after` och meddela
+**Nästa verkliga tillägg får tappat svar**. Kräv faktiskt lyckat
+genomförande separat innan användaren kontrollerar det okända utfallet.
+Stäng konsolen inför tangentbordsprovet och återställ HTTPS-ingången
+före `quit` enligt de befintliga förberedelserna.
+
 **Steg:**
 
-1. Välj **Nytt objekt**, skriv Lo och Bevarad ikontext. Öppna **Livscykel
-   och utseende**, sök cykel och välj Cykel med Enter.
-2. Förbered avvisningen enligt KARTA-17. Aktivera **Lägg i utkastet
-   och stäng** med Enter. Släpp svaret med `releaseObjectStage()` i
-   konsolen. Vänta på det synliga avslaget och kontrollera text och
-   ikonmarkering.
-3. Förbered transporten enligt KARTA-18 och armera
-   `stage:drop-after` före nästa tillägg. Försök igen och
-   läs beskedet om okänt utfall. Kontrollera att vanligt tillägg är spärrat.
+1. Välj **Nytt objekt**, skriv Lo och Bevarad ikontext. Öppna **Livscykel och
+   utseende**, sök cykel och välj Cykel med Enter.
+2. Be operatören förbereda avvisningen enligt KARTA-17 och invänta
+   installationen. Aktivera **Lägg i utkastet och stäng** med Enter. Be
+   operatören släppa samma avslag enligt förberedelsen och invänta bekräftelse.
+   Vänta på det synliga avslaget och kontrollera text och ikonmarkering.
+3. Be operatören förbereda nästa tappade svar enligt KARTA-18 och invänta
+   bekräftelse före nästa tillägg. Försök igen och läs beskedet om okänt utfall.
+   Kontrollera att vanligt tillägg är spärrat.
 4. Fokusera **Kontrollera om ändringen lades i utkastet** och tryck Enter.
-   Granska utkastet och historiken. Återställ HTTPS-ingången innan
-   transporten avslutas med `quit`.
+   Granska utkastet och historiken. Be operatören återställa HTTPS-ingången och
+   avsluta transporten enligt förberedelsen. Invänta bekräftelse.
 
 **Förväntat resultat:**
 

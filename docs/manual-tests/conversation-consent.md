@@ -227,17 +227,30 @@ andra medlemmar”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före den andra inloggningen i UI-steg 3: kör `identity alex` i
+den befintliga startguiden och meddela **Alex testidentitet är vald**.
+Behåll den första verifierade profilen och hushållet. Robins separat
+inbjudna profil har fortfarande sin egen identitet och sitt eget
+medgivande; samma visningsnamn ger inte gemensamt medgivande.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Som Alex, välj **Skriv till Skyttel → Nytt samtal**, markera
-   **Fråga inte igen för det här hushållet** och välj **Godkänn och starta**.
-2. Ladda om sidan och välj **Prata med Skyttel**. Samtalet ska starta
-   direkt med mikrofonen.
-3. Kör `identity alex`. Logga in som Alex i ytterligare en webbläsarprofil,
-   som en andra enhet. Välj **Skriv till Skyttel → Nytt samtal**;
-   samtalet ska starta direkt.
-4. Som Robin, välj **Skriv till Skyttel → Nytt samtal**.
-   Medgivanderutan ska visas med omarkerad kryssruta. Välj **Avbryt**.
+1. Som Alex, välj **Skriv till Skyttel → Nytt samtal**, markera **Fråga inte
+   igen för det här hushållet** och välj **Godkänn och starta**.
+2. Ladda om sidan och välj **Prata med Skyttel**. Samtalet ska starta direkt med
+   mikrofonen.
+3. Be operatören förbereda Alex andra inloggning och invänta bekräftelse. Logga
+   in som Alex i ytterligare en webbläsarprofil, som en andra enhet. Välj
+   **Skriv till Skyttel → Nytt samtal**; samtalet ska starta direkt.
+4. Som Robin, välj **Skriv till Skyttel → Nytt samtal**. Medgivanderutan ska
+   visas med omarkerad kryssruta. Välj **Avbryt**.
 
 **Förväntat resultat:**
 
@@ -901,21 +914,38 @@ testfallet “MEDGIVANDE-15: återkallandet behåller utkast och oskickad text�
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Efter verklig Skicka i UI-steg 2: invänta det hållna uppdraget
+och meddela **Samma gamla uppdrag hålls**. Behåll dess ID genom
+användarens oskickade text, Escape, Avbryt och faktiska återkallande.
+Först i steg 5: kör `reply ID För sent efter återkallandet.` med
+just det gamla ID:t och meddela **Samma gamla svar är släppt**.
+Efter nytt godkännande och verklig Börja om i steg 6: invänta det
+nya uppdraget och kör `reply ID Ett nytt samtal.` med dess eget
+aktuella ID. Meddela **Det nya samtalets svar är släppt**.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Välj **Skriv till Skyttel → Nytt samtal** och **Godkänn och starta**.
-   Vänta på textvyn. Slå på mikrofonen med **Prata med Skyttel**.
-2. Skicka **Tillfälligt provord för återkallandet.**. Låt terminalens
-   förfrågan vänta. Skriv **Min oskickade text.** utan att skicka.
-3. Öppna **Inställningar**, sidan **Samtal med Skyttel**, och välj
-   **Återkalla medgivandet**. Läs rutan. Stäng med Escape. Öppna igen
-   och välj **Avbryt**. Kontrollera fokus efter båda handlingarna.
+1. Välj **Skriv till Skyttel → Nytt samtal** och **Godkänn och starta**. Vänta
+   på textvyn. Slå på mikrofonen med **Prata med Skyttel**.
+2. Skicka **Tillfälligt provord för återkallandet.**. Invänta operatörens
+   bekräftelse att samma gamla uppdrag hålls. Skriv **Min oskickade text.** utan
+   att skicka.
+3. Öppna **Inställningar**, sidan **Samtal med Skyttel**, och välj **Återkalla
+   medgivandet**. Läs rutan. Stäng med Escape. Öppna igen och välj **Avbryt**.
+   Kontrollera fokus efter båda handlingarna.
 4. Öppna rutan igen och välj **Återkalla och avsluta samtalet**.
-5. Släpp det gamla svaret med `reply ID För sent efter återkallandet.`.
-   Välj **Tillbaka till kartan**. Kontrollera utkastet.
-6. Välj **Skriv till Skyttel → Nytt samtal** och godkänn igen. Läs
-   skrivfältet och samtalstexten. Skicka **Börja om.** och släpp svaret med
-   `reply ID Ett nytt samtal.`.
+5. Be operatören släppa samma gamla svar efter återkallandet och invänta
+   bekräftelse. Välj **Tillbaka till kartan**. Kontrollera utkastet.
+6. Välj **Skriv till Skyttel → Nytt samtal** och godkänn igen. Läs skrivfältet
+   och samtalstexten. Skicka **Börja om.** och be operatören släppa just det nya
+   samtalets svar och invänta bekräftelse.
 
 **Förväntat resultat:**
 

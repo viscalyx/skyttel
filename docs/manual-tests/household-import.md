@@ -129,46 +129,74 @@ attempts and permits ordinary corrections after restart”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Använd de befintliga separata recepten **Fånga nästa sparbegäran**, **Prova båda
+gamla sparbegärandena** och rensningen nedan, i profil A på samma ursprung och i
+samma flik. Behåll deras exakta kod och `sessionStorage` genom omladdningen;
+kopiera inga inloggningsuppgifter.
+
+1. Före det verkliga bildsparandet i UI-steg 2: kör fångstkoden med
+   `image` och meddela **Nästa bildsparande fångas**. Efter användarens
+   Spara: invänta kvittot och **IMPORT-06: image sparat**. Meddela
+   **Bildsparandet är fångat och bekräftat**.
+2. Före det senare verkliga sparandet i steg 4: kör samma fångstkod
+   med `later` och meddela **Nästa senare sparande fångas med tappat
+   svar**. Efter Spara: kräv **IMPORT-06: later sparat**, som receptet
+   ger först efter lyckat riktigt sparkvitto. Meddela **Samma senare
+   sparande är genomfört och dess svar tappat**. Vanligt offline är
+   inte denna gräns. Stäng konsolen inför den vanliga UI-läsningen.
+3. Efter återimport och samma-databas-omstart i steg 6, före den nya
+   rättelsen: kör **Prova båda gamla sparbegärandena** i samma flik.
+   Jämför båda avvisningarna och oförändrad karta, privata utkast och
+   historik enligt receptet. Meddela **Båda gamla begärandena avvisas
+   utan ändring** innan användaren fortsätter den vanliga läsningen.
+4. Efter den nya rättelsens sista omstart och läsning, vid steg 8:
+   kör den befintliga rensningskoden och meddela **Fångade
+   testbegäranden är rensade**. Stäng profilerna och städa bara
+   provinstallationen enligt den befintliga guiden.
+
 **Steg:**
 
-1. I profil A: skapa två objekt med namnet **Lo Exempel** som föreställer
-   samma påhittade person. Spara ett samband från det andra objektet med
-   okänd målpunkt. Placera objekten på två igenkännliga platser i rymdkartan.
-2. Lägg den första provbilden på det andra objektet och spara den.
-   Lägg sedan samma provbild på det första objektet som ett vanligt
-   bildförslag. Kör **Fånga nästa sparbegäran** nedan och ange `image`.
-   Spara utkastet och invänta kvittot samt **IMPORT-06: image sparat**.
-3. Lägg den andra provbilden som privat bildförslag på det första objektet.
-   Låt förslaget vara osparat. Hämta en fullständig export i
-   **Inställningar → Fullständig export** och behåll ZIP-filen privat.
-4. I profil A: skapa **Senare objekt** och lägg det i utkastet. Kör samma
-   fångstkod igen, ange `later` och välj **Spara hela utkastet**. Kontrollera
-   konsolbeskedet **IMPORT-06: later sparat** och gränssnittets
-   **Sparandet kunde inte bekräftas**. Välj inte att hämta kvittot igen.
-   I profil B:
-   öppna aktuell karta och kontrollera att **Senare objekt** finns; det
-   visar att servern sparade innan svaret försvann. Börja skriva ett nytt
-   objektförslag, men låt formuläret vara öppet utan att skicka det.
-5. Öppna en andra flik i profil B och gå till
-   **Inställningar → Återimportera hushållet**. Välj exporten
-   från steg 3, granska rätt hushåll och bekräfta ersättningen. Försök sedan
-   lägga den första flikens gamla öppna objektförslag i utkastet, innan
-   servern startas om. Kontrollera att förslaget avvisas och inte syns i
-   aktuell karta eller historik. Läs in aktuell karta när klienten begär det.
-6. Starta om servern med samma databas enligt utvecklingsguiden. Ladda om
-   profil A och B. Kontrollera kartan med båda objekten, den privata andra
-   bilden och det ursprungliga bildkvittot. **Senare objekt**
-   ska saknas. Kör **Prova båda gamla sparbegärandena** nedan i profil A,
-   på samma ursprung och i samma flik som fångstkodens båda körningar.
-   Omladdning behåller de fångade uppgifterna. Redovisa denna tekniska
-   kontroll separat enligt förberedelsen. Läs sedan karta och historik
-   igen; inga äldre försök får ha återinfört senare innehåll.
-7. I profil B: kasta det återställda privata bildförslaget. Ändra
-   beskrivningen på det andra objektet till **Ny vanlig rättelse**, lägg
-   förslaget i utkastet och spara. Starta om och kontrollera båda objektens
-   bilder, samband, beskrivningar och personliga placeringar.
-8. Ta bort konsolens två sparade testbegäranden genom den sista kodraden
-   nedan. Stäng testprofilerna och följ provmiljöns städning efter fallet.
+1. I profil A: skapa två objekt med namnet **Lo Exempel** som föreställer samma
+   påhittade person. Spara ett samband från det andra objektet med okänd
+   målpunkt. Placera objekten på två igenkännliga platser i rymdkartan.
+2. Lägg den första provbilden på det andra objektet och spara den. Lägg sedan
+   samma provbild på det första objektet som ett vanligt bildförslag. Be
+   driftansvarig förbereda fångst av nästa bildsparande och invänta
+   installationsbekräftelse. Spara utkastet och invänta kvittot samt
+   driftansvarigs bekräftelse av fångsten.
+3. Lägg den andra provbilden som privat bildförslag på det första objektet. Låt
+   förslaget vara osparat. Hämta en fullständig export i **Inställningar →
+   Fullständig export** och behåll ZIP-filen privat.
+4. I profil A: skapa **Senare objekt** och lägg det i utkastet. Be driftansvarig
+   förbereda fångst av nästa senare sparande och invänta installationen. Välj
+   **Spara hela utkastet**. Invänta driftansvarigs bekräftelse av verkligt
+   genomfört sparande med tappat svar och kontrollera gränssnittets **Sparandet
+   kunde inte bekräftas**. Välj inte att hämta kvittot igen. I profil B: öppna
+   aktuell karta och kontrollera att **Senare objekt** finns; det visar att
+   servern sparade innan svaret försvann. Börja skriva ett nytt objektförslag,
+   men låt formuläret vara öppet utan att skicka det.
+5. Öppna en andra flik i profil B och gå till **Inställningar → Återimportera
+   hushållet**. Välj exporten från steg 3, granska rätt hushåll och bekräfta
+   ersättningen. Försök sedan lägga den första flikens gamla öppna objektförslag
+   i utkastet, innan servern startas om. Kontrollera att förslaget avvisas och
+   inte syns i aktuell karta eller historik. Läs in aktuell karta när klienten
+   begär det.
+6. Starta om servern med samma databas enligt utvecklingsguiden. Ladda om profil
+   A och B. Kontrollera kartan med båda objekten, den privata andra bilden och
+   det ursprungliga bildkvittot. **Senare objekt** ska saknas. Be driftansvarig
+   utföra den separata kontrollen av båda gamla sparbegärandena i samma profil
+   och flik. Invänta bekräftelse att båda är avvisade med bevarade uppgifter,
+   före den nya rättelsen. Läs sedan karta och historik igen; inga äldre försök
+   får ha återinfört senare innehåll.
+7. I profil B: kasta det återställda privata bildförslaget. Ändra beskrivningen
+   på det andra objektet till **Ny vanlig rättelse**, lägg förslaget i utkastet
+   och spara. Starta om och kontrollera båda objektens bilder, samband,
+   beskrivningar och personliga placeringar.
+8. Be driftansvarig rensa de två lokalt fångade begärandena enligt förberedelsen
+   och invänta bekräftelse. Stäng testprofilerna och följ provmiljöns städning
+   efter fallet.
 
 **Fånga nästa sparbegäran:**
 
@@ -1198,13 +1226,41 @@ exact review and confirmed server result”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ [IMPORT-21: förberedelse 1](household-recovery-console.md#import-21-förberedelse-1)
+med samma flik, valda ZIP-fil och hushåll genom hela felkedjan.
+Efter filvalet, före första Kontrollera importfil i UI-steg 1:
+installera det oförändrade utdraget och meddela **Borttagning ur
+importens återhämtningsminne blockeras**. Utdragets initiala läge är
+blockerad borttagning. Stäng utvecklarverktygen före filkontrollen.
+
+Före den andra filkontrollen i steg 2: tryck Alt+Skift+A och sedan
+Alt+Skift+S. Meddela **Lagringen återställd, sedan skrivning blockerad**.
+Behåll skrivfelet genom den verkliga färdiga granskningen och första
+Ersätt hushållets innehåll i steg 3; den ersättningen får inte starta.
+Återställ inte under läsningen av samma granskning och identifierare.
+
+Före ersättningen i steg 4: tryck Alt+Skift+A och sedan Alt+Skift+R.
+Meddela **Lagringen återställd, sedan borttagning blockerad**. Nu går
+den verkliga ersättningen igenom, med bekräftat resultat och separat
+lagringsfel. Ett saknat serversvar ersätter inte den här gränsen.
+
+Före Hämta importens status i steg 5: tryck Alt+Skift+A och meddela
+**Importens lagring är återställd**. Kontrollera samma kända slutförda
+import, inte en ny filkontroll eller ersättning. Ladda om efter sista
+innehållsläsningen för att återställa de vanliga lagringsfunktionerna;
+städa sedan provinstallationen och den privata ZIP-filen enligt guiden.
+
 **Steg:**
 
-1. Välj **Kontrollera importfil**. Läs meddelandet om
+1. Invänta operatörens bekräftelse av den installerade blockeringen.
+   Välj **Kontrollera importfil**. Läs meddelandet om
    **Webbläsarens återhämtningsminne**. Den valda filen och den användbara
    knappen ska finnas kvar; sidan får inte fastna i **Behandlar importen**.
    Kontrollera i den andra profilen att **Senare namn** finns kvar.
-2. Tryck Alt+Skift+A och sedan Alt+Skift+S. Välj
+2. Be operatören återställa lagringen och sedan blockera skrivning.
+   Invänta bekräftelse. Välj
    **Kontrollera importfil** igen. En verklig granskning med identifierare
    ska visas. Lagringsfelet visas separat; filkontrollens svar saknas inte.
 3. Markera **Jag vill ersätta allt hushållsinnehåll** och välj
@@ -1212,11 +1268,13 @@ exact review and confirmed server result”.
    **Senare namn** finns kvar i kartan. Välj **Hämta importens status**;
    samma identifierare och
    granskning ska återkomma.
-4. Tryck Alt+Skift+A och sedan Alt+Skift+R. Välj
+4. Be operatören återställa lagringen och sedan blockera borttagning.
+   Invänta bekräftelse. Välj
    **Ersätt hushållets innehåll**. Nu ska den verkliga ersättningen
    slutföras. Bekräftelsen **Hushållets innehåll är ersatt** ska visas
    tillsammans med det separata lagringsfelet. Det är inte ett okänt utfall.
-5. Tryck Alt+Skift+A och välj **Hämta importens status**.
+5. Be operatören återställa lagringen och invänta bekräftelse. Välj
+   **Hämta importens status**.
    Lagringsfelet ska försvinna och samma slutförda resultat finnas kvar.
    Välj **Läs in det återställda hushållet** och kontrollera
    **Lampan i exporten**. Ingen andra filkontroll eller ersättning ska ske.

@@ -639,6 +639,17 @@ och sambandets ID från kartans publika HTTP-svar.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Anteckna objektets och sambandets ID från kartans publika HTTP-svar enligt
+förutsättningarna och allmän Network-förberedelse. Efter det verkliga sparandet
+i UI-steg 3: jämför de nya publika svarens exakta ID med de ursprungliga.
+Meddela **Samma cykel och samband är bevarade** först efter båda jämförelserna.
+Detta är separat protokollunderlag;
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts) behåller sina
+exakta identitetskontroller. Behåll samma hushåll och provdatabas genom
+omstarterna och återställ enligt allmän förberedelse.
+
 **Steg:**
 
 1. Öppna Alex blå cykel och välj Motorfordon som **Objekttyp**. Kontrollera
@@ -649,7 +660,9 @@ och sambandets ID från kartans publika HTTP-svar.
    **Lägg i utkastet och stäng**.
    Granska båda typerna, gamla och nya Nummer samt obesvarat Försäkrad.
 3. Starta om installationen och ladda om. Kontrollera samma privata
-   förslag. Spara hela utkastet och kontrollera cykelns och sambandets ID.
+   förslag. Spara hela utkastet. Öppna cykeln och läs Motorfordon, Nummer 42,
+   obesvarat Försäkrad och sambandet till Garaget. Invänta operatörens
+   bekräftelse att samma objekt och samband har bevarats.
 4. Byt typdefinitionens namn från Cykel till Trampcykel och dess fältnamn
    till Tidigare Nummer och Tidigare Försäkrad. Spara. Starta om och öppna
    **Rapporter**. Välj **Visa ändringarna** vid typbytet från Cykel

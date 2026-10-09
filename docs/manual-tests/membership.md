@@ -299,16 +299,25 @@ MEDLEM-07, båda leveransgränserna i samma återhämtningsflöde.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Operatören tar bort acceptansblockeringen och kör konsolskriptet i Robins profil
+vid UI-steg 3, före den nya acceptansen. Meddela **Nästa acceptans går till
+servern, men dess svar tappas** efter installationen. Använd den befintliga
+separata förberedelsen ovan; behåll dess verkliga genomförande och
+återställning. Stäng konsolen före den vanliga UI-kontrollen.
+
 **Steg:**
 
-1. Ange koden i **Inbjudningskod** och välj **Acceptera inbjudan** medan
-   begäran är blockerad. Läs felet och kontrollera att koden finns kvar.
-2. Välj **Kontrollera tillgång**. Kontrollera att sidan fortfarande visar
-   **Du har inte tillgång till hushållet**.
-3. Ta bort blockeringen och kör konsolskriptet enligt förberedelsen.
-   Ange samma kod igen och välj **Acceptera inbjudan**.
-4. Läs **Inbjudan kunde inte bekräftas** och välj **Kontrollera tillgång**
-   innan den automatiska uppdateringen öppnar hushållet.
+1. Ange koden i **Inbjudningskod** och välj **Acceptera inbjudan** medan begäran
+   är blockerad. Läs felet och kontrollera att koden finns kvar.
+2. Välj **Kontrollera tillgång**. Kontrollera att sidan fortfarande visar **Du
+   har inte tillgång till hushållet**.
+3. Be operatören förbereda den andra acceptansen enligt förberedelsen. Invänta
+   besked att blockeringen är borttagen och svarskontrollen installerad. Ange
+   samma kod igen och välj **Acceptera inbjudan**.
+4. Läs **Inbjudan kunde inte bekräftas** och välj **Kontrollera tillgång** innan
+   den automatiska uppdateringen öppnar hushållet.
 
 **Förväntat resultat:**
 

@@ -210,34 +210,47 @@ att flytten genomförts; provet ändrar inte annan hushållsinformation.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Följ
+[väntande personlig flytt](workspace-preparation.md#väntande-personlig-flytt).
+Arma före den verkliga flytten i UI-steg 7. Efter flytten: invänta hållningen
+efter genomförandet och meddela **Samma genomförda svar hålls**. Behåll svaret
+tills användaren fokuserat Stäng navigering. Kör först då `release` i
+förberedelseterminalen och meddela **Samma svar är släppt**. Arma på nytt inför
+andra flytten, och släpp dess svar först efter verklig stängning. Återställ
+transporten enligt den befintliga guiden efter båda fokusproven.
+
 **Steg:**
 
-1. Fokusera Lo med tangentbord och tryck Shift+F10. Nå
-   **Fokusera markering** med högerpil och tryck Enter.
-2. Kontrollera Lo och Kim i den fria kartytan. Välj **Föregående vy**
-   medan verktygsnamnen är öppna. Knappen behåller fokus och blir dimmad.
-   Öppna namnen igen och fokusera markeringen via högerklicksmenyn.
-3. Slå på och av **Alla etiketter** med etikettikonen under
-   **Föregående vy** i verktygsfältet.
+1. Fokusera Lo med tangentbord och tryck Shift+F10. Nå **Fokusera markering**
+   med högerpil och tryck Enter.
+2. Kontrollera Lo och Kim i den fria kartytan. Välj **Föregående vy** medan
+   verktygsnamnen är öppna. Knappen behåller fokus och blir dimmad. Öppna namnen
+   igen och fokusera markeringen via högerklicksmenyn.
+3. Slå på och av **Alla etiketter** med etikettikonen under **Föregående vy** i
+   verktygsfältet.
 4. Öppna **Navigera**. Läs söksammanfattningen och hushållets återkoppling
-   bredvid navigeringen. Fokusera sammanhangsytan med tangentbord; rulla
-   vid behov hela arbetsytan för att läsa den.
-   Nå var och en av de sex **Flytta Lo Exempel**-knapparna med tangentbord och
-   aktivera dem: vänster, höger, uppåt, nedåt, framåt och bakåt. Kontrollera
-   fokus och att enbart din personliga placering ändras. Rotera och stäng
-   navigeringen. Upprepa detta steg vid 640 × 500 CSS-pixlar.
-5. Välj **Visa verktygens namn** och kontrollera att **Skriv till Skyttel**
-   går att nå.
-6. Öppna Los högerklicksmeny med Shift+F10 och aktivera
-   **Fokusera markering** med tangentbord medan verktygsnamnen är öppna.
-7. Förbered det kontrollerade svaret och öppna Navigera. Flytta Lo med
-   tangentbord och kontrollera att flyttknappen blir inaktiv i väntan på svaret.
-   Flytta fokus till **Stäng navigering** utan att aktivera den. Släpp samma
-   svar med `release` i förberedelseterminalen och kontrollera att fokus ligger
-   kvar.
-   Upprepa förberedelsen och flytten, men aktivera nu **Stäng navigering**
-   före svaret. Släpp svaret och kontrollera att **Navigera** behåller fokus;
-   den stängda navigeringen återöppnas inte.
+   bredvid navigeringen. Fokusera sammanhangsytan med tangentbord; rulla vid
+   behov hela arbetsytan för att läsa den. Nå var och en av de sex **Flytta Lo
+   Exempel**-knapparna med tangentbord och aktivera dem: vänster, höger, uppåt,
+   nedåt, framåt och bakåt. Kontrollera fokus och att enbart din personliga
+   placering ändras. Rotera och stäng navigeringen. Upprepa detta steg vid 640 ×
+   500 CSS-pixlar.
+5. Välj **Visa verktygens namn** och kontrollera att **Skriv till Skyttel** går
+   att nå.
+6. Öppna Los högerklicksmeny med Shift+F10 och aktivera **Fokusera markering**
+   med tangentbord medan verktygsnamnen är öppna.
+7. Be operatören förbereda det kontrollerade svaret och invänta installationen.
+   Öppna Navigera. Flytta Lo med tangentbord och kontrollera att flyttknappen
+   blir inaktiv i väntan på svaret. Invänta operatörens bekräftelse av den
+   verkliga hållningen. Flytta fokus till **Stäng navigering** utan att aktivera
+   den. Be operatören släppa samma svar enligt förberedelsen och invänta
+   bekräftelse. Kontrollera att fokus ligger kvar. Be operatören förbereda nästa
+   svar och invänta installationen. Upprepa flytten och invänta bekräftelse av
+   hållningen, men aktivera nu **Stäng navigering** före svaret. Be operatören
+   släppa samma svar och invänta bekräftelse. Kontrollera att **Navigera**
+   behåller fokus; den stängda navigeringen återöppnas inte.
 
 **Förväntat resultat:**
 

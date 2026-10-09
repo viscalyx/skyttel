@@ -385,21 +385,37 @@ EXPORT-07.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före Hämta ZIP-fil i UI-steg 1: skriv `arm-stream` i terminalen
+och bekräfta installationen. Efter hämtknappen: invänta `paused` och
+kräv guidens olästa byte i serverns arkivkälla. Meddela **Verklig
+aktiv ström hålls före slut och giltighetstidens utgång**. Behåll
+strömmen genom Alex faktiska rolländring. Först i steg 2: skriv
+`release` och meddela **Samma ström är släppt efter rolländringen**.
+Vid upprepningen i steg 3: arma och bekräfta en ny faktisk ström på
+samma sätt; skriv `release` först efter bekräftad återkallelse.
+Kontrollera guidens avbrott och giltighetstid separat.
+Använd [styrd export i webbläsaren](#styrd-export-i-webbläsaren), samma
+provinstallation och dess två verifierade fönster. Avsluta med `quit`
+och kontrollera städningen efter fallet; radera separat sparade ZIP-filer.
+
 **Steg:**
 
-1. Förbered exporten i Robins exportfönster. Skriv `arm-stream` i
-   terminalen. Välj **Hämta ZIP-fil** och vänta på `paused` i terminalen.
-   Kontrollera att sidan visar **Hämtar och kontrollerar ZIP-filen…**.
-2. Välj **Gör till medlem** för Robin i Alex administrationsfönster.
-   Skriv `release` i terminalen. Kontrollera Robins felbesked och att
-   ingen ZIP-fil erbjuds. Ladda om Robins sida och kontrollera att
-   administrationen nekas.
-3. Gör Robin till administratör igen genom Alex administrationssida.
-   Öppna exportadressen i Robins fönster. Upprepa steg 1, välj sedan
-   **Återkalla tillgång** och **Bekräfta återkallelse** som Alex.
-   Skriv `release`. Kontrollera felet och avsaknaden av fil igen.
-4. Ladda om Robins sida. Kontrollera att hushållstillgången nekas.
-   Avsluta förberedelsen med `quit` och radera eventuella testfiler.
+1. Förbered exporten i Robins exportfönster. Be operatören förbereda aktiv ström
+   och invänta installationen. Välj **Hämta ZIP-fil** och invänta operatörens
+   bekräftelse av verkligt hållen aktiv ström. Kontrollera att sidan visar
+   **Hämtar och kontrollerar ZIP-filen…**.
+2. Välj **Gör till medlem** för Robin i Alex administrationsfönster. Be
+   operatören släppa samma ström och invänta bekräftelse. Kontrollera Robins
+   felbesked och att ingen ZIP-fil erbjuds. Ladda om Robins sida och kontrollera
+   att administrationen nekas.
+3. Gör Robin till administratör igen genom Alex administrationssida. Öppna
+   exportadressen i Robins fönster. Upprepa steg 1, välj sedan **Återkalla
+   tillgång** och **Bekräfta återkallelse** som Alex. Be operatören släppa samma
+   ström och invänta bekräftelse. Kontrollera felet och avsaknaden av fil igen.
+4. Ladda om Robins sida. Kontrollera att hushållstillgången nekas. Be operatören
+   avsluta förberedelsen och invänta bekräftelse. Radera eventuella testfiler.
 
 **Förväntat resultat:**
 
@@ -450,16 +466,29 @@ explains cleanup uncertainty”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Behåll fallets separat förberedda `arm-ready` före UI-steg 1.
+Efter Förbered fullständig export: invänta terminalens `held` och
+meddela **Arkivet är förberett och samma färdiga svar hålls**.
+Behåll svaret genom användarens verkliga avbrott i steg 2. Först
+i steg 3: skriv `release` i terminalen och meddela **Samma äldre
+svar är släppt efter avbrottet**.
+Använd [styrd export i webbläsaren](#styrd-export-i-webbläsaren), samma
+provinstallation och dess två verifierade fönster. Avsluta med `quit`
+och kontrollera städningen efter fallet; radera separat sparade ZIP-filer.
+
 **Steg:**
 
 1. Välj **Förbered fullständig export** och kontrollera väntemeddelandet.
+   Invänta operatörens bekräftelse att samma färdiga svar hålls.
 2. Innan svaret kommer fram, använd tangentbordet till **Avbryt export**.
-3. Läs beskedet och skriv `release` i terminalen. Kontrollera att ingen fil erbjuds
-   från det avbrutna försöket.
+3. Läs beskedet och be operatören släppa samma färdiga svar. Invänta
+   bekräftelse. Kontrollera att ingen fil erbjuds från det avbrutna försöket.
 4. Förbered en ny export och hämta ZIP-filen. Kontrollera att hushållets
-   gemensamma objekt finns kvar i Tabell. Öppna **Visa utkastet →
-   Visa förslaget: Privat förslag** och kontrollera den osparade
-   beskrivningen. Stäng läsningen utan att spara eller kasta förslaget.
+   gemensamma objekt finns kvar i Tabell. Öppna **Visa utkastet → Visa
+   förslaget: Privat förslag** och kontrollera den osparade beskrivningen. Stäng
+   läsningen utan att spara eller kasta förslaget.
 
 **Förväntat resultat:**
 
@@ -503,27 +532,41 @@ EXPORT-09 vid 1280 × 900 CSS-pixlar.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före den sista förberedelsen i UI-steg 5: skriv `arm-ready` och
+bekräfta installationen. Efter den verkliga förberedelsen: invänta
+terminalens `held` och meddela **Samma färdiga svar hålls**. Behåll
+svaret tills användaren med Tab fokuserat Tillbaka till kartan utan
+att aktivera länken. Skriv först då `release` i terminalen och meddela
+**Samma färdiga svar är släppt**, utan att ändra användarens fokus.
+Använd [styrd export i webbläsaren](#styrd-export-i-webbläsaren), samma
+provinstallation och dess två verifierade fönster. Avsluta med `quit`
+och kontrollera städningen efter fallet; radera separat sparade ZIP-filer.
+
 **Steg:**
 
-1. Välj **Nytt objekt** och skriv namn och beskrivning. Tryck Escape
-   och **Fortsätt redigera**. Kontrollera båda värdena och fokus i
-   beskrivningen. Tryck Escape igen och välj **Kasta ändringarna och
-   fortsätt**. Det privata utkastet ska vara oförändrat.
-2. Öppna Inställningar och Fullständig export. På mobil, fäll först ut
-   Välj inställning. Kontrollera att exportens fokuserade rubrik syns
-   även efter att navigationen fälls ihop.
-3. Använd tangentbordet för att förbereda en export. Kontrollera fokus
-   på Hämta ZIP-fil när filen blir klar. Avbryt med tangentbordet och
-   kontrollera fokus på Förbered fullständig export.
+1. Välj **Nytt objekt** och skriv namn och beskrivning. Tryck Escape och
+   **Fortsätt redigera**. Kontrollera båda värdena och fokus i beskrivningen.
+   Tryck Escape igen och välj **Kasta ändringarna och fortsätt**. Det privata
+   utkastet ska vara oförändrat.
+2. Öppna Inställningar och Fullständig export. På mobil, fäll först ut Välj
+   inställning. Kontrollera att exportens fokuserade rubrik syns även efter att
+   navigationen fälls ihop.
+3. Använd tangentbordet för att förbereda en export. Kontrollera fokus på Hämta
+   ZIP-fil när filen blir klar. Avbryt med tangentbordet och kontrollera fokus
+   på Förbered fullständig export.
 4. Upprepa med det andra temat. Kontrollera läsbar text, synligt fokus,
    åtkomliga knappar och att sidan inte behöver rullas i sidled.
-5. Förbered igen och vänta på terminalens `held`. Flytta med Tab fokus
-   till **Tillbaka till kartan** och låt länken vara fokuserad utan att
-   aktivera den. Tryck inte Enter och klicka inte på länken. Skriv
-   `release` i terminalen. Kontrollera att svaret låter fokus vara kvar
-   på länken och att exportsidan fortfarande är öppen.
-6. Hämta ZIP-filen med tangentbordet. Kontrollera fokus på knappen för
-   ny förberedelse och återgå sedan till kartan.
+5. Be operatören förbereda nästa hållna svar och invänta installationen.
+   Förbered exporten igen och invänta operatörens bekräftelse av hållet färdigt
+   svar. Flytta med Tab fokus till **Tillbaka till kartan** och låt länken vara
+   fokuserad utan att aktivera den. Tryck inte Enter och klicka inte på länken.
+   Be operatören släppa samma svar först efter detta fokusval och invänta
+   bekräftelse. Kontrollera att svaret låter fokus vara kvar på länken och att
+   exportsidan fortfarande är öppen.
+6. Hämta ZIP-filen med tangentbordet. Kontrollera fokus på knappen för ny
+   förberedelse och återgå sedan till kartan.
 
 **Förväntat resultat:**
 
@@ -818,16 +861,27 @@ EXPORT-15.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Behåll fallets `arm-response` före Hämta ZIP-fil i grundfallets
+UI-steg 3. Efter hämtningen: invänta terminalens `held` och meddela
+**Samma färdiga ZIP-svar hålls**. Detta är buffrad slutförd hämtning,
+skild från EXPORT-07:s olästa serverbyte. Behåll svaret genom det
+verkliga sidbytet. Skriv `release` efter sidbytet, före återbesöket
+i grundfallets steg 4, och meddela **Samma äldre ZIP-svar är släppt**.
+Använd [styrd export i webbläsaren](#styrd-export-i-webbläsaren), samma
+provinstallation och dess två verifierade fönster. Avsluta med `quit`
+och kontrollera städningen efter fallet; radera separat sparade ZIP-filer.
+
 **Steg:**
 
-1. Utför EXPORT-11 steg 1–4 en gång med följande kontroller under flödet.
-   Vid steg 3 väljer du först
-   **Hämta ZIP-fil**. Vänta på terminalens `held` och sidans
-   **Hämtar och kontrollerar ZIP-filen…**, och välj sedan
-   **Tillbaka till kartan**. Skriv `release` efter sidbytet,
-   före återbesöket i steg 4. Kontrollera
-   att det sena svaret inte erbjuder en fil. Fortsätt sedan steg 4 med
-   en ny förberedelse och en fungerande hämtning.
+1. Utför EXPORT-11 steg 1–4 en gång med följande kontroller under flödet. Vid
+   steg 3 väljer du först **Hämta ZIP-fil**. Invänta operatörens bekräftelse av
+   hållet färdigt ZIP-svar och sidans **Hämtar och kontrollerar ZIP-filen…**,
+   och välj sedan **Tillbaka till kartan**. Be operatören släppa samma äldre
+   svar efter sidbytet och invänta bekräftelse före återbesöket i grundfallets
+   steg 4. Kontrollera att det sena svaret inte erbjuder en fil. Fortsätt sedan
+   steg 4 med en ny förberedelse och en fungerande hämtning.
 
 **Förväntat resultat:**
 
