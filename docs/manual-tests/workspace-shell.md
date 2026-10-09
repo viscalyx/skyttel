@@ -210,8 +210,9 @@ YTA-03.
 **Användare:** Alex, administratör i Hjälpprov.
 
 **Förutsättningar:** Den kontrollerade installationen enligt steg 4. Börja med
-tomt utkast på dator. Använd Windows/Linux-emulering vid 1280 × 720. macOS har
-det egna fallet YTA-13; fysisk genväg bedöms i YTA-15.
+tomt utkast på dator. Använd Windows/Linux-emulering vid 1280 × 720. macOS-texten
+har det avgränsade webbläsarfallet YTA-13; den första macOS-genvägen och
+medgivandet provas i MIKROFONTRYCK-09. Fysisk genväg bedöms i YTA-15.
 
 **Integrationstest:**
 [conversation-help.spec.ts](../../tests/integration/conversation-help.spec.ts),
@@ -364,33 +365,38 @@ verktyg och återställt fokus. Verklig NVDA/VoiceOver-uppläsning, genvägar p�
 fysisk Windows/macOS, pekning på iPhone/iPad, kontrast i båda teman och 200/400
 procents zoom återstår. Inget intyg om fullständig WCAG-överensstämmelse ges.
 
-### YTA-13: samtalshjälp med macOS-tangentkombination
+### YTA-13: samtalshjälpens macOS-text före medgivande
 
-**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+**Syfte:** Läsa rätt tangentkombination och hjälpens innehåll utan att starta
+samtal eller mikrofon, samt återfå fokus vid stängning.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
-konfiguration före den första UI-handlingen. Använd macOS-plattformsnamnet i den
-kontrollerade webbläsaren. Vid steg 2 och 5 används Ctrl+Skift+Mellanslag.
-Fysisk kollision bedöms i YTA-15.
+**Förutsättningar:** Börja med tomt utkast utan pågående samtal eller sparat
+medgivande vid 1280 × 720. Använd macOS-plattformsnamnet i den kontrollerade
+webbläsaren. Fysisk kollision bedöms i YTA-15.
 
-**Integrationstest:**
-[conversation-help.spec.ts](../../tests/integration/conversation-help.spec.ts),
+**Automatiskt motsvarande webbläsartest:**
+[conversation-help.test.tsx](../../tests/browser/conversation-help.test.tsx),
 YTA-13.
+Chromium visar produktens hjälpyta genom kartans publika hjälpknapp
+med produktens stilmall och kontrollerade lässvar. Det provar inte beständigt
+sparande eller återkallande mot servern.
 
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/conversation-help.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/conversation-help.test.tsx",
     "caseId": "YTA-13"
   },
-  "reference": "Chromium 1280 × 720; MacIntel-plattformsnamn och Ctrl+Skift+Mellanslag.",
+  "reference": "Chromium 1280 × 720; MacIntel-plattformsnamn, produktens hjälpyta och stilmall, kontrollerade lässvar utan samtalsstart. Full serverkedja finns i YTA-07; första macOS-genvägen i MIKROFONTRYCK-09.",
   "outcomes": [
-    "Hjälpen visar rätt tangentkombination och leder genom samma fullständiga formulär-, utkast-, samtals- och återkallandeflöde.",
-    "Oskickad text och Lo-förslaget bevaras."
+    "Hjälpen visar Ctrl+Skift+Mellanslag och hela förklaringen av samma samtal, kartans tecken, medgivande, datavillkor och formuläralternativ.",
+    "Läsning startar inget samtal eller mikrofon. Rubriken får fokus och båda stängningssätten återför det till hjälpknappen."
   ]
 }
 ```
@@ -399,18 +405,28 @@ YTA-13.
 
 **Steg:**
 
-1. Utför
-   [YTA-07](#yta-07-hjälpen-förklarar-samtalet-och-leder-till-rätt-kontroller)
-   en gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
-   separata förberedelse. Upprepa inte basfallet först.
-2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
-   motsvarande steg. Avsluta när basfallet avslutas.
+1. Nå **Information och hjälp** med tangentbord och öppna med Enter. Kräv
+   fokus på rubriken. Läs samma innehåll som i YTA-07:s steg 1–3, inklusive
+   **Ctrl+Skift+Mellanslag**, kort och långt tryck, formuläralternativ,
+   förlustvarning, sparbesked och OpenAI:s begränsningar. Läs datavillkorslänken.
+2. Stäng med Escape och kräv fokus på hjälpknappen.
+3. Öppna med hjälpknappen igen och välj **Stäng verktyget**. Kräv att hjälpen
+   stängs och fokus återgår till hjälpknappen.
 
 **Förväntat resultat:**
 
-- Hjälpen visar rätt tangentkombination och leder genom samma fullständiga
-  formulär-, utkast-, samtals- och återkallandeflöde.
-- Oskickad text och Lo-förslaget bevaras.
+- Hjälpen visar **Ctrl+Skift+Mellanslag** och samma förklaringar och
+  datavillkorslänk som YTA-07, utan gamla kontrollnamn eller teknisk jargong.
+- Läsning startar inget samtal eller mikrofon. Rubriken får fokus och
+  stängning med Escape eller knappen återför det till hjälpknappen.
+
+**Avgränsning:** YTA-13 behåller sitt ID för macOS-hjälpen. Den upprepade
+fullständiga formulär-, utkast-, samtals- och återkallandekedjan samlas i
+YTA-07. Första macOS-genvägens medgivande och spärr mot inspelning före
+medgivande finns i
+[MIKROFONTRYCK-09](microphone-press.md#mikrofontryck-09-macos-tangentkombinationens-korta-och-långa-tryck).
+Hela hjälpkedjan körs därmed inte längre oberoende på båda emulerade
+plattformarna; dess gemensamma beteenden representeras av Windows/Linux.
 
 ### YTA-14: samtalshjälpens faktiska uppläsning
 

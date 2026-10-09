@@ -722,6 +722,10 @@ tomt underlag i kort vy och `seed-family` i hög vy provas inte oberoende. De tv
 scenarierna ger fyra tekniska prov. De flyttade felkommandona och
 TAL-11:s ljudaktivitet med mikrofonen av har egna publika prov med fullständig
 start, återställning och städning. ROSTFEL-01/05–08,
-HJALP-07–10, TEXTBRICKA-06–08 och YTA-13 har egna funktionella motsvarigheter.
+HJALP-07–10 och TEXTBRICKA-06–08 har egna funktionella motsvarigheter.
+YTA-13 läser macOS-hjälpen i Chromium med produktens stilmall och kontrollerade
+svar. Första macOS-genvägens medgivande provas i MIKROFONTRYCK-09; hela
+formulär-, utkast-, samtals- och återkallandekedjan körs i YTA-07 och upprepas
+inte oberoende på macOS.
 HJALP-11/12, TEXTBRICKA-09/10 och YTA-14/15 beskriver faktiskt hjälpmedel,
 fysisk inmatning eller zoom; syntetisk Chromium etablerar dem inte.

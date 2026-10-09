@@ -790,7 +790,8 @@
     "utkastbatchen",
     "begäransfilen",
     "provfilerna",
-    "filfelet"
+    "filfelet",
+    "återkallandekedjan"
   ],
   "overrides": [
     {

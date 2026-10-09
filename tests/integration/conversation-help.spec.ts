@@ -60,14 +60,9 @@ async function arrange(page: Page) {
   return { app, household, live, model };
 }
 
-for (const platform of [
-  { name: 'Windows och Linux', value: 'Win32', mac: false },
-  { name: 'macOS', value: 'MacIntel', mac: true },
-]) {
+for (const platform of [{ name: 'Windows och Linux', value: 'Win32', mac: false }]) {
   test.describe(platform.name, () => {
-    test(`${platform.mac ? 'YTA-13' : 'YTA-07'}: hjälpen förklarar samtalet och leder till rätt kontroller`, async ({
-      page,
-    }) => {
+    test('YTA-07: hjälpen förklarar samtalet och leder till rätt kontroller', async ({ page }) => {
       await page.addInitScript(
         (value) => Object.defineProperty(navigator, 'platform', { configurable: true, value }),
         platform.value,

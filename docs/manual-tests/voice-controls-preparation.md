@@ -1082,10 +1082,10 @@ kontrollerna finns kvar i NOT-10:s integrationstest.
 
 ## Hjälpens kontrollerade svar
 
-Gäller YTA-07 och YTA-13 vid steg 6. Använd en ny kontrollerad installation med
+Gäller YTA-07 vid steg 6. Använd en ny kontrollerad installation med
 Hjälpprov, Google-inloggning som Alex och 1280 × 720 före första handlingen.
-Windows/Linux använder vanlig Chromium-plattform. macOS använder Chrome på macOS
-för den dokumenterade kombinationen; syntetisk plattform är separat underlag.
+Windows/Linux använder vanlig Chromium-plattform. macOS-hjälpens läsning i
+YTA-13 behöver inget kontrollerat samtalssvar.
 Använd inga fysiska OS-genvägspåståenden från emulering. De faktiska
 tangentkommandona bedöms i YTA-15.
 
