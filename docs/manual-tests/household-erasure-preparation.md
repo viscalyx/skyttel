@@ -188,5 +188,13 @@ tekniskt underlag, samtidigt som varje vanligt fall har en UI-motsvarighet.
   kontrollerar också bevarade personliga placeringar och hela historiken.
 
 [household-erasure-preparation.spec.ts](../../tests/integration/household-erasure-preparation.spec.ts)
-rökprovar utdrag och läsarkommando mot riktiga tomma och fyllda databaser.
+rökprovar utdrag och läsarkommando mot en riktig databas med ett privat
+förslag; titeln anger `seeded content`.
+Den bevarar hela det oberoende utkastet efter tappat execute-svar, verklig
+SQLite-städning med tappat resume-svar och återställt återhämtningsminne.
 Det är tekniskt underlag och utför inga fysiska zoom- eller skärmläsarprov.
+
+Den tekniska varianten med `empty content` ersätts av referensen ovan.
+En självständig körning av recepten utan ett befintligt privat förslag
+ingår inte i den representativa kontrollen.
+De separata raderings- och återhämtningsfallen behåller sina egna felkedjor.

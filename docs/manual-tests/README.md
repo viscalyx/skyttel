@@ -366,6 +366,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   fysiskt tangentbord. [Separat förberedelse](household-erasure-preparation.md)
   håller SQLite-läsning, tappar verkligt slutförda svar och blockerar
   återhämtningsminnet med tydliga tidpunkter och återställning.
+  Den tekniska receptkontrollen bevarar ett privat förslag; en självständig
+  receptkörning utan befintligt förslag ingår inte i den referensen.
 
 - [Fullständig återimport](household-import.md): egna inställningssidor,
   bevarat oskickat arbete före innehållsbyte, uttrycklig ersättning,
