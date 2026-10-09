@@ -381,6 +381,16 @@ via HTTP; det är separat tekniskt underlag, inte ett vanligt UI-steg.
 Efter varje fall: `network-ok`, `release`, sedan `new-base`. Avsluta med
 `quit` och kontrollera att provinstallationen städas bort.
 
+För UTKAST-150: kör `other-member` efter `new-base`. Provverktyget loggar
+in Robin med den separata syntetiska Microsoft-identiteten, bjuder in och
+ansluter just detta konto till Alex hushåll och öppnar en separat
+webbläsarsession. Det skapar genom det ordinarie formuläret ett osparat
+Person-förslag: **Robins privata anteckning**, beskrivning
+**Hela Robins oberoende arbete före och efter borttagningen**. Det sparas
+inte gemensamt. Använd Robins separat öppnade sida för läsningarna i
+fallet; displaynamnet ensamt ger inte åtkomst. `new-base` och `quit`
+stänger även Robins session.
+
 Operatören kan kontrollera förberedelsen separat, efter samma build:
 
 ```sh
@@ -1183,9 +1193,12 @@ UTKAST-149.
 
 **Syfte:** Skilja stopp före servern från tappat svar efter genomförd ändring.
 
-**Användare:** Alex Exempel i provinstallationen.
+**Användare:** Alex Exempel och den inbjudna Robin i separata sessioner.
 
-**Förutsättningar:** Förbered provkommandot ovan och välj `new-base`.
+**Förutsättningar:** Förbered provkommandot ovan, välj `new-base` och
+`other-member`. Läs Robins fullständiga förslag genom Visa förslaget:
+Person, Robins privata anteckning, hela beskrivningen, Identifierat objekt
+och Följ slutdatum. Behåll det osparat.
 
 **Integrationstest:**
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
@@ -1200,7 +1213,7 @@ UTKAST-150.
   "reference": "1280 × 720; Chromium; syntetiska testidentiteter",
   "outcomes": [
     "Stopp före servern ändrar inga förslag. Stängning och återöppning ger inte rätt att upprepa åtgärden.",
-    "Faktisk kontroll tillåter ett nytt försök. En genomförd riktad borttagning bevarar alla oberoende förslag, gemensamma värden och historik."
+    "Faktisk kontroll tillåter ett nytt försök. Riktad borttagning bevarar Alex andra förslag, Robins separata privata arbete, gemensamma värden och historik utan att avslöja Robins utkast."
   ]
 }
 ```
@@ -1213,19 +1226,28 @@ UTKAST-150.
    och spärrad Ta bort.
 3. Tryck Escape och läs samtliga förslag fullständigt. Olöst fordon och alla
    övriga värden är kvar.
-4. Välj Kontrollera borttagningen. Ta bort är fortfarande spärrad. Välj Hämta
-   aktuellt utkast och granska den kvarvarande enda posten.
+4. Välj Kontrollera borttagningen. Ta bort är fortfarande spärrad.
+   Ladda om Robins separata sida, öppna Utkast och läs hela Person-förslaget
+   igen. Gå tillbaka till Alex, välj Hämta aktuellt utkast och granska den
+   kvarvarande enda posten. Upprepa därefter Robins läsning.
+   Namn, hela beskrivningen, identitet och status är oförändrade och osparade.
+   Alex utkast visar enbart Alex förslag och avslöjar inget av Robins arbete.
 5. Först när faktisk kontroll ger ett nytt tillåtet försök: kör network-ok, välj
    Ta bort och kontrollera att Olöst fordon försvinner.
 6. Läs alla kvarvarande förslag fullständigt. Gör den slutliga gemensamma
    kontrollen enligt förberedelsen.
+   Ladda om Robins sida och läs hela Person-förslaget ännu en gång.
+   Det förblir osparat och oförändrat efter Alex lyckade försök; Alex kan
+   fortfarande inte se det i sitt utkast eller den gemensamma kartan.
 
 **Förväntat resultat:**
 
 - Stopp före servern ändrar inga förslag. Stängning och återöppning ger inte
   rätt att upprepa åtgärden.
 - Faktisk kontroll tillåter ett nytt försök. En genomförd riktad borttagning
-  bevarar alla oberoende förslag, gemensamma värden och historik.
+  bevarar Alex andra förslag, Robins separata privata förslag, gemensamma
+  värden och historik. Robins fullständiga värden består före och efter
+  kontroll samt efter lyckad borttagning utan att avslöjas för Alex.
 
 ### UTKAST-90: läs hela utkastet utan AI eller medgivande
 

@@ -4,6 +4,7 @@ import { chromium, expect } from '@playwright/test';
 import {
   prepareDraftRemovalFocus,
   prepareDraftRemovalMeaning,
+  prepareRemovalMember,
 } from '../tests/support/draft-removal.js';
 import { prepareDraftReview } from '../tests/support/draft-review.js';
 import { createInstallation } from '../tests/support/installation.js';
@@ -31,9 +32,12 @@ let lostResponse = false;
 let unsent = false;
 let release: (() => void) | undefined;
 let prepared = false;
+let member: Awaited<ReturnType<typeof prepareRemovalMember>> | undefined;
 process.once('SIGINT', () => input?.close());
 process.once('SIGTERM', () => input?.close());
 async function fresh(kind: string) {
+  await member?.context.close();
+  member = undefined;
   release?.();
   hold = lostResponse = unsent = false;
   if (prepared) {
@@ -57,7 +61,11 @@ async function fresh(kind: string) {
 async function command(command: string) {
   if (['new-base', 'new-focus', 'new-object-meaning', 'new-relationship-meaning'].includes(command))
     await fresh(command);
-  else if (command === 'newer-type')
+  else if (command === 'other-member') {
+    await member?.context.close();
+    member = await prepareRemovalMember(browser, page.request, app, data.household.id);
+    console.log('Robin: separate admitted session and full native private proposal ready.');
+  } else if (command === 'newer-type')
     await data.post('object-type', {
       id: 'newer-independent-type',
       baseRevision: null,
@@ -103,7 +111,7 @@ try {
   });
   await fresh('new-base');
   console.log(
-    'Commands: new-base, new-focus, new-object-meaning, new-relationship-meaning, newer-type, hold, release, lost-response, lost-unsent, network-ok, result, screen, quit',
+    'Commands: new-base, new-focus, new-object-meaning, new-relationship-meaning, other-member, newer-type, hold, release, lost-response, lost-unsent, network-ok, result, screen, quit',
   );
   if (process.argv.includes('--smoke')) {
     await command('new-focus');
@@ -121,10 +129,13 @@ try {
     await readRemovalHistory(page);
     console.log('Smoke empty: native empty draft and complete saved/history readback.');
     await command('new-base');
+    await command('other-member');
+    if (!member) throw new Error('Missing independent member preparation');
     const before = await data.read();
     const history = await (await page.request.get(`${data.path}/history`)).json();
     await page.getByRole('button', { name: 'Utkast', exact: true }).click();
     await readRemovalProposals(page, before);
+    await member.assertPrivate(page, before);
     await command('lost-unsent');
     await page
       .getByRole('button', { name: 'Ta bort förslaget: Olöst fordon', exact: true })
@@ -139,9 +150,13 @@ try {
     await page.keyboard.press('Escape');
     await readRemovalProposals(page, before);
     await page.getByRole('button', { name: 'Kontrollera borttagningen', exact: true }).click();
+    await member.assertUnchanged();
+    await member.assertPrivate(page, await data.read());
     await single.getByRole('button', { name: 'Hämta aktuellt utkast', exact: true }).click();
     await expect(single.getByRole('button', { name: 'Ta bort', exact: true })).toBeEnabled();
     expect(await data.read()).toEqual(before);
+    await member.assertUnchanged();
+    await member.assertPrivate(page, await data.read());
     await command('network-ok');
     await single.getByRole('button', { name: 'Ta bort', exact: true }).click();
     await expect(single).toHaveCount(0);
@@ -155,6 +170,8 @@ try {
     expect(absentAfter.relationships).toEqual(before.relationships);
     expect(await (await page.request.get(`${data.path}/history`)).json()).toEqual(history);
     await readRemovalProposals(page, absentAfter);
+    await member.assertUnchanged();
+    await member.assertPrivate(page, absentAfter);
     await readRemovalHistory(page);
     console.log(
       'Smoke absent: complete unchanged draft before actual check and one fresh native removal.',
@@ -199,6 +216,7 @@ try {
 } finally {
   release?.();
   input?.close();
+  await member?.context.close();
   await browser.close();
   await app.close();
   expect(existsSync(app.directory)).toBe(false);

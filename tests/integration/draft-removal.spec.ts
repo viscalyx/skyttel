@@ -3,6 +3,7 @@ import { draftChangeCount } from '../../src/shared/map.js';
 import {
   prepareDraftRemovalFocus,
   prepareDraftRemovalMeaning,
+  prepareRemovalMember,
   stageNewRemovalType,
 } from '../support/draft-removal.js';
 import { prepareDraftReview } from '../support/draft-review.js';
@@ -11,10 +12,13 @@ import { readRemovalHistory, readRemovalProposals } from '../support/removal-rea
 
 test('UTKAST-150: absent independent removal retains complete proposals until actual checking permits one fresh removal', async ({
   page,
+  browser,
 }) => {
   const installation = await createInstallation();
+  let member: Awaited<ReturnType<typeof prepareRemovalMember>> | undefined;
   try {
     const data = await prepareDraftReview(page.request, installation.origin);
+    member = await prepareRemovalMember(browser, page.request, installation, data.household.id);
     const before = await data.read();
     const history = await (await page.request.get(`${data.path}/history`)).json();
     let confirmations = 0;
@@ -28,6 +32,7 @@ test('UTKAST-150: absent independent removal retains complete proposals until ac
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await page.getByRole('button', { name: 'Utkast', exact: true }).click();
     await readRemovalProposals(page, before);
+    await member.assertPrivate(page, before);
     const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
     const remove = draft.getByRole('button', {
       name: 'Ta bort förslaget: Olöst fordon',
@@ -46,10 +51,14 @@ test('UTKAST-150: absent independent removal retains complete proposals until ac
     await draft.getByRole('button', { name: 'Kontrollera borttagningen', exact: true }).click();
     await expect(dialog.getByRole('button', { name: 'Ta bort', exact: true })).toBeDisabled();
     expect(confirmations).toBe(1);
+    await member.assertUnchanged();
+    await member.assertPrivate(page, await data.read());
     await dialog.getByRole('button', { name: 'Hämta aktuellt utkast', exact: true }).click();
     await expect(dialog.getByRole('button', { name: 'Ta bort', exact: true })).toBeEnabled();
     await expect(dialog.getByRole('listitem')).toHaveCount(1);
     expect(await data.read()).toEqual(before);
+    await member.assertUnchanged();
+    await member.assertPrivate(page, await data.read());
     dropBefore = false;
     await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click();
     await expect(dialog).toHaveCount(0);
@@ -65,8 +74,11 @@ test('UTKAST-150: absent independent removal retains complete proposals until ac
     expect(after.relationships).toEqual(before.relationships);
     expect(await (await page.request.get(`${data.path}/history`)).json()).toEqual(history);
     await readRemovalProposals(page, after);
+    await member.assertUnchanged();
+    await member.assertPrivate(page, after);
     await readRemovalHistory(page);
   } finally {
+    await member?.context.close();
     await installation.close();
   }
 });

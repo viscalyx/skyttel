@@ -92,6 +92,9 @@ await lifecyclePost('relationship', {
 
 För LIVSCYKEL-06 kör i stället:
 
+Utgå direkt från Allmän förberedelses två sparade samband. Denna kod
+skapar det separata sambandet från Molnmusik till Lo; skapa det enbart här.
+
 ```js
 await lifecyclePost('relationship', {
   id: lifecycleIncoming.id, baseRevision: lifecycleIncoming.revision,
@@ -383,12 +386,16 @@ namn och status när utkastet ändrar sambandet och andra samband visas samtidig
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** De sparade objekten och sambanden ovan. Ange känt
-slutdatum **2000-01-01** och status **Upphört** för sambandet från Lo till
-Familjemusik. Lägg till **Molnmusik → Betalar → Lo Exempel** med samma
-slutdatum och status **Gäller fortfarande**. Spara hela utkastet.
-Använd den separata förberedelsen ovan för de överlappande identiteterna.
-Automationen använder `incoming` och `previous-incoming`.
+**Förutsättningar:** Utför Allmän förberedelse i ett nytt hushåll: tre
+objekt och exakt två samband, sparade genom de ordinarie formulären.
+Kör därefter den gemensamma Console-förberedelsen och endast dess kod för
+LIVSCYKEL-06. Den anger känt slutdatum **2000-01-01** och **Upphört**
+för Lo → Använder → Familjemusik och skapar
+**Molnmusik → Betalar → Lo Exempel** med samma slutdatum och
+**Gäller fortfarande**. Läs de fullständiga förslagen och spara dem genom
+Utkast. Detta är hela förberedelsen; skapa inget extra samband mellan
+Molnmusik och Lo. De överlappande identiteterna ska komma från detta enda
+Console-steg, följt av UI-granskningen och sparandet.
 
 **Integrationstest:**
 [lifecycle.spec.ts](../../tests/integration/lifecycle.spec.ts),
