@@ -594,6 +594,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   UTKAST-41–48 och UTKAST-142–150 har separata borttagningsflöden:
   oberoende och beroende förslag, två typsamlingar, smala bekräftelser,
   sena fokusutfall och tappat svar efter genomförd eller utebliven ändring.
+  UTKAST-137 följer två samtidigt privata, oberoende objektändringar till
+  separata sparanden och båda medlemmarnas läsning efter omstart.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
@@ -610,7 +612,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   TYP-13–22 skyddar angivna smala, korta och mörka browserflöden. Hela
   sparande- och omstartskedjan upprepas inte i varje konfiguration.
   TYP-23 kräver fysisk tangentbordsanvändning vid verklig förstoring.
-  Felaktiga värden och kvittots återspelning har separat tekniskt underlag;
+  Felaktiga värden har separat tekniskt underlag; TYP-01 jämför hela privata
+  förslag, beständigt kvitto, historik och återspelning i formulärflödet;
   typens och fältets formulärvalidering utförs genom riktiga kontroller.
   Konfigurerad fältordning följer med till formulär, utkast och tabellens
   fullständiga läsning, inklusive uttrycklig noll och Nej.
@@ -631,6 +634,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   och samtidiga sparanden utan delsparande. Typ- och fältformulär provas
   genom native kontroller. Hela spara- och omstartskedjan har referensen
   1440px; 390/320px behåller eget formulärarbete, teman och fokus.
+  STY-01 jämför hela privata förslag, historiska typdefinitioner, exakt
+  kvitto, historik och återspelning i samma formulärflöde.
 - [Borttagning av typer och fält](definition-removal.md): granskad
   katalogborttagning, användningsspärrar för upphört innehåll och privata
   utkast utan privat läckage, fullständig förslagsläsning och läsning av

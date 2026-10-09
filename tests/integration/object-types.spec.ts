@@ -14,74 +14,15 @@ import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
-test('custom definitions and four optional fields share one durable save and history', {
-  tag: '@technical',
-}, async ({ page }) => {
-  const installation = await createInstallation();
-  try {
-    await signIn(page.request, installation.origin);
-    const { household } = await (await createHousehold(page.request, installation.origin)).json();
-    const path = `${installation.origin}/api/households/${household.id}/map`;
-    const post = (route: string, data: unknown) =>
-      page.request.post(`${path}/${route}`, { headers: { origin: installation.origin }, data });
-    const fields = [
-      { id: 'supplier', name: 'Leverantör', description: 'Namn', kind: 'text' },
-      { id: 'power', name: 'Effekt', description: 'kW', kind: 'number' },
-      { id: 'installed', name: 'Installationsdatum', description: '', kind: 'date' },
-      { id: 'battery', name: 'Batteri', description: '', kind: 'boolean' },
-    ];
-    expect(
-      (
-        await post('object-type', {
-          version: 0,
-          id: 'solar',
-          baseRevision: null,
-          value: { name: 'Solcellsanläggning', description: 'Hushållets elproduktion', fields },
-        })
-      ).status(),
-    ).toBe(200);
-    const value = {
-      typeId: 'solar',
-      name: 'Paneler på taket',
-      description: '',
-      customValues: { supplier: 'Exempelsol', power: 12.5, installed: '2026-09-01' },
-    };
-    expect(
-      (await post('draft', { version: 1, id: 'panels', baseRevision: null, value })).status(),
-    ).toBe(200);
-    await installation.restart();
-    const proposed = await (await page.request.get(path)).json();
-    expect(proposed.types.some((type: { id: string }) => type.id === 'solar')).toBe(false);
-    expect(proposed.objects).toEqual([]);
-    expect(proposed.draft.changes[0].after).toEqual(value);
-    expect(proposed.draft.objectTypes[0].after.fields).toEqual(fields);
-    const saved = await post('save', { version: 2, operationId: 'solar-save' });
-    expect(saved.status()).toBe(200);
-    const { receipt } = await saved.json();
-    expect(receipt.objectTypes[0].after).toMatchObject({ id: 'solar', revision: 1, fields });
-    expect(receipt.changes[0].after).toMatchObject(value);
-    await installation.restart();
-    const current = await (await page.request.get(path)).json();
-    expect(current.objects[0].customValues).not.toHaveProperty('battery');
-    expect(current.types.find((type: { id: string }) => type.id === 'solar')).toEqual(
-      receipt.objectTypes[0].after,
-    );
-    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([receipt]);
-    expect(await (await post('save', { version: 2, operationId: 'solar-save' })).json()).toEqual({
-      receipt,
-    });
-  } finally {
-    await installation.close();
-  }
-});
-
 test('TYP-01: native type and field forms share a durable object save and readable history', async ({
   page,
 }) => {
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
-    await createHousehold(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const read = async () => (await page.request.get(path)).json();
     await page.goto(installation.origin);
     await openSettings(page);
     await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
@@ -94,16 +35,18 @@ test('TYP-01: native type and field forms share a durable object save and readab
     await page.getByRole('button', { name: 'Lägg till fält', exact: true }).click();
     await submit.click();
     await expect(page.getByLabel('Fältets namn')).toBeFocused();
-    for (const [index, [name, kind]] of [
-      ['Leverantör', 'text'],
-      ['Effekt', 'number'],
-      ['Installationsdatum', 'date'],
-      ['Batteri', 'boolean'],
-    ].entries()) {
+    const fieldValues = [
+      ['Leverantör', 'text', 'Namn'],
+      ['Effekt', 'number', 'kW'],
+      ['Installationsdatum', 'date', ''],
+      ['Batteri', 'boolean', ''],
+    ];
+    for (const [index, [name, kind, description]] of fieldValues.entries()) {
       if (index) await page.getByRole('button', { name: 'Lägg till fält', exact: true }).click();
       const field = page.getByRole('group', { name: /^Eget fält/ }).last();
       await field.getByLabel('Fältets namn').fill(name);
       await field.getByLabel('Värdeslag', { exact: true }).selectOption(kind);
+      await field.getByLabel('Fältets beskrivning', { exact: true }).fill(description);
     }
     await submit.click();
     await expect(page.getByRole('status')).toContainText('Förslaget finns i ditt privata utkast');
@@ -119,15 +62,77 @@ test('TYP-01: native type and field forms share a durable object save and readab
     await page.getByLabel('Installationsdatum', { exact: true }).fill('2026-09-01');
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const staged = await read();
+    expect(staged.draft.objectTypes).toHaveLength(1);
+    expect(staged.draft.changes).toHaveLength(1);
+    const definition = staged.draft.objectTypes[0];
+    const fields = definition.after.fields;
+    expect(definition.before).toBeNull();
+    expect(definition.after).toMatchObject({
+      id: definition.id,
+      householdId: household.id,
+      revision: 1,
+      name: 'Solcellsanläggning',
+      description: 'Hushållets elproduktion',
+      fields: fieldValues.map(([name, kind, description]) => ({ name, kind, description })),
+    });
+    const value = {
+      typeId: definition.id,
+      name: 'Paneler på taket',
+      description: '',
+      customValues: {
+        [fields[0].id]: 'Exempelsol',
+        [fields[1].id]: 12.5,
+        [fields[2].id]: '2026-09-01',
+      },
+    };
+    expect(staged.draft.changes[0].after).toMatchObject(value);
+    expect(staged.draft.changes[0].after.customValues).toEqual(value.customValues);
+    expect(staged.types.some((type: { id: string }) => type.id === definition.id)).toBe(false);
+    expect(staged.objects).toEqual([]);
     await installation.restart();
     await page.reload();
+    const proposed = await read();
+    expect(proposed.draft).toEqual(staged.draft);
+    expect(proposed.objects).toEqual([]);
+    expect(proposed.types.some((type: { id: string }) => type.id === definition.id)).toBe(false);
     const draft = await openDraftReview(page);
     await expect(draft).toContainText('Solcellsanläggning');
     await expect(draft).toContainText('Paneler på taket');
-    await saveReviewedConflictDraft(page);
+    const saved = await saveReviewedConflictDraft(page);
+    expect(saved.status()).toBe(200);
+    const saveRequest = saved.request().postDataJSON();
+    const { receipt } = await saved.json();
+    expect(receipt.objectTypes).toEqual([
+      { id: definition.id, before: null, after: { ...definition.after, revision: 1 } },
+    ]);
+    expect(receipt.changes).toHaveLength(1);
+    expect(receipt.changes[0].before).toBeNull();
+    expect(receipt.changes[0].after).toEqual({
+      ...staged.draft.changes[0].after,
+      id: staged.draft.changes[0].id,
+      householdId: household.id,
+      revision: 1,
+    });
+    expect(receipt.changes[0].type).toEqual(receipt.objectTypes[0].after);
     await closeTextView(page);
     await installation.restart();
     await page.reload();
+    const current = await read();
+    expect(current.objects).toEqual([receipt.changes[0].after]);
+    expect(current.objects[0].customValues).not.toHaveProperty(fields[3].id);
+    expect(current.types.find((type: { id: string }) => type.id === definition.id)).toEqual(
+      receipt.objectTypes[0].after,
+    );
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([receipt]);
+    const replay = await page.request.post(`${path}/save`, {
+      headers: { origin: installation.origin },
+      data: saveRequest,
+    });
+    expect(replay.status()).toBe(200);
+    expect(await replay.json()).toEqual({ receipt });
+    expect(await read()).toEqual(current);
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([receipt]);
     await openTable(page);
     await editTableObject(page, 'Paneler på taket');
     await page.getByRole('button', { name: 'Egna fält', exact: true }).click();

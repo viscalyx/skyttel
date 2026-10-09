@@ -8038,15 +8038,7 @@ UTKAST-137.
   "counterpart": {
     "spec": "tests/integration/draft-conflicts.spec.ts",
     "caseId": "UTKAST-137"
-  },
-  "evidence": [
-    {
-      "kind": "technical",
-      "spec": "tests/integration/draft-conflicts.spec.ts",
-      "title": "independent users save unrelated objects without a meaningless conflict",
-      "purpose": "Bevarat HTTP-prov för samtidiga oberoende förslag; omstart, sparad karta och båda privata utkast jämförs separat."
-    }
-  ]
+  }
 }
 ```
 -->
@@ -8068,3 +8060,17 @@ UTKAST-137.
 - Båda sparanden bekräftas utan konflikt om det andra objektet.
 - Lo Lind och Ny musiktjänst finns hos båda efter omstart.
 - Båda egna utkasten är tomma.
+- UTKAST-137 jämför dessutom de två samtidigt privata förslagen,
+  sparresultaten och objektens fullständiga identiteter och värden för båda
+  medlemmarna genom publika HTTP-svar. Dessa kontroller ingår i samma
+  formulärflöde och kräver inga ytterligare manuella UI-steg.
+
+## Avvecklat tekniskt underlag
+
+I [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts)
+ersätter UTKAST-137 det fristående tekniska testet “independent users save
+unrelated objects without a meaningless conflict”. Två samtidiga privata
+utkast, två lyckade oberoende sparanden, faktisk omstart och båda medlemmarnas
+läsning av exakta objektidentiteter och värden ingår i samma formulärflöde.
+Ingen funktionell fallidentitet avvecklas. Den separata direkta HTTP-kedjan
+upprepas inte; båda medlemmarnas förslag och sparanden görs genom Tabell.

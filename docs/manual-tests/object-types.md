@@ -127,15 +127,8 @@ Hämta då ett nytt giltigt underlag och gör om kontrollen utan samtidiga
   "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
   "outcomes": [
     "Namnlös typ och namnlöst fält stoppas med fokus på respektive fält.",
-    "Typ och objekt sparas tillsammans och visas med svar och historik efter omstart."
-  ],
-  "evidence": [
-    {
-      "kind": "technical",
-      "spec": "tests/integration/object-types.spec.ts",
-      "title": "custom definitions and four optional fields share one durable save and history",
-      "purpose": "Separat HTTP-verifiering av beständighet, avvisning och oförändrat underlag; utför inte formulärstegen."
-    }
+    "Typ och objekt finns i samma privata utkast efter omstart; gemensamma uppgifter ändras först vid sparandet.",
+    "Alla tre svar, obesvarat Batteri och läsbar historik består efter sparande och omstart."
   ]
 }
 ```
@@ -148,8 +141,9 @@ Hämta då ett nytt giltigt underlag och gör om kontrollen utan samtidiga
    lägga det tomma förslaget i utkastet. Typens namn får fokus.
 2. Ange Solcellsanläggning och beskrivningen Hushållets elproduktion.
    Lägg till ett fält utan namn och försök lägga förslaget i utkastet.
-   Fältets namn får fokus. Ange Leverantör som text. Lägg också till
-   Effekt som tal, Installationsdatum som datum och Batteri som ja/nej.
+   Fältets namn får fokus. Ange Leverantör som text med beskrivningen Namn.
+   Lägg också till Effekt som tal med beskrivningen kW,
+   Installationsdatum som datum och Batteri som ja/nej.
    Lägg definitionen i utkastet och läs återkopplingen.
 3. Återgå till kartan. Skapa Paneler på taket av Solcellsanläggning.
    Öppna Egna fält. Ange Exempelsol, `12.5` och `2026-09-01`.
@@ -167,8 +161,10 @@ Hämta då ett nytt giltigt underlag och gör om kontrollen utan samtidiga
 - Namnlös typ och namnlöst fält stoppas var för sig med fokus på felet.
 - Typ och objekt återkommer i samma utkast efter omstart och sparas
   tillsammans. Svaren, obesvarat Batteri och läsbar historik består.
-- Det separata tekniska underlaget kontrollerar exakt kvitto, fältlista,
-  historik och återspelning av samma sparbegäran; UI-stegen gör inte det.
+- Före sparandet finns typen och objektet bara i det privata utkastet.
+  TYP-01 jämför också hela förslagen, kvittot och historiken via publika
+  HTTP-svar och återspelar samma sparbegäran utan ett nytt sparande.
+  Dessa tekniska kontroller kräver inga ytterligare manuella UI-steg.
 
 ### TYP-02: Fyra frivilliga fält kan lämnas öppna, fyllas i och rättas
 
@@ -1630,10 +1626,21 @@ av dessa steg i annan konfiguration kan därför undgå referensen. Det är
 inte ett bevis för alla konfigurationers likvärdighet. TYP-06 och TYP-07
 behåller särskilt skydd för undanträngda fält och ändrade definitioner.
 
-TYP-01 och TYP-07 har separat tekniskt HTTP-underlag. Där kontrolleras
-exakta fältidentiteter, kvitton, återspelning, avvisade värden, gammalt
-sparbesked och historik. Övriga test kontrollerar också lagrade uppgifter
+TYP-01 kontrollerar exakta fältidentiteter, kvitton, återspelning och historik
+i samma formulärflöde. TYP-07 har separat tekniskt HTTP-underlag för
+avvisade värden och gammalt sparbesked. Övriga test kontrollerar lagrade uppgifter
 utöver sina browsersteg. Dessa påståenden kräver inte att en människa
 läser nätverkstrafik under de vanliga stegen. Verklig skärmläsarutmatning,
 fysiskt tangentbord eller pekskärm och faktisk symboltolkning ingår inte
 i syntetisk Chromium-verifiering. Ingen betald leverantör körs här.
+
+## Avvecklat tekniskt underlag
+
+I [object-types.spec.ts](../../tests/integration/object-types.spec.ts)
+ersätter TYP-01 det fristående tekniska testet “custom definitions and four
+optional fields share one durable save and history”. Typens och objektets
+hela privata förslag, omstart före och efter sparandet, obesvarat Batteri,
+exakt kvitto, historik och återspelning ingår i det befintliga formulärflödet.
+Ingen funktionell fallidentitet avvecklas. Direkta HTTP-förslag med fasta
+prov-ID:n körs inte längre som ett separat arbetsflöde; formulären skapar
+identiteterna och HTTP-kontrollerna följer dem genom hela sparandet.

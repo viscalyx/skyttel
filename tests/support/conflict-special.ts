@@ -6,7 +6,7 @@ export async function saveReviewedConflictDraft(page: Page) {
   const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
   if (await conflict.isVisible()) await page.keyboard.press('Escape');
   const draft = await openDraftReview(page);
-  await Promise.all([
+  const [saved] = await Promise.all([
     page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
@@ -19,6 +19,7 @@ export async function saveReviewedConflictDraft(page: Page) {
   await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
     'Utkastet är sparat',
   );
+  return saved;
 }
 
 export async function prepareRemovedObjectConflict(

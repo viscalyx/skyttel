@@ -1889,37 +1889,6 @@ test('UTKAST-118: resolving an object preserves fields changed only by the other
   }
 });
 
-test('independent users save unrelated objects without a meaningless conflict', {
-  tag: '@technical',
-}, async ({ page, browser }) => {
-  const other = await browser.newContext();
-  const app = await collaborators(page.request, other.request);
-  try {
-    const state = await app.read();
-    await app.propose(page.request, 'draft', 'lo', {
-      typeId: state.types[0].id,
-      name: 'Lo Lind',
-      description: '',
-    });
-    await app.propose(other.request, 'draft', 'service', {
-      typeId: state.types[0].id,
-      name: 'Ny musiktjänst',
-      description: '',
-    });
-    expect((await app.save(other.request, 'service-change')).status()).toBe(200);
-    expect((await app.save(page.request, 'person-change')).status()).toBe(200);
-    await app.installation.restart();
-    for (const client of [page.request, other.request])
-      expect((await app.read(client)).objects.map((object) => object.name)).toEqual([
-        'Lo Lind',
-        'Ny musiktjänst',
-      ]);
-  } finally {
-    await other.close();
-    await app.installation.close();
-  }
-});
-
 test('UTKAST-137: independent browser edits save unrelated objects without a conflict', async ({
   page,
   browser,
@@ -1928,6 +1897,7 @@ test('UTKAST-137: independent browser edits save unrelated objects without a con
   const app = await collaborators(page.request, other.request);
   const member = await other.newPage();
   try {
+    const initial = await app.read();
     for (const client of [page, member]) {
       await client.goto(app.installation.origin);
       await openTable(client);
@@ -1938,12 +1908,53 @@ test('UTKAST-137: independent browser edits save unrelated objects without a con
     await editTableObject(member, 'Molnmusik');
     await member.getByLabel('Namn', { exact: true }).fill('Ny musiktjänst');
     await member.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await saveReviewedConflictDraft(member);
-    await saveReviewedConflictDraft(page);
+    const mine = await app.read();
+    const theirs = await app.read(member.request);
+    expect(mine.objects).toEqual(initial.objects);
+    expect(theirs.objects).toEqual(initial.objects);
+    expect(mine.draft.changes).toHaveLength(1);
+    expect(theirs.draft.changes).toHaveLength(1);
+    expect(mine.draft.changes[0]).toMatchObject({
+      id: 'lo',
+      before: initial.objects.find((object) => object.id === 'lo'),
+      after: { typeId: initial.types[0].id, name: 'Lo Lind', description: '' },
+    });
+    expect(theirs.draft.changes[0]).toMatchObject({
+      id: 'service',
+      before: initial.objects.find((object) => object.id === 'service'),
+      after: { typeId: initial.types[0].id, name: 'Ny musiktjänst', description: '' },
+    });
+    const memberSaved = await saveReviewedConflictDraft(member);
+    expect(memberSaved.status()).toBe(200);
+    const { receipt: memberReceipt } = await memberSaved.json();
+    expect(memberReceipt.changes).toHaveLength(1);
+    expect(memberReceipt.changes[0].before).toEqual(theirs.draft.changes[0].before);
+    expect(memberReceipt.changes[0].after).toEqual({
+      ...theirs.draft.changes[0].after,
+      id: 'service',
+      householdId: theirs.draft.changes[0].before?.householdId,
+      revision: 2,
+    });
+    expect((await app.read()).draft).toEqual(mine.draft);
+    const saved = await saveReviewedConflictDraft(page);
+    expect(saved.status()).toBe(200);
+    const { receipt } = await saved.json();
+    expect(receipt.changes).toHaveLength(1);
+    expect(receipt.changes[0].before).toEqual(mine.draft.changes[0].before);
+    expect(receipt.changes[0].after).toEqual({
+      ...mine.draft.changes[0].after,
+      id: 'lo',
+      householdId: mine.draft.changes[0].before?.householdId,
+      revision: 2,
+    });
     await closeTextView(member);
     await closeTextView(page);
     await app.installation.restart();
     for (const client of [page, member]) {
+      const current = await app.read(client.request);
+      expect(current.objects).toEqual([receipt.changes[0].after, memberReceipt.changes[0].after]);
+      expect(current.objects.map((object) => object.name)).toEqual(['Lo Lind', 'Ny musiktjänst']);
+      expect(current.draft.changes).toEqual([]);
       await client.reload();
       await openTable(client);
       const table = client.getByRole('region', { name: 'Hushållets tabell', exact: true });
