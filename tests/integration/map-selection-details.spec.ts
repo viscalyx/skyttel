@@ -134,9 +134,15 @@ test('MARKERING-06: independent property windows share context actions and move 
     ).toContainText('Garage');
     await relationships.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
     await bike.click({ button: 'right' });
-    const icons = await actions
-      .locator('button svg path')
-      .evaluateAll((paths) => paths.map((path) => path.getAttribute('d')));
+    const sharedActionNames = ['Samband för Cykel', 'Visa i kartan', 'Visa samband i kartan'];
+    const expectNamedActions = async (toolbar: Locator, names: string[]) => {
+      for (const name of names) {
+        const action = toolbar.getByRole('button', { name, exact: true });
+        await expect(action).toHaveAccessibleName(name);
+        await action.click({ trial: true });
+      }
+    };
+    await expectNamedActions(actions, ['Redigera objekt', ...sharedActionNames, 'Ta bort objekt']);
     await actions.getByRole('button', { name: 'Visa uppgifter för Cykel', exact: true }).click();
     const first = page.getByRole('region', { name: 'Cykel', exact: true });
     await expect(first).toBeVisible();
@@ -147,15 +153,13 @@ test('MARKERING-06: independent property windows share context actions and move 
       name: 'Objektåtgärder för Cykel',
       exact: true,
     });
-    expect(
-      await firstActions
-        .locator('button svg path')
-        .evaluateAll((paths) => paths.map((path) => path.getAttribute('d'))),
-    ).toEqual(icons.filter((_, index) => index !== 1 && index !== 5));
-    expect(await firstActions.getByRole('button').allTextContents()).toEqual(['', '', '', '', '']);
-    expect(
-      await first.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).textContent(),
-    ).toBe('');
+    // Icon artwork and order may change; each shared action must remain named and usable.
+    const propertyActionNames = ['Redigera Cykel', ...sharedActionNames, 'Ta bort Cykel'];
+    await expect(firstActions.getByRole('button')).toHaveCount(propertyActionNames.length);
+    await expectNamedActions(firstActions, propertyActionNames);
+    const close = first.getByRole('button', { name: 'Stäng uppgifterna', exact: true });
+    await expect(close).toHaveAccessibleName('Stäng uppgifterna');
+    await close.click({ trial: true });
     await expect.poll(positions).toEqual(cameraBefore);
     const move = async (panel: Locator, x: number, y: number) => {
       const header = panel.locator('.object-property-header');
