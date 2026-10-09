@@ -10,8 +10,9 @@ inte
 
 ## Väntande start och syntetiska toner
 
-Starta en ny installation. Skapa Tryckprov, välj **Skriv till Skyttel**,
-markera **Fråga inte igen för det här hushållet** och godkänn. Ladda om sidan så
+Starta en ny installation. Skapa Tryckprov, välj **Skriv till Skyttel** och
+**Nytt samtal**, markera **Fråga inte igen för det här hushållet** och välj
+**Godkänn och starta**. Ladda om sidan så
 att inget samtal ännu pågår. Öppna Console och kör hela blocket:
 
 <!-- markdownlint-disable MD013 -->
@@ -146,6 +147,15 @@ startar den faktiska publika launchern på tomt respektive `seed-family`
 underlag vid 320 × 250 och 1280 × 900. De provar blockens exakta text, båda
 startgränserna, toner, oförändrad karta/utkast/historik, exakt transportstopp,
 runnerns media- och HTTP-avbrott, klockans paus/återupptagning och städning.
+
+Ytterligare separata tekniska prov kör de ordagrant hämtade kommandona för
+ROSTFEL-04, notisernas tillgänglighet och uppdragsfel samt TAL-11:s inkommande
+ljudaktivitet med mikrofonen av. Varje prov använder en egen publik launcher
+med tomt eller `seed-family`-underlag vid samma korta eller höga vy. Proven
+hämtar kommandona före start och behåller egna samtyckesstarter,
+återställningar, status 201/200, oförändrad karta/utkast/historik, tomma
+diagnostikutdata och borttagen provkatalog. De delar inte tidsbudget med
+blockens och runnerns fullständiga prov.
 
 ## Media, textfragment och tekniska observationer
 
@@ -522,6 +532,12 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    **Visa utkastet** utan att föreslå någon ändring.
 7. Välj **Prata med Skyttel** igen.
 
+Tidslinjens steg 2–3 hör till UI-steg 1–2; steg 4–5 till UI-steg 3;
+steg 6 till UI-steg 4 och steg 7 till UI-steg 5. Efter avbruten åtkomst
+ska spåret vara `ended`, inga röstanslutningar skapade. Efter lyckad start
+och mikrofonavslag ska samma spår vara `live`, `enabled:false` och
+`openPeers:1`. Efter ny aktivering är samma spår `enabled:true`.
+
 ### Tidslinje TAL-11
 
 1. Kör `user Rätta namnet till Lo Lind.` och `delegate`. Låt anropet vara
@@ -533,6 +549,14 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    och nästa anrop med `reply REQUEST Namnet är ändrat i utkastet.`.
 4. Kör `sessions`. Kör sedan `setSound('remote', false)` och vänta några
    sekunder. Kör `stats()`.
+5. Vid UI-steg 4, sätt `window.skyttelVoiceFixture.setSound('remote', true)`
+   igen. Läs Skyttel talar med mikrofon av, avsluta med
+   `window.skyttelVoiceFixture.setSound('remote', false)`.
+
+Resurskontrollen vid UI-steg 2 och 4 använder
+`window.skyttelVoiceFixture.stats()`: samma levande mikrofonspår med
+`enabled:false`, en öppen anslutning och en ljudutgång. Terminalens
+`sessions` ska innehålla exakt ett kommentarspaket för uppdraget.
 
 ### Tidslinje TAL-12
 
@@ -544,6 +568,11 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
 5. Kör `setSound('remote', false)`, vänta mer än en sekund och kontrollera att
    de gamla inkommande spåren fortfarande är avslutade. Kör sedan
    `setSound('remote', true)` för ett nytt svar i den nya anslutningen.
+
+Tidslinjens steg 1–2 hör till UI-steg 1, steg 3 till UI-steg 2,
+steg 4 till UI-steg 3 och steg 5 till UI-steg 4. Efter avbrottet ska
+`stats()` visa avslutade gamla inkommande spår men samma levande mikrofonspår;
+`sessions` ska sakna kommentarspaket för det avbrutna uppdraget.
 
 ### Tidslinje TAL-13
 
@@ -563,6 +592,12 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    `reply REQUEST Utkastet har ett förslag.`.
 4. Slå på minskad rörelse i operativsystemet eller i webbläsarens
    utvecklarverktyg. Stoppa sedan Skyttels ljud och därefter mikrofonljudet.
+
+Separat måttunderlag för föregående TAL-14: automationen mäter röstrutans höjd
+till exakt 36 px vid Lyssnar, Du talar, Skyttel talar, Skyttel arbetar och
+minskad rörelse. Vid teknisk inspektion, välj `.voice-box` i Elements och
+läs dess beräknade höjd vid samma stadier. Det vanliga UI-flödet kontrollerar
+läsbarhet och nåbara kontroller.
 
 ### Tidslinje TAL-16
 
@@ -696,6 +731,32 @@ Efter att UI visar **Rösten startar**, kör
 före **Starta ljudet**. `stats()` visar separat spårens avslag och aktivering;
 hörbar ljudåterhämtning kräver ROSTFEL-09.
 
+## Ljudhinder ROSTFEL-04
+
+Använd ett pågående textsamtal med mikrofon av. Före UI-steg 1 kör operatören
+följande i Console:
+
+```javascript
+window.skyttelVoiceFixture.setPlayback('blocked');
+```
+
+Efter mikrofontrycket i UI-steg 1, före nästa återställning, kör:
+
+```javascript
+window.skyttelVoiceFixture.stats();
+```
+
+Alla `microphoneTracks` ska ha `enabled:false`. Vid UI-steg 3, innan testaren
+tabbar till **Starta ljudet** och trycker Retur, kör:
+
+```javascript
+window.skyttelVoiceFixture.setPlayback('allow');
+```
+
+Efter ljudstart ska hindret försvinna, mikrofonspåret vara aktiverat och fokus
+återgå till mikrofonknappen. Slå av mikrofonen, återställ tillåten uppspelning
+och avsluta med `quit`. Faktiskt hörbart ljud bedöms i ROSTFEL-09.
+
 ## Serverfel och referenser
 
 I ROSTFEL-02 skriv `voice-failure startup` före första mikrofonstart; i
@@ -712,6 +773,53 @@ eller `interrupted` utan leverantörens privata meddelande. De kontrollerade
 serverkommandona ersätter en extern leverantör; de ändrar inga sparade
 kartuppgifter. Återställ `voice-failure off`, slå av mikrofonen och avsluta med
 `quit`.
+
+## Notisernas tidslinjer
+
+Använd den nya kontrollerade installationen och det aktuella NOT-fallets
+utgångsläge. Välj bara fallets angivna mått och tema. Operatören utför
+kommandona vid motsvarande UI-steg; testaren utför flödet en gång. För
+textbaserade fall utan pågående samtal, välj **Skriv till Skyttel → Nytt
+samtal → Godkänn och starta** före uppdraget. Lo Exempel, Person och
+**Påhittad uppgift** behålls osparat genom hela provet.
+
+- NOT-01: före första UI-steget, skriv `available off` i launcherns terminal
+  och vänta på knappens otillgängliga beskrivning.
+- NOT-02: vid UI-steg 2 sätt **Network → Offline** i utvecklarverktygen.
+  Vid steg 4 återställ **No throttling** innan texten skickas. När terminalen
+  visar dess `held`, ersätt REQUEST med just detta ID och skriv
+  `reply REQUEST Hej.`. Invänta hela svaret innan ny mikrofonstart.
+- NOT-04: efter texten i UI-steg 1 visas `held` i terminalen; ersätt REQUEST
+  med dess ID och skriv `fail REQUEST`. Vid steg 2 skriv `available off`.
+  Vid steg 3 sätt **Network → Offline**, läs kontaktfelet, återställ
+  **No throttling**, läs åter otillgängligheten och skriv sedan `available on`.
+- NOT-05: efter uppdraget i UI-steg 1, läs `held` och skriv `fail REQUEST`
+  med aktuellt ID. Gör samma sak för det nya anropet efter UI-steg 3.
+  I UI-steg 4 behåll det nya anropet hållet tills den borttagna notisen lästs;
+  släpp sedan med `reply REQUEST Ett nytt svar.`.
+- NOT-06: sätt **Network → Offline** före UI-steg 1. Efter att testaren
+  fokuserat stängknappen vid steg 2 återställ **No throttling**. Bryt före
+  steg 3 igen; efter uttrycklig stängning återställ nätverket vid steg 4.
+- NOT-08 och dess placeringsvarianter NOT-21/22: efter **Ge ett förslag.**
+  i UI-steg 1 läs `held` och skriv `fail REQUEST` med aktuellt ID. Behåll
+  det valda visningsmåttet och mikrofon på genom stängningen.
+- NOT-09/23: före UI-steg 1 skriv `available off`; vid UI-steg 2 skriv
+  `available on`. Före mikrofontrycket i UI-steg 3 kör följande i Console:
+
+  ```javascript
+  window.skyttelVoiceFixture.setMicrophone('deny');
+  ```
+
+  Vid UI-steg 4 mäts symbolens kontrast till minst 3:1 och texten till minst
+  4,5:1 med ett kontrastverktyg i det valda temat. Automationen bevarar de
+  exakta färgberäkningarna. Fysisk symboligenkänning hör till NOT-11.
+
+Efter valt fall: återställ **No throttling**, skriv `available on` och kör
+`window.skyttelVoiceFixture.setMicrophone('allow')` i Console. Slå av
+mikrofonen, avsluta med `quit` och kontrollera borttagen provkatalog.
+`fail` orsakar avsiktligt ett kontrollerat leverantörsfel; notisen och
+terminalens felreferens ska tillhöra just det uppdraget. Inga andra
+serverdiagnoser eller privata uppgifter får tillkomma.
 
 ## Pekavbrott och kvarvarande svar
 
@@ -793,8 +901,9 @@ efter fallet och avsluta med `quit`.
 
 ### Tidslinje TEXTBRICKA-04
 
-1. Aktivera operativsystemets minskade rörelse. Prova ett 390 px fönster och ett
-   1280 px fönster, i både ljust och mörkt tema.
+1. Välj bara det aktuella fallets bredd och tema före första handlingen:
+   TEXTBRICKA-04: 390 px ljust, 06: 390 px mörkt, 07: 1280 px ljust eller
+   08: 1280 px mörkt. Aktivera operativsystemets minskade rörelse.
 2. Skicka **Beskriv mitt utkast.**, stäng textvyn och välj
    **Visa verktygens namn**. Kräv synlig text **Skriv till Skyttel**, med
    stilla arbetsmarkering som inte täcker namnet.
@@ -802,8 +911,9 @@ efter fallet och avsluta med `quit`.
    står stilla utan övergång.
 4. Släpp `reply REQUEST Ett nytt svar.`. Tre punkter ersätter arbetsformen.
    Verktygens placering, bredd och höjd förblir desamma.
-5. Kontrollera synlig kontrast och fokus, även vid zoom. Gör också TEXTBRICKA-02
-   för att jämföra frågetecknets form med punkterna.
+5. Kontrollera synlig kontrast och fokus i den valda konfigurationen. Avsluta
+   detta fall; frågeflödet har sin egen identitet TEXTBRICKA-02. Faktisk zoom
+   och symboligenkänning bedöms i TEXTBRICKA-09/10.
 
 ### Tidslinje TEXTBRICKA-05
 
@@ -917,8 +1027,9 @@ efter fallet och avsluta med `quit`.
 
 Starta en ny kontrollerad installation vid 390 × 844. Logga in som Alex med
 Google och skapa Notisprov. Lägg **Lo Exempel**, **Person**, tom beskrivning i
-utkastet med det riktiga **Nytt objekt** -formuläret. Starta textsamtalet och
-godkänn. Öppna utvecklarverktygens **Network request blocking**, lägg till
+utkastet med det riktiga **Nytt objekt** -formuläret. Välj **Skriv till
+Skyttel → Nytt samtal → Godkänn och starta** utan mikrofonstart. Öppna
+utvecklarverktygens **Network request blocking**, lägg till
 `*text-assistant/recover*` och aktivera blockeringen innan registreringen nedan.
 Behåll den över omladdning.
 
@@ -941,6 +1052,12 @@ före och efter: samma verkliga operation-ID byter från `pending` till
 `succeeded`, ett försök och ett sparat Lo. ID:t från servern är inte modellens
 `notis-prov`. Återställ nätblockeringen, stäng mikrofonen och avsluta med
 `quit`.
+
+Separat måttunderlag vid föregående NOT-10:s UI-steg 1: automationen
+kontrollerar minst 36 px synlig knapphöjd och minst 44 px faktisk tryckyta
+inklusive `::before`. Vid teknisk inspektion väljs kontrollknappen i Elements;
+beräknad knapp- och pseudoelementhöjd ska ge samma tryckyta. De numeriska
+kontrollerna finns kvar i NOT-10:s integrationstest.
 
 ## Hjälpens kontrollerade svar
 

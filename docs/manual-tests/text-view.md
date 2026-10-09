@@ -1458,8 +1458,9 @@ notisen.
 
 För TEXTBRICKA-01–05 används den kontrollerade röstinstallationen enligt
 [röstguiden](voice-assistant.md#controlled-voice-fixture). Skapa ett nytt
-hushåll med tomt utkast; kör inte `seed-family`. Välj **Skriv till Skyttel**
-och godkänn för besöket. Terminalens `pending` visar det hållna modell- anropet.
+hushåll med tomt utkast; kör inte `seed-family`. Välj **Skriv till Skyttel →
+Nytt samtal → Godkänn och starta** för besöket. Terminalens `pending` visar
+det hållna modellanropet.
 Släpp ett vanligt svar med `reply REQUEST TEXT`. Börja med en ny installation
 inför varje fall. Fysisk skärmläsare och röststyrning provas separat; de tysta
 mediespåren bevisar ingen uppläsning.

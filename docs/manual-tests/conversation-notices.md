@@ -40,7 +40,9 @@ samtalet eller flytta fokus när notisen visas.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Ny flik utan samtal. Kör `available off` före starten.
+**Förutsättningar:** Ny flik utan samtal; operatören har förberett
+otillgänglighet enligt
+[notisernas tidslinjer](voice-controls-preparation.md#notisernas-tidslinjer).
 
 **Integrationstest:**
 [conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
@@ -94,7 +96,11 @@ och läsa. Återkomst får inte slå på mikrofonen.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Ny flik, normalt nätverk och `available on`.
+**Förutsättningar:** Ny flik, normalt nätverk och tillgängligt samtal.
+
+**Separat förberedelse:** Operatören följer NOT-02 i
+[notisernas tidslinjer](voice-controls-preparation.md#notisernas-tidslinjer)
+vid de angivna stegen. Utför UI-flödet en gång.
 
 **Integrationstest:**
 [conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
@@ -118,11 +124,11 @@ och läsa. Återkomst får inte slå på mikrofonen.
 **Steg:**
 
 1. Välj **Prata med Skyttel**, godkänn för besöket och invänta **Lyssnar**.
-2. Sätt webbläsaren i **Offline**.
+2. Låt operatören bryta HTTP-kontakten enligt tidslinjen och läs notisen.
 3. Välj **Skriv till Skyttel**. Skriv **Text som inte ska skickas än.** Tryck
    Retur och kontrollera **Skicka**.
-4. Återställ nätverket. Skicka texten och släpp dess `held` -anrop med
-   `reply REQUEST Hej.`. Slå därefter själv på mikrofonen.
+4. När kontakten återkommer, skicka texten och läs det förberedda svaret
+   **Hej.** Slå därefter själv på mikrofonen.
 
 **Förväntat resultat:**
 
@@ -177,18 +183,18 @@ Påhittad uppgift, mikrofon på och stängd textvy.
 
 **Steg:**
 
-1. Fokusera Prata med Skyttel. Skriv offline i runnerns terminal.
+1. Fokusera Prata med Skyttel. Låt operatören bryta HTTP enligt förberedelsen.
    Läs kontakttexten och
    kontrollera att fokus ligger kvar.
 2. Öppna textvyn, läs hela notisen ovanför meddelandefältet och stäng textvyn.
    Samma besked ska nu finnas vid röstrutans plats.
-3. Skriv online i runnerns terminal. Notisen försvinner; mikrofonen förblir av.
+3. När operatören återställer kontakten försvinner notisen; mikrofonen är av.
 4. Slå själv på mikrofonen. Öppna textvyn och fokusera Meddelande till Skyttel
-   innan nästa offline-kommando.
+   innan nästa förberedda kontaktavbrott.
    Kontrollera kvarvarande fältfokus och samma
    kontakttext.
 5. Stäng och öppna textvyn medan HTTP är av. Kontrollera en enda synlig
-   notis och samma text. Skriv online igen.
+   notis och samma text. Låt operatören återställa kontakten igen.
 6. Kontrollera att notisen försvinner och mikrofonen fortfarande är av. Avsluta
    provmiljön.
 
@@ -213,6 +219,10 @@ otillgängligt samtal och uppdragsfel.
 
 **Förutsättningar:** Textvy och normalt nätverk. Behåll samma samtal.
 
+**Separat förberedelse:** Operatören följer NOT-04 i
+[notisernas tidslinjer](voice-controls-preparation.md#notisernas-tidslinjer)
+vid de angivna stegen. Utför UI-flödet en gång.
+
 **Integrationstest:**
 [conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
 , NOT-04.
@@ -234,16 +244,17 @@ otillgängligt samtal och uppdragsfel.
 
 **Steg:**
 
-1. Skicka **Ge ett förslag.** och kör `fail REQUEST` för dess hållna anrop.
-2. Kör `available off`. Skriv **Oskickad text finns kvar.** utan att skicka.
-3. Sätt nätverket i **Offline**, återställ det och kör `available on`.
+1. Skicka **Ge ett förslag.** och läs det förberedda uppdragsfelet.
+2. När otillgängligheten förberetts, skriv **Oskickad text finns kvar.** utan
+   att skicka.
+3. Läs kontaktavbrottet och sedan återkomsten enligt operatörens tidslinje.
 
 **Förväntat resultat:**
 
 - Först visas **Skyttel kunde inte slutföra uppdraget. Försök igen.**
   Otillgängligt samtal ersätter sedan detta besked och inaktiverar Skicka.
 - Kontaktavbrottet ersätter otillgängligheten. Bara en notis visas.
-- Efter återkomst syns otillgängligheten igen, tills `available on` återställer
+- Efter återkomst syns otillgängligheten igen, tills operatören återställer
   samtalet. Uppdragsfelet syns då igen och texten finns kvar. Återkomsten till
   tillgängligt samtal läses upp i tur.
 
@@ -254,6 +265,10 @@ otillgängligt samtal och uppdragsfel.
 **Användare:** Alex.
 
 **Förutsättningar:** Textvy, normalt nätverk och tillgängligt samtal.
+
+**Separat förberedelse:** Operatören följer NOT-05 i
+[notisernas tidslinjer](voice-controls-preparation.md#notisernas-tidslinjer)
+vid de angivna stegen. Utför UI-flödet en gång.
 
 **Integrationstest:**
 [conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
@@ -276,11 +291,12 @@ otillgängligt samtal och uppdragsfel.
 
 **Steg:**
 
-1. Skicka ett uppdrag och kör `fail REQUEST`. Kontrollera fältets fokus.
+1. Skicka ett uppdrag och låt det misslyckas enligt tidslinjen. Kontrollera
+   fältets fokus.
 2. Välj **Stäng notisen** med tangentbord.
-3. Skicka ett nytt uppdrag och låt även detta misslyckas med `fail REQUEST`.
-4. Skicka **Ett nytt försök.** Håll svaret och släpp sedan
-   `reply REQUEST Ett nytt svar.`.
+3. Skicka ett nytt uppdrag och låt även detta misslyckas enligt tidslinjen.
+4. Skicka **Ett nytt försök.** Läs först medan svaret väntar och sedan det
+   förberedda svaret **Ett nytt svar.**.
 
 **Förväntat resultat:**
 
@@ -298,7 +314,11 @@ otillgängligt samtal och uppdragsfel.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Ny flik utan samtal, normalt nätverk och `available on`.
+**Förutsättningar:** Ny flik utan samtal, normalt nätverk och tillgänglighet.
+
+**Separat förberedelse:** Operatören följer NOT-06 i
+[notisernas tidslinjer](voice-controls-preparation.md#notisernas-tidslinjer)
+vid de angivna stegen. Utför UI-flödet en gång.
 
 **Integrationstest:**
 [conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
@@ -321,10 +341,10 @@ otillgängligt samtal och uppdragsfel.
 
 **Steg:**
 
-1. Sätt nätverket i **Offline**. Välj **Prata med Skyttel**.
-2. Fokusera **Stäng notisen** utan att trycka och återställ nätverket.
-3. Bryt nätverket igen. Tryck **Prata med Skyttel** och stäng notisen.
-4. Återställ nätverket igen.
+1. Efter förberett kontaktavbrott, välj **Prata med Skyttel**.
+2. Fokusera **Stäng notisen** utan att trycka och låt kontakten återkomma.
+3. Efter nästa förberedda avbrott, tryck **Prata med Skyttel** och stäng notisen.
+4. Låt kontakten återkomma igen enligt tidslinjen.
 
 **Förväntat resultat:**
 
@@ -372,8 +392,8 @@ verktygsfältet även i korta fönster.
 
 1. Följ
    [medieanslutningens separata förberedelse](voice-controls-preparation.md#notisens-plats-under-bruten-mediekontakt)
-   . Bryt medieanslutningen med disconnect; behåll HTTP och fliken. Återanslut
-   först efter steg 3 med reconnect.
+   . Operatören bryter medieanslutningen före nästa observation; HTTP och
+   fliken behålls. Kontakten återställs först efter steg 3.
 2. Läs notisen, kartans status och verktygsfältets **Återställ vy**.
    Kontrollera att kameraverktyget **Navigera** går att nå utan att täckas.
 3. I korta fönster: gå med Tab till **Kartans sammanhang**. Kontrollera den
@@ -403,6 +423,11 @@ verktygsfältet även i korta fönster.
 **Förutsättningar:** Mikrofonen på, normalt nätverk och textvyn öppen. Använd
 1280 × 900 före första UI-handlingen; andra mått har egna fall.
 
+**Separat förberedelse:** Operatören följer NOT-08 i
+[notisernas tidslinjer](voice-controls-preparation.md#notisernas-tidslinjer)
+vid de angivna stegen. Utför UI-flödet en gång; NOT-21/22 väljer sin egen
+konfiguration före samma steg.
+
 **Integrationstest:**
 [conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
 , NOT-08.
@@ -424,7 +449,7 @@ verktygsfältet även i korta fönster.
 
 **Steg:**
 
-1. Skicka **Ge ett förslag.** och kör `fail REQUEST`.
+1. Skicka **Ge ett förslag.** och låt det misslyckas enligt tidslinjen.
 2. Stäng textvyn. Läs notisen, röstrutan och kartans status.
 3. Fokusera **Skriv till Skyttel** och tryck Tab. Tryck Retur på
    **Stäng notisen**.
@@ -450,6 +475,10 @@ verktygsfältet även i korta fönster.
 **Förutsättningar:** Den kontrollerade röstinstallationen, normalt nätverk och
 ljust tema. Textvyn har öppnats med medgivande och stängts igen.
 
+**Separat förberedelse:** Operatören följer NOT-09 i
+[notisernas tidslinjer](voice-controls-preparation.md#notisernas-tidslinjer)
+vid de angivna stegen. NOT-23 använder samma flöde en gång i mörkt tema.
+
 **Integrationstest:**
 [conversation-audit.spec.ts](../../tests/integration/conversation-audit.spec.ts)
 , NOT-09.
@@ -471,23 +500,21 @@ ljust tema. Textvyn har öppnats med medgivande och stängts igen.
 
 **Steg:**
 
-1. Kör `available off`. Vänta på knappbeskrivningen
+1. Efter förberedd otillgänglighet, vänta på knappbeskrivningen
    **Inte tillgängligt just nu.** Tryck på mikrofonknappen och läs notisen.
-2. Kör `available on` och vänta på att notisen försvinner.
-3. I webbläsarens konsol, kör `window.skyttelVoiceFixture.setMicrophone('deny')`
-   . Tryck på mikrofonknappen och läs notisen.
-4. Behåll ljust tema. Mät symbolens kontrast mot kortets bakgrund och textens
-   kontrast med ett kontrastverktyg.
+2. När tillgängligheten återställts, vänta på att notisen försvinner.
+3. Efter förberett mikrofonavslag, tryck på mikrofonknappen och läs notisen.
+4. Behåll det valda temat. Läs symbolen, texten och kontrollerna; teknisk
+   kontrastmätning hör till tidslinjens separata underlag.
 
 **Förväntat resultat:**
 
 - Hindret har en överstruken cirkel; mikrofonhändelsen har en överstruken
   mikrofon. Symbolerna står i tonade cirklar till vänster om texten. Hinder är
   röda och händelser gulbruna.
-- Symbolerna har minst 3:1 kontrast, och texten minst 4,5:1, i detta tema.
-  Automationen mäter de faktiskt beräknade färgerna på de ogenomskinliga korten
-  och symbolernas egna tonade bakgrunder. Den bedömer inte färgseende eller
-  fysisk bildskärm.
+- Symbol och text förblir tydligt urskiljbara i det valda temat. Numerisk
+  kontrast mäts separat enligt förberedelsen och automationen; den bedömer
+  inte färgseende eller fysisk bildskärm.
 - Symbolen är dold för hjälpmedel; text och namngivna kontroller bär beskedet.
   Båda fallen är stängbara när inget samtal pågår.
 
@@ -530,7 +557,8 @@ inte genomfört försök.
 2. Kontrollera mikrofon av. Öppna **Visa utkastet → Visa förslaget: Lo Exempel**
    och läs **Person**, namn och **Ej uppgivet** i beskrivningen. Stäng
    förslaget utan ändring.
-3. Ta bort nätverksblockeringen. Välj **Kontrollera om utkastet sparades**. Läs
+3. När operatören tar bort nätverksblockeringen, välj **Kontrollera om
+   utkastet sparades**. Läs
    **Utkastet är tomt.**. I **Tabell**, öppna **Lo Exempel** och läs
    **Person** samt **Ej uppgivet** i beskrivningen. Detta avslutar fallet;
    upprepa inte hela
@@ -539,8 +567,9 @@ inte genomfört försök.
 **Förväntat resultat:**
 
 - Ett frågetecken i cirkel står till vänster.
-  **Kontrollera om utkastet sparades** står under texten, med minst 44 px hög
-  tryckyta. Ingen stängknapp finns, och kortet kräver ingen rullning i sidled.
+  **Kontrollera om utkastet sparades** står läsbart under texten och går att
+  nå och trycka på. Ingen stängknapp finns, och kortet kräver ingen rullning
+  i sidled. Exakta mått granskas separat i förberedelsen.
 - Mikrofonen är av. Förslaget är identiskt med det som registrerades; felet har
   varken sparat det eller kastat det.
 - Kontrollen använder samma försöks-ID. Automationen använder en riktig

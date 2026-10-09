@@ -17,7 +17,8 @@ administrativa rättigheter behövs för samtalsflödet.
    . Starta `npx tsx scripts/manual-voice.ts` i en egen terminal. Varje start
    skapar en separat tillfällig SQLite och verkliga applikationsrutter.
 2. Logga in som Alex på den angivna adressen, skapa ett hushåll och välj
-   **Skriv till Skyttel**. Godkänn medgivandet. Håll terminalen öppen.
+   **Skriv till Skyttel → Nytt samtal → Godkänn och starta**. Håll terminalen
+   öppen.
 3. Öppna webbläsarens utvecklarkonsol. Provets `window.skyttelVoiceFixture`
    ersätter endast webbläsarens media och den externa leverantören. Den spelar
    inte in den verkliga mikrofonen.
@@ -180,6 +181,11 @@ ROSTFEL-03.
 
 **Förutsättningar:** Textsamtalet är igång och mikrofonen av.
 
+**Separat förberedelse:** Följ
+[ljudhindret ROSTFEL-04](voice-controls-preparation.md#ljudhinder-rostfel-04)
+vid respektive UI-steg. Operatören förbereder blockering, tillåtelse och
+spårkontroll; utför UI-flödet en gång.
+
 **Integrationstest:**
 [voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts),
 ROSTFEL-04.
@@ -201,13 +207,12 @@ ROSTFEL-04.
 
 **Steg:**
 
-1. Kör `window.skyttelVoiceFixture.setPlayback('blocked')`. Tryck på
+1. När ljudhindret förberetts, tryck på
    mikrofonknappen. Kontrollera **Webbläsaren stoppade ljudet.** och knappen
    **Starta ljudet** i samtalsnotisen.
-2. Kontrollera att mikrofonen är av. Kör `window.skyttelVoiceFixture.stats()`
-   och kontrollera att samtliga `microphoneTracks` har `enabled: false`.
+2. Kontrollera att mikrofonknappen visar avstängt läge.
    Notisen har ingen stängknapp medan hindret pågår.
-3. Kör `window.skyttelVoiceFixture.setPlayback('allow')`. Tabba till
+3. När operatören tillåter uppspelning enligt förberedelsen, tabba till
    **Starta ljudet** och tryck Retur.
 4. Kontrollera att ljudhindret försvinner, mikrofonknappen får fokus och
    röstrutan visar **Lyssnar**. Kontrollera att textvyn behåller sitt
@@ -218,7 +223,8 @@ ROSTFEL-04.
 - Uppspelning försöker starta i den användargest som startar rösten. Misslyckad
   uppspelning håller mikrofonen av och visas som ett hinder.
 - **Starta ljudet** låser upp uppspelningen i sitt eget tryck. Mikrofonen
-  lyssnar först efter fungerande uppspelning. Den gamla ljudknappen finns inte.
+  lyssnar först efter fungerande uppspelning. Notisen försvinner och
+  mikrofonknappen får tillbaka fokus.
 - En skärmläsare får den artiga meningen
   **Webbläsaren stoppade ljudet. Starta ljudet.**, med både text och åtgärd.
 

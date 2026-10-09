@@ -263,7 +263,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   raden Skyttel arbetar. Kontrollerat familjeunderlag och
   verkligt tal redovisas separat. TAL-18/19 skiljer mikrofonlägena;
   TAL-20–22 skiljer placeringarna och TAL-17/23–25 kräver verkliga
-  mikrofon-, ljud-, system- eller skärmläsarobservationer.
+  mikrofon-, ljud-, system- eller skärmläsarobservationer. TAL-24 behåller
+  TAL-16:s exakta hörda fokus-/aktivitetssekvens, inklusive statusord som
+  inte ska läsas upp, och skiljer den från verkligt tal.
 - [Utkastet i samtalet](conversation-draft.md): tabellen och dess symboler,
   personligt val mellan hushåll och enheter, första förslaget, tomt utkast,
   sparåterkoppling och kvittots plats i Rapporter → Ändringshistorik.
@@ -673,7 +675,9 @@ anger exakta kommandon, hållna startgränser, syntetiska toner, tekniska
 paket/resurser och återställning. Dess publika runner pausar klockan för
 manuell inspektion av media- och HTTP-avbrott och återupptar den vid
 återanslutning; det är inte naturlig förlupen tid. Tomt/seedat underlag
-vid kort/hög vy har separata tekniska röktest. ROSTFEL-01/05–08,
+vid kort/hög vy har separata tekniska röktest. De flyttade felkommandona och
+TAL-11:s ljudaktivitet med mikrofonen av har egna publika prov med fullständig
+start, återställning och städning. ROSTFEL-01/05–08,
 HJALP-07–10, TEXTBRICKA-06–08 och YTA-13 har egna funktionella motsvarigheter.
 HJALP-11/12, TEXTBRICKA-09/10 och YTA-14/15 beskriver faktiskt hjälpmedel,
 fysisk inmatning eller zoom; syntetisk Chromium etablerar dem inte.

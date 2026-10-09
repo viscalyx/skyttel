@@ -20,9 +20,12 @@ Google-knapp. Inga administrativa rättigheter krävs för samtalet.
    `available on` ändrar samtalets tillgänglighet. `pending` listar uppdragets
    `held` -anrop. `fail REQUEST` avbryter det aktuella anropet;
    `reply REQUEST Kartan är redo.` avslutar det med ett svar.
-3. Starta en ny provmiljö inför varje fall. Förbered **Prata med Skyttel** och
-   godkänn medgivandet. Invänta **Lyssnar**, om fallet inte anger text. Kör
-   först vid 1280 pixels bredd, därefter vid 390 pixels bredd.
+3. Starta en ny provmiljö inför varje fall. För röst, välj **Prata med
+   Skyttel → Godkänn och starta** och invänta **Lyssnar**. För text utan
+   röststart, välj **Skriv till Skyttel → Nytt samtal → Godkänn och starta**.
+   Kör
+   bara det aktuella fallets angivna bredd och pekarkonfiguration. Övriga
+   konfigurationer har egna fall; upprepa inte dem i samma körning.
 4. Provet använder riktig server och tillfällig SQLite men ersätter mikrofon,
    ljudtransport och externa leverantörer. Konsolkommandon nedan styr dessa
    ersättningar, aldrig appens interna tillstånd.
@@ -43,8 +46,9 @@ samtal på dator och pekskärm.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Mikrofonen är på. Kör fallet med mus och med pekstyrd
-webbläsaremulering; verklig pekskärm hör till #220.
+**Förutsättningar:** Mikrofonen är på. Kör HJALP-01 med fin pekare vid
+1280 pixels bredd. Den emulerade grova pekaren har eget fall HJALP-07;
+verklig pekskärm hör till #220.
 
 **Integrationstest:**
 [conversation-accessibility.spec.ts](../../tests/integration/conversation-accessibility.spec.ts)
@@ -239,7 +243,8 @@ mikrofonuppläsning efter användarens åtgärd.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Börja med **Skriv till Skyttel**, giltigt medgivande och
+**Förutsättningar:** Börja med **Skriv till Skyttel → Nytt samtal → Godkänn
+och starta**, giltigt medgivande och
 mikrofonen av. Röstanslutningen ska inte redan vara igång.
 
 **Integrationstest:**

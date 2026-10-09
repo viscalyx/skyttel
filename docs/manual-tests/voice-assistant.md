@@ -573,7 +573,7 @@ till TAL-17/23/24.
 **Steg:**
 
 1. Välj Prata med Skyttel, läs medgivanderutan och välj Avbryt. Starta i stället
-   med Skriv till Skyttel och godkänn.
+   med Skriv till Skyttel → Nytt samtal → Godkänn och starta.
 2. Skicka Text utan mikrofon och låt Texten fungerar. tillkomma enligt
    tidslinjen. Rösten ska inte ha startats.
 3. Förbered väntande mikrofonåtkomst enligt tidslinjen och välj Prata med
@@ -648,21 +648,20 @@ till TAL-17/23/24.
 
 **Förväntat resultat:**
 
-- Steg 3: röstrutan visar grå punkter och **Rösten startar**, utan stoppikon.
+- Steg 2: röstrutan visar grå punkter och **Rösten startar**, utan stoppikon.
   Knappen heter fortfarande **Prata med Skyttel**, är inte intryckt och
   beskrivs **Avbryt starten av rösten**.
-- Steg 4: röstrutan försvinner. Det sena mikrofonspåret avslutas, och ingen
-  röstanslutning skapas.
-- Steg 5: knappen är intryckt och visar samma mikrofon. Röstrutan visar sju
-  punkter och **Lyssnar**. Ingen panel öppnas, och samtalets textfält syns
+- Steg 3: den avbrutna röstrutan försvinner. Sen åtkomst startar inte ett
+  samtal. Först den uttryckliga nya starten ger **Lyssnar**.
+- Steg 4 före avslag: knappen är intryckt och visar samma mikrofon. Röstrutan
+  visar sju punkter och **Lyssnar**. Ingen panel öppnas, och textfältet syns
   inte. Knappen har accentfärgad bakgrund; i avläget är den en vanlig knapp utan
   stoppsymbol.
-- Steg 6: knappen är inte intryckt, och röstrutan försvinner direkt.
-  Mikrofonspåret är avstängt från första stund och fortsätter vara levande.
-  Anslutningen är kvar så att ett fördröjt svar kan höras: den separat
-  kontrollerade resursen. Lo-förslagets identitet, typ och värden är oförändrade
-  av mikrofonavslag.
-- Steg 7: samma samtal fortsätter utan medgivanderuta, och röstrutan visar
+- Steg 4 efter avslag: knappen är inte intryckt, och röstrutan försvinner direkt.
+  Lo Exempel, Person och **Påhittad uppgift** finns kvar i utkastet.
+  Levande avstängt mikrofonspår och kvarvarande anslutning granskas separat
+  enligt tidslinjen.
+- Steg 5: samma samtal fortsätter utan medgivanderuta, och röstrutan visar
   **Lyssnar**.
 
 ### TAL-11: Skyttel arbetar färdigt och talar klart när mikrofonen stängs av
@@ -715,15 +714,15 @@ till TAL-17/23/24.
 **Förväntat resultat:**
 
 - Steg 1: röstrutan visar **Skyttel arbetar** och stoppikonen **Avbryt**.
-- Steg 2: knappen är inte intryckt men går att välja. Mikrofonspåret har den
-  separat kontrollerade resursen och den separat kontrollerade resursen.
+- Steg 2: knappen är inte intryckt men går att välja. Mikrofonen är av.
   Röstrutan visar fortfarande **Skyttel arbetar**.
 - Steg 3: utkastet visar **Lo Lind**. Röstrutan visar **Skyttel talar**.
-- Steg 4: `sessions` visar ett kommentarspaket för uppdraget. Röstrutan
+- Steg 4: röstrutan
   försvinner när ljudet tystnar, och statusen för hjälpmedel innehåller
   **Mikrofonen är av**. Anslutningen och det avstängda mikrofonspåret finns
-  kvar även efter en längre paus. Kör `setSound('remote', true)` igen:
-  **Skyttel talar** visas utan att mikrofonen slås på. Inget fel visas.
+  kvar enligt tidslinjens separata resurskontroll. Vid det förberedda nya
+  ljudsegmentet visas **Skyttel talar** utan att mikrofonen slås på.
+  Inget fel visas.
 
 ### TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men
 
@@ -774,12 +773,11 @@ till TAL-17/23/24.
 
 - Steg 2: röstrutan visar **Lyssnar** utan stoppikon. Fokus står på
   **Prata med Skyttel**, som fortfarande är intryckt.
-- Steg 3: utkastet är oförändrat. Lo heter fortfarande Lo Exempel, och inget
-  kommentarspaket skickas för det avbrutna uppdraget.
-- Steg 4: den gamla ljudutgången och dess spår avslutas direkt. Samma
-  mikrofonspår är kvar. En ny anslutning behåller samtalets tidigare text, och
+- Steg 2: utkastet är oförändrat. Lo heter fortfarande Lo Exempel. Kommentarer
+  och resursstopp granskas separat enligt tidslinjen.
+- Steg 3: det gamla ljudet tystnar direkt. Samtalets tidigare text finns kvar,
   röstrutan återgår till **Lyssnar**. Förslagen finns kvar.
-- Steg 5: det avbrutna ljudet kan inte återupptas efter en paus.
+- Steg 4: det avbrutna ljudet kan inte återupptas efter en paus.
   **Skyttel talar** visas för det nya svaret, som ger kontrollerad inkommande
   ljudaktivitet.
 
@@ -790,7 +788,8 @@ mikrofonknappen vänta medan Skyttel arbetar med ett skrivet meddelande.
 
 **Användare:** Alex i den kontrollerade installationen.
 
-**Förutsättningar:** Samtalet är startat med **Skriv till Skyttel**.
+**Förutsättningar:** Samtalet är startat med **Skriv till Skyttel → Nytt
+samtal → Godkänn och starta**, utan mikrofonstart.
 
 **Integrationstest:**
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-13.
@@ -891,7 +890,8 @@ till TAL-17/23/24.
   punkter. Formerna byts utan övergång.
 - Röstrutan är en namngiven grupp. **Avbryt** går att trycka på. Den visar
   vågform, ett statusord, eventuell kontextsymbol och stoppikon. Den blir
-  bredare med fler delar men behåller samma höjd, 36 px.
+  bredare med fler delar men behåller samma höjd. Text och stoppknapp förblir
+  läsbara och nåbara; exakta mått granskas separat enligt tidslinjen.
 
 ### TAL-16: röstrutans namn läge och status för hjälpmedel
 
@@ -1196,6 +1196,10 @@ Open the exact printed `http://127.0.0.1:PORT` origin in a new private browser
 window. Sign in with Google as the controlled **Alex Exempel**. The prepared
 family case opens its existing household. Otherwise, create **Talprov** through
 the normal form. Use only invented information.
+
+If the selected case begins without consent or an ongoing conversation, stop
+preparation here and use that case's first start action. If it begins with text
+and microphone off, start only the text conversation below. Otherwise:
 
 Choose **Skriv till Skyttel → Nytt samtal** from the map tools and select
 **Godkänn och starta** in the consent box. Then choose **Prata med Skyttel** in
@@ -1622,6 +1626,14 @@ familjeärende, rättelser, fullständigt sparande och fortsatt formulärarbete.
 
 ### TAL-24: riktig skärmläsare och tal samtidigt
 
+**Separat förberedelse för statussekvensen:** Använd först en ny
+[kontrollerad installation](#controlled-voice-fixture) på dator med riktig
+NVDA/Chrome eller VoiceOver/Chrome. Lägg Lo Exempel, Person och **Påhittad
+uppgift** i utkastet utan att starta samtalet. En operatör följer
+[TAL-16:s tidslinje](voice-controls-preparation.md#tidslinje-tal-16) vid steg
+1–7 nedan, särskilt aktivering utan fokusflytt i steg 2. Mediaersättningen
+är tyst; människan lyssnar på den riktiga skärmläsarens statusbesked.
+
 **Syfte:** Hör statusord och samtalstext en gång, och bedöm om skärmläsarens
 röst tas upp som nytt tal.
 
@@ -1640,12 +1652,20 @@ bedöm om skärmläsarens röst tas upp som nytt tal.
 {
   "humanObservation": {
     "kind": "screen-reader",
-    "observation": "Hör statusord och samtalstext en gång, och bedöm om skärmläsarens röst tas upp som nytt tal."
+    "observation": "Hör knappens eget läge med fokus på knappen utan extra status; Lyssnar en gång med fokus på Återställ vy; inget Du talar, upprepat Lyssnar eller Skyttel talar; Skyttel arbetar och Mikrofonen är av i tur. Bedöm dessutom samspel med verkligt tal separat."
   },
-  "reference": "NVDA/Chrome Windows; VoiceOver/Chrome macOS, iPhone och iPad.",
+  "reference": "Kontrollerad fokus-/aktivitetsekvens med riktig NVDA/Chrome Windows eller VoiceOver/Chrome macOS; separat TAL-17 med verklig röst, även iPhone/iPad.",
   "outcomes": [
     "Beskeden hörs i rätt tur utan upprepning eller oavsiktligt nytt tal.",
     "De faktiskt provade hjälpmedlens namn, lägen och fokus redovisas."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/voice-box.spec.ts",
+      "caseId": "TAL-16",
+      "purpose": "Samma fokuserade och ofokuserade aktivitet, statusförekomst och tangentordning; DOM-underlag hör inte skärmläsaren."
+    }
   ]
 }
 ```
@@ -1653,16 +1673,41 @@ bedöm om skärmläsarens röst tas upp som nytt tal.
 
 **Steg:**
 
-1. Utför TAL-17 med hjälpmedlet aktiverat och fokus både på mikrofonknappen och
-   annan kontroll.
-2. Öppna och stäng textvyn, tala och stäng av mikrofonen under arbetet. Hör
+1. Starta **Prata med Skyttel → Godkänn och starta**. Slå av med fokus kvar
+   på samma knapp. Hör knappens eget läge, utan extra statusuppläsning.
+2. Slå på mikrofonen och flytta fokus till **Återställ vy** innan
+   uppläsningen börjar. Hör **Lyssnar** exakt en gång. Den separata
+   tidslinjen erbjuder också aktivering av samma knapp utan fokusflytt;
+   granska faktiskt hört resultat med skärmläsaren, inte bara DOM-status.
+3. Låt förberedelsen ge egen aktivitet och sedan tystnad. Läs **Du talar**
+   och åter **Lyssnar** i rutan, men hör inget **Du talar** och inget nytt
+   **Lyssnar**.
+4. Låt **Beskriv utkastet.** vänta. Hör **Skyttel arbetar**. Låt svaret och
+   inkommande aktivitet börja; hör inget statusbesked **Skyttel talar**.
+   Stoppknappen heter **Avbryt**.
+5. Tabba från **Prata med Skyttel** till **Skriv till Skyttel**, **Avbryt**
+   och **Utkast**. Hör namnen i samma ordning. Röstrutan är gruppen
+   **Röstruta**; vågformen läses inte.
+6. Slå av mikrofonen, flytta fokus till **Återställ vy** och låt den
+   inkommande aktiviteten upphöra. När rutan försvinner, hör **Mikrofonen
+   är av**. Alla statusbesked väntar på sin tur; inga ljudsignaler hörs.
+7. Slå på mikrofonen igen och öppna **Inställningar**. Låt inkommande
+   aktivitet börja. Röstrutan står kvar i Inställningarnas statusrad och
+   följer rösten där. Tabba till **Avbryt**, tryck Retur och kontrollera fokus
+   på **Tillbaka till kartan** när stoppknappen försvinner. Avsluta och
+   städa den kontrollerade installationen enligt guiden.
+8. Gör därefter det separata verkliga TAL-17 med hjälpmedlet aktiverat.
+   Öppna och stäng textvyn, tala och stäng av mikrofonen under arbetet. Hör
    Skyttels svar och skärmläsarens status.
-3. Bedöm läsordning vid nederkanten, återgångsfokus efter Avbryt och samspel
+9. Bedöm läsordning vid nederkanten, återgångsfokus efter Avbryt och samspel
    mellan de två rösterna.
 
 **Förväntat resultat:**
 
 - Beskeden hörs i rätt tur utan upprepning eller oavsiktligt nytt tal.
+- Den exakta statussekvensen i steg 1–7 bedöms med verklig skärmläsare:
+  särskilt tystnaden vid knappfokus, Du talar, återkommande Lyssnar och
+  Skyttel talar. Syntetisk media och DOM bevisar inte den hörda observationen.
 - De faktiskt provade hjälpmedlens namn, lägen och fokus redovisas.
 
 ### TAL-25: verklig mikrofonbehörighet och användningsindikator

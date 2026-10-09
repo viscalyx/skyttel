@@ -768,8 +768,21 @@ async function readFamily(page: Page) {
       details.getByText('Typ', { exact: true }).locator('..').getByRole('definition'),
     ).toHaveText(type);
     await expect(details.locator('.household-table-description')).toHaveText(description);
-    if (name === 'Familjens Molnmusik')
+    if (name === 'Familjens Molnmusik') {
       for (const value of ['189', 'SEK', 'månad']) await expect(details).toContainText(value);
+      for (const [label, value] of [
+        ['Pris', '189'],
+        ['Valuta', 'SEK'],
+        ['Betalningsintervall', 'månad'],
+      ])
+        await expect(
+          details
+            .locator('dt')
+            .filter({ hasText: new RegExp(`^${label}$`) })
+            .locator('..')
+            .locator('dd'),
+        ).toHaveText(value);
+    }
   }
   for (const [name, values] of [
     [
@@ -802,6 +815,63 @@ async function readFamily(page: Page) {
   ] as const) {
     const relationships = await openObjectRelationships(page, name);
     for (const value of values) await expect(relationships).toContainText(value);
+    const expected = {
+      'Familjens musikkonto': [
+        ['Inloggningsadress', 'Familjens musikkonto', 'musik@example.test', 'Känt'],
+        ['Kontaktadress', 'Familjens musikkonto', 'familjen@example.test', 'Känt'],
+      ],
+      'Familjens Molnmusik': [
+        ['Står på avtalet', 'Familjens Molnmusik', 'Alex Exempel', 'Känt'],
+        ['Betalar', 'Kim Exempel', 'Familjens Molnmusik', 'Känt'],
+        ['Betalas med', 'Familjens Molnmusik', 'Familjens musikkort', 'Känt'],
+      ],
+      Molnmusik: [
+        ['Använder', 'Lo Lind', 'Molnmusik', 'Känt'],
+        ['Används av', 'Molnmusik', 'Lo Lind', 'Osäkert uppgivet'],
+      ],
+      'Föreningens musikkonto': [['Äger', 'Föreningens musikkonto', 'Okänt', 'Okänt']],
+      'Lindens musikförening': [
+        ['Används av', 'Lindens musikförening', 'Uttryckligen inget', 'Uttryckligen inget'],
+      ],
+      'Familjens musikkort': [
+        ['Kontokoppling', 'Familjens musikkort', 'Kortets kontokoppling', 'Känt'],
+        ['Kortfakturan betalas från', 'Familjens musikkort', 'Hushållets betalkonto', 'Känt'],
+      ],
+    }[name];
+    for (const [direction, source, target, knowledge] of expected ?? []) {
+      const edge = relationships
+        .locator('.household-read-relationships > li')
+        .filter({
+          has: page
+            .locator('dt')
+            .filter({ hasText: /^Riktning$/ })
+            .locator('..')
+            .locator('dd')
+            .filter({ hasText: new RegExp(`^${direction}$`) }),
+        })
+        .filter({
+          has: page
+            .locator('dt')
+            .filter({ hasText: /^Från objekt$/ })
+            .locator('..')
+            .locator('dd')
+            .filter({ hasText: new RegExp(`^${source}$`) }),
+        });
+      await expect(edge).toHaveCount(1);
+      for (const [label, value] of [
+        ['Riktning', direction],
+        ['Från objekt', source],
+        ['Till objekt', target],
+        ['Uppgiftens säkerhet', knowledge],
+      ])
+        await expect(
+          edge
+            .locator('dt')
+            .filter({ hasText: new RegExp(`^${label}$`) })
+            .locator('..')
+            .locator('dd'),
+        ).toHaveText(value);
+    }
     await page.keyboard.press('Escape');
   }
 }

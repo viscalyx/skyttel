@@ -15,7 +15,8 @@ loggar in med Google i den kontrollerade installationen.
 1. Starta en ny installation enligt
    [den kontrollerade röstguiden](voice-assistant.md#controlled-voice-fixture).
    Skapa hushållet Röst och text. Kör inte `seed-family`.
-2. Välj **Skriv till Skyttel** och **Godkänn och starta**. Låt utkastet vara
+2. Välj **Skriv till Skyttel**, **Nytt samtal** och **Godkänn och starta**.
+   Låt utkastet vara
    tomt. Använd ett datorfönster som är bredare än 700 px.
 3. Skrivna uppdrag hålls i terminalen som `held`. Läs `pending` och ersätt
    `REQUEST` med anrops-ID. Släpp ett vanligt svar med `reply REQUEST TEXT`.

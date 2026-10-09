@@ -22,6 +22,12 @@ for (const seeded of [false, true])
     test(`voice preparation controls the public launcher on ${seeded ? 'seeded' : 'empty'} content at ${viewport.width}x${viewport.height}`, {
       tag: '@technical',
     }, async ({ page }) => {
+      // Extract the literal public preparation before launching its installation.
+      const document = await readFile('docs/manual-tests/voice-controls-preparation.md', 'utf8');
+      const snippet = document.match(/```javascript\n([\s\S]*?)\n```/u)?.[1];
+      expect(snippet).toBe(voiceControlsPreparationSource);
+      const tones = [...document.matchAll(/```javascript\n([\s\S]*?)\n```/gu)][1]?.[1];
+      expect(tones).toBe(voiceTonePreparationSource);
       const child = spawn(process.execPath, ['--import', 'tsx', 'scripts/manual-voice.ts'], {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, FORCE_COLOR: undefined },
@@ -32,6 +38,8 @@ for (const seeded of [false, true])
         directory?: string;
         householdId?: string;
         message?: string;
+        id?: string;
+        kind?: string;
       }[] = [];
       let buffer = '';
       let diagnostics = '';
@@ -70,11 +78,6 @@ for (const seeded of [false, true])
         await startConversationWithText(page, { remember: true });
         await page.reload();
         await expect(microphoneButton(page)).toBeVisible();
-        const document = await readFile('docs/manual-tests/voice-controls-preparation.md', 'utf8');
-        const snippet = document.match(/```javascript\n([\s\S]*?)\n```/u)?.[1];
-        expect(snippet).toBe(voiceControlsPreparationSource);
-        const tones = [...document.matchAll(/```javascript\n([\s\S]*?)\n```/gu)][1]?.[1];
-        expect(tones).toBe(voiceTonePreparationSource);
         await page.evaluate(() => {
           Object.assign(window, { voiceOriginalFetch: window.fetch });
         });
@@ -210,6 +213,7 @@ for (const seeded of [false, true])
         expect(stoppedSecondVoice.status()).toBe(200);
         expect((await stoppedSecondVoice.json()).voice.phase).toBe('closed');
         expect(diagnostics, 'after deliberate prepared-transport cleanup').toBe('');
+
         const runner = spawn(
           process.execPath,
           [
@@ -406,6 +410,232 @@ for (const seeded of [false, true])
         await expect(stat(ready.directory)).rejects.toMatchObject({ code: 'ENOENT' });
       } finally {
         await page.evaluate(() => window.skyttelVoicePreparation?.restore()).catch(() => {});
+        if (child.exitCode === null) {
+          child.kill('SIGTERM');
+          await new Promise<void>((resolve) => child.once('exit', () => resolve()));
+        }
+      }
+    });
+
+// These literal recipes have independent setup and cleanup; the complete
+// control/observation cases above retain their original time budget.
+for (const seeded of [false, true])
+  for (const viewport of [
+    { width: 320, height: 250 },
+    { width: 1280, height: 900 },
+  ])
+    test(`voice preparation executes literal fault recipes on ${seeded ? 'seeded' : 'empty'} content at ${viewport.width}x${viewport.height}`, {
+      tag: '@technical',
+    }, async ({ page }) => {
+      // Read every literal command before launching its actual installation.
+      const document = await readFile('docs/manual-tests/voice-controls-preparation.md', 'utf8');
+      const playbackSection = document.split('## Ljudhinder ROSTFEL-04\n')[1]?.split('\n## ')[0];
+      const playback = [
+        ...(playbackSection ?? '').matchAll(/```javascript\n([\s\S]*?)\n```/gu),
+      ].map((match) => match[1]);
+      expect(playback).toEqual([
+        "window.skyttelVoiceFixture.setPlayback('blocked');",
+        'window.skyttelVoiceFixture.stats();',
+        "window.skyttelVoiceFixture.setPlayback('allow');",
+      ]);
+      const noticesSection = document.split('## Notisernas tidslinjer\n')[1]?.split('\n## ')[0];
+      const denied = noticesSection?.match(/```javascript\n([\s\S]*?)\n\s*```/u)?.[1]?.trim();
+      expect(denied).toBe("window.skyttelVoiceFixture.setMicrophone('deny');");
+      const command = (pattern: RegExp) => {
+        const value = noticesSection?.match(pattern)?.[1];
+        if (!value) throw new Error(`Missing literal notice preparation ${pattern}`);
+        return value;
+      };
+      const unavailable = command(/`(available off)`/u);
+      const available = command(/`(available on)`/u);
+      const failed = command(/`(fail REQUEST)`/u);
+      const answered = command(/`(reply REQUEST Ett nytt svar\.)`/u);
+      const allowed = command(/`(window\.skyttelVoiceFixture\.setMicrophone\('allow'\))`/u);
+      const offMicrophoneSound = document.split('### Tidslinje TAL-11\n')[1]?.split('\n### ')[0];
+      const remote = [
+        ...(offMicrophoneSound ?? '').matchAll(
+          /`(window\.skyttelVoiceFixture\.setSound\('remote', (?:true|false)\))`/gu,
+        ),
+      ].map((match) => match[1]);
+      expect(remote).toEqual([
+        "window.skyttelVoiceFixture.setSound('remote', true)",
+        "window.skyttelVoiceFixture.setSound('remote', false)",
+      ]);
+      const child = spawn(process.execPath, ['--import', 'tsx', 'scripts/manual-voice.ts'], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env, FORCE_COLOR: undefined },
+      });
+      const events: {
+        event: string;
+        origin?: string;
+        directory?: string;
+        householdId?: string;
+        message?: string;
+        id?: string;
+        kind?: string;
+      }[] = [];
+      let buffer = '';
+      let diagnostics = '';
+      const unexpectedOutput: string[] = [];
+      child.stdout.on('data', (chunk) => {
+        buffer += String(chunk);
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (line.startsWith('{')) events.push(JSON.parse(line));
+          else if (line.trim()) unexpectedOutput.push(line);
+        }
+      });
+      child.stderr.on('data', (chunk) => {
+        diagnostics += String(chunk);
+      });
+      try {
+        await page.setViewportSize(viewport);
+        await expect.poll(() => events.some(({ event }) => event === 'ready')).toBe(true);
+        const ready = events.find(({ event }) => event === 'ready');
+        if (!ready?.origin || !ready.directory) throw new Error('Missing public launcher address');
+        if (seeded) {
+          child.stdin.write('seed-family\n');
+          await expect.poll(() => events.some(({ event }) => event === 'seeded')).toBe(true);
+        }
+        await signIn(page.request, ready.origin);
+        const household = seeded
+          ? events.find(({ event }) => event === 'seeded')?.householdId
+          : (await (await createHousehold(page.request, ready.origin, 'Tryckprov')).json())
+              .household.id;
+        if (!household) throw new Error('Missing prepared household');
+        await page.goto(ready.origin);
+        const path = `${ready.origin}/api/households/${household}/map`;
+        const before = await (await page.request.get(path)).json();
+        expect(before.draft.changes.length > 0).toBe(seeded);
+        const history = await (await page.request.get(`${path}/history`)).json();
+        await startConversationWithText(page, { remember: true });
+        // Execute the moved ROSTFEL/NOT recipes at their documented boundaries.
+        await page.reload();
+        await openConversationText(page);
+        await page.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+        await expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
+          'data-session-active',
+          'true',
+        );
+        const notice = page.getByRole('region', { name: 'Samtalsnotis', exact: true });
+        await page.evaluate(playback[0]);
+        const playbackAdmission = page.waitForResponse(
+          (response) => response.url().endsWith('/voice') && response.request().method() === 'POST',
+        );
+        await microphoneButton(page).click();
+        await expect(notice).toContainText('Webbläsaren stoppade ljudet.');
+        const blocked = await page.evaluate<ReturnType<Window['skyttelVoiceFixture']['stats']>>(
+          playback[1],
+        );
+        expect(
+          blocked.microphoneTracks.every((track: { enabled: boolean }) => !track.enabled),
+        ).toBe(true);
+        await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
+        await page.evaluate(playback[2]);
+        await notice.getByRole('button', { name: 'Starta ljudet', exact: true }).focus();
+        await page.keyboard.press('Enter');
+        await expect(notice).toHaveCount(0);
+        await expect(microphoneButton(page)).toBeFocused();
+        await expect(voiceBox(page)).toHaveText('Lyssnar');
+        const playbackResponse = await playbackAdmission;
+        expect(playbackResponse.status()).toBe(201);
+        const playbackVoice = (await playbackResponse.json()).voice;
+        await microphoneButton(page).click();
+        await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
+        await page.evaluate(remote[0]);
+        await expect(voiceBox(page)).toHaveText('Skyttel talar');
+        await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
+        await page.evaluate(remote[1]);
+        await expect(voiceBox(page)).toHaveCount(0);
+        const stoppedPlayback = await page.request.post(
+          `${playbackResponse.url()}/${playbackVoice.id}/stop`,
+          { headers: { origin: ready.origin }, data: {} },
+        );
+        expect(stoppedPlayback.status()).toBe(200);
+        expect((await stoppedPlayback.json()).voice.phase).toBe('closed');
+        await page.reload();
+        child.stdin.write(`${unavailable}\n`);
+        await expect(microphoneButton(page)).toHaveAccessibleDescription(
+          /Inte tillgängligt just nu\./,
+          { timeout: 10_000 },
+        );
+        await microphoneButton(page).click();
+        await expect(notice).toContainText('Samtal med Skyttel är inte tillgängligt');
+        child.stdin.write(`${available}\n`);
+        await expect(notice).toHaveCount(0, { timeout: 10_000 });
+        await page.evaluate(denied ?? 'throw new Error("Missing denied preparation")');
+        await microphoneButton(page).click();
+        await expect(notice).toContainText('Webbläsaren tillåter inte mikrofonen.');
+        await notice.getByRole('button', { name: 'Stäng notisen', exact: true }).click();
+        await page.evaluate(allowed);
+        // These are separate documented cases; reset the denied voice attempt
+        // before the text task, so its failure is not masked by the old notice.
+        await page.reload();
+        await openConversationText(page);
+        await page.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+        await expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
+          'data-session-active',
+          'true',
+        );
+        const field = page.getByLabel('Meddelande till Skyttel');
+        const send = page
+          .getByRole('region', { name: 'Skriv till Skyttel', exact: true })
+          .getByRole('button', { name: 'Skicka', exact: true });
+        await field.fill('Ge ett förslag.');
+        await send.click();
+        await expect.poll(() => events.filter(({ event }) => event === 'held').length).toBe(1);
+        const rejected = events.find(({ event }) => event === 'held')?.id;
+        if (!rejected) throw new Error('Missing literal notice request');
+        child.stdin.write(`${failed.replace('REQUEST', rejected)}\n`);
+        await expect(notice).toContainText('Skyttel kunde inte slutföra uppdraget.');
+        await expect(field).toBeFocused();
+        await notice.getByRole('button', { name: 'Stäng notisen', exact: true }).focus();
+        await page.keyboard.press('Enter');
+        await expect(microphoneButton(page)).toBeFocused();
+        await field.fill('Ett nytt försök.');
+        await send.click();
+        await expect.poll(() => events.filter(({ event }) => event === 'held').length).toBe(2);
+        await expect(notice).toHaveCount(0);
+        const recovered = events.filter(({ event }) => event === 'held').at(-1)?.id;
+        if (!recovered) throw new Error('Missing literal recovery request');
+        child.stdin.write(`${answered.replace('REQUEST', recovered)}\n`);
+        await expect(page.getByRole('log', { name: 'Samtalstext', exact: true })).toContainText(
+          'Ett nytt svar.',
+        );
+        await closeConversationText(page);
+        expect(await (await page.request.get(path)).json()).toEqual(before);
+        expect(await (await page.request.get(`${path}/history`)).json()).toEqual(history);
+        expect(diagnostics, 'after literal playback/notice preparation and reset').toBe('');
+        expect(events.filter(({ event }) => event === 'held')).toHaveLength(2);
+        expect(events.filter(({ event }) => event === 'released')).toHaveLength(4);
+        expect(
+          events.filter(({ event }) => event === 'released').map(({ kind, id }) => ({ kind, id })),
+        ).toEqual([
+          { kind: 'available', id: 'off' },
+          { kind: 'available', id: 'on' },
+          { kind: 'fail', id: rejected },
+          { kind: 'reply', id: recovered },
+        ]);
+        expect(events.filter(({ event }) => event === 'error')).toEqual([]);
+        expect(unexpectedOutput).toEqual([]);
+        expect(
+          events.every(({ event }) => ['ready', 'seeded', 'held', 'released'].includes(event)),
+        ).toBe(true);
+        expect(diagnostics, 'before literal-proof launcher quit').toBe('');
+        child.stdin.write('quit\n');
+        await expect.poll(() => child.exitCode).toBe(0);
+        expect(events.filter(({ event }) => event === 'closed')).toHaveLength(1);
+        expect(events.filter(({ event }) => event === 'error')).toEqual([]);
+        expect(unexpectedOutput).toEqual([]);
+        expect(
+          events.every(({ event }) =>
+            ['ready', 'seeded', 'held', 'released', 'closed'].includes(event),
+          ),
+        ).toBe(true);
+        expect(diagnostics, 'after literal-proof launcher quit').toBe('');
+        await expect(stat(ready.directory)).rejects.toMatchObject({ code: 'ENOENT' });
+      } finally {
         if (child.exitCode === null) {
           child.kill('SIGTERM');
           await new Promise<void>((resolve) => child.once('exit', () => resolve()));
