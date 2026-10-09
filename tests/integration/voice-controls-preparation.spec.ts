@@ -91,6 +91,7 @@ for (const { seeded, viewport } of references)
       await page.evaluate(voiceControlsPreparationSource);
       await page.evaluate(voiceTonePreparationSource);
       await page.evaluate(() => window.skyttelVoicePreparation?.hold('voice'));
+      await microphoneButton(page).scrollIntoViewIfNeeded();
       const box = await microphoneButton(page).boundingBox();
       if (!box) throw new Error('Missing microphone control');
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -155,7 +156,13 @@ for (const { seeded, viewport } of references)
       await page.evaluate(voiceControlsPreparationSource);
       await page.evaluate(voiceTonePreparationSource);
       await page.evaluate(() => window.skyttelVoicePreparation?.hold('text-assistant'));
-      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await microphoneButton(page).scrollIntoViewIfNeeded();
+      const assistantBox = await microphoneButton(page).boundingBox();
+      if (!assistantBox) throw new Error('Missing microphone control');
+      await page.mouse.move(
+        assistantBox.x + assistantBox.width / 2,
+        assistantBox.y + assistantBox.height / 2,
+      );
       await page.mouse.down();
       await expect
         .poll(() => page.evaluate(() => window.skyttelVoicePreparation?.status().held))
