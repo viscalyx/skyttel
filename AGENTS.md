@@ -1,6 +1,6 @@
 # Agent Instructions
 
-For terminology, read [./CONTEXT.md](./CONTEXT.md).
+For terminology, read [./GLOSSARY.md](./GLOSSARY.md).
 
 Follow the rules in @.github/copilot-instructions.md and the instructions in `.github/instructions/*.md`
 
