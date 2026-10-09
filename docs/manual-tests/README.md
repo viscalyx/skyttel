@@ -124,7 +124,13 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   separat sökning, synligt kapselfält, kompakta snabbval och borttagning
   av aktiva filter med badges efter Filter, filterdialog utan
   förflyttning av etiketter
-  och synliga streckade etikettlinjer i båda teman,
+  och synliga streckade etikettlinjer i båda teman. SÖK-11/15 och SÖK-12
+  körs genom kartans publika kontroller i Chromium med produktens stilar,
+  fullständigt kontrollerat kartsvar och profilbilder från tabellförberedelsen.
+  De behåller sina ID och ersätter tre integrationsexekveringar; övriga
+  sökfall behåller verklig HTTP och jämförelse av hushållets tillstånd.
+  Webbläsarfallen bevisar inte beständigt sparande.
+  Området omfattar också
   Escape som rensar kartans text och filter, gemensamma kompakta
   filterdialoger med träffantal och sökfält med kryss,
   egna detaljträffar, aktuell rad, teckensammansättning,
