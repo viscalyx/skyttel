@@ -1,0 +1,911 @@
+{
+  "input": {
+    "file": "long-texts.json",
+    "sha256": "235418209e96f8d730d1e6bad442161ddf4bec22feeb579d3d375e1d8a8a051a"
+  },
+  "controlsInput": {
+    "file": "short-texts.json",
+    "sha256": "54b06c35424b124f0f531cf537f817c9f81139ccee182b79f324e7075bf54e6e"
+  },
+  "generator": {
+    "file": "generate.py",
+    "sha256": "3f797a174bb2e8d5b9b5cf3101b5ea765ba0ddb2f1b816433112d9acc893ebc0"
+  },
+  "model": {
+    "file": "sv_SE-nst-medium.onnx",
+    "sha256": "df011f56825a59dd1efc080c38a65a1ef70407e60f63050e9246f43a3d7e471e",
+    "configSha256": "d45dd74cbb4eca58694bf04a97e243044092476f28a55ae26424f0653086980a"
+  },
+  "runtime": {
+    "architecture": "aarch64",
+    "python": "3.12.3",
+    "versions": {
+      "piper-tts": "1.8.0",
+      "onnxruntime": "1.31.0",
+      "numpy": "2.5.3"
+    },
+    "binaryHashes": {
+      "python3.12": "c86f21d0da9290ece2d7d49a3f7ed52aed59cb029abdf0ea25c79634f6cbe960",
+      "espeakbridge.so": "9455cb411cafadf067b98703ca09bd70f4fb4bc127e9a4f8e7c451d14904799a",
+      "onnxruntime_pybind11_state.cpython-312-aarch64-linux-gnu.so": "b639a3da0e17095a0a3d17ddb63e428a9e7aaa0d178fdde5b3042ee92acd9f66",
+      "libonnxruntime_providers_shared.so": "3b6be288fbfb7dff8770d08a23defdde18e8f7e0f5a2b344a0e5e238c999ea88",
+      "libonnxruntime.so.1.31.0": "b79d2fcf36b8870f4b2da95784a6ad846c47f05511ffa7be409c79a44f9dc9a4"
+    },
+    "voiceModuleSha256": "3d6ce0415dda785396af3000f89d59cb6307eeee31711c9d671a7d2c0e5f8b19"
+  },
+  "settings": {
+    "noise_scale": 0,
+    "noise_w_scale": 0,
+    "length_scale": 1,
+    "normalize_audio": true,
+    "volume": 1,
+    "speaker_id": null,
+    "use_cuda": false,
+    "addedBoundarySilenceMs": [
+      500,
+      1500
+    ],
+    "addedLeadingTrailingSilenceMs": [
+      0,
+      0
+    ]
+  },
+  "license": {
+    "speech": "Synthetic speech; all utterances contain fictional household data.",
+    "voice": "sv_SE-nst-medium",
+    "voiceRepositoryLicense": "MIT",
+    "trainingDataLicense": "CC0",
+    "software": "piper-tts GPL-3.0; software license distinguished from generated output.",
+    "evidence": "Research decision: Hur skapas reproducerbart syntetiskt svenskt tal för talscenarierna?",
+    "researchCheckedAt": "2026-09-30",
+    "researchUrl": "https://github.com/viscalyx/skyttel/blob/9c50d39f3f1d72b3347c105fe8fb4f577feb75e7/docs/research/synthetic-swedish-speech.md",
+    "modelCardUrl": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/sv/sv_SE/nst/medium/MODEL_CARD",
+    "dataLicenseUrl": "https://www.nb.no/sprakbanken/en/resource-catalogue/page/37/"
+  },
+  "scenarios": {
+    "flera-andringar": {
+      "text": "Jag vill ordna flera uppgifter om våra tjänster. Alex Lind och Lo Berg använder Spotify, men Mira Dahl använder inte den tjänsten. Lägg till användningen för Alex och Lo och ta bort den för Mira. Alex Lind använder också Microsoft 365. Spotify Premium Family ska betalas med Hushållskortet. Det är fortfarande Alex som står på abonnemanget, så ändra inte den uppgiften. Tjänstekontot Alex arbete hos Microsoft 365 ska ha alex@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika roller, och du ska inte byta namnet på tjänstekontot. Abonnemanget Molnlagring Plus 2 TB kostar 229 kronor per månad och ska betalas från Bankkonto Hushåll. Lo betalar det abonnemanget men Mira använder tjänsten Molnlagring Plus. Ändra bara de uppgifter som jag har nämnt och lämna våra andra abonnemang som de är.",
+      "characters": 838,
+      "wordsWhitespace": 131,
+      "plain": {
+        "file": "flera-andringar.wav",
+        "frames": 1507584,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 68.37115646258503,
+        "durationExact": "1507584/22050",
+        "sha256": "493f4310011daf8d5f7add404b77b345d0d5bfe3636cfa99b1d5bf8c41bdebbe",
+        "bytes": 3015212
+      },
+      "paused": {
+        "file": "flera-andringar-pauses.wav",
+        "frames": 1551684,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 70.37115646258503,
+        "durationExact": "1551684/22050",
+        "sha256": "dc34092daca57a867693a56daeca45191f45709c36633406b864afebd823be36",
+        "bytes": 3103412,
+        "measurementOnly": true
+      },
+      "segments": [
+        {
+          "text": "Jag vill ordna flera uppgifter om våra tjänster. Alex Lind och Lo Berg använder Spotify, men Mira Dahl använder inte den tjänsten. Lägg till användningen för Alex och Lo och ta bort den för Mira. Alex Lind använder också Microsoft 365. Spotify Premium Family ska betalas med Hushållskortet. Det är fortfarande Alex som står på abonnemanget, så ändra inte den uppgiften.",
+          "file": "flera-andringar-segment-1.wav",
+          "frames": 600832,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 27.248616780045353,
+          "durationExact": "600832/22050",
+          "sha256": "c44158836ef2d6a75fbf0223700ee238da8f275e6de66ecdfdc8200948919fc5",
+          "bytes": 1201708,
+          "measurementOnly": true
+        },
+        {
+          "text": "Tjänstekontot Alex arbete hos Microsoft 365 ska ha alex@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika roller, och du ska inte byta namnet på tjänstekontot.",
+          "file": "flera-andringar-segment-2.wav",
+          "frames": 469760,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 21.304308390022676,
+          "durationExact": "469760/22050",
+          "sha256": "bcd487b9c60b57680715a6e0fb222ba1494b828ebbb7bb362ae677fc61567e35",
+          "bytes": 939564,
+          "measurementOnly": true
+        },
+        {
+          "text": "Abonnemanget Molnlagring Plus 2 TB kostar 229 kronor per månad och ska betalas från Bankkonto Hushåll. Lo betalar det abonnemanget men Mira använder tjänsten Molnlagring Plus. Ändra bara de uppgifter som jag har nämnt och lämna våra andra abonnemang som de är.",
+          "file": "flera-andringar-segment-3.wav",
+          "frames": 436992,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 19.818231292517005,
+          "durationExact": "436992/22050",
+          "sha256": "921eb505ca426be57b89a925ea22c2d1c8438f8b767a6b9e343c919023f98fcd",
+          "bytes": 874028,
+          "measurementOnly": true
+        }
+      ],
+      "plainEqualsConcatenatedSegmentPcm": true,
+      "pauseBoundaries": [
+        {
+          "afterText": "så ändra inte den uppgiften.",
+          "afterFrame": 600832,
+          "silenceFrames": 11025
+        },
+        {
+          "afterText": "du ska inte byta namnet på tjänstekontot.",
+          "afterFrame": 1070592,
+          "silenceFrames": 33075
+        }
+      ]
+    },
+    "sen-rattelse": {
+      "text": "Jag vill ordna flera uppgifter om våra tjänster. Alex Lind och Lo Berg använder Spotify, men Mira Dahl använder inte den tjänsten. Lägg till användningen för Alex och Lo och ta bort den för Mira. Alex Lind använder också Microsoft 365. Spotify Premium Family ska betalas med Hushållskortet. Det är fortfarande Alex som står på abonnemanget, så ändra inte den uppgiften. Tjänstekontot Alex arbete hos Microsoft 365 ska ha alex@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika roller, och du ska inte byta namnet på tjänstekontot. Abonnemanget Molnlagring Plus 2 TB kostar 249 kronor per månad och ska betalas från Bankkonto Hushåll. Lo betalar det abonnemanget men Mira använder tjänsten Molnlagring Plus. Ändra bara de uppgifter som jag har nämnt och lämna våra andra abonnemang som de är. Jag rättar en sak: Molnlagring Plus 2 TB ska kosta 229 kronor per månad, inte 249. Allt annat som jag bad om gäller fortfarande.",
+      "characters": 967,
+      "wordsWhitespace": 155,
+      "plain": {
+        "file": "sen-rattelse.wav",
+        "frames": 1733376,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 78.61115646258503,
+        "durationExact": "1733376/22050",
+        "sha256": "26577fc9d3c342c8c4be355395aed4a199493bc8b9c280ebbbcbd6b8e54c0197",
+        "bytes": 3466796
+      },
+      "paused": {
+        "file": "sen-rattelse-pauses.wav",
+        "frames": 1777476,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 80.61115646258503,
+        "durationExact": "1777476/22050",
+        "sha256": "b936cedf96caba48e6f79dad00d25300b654d9c89927165940632d9ad222eff5",
+        "bytes": 3554996,
+        "measurementOnly": true
+      },
+      "segments": [
+        {
+          "text": "Jag vill ordna flera uppgifter om våra tjänster. Alex Lind och Lo Berg använder Spotify, men Mira Dahl använder inte den tjänsten. Lägg till användningen för Alex och Lo och ta bort den för Mira. Alex Lind använder också Microsoft 365. Spotify Premium Family ska betalas med Hushållskortet. Det är fortfarande Alex som står på abonnemanget, så ändra inte den uppgiften.",
+          "file": "sen-rattelse-segment-1.wav",
+          "frames": 600832,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 27.248616780045353,
+          "durationExact": "600832/22050",
+          "sha256": "c44158836ef2d6a75fbf0223700ee238da8f275e6de66ecdfdc8200948919fc5",
+          "bytes": 1201708,
+          "measurementOnly": true
+        },
+        {
+          "text": "Tjänstekontot Alex arbete hos Microsoft 365 ska ha alex@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika roller, och du ska inte byta namnet på tjänstekontot.",
+          "file": "sen-rattelse-segment-2.wav",
+          "frames": 469760,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 21.304308390022676,
+          "durationExact": "469760/22050",
+          "sha256": "bcd487b9c60b57680715a6e0fb222ba1494b828ebbb7bb362ae677fc61567e35",
+          "bytes": 939564,
+          "measurementOnly": true
+        },
+        {
+          "text": "Abonnemanget Molnlagring Plus 2 TB kostar 249 kronor per månad och ska betalas från Bankkonto Hushåll. Lo betalar det abonnemanget men Mira använder tjänsten Molnlagring Plus. Ändra bara de uppgifter som jag har nämnt och lämna våra andra abonnemang som de är. Jag rättar en sak: Molnlagring Plus 2 TB ska kosta 229 kronor per månad, inte 249. Allt annat som jag bad om gäller fortfarande.",
+          "file": "sen-rattelse-segment-3.wav",
+          "frames": 662784,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 30.058231292517007,
+          "durationExact": "662784/22050",
+          "sha256": "aae12f1dc39d523e4e9d8c4f5a1c73a4fb02a6cf37fe5f3b153a4110b03619fa",
+          "bytes": 1325612,
+          "measurementOnly": true
+        }
+      ],
+      "plainEqualsConcatenatedSegmentPcm": true,
+      "pauseBoundaries": [
+        {
+          "afterText": "så ändra inte den uppgiften.",
+          "afterFrame": 600832,
+          "silenceFrames": 11025
+        },
+        {
+          "afterText": "du ska inte byta namnet på tjänstekontot.",
+          "afterFrame": 1070592,
+          "silenceFrames": 33075
+        }
+      ]
+    },
+    "sparbesked-sist": {
+      "text": "Jag vill ordna flera uppgifter om våra tjänster. Alex Lind och Lo Berg använder Spotify, men Mira Dahl använder inte den tjänsten. Lägg till användningen för Alex och Lo och ta bort den för Mira. Alex Lind använder också Microsoft 365. Spotify Premium Family ska betalas med Hushållskortet. Det är fortfarande Alex som står på abonnemanget, så ändra inte den uppgiften. Tjänstekontot Alex arbete hos Microsoft 365 ska ha alex@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika roller, och du ska inte byta namnet på tjänstekontot. Abonnemanget Molnlagring Plus 2 TB kostar 229 kronor per månad och ska betalas från Bankkonto Hushåll. Lo betalar det abonnemanget men Mira använder tjänsten Molnlagring Plus. Ändra bara de uppgifter som jag har nämnt och lämna våra andra abonnemang som de är. Spara nu hela utkastet med alla de här ändringarna.",
+      "characters": 890,
+      "wordsWhitespace": 140,
+      "plain": {
+        "file": "sparbesked-sist.wav",
+        "frames": 1572352,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 71.30848072562358,
+        "durationExact": "1572352/22050",
+        "sha256": "205e9da16e65f435170990c7bda57256f1bc4fd0a203289106774812b969b35a",
+        "bytes": 3144748
+      },
+      "paused": {
+        "file": "sparbesked-sist-pauses.wav",
+        "frames": 1616452,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 73.30848072562358,
+        "durationExact": "1616452/22050",
+        "sha256": "892b693213c5acdd5c09f9a034879bd6288fd430347ee5ee65f9fed1e6bb59ee",
+        "bytes": 3232948,
+        "measurementOnly": true
+      },
+      "segments": [
+        {
+          "text": "Jag vill ordna flera uppgifter om våra tjänster. Alex Lind och Lo Berg använder Spotify, men Mira Dahl använder inte den tjänsten. Lägg till användningen för Alex och Lo och ta bort den för Mira. Alex Lind använder också Microsoft 365. Spotify Premium Family ska betalas med Hushållskortet. Det är fortfarande Alex som står på abonnemanget, så ändra inte den uppgiften.",
+          "file": "sparbesked-sist-segment-1.wav",
+          "frames": 600832,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 27.248616780045353,
+          "durationExact": "600832/22050",
+          "sha256": "c44158836ef2d6a75fbf0223700ee238da8f275e6de66ecdfdc8200948919fc5",
+          "bytes": 1201708,
+          "measurementOnly": true
+        },
+        {
+          "text": "Tjänstekontot Alex arbete hos Microsoft 365 ska ha alex@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika roller, och du ska inte byta namnet på tjänstekontot.",
+          "file": "sparbesked-sist-segment-2.wav",
+          "frames": 469760,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 21.304308390022676,
+          "durationExact": "469760/22050",
+          "sha256": "bcd487b9c60b57680715a6e0fb222ba1494b828ebbb7bb362ae677fc61567e35",
+          "bytes": 939564,
+          "measurementOnly": true
+        },
+        {
+          "text": "Abonnemanget Molnlagring Plus 2 TB kostar 229 kronor per månad och ska betalas från Bankkonto Hushåll. Lo betalar det abonnemanget men Mira använder tjänsten Molnlagring Plus. Ändra bara de uppgifter som jag har nämnt och lämna våra andra abonnemang som de är. Spara nu hela utkastet med alla de här ändringarna.",
+          "file": "sparbesked-sist-segment-3.wav",
+          "frames": 501760,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 22.755555555555556,
+          "durationExact": "501760/22050",
+          "sha256": "e99f2431eba86a2fde20fee73ffca94f603610db5db0f2ad29247dd1748393ed",
+          "bytes": 1003564,
+          "measurementOnly": true
+        }
+      ],
+      "plainEqualsConcatenatedSegmentPcm": true,
+      "pauseBoundaries": [
+        {
+          "afterText": "så ändra inte den uppgiften.",
+          "afterFrame": 600832,
+          "silenceFrames": 11025
+        },
+        {
+          "afterText": "du ska inte byta namnet på tjänstekontot.",
+          "afterFrame": 1070592,
+          "silenceFrames": 33075
+        }
+      ]
+    },
+    "tva-oklarheter": {
+      "text": "Jag vill ändra flera uppgifter på samma gång. Lo Berg använder Spotify och Mira Dahl använder tjänsten Molnlagring Plus. Microsoft 365 ska användas av Alex. Priset för abonnemanget Molnlagring Plus 2 TB ska vara 229 kronor per månad. Spotify Premium Family ska betalas från bankkontot. Lo står kvar som avtalspart för det abonnemanget, så byt inte avtalspart när du ändrar betalningen. Tjänstekontot Lo arbete hos Microsoft 365 ska ha lo@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika adresser med olika roller. Lägg det som är tydligt i utkastet och fråga mig om det du behöver veta för resten.",
+      "characters": 646,
+      "wordsWhitespace": 101,
+      "plain": {
+        "file": "tva-oklarheter.wav",
+        "frames": 1206528,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 54.7178231292517,
+        "durationExact": "1206528/22050",
+        "sha256": "eeb386bf02d28b03ff2bbeddefe89742472f5e44035b28748e92d780ba6d1aa1",
+        "bytes": 2413100
+      },
+      "paused": {
+        "file": "tva-oklarheter-pauses.wav",
+        "frames": 1250628,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 56.7178231292517,
+        "durationExact": "1250628/22050",
+        "sha256": "326cf8eafba5d39775c1b710c330531fbb35c93d7b8f35b38aa97188a31aa94c",
+        "bytes": 2501300,
+        "measurementOnly": true
+      },
+      "segments": [
+        {
+          "text": "Jag vill ändra flera uppgifter på samma gång. Lo Berg använder Spotify och Mira Dahl använder tjänsten Molnlagring Plus. Microsoft 365 ska användas av Alex. Priset för abonnemanget Molnlagring Plus 2 TB ska vara 229 kronor per månad. Spotify Premium Family ska betalas från bankkontot.",
+          "file": "tva-oklarheter-segment-1.wav",
+          "frames": 519424,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 23.556643990929704,
+          "durationExact": "519424/22050",
+          "sha256": "1ffe8b0233e3453921df9914359fdb3818faa10717cd9cb7e5377f164369e345",
+          "bytes": 1038892,
+          "measurementOnly": true
+        },
+        {
+          "text": "Lo står kvar som avtalspart för det abonnemanget, så byt inte avtalspart när du ändrar betalningen. Tjänstekontot Lo arbete hos Microsoft 365 ska ha lo@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika adresser med olika roller.",
+          "file": "tva-oklarheter-segment-2.wav",
+          "frames": 567040,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 25.71609977324263,
+          "durationExact": "567040/22050",
+          "sha256": "d3c3332996b2ba87cf8f24d39ddfe9c86680fd1faf154effe79761c9b1d66419",
+          "bytes": 1134124,
+          "measurementOnly": true
+        },
+        {
+          "text": "Lägg det som är tydligt i utkastet och fråga mig om det du behöver veta för resten.",
+          "file": "tva-oklarheter-segment-3.wav",
+          "frames": 120064,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 5.445079365079365,
+          "durationExact": "120064/22050",
+          "sha256": "502ce2f1e474277dae53391cc57f273d40eeecb0bae849215f07902196e38e2f",
+          "bytes": 240172,
+          "measurementOnly": true
+        }
+      ],
+      "plainEqualsConcatenatedSegmentPcm": true,
+      "pauseBoundaries": [
+        {
+          "afterText": "Spotify Premium Family ska betalas från bankkontot.",
+          "afterFrame": 519424,
+          "silenceFrames": 11025
+        },
+        {
+          "afterText": "Det är två olika adresser med olika roller.",
+          "afterFrame": 1086464,
+          "silenceFrames": 33075
+        }
+      ]
+    },
+    "fragor-och-andringar": {
+      "text": "Jag vill ordna flera uppgifter om våra tjänster. Alex Lind och Lo Berg använder Spotify, men Mira Dahl använder inte den tjänsten. Lägg till användningen för Alex och Lo och ta bort den för Mira. Alex Lind använder också Microsoft 365. Spotify Premium Family ska betalas med Hushållskortet. Det är fortfarande Alex som står på abonnemanget, så ändra inte den uppgiften. Tjänstekontot Alex arbete hos Microsoft 365 ska ha alex@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika roller, och du ska inte byta namnet på tjänstekontot. Abonnemanget Molnlagring Plus 2 TB kostar 229 kronor per månad och ska betalas från Bankkonto Hushåll. Lo betalar det abonnemanget men Mira använder tjänsten Molnlagring Plus. Ändra bara de uppgifter som jag har nämnt och lämna våra andra abonnemang som de är. Berätta också vad Spotify Premium Family kostar enligt den sparade kartan och vilka personer som använder Microsoft 365 enligt mitt utkast. Visa tjänstekontot Alex arbete i kartan när du är klar. Sammanfatta både ändringarna och svaren på mina frågor.",
+      "characters": 1090,
+      "wordsWhitespace": 170,
+      "plain": {
+        "file": "fragor-och-andringar.wav",
+        "frames": 1930752,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 87.56244897959184,
+        "durationExact": "1930752/22050",
+        "sha256": "303277bc4b3b821a942cd98960c2588f267ef784d909efc16966dbd1be632a47",
+        "bytes": 3861548
+      },
+      "paused": {
+        "file": "fragor-och-andringar-pauses.wav",
+        "frames": 1974852,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 89.56244897959184,
+        "durationExact": "1974852/22050",
+        "sha256": "5ba42f272bdce0047889d358d47e9d9b146d0c4966a058ea842f8d5055ce54ba",
+        "bytes": 3949748,
+        "measurementOnly": true
+      },
+      "segments": [
+        {
+          "text": "Jag vill ordna flera uppgifter om våra tjänster. Alex Lind och Lo Berg använder Spotify, men Mira Dahl använder inte den tjänsten. Lägg till användningen för Alex och Lo och ta bort den för Mira. Alex Lind använder också Microsoft 365. Spotify Premium Family ska betalas med Hushållskortet. Det är fortfarande Alex som står på abonnemanget, så ändra inte den uppgiften.",
+          "file": "fragor-och-andringar-segment-1.wav",
+          "frames": 600832,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 27.248616780045353,
+          "durationExact": "600832/22050",
+          "sha256": "c44158836ef2d6a75fbf0223700ee238da8f275e6de66ecdfdc8200948919fc5",
+          "bytes": 1201708,
+          "measurementOnly": true
+        },
+        {
+          "text": "Tjänstekontot Alex arbete hos Microsoft 365 ska ha alex@norrsken.test som inloggningsadress och hushall@norrsken.test som kontaktadress. Det är två olika roller, och du ska inte byta namnet på tjänstekontot.",
+          "file": "fragor-och-andringar-segment-2.wav",
+          "frames": 469760,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 21.304308390022676,
+          "durationExact": "469760/22050",
+          "sha256": "bcd487b9c60b57680715a6e0fb222ba1494b828ebbb7bb362ae677fc61567e35",
+          "bytes": 939564,
+          "measurementOnly": true
+        },
+        {
+          "text": "Abonnemanget Molnlagring Plus 2 TB kostar 229 kronor per månad och ska betalas från Bankkonto Hushåll. Lo betalar det abonnemanget men Mira använder tjänsten Molnlagring Plus. Ändra bara de uppgifter som jag har nämnt och lämna våra andra abonnemang som de är. Berätta också vad Spotify Premium Family kostar enligt den sparade kartan och vilka personer som använder Microsoft 365 enligt mitt utkast. Visa tjänstekontot Alex arbete i kartan när du är klar. Sammanfatta både ändringarna och svaren på mina frågor.",
+          "file": "fragor-och-andringar-segment-3.wav",
+          "frames": 860160,
+          "sampleRate": 22050,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 39.00952380952381,
+          "durationExact": "860160/22050",
+          "sha256": "0989ce366dc8238dfbdb897991e5acb8f678b77caa49985f06d42e4156955aa1",
+          "bytes": 1720364,
+          "measurementOnly": true
+        }
+      ],
+      "plainEqualsConcatenatedSegmentPcm": true,
+      "pauseBoundaries": [
+        {
+          "afterText": "så ändra inte den uppgiften.",
+          "afterFrame": 600832,
+          "silenceFrames": 11025
+        },
+        {
+          "afterText": "du ska inte byta namnet på tjänstekontot.",
+          "afterFrame": 1070592,
+          "silenceFrames": 33075
+        }
+      ]
+    }
+  },
+  "controls": {
+    "kort-utan-sparande": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor per månad och låt Spotify Premium Family betalas med Hushållskortet.",
+      "characters": 123,
+      "wordsWhitespace": 20,
+      "plain": {
+        "file": "kort-utan-sparande.wav",
+        "frames": 246016,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 11.15718820861678,
+        "durationExact": "246016/22050",
+        "sha256": "586d0209cd2a9d129660872fb53de37dc4d366343824cdbb2ab095808130eebe",
+        "bytes": 492076
+      }
+    },
+    "kort-med-sparande": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor per månad och låt Spotify Premium Family betalas med Hushållskortet. Spara hela utkastet.",
+      "characters": 144,
+      "wordsWhitespace": 23,
+      "plain": {
+        "file": "kort-med-sparande.wav",
+        "frames": 286976,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 13.014784580498866,
+        "durationExact": "286976/22050",
+        "sha256": "448287156885cb1d851a5f54f1a7a110550213c723a8d5ce3cb37412f31b8eee",
+        "bytes": 573996
+      }
+    },
+    "samband-utan-typ": {
+      "text": "Koppla ihop tjänsten Microsoft 365 och tjänsten Tenant Norrsken Bygg.",
+      "characters": 69,
+      "wordsWhitespace": 10,
+      "plain": {
+        "file": "samband-utan-typ.wav",
+        "frames": 152576,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 6.919546485260771,
+        "durationExact": "152576/22050",
+        "sha256": "61b64f7599ae5023134bc1c42682256c4dec4bb6158cfa70a648d9e3eaa971e5",
+        "bytes": 305196
+      }
+    },
+    "samband-utan-riktning": {
+      "text": "Skapa ett samband av typen Levererar till mellan Microsoft 365 och Tenant Norrsken Bygg.",
+      "characters": 88,
+      "wordsWhitespace": 14,
+      "plain": {
+        "file": "samband-utan-riktning.wav",
+        "frames": 164608,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 7.465215419501134,
+        "durationExact": "164608/22050",
+        "sha256": "48504cff1ec32f9bb87746ffde30e404239ae35f1c80b72eebb467aae645d685",
+        "bytes": 329260
+      }
+    },
+    "samband-med-riktning": {
+      "text": "Microsoft 365 levererar till Tenant Norrsken Bygg. Lägg in det sambandet.",
+      "characters": 73,
+      "wordsWhitespace": 11,
+      "plain": {
+        "file": "samband-med-riktning.wav",
+        "frames": 160512,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 7.279455782312925,
+        "durationExact": "160512/22050",
+        "sha256": "90d85f17793fb7f52553b6b8a588850d6ea023497b941e091fea1d8d038f121a",
+        "bytes": 321068
+      }
+    },
+    "samband-foljdsvar": {
+      "text": "Microsoft 365 ska leverera till Tenant Norrsken Bygg.",
+      "characters": 53,
+      "wordsWhitespace": 8,
+      "plain": {
+        "file": "samband-foljdsvar.wav",
+        "frames": 125184,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 5.677278911564626,
+        "durationExact": "125184/22050",
+        "sha256": "954c5bbcb24c37a9a27db09065008ab1a8f8154ce27ca043a937c8516302c038",
+        "bytes": 250412
+      }
+    },
+    "oklarheter-med-sparbegaran": {
+      "text": "Lo Berg använder Spotify. Priset för Molnlagring Plus 2 TB ska vara 229 kronor per månad. Alex använder Microsoft 365 och Spotify Premium Family ska betalas från bankkontot. Spara hela utkastet.",
+      "characters": 194,
+      "wordsWhitespace": 31,
+      "plain": {
+        "file": "oklarheter-med-sparbegaran.wav",
+        "frames": 411904,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 18.68045351473923,
+        "durationExact": "411904/22050",
+        "sha256": "21e25c3ccd91f6264bcb7b4a045c53da2f6e77a7f4bf51cde7cc4957a8253fd5",
+        "bytes": 823852
+      }
+    },
+    "oklarheter-foljdsvar": {
+      "text": "Jag menar Alex Lind och Bankkonto Reserv.",
+      "characters": 41,
+      "wordsWhitespace": 7,
+      "plain": {
+        "file": "oklarheter-foljdsvar.wav",
+        "frames": 68864,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 3.1230839002267574,
+        "durationExact": "68864/22050",
+        "sha256": "6dde172f3848d15a3daf810952d19903232e37a8b973feeadc9b0fd3a1e4b63a",
+        "bytes": 137772
+      }
+    },
+    "spara-hela-utkastet": {
+      "text": "Spara hela utkastet.",
+      "characters": 20,
+      "wordsWhitespace": 3,
+      "plain": {
+        "file": "spara-hela-utkastet.wav",
+        "frames": 40960,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 1.8575963718820863,
+        "durationExact": "40960/22050",
+        "sha256": "a073f887ddba3cd501791d03e0bc1be24840d2591d8de7cd75f4fb0023f8e638",
+        "bytes": 81964
+      }
+    },
+    "nekad-sparavsikt": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor. Spara inte.",
+      "characters": 67,
+      "wordsWhitespace": 12,
+      "plain": {
+        "file": "nekad-sparavsikt.wav",
+        "frames": 149248,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 6.768616780045352,
+        "durationExact": "149248/22050",
+        "sha256": "1de37334224f0ff0d1f8d0ed4781480828e8fbc5cda5414cbe8b6be0a33f8c06",
+        "bytes": 298540
+      }
+    },
+    "nekad-sparavsikt-presens": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor. Sparar inte.",
+      "characters": 68,
+      "wordsWhitespace": 12,
+      "plain": {
+        "file": "nekad-sparavsikt-presens.wav",
+        "frames": 147968,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 6.710566893424036,
+        "durationExact": "147968/22050",
+        "sha256": "f46f68f64c1fe89dd854f7b5a0da1a0964fc000f3095c8cdcdc43d7128c28bc6",
+        "bytes": 295980
+      }
+    },
+    "uppskjuten-sparavsikt": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor. Vänta med att spara.",
+      "characters": 76,
+      "wordsWhitespace": 14,
+      "plain": {
+        "file": "uppskjuten-sparavsikt.wav",
+        "frames": 157184,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 7.128526077097506,
+        "durationExact": "157184/22050",
+        "sha256": "03b35f0c610bd9d04e1e2f1431d97d13d4c7b375a07c090bb7429addf46562c9",
+        "bytes": 314412
+      }
+    },
+    "hypotetisk-sparavsikt": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor. Vad händer om vi sparar hela utkastet?",
+      "characters": 94,
+      "wordsWhitespace": 17,
+      "plain": {
+        "file": "hypotetisk-sparavsikt.wav",
+        "frames": 185088,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 8.394013605442177,
+        "durationExact": "185088/22050",
+        "sha256": "f055da10c705d96491316c8d97449003f6835110560f91c1b4b660c63e0810e4",
+        "bytes": 370220
+      }
+    },
+    "citerad-sparavsikt": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor. Jag citerar bara uttrycket spara hela utkastet, jag ber dig inte att göra det.",
+      "characters": 134,
+      "wordsWhitespace": 24,
+      "plain": {
+        "file": "citerad-sparavsikt.wav",
+        "frames": 225536,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 10.228390022675738,
+        "durationExact": "225536/22050",
+        "sha256": "51e25846132e4373d13f42bafc18ee9d46cac95bb102f9235d919577b232b8ef",
+        "bytes": 451116
+      }
+    },
+    "villkorad-sparavsikt": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor. Spara när jag har kontrollerat uppgifterna.",
+      "characters": 99,
+      "wordsWhitespace": 16,
+      "plain": {
+        "file": "villkorad-sparavsikt.wav",
+        "frames": 176640,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 8.010884353741497,
+        "durationExact": "176640/22050",
+        "sha256": "71373c017d462f636ee57101aed7e30b1d83c95a5cf3b35f5d5671ccc76b0860",
+        "bytes": 353324
+      }
+    },
+    "sen-sparnegation": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor och spara hela utkastet. Nej, jag rättar mig: spara inte.",
+      "characters": 112,
+      "wordsWhitespace": 20,
+      "plain": {
+        "file": "sen-sparnegation.wav",
+        "frames": 224512,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 10.181950113378685,
+        "durationExact": "224512/22050",
+        "sha256": "aa34c84509be4eb367628bda3a8838842edee6f3d0eac589d996f09270800e5e",
+        "bytes": 449068
+      }
+    },
+    "bara-spara-inte": {
+      "text": "Spara inte.",
+      "characters": 11,
+      "wordsWhitespace": 2,
+      "plain": {
+        "file": "bara-spara-inte.wav",
+        "frames": 22784,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 1.0332879818594105,
+        "durationExact": "22784/22050",
+        "sha256": "a223f560a0065e0ae35ff521cb5d2d3a515337e22dc3730e625c86a8649ba403",
+        "bytes": 45612
+      }
+    },
+    "bara-sparar-inte": {
+      "text": "Sparar inte.",
+      "characters": 12,
+      "wordsWhitespace": 2,
+      "plain": {
+        "file": "bara-sparar-inte.wav",
+        "frames": 21504,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 0.9752380952380952,
+        "durationExact": "21504/22050",
+        "sha256": "76aec7caa9663a0ddea19b525530486d792a21e2aded17ae1b3da9b211d2277a",
+        "bytes": 43052
+      }
+    },
+    "kontext-forsta-andring": {
+      "text": "Ändra priset för Spotify Premium Family till 189 kronor per månad.",
+      "characters": 66,
+      "wordsWhitespace": 11,
+      "plain": {
+        "file": "kontext-forsta-andring.wav",
+        "frames": 147200,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 6.675736961451247,
+        "durationExact": "147200/22050",
+        "sha256": "2aa303f51ba5fd6b6b920045a261c4c9607a5c09da3c28abbc242e7fe2b8a0d5",
+        "bytes": 294444
+      }
+    },
+    "kontext-sista-andring": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor per månad.",
+      "characters": 65,
+      "wordsWhitespace": 12,
+      "plain": {
+        "file": "kontext-sista-andring.wav",
+        "frames": 133888,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 6.072018140589569,
+        "durationExact": "133888/22050",
+        "sha256": "351d39160593a96e837153911224a27d86b705d94a0580944a5816b121d330b2",
+        "bytes": 267820
+      }
+    },
+    "kontext-ratta-sista": {
+      "text": "Rätta den sista till 239 kronor, spara inte.",
+      "characters": 44,
+      "wordsWhitespace": 8,
+      "plain": {
+        "file": "kontext-ratta-sista.wav",
+        "frames": 88832,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 4.028662131519274,
+        "durationExact": "88832/22050",
+        "sha256": "578d142770f43fd49a993c14cf87b0a3d17289da22b666e2dc43f907a4eb8a28",
+        "bytes": 177708
+      }
+    },
+    "nytt-samtal": {
+      "text": "Nytt samtal.",
+      "characters": 12,
+      "wordsWhitespace": 2,
+      "plain": {
+        "file": "nytt-samtal.wav",
+        "frames": 29184,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 1.3235374149659864,
+        "durationExact": "29184/22050",
+        "sha256": "12aba2e4c69d8ab2d1b5e0f548f3f51a410a330d196e5cc5677f041a8696e085",
+        "bytes": 58412
+      }
+    },
+    "kasta-utkastet": {
+      "text": "Kasta utkastet.",
+      "characters": 15,
+      "wordsWhitespace": 2,
+      "plain": {
+        "file": "kasta-utkastet.wav",
+        "frames": 37120,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 1.6834467120181407,
+        "durationExact": "37120/22050",
+        "sha256": "e22a84d3d8086c07b8e0d4a99b85647cd15ead4c303b74af9f3cce5d574a4874",
+        "bytes": 74284
+      }
+    },
+    "nytt-samtal-och-kasta": {
+      "text": "Nytt samtal och kasta utkastet.",
+      "characters": 31,
+      "wordsWhitespace": 5,
+      "plain": {
+        "file": "nytt-samtal-och-kasta.wav",
+        "frames": 65280,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 2.9605442176870747,
+        "durationExact": "65280/22050",
+        "sha256": "6ca4962088b64fa487a737de94dcf15c99917c5e604f2ce61cba91dd8611b478",
+        "bytes": 130604
+      }
+    },
+    "rost-fraga-pris": {
+      "text": "Vad kostar Spotify Premium Family?",
+      "characters": 34,
+      "wordsWhitespace": 5,
+      "plain": {
+        "file": "rost-fraga-pris.wav",
+        "frames": 76032,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 3.4481632653061225,
+        "durationExact": "76032/22050",
+        "sha256": "5999f039e403620bbc956d701bcc6083c5639826226ff0010ef7f8e6b3b16b76",
+        "bytes": 152108
+      }
+    },
+    "rost-andra-pris": {
+      "text": "Ändra priset för Molnlagring Plus 2 TB till 229 kronor per månad.",
+      "characters": 65,
+      "wordsWhitespace": 12,
+      "plain": {
+        "file": "rost-andra-pris.wav",
+        "frames": 133888,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 6.072018140589569,
+        "durationExact": "133888/22050",
+        "sha256": "351d39160593a96e837153911224a27d86b705d94a0580944a5816b121d330b2",
+        "bytes": 267820
+      }
+    },
+    "rost-begar-sammanfattning": {
+      "text": "Berätta vilka ändringar som ligger i mitt utkast.",
+      "characters": 49,
+      "wordsWhitespace": 8,
+      "plain": {
+        "file": "rost-begar-sammanfattning.wav",
+        "frames": 81408,
+        "sampleRate": 22050,
+        "channels": 1,
+        "sampleWidth": 2,
+        "durationSeconds": 3.6919727891156464,
+        "durationExact": "81408/22050",
+        "sha256": "50ec2415a0546d779df1f8d6e26e3d6db23a882324d4737ef99fdf5901875945",
+        "bytes": 162860
+      }
+    }
+  }
+}
