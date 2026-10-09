@@ -27,13 +27,14 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 1. {{Ange körbart kommando eller länk till förberedelsen, nödvändiga indata
    och det förväntade utgångsläget. Ange återställning efter felet.}}
 
-{{Välj antingen Integrationstest med counterpart eller Kräver mänsklig
-observation med humanObservation. Ta bort hela den andra grenen, inklusive
-dess textfält och metadata. Fyll i vald referens och skyddade resultat.
+{{Välj antingen Automatiskt motsvarande test med counterpart eller Kräver
+mänsklig observation med humanObservation. Ta bort hela den andra grenen,
+inklusive dess textfält och metadata. Fyll i vald referens och skyddade
+resultat.
 Använd title i stället för caseId om namnet behövs för att entydigt välja
 ett upptäckt test.}}
 
-**Integrationstest:**
+**Automatiskt motsvarande test (integration eller webbläsare):**
 [{{filnamn}}.spec.ts](../../tests/integration/{{filnamn}}.spec.ts),
 {{identifierande namn eller stabilt ID för exakt ett motsvarande test}}.
 
@@ -41,6 +42,8 @@ ett upptäckt test.}}
 ```manual-mapping
 {
   "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
     "spec": "tests/integration/{{filnamn}}.spec.ts",
     "caseId": "{{OMRÅDE-01}}"
   },
@@ -49,6 +52,11 @@ ett upptäckt test.}}
 }
 ```
 -->
+
+{{För ett motsvarande Chromium-test: använd runner vitest, suite browser och
+en länk till tests/browser/{{filnamn}}.test.tsx. Beskriv synligt vilka svar som
+är kontrollerade och vilket beständigt sparande som verifieras separat mot
+verklig server. Behåll testfallets ID vid flytt mellan sviter.}}
 
 **Kräver mänsklig observation:** {{Ange den faktiska observationen,
 utrustningen eller den externa klienten. Ange eventuellt närliggande
@@ -69,8 +77,11 @@ automatiskt underlag separat; det utför inte denna observation.}}
 
 **Ytterligare underlag:** {{Ange vid behov separat tekniskt underlag,
 överlappande test eller verklig leverantörsverifiering med dess syfte.
-Lägg referenser i metadatafältet evidence med kind, spec, title eller
-caseId samt purpose. Ange verklig körning separat från mänsklig observation.}}
+Lägg referenser i metadatafältet evidence med kind, spec, title eller caseId
+samt purpose. Ange runner och suite för upptäckt underlag; utelämna dem för
+real-provider. För serverunderlag används runner vitest, suite server och
+en länk till tests/unit/server/{{filnamn}}.test.ts.
+Ange verklig körning separat från mänsklig observation.}}
 
 **Steg:**
 

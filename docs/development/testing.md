@@ -100,7 +100,8 @@ List selected tests without executing them:
 npm run test:integration -- tests/integration/bootstrap.spec.ts --list
 ```
 
-Validate manual-case references against discovered integration tests:
+Validate manual-case references against integration, Chromium browser and
+server-suite discovery:
 
 ```sh
 npm run test:manual-mapping
@@ -108,10 +109,17 @@ npm run test:manual-mapping -- --area docs/manual-tests/map.md
 ```
 
 Repeat `--area` to validate several files during a coordinated migration.
-The full command also checks every functional test has one manual counterpart.
-Discovery lists tests without executing browser workflows or provider suites.
+The full command checks every functional integration test and every browser
+test with a stable case ID has one manual counterpart. Existing browser
+component tests without IDs and technical server tests remain supporting
+coverage. New references select a runner and suite; legacy references keep
+selecting integration tests. Discovery expands definitions without executing
+test bodies or hooks, application requests or paid-provider suites.
 This checks structure; compare the actions and outcomes to assess whether a
-manual case and its counterpart protect the same scenario.
+manual case and its counterpart protect the same scenario. Controlled browser
+responses demonstrate UI behavior; persistence and restart assertions must
+exercise a real server. Record such supporting evidence separately for browser
+replacements and keep those boundaries explicit when moving coverage.
 
 `npm test` builds the application, then runs all unit and integration tests.
 The ordinary suites do not make billable provider calls. Keep their inputs
