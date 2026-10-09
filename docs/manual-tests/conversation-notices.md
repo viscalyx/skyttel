@@ -1,32 +1,32 @@
 # Manuella testfall för samtalsnotiser
 
-Fallen provar korta besked om bruten kontakt, otillgängliga samtal och
-uppdrag som Skyttel inte kan slutföra. De omfattar knappar, textinmatning,
-mikrofon, placering, uppläsning och fokus. Kartans återkoppling om det
-privata utkastet och sparandet ska finnas kvar.
-Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
+Fallen provar korta besked om bruten kontakt, otillgängliga samtal och uppdrag
+som Skyttel inte kan slutföra. De omfattar knappar, textinmatning, mikrofon,
+placering, uppläsning och fokus. Kartans återkoppling om det privata utkastet
+och sparandet ska finnas kvar. Anteckna commit, webbläsare och godkänt eller
+underkänt resultat vid körning.
 
 ## Konfigurerade användare
 
-Alex Exempel är administratör i provhushållet. Alex loggar in med Google
-i den kontrollerade miljön. Samma samtalsknappar och notiser gäller för
-vanliga medlemmar; inga administrativa rättigheter används av samtalet.
+Alex Exempel är administratör i provhushållet. Alex loggar in med Google i den
+kontrollerade miljön. Samma samtalsknappar och notiser gäller för vanliga
+medlemmar; inga administrativa rättigheter används av samtalet.
 
 ## Allmän förberedelse
 
 1. Starta en ny installation enligt
    [den kontrollerade röstguiden](voice-assistant.md#controlled-voice-fixture).
-   Använd bara påhittade uppgifter. Skapa ett hushåll och lägg **Lo Exempel**
-   i ditt utkast genom **Tabell → Nytt objekt → Lägg i utkastet och stäng**.
+   Använd bara påhittade uppgifter. Skapa ett hushåll och lägg **Lo Exempel** i
+   ditt utkast genom **Tabell → Nytt objekt → Lägg i utkastet och stäng**.
    Spara inte.
-2. Terminalkommandona nedan hör till startguiden. `available off` gör
-   samtalet otillgängligt, och `available on` återställer tillgängligheten.
-   Vänta upp till fem sekunder på beskedet. Skicka ett skrivet uppdrag och
-   kör `fail REQUEST` med det aktuella `held`-anropets ID för uppdragsfel.
+2. Terminalkommandona nedan hör till startguiden. `available off` gör samtalet
+   otillgängligt, och `available on` återställer tillgängligheten. Vänta upp
+   till fem sekunder på beskedet. Skicka ett skrivet uppdrag och kör
+   `fail REQUEST` med det aktuella `held` -anropets ID för uppdragsfel.
    `reply REQUEST Hej.` ger ett nytt kontrollerat svar.
 3. Använd webbläsarens nätverksläge **Offline** för kontaktavbrott, och
-   återställ till normalt nätverk efter varje fall. Börja en ny provmiljö
-   inför NOT-01, NOT-02 och NOT-06. Behåll samma flik under respektive fall.
+   återställ till normalt nätverk efter varje fall. Börja en ny provmiljö inför
+   NOT-01, NOT-02 och NOT-06. Behåll samma flik under respektive fall.
 4. Miljön använder riktig server och tillfällig SQLite men ersätter externa
    leverantörer, mikrofon och ljudtransport. Den verifierar inte verklig
    mikrofonbehörighet, tal eller fysisk nätverksåterhämtning.
@@ -43,9 +43,23 @@ samtalet eller flytta fokus när notisen visas.
 **Förutsättningar:** Ny flik utan samtal. Kör `available off` före starten.
 
 **Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts),
-testfallet “NOT-01: utan samtal visar avstängda samtalsknappar en stängbar
-notis utan att öppna textvyn”.
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-01.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-01"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "outcomes": [
+    "Förklara hindret först efter användarens tryck, utan att starta samtalet eller flytta fokus när notisen visas."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -53,96 +67,140 @@ notis utan att öppna textvyn”.
 2. Fokusera **Prata med Skyttel** och tryck Retur. Läs notisen.
 3. Välj **Stäng notisen**. Fokusera **Skriv till Skyttel** och tryck Retur.
    Kontrollera textvyn, notisen och knappen **Nytt samtal**.
-4. Stäng notisen och sedan textvyn. Läs teckenförklaringen och övriga
-   verktyg.
+4. Stäng notisen och sedan textvyn. Läs teckenförklaringen och övriga verktyg.
 
 **Förväntat resultat:**
 
-- Ingen notis visas före första trycket. Båda knapparna ser avstängda ut
-  men går att trycka på. Hjälpmedel märker dem inte som inaktiverade;
-  beskrivningen slutar med **Inte tillgängligt just nu.**
-- Texten är **Samtal med Skyttel är inte tillgängligt just nu. Kontakta
-  administratören om det fortsätter.** Symbolen är en överstruken cirkel
-  och dold för hjälpmedel. Mikrofonknappen öppnar varken textvyn eller
-  medgivanderutan och startar inget samtal.
-- **Skriv till Skyttel** öppnar textvyn även utan tillgängligt samtal.
-  Fokus börjar i meddelandefältet på dator. **Nytt samtal** är inaktiverad;
-  inget samtal startas och ingen medgivanderuta visas.
-- Fokus stannar på mikrofonknappen när den visar notisen. Stängning
-  återför fokus till **Prata med Skyttel** och läser inte upp ett
-  återkomstbesked. När textvyn stängs återgår fokus till textknappen.
-  Teckenförklaringens gröna plus finns kvar. Kartan visar inget privat
-  förslagsantal.
+- Ingen notis visas före första trycket. Båda knapparna ser avstängda ut men går
+  att trycka på. Hjälpmedel märker dem inte som inaktiverade; beskrivningen
+  slutar med **Inte tillgängligt just nu.**
+- Texten är
+**Samtal med Skyttel är inte tillgängligt
+  just nu. Kontakta administratören om det fortsätter.**
+  Symbolen är en överstruken cirkel och dold för hjälpmedel. Mikrofonknappen
+  öppnar varken textvyn eller medgivanderutan och startar inget samtal.
+- **Skriv till Skyttel** öppnar textvyn även utan tillgängligt samtal. Fokus
+  börjar i meddelandefältet på dator. **Nytt samtal** är inaktiverad; inget
+  samtal startas och ingen medgivanderuta visas.
+- Fokus stannar på mikrofonknappen när den visar notisen. Stängning återför
+  fokus till **Prata med Skyttel** och läser inte upp ett återkomstbesked. När
+  textvyn stängs återgår fokus till textknappen. Teckenförklaringens gröna plus
+  finns kvar. Kartan visar inget privat förslagsantal.
 
 ### NOT-02: kontaktavbrott stoppar inmatning men behåller skrivande
 
-**Syfte:** Stoppa mikrofon och sändning på riktigt medan texten går att
-skriva och läsa. Återkomst får inte slå på mikrofonen.
+**Syfte:** Stoppa mikrofon och sändning på riktigt medan texten går att skriva
+och läsa. Återkomst får inte slå på mikrofonen.
 
 **Användare:** Alex.
 
 **Förutsättningar:** Ny flik, normalt nätverk och `available on`.
 
 **Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts),
-testfallet “NOT-02: bruten kontakt stoppar mikrofon och sändning medan
-texten går att skriva och läsa”.
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-02.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-02"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "outcomes": [
+    "Stoppa mikrofon och sändning på riktigt medan texten går att skriva och läsa. Återkomst får inte slå på mikrofonen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Välj **Prata med Skyttel**, godkänn för besöket och invänta **Lyssnar**.
 2. Sätt webbläsaren i **Offline**.
-3. Välj **Skriv till Skyttel**. Skriv **Text som inte ska skickas än.**
-   Tryck Retur och kontrollera **Skicka**.
-4. Återställ nätverket. Skicka texten och släpp dess `held`-anrop med
+3. Välj **Skriv till Skyttel**. Skriv **Text som inte ska skickas än.** Tryck
+   Retur och kontrollera **Skicka**.
+4. Återställ nätverket. Skicka texten och släpp dess `held` -anrop med
    `reply REQUEST Hej.`. Slå därefter själv på mikrofonen.
 
 **Förväntat resultat:**
 
-- Mikrofonen stängs av vid avbrottet. Knappen ser avstängd ut men är
-  tillgänglig för hjälpmedel; beskrivningen slutar med **Inte tillgängligt
-  just nu.** Ett tryck visar hindret utan att börja lyssna.
-  Notisen säger **Ingen kontakt med Skyttel. Mikrofonen är av. Slå på den
-  igen när kontakten är tillbaka.** Den har ingen stängknapp.
-- Textknappen fungerar. Samtalstexten går att läsa och meddelandefältet
-  går att skriva i. Retur sänder inte texten; **Skicka** är inaktiverad.
+- Mikrofonen stängs av vid avbrottet. Knappen ser avstängd ut men är tillgänglig
+  för hjälpmedel; beskrivningen slutar med **Inte tillgängligt just nu.** Ett
+  tryck visar hindret utan att börja lyssna. Notisen säger
+**Ingen kontakt med Skyttel. Mikrofonen är av.
+  Slå på den igen när kontakten är tillbaka.**
+  Den har ingen stängknapp.
+- Textknappen fungerar. Samtalstexten går att läsa och meddelandefältet går att
+  skriva i. Retur sänder inte texten; **Skicka** är inaktiverad.
 - Notisen försvinner när kontakten återkommer. Hjälpmedel läser i tur
-  **Kontakten med Skyttel är tillbaka.** Texten finns kvar att skicka,
-  och mikrofonen är fortfarande av tills användaren slår på den.
+  **Kontakten med Skyttel är tillbaka.** Texten finns kvar att skicka, och
+  mikrofonen är fortfarande av tills användaren slår på den.
 - Automationen räknar sändningsanrop och modellanrop och kontrollerar
   mikrofonspårets avstängda läge. Ett manuellt prov med den kontrollerade
   mikrofonen ersätter inte ett prov med fysisk mikrofon och nätverk.
 
-### NOT-03: flytt till textvyn upprepar inte uppläsningen
+### NOT-03: flytt till textvyn bevarar båda fokusvägarna
 
-**Syfte:** Visa samma besked en gång och läsa upp det en gång även vid vybyte.
+**Syfte:** Behålla samma notis och statusförekomst utan att starta mikrofonen
+vid återkomst.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Påslagen mikrofon och stängd textvy enligt NOT-02.
+**Förutsättningar:** Följ
+[HTTP-avbrottets förberedelse](voice-controls-preparation.md#http-avbrott-och-fokus-not-03).
+Ny installation,
+Lo Exempel i utkastet med beskrivningen
+Påhittad uppgift, mikrofon på och stängd textvy.
 
 **Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts),
-testfallet “NOT-03: en notis flyttas till textvyn utan ny uppläsning och
-försvinner när kontakten återkommer”.
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-03.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-03"
+  },
+  "reference": "Chromium 1280 × 720; två kontaktavbrott i samma samtal, först mikrofonknapp, sedan meddelandefält.",
+  "outcomes": [
+    "Både mikrofonknappens och meddelandefältets fokus bevaras när kontaktfelet uppstår.",
+    "Notisen har en plats åt gången och täcker inte meddelandefältet; mikrofonen är av genom båda återkomsterna.",
+    "Automationen bevarar samma kortnod och statusnod vid varje flytt och kontrollerar att inget extra Mikrofonen är av tillkommer. Faktiskt hört besked bedöms i NOT-24."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Fokusera mikrofonknappen. Sätt nätverket i **Offline** och läs notisen.
-2. Öppna textvyn med **Skriv till Skyttel**. Stäng den med **Stäng textvyn**.
-3. Återställ nätverket.
+1. Fokusera Prata med Skyttel. Skriv offline i runnerns terminal.
+   Läs kontakttexten och
+   kontrollera att fokus ligger kvar.
+2. Öppna textvyn, läs hela notisen ovanför meddelandefältet och stäng textvyn.
+   Samma besked ska nu finnas vid röstrutans plats.
+3. Skriv online i runnerns terminal. Notisen försvinner; mikrofonen förblir av.
+4. Slå själv på mikrofonen. Öppna textvyn och fokusera Meddelande till Skyttel
+   innan nästa offline-kommando.
+   Kontrollera kvarvarande fältfokus och samma
+   kontakttext.
+5. Stäng och öppna textvyn medan HTTP är av. Kontrollera en enda synlig
+   notis och samma text. Skriv online igen.
+6. Kontrollera att notisen försvinner och mikrofonen fortfarande är av. Avsluta
+   provmiljön.
 
 **Förväntat resultat:**
 
-- Kontakttexten läses upp med avbrytande uppläsning när avbrottet inträffar.
-  Att notisen visas flyttar inte fokus.
-- Med textvyn öppen finns notisen bara som en rad ovanför meddelandefältet.
-  Med textvyn stängd finns den bara vid röstrutans plats. Vybytet läser
-  inte upp samma besked igen.
-- Hela beskedet och dess kontroller ryms ovanför meddelandefältet.
-  Samtalstexten har fortfarande användbart läsutrymme på dator, telefon,
-  bred pekskärm och i korta fönster.
-- Återkomstbeskedet läses i tur. Ingen notis finns kvar efter återkomsten.
+- Både mikrofonknappens och meddelandefältets fokus bevaras när kontaktfelet
+  uppstår.
+- Notisen har en plats åt gången och täcker inte meddelandefältet; mikrofonen är
+  av genom båda återkomsterna.
+- Automationen bevarar samma kortnod och statusnod vid varje flytt och
+  kontrollerar att inget extra Mikrofonen är av tillkommer. Faktiskt hört besked
+  bedöms i NOT-24.
 
 ## Ordning, stängning och fokus
 
@@ -156,8 +214,23 @@ otillgängligt samtal och uppdragsfel.
 **Förutsättningar:** Textvy och normalt nätverk. Behåll samma samtal.
 
 **Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts),
-testfallet “NOT-04: bruten kontakt går före otillgängligt samtal och uppdragsfel”.
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-04.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-04"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "outcomes": [
+    "Visa en notis åt gången och låta kontaktavbrottet gå före otillgängligt samtal och uppdragsfel."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -170,9 +243,9 @@ testfallet “NOT-04: bruten kontakt går före otillgängligt samtal och uppdra
 - Först visas **Skyttel kunde inte slutföra uppdraget. Försök igen.**
   Otillgängligt samtal ersätter sedan detta besked och inaktiverar Skicka.
 - Kontaktavbrottet ersätter otillgängligheten. Bara en notis visas.
-- Efter återkomst syns otillgängligheten igen, tills `available on`
-  återställer samtalet. Uppdragsfelet syns då igen och texten finns kvar.
-  Återkomsten till tillgängligt samtal läses upp i tur.
+- Efter återkomst syns otillgängligheten igen, tills `available on` återställer
+  samtalet. Uppdragsfelet syns då igen och texten finns kvar. Återkomsten till
+  tillgängligt samtal läses upp i tur.
 
 ### NOT-05: uppdragsfel försvinner vid stängning eller nytt försök
 
@@ -183,9 +256,23 @@ testfallet “NOT-04: bruten kontakt går före otillgängligt samtal och uppdra
 **Förutsättningar:** Textvy, normalt nätverk och tillgängligt samtal.
 
 **Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts),
-testfallet “NOT-05: uppdragsfelet kan stängas eller försvinna vid nästa
-försök och fokus stannar logiskt”.
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-05.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-05"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "outcomes": [
+    "Ge ett stängbart besked och bevara logiskt fokus."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -197,13 +284,13 @@ försök och fokus stannar logiskt”.
 
 **Förväntat resultat:**
 
-- Notisen visar en varningstriangel och texten **Skyttel kunde inte
-  slutföra uppdraget. Försök igen.** Texten läses i tur. Fältet behåller
-  fokus när notisen visas.
-- Stängning återför fokus till **Prata med Skyttel**. Det andra felet
-  ger ett nytt stängbart besked.
-- Det tredje försöket tar bort notisen redan medan svaret väntar.
-  Det nya svaret står sedan i samtalstexten. Utkastet finns kvar.
+- Notisen visar en varningstriangel och texten
+  **Skyttel kunde inte slutföra uppdraget. Försök igen.** Texten läses i tur.
+  Fältet behåller fokus när notisen visas.
+- Stängning återför fokus till **Prata med Skyttel**. Det andra felet ger ett
+  nytt stängbart besked.
+- Det tredje försöket tar bort notisen redan medan svaret väntar. Det nya svaret
+  står sedan i samtalstexten. Utkastet finns kvar.
 
 ### NOT-06: ett avslutat hinder kräver ett nytt tryck vid nästa avbrott
 
@@ -214,9 +301,23 @@ försök och fokus stannar logiskt”.
 **Förutsättningar:** Ny flik utan samtal, normalt nätverk och `available on`.
 
 **Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts),
-testfallet “NOT-06: en stängbar kontakt-notis försvinner automatiskt och
-nästa avbrott väntar på ett nytt tryck”.
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-06.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-06"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "outcomes": [
+    "Skilja automatisk återkomst från stängning utan pågående samtal."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -227,13 +328,14 @@ nästa avbrott väntar på ett nytt tryck”.
 
 **Förväntat resultat:**
 
-- Varje avbrott väntar på ett nytt tryck innan en notis visas. Textvyn
-  öppnas inte. Texten är **Ingen kontakt med Skyttel. Försök igen när
-  kontakten är tillbaka.** och notisen har en stängknapp.
-- Automatisk återkomst tar bort notisen, återför fokus från stängknappen
-  till **Prata med Skyttel** och läser i tur upp återkomstbeskedet.
-- Manuell stängning ger inget återkomstbesked, inte heller när det redan
-  stängda hindret senare upphör.
+- Varje avbrott väntar på ett nytt tryck innan en notis visas. Textvyn öppnas
+  inte. Texten är
+  **Ingen kontakt med Skyttel. Försök igen när kontakten är tillbaka.** och
+  notisen har en stängknapp.
+- Automatisk återkomst tar bort notisen, återför fokus från stängknappen till
+  **Prata med Skyttel** och läser i tur upp återkomstbeskedet.
+- Manuell stängning ger inget återkomstbesked, inte heller när det redan stängda
+  hindret senare upphör.
 
 ## Plats och tangentordning
 
@@ -243,43 +345,54 @@ nästa avbrott väntar på ett nytt tryck”.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Påslagen mikrofon och stängd textvy. Prova dator,
-telefonbred skärm och kort liggande fönster. **Återställ vy** finns i
+**Förutsättningar:** Påslagen mikrofon och stängd textvy. Använd 1280 × 900 före
+första UI-handlingen. Övriga mått har egna fall. **Återställ vy** finns i
 verktygsfältet även i korta fönster.
 
 **Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts),
-testfallen “NOT-07: notisen har sin plats och täcker inte kartans
-återkoppling vid 1280 × 900”, “NOT-07: notisen har sin plats och täcker
-inte kartans återkoppling vid 700 × 900”, “NOT-07: notisen har sin plats
-och täcker inte kartans återkoppling vid 390 × 844” och “NOT-07: notisen
-har sin plats och täcker inte kartans återkoppling vid 667 × 375”,
-“NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid
-320 × 640” och “NOT-07: notisen har sin plats och täcker inte kartans
-återkoppling vid 320 × 250”.
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-07.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-07"
+  },
+  "reference": "Chromium 1280 × 900; mediernas anslutning bryts oberoende av HTTP.",
+  "outcomes": [
+    "Bevara verktygsfältets Återställ vy och kartans status."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Bryt och återställ kontakten genom webbläsarens nätverksläge.
+1. Följ
+   [medieanslutningens separata förberedelse](voice-controls-preparation.md#notisens-plats-under-bruten-mediekontakt)
+   . Bryt medieanslutningen med disconnect; behåll HTTP och fliken. Återanslut
+   först efter steg 3 med reconnect.
 2. Läs notisen, kartans status och verktygsfältets **Återställ vy**.
    Kontrollera att kameraverktyget **Navigera** går att nå utan att täckas.
-3. I korta fönster: gå med Tab till **Kartans sammanhang**. Kontrollera
-   den synliga fokusringen och använd PageDown för att läsa teckenförklaringen.
-   Nå **Återställ vy** i verktygsfältet med tangentbordet även i det
-   minsta fönstret.
+3. I korta fönster: gå med Tab till **Kartans sammanhang**. Kontrollera den
+   synliga fokusringen och använd PageDown för att läsa teckenförklaringen. Nå
+   **Återställ vy** i verktygsfältet med tangentbordet även i det minsta
+   fönstret.
 
 **Förväntat resultat:**
 
-- Med röstrutan borta finns kortet på rutans plats. På smal skärm står
-  det över hela bredden, ovanför återkopplingen och kartans nederkant.
-- Notisen täcker varken **Återställ vy** eller kartans status.
-  Inget måste rullas i sidled för att läsa notisen.
+- Med röstrutan borta finns kortet på rutans plats. På smal skärm står det över
+  hela bredden, ovanför återkopplingen och kartans nederkant.
+- Notisen täcker varken **Återställ vy** eller kartans status. Inget måste
+  rullas i sidled för att läsa notisen.
 - Vid återkomst är mikrofonen av. Automationen bryter även ljudtransporten
   oberoende av HTTP och kontrollerar kortets geometri vid de sex måtten.
-- Kartans sammanhang är en namngiven rullningsyta för tangentbord. Hela
-  statusen och teckenförklaringen går att läsa utan att täckas av kartan
-  eller notisen. Vid 320 × 250 har sammanhanget och visningsvalen var sin rullningsyta
-  ovanför notisen.
+- Kartans sammanhang är en namngiven rullningsyta för tangentbord. Hela statusen
+  och teckenförklaringen går att läsa utan att täckas av kartan eller notisen.
+  Vid 320 × 250 har sammanhanget och visningsvalen var sin rullningsyta ovanför
+  notisen.
 
 ### NOT-08: röstruta och uppdragsnotis har var sin plats
 
@@ -287,15 +400,27 @@ har sin plats och täcker inte kartans återkoppling vid 667 × 375”,
 
 **Användare:** Alex.
 
-**Förutsättningar:** Mikrofonen på, normalt nätverk och textvyn öppen.
-Prova dator, bred pekskärm och telefonbred skärm.
+**Förutsättningar:** Mikrofonen på, normalt nätverk och textvyn öppen. Använd
+1280 × 900 före första UI-handlingen; andra mått har egna fall.
 
 **Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts),
-testfallen “NOT-08: en uppdragsnotis står bredvid röstrutan utan att täcka
-återkoppling vid 1280 × 900”, “NOT-08: en uppdragsnotis står bredvid
-röstrutan utan att täcka återkoppling vid 820 × 1180” och “NOT-08: en
-uppdragsnotis står bredvid röstrutan utan att täcka återkoppling vid 390 × 844”.
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-08.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-08"
+  },
+  "reference": "Chromium 1280 × 900; samtidig röstruta och uppdragsnotis.",
+  "outcomes": [
+    "Behålla placering och tangentordning när båda syns."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -306,13 +431,13 @@ uppdragsnotis står bredvid röstrutan utan att täcka återkoppling vid 390 × 
 
 **Förväntat resultat:**
 
-- På bred skärm står notisen i ett eget kort under röstrutan. På smal
-  skärm står kortet ovanför röstrutan, över hela bredden. Symbolen står
-  till vänster, texten bredvid och stängknappen uppe till höger.
+- På bred skärm står notisen i ett eget kort under röstrutan. På smal skärm står
+  kortet ovanför röstrutan, över hela bredden. Symbolen står till vänster,
+  texten bredvid och stängknappen uppe till höger.
 - Ingen överlappning döljer röstrutan eller återkopplingen. Tab går från
   textknappen till notisens stängknapp när ingen Avbryt-knapp finns.
-- Stängning återför fokus till mikrofonknappen. Mikrofonen och
-  **Lyssnar** finns kvar; att stänga ett felbesked avslutar inget samtal.
+- Stängning återför fokus till mikrofonknappen. Mikrofonen och **Lyssnar** finns
+  kvar; att stänga ett felbesked avslutar inget samtal.
 
 ## Symboler och läsbarhet
 
@@ -322,36 +447,49 @@ uppdragsnotis står bredvid röstrutan utan att täcka återkoppling vid 390 × 
 
 **Användare:** Alex.
 
-**Förutsättningar:** Den kontrollerade röstinstallationen, normalt nätverk
-och ljust tema. Textvyn har öppnats med medgivande och stängts igen.
+**Förutsättningar:** Den kontrollerade röstinstallationen, normalt nätverk och
+ljust tema. Textvyn har öppnats med medgivande och stängts igen.
 
 **Integrationstest:**
-[conversation-audit.spec.ts](../../tests/integration/conversation-audit.spec.ts),
-testfallen “NOT-09: symbolfärg och läsbarhet skiljer hinder från händelse i
-light tema” och samma titel med “dark tema”.
+[conversation-audit.spec.ts](../../tests/integration/conversation-audit.spec.ts)
+, NOT-09.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-audit.spec.ts",
+    "caseId": "NOT-09"
+  },
+  "reference": "Chromium, ljust tema; avstängt samtal respektive nekad mikrofon.",
+  "outcomes": [
+    "Skilja hinder från händelser med både form, färg och text."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Kör `available off`. Vänta på knappbeskrivningen **Inte tillgängligt
-   just nu.** Tryck på mikrofonknappen och läs notisen.
+1. Kör `available off`. Vänta på knappbeskrivningen
+   **Inte tillgängligt just nu.** Tryck på mikrofonknappen och läs notisen.
 2. Kör `available on` och vänta på att notisen försvinner.
-3. I webbläsarens konsol, kör
-   `window.skyttelVoiceFixture.setMicrophone('deny')`. Tryck på
-   mikrofonknappen och läs notisen.
-4. Upprepa i mörkt tema. Mät symbolens kontrast mot kortets bakgrund
-   och textens kontrast med ett kontrastverktyg.
+3. I webbläsarens konsol, kör `window.skyttelVoiceFixture.setMicrophone('deny')`
+   . Tryck på mikrofonknappen och läs notisen.
+4. Behåll ljust tema. Mät symbolens kontrast mot kortets bakgrund och textens
+   kontrast med ett kontrastverktyg.
 
 **Förväntat resultat:**
 
 - Hindret har en överstruken cirkel; mikrofonhändelsen har en överstruken
-  mikrofon. Symbolerna står i tonade cirklar till vänster om texten.
-  Hinder är röda och händelser gulbruna.
-- Symbolerna har minst 3:1 kontrast, och texten minst 4,5:1, i båda teman.
-  Automationen mäter de faktiskt beräknade färgerna på de ogenomskinliga
-  korten och symbolernas egna tonade bakgrunder. Den bedömer inte
-  färgseende eller fysisk bildskärm.
-- Symbolen är dold för hjälpmedel; text och namngivna kontroller bär
-  beskedet. Båda fallen är stängbara när inget samtal pågår.
+  mikrofon. Symbolerna står i tonade cirklar till vänster om texten. Hinder är
+  röda och händelser gulbruna.
+- Symbolerna har minst 3:1 kontrast, och texten minst 4,5:1, i detta tema.
+  Automationen mäter de faktiskt beräknade färgerna på de ogenomskinliga korten
+  och symbolernas egna tonade bakgrunder. Den bedömer inte färgseende eller
+  fysisk bildskärm.
+- Symbolen är dold för hjälpmedel; text och namngivna kontroller bär beskedet.
+  Båda fallen är stängbara när inget samtal pågår.
 
 ### NOT-10: ett väntande sparförsök visar frågesymbol och kontrollknapp
 
@@ -359,32 +497,52 @@ light tema” och samma titel med “dark tema”.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Ett registrerat men inte genomfört sparförsök enligt
-[SPAR-02](operations.md#spar-02-automatiskt-kontrollera-ett-väntande-sparande-från-en-annan-klient).
-Prova 390 × 844 px och blockera `*/text-assistant/recover` i webbläsarens
-nätverkspanel innan sidan laddas om.
+**Förutsättningar:** Följ
+[NOT-10:s egna förberedelse](voice-controls-preparation.md#väntande-kontroll-not-10)
+med Lo Exempel, Person och tom beskrivning. Välj 390 × 844 före första
+handlingen. Kör inte hela SPAR-02; detta fall provar ett eget registrerat men
+inte genomfört försök.
 
 **Integrationstest:**
-[conversation-audit.spec.ts](../../tests/integration/conversation-audit.spec.ts),
-testfallet “NOT-10: ett verkligt väntande sparförsök visar frågesymbol och
-kontrollknapp under texten”.
+[conversation-audit.spec.ts](../../tests/integration/conversation-audit.spec.ts)
+, NOT-10.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-audit.spec.ts",
+    "caseId": "NOT-10"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "outcomes": [
+    "Visa ett kontrollfel utan att ge en ny befogenhet att spara."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Ladda om och vänta på **Skyttel kunde inte kontrollera om utkastet
-   sparades.**
-   Läs symbolen, texten och kontrollknappen.
-2. Kontrollera mikrofonens läge, det privata förslaget och sparförsöket.
-3. Ta bort nätverksblockeringen. Välj **Kontrollera om utkastet sparades**.
-   Följ resultatet enligt SPAR-02.
+1. Ladda om och vänta på
+   **Skyttel kunde inte kontrollera om utkastet sparades.** Läs symbolen, texten
+   och kontrollknappen.
+2. Kontrollera mikrofon av. Öppna **Visa utkastet → Visa förslaget: Lo Exempel**
+   och läs **Person**, namn och **Ej uppgivet** i beskrivningen. Stäng
+   förslaget utan ändring.
+3. Ta bort nätverksblockeringen. Välj **Kontrollera om utkastet sparades**. Läs
+   **Utkastet är tomt.**. I **Tabell**, öppna **Lo Exempel** och läs
+   **Person** samt **Ej uppgivet** i beskrivningen. Detta avslutar fallet;
+   upprepa inte hela
+   SPAR-02 efter kontrollen.
 
 **Förväntat resultat:**
 
-- Ett frågetecken i cirkel står till vänster. **Kontrollera om utkastet
-  sparades** står under texten, med minst 44 px hög tryckyta. Ingen
-  stängknapp finns, och kortet kräver ingen rullning i sidled.
-- Mikrofonen är av. Förslaget är identiskt med det som registrerades;
-  felet har varken sparat det eller kastat det.
+- Ett frågetecken i cirkel står till vänster.
+  **Kontrollera om utkastet sparades** står under texten, med minst 44 px hög
+  tryckyta. Ingen stängknapp finns, och kortet kräver ingen rullning i sidled.
+- Mikrofonen är av. Förslaget är identiskt med det som registrerades; felet har
+  varken sparat det eller kastat det.
 - Kontrollen använder samma försöks-ID. Automationen använder en riktig
   registrering och avbryter bara kontrollsvaret till webbläsaren.
 
@@ -394,20 +552,35 @@ kontrollknapp under texten”.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Kör de länkade fallen i den kontrollerade miljön.
-Prova både ljust och mörkt tema. Detta fall är enbart manuellt; ingen
-mänsklig formbedömning redovisas som utförd.
+**Förutsättningar:** Kör de länkade fallen i den kontrollerade miljön. Prova
+både ljust och mörkt tema. Detta fall är enbart manuellt; ingen mänsklig
+formbedömning redovisas som utförd.
 
-**Integrationstest:** Inget. De länkade fallen automatiserar situationens
-text, kontroller och beteende, inte människans igenkänning av symbolen.
+**Kräver mänsklig observation:** Känn igen alla angivna symboler, typfärger och
+skillnader utan färg.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "visual-symbol-recognition",
+    "observation": "Känn igen de överstrukna symbolerna, mätaren, frågetecknet och varningstriangeln utan att bara jämföra SVG-data."
+  },
+  "reference": "Ljust och mörkt tema; alla tabellens kontrollerat utlösta situationer.",
+  "outcomes": [
+    "Människan känner igen symbolens form och kan skilja händelse från hinder."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Utlös varje rad genom det angivna fallet. Läs först texten, jämför
-   sedan den synliga symbolen med tabellen och anteckna resultat per rad.
-2. Kontrollera att alla hinder har samma symbolfärg som hindret i NOT-09,
-   och alla händelser samma färg som mikrofonhändelsen. Se också att
-   formerna går att skilja åt utan färg.
+1. Utlös varje rad genom det angivna fallet. Läs först texten, jämför sedan den
+   synliga symbolen med tabellen och anteckna resultat per rad.
+2. Kontrollera att alla hinder har samma symbolfärg som hindret i NOT-09, och
+   alla händelser samma färg som mikrofonhändelsen. Se också att formerna går
+   att skilja åt utan färg.
 
 **Förväntat resultat:**
 
@@ -421,28 +594,28 @@ text, kontroller och beteende, inte människans igenkänning av symbolen.
 | Samtal otillgängligt, NOT-01 | Överstruken cirkel | Hinder |
 | Full kontext efter misslyckad sammanfattning, KONTEXT-10 | Mätare | Hinder |
 | Nekad mikrofon, ROSTFEL-01 deny | Överstruken mikrofon | Händelse |
-| Ingen mikrofon, ROSTFEL-01 error | Överstruken mikrofon | Händelse |
-| Upptagen mikrofon, ROSTFEL-01 busy | Överstruken mikrofon | Händelse |
-| Röststödet saknas, ROSTFEL-01 unsupported | Överstruken mikrofon | Händelse |
+| Ingen mikrofon, ROSTFEL-05 error | Överstruken mikrofon | Händelse |
+| Upptagen mikrofon, ROSTFEL-06 busy | Överstruken mikrofon | Händelse |
+| Röststödet saknas, ROSTFEL-07 unsupported | Överstruken mikrofon | Händelse |
 | Tillfälligt röstfel, ROSTFEL-02 startup | Varningstriangel | Händelse |
 | Avbruten röst, ROSTFEL-03 | Överstruken mikrofon | Händelse |
-| Administrationsfel, ROSTFEL-02 administration | Varningstriangel | Händelse |
+| Administrationsfel, ROSTFEL-08 administration | Varningstriangel | Händelse |
 | Återkallat medgivande, MEDGIVANDE-13 | Varningstriangel | Händelse |
 | Misslyckat uppdrag, NOT-05 | Varningstriangel | Händelse |
 | Stoppat ljud, ROSTFEL-04 | Överstruken högtalare | Hinder |
 <!-- markdownlint-enable MD013 -->
 
 Läs [kontrollfallen](save-check.md), [kontextfallen](conversation-context.md),
-[röstfelen](voice-errors.md) och [medgivandefallen](conversation-consent.md)
-för respektive förberedelse och utlösning. NOT-11 kompletterar deras
+[röstfelen](voice-errors.md) och [medgivandefallen](conversation-consent.md) för
+respektive förberedelse och utlösning. NOT-11 kompletterar deras
 beteendekontroller med en uttrycklig granskning av form och typfärg.
 
 ## WCAG 2.2 AA: utformning och verifiering
 
-Utformningen syftar till WCAG 2.2 AA. Automationen provar det ändrade
-flödet genom gränssnittet mot riktig server och tillfällig SQLite.
-Ingen manuell skärmläsar-, kontrast- eller fysisk enhetskontroll intygas.
-Fullständig överensstämmelse för hela sidor och flöden är inte verifierad.
+Utformningen syftar till WCAG 2.2 AA. Automationen provar det ändrade flödet
+genom gränssnittet mot riktig server och tillfällig SQLite. Ingen manuell
+skärmläsar-, kontrast- eller fysisk enhetskontroll intygas. Fullständig
+överensstämmelse för hela sidor och flöden är inte verifierad.
 
 <!-- markdownlint-disable MD013 -->
 | Kriterium | Utformning och automatisk kontroll | Återstår manuellt |
@@ -457,3 +630,587 @@ Fullständig överensstämmelse för hela sidor och flöden är inte verifierad.
 | 3.3.1, 3.3.3 Felbeskrivning och förslag | Varje grundfel har begriplig text och nästa steg. Fältet behåller oskickad text, och sändning stoppas vid hinder. Automationen kontrollerar detta. | Att texterna förstås med hjälpmedel. |
 | 4.1.2, 4.1.3 Namn, roll, värde och status | Avbrytande eller väntande uppläsning följer notisens situation. Flytt läser inte upp igen. Automatisk återkomst läses i tur; stängning ger inget återkomstbesked. | Faktisk uppläsning och tur i minst två skärmläsare. |
 <!-- markdownlint-enable MD013 -->
+
+## Separata placeringar och teman
+
+### NOT-16: kontakt-notis vid 700 × 900
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 700 × 900 i
+observationsstarten. Behåll samma anslutning och native kontroller.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-16.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-16"
+  },
+  "reference": "Chromium 700 × 900; medieavbrott och separat pausad observationsklocka.",
+  "outcomes": [
+    "Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå utan överlappning.",
+    "Återanslutning tar bort notisen men lämnar mikrofonen av."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [NOT-07](#not-07-en-kontakt-notis-täcker-inte-kartans-återkoppling) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå
+  utan överlappning.
+- Återanslutning tar bort notisen men lämnar mikrofonen av.
+
+### NOT-17: kontakt-notis vid 390 × 844
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 390 × 844 i
+observationsstarten. Behåll samma anslutning och native kontroller.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-17.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-17"
+  },
+  "reference": "Chromium 390 × 844; medieavbrott och separat pausad observationsklocka.",
+  "outcomes": [
+    "Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå utan överlappning.",
+    "Återanslutning tar bort notisen men lämnar mikrofonen av."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [NOT-07](#not-07-en-kontakt-notis-täcker-inte-kartans-återkoppling) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå
+  utan överlappning.
+- Återanslutning tar bort notisen men lämnar mikrofonen av.
+
+### NOT-18: kontakt-notis vid 667 × 375
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 667 × 375 i
+observationsstarten. I steg 3: tabba till Kartans sammanhang, använd PageDown
+och End, kontrollera synlig fokusram och nå Återställ vy.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-18.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-18"
+  },
+  "reference": "Chromium 667 × 375; medieavbrott och separat pausad observationsklocka.",
+  "outcomes": [
+    "Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå utan överlappning.",
+    "Återanslutning tar bort notisen men lämnar mikrofonen av."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [NOT-07](#not-07-en-kontakt-notis-täcker-inte-kartans-återkoppling) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå
+  utan överlappning.
+- Återanslutning tar bort notisen men lämnar mikrofonen av.
+
+### NOT-19: kontakt-notis vid 320 × 640
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 320 × 640 i
+observationsstarten. Behåll samma anslutning och native kontroller.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-19.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-19"
+  },
+  "reference": "Chromium 320 × 640; medieavbrott och separat pausad observationsklocka.",
+  "outcomes": [
+    "Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå utan överlappning.",
+    "Återanslutning tar bort notisen men lämnar mikrofonen av."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [NOT-07](#not-07-en-kontakt-notis-täcker-inte-kartans-återkoppling) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå
+  utan överlappning.
+- Återanslutning tar bort notisen men lämnar mikrofonen av.
+
+### NOT-20: kontakt-notis vid 320 × 250
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 320 × 250 i
+observationsstarten. I steg 3: tabba till Kartans sammanhang, använd PageDown
+och End, kontrollera synlig fokusram och nå Återställ vy.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-20.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-20"
+  },
+  "reference": "Chromium 320 × 250; medieavbrott och separat pausad observationsklocka.",
+  "outcomes": [
+    "Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå utan överlappning.",
+    "Återanslutning tar bort notisen men lämnar mikrofonen av."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [NOT-07](#not-07-en-kontakt-notis-täcker-inte-kartans-återkoppling) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Notis, Kartans status, teckenförklaring, Återställ vy och Navigera går att nå
+  utan överlappning.
+- Återanslutning tar bort notisen men lämnar mikrofonen av.
+
+### NOT-21: röstruta och uppdragsnotis vid 820 × 1180
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 820 × 1180.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-21.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-21"
+  },
+  "reference": "Chromium 820 × 1180; påslagen mikrofon och kontrollerat uppdragsfel.",
+  "outcomes": [
+    "Röstruta, notis och kartåterkoppling täcker inte varandra.",
+    "Tab når Stäng notisen; stängning återför fokus utan att avsluta samtalet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [NOT-08](#not-08-röstruta-och-uppdragsnotis-har-var-sin-plats) en gång,
+   med ovanstående konfiguration. Följ dess steg i ordning och samma separata
+   förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Röstruta, notis och kartåterkoppling täcker inte varandra.
+- Tab når Stäng notisen; stängning återför fokus utan att avsluta samtalet.
+
+### NOT-22: röstruta och uppdragsnotis vid 390 × 844
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 390 × 844.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-22.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-22"
+  },
+  "reference": "Chromium 390 × 844; påslagen mikrofon och kontrollerat uppdragsfel.",
+  "outcomes": [
+    "Röstruta, notis och kartåterkoppling täcker inte varandra.",
+    "Tab når Stäng notisen; stängning återför fokus utan att avsluta samtalet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [NOT-08](#not-08-röstruta-och-uppdragsnotis-har-var-sin-plats) en gång,
+   med ovanstående konfiguration. Följ dess steg i ordning och samma separata
+   förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Röstruta, notis och kartåterkoppling täcker inte varandra.
+- Tab når Stäng notisen; stängning återför fokus utan att avsluta samtalet.
+
+### NOT-23: symbolkontrast i mörkt tema
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj mörkt tema före första
+UI-handlingen.
+
+**Integrationstest:**
+[conversation-audit.spec.ts](../../tests/integration/conversation-audit.spec.ts)
+, NOT-23.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-audit.spec.ts",
+    "caseId": "NOT-23"
+  },
+  "reference": "Chromium, mörkt tema och minskad rörelse.",
+  "outcomes": [
+    "Hinder och händelser har samma texter och kontroller, med läsbar symbol- och textkontrast i mörkt tema."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [NOT-09](#not-09-symbolfärg-och-läsbarhet-skiljer-hinder-från-händelse)
+   en gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Hinder och händelser har samma texter och kontroller, med läsbar symbol- och
+  textkontrast i mörkt tema.
+
+### NOT-24: faktiskt hörda notiser och återkomst
+
+**Syfte:** Hör exakt en avbrytande kontakt-notis, ingen extra mikrofonstatus och
+ett köat återkomstbesked.
+
+**Användare:** Den konfigurerade testmedlemmen.
+
+**Förutsättningar:** Använd den
+[riktiga enhetsförberedelsen](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare)
+, med enbart påhittade uppgifter. Telefon och surfplatta behöver nåbar
+HTTPS-adress och konfigurerad inloggning.
+
+**Kräver mänsklig observation:** Hör exakt en avbrytande kontakt-notis, ingen
+extra mikrofonstatus och ett köat återkomstbesked.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Hör exakt en avbrytande kontakt-notis, ingen extra mikrofonstatus och ett köat återkomstbesked."
+  },
+  "reference": "NVDA/Chrome Windows och VoiceOver/Chrome macOS; motsvarande faktiskt provade HTTPS-enhet.",
+  "outcomes": [
+    "Kontakttexten hörs en gång per avbrott och återkomstbeskedet väntar på sin tur.",
+    "Flytt ger ingen extra uppläsning eller mikrofonstart."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Starta samtalet med mikrofonen på. Fokusera mikrofonknappen, bryt nätverket
+   och lyssna.
+2. Öppna och stäng textvyn med hjälpmedlet och återställ nätverket. Mikrofonen
+   ska förbli av.
+3. Slå själv på mikrofonen, fokusera meddelandefältet och upprepa avbrott, flytt
+   och återkomst en gång.
+
+**Förväntat resultat:**
+
+- Kontakttexten hörs en gång per avbrott och återkomstbeskedet väntar på sin
+  tur.
+- Flytt ger ingen extra uppläsning eller mikrofonstart.
+
+### NOT-12: notisens text och kontroller på dator
+
+**Syfte:** Läsa en mikrofonhändelse och ett ljudhinder i både kort och inline
+plats.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation, Lo i utkastet och 1280 × 800 före starten.
+Starta samtalet med text och stäng textvyn.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-12.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-12"
+  },
+  "reference": "Chromium 1280 × 800; datorpekare.",
+  "outcomes": [
+    "Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.",
+    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Förbered nekad mikrofon enligt röstguidens mediekontroller. Välj Prata med
+   Skyttel. Läs hela händelsen och nå dess stängknapp.
+2. Öppna textvyn. Läs samma besked och kontrollera att text och kontroller får
+   plats utan rullning i sidled.
+3. Förbered tillåten mikrofon men spärrad uppspelning. Välj Prata med Skyttel
+   och läs hindret med Starta ljudet.
+4. Läs hela hindret i textvyn, stäng den och läs kortet igen. Kontrollera
+   samtalstextens kvarvarande läsyta i det korta fönstret.
+
+**Förväntat resultat:**
+
+- Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.
+- Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling
+  läggs i textvyn.
+
+### NOT-13: notisens text och kontroller på telefon
+
+**Syfte:** Läsa en mikrofonhändelse och ett ljudhinder i både kort och inline
+plats.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation, Lo i utkastet och 390 × 780 före starten.
+Starta samtalet med text och stäng textvyn.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-13.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-13"
+  },
+  "reference": "Chromium 390 × 780; emulerad pekning.",
+  "outcomes": [
+    "Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.",
+    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Förbered nekad mikrofon enligt röstguidens mediekontroller. Välj Prata med
+   Skyttel. Läs hela händelsen och nå dess stängknapp.
+2. Öppna textvyn. Läs samma besked och kontrollera att text och kontroller får
+   plats utan rullning i sidled.
+3. Förbered tillåten mikrofon men spärrad uppspelning. Välj Prata med Skyttel
+   och läs hindret med Starta ljudet.
+4. Läs hela hindret i textvyn, stäng den och läs kortet igen. Kontrollera
+   samtalstextens kvarvarande läsyta i det korta fönstret.
+
+**Förväntat resultat:**
+
+- Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.
+- Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling
+  läggs i textvyn.
+
+### NOT-14: notisens text och kontroller på bred pekskärm
+
+**Syfte:** Läsa en mikrofonhändelse och ett ljudhinder i både kort och inline
+plats.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation, Lo i utkastet och 1024 × 1366 före
+starten. Starta samtalet med text och stäng textvyn.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-14.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-14"
+  },
+  "reference": "Chromium 1024 × 1366; emulerad pekning.",
+  "outcomes": [
+    "Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.",
+    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Förbered nekad mikrofon enligt röstguidens mediekontroller. Välj Prata med
+   Skyttel. Läs hela händelsen och nå dess stängknapp.
+2. Öppna textvyn. Läs samma besked och kontrollera att text och kontroller får
+   plats utan rullning i sidled.
+3. Förbered tillåten mikrofon men spärrad uppspelning. Välj Prata med Skyttel
+   och läs hindret med Starta ljudet.
+4. Läs hela hindret i textvyn, stäng den och läs kortet igen. Kontrollera
+   samtalstextens kvarvarande läsyta i det korta fönstret.
+
+**Förväntat resultat:**
+
+- Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.
+- Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling
+  läggs i textvyn.
+
+### NOT-15: notisens text och kontroller på kort fönster
+
+**Syfte:** Läsa en mikrofonhändelse och ett ljudhinder i både kort och inline
+plats.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation, Lo i utkastet och 844 × 390 före starten.
+Starta samtalet med text och stäng textvyn.
+
+**Integrationstest:**
+[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
+, NOT-15.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-notices.spec.ts",
+    "caseId": "NOT-15"
+  },
+  "reference": "Chromium 844 × 390; emulerad pekning.",
+  "outcomes": [
+    "Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.",
+    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Förbered nekad mikrofon enligt röstguidens mediekontroller. Välj Prata med
+   Skyttel. Läs hela händelsen och nå dess stängknapp.
+2. Öppna textvyn. Läs samma besked och kontrollera att text och kontroller får
+   plats utan rullning i sidled.
+3. Förbered tillåten mikrofon men spärrad uppspelning. Välj Prata med Skyttel
+   och läs hindret med Starta ljudet.
+4. Läs hela hindret i textvyn, stäng den och läs kortet igen. Kontrollera
+   samtalstextens kvarvarande läsyta i det korta fönstret.
+
+**Förväntat resultat:**
+
+- Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.
+- Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling
+  läggs i textvyn.

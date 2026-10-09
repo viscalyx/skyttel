@@ -1,7 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { createHousehold, signIn } from '../support/client.js';
+import { closeSupportDialog, createHousehold, openDraftReview, signIn } from '../support/client.js';
 import {
   microphoneButton,
   openConversationText,
@@ -9,6 +9,7 @@ import {
   startConversationWithVoice,
   voiceBox,
 } from '../support/conversation-page.js';
+import { readDraftProposal, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -110,7 +111,7 @@ async function contentFits(card: Locator) {
 }
 
 for (const theme of ['light', 'dark'] as const)
-  test(`NOT-09: symbolfärg och läsbarhet skiljer hinder från händelse i ${theme} tema`, async ({
+  test(`${theme === 'light' ? 'NOT-09' : 'NOT-23'}: symbolfärg och läsbarhet skiljer hinder från händelse i ${theme} tema`, async ({
     page,
   }) => {
     await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
@@ -210,6 +211,28 @@ test('NOT-10: ett verkligt väntande sparförsök visar frågesymbol och kontrol
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
     await capture(page, 'selected-notice-equivalent');
     expect((await (await page.request.get(path)).json()).draft).toEqual(current.draft);
+    const proposal = await readDraftProposal(page, 'Lo Exempel');
+    await expect(proposal).toContainText('Person');
+    await expect(
+      proposal.getByText('Beskrivning', { exact: true }).locator('..').getByRole('definition'),
+    ).toHaveText('Ej uppgivet');
+    await closeSupportDialog(page, 'Lo Exempel');
+    await page.unroute('**/text-assistant/recover');
+    await action.click();
+    await expect(notice(page)).toHaveCount(0);
+    await expect(await openDraftReview(page)).toContainText('Utkastet är tomt.');
+    const saved = await readTableObject(page, 'Lo Exempel');
+    await expect(saved).toContainText('Person');
+    await expect(saved.locator('.household-table-description')).toHaveText('Ej uppgivet');
+    const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
+    expect(operations).toHaveLength(1);
+    expect(operations[0]).toMatchObject({
+      operationId: 'audit-original-save',
+      status: 'succeeded',
+    });
+    expect((await (await page.request.get(path)).json()).objects).toMatchObject([
+      { id: 'lo', name: 'Lo Exempel', description: '', typeId: current.types[0].id },
+    ]);
   } finally {
     await app.close();
   }

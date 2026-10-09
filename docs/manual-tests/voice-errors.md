@@ -1,115 +1,130 @@
 # Manuella testfall för röstfel och ljudåterhämtning
 
 Fallen omfattar webbläsarens mikrofonhinder, serverns tre felgrupper,
-felreferenser och återhämtning från stoppat ljud genom samtalsnotisen.
-Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
+felreferenser och återhämtning från stoppat ljud genom samtalsnotisen. Anteckna
+commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
 
-Alex är vanlig medlem i det tillfälliga hushållet och loggar in genom
-provets Google-knapp. Administratören är den som läser startguidens
-serverloggar; inga administrativa rättigheter behövs för samtalsflödet.
+Alex är administratör i det tillfälliga hushållet och loggar in genom provets
+Google-knapp. Administratören är den som läser startguidens serverloggar; inga
+administrativa rättigheter behövs för samtalsflödet.
 
 ## Allmän förberedelse
 
-1. Följ [den kontrollerade talprovsguiden](voice-assistant.md#controlled-voice-fixture).
-   Starta `npx tsx scripts/manual-voice.ts` i en egen terminal. Varje start
+1. Följ
+   [den kontrollerade talprovsguiden](voice-assistant.md#controlled-voice-fixture)
+   . Starta `npx tsx scripts/manual-voice.ts` i en egen terminal. Varje start
    skapar en separat tillfällig SQLite och verkliga applikationsrutter.
 2. Logga in som Alex på den angivna adressen, skapa ett hushåll och välj
    **Skriv till Skyttel**. Godkänn medgivandet. Håll terminalen öppen.
-3. Öppna webbläsarens utvecklarkonsol. Provets
-   `window.skyttelVoiceFixture` ersätter endast webbläsarens media och den
-   externa leverantören. Den spelar inte in den verkliga mikrofonen.
-4. Slå av mikrofonen med **Prata med Skyttel** och välj **Nytt samtal**
-   i textvyn mellan fallen. Återställ med
+3. Öppna webbläsarens utvecklarkonsol. Provets `window.skyttelVoiceFixture`
+   ersätter endast webbläsarens media och den externa leverantören. Den spelar
+   inte in den verkliga mikrofonen.
+4. Slå av mikrofonen med **Prata med Skyttel** och välj **Nytt samtal** i
+   textvyn mellan fallen. Återställ med
    `window.skyttelVoiceFixture.setMicrophone('allow')` och
-   `window.skyttelVoiceFixture.setPlayback('allow')`. Skriv
-   `voice-failure off` i terminalen. Avsluta med `quit`; provdatabasen tas bort.
+   `window.skyttelVoiceFixture.setPlayback('allow')`. Skriv `voice-failure off`
+   i terminalen. Avsluta med `quit`; provdatabasen tas bort.
 
 ## Mikrofonhinder
 
-### ROSTFEL-01: fyra mikrofonhinder kan stängas och prövas igen
+### ROSTFEL-01: nekad mikrofon kan stängas och prövas igen
 
-**Syfte:** Kontrollera de fyra fasta webbläsartexterna och nya felhändelser.
+**Syfte:** Återhämta en distinkt mikrofonhändelse utan att starta i förväg.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Textsamtalet är igång, mikrofonen av och textvyn öppen.
+**Förutsättningar:** Textsamtal pågår med mikrofon av. Följ
+[mikrofonhindrens separata förberedelse](voice-controls-preparation.md#mikrofonhinder)
+för deny.
 
 **Integrationstest:**
-[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts), testfallen:
+[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts),
+ROSTFEL-01.
 
-- “ROSTFEL-01: deny ger en stängbar mikrofonnotis och återförsöket tar bort den”.
-- “ROSTFEL-01: error ger en stängbar mikrofonnotis och återförsöket tar bort den”.
-- “ROSTFEL-01: busy ger en stängbar mikrofonnotis och återförsöket tar bort den”.
-- “ROSTFEL-01: unsupported ger en stängbar mikrofonnotis och återförsöket
-  tar bort den”.
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/voice-errors.spec.ts",
+    "caseId": "ROSTFEL-01"
+  },
+  "reference": "Kontrollerad extern mikrofonersättning deny; stängning, samma nya fel, väntande åtkomst och lyckad start.",
+  "outcomes": [
+    "Webbläsaren tillåter inte mikrofonen. Tillåt den i webbläsarens inställningar och tryck på mikrofonknappen igen.",
+    "Stängning och nytt försök behåller logiskt fokus och skiljer en ny händelse från den stängda.",
+    "Faktisk mikrofonbehörighet bedöms separat i ROSTFEL-09."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Kör `window.skyttelVoiceFixture.setMicrophone('deny')`. Tryck på
-   **Prata med Skyttel** och läs samtalsnotisen.
-2. Fokusera **Stäng notisen** med tangentbordet och tryck Retur. Kontrollera
-   att notisen försvinner och fokus återgår till mikrofonknappen.
-   Mikrofonen är fortsatt av och ingen röstruta visas.
-3. Tryck på mikrofonknappen igen. Samma hinder ska ge en ny notis.
-4. Kör `window.skyttelVoiceFixture.setMicrophone('hold')` och tryck igen.
-   Notisen ska försvinna medan starten väntar. Kör
-   `window.skyttelVoiceFixture.releaseMicrophone()` och kontrollera **Lyssnar**.
-5. Upprepa med `error` och `busy` efter återställningen mellan fallen.
-6. Prova saknat stöd genom `window.savedPeer = window.RTCPeerConnection`
-   och `window.RTCPeerConnection = undefined`. Upprepa steg 1–3.
-   Återställ med `window.RTCPeerConnection = window.savedPeer` före steg 4.
+1. Välj Prata med Skyttel och läs hela notisen.
+2. Fokusera Stäng notisen och tryck Enter. Kräv borttagen notis, fokus på
+   mikrofonknappen och mikrofon av.
+3. Försök igen utan att ändra hindret. Samma text ska ge en ny notis.
+4. Startoperatören återställer hindret och förbereder väntande mikrofonåtkomst.
+   Tryck igen och läs Rösten startar utan kvarvarande fel. Efter släppt åtkomst,
+   läs Lyssnar och påslagen mikrofon.
 
 **Förväntat resultat:**
 
-- Nekad mikrofon: **Webbläsaren tillåter inte mikrofonen. Tillåt den i
-  webbläsarens inställningar och tryck på mikrofonknappen igen.**
-- Saknad mikrofon: **Ingen mikrofon hittades. Anslut en mikrofon och tryck
-  på mikrofonknappen igen.**
-- Upptagen mikrofon: **Mikrofonen kunde inte öppnas. Kontrollera om en
-  annan app använder den.**
-- Saknat stöd: **Webbläsaren har inte stöd för röst. Du kan skriva till Skyttel.**
-- Händelsen har text och symbol, mikrofonen är av och inget ljud spelas in.
-  Symbolen läses inte som en separat mening. Stängning och nytt försök
-  tar bort föregående händelse; texten återkommer inte från en annan felruta.
+- Webbläsaren tillåter inte mikrofonen. Tillåt den i webbläsarens inställningar
+  och tryck på mikrofonknappen igen.
+- Stängning och nytt försök behåller logiskt fokus och skiljer en ny händelse
+  från den stängda.
+- Faktisk mikrofonbehörighet bedöms separat i ROSTFEL-09.
 
 ## Serverfel
 
-### ROSTFEL-02: startfel och administrationsfel har korta besked med referens
+### ROSTFEL-02: tillfälligt serverstartfel med läsbar referens
 
-**Syfte:** Kontrollera serverns klassificering utan leverantörsprosa.
+**Syfte:** Läsa rätt nästa handling utan privat leverantörsinnehåll.
 
-**Användare:** Alex och administratören för kontroll av loggreferens.
+**Användare:** Alex.
 
-**Förutsättningar:** Textsamtalet är igång och inga röstanslutningar finns.
+**Förutsättningar:** Textsamtal pågår och ingen röstanslutning finns. Förbered
+voice-failure startup enligt
+[serverfelets förberedelse](voice-controls-preparation.md#serverfel-och-referenser)
+.
 
 **Integrationstest:**
-[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts), testfallen:
+[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts),
+ROSTFEL-02.
 
-- “ROSTFEL-02: serverns startup visar ett kort besked med felreferens”.
-- “ROSTFEL-02: serverns administration visar ett kort besked med felreferens”.
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/voice-errors.spec.ts",
+    "caseId": "ROSTFEL-02"
+  },
+  "reference": "Kontrollerat serverfel startup; faktisk felreferens och lyckat uttryckligt återförsök.",
+  "outcomes": [
+    "Rösten kunde inte starta just nu. Försök igen om en stund.",
+    "En läsbar Felreferens hör till samma försök; rå svar-/loggjämförelse görs i separat förberedelse.",
+    "Notisen visar inget privat leverantörsinnehåll."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Skriv `voice-failure startup` i terminalen. Tryck på mikrofonknappen.
-2. Kontrollera **Rösten kunde inte starta just nu. Försök igen om en stund.**
-   och **Felreferens**. Sök efter referensen i terminalens
-   `voice_start_failed` och kontrollera `code`, `stage` och `providerStatus`.
-3. Skriv `voice-failure off`. Tryck igen och kontrollera att notisen
-   försvinner och röstrutan visar **Lyssnar**.
-4. Återställ samtalet. Skriv `voice-failure administration` och tryck på
-   mikrofonknappen. Kontrollera **Rösten fungerar inte. Kontakta
-   administratören.**, med samma möjlighet att hitta orsaken genom referensen.
-5. Skriv `voice-failure off` och pröva igen.
+1. Välj Prata med Skyttel. Läs feltexten och hela synliga Felreferens.
+2. Kontrollera att notisen säger vad som går att göra och att mikrofonen är av.
+3. Startoperatören återställer voice-failure off. Välj Prata med Skyttel igen.
+   Kräv borttagen notis och Lyssnar.
 
 **Förväntat resultat:**
 
-- Serverns tillfälliga startfel och administrationsfel väljer rätt kort text.
-  Referensen på skärmen motsvarar serverns logg och svar.
-- Notisen nämner inte leverantör, konfiguration, text och formulär eller
-  att sparande inte är ångrat. Mikrofonen förblir av vid fel.
-- Nytt försök tar bort händelsen och startar med samma vanliga gränssnitt.
+- Rösten kunde inte starta just nu. Försök igen om en stund.
+- En läsbar Felreferens hör till samma försök; rå svar-/loggjämförelse görs i
+  separat förberedelse.
+- Notisen visar inget privat leverantörsinnehåll.
 
 ### ROSTFEL-03: ett avbrott stoppar mikrofonen och visar diagnostisk referens
 
@@ -120,24 +135,39 @@ serverloggar; inga administrativa rättigheter behövs för samtalsflödet.
 **Förutsättningar:** **Prata med Skyttel** visar **Lyssnar**.
 
 **Integrationstest:**
-[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts), testfallet
-“ROSTFEL-03: serverns avbrott stoppar mikrofonen och visar samma diagnostiska referens”.
+[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts),
+ROSTFEL-03.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/voice-errors.spec.ts",
+    "caseId": "ROSTFEL-03"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "outcomes": [
+    "Kontrollera serverns grupp för fel under pågående röst."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Skriv `drop` i provterminalen. Vänta på samtalsnotisen.
 2. Kontrollera **Rösten avbröts. Tryck på mikrofonknappen för att fortsätta.**
    och att mikrofonknappen är av. Ingen automatisk återanslutning sker.
-3. Sök efter visad **Felreferens** i serverns `voice_interrupted`. Kontrollera
-   att `stage` är `session`, att `group` är `interrupted` och att `code`
-   anger orsaken. Kontrollera att samma referens hör till röstförsökets mätning.
-4. Tryck på mikrofonknappen igen och kontrollera att rösten startar utan
-   den tidigare händelsen. Prova sedan att stänga en ny avbrottsnotis.
+3. Läs hela Felreferens. Serveroperatören följer den separat i
+   [referensförberedelsen](voice-controls-preparation.md#serverfel-och-referenser)
+   .
+4. Tryck på mikrofonknappen igen och kontrollera att rösten startar utan den
+   tidigare händelsen. Prova sedan att stänga en ny avbrottsnotis.
 
 **Förväntat resultat:**
 
-- Ett pågående avbrott väljer avbrottstexten och frigör mikrofonspåren.
-  Loggen innehåller orsak och referens utan ljud eller hushållsinnehåll.
+- Ett pågående avbrott väljer avbrottstexten och frigör mikrofonspåren. Loggen
+  innehåller orsak och referens utan ljud eller hushållsinnehåll.
 - Försök igen och stängning fungerar som för övriga felhändelser.
 
 ## Stoppat ljud
@@ -151,40 +181,52 @@ serverloggar; inga administrativa rättigheter behövs för samtalsflödet.
 **Förutsättningar:** Textsamtalet är igång och mikrofonen av.
 
 **Integrationstest:**
-[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts), testfallet
-“ROSTFEL-04: Starta ljudet återställer ljudet innan mikrofonen lyssnar och
-försvinner med logiskt fokus”.
-Det tidigare inspelade talets gräns efter släpp provas också i
-[MIKROFONTRYCK-07](microphone-press.md#mikrofontryck-07-spärrat-ljud-ger-ingen-inspelning).
+[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts),
+ROSTFEL-04.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/voice-errors.spec.ts",
+    "caseId": "ROSTFEL-04"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "outcomes": [
+    "Kontrollera det väntande ljudhindret och logiskt återgångsfokus."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Kör `window.skyttelVoiceFixture.setPlayback('blocked')`. Tryck på
-   mikrofonknappen. Kontrollera **Webbläsaren stoppade ljudet.** och
-   knappen **Starta ljudet** i samtalsnotisen.
-2. Kontrollera att mikrofonen är av. Kör
-   `window.skyttelVoiceFixture.stats()` och kontrollera att samtliga
-   `microphoneTracks` har `enabled: false`. Notisen har ingen stängknapp
-   medan hindret pågår.
+   mikrofonknappen. Kontrollera **Webbläsaren stoppade ljudet.** och knappen
+   **Starta ljudet** i samtalsnotisen.
+2. Kontrollera att mikrofonen är av. Kör `window.skyttelVoiceFixture.stats()`
+   och kontrollera att samtliga `microphoneTracks` har `enabled: false`.
+   Notisen har ingen stängknapp medan hindret pågår.
 3. Kör `window.skyttelVoiceFixture.setPlayback('allow')`. Tabba till
    **Starta ljudet** och tryck Retur.
 4. Kontrollera att ljudhindret försvinner, mikrofonknappen får fokus och
-   röstrutan visar **Lyssnar**. Kontrollera att textvyn behåller sitt öppningsläge.
+   röstrutan visar **Lyssnar**. Kontrollera att textvyn behåller sitt
+   öppningsläge.
 
 **Förväntat resultat:**
 
-- Uppspelning försöker starta i den användargest som startar rösten.
-  Misslyckad uppspelning håller mikrofonen av och visas som ett hinder.
+- Uppspelning försöker starta i den användargest som startar rösten. Misslyckad
+  uppspelning håller mikrofonen av och visas som ett hinder.
 - **Starta ljudet** låser upp uppspelningen i sitt eget tryck. Mikrofonen
   lyssnar först efter fungerande uppspelning. Den gamla ljudknappen finns inte.
-- En skärmläsare får den artiga meningen **Webbläsaren stoppade ljudet.
-  Starta ljudet.**, med både text och åtgärd.
+- En skärmläsare får den artiga meningen
+  **Webbläsaren stoppade ljudet. Starta ljudet.**, med både text och åtgärd.
 
 ## Tillgänglighetsbedömning och körgränser
 
 Designen använder samma prioritet, teman, fokus och reglage som
-[samtalsnotiserna](conversation-notices.md). Bedömningen är ett designmål
-för WCAG 2.2 AA, inte ett intyg om verifierad överensstämmelse.
+[samtalsnotiserna](conversation-notices.md). Bedömningen är ett designmål för
+WCAG 2.2 AA, inte ett intyg om verifierad överensstämmelse.
 
 <!-- markdownlint-disable MD013 -->
 
@@ -198,7 +240,242 @@ för WCAG 2.2 AA, inte ett intyg om verifierad överensstämmelse.
 
 <!-- markdownlint-enable MD013 -->
 
-Automatiserade fall använder riktig server och tillfällig SQLite men
-syntetiska media- och leverantörsgränser. Verkliga mikrofonbehörigheter,
-upptagen fysisk mikrofon, mobil uppspelningspolicy och skärmläsarens hörbara
-uppläsning kräver separat mänsklig körning enligt restlistan #220.
+Automatiserade fall använder riktig server och tillfällig SQLite men syntetiska
+media- och leverantörsgränser. Verkliga mikrofonbehörigheter, upptagen fysisk
+mikrofon, mobil uppspelningspolicy och skärmläsarens hörbara uppläsning kräver
+separat mänsklig körning enligt restlistan #220.
+
+### ROSTFEL-05: saknad mikrofon kan stängas och prövas igen
+
+**Syfte:** Återhämta en distinkt mikrofonhändelse utan att starta i förväg.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Textsamtal pågår med mikrofon av. Följ
+[mikrofonhindrens separata förberedelse](voice-controls-preparation.md#mikrofonhinder)
+för error.
+
+**Integrationstest:**
+[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts),
+ROSTFEL-05.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/voice-errors.spec.ts",
+    "caseId": "ROSTFEL-05"
+  },
+  "reference": "Kontrollerad extern mikrofonersättning error; stängning, samma nya fel, väntande åtkomst och lyckad start.",
+  "outcomes": [
+    "Ingen mikrofon hittades. Anslut en mikrofon och tryck på mikrofonknappen igen.",
+    "Stängning och nytt försök behåller logiskt fokus och skiljer en ny händelse från den stängda.",
+    "Faktisk mikrofonbehörighet bedöms separat i ROSTFEL-09."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj Prata med Skyttel och läs hela notisen.
+2. Fokusera Stäng notisen och tryck Enter. Kräv borttagen notis, fokus på
+   mikrofonknappen och mikrofon av.
+3. Försök igen utan att ändra hindret. Samma text ska ge en ny notis.
+4. Startoperatören återställer hindret och förbereder väntande mikrofonåtkomst.
+   Tryck igen och läs Rösten startar utan kvarvarande fel. Efter släppt åtkomst,
+   läs Lyssnar och påslagen mikrofon.
+
+**Förväntat resultat:**
+
+- Ingen mikrofon hittades. Anslut en mikrofon och tryck på mikrofonknappen igen.
+- Stängning och nytt försök behåller logiskt fokus och skiljer en ny händelse
+  från den stängda.
+- Faktisk mikrofonbehörighet bedöms separat i ROSTFEL-09.
+
+### ROSTFEL-06: upptagen mikrofon kan stängas och prövas igen
+
+**Syfte:** Återhämta en distinkt mikrofonhändelse utan att starta i förväg.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Textsamtal pågår med mikrofon av. Följ
+[mikrofonhindrens separata förberedelse](voice-controls-preparation.md#mikrofonhinder)
+för busy.
+
+**Integrationstest:**
+[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts),
+ROSTFEL-06.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/voice-errors.spec.ts",
+    "caseId": "ROSTFEL-06"
+  },
+  "reference": "Kontrollerad extern mikrofonersättning busy; stängning, samma nya fel, väntande åtkomst och lyckad start.",
+  "outcomes": [
+    "Mikrofonen kunde inte öppnas. Kontrollera om en annan app använder den.",
+    "Stängning och nytt försök behåller logiskt fokus och skiljer en ny händelse från den stängda.",
+    "Faktisk mikrofonbehörighet bedöms separat i ROSTFEL-09."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj Prata med Skyttel och läs hela notisen.
+2. Fokusera Stäng notisen och tryck Enter. Kräv borttagen notis, fokus på
+   mikrofonknappen och mikrofon av.
+3. Försök igen utan att ändra hindret. Samma text ska ge en ny notis.
+4. Startoperatören återställer hindret och förbereder väntande mikrofonåtkomst.
+   Tryck igen och läs Rösten startar utan kvarvarande fel. Efter släppt åtkomst,
+   läs Lyssnar och påslagen mikrofon.
+
+**Förväntat resultat:**
+
+- Mikrofonen kunde inte öppnas. Kontrollera om en annan app använder den.
+- Stängning och nytt försök behåller logiskt fokus och skiljer en ny händelse
+  från den stängda.
+- Faktisk mikrofonbehörighet bedöms separat i ROSTFEL-09.
+
+### ROSTFEL-07: saknat röststöd kan stängas och prövas igen
+
+**Syfte:** Återhämta en distinkt mikrofonhändelse utan att starta i förväg.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Textsamtal pågår med mikrofon av. Följ
+[mikrofonhindrens separata förberedelse](voice-controls-preparation.md#mikrofonhinder)
+för unsupported.
+
+**Integrationstest:**
+[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts),
+ROSTFEL-07.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/voice-errors.spec.ts",
+    "caseId": "ROSTFEL-07"
+  },
+  "reference": "Kontrollerad extern mikrofonersättning unsupported; stängning, samma nya fel, väntande åtkomst och lyckad start.",
+  "outcomes": [
+    "Webbläsaren har inte stöd för röst. Du kan skriva till Skyttel.",
+    "Stängning och nytt försök behåller logiskt fokus och skiljer en ny händelse från den stängda.",
+    "Faktisk mikrofonbehörighet bedöms separat i ROSTFEL-09."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj Prata med Skyttel och läs hela notisen.
+2. Fokusera Stäng notisen och tryck Enter. Kräv borttagen notis, fokus på
+   mikrofonknappen och mikrofon av.
+3. Försök igen utan att ändra hindret. Samma text ska ge en ny notis.
+4. Startoperatören återställer hindret och förbereder väntande mikrofonåtkomst.
+   Tryck igen och läs Rösten startar utan kvarvarande fel. Efter släppt åtkomst,
+   läs Lyssnar och påslagen mikrofon.
+
+**Förväntat resultat:**
+
+- Webbläsaren har inte stöd för röst. Du kan skriva till Skyttel.
+- Stängning och nytt försök behåller logiskt fokus och skiljer en ny händelse
+  från den stängda.
+- Faktisk mikrofonbehörighet bedöms separat i ROSTFEL-09.
+
+### ROSTFEL-08: administrationsfel med läsbar referens
+
+**Syfte:** Läsa rätt nästa handling utan privat leverantörsinnehåll.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Textsamtal pågår och ingen röstanslutning finns. Förbered
+voice-failure administration enligt
+[serverfelets förberedelse](voice-controls-preparation.md#serverfel-och-referenser)
+.
+
+**Integrationstest:**
+[voice-errors.spec.ts](../../tests/integration/voice-errors.spec.ts),
+ROSTFEL-08.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/voice-errors.spec.ts",
+    "caseId": "ROSTFEL-08"
+  },
+  "reference": "Kontrollerat serverfel administration; faktisk felreferens och lyckat uttryckligt återförsök.",
+  "outcomes": [
+    "Rösten fungerar inte. Kontakta administratören.",
+    "En läsbar Felreferens hör till samma försök; rå svar-/loggjämförelse görs i separat förberedelse.",
+    "Notisen visar inget privat leverantörsinnehåll."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj Prata med Skyttel. Läs feltexten och hela synliga Felreferens.
+2. Kontrollera att notisen säger vad som går att göra och att mikrofonen är av.
+3. Startoperatören återställer voice-failure off. Välj Prata med Skyttel igen.
+   Kräv borttagen notis och Lyssnar.
+
+**Förväntat resultat:**
+
+- Rösten fungerar inte. Kontakta administratören.
+- En läsbar Felreferens hör till samma försök; rå svar-/loggjämförelse görs i
+  separat förberedelse.
+- Notisen visar inget privat leverantörsinnehåll.
+
+### ROSTFEL-09: riktigt nekat eller otillgängligt mikrofonljud
+
+**Syfte:** Prova faktisk webbläsar-/OS-behörighet, saknad eller upptagen fysisk
+mikrofon och återhämtning på verklig utrustning.
+
+**Användare:** Den konfigurerade testmedlemmen.
+
+**Förutsättningar:** Använd den
+[riktiga enhetsförberedelsen](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare)
+, med enbart påhittade uppgifter. Telefon och surfplatta behöver nåbar
+HTTPS-adress och konfigurerad inloggning.
+
+**Kräver mänsklig observation:** Prova faktisk webbläsar-/OS-behörighet, saknad
+eller upptagen fysisk mikrofon och återhämtning på verklig utrustning.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "os-permission",
+    "observation": "Prova faktisk webbläsar-/OS-behörighet, saknad eller upptagen fysisk mikrofon och återhämtning på verklig utrustning."
+  },
+  "reference": "Stödplattformarnas riktiga behörighetskontroller, fysisk mikrofon och ljudutgång.",
+  "outcomes": [
+    "Riktiga behörighets- och utrustningshinder lämnar text/formulär användbara.",
+    "Ingen inspelning sker före godkänd åtkomst och fungerande uppspelning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Starta ett samtal med text. Neka den riktiga mikrofonprompten och läs
+   notisen. Stäng den och pröva igen.
+2. Tillåt enligt webbläsarens inställningar och starta uttryckligen. Prova även
+   frånkopplad eller upptagen mikrofon där plattformen medger det.
+3. Prova verkligt blockerat ljud, Starta ljudet, fältets fortsatta användning
+   och återställt fokus. Anteckna vad OS och webbläsare faktiskt gör.
+
+**Förväntat resultat:**
+
+- Riktiga behörighets- och utrustningshinder lämnar text/formulär användbara.
+- Ingen inspelning sker före godkänd åtkomst och fungerande uppspelning.

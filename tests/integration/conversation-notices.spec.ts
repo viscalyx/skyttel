@@ -124,10 +124,10 @@ async function uncovered(locator: Locator) {
 }
 
 for (const configuration of [
-  { name: 'dator', viewport: { width: 1280, height: 800 }, touch: false },
-  { name: 'telefon', viewport: { width: 390, height: 780 }, touch: true },
-  { name: 'bred pekskärm', viewport: { width: 1024, height: 1366 }, touch: true },
-  { name: 'kort fönster', viewport: { width: 844, height: 390 }, touch: true },
+  { caseId: 'NOT-12', name: 'dator', viewport: { width: 1280, height: 800 }, touch: false },
+  { caseId: 'NOT-13', name: 'telefon', viewport: { width: 390, height: 780 }, touch: true },
+  { caseId: 'NOT-14', name: 'bred pekskärm', viewport: { width: 1024, height: 1366 }, touch: true },
+  { caseId: 'NOT-15', name: 'kort fönster', viewport: { width: 844, height: 390 }, touch: true },
 ]) {
   test.describe(`notisens innehåll på ${configuration.name}`, () => {
     test.use({
@@ -135,7 +135,7 @@ for (const configuration of [
       isMobile: configuration.touch,
       hasTouch: configuration.touch,
     });
-    test('text och kontroller ryms i en händelse och ett hinder, även i textvyn', async ({
+    test(`${configuration.caseId}: text och kontroller ryms i en händelse och ett hinder, även i textvyn`, async ({
       page,
     }) => {
       const { app } = await configured();
@@ -299,6 +299,10 @@ test('NOT-03: en notis flyttas till textvyn utan ny uppläsning och försvinner 
     await expect(notice(page)).toContainText(disconnectedActive);
     await expect(microphoneButton(page)).toBeFocused();
     await expect(assertive(page)).toHaveText(disconnectedActive);
+    await expect(
+      page.locator('.voice-announcement:not(.voice-context-announcement)'),
+    ).not.toHaveText('Mikrofonen är av');
+    const identity = await notice(page).evaluateHandle((element) => element);
     await assertive(page)
       .locator('span')
       .evaluate((element) => {
@@ -308,6 +312,7 @@ test('NOT-03: en notis flyttas till textvyn utan ny uppläsning och försvinner 
     await expect(notice(page)).toBeVisible();
     await expect(notice(page)).toHaveAttribute('data-inline', 'true');
     await expect(notice(page)).toHaveCount(1);
+    expect(await notice(page).evaluate((element, first) => element === first, identity)).toBe(true);
     await expect(assertive(page).locator('span')).toHaveAttribute(
       'data-announcement-identity',
       'first',
@@ -323,6 +328,7 @@ test('NOT-03: en notis flyttas till textvyn utan ny uppläsning och försvinner 
     await expect(
       page.locator('.conversation-corner').getByRole('region', { name: 'Samtalsnotis' }),
     ).toBeVisible();
+    expect(await notice(page).evaluate((element, first) => element === first, identity)).toBe(true);
     await expect(assertive(page).locator('span')).toHaveAttribute(
       'data-announcement-identity',
       'first',
@@ -330,6 +336,46 @@ test('NOT-03: en notis flyttas till textvyn utan ny uppläsning och försvinner 
     await page.context().setOffline(false);
     await expect(notice(page)).toHaveCount(0, { timeout: networkRecheckTimeout });
     await expect(polite(page)).toHaveText('Kontakten med Skyttel är tillbaka.');
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
+
+    // The second occurrence starts with the message field focused. Moving the
+    // same card must neither steal that focus nor add a microphone announcement.
+    await microphoneButton(page).click();
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
+    await textButton(page).click();
+    await field(page).focus();
+    await page.context().setOffline(true);
+    await expect(notice(page)).toContainText(disconnectedActive);
+    await expect(assertive(page)).toHaveText(disconnectedActive);
+    await expect(
+      page.locator('.voice-announcement:not(.voice-context-announcement)'),
+    ).not.toHaveText('Mikrofonen är av');
+    await expect(field(page)).toBeFocused();
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
+    const focusedFieldIdentity = await notice(page).evaluateHandle((element) => element);
+    await assertive(page)
+      .locator('span')
+      .evaluate((element) => {
+        element.dataset.announcementIdentity = 'second';
+      });
+    await page.getByRole('button', { name: 'Stäng textvyn' }).click();
+    expect(
+      await notice(page).evaluate((element, first) => element === first, focusedFieldIdentity),
+    ).toBe(true);
+    await textButton(page).click();
+    expect(
+      await notice(page).evaluate((element, first) => element === first, focusedFieldIdentity),
+    ).toBe(true);
+    await expect(notice(page)).toHaveCount(1);
+    await expect(notice(page)).toHaveAttribute('data-inline', 'true');
+    await expect(assertive(page).locator('span')).toHaveAttribute(
+      'data-announcement-identity',
+      'second',
+    );
+    await page.context().setOffline(false);
+    await expect(notice(page)).toHaveCount(0, { timeout: networkRecheckTimeout });
+    await expect(polite(page)).toHaveText('Kontakten med Skyttel är tillbaka.');
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
   } finally {
     await page.context().setOffline(false);
     await app.close();
@@ -443,14 +489,14 @@ test('NOT-06: en stängbar kontakt-notis försvinner automatiskt och nästa avbr
 });
 
 for (const viewport of [
-  { width: 1280, height: 900 },
-  { width: 700, height: 900 },
-  { width: 390, height: 844 },
-  { width: 667, height: 375 },
-  { width: 320, height: 640 },
-  { width: 320, height: 250 },
+  { caseId: 'NOT-07', width: 1280, height: 900 },
+  { caseId: 'NOT-16', width: 700, height: 900 },
+  { caseId: 'NOT-17', width: 390, height: 844 },
+  { caseId: 'NOT-18', width: 667, height: 375 },
+  { caseId: 'NOT-19', width: 320, height: 640 },
+  { caseId: 'NOT-20', width: 320, height: 250 },
 ]) {
-  test(`NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid ${viewport.width} × ${viewport.height}`, async ({
+  test(`${viewport.caseId}: notisen har sin plats och täcker inte kartans återkoppling vid ${viewport.width} × ${viewport.height}`, async ({
     page,
   }) => {
     const { app } = await configured();
@@ -542,11 +588,11 @@ for (const viewport of [
 }
 
 for (const viewport of [
-  { width: 1280, height: 900 },
-  { width: 820, height: 1180 },
-  { width: 390, height: 844 },
+  { caseId: 'NOT-08', width: 1280, height: 900 },
+  { caseId: 'NOT-21', width: 820, height: 1180 },
+  { caseId: 'NOT-22', width: 390, height: 844 },
 ]) {
-  test(`NOT-08: en uppdragsnotis står bredvid röstrutan utan att täcka återkoppling vid ${viewport.width} × ${viewport.height}`, async ({
+  test(`${viewport.caseId}: en uppdragsnotis står bredvid röstrutan utan att täcka återkoppling vid ${viewport.width} × ${viewport.height}`, async ({
     page,
   }) => {
     const { app } = await configured(

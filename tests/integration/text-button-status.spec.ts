@@ -216,7 +216,7 @@ test('TEXTBRICKA-03: röstrutan ersätter brickan och samma olästa svar annonse
 
 for (const width of [390, 1280])
   for (const theme of ['light', 'dark'] as const)
-    test(`TEXTBRICKA-04: minskad rörelse och fasta knappmått vid ${width}px i ${theme} tema`, async ({
+    test(`${width === 390 ? (theme === 'light' ? 'TEXTBRICKA-04' : 'TEXTBRICKA-06') : theme === 'light' ? 'TEXTBRICKA-07' : 'TEXTBRICKA-08'}: minskad rörelse och fasta knappmått vid ${width}px i ${theme} tema`, async ({
       page,
     }) => {
       let release!: () => void;

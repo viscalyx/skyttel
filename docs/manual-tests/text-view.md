@@ -1459,10 +1459,10 @@ notisen.
 För TEXTBRICKA-01–05 används den kontrollerade röstinstallationen enligt
 [röstguiden](voice-assistant.md#controlled-voice-fixture). Skapa ett nytt
 hushåll med tomt utkast; kör inte `seed-family`. Välj **Skriv till Skyttel**
-och godkänn för besöket. Terminalens `pending` visar det hållna modell-
-anropet. Släpp ett vanligt svar med `reply REQUEST TEXT`.
-Börja med en ny installation inför varje fall. Fysisk skärmläsare och
-röststyrning provas separat; de tysta mediespåren bevisar ingen uppläsning.
+och godkänn för besöket. Terminalens `pending` visar det hållna modell- anropet.
+Släpp ett vanligt svar med `reply REQUEST TEXT`. Börja med en ny installation
+inför varje fall. Fysisk skärmläsare och röststyrning provas separat; de tysta
+mediespåren bevisar ingen uppläsning.
 
 ### TEXTBRICKA-01: arbete och oläst svar
 
@@ -1473,29 +1473,46 @@ röststyrning provas separat; de tysta mediespåren bevisar ingen uppläsning.
 **Förutsättningar:** Textvyn är öppen, mikrofonen av och svaret hålls.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallet “TEXTBRICKA-01: stängd textvy visar arbete och ett oläst svar utan
-att flytta verktygen”.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-01.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-01"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller statusförekomst bedöms separat.",
+  "outcomes": [
+    "Följa ett skrivet uppdrag utan att öppna textvyn."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-01](voice-controls-preparation.md#tidslinje-textbricka-01)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
-1. Skriv **Beskriv mitt utkast.**, välj **Skicka** och stäng textvyn.
-2. Kräv arbetsmarkering och namnet **Skriv till Skyttel. Skyttel arbetar.**
-   Kontrollera att markeringen inte får en egen skärmläsaruppläsning.
-3. Släpp svaret med `reply REQUEST Det privata utkastet är fortfarande osparat.`.
-   Kräv tre punkter uppe till höger och namnet
-   **Skriv till Skyttel. Skyttel har svarat.**.
-4. Lyssna efter en enda uppläsning **Skyttel har svarat**, som väntar på
-   sin tur. Själva svaret ska inte läsas upp medan textvyn är stängd.
-5. Öppna **Din profil** och välj **Tillbaka till arbetet**. Fokus ska gå
-   tillbaka till samma textknapp även om dess statusnamn ändrats.
-6. Öppna textvyn. Läs svaret och stäng igen. Knappen har sitt vanliga namn.
+1. Skicka **Beskriv mitt utkast.** och stäng textvyn. Läs arbetsmarkeringen och
+   knappens namn.
+2. När det förberedda svaret **Det privata utkastet är fortfarande osparat.**
+   kommer, läs tre punkter och knappens nya namn. Granska separat DOM-status
+   enligt förberedelsen.
+3. Öppna **Din profil** och välj **Tillbaka till arbetet**. Kontrollera fokus
+   på samma textknapp.
+4. Öppna textvyn, läs hela svaret och stäng den. Knappens vanliga namn
+   återkommer.
 
 **Förväntat resultat:**
 
 - Verktygsraden och knappens mått flyttas inte. Fokus stannar på knappen.
-- Markeringen finns bara med stängd textvy. Ett redan läst svar ger ingen
-  ny bricka när textvyn stängs igen.
+- Markeringen finns bara med stängd textvy. Ett redan läst svar ger ingen ny
+  bricka när textvyn stängs igen.
 
 ### TEXTBRICKA-02: oläst fråga med mikrofonen av
 
@@ -1506,28 +1523,45 @@ att flytta verktygen”.
 **Förutsättningar:** Textvyn är öppen och mikrofonen av.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallet “TEXTBRICKA-02: en oläst nödvändig fråga får frågebricka och samma
-fråga ligger kvar med mikrofonen av”.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-02.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-02"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller statusförekomst bedöms separat.",
+  "outcomes": [
+    "Visa den uttryckliga frågesignalen utan en konkurrerande röstruta."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-02](voice-controls-preparation.md#tidslinje-textbricka-02)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
 1. Skicka **Red ut vilken Lo som avses.** och stäng textvyn.
-2. Släpp modellen med
-   `tool REQUEST ask_questions {"questions":["Vilken person avses med Lo?"]}`.
-3. Kräv frågetecken och namnet **Skriv till Skyttel. Skyttel väntar på ditt svar.**.
-   Uppläsningen är en enda **Skyttel väntar på ditt svar**, utan själva frågan.
-4. Slå på mikrofonen. När röstrutan syns har textknappen ingen bricka.
-   Slå av mikrofonen igen. En redan levererad fråga spelas inte upp i efterhand.
-   Om röstrutan är borta finns samma olästa frågebricka, utan ny uppläsning.
-5. Öppna textvyn. Frågan finns kvar. Stäng igen; den lästa frågan ger ingen bricka.
+2. När den förberedda frågan **Vilken person avses med Lo?** kommer, läs
+   frågetecknet och namnet **Skriv till Skyttel. Skyttel väntar på ditt svar.**
+   .
+3. Slå på mikrofonen: röstrutan ersätter brickan. Slå av igen: samma olästa
+   bricka återkommer. Inga tidigare frågor överförs till rösten igen.
+4. Öppna textvyn, läs frågan och stäng den. Den lästa frågan ger ingen bricka.
 
 **Förväntat resultat:**
 
 - Frågesymbolen skiljer sig från tre punkter och arbetsmarkeringen.
 - Mikrofonens läge ändrar inte frågan. Lästa frågor ger ingen ny markering.
 
-### TEXTBRICKA-03: röstruta och en enda brickuppläsning
+### TEXTBRICKA-03: röstruta och en enda brickstatusförekomst
 
 **Syfte:** Behålla en oläst förekomst vid byte mellan röst och text.
 
@@ -1536,29 +1570,45 @@ fråga ligger kvar med mikrofonen av”.
 **Förutsättningar:** Textvyn är öppen, mikrofonen av och svaret hålls.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallet “TEXTBRICKA-03: röstrutan ersätter brickan och samma olästa svar
-annonseras inte på nytt”.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-03.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-03"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller statusförekomst bedöms separat.",
+  "outcomes": [
+    "Behålla en oläst förekomst vid byte mellan röst och text."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-03](voice-controls-preparation.md#tidslinje-textbricka-03)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
-1. Skicka **Beskriv mitt utkast.**, stäng textvyn och släpp modellen med
-   `reply REQUEST Det första svaret.`. Kräv tre punkter och en uppläsning.
-2. Slå på och av mikrofonen två gånger utan att öppna textvyn. Brickan
-   döljs av röstrutan och återkommer när röstrutan försvinner. Samma
-   olästa svar ger ingen andra uppläsning av brickans namn.
-3. Slå på mikrofonen. I terminalen: `user Beskriv kartan.` och
-   `delegate`. Kontrollera den aktiva anslutningen med `sessions`.
-4. Slå av mikrofonen medan modellen hålls. Röstrutan säger **Skyttel arbetar**,
-   men textknappen har ingen arbetsmarkering för det talade uppdraget.
-5. Släpp modellen med `reply REQUEST Det talade svaret.`. Öppna textvyn och
-   läs även den raden. Kontrollera att inget ytterligare modelluppdrag skapats.
+1. Skicka **Beskriv mitt utkast.**, stäng textvyn och låt det förberedda
+   **Det första svaret.** komma. Läs tre punkter.
+2. Slå på och av mikrofonen två gånger. Brickan döljs av röstrutan och
+   återkommer utan en ny DOM-status för samma svar.
+3. Slå på mikrofonen och låt förberedelsens **Beskriv kartan.** börja arbeta.
+   Slå av mikrofonen under arbetet. Läs **Skyttel arbetar** utan
+   textarbetsmarkering.
+4. Låt **Det talade svaret.** komma, öppna textvyn och läs även den raden.
 
 **Förväntat resultat:**
 
 - Bara skrivet arbete får textknappens arbetsmarkering.
-- Röstrutan och svarsbrickan konkurrerar inte. En oläst förekomst
-  annonseras en gång även när röstrutan visas och försvinner igen.
+- Röstrutan och svarsbrickan konkurrerar inte. En oläst förekomst annonseras en
+  gång även när röstrutan visas och försvinner igen.
 
 ### TEXTBRICKA-04: minskad rörelse, teman och knappmått
 
@@ -1569,24 +1619,41 @@ annonseras inte på nytt”.
 **Förutsättningar:** Textvyn är öppen och ett skrivet svar hålls.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallen “TEXTBRICKA-04: minskad rörelse och fasta knappmått vid 390px i
-light tema”, motsvarande titel med “dark tema” samt båda varianterna med
-“1280px”. Automatiken mäter knapp, överlagring och textkontrast.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-04.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-04"
+  },
+  "reference": "Chromium 390 × 844, ljust tema; emulerad minskad rörelse och återställd normal rörelse.",
+  "outcomes": [
+    "Kunna urskilja markeringarna utan färg eller rörelse."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-04](voice-controls-preparation.md#tidslinje-textbricka-04)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
-1. Aktivera operativsystemets minskade rörelse. Prova ett 390 px fönster
-   och ett 1280 px fönster, i både ljust och mörkt tema.
+1. Välj emulerad minskad rörelse, 390 × 844 och ljust tema före första native
+   handlingen.
 2. Skicka **Beskriv mitt utkast.**, stäng textvyn och välj
-   **Visa verktygens namn**. Kräv synlig text **Skriv till Skyttel**,
-   med stilla arbetsmarkering som inte täcker namnet.
-3. Avaktivera minskad rörelse. Arbetsmarkeringen roterar. Aktivera igen;
-   den står stilla utan övergång.
-4. Släpp `reply REQUEST Ett nytt svar.`. Tre punkter ersätter arbetsformen.
-   Verktygens placering, bredd och höjd förblir desamma.
-5. Kontrollera synlig kontrast och fokus, även vid zoom. Gör också
-   TEXTBRICKA-02 för att jämföra frågetecknets form med punkterna.
+   **Visa verktygens namn**. Läs namnet och den stilla arbetsmarkeringen.
+3. Avaktivera minskad rörelse: arbetsmarkeringen roterar. Aktivera igen: den
+   står stilla utan övergång.
+4. Låt **Ett nytt svar.** komma. Tre punkter ersätter arbetsformen utan att
+   flytta verktygen.
+5. Granska kontrast och synlig fokusram. Fysisk zoom, rörelsebedömning och
+   formigenkänning hör till TEXTBRICKA-10.
 
 **Förväntat resultat:**
 
@@ -1603,39 +1670,56 @@ light tema”, motsvarande titel med “dark tema” samt båda varianterna med
 **Förutsättningar:** Textvyn är öppen på bred dator och mikrofonen av.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallet “TEXTBRICKA-05: köat textarbete behåller arbetsmarkeringen före
-ett oläst svar och avbrott tar bort den”.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-05.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-05"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller statusförekomst bedöms separat.",
+  "outcomes": [
+    "Ge pågående textarbete företräde över ett tidigare oläst svar."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-05](voice-controls-preparation.md#tidslinje-textbricka-05)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
-1. Skicka **Beskriv mitt utkast.** och sedan **Beskriv sedan kartan.**.
-   Det andra meddelandet väntar. Stäng textvyn.
-2. Kräv arbetsmarkering. Släpp första anropet med
-   `reply REQUEST Första svaret är klart.` och håll det andra.
-3. Kräv fortsatt arbetsmarkering, utan svarsbricka eller brickuppläsning.
-   Det andra skrivna meddelandet behåller rätt arbetsmarkering i kön.
-4. Öppna textvyn, läs första svaret och tryck Escape i meddelandefältet.
-   Kräv avbrottstexten och stäng vyn. Arbetsmarkeringen försvinner.
-5. Släpp det avbrutna anropet med `reply REQUEST Det avbrutna svaret.`.
-   Öppna textvyn och kontrollera att det sena svaret saknas. Stäng igen.
+1. Skicka **Beskriv mitt utkast.** och **Beskriv sedan kartan.**. Det andra
+   meddelandet väntar. Stäng textvyn.
+2. Låt **Första svaret är klart.** komma medan det andra anropet hålls.
+   Arbetsmarkeringen fortsätter utan svarsbricka.
+3. Öppna textvyn, läs första svaret och tryck Escape i meddelandefältet. Läs
+   avbrottstexten och stäng vyn.
+4. Låt det sena **Det avbrutna svaret.** levereras enligt förberedelsen. Öppna
+   textvyn: det sena svaret ska saknas. Stäng igen.
 
 **Förväntat resultat:**
 
 - Arbete går före olästa svar. Ett talat uppdrag får aldrig textarbetsmarkering.
-- Avbrott och avslutat arbete tar bort arbetsmarkeringen. Ett sent avbrutet
-  svar får ingen bricka, och ett nytt samtal börjar utan gamla markeringar.
+- Avbrott och avslutat arbete tar bort arbetsmarkeringen. Ett sent avbrutet svar
+  får ingen bricka, och ett nytt samtal börjar utan gamla markeringar.
 
 ## Bedömning och återstående manuella prov
 
 Flödet är utformat mot WCAG 2.2 nivå AA. Kraven nedan är designmål, och
-automationen visar bara det som anges. Ingen skärmläsare och ingen fysisk
-enhet är provad, och fullständig överensstämmelse intygas inte.
+automationen visar bara det som anges. Ingen skärmläsare och ingen fysisk enhet
+är provad, och fullständig överensstämmelse intygas inte.
 
 <!-- markdownlint-disable MD013 -->
 | Kriterium | Utformning | Automatisk kontroll | Återstår att prova manuellt |
 | --- | --- | --- | --- |
-| 1.3.1, 4.1.2 Namn, roll och relationer | Textvyn är en region med rubriken **Skriv till Skyttel** som namn. Samtalstexten är en logg med namnet **Samtalstext**. Varje rad börjar med en dold talare, **Du:** eller **Skyttel:**. **Skriv till Skyttel** säger med sitt utfällda läge om textvyn är öppen. | Namn på region, logg, fält och knappar, dolda talare och knappens läge. | Uppläsning med NVDA och VoiceOver, och hur loggens nya rader läses upp. |
+| 1.3.1, 4.1.2 Namn, roll och relationer | Textvyn är en region med rubriken **Skriv till Skyttel** som namn. Samtalstexten är en logg med namnet **Samtalstext**. Varje rad börjar med en dold talare, **Du:** eller **Skyttel:**. **Skriv till Skyttel** säger med sitt utfällda läge om textvyn är öppen. | Namn på region, logg, fält och knappar, dolda talare och knappens läge. | Uppläsning med NVDA och VoiceOver, och hur loggens nya rader erbjuds som DOM-status. |
 | 1.3.2, 2.4.3 Ordning och fokus | Rubriken, **Nytt samtal** och **Stäng textvyn** står först, samtalstexten därefter och fältet sist. På dator får fältet fokus när textvyn öppnas, och **Stäng textvyn** ger fokus till **Skriv till Skyttel**. På mobil enhet och smal skärm stannar fokus i verktygsraden eller går till rubriken. | Fokus vid öppning på dator och pekskärm, efter **Skicka** och efter stängning. | Fokusordning med skärmläsare och på fysisk pekskärm. |
 | 1.4.1 Färg | Din text står i en tonad ruta med kant. Talaren finns också i text för hjälpmedel. | Rutan och den dolda talaren. | – |
 | 1.4.3, 1.4.11 Kontrast | Textvyn använder kartans färger för text, ytor, kanter och fokus i ljust och mörkt tema. | Ingen. | Kontrast för samtalstexten, platshållaren och den tonade rutan i båda teman. |
@@ -1645,25 +1729,25 @@ enhet är provad, och fullständig överensstämmelse intygas inte.
 | 3.3.2 Etiketter | Fältet har etiketten **Meddelande till Skyttel**, dold visuellt i kort läge. | Fältets namn och platshållare även efter ändrad synlig höjd. | Uppläsning i kort läge. |
 <!-- markdownlint-enable MD013 -->
 
-Mobilfallen verifierar även omflöde utan horisontell rullning (1.4.10),
-namn på dolda etiketter och den kompakta utkastknappen (1.3.1, 4.1.2),
-bevarat fokus och nåbar stängknapp efter rullning (2.4.3, 2.4.11) samt
-44 px tryckyta utan förändrad symbol (2.5.8). Läsordningen och det
-synliga fokuset på verklig iPhone och iPad, kontrast i båda teman och
-200/400 procents zoom återstår att kontrollera. Emulerade skärmstorlekar
-och en ändring av webbläsarens synliga höjd bevisar inte ett fysiskt
-skärmtangentbord eller fullständig överensstämmelse.
+Mobilfallen verifierar även omflöde utan horisontell rullning (1.4.10), namn på
+dolda etiketter och den kompakta utkastknappen (1.3.1, 4.1.2), bevarat fokus och
+nåbar stängknapp efter rullning (2.4.3, 2.4.11) samt 44 px tryckyta utan
+förändrad symbol (2.5.8). Läsordningen och det synliga fokuset på verklig iPhone
+och iPad, kontrast i båda teman och 200/400 procents zoom återstår att
+kontrollera. Emulerade skärmstorlekar och en ändring av webbläsarens synliga
+höjd bevisar inte ett fysiskt skärmtangentbord eller fullständig
+överensstämmelse.
 
 Breddhandtagen har namn, avskiljarroll, orientering, styrd region och
 aktuellt/minsta/största värde (1.3.1, 4.1.2). Tab och piltangenter ger
-tangentbordsåtkomst och ett alternativ till dragning (2.1.1, 2.5.7).
-Handtagens träffyta är 24 px bred (2.5.8), och fokus markeras i kartans
-accentfärg (2.4.7, 1.4.11). Återställning ger artig återkoppling och
-rubrikfokus när knappen försvinner (2.4.3, 4.1.3). Automationen kontrollerar
-namn, roller, värden, dragning, piltangenter, bevarat fokus och text samt
-återställningens fokus. Verklig skärmläsaruppläsning, kontrast i båda teman
-och omflöde vid 200/400 procents zoom återstår. Detta är designmål och
-avgränsade kontroller, inte ett intyg om fullständig WCAG-överensstämmelse.
+tangentbordsåtkomst och ett alternativ till dragning (2.1.1, 2.5.7). Handtagens
+träffyta är 24 px bred (2.5.8), och fokus markeras i kartans accentfärg (2.4.7,
+1.4.11). Återställning ger artig återkoppling och rubrikfokus när knappen
+försvinner (2.4.3, 4.1.3). Automationen kontrollerar namn, roller, värden,
+dragning, piltangenter, bevarat fokus och text samt återställningens fokus.
+Verklig skärmläsaruppläsning, kontrast i båda teman och omflöde vid 200/400
+procents zoom återstår. Detta är designmål och avgränsade kontroller, inte ett
+intyg om fullständig WCAG-överensstämmelse.
 
 Textknappens ändrade flöde har följande WCAG 2.2 AA-designmål:
 
@@ -1677,7 +1761,228 @@ Textknappens ändrade flöde har följande WCAG 2.2 AA-designmål:
 | 4.1.3 | En artig region annonserar varje ny oläst förekomst en gång. Inget autonomt arbetsnamn eller svar med stängd textvy. | Faktiskt hörbar turordning och frånvaro av dubbla uppläsningar. |
 <!-- markdownlint-enable MD013 -->
 
-Proven använder riktig server och tillfällig SQLite. Kontrollerade
-modell- och mediesvar, DOM-uppläsningar och emulerade fönstermått visar
-inte fullständig WCAG-överensstämmelse. Fysisk mikrofon, skärmläsare,
-röststyrning, zoom och pekskärm återstår enligt #220.
+Proven använder riktig server och tillfällig SQLite. Kontrollerade modell- och
+mediesvar, DOM-uppläsningar och emulerade fönstermått visar inte fullständig
+WCAG-överensstämmelse. Fysisk mikrofon, skärmläsare, röststyrning, zoom och
+pekskärm återstår enligt #220.
+
+## Separata brickkonfigurationer och observationer
+
+### TEXTBRICKA-06: minskad rörelse vid 390 i mörkt tema
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 390 × 844 och mörkt tema före
+första UI-handlingen.
+
+**Integrationstest:**
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-06.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-06"
+  },
+  "reference": "Chromium 390 × 844, mörkt tema; emulerad minskad rörelse och normal rörelse.",
+  "outcomes": [
+    "Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.",
+    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [TEXTBRICKA-04](#textbricka-04-minskad-rörelse-teman-och-knappmått) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.
+- Markeringen är läsbar och respekterar den emulerade rörelseinställningen.
+
+### TEXTBRICKA-07: minskad rörelse vid 1280 i ljust tema
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 1280 × 844 och ljust tema före
+första UI-handlingen.
+
+**Integrationstest:**
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-07.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-07"
+  },
+  "reference": "Chromium 1280 × 844, ljust tema; emulerad minskad rörelse och normal rörelse.",
+  "outcomes": [
+    "Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.",
+    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [TEXTBRICKA-04](#textbricka-04-minskad-rörelse-teman-och-knappmått) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.
+- Markeringen är läsbar och respekterar den emulerade rörelseinställningen.
+
+### TEXTBRICKA-08: minskad rörelse vid 1280 i mörkt tema
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 1280 × 844 och mörkt tema före
+första UI-handlingen.
+
+**Integrationstest:**
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-08.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-08"
+  },
+  "reference": "Chromium 1280 × 844, mörkt tema; emulerad minskad rörelse och normal rörelse.",
+  "outcomes": [
+    "Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.",
+    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [TEXTBRICKA-04](#textbricka-04-minskad-rörelse-teman-och-knappmått) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.
+- Markeringen är läsbar och respekterar den emulerade rörelseinställningen.
+
+### TEXTBRICKA-09: faktiskt hörda olästa svar och frågor
+
+**Syfte:** Hör en ny oläst förekomst en gång, utan att själva svaret läses när
+textvyn är stängd.
+
+**Användare:** Den konfigurerade testmedlemmen.
+
+**Förutsättningar:** Använd den
+[riktiga enhetsförberedelsen](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare)
+, med enbart påhittade uppgifter. Telefon och surfplatta behöver nåbar
+HTTPS-adress och konfigurerad inloggning.
+
+**Kräver mänsklig observation:** Hör en ny oläst förekomst en gång, utan att
+själva svaret läses när textvyn är stängd.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Hör en ny oläst förekomst en gång, utan att själva svaret läses när textvyn är stängd."
+  },
+  "reference": "NVDA/Chrome Windows och VoiceOver/Chrome macOS/iPhone/iPad.",
+  "outcomes": [
+    "Varje ny oläst förekomst hörs en gång; gamla svar och frågor dubbleras inte.",
+    "Svar, fråga och mikrofonläge är begripliga med faktiskt provat hjälpmedel."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Starta ett riktigt textsamtal med mikrofonen av. Skicka ett uppdrag och stäng
+   textvyn. Hör arbets-/svarsnamn och kontrollera att fokus ligger kvar.
+2. Slå på och av mikrofonen två gånger utan att öppna textvyn. Den samma olästa
+   förekomsten får inte läsas igen.
+3. Öppna textvyn, läs svaret och stäng igen. Upprepa med en nödvändig fråga och
+   bedöm rätt turordning.
+
+**Förväntat resultat:**
+
+- Varje ny oläst förekomst hörs en gång; gamla svar och frågor dubbleras inte.
+- Svar, fråga och mikrofonläge är begripliga med faktiskt provat hjälpmedel.
+
+### TEXTBRICKA-10: fysisk inmatning zoom och symboler
+
+**Syfte:** Bedöm träffsäkerhet, röststyrning, verklig zoom och minskad rörelse
+på faktisk utrustning.
+
+**Användare:** Den konfigurerade testmedlemmen.
+
+**Förutsättningar:** Använd den
+[riktiga enhetsförberedelsen](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare)
+, med enbart påhittade uppgifter. Telefon och surfplatta behöver nåbar
+HTTPS-adress och konfigurerad inloggning.
+
+**Kräver mänsklig observation:** Bedöm träffsäkerhet, röststyrning, verklig zoom
+och minskad rörelse på faktisk utrustning.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Bedöm träffsäkerhet, röststyrning, verklig zoom och minskad rörelse på faktisk utrustning."
+  },
+  "reference": "Windows/macOS/iPhone/iPad; båda teman och OS-inställning.",
+  "outcomes": [
+    "Brickans betydelse och kontroller är begripliga och nåbara på provad enhet.",
+    "Faktiskt rörelse-/zoomresultat och röststyrning redovisas separat."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Med fysisk pekning/tangentbord och röststyrning, skicka ett uppdrag med
+   stängd textvy och öppna svaret igen.
+2. Prova 200/400 procents zoom, båda teman och faktisk minskad rörelse.
+   Kontrollera synligt fokus, namn och nåbara knappmål.
+3. Jämför ring, tre punkter och frågetecken utan att använda färg som enda
+   skillnad.
+
+**Förväntat resultat:**
+
+- Brickans betydelse och kontroller är begripliga och nåbara på provad enhet.
+- Faktiskt rörelse-/zoomresultat och röststyrning redovisas separat.

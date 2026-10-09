@@ -241,7 +241,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   hjälpmedel utan dubbel uppläsning, fokus och placering vid röstrutan
   eller meddelandefältet med hela beskedet läsbart på bred och smal skärm,
   verkligt registrerat
-  kontrollfel samt mätt text- och symbolkontrast i båda teman. NOT-11 har
+  kontrollfel med full privat och sparad läsning samt mätt text- och
+  symbolkontrast i båda teman. NOT-03 behåller båda fokusvägarna och
+  den pensionerade HJALP-04:s nodidentitet utan återanvänt ID. NOT-12–23
+  har separata placeringar, korta fönster och teman; NOT-24 kräver hört
+  besked. NOT-11 har
   en separat körbar mänsklig granskning av alla symbolformer och typfärger.
 - [Frågor och talade sparbesked](conversation-questions.md): identiteter,
   konflikter, väntan med mikrofonen av, beständigt kvitto och fyra
@@ -256,7 +260,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   faktisk markering, exakt sparåterhämtning och tydlig skillnad mellan
   samtalstext och verifierade resultat, löpande dialog och
   raden Skyttel arbetar. Kontrollerat familjeunderlag och
-  verkligt tal redovisas separat.
+  verkligt tal redovisas separat. TAL-18/19 skiljer mikrofonlägena;
+  TAL-20–22 skiljer placeringarna och TAL-17/23–25 kräver verkliga
+  mikrofon-, ljud-, system- eller skärmläsarobservationer.
 - [Utkastet i samtalet](conversation-draft.md): tabellen och dess symboler,
   personligt val mellan hushåll och enheter, första förslaget, tomt utkast,
   sparåterkoppling och kvittots plats i Rapporter → Ändringshistorik.
@@ -266,8 +272,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   smal dator och bred emulerad pekare har varsin motsvarighet.
 
 - [Mikrofontryck](microphone-press.md): kort och långt tryck, släpp och
-  systemavbrott, medgivande, pekfångst och tangentkombinationer på riktiga
-  Windows- och macOS-enheter; väntande tal under starten, avbrott och
+  systemavbrott, medgivande, pekfångst och separata Windows/macOS-varianter.
+  Faktiska OS-genvägar och pekning har egna mänskliga fall. Väntande tal
+  under starten, avbrott och
   spärrad ljuduppspelning och mikrofonens läge vid nytt samtal.
 
 - [Textvyn](text-view.md): **Skriv till Skyttel** öppnar och stänger
@@ -658,3 +665,13 @@ specifik för en annan konfiguration kan därför undgå referensen.
 [Kontrastmätningens sex hjälpprov](../../tests/integration/accessibility-measurements.spec.ts)
 är tekniskt underlag för beräkningen. De har ingen påhittad UI-procedur;
 INST-06 och YTA-02 behåller sina egna browserbaserade kontrastkontroller.
+
+[Separat kontrollerad röstförberedelse](voice-controls-preparation.md)
+anger exakta kommandon, hållna startgränser, syntetiska toner, tekniska
+paket/resurser och återställning. Dess publika runner pausar klockan för
+manuell inspektion av media- och HTTP-avbrott och återupptar den vid
+återanslutning; det är inte naturlig förlupen tid. Tomt/seedat underlag
+vid kort/hög vy har separata tekniska röktest. ROSTFEL-01/05–08,
+HJALP-07–10, TEXTBRICKA-06–08 och YTA-13 har egna funktionella motsvarigheter.
+HJALP-11/12, TEXTBRICKA-09/10 och YTA-14/15 beskriver faktiskt hjälpmedel,
+fysisk inmatning eller zoom; syntetisk Chromium etablerar dem inte.

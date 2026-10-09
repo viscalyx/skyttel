@@ -21,6 +21,7 @@ import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
 import { modelMessage, textModel } from '../support/text-model.js';
+import { readVoiceProposal } from '../support/voice-work-reading.js';
 
 const help = (page: Page) =>
   page.getByRole('region', { name: 'Information och hjälp', exact: true });
@@ -64,7 +65,9 @@ for (const platform of [
   { name: 'macOS', value: 'MacIntel', mac: true },
 ]) {
   test.describe(platform.name, () => {
-    test('YTA-07: hjälpen förklarar samtalet och leder till rätt kontroller', async ({ page }) => {
+    test(`${platform.mac ? 'YTA-13' : 'YTA-07'}: hjälpen förklarar samtalet och leder till rätt kontroller`, async ({
+      page,
+    }) => {
       await page.addInitScript(
         (value) => Object.defineProperty(navigator, 'platform', { configurable: true, value }),
         platform.value,
@@ -134,6 +137,7 @@ for (const platform of [
         await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
         const draft = await openDraftReview(page);
         await expect(draft).toContainText('Lo Exempel');
+        await readVoiceProposal(page, 'Lo Exempel', 'Ej uppgivet');
         await expect(consentBox(page)).toHaveCount(0);
         expect(model.requests).toHaveLength(0);
         expect(live.requests).toHaveLength(0);
@@ -190,6 +194,7 @@ for (const platform of [
         );
         await expect(field(page)).toHaveValue('Oskickat medan hjälpen läses');
         await expect(await openDraftReview(page)).toContainText('Lo Exempel');
+        await readVoiceProposal(page, 'Lo Exempel', 'Ej uppgivet');
         expect(
           await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests),
         ).toBe(1);
@@ -270,7 +275,20 @@ test('YTA-08: hjälpens långa text går att läsa och stänga på smal skärm',
     await expect(
       help(page).getByRole('button', { name: 'Stäng verktyget', exact: true }),
     ).toBeFocused();
+    await page.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+    await expect(help(page)).toBeVisible();
+    await page.getByRole('button', { name: 'Dölj verktygens namn', exact: true }).click();
+    await expect(help(page)).toBeVisible();
+    await help(page).getByRole('button', { name: 'Stäng verktyget', exact: true }).focus();
     await page.keyboard.press('Escape');
+    await expect(help(page)).toHaveCount(0);
+    await expect(button).toBeFocused();
+    await openHelp(page);
+    await page.keyboard.press('End');
+    await expect(
+      help(page).getByText(/Kasta ändringarna och fortsätt kastar bara/),
+    ).toBeInViewport();
+    await help(page).getByRole('button', { name: 'Stäng verktyget', exact: true }).click();
     await expect(help(page)).toHaveCount(0);
     await expect(button).toBeFocused();
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests)).toBe(

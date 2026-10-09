@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { createHousehold, signIn } from '../support/client.js';
+import { createHousehold, openDraftReview, signIn, utilityButton } from '../support/client.js';
 import {
   closeConversationText,
   microphoneButton,
@@ -137,6 +137,20 @@ test('RÖSTTEXT-04: ett skrivet obekräftat sparpåstående blir inget verifiera
     await expect(voiceBox(page).locator('.voice-saved')).toHaveCount(0);
     expect((await (await page.request.get(`${mapPath}/operations`)).json()).operations).toEqual([]);
     expect((await (await page.request.get(mapPath)).json()).objects).toEqual([]);
+    await expect(
+      (await openDraftReview(page)).getByText('Utkastet är tomt.', { exact: true }),
+    ).toBeVisible();
+    await (await utilityButton(page, 'Rapporter')).click();
+    await expect(
+      page
+        .getByRole('region', { name: 'Ändringshistorik', exact: true })
+        .getByText('Inga genomförda sparanden.', { exact: true }),
+    ).toBeVisible();
+    const back = page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true });
+    await back.focus();
+    await expect(back).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
   } finally {
     for (const release of held) release([]);
     await app.close();
@@ -230,8 +244,10 @@ test('RÖSTTEXT-03: köns skrivna svar överlämnas till rösten en gång och sa
     await send(page, 'Min egen text ska inte läsas.');
     await expect.poll(() => held.length).toBe(3);
     await expect(announcement(page)).not.toContainText('Min egen text');
+    await field(page).focus();
     held[2]([modelMessage('Bara Skyttels nya text läses.')]);
     await expect(announcement(page)).toHaveText('Skyttel: Bara Skyttels nya text läses.');
+    await expect(field(page)).toBeFocused();
     await closeConversationText(page);
     await openConversationText(page);
     await expect(announcement(page)).toBeEmpty();
