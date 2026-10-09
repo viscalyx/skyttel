@@ -613,6 +613,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sena fokusutfall och tappat svar efter genomförd eller utebliven ändring.
   UTKAST-137 följer två samtidigt privata, oberoende objektändringar till
   separata sparanden och båda medlemmarnas läsning efter omstart.
+  UTKAST-43 och UTKAST-143 har separat
+  [tekniskt HTTP-underlag i server-sviten](../../tests/unit/server/draft-removal-http.test.ts)
+  för publika typförslag, beroende värden och oförändrad karta och historik.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,

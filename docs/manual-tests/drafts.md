@@ -678,6 +678,11 @@ Spara inte.
 **Integrationstest:**
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-43.
+
+**Tekniskt HTTP-underlag:**
+[draft-removal-http.test.ts](../../tests/unit/server/draft-removal-http.test.ts)
+provar publika förslagsvägar med verkliga sessioner och SQLite i
+server-sviten i Vitest. Formulär och borttagningsbekräftelse provas i UTKAST-43.
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
@@ -694,7 +699,9 @@ UTKAST-43.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/draft-removal.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/draft-removal-http.test.ts",
       "title": "direct objectType removal setup preserves the original public proposal routes and values",
       "purpose": "Bevarar ursprungliga lyckade HTTP-förberedelser, exakta värden och statuskontroller separat från de ordinarie formulären."
     }
@@ -736,6 +743,11 @@ Lägg i utkastet med Enter och välj Stäng samband. Spara inte.
 **Integrationstest:**
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-143.
+
+**Tekniskt HTTP-underlag:**
+[draft-removal-http.test.ts](../../tests/unit/server/draft-removal-http.test.ts)
+provar publika förslagsvägar med verkliga sessioner och SQLite i
+server-sviten i Vitest. Formulär och borttagningsbekräftelse provas i UTKAST-143.
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
@@ -752,7 +764,9 @@ UTKAST-143.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/draft-removal.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/draft-removal-http.test.ts",
       "title": "direct relationshipType removal setup preserves the original public proposal routes and values",
       "purpose": "Bevarar ursprungliga lyckade HTTP-förberedelser, exakta värden och statuskontroller separat från de ordinarie formulären."
     }
