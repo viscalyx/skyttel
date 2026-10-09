@@ -1106,22 +1106,28 @@ plats.
 **Förutsättningar:** Ny installation, Lo i utkastet och 1280 × 800 före starten.
 Starta samtalet med text och stäng textvyn.
 
-**Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
-, NOT-12.
+**Automatiskt motsvarande webbläsartest:**
+[conversation-notice-content.test.tsx](../../tests/browser/conversation-notice-content.test.tsx),
+NOT-12. Chromium använder produktionsstilar och kontrollerade HTTP- och
+mediesvar. Testet visar placering och återställning, inte beständigt sparande.
+NOT-01–08 och NOT-10 behåller verklig server och SQLite för sina respektive
+samtals- och kontrollflöden.
 
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/conversation-notices.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/conversation-notice-content.test.tsx",
     "caseId": "NOT-12"
   },
-  "reference": "Chromium 1280 × 800; datorpekare.",
+  "reference": "Chromium 1280 × 800; datorpekare, produktionsstilar och kontrollerade HTTP-/mediesvar. Placering, fokus och Starta ljudet skyddas här; verklig HTTP/SQLite behålls separat i NOT-01–08/10.",
   "outcomes": [
     "Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.",
-    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn."
+    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn.",
+    "Starta ljudet går att fokusera i båda placeringarna; Retur återställer ljudet och Lyssnar."
   ]
 }
 ```
@@ -1136,14 +1142,18 @@ Starta samtalet med text och stäng textvyn.
    plats utan rullning i sidled.
 3. Förbered tillåten mikrofon men spärrad uppspelning. Välj Prata med Skyttel
    och läs hindret med Starta ljudet.
-4. Läs hela hindret i textvyn, stäng den och läs kortet igen. Kontrollera
-   samtalstextens kvarvarande läsyta i det korta fönstret.
+4. Läs hela hindret i textvyn och fokusera **Starta ljudet**. Stäng textvyn
+   och läs kortet igen. Kontrollera samtalstextens kvarvarande läsyta i det
+   korta fönstret. När uppspelning tillåts igen, fokusera **Starta ljudet**
+   och tryck Retur.
 
 **Förväntat resultat:**
 
 - Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.
 - Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling
   läggs i textvyn.
+- **Starta ljudet** går att fokusera i båda placeringarna. Retur återställer
+  ljudet, tar bort hindret och visar **Lyssnar**.
 
 ### NOT-13: notisens text och kontroller på telefon
 
@@ -1155,22 +1165,28 @@ plats.
 **Förutsättningar:** Ny installation, Lo i utkastet och 390 × 780 före starten.
 Starta samtalet med text och stäng textvyn.
 
-**Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
-, NOT-13.
+**Automatiskt motsvarande webbläsartest:**
+[conversation-notice-content.test.tsx](../../tests/browser/conversation-notice-content.test.tsx),
+NOT-13. Chromium använder produktionsstilar och kontrollerade HTTP- och
+mediesvar. Testet visar placering och återställning, inte beständigt sparande.
+NOT-01–08 och NOT-10 behåller verklig server och SQLite för sina respektive
+samtals- och kontrollflöden.
 
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/conversation-notices.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/conversation-notice-content.test.tsx",
     "caseId": "NOT-13"
   },
-  "reference": "Chromium 390 × 780; emulerad pekning.",
+  "reference": "Chromium 390 × 780; emulerad mobil och pekning, produktionsstilar och kontrollerade HTTP-/mediesvar. Placering, fokus och Starta ljudet skyddas här; verklig HTTP/SQLite behålls separat i NOT-01–08/10.",
   "outcomes": [
     "Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.",
-    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn."
+    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn.",
+    "Starta ljudet går att fokusera i båda placeringarna; Retur återställer ljudet och Lyssnar."
   ]
 }
 ```
@@ -1185,14 +1201,18 @@ Starta samtalet med text och stäng textvyn.
    plats utan rullning i sidled.
 3. Förbered tillåten mikrofon men spärrad uppspelning. Välj Prata med Skyttel
    och läs hindret med Starta ljudet.
-4. Läs hela hindret i textvyn, stäng den och läs kortet igen. Kontrollera
-   samtalstextens kvarvarande läsyta i det korta fönstret.
+4. Läs hela hindret i textvyn och fokusera **Starta ljudet**. Stäng textvyn
+   och läs kortet igen. Kontrollera samtalstextens kvarvarande läsyta i det
+   korta fönstret. När uppspelning tillåts igen, fokusera **Starta ljudet**
+   och tryck Retur.
 
 **Förväntat resultat:**
 
 - Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.
 - Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling
   läggs i textvyn.
+- **Starta ljudet** går att fokusera i båda placeringarna. Retur återställer
+  ljudet, tar bort hindret och visar **Lyssnar**.
 
 ### NOT-14: notisens text och kontroller på bred pekskärm
 
@@ -1204,22 +1224,28 @@ plats.
 **Förutsättningar:** Ny installation, Lo i utkastet och 1024 × 1366 före
 starten. Starta samtalet med text och stäng textvyn.
 
-**Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
-, NOT-14.
+**Automatiskt motsvarande webbläsartest:**
+[conversation-notice-content.test.tsx](../../tests/browser/conversation-notice-content.test.tsx),
+NOT-14. Chromium använder produktionsstilar och kontrollerade HTTP- och
+mediesvar. Testet visar placering och återställning, inte beständigt sparande.
+NOT-01–08 och NOT-10 behåller verklig server och SQLite för sina respektive
+samtals- och kontrollflöden.
 
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/conversation-notices.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/conversation-notice-content.test.tsx",
     "caseId": "NOT-14"
   },
-  "reference": "Chromium 1024 × 1366; emulerad pekning.",
+  "reference": "Chromium 1024 × 1366; emulerad mobil och pekning, produktionsstilar och kontrollerade HTTP-/mediesvar. Placering, fokus och Starta ljudet skyddas här; verklig HTTP/SQLite behålls separat i NOT-01–08/10.",
   "outcomes": [
     "Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.",
-    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn."
+    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn.",
+    "Starta ljudet går att fokusera i båda placeringarna; Retur återställer ljudet och Lyssnar."
   ]
 }
 ```
@@ -1234,14 +1260,18 @@ starten. Starta samtalet med text och stäng textvyn.
    plats utan rullning i sidled.
 3. Förbered tillåten mikrofon men spärrad uppspelning. Välj Prata med Skyttel
    och läs hindret med Starta ljudet.
-4. Läs hela hindret i textvyn, stäng den och läs kortet igen. Kontrollera
-   samtalstextens kvarvarande läsyta i det korta fönstret.
+4. Läs hela hindret i textvyn och fokusera **Starta ljudet**. Stäng textvyn
+   och läs kortet igen. Kontrollera samtalstextens kvarvarande läsyta i det
+   korta fönstret. När uppspelning tillåts igen, fokusera **Starta ljudet**
+   och tryck Retur.
 
 **Förväntat resultat:**
 
 - Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.
 - Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling
   läggs i textvyn.
+- **Starta ljudet** går att fokusera i båda placeringarna. Retur återställer
+  ljudet, tar bort hindret och visar **Lyssnar**.
 
 ### NOT-15: notisens text och kontroller på kort fönster
 
@@ -1253,22 +1283,28 @@ plats.
 **Förutsättningar:** Ny installation, Lo i utkastet och 844 × 390 före starten.
 Starta samtalet med text och stäng textvyn.
 
-**Integrationstest:**
-[conversation-notices.spec.ts](../../tests/integration/conversation-notices.spec.ts)
-, NOT-15.
+**Automatiskt motsvarande webbläsartest:**
+[conversation-notice-content.test.tsx](../../tests/browser/conversation-notice-content.test.tsx),
+NOT-15. Chromium använder produktionsstilar och kontrollerade HTTP- och
+mediesvar. Testet visar placering och återställning, inte beständigt sparande.
+NOT-01–08 och NOT-10 behåller verklig server och SQLite för sina respektive
+samtals- och kontrollflöden.
 
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/conversation-notices.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/conversation-notice-content.test.tsx",
     "caseId": "NOT-15"
   },
-  "reference": "Chromium 844 × 390; emulerad pekning.",
+  "reference": "Chromium 844 × 390; emulerad mobil och pekning, produktionsstilar och kontrollerade HTTP-/mediesvar. Placering, fokus och Starta ljudet skyddas här; verklig HTTP/SQLite behålls separat i NOT-01–08/10.",
   "outcomes": [
     "Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.",
-    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn."
+    "Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling läggs i textvyn.",
+    "Starta ljudet går att fokusera i båda placeringarna; Retur återställer ljudet och Lyssnar."
   ]
 }
 ```
@@ -1283,11 +1319,27 @@ Starta samtalet med text och stäng textvyn.
    plats utan rullning i sidled.
 3. Förbered tillåten mikrofon men spärrad uppspelning. Välj Prata med Skyttel
    och läs hindret med Starta ljudet.
-4. Läs hela hindret i textvyn, stäng den och läs kortet igen. Kontrollera
-   samtalstextens kvarvarande läsyta i det korta fönstret.
+4. Läs hela hindret i textvyn och fokusera **Starta ljudet**. Stäng textvyn
+   och läs kortet igen. Kontrollera samtalstextens kvarvarande läsyta i det
+   korta fönstret. När uppspelning tillåts igen, fokusera **Starta ljudet**
+   och tryck Retur.
 
 **Förväntat resultat:**
 
 - Hela texten och kontrollerna är läsbara inom kortet i båda placeringarna.
 - Kort och kontroller täcker inte varandra, och ingen extra utkaståterkoppling
   läggs i textvyn.
+- **Starta ljudet** går att fokusera i båda placeringarna. Retur återställer
+  ljudet, tar bort hindret och visar **Lyssnar**.
+
+## Flyttade motsvarigheter
+
+NOT-12–15 behåller sina identiteter i Chromium-sviten
+[conversation-notice-content.test.tsx](../../tests/browser/conversation-notice-content.test.tsx).
+Alla fyra storlekar, dator- eller mobil-/pekläge, Lo i utkastet, mikrofonavslag
+och spärrad uppspelning samt båda notisplaceringarna behålls. Återställning
+med fokus och Retur tillkommer. HTTP-svaren är kontrollerade; fallen provar
+inte längre verklig installation, medgivandelagring eller SQLite. NOT-01–08,
+NOT-16–22 och NOT-10 behåller sina egna serverflöden, placeringar och
+kontrollförberedelser. Fysisk mikrofon, ljud, mobilens tangentbord och
+hjälpmedlens uppläsning kräver fortfarande sina separata fall.

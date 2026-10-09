@@ -261,8 +261,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   kontrollfel med full privat och sparad läsning samt mätt text- och
   symbolkontrast i båda teman. NOT-03 behåller båda fokusvägarna och
   den pensionerade HJALP-04:s nodidentitet utan återanvänt ID. NOT-12–23
-  har separata placeringar, korta fönster och teman; NOT-24 kräver hört
-  besked. NOT-11 har
+  har separata placeringar, korta fönster och teman. NOT-12–15 har sina
+  stabila motsvarigheter i Chromium med produktionsstilar, kontrollerade
+  HTTP-/mediesvar och återställning med fokus och Retur; verklig server,
+  medgivandelagring och SQLite skyddas av de kvarvarande integrationsfallen.
+  NOT-24 kräver hört besked. NOT-11 har
   en separat körbar mänsklig granskning av alla symbolformer och typfärger.
 - [Frågor och talade sparbesked](conversation-questions.md): identiteter,
   konflikter, väntan med mikrofonen av, beständigt kvitto och fyra

@@ -11,9 +11,10 @@ import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 
 /** Real household composition with controlled replies at its public fetch boundary.
  * This does not establish HTTP admission, provider execution or durable storage. */
-export async function openHouseholdConversation(width: number, height: number) {
-  await page.viewport(width, height);
-  const state: MapState = {
+export async function openHouseholdConversation(
+  width: number,
+  height: number,
+  state: MapState = {
     userId: 'alex',
     contentVersion: 0,
     types: [],
@@ -21,20 +22,23 @@ export async function openHouseholdConversation(width: number, height: number) {
     relationships: [],
     objects: [],
     draft: { version: 0, changes: [] },
-  };
+  },
+  review: TextAssistantView['review'] = {
+    ...state.draft,
+    contentVersion: state.contentVersion,
+    readyToSave: false,
+    conflicts: [],
+    unresolvedIdentities: [],
+    pendingOperations: [],
+  },
+) {
+  await page.viewport(width, height);
   let conversation: TextAssistantView = {
     id: 'browser-conversation',
     revision: 0,
     phase: 'ready',
     operations: [],
-    review: {
-      ...state.draft,
-      contentVersion: state.contentVersion,
-      readyToSave: false,
-      conflicts: [],
-      unresolvedIdentities: [],
-      pendingOperations: [],
-    },
+    review,
   };
   let available = true;
   let failNextReply = false;
