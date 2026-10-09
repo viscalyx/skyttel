@@ -1055,7 +1055,7 @@ före och efter: samma verkliga operation-ID byter från `pending` till
 
 Separat måttunderlag vid föregående NOT-10:s UI-steg 1: automationen
 kontrollerar minst 36 px synlig knapphöjd och minst 44 px faktisk tryckyta
-inklusive `::before`. Vid teknisk inspektion väljs kontrollknappen i Elements;
+inklusive `::after`. Vid teknisk inspektion väljs kontrollknappen i Elements;
 beräknad knapp- och pseudoelementhöjd ska ge samma tryckyta. De numeriska
 kontrollerna finns kvar i NOT-10:s integrationstest.
 
