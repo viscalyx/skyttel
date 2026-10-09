@@ -432,6 +432,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   verklig modellverifiering; vanliga fall använder kontrollerade anrop.
   En kontrollerad lokal MCP-klient behåller gamla begäranden, tappar ett
   lyckat sparbesked och provar exakta återförsök efter serveromstart.
+  [Separat läsklientprov](assistant-client-preparation.md#läsande-terminalklient-tom-och-fylld-karta)
+  läser tom och fylld karta och utkast under samma medgivande och kontrollerar
+  oförändrat innehåll, återkallelse och processavslut utan språkmodell.
   Profilens anslutningar får tangentbordsfokus och återgången behåller
   oskickad text och oberoende privata förslag.
 
