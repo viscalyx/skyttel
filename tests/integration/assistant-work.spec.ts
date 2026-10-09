@@ -353,6 +353,14 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
       .getByText('Identifiera sparandet och användaren', { exact: true })
       .click();
     await expect(recoveredHistory).toContainText(attempt.operationId);
+    await expect(
+      recoveredHistory.getByText(`Skyttel-användare: ${committedReceipt?.userId}.`, {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      recoveredHistory.getByText(`Tidpunkt: ${committedReceipt?.savedAt}`, { exact: true }),
+    ).toBeVisible();
     await page
       .getByRole('region', { name: 'Rapporter', exact: true })
       .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })
@@ -376,6 +384,12 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     await expect(savedHistory).toContainText('Lo Exempel');
     await savedHistory.getByText('Identifiera sparandet och användaren', { exact: true }).click();
     await expect(savedHistory).toContainText(attempt.operationId);
+    await expect(
+      savedHistory.getByText(`Skyttel-användare: ${committedReceipt?.userId}.`, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      savedHistory.getByText(`Tidpunkt: ${committedReceipt?.savedAt}`, { exact: true }),
+    ).toBeVisible();
     await page
       .getByRole('region', { name: 'Rapporter', exact: true })
       .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })

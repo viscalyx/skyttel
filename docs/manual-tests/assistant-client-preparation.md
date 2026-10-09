@@ -399,6 +399,23 @@ sparresultatet. Förvänta `RETAINED imported`; behåll C vid databasbytet.
 Behåll också de syntetiska värdena `result.value.receipt.operationId`
 och `result.value.receipt.userId` från just detta originalkvitto.
 
+Efter databasbytet i MCP-06 steg 3, före importen i steg 5, kör `read`
+i den nya tomma databasen och behåll dess `result.value.contentVersion`.
+Fånga sedan följande gamla förslag i terminal B utan att skicka det:
+
+<!-- markdownlint-disable MD013 -->
+```text
+capture-tool old-type propose_object_type {"id":"manual-old-type","baseRevision":null,"value":{"name":"Gammalt underlag","description":"","fields":[]}}
+```
+<!-- markdownlint-enable MD013 -->
+
+Klientens `captured`-händelse ska använda samma tomma kartas
+`arguments.contentVersion`. Behåll fångsten under import och omstart;
+skicka den först efter historikläsningen enligt slutet av detta avsnitt.
+Ingen ny fångst ska ersätta det gamla underlaget. Vid fel utgångsläge,
+återställ båda tillfälliga databaserna enligt installationsguiden innan
+fallet upprepas. Fångsten städas med klientens `quit` efter fallet.
+
 Före läsningen i steg 6 lägger du ett nytt objektförslag
 **Oberoende utkast**, tom beskrivning ersatt av **Privat lampanteckning**,
 med samma typ som lampan. Använd `propose_object`, ID `private-lamp`,

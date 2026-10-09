@@ -195,6 +195,9 @@ test('MCP-06: importerad historik läses och vanliga rättelser använder färsk
     await nativeHistory.getByText('Identifiera sparandet och användaren', { exact: true }).click();
     await expect(nativeHistory).toContainText(saved.operationId);
     await expect(nativeHistory).toContainText(saved.userId);
+    await expect(
+      nativeHistory.getByText(`Tidpunkt: ${saved.savedAt}`, { exact: true }),
+    ).toBeVisible();
     await page
       .getByRole('region', { name: 'Rapporter', exact: true })
       .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })

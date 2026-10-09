@@ -383,15 +383,9 @@ färskt underlag”.
    exporten. Städa den första provdatabasen enligt startguiden. Skapa en
    ny tom tillfällig databas med samma guide, logga in i ett nytt privat
    fönster och skapa hushållet **MCP-prov**. Anslut en ny terminalklient.
-4. Kör `read` och anteckna den nya tomma kartans `contentVersion`. Fånga
-   ett gammalt förslag före importen, utan att skicka det:
-
-   <!-- markdownlint-disable MD013 -->
-   ```text
-   capture-tool old-type propose_object_type {"id":"manual-old-type","baseRevision":null,"value":{"name":"Gammalt underlag","description":"","fields":[]}}
-   ```
-   <!-- markdownlint-enable MD013 -->
-
+4. Följ
+   [historikförberedelsens fångst före import](assistant-client-preparation.md#historikläsning-mcp-06)
+   i den nya tomma databasen. Skicka inte det gamla förslaget ännu.
 5. I administrationens **Återimport**, välj ZIP-filen från första
    databasen, granska den och bekräfta hela ersättandet. Följ
    [IMPORT-01:s importsteg](household-import.md#import-01-ersätt-hushållet-med-tangentbordet)

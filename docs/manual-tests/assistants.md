@@ -694,7 +694,9 @@ kvittot utan att kräva interna identifierare i webbläsarkontrollerna.
    av Lo Exempel. Välj **Identifiera sparandet och användaren** och
    kontrollera att sparande, användare och tidpunkt går att läsa.
 5. Följ förberedelsens återförsök och jämförelse. Ladda om kartan och
-   historiken: inget andra sparande ska tillkomma.
+   historiken: inget andra sparande ska tillkomma. Öppna
+   **Identifiera sparandet och användaren** igen och kontrollera samma
+   sparande, användare och tidpunkt som före återförsöket.
    Välj **Tillbaka till arbetet**, öppna **Visa utkastet** och kontrollera
    **Utkastet är tomt.**
 6. Följ guidens återkallelse och städning.
