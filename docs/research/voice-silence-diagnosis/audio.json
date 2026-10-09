@@ -1,0 +1,30 @@
+{
+  "generator": {
+    "piper": "1.8.0",
+    "onnxruntime": "1.31.0",
+    "voice": "sv_SE-nst-medium",
+    "noiseScale": 0,
+    "noiseWScale": 0,
+    "syntheticVoice": true
+  },
+  "clips": {
+    "missing": {
+      "text": "Jag vill relatera tjänsten Microsoft 365 och tjänsten Tenant Norrsken Bygg.",
+      "sha256": "929226a125812e4529b282968e5cf6285ca5903136b7f1469a6aac03bee6a9da",
+      "speechSeconds": 7.024036281179138,
+      "sampleRate": 22050,
+      "sampleWidth": 2,
+      "clipSha256": "2cdc6bc9591f8ead9b1ae3c95ba1d11010c02c7562b8334b5b8734df6ff02b11",
+      "clipFile": "missing-clip.wav"
+    },
+    "named": {
+      "text": "Jag vill relatera tjänsten Microsoft 365 och tjänsten Tenant Norrsken Bygg med sambandstypen Ingår i. Microsoft 365 ingår i Tenant Norrsken Bygg. Spara inte.",
+      "sha256": "016f5a2e9195376b807f5f2bee3180033be3ace5e44d69d8917314aecbf43413",
+      "speechSeconds": 15.51092970521542,
+      "sampleRate": 22050,
+      "sampleWidth": 2,
+      "clipSha256": "5b2645ac6f7664065a6865b7d548c1384bc04e87f44201573d99effdb6d6928e",
+      "clipFile": "named-clip.wav"
+    }
+  }
+}

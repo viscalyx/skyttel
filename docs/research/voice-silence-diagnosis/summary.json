@@ -1,0 +1,78 @@
+{
+  "checkedAt": "2026-10-09",
+  "sourceCommit": "f0c19ff65b296c2bbda366860d755f4f755b4900",
+  "models": {
+    "text": "gpt-5.6-terra",
+    "reasoning": "low",
+    "voice": "gpt-live-1"
+  },
+  "microphoneMethod": "Ljudström från Web Audio",
+  "text": [
+    {
+      "case": "text-missing",
+      "prompt": "Jag vill relatera tjänsten Microsoft 365 och tjänsten Tenant Norrsken Bygg.",
+      "phase": "ready",
+      "questionPending": false,
+      "reply": "Utkastet är uppdaterat.",
+      "draftRelationshipCount": 1,
+      "savedRelationshipCount": 0,
+      "newSaves": 0
+    },
+    {
+      "case": "text-named",
+      "prompt": "Jag vill relatera tjänsten Microsoft 365 och tjänsten Tenant Norrsken Bygg med sambandstypen Ingår i. Microsoft 365 ingår i Tenant Norrsken Bygg. Spara inte.",
+      "phase": "ready",
+      "questionPending": false,
+      "reply": "Utkastet är uppdaterat.",
+      "draftRelationshipCount": 1,
+      "savedRelationshipCount": 0,
+      "newSaves": 0
+    }
+  ],
+  "voice": [
+    {
+      "case": "voice-missing",
+      "delegationOffsetMs": 7000,
+      "latestTranscriptEndMs": 7200,
+      "overlapMs": 200,
+      "backendRequests": 0,
+      "canonicalResponse": false,
+      "questionPending": false,
+      "draftChanges": 0,
+      "newSaves": 0,
+      "peerState": "connected",
+      "bytesSent": 28826,
+      "bytesReceived": 46683,
+      "receivedAudioEnergy": 0.0707744490108601
+    },
+    {
+      "case": "voice-named",
+      "delegationOffsetMs": 15600,
+      "latestTranscriptEndMs": 15800,
+      "overlapMs": 200,
+      "backendRequests": 0,
+      "canonicalResponse": false,
+      "questionPending": false,
+      "draftChanges": 0,
+      "newSaves": 0,
+      "peerState": "connected",
+      "bytesSent": 63577,
+      "bytesReceived": 74638,
+      "receivedAudioEnergy": 0.1043449117837418
+    }
+  ],
+  "cost": {
+    "responsesRequestsIncludingHarnessFailures": 27,
+    "responsesEstimatedUsd": 0.1952193,
+    "liveReportedSeconds": 33,
+    "liveEstimatedUsd": 0.0275,
+    "totalEstimatedUsd": 0.2227193
+  },
+  "limits": [
+    "Total tystnad i produktion återskapas inte",
+    "Två yttranden och en röst; ingen baslinjekörning",
+    "Ingen bedömning av akustisk begriplighet",
+    "Modellens utdata begränsas till 2000 tokens",
+    "Vanlig testmikrofon saknar stöd i denna miljö"
+  ]
+}
