@@ -689,9 +689,12 @@ PLACERING-09 har komplett 1440-referens och PLACERING-10 behåller smal
 återkoppling, utgången toast och fokus. Den samlade omstartskedjan provas
 inte separat vid varje CSS-mått eller öppningsordning; en kombinationsbugg
 specifik för en annan konfiguration kan därför undgå referensen.
-[Kontrastmätningens sex hjälpprov](../../tests/integration/accessibility-measurements.spec.ts)
-är tekniskt underlag för beräkningen. De har ingen påhittad UI-procedur;
-INST-06 och YTA-02 behåller sina egna browserbaserade kontrastkontroller.
+[Kontrastmätningens sex hjälpprov](../../tests/browser/accessibility-measurements.test.tsx)
+körs i Chromium som tekniskt underlag för beräkningen. De provar
+färgtolkning, genomskinliga föräldraytor och avvisning utan opak yta.
+De har ingen påhittad UI-procedur; INST-06 och YTA-02 behåller sina egna
+browserbaserade kontrastkontroller. SÖK-12 provar separat produktens
+kontrast i båda teman; hjälpproven ersätter inte det scenariot.
 
 [Separat kontrollerad röstförberedelse](voice-controls-preparation.md)
 anger exakta kommandon, hållna startgränser, syntetiska toner, tekniska
