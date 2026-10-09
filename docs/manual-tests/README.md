@@ -232,6 +232,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   otillgängligt samtal, misslyckat sparande och ny fråga efter en ny
   inbjudan. Ändrad medgivandetext kräver ett nytt sparat medgivande;
   en separat tillfällig installation förbereder det syntetiska tillståndet.
+  Vanliga syntetiska motsvarigheter hålls skilda från MEDGIVANDE-19/20:s
+  faktiska skärmläsning, beröring och förstoring.
 - [Samtalsnotiser](conversation-notices.md): bruten kontakt, otillgängligt
   samtal och uppdragsfel; en gemensam ordning, bara ett besked, stängning och
   automatisk återkomst, textåtkomst utan tillgängligt samtal, bevarad text
@@ -243,7 +245,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   en separat körbar mänsklig granskning av alla symbolformer och typfärger.
 - [Frågor och talade sparbesked](conversation-questions.md): identiteter,
   konflikter, väntan med mikrofonen av, beständigt kvitto och fyra
-  sekunders sparbesked efter ljud eller stopp.
+  sekunders sparbesked efter ljud eller stopp. Talad och skriven ingång
+  har skilda vanliga fall; uppläsning och faktiskt ljud har FRAGA-08/09.
 - [Skyttels röst](voice-assistant.md): svenska röstuppdrag,
   start efter medgivande, mikrofonen på och av med **Prata med Skyttel**,
   röstrutans statusord, vågform, stoppikon, plats och uppläsning,
@@ -290,6 +293,7 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Samtalets kö och avbrott](conversation-queue.md): serverns kö på dator,
   fokusstyrd Escape, stopp på mobil och smal skärm, talade och skrivna
   uppdrag samt kvarvarande utkast, oskickad text och återkoppling.
+  KÖ-05 avser verklig utrustning.
 - [Röst och text i samma samtal](conversation-voice-text.md): skrivna svar
   med röst när mikrofonen är på, text när den är av, ordnad överlämning av
   långa svar, kvarvarande samtalstext och artig uppläsning bara av nya
@@ -304,7 +308,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   Full kontext sammanfattas automatiskt med kvarvarande samtalstext,
   aktuellt utkast, mikrofonläge och tidigare inspelat tal. Misslyckad
   sammanfattning blockerar nya uppdrag tills Nytt samtal. Pågående
-  sparande och dess hörda kvitto avslutas före röstbytet.
+  sparande och dess kontrollerade ljudkvittens avslutas före röstbytet.
+  Mikrofonval, felingång och emulerade pekbredder har skilda identiteter;
+  KONTEXT-16/17 avser verklig uppläsning, mikrofon och beröring.
+  [Separat samtalsförberedelse](conversation-preparation.md) beskriver
+  versionsvärden, paket, registrerat sparande och PCM genom hållen start.
 - [Samtal med Skyttel](text-assistant.md): hela utkast,
   rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
   samtidigt synliga objekt och samband i karta och detaljpanel även på

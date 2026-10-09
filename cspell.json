@@ -718,7 +718,11 @@
     "stängmål",
     "breddåterställning",
     "historikhändelsen",
-    "historikresultaten"
+    "historikresultaten",
+    "launchern",
+    "fyrasekundersgräns",
+    "avbrottsgräns",
+    "utkastbatchen"
   ],
   "overrides": [
     {

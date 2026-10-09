@@ -10,7 +10,7 @@ import {
 } from '@playwright/test';
 import { conversationConsentTextVersion } from '../../src/shared/conversation-consent.js';
 import { bounds, contrast } from '../support/accessibility.js';
-import { createHousehold, openSettings, signIn } from '../support/client.js';
+import { closeSupportDialog, createHousehold, openSettings, signIn } from '../support/client.js';
 import { specifiedConsentText } from '../support/conversation.js';
 import {
   chooseConversationText,
@@ -25,6 +25,7 @@ import {
   turnMicrophoneOn,
   voiceBox,
 } from '../support/conversation-page.js';
+import { readDraftProposal, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -682,6 +683,35 @@ async function arrangeDraft(page: Page, path: string, origin: string) {
   return (await (await page.request.get(`${path}/map`)).json()).draft;
 }
 
+async function readPrivateLo(page: Page, name = 'Lo Exempel') {
+  const proposal = await readDraftProposal(page, name);
+  const proposedValues = proposal
+    .getByRole('heading', { name: 'Föreslagna värden', exact: true })
+    .locator('..');
+  await expect(
+    proposedValues
+      .locator('dt')
+      .filter({ hasText: /^Namn(?:\s+· ändrat)?$/ })
+      .locator('..')
+      .locator('dd'),
+  ).toHaveText(name);
+  await expect(
+    proposedValues
+      .locator('dt')
+      .filter({ hasText: /^Typ(?:\s+· ändrat)?$/ })
+      .locator('..')
+      .locator('dd'),
+  ).toHaveText('Person');
+  await expect(
+    proposedValues
+      .locator('dt')
+      .filter({ hasText: /^Beskrivning(?:\s+· ändrat)?$/ })
+      .locator('..')
+      .locator('dd'),
+  ).toHaveText('Påhittad uppgift');
+  await closeSupportDialog(page, name);
+}
+
 test('MEDGIVANDE-15: återkallandet behåller utkast och oskickad text', async ({ page }) => {
   let release!: (reply: unknown[]) => void;
   const model = textModel((request) => {
@@ -742,6 +772,7 @@ test('MEDGIVANDE-15: återkallandet behåller utkast och oskickad text', async (
     await expect(page.getByRole('region', { name: 'Samtalsnotis' })).toHaveCount(0);
     await startConversationWithText(page);
     await expect(message(page)).toHaveValue('Min oskickade text.');
+    await readPrivateLo(page);
     await expect(textView(page).getByRole('log')).not.toContainText('Tillfälligt provord');
     await message(page).fill('Börja om.');
     await textView(page).getByRole('button', { name: 'Skicka', exact: true }).click();
@@ -821,6 +852,28 @@ test('MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet', async (
     await expect(history).toContainText('Lo Exempel');
     await history.getByText('Identifiera sparandet och användaren', { exact: true }).click();
     await expect(history).toContainText(before.operationId);
+    await history.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(
+      history.locator('.history-changes').getByText('Objekttyp: Person.', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      history
+        .locator('.history-changes')
+        .getByText('Beskrivning: Påhittad uppgift', { exact: true }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    const savedLo = await readTableObject(page, 'Lo Exempel');
+    await expect(
+      savedLo
+        .locator('dt')
+        .filter({ hasText: /^Namn$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveText('Lo Exempel');
+    await expect(
+      savedLo.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
+    ).toHaveText('Person');
+    await expect(savedLo.locator('.household-table-description')).toHaveText('Påhittad uppgift');
   } finally {
     release?.();
     await app.close();
@@ -914,6 +967,7 @@ test('MEDGIVANDE-18: nästa textförsök visar återkallandet på en annan enhet
     expect((await (await page.request.get(`${path}/map`)).json()).draft.changes).toHaveLength(1);
     await startConversationWithText(page);
     await expect(message(page)).toHaveValue('Text som inte hunnit skickas.');
+    await readPrivateLo(page);
     await expect(textView(page).getByRole('log')).not.toContainText(
       'Text som inte hunnit skickas.',
     );

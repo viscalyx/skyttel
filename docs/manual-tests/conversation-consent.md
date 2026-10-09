@@ -21,6 +21,23 @@ användarens alla enheter och att medgivandet följer medlemskapet.
   MEDGIVANDE-06, MEDGIVANDE-13 och MEDGIVANDE-18.
 - Den kontrollerade miljön använder inga verkliga externa konton.
 
+Körbara paket, versionsvärden, felgränser och städning finns i
+[den separata förberedelsen](conversation-preparation.md). Följ den vid
+angivet arbetssteg, tillsammans med UI-proceduren en gång.
+
+## Läsning av bevarade och sparade uppgifter
+
+I MEDGIVANDE-15/16/18, när ett steg kräver kvarvarande eller rättat Lo-förslag:
+öppna
+**Utkast → Visa förslaget: Lo Exempel** (eller det rättade namnet).
+Läs Person, det aktuella namnet och **Påhittad uppgift** som beskrivning.
+Stäng dialogen före nästa samtalssteg. När ett steg kräver sparad Lo:
+öppna **Tabell**, fäll ut objektets rad och läs samma fullständiga värden.
+Ett kvitto läses genom **Rapporter → Ändringshistorik → Visa ändringarna**.
+Läs objektets namn, typ och beskrivning och välj **Tillbaka till arbetet**.
+Gör läsningen vid respektive bevarat/rättat/sparat steg, utan att lägga
+nya förslag i utkastet eller utföra ett extra sparande.
+
 ## Allmän förberedelse
 
 1. Starta den kontrollerade
@@ -31,9 +48,10 @@ användarens alla enheter och att medgivandet följer medlemskapet.
    kartan tom.
 3. Starta en ny installation för varje fall, så att inget medgivande är
    sparat när fallet börjar. Avsluta med `quit`.
-4. Kör även med tangentbord, skärmläsare och pekskärm på fysisk telefon
-   och dator. Anteckna hjälpmedel och plattformar separat från
-   Chromium-emulering.
+4. Använd Chromium och dess emulerade pekskärm för de vanliga fallen.
+   Faktisk uppläsning och fysisk utrustning har separata fall
+   MEDGIVANDE-19/20. Loopback-installationen kan användas med NVDA på
+   dator; en fysisk telefon behöver den separata HTTPS-miljön.
 
 ## Förberedelse för återkallande under samtal
 
@@ -44,7 +62,7 @@ repositoryts rot:
 
 ```sh
 npm run build
-npx tsx scripts/manual-voice.ts
+npm run test:env -- node --import tsx scripts/manual-voice.ts
 ```
 
 Öppna den utskrivna adressen privat och logga in som Alex med Google.
@@ -74,6 +92,23 @@ godkänt under besöket.
 [conversation-consent.spec.ts](../../tests/integration/conversation-consent.spec.ts),
 testfallet “MEDGIVANDE-01: samtalsknapparna visar medgivanderutan och
 Avbryt startar inget”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-consent.spec.ts",
+    "caseId": "MEDGIVANDE-01"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Varje explicit samtalsstart visar samma ruta. Kryssrutan är omarkerad, och raden om återkallande säger **Du kan återkalla det i Inställningar.**",
+    "Rutan är en dialog med namnet **Samtal med Skyttel**. Resten av sidan går inte att använda medan den visas.",
+    "**Avbryt** och Escape startar ingenting och sparar inget medgivande. Fokus återgår till den knapp som valdes."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -117,6 +152,23 @@ låta ett osparat medgivande gälla tills kartan lämnas eller sidan laddas om.
 testfallet “MEDGIVANDE-02: vald knapp avgör röst eller text och
 medgivandet gäller besöket”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-consent.spec.ts",
+    "caseId": "MEDGIVANDE-02"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Röstknappen startar samtalet med mikrofonen. **Nytt samtal** i textvyn startar textsamtalet utan att begära mikrofonåtkomst. Att bara öppna textvyn startar ingenting och frågar inte om medgivande.",
+    "**Nytt samtal** frågar inte igen, och samtalet frågar inte igen efter ett besök i Inställningar.",
+    "Efter omladdningen frågar Skyttel igen. Inget medgivande har sparats."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Välj **Prata med Skyttel** och **Godkänn och starta** utan att markera
@@ -158,6 +210,22 @@ profil. Acceptera som Robin. Inget medgivande är sparat.
 testfallet “MEDGIVANDE-03: sparat medgivande följer användaren men inte
 andra medlemmar”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-consent.spec.ts",
+    "caseId": "MEDGIVANDE-03"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Alex sparade medgivande gäller efter omladdning och på den andra enheten, för både röst och text.",
+    "Robin har inget medgivande i hushållet och får frågan. Robins avbrott ändrar inte Alex medgivande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Som Alex, välj **Skriv till Skyttel → Nytt samtal**, markera
@@ -190,6 +258,23 @@ andra medlemmar”.
 testfallet “MEDGIVANDE-04: medgivanderutan fungerar med tangentbord och
 pekskärm”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-consent.spec.ts",
+    "caseId": "MEDGIVANDE-04"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Verktygsradens plats avgör var rutan öppnas, inte om enheten är mobil. I ett lågt fönster nås alla kontroller genom att rulla i rutan.",
+    "Fokus står på rubriken när rutan öppnas och syns på varje kontroll. Tangentordningen är kryssrutan, **Godkänn och starta** och **Avbryt**.",
+    "Kryssrutan och knapparna går att aktivera i pekskärmsemuleringen. Samtalet startar efter godkännandet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. På dator, välj **Prata med Skyttel**. Rutan ska öppnas intill
@@ -204,8 +289,8 @@ pekskärm”.
    mellanslag. Gå vidare till **Godkänn och starta** och tryck Enter.
 4. På en pekskärm med en annan användare, eller i en ny installation, tryck
    på **Skriv till Skyttel**, **Nytt samtal** och **Godkänn och starta**.
-5. Upprepa steg 3 med skärmläsare. Lyssna efter dialogens namn,
-   medgivandetexten, kryssrutans namn och raden om återkallande.
+5. Läs dialogens synliga namn, medgivandetexten, kryssrutans namn och
+   raden om återkallande. Uppläsningen bedöms i MEDGIVANDE-19.
 
 **Förväntat resultat:**
 
@@ -213,7 +298,7 @@ pekskärm”.
   I ett lågt fönster nås alla kontroller genom att rulla i rutan.
 - Fokus står på rubriken när rutan öppnas och syns på varje kontroll.
   Tangentordningen är kryssrutan, **Godkänn och starta** och **Avbryt**.
-- Kryssrutan och knapparna går att träffa med ett finger. Samtalet
+- Kryssrutan och knapparna går att aktivera i pekskärmsemuleringen. Samtalet
   startar efter godkännandet.
 
 ## Sidan Samtal med Skyttel
@@ -236,6 +321,24 @@ MEDGIVANDE-03. Inget medgivande är sparat eller godkänt under besöket.
 testfallet “MEDGIVANDE-05: sidan Samtal med Skyttel visar medgivandet för
 alla medlemmar”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-05"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "**Samtal med Skyttel** står efter **Rymdkartan** och före **Typer och egna fält**, både på översikten och i menyn. Översikten beskriver sidan med **Ditt medgivande, utkastet och textvyns bredd.**",
+    "Sidan öppnas med fokus på rubriken **Samtal med Skyttel**, och menyn markerar sidan.",
+    "Under **Medgivande** står raden **Gäller dig i hushållet Medgivandeprov.**, medgivandetexten i tre stycken med samma ordalydelse som i medgivanderutan, meningen **Ett sparat medgivande gäller alla dina samtal i hushållet Medgivandeprov tills du återkallar det.**, statusraden **Inget medgivande är sparat.** och knappen **Spara medgivandet**.",
+    "Robin ser samma samtalsinställningar som Alex, utan gruppen **Administration**."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Som Alex, öppna **Inställningar**. Läs gruppen **Hushållets karta** på
@@ -256,7 +359,8 @@ alla medlemmar”.
   **Ett sparat medgivande gäller alla dina samtal i hushållet
   Medgivandeprov tills du återkallar det.**, statusraden
   **Inget medgivande är sparat.** och knappen **Spara medgivandet**.
-- Robin ser samma samtalsinställningar som Alex, utan gruppen **Administration**.
+- Robin ser samma samtalsinställningar som Alex, utan gruppen
+  **Administration**.
 
 ### MEDGIVANDE-06: Spara medgivandet sparar direkt utan att starta ett samtal
 
@@ -271,6 +375,24 @@ startar utan medgivanderutan, på användarens alla enheter.
 [conversation-settings.spec.ts](../../tests/integration/conversation-settings.spec.ts),
 testfallet “MEDGIVANDE-06: Spara medgivandet sparar direkt utan att starta
 ett samtal”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-06"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Texten **Medgivandet är sparat** visas vid knappen. Statusraden visar **Sparat den** följt av dagens datum, till exempel **Sparat den 1 oktober 2026.**",
+    "Knappen heter nu **Återkalla medgivandet** och har kvar fokus. Varken samtal eller mikrofon startar när medgivandet sparas.",
+    "**Prata med Skyttel** startar samtalet direkt, utan medgivanderutan.",
+    "Den andra enheten visar samma statusrad och **Återkalla medgivandet**."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -305,6 +427,22 @@ MEDGIVANDE-06 och sedan laddat om sidan, så att inget samtal pågår.
 testfallet “MEDGIVANDE-07: Återkalla medgivandet gäller genast och Skyttel
 frågar igen”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-07"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Texten **Medgivandet är återkallat** visas vid knappen, som nu heter **Spara medgivandet** och har kvar fokus. Statusraden visar **Inget medgivande är sparat.**, även efter omladdningen.",
+    "Både röststart och **Nytt samtal** visar medgivanderutan. Varken samtal eller mikrofon startar."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Öppna sidan **Samtal med Skyttel** och välj **Återkalla medgivandet**.
@@ -336,6 +474,24 @@ och att spara, och att sparandet inte stör ett pågående samtal.
 [conversation-settings.spec.ts](../../tests/integration/conversation-settings.spec.ts),
 testfallet “MEDGIVANDE-08: medgivande för besöket går att återkalla och att
 spara”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-08"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "I steg 2 visar statusraden **Du har godkänt för det här besöket. Inget medgivande är sparat.** Både **Spara medgivandet** och **Återkalla medgivandet** visas.",
+    "Efter återkallandet visar statusraden **Inget medgivande är sparat.** Bara **Spara medgivandet** finns kvar, och den har fokus. Samtalet är avslutat och mikrofonen är av.",
+    "I steg 4 visas medgivanderutan igen, med omarkerad kryssruta.",
+    "Efter **Spara medgivandet** visar statusraden **Sparat den** med dagens datum, och knappen heter **Återkalla medgivandet**. Samtalet pågår som förut, med mikrofonen på."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -370,15 +526,31 @@ spara”.
 
 **Förutsättningar:** Använd en
 [separat provdatabas](../development/devcontainer.md#disposable-local-database)
-i stället för kostnadsmiljön. Starta den med en påhittad `OPENAI_API_KEY`
-i den privata miljöfilen, logga in och spara medgivandet på sidan. Ta
-sedan bort nyckeln ur miljöfilen och starta om med samma databas. Utan
-nyckeln erbjuder servern inte samtalet.
+i stället för kostnadsmiljön. Använd röstinstallationen ovan, logga in och spara
+medgivandet.
+Kör `available off`, sedan `restart` och behåll samma databas och profil.
+Återställ med `available on` och `restart`; avsluta med `quit`.
 
 **Integrationstest:**
 [conversation-settings.spec.ts](../../tests/integration/conversation-settings.spec.ts),
 testfallet “MEDGIVANDE-09: sidan visas och återkallar när samtalet inte är
 tillgängligt”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-09"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Sidan visar **Samtal med Skyttel är inte tillgängligt just nu.** tillsammans med medgivandetexten och statusraden **Sparat den** med datum. Bara **Återkalla medgivandet** visas.",
+    "Efter återkallandet visar statusraden **Inget medgivande är sparat.** **Spara medgivandet** visas inte så länge samtalet inte är tillgängligt. Ingen knapp finns kvar, så fokus står på rubriken **Medgivande**."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -408,6 +580,23 @@ se att sidan då visar det läge som fortfarande gäller.
 [conversation-settings.spec.ts](../../tests/integration/conversation-settings.spec.ts),
 testfallet “MEDGIVANDE-10: ett misslyckat sparande sägs och knappen behåller
 sitt läge”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-10"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "I steg 1 visas **Medgivandet kunde inte sparas. Försök igen.** vid knappen. Statusraden visar fortfarande **Inget medgivande är sparat.**, och **Spara medgivandet** har kvar sitt namn och fokus.",
+    "I steg 2 sparas medgivandet, och texten vid knappen säger det.",
+    "I steg 3 visas **Medgivandet kunde inte återkallas. Försök igen.** Statusraden visar fortfarande **Sparat den** med datum, och **Återkalla medgivandet** har kvar sitt namn och fokus. Med nätverket tillbaka återkallas medgivandet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -442,6 +631,24 @@ ljust och mörkt tema.
 testfallet “MEDGIVANDE-11: sidan sköts med tangentbord och pekskärm i båda
 teman”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-11"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Fokus syns på knappen och står kvar på den när den byter namn. Texten vid knappen säger resultatet efter varje tryck.",
+    "Rubrik, texter, statusrad, knappar och texten vid knappen går att läsa i båda teman.",
+    "På telefonbredd ryms delen utan rullning i sidled. Knappen går att träffa med ett finger, och texten vid knappen syns utan att rulla.",
+    "Resultattexten visas vid knappen utan att fokus flyttas."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Öppna sidan **Samtal med Skyttel**. Tryck Tab från sidans rubrik tills
@@ -452,8 +659,8 @@ teman”.
 3. På en pekskärm med telefonbredd, med en annan användare eller i en ny
    installation, öppna sidan och tryck på **Spara medgivandet** och sedan
    på **Återkalla medgivandet**.
-4. Upprepa steg 1 med skärmläsare. Lyssna efter knappens namn före och
-   efter varje tryck och efter texten vid knappen.
+4. Kontrollera de synliga knappnamnen före och efter varje tryck.
+   Uppläsningen bedöms separat i MEDGIVANDE-19.
 
 **Förväntat resultat:**
 
@@ -461,9 +668,10 @@ teman”.
   vid knappen säger resultatet efter varje tryck.
 - Rubrik, texter, statusrad, knappar och texten vid knappen går att läsa
   i båda teman.
-- På telefonbredd ryms delen utan rullning i sidled. Knappen går att
-  träffa med ett finger, och texten vid knappen syns utan att rulla.
-- Skärmläsaren läser upp texten vid knappen utan att fokus flyttas.
+- På telefonbredd ryms delen utan rullning i sidled. Knappen är nåbar i
+  emuleringen; fysisk träffsäkerhet provas separat, och texten vid knappen syns
+  utan att rulla.
+- Resultattexten visas vid knappen utan att fokus flyttas.
 
 ### MEDGIVANDE-12: en medlem som bjuds in igen har inget sparat medgivande
 
@@ -480,13 +688,32 @@ MEDGIVANDE-03 och har sparat medgivandet på sidan **Samtal med Skyttel**.
 testfallet “MEDGIVANDE-12: en medlem som bjuds in igen har inget sparat
 medgivande”.
 
-**Steg:**
+**Separat förberedelse:**
 
 1. Som Alex, öppna **Inställningar** och **Administrera tillgång**. Välj
    **Återkalla tillgång** för Robin under **Medlemmar** och bekräfta.
 2. Bjud in Robins användar-ID igen, och acceptera inbjudan som Robin.
-3. Som Robin, öppna sidan **Samtal med Skyttel** och läs statusraden.
-4. Välj **Tillbaka till kartan** och **Prata med Skyttel**.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-12"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Statusraden visar **Inget medgivande är sparat.**, och knappen heter **Spara medgivandet**.",
+    "**Prata med Skyttel** visar medgivanderutan, med omarkerad kryssruta. Varken samtal eller mikrofon startar."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Som Robin, öppna sidan **Samtal med Skyttel** och läs statusraden.
+2. Välj **Tillbaka till kartan** och **Prata med Skyttel**.
 
 **Förväntat resultat:**
 
@@ -510,6 +737,22 @@ MEDGIVANDE-06.
 testfallet “MEDGIVANDE-13: ett återkallande på en annan enhet avslutar
 samtalet”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-13"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "På den första enheten stängs mikrofonen av, och samtalet avslutas. Kartan finns kvar, och ingen text säger att åtkomsten har upphört. En notis visar **Medgivandet är återkallat. Samtalet är avslutat. Utkastet ligger kvar.**",
+    "**Prata med Skyttel** visar medgivanderutan, med omarkerad kryssruta."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Välj **Prata med Skyttel** i kartan. Vänta tills mikrofonen är på.
@@ -523,7 +766,7 @@ samtalet”.
 
 - På den första enheten stängs mikrofonen av, och samtalet avslutas.
   Kartan finns kvar, och ingen text säger att åtkomsten har upphört.
-  En notis säger **Medgivandet är återkallat. Samtalet är avslutat.
+  En notis visar **Medgivandet är återkallat. Samtalet är avslutat.
   Utkastet ligger kvar.**
 - **Prata med Skyttel** visar medgivanderutan, med omarkerad kryssruta.
 
@@ -538,7 +781,8 @@ gäller och att användaren kan ersätta det från Inställningar.
 allmänna förberedelsen, med bara Alex och hushållet Medgivandeprov. Spara
 medgivandet enligt steg 1 i MEDGIVANDE-06. Lämna sidan öppen utan samtal.
 Förbered sedan en annan sparad textversion enligt nedan. Värdet 1 är den
-tidigare textversionen; den aktuella textversionen är 2. Det motsvarar det sparade
+tidigare textversionen; den aktuella textversionen är 2. Det motsvarar det
+sparade
 tillståndet efter ett byte av medgivandetextens version.
 
 I en andra terminal, från repositoryts rot, sätt katalogen till exakt
@@ -589,6 +833,22 @@ allmänna förberedelsen; starta en ny installation inför nästa körning.
 testfallet “MEDGIVANDE-14: ändrad medgivandetext kräver ett nytt sparat
 medgivande”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-14"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Före sparandet står **Medgivandetexten har ändrats. Inget medgivande är sparat.** och endast **Spara medgivandet** erbjuds.",
+    "Efter sparandet visas **Medgivandet är sparat**, statusraden börjar med **Sparat den** och visar dagens datum. Knappen heter **Återkalla medgivandet**. Det nya medgivandet ersätter den andra textversionens medgivande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Ladda om sidan och öppna **Inställningar**, **Samtal med Skyttel**.
@@ -620,6 +880,25 @@ Utkastet har en osparad ändring. Inget medgivande är sparat.
 **Integrationstest:**
 [conversation-settings.spec.ts](../../tests/integration/conversation-settings.spec.ts),
 testfallet “MEDGIVANDE-15: återkallandet behåller utkast och oskickad text”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-15"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Rutan säger **Samtalet avslutas och samtalstexten töms. Utkastet med 1 osparade ändringar ligger kvar.** och har två knappar.",
+    "Escape och **Avbryt** återför fokus till **Återkalla medgivandet**. Mikrofonen och arbetet fortsätter.",
+    "Bekräftelsen stänger mikrofonen och avslutar arbetet. Fokus går till **Spara medgivandet**; resultatet säger **Medgivandet är återkallat**.",
+    "Textvyn och röstrutan är borta i kartan. Ingen samtalsnotis visas där. Lo Exempel ligger kvar i utkastet. Det sena svaret visas inte.",
+    "Nästa start frågar om medgivande igen. **Min oskickade text.** ligger kvar i skrivfältet. Den gamla samtalstexten och kontexten är tömda. Det nya svaret visas i det nya samtalet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -665,26 +944,40 @@ Skriv `hold-save on` i terminalen innan samtalet börjar.
 [conversation-settings.spec.ts](../../tests/integration/conversation-settings.spec.ts),
 testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-16"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Rutan säger **Skyttel sparar ditt utkast. Sparandet slutförs.** i stället för att ange antal osparade ändringar.",
+    "Medgivandet återkallas medan det registrerade sparandet slutförs. Kartan innehåller Lo Exempel och utkastet är tomt.",
+    "Ändringshistoriken visar sparandet med det noterade ID:t. Den har ett sparande för samma ID, även efter att det fördröjda svaret släpps.",
+    "Textvyn och röstrutan är stängda och ingen samtalsnotis visas. Sparresultatet går att kontrollera utan ett nytt samtalsmedgivande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn för besöket och
-   vänta på textvyn.
-   Slå på mikrofonen med **Prata med Skyttel** och skicka
-   **Spara hela utkastet nu.**.
-2. Läs `id`, `draft.version` och `draft.contentVersion` i terminalens
-   `held`. Ersätt ID, V och C med dessa värden i följande kommando:
-
-   ```text
-   tool ID save_draft {"version":V,"contentVersion":C,"operationId":"prov"}
-   ```
-
-3. Vänta på terminalens `save-registered`. Notera dess `operationId`.
-   Öppna **Samtal med Skyttel** i Inställningar och välj
-   **Återkalla medgivandet**. Läs rutan och bekräfta.
-4. Skriv `release-save`. Gå tillbaka till kartan. Öppna
-   **Rapporter → Ändringshistorik** och kontrollera det enda sparandet
-   med Lo Exempel. Öppna **Identifiera sparandet och användaren**
-   och jämför dess ID med det noterade sparförsöket.
+1. Förbered hållning av registrerat sparande enligt den separata
+   förberedelsen. Välj **Skriv till Skyttel → Nytt samtal**, godkänn
+   för besöket och slå på mikrofonen. Skicka **Spara hela utkastet nu.**.
+2. Låt operatören släppa sparverktyget med de faktiska aktuella
+   värdena och invänta `save-registered` innan nästa steg.
+3. Öppna **Samtal med Skyttel** i Inställningar. Välj **Återkalla
+   medgivandet**, läs **Skyttel sparar ditt utkast. Sparandet slutförs.**
+   och bekräfta återkallandet.
+4. Operatören släpper det registrerade svaret enligt förberedelsen.
+   Välj **Tillbaka till kartan**. Läs hela Lo Exempel i Tabell och tomt
+   utkast. Öppna **Rapporter → Ändringshistorik → Visa ändringarna**
+   och läs det enda sparandets fullständiga Lo-värden.
+5. Rå ID-jämförelse utförs separat enligt förberedelsen. Välj
+   **Tillbaka till arbetet** efter läsningen.
 
 **Förväntat resultat:**
 
@@ -705,22 +998,41 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
 
 **Förutsättningar:** Följ förberedelsen ovan. Börja ett textsamtal och
 öppna **Samtal med Skyttel** i Inställningar. Prova ljust och mörkt tema
-på dator och telefon; anteckna faktisk enhet och hjälpmedel separat.
+på dator och emulerad pekskärm; faktisk enhet och hjälpmedel är separata
+observationsfall.
 
 **Integrationstest:**
 [conversation-settings.spec.ts](../../tests/integration/conversation-settings.spec.ts),
 testfallet “MEDGIVANDE-17: återkallanderutan med tangentbord och pekskärm”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-17"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Fokus börjar på rubriken. Namn och beskrivning berättar vad som avslutas och vad som ligger kvar. Tab stannar inom rutan.",
+    "Escape och **Avbryt** återför fokus till den valda knappen utan att ändra medgivandet. Bekräftelse återför fokus till **Spara medgivandet**.",
+    "Text och knappar kan läsas och nås även efter förstoring. Knapparna fungerar med beröring. Resultattexten visas vid knappen; uppläsning provas i MEDGIVANDE-19."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Använd Tab och Enter för att välja **Återkalla medgivandet**.
-   Läs rutans rubrik, beskrivning och knappar med skärmläsare.
+   Läs rutans synliga rubrik, beskrivning och knappar.
 2. Gå framåt och bakåt med Tab. Välj **Avbryt** och kontrollera fokus.
    Öppna igen och stäng med Escape.
-3. Upprepa på pekskärm i båda teman. Förstora texten och kontrollera
-   läsordning, synligt fokus och att alla handlingar går att nå.
-4. Öppna igen och välj **Återkalla och avsluta samtalet**. Lyssna på
-   resultatet utan att flytta fokus.
+3. Upprepa i emulerad pekskärm, 390 × 844 px, i båda teman.
+   Kontrollera läsbar text, synligt fokus och nåbara kontroller.
+   Fysisk beröring och förstoring provas i MEDGIVANDE-20.
+4. Öppna igen och välj **Återkalla och avsluta samtalet**. Läs resultatet utan
+   att flytta fokus.
 
 **Förväntat resultat:**
 
@@ -729,7 +1041,8 @@ testfallet “MEDGIVANDE-17: återkallanderutan med tangentbord och pekskärm”
 - Escape och **Avbryt** återför fokus till den valda knappen utan att
   ändra medgivandet. Bekräftelse återför fokus till **Spara medgivandet**.
 - Text och knappar kan läsas och nås även efter förstoring. Knapparna
-  fungerar med beröring. Resultatet läses upp en gång vid knappen.
+  fungerar med beröring. Resultattexten visas vid knappen; uppläsning provas i
+  MEDGIVANDE-19.
 
 ### MEDGIVANDE-18: nästa textförsök visar återkallandet på en annan enhet
 
@@ -746,10 +1059,28 @@ Inställningar. Logga in som Alex i en andra profil på samma adress.
 testfallet “MEDGIVANDE-18: nästa textförsök visar återkallandet på en annan
 enhet”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-18"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
+  "outcomes": [
+    "Första profilen visar **Medgivandet är återkallat. Samtalet är avslutat. Utkastet ligger kvar.** senast vid nästa försök att skicka. Notisen läses upp en gång och säger inte att hushållets åtkomst har upphört.",
+    "Textvyn och samtalet avslutas; kartan och utkastet finns kvar.",
+    "Nästa start visar medgivanderutan. Skrivfältet har kvar **Text som inte hunnit skickas.**. Texten ingår inte i det nya samtalets historik."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Välj **Skriv till Skyttel → Nytt samtal** i första profilen och invänta
-   att samtalet startar med det sparade medgivandet. Skriv **Text som inte hunnit
+   att samtalet startar med det sparade medgivandet. Skriv **Text som inte
+   hunnit
    skickas.** i skrivfältet utan att skicka.
 2. Öppna **Samtal med Skyttel** i andra profilen och välj
    **Återkalla medgivandet**. Inget samtal pågår där; ingen
@@ -762,7 +1093,7 @@ enhet”.
 
 - Första profilen visar **Medgivandet är återkallat. Samtalet är avslutat.
   Utkastet ligger kvar.** senast vid nästa försök att skicka. Notisen
-  läses upp en gång och säger inte att hushållets åtkomst har upphört.
+  visar beskedet och säger inte att hushållets åtkomst har upphört.
 - Textvyn och samtalet avslutas; kartan och utkastet finns kvar.
 - Nästa start visar medgivanderutan. Skrivfältet har kvar **Text som inte
   hunnit skickas.**. Texten ingår inte i det nya samtalets historik.
@@ -786,9 +1117,9 @@ enhet är provad, och fullständig överensstämmelse intygas inte.
 | 4.1.3 Statusmeddelanden | Ett misslyckat sparande av medgivandet står som en feltext i rutan, som hjälpmedel läser upp. | Feltextens ordalydelse och roll i klientens enhetstester. | Uppläsning av feltexten. |
 <!-- markdownlint-enable MD013 -->
 
-Ett sparat medgivande för en äldre version av medgivandetexten ger
-medgivanderutan igen. Det provas i serverns och klientens enhetstester,
-eftersom texten bara har en version.
+Ett sparat medgivande för en äldre textversion ger inte giltigt
+medgivande. MEDGIVANDE-14 provar det syntetiskt förberedda gamla
+tillståndet genom riktig inställningssida och server.
 
 ### Delen Medgivande på sidan Samtal med Skyttel
 
@@ -829,3 +1160,107 @@ verifiering av överensstämmelse.
   Ett återkallande från en annan enhet annonseras som en enda notis.
   Faktisk uppläsning med NVDA och VoiceOver återstår, liksom lyssning på
   riktigt ljud; den kontrollerade transporten är tyst.
+
+## Observationer med verkliga hjälpmedel och utrustning
+
+### MEDGIVANDE-19: medgivande med skärmläsare
+
+**Syfte:** Bedöma den verkliga observationen separat från Chromium-emulering.
+
+**Användare:** Alex; Robin i medlemskapets förberedelse om den behövs.
+
+**Förutsättningar:** NVDA i Chromium på dator.
+
+**Separat förberedelse:**
+
+Starta den kontrollerade installationen enligt områdets förberedelse på
+dator. Använd NVDA i samma Chromium-fönster. Tyst syntetisk media räcker
+för denna uppläsningskontroll; inget verkligt leverantörsanrop behövs.
+Avsluta med `quit` efter granskningen och anteckna NVDA-versionen.
+
+**Kräver mänsklig observation:** Dialogens namn, hela medgivandetexten,
+kryssrutans namn, återkallandets beskrivning och resultat läses i rätt ordning.
+Samma resultat läses igen efter upprepad handling.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Dialogens namn, hela medgivandetexten, kryssrutans namn, återkallandets beskrivning och resultat läses i rätt ordning. Samma resultat läses igen efter upprepad handling."
+  },
+  "reference": "NVDA i Chromium på dator",
+  "outcomes": [
+    "Dialogens namn, hela medgivandetexten, kryssrutans namn, återkallandets beskrivning och resultat läses i rätt ordning. Samma resultat läses igen efter upprepad handling."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ de synliga arbetsstegen i MEDGIVANDE-04, MEDGIVANDE-11 och
+   MEDGIVANDE-17, ett fall i taget,
+   från rätt utgångsläge. Använd verklig utrustning för den angivna
+   observationen; syntetiska terminalpaket ersätter inte faktiskt tal.
+2. Anteckna det faktiskt hörda eller utförda resultatet, plattform,
+   webbläsare och hjälpmedel. För fysiskt ljud, använd samma påhittade
+   meddelanden; följ den angivna ljud- eller inmatningsobservationen.
+
+**Förväntat resultat:**
+
+- Dialogens namn, hela medgivandetexten, kryssrutans namn, återkallandets
+  beskrivning och resultat läses i rätt ordning. Samma resultat läses igen efter
+  upprepad handling.
+
+### MEDGIVANDE-20: medgivande på fysisk pekskärm och med förstoring
+
+**Syfte:** Bedöma den verkliga observationen separat från Chromium-emulering.
+
+**Användare:** Alex; Robin i medlemskapets förberedelse om den behövs.
+
+**Förutsättningar:** Fysisk telefon och dator, ljust och mörkt tema, 200/400
+procent zoom.
+
+**Separat förberedelse:**
+
+Följ [den fysiska förberedelsen](../development/testing.md#physical-device-manual-preparation)
+med isolerad, nåbar HTTPS-installation, verklig inloggning och påhittade
+uppgifter. Loopback-adressen från launchern når inte en fysisk telefon.
+Verkliga leverantörsanrop kräver separat godkännande innan körning.
+Skapa Lo Exempel som Person med Påhittad uppgift när fallet behöver utkast;
+använd tom beskrivning för FRAGA. Återställ utkast och samtal mellan fallen,
+och ta bort provhushållet när granskningen är klar.
+
+**Kräver mänsklig observation:** Beröring av kryssruta och knappar fungerar;
+rubrik, text, fokus och alla kontroller är nåbara vid zoom utan sidrullning.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Beröring av kryssruta och knappar fungerar; rubrik, text, fokus och alla kontroller är nåbara vid zoom utan sidrullning."
+  },
+  "reference": "Fysisk telefon och dator, ljust och mörkt tema, 200/400 procent zoom",
+  "outcomes": [
+    "Beröring av kryssruta och knappar fungerar; rubrik, text, fokus och alla kontroller är nåbara vid zoom utan sidrullning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ de synliga arbetsstegen i MEDGIVANDE-04, MEDGIVANDE-11 och
+   MEDGIVANDE-17, ett fall i taget,
+   från rätt utgångsläge. Använd verklig utrustning för den angivna
+   observationen; syntetiska terminalpaket ersätter inte faktiskt tal.
+2. Anteckna det faktiskt hörda eller utförda resultatet, plattform,
+   webbläsare och hjälpmedel. För fysiskt ljud, använd samma påhittade
+   meddelanden; följ den angivna ljud- eller inmatningsobservationen.
+
+**Förväntat resultat:**
+
+- Beröring av kryssruta och knappar fungerar; rubrik, text, fokus och alla
+  kontroller är nåbara vid zoom utan sidrullning.

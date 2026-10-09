@@ -219,7 +219,7 @@ for (const width of [390, 820])
       hasTouch: true,
       reducedMotion: 'reduce',
     });
-    test('KONTEXT-07: mätaren och röstrutans procent går att läsa på pekskärm', async ({
+    test(`${width === 390 ? 'KONTEXT-07' : 'KONTEXT-13'}: mätaren och röstrutans procent går att läsa på pekskärm ${width}`, async ({
       page,
     }) => {
       const { app, live, setTextPercent } = await installation(page);
