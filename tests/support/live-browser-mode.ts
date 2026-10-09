@@ -1,4 +1,25 @@
+import { expect } from 'vitest';
 import { liveBrowserFixtureSource } from './live-browser.js';
+
+/** Check UI disposal before restoring the external media substitute. */
+export async function assertBrowserVoiceDisposedAndRestore(restoreMedia?: () => void) {
+  if (!restoreMedia) return;
+  try {
+    // HouseholdMap/useVoice and the real SDK must dispose the native resources.
+    // No fixture-owned stop can satisfy these checks.
+    await expect.poll(() => window.skyttelVoiceFixture.stats().openPeers).toBe(0);
+    const resources = window.skyttelVoiceFixture.stats();
+    expect(resources.microphoneTracks.length).toBeGreaterThan(0);
+    expect(resources.remoteTracks.length).toBeGreaterThan(0);
+    expect(
+      resources.microphoneTracks.every((track) => !track.enabled && track.state === 'ended'),
+    ).toBe(true);
+    expect(resources.remoteTracks.every((track) => track.state === 'ended')).toBe(true);
+    expect(resources.audioElements).toBe(0);
+  } finally {
+    restoreMedia();
+  }
+}
 
 /** The same external media fixture as integration, restored after UI disposal. */
 export function installBrowserVoiceFixture() {

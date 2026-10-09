@@ -2,7 +2,7 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { cdp, type Locator, page } from 'vitest/browser';
 import type { MapState } from '../../src/shared/map.js';
-import { openHouseholdCamera } from '../support/household-camera-browser.js';
+import { ctrlWheel, openHouseholdCamera } from '../support/household-camera-browser.js';
 
 const state: MapState = {
   userId: 'alex',
@@ -74,37 +74,9 @@ test('NAVIGATION-05: trackpad pinch zoom follows pinch speed while a Ctrl mouse-
   const session = cdp();
   const offset = window.frameElement?.getBoundingClientRect();
   const nativeTarget = { x: empty.x + (offset?.x ?? 0), y: empty.y + (offset?.y ?? 0) };
-  // Native Chromium Ctrl + wheel events match the original Playwright input.
-  const pinch = async (deltaY: number, events: number) => {
-    await session.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...nativeTarget });
-    await session.send('Input.dispatchKeyEvent', {
-      type: 'keyDown',
-      key: 'Control',
-      code: 'ControlLeft',
-      modifiers: 2,
-      windowsVirtualKeyCode: 17,
-    });
-    try {
-      for (let index = 0; index < events; index += 1)
-        await session.send('Input.dispatchMouseEvent', {
-          type: 'mouseWheel',
-          ...nativeTarget,
-          deltaX: 0,
-          deltaY,
-          modifiers: 2,
-        });
-    } finally {
-      await session.send('Input.dispatchKeyEvent', {
-        type: 'keyUp',
-        key: 'Control',
-        code: 'ControlLeft',
-        windowsVirtualKeyCode: 17,
-      });
-    }
-  };
   const ratioAfter = async (deltaY: number, events: number, expected: number) => {
     await reset();
-    await pinch(deltaY, events);
+    await ctrlWheel(session, nativeTarget, deltaY, events);
     await expect.poll(() => separation() / baseline).toBeCloseTo(expected, 1);
     return separation() / baseline;
   };
@@ -112,7 +84,7 @@ test('NAVIGATION-05: trackpad pinch zoom follows pinch speed while a Ctrl mouse-
   // Reverse each manual pinch immediately, preserving the documented sequence.
   const reversePinch = async (deltaY: number, expected: number) => {
     const before = separation();
-    await pinch(deltaY, 5);
+    await ctrlWheel(session, nativeTarget, deltaY, 5);
     await expect.poll(() => separation() / before).toBeCloseTo(expected, 1);
     await expect.poll(separation).toBeCloseTo(baseline, 0);
     return separation() / before;

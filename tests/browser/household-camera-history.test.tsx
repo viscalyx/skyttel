@@ -4,7 +4,7 @@ import { cdp, type Locator, page } from 'vitest/browser';
 import type { MapState } from '../../src/shared/map.js';
 import { defaultViewSettings, type PersonalView } from '../../src/shared/personal-view.js';
 import { restoreDesktopPointer } from '../support/browser-touch.js';
-import { openHouseholdCamera } from '../support/household-camera-browser.js';
+import { ctrlWheel, openHouseholdCamera } from '../support/household-camera-browser.js';
 
 function cameraWork() {
   const person = {
@@ -267,31 +267,7 @@ test('KAMERA-09: mouse drags, wheel bursts and touch pinch create complete previ
   await expect.poll(() => projection(map)).not.toEqual(rotated);
   const panned = projection(map);
   const point = emptyPoint(map);
-  await session.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point });
-  await session.send('Input.dispatchKeyEvent', {
-    type: 'keyDown',
-    key: 'Control',
-    code: 'ControlLeft',
-    modifiers: 2,
-    windowsVirtualKeyCode: 17,
-  });
-  try {
-    for (let index = 0; index < 5; index++)
-      await session.send('Input.dispatchMouseEvent', {
-        type: 'mouseWheel',
-        ...point,
-        deltaX: 0,
-        deltaY: 3,
-        modifiers: 2,
-      });
-  } finally {
-    await session.send('Input.dispatchKeyEvent', {
-      type: 'keyUp',
-      key: 'Control',
-      code: 'ControlLeft',
-      windowsVirtualKeyCode: 17,
-    });
-  }
+  await ctrlWheel(session, point, 3, 5);
   await expect.poll(() => projection(map)).not.toEqual(panned);
   await previous.click();
   await expectProjection(map, panned);

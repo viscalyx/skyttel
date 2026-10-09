@@ -9,7 +9,10 @@ import {
   startConversationWithText,
 } from '../support/conversation-browser.js';
 import { openHouseholdConversation } from '../support/household-conversation-browser.js';
-import { installBrowserVoiceFixture } from '../support/live-browser-mode.js';
+import {
+  assertBrowserVoiceDisposedAndRestore,
+  installBrowserVoiceFixture,
+} from '../support/live-browser-mode.js';
 
 const notice = () => page.getByRole('region', { name: 'Samtalsnotis', exact: true });
 const textView = () => page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
@@ -19,20 +22,8 @@ let restoreMedia: (() => void) | undefined;
 afterEach(async () => {
   cleanup();
   try {
-    if (restoreMedia) {
-      // HouseholdMap/useVoice and the real SDK dispose the media first.
-      await expect.poll(() => window.skyttelVoiceFixture.stats().openPeers).toBe(0);
-      const resources = window.skyttelVoiceFixture.stats();
-      expect(resources.microphoneTracks.length).toBeGreaterThan(0);
-      expect(resources.remoteTracks.length).toBeGreaterThan(0);
-      expect(
-        resources.microphoneTracks.every((track) => !track.enabled && track.state === 'ended'),
-      ).toBe(true);
-      expect(resources.remoteTracks.every((track) => track.state === 'ended')).toBe(true);
-      expect(resources.audioElements).toBe(0);
-    }
+    await assertBrowserVoiceDisposedAndRestore(restoreMedia);
   } finally {
-    restoreMedia?.();
     restoreMedia = undefined;
     vi.unstubAllGlobals();
     localStorage.clear();
