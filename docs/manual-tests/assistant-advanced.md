@@ -295,8 +295,10 @@ testfallet “MCP-04: upphört innehåll och privata utkast skyddar typer”.
    **Andras privata namn**, beskrivning **Privat hemlig anteckning**, och
    **Lägg i utkastet och stäng** utan att spara. Alex använder klienten för att
    ta bort
-   Privat använd typ. Kontrollera avvisningen och att varken namn,
-   beskrivning eller privat objekt-ID finns i svaret.
+   Privat använd typ. Kontrollera avvisningen och att varken namn eller
+   beskrivning finns i svaret. Utför den separata kontrollen av privata
+   objektidentiteter vid denna avvisning enligt
+   [förberedelsen](assistant-client-preparation.md#fångster-för-mcp-04).
 3. Alex föreslår borttagning av Samtidig typ men sparar inte. Robin lägger
    därefter **Senare privat användning**, typ Samtidig typ, i sitt utkast
    utan att spara. Först nu ber Alex kontrollerade klienten spara hela utkastet.
@@ -311,8 +313,9 @@ testfallet “MCP-04: upphört innehåll och privata utkast skyddar typer”.
    **Senare privat användning** ska ha typen **Samtidig typ** och
    **Ej uppgivet** som beskrivning. Alex försöker åter ta bort Privat
    använd typ och spara borttagningen av Samtidig typ enligt förberedelsen.
-   Båda försöken ska avvisas utan privata namn, beskrivningar eller
-   objektidentiteter. Alex sparade katalog ska fortfarande innehålla
+   Båda försöken ska avvisas utan privata namn eller beskrivningar.
+   Utför förberedelsens separata kontroll av privata objektidentiteter
+   vid båda avvisningarna efter omstarten. Alex sparade katalog ska innehålla
    Samtidig typ; Robins båda förslag och historiken ska vara oförändrade.
 
 **Förväntat resultat:**

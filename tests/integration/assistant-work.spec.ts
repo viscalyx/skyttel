@@ -275,6 +275,20 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(await openDraftReview(page)).toContainText('Lo Exempel');
+    const proposal = await readDraftProposal(page, 'Lo Exempel');
+    for (const [label, value] of [
+      ['Namn', 'Lo Exempel'],
+      ['Typ', 'Person'],
+      ['Beskrivning', 'Ej uppgivet'],
+    ])
+      await expect(
+        proposal
+          .locator('dt')
+          .filter({ hasText: new RegExp(`^${label}$`) })
+          .locator('..')
+          .locator('dd'),
+      ).toHaveText(value);
+    await page.keyboard.press('Escape');
     const review = await tool(app.origin, token, 'read_my_draft');
     const attempt = {
       version: review.version,
@@ -332,6 +346,7 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     await page.reload();
     await openTable(page);
     const person = await editTableObject(page, 'Lo Exempel');
+    await expect(person.getByLabel('Objekttyp').locator('option:checked')).toHaveText('Person');
     await expect(person.getByLabel('Namn', { exact: true })).toHaveValue('Lo Exempel');
     await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
     await page.keyboard.press('Escape');
