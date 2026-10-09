@@ -331,6 +331,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sammanfattningsfel.
   [Separat samtalsförberedelse](conversation-preparation.md) beskriver
   versionsvärden, paket, registrerat sparande och PCM genom hållen start.
+  PCM-receptets tekniska referens är fylld installation med oförändrad
+  karta, utkast och historik; separat körning från tomt hushåll ingår inte.
+  Båda huvudreceptproven finns kvar, inklusive fylld konfliktlösning.
 - [Samtal med Skyttel](text-assistant.md): hela utkast,
   rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
   samtidigt synliga objekt och samband i karta och detaljpanel även på
