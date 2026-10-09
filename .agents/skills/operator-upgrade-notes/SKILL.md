@@ -102,8 +102,8 @@ For changes that pass the operational relevance test, create notes for:
   managers, or staff responsible for production operation.
 - State what needs attention before upgrade, during rollout, or soon after
   upgrade.
-- Write in ASD-STE100 Simplified Technical English. Use `CONTEXT-MAP.md` if it
-  exists to select the ubiquitous language; otherwise use `CONTEXT.md`.
+- Write in ASD-STE100 Simplified Technical English. Use `GLOSSARY-MAP.md` if it
+  exists to select the ubiquitous language; otherwise use `GLOSSARY.md`.
 - Keep notes independent of implementation. Omit file paths, code symbols,
   migration numbers, table or column names, tests, commits, PRs, and issues.
 - Omit detailed commands, SQL, configuration-variable lists, and code
