@@ -679,8 +679,10 @@ INST-06 och YTA-02 behåller sina egna browserbaserade kontrastkontroller.
 anger exakta kommandon, hållna startgränser, syntetiska toner, tekniska
 paket/resurser och återställning. Dess publika runner pausar klockan för
 manuell inspektion av media- och HTTP-avbrott och återupptar den vid
-återanslutning; det är inte naturlig förlupen tid. Tomt/seedat underlag
-vid kort/hög vy har separata tekniska röktest. De flyttade felkommandona och
+återanslutning; det är inte naturlig förlupen tid. Varje tekniskt scenario
+har `seed-family`-underlag vid 320 × 250 och tomt underlag vid 1280 × 900;
+tomt underlag i kort vy och `seed-family` i hög vy provas inte oberoende. De två
+scenarierna ger fyra tekniska prov. De flyttade felkommandona och
 TAL-11:s ljudaktivitet med mikrofonen av har egna publika prov med fullständig
 start, återställning och städning. ROSTFEL-01/05–08,
 HJALP-07–10, TEXTBRICKA-06–08 och YTA-13 har egna funktionella motsvarigheter.
