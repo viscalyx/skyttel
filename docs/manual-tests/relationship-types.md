@@ -137,6 +137,13 @@ objects and edit the shared definition”.
 }
 ```
 
+**Ytterligare tekniskt underlag:** Efter det första gemensamma sparandet
+läser samma test kartans HTTP-svar och behåller sambandets identitet.
+Efter typens rättelse och omladdning jämför testet det sparade sambandet:
+identiteten är densamma, revisionen är 1, startobjektet är cykeln och
+målobjektet är garaget. Kartans HTTP-svar innehåller bara ett samband.
+Dessa protokollkontroller är separata från den vanliga UI-proceduren.
+
 **Steg:**
 
 1. Skapa Förvaring med benämningarna och beskrivningen i STY-01.
@@ -154,7 +161,8 @@ objects and edit the shared definition”.
    garaget. Välj **Avbryt redigeringen** och stäng översikten med krysset.
 5. Ändra typens namn till Plats, beskrivningen till Hushållets
    förvaringsplatser och startbenämningen till finns i. Granska skillnaden,
-   spara och ladda om. Läs kartans samband via HTTP.
+   spara och ladda om. Öppna **Samband för Alex blå cykel** i Tabell
+   och läs **Alex blå cykel → finns i → Garaget**.
 
 **Förväntat resultat:**
 
@@ -162,8 +170,8 @@ objects and edit the shared definition”.
   cykeln förvaras i garaget och garaget innehåller cykeln.
 - Även när typen är privat beskriver ett upprepat tillägg det befintliga
   sambandet med namn och benämning utan att skapa en dubblett.
-- Definitionens rättelse ändrar visad text men inte sambandets identitet,
-  revision, startobjekt eller målobjekt. Bara ett samband finns.
+- Definitionens rättelse ändrar den lästa benämningen till finns i.
+  Cykeln och garaget är fortfarande kopplade i samma riktning.
 
 ### STY-03: Medlemmar redigerar typer utan att privata förslag röjs
 
