@@ -12,10 +12,9 @@ Kommandon nedan hör till förberedelsen, inte användarens kontroller.
 Starta den [kontrollerade kostnadsmiljön](costs.md#controlled-cost-fixture)
 och anteckna dess `directory`. Förbered de två objekten och stolens privata
 förslag enligt ARBETE-07. Behåll båda flikarna och samma databas.
-Precis före **Spara hela utkastet** i flik A: kör detta oförändrade utdrag
-i **Sources → Snippets**. Invänta konsolens väntandebesked och kontrollera
-i **Network** att `map/operations` registrerar status `pending` med HTTP 200.
-Anteckna den faktiskt returnerade `operationId`; hitta aldrig på den.
+Före steg 3 i ARBETE-07: kör detta oförändrade utdrag i flik A via
+**Sources → Snippets**. Meddela användaren att kroken är installerad.
+Vänta inte på något sparbesked ännu; kroken håller först nästa sparbegäran.
 
 ```js
 (() => {
@@ -43,9 +42,17 @@ Anteckna den faktiskt returnerade `operationId`; hitta aldrig på den.
 })();
 ```
 
-Efter granskning av enbart lampan men före **Radera permanent**, kör följande
-i en andra terminal från projektets rot. Sökvägen är `directory` följt av
-`/skyttel.db`. Invänta **Läsningen är öppen**.
+Efter att användaren väljer **Spara hela utkastet** i steg 3: invänta
+konsolens **ARBETE-07: sparandet väntar**. Kontrollera i **Network** att
+`map/operations` registrerar status `pending` med HTTP 200. Anteckna den
+faktiskt returnerade `operationId`; hitta aldrig på den. Stäng
+utvecklarverktygen och meddela användaren att försöket är registrerat och
+sparbegäran hålls kvar, innan användaren stänger **Spara utkastet**.
+
+Efter granskning av enbart lampan, på användarens begäran i steg 4 men före
+**Radera permanent**, kör följande i en andra terminal från projektets rot.
+Sökvägen är `directory` följt av `/skyttel.db`. Invänta **Läsningen är öppen**
+och bekräfta för användaren att läsaren är öppen före raderingen.
 
 ```sh
 printf 'Databasens fullständiga sökväg: '
@@ -75,10 +82,12 @@ Efter bekräftelsen ska **Network** visa HTTP 202 och samma raderings-ID.
 Låt läsaren vara öppen medan båda flikarna avvecklar gammalt arbete.
 När UI-fallet ber dig släppa sparandet: tryck Alt+Skift+R i flik A.
 Kontrollera HTTP 409 och `content_maintenance` för den gamla `map/save`.
-Ingen automatisk omsändning ska ske. Tryck sedan Enter i läsarens terminal
-innan **Försök slutföra raderingen**. Resultatet använder samma ID och anger
-ett objekt samt noll samband, typer och bilder. Vid avbrott: släpp alltid
-begäran och läsaren, slutför ett väntande ärende och avsluta miljön.
+Ingen automatisk omsändning ska ske. Vid steg 7: tryck Enter i läsarens
+terminal, invänta **Läsningen är avslutad.** och meddela användaren att
+läsaren är släppt, innan användaren väljer **Försök slutföra raderingen**.
+Resultatet använder samma ID och anger ett objekt samt noll samband, typer
+och bilder. Vid avbrott: släpp alltid begäran och läsaren, slutför ett
+väntande ärende och avsluta miljön.
 
 ## Sammanhängande familjeärende
 
@@ -147,12 +156,30 @@ inte bevisa detta sparande. Vänta inte på en ytterligare `held`-begäran.
 Servern tilldelar den beständiga identiteten.
 Anteckna den genom **Rapporter → Ändringshistorik → Identifiera sparandet
 och användaren**; automationen jämför hela kvittot, användare och tidpunkt.
-Släpp inget verktyg efter avslutat arbete. Före omstart stängs mikrofonen av
-i UI; `restart` avslutar den gamla serveranslutningen och mediespåren före
-omladdning. Efter omstart: vänta tills kartans grafik är synlig och kör nästa
-avsnitt. Avsluta med
+Släpp inget verktyg efter avslutat arbete. Vid steg 7 i ARBETE-08, efter att
+användaren stänger av mikrofonen i UI: kör `restart` och invänta miljöns
+`restarted`-händelse. Bekräfta omstarten med samma databas för användaren
+före omladdning. De tekniska mediegränserna beskrivs separat nedan; de är
+inte en kontroll som användaren utför i den publika provmiljön.
+Efter omstart: vänta tills kartans grafik är synlig och kör nästa avsnitt.
+Avsluta med
 `quit`; den tillfälliga katalogen ska tas bort. Vid avbrott avslutas miljön
 och båda profilerna; nästa prov börjar med ny installation.
+
+### Separat automatiskt underlag för medielivslängd
+
+[connected-work.spec.ts](../../tests/integration/connected-work.spec.ts),
+ARBETE-08, behåller tekniska kontroller med testets syntetiska mediefixtur.
+Efter Inställningar krävs samma enda skapade anslutning: `peers: 1`,
+`openPeers: 1` och mikrofonspåret aktiverat med tillstånd `live`.
+Efter mikrofon OFF i steg 7 krävs `openPeers: 1`, mikrofonspåret inaktiverat
+med tillstånd `live` och fjärrspåret aktiverat med tillstånd `live`.
+Efter serveromstart, före omladdning, krävs `openPeers: 0` och tillstånd
+`ended` för både mikrofonspåret och fjärrspåret; mikrofonspåret förblir
+inaktiverat. Dessa värden läses från testets `skyttelVoiceFixture.stats()`.
+Här anges de som bevarat automatiskt underlag, separat från användarens
+UI-steg. De bevisar inte fysisk mikrofon och hörbart ljud. Faktiska
+ljudobservationer hör till ARBETE-13.
 
 ## Grafikavbrott utan ljud
 

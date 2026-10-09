@@ -350,16 +350,17 @@ an admitted save before reloading”.
    objektdialogen öppen i flik B utan omladdning.
    Ett oskickat objekt spärrar sparandet i sin egen flik; därför används
    separata flikar för formuläret och det väntande sparandet.
-2. Be operatören utföra [väntande sparförberedelse](household-work-preparation.md#väntande-radering)
-   i flik A före nästa steg. Begäran hålls först när du väljer Spara.
-3. I **Utkastet**, välj **Spara hela utkastet**. Invänta konsolens **ARBETE-07:
-   sparandet väntar**. Stäng utvecklarverktygen. Stäng **Spara utkastet** med
-   krysset; försöket
+2. Be operatören installera [sparförberedelsens krok](household-work-preparation.md#väntande-radering)
+   i flik A. Invänta bekräftelse att kroken är installerad före nästa steg.
+   Begäran hålls först när du väljer Spara.
+3. I **Utkastet**, välj **Spara hela utkastet**. Vänta på operatörens
+   bekräftelse att försöket är registrerat och sparbegäran hålls kvar.
+   Stäng **Spara utkastet** med krysset; försöket
    fortsätter. Öppna **Inställningar → Permanent radering**.
    Mikrofonen ska fortfarande vara på. Välj endast lampan och granska.
    Stolen och dess privata beskrivning ska inte visas i omfattningen.
 4. Be operatören öppna [databasläsaren](household-work-preparation.md#väntande-radering)
-   före bekräftelsen. Invänta **Läsningen är öppen**.
+   före bekräftelsen. Invänta operatörens bekräftelse att läsaren är öppen.
 5. Bekräfta med exakt **RADERA PERMANENT**. Invänta besked om
    väntande städning. Behåll raderingssidan öppen för samma ärende.
    **Ladda inte om någon flik.** Inom tio sekunder ska mikrofonen i flik A
@@ -369,7 +370,8 @@ an admitted save before reloading”.
 6. Be operatören släppa den gamla sparbegäran enligt förberedelsen.
    Ingen sparbekräftelse får visas och inget nytt sparande ska starta.
    Raderingen ska fortfarande vänta på städning.
-7. Tryck Enter i läsarens terminal. Välj uttryckligen **Försök slutföra
+7. Be operatören släppa databasläsaren enligt förberedelsen. Invänta
+   bekräftelse att läsaren är släppt. Välj uttryckligen **Försök slutföra
    raderingen**. Samma ärende ska slutföras. Bara lampan raderas; stolen
    behålls.
 8. Välj **Läs in kartan på nytt**. Öppna **Skriv till Skyttel** utan att
@@ -519,14 +521,14 @@ and resizing”.
   "reference": "1280 × 720; hela familjekedjan med kontrollerat tal",
   "outcomes": [
     "Hela familjeärendet sparas och återläses efter omstart",
-    "Fullständiga fullständiga värden och separat privat arbete för båda medlemmarna"
+    "Fullständiga värden och separat privat arbete för båda medlemmarna"
   ],
   "evidence": [
     {
       "kind": "overlap",
       "spec": "tests/integration/assistant-work.spec.ts",
       "caseId": "AI-08",
-      "purpose": "Komplett extern familjekedja med SDK och fullständiga läsning"
+      "purpose": "Komplett extern familjekedja med SDK och fullständig läsning"
     },
     {
       "kind": "overlap",
@@ -659,8 +661,7 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Kim Exempel**, läs riktning, ändpunkter och **Känt**, och stäng
    läsmodalen. Återgå till textvyn och kontrollera samma detaljvy och
    samtalets oskickade text. Kims uttryckligen kastade text återkommer inte.
-   Robins notering ska fortfarande vara privat. Automationen kontrollerar
-   att samma levande mediespår och anslutning används efter Inställningar.
+   Robins notering ska fortfarande vara privat.
 6. Välj **Visa utkastet** i textvyn. Tabellen ska ha två objekt och ett
    samband. Granska **189 / SEK / månad**, med **Rättad för hand**, i
    abonnemangets uppgifter och återvänd sedan till **Skriv till Skyttel**.
@@ -681,10 +682,9 @@ till gemensamt kvitto och privat fortsatt arbete”.
    finns kvar i **Rapporter → Ändringshistorik**, och
    mikrofonknappen finns kvar i verktygsraden. Robins privata notering
    ingår inte i kvittot.
-7. Stäng av mikrofonen med **Prata med Skyttel**. Kontrollera att ny
-   inspelning är av och att samma anslutning finns kvar för ett eventuellt
-   fördröjt svar. Be operatören starta om samma databas enligt förberedelsen: då
-   avslutas mediespåren.
+7. Stäng av mikrofonen med **Prata med Skyttel**. Kontrollera att
+   mikrofonknappen visar att mikrofonen är av. Be operatören starta om
+   samma databas enligt förberedelsen och invänta bekräftad omstart.
    Ladda om Alex flik och öppna
    **Rapporter → Ändringshistorik → Visa ändringarna** för samma
    kvitto. Upprepa hela den märkta historikläsningen från steg 6,
@@ -721,6 +721,12 @@ till gemensamt kvitto och privat fortsatt arbete”.
   Automationen jämför hela kvittot, historiken och båda kartornas publika
   svar; enbart modellens text räknas inte som sparbevis.
 
+**Separat tekniskt underlag:**
+[De bevarade automatiska mediekontrollerna](household-work-preparation.md#separat-automatiskt-underlag-för-medielivslängd)
+verifierar anslutningens och spårens livslängd genom Inställningar,
+mikrofon OFF och omstart. De är separata från UI-stegen och det fysiska
+ljudprovet ARBETE-13.
+
 ### ARBETE-09: samma familjearbete med text och listor utan grafik eller ljud
 
 <!-- markdownlint-disable MD013 -->
@@ -740,7 +746,7 @@ till gemensamt kvitto och privat fortsatt arbete”.
       "kind": "overlap",
       "spec": "tests/integration/assistant-work.spec.ts",
       "caseId": "AI-08",
-      "purpose": "Komplett extern familjekedja med SDK och fullständiga läsning"
+      "purpose": "Komplett extern familjekedja med SDK och fullständig läsning"
     },
     {
       "kind": "overlap",
