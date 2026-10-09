@@ -11,6 +11,7 @@ import {
   startConversationWithText,
   turnMicrophoneOff,
   turnMicrophoneOn,
+  voiceBox,
 } from '../support/conversation-page.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 
@@ -305,10 +306,19 @@ for (const seeded of [false, true]) {
       at = events.length;
       await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
       const summary = await held(at, 'context-summary');
+      const renewedVoice = page.waitForResponse(
+        (response) => response.request().method() === 'POST' && response.url().endsWith('/voice'),
+      );
       command(render(summaryReply, summary));
       await expect(log).toContainText(
         'Skyttel har sammanfattat samtalet för att få plats i kontexten.',
       );
+      // The summary text arrives before the replacement voice is ready. Wait
+      // for admission and playback setup so the click pauses capture instead
+      // of cancelling startup and leaving an untracked server transport.
+      expect((await renewedVoice).status()).toBe(201);
+      await expect(voiceBox(page)).toHaveText('Lyssnar');
+      expect(voiceStarts).toHaveLength(2);
       await turnMicrophoneOff(page);
       state = await (await page.request.get(path)).json();
       const savedState = state;
