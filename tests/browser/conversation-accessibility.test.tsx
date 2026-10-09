@@ -1,6 +1,7 @@
 import { cleanup } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { cdp, page, userEvent } from 'vitest/browser';
+import { restoreDesktopPointer } from '../support/browser-touch.js';
 import {
   openConversationText,
   startConversationWithVoice,
@@ -42,10 +43,10 @@ test('HJALP-07: en blockerad mikrofon i ett pågående samtal går att aktivera 
   onTestFinished,
 }) => {
   const session = cdp();
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true });
   onTestFinished(async () => {
-    await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await restoreDesktopPointer(session);
   });
+  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true });
   expect(window.matchMedia('(pointer: coarse)').matches).toBe(true);
   restoreMedia = installBrowserVoiceFixture();
   const home = await openHouseholdConversation(1280, 720);

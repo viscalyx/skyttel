@@ -2,6 +2,7 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { cdp, type Locator, page, userEvent } from 'vitest/browser';
 import type { MapState } from '../../src/shared/map.js';
+import { restoreDesktopPointer } from '../support/browser-touch.js';
 import {
   closeConversationText,
   openConversationText,
@@ -129,8 +130,8 @@ for (const configuration of [
     const session = cdp();
     onTestFinished(async () => {
       // Vitest runs onTestFinished after afterEach has disposed the household.
-      await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
       await session.send('Emulation.clearDeviceMetricsOverride');
+      await restoreDesktopPointer(session);
     });
     restoreMedia = installBrowserVoiceFixture();
     const state = proposedLo();

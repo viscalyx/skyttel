@@ -24,6 +24,9 @@ async function serveImage({ requestId, request }: { requestId: string; request: 
 }
 beforeAll(async () => {
   imageSession = cdp();
+  // Establish the CDP session before on() starts its asynchronous registration,
+  // so Fetch interception and its listener use the same native session.
+  await imageSession.send('Page.getLayoutMetrics');
   imageSession.on('Fetch.requestPaused', serveImage);
   await imageSession.send('Fetch.enable', {
     patterns: [{ urlPattern: '*/api/households/*/profile-images/*', resourceType: 'Image' }],

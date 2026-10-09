@@ -3,6 +3,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { cdp, type Locator, page } from 'vitest/browser';
 import type { MapState } from '../../src/shared/map.js';
 import { defaultViewSettings, type PersonalView } from '../../src/shared/personal-view.js';
+import { restoreDesktopPointer } from '../support/browser-touch.js';
 import { openHouseholdCamera } from '../support/household-camera-browser.js';
 
 function cameraWork() {
@@ -215,10 +216,10 @@ test('KAMERA-09: mouse drags, wheel bursts and touch pinch create complete previ
   onTestFinished,
 }) => {
   const session = cdp();
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 2 });
   onTestFinished(async () => {
-    await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await restoreDesktopPointer(session);
   });
+  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 2 });
   const { state, view } = cameraWork();
   const content = structuredClone(state);
   const originalView = structuredClone(view);
