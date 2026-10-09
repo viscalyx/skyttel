@@ -524,7 +524,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
   kommando förbereder äldre provdata för uppgraderingen. AVTAL-07 provar
   saknat känt skuldbelopp i formuläret och AVTAL-08 riktiga konfliktval;
-  HTTP-validering, kvitton och historik anges som separat tekniskt underlag.
+  HTTP-validering, kvitton och historik körs som separat tekniskt underlag
+  i Vitests serverprojekt med oberoende autentiserade klienter, verklig
+  lokal server, SQLite och faktisk omstart. De tre protokollarbetsflödena
+  behåller alla påståenden; tre integrationsexekveringar blir tre
+  serverexekveringar.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
   separata bredd-, tema- och återfokusfall med

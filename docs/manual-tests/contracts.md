@@ -196,7 +196,9 @@ incomplete meanings in forms and drafts”.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/contracts.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/contracts-http.test.ts",
       "title": "HTTP: dated debt and credit facts survive draft recovery, correction and history",
       "purpose": "HTTP-kvitto, sparande användare, tidpunkt, stabil identitet och båda historiska värden."
     }
@@ -215,7 +217,10 @@ sparande och rättelse.
 testinstallationen med samma databas.
 
 **Integrationstest:** [contract-forms.spec.ts](../../tests/integration/contract-forms.spec.ts),
-AVTAL-04. Separat HTTP-underlag finns i metadata ovan.
+AVTAL-04. Separat HTTP-underlag körs i Vitests serverprojekt:
+[contracts-http.test.ts](../../tests/unit/server/contracts-http.test.ts).
+Det använder autentiserade anrop till en verklig lokal server, SQLite och
+faktisk omstart. Underlaget anges i metadata ovan.
 
 **Steg:**
 
@@ -416,7 +421,9 @@ private draft”.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/contracts.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/contracts-http.test.ts",
       "title": "HTTP: invalid financial facts preserve the entire current draft and saved map",
       "purpose": "Ogiltigt datum avvisas utan ändrat utkast, karta eller historik."
     }
@@ -434,7 +441,10 @@ skapar en delvis sparad karta.
 **Förutsättningar:** Tom karta och tomt utkast.
 
 **Integrationstest:** [contract-forms.spec.ts](../../tests/integration/contract-forms.spec.ts),
-AVTAL-07. Separat datumvalidering via HTTP anges i metadata ovan.
+AVTAL-07. Separat datumvalidering via HTTP körs i Vitests serverprojekt:
+[contracts-http.test.ts](../../tests/unit/server/contracts-http.test.ts),
+med autentiserade anrop till en verklig lokal server och SQLite.
+Underlaget anges i metadata ovan.
 
 **Steg:**
 
@@ -474,7 +484,9 @@ AVTAL-07. Separat datumvalidering via HTTP anges i metadata ovan.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/contracts.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/contracts-http.test.ts",
       "title": "HTTP: resolving financial conflicts preserves independent facts and requires a whole new save",
       "purpose": "HTTP-konfliktval sparar inget; nytt helsparande bevarar oberoende fakta och rätt användare i historiken."
     }
@@ -494,7 +506,10 @@ uppgiven skuld `150000` daterad `2026-08-01`, känt kreditutrymme `200000`
 och kända avtalsvillkor **Preliminära villkor**. Tomma utkast.
 
 **Integrationstest:** [contract-forms.spec.ts](../../tests/integration/contract-forms.spec.ts),
-AVTAL-08. Separat HTTP-konfliktbevis anges i metadata ovan.
+AVTAL-08. Separat HTTP-konfliktbevis körs i Vitests serverprojekt:
+[contracts-http.test.ts](../../tests/unit/server/contracts-http.test.ts),
+med oberoende autentiserade klienter, verklig lokal server, SQLite och
+faktisk omstart. Underlaget anges i metadata ovan.
 
 **Steg:**
 
@@ -581,3 +596,20 @@ separat tekniskt underlag: ogiltigt datum, oförändrat utkast och karta,
 hela konfliktsparandet, sparande användare, tidpunkt och historik.
 AVTAL-06 tillför läsning och sparande i webbläsaren efter verklig uppgradering.
 Inget ID pensioneras och ingen ekonomisk täckningsförlust accepteras.
+
+## Flyttat tekniskt underlag
+
+De tre requestdrivna protokollproven från `contracts.spec.ts` körs som
+separat HTTP-underlag i
+[contracts-http.test.ts](../../tests/unit/server/contracts-http.test.ts).
+De behåller sina fullständiga påståenden och exakta testnamn i metadata för
+AVTAL-04, AVTAL-07 och AVTAL-08. Autentisering, oberoende medlemsutkast,
+verklig SQLite och faktisk serveromstart ingår fortfarande. Daterade fakta,
+känd nollkredit, rättelser, historik, atomisk avvisning och nytt samlat
+sparande efter konfliktval behåller sina kontroller.
+
+Tre integrationsexekveringar flyttas till tre serverexekveringar; inga
+protokollarbetsflöden eller påståenden tas bort. De oanvända
+webbläsarfixturerna ersätts med separata requestklienter. Flytten etablerar
+inte nya manuella observationer. De funktionella AVTAL-fallen behåller
+sina identiteter och integrationstester.
