@@ -727,5 +727,10 @@ YTA-13 läser macOS-hjälpen i Chromium med produktens stilmall och kontrollerad
 svar. Första macOS-genvägens medgivande provas i MIKROFONTRYCK-09; hela
 formulär-, utkast-, samtals- och återkallandekedjan körs i YTA-07 och upprepas
 inte oberoende på macOS.
+TEXTBRICKA-06/07 använder Chromium med hushållskartan, produktionsstilar och
+kontrollerade textsvar för 390 px mörkt respektive 1280 px ljust.
+TEXTBRICKA-04/08 behåller hela serverflödet vid 390 px ljust respektive
+1280 px mörkt; medgivande och HTTP-flöde körs inte separat i de andra två
+kombinationerna.
 HJALP-11/12, TEXTBRICKA-09/10 och YTA-14/15 beskriver faktiskt hjälpmedel,
 fysisk inmatning eller zoom; syntetisk Chromium etablerar dem inte.

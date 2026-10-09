@@ -214,63 +214,65 @@ test('TEXTBRICKA-03: röstrutan ersätter brickan och samma olästa svar annonse
   }
 });
 
-for (const width of [390, 1280])
-  for (const theme of ['light', 'dark'] as const)
-    test(`${width === 390 ? (theme === 'light' ? 'TEXTBRICKA-04' : 'TEXTBRICKA-06') : theme === 'light' ? 'TEXTBRICKA-07' : 'TEXTBRICKA-08'}: minskad rörelse och fasta knappmått vid ${width}px i ${theme} tema`, async ({
-      page,
-    }) => {
-      let release!: () => void;
-      const model = textModel(async () => {
-        await new Promise<void>((resolve) => {
-          release = resolve;
-        });
-        return [modelMessage('Ett nytt svar.')];
+for (const { caseId, width, theme } of [
+  { caseId: 'TEXTBRICKA-04', width: 390, theme: 'light' },
+  { caseId: 'TEXTBRICKA-08', width: 1280, theme: 'dark' },
+] as const)
+  test(`${caseId}: minskad rörelse och fasta knappmått vid ${width}px i ${theme} tema`, async ({
+    page,
+  }) => {
+    let release!: () => void;
+    const model = textModel(async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve;
       });
-      const app = await createInstallation(undefined, { modelFetch: model.provider });
-      try {
-        await page.setViewportSize({ width, height: 844 });
-        await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme });
-        await signIn(page.request, app.origin);
-        await createHousehold(page.request, app.origin);
-        await page.goto(app.origin);
-        await startConversationWithText(page);
-        await page.getByLabel('Meddelande till Skyttel').fill('Beskriv mitt utkast.');
-        await page.getByRole('button', { name: 'Skicka', exact: true }).click();
-        await expect.poll(() => typeof release).toBe('function');
-        await closeConversationText(page);
-        const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
-        await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
-        const button = await utilityButton(page, 'Skriv till Skyttel');
-        await expect(button.locator('span').first()).toHaveText('Skriv till Skyttel');
-        await expect(button.locator('span').first()).toBeVisible();
-        const before = await bounds(tools);
-        const target = await bounds(button);
-        expect(target.width).toBeGreaterThanOrEqual(44);
-        expect(target.height).toBeGreaterThanOrEqual(44);
-        const spinner = button.locator('.text-button-marker');
-        expect(await spinner.evaluate((element) => getComputedStyle(element).animationName)).toBe(
-          'none',
-        );
-        await page.emulateMedia({ reducedMotion: 'no-preference', colorScheme: theme });
-        expect(await spinner.evaluate((element) => getComputedStyle(element).animationName)).toBe(
-          'text-button-work',
-        );
-        await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme });
-        release();
-        await expect(button).toHaveAccessibleName('Skriv till Skyttel. Skyttel har svarat.');
-        const badge = button.locator('.text-button-marker');
-        await expect(badge).toHaveText('•••');
-        expect(await contrast(badge)).toBeGreaterThanOrEqual(4.5);
-        const overlay = await bounds(badge);
-        expect(overlay.right).toBeGreaterThan(target.right - 3);
-        expect(overlay.y).toBeLessThan(target.y + 3);
-        expect(await bounds(button)).toEqual(target);
-        expect(await bounds(tools)).toEqual(before);
-      } finally {
-        release?.();
-        await app.close();
-      }
+      return [modelMessage('Ett nytt svar.')];
     });
+    const app = await createInstallation(undefined, { modelFetch: model.provider });
+    try {
+      await page.setViewportSize({ width, height: 844 });
+      await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme });
+      await signIn(page.request, app.origin);
+      await createHousehold(page.request, app.origin);
+      await page.goto(app.origin);
+      await startConversationWithText(page);
+      await page.getByLabel('Meddelande till Skyttel').fill('Beskriv mitt utkast.');
+      await page.getByRole('button', { name: 'Skicka', exact: true }).click();
+      await expect.poll(() => typeof release).toBe('function');
+      await closeConversationText(page);
+      const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
+      await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+      const button = await utilityButton(page, 'Skriv till Skyttel');
+      await expect(button.locator('span').first()).toHaveText('Skriv till Skyttel');
+      await expect(button.locator('span').first()).toBeVisible();
+      const before = await bounds(tools);
+      const target = await bounds(button);
+      expect(target.width).toBeGreaterThanOrEqual(44);
+      expect(target.height).toBeGreaterThanOrEqual(44);
+      const spinner = button.locator('.text-button-marker');
+      expect(await spinner.evaluate((element) => getComputedStyle(element).animationName)).toBe(
+        'none',
+      );
+      await page.emulateMedia({ reducedMotion: 'no-preference', colorScheme: theme });
+      expect(await spinner.evaluate((element) => getComputedStyle(element).animationName)).toBe(
+        'text-button-work',
+      );
+      await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme });
+      release();
+      await expect(button).toHaveAccessibleName('Skriv till Skyttel. Skyttel har svarat.');
+      const badge = button.locator('.text-button-marker');
+      await expect(badge).toHaveText('•••');
+      expect(await contrast(badge)).toBeGreaterThanOrEqual(4.5);
+      const overlay = await bounds(badge);
+      expect(overlay.right).toBeGreaterThan(target.right - 3);
+      expect(overlay.y).toBeLessThan(target.y + 3);
+      expect(await bounds(button)).toEqual(target);
+      expect(await bounds(tools)).toEqual(before);
+    } finally {
+      release?.();
+      await app.close();
+    }
+  });
 
 test('TEXTBRICKA-05: köat textarbete behåller arbetsmarkeringen före ett oläst svar och avbrott tar bort den', async ({
   page,

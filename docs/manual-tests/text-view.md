@@ -1833,18 +1833,27 @@ pekskärm återstår enligt #220.
 
 ## Separata brickkonfigurationer och observationer
 
+TEXTBRICKA-04 och 08 kör hela flödet mot en verklig kontrollerad server vid
+390 px i ljust tema respektive 1280 px i mörkt tema. TEXTBRICKA-06 och 07
+behåller sina identiteter för motsvarande presentation i Chromium med
+kontrollerade svar vid hushållskartans publika anropsgräns. Dessa två
+webbläsarfall visar inte serverns medgivandekontroll, verklig
+leverantörskörning eller beständigt sparande. Hela HTTP-flödet körs därmed
+inte längre separat vid 390 px mörkt och 1280 px ljust; alla fyra
+bredd- och temakombinationer har kvar presentationskontroller.
+
 ### TEXTBRICKA-06: minskad rörelse vid 390 i mörkt tema
 
-**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+**Syfte:** Behålla arbets- och svarsmarkeringarnas presentation i denna
+konfiguration.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
-konfiguration före den första UI-handlingen. Välj 390 × 844 och mörkt tema före
-första UI-handlingen.
+**Förutsättningar:** Välj 390 × 844, mörkt tema och minskad rörelse före
+första UI-handlingen. Textsvaret kan hållas och släppas separat.
 
-**Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+**Automatiskt motsvarande webbläsartest:**
+[text-button-status.test.tsx](../../tests/browser/text-button-status.test.tsx)
 , TEXTBRICKA-06.
 
 <!-- markdownlint-disable MD013 -->
@@ -1852,13 +1861,16 @@ första UI-handlingen.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/text-button-status.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/text-button-status.test.tsx",
     "caseId": "TEXTBRICKA-06"
   },
-  "reference": "Chromium 390 × 844, mörkt tema; emulerad minskad rörelse och normal rörelse.",
+  "reference": "Chromium 390 × 844, mörkt tema; verklig hushållskarta och produktionsstilar, kontrollerade textsvar och emulerad minskad/normal rörelse. Ingen verklig HTTP-kontroll av medgivande eller beständigt sparande.",
   "outcomes": [
     "Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.",
-    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen."
+    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen.",
+    "Det färdiga svaret går att läsa i textvyn och släcker den olästa markeringen."
   ]
 }
 ```
@@ -1870,26 +1882,27 @@ första UI-handlingen.
 1. Utför [TEXTBRICKA-04](#textbricka-04-minskad-rörelse-teman-och-knappmått) en
    gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
    separata förberedelse. Upprepa inte basfallet först.
-2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
-   motsvarande steg. Avsluta när basfallet avslutas.
+2. Öppna textvyn och läs **Ett nytt svar.**. Kontrollera att svarsmarkeringen
+   försvinner från textknappen.
 
 **Förväntat resultat:**
 
 - Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.
 - Markeringen är läsbar och respekterar den emulerade rörelseinställningen.
+- Svaret är läsbart i textvyn. När svaret läses släcks den olästa markeringen.
 
 ### TEXTBRICKA-07: minskad rörelse vid 1280 i ljust tema
 
-**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+**Syfte:** Behålla arbets- och svarsmarkeringarnas presentation i denna
+konfiguration.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
-konfiguration före den första UI-handlingen. Välj 1280 × 844 och ljust tema före
-första UI-handlingen.
+**Förutsättningar:** Välj 1280 × 844, ljust tema och minskad rörelse före
+första UI-handlingen. Textsvaret kan hållas och släppas separat.
 
-**Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+**Automatiskt motsvarande webbläsartest:**
+[text-button-status.test.tsx](../../tests/browser/text-button-status.test.tsx)
 , TEXTBRICKA-07.
 
 <!-- markdownlint-disable MD013 -->
@@ -1897,13 +1910,16 @@ första UI-handlingen.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/text-button-status.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/text-button-status.test.tsx",
     "caseId": "TEXTBRICKA-07"
   },
-  "reference": "Chromium 1280 × 844, ljust tema; emulerad minskad rörelse och normal rörelse.",
+  "reference": "Chromium 1280 × 844, ljust tema; verklig hushållskarta och produktionsstilar, kontrollerade textsvar och emulerad minskad/normal rörelse. Ingen verklig HTTP-kontroll av medgivande eller beständigt sparande.",
   "outcomes": [
     "Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.",
-    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen."
+    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen.",
+    "Det färdiga svaret går att läsa i textvyn och släcker den olästa markeringen."
   ]
 }
 ```
@@ -1915,13 +1931,14 @@ första UI-handlingen.
 1. Utför [TEXTBRICKA-04](#textbricka-04-minskad-rörelse-teman-och-knappmått) en
    gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
    separata förberedelse. Upprepa inte basfallet först.
-2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
-   motsvarande steg. Avsluta när basfallet avslutas.
+2. Öppna textvyn och läs **Ett nytt svar.**. Kontrollera att svarsmarkeringen
+   försvinner från textknappen.
 
 **Förväntat resultat:**
 
 - Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.
 - Markeringen är läsbar och respekterar den emulerade rörelseinställningen.
+- Svaret är läsbart i textvyn. När svaret läses släcks den olästa markeringen.
 
 ### TEXTBRICKA-08: minskad rörelse vid 1280 i mörkt tema
 
