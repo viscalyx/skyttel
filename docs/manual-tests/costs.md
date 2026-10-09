@@ -171,10 +171,15 @@ skrivning och nå hela flödet med tangentbord på mobil och dator.
 
 **Förutsättningar:** Ny kontrollerad installation och 1280×900.
 
-**Separat förberedelse:** Förbered nästa verkliga sparande enligt
-[styrt kostnadssvar](#styrt-kostnadssvar). Det tappade svaret släpps först
-sedan servern har svarat med framgång. Återställ `fetch` efter varje prov
-eller ladda om sidan. Avsluta installationen med `quit`.
+**Separat förberedelse:** Operatören installerar
+[styrt kostnadssvar](#styrt-kostnadssvar) och armerar det tappade svaret
+före steg 3. Det tappas först sedan servern har svarat med framgång.
+Operatören återställer `fetch` och kör `restart` i installationens terminal
+med samma databas före omladdningen i steg 5. Operatören installerar
+fördröjningen före sparandet av 14 i steg 7 och släpper det svaret
+först när testaren har valt **Ljust** och bekräftat temaknappens fokus.
+Återställ `fetch` efter varje prov eller ladda om sidan. Avsluta
+installationen med `quit`.
 
 **Integrationstest:**
 [costs.spec.ts](../../tests/integration/costs.spec.ts), KOST-04.
@@ -186,19 +191,22 @@ eller ladda om sidan. Avsluta installationen med `quit`.
    delsumman 72,50 SEK och texten om separat driftbehörighet.
 2. Öppna **Ändra månadens antaganden**. Fokus ska stå i **SEK per USD**.
    Ange 12, välj **Uppdatera underlaget** och kontrollera att 12 står kvar.
-3. Aktivera det tappade svaret och välj **Spara månadens antaganden**.
+3. Invänta operatörens bekräftelse på förberedelsen av det tappade svaret
+   och välj **Spara månadens antaganden**.
    Kräv **Sparresultatet är okänt**, spärrat sparande och äldre känd summa.
 4. Välj **Uppdatera underlaget**. Kräv 87,00 SEK och besked att aktuella
    antaganden är hämtade. Fokus ska stanna på **Uppdatera underlaget**.
    Inget nytt sparande ska behövas.
-5. Återställ svaret, kör `restart` och ladda om. Öppna **Tidigare
-   antaganden för månaden**. Version 1 har kurs 10 och version 2 kurs 12.
+5. Invänta operatörens bekräftelse på återställningen och omstarten med
+   samma databas. Ladda om sidan.
+   Öppna **Tidigare antaganden för månaden**. Version 1 har kurs 10 och
+   version 2 kurs 12.
 6. Öppna redigeringen, ange 13 och spara. Fokus återgår till **Ändra
    månadens antaganden**. Öppna och stäng redigeringen; fokus återgår igen.
-7. Förbered fördröjt svar enligt **Styrt kostnadssvar**. Spara 14.
+7. Invänta operatörens bekräftelse på fördröjningen. Spara 14.
    Öppna **Tema** och välj **Ljust** medan sparandet pågår.
-   Kör `window.releaseCostReply()` i konsolen;
-   temaknappens fokus ska bestå när kvittot kommer.
+   Kontrollera temaknappens fokus och be operatören släppa svaret.
+   Invänta bekräftelsen och sparbeskedet; temaknappens fokus ska bestå.
 8. Öppna mätvärden och hela prisunderlaget. Använd Tab och piltangenter
    för pristabellen. Kontrollera läsbarhet, synligt fokus och att övrigt
    innehåll inte kräver rullning i sidled.
@@ -238,8 +246,11 @@ eller ladda om sidan. Avsluta installationen med `quit`.
 **Förutsättningar:** Starta ny [kontrollerad installation](#controlled-cost-fixture).
 Ställ innehållsytan på 390×900; detta är syntetiskt omflödesprov.
 
-**Separat förberedelse:** Använd [styrt kostnadssvar](#styrt-kostnadssvar)
-för tappat svar och fördröjt svar. Återställ `fetch` och avsluta med `quit`.
+**Separat förberedelse:** Operatören använder
+[styrt kostnadssvar](#styrt-kostnadssvar) för tappat svar före steg 1
+och fördröjt svar före sparandet av 14 i steg 3. Operatören släpper
+fördröjningen först efter testarens val av **Mörkt** och bekräftelse av
+temaknappens fokus. Återställ `fetch` och avsluta med `quit`.
 
 **Integrationstest:** [costs.spec.ts](../../tests/integration/costs.spec.ts),
 KOST-05.
@@ -251,9 +262,10 @@ KOST-05.
 2. Öppna redigeringen, ange 13 och spara. Kräv sparbesked och fokus på
    **Ändra månadens antaganden**. Öppna och stäng redigeringen; samma
    knapp får fokus igen.
-3. Förbered fördröjt svar, ange 14 och spara. Öppna **Tema**, välj
-   **Mörkt** och släpp svaret med `window.releaseCostReply()`.
-   Temaknappen ska behålla fokus när beskedet kommer.
+3. Invänta operatörens bekräftelse på fördröjningen, ange 14 och spara.
+   Öppna **Tema**, välj **Mörkt** och kontrollera temaknappens fokus.
+   Be operatören släppa svaret. Invänta bekräftelsen och sparbeskedet;
+   temaknappen ska behålla fokus när beskedet kommer.
 4. Öppna **Prisunderlag** och modellpriserna. Fokusera Terra-tabellens
    rullbara region och tryck högerpil. Nå alla kolumner och priser utan
    att hela sidan måste rullas i sidled.
@@ -289,8 +301,11 @@ KOST-05.
 **Förutsättningar:** Starta ny [kontrollerad installation](#controlled-cost-fixture).
 Ställ innehållsytan på 320×900; detta är syntetiskt omflödesprov.
 
-**Separat förberedelse:** Använd [styrt kostnadssvar](#styrt-kostnadssvar)
-för tappat svar och fördröjt svar. Återställ `fetch` och avsluta med `quit`.
+**Separat förberedelse:** Operatören använder
+[styrt kostnadssvar](#styrt-kostnadssvar) för tappat svar före steg 1
+och fördröjt svar före sparandet av 14 i steg 3. Operatören släpper
+fördröjningen först efter testarens val av **Ljust** och bekräftelse av
+temaknappens fokus. Återställ `fetch` och avsluta med `quit`.
 
 **Integrationstest:** [costs.spec.ts](../../tests/integration/costs.spec.ts),
 KOST-06.
@@ -302,9 +317,10 @@ KOST-06.
 2. Öppna redigeringen, ange 13 och spara. Kräv sparbesked och fokus på
    **Ändra månadens antaganden**. Öppna och stäng redigeringen; samma
    knapp får fokus igen.
-3. Förbered fördröjt svar, ange 14 och spara. Öppna **Tema**, välj
-   **Ljust** och släpp svaret med `window.releaseCostReply()`.
-   Temaknappen ska behålla fokus när beskedet kommer.
+3. Invänta operatörens bekräftelse på fördröjningen, ange 14 och spara.
+   Öppna **Tema**, välj **Ljust** och kontrollera temaknappens fokus.
+   Be operatören släppa svaret. Invänta bekräftelsen och sparbeskedet;
+   temaknappen ska behålla fokus när beskedet kommer.
 4. Öppna **Prisunderlag** och modellpriserna. Fokusera Terra-tabellens
    rullbara region och tryck högerpil. Nå alla kolumner och priser utan
    att hela sidan måste rullas i sidled.
@@ -489,9 +505,11 @@ rate maintenance and limits are described in the
 
 ## Styrt kostnadssvar
 
-Kör följande i webbläsarens konsol på den disponibla installationens
-kostnadssida. `drop` tappar nästa framgångsrika svar efter verkligt
-sparande; `hold` håller nästa framgångsrika svar tills det släpps.
+Operatören kör följande i webbläsarens konsol på den disponibla
+installationens kostnadssida före det angivna sparandet i KOST-04–06.
+Testaren utför därefter fallets UI-steg. `drop` tappar nästa framgångsrika
+svar efter verkligt sparande; `hold` håller nästa framgångsrika svar tills
+det släpps.
 Felaktiga svar passerar normalt. Välj läge före sparande, ett i taget.
 Inga riktiga kostnadskonton eller modellnycklar behövs.
 
@@ -523,10 +541,15 @@ Inga riktiga kostnadskonton eller modellnycklar behövs.
 window.armCostReply('drop');
 ```
 
-Efter återhämtning, kör `window.armCostReply('hold')` före det fördröjda
-sparandet. Släpp med `window.releaseCostReply()`. Avsluta alltid med
-`window.restoreCostReplies()` eller omladdning. Starta en ny fixture per
-fall; behåll samma databas bara inom dess omstartsprov. Vanligt offlineläge
+Efter återhämtning och eventuellt omstartsprov installerar operatören
+koden igen vid behov och kör `window.armCostReply('hold')` före det
+fördröjda sparandet av 14. Vänta medan testaren sparar, väljer fallets tema
+och kontrollerar temaknappens fokus. Först på testarens begäran kör
+operatören `window.releaseCostReply()` och bekräftar att svaret är släppt.
+Testaren läser sparbeskedet och kontrollerar samma senare fokus.
+Operatören avslutar alltid med `window.restoreCostReplies()` eller
+omladdning. Starta en ny fixture per fall; behåll samma databas bara inom
+dess omstartsprov. Vanligt offlineläge
 provar inte ett tappat svar efter slutförd transaktion.
 
 ## Referenser och accepterad förlust

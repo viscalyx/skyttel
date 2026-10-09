@@ -976,10 +976,15 @@ navigation”.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** Tomt utkast i en separat provinstallation. Kör följande
-kod i webbläsarens konsol innan steg 1. Den fördröjer och avvisar endast nästa
-tillägg utan att nå servern. Kör `window.releaseObjectStage()` i steg 2.
-Ladda om efter fallet om du avbryter innan begäran har släppts fram.
+**Förutsättningar:** Tomt utkast i en separat provinstallation.
+
+**Separat förberedelse:** Operatören installerar följande kod i
+webbläsarens konsol före steg 1 och bekräftar förberedelsen för testaren.
+Den fördröjer och avvisar endast nästa tillägg med status 400 utan att nå
+servern. Efter dubbelaktiveringen och Escape i steg 1 släpper operatören
+avvisningen med `window.releaseObjectStage()` på testarens begäran och
+bekräftar att den är släppt. Ladda om efter fallet om du avbryter innan
+begäran har släppts fram.
 
 ```javascript
 (() => {
@@ -1010,8 +1015,8 @@ keeps all values”.
 1. Välj **Nytt objekt** och ange **Väntande cykel** och **Bevarad beskrivning**.
    Dubbelaktivera **Lägg i utkastet och stäng**. Prova Escape medan
    svaret väntar.
-2. Kör `window.releaseObjectStage()` i konsolen. Kontrollera att namn
-   och beskrivning består. Välj **Lägg i utkastet och stäng** igen;
+2. Be operatören släppa avvisningen och invänta bekräftelsen. Kontrollera
+   att namn och beskrivning består. Välj **Lägg i utkastet och stäng** igen;
    engångsfelet är nu avslutat och nästa tillägg går till servern.
 
 **Förväntat resultat:**
