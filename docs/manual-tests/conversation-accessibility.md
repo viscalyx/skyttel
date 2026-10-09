@@ -5,6 +5,23 @@ läsordning, tangentbord, fokus, uppläsningarnas förekomst och systemets minsk
 rörelse på dator och smal skärm. Anteckna commit, webbläsare, hjälpmedel och
 godkänt eller underkänt resultat vid körning.
 
+HJALP-06/07/10 har sina stabila identiteter i Chromium-sviten
+[conversation-accessibility.test.tsx](../../tests/browser/conversation-accessibility.test.tsx).
+Den använder hushållskartans publika kontroller och produktionsstilar med
+kontrollerade svar och medieströmmar genom samma externa medieram som
+integrationsproven. HJALP-07 provar grov pekare och tangentbord; HJALP-06/10
+provar minskad och normal rörelse vid 1280 respektive 390 pixels bredd.
+Städningen efter kartans avmontering kontrollerar avslutade mikrofon- och
+fjärrspår, anslutning och ljuduppspelning innan ersatta medier återställs.
+
+Ingen identitet pensioneras. Dessa tre server-/leverantörskedjor upprepas
+inte i motsvarande konfigurationer. HJALP-01 behåller tillgänglighetsväxling
+och mikrofon av genom riktig HTTP-server. TAL-14 behåller röstsignal och
+minskad rörelse genom riktig HTTP-server. Browserproven visar kontrollerad
+komposition och resursstädning, inte beständigt sparande, fysisk pekskärm,
+riktig mikrofon eller faktiskt hörda skärmläsarbesked. De manuella fallen
+behåller den körbara serverförberedelsen nedan.
+
 ## Konfigurerade användare
 
 Alex är vanlig medlem i ett tillfälligt hushåll och loggar in med provets
@@ -309,8 +326,8 @@ separat. Utför arbetsflödet en gång.
 **Förutsättningar:** Emulera minskad rörelse i webbläsarens utvecklarverktyg.
 Mikrofonen är på. Ingen särskild appinställning ska användas.
 
-**Integrationstest:**
-[conversation-accessibility.spec.ts](../../tests/integration/conversation-accessibility.spec.ts)
+**Automatiskt motsvarande Chromium-test:**
+[conversation-accessibility.test.tsx](../../tests/browser/conversation-accessibility.test.tsx)
 , HJALP-06.
 
 <!-- markdownlint-disable MD013 -->
@@ -318,10 +335,22 @@ Mikrofonen är på. Ingen särskild appinställning ska användas.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/conversation-accessibility.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/conversation-accessibility.test.tsx",
     "caseId": "HJALP-06"
   },
-  "reference": "Chromium 1280 × 900; emulerad minskad rörelse och normal rörelse.",
+  "evidence": [
+    {
+      "kind": "overlap",
+      "runner": "playwright",
+      "suite": "integration",
+      "spec": "tests/integration/voice-box.spec.ts",
+      "caseId": "TAL-14",
+      "purpose": "Röstsignal och minskad rörelse behåller riktig HTTP-server och kontrollerad leverantörskedja."
+    }
+  ],
+  "reference": "Chromium 1280 × 900; faktisk hushållskarta med produktionsstilar, emulerad minskad/normal rörelse och kontrollerade samtalssvar och medieströmmar. Ingen verklig HTTP-server eller leverantör körs i denna motsvarighet.",
   "outcomes": [
     "Undvika rörelse och övergångar i alla samtalets ytor."
   ]
@@ -426,8 +455,8 @@ gemensamma återkoppling med verkligt tangentbord. Redovisa brister som egna
 konfiguration före den första UI-handlingen. Emulera grov pekare i webbläsarens
 enhetsverktyg; ingen fysisk pekskärm är verifierad.
 
-**Integrationstest:**
-[conversation-accessibility.spec.ts](../../tests/integration/conversation-accessibility.spec.ts)
+**Automatiskt motsvarande Chromium-test:**
+[conversation-accessibility.test.tsx](../../tests/browser/conversation-accessibility.test.tsx)
 , HJALP-07.
 
 <!-- markdownlint-disable MD013 -->
@@ -435,13 +464,25 @@ enhetsverktyg; ingen fysisk pekskärm är verifierad.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/conversation-accessibility.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/conversation-accessibility.test.tsx",
     "caseId": "HJALP-07"
   },
-  "reference": "Chromium 1280 × 720; grov pekare via webbläsaremulering.",
+  "evidence": [
+    {
+      "kind": "overlap",
+      "runner": "playwright",
+      "suite": "integration",
+      "spec": "tests/integration/conversation-accessibility.spec.ts",
+      "caseId": "HJALP-01",
+      "purpose": "Tillgängligheten återkommer genom riktig HTTP-server utan att mikrofonen startas."
+    }
+  ],
+  "reference": "Chromium 1280 × 720; grov pekare via webbläsaremulering och Retur genom webbläsarens tangentbord, faktisk hushållskarta med produktionsstilar och kontrollerade samtalssvar/medieströmmar. HJALP-01 behåller riktig HTTP-tillgänglighet och mikrofon av.",
   "outcomes": [
-    "Mikrofonens val, operabla kontroller och den angivna statusförekomsten bevaras.",
-    "Samma läs-/tabbordning, åtkomliga ytor och återgångsfokus skyddas i denna konfiguration."
+    "Den operabla mikrofonknappen beskriver hindret, Retur behåller fokus och en enda notis visas med mikrofonen av.",
+    "Tillgängligheten återkommer med DOM-status utan att mikrofonen startas; automatisk städning avslutar medieresurserna."
   ]
 }
 ```
@@ -458,10 +499,10 @@ enhetsverktyg; ingen fysisk pekskärm är verifierad.
 
 **Förväntat resultat:**
 
-- Mikrofonens val, operabla kontroller och den angivna statusförekomsten
-  bevaras.
-- Samma läs-/tabbordning, åtkomliga ytor och återgångsfokus skyddas i denna
-  konfiguration.
+- Den operabla mikrofonknappen beskriver hindret. Retur behåller fokus,
+  en enda notis visas och mikrofonen förblir av när tillgängligheten återkommer.
+- Återkomstens DOM-status finns. Automatisk städning av hushållskartan
+  avslutar mikrofon- och fjärrspår, anslutning och ljuduppspelning.
 
 ### HJALP-08: samtalsordning på smal skärm
 
@@ -566,8 +607,8 @@ konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
 **Förutsättningar:** Starta en ny kontrollerad installation och välj denna
 konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
 
-**Integrationstest:**
-[conversation-accessibility.spec.ts](../../tests/integration/conversation-accessibility.spec.ts)
+**Automatiskt motsvarande Chromium-test:**
+[conversation-accessibility.test.tsx](../../tests/browser/conversation-accessibility.test.tsx)
 , HJALP-10.
 
 <!-- markdownlint-disable MD013 -->
@@ -575,13 +616,25 @@ konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/conversation-accessibility.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/conversation-accessibility.test.tsx",
     "caseId": "HJALP-10"
   },
-  "reference": "Chromium 390 × 900; samma distinkta smala arbetsflöde.",
+  "evidence": [
+    {
+      "kind": "overlap",
+      "runner": "playwright",
+      "suite": "integration",
+      "spec": "tests/integration/voice-box.spec.ts",
+      "caseId": "TAL-14",
+      "purpose": "Röstsignal och minskad rörelse behåller riktig HTTP-server och kontrollerad leverantörskedja."
+    }
+  ],
+  "reference": "Chromium 390 × 900; faktisk hushållskarta med produktionsstilar, emulerad minskad/normal rörelse och kontrollerade samtalssvar och medieströmmar. TAL-14 behåller signal- och rörelseunderlag mot riktig HTTP-server.",
   "outcomes": [
-    "Mikrofonens val, operabla kontroller och den angivna statusförekomsten bevaras.",
-    "Samma läs-/tabbordning, åtkomliga ytor och återgångsfokus skyddas i denna konfiguration."
+    "Sju fasta punkter eller stilla staplar bevaras vid olika ljudnivåer och båda ljudkällorna; arbetsmarkeringen står stilla.",
+    "Notis, textvy, hörnyta och kontroller saknar övergångar; normal rörelse återställer fjärrvågformens animation."
   ]
 }
 ```
@@ -598,10 +651,10 @@ konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
 
 **Förväntat resultat:**
 
-- Mikrofonens val, operabla kontroller och den angivna statusförekomsten
-  bevaras.
-- Samma läs-/tabbordning, åtkomliga ytor och återgångsfokus skyddas i denna
-  konfiguration.
+- Samma fasta former, stilla arbetsmarkering och omedelbara ytor som i
+  HJALP-06 visas vid den smala bredden.
+- Normal rörelse återställer fjärrvågformens animation; ingen egen
+  rörelseinställning finns i appen.
 
 ### HJALP-11: faktisk läsordning och en enda uppläsning
 

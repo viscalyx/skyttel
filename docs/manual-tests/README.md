@@ -729,6 +729,14 @@ scenarierna ger fyra tekniska prov. De flyttade felkommandona och
 TAL-11:s ljudaktivitet med mikrofonen av har egna publika prov med fullständig
 start, återställning och städning. ROSTFEL-01/05–08,
 HJALP-07–10 och TEXTBRICKA-06–08 har egna funktionella motsvarigheter.
+HJALP-06/07/10 använder Chromium med hushållskartan, produktionsstilar,
+publika kontroller, kontrollerade samtalssvar och medieströmmar samt
+fullständig resursstädning. HJALP-07 behåller grov pekare och tangentbord;
+HJALP-06/10 behåller båda bredderna och ändrad rörelseinställning.
+HJALP-01:s tillgänglighetsväxling och mikrofon av samt TAL-14:s röstsignal
+och minskade rörelse behåller riktig HTTP-server. Server-/leverantörskedjan
+upprepas inte separat i de tre Chromium-fallen. Fysisk pekskärm och
+skärmläsarbesked hör fortsatt till HJALP-11/12.
 YTA-13 läser macOS-hjälpen i Chromium med produktens stilmall och kontrollerade
 svar. Första macOS-genvägens medgivande provas i MIKROFONTRYCK-09; hela
 formulär-, utkast-, samtals- och återkallandekedjan körs i YTA-07 och upprepas

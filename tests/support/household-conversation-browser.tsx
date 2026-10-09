@@ -36,6 +36,8 @@ export async function openHouseholdConversation(width: number, height: number) {
       pendingOperations: [],
     },
   };
+  let available = true;
+  let failNextReply = false;
   const messages: unknown[] = [];
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     if (url.endsWith('/conversation-preferences'))
@@ -50,7 +52,25 @@ export async function openHouseholdConversation(width: number, height: number) {
       });
     if (url.includes('/map?') || url.endsWith('/map')) return Response.json(state);
     if (url.endsWith('/text-assistant'))
-      return Response.json(init?.method === 'POST' ? conversation : { available: true });
+      return Response.json(init?.method === 'POST' ? conversation : { available });
+    if (url.endsWith('/text-assistant/browser-conversation/voice'))
+      return Response.json({
+        assistant: conversation,
+        voice: { id: 'browser-voice', phase: 'listening', seconds: null, usageFinal: false },
+        sdp: 'synthetic-browser-answer',
+      });
+    if (url.endsWith('/text-assistant/browser-conversation/voice/browser-voice/poll'))
+      return Response.json({
+        assistant: conversation,
+        voice: { id: 'browser-voice', phase: 'listening', seconds: null, usageFinal: false },
+      });
+    if (url.endsWith('/text-assistant/browser-conversation/voice/browser-voice/stop'))
+      return Response.json({
+        assistant: conversation,
+        voice: { id: 'browser-voice', phase: 'closed', seconds: null, usageFinal: true },
+      });
+    if (url.endsWith('/text-assistant/browser-conversation/stop'))
+      return Response.json(conversation);
     if (url.endsWith('/text-assistant/browser-conversation/messages')) {
       if (init?.method !== 'POST') throw new Error(`Unexpected message method: ${init?.method}`);
       messages.push(JSON.parse(String(init?.body)));
@@ -62,6 +82,17 @@ export async function openHouseholdConversation(width: number, height: number) {
         taskStatus: 'working',
         taskId: 'browser-task',
       };
+      if (failNextReply) {
+        failNextReply = false;
+        conversation = {
+          ...conversation,
+          phase: 'error',
+          taskStatus: 'completed',
+          taskId: undefined,
+          taskSource: undefined,
+          error: 'assistant_draft_changed',
+        };
+      }
       return Response.json(conversation);
     }
     if (url.endsWith('/text-assistant/browser-conversation')) return Response.json(conversation);
@@ -70,13 +101,21 @@ export async function openHouseholdConversation(width: number, height: number) {
   render(
     <FormLeaveProvider>
       <main>
-        <HouseholdMap householdId="home" />
+        <section className="panel household-panel">
+          <HouseholdMap householdId="home" />
+        </section>
       </main>
     </FormLeaveProvider>,
   );
   await expect.element(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
   return {
     messages,
+    setAvailable(value: boolean) {
+      available = value;
+    },
+    failNextReply() {
+      failNextReply = true;
+    },
     completeReply(text: string) {
       conversation = {
         ...conversation,
