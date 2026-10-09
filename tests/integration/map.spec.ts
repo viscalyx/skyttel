@@ -11,7 +11,7 @@ import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
-test('refreshing after a conflict preserves text without authorizing a stale form', async ({
+test('KARTA-23: refreshing after a conflict preserves text without authorizing a stale form', async ({
   page,
   browser,
 }) => {
@@ -57,7 +57,7 @@ test('refreshing after a conflict preserves text without authorizing a stale for
   }
 });
 
-test('an uncertain save recovers its receipt and stale tabs cannot save newer drafts', async ({
+test('KARTA-24: an uncertain save recovers its receipt and stale tabs cannot save newer drafts', async ({
   page,
   browser,
 }) => {
@@ -118,6 +118,10 @@ test('KARTA-06: objects move from a persistent private proposal to the shared ma
     await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
     await page.getByLabel('Beskrivning', { exact: true }).fill('En påhittad person');
+    const loType = await page
+      .getByLabel('Objekttyp', { exact: true })
+      .locator('option:checked')
+      .innerText();
     await page.setViewportSize({ width: 320, height: 568 });
     await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Lo Exempel');
     await page.setViewportSize({ width: 1024, height: 768 });
@@ -137,6 +141,23 @@ test('KARTA-06: objects move from a persistent private proposal to the shared ma
       await reopened.goto(installation.origin);
       await openDraftReview(reopened);
       await expect(reopened.getByRole('region', { name: 'Utkastet' })).toContainText('Lo Exempel');
+      const restored = await readDraftProposal(reopened, 'Lo Exempel');
+      await expect(restored.locator('dt').filter({ hasText: /^Typ$/ }).locator('..')).toContainText(
+        loType,
+      );
+      await expect(
+        restored
+          .locator('dt')
+          .filter({ hasText: /^Beskrivning$/ })
+          .locator('..'),
+      ).toContainText('En påhittad person');
+      await expect(
+        restored
+          .locator('dt')
+          .filter({ hasText: /^Identitet$/ })
+          .locator('..'),
+      ).toContainText('Identifierat objekt');
+      await reopened.keyboard.press('Escape');
       await saveReviewedConflictDraft(reopened);
       await expect(reopened.getByRole('region', { name: 'Utkastet' })).toContainText(
         'Utkastet är tomt',
@@ -150,6 +171,27 @@ test('KARTA-06: objects move from a persistent private proposal to the shared ma
       const proposal = await readDraftProposal(reopened, 'Lo Lind');
       await expect(proposal).toContainText('Lo Exempel');
       await expect(proposal).toContainText('Lo Lind');
+      for (const [title, name] of [
+        ['Sparade värden', 'Lo Exempel'],
+        ['Föreslagna värden', 'Lo Lind'],
+      ]) {
+        const values = proposal.locator('section').filter({
+          has: reopened.getByRole('heading', { name: title, exact: true }),
+        });
+        for (const [label, value] of [
+          ['Namn', name],
+          ['Typ', loType],
+          ['Beskrivning', 'En påhittad person'],
+          ['Identitet', 'Identifierat objekt'],
+        ]) {
+          await expect(
+            values
+              .locator('dt')
+              .filter({ hasText: new RegExp(`^${label}(?: · ändrat)?$`) })
+              .locator('..'),
+          ).toContainText(value);
+        }
+      }
       await reopened.keyboard.press('Escape');
       const review = reopened.getByRole('region', { name: 'Utkastet' });
       await expect(review).toContainText('Lo Exempel');

@@ -48,7 +48,7 @@ test('ACCESS-05: failed startup read offers a working retry', async ({ page }) =
   }
 });
 
-test('ACCESS-12: provider outage gives a readable error and allows another login attempt', async ({
+test('ACCESS-21: provider outage gives a readable error and allows another login attempt', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -68,11 +68,35 @@ test('ACCESS-12: provider outage gives a readable error and allows another login
   }
 });
 
-for (const { provider, label, identity } of [
-  { provider: 'google', label: 'Google', identity: alex },
-  { provider: 'microsoft', label: 'Microsoft', identity: robin },
+test('ACCESS-12: failed sign-in startup preserves the login choice and allows a successful retry', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await page.goto(installation.origin);
+    await page.route('**/api/auth/sign-in/social', (route) => route.abort());
+    await page.getByRole('button', { name: 'Fortsätt med Google' }).click();
+    await page.getByRole('button', { name: 'Fortsätt till Google' }).click();
+    await expect(page.getByRole('alert')).toContainText('Inloggningen kunde inte slutföras');
+    await expect(page.getByRole('button', { name: 'Fortsätt med Google' })).toBeEnabled();
+    expect(
+      await (await page.request.get(`${installation.origin}/api/bootstrap`)).json(),
+    ).toMatchObject({ status: 'anonymous' });
+    await expect(page.getByLabel('Hushållets namn')).toHaveCount(0);
+    await page.unroute('**/api/auth/sign-in/social');
+    await page.getByRole('button', { name: 'Fortsätt med Google' }).click();
+    await page.getByRole('button', { name: 'Fortsätt till Google' }).click();
+    await expect(page.getByRole('heading', { name: 'Skapa ditt hushåll' })).toBeVisible();
+  } finally {
+    await installation.close();
+  }
+});
+
+for (const { caseId, provider, label, identity } of [
+  { caseId: 'ACCESS-13', provider: 'google', label: 'Google', identity: alex },
+  { caseId: 'ACCESS-22', provider: 'microsoft', label: 'Microsoft', identity: robin },
 ] as const) {
-  test(`ACCESS-13: denied ${label} consent leaves access closed and allows a successful retry`, async ({
+  test(`${caseId}: denied ${label} consent leaves access closed and allows a successful retry`, async ({
     page,
   }) => {
     const installation = await createInstallation({ provider, subject: identity.subject });

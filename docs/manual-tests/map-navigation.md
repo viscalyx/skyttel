@@ -32,8 +32,24 @@ påhittade uppgifter. Administratörsrollen behövs inte för kartarbetet.
 
 **Integrationstest:**
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts),
-testfallet “NAVIGATION-01: normal and mini navigation move independently
-with keyboard and cancelled dragging”.
+NAVIGATION-01.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-01"
+  },
+  "reference": "Chromium, angiven vanlig navigering och sparade objekt.",
+  "outcomes": [
+    "Navigation, riktning, fokus och personliga placeringar bevarar hushållets uppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -62,14 +78,30 @@ med den gemensamma objektdialogens förlustskydd i båda öppningsordningarna.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Upprepa på dator samt vid 390 och 320 pixlars bredd,
-även i korta fönster på 844 × 390, 700 × 600, 640 × 500 och 320 × 250
-CSS-pixlar. Prova verklig webbläsarzoom separat från ändrad fönsterstorlek.
+**Förutsättningar:** 1440 × 1000 CSS-pixlar. Öppna Navigation först.
+De separata NAVIGATION-06–18 anger övriga mått och öppningsordning.
+Återställ sparade Lo och Kim inför varje fall; använd samma databas vid omstart.
 
 **Integrationstest:**
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts),
-testfallet “NAVIGATION-02: navigation and unsent details retain usable work
-in both opening orders”.
+NAVIGATION-02.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-02"
+  },
+  "reference": "1440 × 1000 CSS-pixlar, Navigation först. Komplett referens med samlat sparande och serveromstart.",
+  "outcomes": [
+    "Navigation, riktning, fokus och personliga placeringar bevarar hushållets uppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -85,7 +117,8 @@ in both opening orders”.
    aktivera **Prata med Skyttel** före öppningen och låt den verkliga
    otillgänglighetsnotisen vara öppen under samma steg.
    Läs uppgiftsytans sista värde och nå **Samband för Lo Exempel** med
-   notisen kvar. Fokusera först notisens stängikon för att läsa notisen och sedan
+   notisen kvar. Fokusera först notisens stängikon för att läsa notisen och
+   sedan
    uppgiftsfönstrets rubrik för att läsa uppgifterna. Sambandsikonen
    ska kunna nås även när innehållet behöver rullas.
 2. På dator: flytta navigationen åt vänster med Skift+pil. Ändra fönstrets
@@ -98,15 +131,33 @@ in both opening orders”.
 4. Välj **Lägg i utkastet och stäng** med tangentbordet. Läs den föreslagna
    beskrivningen i uppgiftsytan. Rulla navigationens innehåll vid behov
    och välj **Flytta Lo Exempel: bakåt**. Vänta på bekräftad personlig vy.
-5. Panorera, byt till mininavigering och zooma med knapparna medan
-   otillgänglighetsnotisen fortfarande är öppen. Rulla hela navigationen
+5. Panorera, byt till mininavigering och zooma med knapparna.
+   I de korta varianterna ska otillgänglighetsnotisen fortfarande vara öppen.
+   Rulla hela navigationen
    vid behov i det kortaste fönstret. Läs den oförändrade föreslagna
    beskrivningen och uppgiftsytans sista värde. Fokusera först därefter
-   notisens **Stäng notisen** och aktivera den utan att ändra utkastet.
+   notisens **Stäng notisen** i de två notisvarianterna och aktivera den
+   utan att ändra utkastet.
    Hushållets sparade uppgifter
    ska fortfarande vara oförändrade.
-6. Ladda om och upprepa med detaljer först och navigation sedan, på
-   samtliga angivna skärmstorlekar.
+6. Välj **Visa utkastet**, sedan **Visa förslaget: Lo Exempel**. Läs
+   namnet, objekttypen och hela den föreslagna beskrivningen. Välj
+   **Stäng dialogen** och **Spara hela utkastet**. Vänta på sparbekräftelsen.
+7. Stäng textvyn och starta om provservern med samma databas och ladda om.
+   Öppna **Tabell**,
+   välj **Lo Exempel** och läs den sparade typen och beskrivningen.
+   Välj också **Kim Exempel** och läs namnet, samma objekttyp och
+   beskrivningen **Ej uppgivet**. Öppna **Samband för Lo Exempel** respektive
+   **Samband för Kim Exempel** och läs att inga samband finns för objekten;
+   stäng varje dialog med **Stäng samband**. Den sparade förberedelsen har
+   inga samband, och de förblir oförändrade efter sparande och omstart.
+   Återgå till **Karta** och kontrollera Los personliga placering.
+   Utkastet är tomt.
+8. Markera Lo, öppna **Navigera** och välj **Flytta Lo Exempel: uppåt**.
+   Kontrollera att flytten fortsätter från den sparade personliga placeringen
+   med synlig förflyttning och bevarat fokus. Övriga objekt kan ha fått
+   nya automatiska placeringar vid omladdningen; identisk kamerainramning
+   krävs inte.
 
 **Förväntat resultat:**
 
@@ -143,8 +194,24 @@ för provinstallationen kan starta om dess server med samma databas.
 
 **Integrationstest:**
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts),
-testfallet “NAVIGATION-03: six personal directions persist after restart
-while empty and multiple selections retain camera controls”.
+NAVIGATION-03.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-03"
+  },
+  "reference": "Chromium, angiven vanlig navigering och sparade objekt.",
+  "outcomes": [
+    "Navigation, riktning, fokus och personliga placeringar bevarar hushållets uppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -155,6 +222,9 @@ while empty and multiple selections retain camera controls”.
 4. Avmarkera båda med Ctrl/Cmd i kartan och kontrollera navigationen.
 5. Starta om servern, ladda om sidan och kontrollera placeringarna samt
    hushållets sparade uppgifter och utkast.
+6. Markera Lo, öppna **Navigera** och flytta uppåt en gång. Kontrollera
+   synlig fortsatt flytt från den sparade personliga placeringen och
+   bevarat fokus på flyttknappen.
 
 **Förväntat resultat:**
 
@@ -175,8 +245,24 @@ av typen Använder. Sambandet kan vara sparat eller ligga i utkastet.
 
 **Integrationstest:**
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts),
-testfallet “NAVIGATION-04: object details retain directed relationship
-access and editing through the list”.
+NAVIGATION-04.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-04"
+  },
+  "reference": "Chromium, angiven vanlig navigering och sparade objekt.",
+  "outcomes": [
+    "Navigation, riktning, fokus och personliga placeringar bevarar hushållets uppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -209,13 +295,30 @@ hastighet. Ett hack med Ctrl och mushjul zoomar begränsat.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** En Mac med styrplatta och en mus med hjul. Prova
-fallet i Chrome och i Safari. Lo och Kim syns i kartan.
+**Förutsättningar:** Lo och Kim syns i Chromium. Styrplattans
+Ctrl-hjulhändelser och musens stora hjulsteg provas kontrollerat i
+automationen. Faktiska Mac-gester och Safari provas i NAVIGATION-19.
 
 **Integrationstest:**
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts),
-testfallet “NAVIGATION-05: trackpad pinch zoom follows pinch speed while a
-Ctrl mouse-wheel notch stays limited”.
+NAVIGATION-05.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-05"
+  },
+  "reference": "Chromium, angiven vanlig navigering och sparade objekt.",
+  "outcomes": [
+    "Navigation, riktning, fokus och personliga placeringar bevarar hushållets uppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -234,3 +337,651 @@ Ctrl mouse-wheel notch stays limited”.
 - Ett nyp isär zoomar in och ett nyp ihop zoomar ut.
 - Ett hack med Ctrl och mushjul zoomar ett begränsat steg utan hopp.
 - Webbläsaren förstorar inte hela sidan. Objektens placeringar ändras inte.
+
+### NAVIGATION-06: uppgifter först vid 1440 × 1000
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-06.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-06"
+  },
+  "reference": "1440 × 1000 CSS-pixlar, uppgifter först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 1440 × 1000 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med uppgifter först. I steg 1 öppnar du
+   Los uppgifter före **Navigera**; flytta inte den ännu stängda navigationen.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-07: Navigation först vid 320 × 250
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-07"
+  },
+  "reference": "320 × 250 CSS-pixlar, navigation först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 320 × 250 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med navigation först. Behåll grundfallets
+   ordning i steg 1.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-08: uppgifter först vid 320 × 250
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-08.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-08"
+  },
+  "reference": "320 × 250 CSS-pixlar, uppgifter först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 320 × 250 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med uppgifter först. I steg 1 öppnar du
+   Los uppgifter före **Navigera**; flytta inte den ännu stängda navigationen.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-09: Navigation först vid 844 × 390
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-09.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-09"
+  },
+  "reference": "844 × 390 CSS-pixlar, navigation först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 844 × 390 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med navigation först. Behåll grundfallets
+   ordning i steg 1.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-10: uppgifter först vid 844 × 390
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-10.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-10"
+  },
+  "reference": "844 × 390 CSS-pixlar, uppgifter först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 844 × 390 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med uppgifter först. I steg 1 öppnar du
+   Los uppgifter före **Navigera**; flytta inte den ännu stängda navigationen.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-11: Navigation först vid 390 × 1000
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-11.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-11"
+  },
+  "reference": "390 × 1000 CSS-pixlar, navigation först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 390 × 1000 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med navigation först. Behåll grundfallets
+   ordning i steg 1.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-12: uppgifter först vid 390 × 1000
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-12.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-12"
+  },
+  "reference": "390 × 1000 CSS-pixlar, uppgifter först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 390 × 1000 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med uppgifter först. I steg 1 öppnar du
+   Los uppgifter före **Navigera**; flytta inte den ännu stängda navigationen.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-13: Navigation först vid 320 × 1000
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-13.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-13"
+  },
+  "reference": "320 × 1000 CSS-pixlar, navigation först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 320 × 1000 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med navigation först. Behåll grundfallets
+   ordning i steg 1.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-14: uppgifter först vid 320 × 1000
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-14.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-14"
+  },
+  "reference": "320 × 1000 CSS-pixlar, uppgifter först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 320 × 1000 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med uppgifter först. I steg 1 öppnar du
+   Los uppgifter före **Navigera**; flytta inte den ännu stängda navigationen.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-15: Navigation först vid 700 × 600
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-15.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-15"
+  },
+  "reference": "700 × 600 CSS-pixlar, navigation först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 700 × 600 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med navigation först. Behåll grundfallets
+   ordning i steg 1.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-16: uppgifter först vid 700 × 600
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-16.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-16"
+  },
+  "reference": "700 × 600 CSS-pixlar, uppgifter först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 700 × 600 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med uppgifter först. I steg 1 öppnar du
+   Los uppgifter före **Navigera**; flytta inte den ännu stängda navigationen.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-17: Navigation först vid 640 × 500
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-17.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-17"
+  },
+  "reference": "640 × 500 CSS-pixlar, navigation först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 640 × 500 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med navigation först. Behåll grundfallets
+   ordning i steg 1.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-18: uppgifter först vid 640 × 500
+
+**Syfte:** Båda ytorna förblir användbara med fullständigt förlustskydd och
+läsbart förslag.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som NAVIGATION-02.
+
+**Integrationstest:**
+[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-18.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-navigation.spec.ts",
+    "caseId": "NAVIGATION-18"
+  },
+  "reference": "640 × 500 CSS-pixlar, uppgifter först: överlappning, fokus och nåbara sista värden skyddas; full omstart ligger i NAVIGATION-02.",
+  "outcomes": [
+    "Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart förslag.",
+    "Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ fönstret på 640 × 500 CSS-pixlar. Följ NAVIGATION-02
+   steg 1–5 en gång, med uppgifter först. I steg 1 öppnar du
+   Los uppgifter före **Navigera**; flytta inte den ännu stängda navigationen.
+2. Utför notiskontrollerna i steg 1 och 5 endast vid 320 × 250 eller
+   844 × 390. Den breda vyns fria fönsterflytt i steg 2 gäller endast 1440-bredden.
+3. Stanna efter steg 5. Spara inte hushållsutkastet och starta inte om.
+   Kontrollera den föreslagna beskrivningen efter sista kameraåtgärden.
+
+**Förväntat resultat:**
+
+- Båda ytorna förblir användbara med fullständigt förlustskydd och läsbart
+  förslag.
+- Personlig flyttning och kamera ändrar inte sparade hushållsuppgifter.
+
+### NAVIGATION-19: faktisk styrplatta och mushjul
+
+**Syfte:** Mac-styrplattans långsamma och snabba nyp ger styrbar kamerazoom i
+Chrome och Safari; ett Ctrl-hjulhack ger begränsad zoom utan sidförstoring.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Faktisk Mac med styrplatta och mus med hjul, både Chrome
+och Safari.
+
+**Kräver mänsklig observation:** Mac-styrplattans långsamma och snabba nyp ger
+styrbar kamerazoom i Chrome och Safari; ett Ctrl-hjulhack ger begränsad zoom
+utan sidförstoring.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Mac-styrplattans långsamma och snabba nyp ger styrbar kamerazoom i Chrome och Safari; ett Ctrl-hjulhack ger begränsad zoom utan sidförstoring."
+  },
+  "reference": "Faktisk Mac med styrplatta och mus med hjul, både Chrome och Safari.",
+  "outcomes": [
+    "Mac-styrplattans långsamma och snabba nyp ger styrbar kamerazoom i Chrome och Safari; ett Ctrl-hjulhack ger begränsad zoom utan sidförstoring."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/map-navigation.spec.ts",
+      "caseId": "NAVIGATION-05",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ NAVIGATION-05 steg 1–4 en gång i varje faktisk webbläsare.
+2. Använd samma fingeravstånd vid långsam och snabb rörelse. Anteckna
+   vilken enhet och webbläsare som provas samt eventuell sidförstoring.
+
+**Förväntat resultat:**
+
+- Mac-styrplattans långsamma och snabba nyp ger styrbar kamerazoom i Chrome och
+  Safari; ett Ctrl-hjulhack ger begränsad zoom utan sidförstoring.

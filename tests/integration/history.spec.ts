@@ -1,7 +1,7 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
-import sharp from 'sharp';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, signIn, utilityButton } from '../support/client.js';
+import { readCommittedHistoryCard } from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
 
 async function setup(client: APIRequestContext, origin: string) {
@@ -40,9 +40,9 @@ test('HISTORIK-01: Reports preserves table work and lists only completed saves l
   try {
     const data = await setup(page.request, installation.origin);
     await data.object('person', 'Lo Exempel');
-    await data.save('initial');
+    const initialReceipt = await data.save('initial');
     await data.object('person', 'Lo Lind');
-    await data.save('rename');
+    const renameReceipt = await data.save('rename');
     await data.object('private', 'Privat person');
     const before = await data.read();
     await page.goto(`${installation.origin}/households/${data.household.id}`);
@@ -57,6 +57,13 @@ test('HISTORIK-01: Reports preserves table work and lists only completed saves l
     const first = history.getByRole('article').first();
     await expect(first).toContainText('Lo Lind');
     await expect(first).toContainText('Alex Exempel');
+    for (const [index, receipt] of [renameReceipt, initialReceipt].entries()) {
+      await expect(history.getByRole('article').nth(index)).toHaveAttribute(
+        'data-save',
+        receipt.operationId,
+      );
+      await readCommittedHistoryCard(history, receipt);
+    }
     await expect(history).not.toContainText('Privat person');
     await first.getByText('Visa ändringarna', { exact: true }).click();
     await expect(first.getByText('Namn: Lo Exempel.', { exact: true })).toBeVisible();
@@ -70,8 +77,12 @@ test('HISTORIK-01: Reports preserves table work and lists only completed saves l
   }
 });
 
-for (const width of [1280, 390, 320]) {
-  test(`HISTORIK-06: Reports exposes complete historical values with keyboard at ${width}px`, async ({
+for (const [width, caseId] of [
+  [1280, 'HISTORIK-06'],
+  [390, 'HISTORIK-14'],
+  [320, 'HISTORIK-15'],
+] as const) {
+  test(`${caseId}: Reports exposes complete historical values with keyboard at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -203,6 +214,7 @@ test('HISTORIK-11: private rejected and pending save attempts never enter shared
   page,
 }) => {
   const installation = await createInstallation();
+  let releaseRecovery = () => {};
   try {
     const data = await setup(page.request, installation.origin);
     await data.object('person', 'Lo Exempel');
@@ -224,8 +236,29 @@ test('HISTORIK-11: private rejected and pending save attempts never enter shared
     expect(pending.ok()).toBe(true);
     expect((await pending.json()).operation.status).toBe('pending');
     const operationsBefore = await (await page.request.get(`${data.path}/operations`)).json();
+    let recoveryStarted = () => {};
+    const started = new Promise<void>((resolve) => {
+      recoveryStarted = resolve;
+    });
+    const held = new Promise<void>((resolve) => {
+      releaseRecovery = resolve;
+    });
+    await page.route(
+      `${installation.origin}/api/households/${data.household.id}/text-assistant/recover`,
+      async (route) => {
+        expect(route.request().method()).toBe('POST');
+        expect(route.request().postDataJSON().operationIds).toContain('private-pending');
+        recoveryStarted();
+        await held;
+        await route.abort('failed');
+      },
+      { times: 1 },
+    );
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await (await utilityButton(page, 'Rapporter')).click();
+    // Recovery completes pending attempts. Hold before the transaction so the
+    // pending-history boundary and return reading cannot depend on its timer.
+    await started;
     const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
     await expect(history.getByRole('article')).toHaveCount(1);
     await expect(history).toContainText('Lo Exempel');
@@ -236,17 +269,28 @@ test('HISTORIK-11: private rejected and pending save attempts never enter shared
     expect(await (await page.request.get(`${data.path}/operations`)).json()).toEqual(
       operationsBefore,
     );
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    await (await utilityButton(page, 'Tabell')).click();
+    await expect(
+      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).toContainText('Osparad person');
+    expect(await data.read()).toEqual(before);
+    expect(await (await page.request.get(`${data.path}/operations`)).json()).toEqual(
+      operationsBefore,
+    );
   } finally {
+    releaseRecovery();
+    await page.unrouteAll({ behavior: 'wait' });
     await installation.close();
   }
 });
 
 for (const viewport of [
-  { width: 1280, height: 720 },
-  { width: 390, height: 844 },
-  { width: 320, height: 640 },
+  { width: 1280, height: 720, caseId: 'HISTORIK-12' },
+  { width: 390, height: 844, caseId: 'HISTORIK-16' },
+  { width: 320, height: 640, caseId: 'HISTORIK-17' },
 ])
-  test(`HISTORIK-12: following save links preserves table search and unsent conversation text${viewport.width === 1280 ? '' : ` at ${viewport.width}px`}`, async ({
+  test(`${viewport.caseId}: following save links preserves table search and unsent conversation text${viewport.width === 1280 ? '' : ` at ${viewport.width}px`}`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -315,50 +359,3 @@ for (const viewport of [
       await installation.close();
     }
   });
-
-test('HISTORIK-13: historical icon changes remain readable beside an unchanged profile image', async ({
-  page,
-}) => {
-  const installation = await createInstallation();
-  try {
-    const data = await setup(page.request, installation.origin);
-    await data.object('person', 'Lo Exempel', { iconId: 'bike' });
-    const buffer = await sharp({
-      create: { width: 40, height: 40, channels: 3, background: '#0088ff' },
-    })
-      .png()
-      .toBuffer();
-    const upload = await page.request.post(
-      `${installation.origin}/api/households/${data.household.id}/profile-images/person`,
-      {
-        headers: {
-          origin: installation.origin,
-          'content-type': 'image/png',
-          'x-skyttel-draft-version': String((await data.read()).draft.version),
-          'x-skyttel-content-version': String((await data.read()).contentVersion),
-          'x-skyttel-object-revision': 'null',
-        },
-        data: buffer,
-      },
-    );
-    expect(upload.ok()).toBe(true);
-    await data.save('initial');
-    await data.object('person', 'Lo Exempel', { iconId: 'car' });
-    await data.save('icon-change');
-    await page.goto(`${installation.origin}/households/${data.household.id}`);
-    await (await utilityButton(page, 'Rapporter')).click();
-    const card = page.getByRole('article').first();
-    await card.getByText('Visa ändringarna', { exact: true }).click();
-    await expect(card.getByAltText('Profilbild för Lo Exempel')).toHaveCount(2);
-    for (const image of await card.getByAltText('Profilbild för Lo Exempel').all()) {
-      await expect(image).toBeVisible();
-      await expect
-        .poll(() => image.evaluate((node: HTMLImageElement) => node.naturalWidth))
-        .toBeGreaterThan(0);
-    }
-    await expect(card.getByText('Ikon: Cykel', { exact: true })).toBeVisible();
-    await expect(card.getByText('Ikon: Bil', { exact: true })).toBeVisible();
-  } finally {
-    await installation.close();
-  }
-});

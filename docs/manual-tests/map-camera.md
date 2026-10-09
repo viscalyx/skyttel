@@ -15,10 +15,20 @@ påhittade uppgifter. Administratörsrollen behövs inte.
    [provförberedelsen](../development/devcontainer.md#disposable-local-database).
    Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor).
 2. Skapa Lo Exempel, Kim Exempel, Alex Exempel och Långt borta. Koppla Lo
-   till Kim och Kim till Långt borta. Flytta objekten till olika personliga
+   till Kim och Kim till Långt borta. Spara hela utkastet. Flytta objekten
+   till olika personliga
    placeringar, även i höjdled. Placera Långt borta tydligt utanför gruppen.
+   Redigera därefter varje objekt: skriv **Privat kameraförslag** i
+   Beskrivning och välj **Lägg i utkastet och stäng**. Redigera båda
+   sambanden: välj **Osäkert uppgivet** i **Uppgiftens säkerhet** och
+   **Lägg i utkastet**. Stäng sambandsdialogen. Spara inte dessa förslag.
 3. Börja varje fall med en omladdad karta. Kamerarörelser ska inte skapa
    hushållsförslag eller ändra personliga objektplaceringar.
+
+KAMERA-10/11/12 använder
+[nåbar fysisk provinstallation och egna provdata](workspace-preparation.md#fysiska-enheter-och-egen-provdata).
+KAMERA-03:s grafikdel har
+[separat förberedelse med exakt tidpunkt](workspace-preparation.md#kontrollerat-grafikavbrott-för-kamera).
 
 ## Rotation och kameravy
 
@@ -32,8 +42,24 @@ påhittade uppgifter. Administratörsrollen behövs inte.
 
 **Integrationstest:**
 [map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
-testfallet “KAMERA-01: rotation keeps the selected personal position fixed
-on screen without a selection jump”.
+KAMERA-01.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-camera.spec.ts",
+    "caseId": "KAMERA-01"
+  },
+  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "outcomes": [
+    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -59,14 +85,31 @@ on screen without a selection jump”.
 
 **Integrationstest:**
 [map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
-testfallet “KAMERA-02: focus fits only selection and direct neighbors while
-camera history preserves work”.
+KAMERA-02.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-camera.spec.ts",
+    "caseId": "KAMERA-02"
+  },
+  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "outcomes": [
+    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Fokusera Lo utan att markera objektet och tryck Shift+F10. Kontrollera
    att **Fokusera markering** är inaktiv med tomt urval. Stäng med Escape.
-2. Dubbelklicka Lo. Läs Los fasta uppgifter.
+2. Dubbelklicka Lo. Läs namnet, typen Person, den tidigare tomma sparade
+   beskrivningen och **Ditt förslag: Privat kameraförslag**.
 3. Öppna Los högerklicksmeny och välj **Fokusera markering**. Kontrollera
    Lo och Kim i det närmare utsnittet, med marginal till verktygen och
    oförändrad kamerariktning.
@@ -74,7 +117,8 @@ camera history preserves work”.
    **Föregående vy** två gånger för att gå tillbaka till fokusutsnittet.
 5. Stäng **Navigera**. Välj **Redigera Lo Exempel** och skriv Oskickat under
    kamerafokus i **Beskrivning**. Välj **Stäng objektdialogen** och kontrollera
-   fokus på **Fortsätt redigera**. Tryck Escape och kontrollera att texten består.
+   fokus på **Fortsätt redigera**. Tryck Escape och kontrollera att texten
+   består.
 6. Stäng igen och välj uttryckligen **Kasta ändringarna och fortsätt**.
    Kontrollera oförändrad kamera, tidigare utkast och sparade uppgifter.
 
@@ -101,8 +145,24 @@ WebGL. Saknas det stödet, anteckna den delen som ej utförd.
 
 **Integrationstest:**
 [map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
-testfallet “KAMERA-03: mouse and touch rotation preserve the pivot and
-narrow focus controls survive unavailable graphics”.
+KAMERA-03.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-camera.spec.ts",
+    "caseId": "KAMERA-03"
+  },
+  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "outcomes": [
+    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -125,73 +185,80 @@ narrow focus controls survive unavailable graphics”.
 
 ### KAMERA-04: Fokusera i en kort vy med åtkomliga verktyg
 
-**Syfte:** Verifiera kartutrymme och verktyg vid kraftig webbläsarzoom.
+**Syfte:** Verifiera kartutrymme och verktyg i korta CSS-vyer.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Börja med Lo markerad. Prova 400 procent riktig
-webbläsarzoom från en vy på 1280 × 1000 bildpunkter, så innehållet får
-320 × 250 CSS-bildpunkter. Anteckna faktiskt mått och zoomnivå.
+**Förutsättningar:** Börja med Lo markerad. Prova 320 × 250 och
+640 × 500 CSS-pixlar. Riktig webbläsarzoom provas i KAMERA-10.
 
 **Integrationstest:**
 [map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
-testfallet “KAMERA-04: short viewports retain a usable focus rectangle
-and reachable camera and display controls”. Testet använder motsvarande
-CSS-mått; riktig webbläsarzoom provas separat.
+KAMERA-04.
 
-För de två kontrollerade svaren i steg 7 använder du bara provinstallationens
-påhittade uppgifter och webbläsarens utvecklarkonsol. Kör följande före varje
-försök. Det verkliga svaret hålls efter att den personliga flytten har genomförts;
-`releasePersonalMove()` släpper samma svar. Detta är ingen telefonförberedelse
-eller uppgift om faktiskt utförd fysisk provning.
+**Separat förberedelse:** Följ
+[kontrollerad personlig leverans](workspace-preparation.md#väntande-personlig-flytt)
+före varje försök i steg 7. Transporten håller samma verkliga svar efter
+att flytten genomförts; provet ändrar inte annan hushållsinformation.
 
-```js
-(() => {
-  const originalFetch = window.fetch.bind(window);
-  let deliver;
-  window.releasePersonalMove = () => deliver?.();
-  window.fetch = async (input, options) => {
-    const response = await originalFetch(input, options);
-    const url = input instanceof Request ? input.url : input;
-    const method = options?.method
-      ?? (input instanceof Request ? input.method : 'GET');
-    if (new URL(url, location.href).pathname.endsWith('/map/view/position')
-        && method === 'POST') {
-      window.fetch = originalFetch;
-      await new Promise(resolve => { deliver = resolve; });
-    }
-    return response;
-  };
-})();
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-camera.spec.ts",
+    "caseId": "KAMERA-04"
+  },
+  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "outcomes": [
+    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+  ]
+}
 ```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Följ
+[väntande personlig flytt](workspace-preparation.md#väntande-personlig-flytt).
+Arma före den verkliga flytten i UI-steg 7. Efter flytten: invänta hållningen
+efter genomförandet och meddela **Samma genomförda svar hålls**. Behåll svaret
+tills användaren fokuserat Stäng navigering. Kör först då `release` i
+förberedelseterminalen och meddela **Samma svar är släppt**. Arma på nytt inför
+andra flytten, och släpp dess svar först efter verklig stängning. Återställ
+transporten enligt den befintliga guiden efter båda fokusproven.
 
 **Steg:**
 
-1. Fokusera Lo med tangentbord och tryck Shift+F10. Nå
-   **Fokusera markering** med högerpil och tryck Enter.
-2. Kontrollera Lo och Kim i den fria kartytan. Välj **Föregående vy**
-   medan verktygsnamnen är öppna. Knappen behåller fokus och blir dimmad.
-   Öppna namnen igen och fokusera markeringen via högerklicksmenyn.
-3. Slå på och av **Alla etiketter** med etikettikonen under
-   **Föregående vy** i verktygsfältet.
+1. Fokusera Lo med tangentbord och tryck Shift+F10. Nå **Fokusera markering**
+   med högerpil och tryck Enter.
+2. Kontrollera Lo och Kim i den fria kartytan. Välj **Föregående vy** medan
+   verktygsnamnen är öppna. Knappen behåller fokus och blir dimmad. Öppna namnen
+   igen och fokusera markeringen via högerklicksmenyn.
+3. Slå på och av **Alla etiketter** med etikettikonen under **Föregående vy** i
+   verktygsfältet.
 4. Öppna **Navigera**. Läs söksammanfattningen och hushållets återkoppling
-   bredvid navigeringen. Fokusera sammanhangsytan med tangentbord; rulla
-   vid behov hela arbetsytan för att läsa den.
-   Nå var och en av de sex **Flytta Lo Exempel**-knapparna med tangentbord och
-   aktivera dem: vänster, höger, uppåt, nedåt, framåt och bakåt. Kontrollera
-   fokus och att enbart din personliga placering ändras. Rotera och stäng
-   navigeringen. Upprepa detta steg vid 640 × 500 CSS-pixlar.
-5. Välj **Visa verktygens namn** och kontrollera att **Skriv till Skyttel**
-   går att nå.
-6. Öppna Los högerklicksmeny med Shift+F10 och aktivera
-   **Fokusera markering** med tangentbord medan verktygsnamnen är öppna.
-7. Förbered det kontrollerade svaret och öppna Navigera. Flytta Lo med
-   tangentbord och kontrollera att flyttknappen blir inaktiv i väntan på svaret.
-   Flytta fokus till **Stäng navigering** utan att aktivera den. Släpp samma
-   svar med `releasePersonalMove()` och kontrollera att fokus ligger kvar.
-   Upprepa förberedelsen och flytten, men aktivera nu **Stäng navigering**
-   före svaret. Släpp svaret och kontrollera att **Navigera** behåller fokus;
-   den stängda navigeringen återöppnas inte.
+   bredvid navigeringen. Fokusera sammanhangsytan med tangentbord; rulla vid
+   behov hela arbetsytan för att läsa den. Nå var och en av de sex **Flytta Lo
+   Exempel**-knapparna med tangentbord och aktivera dem: vänster, höger, uppåt,
+   nedåt, framåt och bakåt. Kontrollera fokus och att enbart din personliga
+   placering ändras. Rotera och stäng navigeringen. Upprepa detta steg vid 640 ×
+   500 CSS-pixlar.
+5. Välj **Visa verktygens namn** och kontrollera att **Skriv till Skyttel** går
+   att nå.
+6. Öppna Los högerklicksmeny med Shift+F10 och aktivera **Fokusera markering**
+   med tangentbord medan verktygsnamnen är öppna.
+7. Be operatören förbereda det kontrollerade svaret och invänta installationen.
+   Öppna Navigera. Flytta Lo med tangentbord och kontrollera att flyttknappen
+   blir inaktiv i väntan på svaret. Invänta operatörens bekräftelse av den
+   verkliga hållningen. Flytta fokus till **Stäng navigering** utan att aktivera
+   den. Be operatören släppa samma svar enligt förberedelsen och invänta
+   bekräftelse. Kontrollera att fokus ligger kvar. Be operatören förbereda nästa
+   svar och invänta installationen. Upprepa flytten och invänta bekräftelse av
+   hållningen, men aktivera nu **Stäng navigering** före svaret. Be operatören
+   släppa samma svar och invänta bekräftelse. Kontrollera att **Navigera**
+   behåller fokus; den stängda navigeringen återöppnas inte.
 
 **Förväntat resultat:**
 
@@ -220,24 +287,43 @@ eller uppgift om faktiskt utförd fysisk provning.
 
 **Integrationstest:**
 [map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
-testfallet “KAMERA-05: context focus preserves multiple selections and
-filters with distinct described actions”.
+KAMERA-05.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-camera.spec.ts",
+    "caseId": "KAMERA-05"
+  },
+  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "outcomes": [
+    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Sök **Exempel** och markera **Ta med upphörda** i kartans filter.
 2. Markera Lo och lägg till Alex i urvalet med Ctrl-klick eller Cmd-klick.
-3. Högerklicka Långt borta utan att ändra urvalet. Läs verktygstipsen och
-   beskrivningarna med skärmläsare för de tre kartåtgärderna.
+3. Högerklicka Långt borta utan att ändra urvalet. Läs verktygstipsen och de tre
+   kartåtgärdernas beskrivningar.
+   Faktisk uppläsning prövas i KAMERA-11.
 4. Nå **Fokusera markering** med tangentbord och tryck Enter.
 5. Välj **Föregående vy** och kontrollera att kameran återgår. Kontrollera
    markeringarna, kartans söktext, filtret och utkastet.
 
 **Förväntat resultat:**
 
-- Kartikonen **Visa i kartan** förklarar att Långt borta markeras, att sökning och
+- Kartikonen **Visa i kartan** förklarar att Långt borta markeras, att sökning
+  och
   filter rensas och att upphörda tas med vid behov.
-- Nätverksikonen **Visa samband i kartan** förklarar att Långt borta markeras och
+- Nätverksikonen **Visa samband i kartan** förklarar att Långt borta markeras
+  och
   att sökning, filter och tidigare visat innehåll behålls.
 - Fokusramen **Fokusera markering** förklarar att alla markerade objekt och
   deras direkta grannar ramas in med bevarat urval, sökning och filter.
@@ -258,8 +344,24 @@ filters with distinct described actions”.
 
 **Integrationstest:**
 [map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
-testfallet “KAMERA-06: toolbar label mode toggles with pointer and keyboard
-and survives reload”.
+KAMERA-06.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-camera.spec.ts",
+    "caseId": "KAMERA-06"
+  },
+  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "outcomes": [
+    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -275,7 +377,8 @@ and survives reload”.
 **Förväntat resultat:**
 
 - Knappen har en etikettikon, synligt fokus och ett tydligt aktivt läge.
-  Skärmläsaren läser namnet **Alla etiketter** och om knappen är på eller av.
+  Namnet **Alla etiketter** och påläget finns för hjälpmedel.
+  Faktisk uppläsning prövas i KAMERA-11.
 - Ett klick slår på valet och nästa klick slår av. Enter och mellanslag
   växlar samma val. Automatiska etiketter används när valet är avstängt.
 - Den personliga inställningen består vid omladdning och i en kort vy.
@@ -292,8 +395,24 @@ and survives reload”.
 
 **Integrationstest:**
 [map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
-testfallet “KAMERA-07: toolbar reset clears map search and selection while
-preserving label mode and personal positions”.
+KAMERA-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-camera.spec.ts",
+    "caseId": "KAMERA-07"
+  },
+  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "outcomes": [
+    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -323,8 +442,24 @@ preserving label mode and personal positions”.
 
 **Integrationstest:**
 [map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
-testfallet “KAMERA-08: previous view walks each camera change back to the
-initial view and reset clears history”.
+KAMERA-08.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-camera.spec.ts",
+    "caseId": "KAMERA-08"
+  },
+  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "outcomes": [
+    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -351,7 +486,8 @@ initial view and reset clears history”.
   blir dimmade. Efter en ny panorering räcker ett steg tillbaka till det
   återställda läget; äldre vyer återkommer inte.
 - Hushållets uppgifter, utkast och objektplaceringar är oförändrade.
-  Skärmläsaren förmedlar knapparnas namn och inaktiva lägen.
+  Knapparnas namn och inaktiva lägen finns för hjälpmedel;
+  faktisk uppläsning prövas i KAMERA-11.
 
 ### KAMERA-09: En sammanhängande gest blir ett steg bakåt
 
@@ -364,8 +500,24 @@ om pekskärmen är emulerad eller fysisk.
 
 **Integrationstest:**
 [map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
-testfallet “KAMERA-09: mouse drags, wheel bursts and touch pinch create
-complete previous views”.
+KAMERA-09.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-camera.spec.ts",
+    "caseId": "KAMERA-09"
+  },
+  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "outcomes": [
+    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -385,3 +537,169 @@ complete previous views”.
 - Hela tvåfingersgesten går att backa med ett tryck, även när den innehåller
   både panorering och zoom. Knappen blir dimmad i startläget.
 - Gester och återgång ändrar inga hushållsuppgifter eller utkast.
+
+### KAMERA-10: fysisk pekrotation och riktig zoom
+
+**Syfte:** Fysisk pekrotation behåller markerad pivot och verklig 400 procents
+webbläsarzoom lämnar kamera, navigation och senare fokus nåbara.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Pekskärm samt webbläsare med faktisk 400 procents zoom från
+1280 × 1000.
+
+**Kräver mänsklig observation:** Fysisk pekrotation behåller markerad pivot och
+verklig 400 procents webbläsarzoom lämnar kamera, navigation och senare fokus
+nåbara.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Fysisk pekrotation behåller markerad pivot och verklig 400 procents webbläsarzoom lämnar kamera, navigation och senare fokus nåbara."
+  },
+  "reference": "Pekskärm samt webbläsare med faktisk 400 procents zoom från 1280 × 1000.",
+  "outcomes": [
+    "Fysisk pekrotation behåller markerad pivot och verklig 400 procents webbläsarzoom lämnar kamera, navigation och senare fokus nåbara."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/map-camera.spec.ts",
+      "caseId": "KAMERA-03",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/map-camera.spec.ts",
+      "caseId": "KAMERA-04",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ KAMERA-03 steg 1–4 med faktisk pekinmatning.
+2. Återställ provet. Följ KAMERA-04 steg 1–7 med riktig webbläsarzoom.
+   Anteckna faktisk zoom, CSS-mått, enhet och eventuella hinder.
+
+**Förväntat resultat:**
+
+- Fysisk pekrotation behåller markerad pivot och verklig 400 procents
+  webbläsarzoom lämnar kamera, navigation och senare fokus nåbara.
+
+### KAMERA-11: skärmläsarens kamera- och etikettkontroller
+
+**Syfte:** NVDA eller VoiceOver läser kartåtgärdernas olika syften, Alla
+etiketter med påläge och kameraknapparnas inaktiva lägen.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Faktisk NVDA eller VoiceOver och sparade kameraobjekt.
+
+**Kräver mänsklig observation:** NVDA eller VoiceOver läser kartåtgärdernas
+olika syften, Alla etiketter med påläge och kameraknapparnas inaktiva lägen.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "NVDA eller VoiceOver läser kartåtgärdernas olika syften, Alla etiketter med påläge och kameraknapparnas inaktiva lägen."
+  },
+  "reference": "Faktisk NVDA eller VoiceOver och sparade kameraobjekt.",
+  "outcomes": [
+    "NVDA eller VoiceOver läser kartåtgärdernas olika syften, Alla etiketter med påläge och kameraknapparnas inaktiva lägen."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/map-camera.spec.ts",
+      "caseId": "KAMERA-05",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/map-camera.spec.ts",
+      "caseId": "KAMERA-06",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/map-camera.spec.ts",
+      "caseId": "KAMERA-08",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ KAMERA-05 steg 1–5 och lyssna på de tre åtgärdernas beskrivningar.
+2. Återställ. Följ KAMERA-06 steg 1–5 och KAMERA-08 steg 1–5.
+   Lyssna på namn, påläge och inaktivt läge. Anteckna hjälpmedlets version.
+
+**Förväntat resultat:**
+
+- NVDA eller VoiceOver läser kartåtgärdernas olika syften, Alla etiketter med
+  påläge och kameraknapparnas inaktiva lägen.
+
+### KAMERA-12: fysiska sammanhängande kameragester
+
+**Syfte:** Fysisk mus, styrplatta och pekskärm grupperar varje sammanhängande
+rotation, panorering och zoom till rätt hela steg i Föregående vy.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Faktisk mus, styrplatta och pekskärm med de sparade
+kameraobjekten.
+
+**Kräver mänsklig observation:** Fysisk mus, styrplatta och pekskärm grupperar
+varje sammanhängande rotation, panorering och zoom till rätt hela steg i
+Föregående vy.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Fysisk mus, styrplatta och pekskärm grupperar varje sammanhängande rotation, panorering och zoom till rätt hela steg i Föregående vy."
+  },
+  "reference": "Faktisk mus, styrplatta och pekskärm med de sparade kameraobjekten.",
+  "outcomes": [
+    "Fysisk mus, styrplatta och pekskärm grupperar varje sammanhängande rotation, panorering och zoom till rätt hela steg i Föregående vy."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/map-camera.spec.ts",
+      "caseId": "KAMERA-09",
+      "purpose": "Kontrollerad webbläsarobservation; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ KAMERA-09 steg 1–6 en gång med faktisk inmatning.
+2. Anteckna verklig gest, fingerordning och de tre återgångarna.
+   Kontrollera att tvåfingersgesten går att backa som ett helt steg.
+
+**Förväntat resultat:**
+
+- Fysisk mus, styrplatta och pekskärm grupperar varje sammanhängande rotation,
+  panorering och zoom till rätt hela steg i Föregående vy.

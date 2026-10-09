@@ -5,6 +5,8 @@ import {
   openDraftReview,
   openMap,
   openNewObject,
+  openSettings,
+  openTable,
   signIn,
 } from '../support/client.js';
 import { openSavedHistory } from '../support/conversation-page.js';
@@ -52,6 +54,10 @@ test('SPAR-01: find a committed save after losing its response and reopening on 
     await expect(receipt).toContainText(committedReceipt.operationId);
     await reopened.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await expect(await openDraftReview(reopened)).toContainText('Utkastet är tomt.');
+    await openTable(reopened);
+    await expect(
+      reopened.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }),
+    ).toHaveCount(1);
     const state: MapState = await (await recovered.request.get(path)).json();
     expect(state.objects.map((object) => object.name)).toEqual(['Lo Exempel']);
     const { history } = await (await recovered.request.get(`${path}/history`)).json();
@@ -176,6 +182,7 @@ test('SPAR-02: automatically recover the same pending save on another client aft
     expect((await (await recovered.request.get(`${path}/history`)).json()).history).toEqual([
       receipt,
     ]);
+    await expect(await openDraftReview(reopened)).toContainText('Kim Exempel');
   } finally {
     releaseCheck();
     await recovered.close();
@@ -223,6 +230,11 @@ test('SPAR-03: a rejected stale save survives restart without consuming newer pr
     await expect(newer.getByRole('region', { name: 'Kartans status', exact: true })).toContainText(
       'Utkastet kunde inte sparas.',
     );
+    await newer.getByRole('button', { name: 'Visa sparandet', exact: true }).click();
+    await expect(newer.getByRole('dialog', { name: 'Spara utkastet', exact: true })).toContainText(
+      'Utkastet kunde inte sparas.',
+    );
+    await newer.keyboard.press('Escape');
     const currentDraft = await openDraftReview(newer);
     await expect(currentDraft).toContainText('Lo Lind');
     const discovered: { operations: SaveOperation[] } = await (
@@ -308,7 +320,9 @@ test('SPAR-04: private pending saves stay hidden from administrators and revoked
     expect(attempt.status).toBe('pending');
 
     await page.goto(installation.origin);
-
+    await expect(
+      page.getByRole('region', { name: 'Kartans status', exact: true }),
+    ).not.toContainText('Sparutfall okänt');
     await expect(await openDraftReview(page)).not.toContainText('Sparutfall okänt');
     expect(await (await page.request.get(`${path}/operations`)).json()).toEqual({ operations: [] });
     expect(
@@ -318,11 +332,22 @@ test('SPAR-04: private pending saves stay hidden from administrators and revoked
       'Privat förslag',
     );
 
-    const revoked = await page.request.post(
-      `${installation.origin}/api/households/${household.id}/members/${user.id}/revoke`,
-      { headers, data: {} },
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
+    const memberRow = page
+      .getByRole('list', { name: 'Medlemmar' })
+      .getByRole('listitem')
+      .filter({ hasText: robin.name });
+    await memberRow.getByRole('button', { name: 'Återkalla tillgång', exact: true }).click();
+    const revocationResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith(`/members/${user.id}/revoke`) &&
+        response.request().method() === 'POST',
     );
+    await memberRow.getByRole('button', { name: 'Bekräfta återkallelse', exact: true }).click();
+    const revoked = await revocationResponse;
     expect(revoked.status()).toBe(200);
+    await expect(memberRow).toHaveCount(0);
     for (const suffix of ['/operations', `/operations/${attempt.operationId}`]) {
       const denied = await member.request.get(`${path}${suffix}`);
       expect(denied.status()).toBe(403);

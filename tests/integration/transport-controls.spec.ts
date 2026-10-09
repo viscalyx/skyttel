@@ -5,11 +5,13 @@ import {
   closeTextView,
   createHousehold,
   openDraftReview,
+  openMap,
   openNewObject,
+  openTable,
   signIn,
 } from '../support/client.js';
 import { openSavedHistory } from '../support/conversation-page.js';
-import { editTableObject } from '../support/domain-work.js';
+import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('SPAR-05: scoped transport holds real staging, rejects stale saves and recovers a lost committed receipt', async ({
@@ -125,6 +127,21 @@ test('SPAR-05: scoped transport holds real staging, rejects stale saves and reco
     await expect(historyView.getByRole('article')).toHaveCount(1);
     await historyView.getByText('Identifiera sparandet och användaren', { exact: true }).click();
     await expect(historyView).toContainText(receipt.operationId);
+    await fresh.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    await expect(await openDraftReview(fresh)).toContainText('Utkastet är tomt.');
+    await closeTextView(fresh);
+    await openTable(fresh);
+    for (const name of ['Lo Exempel', 'Kim Exempel'])
+      await expect(
+        fresh.getByRole('button', { name: `Redigera ${name}`, exact: true }),
+      ).toHaveCount(1);
+    await fresh.reload();
+    const reloadedHistory = await openSavedHistory(fresh);
+    await expect(reloadedHistory.getByRole('article')).toHaveCount(1);
+    await reloadedHistory
+      .getByText('Identifiera sparandet och användaren', { exact: true })
+      .click();
+    await expect(reloadedHistory).toContainText(receipt.operationId);
     const repeated = await reopened.request.post(`${path}/save`, {
       headers: { origin: app.origin },
       data: {
@@ -199,33 +216,32 @@ test('SPAR-05: scoped transport holds real staging, rejects stale saves and reco
     const member: MapState = await (await other.request.get(path)).json();
     const lo = member.objects.find((object) => object.name === 'Lo Exempel');
     if (!lo) throw new Error('The saved object must be readable by both members');
-    expect(
-      (
-        await other.request.post(`${path}/draft`, {
-          headers: { origin: app.origin },
-          data: {
-            version: member.draft.version,
-            contentVersion: member.contentVersion,
-            id: lo.id,
-            baseRevision: lo.revision,
-            value: { ...lo, description: 'Robins sparade beskrivning' },
-          },
-        })
-      ).status(),
-    ).toBe(200);
+    const memberPage = await other.newPage();
+    await memberPage.goto(app.origin);
+    const memberForm = await editTableObject(memberPage, 'Lo Exempel');
+    await memberForm.getByLabel('Beskrivning', { exact: true }).fill('Robins sparade beskrivning');
+    const stageResponse = memberPage.waitForResponse(
+      (response) =>
+        response.url().endsWith('/map/object-form') && response.request().method() === 'POST',
+    );
+    await memberForm.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
+    expect((await stageResponse).status()).toBe(200);
     const changed: MapState = await (await other.request.get(path)).json();
-    expect(
-      (
-        await other.request.post(`${path}/save`, {
-          headers: { origin: app.origin },
-          data: {
-            version: changed.draft.version,
-            contentVersion: changed.contentVersion,
-            operationId: 'member-before-release',
-          },
-        })
-      ).status(),
-    ).toBe(200);
+    const memberSave = memberPage.waitForResponse(
+      (response) => response.url().endsWith('/map/save') && response.request().method() === 'POST',
+    );
+    await (await openDraftReview(memberPage))
+      .getByRole('button', { name: 'Spara hela utkastet', exact: true })
+      .click();
+    const savedMember = await memberSave;
+    expect(savedMember.status()).toBe(200);
+    expect(savedMember.request().postDataJSON()).toMatchObject({
+      version: changed.draft.version,
+      contentVersion: changed.contentVersion,
+    });
+    await expect(
+      memberPage.getByRole('status', { name: 'Sparbekräftelse', exact: true }),
+    ).toHaveText('Utkastet är sparat');
     const shared: MapState = await (await other.request.get(path)).json();
     const historyBefore = (await (await other.request.get(`${path}/history`)).json()).history;
     proxy.command('release');
@@ -243,6 +259,24 @@ test('SPAR-05: scoped transport holds real staging, rejects stale saves and reco
     expect(rejected.objects.find((object) => object.id === lo.id)?.description).toBe(
       'Robins sparade beskrivning',
     );
+    await fresh.keyboard.press('Escape');
+    const privateProposal = await readDraftProposal(fresh, 'Lo Exempel');
+    await expect(privateProposal).toContainText('Alex privata beskrivning');
+    await fresh.keyboard.press('Escape');
+    await closeTextView(fresh);
+    await openMap(fresh);
+    await fresh.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+    await fresh.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const conflict = fresh.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await expect(conflict.getByRole('region', { name: 'Sparat i kartan nu' })).toContainText(
+      'Robins sparade beskrivning',
+    );
+    await expect(conflict.getByRole('region', { name: 'Ditt förslag' })).toContainText(
+      'Alex privata beskrivning',
+    );
+    await fresh.keyboard.press('Escape');
+    const finalHistory = await openSavedHistory(fresh);
+    await expect(finalHistory.getByRole('article')).toHaveCount(2);
   } finally {
     await transport?.close();
     await other.close();

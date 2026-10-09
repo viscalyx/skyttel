@@ -45,6 +45,23 @@ Objektets namn öppnar den utökade läsraden och startar ingen redigering.
 
 ### KARTA-01: sök med svenska bokstäver och stäng text som inte skickas
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-01"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kontrollera att sökning fungerar utan hänsyn till stora och små bokstäver och att avbruten formulärtext inte ändrar kartan eller utkastet."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera att sökning fungerar utan hänsyn till stora och små
 bokstäver och att avbruten formulärtext inte ändrar kartan eller utkastet.
 
@@ -86,6 +103,23 @@ the saved map”.
 
 ### KARTA-02: identifiera ett ospecificerat objekt utan att byta dess samband
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-02"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kontrollera skillnaden mellan en obesvarad identitetsfråga och ett ospecificerat objekt som senare kan identifieras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera skillnaden mellan en obesvarad identitetsfråga och
 ett ospecificerat objekt som senare kan identifieras.
 
@@ -108,7 +142,8 @@ identified without changing its links”.
    **Ospecificerat objekt** och lägg ändringen i utkastet.
 3. Lägg till abonnemanget **Familjemusik** och sambandet
    **Familjemusik → Betalas med → Betalkonto**. Spara hela utkastet.
-4. Ladda om sidan och välj **Redigera Betalkonto**. Kontrollera att det fortfarande
+4. Ladda om sidan och välj **Redigera Betalkonto**. Kontrollera att det
+   fortfarande
    är ospecificerat. Välj **Identifierat objekt**, ändra namnet till
    **Hushållskontot** och beskrivningen till **Gemensamt bankkonto**.
    Lägg ändringen i utkastet och spara.
@@ -126,30 +161,34 @@ identified without changing its links”.
 
 ### KARTA-08: kasta oskickad text och rätta en obesvarad identitet
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-08"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kasta enbart oskickat formulärarbete innan ett tidigare objektförslag rättas, utan att ändra dess samband eller andra förslag."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kasta enbart oskickat formulärarbete innan ett tidigare
 objektförslag rättas, utan att ändra dess samband eller andra förslag.
 
 **Användare:** Den konfigurerade administratören.
 
 **Förutsättningar:** Spara Familjemusik med beskrivningen Sparad beskrivning.
+Använd 1280 × 900 CSS-pixlar och ljust tema.
 Behåll databasen vid omstart.
 
 **Integrationstest:**
-[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts).
-Följande testfall:
-
-- “KARTA-08: discarding unsent object text preserves proposals before correcting
-  an unresolved identity at 1280px in light”.
-- “KARTA-08: discarding unsent object text preserves proposals before correcting
-  an unresolved identity at 1280px in dark”.
-- “KARTA-08: discarding unsent object text preserves proposals before correcting
-  an unresolved identity at 390px in light”.
-- “KARTA-08: discarding unsent object text preserves proposals before correcting
-  an unresolved identity at 390px in dark”.
-- “KARTA-08: discarding unsent object text preserves proposals before correcting
-  an unresolved identity at 320px in light”.
-- “KARTA-08: discarding unsent object text preserves proposals before correcting
-  an unresolved identity at 320px in dark”.
+[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts), KARTA-08.
 
 **Steg:**
 
@@ -176,6 +215,23 @@ Följande testfall:
 
 ### KARTA-05: skilj på obesvarat, osäkert, okänt och uttryckligen inget
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/family.spec.ts",
+    "caseId": "KARTA-05"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kontrollera att sambandsuppgifter bevarar sin betydelse och att en obesvarad fråga blockerar sparande av hela utkastet."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera att sambandsuppgifter bevarar sin betydelse och att
 en obesvarad fråga blockerar sparande av hela utkastet.
 
@@ -197,7 +253,8 @@ unanswered identity question”.
    Ladda om sidan.
 2. Välj **Skriv till Skyttel** och **Visa utkastet**. Läs **Olöst identitet**
    och **Målet är oklart**. Kontrollera att **Spara hela utkastet** är inaktivt.
-   Stäng textvyn och öppna samma samband från tabellen. Välj **Redigera samband**,
+   Stäng textvyn och öppna samma samband från tabellen. Välj **Redigera
+   samband**,
    **Osäkert uppgivet** och Betalkonto som **Till objekt**. Lägg hela sambandet
    i utkastet och stäng samband. Öppna utkastvyn igen och spara uttryckligen.
    Invänta **Utkastet är sparat**, stäng textvyn och ladda om sidan.
@@ -220,6 +277,23 @@ unanswered identity question”.
 ## Välja och ta bort samband
 
 ### KARTA-03: välj mellan lika namn och rätta ett enskilt samband
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-03"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kontrollera att lika namn inte slår samman objekt och att ett sambands mål kan ändras och sambandet tas bort utan att påverka andra data."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att lika namn inte slår samman objekt och att ett
 sambands mål kan ändras och sambandet tas bort utan att påverka andra data.
@@ -268,6 +342,23 @@ deleting a relationship”.
 
 ### KARTA-04: granska och kasta borttagning av ett objekt med flera samband
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-04"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kontrollera att objektborttagning omfattar inkommande och utgående samband och lämnar oberoende information oförändrad."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera att objektborttagning omfattar inkommande och
 utgående samband och lämnar oberoende information oförändrad.
 
@@ -313,29 +404,33 @@ and can be discarded”.
 
 ### KARTA-09: skapa typer, kompletta objekt och samband i samma utkast
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-creation.spec.ts",
+    "caseId": "KARTA-09"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Använd nya typer i kompletta objektformulär och spara definitioner, objekt och samband tillsammans."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Använd nya typer i kompletta objektformulär och spara
 definitioner, objekt och samband tillsammans.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** Tom karta och tomt utkast. Behåll databasen vid omstart.
+**Förutsättningar:** Tom karta och tomt utkast. Använd 1280 × 900 CSS-pixlar
+och ljust tema. Behåll databasen vid omstart.
 
 **Integrationstest:**
-[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts).
-Följande testfall:
-
-- “KARTA-09: complete forms use new draft types and objects in one durable
-  relationship save at 1280px in light”.
-- “KARTA-09: complete forms use new draft types and objects in one durable
-  relationship save at 1280px in dark”.
-- “KARTA-09: complete forms use new draft types and objects in one durable
-  relationship save at 390px in light”.
-- “KARTA-09: complete forms use new draft types and objects in one durable
-  relationship save at 390px in dark”.
-- “KARTA-09: complete forms use new draft types and objects in one durable
-  relationship save at 320px in light”.
-- “KARTA-09: complete forms use new draft types and objects in one durable
-  relationship save at 320px in dark”.
+[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts), KARTA-09.
 
 **Steg:**
 
@@ -346,7 +441,8 @@ Följande testfall:
    det i utkastet utan namn. Kontrollera felsammanfattningens fokus och välj
    fellänken Namn.
 3. Ange Paneler på taket och Beskrivning till den nya typen. Välj Solutrustning,
-   öppna Uppgifter och ange Placering Södertak och Reserv Nej. Behåll Identifierat
+   öppna Uppgifter och ange Placering Södertak och Reserv Nej. Behåll
+   Identifierat
    objekt och välj **Lägg i utkastet och stäng**.
 4. Skapa **Batteriet** av samma nya typ. Välj **Ospecificerat objekt**, lämna
    de egna fälten obesvarade och välj **Lägg i utkastet och stäng**.
@@ -380,6 +476,23 @@ Följande testfall:
   kontrollerar dessutom att allt ingår i ett enda verkligt kvitto.
 
 ### KARTA-06: återuppta, rätta och kasta ett beständigt objektförslag
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map.spec.ts",
+    "caseId": "KARTA-06"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kontrollera att ett objektförslag bevaras före sparandet och kan återupptas i en annan klient med samma inloggning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att ett objektförslag bevaras före sparandet och
 kan återupptas i en annan klient med samma inloggning.
@@ -423,6 +536,31 @@ shared map after review”.
 
 ### KARTA-07: spara separata familjeobjekt och ett riktat samband tillsammans
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/family.spec.ts",
+    "caseId": "KARTA-07"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kontrollera att tjänst, konto, abonnemang och övriga objekt behåller separata identiteter när hela utkastet sparas."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/family.spec.ts",
+      "title": "HTTP family objects and directed relationships save together and keep their identities",
+      "purpose": "Bevarar riktade identiteter, normaliserad dubblett, fullständigt sparkvitto och historik efter omstart."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera att tjänst, konto, abonnemang och övriga objekt
 behåller separata identiteter när hela utkastet sparas.
 
@@ -431,13 +569,8 @@ behåller separata identiteter när hela utkastet sparas.
 **Förutsättningar:** Tom karta och tomt utkast. Tillgång till att starta om
 testinstallationen med samma databas.
 
-**Integrationstest:** [family.spec.ts](../../tests/integration/family.spec.ts),
-följande testfall:
-
-- “KARTA-07: family objects and directed relationships save together and
-  keep their identities”.
-- “KARTA-07: a concurrent duplicate refreshes the saved relationship and
-  allows explicit editing”.
+**Integrationstest:**
+[family.spec.ts](../../tests/integration/family.spec.ts), KARTA-07.
 
 **Steg:**
 
@@ -447,8 +580,9 @@ följande testfall:
    **Familjekort**, bankkontot **Hushållskonto** och företaget **Moln AB**.
 2. Skapa sambandet
    **Familjemusik → Gäller tjänstekontot → Familjens konto**.
-3. Försök lägga till exakt samma samband igen. Granska hela utkastet och
-   kontrollera att det fortfarande bara innehåller ett samband.
+3. Försök lägga till exakt samma samband igen. Läs **Sambandet finns redan**.
+   Välj **Avbryt redigeringen**, kasta endast det oskickade tillägget och
+   stäng samband. Granska hela utkastet: åtta objekt och ett samband.
 4. Spara hela utkastet. Starta om applikationen med samma databas,
    öppna kartan och granska objekten och sambandet.
 
@@ -461,10 +595,38 @@ följande testfall:
 - Integrationstestet kontrollerar dessutom att sparandet och historiken
   bevarar samma ändringsgrupp och objektens identiteter.
 
-**Samtidig dubblett:** Förbered ett separat provhushåll med demodata enligt
+### KARTA-25: samtidig dubblett öppnar det befintliga sambandet
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/family.spec.ts",
+    "caseId": "KARTA-25"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Skydda mot ett annat medlems identiska sparande."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Skydda mot ett annat medlems identiska sparande.
+
+**Användare:** Alex och Robin.
+
+**Förutsättningar:**  Förbered ett separat provhushåll med demodata enligt
 [DEMO-01](operations.md). Alex är administratör och Robin medlem i en
 separat profil. Kasta Alex tidigare privata utkast genom **Visa utkastet →
 Kasta hela utkastet** och den uttryckliga bekräftelsen. Bevara sparade fakta.
+
+**Integrationstest:**
+[family.spec.ts](../../tests/integration/family.spec.ts), KARTA-25.
+
+**Steg:**
 
 1. Som Alex, öppna **Tabell → Samband för Kim Exempel → Nytt samband**.
    Välj **Från objekt: Kim Exempel**, typen **Använder** och
@@ -480,8 +642,13 @@ Kasta hela utkastet** och den uttryckliga bekräftelsen. Bevara sparade fakta.
    av det oskickade tillägget med **Kasta ändringarna och fortsätt**.
    Formuläret visar **Redigera samband** för det befintliga sambandet.
    Att öppna redigeringen ska inte ändra det sparade sambandet eller
-   skapa något privat förslag. Automationen kontrollerar samma faktiska
-   sambands-ID och hela oförändrade publika kartsvaret.
+   skapa något privat förslag.
+
+**Förväntat resultat:**
+
+- Alex får den sparade kopplingen för fortsatt uttrycklig redigering.
+- Inget extra samband eller privat förslag tillkommer. Automationen
+  kontrollerar dessutom exakt identitet och hela kartsvaret.
 
 ## Gemensamt objektformulär
 
@@ -496,6 +663,23 @@ Manuell kontroll av skärmläsare och verkligt skärmtangentbord redovisas
 separat från automatiska fönster- och fokusprov.
 
 ### KARTA-10: skapa från tabellen och återgå till öppningsknappen
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-10"
+  },
+  "reference": "1280×720, ljust; skapa från Tabell och återge öppningsfokus.",
+  "outcomes": [
+    "Hela förslaget läggs i utkastet; fokus återgår till öppningsknappen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera skapa från tabellen och återgå till öppningsknappen.
 
@@ -522,6 +706,23 @@ without saving”.
 
 ### KARTA-11: rätta fel i ett stängt avsnitt
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-11"
+  },
+  "reference": "1280×720; fel i stängt avsnitt och fokuserad fellänk.",
+  "outcomes": [
+    "Fellänk öppnar dolt prisfält utan delvis förslag."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera rätta fel i ett stängt avsnitt.
 
 **Användare:** Den konfigurerade administratören.
@@ -535,10 +736,10 @@ linked correction”.
 
 **Steg:**
 
-1. Ange namnet Cykeln. Öppna Ekonomiska uppgifter, välj Känt för Pris och lämna
-   beloppet tomt.
+1. Välj **Nytt objekt** och ange **Hela cykeln**. Öppna **Ekonomiska
+   uppgifter**, välj **Känt** för **Pris** och lämna beloppet tomt.
 2. Öppna Grunduppgifter och skicka. Följ länken till Pris i felsammanfattningen,
-   fyll i 399 och skicka igen.
+   fyll i **399 SEK** och välj **Lägg i utkastet och stäng** igen.
 
 **Förväntat resultat:**
 
@@ -548,12 +749,32 @@ linked correction”.
 
 ### KARTA-12: behåll alla uppgifter i skapa och redigera
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-12"
+  },
+  "reference": "1280×720; egna fält, falskt ja/nej och upphörd livscykel.",
+  "outcomes": [
+    "Identitet, falskt ja/nej-värde, egna fält, livscykel och ikon hålls samman."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera behåll alla uppgifter i skapa och redigera.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** Skapa typen Cykel med textfält, talfält, datumfält och
-ja/nej-fält.
+**Förutsättningar:** Öppna **Inställningar → Typer och egna fält → Ny
+objekttyp**. Ange **Cykel** och skapa fälten **Tillverkare** (text),
+**Antal växlar** (tal), **Inköpsdatum** (datum) och **Elcykel** (ja/nej)
+med **Lägg till fält**. Lägg definitionen i utkastet och spara hela utkastet.
+Återgå till Tabell.
 
 **Integrationstest:**
 [object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
@@ -562,10 +783,12 @@ when staging and editing”.
 
 **Steg:**
 
-1. Skapa Alex cykel med Ospecificerat objekt, beskrivning och värden i alla fyra
-   egna fält.
+1. Välj **Nytt objekt**, ange **Pendlarcykeln**, beskrivningen **Hela
+   cykelns beskrivning.**, typen **Cykel** och **Ospecificerat objekt**.
+   Öppna **Egna fält**. Ange **Exempelcykel**, **8**, **2026-04-03** och
+   **Nej** i de fyra fälten.
 2. Öppna Livscykel och utseende, välj Upphört och ikonen Cykel. Öppna
-   Ekonomiska uppgifter, välj Känt för Slutdatum och ange datumet. Lägg hela
+   Ekonomiska uppgifter, välj Känt för Slutdatum och ange 2026-04-04. Lägg hela
    formuläret i utkastet.
 3. Öppna Tabell → Filter, välj Ta med upphörda och stäng filtret
    med Escape. Välj objektets Redigera och kontrollera uppgifterna igen.
@@ -578,12 +801,33 @@ when staging and editing”.
 
 ### KARTA-13: bekräfta egna fält som försvinner vid typbyte
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-13"
+  },
+  "reference": "1280×720; avbruten och bekräftad fältförlust vid typbyte.",
+  "outcomes": [
+    "Typbyte kräver uttrycklig bekräftelse av fältförlust."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera bekräfta egna fält som försvinner vid typbyte.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** Ett objekt med typen Cykel, Ramnummer CYKEL-42 och en annan
-valbar typ utan det fältet.
+**Förutsättningar:** Skapa **Cykel med ramnummer** via **Inställningar →
+Typer och egna fält → Ny objekttyp**, med textfältet **Ramnummer**.
+Lägg definitionen i utkastet. Skapa **Cykeln** av den typen, med
+beskrivningen **Behåll beskrivningen**, **Ramnummer ABC123** och känt
+**Pris 1200 SEK**. Lägg hela formuläret i utkastet. Typen **Person**
+ska finnas och sakna Ramnummer.
 
 **Integrationstest:**
 [object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
@@ -592,10 +836,13 @@ values are lost”.
 
 **Steg:**
 
-1. Öppna objektets redigering och välj den andra typen. Kontrollera berörda
+1. Öppna **Tabell → Redigera Cykeln** och välj typen **Person**. Kontrollera
+   berörda
    fältnamn och värden samt fokus på Fortsätt redigera.
-2. Tryck Escape och kontrollera typ och värden. Välj typen igen och Ta bort
-   fältvärdena och byt typ.
+2. Tryck Escape och kontrollera typ och **Ramnummer ABC123**. Välj
+   **Person** igen och **Ta bort fältvärdena och byt typ**.
+3. Välj **Lägg i utkastet och stäng** och granska förslaget. Namn,
+   beskrivning och känt pris ska bestå, medan Ramnummer tas bort.
 
 **Förväntat resultat:**
 
@@ -605,11 +852,36 @@ values are lost”.
 
 ### KARTA-14: lägg bild och uppgifter i utkastet tillsammans
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-14"
+  },
+  "reference": "1280×720; ogiltig fil och giltig syntetisk PNG.",
+  "outcomes": [
+    "Ogiltig bild avvisar hela förslaget; giltig bild och text läggs tillsammans."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera lägg bild och uppgifter i utkastet tillsammans.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** En syntetisk PNG-bild och en textfil med ändelsen .png.
+**Separat förberedelse:** Kör i repositoryts rot för en blå provbild och
+felaktig fil. Ta bort filerna efter provet.
+
+```sh
+node --input-type=module -e "import sharp from 'sharp'; await sharp({create:{width:30,height:20,channels:3,background:'#0088ff'}}).png().toFile('/tmp/skyttel-object-valid.png')"
+printf 'not an image' > /tmp/skyttel-object-invalid.png
+```
+
+**Förutsättningar:** Tomt utkast; båda förberedda filer är tillgängliga.
 
 **Integrationstest:**
 [object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
@@ -618,7 +890,8 @@ preserves the unsent form”.
 
 **Steg:**
 
-1. Skapa ett objekt med namn och beskrivning. Välj den felaktiga bilden under
+1. Välj **Nytt objekt**, ange **Cykeln med bild** och beskrivningen
+   **Text och bild skickas tillsammans.** Välj den felaktiga bilden under
    Livscykel och utseende och skicka.
 2. Kontrollera felet och värdena. Välj den giltiga bilden och skicka hela
    formuläret.
@@ -631,11 +904,29 @@ preserves the unsent form”.
 
 ### KARTA-15: skydda enbart oskickade formulärändringar
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-15"
+  },
+  "reference": "1280×720; Escape, kryss och Avbryt med tidigare privat förslag.",
+  "outcomes": [
+    "Avbruten förlust behåller oskickad text och fokus; tidigare förslag består."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera skydda enbart oskickade formulärändringar.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** Ett redan lagt förslag och ett nytt öppet objektformulär.
+**Förutsättningar:** Skapa **Redan i utkastet** med **Nytt objekt → Lägg i
+utkastet och stäng**. Öppna sedan **Nytt objekt** igen.
 
 **Integrationstest:**
 [object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
@@ -657,6 +948,23 @@ restore the editing focus”.
 
 ### KARTA-16: skydda oskickat arbete vid bakåtnavigation
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-16"
+  },
+  "reference": "1280×720; webbläsarens Tillbaka till Inställningar.",
+  "outcomes": [
+    "Webbläsarens Tillbaka kräver bekräftelse innan oskickat arbete kastas."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera skydda oskickat arbete vid bakåtnavigation.
 
 **Användare:** Den konfigurerade administratören.
@@ -671,26 +979,48 @@ navigation”.
 
 **Steg:**
 
-1. Öppna Nytt objekt, skriv ett namn och använd webbläsarens Tillbaka.
+1. Välj **Nytt objekt**, skriv **Text att behålla** och använd
+   webbläsarens **Tillbaka**.
 2. Välj Fortsätt redigera. Prova Tillbaka igen och välj Kasta ändringarna och
    fortsätt.
 
 **Förväntat resultat:**
 
 - Första försöket behåller formulär och adress. Bekräftat kastande tillåter
-  navigationen till Inställningar utan att skapa ett förslag. Dokumentnavigation
-  och omladdning använder webbläsarens varning där den kan visas.
+  navigationen till Inställningar utan att skapa ett förslag.
 
 ### KARTA-17: spärra väntande tillägg och behåll ett avvisat formulär
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-17"
+  },
+  "reference": "1280×720; fördröjd känd avvisning före faktiskt tillägg.",
+  "outcomes": [
+    "Väntande kontroller är spärrade; känd avvisning behåller namn och beskrivning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera spärra väntande tillägg och behåll ett avvisat formulär.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** Tomt utkast i en separat provinstallation. Kör följande
-kod i webbläsarens konsol innan steg 1. Den fördröjer och avvisar endast nästa
-tillägg utan att nå servern. Kör `window.releaseObjectStage()` i steg 2.
-Ladda om efter fallet om du avbryter innan begäran har släppts fram.
+**Förutsättningar:** Tomt utkast i en separat provinstallation.
+
+**Separat förberedelse:** Operatören installerar följande kod i
+webbläsarens konsol före steg 1 och bekräftar förberedelsen för testaren.
+Den fördröjer och avvisar endast nästa tillägg med status 400 utan att nå
+servern. Efter dubbelaktiveringen och Escape i steg 1 släpper operatören
+avvisningen med `window.releaseObjectStage()` på testarens begäran och
+bekräftar att den är släppt. Ladda om efter fallet om du avbryter innan
+begäran har släppts fram.
 
 ```javascript
 (() => {
@@ -702,7 +1032,7 @@ Ladda om efter fallet om du avbryter innan begäran har släppts fram.
         && method === 'POST') {
       window.fetch = originalFetch;
       await new Promise(resolve => { window.releaseObjectStage = resolve; });
-      return new Response(JSON.stringify({ error: 'invalid_name' }), {
+      return new Response(JSON.stringify({ error: 'invalid_request' }), {
         status: 400, headers: { 'Content-Type': 'application/json' }
       });
     }
@@ -718,72 +1048,89 @@ keeps all values”.
 
 **Steg:**
 
-1. Ange Väntande cykel och Bevarad beskrivning. Dubbelaktivera Lägg i utkastet
-   och stäng. Prova Escape medan svaret väntar.
-2. Släpp fram avvisningen. Kontrollera värdena och rätta orsaken före nytt
-   försök.
+1. Välj **Nytt objekt** och ange **Väntande cykel** och **Bevarad beskrivning**.
+   Dubbelaktivera **Lägg i utkastet och stäng**. Prova Escape medan
+   svaret väntar.
+2. Be operatören släppa avvisningen och invänta bekräftelsen. Kontrollera
+   att namn och beskrivning består. Välj **Lägg i utkastet och stäng** igen;
+   engångsfelet är nu avslutat och nästa tillägg går till servern.
 
 **Förväntat resultat:**
 
-- Bara en begäran skickas. Fält och vanlig stängning är spärrade medan den
-  väntar. Avvisningen behåller samtliga värden och skapar inget förslag; efter
-  rättelse kan exakt ett fullständigt förslag läggas i utkastet.
+- Fält och stängning är spärrade under väntan. Avvisningen behåller
+  samtliga värden och skapar inget förslag. När engångsfelet är avslutat
+  kan exakt ett fullständigt förslag läggas i utkastet.
 
 ### KARTA-18: kontrollera tappat svar före övergång eller nytt försök
 
-**Syfte:** Kontrollera kontrollera tappat svar före övergång eller nytt försök.
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-18"
+  },
+  "reference": "1280×720; verkligt tillägg med bild före tappat svar.",
+  "outcomes": [
+    "Tappat svar efter verkligt tillägg kontrolleras innan samband öppnas."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Bevara hela bildförslaget och kontrollera tillämpat tillägg
+innan sambandsarbetet får fortsätta.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** Tomt utkast i en separat provinstallation. Kör koden
-nedan i konsolen före steg 1. Den första körningen använder
-`const applied = true`: servern lägger till ändringen innan svaret tappas.
-Ladda om och börja med nytt tomt utkast för andra körningen, och ändra till
-`const applied = false`: begäran når då inte servern. Koden återställer
-`fetch` efter avbrottet. Ladda om om du avbryter tidigare. Vanligt offlineläge
-bevisar inte att servern redan har lagt ändringen i utkastet.
+**Förutsättningar:** Tomt utkast. Förbered transporten enligt
+[styrd objektleverans](#styrd-objektleverans) och en giltig syntetisk PNG.
 
-```javascript
-(() => {
-  const applied = true;
-  const originalFetch = window.fetch.bind(window);
-  window.fetch = async (...args) => {
-    const target = args[0] instanceof Request ? args[0].url : args[0];
-    const method = args[1]?.method ?? args[0]?.method ?? 'GET';
-    if (new URL(target, location.href).pathname.endsWith('/map/object-form')
-        && method === 'POST') {
-      window.fetch = originalFetch;
-      if (applied) await originalFetch(...args);
-      throw new TypeError('Synthetic connection interrupted');
-    }
-    return originalFetch(...args);
-  };
-})();
-```
+**Separat förberedelse:** Skriv `arm stage:drop-after` i transportterminalen.
+Terminalen ska visa `application-completed` med status 200 innan `dropped`.
+Detta tappar svaret efter verkligt tillägg; vanligt offlineläge ersätter
+inte felet. Återställ ingången och skriv `quit` när utfallet är kontrollerat.
 
 **Integrationstest:**
-[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts).
-Följande testfall:
-
-- “KARTA-18: lost staging response is checked before confirmed relationship
-  transition”.
-- “KARTA-18: lost staging response is checked before safe retry”.
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts), KARTA-18.
 
 **Steg:**
 
-1. Ange Cykeln efter tappat svar och välj Lägg i utkastet och öppna samband.
-   Kontrollera spärrad redigering och stängning.
-2. Välj Kontrollera om ändringen lades i utkastet. I körningen utan tillägg,
-   invänta uttrycklig bekräftelse och försök därefter igen.
+1. Välj **Nytt objekt**, ange **Cykeln efter tappat svar**. Öppna
+   **Livscykel och utseende** och välj PNG-filen i **Profilbild**.
+2. Välj **Lägg i utkastet och öppna samband**. Läs beskedet om oklart
+   utfall. Fält och tillägg är spärrade; Escape stänger inte formuläret.
+3. Välj **Kontrollera om ändringen lades i utkastet**. Sambandsdialogen
+   öppnas med fokus på sin rubrik. Stäng den med krysset.
+4. Öppna **Visa utkastet** och granska **Cykeln efter tappat svar**.
+   Kontrollera att namn och bild ingår i ett enda förslag.
 
 **Förväntat resultat:**
 
-- Ingen dubblett skickas vid oklart utfall. Ett bekräftat tillägg öppnar
-  sambandsdialogens rubrik; en bekräftad utebliven ändring tillåter nytt försök
-  med värdena kvar. Stängning av samband återgår till ursprungsplatsen. Kartan
-  är inte gemensamt sparad.
+- Kontroll ersätter upprepat tillägg vid oklart utfall. Namn och bild
+  bevaras tillsammans; kartan är ännu inte gemensamt sparad.
+- Sambandsrubriken får fokus. Stängning återgår till **Nytt objekt**.
 
 ### KARTA-19: öppna samband utan ett onödigt förslag
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-19"
+  },
+  "reference": "1280×720; oförändrad redigering och sambandens återfokus.",
+  "outcomes": [
+    "Oförändrat formulär öppnar samband utan nytt förslag och återger fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera öppna samband utan ett onödigt förslag.
 
@@ -814,32 +1161,756 @@ every reading entry uses the same object dialog”.
 
 ### KARTA-20: bevara typens ordning och dolda värden
 
-**Syfte:** Kontrollera bevara typens ordning och dolda värden.
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-20"
+  },
+  "reference": "1440×900; hela rättelsen, sparande, omstart och fullständig läsning.",
+  "outcomes": [
+    "Rättelse och dolt värde består i utkast, sparat objekt och efter omstart."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Bevara konfigurerad ordning och dolda värden genom rättelse,
+sparande, omstart och fullständig läsning.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** Skapa typen Avtal med avsnittet Avtalets uppgifter. Placera
-Anteckning, Månadsbelopp och Avtalstext i den ordningen och dölj ett textfält
-med ett befintligt värde.
+**Förutsättningar:** Förbered typen och objektet enligt
+[ordnade och dolda uppgifter](#ordnade-och-dolda-uppgifter). Prova 1440px.
+320px har eget fall KARTA-22.
 
 **Integrationstest:**
-[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts).
-Följande testfall:
-
-- “KARTA-20: configured properties keep their order and hidden values in the
-  single-section dialog at 1440px”.
-- “KARTA-20: configured properties keep their order and hidden values in the
-  single-section dialog at 320px”.
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts), KARTA-20.
+320px har eget fall [KARTA-22](#karta-22-smalt-objektformulär-bevarar-ordning-dolda-värden-och-återfokus).
 
 **Steg:**
 
 1. Öppna ett sparat objekt av typen. Öppna Avtalets uppgifter och kontrollera
    fältnamn, ordning och värden.
-2. Ändra Anteckning och lägg hela formuläret i utkastet. Upprepa på en smal
-   skärm.
+2. Ändra **Anteckning** från **Före rättelsen** till **Efter rättelsen**
+   och välj **Lägg i utkastet och stäng**. Kontrollera fokus på
+   **Redigera Hushållets avtal** och granska förslaget med **Visa
+   förslaget: Hushållets avtal**. Läs även det dolda underlaget.
+3. Stäng läsningen, spara hela utkastet och starta om med samma databas.
+   Öppna **Tabell**, expandera **Hushållets avtal** och läs **Efter
+   rättelsen**, **Bevaras oförändrat**, avtalstext och belopp igen.
 
 **Förväntat resultat:**
 
-- Endast ett avsnitt är öppet. Typens benämningar och ordning används; det dolda
-  värdet behålls oförändrat. Formulär och knappar ryms på smal skärm. Den
-  gemensamma kartan behåller tidigare värden.
+- Endast ett avsnitt är öppet. Typens benämningar och ordning används.
+  Det dolda värdet behålls genom rättelsen. Före gemensamt sparande
+  visar kartan tidigare värden.
+- Efter sparande och omstart visar samma objekt **Efter rättelsen**,
+  **Bevaras oförändrat**, avtalstext och **249**. Utkastet är tomt.
+
+### KARTA-21: kontrollera uteblivet tillägg före säkert återförsök
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-21"
+  },
+  "reference": "Vanlig datorvy; transporten tappar begäran före servern.",
+  "outcomes": ["Kontrollerat uteblivet tillägg tillåter nytt försök med namnet kvar."]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Tillåta återförsök först när det okända utfallet är kontrollerat.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Tomt utkast och [styrd objektleverans](#styrd-objektleverans).
+
+**Separat förberedelse:** Skriv `arm stage:drop-before`. Begäran ska tappas
+innan den når servern. Återställ ingången och avsluta med `quit` efter provet.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts), KARTA-21.
+
+**Steg:**
+
+1. Välj **Nytt objekt**, ange **Cykeln efter tappat svar** och välj
+   **Lägg i utkastet och öppna samband**. Prova Escape; formuläret består
+   med spärrade fält och besked om oklart utfall.
+2. Välj **Kontrollera om ändringen lades i utkastet**. Läs beskedet att
+   ändringen inte lades i utkastet; namnet ska finnas kvar.
+3. Välj **Lägg i utkastet och öppna samband** igen. Stäng sambandsdialogen
+   och granska utkastet.
+
+**Förväntat resultat:**
+
+- Kontrollerat uteblivet tillägg tillåter återförsök. Ett enda objektförslag
+  finns i utkastet; kartan är fortfarande inte gemensamt sparad.
+- Sambandsrubriken får fokus, och stängning återför det till **Nytt objekt**.
+
+### KARTA-22: smalt objektformulär bevarar ordning, dolda värden och återfokus
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-dialog.spec.ts",
+    "caseId": "KARTA-22"
+  },
+  "reference": "320×900; ordning, bevarat dolt värde och nåbar sidfot vid smal bredd.",
+  "outcomes": ["Hela rättelsen läggs i utkastet och fokus återgår till redigeringen."]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Skydda smal redigering mot överflöde och förlust av dolda värden.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** En ny installation med
+[ordnade och dolda uppgifter](#ordnade-och-dolda-uppgifter). Ställ
+webbläsarens innehållsyta på 320×900; detta provar omflöde, inte fysisk pekning.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts), KARTA-22.
+
+**Steg:**
+
+1. Välj **Tabell → Redigera Hushållets avtal → Avtalets uppgifter**.
+   Kontrollera ordningen Anteckning, Månadsbelopp och Avtalstext, med
+   **Före rättelsen**, känt **249** och **Fullständig avtalstext**.
+2. Ändra Anteckning till **Efter rättelsen**. Nå **Lägg i utkastet och
+   stäng** utan att behöva rulla hela sidan i sidled och aktivera knappen.
+3. Kontrollera fokus på **Redigera Hushållets avtal**. Öppna
+   **Visa utkastet → Visa förslaget: Hushållets avtal** och läs
+   **Efter rättelsen** och **Dolt underlag: Bevaras oförändrat**.
+   Spara inte hela utkastet i detta smala fall.
+
+**Förväntat resultat:**
+
+- Bara valt avsnitt är öppet. Sidfot och kryss ryms i innehållsytan.
+- Text, belopp och det dolda värdet **Bevaras oförändrat** finns kvar i
+  förslaget. Det sparade objektet visar fortfarande **Före rättelsen**.
+
+## Ordnade och dolda uppgifter
+
+1. Välj **Inställningar → Typer och egna fält → Ny objekttyp**. Ange
+   **Dialogavtal**, avsnittet **Avtalets uppgifter**, och textfälten
+   **Anteckning** och **Dolt underlag**. Placera båda i avsnittet.
+2. Placera Beskrivning och Pris i samma avsnitt, benämnda **Avtalstext**
+   och **Månadsbelopp**. Använd **Flytta upp** och **Flytta ned** så att
+   ordningen blir Anteckning, Månadsbelopp, Avtalstext, Dolt underlag.
+   Lägg definitionen i utkastet och spara hela utkastet.
+3. Skapa **Hushållets avtal** av typen Dialogavtal. Ange Anteckning
+   **Före rättelsen**, Avtalstext **Fullständig avtalstext**, känt
+   Månadsbelopp **249** och Dolt underlag **Bevaras oförändrat**.
+   Lägg hela objektet i utkastet och spara.
+4. Redigera typen i Inställningar. Välj **Dold, behåll värden** i **Visa i
+   avsnitt** för fältet,
+   lägg definitionen i utkastet och spara. Återgå till Tabell.
+   Dolt underlag ska nu inte visas i objektformuläret.
+
+## Styrd objektleverans
+
+En operatör förbereder en separat HTTPS-testinstallation och dess vanliga
+inloggning. Använd hushållets ID från sidans adress, den publika adressen och
+applikationens privata lyssnarport. Kör på applikationsvärden:
+
+```sh
+node --import tsx scripts/manual-transport.ts \
+  --origin https://skyttel-test.example.com \
+  --upstream http://127.0.0.1:3300 \
+  --household TEST_HOUSEHOLD_ID --port 4318
+```
+
+Ersätt adress, port och ID med provinstallationens värden. Koppla dess
+HTTPS-ingång till `127.0.0.1:4318` och bevara `Host`, `Origin`, kakor och
+WebSocket-uppgradering. Behåll applikationens publika adress. Kontrollera
+vanlig inloggning och läsning innan `arm`. En regel förbrukas av nästa
+matchande tillägg; andra begäranden passerar. `clear` tar bort en oanvänd
+regel. Återställ HTTPS-ingången till applikationen innan `quit`. Behåll
+provdatabasen tills okända utfall är kontrollerade.
+
+## Identiteter och referenser
+
+KARTA-18 behåller scenariot där tillägget genomförs före tappat svar.
+Det skilda uteblivna tillägget får KARTA-21. KARTA-20 behåller 1440px och
+KARTA-22 identifierar 320px. Båda breddernas ursprungliga kontroller finns
+kvar. Det fullständiga 1440px-fallet tillför sparande, omstart och
+läsning av rättelse och dolt värde; något sådant avslut finns inte i
+320px-basfallet. Ingen befintlig kedja tas bort och ingen täckningsförlust
+accepteras här. Inget gammalt ID pensioneras.
+
+### KARTA-26: KARTA-08 vid 1280 × 900, mörkt tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-26"
+  },
+  "reference": "1280 × 900, mörkt tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen.",
+    "Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande\n  eller omstart efter rättelsen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-08 vid 1280 × 900, mörkt tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Nytt provhushåll med sparad Familjemusik. Välj mörkt
+tema och 1280 CSS-pixlars bredd. Varianten skyddar oskickad
+formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
+
+**Integrationstest:**
+[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts), KARTA-26.
+
+**Steg:**
+
+1. Utför KARTA-08 en gång med denna konfiguration. Stanna efter steg 3; utför
+   inte de efterföljande stegen.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+- Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande
+  eller omstart efter rättelsen.
+
+### KARTA-27: KARTA-08 vid 390 × 900, ljust tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-27"
+  },
+  "reference": "390 × 900, ljust tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen.",
+    "Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande\n  eller omstart efter rättelsen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-08 vid 390 × 900, ljust tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Nytt provhushåll med sparad Familjemusik. Välj ljust
+tema och 390 CSS-pixlars bredd. Varianten skyddar oskickad
+formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
+
+**Integrationstest:**
+[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts), KARTA-27.
+
+**Steg:**
+
+1. Utför KARTA-08 en gång med denna konfiguration. Stanna efter steg 3; utför
+   inte de efterföljande stegen.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+- Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande
+  eller omstart efter rättelsen.
+
+### KARTA-28: KARTA-08 vid 390 × 900, mörkt tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-28"
+  },
+  "reference": "390 × 900, mörkt tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen.",
+    "Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande\n  eller omstart efter rättelsen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-08 vid 390 × 900, mörkt tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Nytt provhushåll med sparad Familjemusik. Välj mörkt
+tema och 390 CSS-pixlars bredd. Varianten skyddar oskickad
+formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
+
+**Integrationstest:**
+[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts), KARTA-28.
+
+**Steg:**
+
+1. Utför KARTA-08 en gång med denna konfiguration. Stanna efter steg 3; utför
+   inte de efterföljande stegen.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+- Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande
+  eller omstart efter rättelsen.
+
+### KARTA-29: KARTA-08 vid 320 × 900, ljust tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-29"
+  },
+  "reference": "320 × 900, ljust tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen.",
+    "Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande\n  eller omstart efter rättelsen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-08 vid 320 × 900, ljust tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Nytt provhushåll med sparad Familjemusik. Välj ljust
+tema och 320 CSS-pixlars bredd. Varianten skyddar oskickad
+formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
+
+**Integrationstest:**
+[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts), KARTA-29.
+
+**Steg:**
+
+1. Utför KARTA-08 en gång med denna konfiguration. Stanna efter steg 3; utför
+   inte de efterföljande stegen.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+- Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande
+  eller omstart efter rättelsen.
+
+### KARTA-30: KARTA-08 vid 320 × 900, mörkt tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-workflows.spec.ts",
+    "caseId": "KARTA-30"
+  },
+  "reference": "320 × 900, mörkt tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen.",
+    "Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande\n  eller omstart efter rättelsen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-08 vid 320 × 900, mörkt tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Nytt provhushåll med sparad Familjemusik. Välj mörkt
+tema och 320 CSS-pixlars bredd. Varianten skyddar oskickad
+formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
+
+**Integrationstest:**
+[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts), KARTA-30.
+
+**Steg:**
+
+1. Utför KARTA-08 en gång med denna konfiguration. Stanna efter steg 3; utför
+   inte de efterföljande stegen.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+- Rättelsen finns endast i utkastet; detta fall utför inget nytt sparande
+  eller omstart efter rättelsen.
+
+### KARTA-31: KARTA-09 vid 1280 × 900, mörkt tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-creation.spec.ts",
+    "caseId": "KARTA-31"
+  },
+  "reference": "1280 × 900, mörkt tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-09 vid 1280 × 900, mörkt tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt provhushåll. Välj mörkt tema och 1280 CSS-pixlars
+bredd. Varianten skyddar mobil inställningsnavigation, felrubrikens fokus
+och hela typ-, objekt- och sambandsarbetet även efter omstart.
+
+**Integrationstest:**
+[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts), KARTA-31.
+
+**Steg:**
+
+1. Utför KARTA-09 en gång med denna konfiguration. Utför alla steg i samma
+   ordning.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+
+### KARTA-32: KARTA-09 vid 390 × 900, ljust tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-creation.spec.ts",
+    "caseId": "KARTA-32"
+  },
+  "reference": "390 × 900, ljust tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-09 vid 390 × 900, ljust tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt provhushåll. Välj ljust tema och 390 CSS-pixlars
+bredd. Varianten skyddar mobil inställningsnavigation, felrubrikens fokus
+och hela typ-, objekt- och sambandsarbetet även efter omstart.
+
+**Integrationstest:**
+[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts), KARTA-32.
+
+**Steg:**
+
+1. Utför KARTA-09 en gång med denna konfiguration. Utför alla steg i samma
+   ordning.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+
+### KARTA-33: KARTA-09 vid 390 × 900, mörkt tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-creation.spec.ts",
+    "caseId": "KARTA-33"
+  },
+  "reference": "390 × 900, mörkt tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-09 vid 390 × 900, mörkt tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt provhushåll. Välj mörkt tema och 390 CSS-pixlars
+bredd. Varianten skyddar mobil inställningsnavigation, felrubrikens fokus
+och hela typ-, objekt- och sambandsarbetet även efter omstart.
+
+**Integrationstest:**
+[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts), KARTA-33.
+
+**Steg:**
+
+1. Utför KARTA-09 en gång med denna konfiguration. Utför alla steg i samma
+   ordning.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+
+### KARTA-34: KARTA-09 vid 320 × 900, ljust tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-creation.spec.ts",
+    "caseId": "KARTA-34"
+  },
+  "reference": "320 × 900, ljust tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-09 vid 320 × 900, ljust tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt provhushåll. Välj ljust tema och 320 CSS-pixlars
+bredd. Varianten skyddar mobil inställningsnavigation, felrubrikens fokus
+och hela typ-, objekt- och sambandsarbetet även efter omstart.
+
+**Integrationstest:**
+[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts), KARTA-34.
+
+**Steg:**
+
+1. Utför KARTA-09 en gång med denna konfiguration. Utför alla steg i samma
+   ordning.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+
+### KARTA-35: KARTA-09 vid 320 × 900, mörkt tema
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-creation.spec.ts",
+    "caseId": "KARTA-35"
+  },
+  "reference": "320 × 900, mörkt tema",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** KARTA-09 vid 320 × 900, mörkt tema.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt provhushåll. Välj mörkt tema och 320 CSS-pixlars
+bredd. Varianten skyddar mobil inställningsnavigation, felrubrikens fokus
+och hela typ-, objekt- och sambandsarbetet även efter omstart.
+
+**Integrationstest:**
+[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts), KARTA-35.
+
+**Steg:**
+
+1. Utför KARTA-09 en gång med denna konfiguration. Utför alla steg i samma
+   ordning.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+
+### KARTA-23: inaktuellt objektformulär behåller oskickad text
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map.spec.ts",
+    "caseId": "KARTA-23"
+  },
+  "reference": "Två flikar, samma användares privata utkast",
+  "outcomes": [
+    "Avvisat oskickat arbete finns kvar tills det uttryckligen kastas.",
+    "Aktuell redigering använder det andra klientens senaste förslag."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** inaktuellt objektformulär behåller oskickad text.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt hushåll. Öppna två flikar med samma inloggning.
+
+**Integrationstest:**
+[map.spec.ts](../../tests/integration/map.spec.ts), KARTA-23.
+
+**Steg:**
+
+1. Lägg Lo Exempel i utkastet i första fliken. Öppna
+   **Tabell → Redigera Lo Exempel** i båda flikarna.
+2. Skriv Lo gammalt förslag i första formuläret och Lo nytt förslag
+   i andra. Lägg andra formuläret i utkastet först, därefter första.
+3. Läs **Dina uppgifter finns kvar** och Lo gammalt förslag i det
+   avvisade formuläret. Välj **Avbryt → Fortsätt redigera**; texten består.
+4. Välj **Avbryt → Kasta ändringarna och fortsätt**. Ladda om och öppna
+   utkastet: Lo nytt förslag finns kvar. Stäng textvyn och öppna dess
+   vanliga redigering. Kontrollera namn och aktiv tilläggsknapp.
+
+**Förväntat resultat:**
+
+- Avvisat oskickat arbete finns kvar tills det uttryckligen kastas.
+- Aktuell redigering använder det andra klientens senaste förslag.
+
+### KARTA-24: inaktuellt sparunderlag och tappat svar återhämtas
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map.spec.ts",
+    "caseId": "KARTA-24"
+  },
+  "reference": "Två flikar samt verkligt tappat svar efter spartransaktionen",
+  "outcomes": [
+    "Gammalt sparunderlag avvisas och kräver uttrycklig uppdatering.",
+    "Kontroll av samma verkligt genomförda sparande ger bekräftelse\n  och ett tomt utkast utan ett nytt sparande."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** inaktuellt sparunderlag och tappat svar återhämtas.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt hushåll med samma användare i två flikar.
+Förbered transport enligt
+[sparförberedelsens vanliga installation](save-preparation.md#vanlig-installation-och-annan-klient).
+
+**Separat förberedelse:** Vid steg 3 skriver operatören
+`arm save:drop-after` i transportens terminal före UI-handlingen.
+Kräv `application-completed` med status 200 före `dropped`.
+Använd samma databas, adress och sparförsök vid kontrollen. Efter fallet
+återställer du HTTPS-ingången till applikationen innan du avslutar
+transporten med `quit`.
+
+**Integrationstest:**
+[map.spec.ts](../../tests/integration/map.spec.ts), KARTA-24.
+
+**Steg:**
+
+1. Lägg Lo Exempel i utkastet. Öppna **Visa utkastet** i andra fliken.
+   Ändra sedan namnet till Lo Lind genom första flikens objektformulär.
+2. Välj **Spara hela utkastet** i andra fliken. Läs **Inget sparades**
+   och kontrollera inaktiv sparknapp. Tryck Escape, välj
+   **Hämta aktuellt underlag** och läs Lo Lind i utkastet.
+3. Efter den separat armerade leveransen väljer du
+   **Spara hela utkastet** och läser
+   **Sparandet kunde inte bekräftas**.
+4. Välj **Kontrollera sparandet igen** i samma dialog. Kontrollera
+   **Utkastet är sparat** och **Utkastet är tomt**.
+
+**Förväntat resultat:**
+
+- Gammalt sparunderlag avvisas och kräver uttrycklig uppdatering.
+- Kontroll av samma verkligt genomförda sparande ger bekräftelse
+  och ett tomt utkast utan ett nytt sparande.
+
+## Konfigurationsreferens och delat underlag
+
+KARTA-08 använder 1280 × 900 och ljust tema för hela rättelse-, spar- och
+omstartskedjan. KARTA-26–30 skyddar fortfarande formulärförlust,
+identitetsrättelse, bevarat samband, tema, fokus och omflöde, men stannar
+innan rättelsen sparas och servern startas om. Ett fel som bara uppstår
+i den kombinerade spar-/omstartskedjan i en annan konfiguration kan
+därför undgå referensen. KARTA-09 och KARTA-31–35 behåller däremot hela
+typ-, objekt- och sambandskedjan vid båda teman och alla tre bredder.
+
+KARTA-07 har ett vanligt formulärprov för åtta separata objekt och ett
+riktat samband. Dess oförändrade HTTP-underlag jämför även normaliserad
+dubblett, samlat kvitto och historik efter omstart. KARTA-25 har den
+skilda samtidiga dubblettdialogen. Ingen av identiteterna pensioneras.
+KARTA-23–24 ger de tidigare onumrerade flik- och sparscenarierna egna ID:n.

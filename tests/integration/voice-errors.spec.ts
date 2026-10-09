@@ -39,7 +39,7 @@ async function setup(page: import('@playwright/test').Page, liveFetch?: typeof f
 }
 
 for (const [failure, expected] of browserFailures)
-  test(`ROSTFEL-01: ${failure} ger en stängbar mikrofonnotis och återförsöket tar bort den`, async ({
+  test(`${({ deny: 'ROSTFEL-01', error: 'ROSTFEL-05', busy: 'ROSTFEL-06', unsupported: 'ROSTFEL-07' } as const)[failure]}: ${failure} ger en stängbar mikrofonnotis och återförsöket tar bort den`, async ({
     page,
   }) => {
     const { app } = await setup(page);
@@ -105,7 +105,9 @@ for (const [status, group, expected] of [
   [503, 'startup', 'Rösten kunde inte starta just nu. Försök igen om en stund.'],
   [401, 'administration', 'Rösten fungerar inte. Kontakta administratören.'],
 ] as const)
-  test(`ROSTFEL-02: serverns ${group} visar ett kort besked med felreferens`, async ({ page }) => {
+  test(`${group === 'startup' ? 'ROSTFEL-02' : 'ROSTFEL-08'}: serverns ${group} visar ett kort besked med felreferens`, async ({
+    page,
+  }) => {
     let fail = true;
     const live = liveProvider();
     const provider: typeof fetch = (url, init) =>
@@ -178,6 +180,29 @@ test('ROSTFEL-03: serverns avbrott stoppar mikrofonen och visar samma diagnostis
     await expect(notice(page)).not.toContainText(
       /PRIVATE_PROVIDER|OpenAI|text och formulär|inte ångrat/,
     );
+    await microphoneButton(page).click();
+    await expect(notice(page)).toHaveCount(0);
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
+    const retryId = [...live.channels.keys()].at(-1);
+    if (!retryId || retryId === id) throw new Error('Missing fresh voice retry');
+    live.emit(retryId, {
+      type: 'error',
+      error: { code: 'server_error', message: 'PRIVATE_PROVIDER_DETAIL' },
+    });
+    await expect(notice(page)).toContainText('Rösten avbröts.');
+    const close = notice(page).getByRole('button', { name: 'Stäng notisen', exact: true });
+    await close.focus();
+    await page.keyboard.press('Enter');
+    await expect(notice(page)).toHaveCount(0);
+    await expect(microphoneButton(page)).toBeFocused();
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      await page.evaluate(() =>
+        window.skyttelVoiceFixture
+          .stats()
+          .microphoneTracks.every((track) => track.state === 'ended'),
+      ),
+    ).toBe(true);
   } finally {
     await app.close();
   }

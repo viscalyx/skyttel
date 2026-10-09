@@ -6,14 +6,17 @@ import sharp from 'sharp';
 import type { ErasureStatus } from '../../src/shared/household-erasure.js';
 import type { MapState } from '../../src/shared/map.js';
 import {
+  closeTextView,
   createHousehold,
   openDraftReview,
   openNewObject,
   openSettings,
   openTable,
   signIn,
+  utilityButton,
 } from '../support/client.js';
-import { editTableObject } from '../support/domain-work.js';
+import { editTableObject, readTableObject } from '../support/domain-work.js';
+import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 import { denyRecoveryStorage, restoreRecoveryStorage } from '../support/recovery-storage.js';
@@ -133,6 +136,81 @@ async function reviewInBrowser(page: Page, administration: string) {
   return section;
 }
 
+async function readRemainingWork(
+  page: Page,
+  administration: string,
+  description = 'Oberoende privat förslag',
+) {
+  const reloadMap = page.getByRole('button', { name: 'Läs in kartan på nytt', exact: true });
+  if (await reloadMap.isVisible()) await reloadMap.click();
+  else await page.goto(administration.replace(/\/administration$/, ''));
+  await openTable(page);
+  const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+  await expect(table.getByRole('button', { name: 'Lampan att radera', exact: true })).toHaveCount(
+    0,
+  );
+  await expect(table.getByRole('button', { name: 'Stolen att bevara', exact: true })).toBeVisible();
+  await readTableObject(page, 'Stolen att bevara');
+  await expect(await openDraftReview(page)).toContainText(description);
+  await closeTextView(page);
+}
+
+async function readRetainedHistory(page: Page, absent: string) {
+  await (await utilityButton(page, 'Rapporter')).click();
+  const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
+  await expect(history).not.toContainText(absent);
+  const cards = history.getByRole('article');
+  for (let index = 0; index < (await cards.count()); index += 1) {
+    const card = cards.nth(index);
+    await card.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(card).not.toContainText(absent);
+  }
+  await expect(history).toContainText('Stolen att bevara');
+  await page
+    .getByRole('region', { name: 'Rapporter', exact: true })
+    .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })
+    .click();
+}
+
+async function eraseInOtherBrowser(page: Page, administration: string, path: string, name: string) {
+  await page.goto(administration.replace(/\/administration$/, '/settings/erasure'));
+  const section = page.getByRole('region', { name: 'Permanent radering', exact: true });
+  await section.getByRole('checkbox', { name, exact: true }).check();
+  const reviewing = page.waitForResponse(`${path}/erasure/review`);
+  await section.getByRole('button', { name: 'Granska raderingen', exact: true }).click();
+  const reviewResponse = await reviewing;
+  expect(reviewResponse.status()).toBe(200);
+  const review = await reviewResponse.json();
+  await section.getByLabel('Skriv RADERA PERMANENT', { exact: true }).fill('RADERA PERMANENT');
+  const executing = page.waitForResponse(`${path}/erasure/execute`);
+  await section.getByRole('button', { name: 'Radera permanent', exact: true }).click();
+  const response = await executing;
+  const submittedId: string = response.request().postDataJSON().operationId;
+  expect(submittedId).toEqual(expect.any(String));
+  expect(submittedId).not.toBe('');
+  await expect(
+    section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+  ).toBeVisible();
+  await expect(section.getByText(submittedId, { exact: true })).toBeVisible();
+  return { review, response, submittedId };
+}
+
+async function readLockedHousehold(page: Page, administration: string) {
+  const checking = await page.context().newPage();
+  try {
+    await checking.goto(administration.replace(/\/administration$/, ''));
+    await expect(checking.getByRole('alert')).toContainText('Hushållets innehåll ändras');
+    await expect(checking.getByRole('region', { name: 'Rymdkarta', exact: true })).toHaveCount(0);
+    await checking.goto(administration.replace(/\/administration$/, '/settings/export'));
+    const exportSection = checking.getByRole('region', { name: 'Fullständig export' });
+    await exportSection.getByRole('button', { name: 'Förbered fullständig export' }).click();
+    await expect(exportSection.getByRole('alert')).toContainText('Exporten kunde inte förberedas');
+    await expect(exportSection.getByRole('button', { name: 'Hämta ZIP-fil' })).toHaveCount(0);
+  } finally {
+    await checking.close();
+  }
+}
+
 async function expectErasureFocus(control: Locator) {
   await expect(control).toBeFocused();
   await expect
@@ -207,15 +285,18 @@ async function expectErasureContrast(control: Locator) {
   expect(contrast).toBeGreaterThanOrEqual(4.5);
 }
 
-for (const [width, height] of [
-  [1280, 900],
-  [390, 900],
-  [320, 900],
-  [640, 500],
-  [320, 250],
-]) {
-  for (const theme of ['light', 'dark'] as const) {
-    test(`RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at ${width}x${height}px ${theme}`, async ({
+for (const [width, height, lightId, darkId] of [
+  [1280, 900, 'RADERING-06', 'RADERING-12'],
+  [390, 900, 'RADERING-13', 'RADERING-14'],
+  [320, 900, 'RADERING-15', 'RADERING-16'],
+  [640, 500, 'RADERING-17', 'RADERING-18'],
+  [320, 250, 'RADERING-19', 'RADERING-20'],
+] as const) {
+  for (const [theme, caseId] of [
+    ['light', lightId],
+    ['dark', darkId],
+  ] as const) {
+    test(`${caseId}: dedicated Settings review can be cancelled before explicit erasure and a fresh map at ${width}x${height}px ${theme}`, async ({
       page,
     }) => {
       const fixture = await arrange(page);
@@ -479,6 +560,15 @@ test('RADERING-01: keyboard review erases selected content and preserves unrelat
     expect(archive['images.bin']).toHaveLength(0);
     expect(JSON.stringify(content)).not.toContain('Lampan att radera');
     expect(JSON.stringify(content)).toContain('Oberoende privat förslag');
+    await readRemainingWork(page, fixture.administration);
+    await readRetainedHistory(page, 'Lampan att radera');
+    const browserArchive = unzipSync(await downloadHouseholdExport(page, fixture.path));
+    const browserContent = JSON.parse(Buffer.from(browserArchive['content.json']).toString());
+    expect(browserContent.objects.map((object: { id: string }) => object.id)).toEqual(['chair']);
+    expect(browserContent.images).toEqual([]);
+    expect(browserArchive['images.bin']).toHaveLength(0);
+    expect(JSON.stringify(browserContent)).not.toContain('Lampan att radera');
+    expect(JSON.stringify(browserContent)).toContain('Oberoende privat förslag');
   } finally {
     await fixture.installation.close();
   }
@@ -523,6 +613,7 @@ test('RADERING-02: a lost completion reply is recovered from durable status with
     await expect(
       section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
     ).toBeVisible();
+    await readRemainingWork(page, fixture.administration);
   } finally {
     await fixture.installation.close();
   }
@@ -530,22 +621,25 @@ test('RADERING-02: a lost completion reply is recovered from durable status with
 
 test('RADERING-03: a changed scope requires a new review and confirmation before erasure', async ({
   page,
+  browser,
 }) => {
   const fixture = await arrange(page);
+  const other = await browser.newContext({ storageState: await page.context().storageState() });
   try {
     const section = await reviewInBrowser(page, fixture.administration);
     const state = await fixture.read();
     const chair = state.objects.find((object) => object.id === 'chair');
-    expect(
-      (
-        await fixture.post('map/draft', {
-          id: 'chair',
-          version: state.draft.version,
-          baseRevision: chair?.revision,
-          value: { ...chair, description: 'Senare privat förslag' },
-        })
-      ).status(),
-    ).toBe(200);
+    expect(chair).toBeDefined();
+    const otherPage = await other.newPage();
+    await otherPage.goto(fixture.administration.replace(/\/administration$/, ''));
+    const form = await editTableObject(otherPage, 'Stolen att bevara');
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Senare privat förslag');
+    const staged = otherPage.waitForResponse((response) =>
+      response.url().endsWith('/map/object-form'),
+    );
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    expect((await staged).status()).toBe(200);
+    await expect(await openDraftReview(otherPage)).toContainText('Senare privat förslag');
     await section.getByLabel('Skriv RADERA PERMANENT', { exact: true }).fill('RADERA PERMANENT');
     await section.getByRole('button', { name: 'Radera permanent', exact: true }).click();
     await expect(section.getByRole('alert')).toContainText('Granska raderingen igen');
@@ -553,6 +647,12 @@ test('RADERING-03: a changed scope requires a new review and confirmation before
       section.getByRole('button', { name: 'Radera permanent', exact: true }),
     ).toHaveCount(0);
     expect((await fixture.read()).objects).toHaveLength(2);
+    await expect(
+      otherPage.getByRole('button', { name: 'Lampan att radera', exact: true }),
+    ).toBeVisible();
+    await expect(
+      otherPage.getByRole('button', { name: 'Stolen att bevara', exact: true }),
+    ).toBeVisible();
     await section.getByRole('button', { name: 'Granska raderingen', exact: true }).click();
     await expect(section.getByLabel('Skriv RADERA PERMANENT', { exact: true })).toHaveValue('');
     await expect(
@@ -566,7 +666,9 @@ test('RADERING-03: a changed scope requires a new review and confirmation before
     expect((await fixture.read()).draft.changes[0].after?.description).toBe(
       'Senare privat förslag',
     );
+    await readRemainingWork(page, fixture.administration, 'Senare privat förslag');
   } finally {
+    await other.close();
     await fixture.installation.close();
   }
 });
@@ -601,6 +703,7 @@ test('RADERING-04: pending cleanup survives application restart and completes on
     expect(await (await fixture.post('exports', {})).json()).toEqual({
       error: 'content_maintenance',
     });
+    await readLockedHousehold(page, fixture.administration);
     await fixture.installation.restart();
     await page.reload();
     await expect(section.getByRole('button', { name: 'Försök slutföra raderingen' })).toBeVisible();
@@ -622,6 +725,7 @@ test('RADERING-04: pending cleanup survives application restart and completes on
     expect(
       (await page.request.get(`${fixture.path}/profile-images/${fixture.imageId}`)).status(),
     ).toBe(404);
+    await readRemainingWork(page, fixture.administration);
   } finally {
     if (reader.inTransaction) reader.exec('ROLLBACK');
     reader.close();
@@ -757,9 +861,41 @@ test('RADERING-05: erasing a former type removes its historical image from a fre
     await page.waitForURL(fixture.administration.replace(/\/administration$/, ''));
     const form = await editTableObject(page, 'Lampan att radera');
     await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
-    await expect(
-      form.getByRole('img', { name: 'Profilbild för Lampan att radera' }),
-    ).toHaveAttribute('src', new RegExp(`/profile-images/${currentImage}$`));
+    const retainedImage = form.getByRole('img', { name: 'Profilbild för Lampan att radera' });
+    await expect(retainedImage).toHaveAttribute(
+      'src',
+      new RegExp(`/profile-images/${currentImage}$`),
+    );
+    await expect(retainedImage).toBeVisible();
+    await expect
+      .poll(() =>
+        retainedImage.evaluate(
+          (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    const { data: pixels, info } = await sharp(await retainedImage.screenshot())
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const center =
+      (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * info.channels;
+    for (const [channel, expected] of [238, 136, 0].entries())
+      expect(Math.abs(pixels[center + channel] - expected)).toBeLessThan(15);
+    await expect(form.getByLabel('Objekttyp', { exact: true })).not.toHaveValue(
+      'former-image-type',
+    );
+    await page.keyboard.press('Escape');
+    await expect(await openDraftReview(page)).toContainText('Oberoende privat förslag');
+    await closeTextView(page);
+    await readRetainedHistory(page, 'Tidigare bildtyp');
+    const browserArchive = unzipSync(await downloadHouseholdExport(page, fixture.path));
+    const browserContent = JSON.parse(Buffer.from(browserArchive['content.json']).toString());
+    expect(browserContent.images.map((image: { id: string }) => image.id)).toEqual([currentImage]);
+    expect(Buffer.from(browserArchive['images.bin'])).toEqual(
+      await (await page.request.get(`${fixture.path}/profile-images/${currentImage}`)).body(),
+    );
+    expect(JSON.stringify(browserContent)).not.toContain(fixture.imageId);
+    expect(JSON.stringify(browserContent)).toContain('Oberoende privat förslag');
   } finally {
     await fixture.installation.close();
   }
@@ -860,26 +996,29 @@ test('RADERING-07: a known erasure survives Settings navigation and reload despi
       section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
     ).toHaveCount(0);
     expect(firstId).not.toBe('');
-    const selection = [{ kind: 'relationshipType', id: 'later-unused-type' }];
-    const reviewResponse = await otherPost('erasure/review', { selection });
-    expect(reviewResponse.status()).toBe(200);
-    const review = await reviewResponse.json();
+    const otherPage = await other.newPage();
+    const {
+      review,
+      response: newer,
+      submittedId,
+    } = await eraseInOtherBrowser(
+      otherPage,
+      fixture.administration,
+      fixture.path,
+      'Senare tom sambandstyp',
+    );
     expect(review).toMatchObject({ objects: [], relationships: [], privateChanges: 0 });
-    const newer = await otherPost('erasure/execute', {
-      selection,
-      token: review.token,
-      operationId: 'later-erasure',
-      confirmation: 'RADERA PERMANENT',
-    });
     expect(newer.status()).toBe(200);
     const newerStatus = (await newer.json()).status;
+    expect(newerStatus.operationId).toBe(submittedId);
+    expect(newerStatus.operationId).not.toBe(firstId);
     expect(newerStatus).toMatchObject({
-      operationId: 'later-erasure',
+      operationId: submittedId,
       phase: 'completed',
       counts: { objects: 0, relationshipTypes: 1, images: 0 },
     });
     const catalogStatus = (await (await page.request.get(`${fixture.path}/erasure`)).json()).status;
-    expect(catalogStatus.operationId).toBe('later-erasure');
+    expect(catalogStatus.operationId).toBe(submittedId);
     await test.info().attach('actual-erasure-receipts', {
       body: JSON.stringify({ firstStatus, newerStatus, catalogStatus }, null, 2),
       contentType: 'application/json',
@@ -908,7 +1047,7 @@ test('RADERING-07: a known erasure survives Settings navigation and reload despi
     });
     await read.click();
     await expect(section.getByText(firstId, { exact: true })).toBeVisible();
-    await expect(section.getByText('later-erasure', { exact: true })).toHaveCount(0);
+    await expect(section.getByText(submittedId, { exact: true })).toHaveCount(0);
     await expect(
       section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
     ).toBeVisible();
@@ -926,7 +1065,7 @@ test('RADERING-07: a known erasure survives Settings navigation and reload despi
     await navigation.getByRole('link', { name: 'Permanent radering', exact: true }).click();
     await read.click();
     await expect(section.getByText(firstId, { exact: true })).toBeVisible();
-    await expect(section.getByText('later-erasure', { exact: true })).toHaveCount(0);
+    await expect(section.getByText(submittedId, { exact: true })).toHaveCount(0);
     await expect(
       section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
     ).toBeVisible();
@@ -934,6 +1073,7 @@ test('RADERING-07: a known erasure survives Settings navigation and reload despi
     expect(resumeCount).toBe(0);
     expect(await fixture.read()).toEqual(retained);
     expect(await (await page.request.get(`${fixture.path}/map/view`)).json()).toEqual(retainedView);
+    await readRemainingWork(page, fixture.administration);
   } finally {
     await other.close();
     await fixture.installation.close();
@@ -1019,9 +1159,17 @@ test('RADERING-08: a current administrator continues the same cleanup after role
     await expect(
       section.getByText(/Hushållets innehåll är tillfälligt otillgängligt/),
     ).toBeVisible();
-    expect((await otherPost(`members/${initiator.id}/role`, { role: 'member' })).status()).toBe(
-      200,
+    const administrationPage = await other.newPage();
+    await administrationPage.goto(fixture.administration);
+    const alexRow = administrationPage
+      .getByRole('list', { name: 'Medlemmar' })
+      .getByRole('listitem')
+      .filter({ hasText: 'Alex Exempel' });
+    const roleChanged = administrationPage.waitForResponse(
+      `${fixture.path}/members/${initiator.id}/role`,
     );
+    await alexRow.getByRole('button', { name: 'Gör till medlem', exact: true }).click();
+    expect((await roleChanged).status()).toBe(200);
     expect(
       (await page.request.get(`${fixture.path}/erasure/${pending.operationId}`)).status(),
     ).toBe(403);
@@ -1059,6 +1207,7 @@ test('RADERING-08: a current administrator continues the same cleanup after role
     });
     expect(await (await otherPost('exports', {})).json()).toEqual({ error: 'content_maintenance' });
 
+    await readLockedHousehold(continuation, fixture.administration);
     await fixture.installation.restart();
     await continuation.reload();
     await expect(recovery.getByText(pending.operationId, { exact: true })).toBeVisible();
@@ -1077,6 +1226,7 @@ test('RADERING-08: a current administrator continues the same cleanup after role
       error: 'content_maintenance',
     });
     expect(await (await otherPost('exports', {})).json()).toEqual({ error: 'content_maintenance' });
+    await readLockedHousehold(continuation, fixture.administration);
     reader.exec('ROLLBACK');
     let completed: ErasureStatus | null = null;
     await continuation.route(
@@ -1138,6 +1288,8 @@ test('RADERING-08: a current administrator continues the same cleanup after role
     expect(
       (await other.request.get(`${fixture.path}/profile-images/${fixture.imageId}`)).status(),
     ).toBe(404);
+    await readRemainingWork(continuation, fixture.administration, 'Robins eget privata förslag');
+    await readRemainingWork(page, fixture.administration);
     await test.info().attach('same-erasure-cleanup-and-resume', {
       body: JSON.stringify({ pending, completed, resumeBodies }, null, 2),
       contentType: 'application/json',
@@ -1191,26 +1343,24 @@ test('RADERING-09: an unavailable exact attempt stays explicitly unknown after n
     expect(await fixture.read()).toEqual(before);
     expect(await (await page.request.get(`${fixture.path}/map/view`)).json()).toEqual(viewBefore);
 
-    const otherPost = (suffix: string, data: unknown) =>
-      other.request.post(`${fixture.path}/${suffix}`, {
-        headers: { origin: fixture.installation.origin },
-        data,
-      });
-    const selection = [{ kind: 'objectType', id: unusedType?.id }];
-    const reviewResponse = await otherPost('erasure/review', { selection });
-    expect(reviewResponse.status()).toBe(200);
-    const review = await reviewResponse.json();
+    const otherPage = await other.newPage();
+    const {
+      review,
+      response: newerResponse,
+      submittedId,
+    } = await eraseInOtherBrowser(
+      otherPage,
+      fixture.administration,
+      fixture.path,
+      unusedType?.name as string,
+    );
     expect(review).toMatchObject({ objects: [], relationships: [], privateChanges: 0, images: 0 });
-    const newerResponse = await otherPost('erasure/execute', {
-      selection,
-      token: review.token,
-      operationId: 'later-known-erasure',
-      confirmation: 'RADERA PERMANENT',
-    });
     expect(newerResponse.status()).toBe(200);
     const newer = (await newerResponse.json()).status;
+    expect(newer.operationId).toBe(submittedId);
+    expect(newer.operationId).not.toBe(firstId);
     expect(newer).toEqual({
-      operationId: 'later-known-erasure',
+      operationId: submittedId,
       phase: 'completed',
       counts: { objects: 0, relationships: 0, objectTypes: 1, relationshipTypes: 0, images: 0 },
     });
@@ -1242,7 +1392,7 @@ test('RADERING-09: an unavailable exact attempt stays explicitly unknown after n
       contentType: 'application/json',
     });
     await expect(section.getByText(firstId, { exact: true })).toBeVisible();
-    await expect(section.getByText(newer.operationId, { exact: true })).toHaveCount(0);
+    await expect(section.getByText(submittedId, { exact: true })).toHaveCount(0);
     await expect(
       section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
     ).toHaveCount(0);
@@ -1277,12 +1427,18 @@ test('RADERING-09: an unavailable exact attempt stays explicitly unknown after n
     );
     await expect(section.getByRole('alert')).toContainText('Utfallet är fortfarande oklart');
     await expect(section.getByText(firstId, { exact: true })).toBeVisible();
-    await expect(section.getByText(newer.operationId, { exact: true })).toHaveCount(0);
+    await expect(section.getByText(submittedId, { exact: true })).toHaveCount(0);
     await expect(section.getByRole('list', { name: 'Raderingens resultat' })).toHaveCount(0);
     expect(executeCount).toBe(1);
     expect(resumeCount).toBe(0);
     expect(await fixture.read()).toEqual(retained);
     expect(await (await page.request.get(`${fixture.path}/map/view`)).json()).toEqual(retainedView);
+    await otherPage.goto(fixture.administration.replace(/\/administration$/, ''));
+    await openTable(otherPage);
+    await expect(
+      otherPage.getByRole('button', { name: 'Lampan att radera', exact: true }),
+    ).toBeVisible();
+    await expect(await openDraftReview(otherPage)).toContainText('Oberoende privat förslag');
   } finally {
     await other.close();
     await fixture.installation.close();
@@ -1440,6 +1596,7 @@ test('RADERING-10: a retired status reply cannot replace a newer reviewed erasur
     expect(
       (await page.request.get(`${fixture.path}/profile-images/${fixture.imageId}`)).status(),
     ).toBe(404);
+    await readRemainingWork(page, fixture.administration);
     await test.info().attach('retired-and-current-erasure-results', {
       body: JSON.stringify({ first, newer, readIds }, null, 2),
       contentType: 'application/json',
@@ -1535,6 +1692,7 @@ test('RADERING-11: unavailable recovery storage preserves review and the exact p
     expect(
       (await page.request.get(`${fixture.path}/profile-images/${fixture.imageId}`)).status(),
     ).toBe(404);
+    await readRemainingWork(page, fixture.administration);
   } finally {
     if (reader.inTransaction) reader.exec('ROLLBACK');
     reader.close();

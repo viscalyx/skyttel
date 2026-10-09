@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { closeTextView, openDraftReview } from '../support/client.js';
+import { openTypeDefinitions } from '../support/domain-work.js';
 import { prepareHouseholdTable } from '../support/household-table.js';
 import { createInstallation } from '../support/installation.js';
 import { focusMapSearch, mapFilters, prepareObjectSearch } from '../support/object-search.js';
 
 for (const width of [1280, 390])
-  test(`SÖK-11: opening filters overlays the map without moving markers or labels at ${width}px`, async ({
+  test(`${width === 1280 ? 'SÖK-11' : 'SÖK-15'}: opening filters overlays the map without moving markers or labels at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -209,6 +211,45 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     await expect(panel.getByRole('searchbox')).toHaveValue('A 2');
     await expect((await mapFilters(page)).getByLabel('Typ 2', { exact: true })).toBeChecked();
     await expect(panel.getByRole('group', { name: 'Förslag i ditt utkast' })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    const nativeBefore = await read();
+    await openTypeDefinitions(page);
+    await page.getByRole('button', { name: 'Ny objekttyp', exact: true }).click();
+    const definition = page.getByRole('group', { name: 'Objekttypens definition', exact: true });
+    await definition.getByLabel('Typens namn', { exact: true }).fill('Enbart typförslag');
+    await definition
+      .getByRole('button', { name: 'Lägg typförslaget i mitt utkast', exact: true })
+      .click();
+    await expect(page.getByRole('status')).toContainText('Förslaget finns i ditt privata utkast');
+    const nativeType = await read();
+    expect(nativeType.types).toEqual(nativeBefore.types);
+    expect(nativeType.objects).toEqual(nativeBefore.objects);
+    expect(nativeType.draft.changes).toEqual([]);
+    expect(nativeType.draft.objectTypes).toHaveLength(1);
+    expect(nativeType.draft.objectTypes?.[0]?.after).toMatchObject({
+      name: 'Enbart typförslag',
+      description: '',
+    });
+    expect(nativeType.draft.objectTypes?.[0]?.after?.fields ?? []).toEqual([]);
+    expect(nativeType.draft.relationshipTypes ?? []).toEqual([]);
+    expect(nativeType.draft.relationships ?? []).toEqual([]);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await focusMapSearch(page);
+    await panel.getByRole('searchbox').fill('finns inte');
+    await expect(
+      (await mapFilters(page)).getByRole('group', { name: 'Förslag i ditt utkast' }),
+    ).toBeVisible();
+    await expect(page.locator('.spatial-node')).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    // Reset only after proving the complete browser-created type-only scenario.
+    await openDraftReview(page);
+    await page.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
+      .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
+      .click();
+    await expect.poll(async () => (await read()).draft.objectTypes?.length ?? 0).toBe(0);
+    await closeTextView(page);
     await post('object-type', {
       id: 'only-type',
       baseRevision: null,

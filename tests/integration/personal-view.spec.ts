@@ -12,8 +12,12 @@ import {
   setAllLabels,
   signIn,
 } from '../support/client.js';
-import { editTableObject } from '../support/domain-work.js';
+import { closeTableObject, editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
+import {
+  readPersonalProjection,
+  verifyRestoredPersonalMove,
+} from '../support/personal-view-reading.js';
 
 async function arrange(page: Page, origin: string) {
   await signIn(page.request, origin);
@@ -95,8 +99,9 @@ async function selectAndArrange(page: Page, name = 'Lampan') {
     await choices.click();
 }
 
-for (const width of [1440, 390])
-  test(`PLACERING-09: personal save toasts expire while preserving focus and saved choices at ${width}px`, async ({
+for (const width of [1440, 390]) {
+  const caseId = width === 1440 ? 'PLACERING-09' : 'PLACERING-10';
+  test(`${caseId}: personal save toasts expire while preserving focus and saved choices at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -135,10 +140,23 @@ for (const width of [1440, 390])
       expect(saved.settings.allLabels).toBe(true);
       expect(saved.positions).toEqual(moved);
       expect(await (await page.request.get(path)).json()).toEqual(content);
+      if (width === 1440) {
+        await installation.restart();
+        await page.reload();
+        await openMap(page);
+        await expect(labels).toHaveAttribute('aria-pressed', 'true');
+        await expect(
+          space(page).getByRole('button', { name: 'Välj objekt: Lampan', exact: true }),
+        ).toBeVisible();
+        expect(await read()).toEqual(saved);
+        expect(await (await page.request.get(path)).json()).toEqual(content);
+        await verifyRestoredPersonalMove(page, 'Lampan', saved.positions[0], saved.contentVersion);
+      }
     } finally {
       await installation.close();
     }
   });
+}
 
 test('PLACERING-01: mouse, height and keyboard movement persist across reload, clients and server restart', async ({
   page,
@@ -199,8 +217,18 @@ test('PLACERING-01: mouse, height and keyboard movement persist across reload, c
     const secondPage = await other.newPage();
     await secondPage.goto(installation.origin);
     await openMap(secondPage);
+    await expect(
+      space(secondPage).getByRole('button', { name: 'Välj objekt: Lampan', exact: true }),
+    ).toBeVisible();
     await openMapSettings(secondPage);
     await expect(secondPage.getByLabel('Visa stjärnhimmel', { exact: true })).toBeChecked();
+    await returnToMap(secondPage);
+    await verifyRestoredPersonalMove(
+      secondPage,
+      'Lampan',
+      expected.positions[0],
+      expected.contentVersion,
+    );
   } finally {
     await other.close();
     await installation.close();
@@ -602,6 +630,14 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
     expect((await (await page.request.get(path)).json()).draft.changes[0].after.name).toBe(
       'Ny sak',
     );
+    const retained = await readTableObject(page, 'Ny sak');
+    await expect(retained).toContainText('Ny sak');
+    await expect(retained).toContainText('Person');
+    await expect(retained.locator('.household-table-description')).toHaveText(
+      '◇ Ditt förslag: Ej uppgivet',
+    );
+    await closeTableObject(page, 'Ny sak');
+    await openMap(page);
   } finally {
     await installation.close();
   }
@@ -700,6 +736,7 @@ test('PLACERING-05: personal views stay private and revocation denies further re
     const { read, path } = await arrange(page, installation.origin);
     await drag(page, 30, 10);
     const own = await read();
+    const ownRendered = await readPersonalProjection(page, 'lamp');
     installation.setIdentity(robin);
     await signIn(member.request, installation.origin, 'microsoft');
     const { user } = await (
@@ -729,6 +766,17 @@ test('PLACERING-05: personal views stay private and revocation denies further re
           ).status(),
         ).toBe(status);
     }
+    const memberPage = await member.newPage();
+    const householdUrl = path.replace('/api/households/', '/households/').replace(/\/map$/, '');
+    await memberPage.goto(householdUrl);
+    await expect(
+      memberPage.getByRole('heading', { name: 'Du har inte tillgång till hushållet', exact: true }),
+    ).toBeVisible();
+    const anonymousPage = await anonymous.newPage();
+    await anonymousPage.goto(householdUrl);
+    await expect(
+      anonymousPage.getByRole('button', { name: 'Fortsätt med Google', exact: true }),
+    ).toBeVisible();
     const { code } = await (
       await page.request.post(`${path.replace('/map', '')}/invitations`, {
         headers: { origin: installation.origin },
@@ -744,11 +792,34 @@ test('PLACERING-05: personal views stay private and revocation denies further re
       ).ok(),
     ).toBe(true);
     expect((await (await member.request.get(`${path}/view`)).json()).positions).toEqual([]);
+    await memberPage.goto(householdUrl);
+    await openMap(memberPage);
+    await selectAndArrange(memberPage);
+    await memberPage.getByRole('button', { name: 'Flytta Lampan: uppåt', exact: true }).click();
+    await expect(
+      space(memberPage).getByText('Din personliga vy är sparad.', { exact: true }),
+    ).toBeVisible();
+    await memberPage.goto(`${householdUrl}/settings/map`);
+    await expect(memberPage).toHaveURL(`${householdUrl}/settings/map`);
+    await memberPage.getByLabel('Visa stjärnhimmel', { exact: true }).check();
+    await expect(
+      memberPage
+        .locator('.map-settings')
+        .getByText('Din personliga vy är sparad.', { exact: true }),
+    ).toBeVisible();
+    await expect(memberPage.getByLabel('Visa stjärnhimmel', { exact: true })).toBeChecked();
+    await expect
+      .poll(async () => (await (await member.request.get(`${path}/view`)).json()).settings.stars)
+      .toBe(true);
+    const memberView: PersonalView = await (await member.request.get(`${path}/view`)).json();
+    expect(memberView.positions).toHaveLength(1);
+    expect(memberView.settings.stars).toBe(true);
+    expect(await read()).toEqual(own);
     expect(
       (
         await member.request.post(`${path}/view/position`, {
           headers: { origin: installation.origin },
-          data: movement,
+          data: { ...movement, version: memberView.positions[0].version },
         })
       ).ok(),
     ).toBe(true);
@@ -756,13 +827,18 @@ test('PLACERING-05: personal views stay private and revocation denies further re
       (
         await member.request.post(`${path}/view/settings`, {
           headers: { origin: installation.origin },
-          data: configuration,
+          data: { ...configuration, version: memberView.settings.version },
         })
       ).ok(),
     ).toBe(true);
     expect(await read()).toEqual(own);
-    const memberPage = await member.newPage();
-    await memberPage.goto(installation.origin);
+    await memberPage.goto(householdUrl);
+    await expect
+      .poll(() => readPersonalProjection(page, 'lamp'))
+      .toEqual({ x: expect.closeTo(ownRendered.x, 5), y: expect.closeTo(ownRendered.y, 5) });
+    await openMapSettings(page);
+    await expect(page.getByLabel('Visa stjärnhimmel', { exact: true })).not.toBeChecked();
+    await returnToMap(page);
     await openMap(memberPage);
     await memberPage.getByRole('button', { name: 'Navigera', exact: true }).click();
     await memberPage.getByText('Ordna min vy', { exact: true }).click();

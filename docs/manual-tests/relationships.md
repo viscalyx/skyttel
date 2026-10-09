@@ -37,6 +37,23 @@ och senare rättelser utan att spara den gemensamma kartan.
 testfallet “SAMBAND-01: separate complete objects connect and remain independently
 editable in the shared dialog”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-01"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "separata objekt och samband kan rättas oberoende"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Skapa Alex som Person med beskrivningen Personen som använder cykeln och
@@ -79,6 +96,23 @@ i utkastet. Inga samband finns ännu.
 [relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
 testfallet “SAMBAND-02: invalid next input and canceled form loss retain previous
 complete relationship proposals”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-02"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "fel och avbruten nästa inmatning bevarar tidigare förslag"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -143,16 +177,42 @@ från Alex till Blå cykeln är gemensamt sparade. Inga privata förslag finns.
 testfallet “SAMBAND-03: a lost duplicate result retains the attempted form and
 offers guarded editing without overwrite”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-03"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "förlorat dubblettsvar bevarar det försökta formuläret"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Före Lägg i utkastet i UI-steg 2: kör `relationshipProbe('lost-applied')` i
+konsolen enligt Styrda avbrott. Meddela **Nästa verkliga svar tappas efter
+genomförandet**. Stäng konsolen före det vanliga fokusprovet. Ladda om efter
+avslutad kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
 1. Öppna Samband för Alex och Nytt samband. Välj Använder, Blå cykeln och
-   Osäkert uppgivet. Kör `relationshipProbe('lost-applied')` i konsolen.
-2. Välj Lägg i utkastet. Kontrollera att uppgifterna spärras och att
-   Kontrollera om ändringen lades i utkastet erbjuds. Välj kontrollen.
-3. Kontrollera Sambandet finns redan och bevarad osäkerhet. Välj
-   Redigera befintligt samband, sedan Fortsätt redigera i förlustvarningen.
-4. Välj Redigera befintligt samband igen och bekräfta förlusten. Kontrollera
-   det befintliga kända sambandet och dess målobjekt. Stäng utan att ändra det.
+   Osäkert uppgivet. Be operatören förbereda nästa tappade verkliga svar enligt
+   förberedelsen och invänta bekräftelse före inskickningen.
+2. Välj Lägg i utkastet. Kontrollera att uppgifterna spärras och att Kontrollera
+   om ändringen lades i utkastet erbjuds. Välj kontrollen.
+3. Kontrollera Sambandet finns redan och bevarad osäkerhet. Välj Redigera
+   befintligt samband, sedan Fortsätt redigera i förlustvarningen.
+4. Välj Redigera befintligt samband igen och bekräfta förlusten. Kontrollera det
+   befintliga kända sambandet och dess målobjekt. Stäng utan att ändra det.
 
 **Förväntat resultat:**
 
@@ -168,12 +228,31 @@ offers guarded editing without overwrite”.
 **Användare:** Alex.
 
 **Förutsättningar:** Samma sparade objekt och kända samband som i SAMBAND-03.
-Sambandet följer slutdatum och saknar ett manuellt statusval.
+Sambandet har ingen uttryckligen sparad status och följer slutdatum.
+Formuläret erbjuder **Sambandets status**. Valet **Upphört** i steg 1 är
+en oskickad manuell statusändring, skild från förslaget om borttagning.
 
 **Integrationstest:**
 [relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
 testfallet “SAMBAND-04: proposed relationship removal discards only confirmed
 unsent changes and keeps saved lifecycle facts”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-04"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "föreslagen borttagning kastar endast bekräftade oskickade värden"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -209,6 +288,23 @@ Dölj därefter Dold uppgift i typdefinitionen; behåll dess fält och svar.
 testfallet “SAMBAND-05: full relationship values survive canceled type loss and
 absent targets keep their distinct meanings”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-05"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "fullständiga värden och säkerhet bevaras vid typbyte"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Redigera sambandet från Alex och välj typen Äger. Läs alla tidigare
@@ -243,21 +339,46 @@ absent targets keep their distinct meanings”.
 testfallet “SAMBAND-06: read-chain navigation retains an uncertain staging outcome
 and restores the originating table control”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-06"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "läskedjan bevarar ett oklart tillägg"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-applied')` enligt
+Styrda avbrott. Meddela **Nästa verkliga svar tappas efter genomförandet** innan
+användaren skickar. Stäng konsolen före det vanliga fokusprovet. Ladda om efter
+avslutad kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Redigera från Samband för Alex. Välj Osäkert uppgivet, kör
-   `relationshipProbe('lost-applied')` och välj Lägg i utkastet.
-2. Följ länken Blå cykeln i de befintliga sambanden. Kontrollera fokus på
-   dess uppgiftsrubrik. Öppna dess samband och välj Tillbaka två gånger.
-3. Kontrollera bevarad osäkerhet och välj Kontrollera om ändringen lades
-   i utkastet. Invänta bekräftelsen och stäng sambandsdialogen.
+1. Redigera från Samband för Alex. Välj Osäkert uppgivet, be operatören
+   förbereda det tappade svaret och invänta bekräftelse. Välj Lägg i utkastet.
+2. Följ länken Blå cykeln i de befintliga sambanden. Kontrollera fokus på dess
+   uppgiftsrubrik. Öppna dess samband och välj Tillbaka två gånger.
+3. Kontrollera bevarad osäkerhet och välj Kontrollera om ändringen lades i
+   utkastet. Invänta bekräftelsen och stäng sambandsdialogen.
 
 **Förväntat resultat:**
 
 - Läskedjan behåller försöket och kräver ingen förlust av formuläret.
   Kontrollen bekräftar den exakta ändringen utan ny inskickning.
 - Sambandets förslag har Osäkert uppgivet. Återfokus går till tabellens
-  ursprungliga öppningsknapp och tidigare sökning och läge finns kvar.
+  ursprungliga öppningsknapp.
 
 ### SAMBAND-07: väntande och avvisade försök skyddar hela formuläret
 
@@ -272,14 +393,41 @@ and restores the originating table control”.
 testfallet “SAMBAND-07: pending requests block duplicate sends and a rejected whole
 relationship retains editable values”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-07"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "väntande och avvisade försök skyddar hela formuläret"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Före dubbelklicket i UI-steg 2: kör
+`relationshipProbe('delayed-rejection')` enligt Styrda avbrott. Meddela
+**Nästa inskickning väntar före avslaget**. Efter fokusprovet, vid steg 3:
+kör `relationshipRelease()` och meddela **Avslaget är släppt**.
+Stäng konsolen före det vanliga fokusprovet. Ladda om efter avslutad
+kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Öppna Nytt samband från Alex. Välj Använder och Blå cykeln. Kör
-   `relationshipProbe('delayed-rejection')` i konsolen.
+1. Öppna Nytt samband från Alex. Välj Använder och Blå cykeln. Be operatören
+   förbereda det väntande avslaget och invänta bekräftelse.
 2. Dubbelklicka Lägg i utkastet. Prova Escape och kontrollera spärrade
-  redigeringsfält och stängningsknappar medan begäran väntar.
-3. Kör `relationshipRelease()` i konsolen. Läs avslaget och kontrollera
-   bevarade värden. Välj Lägg i utkastet igen utan styrt avslag.
+   redigeringsfält och stängningsknappar medan begäran väntar.
+3. Be operatören släppa avslaget och invänta bekräftelse. Läs avslaget och
+   kontrollera bevarade värden. Välj Lägg i utkastet igen utan styrt avslag.
 
 **Förväntat resultat:**
 
@@ -301,14 +449,41 @@ relationship retains editable values”.
 testfallet “SAMBAND-08: recovery returns the current draft without replaying an
 earlier successful relationship over later changes”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-08"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "kontroll av äldre framgång återspelar aldrig ett gammalt utkast"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-applied')` enligt
+Styrda avbrott. Meddela **Nästa verkliga svar tappas efter genomförandet**.
+Behåll första fönstret medan det andra ändrar samma utkast. Stäng konsolen före
+det vanliga fokusprovet. Ladda om efter avslutad kontroll eller avbrott för att
+återställa hooken, enligt den befintliga förberedelsen. Återställ provhushållet
+mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Skapa ett känt samband Använder från Alex till Blå cykeln i första
-   fönstret. Kör `relationshipProbe('lost-applied')` före Lägg i utkastet.
-2. Öppna samma hushåll i det andra fönstret. Redigera det färdiga sambandet
-   till Osäkert uppgivet och lägg hela rättelsen i utkastet.
-3. Kontrollera det ursprungliga försöket i första fönstret. Läs beskedet
-   om ändrat aktuellt underlag och granska förslaget i det andra fönstret.
+1. Skapa ett känt samband Använder från Alex till Blå cykeln i första fönstret.
+   Be operatören förbereda tappat svar och invänta bekräftelse före Lägg i
+   utkastet.
+2. Öppna samma hushåll i det andra fönstret. Redigera det färdiga sambandet till
+   Osäkert uppgivet och lägg hela rättelsen i utkastet.
+3. Kontrollera det ursprungliga försöket i första fönstret. Läs beskedet om
+   ändrat aktuellt underlag och granska förslaget i det andra fönstret.
 
 **Förväntat resultat:**
 
@@ -325,26 +500,34 @@ earlier successful relationship over later changes”.
 **Användare:** Alex.
 
 **Förutsättningar:** De två objekten finns i utkastet. Börja från hushållets
-Inställningar och välj Tillbaka till kartan. Prova på dator, smal telefon och
-med skärmtangentbord öppet. Gör även ett separat prov med skärmläsare.
+Inställningar och välj Tillbaka till kartan. Använd webbläsarvy 1280 × 900.
+Syftet är tangentbordsarbete och bekräftad navigation på dator.
 
 **Integrationstest:**
 [relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
-testfallen:
+SAMBAND-09.
 
-- “SAMBAND-09: keyboard form actions and confirmed route loss remain reachable
-  at 1280x900”.
-- “SAMBAND-09: keyboard form actions and confirmed route loss remain reachable
-  at 320x640”.
-- “SAMBAND-09: keyboard form actions and confirmed route loss remain reachable
-  at 320x240”.
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-09"
+  },
+  "reference": "1280 × 900; tangentbordsarbete och navigation",
+  "outcomes": [
+    "tangentbord, smal skärm och navigationsförlust"
+  ]
+}
+```
+-->
 
 **Steg:**
 
 1. Öppna tabellen, Samband för Alex och Nytt samband. Kontrollera fokus på
    dialogrubriken. Välj Använder och Blå cykeln med tangentbordet.
 2. Nå Lägg i utkastet genom tangentbord och rullning. Kontrollera att
-   fält, text och åtgärder går att använda med öppet skärmtangentbord.
+   fält, text och åtgärder går att använda inom webbläsarvyn.
 3. Tabba från sista Stäng samband till första stängningsknappen. Kontrollera
    att dialogen håller fokus och att innehållet bakom är inaktivt.
 4. Använd webbläsarens Tillbaka. Avbryt förlusten och kontrollera bevarat mål.
@@ -352,13 +535,104 @@ testfallen:
 
 **Förväntat resultat:**
 
-- Rubrik, etiketter, fel och status går att förstå med skärmläsare.
-  Tangentbordet når samtliga åtgärder utan att lämna den öppna dialogen.
+- Tangentbordet når åtgärderna utan att lämna den öppna dialogen.
+  Rubriken får fokus när dialogen öppnas och åtgärderna kan rullas fram.
 - Förlustvarningen har Fortsätt redigera förvalt. Bekräftad navigation kastar
-  endast oskickade värden. Tidigare förslag finns kvar och ingen
-  återupptagningsingång skapas.
-- Automatiseringen provar tre skärmstorlekar. Fysiskt skärmtangentbord och
-  skärmläsare kräver separata mänskliga prov; skriv deras faktiska resultat.
+  endast oskickade värden. Tidigare förslag finns kvar.
+
+### SAMBAND-16: tangentbord, smal skärm och navigationsförlust
+
+**Syfte:** Kontrollera nåbara åtgärder, fokusfälla och bekräftad sidnavigation.
+
+**Användare:** Alex.
+
+**Förutsättningar:** De två objekten finns i utkastet. Börja från hushållets
+Inställningar och välj Tillbaka till kartan. Använd webbläsarvy 320 × 640.
+Syftet är smalt omflöde, fokusfälla och nåbara åtgärder.
+
+**Integrationstest:**
+[relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
+SAMBAND-16.
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-16"
+  },
+  "reference": "320 × 640; smalt omflöde och fokusfälla",
+  "outcomes": [
+    "tangentbord, smal skärm och navigationsförlust"
+  ]
+}
+```
+-->
+
+**Steg:**
+
+1. Öppna tabellen, Samband för Alex och Nytt samband. Kontrollera fokus på
+   dialogrubriken. Välj Använder och Blå cykeln med tangentbordet.
+2. Nå Lägg i utkastet genom tangentbord och rullning. Kontrollera att
+   fält, text och åtgärder går att använda inom webbläsarvyn.
+3. Tabba från sista Stäng samband till första stängningsknappen. Kontrollera
+   att dialogen håller fokus och att innehållet bakom är inaktivt.
+4. Använd webbläsarens Tillbaka. Avbryt förlusten och kontrollera bevarat mål.
+   Använd Tillbaka igen och bekräfta förlusten. Återvänd till kartan.
+
+**Förväntat resultat:**
+
+- Tangentbordet når åtgärderna utan att lämna den öppna dialogen.
+  Rubriken får fokus när dialogen öppnas och åtgärderna kan rullas fram.
+- Förlustvarningen har Fortsätt redigera förvalt. Bekräftad navigation kastar
+  endast oskickade värden. Tidigare förslag finns kvar.
+
+### SAMBAND-17: tangentbord, smal skärm och navigationsförlust
+
+**Syfte:** Kontrollera nåbara åtgärder, fokusfälla och bekräftad sidnavigation.
+
+**Användare:** Alex.
+
+**Förutsättningar:** De två objekten finns i utkastet. Börja från hushållets
+Inställningar och välj Tillbaka till kartan. Använd webbläsarvy 320 × 240.
+Syftet är nåbara åtgärder och förlustvarning vid extremt låg vyhöjd.
+
+**Integrationstest:**
+[relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
+SAMBAND-17.
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-17"
+  },
+  "reference": "320 × 240; åtgärder i extremt låg webbläsarvy",
+  "outcomes": [
+    "tangentbord, smal skärm och navigationsförlust"
+  ]
+}
+```
+-->
+
+**Steg:**
+
+1. Öppna tabellen, Samband för Alex och Nytt samband. Kontrollera fokus på
+   dialogrubriken. Välj Använder och Blå cykeln med tangentbordet.
+2. Nå Lägg i utkastet genom tangentbord och rullning. Kontrollera att
+   fält, text och åtgärder går att använda inom webbläsarvyn.
+3. Tabba från sista Stäng samband till första stängningsknappen. Kontrollera
+   att dialogen håller fokus och att innehållet bakom är inaktivt.
+4. Använd webbläsarens Tillbaka. Avbryt förlusten och kontrollera bevarat mål.
+   Använd Tillbaka igen och bekräfta förlusten. Återvänd till kartan.
+
+**Förväntat resultat:**
+
+- Tangentbordet når åtgärderna utan att lämna den öppna dialogen.
+  Rubriken får fokus när dialogen öppnas och åtgärderna kan rullas fram.
+- Förlustvarningen har Fortsätt redigera förvalt. Bekräftad navigation kastar
+  endast oskickade värden. Tidigare förslag finns kvar.
 
 ### SAMBAND-10: ett uteblivet tillägg kontrolleras före nytt försök
 
@@ -373,16 +647,46 @@ testfallen:
 testfallet “SAMBAND-10: a request that never reached the server is checked before
 safe retry and later duplicate removal is reported truthfully”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-10"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "ett uteblivet tillägg kontrolleras före nytt försök"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-before')`
+och meddela **Nästa inskickning stoppas före servern**. Efter det första
+kontrollerade försöket, före inskickningen i steg 3: kör
+`relationshipProbe('lost-applied')` och meddela **Nästa verkliga svar
+tappas efter genomförandet**. Använd Styrda avbrott för båda gränserna.
+Stäng konsolen före det vanliga fokusprovet. Ladda om efter avslutad
+kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Fyll Nytt samband med Använder från Alex till Blå cykeln. Kör
-   `relationshipProbe('lost-before')` och välj Lägg i utkastet.
+1. Fyll Nytt samband med Använder från Alex till Blå cykeln. Be operatören
+   förbereda stopp före servern och invänta bekräftelse. Välj Lägg i utkastet.
 2. Välj Kontrollera om ändringen lades i utkastet. Läs beskedet att ändringen
    inte lades i utkastet. Kontrollera mål och typ och skicka igen utan avbrott.
-3. Stäng dialogen och spara hela utkastet. Öppna Nytt samband med samma typ
-   och ändpunkter igen. Kör `relationshipProbe('lost-applied')` och skicka.
+3. Stäng dialogen och spara hela utkastet. Öppna Nytt samband med samma typ och
+   ändpunkter igen. Be operatören förbereda tappat verkligt svar och invänta
+   bekräftelse. Skicka sedan.
 4. Föreslå borttagning av det befintliga sambandet i andra fönstret. Kontrollera
-   dubblettförsöket i första fönstret och läs beskedet om ändring eller borttagning.
+   dubblettförsöket i första fönstret och läs beskedet om ändring eller
+   borttagning.
 
 **Förväntat resultat:**
 
@@ -406,6 +710,23 @@ i utkastet. Föreslå borttagning av Tas bort utan att spara hela utkastet.
 [relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
 testfallet “SAMBAND-11: the household object selector ignores table filters and
 excludes removed proposals while retaining effective type names”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-11"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "objektval är oberoende av tabellens filter"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -440,6 +761,21 @@ det i det vanliga namnfältet; byt bokstav till L respektive F för de andra fä
 [relationship-dialog-accessibility.spec.ts](../../tests/integration/relationship-dialog-accessibility.spec.ts),
 testfallet “SAMBAND-12: long relationship names and field labels reflow without
 horizontal overflow at 320 CSS pixels”.
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog-accessibility.spec.ts",
+    "caseId": "SAMBAND-12"
+  },
+  "reference": "320 × 700; långa ord och bevarad inmatning",
+  "outcomes": [
+    "långa benämningar och fält bryts på smal skärm"
+  ]
+}
+```
+-->
 
 **Steg:**
 
@@ -487,26 +823,59 @@ window.fetch = async (input, options) => {
 testfallet “SAMBAND-13: staging cancel and explicit outcome checks retain meaningful
 focus without stealing later reading focus”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-dialog-accessibility.spec.ts",
+    "caseId": "SAMBAND-13"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "fokus efter inskickning, avbrytande och utfallskontroll"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 3: kör `relationshipProbe('lost-applied')`.
+Före inskickningen i steg 4: kör `relationshipProbe('lost-applied')` igen.
+Meddela **Tappat svar förberett** före vardera inskickningen.
+Efter inskickningen i steg 4 men före kontrollknappen: installera det
+separata väntande kontrollreceptet ovan och bekräfta installationen.
+Vänta på den verkliga kontrollens hållning efter knapptryckningen.
+Behåll svaret tills användaren följt Blå cykeln och valt dess rubrikfokus.
+Först i steg 5: kör `relationshipCheckRelease()` och meddela
+**Kontrollsvaret är släppt**.
+Stäng konsolen före det vanliga fokusprovet. Ladda om efter avslutad
+kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
-1. Öppna tabellen, Samband för Alex och Nytt samband. Välj Använder och
-   Blå cykeln. Nå Lägg i utkastet med tangentbordet och skicka. Kontrollera
-   fokus på dialogens rubrik och det enda fullständiga privata sambandet.
+1. Öppna tabellen, Samband för Alex och Nytt samband. Välj Använder och Blå
+   cykeln. Nå Lägg i utkastet med tangentbordet och skicka. Kontrollera fokus på
+   dialogens rubrik och det enda fullständiga privata sambandet.
 2. Öppna nästa formulär, skriv cykel i objektsökningen och välj Avbryt
    redigeringen. Bekräfta Kasta ändringarna och fortsätt. Kontrollera
    rubrikfokus och att det tidigare förslaget finns kvar.
-3. Redigera sambandet till Osäkert uppgivet. Kör
-   `relationshipProbe('lost-applied')`, skicka och välj sedan Kontrollera om
-   ändringen lades i utkastet. Kontrollera rubrikfokus och bekräftat förslag.
-4. Redigera igen till Känt. Kör `relationshipProbe('lost-applied')` och
-   skicka. Kör förberedelsen för det väntande kontrollsvaret ovan. Välj
-   Kontrollera om ändringen lades i utkastet och följ därefter Blå cykeln
-   i läsningen medan kontrollen väntar. Kontrollera objektets rubrikfokus
-   och texten Sparade uppgifter och ditt utkast.
-5. Kör `relationshipCheckRelease()` i konsolen. Kontrollera att objektets
-   rubrik fortfarande har fokus och läs bekräftelsen. Välj Tillbaka och
-   kontrollera sambandsdialogens rubrikfokus och texten Ändringar läggs
-   i ditt utkast. Kartan sparas separat.
+3. Redigera sambandet till Osäkert uppgivet. Be operatören förbereda tappat svar
+   och invänta bekräftelse. Skicka och välj sedan Kontrollera om ändringen lades
+   i utkastet. Kontrollera rubrikfokus och bekräftat förslag.
+4. Redigera igen till Känt. Be operatören förbereda tappat svar och invänta
+   bekräftelse. Skicka. Be sedan operatören förbereda det väntande
+   kontrollsvaret och invänta installationsbekräftelse. Välj Kontrollera om
+   ändringen lades i utkastet och följ därefter Blå cykeln i läsningen medan
+   kontrollen väntar. Kontrollera objektets rubrikfokus och texten Sparade
+   uppgifter och ditt utkast.
+5. Be operatören släppa kontrollsvaret efter objektets fokusval och invänta
+   bekräftelse. Kontrollera att objektets rubrik fortfarande har fokus och läs
+   bekräftelsen. Välj Tillbaka och kontrollera sambandsdialogens rubrikfokus och
+   texten Ändringar läggs i ditt utkast. Kartan sparas separat.
 
 **Förväntat resultat:**
 
@@ -535,23 +904,49 @@ Styrda avbrott ovan. Använd en separat provinstallation med påhittade uppgifte
 testfallet “SAMBAND-14: an absent old-version attempt unlocks retained input and
 requires current-basis review before retry”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-outcome-absence.spec.ts",
+    "caseId": "SAMBAND-14"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "gammalt försök lämnas utan att skriva över senare arbete"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-before')` enligt
+Styrda avbrott och meddela **Nästa inskickning stoppas före servern**. Behåll
+första fönstret och dess försöksvärden medan det andra fönstret lägger Lo i
+samma utkast. Stäng konsolen före det vanliga fokusprovet. Ladda om efter
+avslutad kontroll eller avbrott för att återställa hooken, enligt den befintliga
+förberedelsen. Återställ provhushållet mellan fall, aldrig under kontrollen.
+
 **Steg:**
 
 1. I första fönstret, öppna tabellen och Samband för Alex. Välj Nytt samband,
-   Använder, Blå cykeln och Osäkert uppgivet. Kör
-   `relationshipProbe('lost-before')` och välj Lägg i utkastet.
-2. I andra fönstret, skapa Lo som Person med Nytt objekt. Välj Lägg i
-   utkastet och stäng. Kontrollera att Lo finns i ditt utkast.
-3. I första fönstret, välj Kontrollera om ändringen lades i utkastet.
-   Läs beskedet om saknad bevarad bekräftelse och ändrat utkast. Kontrollera
-   att säkerhet och objektval finns kvar och går att läsa eller ändra.
-   Lägg i utkastet är spärrat tills formuläret öppnas med aktuellt underlag.
-4. Välj Stäng samband och sedan Fortsätt redigera. Kontrollera att värdena
-   finns kvar. Anteckna de värden du vill använda. Välj Stäng samband igen
-   och Kasta ändringarna och fortsätt. Kontrollera fokus på öppningsknappen.
-5. Öppna Samband för Alex igen, välj Nytt samband och ange samma typ,
-   ändpunkter och Osäkert uppgivet efter granskning av aktuella uppgifter.
-   Välj Lägg i utkastet och kontrollera bekräftelsen.
+   Använder, Blå cykeln och Osäkert uppgivet. Be operatören förbereda stopp före
+   servern och invänta bekräftelse. Välj Lägg i utkastet.
+2. I andra fönstret, skapa Lo som Person med Nytt objekt. Välj Lägg i utkastet
+   och stäng. Kontrollera att Lo finns i ditt utkast.
+3. I första fönstret, välj Kontrollera om ändringen lades i utkastet. Läs
+   beskedet om saknad bevarad bekräftelse och ändrat utkast. Kontrollera att
+   säkerhet och objektval finns kvar och går att läsa eller ändra. Lägg i
+   utkastet är spärrat tills formuläret öppnas med aktuellt underlag.
+4. Välj Stäng samband och sedan Fortsätt redigera. Kontrollera att värdena finns
+   kvar. Anteckna de värden du vill använda. Välj Stäng samband igen och Kasta
+   ändringarna och fortsätt. Kontrollera fokus på öppningsknappen.
+5. Öppna Samband för Alex igen, välj Nytt samband och ange samma typ, ändpunkter
+   och Osäkert uppgivet efter granskning av aktuella uppgifter. Välj Lägg i
+   utkastet och kontrollera bekräftelsen.
 
 **Förväntat resultat:**
 
@@ -582,21 +977,48 @@ Styrda avbrott ovan i det första fönstret.
 testfallet “SAMBAND-15: absent stale editing cannot overwrite or remove a later
 same-owner relationship proposal”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/relationship-outcome-absence.spec.ts",
+    "caseId": "SAMBAND-15"
+  },
+  "reference": "Chromium, vanlig datorvy; scenariots angivna provdata och avbrott",
+  "outcomes": [
+    "gammal redigering skriver inte över en senare sambandsändring"
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Före inskickningen i UI-steg 1: kör `relationshipProbe('lost-before')` enligt
+Styrda avbrott och meddela **Nästa inskickning stoppas före servern**. Behåll
+första fönstret och dess gamla redigering medan den andra klienten ändrar samma
+samband och lägger ett oberoende förslag. Stäng konsolen före det vanliga
+fokusprovet. Ladda om efter avslutad kontroll eller avbrott för att återställa
+hooken, enligt den befintliga förberedelsen. Återställ provhushållet mellan
+fall, aldrig under kontrollen.
+
 **Steg:**
 
 1. I första fönstret, öppna tabellen, Samband för Alex och Redigera samband.
-   Ändra säkerheten till Osäkert uppgivet. Kör
-   `relationshipProbe('lost-before')` och välj Lägg i utkastet.
+   Ändra säkerheten till Osäkert uppgivet. Be operatören förbereda stopp före
+   servern och invänta bekräftelse. Välj Lägg i utkastet.
 2. I andra fönstret, redigera samma samband till Obesvarad identitetsfråga och
-   lägg i utkastet. Kontrollera att inget identifierat målobjekt anges.
-   Stäng sambandsdialogen, skapa Lo som Person och lägg även det i utkastet.
+   lägg i utkastet. Kontrollera att inget identifierat målobjekt anges. Stäng
+   sambandsdialogen, skapa Lo som Person och lägg även det i utkastet.
 3. I första fönstret, välj Kontrollera om ändringen lades i utkastet.
-   Kontrollera beskedet om saknad bevarad bekräftelse och ändrat utkast.
-   Det försökta formuläret visar fortfarande Osäkert uppgivet och Blå cykeln.
-   Lägg i utkastet och Föreslå borttagning är spärrade.
-4. Välj Stäng samband och Fortsätt redigera. Kontrollera att de försökta
-   värdena finns kvar. Välj Stäng samband igen och bekräfta Kasta ändringarna
-   och fortsätt. Öppna Samband för Alex och Redigera samband igen.
+   Kontrollera beskedet om saknad bevarad bekräftelse och ändrat utkast. Det
+   försökta formuläret visar fortfarande Osäkert uppgivet och Blå cykeln. Lägg i
+   utkastet och Föreslå borttagning är spärrade.
+4. Välj Stäng samband och Fortsätt redigera. Kontrollera att de försökta värdena
+   finns kvar. Välj Stäng samband igen och bekräfta Kasta ändringarna och
+   fortsätt. Öppna Samband för Alex och Redigera samband igen.
 5. Läs det aktuella formuläret: säkerheten är Obesvarad identitetsfråga och
    ingen väljare för Till objekt visas. Skicka eller ta inte bort något.
 
@@ -611,3 +1033,102 @@ same-owner relationship proposal”.
   Lo och båda tidigare objektförslagen finns kvar och den gemensamma kartan
   är tom. Automatiseringen provar även den försenade gamla HTTP-begärans
   avvisning och oförändrat aktuellt utkast.
+
+## Mänskliga hjälpmedelsprov
+
+### SAMBAND-18: skärmläsaren beskriver sambandsarbetet
+
+**Syfte:** Kontrollera faktiskt upplästa rubriker, etiketter, fel och status.
+
+**Användare:** Alex med en riktig skärmläsare och webbläsare.
+
+**Förutsättningar:** De två objekten enligt allmän förberedelse finns
+i utkastet. Anteckna skärmläsare, version och webbläsare.
+
+**Kräver mänsklig observation:** Lyssna på skärmläsarens faktiska uppläsning.
+DOM-fokus i SAMBAND-09 bevisar inte uppläst innehåll.
+
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Lyssna på rubriker, fältetiketter, fel och status."
+  },
+  "reference": "Riktig skärmläsare och webbläsare; anteckna versionerna",
+  "outcomes": ["Rubriker, etiketter, fel och status går att förstå"],
+  "evidence": [{
+    "kind": "overlap",
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-09",
+    "purpose": "Syntetiskt tangentbord och DOM-fokus på dator"
+  }]
+}
+```
+-->
+
+**Steg:**
+
+1. Öppna Tabell, Samband för Alex och Nytt samband med skärmläsaren.
+   Lyssna på dialogrubriken och fältens namn.
+2. Försök lägga till utan typ och mål. Lyssna på felsammanfattningen och
+   följ fellänkarna. Fyll Använder och Blå cykeln och lägg i utkastet.
+3. Lyssna på bekräftelsen. Stäng dialogen och fortsätt från öppningsknappen.
+
+**Förväntat resultat:**
+
+- Uppläsningen gör riktning, fält, fel och bekräftelse begripliga.
+- Inga åtgärder kräver att användaren ser den rumsliga kartan.
+
+### SAMBAND-19: ett fysiskt skärmtangentbord lämnar åtgärder nåbara
+
+**Syfte:** Kontrollera faktisk skymning när telefonens tangentbord öppnas.
+
+**Användare:** Alex med en fysisk telefon.
+
+**Förutsättningar:** De två objekten enligt allmän förberedelse finns
+i utkastet. Anteckna telefon, operativsystem och webbläsare.
+
+**Kräver mänsklig observation:** Öppna telefonens verkliga skärmtangentbord
+och kontrollera skymning och rullning. Ändrad Chromium-vyhöjd utför inte det.
+
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Öppna fysiskt skärmtangentbord och prova nåbara åtgärder."
+  },
+  "reference": "Fysisk telefon med verkligt skärmtangentbord",
+  "outcomes": ["Inmatning och åtgärder kan användas med tangentbordet öppet"],
+  "evidence": [{
+    "kind": "overlap",
+    "spec": "tests/integration/relationship-dialog.spec.ts",
+    "caseId": "SAMBAND-17",
+    "purpose": "Syntetisk extremt låg webbläsarvy"
+  }]
+}
+```
+-->
+
+**Steg:**
+
+1. Öppna Tabell, Samband för Alex och Nytt samband. Tryck i Sök det andra
+   objektet så att telefonens skärmtangentbord öppnas. Skriv cykel.
+2. Välj Använder och Blå cykeln. Rulla fram Lägg i utkastet och
+   Stäng samband medan tangentbordet är öppet.
+3. Stäng sambandet och välj Fortsätt redigera i förlustvarningen.
+   Kontrollera bevarad sökning och mål.
+
+**Förväntat resultat:**
+
+- Inmatning, text och åtgärder går att nå trots det verkliga tangentbordet.
+- Avbruten förlust bevarar inmatningen och återgår till redigeringen.
+
+## Täckningens gräns
+
+SAMBAND-12 kontrollerar lång mening, fältvärde, oförändrade uppgifter och
+omflöde vid 320 CSS-pixlar. Exakt kantbredd, övre utfyllnad, teckenvikt
+650 och hörnradie ingår inte i skyddet; dekorativa avvikelser i dessa
+värden kan undgå provet. Färgad meningsyta behålls i automatiseringen.
+Inga befintliga fallidentiteter pensioneras eller återanvänds.

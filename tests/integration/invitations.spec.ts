@@ -6,7 +6,9 @@ import Database from 'better-sqlite3';
 import { createHousehold, signIn } from '../support/client.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
 
-test('upgrading an existing household preserves its membership and enables invitations', async () => {
+test('upgrading an existing household preserves its membership and enables invitations', {
+  tag: '@technical',
+}, async () => {
   const migrationsDirectory = await mkdtemp(join(tmpdir(), 'skyttel-upgrade-'));
   await copyFile('migrations/001_initial.sql', join(migrationsDirectory, '001_initial.sql'));
   const options = { migrationsDirectory, legacyAuthCallbacks: true };
@@ -130,7 +132,9 @@ test('upgrading an existing household preserves its membership and enables invit
   }
 });
 
-test('an invitation admits only its authenticated recipient and remains consumed after restart', async () => {
+test('an invitation admits only its authenticated recipient and remains consumed after restart', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
   const recipient = await request.newContext();
@@ -195,7 +199,9 @@ test('an invitation admits only its authenticated recipient and remains consumed
   }
 });
 
-test('administrators cannot cross household boundaries and members can accept access to another household', async () => {
+test('administrators cannot cross household boundaries and members can accept access to another household', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const first = await request.newContext();
   const second = await request.newContext();
@@ -298,7 +304,9 @@ test('administrators cannot cross household boundaries and members can accept ac
   }
 });
 
-test('invitation replacement, cancellation, and membership revocation invalidate old codes', async () => {
+test('invitation replacement, cancellation, and membership revocation invalidate old codes', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
   const recipient = await request.newContext();
@@ -348,7 +356,9 @@ test('invitation replacement, cancellation, and membership revocation invalidate
   }
 });
 
-test('concurrent role changes cannot remove the last administrator', async () => {
+test('concurrent role changes cannot remove the last administrator', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const first = await request.newContext();
   const second = await request.newContext();
@@ -386,7 +396,9 @@ test('concurrent role changes cannot remove the last administrator', async () =>
   }
 });
 
-test('members cannot administer access, two administrators can share it, and revocation defeats old sessions', async () => {
+test('members cannot administer access, two administrators can share it, and revocation defeats old sessions', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
   const recipient = await request.newContext();

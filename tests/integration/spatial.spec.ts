@@ -12,7 +12,12 @@ import {
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
-import { closeTableObject, editTableObject, readTableObject } from '../support/domain-work.js';
+import {
+  closeTableObject,
+  editObjectRelationship,
+  editTableObject,
+  readTableObject,
+} from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { focusMapSearch, mapFilters } from '../support/object-search.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
@@ -893,7 +898,43 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     const post = (route: string, data: unknown) =>
       page.request.post(`${path}/${route}`, { headers: { origin: installation.origin }, data });
     const state = await read();
+    expect(
+      (
+        await post('relationship', {
+          version: (await read()).draft.version,
+          id: 'use',
+          baseRevision: null,
+          value: {
+            typeId: state.relationshipTypes.find((item) => item.name === 'Använder')?.id,
+            sourceId: 'lo',
+            targetId: 'music',
+            knowledge: 'known',
+          },
+        })
+      ).ok(),
+    ).toBe(true);
     for (const change of state.draft.changes) {
+      if (!change.after) throw new Error('Initial object proposals must contain values');
+      await page.goto(installation.origin);
+      const editor = await editTableObject(page, change.after.name);
+      await editor.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+      await editor
+        .getByLabel('Slutdatum: uppgiftens säkerhet', { exact: true })
+        .selectOption('known');
+      await editor.getByLabel('Slutdatum', { exact: true }).fill('2000-01-01');
+      await editor.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+      await editor
+        .getByLabel('Objektets status', { exact: true })
+        .selectOption(change.id === 'music' ? 'ended' : 'active');
+      await editor.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      await expect(editor).not.toBeVisible();
+      expect(
+        (await read()).draft.changes.find((value) => value.id === change.id)?.after,
+      ).toMatchObject({
+        ...change.after,
+        lifecycle: change.id === 'music' ? 'ended' : 'active',
+        financialFacts: { endDate: { knowledge: 'known', value: '2000-01-01' } },
+      });
       expect(
         (
           await post('draft', {
@@ -909,6 +950,26 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
         ).ok(),
       ).toBe(true);
     }
+    await page.reload();
+    const nativeRelationship = await editObjectRelationship(
+      page,
+      'Lo Exempel',
+      'Lo Exempel → Använder → Molnmusik',
+    );
+    await nativeRelationship
+      .getByLabel('Sambandets slutdatum: uppgiftens säkerhet', { exact: true })
+      .selectOption('known');
+    await nativeRelationship.getByLabel('Sambandets slutdatum', { exact: true }).fill('2000-01-01');
+    await stageRelationshipAndClose(page);
+    expect(
+      (await read()).draft.relationships?.find((change) => change.after?.sourceId === 'lo')?.after,
+    ).toMatchObject({
+      typeId: state.relationshipTypes.find((item) => item.name === 'Använder')?.id,
+      sourceId: 'lo',
+      targetId: 'music',
+      knowledge: 'known',
+      endDate: { knowledge: 'known', value: '2000-01-01' },
+    });
     expect(
       (
         await post('relationship', {
@@ -1250,10 +1311,11 @@ test('RYMD-09: dense mobile maps offer separate pointer and keyboard targets wit
             nodes.map((node) => [node.getAttribute('data-object-id'), node.getAttribute('style')]),
           ),
       ).toEqual(before);
-      await space.locator('canvas').evaluate((canvas: HTMLCanvasElement) => {
+      const graphics = await space.locator('canvas').evaluateHandle((canvas: HTMLCanvasElement) => {
         const extension = canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context');
         if (!extension) throw new Error('Native graphics loss must be available');
         extension.loseContext();
+        return extension;
       });
       await expect(
         space.getByText('Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.'),
@@ -1271,6 +1333,13 @@ test('RYMD-09: dense mobile maps offer separate pointer and keyboard targets wit
         'data-selected',
         'true',
       );
+      await graphics.evaluate((extension) => extension.restoreContext());
+      await graphics.dispose();
+      await openMap(page);
+      await expect(
+        space.getByText('Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.'),
+      ).toHaveCount(0);
+      await expect(space.locator('button[data-object-id]')).toHaveCount(saved.objects.length);
       expect(await (await page.request.get(`${path}/view`)).json()).toEqual(personal);
       expect(await read()).toEqual(saved);
     }

@@ -14,6 +14,7 @@ import {
   editTableObject,
   openObjectRelationships,
   readDraftProposal,
+  readTableObject,
 } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
@@ -206,7 +207,11 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
 
 for (const width of [1280, 390, 320]) {
   for (const theme of ['light', 'dark'] as const) {
-    test(`KARTA-08: discarding unsent object text preserves proposals before correcting an unresolved identity at ${width}px in ${theme}`, async ({
+    const caseId =
+      width === 1280 && theme === 'light'
+        ? 'KARTA-08'
+        : `KARTA-${26 + [1280, 390, 320].indexOf(width) * 2 + (theme === 'dark' ? 1 : 0) - 1}`;
+    test(`${caseId}: discarding unsent object text preserves proposals before correcting an unresolved identity at ${width}px in ${theme}`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 900 });
@@ -265,6 +270,10 @@ for (const width of [1280, 390, 320]) {
           }),
         ]);
         expect(corrected.draft.relationships).toEqual(proposed.draft.relationships);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+        if (width !== 1280 || theme !== 'light') return;
         await save(page);
         await installation.restart();
         await page.reload();
@@ -282,6 +291,13 @@ for (const width of [1280, 390, 320]) {
         expect(saved.relationships).toEqual([
           expect.objectContaining({ id: relationship?.id, ...relationship?.after }),
         ]);
+        await expect(await readTableObject(page, 'Betalkonto')).toContainText('Rättad beskrivning');
+        await expect(await readTableObject(page, 'Betalkonto')).toContainText(
+          'Ospecificerat objekt',
+        );
+        await expect(await readTableObject(page, 'Familjemusik')).toContainText(
+          'Sparad beskrivning',
+        );
         await expect(await openObjectRelationships(page, 'Familjemusik')).toContainText(
           'Familjemusik → Betalas med → Betalkonto',
         );

@@ -37,7 +37,7 @@ async function closeSaveDialog(page: Page) {
 }
 
 for (const theme of ['light', 'dark'])
-  test(`UTKAST-25: filtered legend matches map colours and retains only displayed categories in ${theme}`, async ({
+  test(`${theme === 'dark' ? 'UTKAST-94' : 'UTKAST-25'}: filtered legend matches map colours and retains only displayed categories in ${theme}`, async ({
     page,
   }) => {
     const app = await createInstallation();
@@ -152,7 +152,7 @@ for (const theme of ['light', 'dark'])
   });
 
 for (const recoverUnknown of [false, true])
-  test(`UTKAST-26: confirmed save toast expires while failed refresh remains recoverable without a conversation${recoverUnknown ? ' after an unknown result' : ''}`, async ({
+  test(`${recoverUnknown ? 'UTKAST-95' : 'UTKAST-26'}: confirmed save toast expires while failed refresh remains recoverable without a conversation${recoverUnknown ? ' after an unknown result' : ''}`, async ({
     page,
   }) => {
     const app = await createInstallation();
@@ -204,7 +204,7 @@ for (const recoverUnknown of [false, true])
   });
 
 for (const width of [1440, 390, 320])
-  test(`UTKAST-12: closed work views retain private proposals through an unknown save at ${width}px and verify the same receipt`, async ({
+  test(`${width === 1440 ? 'UTKAST-12' : width === 390 ? 'UTKAST-96' : 'UTKAST-97'}: closed work views retain private proposals through an unknown save at ${width}px and verify the same receipt`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -645,7 +645,7 @@ for (const viewport of [
   { width: 640, height: 500 },
   { width: 320, height: 250 },
 ])
-  test(`UTKAST-16: navigation and native draft review keep controls usable through both opening orders at ${viewport.width}px`, async ({
+  test(`${viewport.width === 1440 ? 'UTKAST-16' : viewport.width === 640 ? 'UTKAST-98' : 'UTKAST-99'}: navigation and native draft review keep controls usable through both opening orders at ${viewport.width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();

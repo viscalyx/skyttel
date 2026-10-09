@@ -1,7 +1,18 @@
 import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openDraftReview, openTable, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  openTable,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { readDraftProposal } from '../support/domain-work.js';
+import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation } from '../support/installation.js';
 
 test('IMPORT-06: replacement preserves image history and private work, rejects old save attempts and permits ordinary corrections after restart', async ({
@@ -105,13 +116,8 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     const privateBytes = await imageBytes(privateImage);
     const archivedState = await read();
     const archivedHistory = (await (await page.request.get(`${path}/history`)).json()).history;
-    const prepared = await page.request.post(`${householdPath}/exports`, { headers, data: {} });
-    expect(prepared.status()).toBe(201);
-    const download = await page.request.get(
-      `${householdPath}/exports/${(await prepared.json()).id}`,
-    );
-    expect(download.status()).toBe(200);
-    const archive = await download.body();
+    await page.goto(installation.origin);
+    const archive = await downloadHouseholdExport(page, householdPath);
 
     expect(
       (
@@ -144,25 +150,46 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     if (!lostReceipt) throw new Error('The later save must commit before its response is lost');
     expect((await read()).objects.some((object) => object.id === 'not-in-archive')).toBe(true);
 
-    const imported = await page.request.post(`${householdPath}/imports`, {
-      headers: {
-        ...headers,
-        'content-type': 'application/zip',
-        'x-skyttel-content-version': String(archivedState.contentVersion),
-      },
-      data: archive,
+    const stale = await page.context().newPage();
+    await stale.goto(installation.origin);
+    await openTable(stale);
+    await expect(stale.getByRole('button', { name: 'Senare objekt', exact: true })).toBeVisible();
+    const staleForm = await openNewObject(stale);
+    await staleForm.getByLabel('Namn', { exact: true }).fill('Gammalt underlag');
+    const importer = await page.context().newPage();
+    await importer.goto(`${installation.origin}/households/${household.id}/settings/import`);
+    await importer.getByLabel('Skyttel-export (ZIP)').setInputFiles({
+      name: 'skyttel.zip',
+      mimeType: 'application/zip',
+      buffer: archive,
     });
+    const preparing = importer.waitForResponse(
+      (response) =>
+        response.url() === `${householdPath}/imports` && response.request().method() === 'POST',
+    );
+    await importer.getByRole('button', { name: 'Kontrollera importfil' }).click();
+    const imported = await preparing;
     expect(imported.status(), await imported.text()).toBe(201);
     const ready = await imported.json();
     expect(ready).toMatchObject({ status: 'ready', sourceHouseholdId: household.id });
-    const confirmed = await page.request.post(`${householdPath}/imports/${ready.id}/confirm`, {
-      headers,
-      data: { contentVersion: archivedState.contentVersion, confirmed: true },
-    });
+    await importer
+      .getByRole('checkbox', { name: 'Jag vill ersätta allt hushållsinnehåll' })
+      .check();
+    const confirming = importer.waitForResponse(`${householdPath}/imports/${ready.id}/confirm`);
+    await importer.getByRole('button', { name: 'Ersätt hushållets innehåll' }).click();
+    const confirmed = await confirming;
     expect(confirmed.status()).toBe(200);
     const completed = await confirmed.json();
     expect(completed.status).toBe('completed');
     expect(completed.contentVersion).not.toBe(archivedState.contentVersion);
+    await expect(importer.getByText(/Hushållets innehåll är ersatt/)).toBeVisible();
+    const rejectedProposal = stale.waitForResponse(
+      (response) =>
+        response.url() === `${path}/object-form` && response.request().method() === 'POST',
+    );
+    await staleForm.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    expect((await rejectedProposal).status()).toBe(409);
+    await expect(staleForm.getByRole('alert')).toBeVisible();
     await installation.restart();
     expect(
       (await (await page.request.get(`${householdPath}/imports/${ready.id}`)).json()).status,
@@ -178,6 +205,43 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     expect(await imageBytes(originalImage)).toEqual(originalBytes);
     expect(await imageBytes(copiedImage)).toEqual(originalBytes);
     expect(await imageBytes(privateImage)).toEqual(privateBytes);
+
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await openTable(reader);
+    await expect(reader.getByRole('button', { name: 'Lo Exempel', exact: true })).toHaveCount(2);
+    await expect(reader.getByRole('button', { name: 'Senare objekt', exact: true })).toHaveCount(0);
+    const privateProposal = await readDraftProposal(reader, 'Lo Exempel');
+    const privatePreview = privateProposal.locator(`img[src$="/profile-images/${privateImage}"]`);
+    await expect(privatePreview).toBeVisible();
+    await expect
+      .poll(() =>
+        privatePreview.evaluate(
+          (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await closeSupportDialog(reader, 'Lo Exempel');
+    await reader.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    await (await utilityButton(reader, 'Rapporter')).click();
+    const historicalReceipt = reader.locator(`article[data-save="${historicalSave.operationId}"]`);
+    await expect(historicalReceipt).toContainText('Alex Exempel');
+    await expect(historicalReceipt.locator('time')).toHaveAttribute(
+      'datetime',
+      historicalSave.savedAt,
+    );
+    await historicalReceipt.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(historicalReceipt).toContainText('Lo Exempel');
+    const historicalImage = historicalReceipt.locator(`img[src$="/profile-images/${copiedImage}"]`);
+    await expect(historicalImage).toBeVisible();
+    await expect
+      .poll(() =>
+        historicalImage.evaluate(
+          (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await reader.close();
 
     for (const oldReceipt of [lostReceipt, historicalSave]) {
       const retried = await post('save', {
@@ -212,21 +276,82 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
         })
       ).status(),
     ).toBe(200);
+    // Discard destroys the private image file. Use a fresh equivalent proposal
+    // to exercise the human discard control without reviving the removed file.
+    await upload('first', '#aa5522');
+    await importer.goto(installation.origin);
+    const restoredDraft = await openDraftReview(importer);
+    await restoredDraft.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
+    const discarding = importer.waitForResponse(`${path}/discard-review`);
+    await importer
+      .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
+      .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
+      .click();
+    expect((await discarding).status()).toBe(200);
     state = await read();
     const current = state.objects.find((object) => object.id === 'second');
     if (!current) throw new Error('The restored object must exist');
+    await importer.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    await openTable(importer);
+    // Equal display names remain distinct identities in the ordinary table.
+    const editorButtons = importer.getByRole('button', {
+      name: 'Redigera Lo Exempel',
+      exact: true,
+    });
+    expect(await editorButtons.count()).toBe(2);
+    await importer.locator(`[data-table-object="${current.id}"][data-table-action="edit"]`).click();
+    await expect(
+      importer.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true }),
+    ).toBeVisible();
+    await importer.getByLabel('Beskrivning', { exact: true }).fill('Ny vanlig rättelse');
+    const staging = importer.waitForResponse(`${path}/object-form`);
+    await importer.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    expect((await staging).status()).toBe(200);
+    const staged = await read();
+    const nativeCorrection = staged.draft.changes.find((change) => change.id === current.id);
+    expect(nativeCorrection?.before).toEqual(current);
+    const { id: _id, householdId: _householdId, revision: _revision, ...currentValue } = current;
+    expect(nativeCorrection?.after).toEqual({ ...currentValue, description: 'Ny vanlig rättelse' });
+    const nativeReview = await openDraftReview(importer);
+    await expect(nativeReview).toContainText('Ny vanlig rättelse');
+    const proposal = await readDraftProposal(importer, 'Lo Exempel');
+    await expect(proposal).toContainText('Ny vanlig rättelse');
+    const proposalImage = proposal
+      .locator('dl')
+      .filter({ hasText: 'Ny vanlig rättelse' })
+      .getByRole('img', {
+        name: 'Profilbild för Lo Exempel',
+        exact: true,
+      });
+    await expect(proposalImage).toHaveAttribute(
+      'src',
+      `${new URL(householdPath).pathname}/profile-images/${originalImage}`,
+    );
+    await expect
+      .poll(() =>
+        proposalImage.evaluate(
+          (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await closeSupportDialog(importer, 'Lo Exempel');
+    await importer.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    // Retain the original direct-route protection beside the native proposal.
     expect(
       (
         await post('draft', {
-          version: state.draft.version,
-          contentVersion: state.contentVersion,
+          version: staged.draft.version,
+          contentVersion: staged.contentVersion,
           id: current.id,
           baseRevision: current.revision,
           value: { ...current, description: 'Ny vanlig rättelse' },
         })
       ).status(),
     ).toBe(200);
-    const corrected = await save('correction-after-import');
+    await importer.reload();
+    const saving = importer.waitForResponse(`${path}/save`);
+    await saveReviewedConflictDraft(importer);
+    const corrected: SaveReceipt = (await (await saving).json()).receipt;
     expect(corrected.contentVersion).toBe(completed.contentVersion);
     await installation.restart();
     state = await read();
@@ -259,6 +384,23 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     expect(state.objects.find((object) => object.id === 'second')?.description).toBe(
       'Ny vanlig rättelse',
     );
+    await importer.reload();
+    await openTable(importer);
+    const restoredObject = importer.locator(
+      '[data-table-object="second"][data-table-action="expand"]',
+    );
+    await restoredObject.click();
+    const details = importer.locator(`#${await restoredObject.getAttribute('aria-controls')}`);
+    await expect(details).toContainText('Ny vanlig rättelse');
+    const restoredImage = details.locator(`img[src$="/profile-images/${originalImage}"]`);
+    await expect(restoredImage).toBeVisible();
+    await expect
+      .poll(() =>
+        restoredImage.evaluate(
+          (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
   } finally {
     await installation.close();
   }

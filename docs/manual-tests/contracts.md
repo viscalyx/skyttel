@@ -40,6 +40,21 @@ Stäng textvyn före nästa steg i Tabell, Karta eller Inställningar.
 
 ### AVTAL-01: Registrera, hitta och rätta hyresuppgifter
 
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/contract-forms.spec.ts",
+    "caseId": "AVTAL-01"
+  },
+  "reference": "1280px, ljust tema; två separata profiler i konfliktprovet.",
+  "outcomes": [
+    "Tomt känt pris avvisas med fellänk; hyresrättelsen består efter omstart."
+  ]
+}
+```
+-->
+
 **Syfte:** Kontrollera att frivilliga uppgifter kan lämnas öppna och att
 ett hyresavtal behåller sin typ när hyran betalas månadsvis.
 
@@ -76,7 +91,8 @@ corrected after reload”.
    oskickad text. Välj **Lägg i utkastet och stäng**, granska både `9 500`
    och `9 700` och spara hela utkastet.
 7. Starta om testinstallationen och ladda om sidan. Öppna objektet igen
-   med radens **Redigera [objektets namn]** och **Ekonomiska uppgifter**. Kontrollera
+   med radens **Redigera [objektets namn]** och **Ekonomiska uppgifter**.
+   Kontrollera
    pris, startdatum och avtalsvillkor.
 
 **Förväntat resultat:**
@@ -95,6 +111,23 @@ corrected after reload”.
 ## Skuld och kredit
 
 ### AVTAL-02: Bevara skilda belopp och ofullständiga uppgifter
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/contract-forms.spec.ts",
+    "caseId": "AVTAL-02"
+  },
+  "reference": "1280px, ljust tema; två separata profiler i konfliktprovet.",
+  "outcomes": [
+    "Skuld, kreditutrymme och utnyttjad kredit behåller säkerhet och separata datum."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att skuld, beviljat kreditutrymme och utnyttjad
 kredit har egna värden och datum, och att uppgiftens säkerhet bevaras.
@@ -122,7 +155,8 @@ incomplete meanings in forms and drafts”.
    **Visa förslaget: Familjens kreditavtal**. Stäng läsningen. Ladda om
    sidan och kontrollera att det osäkra beloppet är kvar. Spara utkastet.
 5. Starta om testinstallationen och ladda om sidan. Öppna objektets
-   uppgifter, välj radens **Redigera [objektets namn]** och **Ekonomiska uppgifter**.
+   uppgifter, välj radens **Redigera [objektets namn]** och **Ekonomiska
+   uppgifter**.
    Kontrollera varje belopp, säkerhetsval och datum i formuläret.
 6. Komplettera utnyttjad kredit med **Känt**, `12 000` och `2026-03-04`.
    Ändra skulden till **Okänt**, rensa kreditutrymmets datum och ändra
@@ -147,6 +181,31 @@ incomplete meanings in forms and drafts”.
 
 ### AVTAL-04: bevara daterade skuld- och kredituppgifter i historiken
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/contract-forms.spec.ts",
+    "caseId": "AVTAL-04"
+  },
+  "reference": "1280px, ljust tema; två separata profiler i konfliktprovet.",
+  "outcomes": [
+    "Daterat utkast återhämtas; känd nollkredit och ursprungligt underlag består."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/contracts.spec.ts",
+      "title": "HTTP: dated debt and credit facts survive draft recovery, correction and history",
+      "purpose": "HTTP-kvitto, sparande användare, tidpunkt, stabil identitet och båda historiska värden."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Skilja skuld, kreditutrymme och utnyttjad kredit genom utkast,
 sparande och rättelse.
 
@@ -155,14 +214,14 @@ sparande och rättelse.
 **Förutsättningar:** Tom karta och tomt utkast. Möjlighet att starta om
 testinstallationen med samma databas.
 
-**Integrationstest:** [contracts.spec.ts](../../tests/integration/contracts.spec.ts),
-testfallet “AVTAL-04: dated debt and credit facts survive draft recovery,
-correction and history”.
+**Integrationstest:** [contract-forms.spec.ts](../../tests/integration/contract-forms.spec.ts),
+AVTAL-04. Separat HTTP-underlag finns i metadata ovan.
 
 **Steg:**
 
-1. Skapa kreditavtalet **Exempelkredit**. Öppna **Ekonomiska uppgifter och
-   avtalsvillkor**. Ange osäkert uppgiven skuld `125 000,50` med datum
+1. Välj **Nytt objekt**, namnet **Exempelkredit** och typen **Kreditavtal**.
+   Öppna **Ekonomiska uppgifter**. Ange osäkert uppgiven skuld
+   `125 000,50` med datum
    `2026-09-01`, känt kreditutrymme `80 000` med datum `2026-08-01` och
    känd utnyttjad kredit `12 500` med datum `2026-09-02`.
 2. Ange känd valuta `SEK`, okänt pris och uttryckligen inga avtalsvillkor.
@@ -183,6 +242,23 @@ correction and history”.
   visar rättelsen först och det ursprungliga sparandet därefter.
 
 ### AVTAL-05: Avtalens roller och identiteter bevaras vid rättelse
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/contract-relationships.spec.ts",
+    "caseId": "AVTAL-05"
+  },
+  "reference": "1280px, ljust tema; två separata profiler i konfliktprovet.",
+  "outcomes": [
+    "Roller, riktning och objektens identiteter består efter spärrat sparande och rättelse."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova flera hyresavtal, lån, kredit och bilavbetalning med
 oberoende roller och ofullständiga uppgifter i samma privata utkast.
@@ -255,6 +331,23 @@ identities through a blocked save and correction”.
 
 ### AVTAL-06: Uppgradering bevarar egna definitioner och äldre utkast
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/contract-relationships.spec.ts",
+    "caseId": "AVTAL-06"
+  },
+  "reference": "1280px, ljust tema; två separata profiler i konfliktprovet.",
+  "outcomes": [
+    "Äldre privat utkast kan granskas och sparas efter uppgradering utan förlorade definitioner."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Prova att befintliga hushåll får avtalsstöd utan att egna
 definitioner eller privata utkast ersätts.
 
@@ -262,7 +355,7 @@ definitioner eller privata utkast ersätts.
 inloggade hushållsmedlem.
 
 **Förutsättningar:** Följ
-[förberedelsen för äldre avtalsdata](../development/testing.md#legacy-contract-upgrade).
+[förberedelsen för äldre avtalsdata](#äldre-avtalsdata).
 Den ger en separat databas med migrationerna 001–006, egen Bostad och
 Hyresvärd, sparade Björkbacken och samma verifierade användares privata
 namnförslag Björkbacken hemma. Bostad har ID `household-home-type`, revision
@@ -282,11 +375,18 @@ private draft”.
 1. Starta nuvarande app med `legacy.env` enligt förberedelsen. Starten
    uppgraderar databasen. Logga in på nytt med samma konto och öppna kartan.
 2. Kontrollera att bostaden och namnförslaget finns kvar. Kontrollera
-   hushållets definitioner genom det publika kartgränssnittet: egna
-   Bostad och Hyresvärd ska behålla namn, beskrivning, revision och
-   identitet utan dubbletter.
-3. Kontrollera att övriga typer för garage, fordon, avtal, hyra, lån,
-   kredit, avbetalning och försäkring samt deras samband finns tillgängliga.
+   **Inställningar → Typer och egna fält**. Öppna **Objekttyper och egna
+   fält → Ändra typ: Bostad** och läs namn och beskrivning. Stäng med
+   **Stäng typformuläret utan att skicka**. Öppna **Sambandstyper och
+   riktning → Ändra sambandstyp: Hyresvärd**, läs dess namn och beskrivning
+   och välj **Stäng sambandstypen utan att skicka**. Ingen
+   dubblett med samma namn ska tillkomma. Revision och intern identitet
+   kontrolleras som tekniskt underlag av integrationstestet.
+3. Läs typknapparna för **Garage**, **Fordon**, **Avtal**, **Hyresavtal**,
+   **Låneavtal**, **Kreditavtal**, **Avbetalningsavtal** och
+   **Försäkringsavtal**. Återgå med **Tillbaka till kartan**. Granska
+   namnförslaget med **Visa utkastet → Visa förslaget: Björkbacken hemma**.
+   Stäng läsningen med krysset.
 4. Spara det äldre utkastet. Starta om provappen och öppna kartan igen.
    Kontrollera namnet Björkbacken hemma och de bevarade typdefinitionerna.
 
@@ -301,6 +401,31 @@ private draft”.
 
 ### AVTAL-07: avvisa ogiltiga uppgifter utan att ändra utkastet
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/contract-forms.spec.ts",
+    "caseId": "AVTAL-07"
+  },
+  "reference": "1280px, ljust tema; två separata profiler i konfliktprovet.",
+  "outcomes": [
+    "Saknat känt skuldbelopp avvisas; tidigare utkast kan sparas utan gissade fakta."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/contracts.spec.ts",
+      "title": "HTTP: invalid financial facts preserve the entire current draft and saved map",
+      "purpose": "Ogiltigt datum avvisas utan ändrat utkast, karta eller historik."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera att valideringen bevarar övriga förslag och inte
 skapar en delvis sparad karta.
 
@@ -308,18 +433,19 @@ skapar en delvis sparad karta.
 
 **Förutsättningar:** Tom karta och tomt utkast.
 
-**Integrationstest:** [contracts.spec.ts](../../tests/integration/contracts.spec.ts),
-testfallet “AVTAL-07: invalid financial facts preserve the entire current
-draft and saved map”.
+**Integrationstest:** [contract-forms.spec.ts](../../tests/integration/contract-forms.spec.ts),
+AVTAL-07. Separat datumvalidering via HTTP anges i metadata ovan.
 
 **Steg:**
 
 1. Skapa objektet **Ofullständigt åtagande** utan ekonomiska uppgifter
    och lägg det i utkastet.
-2. Öppna ett nytt objekt och ange namnet **Felaktigt åtagande**.
-   Välj **Känt** för skuld men lämna beloppet tomt. Försök lägga
-   objektet i utkastet.
-3. Stäng formuläret utan att skicka texten och kontrollera hela utkastet.
+2. Öppna **Nytt objekt**, ange **Felaktigt åtagande** och välj typen
+   **Låneavtal**. Öppna **Ekonomiska uppgifter** och välj **Känt** för
+   **Senast uppgiven skuld**, men lämna beloppet tomt. Öppna
+   **Grunduppgifter** och välj **Lägg i utkastet och stäng**. Följ
+   skuldlänken i felsammanfattningen; det tomma beloppsfältet får fokus.
+3. Välj **Avbryt → Kasta ändringarna och fortsätt** och öppna hela utkastet.
    Spara det ofullständiga åtagandet utan att ange belopp eller villkor.
 
 **Förväntat resultat:**
@@ -327,11 +453,36 @@ draft and saved map”.
 - Formuläret kräver ett värde när säkerheten uttryckligen är **Känt**.
   Det tidigare förslaget finns kvar och inget nytt objekt sparas.
 - Åtagandet går att spara utan ekonomiska uppgifter; inget belopp gissas.
-- Integrationstestet skickar även ett ogiltigt uppgiftsdatum via den
+- Det separata tekniska testet skickar ett ogiltigt uppgiftsdatum via den
   publika HTTP-ingången. Försöket avvisas och hela utkastet, kartan och
   historiken bevaras.
 
 ### AVTAL-08: lös en konflikt utan att förlora oberoende ekonomiska fakta
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/contract-forms.spec.ts",
+    "caseId": "AVTAL-08"
+  },
+  "reference": "1280px, ljust tema; två separata profiler i konfliktprovet.",
+  "outcomes": [
+    "Användarens konfliktval förenar separata fakta utan omedelbart sparande."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/contracts.spec.ts",
+      "title": "HTTP: resolving financial conflicts preserves independent facts and requires a whole new save",
+      "purpose": "HTTP-konfliktval sparar inget; nytt helsparande bevarar oberoende fakta och rätt användare i historiken."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevara separata fakta när två användare rättar samma avtal.
 
@@ -342,9 +493,8 @@ webbläsarprofiler med tillgång till samma hushåll.
 uppgiven skuld `150000` daterad `2026-08-01`, känt kreditutrymme `200000`
 och kända avtalsvillkor **Preliminära villkor**. Tomma utkast.
 
-**Integrationstest:** [contracts.spec.ts](../../tests/integration/contracts.spec.ts),
-testfallet “AVTAL-08: resolving financial conflicts preserves independent
-facts and requires a whole new save”.
+**Integrationstest:** [contract-forms.spec.ts](../../tests/integration/contract-forms.spec.ts),
+AVTAL-08. Separat HTTP-konfliktbevis anges i metadata ovan.
 
 **Steg:**
 
@@ -353,8 +503,12 @@ facts and requires a whole new save”.
    Lägg också till personen **Lo** utan att spara.
 2. Låt Robin öppna sin karta och kontrollera att Alex utkast inte syns.
    Rätta kreditutrymmet till `250000`, ange känd valuta `SEK` och spara.
-3. Låt Alex försöka spara och sedan hämta aktuellt underlag. Granska
-   konflikten och välj **Behåll mitt förslag**.
+3. Låt Alex välja **Spara hela utkastet**. Läs avvisningen och stäng
+   sparrutan med Escape. Stäng textvyn, välj **Karta → Hämta aktuellt
+   underlag** och återgå till **Tabell**. Öppna **1 konflikt i ditt
+   utkast**. Välj **Ditt förslag** för skuld och avtalsvillkor, samt
+   **Sparat i kartan nu** för kreditutrymme och valuta. Granska **Efter
+   dina val** och välj **Lägg valen i utkastet**.
 4. Granska det uppdaterade utkastet och välj **Spara hela utkastet**.
    Starta om applikationen och kontrollera avtalet och Lo.
 
@@ -366,6 +520,64 @@ facts and requires a whole new save”.
   uppgiftsdatum behandlas som en sammanhängande uppgift.
 - Konfliktvalet sparar ingenting i sig. Efter det nya sparandet finns
   Lo och samtliga avsedda avtalsuppgifter kvar efter omstart.
-- Integrationstestet kontrollerar via HTTP att historiken visar rätt
+- Det separata tekniska testet kontrollerar att historiken visar rätt
   användare för varje sparande och bevarar Robins värden som underlag
   för Alex rättelse.
+
+## Äldre avtalsdata
+
+En operatör förbereder en separat lokal installation med den vanliga
+konfigurerade inloggningen enligt
+[utvecklingsguiden](../development/devcontainer.md#set-up-local-sign-in).
+Stoppa vanlig utveckling och håll portarna 3300 och 5173 fria. Kör i
+repositoryts rot:
+
+```sh
+umask 077
+SKYTTEL_MANUAL_MAP_DIR=$(mktemp -d /tmp/skyttel-manual-map-XXXXXX)
+printf 'SKYTTEL_DATABASE_PATH=%s/verified.sqlite\n' \
+  "$SKYTTEL_MANUAL_MAP_DIR" > "$SKYTTEL_MANUAL_MAP_DIR/case.env"
+env -u SKYTTEL_DATABASE_PATH \
+  node --env-file="$SKYTTEL_MANUAL_MAP_DIR/case.env" scripts/develop.mjs
+```
+
+Logga in som den konfigurerade administratören i en ny profil och skapa
+Linden. Hämta bara användar-ID, inga kakor eller leverantörstoken, med
+följande separat konsolkommando:
+
+```javascript
+(await (await fetch('/api/bootstrap')).json()).user.id
+```
+
+Stoppa servern. Kör i samma terminal, med det kopierade ID:t:
+
+```sh
+SKYTTEL_MANUAL_USER_ID='paste-Alex-user-id'
+node --import tsx scripts/prepare-manual-map.ts \
+  legacy-contracts "$SKYTTEL_MANUAL_MAP_DIR" "$SKYTTEL_MANUAL_USER_ID"
+printf 'SKYTTEL_DATABASE_PATH=%s/legacy.sqlite\n' \
+  "$SKYTTEL_MANUAL_MAP_DIR" > "$SKYTTEL_MANUAL_MAP_DIR/legacy.env"
+env -u SKYTTEL_DATABASE_PATH \
+  node --env-file="$SKYTTEL_MANUAL_MAP_DIR/legacy.env" scripts/develop.mjs
+```
+
+Hjälpen skapar en separat äldre databas och vägrar skriva över en befintlig
+fil. Starten uppgraderar den. Logga in igen med samma konto. Vid omstart
+upprepar du bara sista serverkommandot, utan att köra hjälpen eller
+`db:setup` igen. När utfallet är kontrollerat, stoppa servern och stäng
+provprofilen före rensning:
+
+```sh
+rm -r -- "${SKYTTEL_MANUAL_MAP_DIR:?}"
+unset SKYTTEL_MANUAL_MAP_DIR SKYTTEL_MANUAL_USER_ID
+```
+
+## Referenser och identiteter
+
+AVTAL-04, AVTAL-07 och AVTAL-08 behåller sina ID:n med verkliga
+objektformulär, granskning, sparande och konfliktval i **contract-forms**.
+De ursprungliga HTTP-testerna behåller samtliga protokollkontroller som
+separat tekniskt underlag: ogiltigt datum, oförändrat utkast och karta,
+hela konfliktsparandet, sparande användare, tidpunkt och historik.
+AVTAL-06 tillför läsning och sparande i webbläsaren efter verklig uppgradering.
+Inget ID pensioneras och ingen ekonomisk täckningsförlust accepteras.

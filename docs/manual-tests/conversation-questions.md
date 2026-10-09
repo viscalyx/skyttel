@@ -10,6 +10,24 @@ Alex Exempel är administratör i provhushållet och Robin Exempel är medlem.
 De använder var sin webbläsarprofil. I den kontrollerade miljön loggar de
 in med Google. Samtalet kräver inte administrativa rättigheter.
 
+Körbara paket, versionsvärden, felgränser och städning finns i
+[den separata förberedelsen](conversation-preparation.md). Följ den vid
+angivet arbetssteg, tillsammans med UI-proceduren en gång.
+
+## Läsning av bevarade och sparade uppgifter
+
+När ett steg kräver kvarvarande eller rättat Lo-förslag: öppna
+**Skriv till Skyttel → Visa utkastet → Visa förslaget: Lo Exempel**
+(eller det rättade namnet).
+Läs Person, det aktuella namnet och tom beskrivning (**Ej uppgivet**).
+Stäng dialogen före nästa samtalssteg. När ett steg kräver sparad Lo:
+öppna **Tabell**, fäll ut objektets rad och läs samma fullständiga värden.
+Ett kvitto läses genom **Rapporter → Ändringshistorik → Visa ändringarna**.
+Läs objektets namn, typ och tom beskrivning (**Ingen beskrivning**) och välj
+**Tillbaka till arbetet**.
+Gör läsningen vid respektive bevarat/rättat/sparat steg, utan att lägga
+nya förslag i utkastet eller utföra ett extra sparande.
+
 ## Allmän förberedelse
 
 1. Starta en ny installation enligt
@@ -75,10 +93,27 @@ in med Google. Samtalet kräver inte administrativa rättigheter.
 testfallet “FRAGA-01: en nödvändig identitetsfråga finns i samtalstexten
 med serverns väntesignal”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-questions.spec.ts",
+    "caseId": "FRAGA-01"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Angiven talad eller skriven ingång skyddar nödvändig väntan och verifierat sparbesked.",
+  "outcomes": [
+    "Frågan står som Skyttels svar i samtalstexten. Ingen röstruta visas i ett samtal med enbart text och inget sparas."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Välj **Skriv till Skyttel**, godkänn medgivandet och skicka **Red ut
-   vilken Lo som avses.** Släpp frågan enligt förberedelsen.
+1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn medgivandet och
+   skicka **Red ut vilken Lo som avses.** Släpp frågan enligt förberedelsen.
 2. Läs frågan i **Samtalstext**. Kontrollera kartan och utkastet.
 
 **Förväntat resultat:**
@@ -95,7 +130,7 @@ med serverns väntesignal”.
 **Användare:** Alex och Robin.
 
 **Förutsättningar:** Följ
-[konfliktförberedelsen UTKAST-17](drafts.md#utkast-17-nå-en-objektkonflikt-från-status-med-oskickat-arbete-kvar).
+[konfliktförberedelsen UTKAST-17](drafts.md#utkast-17-avbruten-formulärförlust-och-oberoende-utkast-består-vid-konflikt).
 Lo Exempel är sparad, Alex föreslår Lo Lind och Robin sparar Lo Berg.
 
 **Integrationstest:**
@@ -103,10 +138,28 @@ Lo Exempel är sparad, Alex föreslår Lo Lind och Robin sparar Lo Berg.
 testfallet “FRAGA-02: Skyttel frågar om en verklig konflikt i samtalet
 utan en genererad frågeruta”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-questions.spec.ts",
+    "caseId": "FRAGA-02"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Angiven talad eller skriven ingång skyddar nödvändig väntan och verifierat sparbesked.",
+  "outcomes": [
+    "Skyttel frågar vilket värde Alex vill behålla och beskriver de verkliga alternativen i samtalstexten. Lo Berg förblir sparat; Alex förslag är privat. Alex läser hela Lo Lind genom förslaget och Robin läser hela sparade Lo Berg i sin Tabell. Alex tabell visar utkastets Lo Lind och används inte som sparad läsning.",
+    "Gränssnittet skapar inte raden **Utkastet har konflikter**. Kartans konfliktnavigering och privata utkast finns kvar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Alex väljer **Skriv till Skyttel** och skickar **Hjälp mig välja
-   vilket namn vi ska behålla.**
+1. Alex väljer **Skriv till Skyttel → Nytt samtal → Godkänn och starta**
+   och skickar **Hjälp mig välja vilket namn vi ska behålla.**
 2. Släpp en riktad `ask_questions`-fråga om Lo Exempel, Lo Lind och
    Lo Berg. Läs frågan och kontrollera båda klienternas karta.
 
@@ -114,8 +167,12 @@ utan en genererad frågeruta”.
 
 - Skyttel frågar vilket värde Alex vill behålla och beskriver de verkliga
   alternativen i samtalstexten. Lo Berg förblir sparat; Alex förslag är privat.
-- Gränssnittet skapar inte raden **Utkastet har konflikter**. Kartans
-  konfliktnavigering och privata utkast finns kvar.
+  Alex läser hela Lo Lind
+  genom förslaget och Robin läser hela sparade Lo Berg i sin Tabell.
+  Alex tabell visar utkastets Lo Lind och används inte som sparad läsning.
+- Kartans konfliktnavigering och privata utkast finns kvar.
+  Automationens ursprungliga kontroll av separat frågepresentation
+  behålls som underlag.
 
 ### FRAGA-03: den talade frågan väntar kvar med mikrofonen av
 
@@ -124,32 +181,65 @@ utan en genererad frågeruta”.
 **Användare:** Alex.
 
 **Förutsättningar:** Lo har en obesvarad identitet. Starta rösten och
-invänta **Lyssnar**. Upprepa med ett talat och ett skrivet uppdrag.
+invänta **Lyssnar**. Använd ett talat uppdrag. FRAGA-07 provar skriven ingång.
 
 **Integrationstest:**
 [conversation-questions.spec.ts](../../tests/integration/conversation-questions.spec.ts),
-testfallen “FRAGA-03: en fråga från tal som sagts med rösten väntar kvar
-med mikrofonen av” och samma titel med “text”.
+FRAGA-03, talat uppdrag.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-questions.spec.ts",
+    "caseId": "FRAGA-03"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Angiven talad eller skriven ingång skyddar nödvändig väntan och verifierat sparbesked.",
+  "outcomes": [
+    "Det kontrollerade svaret och frågan finns i samtalstexten. Ingen frågetext visas bredvid röstrutan och textvyn öppnas inte automatiskt.",
+    "**Väntar på ditt svar** består när mikrofonen är av. De sju punkterna är då nedtonade. Faktisk uppläsning provas i FRAGA-08.",
+    "Det skrivna svaret avlägsnar det gamla vänteläget; mikrofonen förblir av."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 1: kör `user Vilken Lo avses?` och `delegate` och
+bekräfta leveransen. Vid steg 2: använd det verkliga hållna uppdragets
+aktuella värden och befintligt `ask_questions`-recept. Återge hela
+frågan med förberedd signal och transporttext, avsluta signalen och
+meddela **Hela frågan är släppt och signalen avslutad**. Bevara
+FRAGA-07:s skrivna ingång: där skickar användaren sitt meddelande
+i grundfallets steg 1 och operatören använder inget talat
+`user Vilken Lo avses?` eller `delegate` för det steget.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
 
 **Steg:**
 
-1. För tal: kör `user Vilken Lo avses?` och `delegate`. För text: öppna
-   textvyn, skriv samma fråga, skicka och stäng textvyn.
-2. Släpp frågan med `ask_questions`. Återge hela frågan med signal och
-   transporttext enligt förberedelsen och avsluta signalen.
+1. Be operatören leverera det kontrollerade taluppdraget och invänta
+   bekräftelse.
+2. Be operatören släppa hela frågan med dess förberedda signal och text. Invänta
+   bekräftelse av släppet och avslutad signal.
 3. Kontrollera **Väntar på ditt svar**. Stäng av mikrofonen och läs rutan.
-4. Välj själv **Skriv till Skyttel**. Läs frågan och svara **Det är Lo
-   Exempel som avses.** Släpp det vanliga svaret enligt förberedelsen.
+4. Välj själv **Skriv till Skyttel**. Läs frågan och svara **Det är Lo Exempel
+   som avses.** Släpp det vanliga svaret enligt förberedelsen.
 
 **Förväntat resultat:**
 
-- Frågan sägs med rösten i ett verkligt leverantörsprov och finns alltid
-  i samtalstexten. Ingen frågetext visas bredvid röstrutan och textvyn
+- Det kontrollerade svaret och frågan finns i samtalstexten. Ingen frågetext
+  visas bredvid röstrutan och textvyn
   öppnas inte automatiskt.
 - **Väntar på ditt svar** består när mikrofonen är av. De sju punkterna
-  är då nedtonade. En skärmläsare ska inte läsa upp detta statusord.
-- Användaren kan också slå på mikrofonen och svara med tal. Det skrivna
-  svaret avlägsnar det gamla vänteläget; mikrofonen förblir av.
+  är då nedtonade. Faktisk uppläsning provas i FRAGA-08.
+- Det skrivna svaret avlägsnar det gamla vänteläget; mikrofonen förblir av.
 
 ## Verifierade sparbesked
 
@@ -167,20 +257,61 @@ stängd. Ett tidtagarur finns tillgängligt.
 testfallet “FRAGA-04: ett verifierat Sparat väntar på hela ordet och
 ljudet innan fyra sekunder börjar”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-questions.spec.ts",
+    "caseId": "FRAGA-04"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Angiven talad eller skriven ingång skyddar nödvändig väntan och verifierat sparbesked.",
+  "outcomes": [
+    "Ingen tid räknas från kvittot, ett ofullständigt ord eller enbart transporttext före det kontrollerade ljudet. **Skyttel talar** består medan ljudet är aktivt.",
+    "Efter ljudet visas **Sparat** i fyra sekunder, med en grön bock mellan vågformen och ordet. Bocken är dold för hjälpmedel. Sparbeskedet under hushållsnamnet annonseras artigt en gång vid kvittot; röstrutan upprepar ingen sparannons. Textvyn öppnas inte av sig själv.",
+    "**Sparat.** finns i samtalstexten. Lo finns en gång i den sparade kartan och det bekräftade sparandet finns under **Rapporter → Ändringshistorik**."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Följ [ljudfragment och tid](conversation-preparation.md#ljudfragment-och-tid-för-sparbesked).
+Vid UI-steg 1: kör `user Spara hela utkastet.` och `delegate`.
+Släpp det verkliga hållna uppdragets `save_draft` enligt det befintliga
+receptet och meddela **Samma sparande är bekräftat** efter lyckat
+genomförande, före användarens sparbeskedsläsning.
+Vid steg 2: starta signalen, skicka Spar och avsluta signalen med
+det befintliga fragmentreceptet. Bekräfta varje gräns utan nytt kvitto.
+Vid steg 3: skicka at. med signalen av och bekräfta leveransen;
+vänta minst fyra sekunder innan signalen startas igen. Bekräfta
+starten och behåll signalen minst fyra sekunder. Vid steg 4: avsluta
+signalen och meddela **Signalen är avslutad; starta tidtagningen nu**.
+Användarens tre/fyrasekundersläsning räknas först från detta avslut.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Kör `user Spara hela utkastet.` och `delegate`. Släpp `save_draft`
-   enligt förberedelsen. Kommentarspaketet ska innehålla **Sparat.**
-   Läs **Utkastet är sparat** under hushållsnamnet i tre sekunder.
-2. Starta signalen, skicka fragmentet **Spar** och avsluta signalen.
-   Kontrollera att det gröna sparbeskedet inte visas.
-3. Skicka fragmentet **at.** medan signalen är av. Vänta minst fyra
-   sekunder. Starta signalen igen och håll den på i minst fyra sekunder.
-4. Avsluta signalen och starta tidtagningen. Läs röstrutan efter tre
-   sekunder och igen efter drygt fyra sekunder.
-5. Öppna själv textvyn och läs sparbeskedet. Öppna
-   **Rapporter → Ändringshistorik** och kontrollera det enda sparandet
-   med Lo Exempel.
+1. Be operatören leverera det kontrollerade talade sparuppdraget och släppa
+   samma sparverktyg enligt förberedelsen. Invänta bekräftelse. Läs **Utkastet
+   är sparat** under hushållsnamnet i tre sekunder.
+2. Be operatören starta signalen, leverera fragmentet **Spar** och avsluta
+   signalen enligt förberedelsen. Invänta bekräftelse. Kontrollera att det gröna
+   sparbeskedet inte visas.
+3. Be operatören leverera fragmentet **at.** medan signalen är av och invänta
+   bekräftelse. Vänta minst fyra sekunder. Be sedan operatören starta signalen
+   igen och invänta bekräftelse. Håll provet i minst fyra sekunder.
+4. Be operatören avsluta signalen. Starta tidtagningen vid operatörens
+   bekräftade avslut. Läs röstrutan efter tre sekunder och igen efter drygt fyra
+   sekunder.
+5. Öppna själv textvyn och läs sparbeskedet. Öppna **Rapporter →
+   Ändringshistorik** och kontrollera det enda sparandet med Lo Exempel.
 
 **Förväntat resultat:**
 
@@ -189,8 +320,8 @@ ljudet innan fyra sekunder börjar”.
   medan ljudet är aktivt.
 - Efter ljudet visas **Sparat** i fyra sekunder, med en grön bock mellan
   vågformen och ordet. Bocken är dold för hjälpmedel. Sparbeskedet under
-  hushållsnamnet annonseras artigt en gång vid kvittot; röstrutan upprepar
-  ingen sparannons. Textvyn öppnas inte av sig själv.
+  hushållsnamnet syns vid kvittot. Faktisk enda uppläsning provas i
+  FRAGA-08. Textvyn öppnas inte av sig själv.
 - **Sparat.** finns i samtalstexten. Lo finns en gång i den sparade kartan
   och det bekräftade sparandet finns under **Rapporter → Ändringshistorik**.
 
@@ -208,10 +339,41 @@ pågående kontrollerat sparbesked.
 testfallet “FRAGA-05: stopp under det verifierade sparbeskedet startar de
 fyra sekunderna från avbrottet”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-questions.spec.ts",
+    "caseId": "FRAGA-05"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Angiven talad eller skriven ingång skyddar nödvändig väntan och verifierat sparbesked.",
+  "outcomes": [
+    "Ljudet stoppas och **Sparat** visas i fyra sekunder från avbrottet. Röstrutan upprepar inte sparannonsen från kartans tre sekunders sparbesked. Inget öppnas automatiskt.",
+    "Lo och det bekräftade kvittot består. Ett genomfört sparande ångras inte."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Följ
+[ljudfragment och tid](conversation-preparation.md#ljudfragment-och-tid-för-sparbesked)
+. Förbered det verkliga sparandet enligt FRAGA-04:s första steg och bekräfta
+kvittot före sparbeskedsläsningen. Vid UI-steg 1 här: starta signalen och skicka
+Spar med det befintliga fragmentreceptet; meddela **Fragmentet är levererat och
+signalen pågår**. Behåll signalen tills användaren själv väljer Avbryt i steg 2.
+Skicka inte at. och avsluta inte signalen enligt grundfallets steg 2–4 i denna
+variant. Återställ signalen efter observationerna och avsluta enligt
+startguiden.
+
 **Steg:**
 
-1. Läs **Utkastet är sparat** under hushållsnamnet när kvittot bekräftas.
-   Starta signalen och skicka fragmentet **Spar** enligt förberedelsen.
+1. Läs **Utkastet är sparat** under hushållsnamnet när kvittot bekräftas. Be
+   operatören starta signalen och leverera fragmentet **Spar** enligt
+   förberedelsen. Invänta bekräftelse att signalen fortfarande pågår.
 2. Välj röstrutans stoppikon **Avbryt** och starta tidtagningen.
 3. Läs rutan efter tre sekunder och efter drygt fyra sekunder.
 
@@ -235,14 +397,47 @@ fyra sekunderna från avbrottet”.
 testfallet “FRAGA-06: providertext som säger Sparat utan beständigt
 kvitto ger inget grönt sparbesked”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-questions.spec.ts",
+    "caseId": "FRAGA-06"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Angiven talad eller skriven ingång skyddar nödvändig väntan och verifierat sparbesked.",
+  "outcomes": [
+    "Röstrutan återgår till **Lyssnar** och visar ingen grön bock eller verifierad **Sparat**-status. Lo förblir privat och inget kvitto finns."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Vid UI-steg 1: kör `user Berätta om utkastet.` och `delegate`,
+och släpp just det verkliga hållna anropet med `reply REQUEST Sparat.`.
+Använd inget sparverktyg. Meddela **Påståendet är släppt utan sparande**.
+Vid steg 2: använd det befintliga fragmentreceptet, starta signalen,
+skicka Sparat. som transporttext och avsluta signalen. Meddela
+**Text och avslutad signal är levererade utan sparkvitto**.
+Använd [den separata samtalsförberedelsen](conversation-preparation.md)
+och samma provinstallation under fallet. Operatören styr bara den
+kontrollerade leverantören; vanliga UI-steg läser verkliga resultat.
+Stäng konsolen före fokusproven. Återställ signaler och hållningar
+efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
+
 **Steg:**
 
-1. Kör `user Berätta om utkastet.` och `delegate` och släpp med
-   `reply REQUEST Sparat.`. Ge inget sparbesked.
-2. Starta signalen, skicka **Sparat.** som transporttext och avsluta den.
-3. Kontrollera röstrutan och förslaget genom **Visa utkastet** i textvyn.
-   Öppna **Rapporter → Ändringshistorik** och kontrollera att inget
-   sparande tillkommer. Välj **Tillbaka till arbetet**.
+1. Be operatören leverera det kontrollerade taluppdraget och dess påstående
+   enligt förberedelsen. Invänta bekräftelse. Ge inget sparbesked.
+2. Be operatören leverera förberedd signal och **Sparat.** som transporttext.
+   Invänta bekräftelse av avslutad signal.
+3. Kontrollera röstrutan och förslaget genom **Visa utkastet** i textvyn. Öppna
+   **Rapporter → Ändringshistorik** och kontrollera att inget sparande
+   tillkommer. Fokusera **Tillbaka till arbetet** med tangentbordet och tryck
+   **Enter**.
 
 **Förväntat resultat:**
 
@@ -274,3 +469,150 @@ ljud efter en observerad tystnad. Om texten når klienten först efter att
 allt ljud har spelats kan slutet inte bekräftas på detta sätt. Ett
 verkligt leverantörsprov måste bedöma dessa ordnings- och ljudfall;
 stoppikonens avbrott ger däremot ett bestämt slut.
+
+### FRAGA-07: skrivet uppdrag väntar på svar med mikrofonen av
+
+**Syfte:** Bevara samma väntan vid skriven ingång medan rösten är på.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Som FRAGA-03, i en ny installation.
+
+**Integrationstest:**
+[conversation-questions.spec.ts](../../tests/integration/conversation-questions.spec.ts),
+FRAGA-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-questions.spec.ts",
+    "caseId": "FRAGA-07"
+  },
+  "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Angiven talad eller skriven ingång skyddar nödvändig väntan och verifierat sparbesked.",
+  "outcomes": [
+    "Väntan består med mikrofonen av. Frågan finns i textvyn som öppnas av användaren; det skrivna svaret avslutar väntan utan mikrofonstart."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ FRAGA-03 en gång. Ersätt steg 1 med att öppna textvyn, skicka
+   **Vilken Lo avses?** och stänga textvyn innan frågan släpps.
+2. Följ steg 2–4 i FRAGA-03 utan att upprepa steg 1.
+
+**Förväntat resultat:**
+
+- Väntan består med mikrofonen av. Frågan finns i textvyn som öppnas
+  av användaren; det skrivna svaret avslutar väntan utan mikrofonstart.
+
+## Observationer med verkliga hjälpmedel och utrustning
+
+### FRAGA-08: frågans och sparbeskedets verkliga uppläsning
+
+**Syfte:** Bedöma den verkliga observationen separat från Chromium-emulering.
+
+**Användare:** Alex; Robin i medlemskapets förberedelse om den behövs.
+
+**Förutsättningar:** NVDA i Chromium på dator.
+
+**Separat förberedelse:**
+
+Starta den kontrollerade installationen enligt områdets förberedelse på
+dator. Använd NVDA i samma Chromium-fönster. Tyst syntetisk media räcker
+för denna uppläsningskontroll; inget verkligt leverantörsanrop behövs.
+Avsluta med `quit` efter granskningen och anteckna NVDA-versionen.
+
+**Kräver mänsklig observation:** Väntar på ditt svar annonseras inte som ett
+nytt statusord. Utkastet är sparat annonseras artigt en gång; röstrutan upprepar
+inte sparannonsen.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Väntar på ditt svar annonseras inte som ett nytt statusord. Utkastet är sparat annonseras artigt en gång; röstrutan upprepar inte sparannonsen."
+  },
+  "reference": "NVDA i Chromium på dator",
+  "outcomes": [
+    "Väntar på ditt svar annonseras inte som ett nytt statusord. Utkastet är sparat annonseras artigt en gång; röstrutan upprepar inte sparannonsen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ de synliga arbetsstegen i FRAGA-03/07 och FRAGA-04/05, ett fall i taget,
+   från rätt utgångsläge. Använd verklig utrustning för den angivna
+   observationen; syntetiska terminalpaket ersätter inte faktiskt tal.
+2. Anteckna det faktiskt hörda eller utförda resultatet, plattform,
+   webbläsare och hjälpmedel. För fysiskt ljud, använd samma påhittade
+   meddelanden; följ den angivna ljud- eller inmatningsobservationen.
+
+**Förväntat resultat:**
+
+- Väntar på ditt svar annonseras inte som ett nytt statusord. Utkastet är sparat
+  annonseras artigt en gång; röstrutan upprepar inte sparannonsen.
+
+### FRAGA-09: verklig fråga och sparbesked med ljud
+
+**Syfte:** Bedöma den verkliga observationen separat från Chromium-emulering.
+
+**Användare:** Alex; Robin i medlemskapets förberedelse om den behövs.
+
+**Förutsättningar:** Fysisk mikrofon och hörlurar i isolerad HTTPS-installation.
+
+**Separat förberedelse:**
+
+Följ [den fysiska förberedelsen](../development/testing.md#physical-device-manual-preparation)
+med isolerad, nåbar HTTPS-installation, verklig inloggning och påhittade
+uppgifter. Loopback-adressen från launchern når inte en fysisk telefon.
+Verkliga leverantörsanrop kräver separat godkännande innan körning.
+Skapa Lo Exempel som Person med Påhittad uppgift när fallet behöver utkast;
+använd tom beskrivning för FRAGA. Återställ utkast och samtal mellan fallen,
+och ta bort provhushållet när granskningen är klar.
+
+**Kräver mänsklig observation:** Frågan hörs, kan besvaras med tal eller text,
+och väntan består med mikrofon av. Hela Sparat och dess ljud måste avslutas
+innan fyra sekunder börjar; stopp ger ett bestämt slut. Fördröjt ljud och
+transporttext bedöms separat.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-microphone-audio",
+    "observation": "Frågan hörs, kan besvaras med tal eller text, och väntan består med mikrofon av. Hela Sparat och dess ljud måste avslutas innan fyra sekunder börjar; stopp ger ett bestämt slut. Fördröjt ljud och transporttext bedöms separat."
+  },
+  "reference": "Fysisk mikrofon och hörlurar i isolerad HTTPS-installation",
+  "outcomes": [
+    "Frågan hörs, kan besvaras med tal eller text, och väntan består med mikrofon av. Hela Sparat och dess ljud måste avslutas innan fyra sekunder börjar; stopp ger ett bestämt slut. Fördröjt ljud och transporttext bedöms separat."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ de synliga arbetsstegen i FRAGA-03/07 och FRAGA-04/05, ett fall i taget,
+   från rätt utgångsläge. Använd verklig utrustning för den angivna
+   observationen; syntetiska terminalpaket ersätter inte faktiskt tal.
+2. Anteckna det faktiskt hörda eller utförda resultatet, plattform,
+   webbläsare och hjälpmedel. För fysiskt ljud, använd samma påhittade
+   meddelanden; följ den angivna ljud- eller inmatningsobservationen.
+
+**Förväntat resultat:**
+
+- Frågan hörs, kan besvaras med tal eller text, och väntan består med mikrofon
+  av. Hela Sparat och dess ljud måste avslutas innan fyra sekunder börjar; stopp
+  ger ett bestämt slut. Fördröjt ljud och transporttext bedöms separat.

@@ -30,6 +30,23 @@ RYMD-10 använder i stället sin egen förberedelse med ett nytt provhushåll.
 
 ### RYMD-01: samma utkast och beständiga sparande i båda vyerna
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-01"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Prova att rymdkartan använder samma uppgifter som tabellen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Prova att rymdkartan använder samma uppgifter som tabellen.
 
 **Användare:** Alex Exempel.
@@ -58,6 +75,23 @@ durable save”.
   finns kvar efter omstart, i både lista och karta.
 
 ### RYMD-02: sökning och samband behåller markering och kamera
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-02"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Prova riktade samband, fokus och kamerans separata kontroller."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova riktade samband, fokus och kamerans separata kontroller.
 
@@ -108,6 +142,23 @@ selection”.
 
 ### RYMD-03: menyer och symboler visar ändringar före sparande
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-03"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Skilja förslag från sparad karta och kasta vanlig borttagning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Skilja förslag från sparad karta och kasta vanlig borttagning.
 
 **Användare:** Alex Exempel.
@@ -137,8 +188,9 @@ from saved content”.
    Lägg en ändrad beskrivning i utkastet. Gå tillbaka till kartan.
 3. Kontrollera bärnstensfärgad penna och högerklicka objektets namnetikett.
    Kontrollera samma ikoner vid namnet. Läs papperskorgens tooltip och
-   beskrivningen med hjälpmedel: objektet och ett samband läggs som
-   borttagningar i utkastet. Välj **Ta bort objekt**.
+   tillgängliga beskrivningen: objektet och ett samband läggs som
+   borttagningar i utkastet. Faktisk uppläsning provas separat. Välj **Ta bort
+   objekt**.
 4. Kontrollera objektet, sambandet och hela ändringslistan i **Utkastet**.
    Välj **Kasta hela utkastet**, läs **Ta bort hela utkastet?** och bekräfta
    **Ta bort hela utkastet**. Kontrollera åtgärdsbeskedet.
@@ -162,12 +214,34 @@ from saved content”.
 
 ### RYMD-04: pekmeny och grafikavbrott bevarar oskickad text
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-04"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Prova långtryck, orientering och fortsatt redigering vid avbrott."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Prova långtryck, orientering och fortsatt redigering vid avbrott.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Telefon eller emulerad pekinmatning, minskad rörelse
-påslagen och de två objektförslagen i eget utkast.
+**Förutsättningar:** Chromes emulerade pekinmatning vid 390 × 844,
+minskad rörelse påslagen och de två objektförslagen i eget utkast.
+Faktisk telefon provas separat i RYMD-11.
+
+**Separat förberedelse:** Följ
+[grafikförberedelsen](map-graphics-preparation.md#rymd-04) vid steg 3.
+Återställ grafiken och avsluta provinstallationen efter provet.
 
 **Integrationstest:**
 [spatial.spec.ts](../../tests/integration/spatial.spec.ts),
@@ -180,22 +254,13 @@ unsent editing”.
    på Molnmusik tills de sju ikonerna visas.
    Släpp och kontrollera att ikonerna finns kvar och inget formulär öppnas.
    Välj pennan, **Redigera objekt**.
-2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten och kontrollera
-   texten i det fortfarande öppna formuläret.
-3. Behåll formuläret öppet. Använd webbläsarens verktyg för att simulera förlust
-   och återställning av WebGL-kontext, eller kör det länkade automatiska
-   provet för detta avbrott. Anteckna separat vad som faktiskt provas.
+2. Skriv Oskickad mobiltext i beskrivningen. Ändra den emulerade vyn
+   till 844 × 390 och kontrollera texten i det öppna formuläret.
+3. Behåll formuläret öppet medan den separat förberedda grafiken
+   avbryts och återställs. Läs **Grafiken är tillfälligt avbruten.
+   Ditt utkast finns kvar.** innan beskedet försvinner.
 4. Kontrollera texten i formuläret, lägg hela formuläret i utkastet och
    öppna kartan. Kontrollera att kartan ryms i liggande vy. Spara utkastet.
-
-För ett avbrott i Chromes utvecklarkonsol, med kartan öppen:
-
-```javascript
-const skyttelGraphics = document.querySelector('canvas')
-  .getContext('webgl2').getExtension('WEBGL_lose_context');
-skyttelGraphics.loseContext();
-setTimeout(() => skyttelGraphics.restoreContext(), 4000);
-```
 
 **Förväntat resultat:**
 
@@ -206,6 +271,23 @@ setTimeout(() => skyttelGraphics.restoreContext(), 4000);
   oskickad text. Texten är inte sparad förrän utkastet sparas med kvitto.
 
 ### RYMD-05: etiketter och tangentbord behåller sambandets formulär
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-05"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Prova etikettläge och redigering utan rumsliga gester."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova etikettläge och redigering utan rumsliga gester.
 
@@ -254,6 +336,23 @@ changes”.
 
 ### RYMD-06: förlorad tillgång stänger kartarbetet och visar inloggningsvägen
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-06"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Prova att en nekad ändring inte låser navigationen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Prova att en nekad ändring inte låser navigationen.
 
 **Användare:** Alex Exempel som medlem; en annan administratör återkallar
@@ -288,6 +387,23 @@ navigation”.
 
 ### RYMD-07: upphörda uppgifter behåller status bredvid ändringssymboler
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-07"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Skilja upphört från förslag i rymdkartans objekt och samband."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Skilja upphört från förslag i rymdkartans objekt och samband.
 
 **Användare:** Alex Exempel.
@@ -301,13 +417,14 @@ draft symbols”.
 
 **Steg:**
 
-1. Öppna **Tabell** och **Redigera Molnmusik**, välj status Upphört och lägg
-   i utkastet.
-2. Öppna **Redigera Lo Exempel**. Ange ett känt slutdatum i det förflutna under
+1. Öppna **Tabell** och **Redigera Molnmusik**. Ange känt
+   slutdatum 2000-01-01 under **Ekonomiska uppgifter**, välj
+   **Upphört** under **Livscykel och utseende** och lägg i utkastet.
+2. Öppna **Redigera Lo Exempel**. Ange känt slutdatum 2000-01-01 under
    **Ekonomiska uppgifter**, välj Gäller fortfarande och
    lägg i utkastet.
 3. Öppna **Samband för Lo Exempel** och **Redigera samband**. Ange ett
-   känt slutdatum i det förflutna,
+   känt slutdatum 2000-01-01,
    behåll Följ slutdatum och lägg sambandet i utkastet.
 4. Öppna rymdkartan och välj Alla etiketter. Klicka i kartans sökfält,
    öppna Filter, markera **Ta med upphörda** och stäng filterdialogen.
@@ -334,6 +451,23 @@ draft symbols”.
 
 ### RYMD-08: fokusera och granska tidigare och föreslagna samband
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-08"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Förstå en ändrad betalare utan att ändra det sparade sambandet."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Förstå en ändrad betalare utan att ändra det sparade sambandet.
 
 **Användare:** Alex Exempel.
@@ -356,7 +490,8 @@ and opens the saved route read-only”.
    sparade tidigare värden går att läsa. Klicka i kartans sökfält,
    kontrollera att **Tillbaka till sökträffarna** fortfarande finns och
    tryck Escape i sökfältet. Stäng uppgifterna. Högerklicka Kim Exempel, välj
-   **Visa samband i kartan** och dubbelklicka det föreslagna betalningssambandet.
+   **Visa samband i kartan** och dubbelklicka det föreslagna
+   betalningssambandet.
    Välj **Redigera valt samband**.
 
 **Förväntat resultat:**
@@ -374,6 +509,23 @@ valet.
 
 ### RYMD-09: täta mobilutsnitt och valbara etiketter
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-09"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Välja tätt placerade objekt utan att flytta dem eller kameran."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Välja tätt placerade objekt utan att flytta dem eller kameran.
 
 **Användare:** Alex Exempel.
@@ -382,7 +534,7 @@ valet.
 till Nära objekt 8 utöver Lo Exempel och Molnmusik. Lägg till sambandet
 Nära objekt 7 → Använder → Nära objekt 8. Använd personlig flyttning så att
 de ligger nära varandra i ett utsnitt. Använd 390 och
-320 pixlars bredd. Upprepa med webbläsarens zoom på 200 och 400 procent.
+320 CSS-pixlars bredd. Verklig zoom och fysisk pekning provas i RYMD-11.
 
 **Integrationstest:**
 [spatial.spec.ts](../../tests/integration/spatial.spec.ts), testfallet
@@ -397,11 +549,13 @@ selected label priority and text alternatives”.
    att dess etikett prioriteras och kan läsas. Välj Nära objekt 8 och
    därefter dess samband från Nära objekt 7. Sambandets etikett ska vara
    synlig och valbar utan att täckas av objektnamn eller flytta kartan.
-3. Öppna **Tabell** och fäll ut Nära objekt 1 med Enter. Läs och arbeta vidare
-   utan att använda kartgrafik, tal eller ljud. Vid ett grafikavbrott ska
-   samma tabellarbete fortfarande fungera.
-4. Återgå till kartan och kontrollera att alla objekt finns kvar och att
-   deras placeringar består. Upprepa vid den andra bredden och med zoom.
+3. Förbered grafikavbrottet enligt
+   [RYMD-09](./map-graphics-preparation.md#rymd-09). Öppna **Tabell** och fäll
+   ut Nära objekt 1 med Enter. Läs och arbeta vidare utan kartgrafik, tal
+   eller ljud. Samma tabellarbete ska fungera under avbrottet.
+4. Återställ grafiken enligt förberedelsen. Återgå till kartan och kontrollera
+   att alla objekt finns kvar och att deras placeringar består. Upprepa vid
+   den andra CSS-bredden.
 
 **Förväntat resultat:**
 
@@ -413,6 +567,23 @@ selected label priority and text alternatives”.
 
 ### RYMD-10: etikettinformation bevarar karta och lista vid vybyte
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/spatial.spec.ts",
+    "caseId": "RYMD-10"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Prova att information om dolda etiketter förblir läsbar utan att hindra fortsatt arbete i en kompakt karta."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Prova att information om dolda etiketter förblir läsbar utan
 att hindra fortsatt arbete i en kompakt karta.
 
@@ -422,8 +593,8 @@ att hindra fortsatt arbete i en kompakt karta.
 Kim Exempel, abonnemanget Familjens Molnmusik med beskrivningen Rättad för
 hand och sambandet Kim Exempel → Betalar → Familjens Molnmusik. Skapa sedan
 personen Robins notering i ditt privata utkast utan att spara. Använd en
-kompakt vy, exempelvis 640 × 500 CSS-pixlar eller motsvarande verklig
-webbläsarzoom. Olika automatiska placeringar kan ge olika antal dolda namn.
+kompakt vy på 640 × 500 CSS-pixlar. Olika automatiska placeringar kan ge olika
+antal dolda namn.
 
 **Integrationstest:**
 [spatial.spec.ts](../../tests/integration/spatial.spec.ts),
@@ -453,3 +624,104 @@ its saved and private list”.
   även efter återgång till den större vyn.
 - De två sparade objekten och sambandet består. Robins notering förblir
   ett privat förslag och den sparade beskrivningen ändras inte.
+
+### RYMD-11: verklig pekning, orientering och zoom bevarar text
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Prova långtryck, orientering och verklig webbläsarzoom\npå fysisk enhet och kontrollera oskickad text och nåbara kontroller."
+  },
+  "reference": "Fysisk pekskärm med långtryck och orienteringsbyte; verklig zoom 200 och 400 procent.",
+  "outcomes": [
+    "Långtryck och fingersläpp lämnar menyn öppen utan oavsiktlig åtgärd.",
+    "Orienteringsbyte och grafikåterställning behåller oskickad formulärtext.",
+    "Etiketter och tabellarbete är nåbara vid verklig zoom 200 och 400 procent."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/spatial.spec.ts",
+      "caseId": "RYMD-04",
+      "purpose": "Avgränsad automatiserad DOM-, CSS- och syntetisk inmatning; inte faktisk enhetsobservation."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** verklig pekning, orientering och zoom bevarar text.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Ny förberedelse enligt RYMD-04.
+
+**Kräver mänsklig observation:** Prova långtryck, orientering och verklig
+webbläsarzoom
+på fysisk enhet och kontrollera oskickad text och nåbara kontroller.
+
+**Steg:**
+
+1. Utför RYMD-04 en gång på fysisk pekskärm. Rotera enheten
+   medan formuläret innehåller oskickad text.
+2. Utför därefter RYMD-09 från ny förberedelse vid verklig zoom
+   200 och 400 procent. Kontrollera nåbara etiketter och tabellarbete.
+
+**Förväntat resultat:**
+
+- Långtryck och fingersläpp lämnar menyn öppen utan oavsiktlig åtgärd.
+- Orienteringsbyte och grafikåterställning behåller oskickad formulärtext.
+- Etiketter och tabellarbete är nåbara vid verklig zoom 200 och 400 procent.
+
+### RYMD-12: symbolernas betydelse känns igen utan hjälptext
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "visual-symbol-recognition",
+    "observation": "Känn igen plus, penna, kryss, riktning och status som\nskilda betydelser på faktiska återgivna objekt och samband."
+  },
+  "reference": "Visuell tolkning på faktisk skärm av symboler före och efter sparande.",
+  "outcomes": [
+    "Plus, penna och kryss skiljer nya, ändrade och borttagna förslag.",
+    "Riktning och upphörd status kan skiljas från privata förslag utan enbart färg."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/spatial.spec.ts",
+      "caseId": "RYMD-03",
+      "purpose": "Avgränsad automatiserad DOM-, CSS- och syntetisk inmatning; inte faktisk enhetsobservation."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** symbolernas betydelse känns igen utan hjälptext.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Ny förberedelse enligt RYMD-03.
+
+**Kräver mänsklig observation:** Känn igen plus, penna, kryss, riktning och
+status som
+skilda betydelser på faktiska återgivna objekt och samband.
+
+**Steg:**
+
+1. Utför RYMD-03 en gång och tolka symbolerna under steg 1–4.
+2. Utför RYMD-07 från ny förberedelse. Skilj upphörd status från
+   förslag före och efter sparande utan att använda enbart färg.
+
+**Förväntat resultat:**
+
+- Plus, penna och kryss skiljer nya, ändrade och borttagna förslag.
+- Riktning och upphörd status kan skiljas från privata förslag utan enbart färg.

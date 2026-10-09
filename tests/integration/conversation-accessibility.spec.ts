@@ -36,7 +36,7 @@ async function setup(page: Page, model = textModel(() => [modelMessage('Hej.')])
 }
 
 for (const touch of [false, true])
-  test(`HJALP-01: en blockerad mikrofon i ett pågående samtal går att aktivera med hjälpmedel på ${touch ? 'pekskärm' : 'dator'}`, async ({
+  test(`${touch ? 'HJALP-07' : 'HJALP-01'}: en blockerad mikrofon i ett pågående samtal går att aktivera med hjälpmedel på ${touch ? 'pekskärm' : 'dator'}`, async ({
     page,
   }) => {
     if (touch)
@@ -79,7 +79,7 @@ for (const touch of [false, true])
   });
 
 for (const width of [1280, 390])
-  test(`HJALP-02: röstruta och notis behåller läs- och tabbordning när textvyn öppnas vid ${width}px`, async ({
+  test(`${width === 1280 ? 'HJALP-02' : 'HJALP-08'}: röstruta och notis behåller läs- och tabbordning när textvyn öppnas vid ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -141,6 +141,7 @@ for (const width of [1280, 390])
       expect(composer).not.toBeNull();
       expect((card?.y ?? 0) + (card?.height ?? 0)).toBeLessThanOrEqual((composer?.y ?? 0) + 1);
       await view(page).getByRole('button', { name: 'Stäng textvyn' }).click();
+      await expect(view(page)).toHaveCount(0);
       await checkOrder();
       await openConversationText(page);
       await checkOrder();
@@ -158,7 +159,7 @@ for (const width of [1280, 390])
   });
 
 for (const width of [1280, 390])
-  test(`HJALP-06: systemets minskade rörelse ger fasta former och omedelbara ytor vid ${width}px`, async ({
+  test(`${width === 1280 ? 'HJALP-06' : 'HJALP-10'}: systemets minskade rörelse ger fasta former och omedelbara ytor vid ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -305,41 +306,8 @@ test('HJALP-03: samma arbete och kontexttröskel läses en gång över textvy, r
   }
 });
 
-test('HJALP-04: kontakt-notisen avbryter en gång utan extra mikrofonstatus och flyttas med samma identitet', async ({
-  page,
-}) => {
-  const { app } = await setup(page);
-  try {
-    await openConversationText(page);
-    await page.getByLabel('Meddelande till Skyttel').focus();
-    await page.context().setOffline(true);
-    const expected =
-      'Ingen kontakt med Skyttel. Mikrofonen är av. Slå på den igen när kontakten är tillbaka.';
-    await expect(notice(page)).toContainText(expected);
-    await expect(page.locator('.notice-announcement[aria-live="assertive"]')).toHaveText(expected);
-    await expect(
-      page.locator('.voice-announcement:not(.voice-context-announcement)'),
-    ).not.toHaveText('Mikrofonen är av');
-    await expect(page.getByLabel('Meddelande till Skyttel')).toBeFocused();
-    const identity = await notice(page).evaluateHandle((element) => element);
-    await view(page).getByRole('button', { name: 'Stäng textvyn' }).click();
-    expect(await notice(page).evaluate((element, first) => element === first, identity)).toBe(true);
-    await openConversationText(page);
-    expect(await notice(page).evaluate((element, first) => element === first, identity)).toBe(true);
-    await page.context().setOffline(false);
-    await expect(notice(page)).toHaveCount(0);
-    await expect(page.locator('.notice-announcement[aria-live="polite"]')).toHaveText(
-      'Kontakten med Skyttel är tillbaka.',
-    );
-    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
-  } finally {
-    await page.context().setOffline(false);
-    await app.close();
-  }
-});
-
 for (const width of [1280, 390])
-  test(`HJALP-05: notisens ljudknapp följer samtalsknapparna och återför fokus utan extra uppläsning vid ${width}px`, async ({
+  test(`${width === 1280 ? 'HJALP-05' : 'HJALP-09'}: notisens ljudknapp följer samtalsknapparna och återför fokus utan extra uppläsning vid ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });

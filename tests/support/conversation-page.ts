@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import type { SaveReceipt } from '../../src/shared/map.js';
 import { utilityButton } from './client.js';
 import {
   consentBoxControls,
@@ -67,6 +68,27 @@ export async function openSavedHistory(page: Page) {
   await expect(history).toBeVisible();
   await expect(history).not.toContainText('Hämtar historik…');
   return history;
+}
+
+/** Read the visible actor, time and identity of an original committed save. */
+export async function readCommittedHistoryCard(history: Locator, receipt: SaveReceipt) {
+  if (!receipt.actorName) throw new Error('The original receipt must identify its actor');
+  const card = history.locator(
+    `article[data-save="${receipt.operationId}"][data-saved-by="${receipt.userId}"]`,
+  );
+  await expect(card).toBeVisible();
+  await expect(card.getByRole('heading', { level: 3 })).toContainText(receipt.actorName);
+  await expect(card.locator('time')).toBeVisible();
+  await expect(card.locator('time')).toHaveAttribute('datetime', receipt.savedAt);
+  await expect(card.locator('time')).not.toHaveText('');
+  const identity = card.getByText('Identifiera sparandet och användaren', { exact: true });
+  if ((await identity.locator('..').getAttribute('open')) === null) await identity.click();
+  await expect(card.getByText(`Sparande: ${receipt.operationId}`, { exact: true })).toBeVisible();
+  await expect(
+    card.getByText(`Skyttel-användare: ${receipt.userId}.`, { exact: true }),
+  ).toBeVisible();
+  await expect(card.getByText(`Tidpunkt: ${receipt.savedAt}`, { exact: true })).toBeVisible();
+  return card;
 }
 
 /** The voice box, which follows the voice wherever the map's tools are shown. */

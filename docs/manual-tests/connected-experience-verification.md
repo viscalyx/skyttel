@@ -18,11 +18,12 @@ Körningen använder verklig Chromium `153.0.8010.12`, standardvyn
 ny tillfällig SQLite-databas per fall. Leverantörernas inloggningssvar,
 modellens svar, transkription och mediespår är kontrollerade provsvar.
 
-Kör om båda fallen från det aktuella källträdet:
+Kör om båda fallen från det aktuella källträdet med npm-skriptens
+gemensamma processlås och ordinarie konfiguration:
 
 ```sh
 npm run build
-npx playwright test tests/integration/connected-work.spec.ts --workers=2
+npm run test:integration -- tests/integration/connected-work.spec.ts
 ```
 
 Båda fallen behåller hela den verkliga följden med sju modellanrop.

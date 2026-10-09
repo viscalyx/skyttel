@@ -4,6 +4,7 @@ import { createHousehold, signIn } from '../support/client.js';
 import { startConversationWithText } from '../support/conversation-page.js';
 import { prepareHouseholdTable } from '../support/household-table.js';
 import { createInstallation } from '../support/installation.js';
+import { prepareTableDetailProposals } from '../support/table-detail-proposals.js';
 
 for (const [caseId, action, title] of [
   [
@@ -216,37 +217,7 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, post } = await prepareHouseholdTable(page.request, installation.origin);
-    const prepared = await read();
-    const type = prepared.types.find((value) => value.id === 'table-type-2');
-    const proposal = prepared.draft.changes.find((change) => change.id === 'table-0');
-    if (!type || !proposal?.after) throw new Error('Missing prepared type or object proposal');
-    await post('object-type', {
-      id: type.id,
-      baseRevision: type.revision,
-      value: {
-        ...type,
-        fields: [
-          { ...type.fields?.[0], name: 'Föreslagen anteckning' },
-          { id: 'frame', name: 'Ramnummer', description: '', kind: 'text', sectionId: '' },
-          { id: 'count', name: 'Antal', description: '', kind: 'number', sectionId: '' },
-          { id: 'reserve', name: 'Reserv', description: '', kind: 'boolean', sectionId: '' },
-        ],
-      },
-    });
-    await post('draft', {
-      id: proposal.id,
-      baseRevision: proposal.before?.revision ?? null,
-      value: {
-        ...proposal.after,
-        customValues: {
-          ...proposal.after.customValues,
-          frame: 'RAM-2026-42',
-          count: 0,
-          reserve: false,
-        },
-      },
-    });
+    const { read } = await prepareTableDetailProposals(page.request, installation.origin);
     const before = await read();
     await page.addInitScript(() => {
       const original = HTMLCanvasElement.prototype.getContext;
@@ -370,10 +341,15 @@ test('TABELL-03: mobile horizontal reading preserves shared selection, draft and
       true,
     );
     await scroller.focus();
+    const scrollEnd = scroller.evaluate(
+      (element) =>
+        new Promise<number>((resolve) => {
+          element.addEventListener('scrollend', () => resolve(element.scrollLeft), { once: true });
+        }),
+    );
     await page.keyboard.press('ArrowRight');
     await expect.poll(() => scroller.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
-    await expect.poll(() => scroller.evaluate((element) => element.scrollLeft)).toBe(40);
-    const horizontal = await scroller.evaluate((element) => element.scrollLeft);
+    const horizontal = await scrollEnd;
     await page.getByRole('button', { name: 'Karta', exact: true }).click();
     const mapObject = page.getByRole('button', { name: 'Välj objekt: A 2', exact: true });
     await expect(mapObject).toHaveAttribute('aria-pressed', 'true');

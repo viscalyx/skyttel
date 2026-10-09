@@ -12,7 +12,7 @@ i devcontainern och värddatorns webbläsare. **Alex** är testrollen för den
 konfigurerade första administratörens befintliga Google- eller
 Microsoft-konto; kontot behöver inte heta Alex. Skapa hushållet **Linden**
 med påhittade uppgifter. Om fallet inte säger annat loggar två profiler in
-med samma konto. IMPORT-09, IMPORT-11 och IMPORT-13 använder även **Robin**,
+med samma konto. IMPORT-09–11 och IMPORT-13 använder även **Robin**,
 en annan verifierad användare som bjuds in till provhushållet. Fallens
 steg anger respektive roll. Ingen publik webbadress eller tunnel behövs.
 
@@ -26,6 +26,20 @@ steg anger respektive roll. Ingen publik webbadress eller tunnel behövs.
 4. Återställ provmiljön mellan fallen. Radera hämtade testfiler efteråt.
    Vid omstart ska samma databas användas: följ bara guidens
    omstartskommando och behåll dess terminal öppen.
+
+## Läs sparat och privat innehåll
+
+När ett fall anger kartläsning: välj **Tillbaka till kartan**, sedan
+**Tabell**. Vid **Läs in det återställda hushållet** läses importsidan om;
+invänta omladdningen och välj därefter **Tillbaka till kartan → Tabell**.
+Fäll ut det namngivna
+objektet och läs hela namnet, beskrivningen och de värden som fallet anger.
+Ett namn i en meny räcker inte för att verifiera objektets övriga värden.
+När ett fall anger privat arbete: öppna **Skriv till Skyttel → Utkast**,
+välj **Visa förslaget** för det aktuella objektet och läs dess fullständiga
+uppgifter. Stäng dialogen och textvyn utan att spara eller kasta något.
+Jämför med antecknade värden från förberedelsen. Använd en extra flik när
+importsidan måste behålla sitt exakta försöks-ID eller sin felstatus.
 
 ## Bekräftad ersättning
 
@@ -43,6 +57,23 @@ förberedelsen. Ingen annan ändrar hushållet under detta fall.
 [household-import-ui.spec.ts](../../tests/integration/household-import-ui.spec.ts),
 testfallet “IMPORT-01: an administrator reviews and explicitly replaces
 household content with the keyboard”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-ui.spec.ts",
+    "caseId": "IMPORT-01"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Kontrollera att förberedelse inte ändrar innehåll och att ersättning kräver ett uttryckligt beslut från aktuell administratör."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -85,45 +116,91 @@ testfallet “IMPORT-06: replacement preserves image history and private work,
 rejects old save
 attempts and permits ordinary corrections after restart”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-history.spec.ts",
+    "caseId": "IMPORT-06"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Kontrollera att en återimport bevarar sparade bildversioner, privata förslag och personliga placeringar, samtidigt som gamla klientunderlag och sparförsök inte kan skriva tillbaka senare innehåll."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Använd de befintliga separata recepten **Fånga nästa sparbegäran**, **Prova båda
+gamla sparbegärandena** och rensningen nedan, i profil A på samma ursprung och i
+samma flik. Behåll deras exakta kod och `sessionStorage` genom omladdningen;
+kopiera inga inloggningsuppgifter.
+
+1. Före det verkliga bildsparandet i UI-steg 2: kör fångstkoden med
+   `image` och meddela **Nästa bildsparande fångas**. Efter användarens
+   Spara: invänta kvittot och **IMPORT-06: image sparat**. Meddela
+   **Bildsparandet är fångat och bekräftat**.
+2. Före det senare verkliga sparandet i steg 4: kör samma fångstkod
+   med `later` och meddela **Nästa senare sparande fångas med tappat
+   svar**. Efter Spara: kräv **IMPORT-06: later sparat**, som receptet
+   ger först efter lyckat riktigt sparkvitto. Meddela **Samma senare
+   sparande är genomfört och dess svar tappat**. Vanligt offline är
+   inte denna gräns. Stäng konsolen inför den vanliga UI-läsningen.
+3. Efter återimport och samma-databas-omstart i steg 6, före den nya
+   rättelsen: kör **Prova båda gamla sparbegärandena** i samma flik.
+   Jämför båda avvisningarna och oförändrad karta, privata utkast och
+   historik enligt receptet. Meddela **Båda gamla begärandena avvisas
+   utan ändring** innan användaren fortsätter den vanliga läsningen.
+4. Efter den nya rättelsens sista omstart och läsning, vid steg 8:
+   kör den befintliga rensningskoden och meddela **Fångade
+   testbegäranden är rensade**. Stäng profilerna och städa bara
+   provinstallationen enligt den befintliga guiden.
+
 **Steg:**
 
-1. I profil A: skapa två objekt med namnet **Lo Exempel** som föreställer
-   samma påhittade person. Spara ett samband från det andra objektet med
-   okänd målpunkt. Placera objekten på två igenkännliga platser i rymdkartan.
-2. Lägg den första provbilden på det andra objektet och spara den.
-   Lägg sedan samma provbild på det första objektet som ett vanligt
-   bildförslag. Kör **Fånga nästa sparbegäran** nedan och ange `image`.
-   Spara utkastet och invänta kvittot samt **IMPORT-06: image sparat**.
-3. Lägg den andra provbilden som privat bildförslag på det första objektet.
-   Låt förslaget vara osparat. Hämta en fullständig export i
-   **Inställningar → Fullständig export** och behåll ZIP-filen privat.
-4. I profil A: skapa **Senare objekt** och lägg det i utkastet. Kör samma
-   fångstkod igen, ange `later` och välj **Spara hela utkastet**. Kontrollera
-   konsolbeskedet **IMPORT-06: later sparat** och gränssnittets
-   **Utfallet är okänt**. Välj inte att hämta kvittot igen. I profil B:
-   öppna aktuell karta och kontrollera att **Senare objekt** finns; det
-   visar att servern sparade innan svaret försvann. Börja skriva ett nytt
-   objektförslag, men låt formuläret vara öppet utan att skicka det.
-5. Öppna en andra flik i profil B och gå till
-   **Inställningar → Återimportera hushållet**. Välj exporten
-   från steg 3, granska rätt hushåll och bekräfta ersättningen. Försök sedan
-   lägga den första flikens gamla öppna objektförslag i utkastet, innan
-   servern startas om. Kontrollera att förslaget avvisas och inte syns i
-   aktuell karta eller historik. Läs in aktuell karta när klienten begär det.
-6. Starta om servern med samma databas enligt utvecklingsguiden. Ladda om
-   profil A och B. Kontrollera kartan med båda objekten, den privata andra
-   bilden och det ursprungliga bildkvittot. **Senare objekt**
-   ska saknas. Kör **Prova båda gamla sparbegärandena** nedan i profil A,
-   på samma ursprung och i samma flik som fångstkodens båda körningar.
-   Omladdning behåller de fångade uppgifterna. Kontrollera två HTTP 409,
-   ett för `image` och ett för `later`, samt beskedet att karta och historik
-   är oförändrade. Inget gammalt lyckat kvitto får returneras.
-7. I profil B: kasta det återställda privata bildförslaget. Ändra
-   beskrivningen på det andra objektet till **Ny vanlig rättelse**, lägg
-   förslaget i utkastet och spara. Starta om och kontrollera båda objektens
-   bilder, samband, beskrivningar och personliga placeringar.
-8. Ta bort konsolens två sparade testbegäranden genom den sista kodraden
-   nedan. Stäng testprofilerna och följ provmiljöns städning efter fallet.
+1. I profil A: skapa två objekt med namnet **Lo Exempel** som föreställer samma
+   påhittade person. Spara ett samband från det andra objektet med okänd
+   målpunkt. Placera objekten på två igenkännliga platser i rymdkartan.
+2. Lägg den första provbilden på det andra objektet och spara den. Lägg sedan
+   samma provbild på det första objektet som ett vanligt bildförslag. Be
+   driftansvarig förbereda fångst av nästa bildsparande och invänta
+   installationsbekräftelse. Spara utkastet och invänta kvittot samt
+   driftansvarigs bekräftelse av fångsten.
+3. Lägg den andra provbilden som privat bildförslag på det första objektet. Låt
+   förslaget vara osparat. Hämta en fullständig export i **Inställningar →
+   Fullständig export** och behåll ZIP-filen privat.
+4. I profil A: skapa **Senare objekt** och lägg det i utkastet. Be driftansvarig
+   förbereda fångst av nästa senare sparande och invänta installationen. Välj
+   **Spara hela utkastet**. Invänta driftansvarigs bekräftelse av verkligt
+   genomfört sparande med tappat svar och kontrollera gränssnittets **Sparandet
+   kunde inte bekräftas**. Välj inte att hämta kvittot igen. I profil B: öppna
+   aktuell karta och kontrollera att **Senare objekt** finns; det visar att
+   servern sparade innan svaret försvann. Börja skriva ett nytt objektförslag,
+   men låt formuläret vara öppet utan att skicka det.
+5. Öppna en andra flik i profil B och gå till **Inställningar → Återimportera
+   hushållet**. Välj exporten från steg 3, granska rätt hushåll och bekräfta
+   ersättningen. Försök sedan lägga den första flikens gamla öppna objektförslag
+   i utkastet, innan servern startas om. Kontrollera att förslaget avvisas och
+   inte syns i aktuell karta eller historik. Läs in aktuell karta när klienten
+   begär det.
+6. Starta om servern med samma databas enligt utvecklingsguiden. Ladda om profil
+   A och B. Kontrollera kartan med båda objekten, den privata andra bilden och
+   det ursprungliga bildkvittot. **Senare objekt** ska saknas. Be driftansvarig
+   utföra den separata kontrollen av båda gamla sparbegärandena i samma profil
+   och flik. Invänta bekräftelse att båda är avvisade med bevarade uppgifter,
+   före den nya rättelsen. Läs sedan karta och historik igen; inga äldre försök
+   får ha återinfört senare innehåll.
+7. I profil B: kasta det återställda privata bildförslaget. Ändra beskrivningen
+   på det andra objektet till **Ny vanlig rättelse**, lägg förslaget i utkastet
+   och spara. Starta om och kontrollera båda objektens bilder, samband,
+   beskrivningar och personliga placeringar.
+8. Be driftansvarig rensa de två lokalt fångade begärandena enligt förberedelsen
+   och invänta bekräftelse. Stäng testprofilerna och följ provmiljöns städning
+   efter fallet.
 
 **Fånga nästa sparbegäran:**
 
@@ -140,42 +217,8 @@ lyckat svar kommer avbryts inte svaret, och fallet ska markeras som ej
 verifierat. Vanligt offlineläge bevisar inte ett avbrott efter transaktionen.
 Ladda om fliken om du avbryter innan nästa sparande.
 
-```javascript
-(() => {
-  const slot = prompt('image eller later');
-  if (!['image', 'later'].includes(slot)) throw new Error('invalid slot');
-  const originalFetch = window.fetch.bind(window);
-  window.fetch = async (input, init) => {
-    const request = new Request(
-      input instanceof Request ? input.clone() : input, init,
-    );
-    const url = new URL(request.url);
-    if (url.origin !== location.origin || request.method !== 'POST'
-        || !/^\/api\/households\/[^/]+\/map\/save$/.test(url.pathname)) {
-      return originalFetch(input, init);
-    }
-    window.fetch = originalFetch;
-    const body = await request.json();
-    const keys = Object.keys(body).sort().join(',');
-    if (keys !== 'contentVersion,operationId,version') {
-      throw new Error('unexpected save fields; stop this case');
-    }
-    const response = await originalFetch(input, init);
-    const result = await response.clone().json();
-    if (!response.ok || result.receipt?.operationId !== body.operationId) {
-      console.error('IMPORT-06: inget lyckat kvitto; kontrollera utfallet');
-      return response;
-    }
-    sessionStorage.setItem(`skyttel-import06-${slot}`, JSON.stringify({
-      path: url.pathname, body,
-    }));
-    console.info(`IMPORT-06: ${slot} sparat`);
-    if (slot === 'later') throw new TypeError('Synthetic lost save response');
-    return response;
-  };
-  console.info('IMPORT-06: redo för nästa sparande');
-})();
-```
+Kör [den separata förberedelsen 1](household-recovery-console.md#import-06-förberedelse-1)
+för IMPORT-06 i det angivna läget.
 
 **Prova båda gamla sparbegärandena:**
 
@@ -185,58 +228,13 @@ begäransfälten exakt. Den tar en aktuell karta och historik före försöken o
 jämför dem efter varje försök. Endast status och felkod skrivs ut; kopiera
 inte privata webbläsardata till en rapport.
 
-```javascript
-await (async () => {
-  const saved = ['image', 'later'].map(slot => ({
-    slot,
-    ...JSON.parse(sessionStorage.getItem(`skyttel-import06-${slot}`)),
-  }));
-  const pattern = /^\/api\/households\/[^/]+\/map\/save$/;
-  if (saved.some(item => !pattern.test(item.path) || !item.body)
-      || saved[0].path !== saved[1].path) {
-    throw new Error('missing requests or different household; stop');
-  }
-  const mapPath = saved[0].path.slice(0, -'/save'.length);
-  const read = async path => {
-    const response = await fetch(path, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`read failed: ${response.status}`);
-    return response.json();
-  };
-  const snapshot = async () => JSON.stringify({
-    map: await read(mapPath), history: await read(`${mapPath}/history`),
-  });
-  const before = await snapshot();
-  const build = await read('/api/version');
-  for (const item of saved) {
-    const response = await fetch(item.path, {
-      method: 'POST', credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Skyttel-Build': `${build.commit}:${build.version}`,
-      },
-      body: JSON.stringify(item.body),
-    });
-    const result = await response.json();
-    console.info('IMPORT-06', item.slot, response.status, result.error);
-    if (response.status !== 409
-        || !['content_conflict', 'operation_conflict'].includes(result.error)) {
-      throw new Error('old save was not rejected by content protection');
-    }
-    if (await snapshot() !== before) {
-      throw new Error('map or history changed after old save retry');
-    }
-  }
-  console.info('IMPORT-06: karta och historik är oförändrade');
-})();
-```
+Kör [den separata förberedelsen 2](household-recovery-console.md#import-06-förberedelse-2)
+för IMPORT-06 i det angivna läget.
 
 Efter fallet, ta bort de två lokalt sparade begärandena:
 
-```javascript
-for (const slot of ['image', 'later']) {
-  sessionStorage.removeItem(`skyttel-import06-${slot}`);
-}
-```
+Kör [den separata förberedelsen 3](household-recovery-console.md#import-06-förberedelse-3)
+för IMPORT-06 i det angivna läget.
 
 **Förväntat resultat:**
 
@@ -269,21 +267,60 @@ en objekttyp utan använda egna fält. Följ export- och importförberedelserna.
 
 **Integrationstest:**
 [household-import-definitions.spec.ts](../../tests/integration/household-import-definitions.spec.ts),
-testfallet “IMPORT-07: historical field meanings survive replacement and
-ordinary corrections”.
+IMPORT-07, med formulär, återimport och läsning i Rapporter.
+Det separata tekniska testet behåller exakta fältslag och kvitton.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-definitions.spec.ts",
+    "caseId": "IMPORT-07"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Bevara historiska talvärden när dagens fält är text, utan omvandling, och tillåta vanligt arbete med aktuellt underlag efter import."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-import-definitions.spec.ts",
+      "title": "historical field kinds and exact receipts survive replacement and request corrections",
+      "purpose": "Exakta historiska fältslag, kvitton och request-rättelser före och efter omstart."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Lägg textfältet **Serienummer** på typen och spara definitionen.
-2. Ändra det oanvända fältet till tal. Lägg **Mätare** med värdet **42**
-   i utkastet och spara definition och objekt tillsammans.
-3. Lägg en borttagning av Mätare i utkastet och ändra det nu oanvända
-   fältet till text. Spara och anteckna kvittot.
-4. Hämta fullständig export och återimportera den till samma hushåll.
-   Bekräfta ersättningen och starta om med samma databas.
-5. Välj **Rapporter** och läs sparandenas historiska värden och typer.
-6. Ändra det oanvända fältet till tal igen. Lägg **Ny mätare** med
-   värdet **43** i utkastet, spara och starta om.
+1. Öppna **Inställningar → Typer och egna fält**. Fäll ut
+   **Objekttyper och egna fält** om avsnittet är stängt. Välj
+   **Ändra typ: Person**, **Lägg till fält** och namnet **Serienummer**.
+   Välj **Text** i **Värdeslag** och **Lägg typförslaget i mitt utkast**.
+   Välj **Tillbaka till kartan**, **Utkast** och **Spara hela utkastet**.
+2. Öppna samma typformulär igen och välj **Tal** för Serienummer. Lägg
+   typförslaget i utkastet och återgå till kartan. Välj **Nytt objekt**,
+   namnet **Mätare** och objekttypen **Person**. Öppna **Egna fält** och
+   skriv **42** i Serienummer. Välj **Lägg i utkastet och stäng** och
+   spara hela utkastet med både definition och objekt.
+3. Välj **Tabell → Ta bort Mätare**. Ändra samma fält till **Text** i
+   typformuläret och lägg typförslaget i utkastet. Återgå till kartan,
+   spara hela utkastet och anteckna det synliga kvittot.
+4. Hämta fullständig export i **Inställningar → Fullständig export**.
+   Öppna **Återimportera hushållet**, välj ZIP-filen och
+   **Kontrollera importfil**. Granska, markera bekräftelsen och välj
+   **Ersätt hushållets innehåll**. Starta om med samma databas.
+5. Återgå till kartan och välj **Rapporter**. Öppna **Visa ändringarna**
+   för de tre sparandena. Läs Mätare, Serienummer och 42 med den äldre
+   taldefinitionen, dagens textdefinition samt författare och tidpunkter.
+6. Ändra samma fält till **Tal** i typformuläret igen. Skapa **Ny mätare**
+   av typen Person och skriv **43** i Serienummer under **Egna fält**.
+   Lägg förslaget i utkastet, spara hela utkastet och starta om. Välj
+   **Tabell → Redigera Ny mätare → Egna fält** och kontrollera 43.
 
 **Förväntat resultat:**
 
@@ -307,6 +344,23 @@ som får startas om. Ingen ersättning har bekräftats.
 [household-import-recovery.spec.ts](../../tests/integration/household-import-recovery.spec.ts),
 testfallet “IMPORT-08: an unavailable prepared archive allows fresh review
 after restart without changing content”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-recovery.spec.ts",
+    "caseId": "IMPORT-08"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Kontrollera att en bortstädad förberedelse inte låser importen och att en ny ersättning kräver ny granskning och bekräftelse."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -340,43 +394,50 @@ webbläsarprofiler. Bjud först in Robin och ge rollen administratör.
 allmänna förberedelsen. Robin har inte öppnat importen tidigare. Använd
 Chromium med utvecklarverktyg i Alex profil.
 
+**Separat dataförberedelse:** Före exporten: skapa ett osparat objekt **Privat
+arbete från exporten**
+med beskrivningen **Privat uppgift för Privat arbete från exporten**.
+Alex ska läsa detta förslag, medan Robins eget utkast ska vara tomt.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
 testfallet “IMPORT-09: another administrator discovers the same committed
 import after a lost response and restart”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-discovery.spec.ts",
+    "caseId": "IMPORT-09"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Följ ett bekräftat importförsök trots tappat svar, ny webbläsare och omstart utan att ersätta innehållet en gång till."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Alex väljer exportfilen och **Kontrollera importfil**. Läs granskningen.
-2. Kör följande kod i utvecklarverktygens Console innan bekräftelsen.
-   Den släpper igenom serverns begäran och kastar bort ett lyckat svar.
-   Fortsätt endast om konsolen senare visar det slutförda försökets ID.
+2. Be driftansvarig förbereda det tappade bekräftelsesvaret enligt
+   [IMPORT-09:s separata förberedelse](household-recovery-console.md#import-09-förberedelse-1).
+   Invänta besked att förberedelsen är installerad före bekräftelsen.
 3. Alex markerar bekräftelsen och väljer **Ersätt hushållets innehåll**.
    Kontrollera beskedet **Utfallet är okänt** och att nytt filval är spärrat.
+   Invänta driftansvarigs bekräftelse att ersättningen är slutförd på
+   servern och att just dess svar har tappats innan Robin fortsätter.
 4. Robin öppnar importen i sin egen webbläsare. Kontrollera att slutfört
    resultat visas för samma försökets ID, utan uppladdning eller bekräftelse.
 5. Kontrollera återställt innehåll, privata utkast och aktuell tillgång.
    Starta om servern med samma databas och ladda om Robins importvy.
    Samma försök och resultat ska fortfarande visas.
-
-```javascript
-(() => {
-  const originalFetch = window.fetch.bind(window);
-  window.fetch = async (input, init) => {
-    const request = new Request(input, init);
-    if (request.method !== 'POST'
-        || !/\/imports\/[^/]+\/confirm$/.test(new URL(request.url).pathname)) {
-      return originalFetch(input, init);
-    }
-    window.fetch = originalFetch;
-    const response = await originalFetch(input, init);
-    const result = await response.clone().json();
-    if (!response.ok || result.status !== 'completed') return response;
-    console.info('IMPORT-09: slutfört försök', result.id);
-    throw new TypeError('Synthetic lost import response');
-  };
-})();
-```
 
 **Förväntat resultat:**
 
@@ -390,48 +451,53 @@ import after a lost response and restart”.
 **Syfte:** Kontrollera att en äldre slutförd import inte döljer en ny
 förberedelse som samma administratör ännu inte har bekräftat.
 
-**Användare:** Alex i två separata webbläsarprofiler.
+**Användare:** Alex i två separata webbläsarprofiler och Robin som aktuell
+administratör i en tredje profil.
 
 **Förutsättningar:** En separat provinstallation och en fullständig export.
 Genomför först IMPORT-01. Behåll servern igång under detta fall; en
 obekräftad förberedelse upphör efter tio minuter eller vid omstart.
+Bjud in Robin och ge rollen administratör före den första importen.
 
 **Integrationstest:**
 [household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
 testfallet “IMPORT-10: the current administrator recovers a lost
 preparation before an older completed import”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-discovery.spec.ts",
+    "caseId": "IMPORT-10"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Kontrollera att en äldre slutförd import inte döljer en ny förberedelse som samma administratör ännu inte har bekräftat."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Öppna importen i profil A och välj exportfilen på nytt. Kör följande
-   kod i utvecklarverktygens Console före **Kontrollera importfil**.
-2. Välj **Kontrollera importfil**. Fortsätt endast om konsolen visar
-   ID för en kontrollerad förberedelse. Läs felbeskedet i gränssnittet.
+1. Öppna importen i profil A och välj exportfilen på nytt. Be driftansvarig
+   installera [IMPORT-10:s separata svarsförberedelse](household-recovery-console.md#import-10-förberedelse-1).
+   Invänta installationsbesked före **Kontrollera importfil**.
+2. Välj **Kontrollera importfil**. Invänta driftansvarigs bekräftelse att
+   servern har förberett filen och tappat svaret för just den granskningen.
+   Läs felbeskedet i gränssnittet.
+   Robin öppnar importen utan att välja en fil. Den äldre slutförda
+   importen visas; Alex nya obekräftade granskning och dess bekräftelse
+   får inte visas för Robin.
 3. Logga in med samma konto i en ny profil B och öppna importen.
    Kontrollera att den nya granskningen och samma ID visas, istället
    för att den äldre importen visas som resultatet av det nya försöket.
 4. Kontrollera att innehållet fortfarande är oförändrat och att
    ersättning kräver en ny markering av bekräftelsen.
 5. Bekräfta ersättningen i profil B. Kontrollera det slutförda resultatet.
-
-```javascript
-(() => {
-  const originalFetch = window.fetch.bind(window);
-  window.fetch = async (input, init) => {
-    const request = new Request(input, init);
-    if (request.method !== 'POST'
-        || !/\/imports$/.test(new URL(request.url).pathname)) {
-      return originalFetch(input, init);
-    }
-    window.fetch = originalFetch;
-    const response = await originalFetch(input, init);
-    const result = await response.clone().json();
-    if (!response.ok || result.status !== 'ready') return response;
-    console.info('IMPORT-10: kontrollerad förberedelse', result.id);
-    throw new TypeError('Synthetic lost preparation response');
-  };
-})();
-```
 
 **Förväntat resultat:**
 
@@ -453,30 +519,73 @@ Bjud in Robin och ge rollen administratör. Kör servern utan rootbehörighet.
 Driftansvarig behöver kunna ändra rättigheter för provets tillfälliga filer.
 Gör aldrig detta i en installation som används för riktigt hushållsarbete.
 
+**Separat förberedelse:** Driftansvarig följer
+[filförberedelsens IMPORT-11-tidpunkter](household-recovery-filesystem.md#tidpunkter-för-import-11).
+Den anger exakta indata, rättigheter, kontroll av borttagna filer och
+återställning. UI-stegen fortsätter först efter respektive förberedelsebesked.
+
+**Separat dataförberedelse:** Före exporten: skapa ett osparat objekt **Privat
+arbete genom rensningen**
+med beskrivningen **Privat uppgift för Privat arbete genom rensningen**.
+Anteckna det sparade objektets beskrivning. Efter rensningen läser Alex
+sitt privata förslag och Robin sin egen tomma utkastvy.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
 testfallet “IMPORT-11: another administrator finishes the same gated
 cleanup after the original administrator loses authority”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-discovery.spec.ts",
+    "caseId": "IMPORT-11"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Kontrollera att en verklig rensningsspärr består efter ersättningen och kan lösas av en annan aktuell administratör."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring."
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Alex väljer exportfilen och **Kontrollera importfil**. Anteckna
    försökets visade ID före bekräftelsen.
-2. Driftansvarig hittar katalogen `.skyttel-imports` bredvid provets
-   SQLite-fil och dess underkatalog med samma ID. Sätt endast den
-   underkatalogens rättigheter till `500` med `chmod`. Behåll terminalen.
+2. Invänta **Rensningsfel förberett** enligt den separata förberedelsen,
+   innan Alex bekräftar.
 3. Alex bekräftar ersättningen. Kontrollera beskedet att innehållet är
    ersatt men att tillfälliga filer behöver rensas. Försök öppna kartan
    och göra en export i Robins profil; båda ska vara spärrade.
 4. Robin ändrar Alex roll till medlem genom administrationen. Öppna
    sedan importen i Robins profil. Samma ID och väntande rensning ska
    visas automatiskt. Ny uppladdning ska vara spärrad.
-5. Driftansvarig återställer underkatalogens rättigheter till `700`.
+5. Invänta **Rensning tillåten** enligt den separata förberedelsen.
    Robin väljer **Slutför importens rensning**. Kontrollera att samma
-   försök blir slutfört och att katalogen försvinner.
+   försök blir slutfört. Filkontrollen redovisas separat.
 6. Läs in kartan igen. Kontrollera återställt innehåll och privat arbete.
    Starta om med samma databas och kontrollera försökets resultat igen.
-   Vid avbrutet test: återställ alltid katalogens rättigheter till `700`.
+   Vid avbrutet test följs den separata förberedelsens återställning.
 
 **Förväntat resultat:**
 
@@ -494,12 +603,37 @@ vid administrativ läsning och uttrycklig innehållsersättning.
 **Användare:** Alex som administratör.
 
 **Förutsättningar:** En separat provinstallation och en fullständig export.
-Använd tangentbord och kontrollera både mobil och dator.
+Använd tangentbord på dator i Chromiums vanliga fönster.
+Mobilnavigation och smala återhämtningskontroller följs i IMPORT-22–24.
+
+**Separat dataförberedelse:** Före exporten: skapa ett osparat objekt **Redan
+privat arbete** med
+beskrivningen **Privat uppgift för Redan privat arbete**. Läs detta
+förslag före och efter ersättningen, utan att spara det.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
 
 **Integrationstest:**
 [household-import-settings.spec.ts](../../tests/integration/household-import-settings.spec.ts),
 testfallet “IMPORT-12: protected Settings recovery pages preserve ordinary
 work and retire it after replacement”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-settings.spec.ts",
+    "caseId": "IMPORT-12"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Skydda oskickade formulärändringar och bevara privata förslag vid administrativ läsning och uttrycklig innehållsersättning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -548,6 +682,23 @@ Inställningar för att kunna öppna dem direkt.
 testfallet “IMPORT-13: import and identity Settings destinations enforce
 current household administrator access”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-settings.spec.ts",
+    "caseId": "IMPORT-13"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Kontrollera att direkta adresser och förlorad administratörsroll inte ger tillgång till administrativa innehållsåtgärder."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Öppna importens adress i en utloggad profil. Kontrollera att
@@ -578,25 +729,53 @@ ID, även när en annan klient genomför en ny ersättning.
 **Förutsättningar:** En separat provinstallation och samma giltiga export
 i båda profilerna. Använd utvecklarverktygen i den första profilen.
 
+**Separat dataförberedelse:** Före exporten: skapa ett osparat objekt **Privat
+arbete i båda ersättningarna**
+med beskrivningen **Privat uppgift för Privat arbete i båda ersättningarna**.
+Anteckna även det sparade objektets beskrivning.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
 testfallet “IMPORT-14: a locally known uncertain import keeps its exact
 identity after a newer replacement and a lost status response”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-discovery.spec.ts",
+    "caseId": "IMPORT-14"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Kontrollera att ett känt men oklart försök följs med sitt eget ID, även när en annan klient genomför en ny ersättning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Förbered filen i den första profilen. Kör koden i IMPORT-09 för att
-   kasta bort det riktiga lyckade bekräftelsesvaret. Bekräfta ersättningen
-   och anteckna försökets ID. Utfallet ska visas som okänt.
+1. Förbered filen i den första profilen. Be driftansvarig installera
+   [det tappade bekräftelsesvaret](household-recovery-console.md#import-09-förberedelse-1)
+   och invänta installationsbesked före bekräftelsen. Bekräfta ersättningen
+   och anteckna försökets ID. Utfallet ska visas som okänt. Invänta därefter
+   besked att servern har slutfört just försöket och att dess svar tappats.
 2. Öppna importen i den andra profilen. Den visar första försökets resultat.
    Välj sedan exporten igen, granska och bekräfta en ny ersättning.
    Anteckna det nya försökets ID; det ska skilja sig från det första.
 3. Starta om servern med samma databas. Ladda om den första profilens
    importsida. Det första ID:t ska finnas kvar och nytt filval vara spärrat.
-4. Sätt den första profilens Network-panel till **Offline** och välj
-   **Hämta importens status**. Ett fel ska visas utan slutfört resultat.
+4. Be driftansvarig installera [IMPORT-14:s separata läsfel](household-recovery-faults.md#tidpunkter-för-import-14).
+   Invänta installationsbesked, välj sedan **Hämta importens status**.
+   Invänta besked att serverns verkliga lyckade lässvar har tappats.
+   Ett fel ska visas utan slutfört resultat.
    Filvalet förblir spärrat och samma första ID ska fortfarande visas.
-5. Återställ **Online** och hämta status igen. Det första försökets
+5. Hämta status igen utan någon ny felregel. Det första försökets
    slutförda resultat ska visas. Ingen ny ersättning ska skickas.
 6. Kontrollera att hushållets innehåll och privata arbete motsvarar
    exporten efter den andra ersättningen.
@@ -616,14 +795,41 @@ genom återimport och uttrycklig ändring av en innehållskoppling.
 
 **Förutsättningar:** En separat provinstallation med ett privat utkast
 och en fullständig export av samma hushåll. Skapa också en vanlig textfil
-med namnet `invalid.zip`; den ska inte vara ett ZIP-arkiv. Upprepa i ljust
-och mörkt tema på dator, smal mobil och kort fönster. Välj minskad rörelse.
+med namnet `invalid.zip`; den ska inte vara ett ZIP-arkiv. Kör i 1280×900, ljust
+och mörkt tema. Välj minskad rörelse.
+De smala och korta fönstren har egna fall IMPORT-22–24.
+
+**Separat dataförberedelse:** Det privata objektet ska heta **Bevarat privat
+arbete** och ha
+beskrivningen **Privat uppgift för Bevarat privat arbete**. Anteckna också
+det sparade objektets beskrivning. Läs båda fullständigt efter filfel,
+avbrott och ersättning i en extra flik. Efter valet utan aktuell ägare
+ska ditt aktuella utkast vara tomt; efter återkopplingen ska samma
+namn och privata beskrivning återkomma.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
 
 **Integrationstest:**
 [household-recovery-accessibility.spec.ts](../../tests/integration/household-recovery-accessibility.spec.ts),
 testfallet “IMPORT-15: keyboard recovery controls remain visible through
-review, errors and assignment at 1280px”, samma titel med “390px”,
-“320px” och “640px”.
+review, errors and assignment at 1280px”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-recovery-accessibility.spec.ts",
+    "caseId": "IMPORT-15"
+  },
+  "reference": "1280×900, ljust och mörkt tema, minskad rörelse; synligt tangentbordsfokus och läsbar granskning.",
+  "outcomes": [
+    "Kontrollera att nästa användbara kontroll får synligt fokus genom återimport och uttrycklig ändring av en innehållskoppling."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -632,9 +838,12 @@ review, errors and assignment at 1280px”, samma titel med “390px”,
 2. Välj `invalid.zip` och aktivera **Kontrollera importfil** med Enter.
    Kontrollera det tydliga felet och att fokus återgår till filvalet.
    Inget hushållsinnehåll ska ändras.
-3. Välj den riktiga exporten och kontrollera filen. Fördröj vid behov
-   svaret med webbläsarens nätverksverktyg. Flytta fokus till
-   **Tillbaka till kartan** medan svaret väntar. Ditt nya fokus ska
+3. Välj den riktiga exporten. Be driftansvarig installera
+   [IMPORT-15:s separata fördröjning](household-recovery-faults.md#tidpunkter-för-import-15-och-import-2224)
+   och invänta installationsbesked före filkontrollen. Kontrollera filen
+   och invänta besked att serverns verkliga svar hålls kvar. Flytta fokus
+   till **Tillbaka till kartan** medan svaret väntar. Be först därefter
+   driftansvarig släppa svaret enligt förberedelsen. Ditt nya fokus ska
    finnas kvar när granskningen visas.
 4. Aktivera **Hämta importens status**. Fokus ska gå till
    **Granska ersättningen**. Läs vad som ersätts och behålls.
@@ -652,7 +861,7 @@ review, errors and assignment at 1280px”, samma titel med “390px”,
    **Hämta aktuella innehållskopplingar** efter det sparade resultatet.
 8. Välj samma identitet och din aktuella verifierade användare. En ny
    bekräftelse krävs. Läs båda fullständiga ID:na i granskningen, även på
-   smal skärm och med förstoring. Bekräfta och kontrollera att ditt privata
+   den valda bredden. Bekräfta och kontrollera att ditt privata
    utkast finns kvar när du läser in kartan igen.
 9. Upprepa med det andra temat. Alla kontroller, statusbesked och texter
    ska vara läsbara och möjliga att nå utan rullning i sidled.
@@ -679,10 +888,35 @@ ersätta hushållets innehåll.
 **Förutsättningar:** En separat provinstallation och giltig export enligt
 den allmänna förberedelsen. Ingen ersättning har bekräftats.
 
+**Separat dataförberedelse:** Efter exporten, före provet: skapa det osparade
+objektet
+**Privat arbete efter exporten** med beskrivningen
+**Privat uppgift för Privat arbete efter exporten**. Behåll förslaget
+under avbrottet och läs hela beskrivningen efteråt.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
 testfallet “IMPORT-16: an administrator explicitly cancels only an
 unconfirmed preparation and removes its staged archive”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-cancel.spec.ts",
+    "caseId": "IMPORT-16"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Ta bort en kontrollerad men ännu obekräftad import utan att ersätta hushållets innehåll."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -719,55 +953,75 @@ skilj ett saknat svar från ett bekräftat avbrott.
 ändra filrättigheter och starta om servern. En giltig export och ett
 privat utkast ska finnas. Använd aldrig en produktionsinstallation.
 
+**Separat förberedelse:** Driftansvarig följer
+[filförberedelsens IMPORT-17-tidpunkter](household-recovery-filesystem.md#tidpunkter-för-import-17)
+före avbrott och rensning. Den innehåller exakta indata, filkontroller och
+återställning även vid avbrutet prov.
+
+**Separat dataförberedelse:** Skapa det osparade objektet **Privat under
+avbrottet** med beskrivningen
+**Privat uppgift för Privat under avbrottet**. Läs dess fullständiga
+uppgifter i en extra flik medan rensning återstår och efter omstart.
+Följ [kart- och utkastläsningen](#läs-sparat-och-privat-innehåll)
+vid fallens kontroller; redovisa egna och andra användares vyer separat.
+
 **Integrationstest:**
 [household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
 testfallet “IMPORT-17: failed cancellation cleanup and a lost success
 remain bound to the same unconfirmed preparation”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-cancel.spec.ts",
+    "caseId": "IMPORT-17"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Behåll samma obekräftade förberedelse vid rensningsfel och skilj ett saknat svar från ett bekräftat avbrott."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring."
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Kontrollera exportfilen utan att bekräfta ersättningen. Anteckna
-   förberedelsens ID. Driftansvarig sätter dess underkatalog i
-   `.skyttel-imports` till läs- och sökbehörighet, men tar bort
-   skrivbehörighet (`chmod 500`).
+   förberedelsens ID. Invänta **Rensningsfel förberett** enligt den
+   separata förberedelsen innan nästa steg.
 2. Välj **Avbryt förberedelsen**. Kontrollera att förberedelsen inte
    längre kan användas och att rensning återstår. Kartan och utkastet
    ska gå att läsa. Inget lyckat avbrott ska påstås.
 3. Logga in med samma konto i den andra profilen och öppna importen.
    Samma ID och **Slutför förberedelsens rensning** ska visas. Filval och
    ersättning ska vara spärrade.
-4. Driftansvarig återställer katalogens rättigheter till `chmod 700`.
-   Kör koden nedan i den andra profilens Console. Aktivera rensningen.
-   Fortsätt endast om konsolen visar **Avbrott utfört, svar dolt**.
+4. Invänta **Rensning tillåten** enligt den separata förberedelsen.
+   Be driftansvarig installera [IMPORT-17:s svarsförberedelse](household-recovery-console.md#import-17-förberedelse-1)
+   i den andra profilen. Invänta installationsbesked, aktivera sedan
+   **Slutför förberedelsens rensning**. Invänta driftansvarigs bekräftelse
+   att avbrottet är utfört och dess svar dolt innan nästa steg.
 5. Välj **Hämta importens status**. Det första lässvaret försvinner också;
    samma ID och spärrat filval ska finnas kvar. Välj status en gång till.
 6. Förberedelsen ska nu vara otillgänglig och filvalet tillgängligt.
    Detta ska inte presenteras som ett kvitto på avbrottet. Starta om
    servern och ladda om sidan. Kartan och det privata utkastet är kvar.
-
-```javascript
-const originalFetch = window.fetch;
-let cancelledId;
-let hideRead = true;
-window.fetch = async (...args) => {
-  const request = new Request(...args);
-  const url = new URL(request.url);
-  const cancelRoute = /\/imports\/[^/]+\/cancel$/.test(url.pathname);
-  if (request.method === 'POST' && cancelRoute) {
-    const response = await originalFetch(...args);
-    const result = await response.clone().json();
-    if (!response.ok || result.cancelled !== true) return response;
-    cancelledId = url.pathname.replace(/\/cancel$/, '');
-    console.log('Avbrott utfört, svar dolt');
-    throw new TypeError('Synthetic lost cancellation response');
-  }
-  if (request.method === 'GET' && url.pathname === cancelledId && hideRead) {
-    hideRead = false;
-    throw new TypeError('Synthetic failed status read');
-  }
-  return originalFetch(...args);
-};
-```
 
 **Förväntat resultat:**
 
@@ -788,22 +1042,57 @@ en ny klient utan att förlora en annan obekräftad granskning.
 **Förutsättningar:** Provinstallation och filrättigheter enligt IMPORT-17.
 Ingen ersättning bekräftas under provet.
 
+**Separat förberedelse:** Driftansvarig följer
+[filförberedelsens IMPORT-18-tidpunkter](household-recovery-filesystem.md#tidpunkter-för-import-18)
+med första granskningens ID. Den andra granskningens katalog ändras inte.
+
 **Integrationstest:**
 [household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
 testfallet “IMPORT-18: a fresh administrator client can find cancelled
 files even when another review is ready”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-cancel.spec.ts",
+    "caseId": "IMPORT-18"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Hitta och rensa en avbruten förberedelses kvarvarande filer i en ny klient utan att förlora en annan obekräftad granskning."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring."
+    },
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup",
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Kontrollera exportfilen i första profilen och anteckna ID.
 2. Öppna importen i andra profilen. Kontrollera samma fil på nytt och
    anteckna det nya ID:t. Den första profilens granskning ska vara kvar.
-3. Driftansvarig tar bort skrivbehörigheten från första förberedelsens
-   underkatalog (`chmod 500`). Avbryt den i första profilen och läs att
+3. Invänta **Rensningsfel förberett** enligt den separata förberedelsen.
+   Avbryt första granskningen i första profilen och läs att
    rensning återstår.
 4. Öppna importen i en helt ny flik utan kopierad fliklagring. Det första
    ID:t och dess väntande rensning ska gå att hitta. Filval är spärrat.
-5. Återställ första katalogens rättigheter (`chmod 700`) och välj
+5. Invänta **Rensning tillåten** enligt den separata förberedelsen och välj
    **Slutför förberedelsens rensning** i den nya fliken.
 6. Ladda om den nya fliken. Den andra granskningen ska finnas kvar med
    sitt eget ID och omarkerad bekräftelse. Avbryt även den uttryckligen.
@@ -830,40 +1119,39 @@ utvecklarverktygens Console för det kontrollerade fördröjda svaret.
 testfallet “IMPORT-19: a retired cancellation response cannot forget a
 newer preparation after Settings navigation”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-cancel.spec.ts",
+    "caseId": "IMPORT-19"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Behålla den aktuella förberedelsens ID när ett äldre avbrottssvar kommer tillbaka efter navigering i Inställningar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Kontrollera exportfilen och anteckna ID. Kör koden nedan och välj
-   **Avbryt förberedelsen**. Fortsätt när konsolen visar **Avbrottet är
-   utfört, svaret väntar**.
+1. Kontrollera exportfilen och anteckna ID. Be driftansvarig installera
+   [IMPORT-19:s svarsförberedelse](household-recovery-console.md#import-19-förberedelse-1)
+   och invänta installationsbesked. Välj **Avbryt förberedelsen**.
+   Invänta därefter besked att servern har utfört avbrottet och att det
+   gamla svaret hålls kvar, innan du navigerar.
 2. Öppna **Koppla historiskt innehåll** och återgå till importen. Hämta
    första försökets status och läs att förberedelsen inte finns längre.
-3. Kontrollera filen igen och anteckna det nya ID:t. Kör
-   `window.releaseImportReply()` i Console för att släppa det äldre svaret.
+3. Kontrollera filen igen och anteckna det nya ID:t. Läs den nya
+   granskningen innan du ber driftansvarig släppa det äldre svaret enligt
+   förberedelsen. Invänta besked att det gamla svaret har släppts.
 4. Ladda om sidan. Det nya ID:t ska finnas kvar med spärrat filval tills
    **Hämta importens status** läser just den nya förberedelsen.
 5. Läs den nya granskningen och avbryt den uttryckligen. Kartan ska vara
-   oförändrad genom hela provet. Omladdning återställer Console-koden.
-
-```javascript
-const originalFetch = window.fetch;
-const heldReply = new Promise((resolve) => {
-  window.releaseImportReply = resolve;
-});
-window.fetch = async (...args) => {
-  const request = new Request(...args);
-  const response = await originalFetch(...args);
-  const isCancel = /\/imports\/[^/]+\/cancel$/.test(new URL(request.url).pathname);
-  if (request.method === 'POST' && isCancel) {
-    window.fetch = originalFetch;
-    const result = await response.clone().json();
-    if (!response.ok || result.cancelled !== true) return response;
-    console.log('Avbrottet är utfört, svaret väntar');
-    await heldReply;
-    if (request.signal.aborted) throw new DOMException('Avbruten', 'AbortError');
-  }
-  return response;
-};
-```
+   oförändrad genom hela provet. Följ förberedelsens återställning.
 
 **Förväntat resultat:**
 
@@ -887,44 +1175,41 @@ utvecklarverktygens Console för den kontrollerade fördröjningen.
 testfallet “IMPORT-20: a retired unavailable status response cannot forget
 a newer preparation after Settings navigation”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-cancel.spec.ts",
+    "caseId": "IMPORT-20"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Behålla den aktuella förberedelsens ID när ett fördröjt svar om ett äldre, borttaget försök kommer efter navigering i Inställningar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Kontrollera exportfilen i första fliken och anteckna ID. Öppna
    importen i en andra flik med samma inloggning och avbryt just den
    förberedelsen där. Läs att tillfälliga filer är borttagna.
-2. Kör koden nedan i första fliken och välj **Hämta importens status**.
-   Fortsätt när konsolen visar **Försöket saknas, svaret väntar**.
+2. Be driftansvarig installera [IMPORT-20:s svarsförberedelse](household-recovery-console.md#import-20-förberedelse-1)
+   i första fliken och invänta installationsbesked. Välj
+   **Hämta importens status**. Invänta därefter besked att servern har
+   svarat att det gamla försöket saknas och att svaret hålls kvar.
 3. Öppna **Koppla historiskt innehåll** och återgå till importen i
    första fliken. Hämta status igen och läs att förberedelsen inte finns.
-4. Kontrollera filen på nytt och anteckna det nya ID:t. Kör
-   `window.releaseImportStatus()` i Console för att släppa det äldre svaret.
+4. Kontrollera filen på nytt och anteckna det nya ID:t. Läs den nya
+   granskningen innan du ber driftansvarig släppa det äldre svaret enligt
+   förberedelsen. Invänta besked att det gamla svaret har släppts.
 5. Ladda om sidan. Det nya ID:t ska finnas kvar med spärrat filval tills
    **Hämta importens status** läser just den nya förberedelsen.
 6. Läs granskningen och avbryt den uttryckligen. Kartan ska vara
-   oförändrad. Omladdning återställer Console-koden.
-
-```javascript
-const originalFetch = window.fetch;
-const heldStatus = new Promise((resolve) => {
-  window.releaseImportStatus = resolve;
-});
-window.fetch = async (...args) => {
-  const request = new Request(...args);
-  const response = await originalFetch(...args);
-  const isStatus = /\/imports\/[^/]+$/.test(new URL(request.url).pathname);
-  if (request.method === 'GET' && isStatus) {
-    window.fetch = originalFetch;
-    const result = await response.clone().json();
-    if (response.status !== 404 || result.error !== 'import_unavailable') {
-      return response;
-    }
-    console.log('Försöket saknas, svaret väntar');
-    await heldStatus;
-    if (request.signal.aborted) throw new DOMException('Avbruten', 'AbortError');
-  }
-  return response;
-};
-```
+   oförändrad. Följ förberedelsens återställning.
 
 **Förväntat resultat:**
 
@@ -950,57 +1235,80 @@ Stäng utvecklarverktygen. Alt+Skift+S blockerar skrivning,
 Alt+Skift+R blockerar borttagning och Alt+Skift+A tillåter båda igen.
 Ladda om efter fallet för att återställa webbläsarens vanliga funktioner.
 
-```js
-(() => {
-  const prefix = 'skyttel-import:';
-  const originalSet = Storage.prototype.setItem;
-  const originalRemove = Storage.prototype.removeItem;
-  let blocked = 'removeItem';
-  window.addEventListener('keydown', (event) => {
-    if (!event.altKey || !event.shiftKey) return;
-    if (event.code === 'KeyS') blocked = 'setItem';
-    else if (event.code === 'KeyR') blocked = 'removeItem';
-    else if (event.code === 'KeyA') blocked = '';
-    else return;
-    event.preventDefault();
-  });
-  Storage.prototype.setItem = function (key, value) {
-    if (key.startsWith(prefix) && blocked === 'setItem')
-      throw new DOMException('Kontrollerat lagringsfel', 'QuotaExceededError');
-    return originalSet.call(this, key, value);
-  };
-  Storage.prototype.removeItem = function (key) {
-    if (key.startsWith(prefix) && blocked === 'removeItem')
-      throw new DOMException('Kontrollerat lagringsfel', 'SecurityError');
-    return originalRemove.call(this, key);
-  };
-})();
-```
+Kör [den separata förberedelsen 1](household-recovery-console.md#import-21-förberedelse-1)
+för IMPORT-21 i det angivna läget.
 
 **Integrationstest:**
 [household-import-ui.spec.ts](../../tests/integration/household-import-ui.spec.ts),
 testfallet “IMPORT-21: unavailable recovery storage preserves the file,
 exact review and confirmed server result”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-import-ui.spec.ts",
+    "caseId": "IMPORT-21"
+  },
+  "reference": "Chromium på dator; separata verifierade profiler enligt förberedelsen.",
+  "outcomes": [
+    "Stoppa filkontroll eller ersättning när återhämtningsuppgifterna inte kan hanteras, utan att kalla ett verkligt svar för okänt."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Följ [IMPORT-21: förberedelse 1](household-recovery-console.md#import-21-förberedelse-1)
+med samma flik, valda ZIP-fil och hushåll genom hela felkedjan.
+Efter filvalet, före första Kontrollera importfil i UI-steg 1:
+installera det oförändrade utdraget och meddela **Borttagning ur
+importens återhämtningsminne blockeras**. Utdragets initiala läge är
+blockerad borttagning. Stäng utvecklarverktygen före filkontrollen.
+
+Före den andra filkontrollen i steg 2: tryck Alt+Skift+A och sedan
+Alt+Skift+S. Meddela **Lagringen återställd, sedan skrivning blockerad**.
+Behåll skrivfelet genom den verkliga färdiga granskningen och första
+Ersätt hushållets innehåll i steg 3; den ersättningen får inte starta.
+Återställ inte under läsningen av samma granskning och identifierare.
+
+Före ersättningen i steg 4: tryck Alt+Skift+A och sedan Alt+Skift+R.
+Meddela **Lagringen återställd, sedan borttagning blockerad**. Nu går
+den verkliga ersättningen igenom, med bekräftat resultat och separat
+lagringsfel. Ett saknat serversvar ersätter inte den här gränsen.
+
+Före Hämta importens status i steg 5: tryck Alt+Skift+A och meddela
+**Importens lagring är återställd**. Kontrollera samma kända slutförda
+import, inte en ny filkontroll eller ersättning. Ladda om efter sista
+innehållsläsningen för att återställa de vanliga lagringsfunktionerna;
+städa sedan provinstallationen och den privata ZIP-filen enligt guiden.
+
 **Steg:**
 
-1. Välj **Kontrollera importfil**. Läs meddelandet om
+1. Invänta operatörens bekräftelse av den installerade blockeringen.
+   Välj **Kontrollera importfil**. Läs meddelandet om
    **Webbläsarens återhämtningsminne**. Den valda filen och den användbara
    knappen ska finnas kvar; sidan får inte fastna i **Behandlar importen**.
-   Ingen filkontroll eller ersättning ska skickas i **Network**.
-2. Tryck Alt+Skift+A och sedan Alt+Skift+S. Välj
+   Kontrollera i den andra profilen att **Senare namn** finns kvar.
+2. Be operatören återställa lagringen och sedan blockera skrivning.
+   Invänta bekräftelse. Välj
    **Kontrollera importfil** igen. En verklig granskning med identifierare
    ska visas. Lagringsfelet visas separat; filkontrollens svar saknas inte.
 3. Markera **Jag vill ersätta allt hushållsinnehåll** och välj
    **Ersätt hushållets innehåll**. Läs att ingen ersättning har startats.
-   Ingen begäran till `/confirm` skickas och **Senare namn** finns kvar
-   i kartan. Välj **Hämta importens status**; samma identifierare och
+   **Senare namn** finns kvar i kartan. Välj **Hämta importens status**;
+   samma identifierare och
    granskning ska återkomma.
-4. Tryck Alt+Skift+A och sedan Alt+Skift+R. Välj
+4. Be operatören återställa lagringen och sedan blockera borttagning.
+   Invänta bekräftelse. Välj
    **Ersätt hushållets innehåll**. Nu ska den verkliga ersättningen
    slutföras. Bekräftelsen **Hushållets innehåll är ersatt** ska visas
    tillsammans med det separata lagringsfelet. Det är inte ett okänt utfall.
-5. Tryck Alt+Skift+A och välj **Hämta importens status**.
+5. Be operatören återställa lagringen och invänta bekräftelse. Välj
+   **Hämta importens status**.
    Lagringsfelet ska försvinna och samma slutförda resultat finnas kvar.
    Välj **Läs in det återställda hushållet** och kontrollera
    **Lampan i exporten**. Ingen andra filkontroll eller ersättning ska ske.
@@ -1014,3 +1322,237 @@ exact review and confirmed server result”.
   försök och en ny destruktiv begäran skickas inte automatiskt.
 - Automationen jämför hela kartan före ersättningen och verifierar exakt
   en filkontroll, en ersättning och den återställda objektinformationen.
+
+## Smala och korta återhämtningsvyer
+
+### IMPORT-22: återhämtningskontroller i 390×900
+
+**Syfte:** Mobilnavigation får inte dölja granskning, status eller nästa
+fokuserade kontroll.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Eget nytt provhushåll, privat utkast och export enligt
+IMPORT-15. Ställ fönstret till 390×900 CSS-pixlar före första steget.
+
+**Integrationstest:**
+[household-recovery-accessibility.spec.ts](../../tests/integration/household-recovery-accessibility.spec.ts),
+IMPORT-22.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-recovery-accessibility.spec.ts",
+    "caseId": "IMPORT-22"
+  },
+  "reference": "390×900, ljust och mörkt tema, minskad rörelse. Mobilnavigation får inte dölja granskning, status eller nästa fokuserade kontroll.",
+  "outcomes": [
+    "Fel och granskning behåller användbart fokus.",
+    "Utkastet bevaras vid avbrott, ersättning och uttrycklig innehållskoppling."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Kör [IMPORT-15](#import-15-tangentbord-genom-fel-granskning-och-innehållskoppling)
+   en gång i den angivna bredden. I steg 1 öppnar du **Välj inställning**
+   före sidvalet. Under steg 2–6 följer du fel, granskning, avbrott och
+   ersättning; den fokuserade kontrollen ska vara synlig och nåbar.
+2. Under basfallets steg 7–8 öppnar du inställningsmenyn före sidbytet.
+   Läs hela identitetsgranskningen utanför vallistorna, nå bekräftelsen
+   och kontrollera utkastet efter varje uttryckligt byte.
+3. Basfallets steg 9 kör samma följd i det andra temat. Kontrollera under
+   respektive steg att inget behöver rullas i sidled och att vald sida,
+   knappar och status går att läsa. Börja inte om redan utförda steg
+   efter att basfallet avslutats.
+
+**Förväntat resultat:**
+
+- Mobilnavigation får inte dölja granskning, status eller nästa fokuserade
+  kontroll.
+- Samma privata arbete bevaras utan sammanslagning. Detta är ett prov av
+  CSS-vy och webbläsarfokus; det verifierar inte fysisk mobilutrustning,
+  verklig zoom eller skärmläsarens uppläsning.
+
+### IMPORT-23: återhämtningskontroller i 320×900
+
+**Syfte:** Den smalaste vyn får inte klippa granskning eller kräva rullning i
+sidled.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Eget nytt provhushåll, privat utkast och export enligt
+IMPORT-15. Ställ fönstret till 320×900 CSS-pixlar före första steget.
+
+**Integrationstest:**
+[household-recovery-accessibility.spec.ts](../../tests/integration/household-recovery-accessibility.spec.ts),
+IMPORT-23.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-recovery-accessibility.spec.ts",
+    "caseId": "IMPORT-23"
+  },
+  "reference": "320×900, ljust och mörkt tema, minskad rörelse. Den smalaste vyn får inte klippa granskning eller kräva rullning i sidled.",
+  "outcomes": [
+    "Fel och granskning behåller användbart fokus.",
+    "Utkastet bevaras vid avbrott, ersättning och uttrycklig innehållskoppling."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Kör [IMPORT-15](#import-15-tangentbord-genom-fel-granskning-och-innehållskoppling)
+   en gång i den angivna bredden. I steg 1 öppnar du **Välj inställning**
+   före sidvalet. Under steg 2–6 följer du fel, granskning, avbrott och
+   ersättning; den fokuserade kontrollen ska vara synlig och nåbar.
+2. Under basfallets steg 7–8 öppnar du inställningsmenyn före sidbytet.
+   Läs hela identitetsgranskningen utanför vallistorna, nå bekräftelsen
+   och kontrollera utkastet efter varje uttryckligt byte.
+3. Basfallets steg 9 kör samma följd i det andra temat. Kontrollera under
+   respektive steg att inget behöver rullas i sidled och att vald sida,
+   knappar och status går att läsa. Börja inte om redan utförda steg
+   efter att basfallet avslutats.
+
+**Förväntat resultat:**
+
+- Den smalaste vyn får inte klippa granskning eller kräva rullning i sidled.
+- Samma privata arbete bevaras utan sammanslagning. Detta är ett prov av
+  CSS-vy och webbläsarfokus; det verifierar inte fysisk mobilutrustning,
+  verklig zoom eller skärmläsarens uppläsning.
+
+### IMPORT-24: återhämtningskontroller i 640×500
+
+**Syfte:** Det korta fönstret får inte dölja bekräftelse, rensning eller
+återhämtningsfokus.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Eget nytt provhushåll, privat utkast och export enligt
+IMPORT-15. Ställ fönstret till 640×500 CSS-pixlar före första steget.
+
+**Integrationstest:**
+[household-recovery-accessibility.spec.ts](../../tests/integration/household-recovery-accessibility.spec.ts),
+IMPORT-24.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-recovery-accessibility.spec.ts",
+    "caseId": "IMPORT-24"
+  },
+  "reference": "640×500, ljust och mörkt tema, minskad rörelse. Det korta fönstret får inte dölja bekräftelse, rensning eller återhämtningsfokus.",
+  "outcomes": [
+    "Fel och granskning behåller användbart fokus.",
+    "Utkastet bevaras vid avbrott, ersättning och uttrycklig innehållskoppling."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Kör [IMPORT-15](#import-15-tangentbord-genom-fel-granskning-och-innehållskoppling)
+   en gång i den angivna bredden. I steg 1 öppnar du **Välj inställning**
+   före sidvalet. Under steg 2–6 följer du fel, granskning, avbrott och
+   ersättning; den fokuserade kontrollen ska vara synlig och nåbar.
+2. Under basfallets steg 7–8 öppnar du inställningsmenyn före sidbytet.
+   Läs hela identitetsgranskningen utanför vallistorna, nå bekräftelsen
+   och kontrollera utkastet efter varje uttryckligt byte.
+3. Basfallets steg 9 kör samma följd i det andra temat. Kontrollera under
+   respektive steg att inget behöver rullas i sidled och att vald sida,
+   knappar och status går att läsa. Börja inte om redan utförda steg
+   efter att basfallet avslutats.
+
+**Förväntat resultat:**
+
+- Det korta fönstret får inte dölja bekräftelse, rensning eller
+  återhämtningsfokus.
+- Samma privata arbete bevaras utan sammanslagning. Detta är ett prov av
+  CSS-vy och webbläsarfokus; det verifierar inte fysisk mobilutrustning,
+  verklig zoom eller skärmläsarens uppläsning.
+
+### IMPORT-25: läs hela innehållskopplingen med verklig webbläsarzoom
+
+**Syfte:** Bevara den mänskliga kontrollen av fullständiga identiteter vid
+förstoring, skild från automationens smala CSS-vyer.
+
+**Användare:** Alex som administratör på en dator med tangentbord.
+
+**Förutsättningar:** Eget provhushåll med privat utkast och fullständig
+export enligt IMPORT-15. Ställ först webbläsarfönstret till 1280×900 och
+normal zoom. Använd webbläsarens verkliga zoomkontroll, utan CSS-skalning.
+
+**Kräver mänsklig observation:** Med faktisk webbläsarzoom och tangentbord
+ska människan läsa hela den valda historiska identitetens namn och ID och
+den avsedda aktuella medlemmens namn och ID utanför vallistorna. Valet och
+bekräftelsen ska kunna nås och utföras utan klippt text.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Använd verklig webbläsarzoom med tangentbord och läs båda fullständiga identiteterna utanför vallistorna före ett uttryckligt ägarbyte."
+  },
+  "reference": "Dator, 1280×900 före verklig 200 procent webbläsarzoom; ljust och mörkt tema.",
+  "outcomes": ["Hela valda identiteter går att läsa och bekräfta med verklig zoom och tangentbord."],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/household-recovery-accessibility.spec.ts",
+      "caseId": "IMPORT-24",
+      "purpose": "Syntetisk 640px-vy kontrollerar native fokus och läsbar granskning, utan att utföra verklig webbläsarzoom."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Kör IMPORT-15 en gång i det angivna fönstret. Följ dess vanliga
+   fel-, import- och avbrottssteg utan att upprepa dem efter slutläget.
+2. Under basfallets steg 7–8: välj 200 procent i webbläsarens zoommeny.
+   Läs båda hela identiteterna utanför vallistorna före varje bekräftelse.
+   Flytta fokus med Tab och genomför det uttryckliga valet med
+   mellanslag och Enter. Kontrollera att hela granskningen går att läsa
+   och att knappen går att nå. Återställ normal zoom efter steg 8.
+3. Under basfallets steg 9 gör du samma zoomkontroll vid innehållskopplingen
+   i det andra temat. Återställ normal zoom när fallet avslutas.
+
+**Förväntat resultat:**
+
+- Förstoring klipper inte identiteter, granskning eller nästa kontroll.
+  Båda uttryckliga bytena bevarar det privata arbetet.
+- Anteckna verklig webbläsare, zoom, tangentbord och mänskligt resultat.
+  Den överlappande automationen utför inte denna observation och bevisar
+  ingen skärmläsaruppläsning.
+
+## Identiteter och automatiskt underlag
+
+IMPORT-15 behåller 1280×900. De övriga upptäckta breddvarianterna har
+egna identiteter IMPORT-22–24. IMPORT-02–05 används inte av dessa fall
+och återanvänds inte. Inga fall eller ursprungliga skydd tas bort här.
+IMPORT-25 bevarar den särskilda mänskliga zoomkontrollen från granskningen.
+IMPORT-07:s request-kontroll är separat tekniskt underlag; det vanliga
+fallet använder typ- och objektformulär, återimport och Rapporter.
+Automationen kontrollerar även exakta kvitton, innehållsversioner,
+bildbyte och sparbegäranden. Dessa jämförelser är tekniskt underlag,
+inte krav på att en människa läser interna svar under UI-stegen.

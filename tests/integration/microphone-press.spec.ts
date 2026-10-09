@@ -288,7 +288,7 @@ test('MIKROFONTRYCK-02: ett långt tryck utan medgivande gör som ett kort och s
 
 for (const mac of [false, true])
   test.describe(mac ? 'macOS' : 'Windows och Linux', () => {
-    test('MIKROFONTRYCK-03: tangentkombinationen har samma korta och långa tryck', async ({
+    test(`${mac ? 'MIKROFONTRYCK-09' : 'MIKROFONTRYCK-03'}: tangentkombinationen har samma korta och långa tryck`, async ({
       page,
     }) => {
       const { app } = await installation(page, mac);
@@ -342,6 +342,19 @@ test.describe('bred pekskärm med minskad rörelse', () => {
       const touch = await page.context().newCDPSession(page);
       const box = await microphone(page).boundingBox();
       if (!box) throw Error('Missing microphone');
+      // Normal touch release remains a distinct boundary from touchCancel.
+      await touch.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: [{ x: box.x + box.width / 2, y: box.y + box.height / 2, id: 6 }],
+      });
+      await expect.poll(async () => (await tracks(page))[0].enabled).toBe(true);
+      await touch.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: 700, y: 500, id: 6 }],
+      });
+      await expect(microphone(page)).toHaveAttribute('aria-pressed', 'true');
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await expect(microphone(page)).toHaveAttribute('aria-pressed', 'false');
       await touch.send('Input.dispatchTouchEvent', {
         type: 'touchStart',
         touchPoints: [{ x: box.x + box.width / 2, y: box.y + box.height / 2, id: 7 }],
@@ -371,6 +384,10 @@ test.describe('bred pekskärm med minskad rörelse', () => {
       await touch.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
       await expect(microphone(page)).toHaveAttribute('aria-pressed', 'false');
       await touch.detach();
+      await expect(microphone(page)).toHaveAttribute('aria-pressed', 'false');
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      await expect(microphone(page)).toHaveAttribute('aria-pressed', 'true');
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
       await expect(microphone(page)).toHaveAttribute('aria-pressed', 'false');
     } finally {
       await app.close();

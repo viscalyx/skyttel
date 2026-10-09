@@ -7,9 +7,10 @@ import {
   openMap,
   openTable,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
-import { editTableObject } from '../support/domain-work.js';
+import { editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 test('STORKARTA-01: dense overview keeps readable labels and every object and relationship reachable', async ({
@@ -178,8 +179,33 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     expect(await (await page.request.get(`${path}/view`)).json()).toEqual(personal);
     const { history } = await (await page.request.get(`${path}/history`)).json();
     expect(history.at(-1).changes[0].after.description).toBe('Oskickad text i den täta kartan');
+    await table
+      .getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true })
+      .fill('Provobjekt 499');
+    await expect(await readTableObject(page, 'Provobjekt 499')).toContainText(
+      'Oskickad text i den täta kartan',
+    );
+    await (await utilityButton(page, 'Rapporter')).click();
+    const reports = page.getByRole('region', { name: 'Rapporter', exact: true });
+    const savedChange = reports
+      .getByRole('region', { name: 'Ändringshistorik', exact: true })
+      .getByRole('article')
+      .first();
+    await expect(savedChange).toContainText('Provobjekt 499');
+    await savedChange.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(savedChange).toContainText('Oskickad text i den täta kartan');
+    await reports.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     const anonymous = await browser.newContext();
     try {
+      const anonymousPage = await anonymous.newPage();
+      await anonymousPage.goto(installation.origin);
+      await expect(
+        anonymousPage.getByRole('heading', { name: 'Välkommen till Skyttel', exact: true }),
+      ).toBeVisible();
+      await expect(
+        anonymousPage.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+      ).not.toBeVisible();
+      await expect(anonymousPage.getByText('Provobjekt 499', { exact: true })).toHaveCount(0);
       expect((await anonymous.request.get(path)).status()).toBe(401);
       expect((await anonymous.request.get(`${path}/view`)).status()).toBe(401);
     } finally {

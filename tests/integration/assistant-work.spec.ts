@@ -10,7 +10,11 @@ import {
   signIn,
 } from '../support/client.js';
 import { openSavedHistory } from '../support/conversation-page.js';
-import { editTableObject, openObjectRelationships } from '../support/domain-work.js';
+import {
+  editTableObject,
+  openObjectRelationships,
+  readDraftProposal,
+} from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 async function connection(actor: APIRequestContext, origin: string, householdId: string) {
@@ -79,6 +83,43 @@ test('AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärend
     expect(savedMap.relationshipTypes.map((type: { name: string }) => type.name)).toEqual(
       expect.arrayContaining(['Betalar', 'Står på avtalet', 'Betalas med']),
     );
+    const names = new Map<string, string>(
+      [...savedMap.objects, ...savedMap.contextObjects].map(
+        (object: { id: string; name: string }) => [object.id, object.name],
+      ),
+    );
+    expect(
+      savedMap.relationships.map(
+        (edge: { sourceId: string; targetId: string; typeId: string; knowledge: string }) => ({
+          source: names.get(edge.sourceId),
+          target: names.get(edge.targetId),
+          type: savedMap.relationshipTypes.find((type: { id: string }) => type.id === edge.typeId)
+            .name,
+          knowledge: edge.knowledge,
+        }),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          source: 'Familjens Molnmusik',
+          target: 'Alex Exempel',
+          type: 'Står på avtalet',
+          knowledge: 'known',
+        },
+        {
+          source: 'Kim Exempel',
+          target: 'Familjens Molnmusik',
+          type: 'Betalar',
+          knowledge: 'known',
+        },
+        {
+          source: 'Familjens Molnmusik',
+          target: 'Familjens musikkort',
+          type: 'Betalas med',
+          knowledge: 'known',
+        },
+      ]),
+    );
     const { id, revision, householdId: _household, ...value } = savedMap.objects[0];
     review = await tool(app.origin, token, 'propose_object', {
       version: review.version,
@@ -120,6 +161,26 @@ test('AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärend
     const subscription = await editTableObject(page, 'Familjens Molnmusik');
     await subscription.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await expect(subscription.getByLabel('Pris', { exact: true })).toHaveValue('189');
+    await expect(subscription.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Familjeabonnemang, 189 kr per månad.',
+    );
+    for (const [label, value] of [
+      ['Pris', '189'],
+      ['Valuta', 'SEK'],
+      ['Betalningsintervall', 'månad'],
+    ]) {
+      await expect(subscription.getByLabel(label, { exact: true })).toHaveValue(value);
+      await expect(
+        subscription.getByLabel(`${label}: uppgiftens säkerhet`, { exact: true }),
+      ).toHaveValue('known');
+    }
+    await page.keyboard.press('Escape');
+    const loForm = await editTableObject(page, 'Lo Lind');
+    await expect(loForm.getByLabel('Namn', { exact: true })).toHaveValue('Lo Lind');
+    await expect(loForm.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Spelar piano i musikföreningen.',
+    );
+    await page.keyboard.press('Escape');
     const lo = await tool(app.origin, token, 'read_map', { query: 'Lo Lind' });
     expect(lo.objects).toEqual(
       expect.arrayContaining([
@@ -189,6 +250,12 @@ test('AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparan
     await page.reload();
     await openTable(page);
     await expect(await openDraftReview(page)).toContainText('Utkastet är tomt.');
+    for (const name of ['Lo Exempel', 'Kim Exempel']) {
+      const person = await editTableObject(page, name);
+      await expect(person.getByLabel('Namn', { exact: true })).toHaveValue(name);
+      await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
+      await page.keyboard.press('Escape');
+    }
   } finally {
     await app.close();
   }
@@ -208,6 +275,20 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(await openDraftReview(page)).toContainText('Lo Exempel');
+    const proposal = await readDraftProposal(page, 'Lo Exempel');
+    for (const [label, value] of [
+      ['Namn', 'Lo Exempel'],
+      ['Typ', 'Person'],
+      ['Beskrivning', 'Ej uppgivet'],
+    ])
+      await expect(
+        proposal
+          .locator('dt')
+          .filter({ hasText: new RegExp(`^${label}$`) })
+          .locator('..')
+          .locator('dd'),
+      ).toHaveText(value);
+    await page.keyboard.press('Escape');
     const review = await tool(app.origin, token, 'read_my_draft');
     const attempt = {
       version: review.version,
@@ -249,12 +330,41 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     expect(outcome).toBe('unknown');
     expect(committedReceipt?.operationId).toBe(attempt.operationId);
     await page.unroute('**/mcp');
+    await page.reload();
+    await openTable(page);
+    const committedPerson = await editTableObject(page, 'Lo Exempel');
+    await expect(committedPerson.getByLabel('Objekttyp').locator('option:checked')).toHaveText(
+      'Person',
+    );
+    await expect(committedPerson.getByLabel('Namn', { exact: true })).toHaveValue('Lo Exempel');
+    await expect(committedPerson.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
+    await page.keyboard.press('Escape');
     await app.restart();
     const recoveredToken = await connection(page.request, app.origin, household.id);
     const recovered = await tool(app.origin, recoveredToken, 'read_save_operation', {
       operationId: attempt.operationId,
     });
     expect(recovered.operation).toMatchObject({ status: 'succeeded', receipt: committedReceipt });
+    await page.reload();
+    const recoveredHistory = await openSavedHistory(page);
+    await expect(recoveredHistory.getByRole('article')).toHaveCount(1);
+    await expect(recoveredHistory).toContainText('Lo Exempel');
+    await recoveredHistory
+      .getByText('Identifiera sparandet och användaren', { exact: true })
+      .click();
+    await expect(recoveredHistory).toContainText(attempt.operationId);
+    await expect(
+      recoveredHistory.getByText(`Skyttel-användare: ${committedReceipt?.userId}.`, {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      recoveredHistory.getByText(`Tidpunkt: ${committedReceipt?.savedAt}`, { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole('region', { name: 'Rapporter', exact: true })
+      .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })
+      .click();
     expect(await tool(app.origin, recoveredToken, 'save_draft', attempt)).toEqual({
       receipt: committedReceipt,
     });
@@ -264,11 +374,22 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     expect(history.history).toEqual([committedReceipt]);
     await page.reload();
     await openTable(page);
+    const person = await editTableObject(page, 'Lo Exempel');
+    await expect(person.getByLabel('Objekttyp').locator('option:checked')).toHaveText('Person');
+    await expect(person.getByLabel('Namn', { exact: true })).toHaveValue('Lo Exempel');
+    await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
+    await page.keyboard.press('Escape');
     const savedHistory = await openSavedHistory(page);
     await expect(savedHistory.getByRole('article')).toHaveCount(1);
     await expect(savedHistory).toContainText('Lo Exempel');
     await savedHistory.getByText('Identifiera sparandet och användaren', { exact: true }).click();
     await expect(savedHistory).toContainText(attempt.operationId);
+    await expect(
+      savedHistory.getByText(`Skyttel-användare: ${committedReceipt?.userId}.`, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      savedHistory.getByText(`Tidpunkt: ${committedReceipt?.savedAt}`, { exact: true }),
+    ).toBeVisible();
     await page
       .getByRole('region', { name: 'Rapporter', exact: true })
       .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })
@@ -318,6 +439,13 @@ test('AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kasta
     await openTable(page);
     await openDraftReview(page);
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
+    const unresolved = await readDraftProposal(page, 'Betalkonto');
+    await expect(unresolved).toContainText('Identiteten behöver redas ut');
+    await expect(unresolved).toContainText('Bankkonto');
+    await page.keyboard.press('Escape');
+    const independent = await readDraftProposal(page, 'Hushållskonto');
+    await expect(independent).toContainText('Bankkonto');
+    await page.keyboard.press('Escape');
     review = await tool(app.origin, token, 'propose_object', {
       version: review.version,
       contentVersion: review.contentVersion,
@@ -351,6 +479,8 @@ test('AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kasta
     await expect(page.getByRole('button', { name: 'Hushållskonto', exact: true })).toHaveCount(0);
     const account = await editTableObject(page, 'Betalkonto');
     await expect(account.getByLabel('Identitet')).toHaveValue('unspecified');
+    await expect(account.getByLabel('Namn', { exact: true })).toHaveValue('Betalkonto');
+    await expect(account.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
   } finally {
     await app.close();
   }

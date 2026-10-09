@@ -339,6 +339,26 @@ test('BILD-03: private, historical and known image addresses enforce current hou
       before: { profileImageId: first },
       after: { profileImageId: replacementId },
     });
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
+    const replacementCard = page
+      .getByRole('region', { name: 'Ändringshistorik', exact: true })
+      .getByRole('article')
+      .first();
+    await replacementCard.getByText('Visa ändringarna', { exact: true }).click();
+    const historicalImages = replacementCard.getByAltText('Profilbild för Lo Exempel');
+    await expect(historicalImages).toHaveCount(2);
+    for (const [index, id] of [first, replacementId].entries()) {
+      const image = historicalImages.nth(index);
+      await expect(image).toBeVisible();
+      await expect(image).toHaveAttribute('src', new RegExp(`/profile-images/${id}$`));
+      await expect
+        .poll(() =>
+          image.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0),
+        )
+        .toBe(true);
+    }
+    expect(await read()).toEqual(replaced);
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     // The old image is retained only through history; the replacement is current.
     for (const id of [first, replacementId])
       expect((await second.request.get(`${images}/${id}`)).status()).toBe(200);
@@ -371,6 +391,10 @@ test('BILD-03: private, historical and known image addresses enforce current hou
     for (const id of imageIds)
       expect((await second.request.get(`${images}/${id}`)).status()).toBe(403);
     installation.seedMembership(user.id, 'elsewhere', 'Annat hushåll');
+    expect(
+      (await second.request.get(`${installation.origin}/api/households/elsewhere/map`)).status(),
+    ).toBe(200);
+    expect((await second.request.get(path)).status()).toBe(403);
     for (const id of imageIds)
       expect(
         (

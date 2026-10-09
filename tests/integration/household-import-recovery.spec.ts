@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
+import {
+  expectRecoveryContent,
+  reloadRestoredHousehold,
+  seedRecoveryContent,
+} from '../support/household-recovery-reading.js';
 import { createInstallation } from '../support/installation.js';
 
 test('IMPORT-08: an unavailable prepared archive allows fresh review after restart without changing content', async ({
@@ -11,6 +16,7 @@ test('IMPORT-08: an unavailable prepared archive allows fresh review after resta
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}`;
     const headers = { origin: installation.origin };
+    await seedRecoveryContent(page.request, path, 'Senare namn');
     const before = await (await page.request.get(`${path}/map`)).json();
     const exported = await page.request.post(`${path}/exports`, { headers, data: {} });
     expect(exported.status()).toBe(201);
@@ -31,6 +37,10 @@ test('IMPORT-08: an unavailable prepared archive allows fresh review after resta
     await expect(input).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Hämta importens status' })).toHaveCount(0);
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await expectRecoveryContent(reader, 'Senare namn');
+    await reader.close();
     await input.setInputFiles(file);
     await page.getByRole('button', { name: 'Kontrollera importfil' }).click();
     const replace = page.getByRole('button', { name: 'Ersätt hushållets innehåll' });
@@ -39,6 +49,8 @@ test('IMPORT-08: an unavailable prepared archive allows fresh review after resta
     await replace.click();
     await expect(page.getByText(/Hushållets innehåll är ersatt/)).toBeVisible();
     expect((await (await page.request.get(`${path}/map`)).json()).contentVersion).toBe(2);
+    await reloadRestoredHousehold(page);
+    await expectRecoveryContent(page, 'Senare namn');
   } finally {
     await installation.close();
   }

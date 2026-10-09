@@ -1,16 +1,306 @@
 import { expect, test } from '@playwright/test';
-import type { SaveReceipt } from '../../src/shared/map.js';
+import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import {
   closeSupportDialog,
   closeTextView,
   createHousehold,
+  openDraftReview,
+  openMap,
   openNewObject,
   openTable,
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
-import { createInstallation } from '../support/installation.js';
+import { createInstallation, robin } from '../support/installation.js';
+
+test('AVTAL-04: dated financial proposals recover and a zero credit correction survives restart', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    await page.goto(installation.origin);
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Exempelkredit');
+    await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Kreditavtal' });
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    for (const [label, knowledge, value, date] of [
+      ['Senast uppgiven skuld', 'uncertain', '125 000,50', '2026-09-01'],
+      ['Beviljat kreditutrymme', 'known', '80 000', '2026-08-01'],
+      ['Utnyttjad kredit', 'known', '12 500', '2026-09-02'],
+    ]) {
+      await page.getByLabel(`${label}: uppgiftens säkerhet`).selectOption(knowledge);
+      await page.getByLabel(label, { exact: true }).fill(value);
+      await page.getByLabel(`${label}: datum för uppgiften`).fill(date);
+    }
+    await page.getByLabel('Valuta: uppgiftens säkerhet').selectOption('known');
+    await page.getByLabel('Valuta', { exact: true }).fill('SEK');
+    await page.getByLabel('Pris: uppgiftens säkerhet').selectOption('unknown');
+    await page.getByLabel('Avtalsvillkor: uppgiftens säkerhet').selectOption('none');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const before = await (await page.request.get(path)).json();
+    await installation.restart();
+    await page.reload();
+    const proposal = await readDraftProposal(page, 'Exempelkredit');
+    for (const text of [
+      '125 000,50',
+      '2026-09-01',
+      '80 000',
+      '2026-08-01',
+      '12 500',
+      '2026-09-02',
+      'Osäkert uppgivet',
+      'Okänt',
+      'Uttryckligen inget',
+    ])
+      await expect(proposal).toContainText(text);
+    expect((await (await page.request.get(path)).json()).draft).toEqual(before.draft);
+    await closeSupportDialog(page, 'Exempelkredit');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await editTableObject(page, 'Exempelkredit');
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await page.getByLabel('Utnyttjad kredit', { exact: true }).fill('0');
+    await page.getByLabel('Utnyttjad kredit: datum för uppgiften').fill('2026-09-20');
+    await expect(page.getByLabel('Utnyttjad kredit: uppgiftens säkerhet')).toHaveValue('known');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const correction = await readDraftProposal(page, 'Exempelkredit');
+    await expect(correction).toContainText('12 500');
+    await expect(correction).toContainText('2026-09-20');
+    for (const [title, usedCredit] of [
+      ['Sparade värden', '12 500 · datum för uppgiften: 2026-09-02'],
+      ['Föreslagna värden', '0 · datum för uppgiften: 2026-09-20'],
+    ]) {
+      const side = correction
+        .locator('section')
+        .filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+      for (const [label, value] of [
+        [
+          'Senast uppgiven skuld',
+          '125 000,50 (Osäkert uppgivet) · datum för uppgiften: 2026-09-01',
+        ],
+        ['Beviljat kreditutrymme', '80 000 · datum för uppgiften: 2026-08-01'],
+        ['Utnyttjad kredit', usedCredit],
+        ['Valuta', 'SEK'],
+        ['Pris', 'Okänt'],
+        ['Avtalsvillkor', 'Uttryckligen inget'],
+      ]) {
+        const field = side
+          .locator('dt')
+          .filter({ hasText: new RegExp(`^${label}(?: · ändrat)?$`) })
+          .locator('..')
+          .locator('dd');
+        await expect(field).toHaveText(value);
+      }
+    }
+    await closeSupportDialog(page, 'Exempelkredit');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await installation.restart();
+    await page.reload();
+    await editTableObject(page, 'Exempelkredit');
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await expect(page.getByLabel('Utnyttjad kredit', { exact: true })).toHaveValue('0');
+    await expect(page.getByLabel('Utnyttjad kredit: datum för uppgiften')).toHaveValue(
+      '2026-09-20',
+    );
+    await expect(page.getByLabel('Senast uppgiven skuld', { exact: true })).toHaveValue(
+      '125 000,50',
+    );
+    await expect(page.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet')).toHaveValue(
+      'uncertain',
+    );
+    await expect(page.getByLabel('Senast uppgiven skuld: datum för uppgiften')).toHaveValue(
+      '2026-09-01',
+    );
+    await expect(page.getByLabel('Beviljat kreditutrymme', { exact: true })).toHaveValue('80 000');
+    await expect(page.getByLabel('Beviljat kreditutrymme: datum för uppgiften')).toHaveValue(
+      '2026-08-01',
+    );
+    await expect(page.getByLabel('Pris: uppgiftens säkerhet')).toHaveValue('unknown');
+    await expect(page.getByLabel('Avtalsvillkor: uppgiftens säkerhet')).toHaveValue('none');
+    const { history }: { history: SaveReceipt[] } = await (
+      await page.request.get(`${path}/history`)
+    ).json();
+    expect(history).toHaveLength(2);
+    expect(history[0].changes[0].before?.id).toBe(history[1].changes[0].after?.id);
+    expect(history[0].changes[0].after?.financialFacts?.usedCredit?.value).toBe('0');
+  } finally {
+    await installation.close();
+  }
+});
+
+test('AVTAL-07: a known debt without a form value preserves the independent draft', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+    await page.goto(installation.origin);
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Ofullständigt åtagande');
+    await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Låneavtal' });
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const before = await read();
+    await openNewObject(page);
+    const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+    await form.getByLabel('Namn', { exact: true }).fill('Felaktigt åtagande');
+    await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Låneavtal' });
+    await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await form.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet').selectOption('known');
+    await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const errors = form.getByRole('alert', { name: 'Formuläret innehåller fel' });
+    await expect(errors).toBeFocused();
+    await errors.getByRole('link', { name: /^Senast uppgiven skuld:/ }).click();
+    await expect(form.getByLabel('Senast uppgiven skuld', { exact: true })).toBeFocused();
+    await expect(form.getByLabel('Senast uppgiven skuld', { exact: true })).toHaveValue('');
+    await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Felaktigt åtagande');
+    expect(await read()).toEqual(before);
+    await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+    const draft = await openDraftReview(page);
+    await expect(draft).toContainText('Ofullständigt åtagande');
+    await expect(draft).not.toContainText('Felaktigt åtagande');
+    await saveReviewedConflictDraft(page);
+    const saved = await read();
+    expect(saved.objects).toHaveLength(1);
+    expect(saved.objects[0]).toMatchObject({ name: 'Ofullständigt åtagande' });
+    expect(saved.objects[0]).not.toHaveProperty('financialFacts');
+  } finally {
+    await installation.close();
+  }
+});
+
+test('AVTAL-08: browser conflict choices combine dated debt with another members independent facts', async ({
+  page,
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const other = await browser.newContext();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const read = async (client = page.request): Promise<MapState> =>
+      (await client.get(path)).json();
+    const post = (route: string, data: unknown, client = page.request) =>
+      client.post(`${path}/${route}`, { headers: { origin: installation.origin }, data });
+    installation.setIdentity(robin);
+    await signIn(other.request, installation.origin);
+    const { user } = await (await other.request.get(`${installation.origin}/api/bootstrap`)).json();
+    const { code } = await (
+      await page.request.post(`${path.replace('/map', '')}/invitations`, {
+        headers: { origin: installation.origin },
+        data: { userId: user.id },
+      })
+    ).json();
+    expect(
+      (
+        await other.request.post(`${installation.origin}/api/invitations/accept`, {
+          headers: { origin: installation.origin },
+          data: { code },
+        })
+      ).status(),
+    ).toBe(200);
+    const initial = await read();
+    const value = {
+      typeId: initial.types.find((type) => type.name === 'Låneavtal')?.id,
+      name: 'Exempellån',
+      description: '',
+      financialFacts: {
+        debt: { knowledge: 'uncertain', value: '150000', reportedOn: '2026-08-01' },
+        creditLimit: { knowledge: 'known', value: '200000' },
+        terms: { knowledge: 'known', value: 'Preliminära villkor' },
+      },
+    };
+    expect(
+      (await post('draft', { version: 0, id: 'loan', baseRevision: null, value })).status(),
+    ).toBe(200);
+    expect((await post('save', { version: 1, operationId: 'initial' })).status()).toBe(200);
+    await page.goto(installation.origin);
+    await editTableObject(page, 'Exempellån');
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await page.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet').selectOption('known');
+    await page.getByLabel('Senast uppgiven skuld', { exact: true }).fill('140000');
+    await page.getByLabel('Senast uppgiven skuld: datum för uppgiften').fill('2026-09-01');
+    await page.getByLabel('Avtalsvillkor: uppgiftens säkerhet').selectOption('');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Lo');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    expect((await read(other.request)).draft.changes).toEqual([]);
+    const otherPage = await other.newPage();
+    await otherPage.goto(installation.origin);
+    await editTableObject(otherPage, 'Exempellån');
+    await otherPage.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await otherPage.getByLabel('Beviljat kreditutrymme', { exact: true }).fill('250000');
+    await otherPage.getByLabel('Valuta: uppgiftens säkerhet').selectOption('known');
+    await otherPage.getByLabel('Valuta', { exact: true }).fill('SEK');
+    await otherPage.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await saveReviewedConflictDraft(otherPage);
+    const before = await read();
+    const draft = await openDraftReview(page);
+    await draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Spara utkastet', exact: true })).toContainText(
+      'Utkastet kunde inte sparas',
+    );
+    expect((await read()).draft).toEqual(before.draft);
+    expect((await read()).objects).toHaveLength(1);
+    await page.keyboard.press('Escape');
+    await closeTextView(page);
+    await openMap(page);
+    await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+    await openTable(page);
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await conflict.getByRole('button', { name: /^Senast uppgiven skuld: Ditt förslag/ }).click();
+    await conflict
+      .getByRole('button', { name: /^Beviljat kreditutrymme: Sparat i kartan nu/ })
+      .click();
+    await conflict.getByRole('button', { name: /^Valuta: Sparat i kartan nu/ }).click();
+    await conflict.getByRole('button', { name: /^Avtalsvillkor: Ditt förslag/ }).click();
+    await conflict.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
+    await expect(conflict.getByRole('status')).toContainText('Valen finns');
+    const expectedFacts = {
+      debt: { knowledge: 'known', value: '140000', reportedOn: '2026-09-01' },
+      creditLimit: { knowledge: 'known', value: '250000' },
+      currency: { knowledge: 'known', value: 'SEK' },
+    };
+    expect((await read()).objects).toEqual(before.objects);
+    expect(
+      (await read()).draft.changes.find((change) => change.id === 'loan')?.after?.financialFacts,
+    ).toEqual(expectedFacts);
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await installation.restart();
+    await page.reload();
+    const form = await editTableObject(page, 'Exempellån');
+    await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await expect(form.getByLabel('Senast uppgiven skuld', { exact: true })).toHaveValue('140000');
+    await expect(form.getByLabel('Senast uppgiven skuld: datum för uppgiften')).toHaveValue(
+      '2026-09-01',
+    );
+    await expect(form.getByLabel('Beviljat kreditutrymme', { exact: true })).toHaveValue('250000');
+    await expect(form.getByLabel('Valuta', { exact: true })).toHaveValue('SEK');
+    await expect(form.getByLabel('Avtalsvillkor: uppgiftens säkerhet')).toHaveValue('');
+    const saved = await read();
+    expect(saved.objects).toHaveLength(2);
+    expect(saved.objects.find((object) => object.name === 'Lo')).toBeTruthy();
+    expect(saved.objects.find((object) => object.id === 'loan')?.financialFacts).toEqual(
+      expectedFacts,
+    );
+  } finally {
+    await other.close();
+    await installation.close();
+  }
+});
 
 test('AVTAL-01: optional rent facts can be reviewed, found and corrected after reload', async ({
   page,

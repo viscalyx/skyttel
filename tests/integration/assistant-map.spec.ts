@@ -6,15 +6,15 @@ import { createInstallation } from '../support/installation.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
 
 for (const viewport of [
-  { width: 1440, height: 1000 },
-  { width: 1280, height: 720 },
-  { width: 390, height: 844 },
-  { width: 640, height: 500 },
-  { width: 320, height: 250 },
+  { caseId: 'TEXT-08', width: 1440, height: 1000 },
+  { caseId: 'TEXT-10', width: 1280, height: 720 },
+  { caseId: 'TEXT-11', width: 390, height: 844 },
+  { caseId: 'TEXT-12', width: 640, height: 500 },
+  { caseId: 'TEXT-13', width: 320, height: 250 },
 ]) {
   test.describe(`${viewport.width} × ${viewport.height}`, () => {
     test.use({ viewport });
-    test('TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen', async ({
+    test(`${viewport.caseId}: markering öppnar och centrerar objekt och samband före bekräftelsen`, async ({
       page,
     }, testInfo) => {
       let step = 0;

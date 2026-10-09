@@ -100,6 +100,19 @@ List selected tests without executing them:
 npm run test:integration -- tests/integration/bootstrap.spec.ts --list
 ```
 
+Validate manual-case references against discovered integration tests:
+
+```sh
+npm run test:manual-mapping
+npm run test:manual-mapping -- --area docs/manual-tests/map.md
+```
+
+Repeat `--area` to validate several files during a coordinated migration.
+The full command also checks every functional test has one manual counterpart.
+Discovery lists tests without executing browser workflows or provider suites.
+This checks structure; compare the actions and outcomes to assess whether a
+manual case and its counterpart protect the same scenario.
+
 `npm test` builds the application, then runs all unit and integration tests.
 The ordinary suites do not make billable provider calls. Keep their inputs
 synthetic and do not point fixtures at an existing household database.
@@ -199,6 +212,57 @@ is available for automated preparation checks; those checks do not execute
 assistive technology or physical devices. These disposable loopback fixtures
 use synthetic authentication. Physical phones require an ordinary test
 installation with configured HTTPS, provider sign-in and household membership.
+
+### Physical-device manual preparation
+
+Use an ordinary, disposable test installation at a DNS name reachable from
+the desktop, iPhone and iPad, for example `https://skyttel-test.example.com`.
+Build or deploy the commit being checked using the
+[installation runbook](../operations/installation.md#build-start-and-restart)
+or the [Render runbook](../operations/render.md). Configure its public
+`SKYTTEL_ORIGIN`, persistent test database, authentication secret and both
+providers using [production authentication](../operations/authentication.md).
+Register both callbacks at that exact HTTPS origin. The HTTPS ingress needs
+a certificate trusted by every device and must forward the application's
+requests and WebSocket connections. A forwarded loopback fixture and its
+synthetic provider do not supply this preparation.
+
+1. On each device's actual network, open the installation's `/healthz`
+   address. Expect `{"status":"ok"}` without a certificate warning or a
+   desktop-only forwarding requirement. Then open the HTTPS application.
+2. Complete a fresh real-provider sign-in as the designated test
+   administrator and create the disposable household through the app.
+   For an existing test household, verify current administrator membership
+   under **Inställningar → Administrera tillgång**. Use the same verified
+   Skyttel account on the desktop and phones when the case reads that
+   user's private proposals. Matching display names do not share a draft.
+   Another participant needs an accepted invitation and current membership
+   before opening the household's full address.
+3. Prepare the area's fictional data through ordinary forms or browser
+   export/import. Imports retain access membership; they do not grant it.
+   An imported private draft from another installation does not become the
+   real test user's draft automatically. Either explicitly restore its
+   verified owner through the existing recovery workflow or import a
+   baseline with empty drafts and recreate private proposals through forms.
+4. Before each case/device, restore that case's baseline, recreate its
+   private proposals as the same test user and close other test tabs.
+   Clear this HTTPS origin's browser site data on the target device, sign
+   in again and open the household's full address. This resets browser
+   search, filters, form text and presentation state without treating a
+   server restart as a data reset. Recheck the prepared saved and proposed
+   meanings in the target browser before enabling the actual assistive
+   technology or starting the physical-input observation.
+5. Record the commit, HTTPS origin, device, OS, browser, assistive technology
+   and actual zoom. Report real sign-in and physical observations only
+   when performed. A local synthetic smoke establishes neither. No model
+   or voice key is needed for ordinary forms and reading. Open the text
+   view without starting a conversation when a case needs unsent text.
+6. After the final case, sign out on every device, clear the test origin's
+   site data and remove the private fictional archives. Stop the disposable
+   installation and remove only its test database/storage using the host's
+   documented cleanup; remove test-only DNS/ingress and provider callbacks
+   if they were created for this run. Retain the ordinary installation's
+   data and settings when using a separately provisioned test instance.
 
 ### Delivery controls for an ordinary HTTPS test installation
 
@@ -337,7 +401,8 @@ npm run check
 ```
 
 This runs typechecking, Biome, documentation checks, workflow gate tests,
-the build and unit-test coverage. Run Playwright integration tests separately:
+manual-case mapping, the build and unit-test coverage. Run Playwright
+integration tests separately:
 
 ```sh
 npm run test:integration

@@ -11,11 +11,16 @@ kostnader krävs installationens särskilda driftbehörighet.
 
 ## Allmän förberedelse
 
+INST-12/13 använder
+[egna provdata och återställning mellan delprocedurer](workspace-preparation.md#fysiska-enheter-och-egen-provdata).
+Faktisk telefon använder samma vanliga HTTPS-ingång; NVDA på dator kan
+använda dess lokala provinstallation.
+
 1. Förbered en
    [separat provdatabas](../development/devcontainer.md#disposable-local-database)
    och logga in. Börja varje fall utan utkast eller oskickad text.
-2. Behåll fliken under fallet. Upprepa navigeringen med tangentbord på
-   dator och telefon, med ljust, mörkt och systemstyrt tema.
+2. Behåll fliken under fallet. Använd de mått och teman som varje fall
+   anger; faktisk zoom och fysisk inmatning provas i INST-12.
 3. Bedöm även skärmläsare, förstoring och fokus på fysiska enheter.
    Redovisa dessa prov separat från automatiserad Chromium-emulering.
 
@@ -31,10 +36,24 @@ kostnader krävs installationens särskilda driftbehörighet.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallen “INST-01: full-page settings protect native form input and
-retain draft feedback at 1280px”, “INST-01: full-page settings protect
-native form input and retain draft feedback at 390px” samt “INST-01:
-full-page settings protect native form input and retain draft feedback at 320px”.
+INST-01.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-01"
+  },
+  "reference": "1280 CSS-pixlars bredd: helsida, formulärförlust och återläsning av utkastet.",
+  "outcomes": [
+    "Oskickat arbete skyddas och inställningar och profil har nåbart innehåll och synligt återställt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -54,7 +73,9 @@ full-page settings protect native form input and retain draft feedback at 320px�
    Besök Inställningar och läs **Ändringen finns i ditt utkast.
    Kartan sparas separat.** Återkopplingens stängknapp
    får inte täcka texten. Välj **Tillbaka till kartan** och sedan
-   **Visa utkastet**. Kontrollera cykeln; spara inte.
+   **Visa utkastet**. Välj **Visa förslaget: Oskickad cykel**. Läs namnet,
+   objekttypen
+   och den tomma beskrivningen. Spara inte.
 
 **Förväntat resultat:**
 
@@ -69,20 +90,87 @@ full-page settings protect native form input and retain draft feedback at 320px�
 
 **Syfte:** Bevara oskickade typer och spara dem tillsammans med objekt.
 
-**Användare:** Alex. Upprepa typredigeringen som Robin.
+**Användare:** Alex, administratör. Robin utför det separata INST-08.
 
 **Förutsättningar:** Kartan är tom.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallet “INST-02: type settings retain unsent definitions and save with
-the same map draft”.
+INST-02.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-02"
+  },
+  "reference": "1280 pixlar, administratör.",
+  "outcomes": [
+    "Oskickad definition bevaras vid sidbyte och sparas tillsammans med objektet."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Lägg objektet Cykel i samma utkast i ditt utkast utan att spara.
+1. Öppna Nytt objekt, ange Cykel i samma utkast i Namn och välj
+   Lägg i utkastet och stäng. Spara inte.
 2. Öppna **Inställningar** → **Typer och egna fält** → **Ny objekttyp**.
-3. Skriv Oskickad typ och en beskrivning. Besök **Översikt** och gå tillbaka.
+3. Skriv Oskickad typ och beskrivningen Behåll även definitionens text. Besök
+   **Översikt** och gå tillbaka.
+4. Kontrollera båda texterna. Välj **Lägg typförslaget i mitt utkast**.
+5. Välj **Tillbaka till kartan** och **Visa utkastet**. Granska båda
+   förslagen och välj **Spara hela utkastet**.
+6. Läs sparbeskedet och ladda om. Öppna definitionerna igen och fäll ut
+   **Objekttyper och egna fält**. Kontrollera den nya typen och objektet.
+
+**Förväntat resultat:**
+
+- Oskickad definitionstext bevaras mellan inställningssidorna.
+- Typen och objektet ingår i samma privata utkast innan sparandet.
+- Ett uttryckligt samlat sparande sparar båda. De finns efter omladdning.
+- Administratörens hela definitions- och objektutkast sparas tillsammans.
+
+### INST-08: vanlig medlem bevarar och sparar typdefinitioner
+
+**Syfte:** Bevara oskickade typer och spara dem tillsammans med objekt.
+
+**Användare:** Robin, vanlig medlem i Alex provhushåll.
+
+**Förutsättningar:** Kartan är tom.
+
+**Integrationstest:**
+[settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
+INST-08.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-08"
+  },
+  "reference": "1280 pixlar, vanlig medlem.",
+  "outcomes": [
+    "Oskickad definition bevaras vid sidbyte och sparas tillsammans med objektet."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Nytt objekt, ange Cykel i samma utkast i Namn och välj
+   Lägg i utkastet och stäng. Spara inte.
+2. Öppna **Inställningar** → **Typer och egna fält** → **Ny objekttyp**.
+3. Skriv Oskickad typ och beskrivningen Behåll även definitionens text. Besök
+   **Översikt** och gå tillbaka.
 4. Kontrollera båda texterna. Välj **Lägg typförslaget i mitt utkast**.
 5. Välj **Tillbaka till kartan** och **Visa utkastet**. Granska båda
    förslagen och välj **Spara hela utkastet**.
@@ -108,8 +196,24 @@ the same map draft”.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallet “INST-03: the separate profile protects native form input and
-groups personal entries”.
+INST-03.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-03"
+  },
+  "reference": "Chromium, angiven bredd och destination; ingen faktisk enhetsemulering utlovas.",
+  "outcomes": [
+    "Oskickat arbete skyddas och inställningar och profil har nåbart innehåll och synligt återställt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -149,8 +253,24 @@ groups personal entries”.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallet “INST-04: settings and profile restore map and toolbar focus
-without opening panels”.
+INST-04.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-04"
+  },
+  "reference": "Chromium, angiven bredd och destination; ingen faktisk enhetsemulering utlovas.",
+  "outcomes": [
+    "Oskickat arbete skyddas och inställningar och profil har nåbart innehåll och synligt återställt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -175,8 +295,24 @@ without opening panels”.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallet “INST-05: leaving the compact profile exposes keyboard focus
-in the retained work”.
+INST-05.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-05"
+  },
+  "reference": "Chromium, angiven bredd och destination; ingen faktisk enhetsemulering utlovas.",
+  "outcomes": [
+    "Oskickat arbete skyddas och inställningar och profil har nåbart innehåll och synligt återställt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -202,8 +338,24 @@ in the retained work”.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallet “INST-06: settings form buttons retain readable contrast when
-hovered in both themes”.
+INST-06.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-06"
+  },
+  "reference": "Chromium, angiven bredd och destination; ingen faktisk enhetsemulering utlovas.",
+  "outcomes": [
+    "Oskickat arbete skyddas och inställningar och profil har nåbart innehåll och synligt återställt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -229,13 +381,29 @@ hovered in both themes”.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Kartan är öppen i mobilvy. Upprepa vid 390 och 320 pixlar.
+**Förutsättningar:** Kartan är öppen vid 390 CSS-pixlars bredd.
+INST-11 anger 320 pixlar.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallen “INST-07: reverse keyboard navigation keeps profile tools
-reachable at 390px” och “INST-07: reverse keyboard navigation keeps
-profile tools reachable at 320px”.
+INST-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-07"
+  },
+  "reference": "390 CSS-pixlars bredd: Shift+Tab från profil, följt av Tab till objektets namn.",
+  "outcomes": [
+    "Oskickat arbete skyddas och inställningar och profil har nåbart innehåll och synligt återställt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -253,3 +421,249 @@ profile tools reachable at 320px”.
 - Profilen stängs när den annars skulle täcka det fokuserade verktyget.
 - Verktygets fokus syns och knappen går att använda med tangentbord.
 - Objektets förslag finns kvar i tabellen när verktygen fällts ihop.
+
+### INST-09: inställningarnas helsida vid 390 pixlar
+
+**Syfte:** Inställningarnas mobilnavigation och hela återkopplingen är nåbara.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som INST-01.
+
+**Integrationstest:**
+[settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts), INST-09.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-09"
+  },
+  "reference": "390 CSS-pixlars bredd: mobilnavigation, skyddad formulärtext och läsbar utkaståterkoppling.",
+  "outcomes": [
+    "Inställningarnas mobilnavigation och hela återkopplingen är nåbara.",
+    "Kastad formulärtext återkommer inte, medan det skickade privata förslaget finns kvar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ INST-01 steg 1–7 en gång vid 390 CSS-pixlars bredd.
+   Under steg 4: öppna **Välj inställning**. Under steg 7: kontrollera
+   att återkopplingens stängknapp inte täcker texten före återgången
+   och läs därefter det kompletta cykelförslaget.
+
+**Förväntat resultat:**
+
+- Inställningarnas mobilnavigation och hela återkopplingen är nåbara.
+- Kastad formulärtext återkommer inte, medan det skickade privata förslaget
+  finns kvar.
+
+### INST-10: inställningarnas helsida vid 320 pixlar
+
+**Syfte:** Inställningarnas mobilnavigation och hela återkopplingen är nåbara.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som INST-01.
+
+**Integrationstest:**
+[settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts), INST-10.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-10"
+  },
+  "reference": "320 CSS-pixlars bredd: mobilnavigation, skyddad formulärtext och läsbar utkaståterkoppling.",
+  "outcomes": [
+    "Inställningarnas mobilnavigation och hela återkopplingen är nåbara.",
+    "Kastad formulärtext återkommer inte, medan det skickade privata förslaget finns kvar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ INST-01 steg 1–7 en gång vid 320 CSS-pixlars bredd.
+   Under steg 4: öppna **Välj inställning**. Under steg 7: kontrollera
+   att återkopplingens stängknapp inte täcker texten före återgången
+   och läs därefter det kompletta cykelförslaget.
+
+**Förväntat resultat:**
+
+- Inställningarnas mobilnavigation och hela återkopplingen är nåbara.
+- Kastad formulärtext återkommer inte, medan det skickade privata förslaget
+  finns kvar.
+
+### INST-11: bakåt från den smalaste profilen
+
+**Syfte:** Fokus på verktyget är synligt och profilen täcker inte den aktiva
+kontrollen.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som INST-07.
+
+**Integrationstest:**
+[settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts), INST-11.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-11"
+  },
+  "reference": "320 CSS-pixlars bredd: bakåtfokus och skydd mot täckande profil.",
+  "outcomes": [
+    "Fokus på verktyget är synligt och profilen täcker inte den aktiva kontrollen.",
+    "Objektets förslag ligger kvar i tabellen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ INST-07 steg 1–3 en gång vid 320 CSS-pixlars bredd.
+2. Gör början av steg 4 fram till och med Enter på **Dölj verktygens namn**.
+   Stanna där; fortsätt inte med grundfallets Tab-väg till objektet,
+   som ingår endast vid 390 pixlar. Läs objektets namn.
+
+**Förväntat resultat:**
+
+- Fokus på verktyget är synligt och profilen täcker inte den aktiva kontrollen.
+- Objektets förslag ligger kvar i tabellen.
+
+### INST-12: fysisk zoom och profilens läsordning
+
+**Syfte:** Faktisk 200 procents webbläsarzoom och fysiskt tangentbord lämnar
+inställningarnas mobilnavigation, hela utkastet och profilens båda
+Tab-riktningar nåbara.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Faktisk webbläsarzoom på dator och fysiskt tangentbord;
+tomt provhushåll.
+
+**Kräver mänsklig observation:** Faktisk 200 procents webbläsarzoom och fysiskt
+tangentbord lämnar inställningarnas mobilnavigation, hela utkastet och profilens
+båda Tab-riktningar nåbara.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Faktisk 200 procents webbläsarzoom och fysiskt tangentbord lämnar inställningarnas mobilnavigation, hela utkastet och profilens båda Tab-riktningar nåbara."
+  },
+  "reference": "Faktisk webbläsarzoom på dator och fysiskt tangentbord; tomt provhushåll.",
+  "outcomes": [
+    "Faktisk 200 procents webbläsarzoom och fysiskt tangentbord lämnar inställningarnas mobilnavigation, hela utkastet och profilens båda Tab-riktningar nåbara."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/settings-profile.spec.ts",
+      "caseId": "INST-01",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/settings-profile.spec.ts",
+      "caseId": "INST-05",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/settings-profile.spec.ts",
+      "caseId": "INST-07",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Aktivera 200 procents webbläsarzoom och följ INST-01 steg 1–7 en gång.
+2. Återställ provet och följ INST-05, sedan INST-07, med fysiskt tangentbord.
+   Anteckna faktisk zoom, CSS-mått, fokus och nåbarhet.
+
+**Förväntat resultat:**
+
+- Faktisk 200 procents webbläsarzoom och fysiskt tangentbord lämnar
+  inställningarnas mobilnavigation, hela utkastet och profilens båda
+  Tab-riktningar nåbara.
+
+### INST-13: skärmläsare i inställningar och profil
+
+**Syfte:** NVDA eller VoiceOver läser inställningarnas och profilens rubriker,
+länkar och utkastvärden i meningsfull ordning med återställt fokus.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Faktisk NVDA eller VoiceOver; kartan är tom och profilen
+tillgänglig.
+
+**Kräver mänsklig observation:** NVDA eller VoiceOver läser inställningarnas och
+profilens rubriker, länkar och utkastvärden i meningsfull ordning med återställt
+fokus.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "NVDA eller VoiceOver läser inställningarnas och profilens rubriker, länkar och utkastvärden i meningsfull ordning med återställt fokus."
+  },
+  "reference": "Faktisk NVDA eller VoiceOver; kartan är tom och profilen tillgänglig.",
+  "outcomes": [
+    "NVDA eller VoiceOver läser inställningarnas och profilens rubriker, länkar och utkastvärden i meningsfull ordning med återställt fokus."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/settings-profile.spec.ts",
+      "caseId": "INST-01",
+      "purpose": "Kontrollerad webbläsarobservation; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/settings-profile.spec.ts",
+      "caseId": "INST-03",
+      "purpose": "Kontrollerad webbläsarobservation; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ INST-01 steg 1–7 en gång och lyssna på hela cykelförslaget.
+2. Återställ. Följ INST-03 steg 1–6 och lyssna på rubrik, kontolänkar
+   och återställt tabellfokus. Anteckna hjälpmedlets version.
+
+**Förväntat resultat:**
+
+- NVDA eller VoiceOver läser inställningarnas och profilens rubriker, länkar och
+  utkastvärden i meningsfull ordning med återställt fokus.

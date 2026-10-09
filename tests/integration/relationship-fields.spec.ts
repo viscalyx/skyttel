@@ -7,6 +7,7 @@ import {
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { openSavedHistory, readCommittedHistoryCard } from '../support/conversation-page.js';
 import {
   editObjectRelationship,
   openObjectRelationships,
@@ -15,8 +16,11 @@ import {
 import { createInstallation } from '../support/installation.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
-for (const width of [1440, 390])
-  test(`STY-06: optional relationship fields share definitions, editing and durable save at ${width}px`, async ({
+for (const [caseId, width] of [
+  ['STY-06', 1440],
+  ['STY-09', 390],
+] as const)
+  test(`${caseId}: optional relationship fields share definitions and keyboard editing at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 1000 });
@@ -74,11 +78,48 @@ for (const width of [1440, 390])
       await page.getByLabel('Startdatum', { exact: true }).fill('2026-09-27');
       await page.getByLabel('Bekräftat', { exact: true }).selectOption('false');
       await expect(page.getByLabel('Obesvarat', { exact: true })).toHaveValue('');
+      await page.getByLabel('Anteckning', { exact: true }).focus();
+      for (const name of ['Belopp', 'Startdatum', 'Bekräftat', 'Obesvarat']) {
+        await page.keyboard.press('Tab');
+        const field = page.getByLabel(name, { exact: true });
+        // The native date control includes several internal keyboard stops.
+        if (name === 'Bekräftat')
+          for (let stop = 0; stop < 4; stop++) {
+            if (await field.evaluate((element) => element === document.activeElement)) break;
+            await expect(page.getByLabel('Startdatum', { exact: true })).toBeFocused();
+            await page.keyboard.press('Tab');
+          }
+        await expect(field).toBeFocused();
+      }
+      const stage = relationships.getByRole('button', { name: 'Lägg i utkastet', exact: true });
+      await stage.focus();
+      await expect(stage).toBeFocused();
+      const bounds = await stage.boundingBox();
+      expect(bounds?.y).toBeGreaterThanOrEqual(0);
+      expect((bounds?.y ?? 1000) + (bounds?.height ?? 0)).toBeLessThanOrEqual(1000);
+      expect(
+        await relationships.evaluate((element) => element.scrollWidth <= element.clientWidth),
+      ).toBe(true);
       await stageRelationshipAndClose(page);
       const review = await readDraftProposal(page, 'Cykeln → förvaras i → Garaget');
       await expect(review).toContainText('Låst skåp');
       await expect(review).toContainText('Nej');
       await closeSupportDialog(page, 'Cykeln → förvaras i → Garaget');
+      if (width !== 1440) {
+        await closeTextView(page);
+        await editObjectRelationship(page, 'Cykeln', 'Cykeln → förvaras i → Garaget');
+        await expect(page.getByLabel('Belopp', { exact: true })).toHaveValue('0');
+        await expect(page.getByLabel('Bekräftat', { exact: true })).toHaveValue('false');
+        await expect(page.getByLabel('Obesvarat', { exact: true })).toHaveValue('');
+        await page.getByLabel('Anteckning', { exact: true }).fill('Övre hyllan');
+        await stageRelationshipAndClose(page);
+        await expect(
+          page.getByRole('button', { name: 'Samband för Cykeln', exact: true }),
+        ).toBeFocused();
+        expect((await read()).objects).toEqual([]);
+        expect((await read()).relationships).toEqual([]);
+        return;
+      }
       await saveReviewedConflictDraft(page);
       await closeTextView(page);
       await installation.restart();
@@ -153,6 +194,7 @@ test('STY-07: relationship type changes require an explicit decision about earli
         })
       ).status(),
     ).toBe(200);
+    const originalReceipt = (await (await page.request.get(`${path}/history`)).json()).history[0];
     await page.goto(installation.origin);
     await editObjectRelationship(page, 'bike', 'bike → hör till → garage');
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption('second');
@@ -182,6 +224,37 @@ test('STY-07: relationship type changes require an explicit decision about earli
       beforeType: { id: 'first' },
       type: { id: 'second' },
     });
+    const nativeHistory = await openSavedHistory(page);
+    const changedCard = await readCommittedHistoryCard(nativeHistory, history[0]);
+    await changedCard.getByText('Visa ändringarna', { exact: true }).click();
+    const changedRelationship = changedCard
+      .locator('.history-changes > div')
+      .filter({ has: page.getByRole('heading', { name: 'Samband: Tillgång', exact: true }) });
+    await expect(changedRelationship.getByText('Identitet: edge', { exact: true })).toBeVisible();
+    for (const [title, answer] of [
+      ['Före sparandet', 'Behåll som historik'],
+      ['Efter sparandet', 'Ny betydelse'],
+    ]) {
+      const fields = changedRelationship.locator(
+        `xpath=./section[preceding-sibling::h5[1][text()="${title}"]]`,
+      );
+      await expect(fields.getByText(`Anteckning: ${answer}`, { exact: true })).toBeVisible();
+    }
+    const originalCard = await readCommittedHistoryCard(nativeHistory, originalReceipt);
+    await originalCard.getByText('Visa ändringarna', { exact: true }).click();
+    const definition = originalCard
+      .locator('.history-changes > div')
+      .filter({ has: page.getByRole('heading', { name: 'Sambandstyp: Förvaring', exact: true }) });
+    for (const value of ['Identitet: first', 'Förvaring', 'hör till', 'har', 'Anteckning', 'Text'])
+      await expect(definition).toContainText(value);
+    const originalRelationship = originalCard
+      .locator('.history-changes > div')
+      .filter({ has: page.getByRole('heading', { name: 'Samband: Förvaring', exact: true }) });
+    await expect(originalRelationship.getByText('Identitet: edge', { exact: true })).toBeVisible();
+    await expect(originalRelationship).toContainText('bike → hör till → garage');
+    await expect(
+      originalRelationship.getByText('Anteckning: Behåll som historik', { exact: true }),
+    ).toBeVisible();
   } finally {
     await installation.close();
   }

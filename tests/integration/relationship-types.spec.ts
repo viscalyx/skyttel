@@ -10,6 +10,7 @@ import {
 import { applyProposedConflictChanges } from '../support/conflict-properties.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import {
+  editObjectRelationship,
   openObjectRelationships,
   openTypeDefinitions,
   readDraftProposal,
@@ -17,9 +18,9 @@ import {
 import { createInstallation } from '../support/installation.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
-test('STY-01: a directed definition and arbitrary endpoints share a durable draft, save and history', async ({
-  page,
-}) => {
+test('directed definition HTTP staging preserves exact receipt and history replay', {
+  tag: '@technical',
+}, async ({ page }) => {
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
@@ -99,6 +100,99 @@ test('STY-01: a directed definition and arbitrary endpoints share a durable draf
   }
 });
 
+test('STY-01: native type and field forms share a durable directed relationship save', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const read = async () => (await page.request.get(path)).json();
+    await page.goto(installation.origin);
+    await openTypeDefinitions(page);
+    await page.getByRole('button', { name: 'Ny sambandstyp', exact: true }).click();
+    const submit = page.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' });
+    for (const [label, value] of [
+      ['Sambandstypens namn', 'Förvaring'],
+      ['Benämning från startobjektet', 'förvaras i'],
+      ['Benämning från målobjektet', 'innehåller'],
+    ]) {
+      await submit.click();
+      await expect(page.getByLabel(label, { exact: true })).toBeFocused();
+      expect((await read()).draft.relationshipTypes ?? []).toEqual([]);
+      await page.getByLabel(label, { exact: true }).fill(value);
+    }
+    await page.getByLabel('Sambandstypens beskrivning').fill('Var hushållets saker finns');
+    await page.getByRole('button', { name: 'Lägg till fält', exact: true }).click();
+    await submit.click();
+    await expect(page.getByLabel('Fältets namn', { exact: true })).toBeFocused();
+    expect((await read()).draft.relationshipTypes ?? []).toEqual([]);
+    await page.getByLabel('Fältets namn', { exact: true }).fill('Anteckning');
+    await page.getByLabel('Värdeslag', { exact: true }).selectOption('text');
+    await submit.click();
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Förslaget finns i ditt privata utkast');
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    for (const [name, type] of [
+      ['Alex blå cykel', 'Fordon'],
+      ['Garaget', 'Bostad'],
+    ]) {
+      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+      await form.getByLabel('Namn', { exact: true }).fill(name);
+      await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: type });
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      await expect(form).not.toBeVisible();
+    }
+    const relationships = await openObjectRelationships(page, 'Alex blå cykel');
+    await relationships.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+    await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Förvaring' });
+    const garageId = (await read()).draft.changes.find(
+      (change: { id: string; after: { name: string } }) => change.after.name === 'Garaget',
+    ).id;
+    await page.getByLabel('Till objekt', { exact: true }).selectOption(garageId);
+    await page.getByLabel('Anteckning', { exact: true }).fill('Låst skåp');
+    await stageRelationshipAndClose(page);
+    const proposed = await read();
+    await installation.restart();
+    await page.reload();
+    expect((await read()).draft).toEqual(proposed.draft);
+    expect((await read()).objects).toEqual([]);
+    expect((await read()).relationships).toEqual([]);
+    const proposal = await readDraftProposal(page, 'Alex blå cykel → förvaras i → Garaget');
+    await expect(proposal).toContainText('Låst skåp');
+    await closeSupportDialog(page, 'Alex blå cykel → förvaras i → Garaget');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await installation.restart();
+    await page.reload();
+    const current = await read();
+    expect(current.relationships).toHaveLength(1);
+    expect(current.relationships[0].id).toBe(proposed.draft.relationships[0].id);
+    expect(current.relationships[0].customValues).toEqual(
+      proposed.draft.relationships[0].after.customValues,
+    );
+    await expect(await openObjectRelationships(page, 'Alex blå cykel')).toContainText(
+      'Alex blå cykel → förvaras i → Garaget',
+    );
+    await closeSupportDialog(page, 'Samband för Alex blå cykel');
+    await expect(await openObjectRelationships(page, 'Garaget')).toContainText(
+      'Garaget → innehåller → Alex blå cykel',
+    );
+    await closeSupportDialog(page, 'Samband för Garaget');
+    await editObjectRelationship(page, 'Alex blå cykel', 'Alex blå cykel → förvaras i → Garaget');
+    await expect(page.getByLabel('Anteckning', { exact: true })).toHaveValue('Låst skåp');
+    const { history } = await (await page.request.get(`${path}/history`)).json();
+    expect(history).toHaveLength(1);
+    expect(history[0].relationshipTypes[0].after.name).toBe('Förvaring');
+    expect(history[0].relationships[0].type.id).toBe(current.relationships[0].typeId);
+  } finally {
+    await installation.close();
+  }
+});
+
 test('STY-03: members share editable prefills while private definitions and household boundaries stay protected', async ({
   page,
   browser,
@@ -138,42 +232,68 @@ test('STY-03: members share editable prefills while private definitions and hous
       forwardLabel: 'förvaras i',
       reverseLabel: 'innehåller',
     };
-    expect(
-      (
-        await post(
-          'relationship-type',
-          { version: 0, id: 'storage', baseRevision: null, value },
-          member.request,
-        )
-      ).status(),
-    ).toBe(200);
+    const memberPage = await member.newPage();
+    await memberPage.goto(installation.origin);
+    await openTypeDefinitions(memberPage);
+    await memberPage.getByRole('button', { name: 'Ny sambandstyp', exact: true }).click();
+    const fillDefinition = async (name: string) => {
+      await memberPage.getByLabel('Sambandstypens namn').fill(name);
+      await memberPage.getByLabel('Sambandstypens beskrivning').fill(value.description);
+      await memberPage.getByLabel('Benämning från startobjektet').fill(value.forwardLabel);
+      await memberPage.getByLabel('Benämning från målobjektet').fill(value.reverseLabel);
+      const response = memberPage.waitForResponse(
+        (response) =>
+          response.url() === `${path}/relationship-type` && response.request().method() === 'POST',
+      );
+      await memberPage.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }).click();
+      expect((await response).status()).toBe(200);
+      await expect(
+        memberPage.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+      ).toContainText('Förslaget finns i ditt privata utkast');
+    };
+    await fillDefinition(value.name);
+    const storageId = (await read(member.request)).draft.relationshipTypes[0].id;
     expect((await read()).draft).toEqual({ version: 0, changes: [] });
     expect(JSON.stringify(await read())).not.toContain('Förvaringsplats');
-    expect(
-      (await post('save', { version: 1, operationId: 'member-type' }, member.request)).status(),
-    ).toBe(200);
+    await page.goto(installation.origin);
+    await openTypeDefinitions(page);
+    await page.getByText('Sambandstyper och riktning', { exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Ändra sambandstyp: Förvaring', exact: true }),
+    ).toHaveCount(0);
+    await memberPage.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    const privateDefinition = await readDraftProposal(memberPage, 'Förvaring');
+    await expect(privateDefinition).toContainText('Förvaringsplats');
+    await closeSupportDialog(memberPage, 'Förvaring');
+    let saved = memberPage.waitForResponse(
+      (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
+    );
+    await saveReviewedConflictDraft(memberPage);
+    expect((await saved).status()).toBe(200);
+    await closeTextView(memberPage);
     const state = await read();
     expect(
-      state.relationshipTypes.find((type: { id: string }) => type.id === 'storage'),
+      state.relationshipTypes.find((type: { id: string }) => type.id === storageId),
     ).toMatchObject(value);
-    const prefill = state.relationshipTypes.find((type: { id: string }) => type.id !== 'storage');
-    expect(
-      (
-        await post(
-          'relationship-type',
-          {
-            version: 2,
-            id: prefill.id,
-            baseRevision: prefill.revision,
-            value: { ...value, name: 'Redigerad förifylld typ' },
-          },
-          member.request,
-        )
-      ).status(),
-    ).toBe(200);
-    expect(
-      (await post('save', { version: 3, operationId: 'prefill' }, member.request)).status(),
-    ).toBe(200);
+    await page.reload();
+    await page.getByText('Sambandstyper och riktning', { exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Ändra sambandstyp: Förvaring', exact: true }),
+    ).toBeVisible();
+    const prefill = state.relationshipTypes.find((type: { id: string }) => type.id !== storageId);
+    await openTypeDefinitions(memberPage);
+    await memberPage.getByText('Sambandstyper och riktning', { exact: true }).click();
+    await memberPage
+      .getByRole('button', { name: `Ändra sambandstyp: ${prefill.name}`, exact: true })
+      .click();
+    await fillDefinition('Redigerad förifylld typ');
+    await memberPage.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    saved = memberPage.waitForResponse(
+      (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
+    );
+    await saveReviewedConflictDraft(memberPage);
+    expect((await saved).status()).toBe(200);
+    await closeTextView(memberPage);
     // A relationship starts from an independently created household object.
     expect(
       (
@@ -189,8 +309,7 @@ test('STY-03: members share editable prefills while private definitions and hous
         )
       ).status(),
     ).toBe(200);
-    const memberPage = await member.newPage();
-    await memberPage.goto(installation.origin);
+    await memberPage.reload();
     await openObjectRelationships(memberPage, 'Medlemmens cykel');
     await memberPage.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await expect(
@@ -203,17 +322,38 @@ test('STY-03: members share editable prefills while private definitions and hous
       .getByRole('button', { name: 'Stäng dialogen', exact: true })
       .click();
     // Equal names still create separate definitions with their own identities.
-    expect(
-      (
-        await post('relationship-type', {
-          version: 0,
-          id: 'other-storage',
-          baseRevision: null,
-          value,
-        })
-      ).status(),
-    ).toBe(200);
-    expect((await post('save', { version: 1, operationId: 'same-name' })).status()).toBe(200);
+    await page.getByRole('button', { name: 'Ny sambandstyp', exact: true }).click();
+    await page.getByLabel('Sambandstypens namn').fill(value.name);
+    await page.getByLabel('Sambandstypens beskrivning').fill(value.description);
+    await page.getByLabel('Benämning från startobjektet').fill(value.forwardLabel);
+    await page.getByLabel('Benämning från målobjektet').fill(value.reverseLabel);
+    const staged = page.waitForResponse(
+      (response) =>
+        response.url() === `${path}/relationship-type` && response.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }).click();
+    expect((await staged).status()).toBe(200);
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Förslaget finns i ditt privata utkast');
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    const sameNameSaved = page.waitForResponse(
+      (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
+    );
+    await saveReviewedConflictDraft(page);
+    expect((await sameNameSaved).status()).toBe(200);
+    await closeTextView(page);
+    await openTypeDefinitions(page);
+    if (
+      (await page
+        .getByText('Sambandstyper och riktning', { exact: true })
+        .locator('..')
+        .getAttribute('open')) === null
+    )
+      await page.getByText('Sambandstyper och riktning', { exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Ändra sambandstyp: Förvaring', exact: true }),
+    ).toHaveCount(2);
     expect(
       (await read()).relationshipTypes.filter(
         (type: { name: string }) => type.name === 'Förvaring',

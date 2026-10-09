@@ -1,4 +1,5 @@
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import {
   type BrowserContext,
   type Download,
@@ -20,6 +21,9 @@ import {
   restartWithSession,
   signIn,
 } from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject, readDraftProposal } from '../support/domain-work.js';
+import { holdBrowserExport, seedLargeExport } from '../support/export-browser-stream.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 
@@ -319,6 +323,10 @@ test('EXPORT-02: an administrator cancels an export and prepares another', async
       expect.objectContaining({ changes: [expect.objectContaining({ id: 'private-proposal' })] }),
     );
     expect(await fixture.read()).toEqual(before);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await openTable(page);
+    await expect(page.getByRole('button', { name: 'Gemensam lampa', exact: true })).toBeVisible();
+    await expect(await openDraftReview(page)).toContainText('Privat förslag');
   } finally {
     await fixture.installation.close();
   }
@@ -458,6 +466,202 @@ test('EXPORT-05: an expired export requires a new preparation', async ({ page })
   }
 });
 
+test('EXPORT-06: browser image proposals, history and restart lead to a downloaded archive', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}`;
+    const read = async (): Promise<MapState> => (await page.request.get(`${path}/map`)).json();
+    const blue = await sharp({
+      create: { width: 24, height: 18, channels: 3, background: '#2255aa' },
+    })
+      .png()
+      .toBuffer();
+    const orange = await sharp({
+      create: { width: 24, height: 18, channels: 3, background: '#aa5522' },
+    })
+      .png()
+      .toBuffer();
+    await page.goto(installation.origin);
+    await openTable(page);
+    for (const description of ['Första objektet', 'Andra objektet']) {
+      const dialog = await openNewObject(page);
+      await dialog.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+      await dialog.getByLabel('Beskrivning', { exact: true }).fill(description);
+      if (description === 'Andra objektet') {
+        await dialog.getByRole('button', { name: 'Livscykel och utseende' }).click();
+        await dialog
+          .getByLabel('Profilbild', { exact: true })
+          .setInputFiles({ name: 'blue.png', mimeType: 'image/png', buffer: blue });
+      }
+      await dialog.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
+    }
+    await saveReviewedConflictDraft(page);
+    const first = (await read()).objects.find(
+      ({ description }) => description === 'Första objektet',
+    );
+    expect(first).toBeDefined();
+    const editFirst = async (buffer: Buffer) => {
+      await openTable(page);
+      // Equal display names remain distinct: select the row by its description.
+      const row = page
+        .getByRole('region', { name: 'Hushållets tabell', exact: true })
+        .getByRole('row')
+        .filter({ has: page.getByRole('cell', { name: 'Första objektet', exact: true }) });
+      await expect(row).toHaveCount(1);
+      await expect(row).toBeVisible();
+      await row.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
+      await expect(dialog.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+        'Första objektet',
+      );
+      await dialog.getByRole('button', { name: 'Livscykel och utseende' }).click();
+      await dialog
+        .getByLabel('Profilbild', { exact: true })
+        .setInputFiles({ name: 'image.png', mimeType: 'image/png', buffer });
+      await dialog.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
+    };
+    await editFirst(blue);
+    await saveReviewedConflictDraft(page);
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
+    const history = page.getByRole('region', { name: 'Ändringshistorik' });
+    await history
+      .getByRole('article')
+      .first()
+      .getByText('Visa ändringarna', { exact: true })
+      .click();
+    await expect(history.getByRole('article').first()).toContainText('Lo Exempel');
+    await expect(history.getByRole('article').first().getByRole('img')).toBeVisible();
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
+    await editFirst(orange);
+    const before = await read();
+    await installation.restart();
+    await page.reload();
+    await expect(await openDraftReview(page)).toContainText('Lo Exempel');
+    const proposal = await readDraftProposal(page, 'Lo Exempel');
+    const proposed = proposal.locator('section').filter({
+      has: page.getByRole('heading', { name: 'Föreslagna värden', exact: true }),
+    });
+    const proposedImage = proposed.getByRole('img', { name: 'Profilbild för Lo Exempel' });
+    const privateImageId = before.draft.changes.find(({ id }) => id === first?.id)?.after
+      ?.profileImageId;
+    expect(privateImageId).toBeDefined();
+    await expect(proposedImage).toBeVisible();
+    await expect(proposedImage).toHaveAttribute(
+      'src',
+      new RegExp(`/profile-images/${privateImageId}$`),
+    );
+    await expect
+      .poll(() =>
+        proposedImage.evaluate(
+          (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    const { data, info } = await sharp(await proposedImage.screenshot())
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const offset =
+      (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * info.channels;
+    for (const [index, expected] of [170, 85, 34].entries())
+      expect(Math.abs(data[offset + index] - expected)).toBeLessThan(15);
+    await proposal.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
+    expect((await read()).draft).toEqual(before.draft);
+    await openSettings(page);
+    await page
+      .getByRole('navigation', { name: 'Inställningarnas sidor' })
+      .getByRole('link', { name: 'Fullständig export', exact: true })
+      .click();
+    const section = page.getByRole('region', { name: 'Fullständig export' });
+    await section.getByRole('button', { name: 'Förbered fullständig export' }).click();
+    const downloaded = page.waitForEvent('download');
+    await section.getByRole('button', { name: 'Hämta ZIP-fil' }).click();
+    const result = await archive(await downloaded);
+    expect(result.content.objects).toHaveLength(2);
+    expect(new Set(result.content.objects.map(({ id }: { id: string }) => id)).size).toBe(2);
+    expect(result.content.images).toHaveLength(3);
+    expect(result.content.history).toHaveLength(2);
+    expect(result.content.drafts).toContainEqual(
+      expect.objectContaining({ changes: before.draft.changes }),
+    );
+    await expect(section.getByRole('status')).toContainText(
+      'Webbläsarens nedladdning har startats',
+    );
+  } finally {
+    await installation.close();
+  }
+});
+
+test('EXPORT-07: browser download interrupted by demotion and revocation offers no ZIP', async ({
+  page,
+  browser,
+}) => {
+  const fixture = await arrange(page);
+  const recipient = await browser.newContext();
+  let transfer: Awaited<ReturnType<typeof holdBrowserExport>> | undefined;
+  try {
+    const user = await inviteMember(fixture, page, recipient);
+    await seedLargeExport(fixture.installation.directory, fixture.household.id, user.id);
+    const recipientPage = await recipient.newPage();
+    const downloads: Download[] = [];
+    recipientPage.on('download', (download) => downloads.push(download));
+    await page.goto(fixture.administration);
+    const row = page
+      .getByRole('list', { name: 'Medlemmar' })
+      .getByRole('listitem')
+      .filter({ hasText: robin.name });
+    for (const action of ['demote', 'revoke']) {
+      await row.getByRole('button', { name: 'Gör till administratör', exact: true }).click();
+      await expect(row.getByRole('button', { name: 'Gör till medlem', exact: true })).toBeVisible();
+      await recipientPage.goto(fixture.exportPage);
+      const section = recipientPage.getByRole('region', { name: 'Fullständig export' });
+      await section.getByRole('button', { name: 'Förbered fullständig export' }).click();
+      await expect(section.getByRole('button', { name: 'Hämta ZIP-fil' })).toBeVisible();
+      transfer = await holdBrowserExport(
+        recipientPage,
+        fixture.installation.directory,
+        fixture.path,
+      );
+      await section.getByRole('button', { name: 'Hämta ZIP-fil' }).click();
+      await transfer.paused;
+      await expect(section.getByRole('status')).toHaveText('Hämtar och kontrollerar ZIP-filen…');
+      if (action === 'demote')
+        await row.getByRole('button', { name: 'Gör till medlem', exact: true }).click();
+      else {
+        await row.getByRole('button', { name: 'Återkalla tillgång', exact: true }).click();
+        await row.getByRole('button', { name: 'Bekräfta återkallelse', exact: true }).click();
+      }
+      transfer.release();
+      await transfer.completed;
+      expect(transfer.inspect().interrupted).toBe(true);
+      expect(transfer.inspect().beforeExpiry).toBe(true);
+      expect(transfer.inspect().receivedBytes).toBeLessThan(transfer.inspect().archiveBytes);
+      expect(await readdir(join(fixture.installation.directory, '.skyttel-exports'))).toEqual([]);
+      await expect(section.getByRole('alert')).toContainText(
+        'Kontrollera anslutningen och förbered en ny export',
+      );
+      await expect(section.getByRole('button', { name: 'Hämta ZIP-fil' })).toHaveCount(0);
+      expect(downloads).toHaveLength(0);
+      await recipientPage.reload();
+      await expect(
+        recipientPage.getByRole('heading', {
+          name:
+            action === 'demote'
+              ? 'Du kan inte administrera hushållet'
+              : 'Du har inte tillgång till hushållet',
+        }),
+      ).toBeVisible();
+    }
+  } finally {
+    transfer?.close();
+    await recipient.close();
+    await fixture.installation.close();
+  }
+});
+
 test('EXPORT-08: canceling preparation with an unseen ready response explains cleanup uncertainty', async ({
   page,
 }) => {
@@ -471,6 +675,12 @@ test('EXPORT-08: canceling preparation with an unseen ready response explains cl
     prepared = resolve;
   });
   try {
+    await page.goto(fixture.installation.origin);
+    await openTable(page);
+    const proposal = await openNewObject(page);
+    await proposal.getByLabel('Namn', { exact: true }).fill('Privat förslag');
+    await proposal.getByLabel('Beskrivning', { exact: true }).fill('Förslaget ska finnas kvar');
+    await proposal.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     const before = await fixture.read();
     const downloads: Download[] = [];
     page.on('download', (download) => downloads.push(download));
@@ -513,19 +723,27 @@ test('EXPORT-08: canceling preparation with an unseen ready response explains cl
     await archive(await download);
     expect(downloads).toHaveLength(1);
     expect(await fixture.read()).toEqual(before);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await openTable(page);
+    await expect(page.getByRole('button', { name: 'Gemensam lampa', exact: true })).toBeVisible();
+    await expect(await openDraftReview(page)).toContainText('Privat förslag');
+    const retainedProposal = await readDraftProposal(page, 'Privat förslag');
+    await expect(retainedProposal).toContainText('Förslaget ska finnas kvar');
+    await retainedProposal.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
+    expect(await fixture.read()).toEqual(before);
   } finally {
     release();
     await fixture.installation.close();
   }
 });
 
-for (const { width, height } of [
-  { width: 1280, height: 900 },
-  { width: 390, height: 900 },
-  { width: 320, height: 900 },
-  { width: 640, height: 500 },
+for (const { caseId, width, height } of [
+  { caseId: 'EXPORT-09', width: 1280, height: 900 },
+  { caseId: 'EXPORT-12', width: 390, height: 900 },
+  { caseId: 'EXPORT-13', width: 320, height: 900 },
+  { caseId: 'EXPORT-14', width: 640, height: 500 },
 ]) {
-  test(`EXPORT-09: keyboard export controls retain focus and protect native form input at ${width}px`, async ({
+  test(`${caseId}: keyboard export controls retain focus and protect native form input at ${width}px`, async ({
     page,
   }) => {
     const fixture = await arrange(page);
@@ -814,20 +1032,12 @@ test('EXPORT-10: the downloaded current-format archive restores shared, private 
     expect(new Set(result.content.objects.map((object: { id: string }) => object.id)).size).toBe(2);
     const savedObject = before.objects.find(({ id }) => id === 'shared-object');
     expect(savedObject).toBeDefined();
-    await post('draft', {
-      id: 'shared-object',
-      baseRevision: savedObject?.revision,
-      value: {
-        typeId: savedObject?.typeId,
-        name: 'Senare namn som ersätts',
-        description: savedObject?.description,
-        iconId: savedObject?.iconId,
-        profileImageId: savedObject?.profileImageId,
-        customValues: savedObject?.customValues,
-        financialFacts: savedObject?.financialFacts,
-      },
-    });
-    await post('save', { operationId: 'after-downloaded-copy' });
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    const edit = await editTableObject(page, 'Gemensam lampa');
+    await edit.getByLabel('Namn', { exact: true }).fill('Senare namn som ersätts');
+    await edit.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
+    await saveReviewedConflictDraft(page);
+    await openSettings(page);
     await page
       .getByRole('navigation', { name: 'Inställningarnas sidor' })
       .getByRole('link', { name: 'Återimportera hushållet', exact: true })
@@ -877,14 +1087,42 @@ test('EXPORT-10: the downloaded current-format archive restores shared, private 
       page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
     ).toContainText('Gemensam lampa');
     await expect(await openDraftReview(page)).toContainText('Privat förslag från exporten');
+    // Continue household work through the browser with the restored private draft.
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Fortsatt arbete efter återimport');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
+    const continuedDraft = await openDraftReview(page);
+    await expect(continuedDraft).toContainText('Privat förslag från exporten');
+    await expect(continuedDraft).toContainText('Fortsatt arbete efter återimport');
+    await continuedDraft.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+      'Utkastet är sparat',
+    );
+    await page.reload();
+    await openTable(page);
+    await expect(
+      page.getByRole('button', { name: 'Fortsatt arbete efter återimport', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Privat förslag från exporten', exact: true }),
+    ).toBeVisible();
+    const continued = await read();
+    expect(continued.objects).toEqual(expect.arrayContaining(restored.objects));
+    expect(continued.draft.changes).toEqual([]);
+    expect((await (await client.get(`${path}/map/history`)).json()).history).toHaveLength(
+      history.length + 1,
+    );
   } finally {
     await client.dispose();
     await fixture.installation.close();
   }
 });
 
-for (const phase of ['ready', 'downloading'] as const) {
-  test(`EXPORT-11: leaving a ${phase} export retires the copy and preserves private proposals after guarded form departure`, async ({
+for (const { caseId, phase } of [
+  { caseId: 'EXPORT-11', phase: 'ready' },
+  { caseId: 'EXPORT-15', phase: 'downloading' },
+] as const) {
+  test(`${caseId}: leaving a ${phase} export retires the copy and preserves private proposals after guarded form departure`, async ({
     page,
   }) => {
     const fixture = await arrange(page);

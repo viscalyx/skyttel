@@ -17,7 +17,7 @@ async function linkStep(
   return (await response.json()).url as string;
 }
 
-test('ACCESS-09: both proven providers return to the same user and household', async ({
+test('both proven providers return to the same user and household', { tag: '@technical' }, async ({
   request,
 }) => {
   const installation = await createInstallation();
@@ -58,7 +58,9 @@ for (const failure of [
   'provider failure',
   'cancelled',
 ] as const) {
-  test(`existing identity proof preserves access after ${failure}`, async ({ request }) => {
+  test(`existing identity proof preserves access after ${failure}`, { tag: '@technical' }, async ({
+    request,
+  }) => {
     const installation = await createInstallation();
     const { origin } = installation;
     try {
@@ -96,7 +98,7 @@ for (const failure of [
   'provider failure',
   'cancelled',
 ] as const) {
-  test(`new identity proof preserves both users after ${failure}`, async ({
+  test(`new identity proof preserves both users after ${failure}`, { tag: '@technical' }, async ({
     request,
     playwright,
   }) => {
@@ -135,10 +137,9 @@ for (const failure of [
   });
 }
 
-test('linking requires the original session, explicit proof and same-origin requests', async ({
-  request,
-  playwright,
-}) => {
+test('linking requires the original session, explicit proof and same-origin requests', {
+  tag: '@technical',
+}, async ({ request, playwright }) => {
   const installation = await createInstallation();
   const { origin } = installation;
   const other = await playwright.request.newContext();
@@ -197,8 +198,10 @@ test('ACCESS-09: the interface verifies the result and lists both login methods'
   try {
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
+    const before = await (await page.request.get(`${installation.origin}/api/bootstrap`)).json();
     await page.goto(installation.origin);
     await openProfile(page);
+    const userId = await page.getByLabel('Ditt Skyttel-användar-ID').inputValue();
     await page.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Inloggningssätt', exact: true })).toBeVisible();
     await expect(page.getByText('Google – kopplat', { exact: true })).toBeVisible();
@@ -234,6 +237,26 @@ test('ACCESS-09: the interface verifies the result and lists both login methods'
     await expect(page.getByText('Google – kopplat', { exact: true })).toBeVisible();
     await expect(page.getByText('Microsoft – inte kopplat', { exact: true })).toHaveCount(0);
     await expect(steps).toHaveCount(0);
+    await page.getByRole('link', { name: 'Till startsidan' }).click();
+    await expect(
+      page.getByRole('heading', { name: before.household.name, exact: true }),
+    ).toBeVisible();
+    const address = page.url();
+    await installation.restart();
+    await page.reload();
+    await openProfile(page);
+    await page.getByRole('button', { name: 'Logga ut', exact: true }).click();
+    await page.getByRole('button', { name: 'Fortsätt med Microsoft' }).click();
+    await page.getByRole('button', { name: 'Fortsätt till Microsoft' }).click();
+    await expect(
+      page.getByRole('heading', { name: before.household.name, exact: true }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(address);
+    await openProfile(page);
+    await expect(page.getByLabel('Ditt Skyttel-användar-ID')).toHaveValue(userId);
+    expect(await (await page.request.get(`${installation.origin}/api/bootstrap`)).json()).toEqual(
+      before,
+    );
   } finally {
     await installation.close();
   }

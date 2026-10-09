@@ -33,6 +33,7 @@
     "test:unit": "npm run test:env -- vitest run",
     "test:unit:coverage": "npm run test:env -- vitest run --coverage",
     "test:gates": "npm run test:env -- node --test --test-concurrency=1 scripts/__tests__/*.test.mjs scripts/release/__tests__/*.test.mjs scripts/security/__tests__/*.test.mjs",
+    "test:manual-mapping": "npm run test:env -- node scripts/check-manual-mapping.mjs",
     "test:integration": "npm run test:env -- playwright test",
     "test:real-model": "npm run test:env -- playwright test --config playwright.real-model.config.ts",
     "test:real-voice": "npm run test:env -- playwright test --config playwright.real-voice.config.ts",
@@ -41,7 +42,7 @@
     "test:devcontainer": "npm run test:env -- node scripts/check-devcontainer.mjs",
     "test:installation": "node scripts/security/verify-installation.mjs",
     "measure:map": "npm run build && npm run test:env -- tsx scripts/measure-map.ts",
-    "check": "npm run typecheck && npm run lint && npm run lint:docs && npm run test:gates && npm run build && npm run test:unit:coverage",
+    "check": "npm run typecheck && npm run lint && npm run lint:docs && npm run test:gates && npm run test:manual-mapping && npm run build && npm run test:unit:coverage",
     "purge:install": "node scripts/purge-install.mjs",
     "test:unit:ci": "npm run test:env -- --ci-fonts vitest run",
     "test:integration:ci": "npm run test:env -- --ci-fonts playwright test"

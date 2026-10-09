@@ -1,5 +1,12 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { createHousehold, openMap, openSettings, openTable, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openMap,
+  openSettings,
+  openTable,
+  signIn,
+} from '../support/client.js';
 import {
   chooseConversationVoice,
   consentBox,
@@ -15,6 +22,7 @@ import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
+import { readVoiceProposal } from '../support/voice-work-reading.js';
 
 type Fixture = Window['skyttelVoiceFixture'];
 const media = (page: Page) => page.evaluate(() => window.skyttelVoiceFixture.stats());
@@ -179,6 +187,9 @@ test('TAL-10: Prata med Skyttel slår på och av mikrofonen utan att någon pane
     await page.waitForTimeout(3500);
     expect((await media(page)).openPeers).toBe(1);
 
+    await readVoiceProposal(page);
+    await closeTextView(page);
+
     // The same conversation goes on: the next press listens again without asking.
     await expect(microphone).toBeEnabled();
     await microphone.click();
@@ -252,6 +263,7 @@ test('TAL-11: Skyttel arbetar färdigt och talar klart när mikrofonen stängs a
     expect((await media(page)).microphoneTracks).toEqual([{ enabled: false, state: 'live' }]);
     await expect(page.getByRole('alert')).toHaveCount(0);
     expect(live.requests).toHaveLength(1);
+    await readVoiceProposal(page, 'Lo Lind');
   } finally {
     await app.close();
   }
@@ -333,13 +345,14 @@ test('TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men behåll
     await sound(page, 'remote', 0.2);
     await expect(voiceBox(page)).toHaveText('Skyttel talar');
     expect((await (await page.request.get(path)).json()).draft).toEqual(before.draft);
+    await readVoiceProposal(page);
   } finally {
     await app.close();
   }
 });
 
 for (const microphoneOn of [true, false]) {
-  test(`TAL-18: Avbryt bevarar ett långt samtal med mikrofonen ${microphoneOn ? 'på' : 'av'}`, async ({
+  test(`${microphoneOn ? 'TAL-18' : 'TAL-19'}: Avbryt bevarar ett långt samtal med mikrofonen ${microphoneOn ? 'på' : 'av'}`, async ({
     page,
   }) => {
     const requestText = (
@@ -447,6 +460,7 @@ for (const microphoneOn of [true, false]) {
       await expect(log).not.toContainText('För sent');
       expect((await (await page.request.get(path)).json()).draft).toEqual(before.draft);
       await expect(page.getByRole('region', { name: 'Samtalsnotis' })).toHaveCount(0);
+      await readVoiceProposal(page);
     } finally {
       await app.close();
     }
@@ -588,7 +602,7 @@ for (const [name, width, height, place] of [
   ['bred pekskärm', 820, 1180, 'top'],
   ['smal skärm', 390, 844, 'bottom'],
 ] as const)
-  test(`röstrutan står på sin plats på ${name} och täcker aldrig kartans rad eller återkoppling`, async ({
+  test(`${name === 'dator' ? 'TAL-20' : name === 'bred pekskärm' ? 'TAL-21' : 'TAL-22'}: röstrutan står på sin plats på ${name} och täcker aldrig kartans rad eller återkoppling`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height });

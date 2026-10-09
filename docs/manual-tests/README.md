@@ -34,6 +34,12 @@ ger en separat lokal provdatabas. Förbered utvecklingsmiljön med
 till utvecklingsguidernas gemensamma miljöer. Särskilda provdata och
 kontroller beskrivs tillsammans med respektive områdesfall.
 
+[Objektlistornas enhetsförberedelse](object-list-device-preparation.md)
+ger LISTA-09 och SÖK-16 vanlig HTTPS, verklig leverantörsinloggning och
+separata påhittade läs-, storkarts- och sökuppgifter. Fullständiga provarkiv
+återställs inför varje delegerat fall; komplett privat provinnehåll kopplas
+uttryckligen till det verifierade kontot före de mänskliga observationerna.
+
 För [stora kartor](large-map-performance.md) finns en separat mätplan och
 [uppmätta resultat](large-map-results.md).
 Den samlade kartupplevelsens
@@ -64,7 +70,8 @@ Välj **Skriv till Skyttel** för textvyn. Den öppnas utan modellkontakt eller
 nytt medgivande. **Visa utkastet** öppnar läsning, borttagning och sparande av
 hela utkastet. Förslag kan läsas men redigeras via de vanliga formulären
 efter borttagning och nytt förslag. Konflikter granskas från **Karta** eller
-**Tabell**. **Rapporter** och **Ändringshistorik** visar gemensamt sparade fakta.
+**Tabell**. **Rapporter** och **Ändringshistorik** visar gemensamt sparade
+fakta.
 För att starta ett nytt samtal väljer du uttryckligen **Nytt samtal**; om
 medgivande behövs väljer du därefter **Godkänn och starta**.
 
@@ -99,7 +106,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Automatisk kontroll av sparande](save-check.md): återkomst efter nätfel,
   ursprungligt försöks-ID efter omstart utan nytt medgivande, ett enda
   utfallsbesked med röstval och kvitto, återkallat medgivande med tappat
-  svar samt återförsök bara vid kontrollfel.
+  svar samt återförsök bara vid kontrollfel. Genererade varianter har egna
+  ID; faktisk uppläsning och mikrofonljud har separata observationsfall.
 
 - [Röstfel och ljudåterhämtning](voice-errors.md): fyra mikrofonhinder, tre
   servergrupper, felreferenser, stängning, återförsök och **Starta ljudet**
@@ -131,21 +139,36 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   redigering fungerar. Återgång från inställningarna behåller användbart
   läge och synligt, otäckt fokus. LISTA-06:s gamla fönstergeometri är
   pensionerad utan återanvänt ID; första aktiveringens läsning finns kvar.
+  TABELL-01–05 har egna vanliga fall, liksom varje smal LISTA- och
+  SÖK-variant. LISTA-09 skiljer faktisk uppläsning och förstoring från
+  Chromium-proven, även för sökning med NVDA och VoiceOver. SÖK-16 har
+  fysisk pekning, skärmtangentbord och förstoring på iPhone och iPad.
+  Grafikavbrott har separat
+  [körbar förberedelse](map-graphics-preparation.md).
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
   fönsterflytt, samtidiga läsbara detaljer och knapptext på flera rader
   med öppen samtalsnotis, sex
   beständiga personliga riktningar och nypzoom med styrplatta.
+  NAVIGATION-02 har komplett 1440 × 1000-referens; NAVIGATION-06–18
+  skyddar alla sju mått och båda öppningsordningarna. NAVIGATION-19
+  anger faktisk styrplatta och webbläsare.
 
 - [Inställningar och profil](settings-profile.md): helsida, mobilnavigation,
   återgång med fokus, synligt tangentbordsfokus i båda riktningar, läsbara
-  teman och typdefinitioner i kartans samlade utkast.
+  teman och typdefinitioner i kartans samlade utkast. INST-02 bevarar
+  administratörens oskickade typtext; INST-08 utför samma hela flöde som
+  vanlig medlem. INST-09–11 delar de genererade mobilfallen; INST-12
+  anger faktisk zoom och fysisk tangentbordsinmatning.
 
 - [Objektarbete och samtal](workspace-panels.md): kompletta objektförslag,
-  fullständiga uppgifter direkt i raden genom dator- och mobilbyte, bevarat samtal,
+  fullständiga uppgifter direkt i raden genom dator- och mobilbyte, bevarat
+  samtal,
   skyddad formulärförlust, väntande
   objektdialog och åtkomliga samband och typer genom vanliga ingångar.
   Gamla fria fönsters placeringsfall är pensionerade utan återanvända ID:n.
+  PANEL-03 använder två riktiga browserklienter och PANEL-09 anger
+  faktiskt mikrofon- och ljudprov.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
   teman, läsbara hopplänkar och fokus, hjälp i det kompakta verktygsfältet,
   samtalshjälp med
@@ -154,12 +177,18 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   går att rulla på telefon. På en tom mobilkarta förblir visningsval,
   verktyg och deras tangentbordsfokus nåbara, även med röstruta eller
   samtalsnotis. Höjdhjälpen finns i navigeringen och är inaktiv utan
-  ett objektval.
+  ett objektval. YTA-06 och YTA-10 skiljer ljust och mörkt tema.
+  [Styrd leverans](workspace-preparation.md) förbereder väntande formulär,
+  personliga flyttar och första läsningar utan produktändringar.
 
-- [Bevarat hushållsarbete](household-work.md): avbruten formulärförlust,
+- [Bevarat hushållsarbete](household-work.md): separata dator-, 390- och
+  320-pixelsfall för avbruten formulärförlust,
   lagda objektförslag, oskickad samtalstext, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
-  sparförsök vid tillfälliga vybyten; avveckling vid utloggning, återkallad
+  sparförsök vid tillfälliga vybyten;
+  [teknisk förberedelse vid rätt steg](household-work-preparation.md), faktiskt
+  hört NVDA-tal och fysisk mikrofon som separata observationer; avveckling vid
+  utloggning, återkallad
   tillgång
   och ersatt hushållsinnehåll. Väntande permanent radering stoppar mikrofon,
   dolt formulär och registrerat sparförsök före omladdning; oberoende privat
@@ -173,6 +202,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   prisunderlag, månadens antaganden, okända värden, kumulativa mätningar,
   omstart, hämtningsfel, okänt sparresultat, tangentbordsfokus och
   installationens särskilda kostnadsbehörighet på mobil och dator.
+  KOST-04 har fullständig 1280px-återhämtning med omstart; KOST-05–06
+  bevarar smala fokus- och prisflöden med dokumenterad referensförlust.
   En lokal startguide ger kontrollerade leverantörssvar och två identiteter.
 
 - [Återställning och flytt](household-recovery.md): tomma lokala installationer,
@@ -180,12 +211,18 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   fullständiga valda identiteter utanför vallistorna och förnyad bekräftelse,
   tappat svar vid identitetskoppling, oberoende privata tillstånd,
   gamla sessioner och sparförsök, omstart och fortsatt export till en tredje
-  installation utan gammal databas eller inloggningsbehörighet.
+  installation utan gammal databas eller inloggningsbehörighet. Separata
+  [svarsförberedelser](household-recovery-faults.md) tappar verkligt slutförda
+  svar; [konsolunderlag](household-recovery-console.md) skiljer sparbegäranden
+  och arkivjämförelser från UI-stegen.
 
 - [Typer, historik och rättelser genom MCP](assistant-advanced.md):
   egna typer och fält, daterade avtal, riktning och typbyte, skyddade
   definitioner och läsbar historik efter import samt vanliga
-  rättelser med aktuellt underlag och avvecklade verktygs frånvaro.
+  rättelser med aktuellt underlag, hela valda kvitton och oförändrat
+  oberoende utkast. Separata
+  [klientfångster](assistant-client-preparation.md) ger körbara indata och
+  tekniska jämförelser utan modell.
 
 - [Samtalsmedgivandet](conversation-consent.md): medgivanderutan från
   verktygsraden och snabblänken, avbruten start med bevarat
@@ -199,6 +236,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   otillgängligt samtal, misslyckat sparande och ny fråga efter en ny
   inbjudan. Ändrad medgivandetext kräver ett nytt sparat medgivande;
   en separat tillfällig installation förbereder det syntetiska tillståndet.
+  Vanliga syntetiska motsvarigheter hålls skilda från MEDGIVANDE-19/20:s
+  faktiska skärmläsning, beröring och förstoring samt MEDGIVANDE-21:s
+  enda hörda fjärråterkallandebesked.
 - [Samtalsnotiser](conversation-notices.md): bruten kontakt, otillgängligt
   samtal och uppdragsfel; en gemensam ordning, bara ett besked, stängning och
   automatisk återkomst, textåtkomst utan tillgängligt samtal, bevarad text
@@ -206,11 +246,16 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   hjälpmedel utan dubbel uppläsning, fokus och placering vid röstrutan
   eller meddelandefältet med hela beskedet läsbart på bred och smal skärm,
   verkligt registrerat
-  kontrollfel samt mätt text- och symbolkontrast i båda teman. NOT-11 har
+  kontrollfel med full privat och sparad läsning samt mätt text- och
+  symbolkontrast i båda teman. NOT-03 behåller båda fokusvägarna och
+  den pensionerade HJALP-04:s nodidentitet utan återanvänt ID. NOT-12–23
+  har separata placeringar, korta fönster och teman; NOT-24 kräver hört
+  besked. NOT-11 har
   en separat körbar mänsklig granskning av alla symbolformer och typfärger.
 - [Frågor och talade sparbesked](conversation-questions.md): identiteter,
   konflikter, väntan med mikrofonen av, beständigt kvitto och fyra
-  sekunders sparbesked efter ljud eller stopp.
+  sekunders sparbesked efter ljud eller stopp. Talad och skriven ingång
+  har skilda vanliga fall; uppläsning och faktiskt ljud har FRAGA-08/09.
 - [Skyttels röst](voice-assistant.md): svenska röstuppdrag,
   start efter medgivande, mikrofonen på och av med **Prata med Skyttel**,
   röstrutans statusord, vågform, stoppikon, plats och uppläsning,
@@ -220,14 +265,23 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   faktisk markering, exakt sparåterhämtning och tydlig skillnad mellan
   samtalstext och verifierade resultat, löpande dialog och
   raden Skyttel arbetar. Kontrollerat familjeunderlag och
-  verkligt tal redovisas separat.
+  verkligt tal redovisas separat. TAL-18/19 skiljer mikrofonlägena;
+  TAL-20–22 skiljer placeringarna och TAL-17/23–25 kräver verkliga
+  mikrofon-, ljud-, system- eller skärmläsarobservationer. TAL-24 behåller
+  TAL-16:s exakta hörda fokus-/aktivitetssekvens, inklusive statusord som
+  inte ska läsas upp, och skiljer den från verkligt tal.
 - [Utkastet i samtalet](conversation-draft.md): tabellen och dess symboler,
   personligt val mellan hushåll och enheter, första förslaget, tomt utkast,
   sparåterkoppling och kvittots plats i Rapporter → Ändringshistorik.
+  SAMTALSUTKAST-01 läser fältvärden före/efter och bevarad sparad historik
+  med [exakt läsförberedelse](conversation-review-preparation.md).
+  SAMTALSUTKAST-04 är pensionerat till TEXT-04 utan återanvänt ID;
+  smal dator och bred emulerad pekare har varsin motsvarighet.
 
 - [Mikrofontryck](microphone-press.md): kort och långt tryck, släpp och
-  systemavbrott, medgivande, pekfångst och tangentkombinationer på riktiga
-  Windows- och macOS-enheter; väntande tal under starten, avbrott och
+  systemavbrott, medgivande, pekfångst och separata Windows/macOS-varianter.
+  Faktiska OS-genvägar och pekning har egna mänskliga fall. Väntande tal
+  under starten, avbrott och
   spärrad ljuduppspelning och mikrofonens läge vid nytt samtal.
 
 - [Textvyn](text-view.md): **Skriv till Skyttel** öppnar och stänger
@@ -237,18 +291,23 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   går att använda på pekskärm och smal skärm. Textknappens överlagrade
   markeringar visar skrivet arbete, olästa svar och väntande frågor med
   en enda artig uppläsning, fasta mått och minskad rörelse. Kommentarspaket
-  och faktiskt hört tal provas separat. Mobilfallen provar iPhone och
-  iPad, fast sidofält på bred pekskärm, kompakt rad vid kort synlig höjd,
+  och faktiskt hört tal provas separat. Mobilfallen har separata ID för
+  varje kvarvarande emulerad konfiguration, fast sidofält på bred pekare,
+  kompakt rad vid kort synlig höjd,
   bibehållet fokus, 190 px synlig höjd med rösten på, fria kartkontroller
   och långa rullbara notiser. Datorfallen provar oberoende breddhandtag
   med mus och piltangenter, personliga bredder mellan hushåll och enheter,
   visningsbegränsning utan ändrat sparat val samt återställning även utan
   tillgängligt samtal. Mobil enhet och smal skärm behåller sina bredder.
   Aktuella och kompatibla äldre hushållsarkiv bevarar personliga samtalsval
-  och håller dem och medgivandet utanför hushållsfilen.
+  och håller dem och medgivandet utanför hushållsfilen. TEXTBREDD-05 har
+  en egen vanlig importmotsvarighet; EXPORT-10 är överlappande underlag.
+  Faktisk skärmläsning, mikrofonljud och fysisk inmatning har separata
+  observationsfall. De tre godkända mobilkonfigurationerna är borttagna.
 - [Samtalets kö och avbrott](conversation-queue.md): serverns kö på dator,
   fokusstyrd Escape, stopp på mobil och smal skärm, talade och skrivna
   uppdrag samt kvarvarande utkast, oskickad text och återkoppling.
+  KÖ-05 avser verklig utrustning.
 - [Röst och text i samma samtal](conversation-voice-text.md): skrivna svar
   med röst när mikrofonen är på, text när den är av, ordnad överlämning av
   långa svar, kvarvarande samtalstext och artig uppläsning bara av nya
@@ -263,14 +322,24 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   Full kontext sammanfattas automatiskt med kvarvarande samtalstext,
   aktuellt utkast, mikrofonläge och tidigare inspelat tal. Misslyckad
   sammanfattning blockerar nya uppdrag tills Nytt samtal. Pågående
-  sparande och dess hörda kvitto avslutas före röstbytet.
+  sparande och dess kontrollerade ljudkvittens avslutas före röstbytet.
+  Mikrofonval, felingång och emulerade pekbredder har skilda identiteter;
+  KONTEXT-16/17 avser verklig uppläsning, mikrofon och beröring;
+  KONTEXT-18 bevarar hört hinderbesked vid textens och röstens
+  sammanfattningsfel.
+  [Separat samtalsförberedelse](conversation-preparation.md) beskriver
+  versionsvärden, paket, registrerat sparande och PCM genom hållen start.
 - [Samtal med Skyttel](text-assistant.md): hela utkast,
   rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
   samtidigt synliga objekt och samband i karta och detaljpanel även på
   telefon, med skyddad formulärtext samt obekräftad samtalstext
   skild från resultat samt synliga samband, typer och före-/eftervärden
   i hela ändringslistan och begärda samtalsdetaljer från utkast och kvitto.
-  Kontrollerade lokala
+  TEXT-07 är pensionerat till SAMTALSUTKAST-01 utan återanvänt ID.
+  TEXT-04 återfinner den verkliga sparidentifieraren efter genomfört
+  sparande med tappat svar och omstart. Varje TEXT-08-storlek har eget ID.
+  [Operatörsförberedelsen](text-conversation-preparation.md) skiljer
+  leveransfel och rått protokoll från vanliga UI-steg. Kontrollerade lokala
   leverantörssvar och verklig modellförståelse redovisas separat.
 
 - [Permanent radering](household-erasure.md): egen inställningssida,
@@ -290,6 +359,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   tangentbordsfokus i båda teman, också på smala och korta fönster.
   Radering av en tidigare typ tar bort dess
   sista historiska bildversion utan att ta bort objektets nuvarande bild.
+  De tio fullständiga bredd- och temaflödena har egna stabila identiteter
+  i RADERING-06 och RADERING-12–20. RADERING-21 kräver faktisk zoom och
+  fysiskt tangentbord. [Separat förberedelse](household-erasure-preparation.md)
+  håller SQLite-läsning, tappar verkligt slutförda svar och blockerar
+  återhämtningsminnet med tydliga tidpunkter och återställning.
 
 - [Fullständig återimport](household-import.md): egna inställningssidor,
   bevarat oskickat arbete före innehållsbyte, uttrycklig ersättning,
@@ -304,35 +378,54 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   och fördröjda avbrotts- och statussvar efter navigering. Ersättning och
   innehållskoppling följs i båda teman. Fel i webbläsarens återhämtningsminne
   bevarar vald fil, faktisk granskning och bekräftat serverresultat.
+  [Separat filförberedelse](household-recovery-filesystem.md) anger rensningsfel,
+  exakta katalogindata och återställning utanför UI-stegen.
+  IMPORT-07 använder typ- och objektformulär samt Rapporter med separat
+  request-underlag. IMPORT-15 och IMPORT-22–24 har varsin automatiserad
+  motsvarighet vid 1280, 390, 320 respektive 640 CSS-pixlar; fysisk zoom
+  och skärmläsaruppläsning ingår inte i dessa syntetiska kontroller.
+  IMPORT-25 bevarar verklig webbläsarzoom som separat mänsklig observation.
 
 - [Fullständig export](household-export.md): egen sida i Inställningar,
   privata uppgifter före export, tangentbord, fokus, bevarat kartarbete,
   nedladdning, verklig återimport av den hämtade filen efter omstart,
+  fortsatt nytt sparande, separata breddfall för dator och smala eller korta
+  fönster, bildförslag och historikläsning genom browserkontroller,
   avbrott med oklart rensningsresultat, sidbyte under hämtning,
   återkallad aktiv hämtning, giltighetstid samt
   bevarade identiteter, bildversioner, utkast och placeringar. En lokal
-  kontrollklient pausar en stor HTTP-överföring,
+  browserförberedelse pausar den riktiga källströmmen och styr sena svar.
+  Separat tekniskt arkivunderlag och en lokal kontrollklient
+  pausar en stor HTTP-överföring,
   mäter olästa byte i serverns källfil och kontrollerar borttagna exportfiler.
 
 - [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
-  mobil, korta fönster vid förstoring, bildens företräde, typbyte, omstart
+  smala CSS-vyer, separat verklig zoom, bildens företräde, typbyte, omstart
   och återgång till standardikon, lokalt tangentbordsfokus samt kompletta
   tillägg med bevarade värden vid avvisat eller okänt utfall.
+  IKON-06–07 kräver fysisk inmatning med verklig zoom respektive visuell
+  igenkänning av cykelsymbolen.
 - [Profilbilder](profile-images.md): privata bildförslag, visning i
-  rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, historikläsning,
+  rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning,
+  historikläsning,
   kvitton och bildåtkomst. Hela bildformulärets väntande tillägg spärrar
   navigering; avvisning behåller lokala värden, tidigare bild och oberoende
   förslag. Förlustvarningen har synligt tangentbordsfokus och läsbar text
   under pekaren i båda teman, också på korta fönster. Avbrutet filval
   ändrar inget och inaktuellt tillägg bevarar hela formuläret.
-  Alla objekttyper delar text, ikon och bild i samma förslag och kvitto;
-  bildborttagning återställer inte en äldre sparad bild.
+  Egen bildtyp är BILD-06:s generiska referens för text, ikon och bild
+  i samma förslag och kvitto; bildborttagning återställer inte en äldre
+  sparad bild. Den utför inte varje förifylld typ. BILD-07–15 identifierar
+  befintliga storleks- och temavarianter; BILD-03 provar faktiskt medlemskap
+  i ett annat hushåll. BILD-16 skiljer verklig zoom från CSS-storlekarna.
 
 - [Externa assistenter](assistants.md): OAuth, separat AI-val, avböjd
   anslutning, avgränsade läsningar, egna utkast, hushållsgränser och
   återkallad åtkomst, särskilt kartmedgivande, hela utkast, rättelser,
   konflikter och återfunna kvitton samt ett separat manuellt Codex CLI-prov
   med verklig Google-inloggning i devcontainern, utan CI-hemligheter.
+  AI-12 och AI-14 skiljer faktisk klientobservation från separat
+  verklig modellverifiering; vanliga fall använder kontrollerade anrop.
   En kontrollerad lokal MCP-klient behåller gamla begäranden, tappar ett
   lyckat sparbesked och provar exakta återförsök efter serveromstart.
   Profilens anslutningar får tangentbordsfokus och återgången behåller
@@ -341,9 +434,12 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Inloggning och hushållets start](access.md): skapa hushåll, använda
   tangentbord, avbryta extern inloggning, återhämta utgångna försök, börja
   med kartans verktyg utan startdialoger, hantera förlorad tillgång och länka
-  inloggningssätt.
+  inloggningssätt. Inloggningsstartens nätverksavbrott och leverantörsfel
+  har separata fall. Nekat Google- och Microsoft-samtycke provas var för sig.
   Länkningens två steg visar aktuell verifiering, båda tjänsternas status
-  och övergången till respektive tjänst.
+  och övergången till respektive tjänst. Microsoft-inloggning efter
+  omstart behåller profil och hushåll; requestdrivet identitetsbevis redovisas
+  separat som tekniskt underlag.
   Avbruten länkning bekräftas med bevarad tillgång och krav på ny verifiering.
   Utgången länkning förklarar ny verifiering och bevarar eget utkast och
   identitet.
@@ -356,11 +452,19 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   separata medlems- och inbjudningsvyer samt avvecklat oskickat arbete när en
   redan öppen mottagarklient förlorar tillgång.
   Misslyckad urklippsknapp följs av manuell kopiering och faktisk acceptans.
+  MEDLEM-07 skiljer utebliven begäran från ett förlorat svar efter serverns
+  acceptans genom separat körbar felförberedelse.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt och bevara ofullständiga uppgifter; det gemensamma
   objektformuläret med fullständiga värden, stängda avsnitts fel, typbyte,
   bild och ikon, förlustvarning, återfokus samt väntande, avvisat och oklart
-  tillägg till utkastet på dator och mobil.
+  tillägg till utkastet på dator och mobil. KARTA-18 och KARTA-21 skiljer
+  tillämpat och uteblivet tillägg; KARTA-20 och KARTA-22 har skilda
+  ordnings- och fokusreferenser, med fullständigt sparande och omstart vid
+  1440px.
+  KARTA-07 använder verkliga familjeformulär med separat HTTP-underlag;
+  KARTA-25 skyddar den samtidiga dubblettdialogen. KARTA-08 har en komplett
+  1280px/ljus referens och fem egna native konfigurationsfall.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon, flera flyttbara uppgiftsfönster och
   högerklickets sju ikoner och uppgiftsfönstrens fem åtgärdsikoner.
@@ -368,6 +472,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   den personliga vyn. Vanliga formulär,
   återfokus och oförändrat utkast provas även i smala och korta fönster,
   liksom återgång från Rapporter till text och utkast.
+  MARKERING-07–10 skiljer smala och korta konfigurationer; verkliga
+  modifierare och pekdragning provas separat i MARKERING-11–12.
 - [Kamerans urvalsfokus](map-camera.md): högerklickets tre kartåtgärder,
   bevarat urval och filter, etikettikonens växling och sparade val,
   återställning från verktygsfältet och bevarade personliga placeringar,
@@ -380,12 +486,16 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Rymdkarta](spatial-map.md): gemensam redigering genom Tabell, kompletta
   formulär och utkastets läsning med bevarad kamera och markering;
   samma kartikoner i listan och vid högerklick eller långtryck,
-  skillnaden mellan återställda och bevarade filter samt tangentbord och stängning;
+  skillnaden mellan återställda och bevarade filter samt tangentbord och
+  stängning;
   sökning och direkta samband, läsbara tidigare sparade samband,
   täta etiketter, publicerat medlemsbortfall och återhämtning av grafik.
+  RYMD-11–12 skiljer fysisk pekning, orientering, zoom och faktisk
+  symboltolkning från syntetisk Chromium-inmatning.
 
 - [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
   genom sidvisning, sökning och fokus, med bevarad text och placering.
+  Sparat resultat och historik läses genom webbläsaren efter omstart.
 - [Personliga placeringar](personal-view.md): stjärnval i Rymdkartans
   inställningar, sparbekräftelse som toast i tre sekunder med bevarat fokus,
   minskad rörelse, flyttning med mus, pekgester
@@ -399,9 +509,13 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
-  kommando förbereder äldre provdata för uppgraderingen.
+  kommando förbereder äldre provdata för uppgraderingen. AVTAL-07 provar
+  saknat känt skuldbelopp i formuläret och AVTAL-08 riktiga konfliktval;
+  HTTP-validering, kvitton och historik anges som separat tekniskt underlag.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
+  separata bredd-, tema- och återfokusfall med
+  [styrd sparleverans](save-preparation.md),
   långa fältnamn och sammanfattningar som skiljer giltighet från statusläge,
   direkt borttagning av oberoende förslag och bekräftad eller avbruten
   borttagning av nya objekt med deras verkliga sambandsberoenden,
@@ -419,8 +533,17 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   bekräftad kontroll från Karta, behåll senare tangentbordsfokus
   och skilj bekräftat kvitto från fel vid efterföljande hämtning; återuppta
   utkast, hantera gamla kastförsök
-  och konfliktval, kombinera egenskaper i Granska konflikter från karta
-  och tabell, läsa långa namn, bevara konfigurerade egenskapsnamn och
+  och konfliktval, kombinera egenskaper i Granska konflikter,
+  separata Karta- och Tabellvägar för genomförda och uteblivna konfliktval,
+  historisk fältförlust, skilda objekt- och sambandstypsåterställningar och
+  avvisad gammal behörighet med
+  [separat historisk förberedelse](historical-definition-preparation.md),
+  nyare jämförelser, andra klienters sparande och oberoende formulärarbete;
+  UTKAST-30 är pensionerat med skydd överfört till UTKAST-03;
+  [styrd konfliktleverans](current-conflict-preparation.md), egna identiteter
+  för bredd och valsida samt faktisk skärmläsarobservation i UTKAST-136;
+  UTKAST-57 behåller kontrast och betydelser utan exakta dekorativa värden;
+  läsa långa namn, bevara konfigurerade egenskapsnamn och
   ange varje egenskaps verkliga sparare, förklara ogiltiga kombinationer
   och avvisa inaktuell jämförelse; bevara val mellan konflikter och återöppning,
   göra om endast berörda egenskapsval, pröva ändrade typer och referenser igen
@@ -468,6 +591,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sökfokus när svaret fördröjs.
   Återfinn privata konfliktval efter tappade svar och bekräfta samma
   kvitto efter ett nytt uttryckligt sparande utan dubbletter.
+  UTKAST-41–48 och UTKAST-142–150 har separata borttagningsflöden:
+  oberoende och beroende förslag, två typsamlingar, smala bekräftelser,
+  sena fokusutfall och tappat svar efter genomförd eller utebliven ändring.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
@@ -480,7 +606,12 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   som objektens innehåll. Upprepade typbyten granskar skilda gamla svar,
   kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
   bild, ikon och samband samt läser historiska värden.
-  Felaktiga värden provas med aktuella versioner i det publika gränssnittet.
+  TYP-09, TYP-10 och TYP-11 är kompletta referenser vid datorbredd;
+  TYP-13–22 skyddar angivna smala, korta och mörka browserflöden. Hela
+  sparande- och omstartskedjan upprepas inte i varje konfiguration.
+  TYP-23 kräver fysisk tangentbordsanvändning vid verklig förstoring.
+  Felaktiga värden och kvittots återspelning har separat tekniskt underlag;
+  typens och fältets formulärvalidering utförs genom riktiga kontroller.
   Konfigurerad fältordning följer med till formulär, utkast och tabellens
   fullständiga läsning, inklusive uttrycklig noll och Nej.
 - [Sambandsarbete](relationships.md): skapa objekt separat, koppla dem i den
@@ -489,27 +620,39 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   Validering, dubbletter, borttagning, oklara utfall och förlustvarning
   bevarar tidigare förslag. Ett gammalt obekräftat försök efter en senare
   ändring kräver granskning av aktuellt underlag före nytt förslag.
-  Läsning, filter, återfokus och smal skärm provas.
+  Läsning, filter, återfokus och tre webbläsarvyer provas med egna
+  fallidentiteter. Faktisk skärmläsning och fysiskt skärmtangentbord har
+  separata mänskliga observationsfall. Exakta dekorativa värden i
+  SAMBAND-12 ingår inte i skyddet.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
   båda objekten, redigerbara definitioner, fyra egna fältslag, obesvarat,
   noll och Nej, uttrycklig hantering vid typbyte, privata förslag,
   ordnade avsnitt och återvisade dolda svar efter omstart, dubbletter
-  och samtidiga sparanden utan delsparande.
+  och samtidiga sparanden utan delsparande. Typ- och fältformulär provas
+  genom native kontroller. Hela spara- och omstartskedjan har referensen
+  1440px; 390/320px behåller eget formulärarbete, teman och fokus.
 - [Borttagning av typer och fält](definition-removal.md): granskad
   katalogborttagning, användningsspärrar för upphört innehåll och privata
-  utkast samt läsning av historiska definitioner som saknas i katalogen.
+  utkast utan privat läckage, fullständig förslagsläsning och läsning av
+  historiska definitioner som saknas i katalogen även efter omstart.
 - [Sparutfall, återhämtning och gemensamma demodata](operations.md):
   kontrollera samma väntande eller obekräftade försök efter omstart,
   läsa genomförda sparanden i Rapporter och kontrollera privat tillgång;
   SPAR-05 provar styrd leverans av verkliga formulärförslag, avvisat inaktuellt
-  sparande och återhämtning av ett tappat lyckat sparkvitto.
-  DEMO-01 provar även färdigt TestHousehold med den
-  konfigurerade Google- eller Microsoft-administratören.
+  sparande och återhämtning av ett tappat lyckat sparkvitto. SPAR-01 tappar
+  också det verkliga svaret före omstart och återfinner samma kvitto från
+  en annan klient; protokollreplay redovisas separat.
+  DEMO-01 och DEMO-02 provar färdigt TestHousehold med Google respektive
+  Microsoft som konfigurerad administratör. Båda behåller den andra
+  leverantörens åtkomstgräns, fulla värden och privata förslag efter omstart.
+  Teknisk start, säker sådd och återställning redovisas separat.
 - [Ändringshistorik](history.md): Rapporter visar genomförda sparanden
   senaste först, fullständiga historiska värden, direktlänkar och återgång
   till bevarat arbete. Omfattar tangentbord, smala skärmar, återförsök
   och fokus under fördröjd hämtning, sparlänkar med bevarad oskickad text
-  och historiska ikonvärden bredvid profilbilder.
+  samt HISTORIK-14–17:s smala varianter och separat verklig zoom.
+  HISTORIK-13 är avvecklat: ikontext före/efter bredvid oförändrad
+  profilbild saknar sin specifika integrationskontroll.
 - [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
   kända slutdatum och granska, kasta eller spara vanlig borttagning med
   bevarade anslutna objekt och historikunderlag, även efter privata typbyten.
@@ -518,3 +661,28 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sina egna namn, typer och statusuppgifter även när identifierare liknar
   varandra.
   Det gäller även tidigare samband som visas tillsammans med aktuella förslag.
+  LIVSCYKEL-01–06 har en varsin funktionell motsvarighet; LIVSCYKEL-07–09
+  kräver faktisk NVDA-uppläsning och redovisar DOM-prov som separat underlag.
+
+Kamerans KAMERA-10/11, personliga vyns PLACERING-11/12 och profilens
+INST-12/13 och arbetsytans YTA-11/12 redovisar faktisk fysisk inmatning,
+zoom eller uppläsning separat. KAMERA-12 gäller fysiska hela kameragester.
+PLACERING-09 har komplett 1440-referens och PLACERING-10 behåller smal
+återkoppling, utgången toast och fokus. Den samlade omstartskedjan provas
+inte separat vid varje CSS-mått eller öppningsordning; en kombinationsbugg
+specifik för en annan konfiguration kan därför undgå referensen.
+[Kontrastmätningens sex hjälpprov](../../tests/integration/accessibility-measurements.spec.ts)
+är tekniskt underlag för beräkningen. De har ingen påhittad UI-procedur;
+INST-06 och YTA-02 behåller sina egna browserbaserade kontrastkontroller.
+
+[Separat kontrollerad röstförberedelse](voice-controls-preparation.md)
+anger exakta kommandon, hållna startgränser, syntetiska toner, tekniska
+paket/resurser och återställning. Dess publika runner pausar klockan för
+manuell inspektion av media- och HTTP-avbrott och återupptar den vid
+återanslutning; det är inte naturlig förlupen tid. Tomt/seedat underlag
+vid kort/hög vy har separata tekniska röktest. De flyttade felkommandona och
+TAL-11:s ljudaktivitet med mikrofonen av har egna publika prov med fullständig
+start, återställning och städning. ROSTFEL-01/05–08,
+HJALP-07–10, TEXTBRICKA-06–08 och YTA-13 har egna funktionella motsvarigheter.
+HJALP-11/12, TEXTBRICKA-09/10 och YTA-14/15 beskriver faktiskt hjälpmedel,
+fysisk inmatning eller zoom; syntetisk Chromium etablerar dem inte.

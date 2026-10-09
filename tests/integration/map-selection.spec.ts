@@ -145,7 +145,8 @@ test('MARKERING-01: ordinary and modified clicks select objects and open details
 });
 
 for (const width of [1440, 390, 320]) {
-  test(`MARKERING-03: text selection and native details protect unsent work at ${width}px`, async ({
+  const caseId = width === 1440 ? 'MARKERING-03' : width === 390 ? 'MARKERING-07' : 'MARKERING-08';
+  test(`${caseId}: text selection and native details protect unsent work at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();

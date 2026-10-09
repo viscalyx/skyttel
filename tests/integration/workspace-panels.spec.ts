@@ -3,6 +3,7 @@ import type { MapState } from '../../src/shared/map.js';
 import {
   closeTextView,
   createHousehold,
+  openDraftReview,
   openMap,
   openNewObject,
   openSettings,
@@ -164,6 +165,12 @@ test('PANEL-05: pending object staging keeps the modal and returns to reading be
     await expect(page.getByRole('button', { name: 'Redigera Bilen', exact: true })).toBeVisible();
     const state: MapState = await (await page.request.get(path)).json();
     expect(state.objects).toEqual([]);
+    await search.fill('');
+    const draft = await openDraftReview(page);
+    await draft.getByRole('button', { name: 'Visa förslaget: Cykeln', exact: true }).click();
+    const proposal = page.getByRole('dialog', { name: 'Cykeln', exact: true });
+    await expect(proposal.getByText('Skickad beskrivning', { exact: true })).toBeVisible();
+    await expect(proposal).toContainText('Cykeln');
     expect(
       state.draft.changes.find((change) => change.after?.name === 'Cykeln')?.after?.description,
     ).toBe('Skickad beskrivning');
@@ -236,6 +243,16 @@ test('PANEL-01: complete object dialogs stage separate proposals and native read
     expect(state.objects).toHaveLength(3);
     expect(state.draft.changes).toEqual([]);
     expect((await (await page.request.get(`${path}/history`)).json()).history).toHaveLength(2);
+    await (await utilityButton(page, 'Rapporter')).click();
+    const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
+    await expect(history.getByRole('article')).toHaveCount(2);
+    const newest = history.getByRole('article').first();
+    await newest.getByText('Visa ändringarna', { exact: true }).click();
+    for (const name of ['Cykeln', 'Bilen', 'Garaget'])
+      await expect(
+        newest.getByText(`Beskrivning: Lagt i utkastet om ${name}`, { exact: true }),
+      ).toBeVisible();
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
   } finally {
     await installation.close();
   }
@@ -286,6 +303,7 @@ test('PANEL-02: mobile reading navigation retains conversation and staged object
 
 test('PANEL-03: an intervening proposal preserves local text and rejects stale complete staging', async ({
   page,
+  browser,
 }) => {
   const installation = await createInstallation();
   try {
@@ -302,12 +320,38 @@ test('PANEL-03: an intervening proposal preserves local text and rejects stale c
     await editTableObject(page, 'Cykeln');
     const form = page.getByRole('dialog', { name: 'Redigera Cykeln', exact: true });
     await form.getByLabel('Beskrivning', { exact: true }).fill('Min oskickade text');
+    const other = await browser.newContext();
+    try {
+      await signIn(other.request, installation.origin);
+      const second = await other.newPage();
+      await second.goto(installation.origin);
+      const secondForm = await editTableObject(second, 'Cykeln');
+      await secondForm
+        .getByLabel('Beskrivning', { exact: true })
+        .fill('Nyare förslag från samma användares andra klient');
+      await secondForm
+        .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
+        .click();
+      const reader = await readTableObject(second, 'Cykeln');
+      await expect(
+        reader.getByText(/Ditt förslag: Nyare förslag från samma användares andra klient/),
+      ).toBeVisible();
+      const native: MapState = await (await page.request.get(path)).json();
+      expect(native.draft.changes[0].after).toMatchObject({
+        name: 'Cykeln',
+        description: 'Nyare förslag från samma användares andra klient',
+        typeId: source.typeId,
+      });
+    } finally {
+      await other.close();
+    }
+    const native: MapState = await (await page.request.get(path)).json();
     const response = await page.request.post(`${path}/draft`, {
       headers: { origin: installation.origin },
       data: {
         id: source.id,
         baseRevision: source.revision,
-        version: state.draft.version,
+        version: native.draft.version,
         contentVersion: state.contentVersion,
         value: { ...source, description: 'Nyare förslag från samma användares andra klient' },
       },
@@ -327,6 +371,15 @@ test('PANEL-03: an intervening proposal preserves local text and rejects stale c
       'Nyare förslag från samma användares andra klient',
     );
     expect((await (await page.request.get(`${path}/history`)).json()).history).toHaveLength(1);
+    await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+    await (await utilityButton(page, 'Rapporter')).click();
+    const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
+    await expect(history.getByRole('article')).toHaveCount(1);
+    await history.getByRole('article').getByText('Visa ändringarna', { exact: true }).click();
+    await expect(history.getByRole('article')).toContainText('Cykeln');
+    await expect(history.getByRole('article')).not.toContainText(
+      'Nyare förslag från samma användares andra klient',
+    );
   } finally {
     await installation.close();
   }

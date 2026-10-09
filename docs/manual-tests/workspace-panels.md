@@ -20,15 +20,16 @@ providentitet och påhittade uppgifter.
    Läs via **Tabell** och objektets namn. Alla uppgifter visas direkt i raden.
    Redigera med radens pennikon **Redigera [objektets namn]**.
    Fäll ihop uppgifterna genom att välja namnet igen.
-3. Spara via **Skriv till Skyttel**, **Visa utkastet** och **Spara hela utkastet**.
+3. Spara via **Skriv till Skyttel**, **Visa utkastet** och **Spara hela
+   utkastet**.
    Vänta på **Utkastet är sparat**. Stäng sedan textvyn när vanliga formulär
    ska användas.
 4. Samtalsfallen kräver en [konfigurerad assistent](setup/assistants.md).
    Öppna texten, välj uttryckligen **Nytt samtal** och ge medgivande.
    PANEL-08 kräver även mikrofonmedgivande och ett fungerande röstsamtal.
-5. PANEL-03 och PANEL-05 använder kontrollerad leverans mot en separat
-   provinstallation. Förbered samma verkliga HTTP-anrop som beskrivs i
-   integrationstestet; vanlig nätverksväxling ger inte ett bestämt leveransutfall.
+5. PANEL-03 använder två inloggade webbläsarklienter med samma identitet.
+   För PANEL-05, följ [kontrollerad formulärleverans](workspace-preparation.md#väntande-formulärsvar)
+   innan det markerade tillägget; vanlig offlineväxling ger inte samma utfall.
 
 ## Objekt och läsning
 
@@ -43,8 +44,24 @@ utan att skapa flera objekt eller förlora samtalstext.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-01: complete object dialogs stage separate proposals and
-native readers reuse each object”.
+PANEL-01.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-panels.spec.ts",
+    "caseId": "PANEL-01"
+  },
+  "reference": "Chromium, angivna dator- och mobilmått; kontrollerad samtalstjänst vid samtalssteg.",
+  "outcomes": [
+    "Kompletta förslag, oskickad text, läsning och meningsfullt fokus bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -59,10 +76,13 @@ native readers reuse each object”.
    Kontrollera beskrivningen, rubriken och en enda detaljvy för objektet.
 4. Öppna texten igen. Kontrollera meddelandet. Spara hela utkastet och
    ladda om sidan. Läs samtliga tre objekt igen.
+5. Öppna **Rapporter → Ändringshistorik**. Läs de två sparandena,
+   fäll ut **Visa ändringarna** för det senaste och läs alla tre
+   sparade beskrivningarna. Välj **Tillbaka till arbetet**.
 
 **Förväntat resultat:**
 
-- Varje objekt har rätt fullständiga beskrivning efter omstart.
+- Varje objekt har rätt fullständiga beskrivning efter omladdning.
 - Återöppning visar samma objekt i en enda detaljvy direkt i raden.
 - Samtalstexten bevaras. Tre objekt finns sparade och utkastet är tomt.
 - Ändringshistoriken innehåller de två uttryckliga sparandena.
@@ -79,8 +99,24 @@ Prova 390, 320 och 1440 CSS-pixlars bredd med 844 pixlars höjd.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-02: mobile reading navigation retains conversation and staged
-object details across resizing”.
+PANEL-02.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-panels.spec.ts",
+    "caseId": "PANEL-02"
+  },
+  "reference": "Chromium, angivna dator- och mobilmått; kontrollerad samtalstjänst vid samtalssteg.",
+  "outcomes": [
+    "Kompletta förslag, oskickad text, läsning och meningsfullt fokus bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -109,8 +145,24 @@ underlaget innan det fullständiga formuläret skickas.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-03: an intervening proposal preserves local text and rejects
-stale complete staging”.
+PANEL-03.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-panels.spec.ts",
+    "caseId": "PANEL-03"
+  },
+  "reference": "Chromium, angivna dator- och mobilmått; kontrollerad samtalstjänst vid samtalssteg.",
+  "outcomes": [
+    "Kompletta förslag, oskickad text, läsning och meningsfullt fokus bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -118,9 +170,13 @@ stale complete staging”.
 2. Lägg ett nyare förslag för samma objekt i den andra klientens utkast:
    beskrivningen Nyare förslag från samma användares andra klient.
 3. Välj **Lägg i utkastet och stäng** i första klienten.
-   Kontrollera avvisningen och att både namnet och Min oskickade text finns kvar.
+   Kontrollera avvisningen och att både namnet och Min oskickade text finns
+   kvar.
 4. Välj krysset och **Kasta ändringarna och fortsätt**. Ladda om och öppna
-   Cykeln för vanlig redigering igen.
+   Cykeln för vanlig redigering igen och läs den andra klientens beskrivning.
+   Stäng det oförändrade formuläret. Öppna **Rapporter → Ändringshistorik**,
+   fäll ut **Visa ändringarna** och läs det ursprungliga sparandet.
+   Den nyare privata beskrivningen ska inte finnas i det sparade innehållet.
 
 **Förväntat resultat:**
 
@@ -141,8 +197,24 @@ Välj **Alla etiketter** i kartan.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-04: map selection preserves unsent relationship and type
-forms”.
+PANEL-04.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-panels.spec.ts",
+    "caseId": "PANEL-04"
+  },
+  "reference": "Chromium, angivna dator- och mobilmått; kontrollerad samtalstjänst vid samtalssteg.",
+  "outcomes": [
+    "Kompletta förslag, oskickad text, läsning och meningsfullt fokus bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -178,8 +250,24 @@ av objektformulärets POST-anrop, enligt integrationstestet.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-05: pending object staging keeps the modal and returns to
-reading before a new search”.
+PANEL-05.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-panels.spec.ts",
+    "caseId": "PANEL-05"
+  },
+  "reference": "Chromium, angivna dator- och mobilmått; kontrollerad samtalstjänst vid samtalssteg.",
+  "outcomes": [
+    "Kompletta förslag, oskickad text, läsning och meningsfullt fokus bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -188,12 +276,14 @@ reading before a new search”.
 2. Håll det verkliga svaret. Kontrollera att beskrivningsfältet och krysset
    är inaktiva. Tryck Escape och försök fokusera den bakomliggande sökningen.
 3. Släpp samma svar. Kontrollera att formuläret stängs och
-   **Redigera Cykeln** får fokus. Sök efter Bilen och fortsätt skriva i sökfältet.
+   **Redigera Cykeln** får fokus. Sök efter Bilen och fortsätt skriva i
+   sökfältet.
 4. Läs utkastet och kontrollera Cykelns Skickad beskrivning.
 
 **Förväntat resultat:**
 
-- Väntande svar tillåter inte ny redigering, stängning eller fokus bakom modalen.
+- Väntande svar tillåter inte ny redigering, stängning eller fokus bakom
+  modalen.
 - Bekräftat tillägg återför fokus och nästa sökning fungerar utan fokusstöld.
 - Beskrivningen finns en gång i det privata förslaget. Inga objekt har sparats.
 
@@ -207,12 +297,29 @@ utrymmet kräver växling mellan text, tabell och karta.
 **Användare:** Alex.
 
 **Förutsättningar:** Cykeln har lagts i utkastet med Bevarad cykeltext.
-Prova 1440 och 640 CSS-pixlars bredd med 1000 pixlars höjd. Rösten är tillgänglig.
+Prova 1440 och 640 CSS-pixlars bredd med 1000 pixlars höjd. Rösten är
+tillgänglig.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-08: limited space switches between full-width work and text
-while voice continues”.
+PANEL-08.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/workspace-panels.spec.ts",
+    "caseId": "PANEL-08"
+  },
+  "reference": "Chromium, angivna dator- och mobilmått; kontrollerad samtalstjänst vid samtalssteg.",
+  "outcomes": [
+    "Kompletta förslag, oskickad text, läsning och meningsfullt fokus bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -234,13 +341,62 @@ while voice continues”.
 
 ## Pensionerade fall
 
-### PANEL-06: pensionerad placering av fria läspaneler
+### Pensionerad identitet PANEL-06
 
 Den fria objektläsningens dragning och flyttknappar togs bort. ID:t återanvänds
 inte. Vanlig läsning, fokus och fullständiga uppgifter prövas i PANEL-01–05.
 
-### PANEL-07: pensionerad kollision för fria läspaneler
+### Pensionerad identitet PANEL-07
 
 Fria objektfönsters placering kring text och röst togs bort. ID:t återanvänds
 inte. Växling och samtalskontinuitet prövas i PANEL-08; Navigation behåller sina
 egna kontroll- och kamerafall i [map-camera.md](map-camera.md).
+
+### PANEL-09: fysiskt hörbar röst genom arbetsytebyte
+
+**Syfte:** Ett faktiskt mikrofon- och ljudprov behåller hörbart samtal och
+oskickad text vid byte mellan arbetsyta och text.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Konfigurerad faktisk samtalstjänst, mikrofon och
+ljudutgång; separat auktoriserad körning.
+
+**Kräver mänsklig observation:** Ett faktiskt mikrofon- och ljudprov behåller
+hörbart samtal och oskickad text vid byte mellan arbetsyta och text.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-microphone-audio",
+    "observation": "Ett faktiskt mikrofon- och ljudprov behåller hörbart samtal och oskickad text vid byte mellan arbetsyta och text."
+  },
+  "reference": "Konfigurerad faktisk samtalstjänst, mikrofon och ljudutgång; separat auktoriserad körning.",
+  "outcomes": [
+    "Ett faktiskt mikrofon- och ljudprov behåller hörbart samtal och oskickad text vid byte mellan arbetsyta och text."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/workspace-panels.spec.ts",
+      "caseId": "PANEL-08",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ PANEL-08 steg 1–5 en gång med faktisk mikrofon och ljudutgång.
+2. Tala och lyssna före och efter bytena. Anteckna ljudutrustning,
+   hörbart svar och eventuella avbrott separat från syntetiskt underlag.
+
+**Förväntat resultat:**
+
+- Ett faktiskt mikrofon- och ljudprov behåller hörbart samtal och oskickad text
+  vid byte mellan arbetsyta och text.

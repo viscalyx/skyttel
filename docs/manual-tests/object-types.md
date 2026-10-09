@@ -54,6 +54,7 @@ hushållets ID, fältets ID och fallets ogiltiga värde i frågorna. Koden läse
 aktuella versioner och ändrar bara det angivna fältet. Den kopierade
 begärans gamla `version` är redan förbrukad och får inte återanvändas.
 
+<!-- markdownlint-disable MD013 -->
 ```js
 await (async () => {
   const body = JSON.parse(prompt('Giltig JSON-kropp från map/draft'));
@@ -94,6 +95,7 @@ await (async () => {
   });
 })();
 ```
+<!-- markdownlint-enable MD013 -->
 
 Resultatet ska vara `status: 400`, `error: "invalid_request"`,
 `unchangedMap: true` och `unchangedHistory: true`. HTTP 409 betyder att en
@@ -112,30 +114,61 @@ Hämta då ett nytt giltigt underlag och gör om kontrollen utan samtidiga
 **Förutsättningar:** Typen Solcellsanläggning saknas.
 
 **Integrationstest:**
-[object-types.spec.ts](../../tests/integration/object-types.spec.ts),
-testfallet “TYP-01: custom definitions and four optional fields share one
-durable save and history”.
+[object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-01.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-types.spec.ts",
+    "caseId": "TYP-01"
+  },
+  "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
+  "outcomes": [
+    "Namnlös typ och namnlöst fält stoppas med fokus på respektive fält.",
+    "Typ och objekt sparas tillsammans och visas med svar och historik efter omstart."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/object-types.spec.ts",
+      "title": "custom definitions and four optional fields share one durable save and history",
+      "purpose": "Separat HTTP-verifiering av beständighet, avvisning och oförändrat underlag; utför inte formulärstegen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Skapa Solcellsanläggning med beskrivningen Hushållets elproduktion.
-   Lägg till Leverantör som text, Effekt som tal, Installationsdatum som
-   datum och Batteri som ja/nej. Lägg definitionen i utkastet.
-2. Skapa Paneler på taket av den nya typen. Ange Exempelsol, `12.5` och
-   `2026-09-01`. Lämna Batteri obesvarat. Lägg objektet i utkastet.
-3. Starta om testinstallationen och ladda om sidan. Kontrollera förslagen.
-   Läs kartans HTTP-svar: typen och objektet finns bara i det egna utkastet.
-4. Spara hela utkastet och läs kvittot från sparbegärans svar. Kontrollera
-   definition, fält, objekt, sparande användare och tidpunkt.
-5. Starta om igen och läs kartan samt historiken genom publika HTTP-anrop.
-   Återförsök samma sparbegäran med samma operations-ID och utkastversion.
+1. Öppna Inställningar → Typer och egna fält → Ny objekttyp. Försök
+   lägga det tomma förslaget i utkastet. Typens namn får fokus.
+2. Ange Solcellsanläggning och beskrivningen Hushållets elproduktion.
+   Lägg till ett fält utan namn och försök lägga förslaget i utkastet.
+   Fältets namn får fokus. Ange Leverantör som text. Lägg också till
+   Effekt som tal, Installationsdatum som datum och Batteri som ja/nej.
+   Lägg definitionen i utkastet och läs återkopplingen.
+3. Återgå till kartan. Skapa Paneler på taket av Solcellsanläggning.
+   Öppna Egna fält. Ange Exempelsol, `12.5` och `2026-09-01`.
+   Lämna Batteri obesvarat och lägg objektet i utkastet.
+4. Starta om provinstallationen och ladda om. Öppna Visa utkastet och
+   kontrollera Solcellsanläggning och Paneler på taket. Spara hela utkastet
+   och vänta på Utkastet är sparat. Stäng textvyn.
+5. Starta om igen och ladda om. Öppna Tabell → Redigera Paneler på taket
+   → Egna fält. Kontrollera alla tre svar och obesvarat Batteri.
+   Välj Avbryt. Öppna Rapporter → Visa ändringarna för sparandet.
+   Läs typens namn, Leverantör, Exempelsol, Alex och tidpunkten.
 
 **Förväntat resultat:**
 
-- Definitionen och objektet återkommer i utkastet efter omstart och blir
-  gemensamma först vid samma sparande.
-- Batteri är obesvarat även i den sparade kartan. Historiken innehåller
-  samma kvitto och definition som sparandet. Återförsöket ger samma kvitto.
+- Namnlös typ och namnlöst fält stoppas var för sig med fokus på felet.
+- Typ och objekt återkommer i samma utkast efter omstart och sparas
+  tillsammans. Svaren, obesvarat Batteri och läsbar historik består.
+- Det separata tekniska underlaget kontrollerar exakt kvitto, fältlista,
+  historik och återspelning av samma sparbegäran; UI-stegen gör inte det.
 
 ### TYP-02: Fyra frivilliga fält kan lämnas öppna, fyllas i och rättas
 
@@ -146,9 +179,25 @@ durable save and history”.
 **Förutsättningar:** Solcellsanläggning och Paneler på taket saknas.
 
 **Integrationstest:**
-[object-types.spec.ts](../../tests/integration/object-types.spec.ts),
-testfallet “TYP-02: forms create, review and correct optional custom fields
-without confusing unanswered and no”.
+[object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-02.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-types.spec.ts",
+    "caseId": "TYP-02"
+  },
+  "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
+  "outcomes": [
+    "Obesvarat Batteri skiljs från Nej.",
+    "Alla fyra fältsvar och rättelser består efter omladdning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -178,12 +227,10 @@ typer.
 
 **Förutsättningar:** Lo är vanlig medlem. Inga privata förslag finns.
 
-**Integrationstest:**
-[object-types.spec.ts](../../tests/integration/object-types.spec.ts),
-testfallet “TYP-03: members share editable definitions while private proposals
-and used field kinds stay protected”.
-
-**Steg:**
+**Separat förberedelse:** Skapa följande tillstånd före browserstegen.
+Automatiken förbereder motsvarande typer och utkast via publika HTTP-anrop;
+denna förberedelse räknas inte som bevis för typformulärets hela flöde.
+Återställ genom ett nytt provhushåll mellan körningar.
 
 1. Lo skapar Solcellsanläggning med textfältet Anteckning och lägger typen
    i sitt utkast. Alex laddar om och kontrollerar att typen inte visas.
@@ -194,17 +241,42 @@ and used field kinds stay protected”.
    ändrar typens namn till Solkraft, fältnamnet till Kommentar och båda
    beskrivningarna. Lo lägger också till ett nytt talfält som heter
    Anteckning och sparar definitionen.
-4. Alex försöker spara sitt äldre utkast. Öppna **Granska konflikter** och
+
+**Integrationstest:**
+[object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-03.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-types.spec.ts",
+    "caseId": "TYP-03"
+  },
+  "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
+  "outcomes": [
+    "Ändrat värdeslag avvisas när fältet används i annat privat utkast.",
+    "Aktuellt Kommentar behåller sitt värde och nytt Anteckning förblir obesvarat.",
+    "Medlem kan skapa objekt och ändra den använda förifyllda typen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Alex laddar om sitt äldre utkast. Öppna **Granska konflikter** och
    läs anvisningen om ändrad typdefinition för ett ännu inte sparat objekt.
    Stäng med Escape. Välj **Tabell → Redigera Paneler → Egna fält**.
    Granska **Kommentar: Privat värde** och tom **Anteckning** med tal som
    värdeslag. Välj **Lägg i utkastet och stäng** och spara därefter separat
    från **Skriv till Skyttel → Visa utkastet**.
-5. Lo skapar Medlemmens paneler av typen Solkraft. Öppna **Egna fält**,
+2. Lo skapar Medlemmens paneler av typen Solkraft. Öppna **Egna fält**,
    fyll i **Kommentar** och lämna **Anteckning** obesvarat. Lägg objektet
    i utkastet och spara separat. Stäng textvyn, skapa dessutom Lo av typen
    Person och spara separat.
-6. Lo ändrar namn och beskrivning på den använda typen Person till
+3. Lo ändrar namn och beskrivning på den använda typen Person till
    Människa och En person i kartan via **Inställningar → Typer och egna fält**.
    Återgå till kartan och spara separat. Ladda om, stäng textvyn och öppna
    **Nytt objekt**.
@@ -231,24 +303,49 @@ definition i historiken.
 
 **Förutsättningar:** Båda ser den förifyllda typen Person.
 
-**Integrationstest:**
-[object-types.spec.ts](../../tests/integration/object-types.spec.ts),
-testfallet “TYP-04: concurrent definition changes reject the whole draft
-until an explicit current choice”.
-
-**Steg:**
+**Separat förberedelse:** Skapa följande tillstånd före browserstegen.
+Automatiken förbereder motsvarande typer och utkast via publika HTTP-anrop;
+denna förberedelse räknas inte som bevis för typformulärets hela flöde.
+Återställ genom ett nytt provhushåll mellan körningar.
 
 1. Alex ändrar Person till Människor med beskrivningen Mitt förslag och
    lägger definitionen i utkastet. Skapa Alex av typen Människor i samma utkast.
 2. Lo ändrar Person till Personer med beskrivningen Annans rättelse och
    lägger till textfältet Smeknamn. Lo sparar hela sitt utkast.
-3. Alex försöker spara, hämtar aktuellt underlag och granskar konflikten.
-   Kontrollera att inga objekt sparas och att det egna utkastet finns kvar.
-4. Öppna **Granska konflikter**. Välj eget namn och egen beskrivning,
+
+**Integrationstest:**
+[object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-04.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-types.spec.ts",
+    "caseId": "TYP-04"
+  },
+  "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
+  "outcomes": [
+    "Hela äldre utkastet stoppas före granskning.",
+    "Eget namn och egen beskrivning sparas med den andra medlemmens Smeknamn."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Alex laddar om och öppnar den markerade konflikten i sitt utkast.
+   Den ändrade gemensamma definitionen stoppar hela det äldre sparandet.
+   Automatiken kontrollerar den avvisningen via HTTP före browsergranskningen.
+2. Öppna **Granska konflikter**. Välj eget namn och egen beskrivning,
    men sparade Egna fält med Smeknamn. Välj **Lägg valen i utkastet**
    och stäng med Escape. Kontrollera att inget sparas förrän
    Alex uttryckligen väljer **Spara hela utkastet** igen.
-5. Starta om och läs historiken via den publika HTTP-adressen.
+3. Starta om och ladda om. Öppna Tabell → Redigera Alex → Egna fält.
+   Kontrollera att Smeknamn finns och är obesvarat. Historikens exakta
+   tidigare definition och revision kontrolleras som tekniskt underlag.
 
 **Förväntat resultat:**
 
@@ -269,24 +366,49 @@ spara.
 **Förutsättningar:** Solkraft är sparad med Effekt som tal och Datum som
 datum. Inga objekt använder fälten.
 
-**Integrationstest:**
-[object-types.spec.ts](../../tests/integration/object-types.spec.ts),
-testfallet “TYP-05: invalid values and newly used field kinds preserve the
-entire draft and map”.
-
-**Steg:**
+**Separat förberedelse:** Skapa följande tillstånd före browserstegen.
+Automatiken förbereder motsvarande typer och utkast via publika HTTP-anrop;
+denna förberedelse räknas inte som bevis för typformulärets hela flöde.
+Återställ genom ett nytt provhushåll mellan körningar.
 
 1. Alex föreslår att det oanvända Effekt blir text. Lägg också ett
-   oberoende nytt Person-objekt i samma utkast.
+   oberoende nytt Person-objekt med namnet Oberoende förslag i samma utkast.
 2. Skapa ett förslag av typen Solkraft med det giltiga datumet
    `2026-02-28` och lägg förslaget i utkastet. Följ kontrollsteget
    [för felaktigt
    fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
    för Datum med värdet `2026-02-30`. Kontrollera HTTP 400 och att kartan,
    hela utkastet och historiken är oförändrade jämfört med före återförsöket.
-3. Lo lägger ett nytt objekt med Effekt `12` i sitt privata utkast utan
-   att spara. Alex försöker nu spara hela sitt utkast.
-4. Kontrollera felet, kartan, det egna utkastet och historikens HTTP-svar.
+3. Lo lägger Hemligt förslag med Effekt `12` i sitt privata utkast utan
+   att spara. Alex har fortfarande sitt osparade utkast.
+
+**Integrationstest:**
+[object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-05.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-types.spec.ts",
+    "caseId": "TYP-05"
+  },
+  "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
+  "outcomes": [
+    "Sparförsöket avvisas utan att avslöja den andra medlemmens privata objekt.",
+    "Hela eget utkast och sparad definition bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Alex öppnar Skriv till Skyttel → Visa utkastet och väljer Spara hela
+   utkastet. Läs felet som uppmanar till ett nytt fält. Kontrollera att
+   meddelandet inte avslöjar Los hemliga förslag. Stäng dialogen och
+   kontrollera att de egna förslagen finns kvar. Spara inte igen.
 
 **Förväntat resultat:**
 
@@ -306,21 +428,30 @@ säkerhet, datum eller tidigare egna värden.
 **Användare:** Alex.
 
 **Förutsättningar:** Börja med ett tomt hushåll. Skapa och spara Annan typ
-utan avsnitt eller egna fält. Använd dator samt 390 och 320 pixlars bredd.
-Pröva även ett kort fönster på 640 × 456 pixlar och verklig webbläsarzoom.
+utan avsnitt eller egna fält. Referensen körs vid 1280 × 900; de smala och
+korta browserflödena är separata TYP-15–17. Fysisk tangentbordsanvändning
+med verklig webbläsarzoom utförs separat i TYP-23.
 
 **Integrationstest:**
-[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts).
-Följande testfall:
+[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-10.
 
-- “TYP-10: canonical properties retain meaning through sections, hiding, type
-  changes, historical reading at 1280px”.
-- “TYP-10: canonical properties retain meaning through sections, hiding, type
-  changes, historical reading at 390px”.
-- “TYP-10: canonical properties retain meaning through sections, hiding, type
-  changes, historical reading at 320px”.
-- “TYP-10: canonical properties retain meaning through sections, hiding, type
-  changes, historical reading at 640px”.
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-builtins.spec.ts",
+    "caseId": "TYP-10"
+  },
+  "reference": "1280 × 900; ljust och mörkt tema skyddar avsnittens omflöde.",
+  "outcomes": [
+    "Saknat namn och känt belopp utan värde stoppas med felsammanfattningsfokus.",
+    "Skuldens säkerhet och datum består vid döljning, typbyte och historisk läsning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -380,9 +511,25 @@ obesvarat, noll och nej som olika uppgifter.
 **Förutsättningar:** Solcellsanläggning saknas. Starta ett tomt testhushåll.
 
 **Integrationstest:**
-[object-sections.spec.ts](../../tests/integration/object-sections.spec.ts),
-testfallet “TYP-08: sections move and hide fields in the shared draft without
-losing values after restart”.
+[object-sections.spec.ts](../../tests/integration/object-sections.spec.ts), TYP-08.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-sections.spec.ts",
+    "caseId": "TYP-08"
+  },
+  "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
+  "outcomes": [
+    "Dold Effekt återkommer med noll och Leverantör, datum och Nej består.",
+    "Reserv förblir obesvarat efter gemensamt sparande och omstart."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -421,18 +568,28 @@ definitionsändringar i Inställningar på mobil och dator.
 **Användare:** Lo, vanlig medlem. Alex förbereder den gemensamma typen.
 
 **Förutsättningar:** Person har textfältet Anteckning i Egna fält.
-Använd dator och smala fönster motsvarande 390 och 320 CSS-pixlar.
+Använd 1280 CSS-pixlar. De smala flödena har egna fall TYP-13 och TYP-14.
 
 **Integrationstest:**
-[object-sections.spec.ts](../../tests/integration/object-sections.spec.ts),
-testfallen:
+[object-sections.spec.ts](../../tests/integration/object-sections.spec.ts), TYP-09.
 
-- “TYP-09: ordinary members retain prefilled section work and keyboard
-  controls at 1280px”.
-- “TYP-09: ordinary members retain prefilled section work and keyboard
-  controls at 390px”.
-- “TYP-09: ordinary members retain prefilled section work and keyboard
-  controls at 320px”.
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-sections.spec.ts",
+    "caseId": "TYP-09"
+  },
+  "reference": "1280 CSS-pixlar, vanlig medlem; båda teman skyddar kontrollernas läsbarhet.",
+  "outcomes": [
+    "Medlem kan ordna avsnitt, dölja fält och återgå med oskickad text kvar.",
+    "Kontroller och fel får synligt fokus; sparad dold placering består efter omstart."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -452,6 +609,9 @@ testfallen:
    får fokus. Ge det namnet Tillfälligt och ta sedan bort det tomma avsnittet.
 7. Prova ljust och mörkt tema och navigera kontrollerna med tangentbord.
    Lägg förslaget i utkastet. Alex kontrollerar sin egen karta.
+8. Vid 1280 pixlar: återgå till kartan och spara hela utkastet. Stäng
+   textvyn, starta om och ladda om. Öppna Person i typinställningarna och
+   kontrollera Kontakt, fältbeskrivningen och dold Anteckning.
 
 **Förväntat resultat:**
 
@@ -477,9 +637,36 @@ Spara Garaget och ett samband från cykeln till garaget. Anteckna objektets
 och sambandets ID från kartans publika HTTP-svar.
 
 **Integrationstest:**
-[type-change.spec.ts](../../tests/integration/type-change.spec.ts),
-testfallet “TYP-06: type changes review displaced values and preserve
-identity, edges and historical reading through restart”.
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-06.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/type-change.spec.ts",
+    "caseId": "TYP-06"
+  },
+  "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
+  "outcomes": [
+    "Typbyte kräver uttryckligt samtycke och kopierar inga egna svar.",
+    "Historiken behåller gamla fältbetydelser; objekt och samband består efter omstart."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Anteckna objektets och sambandets ID från kartans publika HTTP-svar enligt
+förutsättningarna och allmän Network-förberedelse. Efter det verkliga sparandet
+i UI-steg 3: jämför de nya publika svarens exakta ID med de ursprungliga.
+Meddela **Samma cykel och samband är bevarade** först efter båda jämförelserna.
+Detta är separat protokollunderlag;
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts) behåller sina
+exakta identitetskontroller. Behåll samma hushåll och provdatabas genom
+omstarterna och återställ enligt allmän förberedelse.
 
 **Steg:**
 
@@ -491,7 +678,9 @@ identity, edges and historical reading through restart”.
    **Lägg i utkastet och stäng**.
    Granska båda typerna, gamla och nya Nummer samt obesvarat Försäkrad.
 3. Starta om installationen och ladda om. Kontrollera samma privata
-   förslag. Spara hela utkastet och kontrollera cykelns och sambandets ID.
+   förslag. Spara hela utkastet. Öppna cykeln och läs Motorfordon, Nummer 42,
+   obesvarat Försäkrad och sambandet till Garaget. Invänta operatörens
+   bekräftelse att samma objekt och samband har bevarats.
 4. Byt typdefinitionens namn från Cykel till Trampcykel och dess fältnamn
    till Tidigare Nummer och Tidigare Försäkrad. Spara. Starta om och öppna
    **Rapporter**. Välj **Visa ändringarna** vid typbytet från Cykel
@@ -531,21 +720,25 @@ På cykeln ska följande gemensamma ekonomiska uppgifter finnas:
 - Pris: **Okänt**.
 
 **Integrationstest:**
-[type-change.spec.ts](../../tests/integration/type-change.spec.ts).
-Följande testfall:
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-11.
 
-- “TYP-11: repeated type changes confirm loss of former answers and complete
-  common values through save and restart at 1280px in light”.
-- “TYP-11: repeated type changes confirm loss of former answers and complete
-  common values through save and restart at 1280px in dark”.
-- “TYP-11: repeated type changes confirm loss of former answers and complete
-  common values through save and restart at 390px in light”.
-- “TYP-11: repeated type changes confirm loss of former answers and complete
-  common values through save and restart at 390px in dark”.
-- “TYP-11: repeated type changes confirm loss of former answers and complete
-  common values through save and restart at 320px in light”.
-- “TYP-11: repeated type changes confirm loss of former answers and complete
-  common values through save and restart at 320px in dark”.
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/type-change.spec.ts",
+    "caseId": "TYP-11"
+  },
+  "reference": "1280 CSS-pixlar, ljust tema; hela typbyteskedjan med sparande och omstart.",
+  "outcomes": [
+    "Varje upprepat typbyte kräver nytt samtycke till aktuella egna svar.",
+    "Gemensamma fakta, bild och samband består genom sparande och omstart."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -585,35 +778,67 @@ Följande testfall:
 Lo har aktuell tillgång till hushållet.
 
 **Integrationstest:**
-[type-change.spec.ts](../../tests/integration/type-change.spec.ts),
-testfallet “TYP-07: invalid values and concurrent definitions block whole
-saves until fresh choices and preserve later private fields”.
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/type-change.spec.ts",
+    "caseId": "TYP-07"
+  },
+  "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
+  "outcomes": [
+    "Ändrad definition stoppar hela utkastet tills aktuellt val och nytt sparande.",
+    "Senare Nummer 43 förblir privat efter omstart medan kartan behåller 42."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/type-change.spec.ts",
+      "title": "invalid values and concurrent definitions block whole saves until fresh choices and preserve later private fields",
+      "purpose": "Separat HTTP-verifiering av beständighet, avvisning och oförändrat underlag; utför inte formulärstegen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Skapa och spara typer, objekt och samband enligt
+TYP-06. Lo ska vara vanlig medlem i samma hushåll. Protokolltestet i
+metadata bevarar kontroll av felaktigt Nummer, gamla utkastversioner och
+exakt historik. För felaktigt Nummer kan koden i allmän förberedelse köras
+med ett giltigt objektförslag och värdet `fel`; detta är separat tekniskt
+underlag, inte en formulärhandling.
 
 **Steg:**
 
-1. Alex lägger namnbytet Garaget till Eget namn i sitt utkast. Föreslå
-   typbytet till Motorfordon: ange Nummer `42`, välj Försäkrad **Nej**,
-   hantera gamla värden och lägg typbytet i utkastet. Följ kontrollsteget
-   [för felaktigt
-   fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
-   för Nummer med texten `fel`. Kontrollera HTTP 400 och oförändrad karta,
-   helt utkast och historik jämfört med före återförsöket.
-2. Behåll det giltiga typbytet med Nummer `42` och Försäkrad **Nej** i
-   utkastet. Lo ändrar och sparar Motorfordons beskrivning.
-3. Alex försöker spara hela utkastet. Kontrollera att varken Garagets namn
-   eller cykelns typ ändras. Hämta aktuellt underlag och behåll förslaget
-   efter granskning av den nya definitionen. Återsänd tidigare sparbegäran
-   med samma gamla utkastversion men nytt operations-ID: HTTP 409.
-4. Ge ett nytt sparbesked och kontrollera båda sparade ändringarna. Lägg
-   sedan Nummer `43` i ditt utkast utan att spara.
-5. Starta om och kontrollera förslaget, sparad karta och historik.
+1. Alex redigerar Garaget till Eget namn och lägger ändringen i utkastet.
+   Öppna Alex blå cykel, välj Motorfordon och bekräfta borttagning av de
+   tidigare egna svaren. Ange Nummer `42` och Försäkrad Nej i Egna fält.
+   Lägg typbytet i samma utkast.
+2. Lo öppnar Motorfordon i typinställningarna, ändrar beskrivningen till
+   Uppdaterad definition och sparar sitt utkast.
+3. Alex väljer Spara hela utkastet. Läs avvisningen, stäng dialogen och
+   textvyn och ladda om. Garagets sparade namn och cykelns sparade typ
+   ska ännu vara oförändrade.
+4. Öppna Granska konflikter, jämför sparad Cykel med Motorfordon och välj det
+   egna
+   förslaget. Lägg valen i utkastet och stäng med Escape. Kontrollera att
+   valet ännu inte sparar kartan. Spara därefter hela utkastet uttryckligen.
+5. Redigera cykeln igen, ändra Nummer till `43` och lägg i utkastet utan
+   att spara. Starta om och ladda om. Öppna Visa förslaget för cykeln.
 
 **Förväntat resultat:**
 
-- Felaktiga värden och inaktuella definitioner sparar ingen del av gruppen.
-  Konfliktvalet kräver ett nytt sparbesked för det aktuella utkastet.
-- Nummer 43 finns kvar i ditt utkast efter omstart. Den sparade kartan
-  behåller Motorfordon och Nummer 42, och tidigare sparanden är oförändrade.
+- Den ändrade definitionen stoppar hela sparandet. Ett aktuellt val och
+  ett nytt uttryckligt sparande behövs för både namn och typbyte.
+- Nummer 43 återkommer i det privata förslaget. Kartan behåller det
+  sparade Nummer 42, Försäkrad Nej och Garagets Eget namn.
+- Separat tekniskt underlag bevarar avvisning av felaktiga värden och
+  gammalt sparbesked samt det sparade kvittot efter omstart.
 
 ### TYP-12: Konfigurerad fältordning i formulär och fullständig läsning
 
@@ -628,6 +853,7 @@ genom publika HTTP-anrop i den inloggade profilens Console. Ange hushållets
 faktiska ID från nätverkspanelen. Kör bara på den separata testinstallationen;
 koden lägger typdefinitionen i utkastet och sparar den gemensamt.
 
+<!-- markdownlint-disable MD013 -->
 ```js
 await (async () => {
   const householdId = prompt('Hushållets ID');
@@ -643,9 +869,9 @@ await (async () => {
     'X-Skyttel-Build': `${identity.commit}:${identity.version}`,
   };
   const before = await read();
-  if (before.draft.changes.length || before.draft.objectTypes.length ||
-      before.draft.relationships.length ||
-      before.draft.relationshipTypes.length) {
+  if (before.draft.changes.length || (before.draft.objectTypes ?? []).length ||
+      (before.draft.relationships ?? []).length ||
+      (before.draft.relationshipTypes ?? []).length) {
     throw new Error('Börja med ett tomt utkast');
   }
   const staged = await fetch(`${path}/object-type`, {
@@ -679,25 +905,39 @@ await (async () => {
   console.log({ staged: staged.status, saved: saved.status });
 })();
 ```
+<!-- markdownlint-enable MD013 -->
 
 Resultatet ska visa `staged: 200` och `saved: 200`. Ladda därefter om sidan.
 Typens lagrade fältlista är Första fältet följt av Andra fältet; dess
 uttryckliga presentationsordning är Andra fältet följt av Första fältet.
 
 **Integrationstest:**
-[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts),
-testfallet “TYP-12: explicit field order preserves zero and false through
-the native form, draft and table readers”.
+[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-12.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-builtins.spec.ts",
+    "caseId": "TYP-12"
+  },
+  "reference": "Chromium på dator; syntetiska uppgifter i ett separat provhushåll.",
+  "outcomes": [
+    "Uttrycklig ordning visar Andra fältet före Första i formulär, utkast och tabell.",
+    "Nej och noll bevaras som svar genom uttryckligt sparande."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Välj Nytt objekt i kartans verktyg. Ange namnet Ordningsprov och välj
    Sorterad typ. Öppna Egna fält: Andra fältet ska stå före Första fältet.
    Välj Nej i Andra fältet och ange `0` i Första fältet.
-2. Kontrollera i nätverkspanelens aktuella kartläsning att det privata
-   objektutkastet fortfarande är tomt. Välj Lägg i utkastet och stäng.
-   Läs kartan igen: inget gemensamt objekt har skapats, medan det privata
-   förslaget innehåller noll och Nej under de två förberedda fältidentiteterna.
+2. Välj Lägg i utkastet och stäng. Vänta på återkopplingen om ditt utkast.
 3. Välj Skriv till Skyttel och Visa utkastet. Öppna Visa förslaget:
    Ordningsprov. Kontrollera ordning och fullständiga värden och stäng
    läsningen med krysset.
@@ -705,9 +945,9 @@ the native form, draft and table readers”.
    Välj Tabell och fäll ut Ordningsprov. Kontrollera samma ordning i raden.
    Läs fullständiga värden direkt i raden, fäll ihop med namnet och öppna igen.
    Kontrollera att fältens ordning och värden finns kvar.
-5. Läs den aktuella kartan i nätverkspanelen. Kontrollera att objektutkastet
-   är tomt, det gemensamma objektet innehåller `first: 0` och `second: false`,
-   och typens fältidentiteter och uttryckliga ordning är oförändrade.
+5. Öppna Visa utkastet och kontrollera att inga osparade objekt återstår.
+   Automatiken kontrollerar dessutom fältidentiteter och lagrade värden via
+   HTTP.
 
 **Förväntat resultat:**
 
@@ -717,3 +957,683 @@ the native form, draft and table readers”.
   utkastet skapar inget gemensamt objekt; uttryckligt sparande skapar det.
 - Sparandet bevarar båda svaren och fältidentiteterna. Den ursprungliga
   fältlistan och den separata presentationsordningen ändras inte.
+
+### TYP-13: Medlem ordnar avsnitt med bevarat oskickat arbete
+
+**Syfte:** Kontrollera mobilnavigation och synligt fokus på smal sida.
+
+**Användare:** Lo, vanlig medlem; Alex förbereder hushållet.
+
+**Förutsättningar:** 390 pixlar.
+
+**Separat förberedelse:** Alex förbereder Person med textfältet Anteckning i
+Egna fält enligt TYP-09. Lo är vanlig medlem i samma hushåll.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[object-sections.spec.ts](../../tests/integration/object-sections.spec.ts), TYP-13.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-sections.spec.ts",
+    "caseId": "TYP-13"
+  },
+  "reference": "390 pixlar; skyddar mobilnavigation och synligt fokus på smal sida.",
+  "outcomes": [
+    "Avsnittsordning och oskickad beskrivning bevaras mellan kartan och Inställningar.",
+    "Döljning, borttagning och fel leder fokus till nåbar kontroll; förslaget förblir privat."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Lo öppnar Inställningar, Typer och egna fält och Ändra typ: Person.
+   Kontrollera att Anteckning visas i Egna fält.
+2. Byt avsnittets namn till Personuppgifter. Aktivera Lägg till avsnitt
+   med tangentbord och skriv Kontakt direkt i det fokuserade namnfältet.
+3. Aktivera Flytta avsnittet Kontakt upp med tangentbord. Kontrollera
+   fokus på det flyttade namnfältet. Välj Kontakt för Anteckning och
+   ändra fältbeskrivningen till Bevara även oskickad beskrivning.
+4. Återgå till kartan och tillbaka till typinställningarna. Kontrollera
+   att ordningen, placeringen och oskickad beskrivning finns kvar.
+5. Dölj Anteckning. Kontrollera fokus på Visa i avsnitt. Ta bort det
+   tomma Personuppgifter; fokus ska gå till Lägg till avsnitt.
+6. Lägg till ett avsnitt med bara mellanslag i namnet. Fäll ihop Avsnitt
+   och försök lägga förslaget i utkastet. Avsnitt öppnas och namnfältet
+   får fokus. Ge det namnet Tillfälligt och ta sedan bort det tomma avsnittet.
+7. Prova ljust och mörkt tema och navigera kontrollerna med tangentbord.
+   Lägg förslaget i utkastet. Alex kontrollerar sin egen karta.
+
+**Förväntat resultat:**
+
+- Avsnittsordning och oskickad beskrivning bevaras mellan kartan och
+  Inställningar.
+- Döljning, borttagning och fel leder fokus till nåbar kontroll; förslaget
+  förblir privat.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-14: Medlem ordnar avsnitt med bevarat oskickat arbete
+
+**Syfte:** Kontrollera minsta breddens omflöde och fokus efter döljning.
+
+**Användare:** Lo, vanlig medlem; Alex förbereder hushållet.
+
+**Förutsättningar:** 320 pixlar.
+
+**Separat förberedelse:** Alex förbereder Person med textfältet Anteckning i
+Egna fält enligt TYP-09. Lo är vanlig medlem i samma hushåll.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[object-sections.spec.ts](../../tests/integration/object-sections.spec.ts), TYP-14.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-sections.spec.ts",
+    "caseId": "TYP-14"
+  },
+  "reference": "320 pixlar; skyddar minsta breddens omflöde och fokus efter döljning.",
+  "outcomes": [
+    "Avsnittsordning och oskickad beskrivning bevaras mellan kartan och Inställningar.",
+    "Döljning, borttagning och fel leder fokus till nåbar kontroll; förslaget förblir privat."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Lo öppnar Inställningar, Typer och egna fält och Ändra typ: Person.
+   Kontrollera att Anteckning visas i Egna fält.
+2. Byt avsnittets namn till Personuppgifter. Aktivera Lägg till avsnitt
+   med tangentbord och skriv Kontakt direkt i det fokuserade namnfältet.
+3. Aktivera Flytta avsnittet Kontakt upp med tangentbord. Kontrollera
+   fokus på det flyttade namnfältet. Välj Kontakt för Anteckning och
+   ändra fältbeskrivningen till Bevara även oskickad beskrivning.
+4. Återgå till kartan och tillbaka till typinställningarna. Kontrollera
+   att ordningen, placeringen och oskickad beskrivning finns kvar.
+5. Dölj Anteckning. Kontrollera fokus på Visa i avsnitt. Ta bort det
+   tomma Personuppgifter; fokus ska gå till Lägg till avsnitt.
+6. Lägg till ett avsnitt med bara mellanslag i namnet. Fäll ihop Avsnitt
+   och försök lägga förslaget i utkastet. Avsnitt öppnas och namnfältet
+   får fokus. Ge det namnet Tillfälligt och ta sedan bort det tomma avsnittet.
+7. Prova ljust och mörkt tema och navigera kontrollerna med tangentbord.
+   Lägg förslaget i utkastet. Alex kontrollerar sin egen karta.
+
+**Förväntat resultat:**
+
+- Avsnittsordning och oskickad beskrivning bevaras mellan kartan och
+  Inställningar.
+- Döljning, borttagning och fel leder fokus till nåbar kontroll; förslaget
+  förblir privat.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-15: Gemensamma egenskaper och fel nås i formuläret
+
+**Syfte:** Kontrollera smalt formulär med felsammanfattning och nåbara fält.
+
+**Användare:** Alex.
+
+**Förutsättningar:** 390 × 900.
+
+**Separat förberedelse:** Börja med tomt hushåll. Förbered Annan typ utan egna
+fält eller avsnitt enligt TYP-10.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-15.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-builtins.spec.ts",
+    "caseId": "TYP-15"
+  },
+  "reference": "390 × 900; skyddar smalt formulär med felsammanfattning och nåbara fält.",
+  "outcomes": [
+    "Namnfel och känt belopp utan värde leder till felsammanfattning och rätt fält.",
+    "Skuldens säkerhet och datum, gemensam beskrivning och egna svar läggs i samma utkast."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Inställningar → Typer och egna fält. Skapa Husavtal och avsnittet
+   Avtalet. Lägg till gemensamma Beskrivning och Senast uppgiven skuld samt
+   ett eget textfält Anteckning. Ändra skuldens visningsnamn till Skuld.
+2. Flytta Skuld upp med tangentbordet, dölj den och återvisa i Avtalet.
+   Kontrollera fokus efter varje handling. Lägg till gemensamma Startdatum
+   och placera i ett nytt avsnitt Datum. Kontrollera ljust och mörkt tema.
+   Lägg typförslaget i utkastet.
+3. Skapa Husets lån av typen Husavtal. Försök först lägga ett namnlöst
+   objekt i utkastet: felsammanfattningen ska få fokus. Följ länken till Namn.
+   Ange Gemensam avtalstext som
+   beskrivning och Eget värde som Anteckning. Ange Skuld `12 300` som
+   **Osäkert uppgivet**, med uppgiftsdatum `2026-09-01`, och Startdatum
+   `2026-08-01` som känt.
+4. Under Ekonomiska uppgifter, välj **Okänt** för Pris
+   och **Uttryckligen inget** för Valuta. Välj **Känt** för Beviljat
+   kreditutrymme utan belopp. Fäll ihop avsnittet och försök lägga i
+   utkastet. Felsammanfattningen ska få fokus. Följ beloppets länk; avsnittet
+   öppnas och det tomma beloppet får fokus. Välj därefter
+   **Ej uppgivet** för kreditutrymmet och lägg objektet i utkastet.
+
+**Förväntat resultat:**
+
+- Namnfel och känt belopp utan värde leder till felsammanfattning och rätt fält.
+- Skuldens säkerhet och datum, gemensam beskrivning och egna svar läggs i samma
+  utkast.
+- I korta fönster går det att rulla inne i formuläret till fält och
+  Lägg i utkastet och stäng; sidans avsnitt fungerar i båda teman.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-16: Gemensamma egenskaper och fel nås i formuläret
+
+**Syfte:** Kontrollera minsta breddens felsammanfattning och avsnittsöppning.
+
+**Användare:** Alex.
+
+**Förutsättningar:** 320 × 900.
+
+**Separat förberedelse:** Börja med tomt hushåll. Förbered Annan typ utan egna
+fält eller avsnitt enligt TYP-10.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-16.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-builtins.spec.ts",
+    "caseId": "TYP-16"
+  },
+  "reference": "320 × 900; skyddar minsta breddens felsammanfattning och avsnittsöppning.",
+  "outcomes": [
+    "Namnfel och känt belopp utan värde leder till felsammanfattning och rätt fält.",
+    "Skuldens säkerhet och datum, gemensam beskrivning och egna svar läggs i samma utkast."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Inställningar → Typer och egna fält. Skapa Husavtal och avsnittet
+   Avtalet. Lägg till gemensamma Beskrivning och Senast uppgiven skuld samt
+   ett eget textfält Anteckning. Ändra skuldens visningsnamn till Skuld.
+2. Flytta Skuld upp med tangentbordet, dölj den och återvisa i Avtalet.
+   Kontrollera fokus efter varje handling. Lägg till gemensamma Startdatum
+   och placera i ett nytt avsnitt Datum. Kontrollera ljust och mörkt tema.
+   Lägg typförslaget i utkastet.
+3. Skapa Husets lån av typen Husavtal. Försök först lägga ett namnlöst
+   objekt i utkastet: felsammanfattningen ska få fokus. Följ länken till Namn.
+   Ange Gemensam avtalstext som
+   beskrivning och Eget värde som Anteckning. Ange Skuld `12 300` som
+   **Osäkert uppgivet**, med uppgiftsdatum `2026-09-01`, och Startdatum
+   `2026-08-01` som känt.
+4. Under Ekonomiska uppgifter, välj **Okänt** för Pris
+   och **Uttryckligen inget** för Valuta. Välj **Känt** för Beviljat
+   kreditutrymme utan belopp. Fäll ihop avsnittet och försök lägga i
+   utkastet. Felsammanfattningen ska få fokus. Följ beloppets länk; avsnittet
+   öppnas och det tomma beloppet får fokus. Välj därefter
+   **Ej uppgivet** för kreditutrymmet och lägg objektet i utkastet.
+
+**Förväntat resultat:**
+
+- Namnfel och känt belopp utan värde leder till felsammanfattning och rätt fält.
+- Skuldens säkerhet och datum, gemensam beskrivning och egna svar läggs i samma
+  utkast.
+- I korta fönster går det att rulla inne i formuläret till fält och
+  Lägg i utkastet och stäng; sidans avsnitt fungerar i båda teman.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-17: Gemensamma egenskaper och fel nås i formuläret
+
+**Syfte:** Kontrollera intern rullning och nåbara kontroller i kort fönster.
+
+**Användare:** Alex.
+
+**Förutsättningar:** 640 × 456.
+
+**Separat förberedelse:** Börja med tomt hushåll. Förbered Annan typ utan egna
+fält eller avsnitt enligt TYP-10.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-17.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-builtins.spec.ts",
+    "caseId": "TYP-17"
+  },
+  "reference": "640 × 456; skyddar intern rullning och nåbara kontroller i kort fönster.",
+  "outcomes": [
+    "Namnfel och känt belopp utan värde leder till felsammanfattning och rätt fält.",
+    "Skuldens säkerhet och datum, gemensam beskrivning och egna svar läggs i samma utkast."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Inställningar → Typer och egna fält. Skapa Husavtal och avsnittet
+   Avtalet. Lägg till gemensamma Beskrivning och Senast uppgiven skuld samt
+   ett eget textfält Anteckning. Ändra skuldens visningsnamn till Skuld.
+2. Flytta Skuld upp med tangentbordet, dölj den och återvisa i Avtalet.
+   Kontrollera fokus efter varje handling. Lägg till gemensamma Startdatum
+   och placera i ett nytt avsnitt Datum. Kontrollera ljust och mörkt tema.
+   Lägg typförslaget i utkastet.
+3. Skapa Husets lån av typen Husavtal. Försök först lägga ett namnlöst
+   objekt i utkastet: felsammanfattningen ska få fokus. Följ länken till Namn.
+   Ange Gemensam avtalstext som
+   beskrivning och Eget värde som Anteckning. Ange Skuld `12 300` som
+   **Osäkert uppgivet**, med uppgiftsdatum `2026-09-01`, och Startdatum
+   `2026-08-01` som känt.
+4. Under Ekonomiska uppgifter, välj **Okänt** för Pris
+   och **Uttryckligen inget** för Valuta. Välj **Känt** för Beviljat
+   kreditutrymme utan belopp. Fäll ihop avsnittet och försök lägga i
+   utkastet. Felsammanfattningen ska få fokus. Följ beloppets länk; avsnittet
+   öppnas och det tomma beloppet får fokus. Välj därefter
+   **Ej uppgivet** för kreditutrymmet och lägg objektet i utkastet.
+
+**Förväntat resultat:**
+
+- Namnfel och känt belopp utan värde leder till felsammanfattning och rätt fält.
+- Skuldens säkerhet och datum, gemensam beskrivning och egna svar läggs i samma
+  utkast.
+- I korta fönster går det att rulla inne i formuläret till fält och
+  Lägg i utkastet och stäng; sidans avsnitt fungerar i båda teman.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-18: Upprepat typbyte kräver aktuellt samtycke
+
+**Syfte:** Kontrollera mörkt temas typbytesdialog och fältnåbarhet.
+
+**Användare:** Alex.
+
+**Förutsättningar:** 1280 pixlar, mörkt tema.
+
+**Separat förberedelse:** Förbered och spara Cykel, Motorfordon, Alex blå cykel,
+bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-18.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/type-change.spec.ts",
+    "caseId": "TYP-18"
+  },
+  "reference": "1280 pixlar, mörkt tema; skyddar mörkt temas typbytesdialog och fältnåbarhet.",
+  "outcomes": [
+    "Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.",
+    "Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna svar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna cykelns redigering och byt till Motorfordon. Läs de tidigare
+   svaren i förlustdialogen och bekräfta borttagningen. Öppna Egenskaper:
+   alla egna fält är obesvarade. Ange Nummer B-84, Antal 8 och Försäkrad Ja.
+2. Öppna Grunduppgifter och byt tillbaka till Cykel. Läs B-84, 8 och Ja
+   i förlustdialogen och bekräfta igen. Ange A-126, 0 och Nej i Egenskaper.
+3. Byt åter till Motorfordon och bekräfta borttagningen av A-126, 0 och Nej.
+   Fyll endast Nummer B-final och lämna Antal och Försäkrad obesvarade.
+4. Kontrollera namn, identitet och beskrivning i Grunduppgifter, bilden i
+   Livscykel och utseende och ekonomiska uppgifter i Ekonomiska uppgifter. Välj
+   Lägg i utkastet och stäng. Den sparade kartan har fortfarande den gamla
+   typen. Kontrollera att formuläret inte kräver vågrät sidrullning.
+
+**Förväntat resultat:**
+
+- Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.
+- Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna
+  svar.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-19: Upprepat typbyte kräver aktuellt samtycke
+
+**Syfte:** Kontrollera smal förlustdialog och fältnåbarhet i ljust tema.
+
+**Användare:** Alex.
+
+**Förutsättningar:** 390 pixlar, ljust tema.
+
+**Separat förberedelse:** Förbered och spara Cykel, Motorfordon, Alex blå cykel,
+bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-19.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/type-change.spec.ts",
+    "caseId": "TYP-19"
+  },
+  "reference": "390 pixlar, ljust tema; skyddar smal förlustdialog och fältnåbarhet i ljust tema.",
+  "outcomes": [
+    "Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.",
+    "Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna svar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna cykelns redigering och byt till Motorfordon. Läs de tidigare
+   svaren i förlustdialogen och bekräfta borttagningen. Öppna Egenskaper:
+   alla egna fält är obesvarade. Ange Nummer B-84, Antal 8 och Försäkrad Ja.
+2. Öppna Grunduppgifter och byt tillbaka till Cykel. Läs B-84, 8 och Ja
+   i förlustdialogen och bekräfta igen. Ange A-126, 0 och Nej i Egenskaper.
+3. Byt åter till Motorfordon och bekräfta borttagningen av A-126, 0 och Nej.
+   Fyll endast Nummer B-final och lämna Antal och Försäkrad obesvarade.
+4. Kontrollera namn, identitet och beskrivning i Grunduppgifter, bilden i
+   Livscykel och utseende och ekonomiska uppgifter i Ekonomiska uppgifter. Välj
+   Lägg i utkastet och stäng. Den sparade kartan har fortfarande den gamla
+   typen. Kontrollera att formuläret inte kräver vågrät sidrullning.
+
+**Förväntat resultat:**
+
+- Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.
+- Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna
+  svar.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-20: Upprepat typbyte kräver aktuellt samtycke
+
+**Syfte:** Kontrollera smal förlustdialog och fältnåbarhet i mörkt tema.
+
+**Användare:** Alex.
+
+**Förutsättningar:** 390 pixlar, mörkt tema.
+
+**Separat förberedelse:** Förbered och spara Cykel, Motorfordon, Alex blå cykel,
+bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-20.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/type-change.spec.ts",
+    "caseId": "TYP-20"
+  },
+  "reference": "390 pixlar, mörkt tema; skyddar smal förlustdialog och fältnåbarhet i mörkt tema.",
+  "outcomes": [
+    "Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.",
+    "Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna svar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna cykelns redigering och byt till Motorfordon. Läs de tidigare
+   svaren i förlustdialogen och bekräfta borttagningen. Öppna Egenskaper:
+   alla egna fält är obesvarade. Ange Nummer B-84, Antal 8 och Försäkrad Ja.
+2. Öppna Grunduppgifter och byt tillbaka till Cykel. Läs B-84, 8 och Ja
+   i förlustdialogen och bekräfta igen. Ange A-126, 0 och Nej i Egenskaper.
+3. Byt åter till Motorfordon och bekräfta borttagningen av A-126, 0 och Nej.
+   Fyll endast Nummer B-final och lämna Antal och Försäkrad obesvarade.
+4. Kontrollera namn, identitet och beskrivning i Grunduppgifter, bilden i
+   Livscykel och utseende och ekonomiska uppgifter i Ekonomiska uppgifter. Välj
+   Lägg i utkastet och stäng. Den sparade kartan har fortfarande den gamla
+   typen. Kontrollera att formuläret inte kräver vågrät sidrullning.
+
+**Förväntat resultat:**
+
+- Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.
+- Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna
+  svar.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-21: Upprepat typbyte kräver aktuellt samtycke
+
+**Syfte:** Kontrollera minsta breddens upprepade förlustbekräftelse.
+
+**Användare:** Alex.
+
+**Förutsättningar:** 320 pixlar, ljust tema.
+
+**Separat förberedelse:** Förbered och spara Cykel, Motorfordon, Alex blå cykel,
+bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-21.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/type-change.spec.ts",
+    "caseId": "TYP-21"
+  },
+  "reference": "320 pixlar, ljust tema; skyddar minsta breddens upprepade förlustbekräftelse.",
+  "outcomes": [
+    "Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.",
+    "Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna svar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna cykelns redigering och byt till Motorfordon. Läs de tidigare
+   svaren i förlustdialogen och bekräfta borttagningen. Öppna Egenskaper:
+   alla egna fält är obesvarade. Ange Nummer B-84, Antal 8 och Försäkrad Ja.
+2. Öppna Grunduppgifter och byt tillbaka till Cykel. Läs B-84, 8 och Ja
+   i förlustdialogen och bekräfta igen. Ange A-126, 0 och Nej i Egenskaper.
+3. Byt åter till Motorfordon och bekräfta borttagningen av A-126, 0 och Nej.
+   Fyll endast Nummer B-final och lämna Antal och Försäkrad obesvarade.
+4. Kontrollera namn, identitet och beskrivning i Grunduppgifter, bilden i
+   Livscykel och utseende och ekonomiska uppgifter i Ekonomiska uppgifter. Välj
+   Lägg i utkastet och stäng. Den sparade kartan har fortfarande den gamla
+   typen. Kontrollera att formuläret inte kräver vågrät sidrullning.
+
+**Förväntat resultat:**
+
+- Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.
+- Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna
+  svar.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-22: Upprepat typbyte kräver aktuellt samtycke
+
+**Syfte:** Kontrollera minsta breddens fältnåbarhet i mörkt tema.
+
+**Användare:** Alex.
+
+**Förutsättningar:** 320 pixlar, mörkt tema.
+
+**Separat förberedelse:** Förbered och spara Cykel, Motorfordon, Alex blå cykel,
+bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
+Återställ genom ett nytt provhushåll mellan körningar.
+
+**Integrationstest:**
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-22.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/type-change.spec.ts",
+    "caseId": "TYP-22"
+  },
+  "reference": "320 pixlar, mörkt tema; skyddar minsta breddens fältnåbarhet i mörkt tema.",
+  "outcomes": [
+    "Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.",
+    "Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna svar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna cykelns redigering och byt till Motorfordon. Läs de tidigare
+   svaren i förlustdialogen och bekräfta borttagningen. Öppna Egenskaper:
+   alla egna fält är obesvarade. Ange Nummer B-84, Antal 8 och Försäkrad Ja.
+2. Öppna Grunduppgifter och byt tillbaka till Cykel. Läs B-84, 8 och Ja
+   i förlustdialogen och bekräfta igen. Ange A-126, 0 och Nej i Egenskaper.
+3. Byt åter till Motorfordon och bekräfta borttagningen av A-126, 0 och Nej.
+   Fyll endast Nummer B-final och lämna Antal och Försäkrad obesvarade.
+4. Kontrollera namn, identitet och beskrivning i Grunduppgifter, bilden i
+   Livscykel och utseende och ekonomiska uppgifter i Ekonomiska uppgifter. Välj
+   Lägg i utkastet och stäng. Den sparade kartan har fortfarande den gamla
+   typen. Kontrollera att formuläret inte kräver vågrät sidrullning.
+
+**Förväntat resultat:**
+
+- Varje byte visar just de tidigare svaren och kräver ny uttrycklig bekräftelse.
+- Gemensamma uppgifter och bild består; bara Nummer B-final återstår bland egna
+  svar.
+- Detta fall slutar vid det privata förslaget. Den kompletta kedjan med
+  senare sparande, historikläsning och omstart körs i referensfallet.
+
+### TYP-23: Fysiskt tangentbord vid verklig webbläsarförstoring
+
+**Syfte:** Kontrollera nåbara typkontroller och synligt felfokus vid
+förstoring med webbläsarens egna tangenter, utöver emulerad fönsterbredd.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Separat provhushåll, fysisk dator med tangentbord och
+Chromium. Förbered Husavtal med avsnitten Avtalet och Datum enligt TYP-10.
+
+**Kräver mänsklig observation:** Använd det fysiska tangentbordet för
+webbläsarens förstoring och Tab-navigering. Kontrollera synligt fokus och
+att formulärets egna rullning håller fel och sparknapp nåbara. Automatiken
+ändrar fönsterstorlek och utför syntetiska tangenttryck; den utför inte
+denna fysiska observation.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Förstora den verkliga webbläsaren med fysiskt tangentbord, följ Tab-fokus och nå formulärets fält, felsammanfattning och sparknapp."
+  },
+  "reference": "Fysiskt tangentbord, Chromium på dator, 100 och 200 procent webbläsarförstoring.",
+  "outcomes": [
+    "Förstorat formulär behåller synligt fokus och nåbara fält samt sparknapp."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/object-builtins.spec.ts",
+      "caseId": "TYP-17",
+      "purpose": "Syntetisk kort fönsterhöjd skyddar formulärfel och rullning men utför inte fysisk webbläsarförstoring."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Vid 100 procent förstoring: öppna Nytt objekt och välj Husavtal.
+   Lämna Namn tomt. Använd Tab och Enter för Lägg i utkastet och stäng.
+2. Kontrollera att felsammanfattningen har synligt fokus. Följ dess länk
+   till Namn med tangentbordet och skriv Förstoringsprov.
+3. Använd Ctrl och plus på Windows/Linux eller Command och plus på macOS
+   tills webbläsarens meny visar 200 procent. Öppna Avtalet och Datum
+   med Tab och Enter. Rulla inne i formuläret till fält och sparknapp.
+4. Öppna Avtalet igen. Välj Känt för Skuld utan belopp, fäll ihop avsnittet och
+   försök lägga i utkastet med tangentbordet. Följ felets länk tillbaka
+   till Skuld och kontrollera fokus. Återställ Skuld till Ej uppgivet.
+5. Lägg i utkastet och stäng. Kontrollera synlig återkoppling och gå till
+   Visa utkastet med tangentbordet. Spara inte. Återställ till 100 procent
+   med Ctrl/Command och noll och kasta provförslaget separat.
+
+**Förväntat resultat:**
+
+- Fysisk Tab-navigering och Enter fungerar även vid verklig förstoring.
+  Fokus skyms inte och fel öppnar sitt avsnitt med nåbart fält.
+- Formulärets rullning gör sparknappen och sista fält nåbara utan att
+  fälttext eller osparat arbete försvinner. Återkopplingen går att läsa.
+
+## Referenser och avgränsningar
+
+TYP-09 är den kompletta avsnittsreferensen vid 1280 pixlar med vanlig medlem.
+TYP-10 är den kompletta referensen för gemensamma egenskaper vid 1280 × 900.
+TYP-11 är den kompletta typbytesreferensen vid 1280 pixlar i ljust tema.
+TYP-13–22 har egna identiteter och skyddar de angivna kontroll-, fokus-,
+omflödes- och temafelen. Alla tidigare identiteter TYP-01–12 består; inga
+identiteter återanvänds eller pensioneras i denna familj. TYP-23 behåller
+det separata mänskliga provet av fysisk inmatning vid verklig förstoring.
+
+Godkänd täckningsförlust: hela typbytes-, sparande- och omstartskedjan
+utförs inte självständigt i varje bredd och tema. Ett fel i kombinationen
+av dessa steg i annan konfiguration kan därför undgå referensen. Det är
+inte ett bevis för alla konfigurationers likvärdighet. TYP-06 och TYP-07
+behåller särskilt skydd för undanträngda fält och ändrade definitioner.
+
+TYP-01 och TYP-07 har separat tekniskt HTTP-underlag. Där kontrolleras
+exakta fältidentiteter, kvitton, återspelning, avvisade värden, gammalt
+sparbesked och historik. Övriga test kontrollerar också lagrade uppgifter
+utöver sina browsersteg. Dessa påståenden kräver inte att en människa
+läser nätverkstrafik under de vanliga stegen. Verklig skärmläsarutmatning,
+fysiskt tangentbord eller pekskärm och faktisk symboltolkning ingår inte
+i syntetisk Chromium-verifiering. Ingen betald leverantör körs här.

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openDraftReview } from '../support/client.js';
 import {
   prepareConflictContinuity,
   prepareConflictReferenceContinuity,
@@ -7,6 +8,7 @@ import {
   saveConflictElsewhere,
   saveNewerConflictType,
 } from '../support/conflict-continuity.js';
+import { expectConflictDraftValues } from '../support/current-conflict-reading.js';
 
 test('UTKAST-55: reopening discovers new saved data before stale choices can be confirmed', async ({
   page,
@@ -252,7 +254,7 @@ test('UTKAST-50: refreshed conflict data clears only choices for properties that
 });
 
 for (const width of [1280, 320])
-  test(`UTKAST-54: an unsent resolution is verified before retrying with the retained choices at ${width}px`, async ({
+  test(`UTKAST-${width === 1280 ? '54' : '119'}: an unsent resolution is verified before retrying with the retained choices at ${width}px`, async ({
     page,
     browser,
   }) => {
@@ -310,8 +312,8 @@ for (const width of [1280, 320])
 
 for (const surface of ['Karta', 'Tabell'] as const)
   for (const side of ['proposed', 'saved'] as const)
-    for (const width of [1280, 320])
-      test(`UTKAST-53: a lost resolution reply stays reachable after the last conflict disappears in ${surface} (${side}) at ${width}px`, async ({
+    for (const width of [1280, 320] as const)
+      test(`UTKAST-${{ 'Karta-proposed-1280': '53', 'Karta-proposed-320': '120', 'Karta-saved-1280': '121', 'Karta-saved-320': '122', 'Tabell-proposed-1280': '123', 'Tabell-proposed-320': '124', 'Tabell-saved-1280': '125', 'Tabell-saved-320': '126' }[`${surface}-${side}-${width}`]}: a lost resolution reply stays reachable after the last conflict disappears in ${surface} (${side}) at ${width}px`, async ({
         page,
         browser,
       }) => {
@@ -391,6 +393,14 @@ for (const surface of ['Karta', 'Tabell'] as const)
           expect(
             (await (await page.request.get(`${app.path}/history`)).json()).history,
           ).toHaveLength(2);
+          await page.keyboard.press('Escape');
+          const privateDraft = await openDraftReview(page);
+          if (side === 'saved') await expect(privateDraft).toContainText('Utkastet är tomt.');
+          else
+            await expectConflictDraftValues(page, 'Lo Lind', {
+              Namn: 'Lo Lind',
+              Beskrivning: 'Min anteckning',
+            });
         } finally {
           await other.close();
           await app.installation.close();
@@ -505,7 +515,7 @@ test('UTKAST-52: a known version rejection retains choices and retries only afte
   }
 });
 
-test('UTKAST-51: a changed relationship reference refreshes its meaning without clearing unchanged property choices', async ({
+test('UTKAST-127: a changed relationship reference refreshes its meaning without clearing unchanged property choices', async ({
   page,
   browser,
 }) => {
@@ -555,7 +565,7 @@ test('UTKAST-51: a changed relationship reference refreshes its meaning without 
   }
 });
 
-test('UTKAST-55: a conflict resolved by another client becomes read-only after reopening', async ({
+test('UTKAST-128: a conflict resolved by another client becomes read-only after reopening', async ({
   page,
   browser,
 }) => {
@@ -592,7 +602,7 @@ test('UTKAST-55: a conflict resolved by another client becomes read-only after r
 });
 
 for (const side of ['saved', 'proposed'] as const)
-  test(`UTKAST-53: another client consuming the draft cannot turn an unknown ${side} choice into private success`, async ({
+  test(`UTKAST-${side === 'saved' ? '129' : '130'}: another client consuming the draft cannot turn an unknown ${side} choice into private success`, async ({
     page,
     browser,
   }) => {
@@ -659,7 +669,7 @@ for (const side of ['saved', 'proposed'] as const)
     }
   });
 
-test('UTKAST-50: a later save after a lost applied reply retains unchanged choices when reviewing the new conflict', async ({
+test('UTKAST-131: a later save after a lost applied reply retains unchanged choices when reviewing the new conflict', async ({
   page,
   browser,
 }) => {

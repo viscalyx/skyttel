@@ -16,18 +16,22 @@ const emit = (event: string, values = {}) => console.log(JSON.stringify({ event,
 async function main() {
   const origin = new URL(process.argv[2] ?? 'http://localhost:3301');
   const port = Number(process.argv[3] ?? '47731');
+  const access = process.argv[4] ?? 'write';
   if (
     origin.protocol !== 'http:' ||
     !['localhost', '127.0.0.1'].includes(origin.hostname) ||
     origin.href !== `${origin.origin}/` ||
     !Number.isInteger(port) ||
     port < 0 ||
-    port > 65535
+    port > 65535 ||
+    !['read', 'write'].includes(access)
   )
-    throw new ControlError('Use a loopback HTTP origin and a callback port from 0 to 65535.');
+    throw new ControlError(
+      'Use a loopback HTTP origin, a callback port from 0 to 65535, and read or write access.',
+    );
   const state = randomBytes(32).toString('base64url');
   const verifier = randomBytes(32).toString('base64url');
-  const scope = 'skyttel:read skyttel:write';
+  const scope = access === 'read' ? 'skyttel:read' : 'skyttel:read skyttel:write';
   const controller = new AbortController();
   let stopped = false;
   let input: ReturnType<typeof createInterface> | undefined;

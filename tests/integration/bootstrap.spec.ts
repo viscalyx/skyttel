@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { openProfile } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
-test('a new installation offers login and protects direct household requests', async ({
+test('ACCESS-23: a new installation offers login and protects direct household requests', async ({
   page,
   request,
 }) => {

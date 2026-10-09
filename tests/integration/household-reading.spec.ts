@@ -1,9 +1,36 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, signIn } from '../support/client.js';
+import { createHousehold, openTable, signIn } from '../support/client.js';
 import { startConversationWithText } from '../support/conversation-page.js';
 import { prepareHouseholdReading } from '../support/household-reading.js';
 import { createInstallation } from '../support/installation.js';
+
+async function removeFromAnotherTab(page: Page, origin: string, names: string[]) {
+  const other = await page.context().newPage();
+  try {
+    await other.goto(origin);
+    await openTable(other);
+    const table = other.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    for (const name of names) {
+      await table.getByRole('searchbox', { name: 'Sök objekt i tabellen' }).fill(name);
+      await table.getByRole('button', { name: `Ta bort ${name}`, exact: true }).click();
+      await expect(table.getByRole('button', { name, exact: true })).toHaveCount(0);
+    }
+  } finally {
+    await other.close();
+  }
+}
+
+function expectOnlyRemoved(before: MapState, after: MapState, ids: string[]) {
+  expect(after).toEqual({
+    ...before,
+    draft: {
+      ...before.draft,
+      version: after.draft.version,
+      changes: before.draft.changes.filter((change) => !ids.includes(change.id)),
+    },
+  });
+}
 
 test('LÄS-05: identity reading distinguishes identified, unresolved and a proposal replacing unspecified identity', async ({
   page,
@@ -93,7 +120,9 @@ test('LÄS-06: a vanished sole second-page row restores the preceding control af
     await table.getByRole('button', { name: 'Nästa', exact: true }).click();
     await expect(table.getByText('Sida 2 av 2 · 50 objekt per sida')).toBeVisible();
     await table.getByRole('button', { name: 'Samband för Objekt 51', exact: true }).click();
-    await propose('item-51', null);
+    const beforeRemoval = await read();
+    await removeFromAnotherTab(page, installation.origin, ['Objekt 51']);
+    expectOnlyRemoved(beforeRemoval, await read(), ['item-51']);
     await expect(
       page.getByRole('dialog', { name: 'Objektet finns inte längre', exact: true }),
     ).toBeVisible({ timeout: 15000 });
@@ -102,6 +131,10 @@ test('LÄS-06: a vanished sole second-page row restores the preceding control af
     await expect(
       table.getByRole('button', { name: 'Samband för Objekt 50', exact: true }),
     ).toBeFocused();
+    expect((await read()).draft.changes).toHaveLength(50);
+    // Replay the retained HTTP removal only after all native background/focus checks.
+    await propose('item-51', 'Objekt 51');
+    await propose('item-51', null);
     expect((await read()).draft.changes).toHaveLength(50);
   } finally {
     await installation.close();
@@ -140,7 +173,7 @@ test('LÄS-07: a long unbroken object name wraps in full reading at 320 CSS pixe
 });
 
 for (const fallback of ['previous', 'heading'] as const) {
-  test(`LÄS-04: vanished read openers return to ${fallback} when no next row remains`, async ({
+  test(`${fallback === 'previous' ? 'LÄS-04' : 'LÄS-08'}: vanished read openers return to ${fallback} when no next row remains`, async ({
     page,
   }) => {
     const installation = await createInstallation(undefined, {
@@ -172,8 +205,15 @@ for (const fallback of ['previous', 'heading'] as const) {
       await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
       await page.getByRole('button', { name: 'Tabell', exact: true }).click();
       await page.getByRole('button', { name: 'Samband för B', exact: true }).click();
-      await propose('b', null);
-      if (fallback === 'heading') await propose('a', null);
+      const beforeRemoval = await read();
+      await removeFromAnotherTab(page, installation.origin, [
+        'B',
+        ...(fallback === 'heading' ? ['A'] : []),
+      ]);
+      expectOnlyRemoved(beforeRemoval, await read(), [
+        'b',
+        ...(fallback === 'heading' ? ['a'] : []),
+      ]);
       await expect(
         page.getByRole('dialog', { name: 'Objektet finns inte längre', exact: true }),
       ).toBeVisible({ timeout: 15000 });
@@ -184,6 +224,15 @@ for (const fallback of ['previous', 'heading'] as const) {
           ? table.getByRole('button', { name: 'Samband för A', exact: true })
           : table.getByRole('heading', { name: 'Hushållet Linden', exact: true }),
       ).toBeFocused();
+      // Independent protocol setup follows the completed native other-tab workflow.
+      await propose('b', 'B');
+      if (fallback === 'heading') await propose('a', 'A');
+      await propose('b', null);
+      if (fallback === 'heading') await propose('a', null);
+      expectOnlyRemoved(beforeRemoval, await read(), [
+        'b',
+        ...(fallback === 'heading' ? ['a'] : []),
+      ]);
     } finally {
       await installation.close();
     }
@@ -245,6 +294,12 @@ test('LÄS-01: keyboard follows Alex to bicycle to garage and back without graph
       dialog.getByRole('heading', { name: 'Uppgifter för Cykel', exact: true }),
     ).toBeFocused();
     await expect(dialog.getByText('Sparat: 2000 SEK', { exact: true })).toBeVisible();
+    await expect(
+      dialog
+        .locator('dt')
+        .filter({ hasText: /^Pris$/ })
+        .locator('..'),
+    ).toContainText('◇ Ditt förslag: 2500 SEK');
     await expect(
       dialog.getByText('Ramens märkning är ett påhittat exempel', { exact: true }),
     ).toBeVisible();
@@ -374,7 +429,9 @@ test('LÄS-03: a vanished table opener returns to the next equivalent control af
     await page
       .getByRole('button', { name: 'Samband för B Tillfälligt objekt', exact: true })
       .click();
-    await post('draft', { id: 'temporary', baseRevision: null, value: null });
+    const beforeRemoval = await read();
+    await removeFromAnotherTab(page, installation.origin, ['B Tillfälligt objekt']);
+    expectOnlyRemoved(beforeRemoval, await read(), ['temporary']);
     await expect(
       page.getByRole('dialog', { name: 'Objektet finns inte längre', exact: true }),
     ).toBeVisible({ timeout: 15000 });
@@ -383,6 +440,14 @@ test('LÄS-03: a vanished table opener returns to the next equivalent control af
       page.getByRole('button', { name: 'Samband för Cykel', exact: true }),
     ).toBeFocused();
     expect((await read()).draft.changes.some((change) => change.id === 'temporary')).toBe(false);
+    // Keep the original HTTP removal assertion in independently restored setup.
+    await post('draft', {
+      id: 'temporary',
+      baseRevision: null,
+      value: { name: 'B Tillfälligt objekt', typeId: 'read-type', description: '' },
+    });
+    await post('draft', { id: 'temporary', baseRevision: null, value: null });
+    expectOnlyRemoved(beforeRemoval, await read(), ['temporary']);
   } finally {
     await installation.close();
   }

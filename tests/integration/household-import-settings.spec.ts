@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { createHousehold, openNewObject, openSettings, signIn } from '../support/client.js';
+import {
+  expectRecoveryContent,
+  expectRecoveryDraft,
+  seedRecoveryContent,
+} from '../support/household-recovery-reading.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('IMPORT-12: protected Settings recovery pages preserve ordinary work and retire it after replacement', async ({
@@ -10,6 +15,7 @@ test('IMPORT-12: protected Settings recovery pages preserve ordinary work and re
     await signIn(page.request, installation.origin);
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}`;
+    await seedRecoveryContent(page.request, path);
     const initial = await (await page.request.get(`${path}/map`)).json();
     expect(
       (
@@ -19,7 +25,11 @@ test('IMPORT-12: protected Settings recovery pages preserve ordinary work and re
             id: 'retained-private',
             version: initial.draft.version,
             baseRevision: null,
-            value: { name: 'Redan privat arbete', description: '', typeId: initial.types[0].id },
+            value: {
+              name: 'Redan privat arbete',
+              description: 'Privat uppgift för Redan privat arbete',
+              typeId: initial.types[0].id,
+            },
           },
         })
       ).status(),
@@ -87,6 +97,8 @@ test('IMPORT-12: protected Settings recovery pages preserve ordinary work and re
     await expect(name).toHaveValue('');
     await page.keyboard.press('Escape');
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    await expectRecoveryContent(page);
+    await expectRecoveryDraft(page, 'Redan privat arbete');
     await openSettings(page);
     await navigation.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();
     await importer.getByRole('button', { name: 'Hämta importens status' }).click();
@@ -106,6 +118,8 @@ test('IMPORT-12: protected Settings recovery pages preserve ordinary work and re
       ...before,
       contentVersion: 2,
     });
+    await expectRecoveryContent(page);
+    await expectRecoveryDraft(page, 'Redan privat arbete', 'Oskickat arbete före återimport');
   } finally {
     await installation.close();
   }

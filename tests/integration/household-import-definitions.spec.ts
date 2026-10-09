@@ -1,11 +1,23 @@
 import { expect, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openNewObject,
+  openSettings,
+  openTable,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { readCommittedHistoryCard } from '../support/conversation-page.js';
+import { editTableObject } from '../support/domain-work.js';
+import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation } from '../support/installation.js';
 
-test('IMPORT-07: historical field meanings survive replacement and ordinary corrections', async ({
-  page,
-}) => {
+test('historical field kinds and exact receipts survive replacement and request corrections', {
+  tag: '@technical',
+}, async ({ page }) => {
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
@@ -97,6 +109,113 @@ test('IMPORT-07: historical field meanings survive replacement and ordinary corr
     expect(finalHistory).toContainEqual(inverse);
     expect(finalHistory).toContainEqual(addition);
     expect(finalHistory).toContainEqual(correction);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('IMPORT-07: browser field editing, replacement and historical reading preserve old meanings and ordinary corrections', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}`;
+    await page.goto(installation.origin);
+    const editDefinition = async (kind: 'text' | 'number', first = false) => {
+      await openSettings(page);
+      await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+      const summary = page.getByText('Objekttyper och egna fält', { exact: true });
+      if ((await summary.locator('..').getAttribute('open')) === null) await summary.click();
+      await page.getByRole('button', { name: 'Ändra typ: Person', exact: true }).click();
+      if (first) {
+        await page.getByRole('button', { name: 'Lägg till fält', exact: true }).click();
+        await page.getByLabel('Fältets namn', { exact: true }).fill('Serienummer');
+      }
+      await page.getByLabel('Värdeslag', { exact: true }).selectOption(kind);
+      await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
+      await expect(
+        page.getByText('Förslaget finns i ditt privata utkast', { exact: false }),
+      ).toBeVisible();
+      await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    };
+    const save = async () => {
+      const saved = page.waitForResponse(
+        (response) =>
+          response.url() === `${path}/map/save` && response.request().method() === 'POST',
+      );
+      await saveReviewedConflictDraft(page);
+      await closeTextView(page);
+      return (await (await saved).json()).receipt as SaveReceipt;
+    };
+    const createMeter = async (name: string, value: string) => {
+      const form = await openNewObject(page);
+      await form.getByLabel('Namn', { exact: true }).fill(name);
+      await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Person' });
+      await form.getByRole('button', { name: 'Egna fält', exact: true }).click();
+      await form.getByLabel('Serienummer', { exact: true }).fill(value);
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    };
+    await editDefinition('text', true);
+    const definitionReceipt = await save();
+    await editDefinition('number');
+    await createMeter('Mätare', '42');
+    const additionReceipt = await save();
+    await openTable(page);
+    await page.getByRole('button', { name: 'Ta bort Mätare', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Ta bort Mätare', exact: true })).toBeDisabled();
+    await editDefinition('text');
+    const removalReceipt = await save();
+    const before = (await (await page.request.get(`${path}/map/history`)).json()).history;
+    const archive = await downloadHouseholdExport(page, path);
+    await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
+    await page.getByLabel('Skyttel-export (ZIP)').setInputFiles({
+      name: 'skyttel.zip',
+      mimeType: 'application/zip',
+      buffer: archive,
+    });
+    await page.getByRole('button', { name: 'Kontrollera importfil' }).click();
+    await page.getByRole('checkbox', { name: 'Jag vill ersätta allt hushållsinnehåll' }).check();
+    await page.getByRole('button', { name: 'Ersätt hushållets innehåll' }).click();
+    await expect(page.getByText(/Hushållets innehåll är ersatt/)).toBeVisible();
+    await installation.restart();
+    await page.goto(installation.origin);
+    await (await utilityButton(page, 'Rapporter')).click();
+    const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
+    await expect(history.getByText('Visa ändringarna', { exact: true })).toHaveCount(before.length);
+    for (const details of await history.getByText('Visa ändringarna', { exact: true }).all()) {
+      await details.click();
+    }
+    await expect(history).toContainText('Mätare');
+    await expect(history).toContainText('Serienummer');
+    await expect(history).toContainText('42');
+    await expect(history).toContainText('Tal');
+    await expect(history).toContainText('Text');
+    await expect(history).toContainText('Alex Exempel');
+    const removal = history.locator(`article[data-save="${before[0].operationId}"]`);
+    await expect(removal).toContainText('Objekt: Mätare');
+    await expect(removal).toContainText('42');
+    await expect(removal).toContainText('Serienummer: Tal');
+    await expect(removal).toContainText('Serienummer: Text');
+    await expect(removal.locator('time')).toHaveAttribute('datetime', before[0].savedAt);
+    for (const receipt of [removalReceipt, additionReceipt, definitionReceipt])
+      await readCommittedHistoryCard(history, receipt);
+    expect(before).toEqual([removalReceipt, additionReceipt, definitionReceipt]);
+    expect((await (await page.request.get(`${path}/map/history`)).json()).history).toEqual(before);
+    await page.goto(installation.origin);
+    await editDefinition('number');
+    await createMeter('Ny mätare', '43');
+    await save();
+    await installation.restart();
+    await page.reload();
+    await openTable(page);
+    await editTableObject(page, 'Ny mätare');
+    await page.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await expect(page.getByLabel('Serienummer', { exact: true })).toHaveValue('43');
+    const after = (await (await page.request.get(`${path}/map/history`)).json()).history;
+    expect(after).toHaveLength(before.length + 1);
+    for (const receipt of before) expect(after).toContainEqual(receipt);
   } finally {
     await installation.close();
   }

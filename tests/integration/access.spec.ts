@@ -2,7 +2,9 @@ import { expect, request, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
 
-test('two installations honor different administrators and deny another identity the bootstrap', async () => {
+test('two installations honor different administrators and deny another identity the bootstrap', {
+  tag: '@technical',
+}, async () => {
   const first = await createInstallation();
   const second = await createInstallation({ provider: 'microsoft', subject: robin.subject });
   const client = await request.newContext();
@@ -35,7 +37,9 @@ test('two installations honor different administrators and deny another identity
   }
 });
 
-test('a second identity with the same email cannot acquire the first identity or its membership', async () => {
+test('a second identity with the same email cannot acquire the first identity or its membership', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
   const outsider = await request.newContext();
@@ -62,7 +66,9 @@ test('a second identity with the same email cannot acquire the first identity or
   }
 });
 
-test('an earlier same-email identity cannot block the configured first administrator', async () => {
+test('an earlier same-email identity cannot block the configured first administrator', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
   const outsider = await request.newContext();
@@ -85,7 +91,9 @@ test('an earlier same-email identity cannot block the configured first administr
   }
 });
 
-test('bootstrap is atomic and rejects cross-origin and malformed submissions', async () => {
+test('bootstrap is atomic and rejects cross-origin and malformed submissions', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const client = await request.newContext();
   try {
@@ -119,7 +127,9 @@ test('bootstrap is atomic and rejects cross-origin and malformed submissions', a
   }
 });
 
-test('current membership isolates households and revocation defeats an existing session', async () => {
+test('current membership isolates households and revocation defeats an existing session', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
   const otherMember = await request.newContext();
@@ -164,7 +174,9 @@ test('current membership isolates households and revocation defeats an existing 
   }
 });
 
-test('forged OAuth callbacks and unavailable authentication routes do not grant access', async () => {
+test('forged OAuth callbacks and unavailable authentication routes do not grant access', {
+  tag: '@technical',
+}, async () => {
   const installation = await createInstallation();
   const client = await request.newContext();
   try {

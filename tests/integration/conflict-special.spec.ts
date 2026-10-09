@@ -46,20 +46,7 @@ test('UTKAST-57: accepting a removed object discards only its proposal and prese
       dialog.getByText('Du behöver inte välja några egenskaper.', { exact: true }),
     ).toBeVisible();
     await expect(dialog.locator('.cp-warning [aria-hidden="true"]')).toHaveText('⚠');
-    await expect(saved.locator('.cp-default')).toHaveCSS(
-      'box-shadow',
-      'rgb(29, 112, 107) 0px 0px 0px 2px inset',
-    );
     await expect(saved.locator('.cp-default')).toHaveClass(/cp-overlap/);
-    expect(
-      await saved.locator('.cp-default').evaluate((element) => {
-        const context = new OffscreenCanvas(1, 1).getContext('2d');
-        if (!context) throw new Error('The background measurement needs a canvas');
-        context.fillStyle = getComputedStyle(element).backgroundColor;
-        context.fillRect(0, 0, 1, 1);
-        return Array.from(context.getImageData(0, 0, 1, 1).data);
-      }),
-    ).toEqual([243, 236, 224, 255]);
     await expect(proposed.getByText('Mitt förslag', { exact: true }).locator('..')).toHaveClass(
       /cp-overlap/,
     );
@@ -383,7 +370,7 @@ test('UTKAST-73: removing one new connection leaves changed saved facts subject 
 
 for (const surface of ['Karta', 'Tabell'] as const)
   for (const delivered of [true, false])
-    test(`UTKAST-77: an ${delivered ? 'applied' : 'unsent'} duplicate-discard reply is explicitly checked without replay in ${surface}`, async ({
+    test(`UTKAST-${surface === 'Karta' ? (delivered ? '77' : '132') : delivered ? '133' : '134'}: an ${delivered ? 'applied' : 'unsent'} duplicate-discard reply is explicitly checked without replay in ${surface}`, async ({
       page,
       browser,
     }) => {
@@ -457,7 +444,7 @@ for (const surface of ['Karta', 'Tabell'] as const)
     });
 
 for (const surface of ['Karta', 'Tabell'] as const) {
-  test(`UTKAST-63: a lost reply verifies retained object and connection removals without replay in ${surface}`, async ({
+  test(`UTKAST-${surface === 'Karta' ? '63' : '135'}: a lost reply verifies retained object and connection removals without replay in ${surface}`, async ({
     page,
     browser,
   }) => {

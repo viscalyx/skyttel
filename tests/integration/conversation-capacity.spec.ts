@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
 import {
+  closeConversationText,
   microphoneButton,
   openConversationText,
   startConversationWithText,
@@ -219,7 +220,7 @@ for (const width of [390, 820])
       hasTouch: true,
       reducedMotion: 'reduce',
     });
-    test('KONTEXT-07: mätaren och röstrutans procent går att läsa på pekskärm', async ({
+    test(`${width === 390 ? 'KONTEXT-07' : 'KONTEXT-13'}: mätaren och röstrutans procent går att läsa på pekskärm ${width}`, async ({
       page,
     }) => {
       const { app, live, setTextPercent } = await installation(page);
@@ -233,8 +234,11 @@ for (const width of [390, 820])
         await expect(meter(page)).toHaveAttribute('value', '88');
         await expect(meter(page)).toHaveAccessibleDescription(description);
         await expect(symbol(page, 88)).toBeVisible();
+        await closeConversationText(page);
+        await expect(meter(page)).toHaveCount(0);
         await openConversationText(page);
         await expect(meter(page)).toBeVisible();
+        await expect(meter(page)).toHaveAttribute('value', '88');
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
         ).toBe(true);

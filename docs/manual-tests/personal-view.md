@@ -14,6 +14,10 @@ att prova samtidighet.
 
 ## Allmän förberedelse
 
+PLACERING-11/12 följer
+[faktisk HTTPS-ingång och egna provdata](workspace-preparation.md#fysiska-enheter-och-egen-provdata)
+för telefon och surfplatta; syntetisk loopback ersätter inte enhetens ingång.
+
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
@@ -38,8 +42,24 @@ fallen anger formulär, samtal, profil eller administration.
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
-testfallet “PLACERING-01: mouse, height and keyboard movement persist across
-reload, clients and server restart”.
+PLACERING-01.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-01"
+  },
+  "reference": "Chromium, sparade Lampan och Cykeln; angivna klienter och medieinställningar.",
+  "outcomes": [
+    "Personliga placeringar och val bevaras utan oavsiktliga hushållsändringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -56,6 +76,10 @@ reload, clients and server restart”.
    Återgå med Tillbaka till kartan.
 3. Ladda om, starta om servern och öppna samma hushåll i en annan klient
    med Alex inloggning.
+4. Läs det sparade stjärnvalet i den andra klientens inställningar och
+   återgå till kartan. Markera Lampan, öppna **Navigera** och flytta uppåt
+   med Enter. Kontrollera att flytten fortsätter från sparad placering
+   och att den aktiva flyttknappen behåller fokus.
 
 **Förväntat resultat:**
 
@@ -77,8 +101,24 @@ reload, clients and server restart”.
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
-testfallet “PLACERING-08: height help keeps its preview stable and manual
-choice across navigation modes and selection”.
+PLACERING-08.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-08"
+  },
+  "reference": "Chromium, sparade Lampan och Cykeln; angivna klienter och medieinställningar.",
+  "outcomes": [
+    "Personliga placeringar och val bevaras utan oavsiktliga hushållsändringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -117,8 +157,24 @@ valet består. Markera även Lampan
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
-testfallet “PLACERING-02: concurrent clients retain independent moves and
-visibly reject stale placement and settings”.
+PLACERING-02.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-02"
+  },
+  "reference": "Chromium, sparade Lampan och Cykeln; angivna klienter och medieinställningar.",
+  "outcomes": [
+    "Personliga placeringar och val bevaras utan oavsiktliga hushållsändringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -148,8 +204,24 @@ visibly reject stale placement and settings”.
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
-testfallet “PLACERING-03: synthetic touch gestures handle height,
-interruption, finger changes and empty-space navigation”.
+PLACERING-03.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-03"
+  },
+  "reference": "Chromium, sparade Lampan och Cykeln; angivna klienter och medieinställningar.",
+  "outcomes": [
+    "Personliga placeringar och val bevaras utan oavsiktliga hushållsändringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -193,8 +265,24 @@ interruption, finger changes and empty-space navigation”.
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
-testfallet “PLACERING-04: personal display settings, new proposals and
-viewport changes preserve existing placement and unsent text”.
+PLACERING-04.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-04"
+  },
+  "reference": "Chromium, sparade Lampan och Cykeln; angivna klienter och medieinställningar.",
+  "outcomes": [
+    "Personliga placeringar och val bevaras utan oavsiktliga hushållsändringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -216,6 +304,8 @@ viewport changes preserve existing placement and unsent text”.
    och tryck Escape. Namnet finns kvar. Stäng igen och välj uttryckligen
    **Kasta ändringarna och fortsätt**. Välj **Karta** och kontrollera
    axelvisarens placering utan att ändra egna flyttar eller Ny sak-förslaget.
+6. Öppna **Tabell** och läs **Ny sak**: namn, typen Person och den tomma
+   beskrivningen. Fäll ihop raden och återgå till **Karta**.
 
 **Förväntat resultat:**
 
@@ -242,47 +332,43 @@ från Alex profil. Använd en tredje, utloggad profil för åtkomstprovet.
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
-testfallet “PLACERING-05: personal views stay private and revocation denies
-further reads and both mutations”.
+PLACERING-05.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-05"
+  },
+  "reference": "Chromium, sparade Lampan och Cykeln; angivna klienter och medieinställningar.",
+  "outcomes": [
+    "Personliga placeringar och val bevaras utan oavsiktliga hushållsändringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Försök öppna Lindens adress utloggad och med Robins andra hushållstillgång.
-   Kör åtkomstprovet nedan i båda profilernas Console.
+   Kontrollera att ingen av profilerna får se Lindens karta.
 2. Bjud in Robin till Linden och acceptera inbjudan som Robin. Öppna
    Lindens adress uttryckligen även om startsidan visar Eken. Flytta Lampan
-   och ändra stjärnvalet som Robin.
+   och ändra stjärnvalet som Robin. För stjärnvalet, öppna Lindens
+   adress följd av `/settings/map` i adressfältet; den vanliga
+   inställningsöversikten kan utgå från Eken som först valt hushåll.
+   Öppna uttryckligen Lindens kartadress igen efter inställningsprovet.
 3. Kontrollera Alex vy. Låt Robin behålla kartan öppen medan Alex
    återkallar Robins tillgång.
 4. Välj Läs in min aktuella vy som Robin och försök fortsätta arbeta.
-   Kör åtkomstprovet igen som Robin. Alla tre svar ska vara HTTP 403.
+   Kontrollera att Lindens karta stängs och inloggningsnavigationen kan nås.
 
-Kör följande endast när profilen **saknar** tillgång till Linden. Ange
-Lindens ID från Alex kartbegäran i nätverkspanelen. Provet försöker läsa
-vyn och göra båda slags ändringar genom appens publika HTTP-gränssnitt.
-De tomma ändringarna ska nekas av tillgångskontrollen före valideringen.
-Utloggad profil ska få tre HTTP 401; Robin utan tillgång ska få tre HTTP 403.
-
-```js
-await (async () => {
-  const householdId = prompt('Lindens hushålls-ID');
-  const identity = await (await fetch('/api/version')).json();
-  const viewPath =
-`/api/households/${encodeURIComponent(householdId)}/map/view`;
-  console.log('read', (await fetch(viewPath)).status);
-  for (const kind of ['position', 'settings']) {
-    const response = await fetch(`${viewPath}/${kind}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Skyttel-Build': `${identity.commit}:${identity.version}`,
-      },
-      body: '{}',
-    });
-    console.log(kind, response.status);
-  }
-})();
-```
+**Ytterligare tekniskt underlag:**
+[Separat åtkomstprov](workspace-preparation.md#separat-åtkomstprov) kontrollerar
+alla tre HTTP-gränserna; dessa svarskoder ingår inte i UI-stegen.
 
 **Förväntat resultat:**
 
@@ -300,40 +386,71 @@ att senare inläsningar och visningsval bevarar användarens kameravy.
 
 **Användare:** Alex Exempel på dator med mus.
 
-**Förutsättningar:** Lampan och Cykeln är sparade. Använd ett brett fönster
-där lista och rymdkarta visas samtidigt. Webbläsaren kan simulera en långsam
-anslutning. För fördröjningsdelen behöver rymdkartan hinna visas innan de
-personliga placeringarna är färdiga att använda. Anteckna om denna ordning
-inte går att återskapa; då är den delen inte bedömd manuellt.
+**Förutsättningar:** Lampan och Cykeln är sparade. Använd 1440 × 1000
+CSS-pixlar och den separata styrda transporten. Första personliga svaret
+hålls efter genomförd läsning, medan rymdkartan visas; vanlig långsam
+anslutning ersätter inte denna bestämda ordning.
+
+**Separat förberedelse:** Följ
+[sen första personlig inläsning](workspace-preparation.md#sen-första-personlig-inläsning).
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
-testfallet “PLACERING-06: delayed initial personal positions frame once and
-later refreshes preserve the camera”.
+PLACERING-06.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-06"
+  },
+  "reference": "Chromium, sparade Lampan och Cykeln; angivna klienter och medieinställningar.",
+  "outcomes": [
+    "Personliga placeringar och val bevaras utan oavsiktliga hushållsändringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Följ
+[sen första personlig inläsning](workspace-preparation.md#sen-första-personlig-inläsning)
+. Arma efter sparade placeringar men före omladdningen i UI-steg 2. Efter
+omladdningen: invänta det verkliga genomförda personliga svarets hållning och
+meddela **Samma första personliga svar hålls**. Behåll det genom användarens
+inaktiva stjärnval. Vid steg 3: släpp samma personliga svar i
+förberedelseterminalen och meddela **Samma första personliga svar är släppt**.
+Arma inte senare läsningar; återställ transporten efter fallet enligt den
+befintliga guiden.
 
 **Steg:**
 
-1. Välj namnet Lampan via **Tabell** och återgå med **Karta**.
-   Öppna **Navigera**. Använd
-   Flytta [objektets namn]: höger upprepade gånger tills Lampan ligger helt
-   utanför den ursprungliga vyn. Vänta på beskedet att din personliga vy är
-   sparad. Gör samma sak med Cykeln, utan att ändra kameran.
-2. Aktivera långsam anslutning i webbläsarens nätverksinställningar och
-   ladda om sidan. Kontrollera att **Tabell** och **Karta** kan öppnas.
-Kontrollera
-   Visa stjärnhimmel under Inställningar → Rymdkartan medan valet är
+1. Välj namnet Lampan via **Tabell** och återgå med **Karta**. Öppna
+   **Navigera**. Använd Flytta [objektets namn]: höger upprepade gånger tills
+   Lampan ligger helt utanför den ursprungliga vyn. Vänta på beskedet att din
+   personliga vy är sparad. Gör samma sak med Cykeln, utan att ändra kameran.
+2. Be operatören förbereda den separata personliga läsningen och invänta
+   installationen. Ladda om sidan. Invänta operatörens bekräftelse att samma
+   genomförda svar hålls. Kontrollera att **Tabell** och **Karta** kan öppnas.
+   Kontrollera Visa stjärnhimmel under Inställningar → Rymdkartan medan valet är
    inaktivt i väntan på de personliga placeringarna. Använd inte Återställ vy
    eller kameraknapparna.
-3. Vänta tills Visa stjärnhimmel går att använda. Välj Tillbaka till kartan
-   och kontrollera att båda objekten syns. Återgå till normal anslutning.
-4. Öppna Navigera och använd Panorera höger så att objekten hamnar
-   tydligt vid sidan av sina första lägen på skärmen. Behåll dem synliga
-   och lägg märke till utsnittet.
-5. Välj Läs in min aktuella vy under Ordna min vy. Vänta tills läsningen
-   är klar och jämför utsnittet med det du valde i föregående steg.
-6. Öppna Inställningar → Rymdkartan och aktivera Visa stjärnhimmel.
-   Återgå med Tillbaka till kartan. Vänta på beskedet att vyn är sparad och
-   jämför utsnittet igen.
+3. Be operatören släppa samma personliga svar enligt förberedelsen och invänta
+   bekräftelse. Vänta tills Visa stjärnhimmel går att använda. Välj Tillbaka
+   till kartan och kontrollera att båda objekten syns. Låt senare läsningar
+   passera normalt.
+4. Öppna Navigera och använd Panorera höger så att objekten hamnar tydligt vid
+   sidan av sina första lägen på skärmen. Behåll dem synliga och lägg märke till
+   utsnittet.
+5. Välj Läs in min aktuella vy under Ordna min vy. Vänta tills läsningen är klar
+   och jämför utsnittet med det du valde i föregående steg.
+6. Öppna Inställningar → Rymdkartan och aktivera Visa stjärnhimmel. Återgå med
+   Tillbaka till kartan. Vänta på beskedet att vyn är sparad och jämför
+   utsnittet igen.
 
 **Förväntat resultat:**
 
@@ -356,8 +473,24 @@ Kontrollera
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
-testfallet “PLACERING-07: map settings retain the personal star choice through
-navigation, reduced motion and restart”.
+PLACERING-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-07"
+  },
+  "reference": "Chromium, sparade Lampan och Cykeln; angivna klienter och medieinställningar.",
+  "outcomes": [
+    "Personliga placeringar och val bevaras utan oavsiktliga hushållsändringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -385,13 +518,29 @@ navigation, reduced motion and restart”.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Lampan och Cykeln är sparade enligt förberedelsen.
-Prova på dator och i 390 CSS-pixlars bredd, samt med skärmläsare.
+Prova vid 1440 CSS-pixlars bredd. PLACERING-10 provar 390 pixlar;
+PLACERING-11 gäller faktisk uppläsning.
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
-testfallen “PLACERING-09: personal save toasts expire while preserving
-focus and saved choices at 1440px” och “PLACERING-09: personal save toasts
-expire while preserving focus and saved choices at 390px”.
+PLACERING-09.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-09"
+  },
+  "reference": "1440 CSS-pixlars bredd: återkoppling, fokus, utgången toast och återläsning efter serveromstart.",
+  "outcomes": [
+    "Personliga placeringar och val bevaras utan oavsiktliga hushållsändringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -403,6 +552,12 @@ expire while preserving focus and saved choices at 390px”.
    och vänta tills toasten försvinner. Kontrollera knappens fokus och påläge.
 4. Öppna **Tabell** och återgå till **Karta**. Kontrollera placeringen,
    etikettvalet och att en gammal sparbekräftelse inte visas igen.
+5. Starta om provservern med samma databas och ladda om. Kontrollera
+   Lampan och det sparade etikettvalet; utkast och hushållsuppgifter är
+   oförändrade.
+6. Markera Lampan, öppna **Navigera** och välj **Flytta Lampan: uppåt**.
+   Lampan fortsätter från den sparade placeringen och flyttknappen behåller
+   fokus. Övriga objekt kan få nya automatiska placeringar vid omladdningen.
 
 **Förväntat resultat:**
 
@@ -410,7 +565,152 @@ expire while preserving focus and saved choices at 390px”.
   tre sekunder. En ny bekräftad sparning startar om tiden.
 - Toasten ryms på skärmen och tar inte tangentbordsfokus. Fokus ligger kvar
   på den använda knappen även när toasten försvinner.
-- Skärmläsaren läser sparbekräftelsen en gång per sparning utan att avbryta
-  pågående uppläsning. Den faktiska uppläsningen provas manuellt.
+- Den artiga statusregionen finns i automatiskt underlag. Faktisk
+  uppläsning en gång per sparning provas i PLACERING-11.
 - Placering och etikettval består. Hushållets sparade uppgifter och utkast
   ändras inte. En redan avslutad toast återkommer inte vid vybyte.
+
+### PLACERING-10: sparbesked i smal vy
+
+**Syfte:** Toasten ryms, försvinner och lämnar fokus på den använda kontrollen.
+
+**Användare:** Alex enligt grundfallet.
+
+**Förutsättningar:** Samma provdata och återställning som PLACERING-09.
+
+**Integrationstest:**
+[personal-view.spec.ts](../../tests/integration/personal-view.spec.ts), PLACERING-10.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-10"
+  },
+  "reference": "390 CSS-pixlars bredd: toastens geometri, utgång och fokus, med bevarade personliga val.",
+  "outcomes": [
+    "Toasten ryms, försvinner och lämnar fokus på den använda kontrollen.",
+    "Placering och etikettval består genom vybyte utan ändrat hushållsarbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ PLACERING-09 steg 1–4 en gång vid 390 CSS-pixlars bredd.
+2. Stanna före steg 5; omstartens samlade referens är PLACERING-09.
+
+**Förväntat resultat:**
+
+- Toasten ryms, försvinner och lämnar fokus på den använda kontrollen.
+- Placering och etikettval består genom vybyte utan ändrat hushållsarbete.
+
+### PLACERING-11: faktiskt uppläst sparbesked
+
+**Syfte:** NVDA eller VoiceOver läser bekräftelsen en gång per personlig
+sparning utan att avbryta pågående läsning.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Sparade Lampan och Cykeln; faktisk skärmläsare vid 1440 och
+390 pixlar.
+
+**Kräver mänsklig observation:** NVDA eller VoiceOver läser bekräftelsen en gång
+per personlig sparning utan att avbryta pågående läsning.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "NVDA eller VoiceOver läser bekräftelsen en gång per personlig sparning utan att avbryta pågående läsning."
+  },
+  "reference": "Sparade Lampan och Cykeln; faktisk skärmläsare vid 1440 och 390 pixlar.",
+  "outcomes": [
+    "NVDA eller VoiceOver läser bekräftelsen en gång per personlig sparning utan att avbryta pågående läsning."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/personal-view.spec.ts",
+      "caseId": "PLACERING-09",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/personal-view.spec.ts",
+      "caseId": "PLACERING-10",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Starta skärmläsaren och följ PLACERING-09 steg 1–3 en gång.
+2. Lyssna på båda bekräftelserna. Kontrollera att knapparnas fokus stannar
+   kvar när toasten försvinner. Anteckna hjälpmedel, version och resultat.
+
+**Förväntat resultat:**
+
+- NVDA eller VoiceOver läser bekräftelsen en gång per personlig sparning utan
+  att avbryta pågående läsning.
+
+### PLACERING-12: fysiska fingerbyten och avbruten pekgest
+
+**Syfte:** Fysiska fingrar på iPhone eller iPad flyttar i bildplan och höjd,
+medan avbrutna gester och flyttat ankare återställer utan oavsiktlig
+objektflytt.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Chrome på faktisk iPhone eller iPad med sparade Lampan och
+Cykeln.
+
+**Kräver mänsklig observation:** Fysiska fingrar på iPhone eller iPad flyttar i
+bildplan och höjd, medan avbrutna gester och flyttat ankare återställer utan
+oavsiktlig objektflytt.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Fysiska fingrar på iPhone eller iPad flyttar i bildplan och höjd, medan avbrutna gester och flyttat ankare återställer utan oavsiktlig objektflytt."
+  },
+  "reference": "Chrome på faktisk iPhone eller iPad med sparade Lampan och Cykeln.",
+  "outcomes": [
+    "Fysiska fingrar på iPhone eller iPad flyttar i bildplan och höjd, medan avbrutna gester och flyttat ankare återställer utan oavsiktlig objektflytt."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/personal-view.spec.ts",
+      "caseId": "PLACERING-03",
+      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ PLACERING-03 steg 1–5 en gång på den faktiska pekskärmen.
+2. Anteckna fingerordningen, avbrottet när webbläsaren lämnas och faktisk
+   återgång. Jämför observerad höjdhjälp och kamerarörelse.
+
+**Förväntat resultat:**
+
+- Fysiska fingrar på iPhone eller iPad flyttar i bildplan och höjd, medan
+  avbrutna gester och flyttat ankare återställer utan oavsiktlig objektflytt.

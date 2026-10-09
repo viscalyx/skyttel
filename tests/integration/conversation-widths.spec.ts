@@ -1,12 +1,14 @@
 import { readFile } from 'node:fs/promises';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { unzipSync, zipSync } from 'fflate';
-import { createHousehold, openSettings, signIn } from '../support/client.js';
+import { closeSupportDialog, createHousehold, openSettings, signIn } from '../support/client.js';
 import {
   openConversationDraft,
+  openConversationText,
   startConversationWithText,
   turnMicrophoneOn,
 } from '../support/conversation-page.js';
+import { readDraftProposal, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -33,10 +35,11 @@ async function settings(page: Page) {
 async function arrange(page: Page, available = true) {
   const live = liveProvider();
   const app = await createInstallation(undefined, {
-    ...(available ? { modelFetch: textModel(() => [modelMessage('Ett provsvar.')]).provider } : {}),
+    modelFetch: textModel(() => [modelMessage('Ett provsvar.')]).provider,
     liveFetch: live.provider,
     liveSideband: live.attach,
   });
+  app.setConversationAvailable(available);
   await signIn(page.request, app.origin);
   const { household } = await (await createHousehold(page.request, app.origin, 'Breddprov')).json();
   const path = `${app.origin}/api/households/${household.id}/map`;
@@ -50,7 +53,11 @@ async function arrange(page: Page, available = true) {
           contentVersion: state.contentVersion,
           id: 'lo',
           baseRevision: null,
-          value: { typeId: state.types[0].id, name: 'Lo Exempel', description: '' },
+          value: {
+            typeId: state.types[0].id,
+            name: 'Lo Exempel',
+            description: 'Osparad breddprovuppgift',
+          },
         },
       })
     ).status(),
@@ -111,6 +118,9 @@ test('TEXTBREDD-01: handtagen ändrar bredderna var för sig utan att avbryta sa
     await value(handle(page, 'text'), 400);
     await value(handle(page, 'draft'), 340);
     await renderedWidths(page, 400, 340);
+    const initialProposal = await readDraftProposal(page, 'Lo Exempel');
+    await expect(initialProposal).toContainText('Osparad breddprovuppgift');
+    await closeSupportDialog(page, 'Lo Exempel');
     await turnMicrophoneOn(page);
     const before = await page.evaluate(() => window.skyttelVoiceFixture.stats());
     const draftBefore = (await (await page.request.get(path)).json()).draft;
@@ -183,6 +193,11 @@ test('TEXTBREDD-01: handtagen ändrar bredderna var för sig utan att avbryta sa
     const box = await view(page).boundingBox();
     expect(box?.x).toBeGreaterThanOrEqual(99);
     await expect.poll(read).toMatchObject({ textWidth: 1240, draftWidth: 260 });
+    const retained = await readDraftProposal(page, 'Lo Exempel');
+    await expect(retained).toContainText('Lo Exempel');
+    await expect(retained).toContainText('Person');
+    await expect(retained).toContainText('Osparad breddprovuppgift');
+    await closeSupportDialog(page, 'Lo Exempel');
   } finally {
     await app.close();
   }
@@ -292,6 +307,9 @@ test('TEXTBREDD-03: bredderna återställs i Inställningar även utan tillgäng
     await expect(
       page.getByText('Samtal med Skyttel är inte tillgängligt just nu.', { exact: true }),
     ).toBeVisible();
+    await expect(
+      page.getByRole('checkbox', { name: 'Visa utkastet när ett samtal börjar', exact: true }),
+    ).toBeChecked();
     const reset = widths(page).getByRole('button', { name: 'Återställ bredderna' });
     await expect(reset).toBeVisible();
     expect(await widths(page).innerText()).not.toMatch(/\d/);
@@ -310,19 +328,46 @@ test('TEXTBREDD-03: bredderna återställs i Inställningar även utan tillgäng
     await expect(widths(page).getByRole('heading')).toBeFocused();
     await expect(widths(page)).toContainText('Du har inte ändrat bredderna.');
     await expect.poll(read).toEqual({ textWidth: 400, draftWidth: 340, showDraftOnStart: true });
+    await expect(
+      page.getByRole('checkbox', { name: 'Visa utkastet när ett samtal börjar', exact: true }),
+    ).toBeChecked();
+    app.setConversationAvailable(true);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await startConversationWithText(page);
+    await openDraft(page);
+    await value(handle(page, 'text'), 400);
+    await value(handle(page, 'draft'), 340);
   } finally {
     await app.close();
   }
 });
 
 for (const mode of [
-  { name: 'smal dator', viewport: { width: 700, height: 900 }, hasTouch: false, isMobile: false },
-  { name: 'telefon', viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true },
-  { name: 'bred pekskärm', viewport: { width: 1180, height: 820 }, hasTouch: true, isMobile: true },
+  {
+    caseId: 'TEXTBREDD-04',
+    name: 'smal dator',
+    viewport: { width: 700, height: 900 },
+    hasTouch: false,
+    isMobile: false,
+  },
+  {
+    caseId: 'TEXTBREDD-06',
+    name: 'telefon',
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  },
+  {
+    caseId: 'TEXTBREDD-07',
+    name: 'bred pekskärm',
+    viewport: { width: 1180, height: 820 },
+    hasTouch: true,
+    isMobile: true,
+  },
 ]) {
   test.describe(mode.name, () => {
     test.use({ viewport: mode.viewport, hasTouch: mode.hasTouch, isMobile: mode.isMobile });
-    test('TEXTBREDD-04: mobil enhet och smal skärm har inga breddhandtag', async ({ page }) => {
+    test(`${mode.caseId}: mobil enhet och smal skärm har inga breddhandtag`, async ({ page }) => {
       const { app, path, read } = await arrange(page);
       try {
         await page.request.post(`${path}/conversation-preferences`, {
@@ -421,6 +466,27 @@ test('TEXTBREDD-05: äldre hushållsarkiv lämnar personliga samtalsval kvar', a
     expect((await (await page.request.get(path)).json()).draft.changes).toEqual([
       expect.objectContaining({ id: 'lo', after: expect.objectContaining({ name: 'Lo Exempel' }) }),
     ]);
+    await page
+      .getByRole('navigation', { name: 'Inställningarnas sidor' })
+      .getByRole('link', { name: 'Samtal med Skyttel', exact: true })
+      .click();
+    await expect(widths(page)).toContainText('Du har inte ändrat bredderna.');
+    await expect(
+      page.getByRole('checkbox', { name: 'Visa utkastet när ett samtal börjar', exact: true }),
+    ).toBeChecked();
+    await expect(
+      page
+        .getByRole('region', { name: 'Medgivande', exact: true })
+        .locator('.conversation-setting-status'),
+    ).toHaveText(/^Sparat den /);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await openConversationText(page);
+    await openDraft(page);
+    await value(handle(page, 'text'), 400);
+    await value(handle(page, 'draft'), 340);
+    const restored = await readTableObject(page, 'Lo Exempel');
+    await expect(restored).toContainText('Person');
+    await expect(restored).toContainText('Osparad breddprovuppgift');
   } finally {
     await app.close();
   }

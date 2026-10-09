@@ -112,9 +112,10 @@ Alla 28 grundobservationer saknar horisontell överströmning i den mätta
 artikeln. Det är en avgränsad observation, inte ett påstående om hela sidan.
 Separata rader för definitionen i valt och bekräftat resultat bevarar namn,
 beskrivning, riktningar, avsnitt och fält på båda vybredderna.
-[UTKAST-67](drafts.md#utkast-67-återställ-en-borttagen-typdefinition-efter-uttrycklig-granskning)
-provar också båda definitionstypernas fullständiga värden och verkliga
-privata bekräftelse utan gemensamt sparande.
+[UTKAST-67](drafts.md#utkast-67-återställ-en-borttagen-objekttyp-genom-privat-granskning-och-sparande)
+och [UTKAST-140](drafts.md#utkast-140-återställ-en-borttagen-sambandstyp-med-läsbara-riktningar)
+provar definitionstypernas fullständiga värden och verkliga privata
+bekräftelse före separat gemensamt sparande och läsning efter omstart.
 
 Borttagna posters förslag visas som statiska fullständiga läsvärden,
 inte som nedtonade avaktiverade valknappar. Detta uppfyller det senare

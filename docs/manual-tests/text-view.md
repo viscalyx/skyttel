@@ -21,19 +21,21 @@ vid körning.
    [kontrollerade installationen för text](text-assistant.md#controlled-text-fixture).
    För TEXTVY-03, TEXTMOBIL-01–05 och TEXTBREDD-01–05: starta i stället
    [den kontrollerade röstinstallationen](voice-assistant.md#controlled-voice-fixture)
-   med `node --import tsx scripts/manual-voice.ts` efter bygget. Följ guidens
+   med `npm run test:env -- node --import tsx scripts/manual-voice.ts` efter
+   bygget. Följ guidens
    privata portvidarebefordran och inloggning. Kör inte `seed-family`;
    hushållet och det enda förslaget skapas i nästa steg. Båda installationerna
    håller varje modellsvar tills du släpper det i terminalen.
 2. Skapa hushållet Textprov. Skapa **Lo Exempel** av typen **Person** med
-   beskrivningen **Påhittad uppgift** genom **Nytt objekt** och välj
+   beskrivningen **Påhittad uppgift** (för TEXTBREDD-fallen används i stället
+   **Osparad breddprovuppgift**) genom **Nytt objekt** och välj
    **Lägg i utkastet och stäng**. Lämna förslaget osparat.
-3. Ladda om sidan före varje fall, så att inget medgivande gäller för
-   besöket. Behåll hushållet och förslaget mellan fallen.
+3. Använd en ny installation per fall. Ladda om före samtalsstart; inget
+   medgivande gäller för besöket. Behåll samma databas vid omstart.
 4. Avsluta respektive installation med `quit` och kontrollera att dess
    tillfälliga katalog försvinner enligt startguiden. Röstinstallationen
    använder tysta mediespår. Den provar kommentarspaket och mikrofonläge;
-   faktiskt hört tal redovisas separat i TEXTVY-03.
+   faktiskt hört tal redovisas separat i TEXTVY-06.
 
 ## Textvyn
 
@@ -51,6 +53,23 @@ medgivande gäller.
 [text-view.spec.ts](../../tests/integration/text-view.spec.ts),
 testfallet “TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att
 avsluta samtalet”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-view.spec.ts",
+    "caseId": "TEXTVY-01"
+  },
+  "reference": "1280 × 800, mus; öppning, stängning och snabblänk med bevarad oskickad text.",
+  "outcomes": [
+    "Öppna och stänga textvyn med samma knapp, utan att samtalet, mikrofonen eller den oskickade texten går förlorade."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -70,8 +89,7 @@ avsluta samtalet”.
   Sparandet nås genom **Rapporter → Ändringshistorik**.
 - **Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.**
   står under hushållets namn, utanför textvyn.
-- **Skicka** står i höjd med fältets mitt. Efter skickandet, också med
-  ett klick på **Skicka**, har meddelandefältet kvar fokus.
+- Fokus efter skickandet och radplacering provas i TEXTVY-02.
 - Meddelandefältet **Meddelande till Skyttel** har fokus när textvyn
   öppnas och platshållaren **Berätta vad du vill göra…**.
 - **Stäng textvyn** ger fokus till **Skriv till Skyttel**. Kartan får hela
@@ -93,16 +111,35 @@ medgivande gäller.
 testfallet “TEXTVY-02: samtalstexten visar vem som skriver och raden
 Skyttel arbetar sist”.
 
+**Separat förberedelse:**
+[Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-view.spec.ts",
+    "caseId": "TEXTVY-02"
+  },
+  "reference": "Dator; två hållna svar, klick och Enter samt Shift+Enter.",
+  "outcomes": [
+    "Skilja din text från Skyttels text och se när Skyttel arbetar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Välj **Skriv till Skyttel → Nytt samtal** och **Godkänn och starta**.
-2. Läs den tomma samtalstexten. Skriv **Vem betalar musiken?** och klicka
-   på **Skicka**.
-3. Medan terminalen håller svaret: läs samtalstextens sista rad. Släpp
-   sedan svaret med `reply NUMMER Kim betalar musiken.`.
-4. Skriv **Rad ett**, tryck Skift+Retur, skriv **rad två** och tryck Retur.
-   Släpp svaret.
-5. Med en skärmläsare: läs raderna i samtalstexten.
+1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn och läs tom samtalstext.
+2. Skriv **Vem betalar musiken?**, klicka Skicka och läs den sista
+   arbetsraden medan operatören håller svaret. Fältet har kvar fokus.
+3. Låt operatören leverera **Kim betalar musiken.** Läs dina och Skyttels
+   olika rader med respektive talarnamn.
+4. Skriv **Rad ett**, Skift+Retur, **rad två**, Retur. Läs samma meddelandes
+   två rader och arbetsraden sist. Släpp **Klart.** och läs slutraden.
 
 **Förväntat resultat:**
 
@@ -114,8 +151,8 @@ Skyttel arbetar sist”.
   för att avbryta.** på dator.
 - Din text och Skyttels text går att skilja åt genom radens utseende.
   Skift+Retur ger en ny rad i samma meddelande.
-- Skärmläsaren läser **Du:** före dina rader och **Skyttel:** före
-  Skyttels rader.
+- De semantiska talarnamnen finns. Faktiskt hörda talare har separat
+  mänskligt observationsfall TEXTVY-05.
 
 ### TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon
 
@@ -132,34 +169,41 @@ Textprov och Lo-förslaget osparat i utkastet. Inget medgivande gäller.
 testfallet “TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och
 mikrofon”.
 
+**Separat förberedelse:**
+[Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-view.spec.ts",
+    "caseId": "TEXTVY-03"
+  },
+  "reference": "Dator; ny kontext, sena svar och mikrofon ON/OFF med hållet dubbelklick.",
+  "outcomes": [
+    "Börja om samtalet utan att förlora utkast, mikrofonläge eller oskickad text och utan att frågas om medgivande igen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Välj **Prata med Skyttel** och **Godkänn och starta**. Öppna textvyn
-   med **Skriv till Skyttel**.
-2. Skicka **Rätta namnet.**. Medan terminalen håller svaret, skriv
-   **Oskickat** i fältet utan att skicka. Anteckna anropets `id`, utkastets
-   `version` och `contentVersion` samt Lo-förslagets `id` och hela `after`
-   från `held.draft`.
-3. Välj **Nytt samtal**.
-   Kör `sessions` i terminalen. Det senaste paketet av typen
-   `session.commentary.append` ska ha `content` lika med
-   **Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.**
-4. Släpp det gamla hållna anropet med `tool REQUEST propose_object`
-   följt av ett JSON-objekt på samma terminalrad. Ersätt `REQUEST` med
-   antecknat anrops-ID. Argumentet ska ha antecknad `version`,
-   `contentVersion`, Lo-förslagets `id`, `baseRevision:null` och `value`
-   lika med kopierat `after`, men ändrat `name` till **För sent**.
-   Ta bort eventuella servermetadata som `id`, `householdId` och `revision`
-   ur `value`. Kontrollera oförändrat Lo-förslag i utkastet.
-5. Skicka **Vad finns i utkastet?**. Nästa `held.input` ska innehålla
-   bara det nya uppdraget utan **Rätta namnet.** Släpp svaret med
-   `reply REQUEST Lo Exempel.`, där `REQUEST` är det nya anropets ID.
-6. Stäng av mikrofonen. Skriv **Oskickat vid omstart** utan att skicka.
-   Aktivera långsam nätverksanslutning i webbläsarens utvecklarverktyg
-   och dubbelklicka **Nytt samtal** medan omstarten väntar på svar.
-   Vänta på beskedet och återställ normal anslutning.
-   Kontrollera i nätverkspanelen att bara ett anrop till `/new` skickas.
-   Kör `window.skyttelVoiceFixture.stats()` i webbläsarkonsolen.
+1. Starta med röst och öppna textvyn. Skicka **Rätta namnet.**, håll svaret
+   enligt separat förberedelse och skriv **Oskickat** utan att skicka.
+2. Välj **Nytt samtal**. Läs endast det nya beskedet om en osparad ändring,
+   kvarvarande Oskickat och mikrofonen på. Ingen ny medgivanderuta behövs.
+3. Låt operatören släppa den gamla rättelsen. Läs samma nya samtalsbesked
+   och öppna **Visa utkastet → Visa förslaget: Lo Exempel**. Läs Person och
+   **Påhittad uppgift**, stäng uppgifterna och dölj utkastet. Skicka därefter
+   **Vad finns i utkastet?** och låt operatören leverera **Lo Exempel.**
+4. Stäng av mikrofonen och skriv **Oskickat vid omstart** utan att skicka.
+   Låt operatören fördröja nystartens svar. Dubbelklicka **Nytt samtal**,
+   vänta på beskedet och kontrollera samma text och mikrofon av. Öppna
+   samma fullständiga Lo-förslag igen, läs uppgifterna och stäng det.
+   Protokoll, spår och gammal kontext granskas separat av operatören.
 
 **Förväntat resultat:**
 
@@ -173,56 +217,59 @@ mikrofon”.
 - Nästa uppdrag bär inget av det som sades före **Nytt samtal**.
 - När mikrofonen är av förblir den av efter **Nytt samtal**.
   Även ett dubbelklick med fördröjt svar bevarar läget, Lo-förslaget och
-  **Oskickat vid omstart**. `stats()` visar `microphoneRequests: 1`,
-  `openPeers: 1` och ett mikrofonspår med `enabled:false`, `state:'live'`.
-
-**Separat prov med faktiskt hört tal:**
-
-1. Följ
-   [förberedelsen i TAL-17](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare)
-   med separat provdatabas, privat leverantörsnyckel och fysisk mikrofon.
-   Skapa Textprov och samma osparade Lo-förslag.
-2. Anslut fysisk mikrofon och ljudutgång. Välj **Prata med Skyttel**,
-   godkänn samtalet och tillåt mikrofonen. Öppna textvyn och välj
-   **Nytt samtal**. Använd **Starta ljudet** om uppspelning blockeras.
-3. Kontrollera att Skyttel hörbart säger att ett nytt samtal börjar och
-   att en osparad ändring ligger kvar i utkastet. Kontrollera samtidigt
-   samma besked i samtalstexten och kvarvarande Lo-förslag.
-4. Anteckna faktiskt hört resultat, mikrofon, ljudutgång och webbläsare
-   separat från det kontrollerade provet. Detta lyssningsprov återstår
-   tills en människa har utfört det; integrationstestet provar inte ljudet.
+  **Oskickat vid omstart**. Spårjämförelser finns i separat tekniskt underlag.
 
 ### TEXTVY-04: textvyn går att använda på mobil enhet och smal skärm
 
-**Syfte:** Skriva till Skyttel på pekskärm och smal skärm utan att
-skärmtangentbordet kommer upp av sig självt.
+**Syfte:** Skriva till Skyttel på emulerad pekare och smal skärm utan
+att fältet får fokus av sig självt.
 
 **Användare:** Alex.
 
-**Förutsättningar:** En iPad eller ett pekskärmsfönster bredare än
-700 px, och en telefon eller ett fönster som är högst 700 px brett. Inget
-medgivande gäller.
+**Förutsättningar:** Emulerad pekare vid 820 × 1180, sedan samma fönster
+vid 390 × 844. Inget medgivande gäller. Fysiskt skärmtangentbord provas
+separat i TEXTMOBIL-13.
 
 **Integrationstest:**
 [text-view.spec.ts](../../tests/integration/text-view.spec.ts),
 testfallet “TEXTVY-04: textvyn går att använda på mobil enhet och smal
 skärm”.
 
+**Separat förberedelse:**
+[Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-view.spec.ts",
+    "caseId": "TEXTVY-04"
+  },
+  "reference": "820 × 1180 emulerad pekare, därefter390 × 844; samma samtal.",
+  "outcomes": [
+    "Skriva till Skyttel på emulerad pekare och smal skärm utan automatiskt fältfokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. På iPad: tryck på **Skriv till Skyttel → Nytt samtal** och
-   **Godkänn och starta**.
-2. Tryck i meddelandefältet, skriv **Hej Skyttel.** och tryck på
-   **Skicka**.
-3. På telefon eller i ett smalt fönster: öppna textvyn, läs den och stäng
-   den med **Skriv till Skyttel**. Öppna den igen och välj sedan **Tabell**.
+1. Vid 820 × 1180 med emulerad pekare: starta med text och godkänn.
+   Fältet ska inte få fokus av sig självt. Aktivera fältet, skriv
+   **Hej Skyttel.**, välj Skicka och låt operatören leverera **Ett provsvar.**
+2. Ändra samma fönster till 390 × 844. Läs samma svar, rubrik, Nytt samtal,
+   fält och Skicka utan horisontell sidrullning.
+3. Stäng textvyn och läs kartan. Öppna textvyn igen, kontrollera att den
+   inte automatiskt fokuserar fältet och att svaret finns kvar. Välj Tabell.
 
 **Förväntat resultat:**
 
-- På iPad är textvyn ett sidofält vid högerkanten och kartan syns bredvid.
-  Sidofältet är 400 px brett även på en liggande telefon.
-  Fältet får inte fokus av sig självt, och tangentbordet kommer upp först
-  när du trycker i fältet. Fältet behåller fokus efter **Skicka**.
+- På bred emulerad pekare är textvyn ett 400 px sidofält vid högerkanten
+  och kartan syns bredvid. Fältet får inte fokus av sig självt och behåller
+  fokus efter **Skicka**. Faktiskt OS-tangentbord bedöms i TEXTMOBIL-13.
 - På smal skärm fyller textvyn skärmen under verktygsraden. Rubriken,
   **Nytt samtal**, fältet och **Skicka** syns utan horisontell rullning.
   Fältet får inte fokus av sig självt.
@@ -237,89 +284,102 @@ skärm”.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Den kontrollerade röstinstallationen med Textprov
-och det osparade Lo-förslaget. Börja utan öppet samtal. Prova Chrome på
-Windows, macOS, iPhone och iPad; anteckna varje verklig enhet separat.
+**Förutsättningar:** Ny kontrollerad röstinstallation och osparat
+Lo-förslag. Använd fallets exakta emulerade konfiguration.
 
 **Integrationstest:**
 [mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
-testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”,
-i grupperna för 390×844, 375×667, 844×390, 820×1180, 1180×820,
-320×250, 700×500 och 1280×900.
+testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”.
+
+**Separat förberedelse:**
+[Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-01"
+  },
+  "reference": "1280 × 900, mus; bred datorreferens med sidofält och automatiskt fältfokus.",
+  "outcomes": [
+    "Läsa, skriva och öppna utkastet på telefon, surfplatta och dator."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. På stående iPhone: välj **Skriv till Skyttel** och godkänn. Kräv att
-   textvyn börjar under verktygsraden och fyller resten av den synliga
-   skärmen. Tangentbordet ska inte öppnas av sig självt.
-2. Tryck i **Meddelande till Skyttel**, skriv **Ett vanligt uppdrag.** och
-   välj **Skicka**. Släpp det hållna modellsvaret i terminalen med
-   `reply ANROP Ett synligt provsvar.`, där `ANROP` är ID från `held`.
-   Fältet ska behålla fokus. Rulla för att läsa kartans utkaståterkoppling.
-3. Välj **Visa utkastet**. Kräv Lo Exempel och knappens nya namn
-   **Dölj utkastet (1)**. Stäng utkastet igen.
-4. Upprepa på iPad stående och liggande samt iPhone liggande. Kräv ett
-   sidofält till höger med kartan synlig bredvid. Sidofältets fasta bredd
-   på 400 px mäts i automationen.
-5. På dator: minska fönstret till högst 700 px. Kräv samma fyllda textvy
-   som på stående telefon. Minska höjden under 520 px. Kräv en enda rad
-   med mätaren, **Utkast (1)**, **Nytt samtal** och stängknappen.
-6. Läs med VoiceOver eller NVDA. Rubriken **Skriv till Skyttel**,
-   mätarens namn **Kontext** och fältets etikett ska finnas även när de
-   inte syns. Utkastknappen ska heta **Visa utkastet (1)** eller
-   **Dölj utkastet (1)**. På bred dator med mus ska rubriken synas även
-   om höjden är kort. En bärbar dator med både mus och pekskärm följer
-   sin främsta pekare, inte bara förekomsten av pekstöd.
+1. Ställ fönstret på 1280 × 900 med mus. Starta med text och godkänn.
+   Läs sidofältet till höger och kartan bredvid. Fältet får fokus på bred dator.
+2. Skriv **Ett vanligt uppdrag.**, välj Skicka och låt operatören leverera
+   **Ett synligt provsvar.** Läs svaret och kvarvarande fokus i fältet.
+3. Välj **Visa utkastet (1)**. Läs Lo Exempel, **Dölj utkastet (1)** och
+   öppet läge. Öppna **Visa förslaget: Lo Exempel**, läs **Person** och
+   **Påhittad uppgift** och stäng uppgifterna. Hela sidan ryms utan
+   horisontell sidrullning.
 
 **Förväntat resultat:**
 
-- Bredd och främsta pekare ger samma läge genom hela samtalsflödet.
-  Ett smalt datorfönster fungerar som smal skärm.
-- Under 520 px synlig höjd på mobil enhet eller smal skärm används
-  den kompakta raden och ett meddelandefält på en rad. Alla kontroller
-  är nåbara utan rullning i sidled. Fältets och mätarens namn bevaras.
-- Automationen kontrollerar mått, knappnamn, utkastets innehåll och att
-  **Skicka** verkligen kan tryckas utan att kartans återkoppling täcker det.
+- På bred dator syns sidofält och karta bredvid; fältet får startfokus.
+- Skicka behåller fältfokus, svaret syns och hela Lo-utkastet går att öppna.
+- Ingen horisontell sidrullning behövs. Kvarvarande smala/pekade/
+  korta konfigurationer har egna identiteter nedan.
 
 ### TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts
 
-**Syfte:** Fortsätta skriva när ett verkligt skärmtangentbord tar plats.
+**Syfte:** Fortsätta skriva när webbläsarfönstrets synliga höjd minskar.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Samma installation. På fysisk iPhone eller iPad
-får tangentbordet själv bestämma höjden; de automatiserade höjderna är
-kontrollerade exempel, inte uppmätta tangentbord.
+**Förutsättningar:** Ny kontrollerad röstinstallation och osparat
+Lo-förslag. Använd fallets exakta emulerade konfiguration.
 
 **Integrationstest:**
 [mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
-testfallet “TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts”,
-i grupperna för 508, 407, 420 och 190 px synlig höjd.
+testfallet “TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts”.
+
+**Separat förberedelse:**
+[Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-02"
+  },
+  "reference": "390 × 844 → 508, emulerad pekare; ändrad synlig höjd i webbläsaren; fysisk tangentbordsfunktion bedöms separat.",
+  "outcomes": [
+    "Fortsätta skriva vid minskad synlig höjd med text, fokus och mikrofon kvar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna textvyn och godkänn. Kräv att tangentbordet är dolt. Slå på
-   **Prata med Skyttel**; den kontrollerade rösten använder tysta spår.
-2. Tryck i fältet och skriv **Ett vanligt uppdrag.**. Kräv att textvyn
-   följer den yta som tangentbordet lämnar, med fältet synligt.
-3. Vrid telefonen till liggande medan tangentbordet är öppet. Kräv den
-   kompakta raden, minst en läsbar samtalsrad och fältet. Röstrutan står
-   ovanför sidofältet på bred pekskärm, med samma höjd som tidigare.
-   På smal skärm står den direkt ovanför fältet i textvyn.
-4. Välj **Skicka** och släpp svaret med `reply ANROP Ett synligt provsvar.`.
-   Kräv fokus kvar i fältet, kvarvarande tangentbord och läsbart svar.
-5. Dölj tangentbordet och öppna det igen. Kräv samma pågående samtal,
-   oskickad text och mikrofon på. Upprepa på iPad i båda riktningarna.
+1. Ställ fönstret på 390 × 844 med emulerad pekare. Starta med text;
+   fältet får inte fokus av sig självt. Slå på Prata med Skyttel.
+2. Aktivera fältet och skriv **Ett vanligt uppdrag.** utan att skicka.
+   Minska samma native webbläsarfönster till 390 × 508. Läs kvarvarande
+   oskickad text och fokus i samma fält, kompakt rad, nåbart fält och Skicka.
+3. Välj Skicka och släpp **Ett synligt provsvar.** Läs svaret inom den
+   synliga samtalsytan, med fokus kvar i fältet och nåbar röstruta.
+4. Återställ höjden till 844. Kontrollera samma fältfokus och mikrofon på.
+   Detta storleksbyte är ett layoutprov; fysisk tangentbordsfunktion har eget
+   fall.
 
 **Förväntat resultat:**
 
-- Ingen ombyggnad av fältet tappar text eller fokus. Tangentbordet
-  öppnas bara när användaren väljer fältet och står kvar efter **Skicka**.
-- Automationen använder webbläsarens verkliga ändring av synlig höjd.
-  Vid 844×190 px mäts sidofältet till 134 px med kompakt rad, samtalsyta
-  och fält synliga och mikrofonen på. Röstrutan är fortfarande 36 px hög.
-- Verkligt tangentbord, rotation, synlig fokusmarkering och VoiceOver
-  återstår att kontrollera manuellt på iPhone och iPad.
+- Samma fältets DOM-nod och oskickade text bevaras genom höjdändringen.
+- Fält, Skicka, röstruta och svar är synliga; mikrofonen förblir på.
+- Native ändring av synlig höjd bevisar inte fysisk skärmtangentbordsfunktion.
 
 ### TEXTMOBIL-03: röstrutan och notisen lämnar kartans nederkant fri
 
@@ -327,26 +387,42 @@ i grupperna för 508, 407, 420 och 190 px synlig höjd.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Samma installation på stående telefon. Lo-förslaget
-är osparat. Textvyn är öppen och mikrofonen på.
+**Förutsättningar:** Ny kontrollerad röstinstallation och osparat
+Lo-förslag. Använd fallets exakta emulerade konfiguration.
 
 **Integrationstest:**
 [mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
 testfallet “TEXTMOBIL-03: röstrutan och notisen lämnar kartans nederkant fri”.
 
+**Separat förberedelse:**
+[Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-03"
+  },
+  "reference": "390 × 844 emulerad pekare; hörntryck, stopp och notisstängning utan överlapp.",
+  "outcomes": [
+    "Nå kartans kontroller och samtalets kontroller utan överlapp."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Stäng textvyn. Läs röstrutan, kartans återkoppling och raden med
-   **Återställ vy**. Kräv att ingen av dem täcker den andra.
-2. Kör `window.skyttelVoiceFixture.setSound('remote', true)` i
-   webbläsarkonsolen för att låta den externa provkällan visa **Skyttel
-   talar**. Tryck på **Avbryt**, även nära den synliga ikonens kant.
-   Kräv att rösten tystnar och utkastet ligger kvar.
-3. Öppna textvyn igen. Skicka **Ett kontrollerat fel.** och kör
-   `fail ANROP` i terminalen, med anrops-ID från `held`.
-4. Läs **Skyttel kunde inte slutföra uppdraget. Försök igen.** ovanför
-   fältet. Välj **Stäng notisen**. Kräv att notisen försvinner och
-   att samtalet och utkastet finns kvar.
+1. Vid 390 × 844 med emulerad pekare: starta med text, slå på mikrofonen
+   och stäng textvyn. Läs röstrutan utan överlapp med kartans verktyg/status.
+2. Låt operatören förbereda syntetisk fjärrljudaktivitet. Aktivera Avbryt
+   nära stoppikonens övre kant. Stoppkontrollen försvinner.
+3. Öppna textvyn, skicka **Ett kontrollerat fel.** och låt operatören ge
+   leverantörsfel. Läs felnotisen. Aktivera Stäng notisen nära dess övre kant.
+   Notisen stängs och fältet finns kvar.
 
 **Förväntat resultat:**
 
@@ -363,22 +439,40 @@ testfallet “TEXTMOBIL-03: röstrutan och notisen lämnar kartans nederkant fri
 
 **Användare:** Alex.
 
-**Förutsättningar:** Samma installation på liggande telefon med
-skärmtangentbordet öppet och textvyn i kort läge.
+**Förutsättningar:** Ny kontrollerad röstinstallation och osparat
+Lo-förslag. Använd fallets exakta emulerade konfiguration.
 
 **Integrationstest:**
 [mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
 testfallet “TEXTMOBIL-04: en lång notis rullar och kan stängas i kort fönster”.
 
+**Separat förberedelse:**
+[Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-04"
+  },
+  "reference": "844 × 190 emulerad pekare; intern notisrullning, tangentbordsstängning och fortsatt text.",
+  "outcomes": [
+    "Nå notisens innehåll och stängknapp utan att tappa fältet."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Skicka **Ett kontrollerat fel.** och kör `fail ANROP` i terminalen.
-2. Läs notisen ovanför fältet. Om den inte ryms, rulla inne i notisen
-   för att läsa resten. Kontrollera att fältet ligger kvar.
-3. Flytta fokus till **Stäng notisen** med externt tangentbord eller
-   VoiceOver och aktivera knappen. Kräv att den går att nå även efter
-   att notisens text har rullats.
-4. Skriv ett nytt uppdrag och välj **Skicka**. Kräv fokus kvar i fältet.
+1. Vid 844 × 190 med emulerad pekare: starta med text, skicka
+   **Ett kontrollerat fel.** och låt operatören ge leverantörsfel.
+2. Läs notisen och rulla inuti den till slutet. Nå **Stäng notisen**
+   med Tab och välj Enter. Notisen stängs trots rullningen.
+3. Skriv **Fortsätt med text.** och välj Skicka. Fältet behåller fokus.
 
 **Förväntat resultat:**
 
@@ -404,12 +498,30 @@ layoutprov.
 testfallet “TEXTMOBIL-05: vald röstruta och kompakt textvy använder det
 riktiga samtalet”, i gruppen “valt mobilt samtalsflöde”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-audit.spec.ts",
+    "caseId": "TEXTMOBIL-05"
+  },
+  "reference": "390 × 844 →390 × 508 →844 × 190 →820 × 1180; samma röst-/textsession.",
+  "outcomes": [
+    "Jämföra det levererade mobila flödet med den valda utformningen, med samma samtal från röst till text och kort fönster."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Välj **Prata med Skyttel**, godkänn och invänta **Lyssnar**. Kör
-   `user Beskriv utkastet.` och `delegate`. Håll modellsvar och kontrollera
+1. Välj **Prata med Skyttel**, godkänn och invänta **Lyssnar**. Operatören
+   levererar det talade uppdraget och håller svaret enligt separat
+   förberedelse. Läs
    **Skyttel arbetar**, vågform och **Avbryt** med textvyn stängd.
-2. Släpp `reply REQUEST Lo-förslaget ligger kvar i utkastet.` och invänta
+2. Låt operatören leverera svaret och invänta
    **Lyssnar**. Öppna **Skriv till Skyttel**. Fältet ska inte få fokus
    av sig självt på pekskärm.
 3. Tryck i fältet, skriv **Beskriv den senaste ändringen.** och skicka.
@@ -452,10 +564,30 @@ Börja med grundbredderna genom TEXTBREDD-03 om de tidigare har ändrats.
 testfallet “TEXTBREDD-01: handtagen ändrar bredderna var för sig utan att
 avbryta samtalet”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-widths.spec.ts",
+    "caseId": "TEXTBREDD-01"
+  },
+  "reference": "1600 × 900, mus; individuella bredder, dragning och pilar med bevarad native textarea/mikrofon.",
+  "outcomes": [
+    "Ändra en bredd med mus eller tangentbord och behålla samtalet."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Välj **Skriv till Skyttel**, godkänn och välj **Visa utkastet**.
-   Slå på **Prata med Skyttel**. Skriv **Oskickat medan bredden ändras**
+1. Välj **Skriv till Skyttel → Nytt samtal → Godkänn och starta**
+   och sedan **Visa utkastet**.
+   Läs **Visa förslaget: Lo Exempel → Osparad breddprovuppgift**, stäng
+   uppgifterna och slå på **Prata med Skyttel**. Skriv
+   **Oskickat medan bredden ändras**
    utan att skicka.
 2. Dra gränsen vid samtalstextens vänsterkant åt vänster och sedan
    gränsen vid utkastets vänsterkant åt vänster. Kontrollera fältet,
@@ -464,7 +596,9 @@ avbryta samtalet”.
    högerpil. Nå **Ändra utkastlistans bredd** och tryck högerpil.
 4. Dra vardera gränsen så långt åt höger som möjligt. Dra sedan
    samtalstextens gräns långt åt vänster. Kontrollera att kartan syns.
-5. Läs handtagens namn, roll och aktuella värde med NVDA eller VoiceOver.
+5. Läs samma fullständiga Lo-förslag igen och stäng uppgifterna.
+   Kontrollera synligt fokus på varje handtag. Faktiskt hörda namn,
+   roller och värden bedöms separat i TEXTVY-05.
 
 **Förväntat resultat:**
 
@@ -498,6 +632,23 @@ Använd katalogen från röstinstallationen. Den andra profilen öppnar
 testfallet “TEXTBREDD-02: bredderna följer användaren och skärmens
 begränsning sparas inte”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-widths.spec.ts",
+    "caseId": "TEXTBREDD-02"
+  },
+  "reference": "1600 →850 →1600 CSS-pixlar; Alex två profiler/hushåll, Robin separat och serveromstart.",
+  "outcomes": [
+    "Behålla Alex bredder mellan hushåll och enheter utan att ändra Robins bredder eller skriva över valet på liten skärm."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. I Alex första profil, öppna samtal och utkast och gör båda bredderna
@@ -508,9 +659,11 @@ begränsning sparas inte”.
    utkastet. Gör fönstret brett igen utan att använda något handtag.
 4. Öka utkastbredden med vänsterpil i andra profilen. Återgå till Alex
    första fönster och kontrollera samma ändring.
-5. Kör `identity robin`. Logga in med Microsoft i Robins profil. Bjud in
+5. Operatören väljer Robin enligt förberedelsen. Logga in med Microsoft
+   i Robins profil. Bjud in
    Robin till Textprov enligt SAMTALSUTKAST-02. Öppna samtal och utkast
-   där. Kör `identity alex`, sedan `restart`, och ladda om Alex sida.
+   där. Operatören återgår till Alex och startar om samma installation
+   enligt förberedelsen. Ladda om Alex sida.
 
 **Förväntat resultat:**
 
@@ -527,23 +680,44 @@ begränsning sparas inte”.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Samma installation. Kör `available off` i terminalen
-och ladda om sidan. Förbered ändrade bredder med TEXTBREDD-01 innan
-samtalet stängs av. Markera gärna utkastets startval i Inställningar.
+**Förutsättningar:** Samma installation. Förbered ändrade bredder med
+TEXTBREDD-01 och markera utkastets startval. Operatören följer
+[avstängning och återställning](text-conversation-preparation.md#otillgängligt-samtal-och-breddåterställning)
+före första läsningen; ladda om sidan.
 
 **Integrationstest:**
 [conversation-widths.spec.ts](../../tests/integration/conversation-widths.spec.ts),
 testfallet “TEXTBREDD-03: bredderna återställs i Inställningar även utan
 tillgängligt samtal”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-widths.spec.ts",
+    "caseId": "TEXTBREDD-03"
+  },
+  "reference": "Dator utan tillgängligt samtal; sparfel och lyckad återställning behåller utkastval.",
+  "outcomes": [
+    "Återställa båda bredderna utan att ändra valet för utkastet."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Öppna **Inställningar**, **Samtal med Skyttel**. Läs **Textvyns bredd**.
-2. Aktivera offline i webbläsarens utvecklarverktyg. Välj
-   **Återställ bredderna** och läs återkopplingen. Återställ anslutningen.
-3. Använd Tab och Enter för att välja **Återställ bredderna** igen.
+2. Be operatören förbereda anslutningsfelet och invänta bekräftelse. Välj
+   **Återställ bredderna** och läs återkopplingen och knappens fokus.
+3. Be operatören återställa anslutningen och invänta bekräftelse.
+   Använd Tab och Enter för att välja **Återställ bredderna** igen.
    Kontrollera återkoppling, fokus och utkastets startval.
-4. Kör `available on`, återgå till kartan och öppna samtal och utkast.
+4. Be operatören återställa tillgängligheten enligt förberedelsen och
+   invänta bekräftelse.
+   Återgå till kartan, starta med text och öppna utkastet.
 
 **Förväntat resultat:**
 
@@ -554,8 +728,8 @@ tillgängligt samtal”.
 - Vid lyckad återställning står **Bredderna är återställda**. Knappen
   försvinner, **Du har inte ändrat bredderna.** visas och fokus går till
   delens rubrik. Valet **Visa utkastet när ett samtal börjar** ändras inte.
-- Samtalstext och utkast har grundbredderna igen. Knappen visas bara när
-  minst en sparad bredd skiljer sig från grundvärdet.
+- Samtalstext och utkast har grundbredderna 400 respektive 340 igen.
+  Knappen visas bara när minst en sparad bredd skiljer sig från grundvärdet.
 
 ### TEXTBREDD-04: mobil enhet och smal skärm har inga breddhandtag
 
@@ -569,14 +743,36 @@ ett datorfönster högst 700 px brett, stående telefon och bred surfplatta.
 **Integrationstest:**
 [conversation-widths.spec.ts](../../tests/integration/conversation-widths.spec.ts),
 testfallet “TEXTBREDD-04: mobil enhet och smal skärm har inga breddhandtag”,
-i grupperna smal dator, telefon och bred pekskärm.
+referensen smal dator. Pekare har egna fall nedan.
+
+**Separat förberedelse:**
+[Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-widths.spec.ts",
+    "caseId": "TEXTBREDD-04"
+  },
+  "reference": "700 × 900, mus; smal datorbehållning och synlig inställningsåterställning.",
+  "outcomes": [
+    "Behålla mobilens och den smala skärmens layout."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna textvyn och utkastet på varje skärm. Kontrollera att inga
-   breddhandtag finns eller kan nås med Tab.
-2. Öppna **Inställningar**, **Samtal med Skyttel** på varje enhet.
-3. Återgå till ett brett datorfönster och kontrollera de sparade bredderna.
+1. Vid 700 × 900 med mus och sparade bredder 624/460: öppna textvyn
+   och utkastet. Inga breddhandtag visas eller kan nås med Tab.
+2. Öppna Inställningar → Samtal med Skyttel. Delen Textvyns bredd och
+   **Återställ bredderna** finns för denna smala dator.
+3. Avsluta utan att återställa valet. De sparade bredderna 624/460
+   är oförändrade; separat tekniskt underlag jämför dem.
 
 **Förväntat resultat:**
 
@@ -601,29 +797,508 @@ giltigt kompatibilitetsprov. Ändra aldrig en produktionsfil för detta prov.
 
 **Integrationstest:**
 [conversation-widths.spec.ts](../../tests/integration/conversation-widths.spec.ts),
-testfallet “TEXTBREDD-05: äldre hushållsarkiv lämnar personliga samtalsval kvar”.
+testfallet “TEXTBREDD-05: äldre hushållsarkiv lämnar personliga samtalsval
+kvar”.
 Aktuell export och återimport täcks även av
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
 testfallet “EXPORT-10: the downloaded current-format archive restores
 shared, private and historical content after restart”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-widths.spec.ts",
+    "caseId": "TEXTBREDD-05"
+  },
+  "reference": "1600 × 900; faktisk browserdownload, kompatibelt schema23 och native läsning av personliga val/private Lo.",
+  "outcomes": [
+    "Läsa ett kompatibelt äldre arkiv utan att återställa personliga bredder, utkastets startval eller medgivande från hushållsfilen."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/household-export-ui.spec.ts",
+      "caseId": "EXPORT-10",
+      "purpose": "Aktuellt arkivformat och fullständig återläsning; detta är extra underlag, inte ett andra counterpart."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Starta samtalet med text, markera **Fråga inte igen för det här
    hushållet** och godkänn. Öppna utkastet och ändra båda bredderna.
 2. Öppna **Inställningar**, **Fullständig export**. Förbered exporten och
-   hämta ZIP-filen. Kör kommandot nedan i arbetsytan; ersätt endast
-   sökvägen med den hämtade provfilen. Kommandot kontrollerar versionen och
-   gör en ny tillfällig kopia utan att ändra hushållsinnehållet.
+   hämta ZIP-filen. Låt operatören göra kompatibilitetskopian enligt
+   [separat arkivförberedelse](#förbered-äldre-arkiv-vid-den-faktiska-hämtningen).
 3. På **Samtal med Skyttel**, återställ bredderna och markera
    **Visa utkastet när ett samtal börjar**.
 4. På **Återimportera hushållet**, välj `/tmp/skyttel-schema-23.zip`.
    Välj **Kontrollera importfil**, granska och markera **Jag vill ersätta
    allt hushållsinnehåll**. Välj **Ersätt hushållets innehåll**.
 5. Läs **Samtal med Skyttel** igen och kontrollera grundbredderna,
-   utkastets markerade startval och det sparade medgivandet. Läs Lo-förslaget.
+   utkastets markerade startval och statusen **Sparat den** för Medgivande.
+   Återgå till kartan, öppna textvyn och läs grundbredderna. Fäll ut Lo
+   i Tabell och läs Person samt **Osparad breddprovuppgift**.
    Ta bort den tillfälliga provkopian när provet är färdigt.
 
+**Förväntat resultat:**
+
+- Exporten använder schemaversion 25. Personliga samtalsval och medgivande
+  ingår inte i hushållsfilen; automationen granskar detta.
+- En giltig schemaversion 23 går att kontrollera och återimportera genom
+  gränssnittet. Lo-förslaget bevaras. Aktuell version provas också.
+- Grundbredderna, det markerade startvalet och det sparade medgivandet
+  finns kvar efter import. Hushållsimport skriver inte över personliga val.
+
+## Separata kvarvarande konfigurationer
+
+### TEXTMOBIL-06: textarbete i den angivna kvarvarande storleken
+
+**Syfte:** Skydda smal stående vy.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation med samma underlag som TEXTMOBIL-01,
+vid 390 × 844, emulerad pekare CSS-pixlar.
+
+**Integrationstest:**
+[mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
+TEXTMOBIL-06.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-06"
+  },
+  "reference": "390 × 844, emulerad pekare CSS-pixlar; smal stående vy.",
+  "outcomes": [
+    "Fältet får inget automatiskt startfokus; textvyn fyller bredden.",
+    "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTMOBIL-01:s steg **en gång** med den angivna konfigurationen.
+   Använd denna startsida/starthöjd och, om angivet, denna minskade höjd
+   i stället för basfallets. Under öppningen/storleksändringen kontrolleras:
+   Fältet får inget automatiskt startfokus; textvyn fyller bredden.
+2. Fortsätt samma basföljd till dess sista steg; börja inte om från ett
+   redan avslutat utkast eller en redan öppnad historiksektion.
+
+**Förväntat resultat:**
+
+- Fältet får inget automatiskt startfokus; textvyn fyller bredden.
+- Samma synliga svar, fullständiga utkast och fokus efter Skicka bevaras.
+  Faktisk telefon, tangentbord, uppläsning eller alla storlekar påstås inte.
+
+### TEXTMOBIL-07: textarbete i den angivna kvarvarande storleken
+
+**Syfte:** Skydda kort liggande vy.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation med samma underlag som TEXTMOBIL-01,
+vid 844 × 390, emulerad pekare CSS-pixlar.
+
+**Integrationstest:**
+[mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
+TEXTMOBIL-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-07"
+  },
+  "reference": "844 × 390, emulerad pekare CSS-pixlar; kort liggande vy.",
+  "outcomes": [
+    "Kompakt rad och fält på en rad; sidofält med karta bredvid.",
+    "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTMOBIL-01:s steg **en gång** med den angivna konfigurationen.
+   Använd denna startsida/starthöjd och, om angivet, denna minskade höjd
+   i stället för basfallets. Under öppningen/storleksändringen kontrolleras:
+   Kompakt rad och fält på en rad; sidofält med karta bredvid.
+2. Fortsätt samma basföljd till dess sista steg; börja inte om från ett
+   redan avslutat utkast eller en redan öppnad historiksektion.
+
+**Förväntat resultat:**
+
+- Kompakt rad och fält på en rad; sidofält med karta bredvid.
+- Samma synliga svar, fullständiga utkast och fokus efter Skicka bevaras.
+  Faktisk telefon, tangentbord, uppläsning eller alla storlekar påstås inte.
+
+### TEXTMOBIL-08: textarbete i den angivna kvarvarande storleken
+
+**Syfte:** Skydda bred stående pekare.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation med samma underlag som TEXTMOBIL-01,
+vid 820 × 1180, emulerad pekare CSS-pixlar.
+
+**Integrationstest:**
+[mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
+TEXTMOBIL-08.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-08"
+  },
+  "reference": "820 × 1180, emulerad pekare CSS-pixlar; bred stående pekare.",
+  "outcomes": [
+    "Fast sidofält och inget automatiskt startfokus.",
+    "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTMOBIL-01:s steg **en gång** med den angivna konfigurationen.
+   Använd denna startsida/starthöjd och, om angivet, denna minskade höjd
+   i stället för basfallets. Under öppningen/storleksändringen kontrolleras:
+   Fast sidofält och inget automatiskt startfokus.
+2. Fortsätt samma basföljd till dess sista steg; börja inte om från ett
+   redan avslutat utkast eller en redan öppnad historiksektion.
+
+**Förväntat resultat:**
+
+- Fast sidofält och inget automatiskt startfokus.
+- Samma synliga svar, fullständiga utkast och fokus efter Skicka bevaras.
+  Faktisk telefon, tangentbord, uppläsning eller alla storlekar påstås inte.
+
+### TEXTMOBIL-09: textarbete i den angivna kvarvarande storleken
+
+**Syfte:** Skydda ytterst kort smal dator.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation med samma underlag som TEXTMOBIL-01,
+vid 320 × 250, mus CSS-pixlar.
+
+**Integrationstest:**
+[mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
+TEXTMOBIL-09.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-09"
+  },
+  "reference": "320 × 250, mus CSS-pixlar; ytterst kort smal dator.",
+  "outcomes": [
+    "Kompakt rad och fält på en rad; inget automatiskt startfokus.",
+    "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTMOBIL-01:s steg **en gång** med den angivna konfigurationen.
+   Använd denna startsida/starthöjd och, om angivet, denna minskade höjd
+   i stället för basfallets. Under öppningen/storleksändringen kontrolleras:
+   Kompakt rad och fält på en rad; inget automatiskt startfokus.
+2. Fortsätt samma basföljd till dess sista steg; börja inte om från ett
+   redan avslutat utkast eller en redan öppnad historiksektion.
+
+**Förväntat resultat:**
+
+- Kompakt rad och fält på en rad; inget automatiskt startfokus.
+- Samma synliga svar, fullständiga utkast och fokus efter Skicka bevaras.
+  Faktisk telefon, tangentbord, uppläsning eller alla storlekar påstås inte.
+
+### TEXTMOBIL-10: textarbete i den angivna kvarvarande storleken
+
+**Syfte:** Skydda smal kort dator.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation med samma underlag som TEXTMOBIL-01,
+vid 700 × 500, mus CSS-pixlar.
+
+**Integrationstest:**
+[mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
+TEXTMOBIL-10.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-10"
+  },
+  "reference": "700 × 500, mus CSS-pixlar; smal kort dator.",
+  "outcomes": [
+    "Kompakt rad, full bredd och inget automatiskt startfokus.",
+    "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTMOBIL-01:s steg **en gång** med den angivna konfigurationen.
+   Använd denna startsida/starthöjd och, om angivet, denna minskade höjd
+   i stället för basfallets. Under öppningen/storleksändringen kontrolleras:
+   Kompakt rad, full bredd och inget automatiskt startfokus.
+2. Fortsätt samma basföljd till dess sista steg; börja inte om från ett
+   redan avslutat utkast eller en redan öppnad historiksektion.
+
+**Förväntat resultat:**
+
+- Kompakt rad, full bredd och inget automatiskt startfokus.
+- Samma synliga svar, fullständiga utkast och fokus efter Skicka bevaras.
+  Faktisk telefon, tangentbord, uppläsning eller alla storlekar påstås inte.
+
+### TEXTMOBIL-11: textarbete i den angivna kvarvarande storleken
+
+**Syfte:** Skydda bred kort pekare.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation med samma underlag som TEXTMOBIL-02,
+vid 1180 × 820 → 420, emulerad pekare CSS-pixlar.
+
+**Integrationstest:**
+[mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
+TEXTMOBIL-11.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-11"
+  },
+  "reference": "1180 × 820 → 420, emulerad pekare CSS-pixlar; bred kort pekare.",
+  "outcomes": [
+    "Röstrutan står ovanför sidofältet; samma nod/fokus/text genom höjdändring.",
+    "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTMOBIL-02:s steg **en gång** med den angivna konfigurationen.
+   Använd denna startsida/starthöjd och, om angivet, denna minskade höjd
+   i stället för basfallets. Under öppningen/storleksändringen kontrolleras:
+   Röstrutan står ovanför sidofältet; samma nod/fokus/text genom höjdändring.
+2. Fortsätt samma basföljd till dess sista steg; börja inte om från ett
+   redan avslutat utkast eller en redan öppnad historiksektion.
+
+**Förväntat resultat:**
+
+- Röstrutan står ovanför sidofältet; samma nod/fokus/text genom höjdändring.
+- Samma svar/utkast och fokus-/mikrofonbevarande som basfallet gäller.
+  Faktisk telefon, tangentbord, uppläsning eller alla storlekar påstås inte.
+
+### TEXTMOBIL-12: textarbete i den angivna kvarvarande storleken
+
+**Syfte:** Skydda ytterst kort liggande pekare.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation med samma underlag som TEXTMOBIL-02,
+vid 844 × 390 → 190, emulerad pekare CSS-pixlar.
+
+**Integrationstest:**
+[mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
+TEXTMOBIL-12.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/mobile-conversation.spec.ts",
+    "caseId": "TEXTMOBIL-12"
+  },
+  "reference": "844 × 390 → 190, emulerad pekare CSS-pixlar; ytterst kort liggande pekare.",
+  "outcomes": [
+    "Kompakt samtalsyta med läsbart svar, fältets DOM-nod/fokus/text och mikrofon på.",
+    "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTMOBIL-02:s steg **en gång** med den angivna konfigurationen.
+   Använd denna startsida/starthöjd och, om angivet, denna minskade höjd
+   i stället för basfallets. Under öppningen/storleksändringen kontrolleras:
+   Kompakt samtalsyta med läsbart svar, samma fält, fokus, text och
+   påslagen mikrofon.
+2. Fortsätt samma basföljd till dess sista steg; börja inte om från ett
+   redan avslutat utkast eller en redan öppnad historiksektion.
+
+**Förväntat resultat:**
+
+- Kompakt samtalsyta med läsbart svar, fältets DOM-nod/fokus/text och mikrofon på.
+- Samma svar/utkast och fokus-/mikrofonbevarande som basfallet gäller.
+  Faktisk telefon, tangentbord, uppläsning eller alla storlekar påstås inte.
+
+### TEXTBREDD-06: textvyn på den angivna emulerade pekaren
+
+**Syfte:** Skydda smal telefonlayout.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation med samma underlag som TEXTBREDD-04,
+vid 390 × 844, emulerad pekare CSS-pixlar.
+
+**Integrationstest:**
+[conversation-widths.spec.ts](../../tests/integration/conversation-widths.spec.ts),
+TEXTBREDD-06.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-widths.spec.ts",
+    "caseId": "TEXTBREDD-06"
+  },
+  "reference": "390 × 844, emulerad pekare CSS-pixlar; smal telefonlayout.",
+  "outcomes": [
+    "Inga handtag och ingen Textvyns bredd-inställning; sparade datorbredder ändras inte.",
+    "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTBREDD-04:s steg **en gång** med den angivna konfigurationen.
+   Använd denna startsida/starthöjd och, om angivet, denna minskade höjd
+   i stället för basfallets. Under öppningen/storleksändringen kontrolleras:
+   Inga handtag och ingen Textvyns bredd-inställning; sparade datorbredder
+   ändras inte.
+2. I basfallets steg 2 saknas **Textvyns bredd** på emulerad pekare;
+   återställ inget val. Fortsätt samma basföljd till dess sista steg;
+   börja inte om från ett
+   redan avslutat utkast eller en redan öppnad historiksektion.
+
+**Förväntat resultat:**
+
+- Inga handtag och ingen Textvyns bredd-inställning; sparade datorbredder
+  ändras inte.
+- De sparade datorbredderna 624/460 finns kvar efter inställningsbesöket.
+  Faktisk telefon, tangentbord, uppläsning eller alla storlekar påstås inte.
+
+### TEXTBREDD-07: textvyn på den angivna emulerade pekaren
+
+**Syfte:** Skydda bred pekarlayout.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny installation med samma underlag som TEXTBREDD-04,
+vid 1180 × 820, emulerad pekare CSS-pixlar.
+
+**Integrationstest:**
+[conversation-widths.spec.ts](../../tests/integration/conversation-widths.spec.ts),
+TEXTBREDD-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-widths.spec.ts",
+    "caseId": "TEXTBREDD-07"
+  },
+  "reference": "1180 × 820, emulerad pekare CSS-pixlar; bred pekarlayout.",
+  "outcomes": [
+    "Fast sidofält400, inga handtag eller Textvyns bredd-inställning; sparade datorbredder ändras inte.",
+    "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTBREDD-04:s steg **en gång** med den angivna konfigurationen.
+   Använd denna startsida/starthöjd och, om angivet, denna minskade höjd
+   i stället för basfallets. Under öppningen/storleksändringen kontrolleras:
+   Fast sidofält 400, inga handtag eller Textvyns bredd-inställning; sparade
+   datorbredder ändras inte.
+2. I basfallets steg 2 saknas **Textvyns bredd** på emulerad pekare;
+   återställ inget val. Fortsätt samma basföljd till dess sista steg;
+   börja inte om från ett
+   redan avslutat utkast eller en redan öppnad historiksektion.
+
+**Förväntat resultat:**
+
+- Fast sidofält 400, inga handtag eller Textvyns bredd-inställning; sparade
+  datorbredder ändras inte.
+- De sparade datorbredderna 624/460 finns kvar efter inställningsbesöket.
+  Faktisk telefon, tangentbord, uppläsning eller alla storlekar påstås inte.
+
+## Godkända dimensionsförluster
+
+TEXTMOBIL-01 körs vid 1280 × 900 samt separata ID för 700 × 500,320 × 250,
+390 × 844,820 × 1180 och 844 × 390. Endast 375 × 667 och 1180 × 820 tas bort
+från just denna lägesregel. TEXTMOBIL-02 behåller 390 × 844 →508 och separata
+ID för 1180 × 820 →420 och 844 × 390 →190; endast 375 × 667 →407 tas bort.
+Hinder, CSS- eller fokusfel specifika för de borttagna dimensionerna kan
+undgå referenserna. Detta är inte bevis på alla storlekar eller fysisk
+skärmtangentbordsfunktion. Inga pensionerade ID återanvänds.
+
+## Förbered äldre arkiv vid den faktiska hämtningen
+
+Operatören utför följande **efter TEXTBREDD-05 steg 2** och före steg 4.
+Indata är den nyss hämtade, fiktiva schema 25-filen, tillgänglig på maskinen
+som kör kommandot. Ersätt dess absoluta sökväg. Utdata är en separat
+schema 23-kopia; hushållsinnehåll och kontrollsummor ändras inte.
+
+<!-- markdownlint-disable MD013 -->
 ```sh
 TEXTBREDD_ARCHIVE=/absolute/path/skyttel-hushall.zip node --input-type=module <<'JS'
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -637,25 +1312,212 @@ parts['manifest.json'] = Buffer.from(JSON.stringify(manifest));
 writeFileSync('/tmp/skyttel-schema-23.zip', zipSync(parts), { mode: 0o600 });
 JS
 ```
+<!-- markdownlint-enable MD013 -->
+
+Efter sista läsningen tas bara provkopian `/tmp/skyttel-schema-23.zip`
+och den nedladdade fiktiva exporten bort. Återställ ingen personinställning
+under importkontrollen. Ny installation används inför nästa fall.
+
+## Mänskliga observationer
+
+### TEXTVY-05: hörbara talare, utkast och breddhandtag
+
+**Syfte:** Faktiskt hörda talare, tabellnavigation och handtagsvärden är
+begripliga; synligt fokus och zoom bedöms på den verkliga målplattformen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Desktop med NVDA/Chrome eller VoiceOver/Safari, påhittat
+Lo-utkast och vald skärmläsare.
+
+**Kräver mänsklig observation:** Lyssna med NVDA eller VoiceOver efter
+Du/Skyttel, utkastets tabellnavigation och handtagens hörbara namn, roller och
+värden.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Lyssna med NVDA eller VoiceOver efter Du/Skyttel, utkastets tabellnavigation och handtagens hörbara namn, roller och värden."
+  },
+  "reference": "Desktop med NVDA/Chrome eller VoiceOver/Safari, påhittat Lo-utkast och vald skärmläsare.",
+  "outcomes": [
+    "Faktiskt hörda talare, tabellnavigation och handtagsvärden är begripliga; synligt fokus och zoom bedöms på den verkliga målplattformen."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/text-view.spec.ts",
+      "caseId": "TEXTVY-02",
+      "purpose": "Semantiska talarnamn och native textarbete; provar ingen skärmläsarutmatning."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/conversation-widths.spec.ts",
+      "caseId": "TEXTBREDD-01",
+      "purpose": "Native tangentbord och avskiljarsemantik; provar inget hört tal."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXTVY-02 med skärmläsaren. Lyssna efter respektive talare.
+2. Öppna utkastet; navigera tabellrubriker och hela ändringsrader.
+3. På bred musdator: använd TEXTBREDD-01:s piltangenter på varje handtag
+   och lyssna efter namn, avskiljarroll och ändrade aktuella värden.
+4. Prova 200/400 procents faktisk zoom med synligt fokus och läsbarhet.
 
 **Förväntat resultat:**
 
-- Exporten använder schemaversion 25. Personliga samtalsval och medgivande
-  ingår inte i hushållsfilen; automationen granskar detta.
-- En giltig schemaversion 23 går att kontrollera och återimportera genom
-  gränssnittet. Lo-förslaget bevaras. Aktuell version provas också.
-- Grundbredderna, det markerade startvalet och det sparade medgivandet
-  finns kvar efter import. Hushållsimport skriver inte över personliga val.
+- Faktiskt hörda talare, tabellnavigation och handtagsvärden är begripliga;
+  synligt fokus och zoom bedöms på den verkliga målplattformen.
+- Anteckna faktiskt utfört prov separat; inga syntetiska resultat påstår
+  denna observation.
+
+### TEXTVY-06: hörbart besked vid nytt samtal
+
+**Syfte:** Det faktiska hörbara beskedet motsvarar samtalstexten och
+kvarvarande Lo-utkast. Mikrofon, ljudutgång och webbläsare anges i resultatet.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Följ den
+[gemensamma fysiska förberedelsen](../development/testing.md#physical-device-manual-preparation)
+med vanlig nåbar HTTPS, leverantör och Alex som vanlig medlem. Skapa
+Textprov och Lo Exempel, Person, Påhittad uppgift i ett osparat utkast.
+Verkliga anrop kräver eget uttryckligt godkännande.
+
+**Kräver mänsklig observation:** Hör Skyttels besked om nytt samtal och
+kvarvarande osparad ändring genom fysisk ljudutgång, med faktisk mikrofon.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-microphone-audio",
+    "observation": "Hör Skyttels besked om nytt samtal och kvarvarande osparad ändring genom fysisk ljudutgång, med faktisk mikrofon."
+  },
+  "reference": "Följ den länkade fysiska förberedelsens vanliga HTTPS-/leverantörs-/medlemsingång; skapa Textprov och samma osparade Lo-förslag. Verkliga anrop kräver eget uttryckligt godkännande.",
+  "outcomes": [
+    "Det faktiska hörbara beskedet motsvarar samtalstexten och kvarvarande Lo-utkast. Mikrofon, ljudutgång och webbläsare anges i resultatet."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/text-view.spec.ts",
+      "caseId": "TEXTVY-03",
+      "purpose": "Kommentarspaket, mikrofonläge och privat utkast; syntetiska spår bevisar inget hört besked."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ den gemensamma fysiska förberedelsen med vanlig HTTPS-ingång och
+   de exakta Lo-uppgifterna ovan.
+   [TAL-17](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare)
+   anger också målplattformarnas ljud- och mikrofonkontroller.
+2. Anslut fysisk mikrofon och ljudutgång. Välj **Prata med Skyttel**,
+   godkänn samtalet och tillåt mikrofonen. Öppna textvyn och välj
+   **Nytt samtal**. Använd **Starta ljudet** om uppspelning blockeras.
+3. Kontrollera att Skyttel hörbart säger att ett nytt samtal börjar och
+   att en osparad ändring ligger kvar i utkastet. Kontrollera samtidigt
+   samma besked i samtalstexten och kvarvarande Lo-förslag.
+4. Anteckna faktiskt hört resultat, mikrofon, ljudutgång och webbläsare
+   separat från det kontrollerade provet. Detta lyssningsprov återstår
+   tills en människa har utfört det; integrationstestet provar inte ljudet.
+
+**Förväntat resultat:**
+
+- Det faktiska hörbara beskedet motsvarar samtalstexten och kvarvarande
+  Lo-utkast. Mikrofon, ljudutgång och webbläsare anges i resultatet.
+- Anteckna faktiskt utfört prov separat; inga syntetiska resultat påstår
+  denna observation.
+
+### TEXTMOBIL-13: fysiskt skärmtangentbord, rotation och tryck
+
+**Syfte:** Fysisk inmatning behåller text/fokus och nåbara kontroller utan
+oavsiktlig mikrofonändring; tangentbord, rotation och verkliga tryck bedöms
+separat från syntetiska viewports.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Vanlig nåbar HTTPS-installation med konfigurerad
+leverantör, vanlig Alex-medlem och exakt fiktivt osparat Lo-förslag enligt den
+länkade fysiska förberedelsen.
+
+**Kräver mänsklig observation:** Använd en faktisk iPhone/iPad: öppna och dölj
+OS-skärmtangentbordet, rotera enheten och tryck fält, Skicka, Avbryt och Stäng
+notisen.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Använd en faktisk iPhone/iPad: öppna och dölj OS-skärmtangentbordet, rotera enheten och tryck fält, Skicka, Avbryt och Stäng notisen."
+  },
+  "reference": "Vanlig nåbar HTTPS-installation med konfigurerad leverantör, vanlig Alex-medlem och exakt fiktivt osparat Lo-förslag enligt den länkade fysiska förberedelsen.",
+  "outcomes": [
+    "Fysisk inmatning behåller text/fokus och nåbara kontroller utan oavsiktlig mikrofonändring; tangentbord, rotation och verkliga tryck bedöms separat från syntetiska viewports."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/mobile-conversation.spec.ts",
+      "caseId": "TEXTMOBIL-02",
+      "purpose": "Native viewport/nod/fokus/text och mikrofon; provar inget fysiskt OS-tangentbord."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Förbered enligt
+   [vanlig fysisk enhet](../development/testing.md#physical-device-manual-preparation).
+   Använd Person Lo Exempel med Påhittad uppgift osparad; noll sparanden.
+2. Öppna textvyn. Tangentbordet ska öppnas först vid faktiskt tryck i fältet.
+   Skriv Ett vanligt uppdrag. och rotera medan tangentbordet är öppet.
+3. Kontrollera oskickad text, faktisk fokusmarkering, nåbart fält/Skicka,
+   minst en läsbar samtalsrad och röstrutans placering. Skicka och läs svar.
+4. Dölj/öppna tangentbordet, slå på mikrofonen och prova båda riktningarna
+   på telefon och surfplatta. Prova stopp-/stängmål nära deras kanter.
+5. Bedöm 200/400 procents zoom och, med VoiceOver, den faktiska läsordningen.
+   Anteckna varje enhet separat; återställ fiktivt utgångsläge och städa
+   enligt samma HTTPS-guide efter varje variant.
+
+**Förväntat resultat:**
+
+- Fysisk inmatning behåller text/fokus och nåbara kontroller utan oavsiktlig
+  mikrofonändring; tangentbord, rotation och verkliga tryck bedöms separat
+  från syntetiska viewports.
+- Anteckna faktiskt utfört prov separat; inga syntetiska resultat påstår
+  denna observation.
 
 ## Textknappens markeringar
 
 För TEXTBRICKA-01–05 används den kontrollerade röstinstallationen enligt
 [röstguiden](voice-assistant.md#controlled-voice-fixture). Skapa ett nytt
-hushåll med tomt utkast; kör inte `seed-family`. Välj **Skriv till Skyttel**
-och godkänn för besöket. Terminalens `pending` visar det hållna modell-
-anropet. Släpp ett vanligt svar med `reply REQUEST TEXT`.
-Börja med en ny installation inför varje fall. Fysisk skärmläsare och
-röststyrning provas separat; de tysta mediespåren bevisar ingen uppläsning.
+hushåll med tomt utkast; kör inte `seed-family`. Välj **Skriv till Skyttel →
+Nytt samtal → Godkänn och starta** för besöket. Terminalens `pending` visar
+det hållna modellanropet.
+Släpp ett vanligt svar med `reply REQUEST TEXT`. Börja med en ny installation
+inför varje fall. Fysisk skärmläsare och röststyrning provas separat; de tysta
+mediespåren bevisar ingen uppläsning.
 
 ### TEXTBRICKA-01: arbete och oläst svar
 
@@ -666,29 +1528,48 @@ röststyrning provas separat; de tysta mediespåren bevisar ingen uppläsning.
 **Förutsättningar:** Textvyn är öppen, mikrofonen av och svaret hålls.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallet “TEXTBRICKA-01: stängd textvy visar arbete och ett oläst svar utan
-att flytta verktygen”.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-01.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-01"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller statusförekomst bedöms separat.",
+  "outcomes": [
+    "Följa ett skrivet uppdrag utan att öppna textvyn."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-01](voice-controls-preparation.md#tidslinje-textbricka-01)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
-1. Skriv **Beskriv mitt utkast.**, välj **Skicka** och stäng textvyn.
-2. Kräv arbetsmarkering och namnet **Skriv till Skyttel. Skyttel arbetar.**
-   Kontrollera att markeringen inte får en egen skärmläsaruppläsning.
-3. Släpp svaret med `reply REQUEST Det privata utkastet är fortfarande osparat.`.
-   Kräv tre punkter uppe till höger och namnet
-   **Skriv till Skyttel. Skyttel har svarat.**.
-4. Lyssna efter en enda uppläsning **Skyttel har svarat**, som väntar på
-   sin tur. Själva svaret ska inte läsas upp medan textvyn är stängd.
-5. Öppna **Din profil** och välj **Tillbaka till arbetet**. Fokus ska gå
-   tillbaka till samma textknapp även om dess statusnamn ändrats.
-6. Öppna textvyn. Läs svaret och stäng igen. Knappen har sitt vanliga namn.
+1. Skicka **Beskriv mitt utkast.** och stäng textvyn. Läs arbetsmarkeringen och
+   knappens namn.
+2. När det förberedda svaret **Det privata utkastet är fortfarande osparat.**
+   kommer, läs tre punkter och knappens nya namn. Granska separat DOM-status
+   enligt förberedelsen.
+3. Öppna **Din profil** och välj **Tillbaka till arbetet**. Kontrollera fokus
+   på samma textknapp.
+4. Öppna textvyn, läs hela svaret och stäng den. Knappens vanliga namn
+   återkommer.
 
 **Förväntat resultat:**
 
 - Verktygsraden och knappens mått flyttas inte. Fokus stannar på knappen.
-- Markeringen finns bara med stängd textvy. Ett redan läst svar ger ingen
-  ny bricka när textvyn stängs igen.
+- Markeringen finns bara med stängd textvy. Ett redan läst svar ger ingen ny
+  bricka när textvyn stängs igen.
 
 ### TEXTBRICKA-02: oläst fråga med mikrofonen av
 
@@ -699,28 +1580,47 @@ att flytta verktygen”.
 **Förutsättningar:** Textvyn är öppen och mikrofonen av.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallet “TEXTBRICKA-02: en oläst nödvändig fråga får frågebricka och samma
-fråga ligger kvar med mikrofonen av”.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-02.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-02"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller statusförekomst bedöms separat.",
+  "outcomes": [
+    "Visa den uttryckliga frågesignalen utan en konkurrerande röstruta."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-02](voice-controls-preparation.md#tidslinje-textbricka-02)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
 1. Skicka **Red ut vilken Lo som avses.** och stäng textvyn.
-2. Släpp modellen med
-   `tool REQUEST ask_questions {"questions":["Vilken person avses med Lo?"]}`.
-3. Kräv frågetecken och namnet **Skriv till Skyttel. Skyttel väntar på ditt svar.**.
-   Uppläsningen är en enda **Skyttel väntar på ditt svar**, utan själva frågan.
-4. Slå på mikrofonen. När röstrutan syns har textknappen ingen bricka.
-   Slå av mikrofonen igen. En redan levererad fråga spelas inte upp i efterhand.
-   Om röstrutan är borta finns samma olästa frågebricka, utan ny uppläsning.
-5. Öppna textvyn. Frågan finns kvar. Stäng igen; den lästa frågan ger ingen bricka.
+2. När den förberedda frågan **Vilken person avses med Lo?** kommer, läs
+   frågetecknet och namnet **Skriv till Skyttel. Skyttel väntar på ditt svar.**
+   .
+3. Slå på mikrofonen: röstrutan ersätter brickan. Slå av igen: samma olästa
+   bricka återkommer. Inga tidigare frågor överförs till rösten igen.
+4. Öppna textvyn, läs frågan och stäng den. Den lästa frågan ger ingen bricka.
 
 **Förväntat resultat:**
 
 - Frågesymbolen skiljer sig från tre punkter och arbetsmarkeringen.
 - Mikrofonens läge ändrar inte frågan. Lästa frågor ger ingen ny markering.
 
-### TEXTBRICKA-03: röstruta och en enda brickuppläsning
+### TEXTBRICKA-03: röstruta och en enda brickstatusförekomst
 
 **Syfte:** Behålla en oläst förekomst vid byte mellan röst och text.
 
@@ -729,29 +1629,47 @@ fråga ligger kvar med mikrofonen av”.
 **Förutsättningar:** Textvyn är öppen, mikrofonen av och svaret hålls.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallet “TEXTBRICKA-03: röstrutan ersätter brickan och samma olästa svar
-annonseras inte på nytt”.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-03.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-03"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller statusförekomst bedöms separat.",
+  "outcomes": [
+    "Behålla en oläst förekomst vid byte mellan röst och text."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-03](voice-controls-preparation.md#tidslinje-textbricka-03)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
-1. Skicka **Beskriv mitt utkast.**, stäng textvyn och släpp modellen med
-   `reply REQUEST Det första svaret.`. Kräv tre punkter och en uppläsning.
-2. Slå på och av mikrofonen två gånger utan att öppna textvyn. Brickan
-   döljs av röstrutan och återkommer när röstrutan försvinner. Samma
-   olästa svar ger ingen andra uppläsning av brickans namn.
-3. Slå på mikrofonen. I terminalen: `user Beskriv kartan.` och
-   `delegate`. Kontrollera den aktiva anslutningen med `sessions`.
-4. Slå av mikrofonen medan modellen hålls. Röstrutan säger **Skyttel arbetar**,
-   men textknappen har ingen arbetsmarkering för det talade uppdraget.
-5. Släpp modellen med `reply REQUEST Det talade svaret.`. Öppna textvyn och
-   läs även den raden. Kontrollera att inget ytterligare modelluppdrag skapats.
+1. Skicka **Beskriv mitt utkast.**, stäng textvyn och låt det förberedda
+   **Det första svaret.** komma. Läs tre punkter.
+2. Slå på och av mikrofonen två gånger. Brickan döljs av röstrutan och
+   återkommer utan en ny DOM-status för samma svar.
+3. Slå på mikrofonen och låt förberedelsens **Beskriv kartan.** börja arbeta.
+   Slå av mikrofonen under arbetet. Läs **Skyttel arbetar** utan
+   textarbetsmarkering.
+4. Låt **Det talade svaret.** komma, öppna textvyn och läs även den raden.
 
 **Förväntat resultat:**
 
 - Bara skrivet arbete får textknappens arbetsmarkering.
-- Röstrutan och svarsbrickan konkurrerar inte. En oläst förekomst
-  annonseras en gång även när röstrutan visas och försvinner igen.
+- Röstrutan och svarsbrickan konkurrerar inte. En oläst förekomst annonseras en
+  gång även när röstrutan visas och försvinner igen.
 
 ### TEXTBRICKA-04: minskad rörelse, teman och knappmått
 
@@ -762,24 +1680,43 @@ annonseras inte på nytt”.
 **Förutsättningar:** Textvyn är öppen och ett skrivet svar hålls.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallen “TEXTBRICKA-04: minskad rörelse och fasta knappmått vid 390px i
-light tema”, motsvarande titel med “dark tema” samt båda varianterna med
-“1280px”. Automatiken mäter knapp, överlagring och textkontrast.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-04.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-04"
+  },
+  "reference": "Chromium 390 × 844, ljust tema; emulerad minskad rörelse och återställd normal rörelse.",
+  "outcomes": [
+    "Kunna urskilja markeringarna utan färg eller rörelse."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-04](voice-controls-preparation.md#tidslinje-textbricka-04)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
-1. Aktivera operativsystemets minskade rörelse. Prova ett 390 px fönster
-   och ett 1280 px fönster, i både ljust och mörkt tema.
+1. Välj emulerad minskad rörelse, 390 × 844 och ljust tema före första native
+   handlingen.
 2. Skicka **Beskriv mitt utkast.**, stäng textvyn och välj
-   **Visa verktygens namn**. Kräv synlig text **Skriv till Skyttel**,
-   med stilla arbetsmarkering som inte täcker namnet.
-3. Avaktivera minskad rörelse. Arbetsmarkeringen roterar. Aktivera igen;
-   den står stilla utan övergång.
-4. Släpp `reply REQUEST Ett nytt svar.`. Tre punkter ersätter arbetsformen.
-   Verktygens placering, bredd och höjd förblir desamma.
-5. Kontrollera synlig kontrast och fokus, även vid zoom. Gör också
-   TEXTBRICKA-02 för att jämföra frågetecknets form med punkterna.
+   **Visa verktygens namn**. Läs namnet och den stilla arbetsmarkeringen.
+3. Avaktivera minskad rörelse: arbetsmarkeringen roterar. Aktivera igen: den
+   står stilla utan övergång.
+4. Låt **Ett nytt svar.** komma. Tre punkter ersätter arbetsformen utan att
+   flytta verktygen.
+5. Granska kontrast och synlig fokusram. Fysisk zoom, rörelsebedömning och
+   formigenkänning hör till TEXTBRICKA-10.
 
 **Förväntat resultat:**
 
@@ -796,39 +1733,58 @@ light tema”, motsvarande titel med “dark tema” samt båda varianterna med
 **Förutsättningar:** Textvyn är öppen på bred dator och mikrofonen av.
 
 **Integrationstest:**
-[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts),
-testfallet “TEXTBRICKA-05: köat textarbete behåller arbetsmarkeringen före
-ett oläst svar och avbrott tar bort den”.
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-05.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-05"
+  },
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller statusförekomst bedöms separat.",
+  "outcomes": [
+    "Ge pågående textarbete företräde över ett tidigare oläst svar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för TEXTBRICKA-05](voice-controls-preparation.md#tidslinje-textbricka-05)
+vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
+resurser separat. Utför arbetsflödet en gång.
 
 **Steg:**
 
-1. Skicka **Beskriv mitt utkast.** och sedan **Beskriv sedan kartan.**.
-   Det andra meddelandet väntar. Stäng textvyn.
-2. Kräv arbetsmarkering. Släpp första anropet med
-   `reply REQUEST Första svaret är klart.` och håll det andra.
-3. Kräv fortsatt arbetsmarkering, utan svarsbricka eller brickuppläsning.
-   Det andra skrivna meddelandet behåller rätt arbetsmarkering i kön.
-4. Öppna textvyn, läs första svaret och tryck Escape i meddelandefältet.
-   Kräv avbrottstexten och stäng vyn. Arbetsmarkeringen försvinner.
-5. Släpp det avbrutna anropet med `reply REQUEST Det avbrutna svaret.`.
-   Öppna textvyn och kontrollera att det sena svaret saknas. Stäng igen.
+1. Skicka **Beskriv mitt utkast.** och **Beskriv sedan kartan.**. Det andra
+   meddelandet väntar. Stäng textvyn.
+2. Låt **Första svaret är klart.** komma medan det andra anropet hålls.
+   Arbetsmarkeringen fortsätter utan svarsbricka.
+3. Öppna textvyn, läs första svaret och tryck Escape i meddelandefältet. Läs
+   avbrottstexten och stäng vyn.
+4. Låt det sena **Det avbrutna svaret.** levereras enligt förberedelsen. Öppna
+   textvyn: det sena svaret ska saknas. Stäng igen.
 
 **Förväntat resultat:**
 
 - Arbete går före olästa svar. Ett talat uppdrag får aldrig textarbetsmarkering.
-- Avbrott och avslutat arbete tar bort arbetsmarkeringen. Ett sent avbrutet
-  svar får ingen bricka, och ett nytt samtal börjar utan gamla markeringar.
+- Avbrott och avslutat arbete tar bort arbetsmarkeringen. Ett sent avbrutet svar
+  får ingen bricka, och ett nytt samtal börjar utan gamla markeringar.
 
 ## Bedömning och återstående manuella prov
 
 Flödet är utformat mot WCAG 2.2 nivå AA. Kraven nedan är designmål, och
-automationen visar bara det som anges. Ingen skärmläsare och ingen fysisk
-enhet är provad, och fullständig överensstämmelse intygas inte.
+automationen visar bara det som anges. Ingen skärmläsare och ingen fysisk enhet
+är provad, och fullständig överensstämmelse intygas inte.
 
 <!-- markdownlint-disable MD013 -->
 | Kriterium | Utformning | Automatisk kontroll | Återstår att prova manuellt |
 | --- | --- | --- | --- |
-| 1.3.1, 4.1.2 Namn, roll och relationer | Textvyn är en region med rubriken **Skriv till Skyttel** som namn. Samtalstexten är en logg med namnet **Samtalstext**. Varje rad börjar med en dold talare, **Du:** eller **Skyttel:**. **Skriv till Skyttel** säger med sitt utfällda läge om textvyn är öppen. | Namn på region, logg, fält och knappar, dolda talare och knappens läge. | Uppläsning med NVDA och VoiceOver, och hur loggens nya rader läses upp. |
+| 1.3.1, 4.1.2 Namn, roll och relationer | Textvyn är en region med rubriken **Skriv till Skyttel** som namn. Samtalstexten är en logg med namnet **Samtalstext**. Varje rad börjar med en dold talare, **Du:** eller **Skyttel:**. **Skriv till Skyttel** säger med sitt utfällda läge om textvyn är öppen. | Namn på region, logg, fält och knappar, dolda talare och knappens läge. | Uppläsning med NVDA och VoiceOver, och hur loggens nya rader erbjuds som DOM-status. |
 | 1.3.2, 2.4.3 Ordning och fokus | Rubriken, **Nytt samtal** och **Stäng textvyn** står först, samtalstexten därefter och fältet sist. På dator får fältet fokus när textvyn öppnas, och **Stäng textvyn** ger fokus till **Skriv till Skyttel**. På mobil enhet och smal skärm stannar fokus i verktygsraden eller går till rubriken. | Fokus vid öppning på dator och pekskärm, efter **Skicka** och efter stängning. | Fokusordning med skärmläsare och på fysisk pekskärm. |
 | 1.4.1 Färg | Din text står i en tonad ruta med kant. Talaren finns också i text för hjälpmedel. | Rutan och den dolda talaren. | – |
 | 1.4.3, 1.4.11 Kontrast | Textvyn använder kartans färger för text, ytor, kanter och fokus i ljust och mörkt tema. | Ingen. | Kontrast för samtalstexten, platshållaren och den tonade rutan i båda teman. |
@@ -838,25 +1794,25 @@ enhet är provad, och fullständig överensstämmelse intygas inte.
 | 3.3.2 Etiketter | Fältet har etiketten **Meddelande till Skyttel**, dold visuellt i kort läge. | Fältets namn och platshållare även efter ändrad synlig höjd. | Uppläsning i kort läge. |
 <!-- markdownlint-enable MD013 -->
 
-Mobilfallen verifierar även omflöde utan horisontell rullning (1.4.10),
-namn på dolda etiketter och den kompakta utkastknappen (1.3.1, 4.1.2),
-bevarat fokus och nåbar stängknapp efter rullning (2.4.3, 2.4.11) samt
-44 px tryckyta utan förändrad symbol (2.5.8). Läsordningen och det
-synliga fokuset på verklig iPhone och iPad, kontrast i båda teman och
-200/400 procents zoom återstår att kontrollera. Emulerade skärmstorlekar
-och en ändring av webbläsarens synliga höjd bevisar inte ett fysiskt
-skärmtangentbord eller fullständig överensstämmelse.
+Mobilfallen verifierar även omflöde utan horisontell rullning (1.4.10), namn på
+dolda etiketter och den kompakta utkastknappen (1.3.1, 4.1.2), bevarat fokus och
+nåbar stängknapp efter rullning (2.4.3, 2.4.11) samt 44 px tryckyta utan
+förändrad symbol (2.5.8). Läsordningen och det synliga fokuset på verklig iPhone
+och iPad, kontrast i båda teman och 200/400 procents zoom återstår att
+kontrollera. Emulerade skärmstorlekar och en ändring av webbläsarens synliga
+höjd bevisar inte ett fysiskt skärmtangentbord eller fullständig
+överensstämmelse.
 
 Breddhandtagen har namn, avskiljarroll, orientering, styrd region och
 aktuellt/minsta/största värde (1.3.1, 4.1.2). Tab och piltangenter ger
-tangentbordsåtkomst och ett alternativ till dragning (2.1.1, 2.5.7).
-Handtagens träffyta är 24 px bred (2.5.8), och fokus markeras i kartans
-accentfärg (2.4.7, 1.4.11). Återställning ger artig återkoppling och
-rubrikfokus när knappen försvinner (2.4.3, 4.1.3). Automationen kontrollerar
-namn, roller, värden, dragning, piltangenter, bevarat fokus och text samt
-återställningens fokus. Verklig skärmläsaruppläsning, kontrast i båda teman
-och omflöde vid 200/400 procents zoom återstår. Detta är designmål och
-avgränsade kontroller, inte ett intyg om fullständig WCAG-överensstämmelse.
+tangentbordsåtkomst och ett alternativ till dragning (2.1.1, 2.5.7). Handtagens
+träffyta är 24 px bred (2.5.8), och fokus markeras i kartans accentfärg (2.4.7,
+1.4.11). Återställning ger artig återkoppling och rubrikfokus när knappen
+försvinner (2.4.3, 4.1.3). Automationen kontrollerar namn, roller, värden,
+dragning, piltangenter, bevarat fokus och text samt återställningens fokus.
+Verklig skärmläsaruppläsning, kontrast i båda teman och omflöde vid 200/400
+procents zoom återstår. Detta är designmål och avgränsade kontroller, inte ett
+intyg om fullständig WCAG-överensstämmelse.
 
 Textknappens ändrade flöde har följande WCAG 2.2 AA-designmål:
 
@@ -870,7 +1826,238 @@ Textknappens ändrade flöde har följande WCAG 2.2 AA-designmål:
 | 4.1.3 | En artig region annonserar varje ny oläst förekomst en gång. Inget autonomt arbetsnamn eller svar med stängd textvy. | Faktiskt hörbar turordning och frånvaro av dubbla uppläsningar. |
 <!-- markdownlint-enable MD013 -->
 
-Proven använder riktig server och tillfällig SQLite. Kontrollerade
-modell- och mediesvar, DOM-uppläsningar och emulerade fönstermått visar
-inte fullständig WCAG-överensstämmelse. Fysisk mikrofon, skärmläsare,
-röststyrning, zoom och pekskärm återstår enligt #220.
+Proven använder riktig server och tillfällig SQLite. Kontrollerade modell- och
+mediesvar, DOM-uppläsningar och emulerade fönstermått visar inte fullständig
+WCAG-överensstämmelse. Fysisk mikrofon, skärmläsare, röststyrning, zoom och
+pekskärm återstår enligt #220.
+
+## Separata brickkonfigurationer och observationer
+
+### TEXTBRICKA-06: minskad rörelse vid 390 i mörkt tema
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 390 × 844 och mörkt tema före
+första UI-handlingen.
+
+**Integrationstest:**
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-06.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-06"
+  },
+  "reference": "Chromium 390 × 844, mörkt tema; emulerad minskad rörelse och normal rörelse.",
+  "outcomes": [
+    "Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.",
+    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [TEXTBRICKA-04](#textbricka-04-minskad-rörelse-teman-och-knappmått) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.
+- Markeringen är läsbar och respekterar den emulerade rörelseinställningen.
+
+### TEXTBRICKA-07: minskad rörelse vid 1280 i ljust tema
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 1280 × 844 och ljust tema före
+första UI-handlingen.
+
+**Integrationstest:**
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-07"
+  },
+  "reference": "Chromium 1280 × 844, ljust tema; emulerad minskad rörelse och normal rörelse.",
+  "outcomes": [
+    "Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.",
+    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [TEXTBRICKA-04](#textbricka-04-minskad-rörelse-teman-och-knappmått) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.
+- Markeringen är läsbar och respekterar den emulerade rörelseinställningen.
+
+### TEXTBRICKA-08: minskad rörelse vid 1280 i mörkt tema
+
+**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Starta en ny kontrollerad installation och välj denna
+konfiguration före den första UI-handlingen. Välj 1280 × 844 och mörkt tema före
+första UI-handlingen.
+
+**Integrationstest:**
+[text-button-status.spec.ts](../../tests/integration/text-button-status.spec.ts)
+, TEXTBRICKA-08.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-button-status.spec.ts",
+    "caseId": "TEXTBRICKA-08"
+  },
+  "reference": "Chromium 1280 × 844, mörkt tema; emulerad minskad rörelse och normal rörelse.",
+  "outcomes": [
+    "Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.",
+    "Markeringen är läsbar och respekterar den emulerade rörelseinställningen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför [TEXTBRICKA-04](#textbricka-04-minskad-rörelse-teman-och-knappmått) en
+   gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
+   separata förberedelse. Upprepa inte basfallet först.
+2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
+   motsvarande steg. Avsluta när basfallet avslutas.
+
+**Förväntat resultat:**
+
+- Arbets- och svarsformer ändrar varken knappmått eller verktygsplacering.
+- Markeringen är läsbar och respekterar den emulerade rörelseinställningen.
+
+### TEXTBRICKA-09: faktiskt hörda olästa svar och frågor
+
+**Syfte:** Hör en ny oläst förekomst en gång, utan att själva svaret läses när
+textvyn är stängd.
+
+**Användare:** Den konfigurerade testmedlemmen.
+
+**Förutsättningar:** Använd den
+[riktiga enhetsförberedelsen](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare)
+, med enbart påhittade uppgifter. Telefon och surfplatta behöver nåbar
+HTTPS-adress och konfigurerad inloggning.
+
+**Kräver mänsklig observation:** Hör en ny oläst förekomst en gång, utan att
+själva svaret läses när textvyn är stängd.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Hör en ny oläst förekomst en gång, utan att själva svaret läses när textvyn är stängd."
+  },
+  "reference": "NVDA/Chrome Windows och VoiceOver/Chrome macOS/iPhone/iPad.",
+  "outcomes": [
+    "Varje ny oläst förekomst hörs en gång; gamla svar och frågor dubbleras inte.",
+    "Svar, fråga och mikrofonläge är begripliga med faktiskt provat hjälpmedel."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Starta ett riktigt textsamtal med mikrofonen av. Skicka ett uppdrag och stäng
+   textvyn. Hör arbets-/svarsnamn och kontrollera att fokus ligger kvar.
+2. Slå på och av mikrofonen två gånger utan att öppna textvyn. Den samma olästa
+   förekomsten får inte läsas igen.
+3. Öppna textvyn, läs svaret och stäng igen. Upprepa med en nödvändig fråga och
+   bedöm rätt turordning.
+
+**Förväntat resultat:**
+
+- Varje ny oläst förekomst hörs en gång; gamla svar och frågor dubbleras inte.
+- Svar, fråga och mikrofonläge är begripliga med faktiskt provat hjälpmedel.
+
+### TEXTBRICKA-10: fysisk inmatning zoom och symboler
+
+**Syfte:** Bedöm träffsäkerhet, röststyrning, verklig zoom och minskad rörelse
+på faktisk utrustning.
+
+**Användare:** Den konfigurerade testmedlemmen.
+
+**Förutsättningar:** Använd den
+[riktiga enhetsförberedelsen](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare)
+, med enbart påhittade uppgifter. Telefon och surfplatta behöver nåbar
+HTTPS-adress och konfigurerad inloggning.
+
+**Kräver mänsklig observation:** Bedöm träffsäkerhet, röststyrning, verklig zoom
+och minskad rörelse på faktisk utrustning.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Bedöm träffsäkerhet, röststyrning, verklig zoom och minskad rörelse på faktisk utrustning."
+  },
+  "reference": "Windows/macOS/iPhone/iPad; båda teman och OS-inställning.",
+  "outcomes": [
+    "Brickans betydelse och kontroller är begripliga och nåbara på provad enhet.",
+    "Faktiskt rörelse-/zoomresultat och röststyrning redovisas separat."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Med fysisk pekning/tangentbord och röststyrning, skicka ett uppdrag med
+   stängd textvy och öppna svaret igen.
+2. Prova 200/400 procents zoom, båda teman och faktisk minskad rörelse.
+   Kontrollera synligt fokus, namn och nåbara knappmål.
+3. Jämför ring, tre punkter och frågetecken utan att använda färg som enda
+   skillnad.
+
+**Förväntat resultat:**
+
+- Brickans betydelse och kontroller är begripliga och nåbara på provad enhet.
+- Faktiskt rörelse-/zoomresultat och röststyrning redovisas separat.

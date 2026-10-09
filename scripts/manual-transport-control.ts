@@ -2,7 +2,15 @@ import { createServer, request as forward, type IncomingMessage } from 'node:htt
 import { connect } from 'node:net';
 import type { Duplex } from 'node:stream';
 
-type Route = 'stage' | 'save' | 'resolve' | 'discard' | 'read' | 'recover';
+type Route =
+  | 'stage'
+  | 'save'
+  | 'resolve'
+  | 'discard'
+  | 'read'
+  | 'recover'
+  | 'read-view'
+  | 'position';
 type Boundary = 'before' | 'after' | 'drop-before' | 'drop-after';
 type Rule = { route: Route; boundary: Boundary };
 
@@ -55,7 +63,9 @@ export async function createManualTransport({
     if (!path.startsWith(prefix)) return;
     const suffix = path.slice(prefix.length);
     if (request.method === 'GET' && suffix === 'map') return 'read';
+    if (request.method === 'GET' && suffix === 'map/view') return 'read-view';
     if (request.method !== 'POST') return;
+    if (suffix === 'map/view/position') return 'position';
     if (suffix === 'map/save') return 'save';
     if (suffix === 'map/resolve') return 'resolve';
     if (/^map\/(?:discard|discard-change|discard-review)$/.test(suffix)) return 'discard';
@@ -203,7 +213,16 @@ export async function createManualTransport({
       const [routeValue, boundaryValue, remainder] = (routeName ?? '').split(':');
       if (
         remainder ||
-        !['stage', 'save', 'resolve', 'discard', 'read', 'recover'].includes(routeValue) ||
+        ![
+          'stage',
+          'save',
+          'resolve',
+          'discard',
+          'read',
+          'recover',
+          'read-view',
+          'position',
+        ].includes(routeValue) ||
         !['before', 'after', 'drop-before', 'drop-after'].includes(boundaryValue)
       )
         throw new Error('Unknown route or delivery boundary.');

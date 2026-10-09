@@ -47,11 +47,12 @@ Lägg hela formulärets ändring i utkastet innan du öppnar nästa arbetsyta.
    åt vänster med **Flytta [objektets namn]: vänster**. Ladda om och kontrollera
    placeringarna.
 5. Öppna **Tabell**, välj **Redigera Stolen att bevara** och skriv
-   **Oberoende privat förslag** i **Beskrivning**. Välj **Lägg i utkastet och stäng**.
+   **Oberoende privat förslag** i **Beskrivning**. Välj **Lägg i utkastet och
+stäng**.
    Kontrollera förslaget
    under **Visa utkastet**. Spara inte hela utkastet.
-6. Behåll samma databas vid omstart inom ett fall. RADERING-02 använder
-   Chromium med utvecklarverktyg; RADERING-04 behöver en andra terminal.
+6. Behåll samma databas vid omstart inom ett fall. Felfallen använder
+   Chromium med separat förberedelse; städningsfallen behöver en andra terminal.
    Förbered en privat mapp för hämtade exporter och radera filerna efteråt.
 
 ### Ny lokal provdatabas och omstart
@@ -82,750 +83,1172 @@ Ladda sedan om webbläsarsidan. Kör inte databasförberedelsen på nytt vid
 omstart; den skulle välja en annan, tom databas. Efter sista fallet kan du
 stoppa provservern och starta den vanliga miljön med `npm run dev:all`.
 
+## Motsvarigheter och tekniskt underlag
+
+Varje vanligt fall har en enda upptäckt browsermotsvarighet. RADERING-06
+använder 1280 × 900, ljust tema. RADERING-12–20 behåller hela samma
+arbetsflöde i sina namngivna konfigurationer. Ingen variant eller tidigare
+identitet utgår. Ingen assertions- eller konfigurationstäckning tas bort.
+RADERING-21 kräver faktisk webbläsarzoom och fysisk tangentbordsanvändning.
+Automatikens fokus, kontrast, geometri och syntetiska tangenttryckningar
+är separat underlag, inte utförd mänsklig observation.
+
+[Separat förberedelse](household-erasure-preparation.md) anger exakt tidpunkt,
+profil, förberedelsebesked, återställning och tekniska efterkontroller.
+Arkiv, HTTP-status, begäransräkning och exakta lagringsvärden kontrolleras
+där och i integrationen; de ersätter inte följande UI-arbete.
+
 ## Granska och genomför
 
 ### RADERING-01: Radera valt innehåll med tangentbordet
 
-**Syfte:** Kontrollera att omfattningen granskas före radering och att
-oberoende innehåll och privat arbete finns kvar efter omstart.
+**Syfte:** Tangentbordsgranskning och oåterkallelig radering bevarar oberoende
+arbete efter omstart.
 
 **Användare:** Alex som administratör.
 
-**Förutsättningar:** Lampan har bild och historik. Stolen har ett privat
-förslag enligt förberedelsen.
+**Förutsättningar:** Allmän förberedelse med bild, historik, placeringar och
+stolens privata förslag.
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-01: keyboard review erases selected content and
-preserves unrelated work after restart”.
+RADERING-01.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-01"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Bara uttryckligen granskat innehåll raderas.",
+    "Stolen och dess privata förslag och historik bevaras efter omstart."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna **Inställningar → Permanent radering**.
-   Läs skillnaden mot vanlig borttagning och upphört innehåll samt
-   begränsningarna för nedladdade exporter och leverantörens interna kopior.
-2. Använd Tab till lampans kryssruta och välj den med mellanslag.
-   Välj **Granska raderingen** med tangentbordet.
-3. Kontrollera **Omfattning att bekräfta**. Lampan, dess bildversion och
-   en personlig placering ingår; stolen ska inte ingå. Bildens identifierare
-   visas. Antalen för andras privata innehåll ska vara noll i denna provkarta.
-4. Kontrollera att **Radera permanent** är inaktiverad. Skriv
-   **RADERA PERMANENT** i bekräftelsefältet och aktivera knappen med Enter.
-5. Invänta **Den permanenta raderingen är slutförd.** Starta om enligt
-   avsnittet ovan, ladda om sidan och kontrollera samma raderingsstatus.
-6. Välj **Läs in kartan på nytt** och **Tabell**. Sök efter lampan;
-   ingen träff ska visas. Öppna stolen och kontrollera dess beskrivning
-   samt förslaget under **Visa utkastet**. Öppna **Rapporter → Ändringshistorik**
-   och **Visa ändringarna**: stolen ska finnas i det ursprungliga sparandet,
-   men lampan ska saknas.
-   Kontrollera också att stolens placering finns kvar i **Rymdkarta**.
-7. Öppna lampans sparade bildadress i en ny flik i samma profil. Ladda om
-   adressen så att en ny begäran görs; kontrollera HTTP-status 404 i
-   utvecklarverktygens **Network**, utan någon bild.
-8. Öppna **Inställningar → Fullständig export**, välj
-   **Förbered fullständig export** och sedan **Hämta ZIP-fil**.
-   Öppna ZIP-filen och `content.json`. Sök efter
-   **Lampan att radera**; namnet ska saknas i hela filen. Stolen och
-   **Oberoende privat förslag** ska finnas. `images` ska vara en tom lista
-   och `images.bin` ska vara tom. Se även
-   [EXPORT-01](household-export.md#export-01-hämta-en-fullständig-export-med-tangentbordet).
+1. Öppna **Inställningar → Permanent radering**. Läs skillnaden mot
+   borttagning och upphört innehåll samt begränsningarna för nedladdade
+   exporter och leverantörens interna kopior.
+2. Använd Tab till **Lampan att radera**, välj med mellanslag och aktivera
+   **Granska raderingen** med Enter. Läs **Omfattning att bekräfta**:
+   lampan, en bildversion och en personlig placering ingår; stolen och
+   dess privata förslag ingår inte. Läs bildversionen i listan.
+3. Kontrollera inaktiverad **Radera permanent**. Skriv **RADERA PERMANENT**
+   och aktivera knappen med Enter. Invänta slutfört besked.
+4. Operatören startar om samma installation enligt kommandot ovan. Ladda
+   om raderingssidan; slutfört besked ska finnas kvar.
+5. Välj **Läs in kartan på nytt → Tabell**. Lampan saknas, stolen finns.
+   Öppna stolens rad och **Visa utkastet**; dess privata förslag finns kvar.
+   Stäng textvyn. Öppna **Rapporter → Ändringshistorik → Visa ändringarna**
+   för de bevarade sparandena: stolen finns, lampans gamla innehåll saknas.
+6. Välj **Tillbaka till arbetet**, öppna **Inställningar → Fullständig
+   export**, välj **Förbered fullständig export → Hämta ZIP-fil**.
+   Webbläsaren hämtar en verklig ZIP-fil. Operatören utför sedan de separata
+   bild- och arkivkontrollerna för RADERING-01.
 
 **Förväntat resultat:**
 
-- Enbart granskning raderar inget. Bekräftelse kräver den angivna texten.
-- Lampan, dess tidigare värden och dess bild är inte åtkomliga genom
-  kartan, historiken, bildadressen eller den nya exporten, även efter omstart.
-- Stolen, dess bevarade historik, privata förslag och placering finns kvar.
-- Ett besked om slutförd radering visas först när servern bekräftar hela
-  rutinen. En tidigare nedladdad export ändras inte av raderingen.
-
-### RADERING-06: Avbryt granskningen och återgå till bevarat arbete
-
-**Syfte:** Granska på en egen inställningssida, avbryt utan radering och
-kräv ny uttrycklig bekräftelse innan ett verifierat resultat öppnar aktuell karta.
-
-**Användare:** Alex i profil A.
-
-**Förutsättningar:** Följ allmän förberedelse med lampans sparade bild och
-stolens oberoende privata förslag. Spara inte hela utkastet.
-Upprepa i ljust och mörkt tema på dator samt vid 390 och 320 pixlars bredd.
-Prova även korta fönster på 640 × 500 och 320 × 250 pixlar.
-Verklig webbläsarzoom vid 200 och 400 procent kontrolleras separat;
-en liten fönsterstorlek är inte i sig ett prov av webbläsarzoom.
-
-**Integrationstest:**
-[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-06: dedicated Settings review can be cancelled before
-explicit erasure and a fresh map at {width}x{height}px {theme}”, med storlekarna
-1280 × 900, 390 × 900, 320 × 900, 640 × 500 och 320 × 250 samt temana
-light och dark.
-
-**Steg:**
-
-1. Öppna **Nytt objekt**. Skriv **Oskickat arbete före radering** i
-   **Namn** utan att lägga texten i utkastet. Tryck Escape och välj
-   **Fortsätt redigera**. Kontrollera namnet och fokus. Tryck Escape
-   igen och bekräfta **Kasta ändringarna och fortsätt**.
-2. Öppna **Inställningar** och välj **Permanent radering** i
-   sidnavigationen med tangentbordet. Sidans huvudrubrik får fokus;
-   kartan är dold och det uttryckligen kastade formuläret är stängt.
-   På smala fönster öppnar du **Välj inställning** med Enter.
-   Kontrollera att den valda sidans länk är läsbar innan menyn stängs igen.
-3. Välj **Lampan att radera** och **Granska raderingen**. Kontrollera
-   att **Omfattning att bekräfta** får fokus och att hela fokusringen syns.
-   Kontrollera lampans namn, bildversionens hela ID och antalet personliga placeringar.
-   Stolen och dess privata förslag ska inte ingå i granskningens omfattning.
-4. Kontrollera att **Radera permanent** är inaktiverad. Skriv först
-   **RADERA permanent**: knappen ska fortfarande vara inaktiverad. Skriv
-   **RADERA PERMANENT**, men välj sedan **Avbryt** med tangentbordet.
-   Granskningen stängs, valrubriken får fokus med hela fokusringen synlig
-   och lampans val finns kvar.
-   Ingen radering genomförs.
-5. Välj **Tillbaka till kartan**. Öppna **Nytt objekt** och kontrollera
-   ett tomt namnfält. Stäng utan ändringar. De sparade objekten, placeringarna
-   och stolens privata förslag är oförändrade.
-6. Öppna samma inställningssida igen. Välj lampan och granska på nytt.
-   Bekräftelsefältet är tomt och **Radera permanent** är inaktiverad.
-   Skriv **RADERA PERMANENT** och välj **Radera permanent** med Enter.
-7. Invänta **Den permanenta raderingen är slutförd.** Kontrollera hela
-   raderingsidentifieraren och resultatets ett objekt, en bildversion samt
-   noll samband och typer. Välj den fokuserade
-   **Läs in kartan på nytt**. Kontrollera i tabellen att lampan är borta,
-   stolen finns kvar och **Visa utkastet** behåller dess privata förslag.
-
-**Förväntat resultat:**
-
-- Avbruten granskning raderar inget och bevarar oberoende arbete.
-- Tidigare bekräftelsetext kan inte användas vid nästa granskning.
-- En uttryckligt bekräftad radering följs av ett verifierat resultat och
-  en ny inläsning av kartan. Gammal oskickad text kan inte fortsätta mot
-  det raderade innehållet; administratörens tillgång finns kvar.
-- Stegmarkering, val, granskning och resultat motsvarar samma verkliga åtgärd.
-  Tangentbordsfokus syns och täcks inte; bekräftelse, avbrytande och återgång
-  går att använda utan mus. Hela bild- och raderingsidentifierarna går att läsa
-  utan vågrät rullning. Kontrollera läsbarhet för vald sidlänk samt fokuserade
-  raderings- och återgångsknappar i båda teman. Automationen mäter fokus,
-  pekmål, textradernas utrymme och minst 4,5:1 textkontrast för dessa kontroller.
-
-## Osäkert och förändrat underlag
+- Bara uttryckligen granskat innehåll raderas.
+- Stolen och dess privata förslag och historik bevaras efter omstart.
 
 ### RADERING-02: Återfinn resultatet efter förlorat svar
 
-**Syfte:** Kontrollera att ett anslutningsavbrott inte presenteras som
-slutförd radering och att serverns beständiga resultat kan återfinnas.
+**Syfte:** Ett verkligt slutfört men förlorat svar förblir oklart tills samma
+resultat återfinns.
 
 **Användare:** Alex som administratör.
 
-**Förutsättningar:** En ny provkarta är förberedd i Chromium. Koden nedan
-låter servern slutföra en enda radering men kastar bort svaret innan
-applikationen får det. Begäran skickas oförändrad. Integrationstestet
-bryter motsvarande svar vid nätverket.
+**Förutsättningar:** Allmän förberedelse. Öppna raderingssidan i Chromium.
 
-Öppna utvecklarverktygen med F12. Under **Sources → Snippets** skapar du
-ett nytt utdrag, lägger in koden nedan och kör det med Ctrl+Enter medan
-raderingssidan är öppen. **Console** ska visa
-**RADERING-02: redo för ett svar.** Kör utdraget bara en gång per försök.
-
-```js
-(() => {
-  const originalFetch = window.fetch;
-  window.fetch = async function (...args) {
-    const response = await originalFetch.apply(this, args);
-    const url = new URL(response.url);
-    if (url.origin === location.origin &&
-        url.pathname.endsWith('/erasure/execute')) {
-      window.fetch = originalFetch;
-      const result = await response.clone().json();
-      if (response.ok && result.status?.phase === 'completed') {
-        console.info('RADERING-02: slutfört svar kastas bort.');
-        throw new TypeError('RADERING-02: kontrollerat förlorat svar');
-      }
-      console.error('RADERING-02: inget slutfört svar; avbrottet sker inte.');
-    }
-    return response;
-  };
-  console.info('RADERING-02: redo för ett svar.');
-})();
-```
-
-Öppna **Network**, aktivera **Preserve log**, töm listan och filtrera på
-`erasure/execute`. Skyttel ska skicka ett enda sådant anrop under hela
-fallet. Svaret kan visas som HTTP 200 här trots att utdraget gör det
-otillgängligt för applikationen.
+**Separat förberedelse:** Tappa ett slutfört svar, execute, före steg 2; efteråt
+separat begäranskontroll.
+Se [körbar förberedelse](household-erasure-preparation.md).
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-02: a lost completion reply is recovered from durable
-status without another erasure”.
+RADERING-02.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-02"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Förlorat slutförandesvar presenteras som oklart utfall.",
+    "Statusläsning återfinner samma slutförande utan ny radering."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Välj lampan och **Granska raderingen**. Skriv **RADERA PERMANENT**
-   och välj **Radera permanent** efter att utdraget är förberett.
-2. Kontrollera **Utfallet är oklart** och konsolens besked om att ett
-   slutfört svar kastas bort. Avbrottet avaktiveras automatiskt. Ladda
-   inte om sidan ännu. Om konsolen i stället säger att avbrottet inte
-   sker, anteckna utfallet och följ eventuell väntande återhämtning;
-   detta försök verifierar då inte ett förlorat slutfört svar.
+1. Markera lampan, välj **Granska raderingen** och skriv **RADERA PERMANENT**.
+2. Operatören förbereder **execute** enligt länken nedan. Välj **Radera
+   permanent**. Läs **Utfallet är oklart** utan slutförandebesked; nytt
+   innehåll får inte väljas. Operatören bekräftar det tappade slutförda svaret.
 3. Välj **Kontrollera raderingsstatus och läs in aktuellt innehåll**.
-   Kontrollera att den genomförda raderingen återfinns.
-4. Kontrollera att **Network** fortfarande visar exakt ett
-   `erasure/execute`-anrop. Ladda om sidan och kontrollera samma slutförda
-   resultat. Välj **Läs in kartan på nytt**: stolen ska finnas och lampan saknas.
-   Omladdning tar även bort utdragets påverkan om fallet avbryts i förtid.
+   Det verkliga slutförda resultatet återfinns. Ladda om sidan: samma
+   slutförda resultat ska finnas kvar.
+4. Välj **Läs in kartan på nytt → Tabell**. Lampan saknas, stolen finns
+   och **Visa utkastet** behåller stolens privata förslag.
 
 **Förväntat resultat:**
 
-- Ett förlorat svar ger **Utfallet är oklart** och inget påstående om
-  slutförd radering. Nytt innehåll kan inte väljas medan utfallet är oklart.
-- Statuskontrollen återfinner den genomförda raderingen utan att skicka
-  en andra radering. Resultatet finns kvar efter omladdning.
-- Lampan är borta och stolen finns kvar. Avbrottet återställer inget.
+- Förlorat slutförandesvar presenteras som oklart utfall.
+- Statusläsning återfinner samma slutförande utan ny radering.
 
 ### RADERING-03: Granska på nytt efter en samtidig ändring
 
-**Syfte:** Kontrollera att en tidigare bekräftelse inte används när
-innehållet ändras efter granskningen.
+**Syfte:** En tidigare bekräftelse får inte användas mot ändrat privat underlag.
 
-**Användare:** Alex i profil A och B.
+**Användare:** Alex i profilerna A och B med samma konto.
 
-**Förutsättningar:** Samma nya provkarta är öppen i båda profilerna.
-Profil A visar **Inställningar → Permanent radering**. Profil B visar hushållets
-**Tabell** och är inloggad med samma konto som profil A.
+**Förutsättningar:** Allmän förberedelse; profil B visar samma hushålls Tabell.
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-03: a changed scope requires a new review and
-confirmation before erasure”.
+RADERING-03.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-03"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Föråldrad granskning avvisas utan radering.",
+    "Ny granskning kräver ny bekräftelse och bevarar det senare privata förslaget."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Välj lampan och granska raderingen i profil A utan att bekräfta ännu.
-2. Välj **Redigera Stolen att bevara** i profil B, ändra **Beskrivning** till
-   **Senare privat förslag** och välj **Lägg i utkastet och stäng**.
-   Öppna **Visa utkastet** och läs förslagets fulla beskrivning. Spara inte.
-3. Skriv **RADERA PERMANENT** och välj **Radera permanent** i profil A.
-4. Kontrollera beskedet **Innehållet har ändrats. Granska raderingen igen**.
-   Kontrollera i profil B att båda objekten finns kvar. I profil A väljer
-   du **Granska raderingen** igen utan att först ladda om sidan.
-5. Kontrollera att bekräftelsefältet är tomt och knappen inaktiverad.
-   Granska, skriv bekräftelsen igen och genomför raderingen.
-6. Invänta slutfört resultat och välj **Läs in kartan på nytt** i profil A.
-   Kontrollera att lampan saknas och att **Visa utkastet** visar stolen
-   med **Senare privat förslag**.
+1. Profil A väljer lampan och **Granska raderingen** utan att bekräfta.
+2. Profil B väljer **Redigera Stolen att bevara**, skriver **Senare privat
+   förslag** i **Beskrivning** och väljer **Lägg i utkastet och stäng**.
+   Öppna **Visa utkastet** och läs beskrivningen. Spara inte.
+3. Profil A skriver **RADERA PERMANENT** och väljer **Radera permanent**.
+   Läs **Innehållet har ändrats. Granska raderingen igen**. Båda objekten
+   ska fortfarande synas i profil B:s tabell.
+4. Profil A väljer **Granska raderingen** igen utan omladdning.
+   Bekräftelsefältet är tomt och **Radera permanent** inaktiverad.
+   Granska den aktuella omfattningen, skriv bekräftelsen på nytt och radera.
+5. Invänta slutfört besked och välj **Läs in kartan på nytt → Tabell**.
+   Lampan saknas. Stolen och **Senare privat förslag** i **Visa utkastet**
+   ska finnas kvar.
 
 **Förväntat resultat:**
 
-- Den gamla granskningen avvisas utan radering och kräver en ny granskning.
-- Bekräftelsetexten återanvänds inte för den nya omfattningen.
-- Den nya bekräftelsen kan slutföra raderingen och bevarar stolens
-  oberoende privata förslag.
-
-## Återhämtning av väntande städning
+- Föråldrad granskning avvisas utan radering.
+- Ny granskning kräver ny bekräftelse och bevarar det senare privata förslaget.
 
 ### RADERING-04: Slutför väntande städning efter omstart
 
-**Syfte:** Kontrollera att en upptagen databas inte ger falskt besked om
-slutförd radering och att ärendet kan fortsättas efter omstart.
+**Syfte:** Fastlåsta journalsidor ger väntande städning, inte ett falskt
+slutförande.
 
-**Användare:** Alex som administratör samt testinstallationens operatör.
+**Användare:** Alex som administratör och installationens operatör.
 
-**Förutsättningar:** En ny provkarta är förberedd med den lokala
-provdatabasen ovan. Kör följande från projektets rot i en **andra**
-terminal i devcontainern. Kommandot läser samma databas och håller en
-separat lästransaktion öppen så att äldre journalsidor inte kan städas.
-Vänta på beskedet **Läsningen är öppen** och lämna terminalen orörd tills
-steg 5. Integrationstestet håller en motsvarande riktig SQLite-läsare.
+**Förutsättningar:** Allmän förberedelse; operatörens oberoende SQLite-läsare är
+öppen.
 
-```sh
-env -u SKYTTEL_DATABASE_PATH node --env-file=/tmp/skyttel-radering.env \
-  --input-type=module -e '
-import Database from "better-sqlite3";
-const database = new Database(process.env.SKYTTEL_DATABASE_PATH, {
-  readonly: true,
-  fileMustExist: true,
-});
-database.exec("BEGIN");
-database.prepare("SELECT id FROM map_object LIMIT 1").get();
-function release() {
-  database.exec("ROLLBACK");
-  database.close();
-  console.log("Läsningen är avslutad.");
-  process.exit(0);
+**Separat förberedelse:** Håll en verklig SQLite-läsare före steg 1, genom
+omstarten, till steg 4; efteråt separat bildkontroll.
+Se [körbar förberedelse](household-erasure-preparation.md).
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-04.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-04"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Hushållsinnehåll och export är spärrade under verklig väntande städning.",
+    "Samma ärende slutförs först efter att läsaren släppts."
+  ]
 }
-process.stdin.resume();
-process.stdin.once("data", release);
-process.once("SIGINT", release);
-console.log("Läsningen är öppen. Tryck Enter när steg 5 säger till.");
-'
 ```
-
-**Integrationstest:**
-[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-04: pending cleanup survives application restart and
-completes only after the reader releases”.
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Välj lampan, granska och bekräfta permanent radering medan operatörens
-   läsning är öppen.
-2. Kontrollera beskedet **Raderingen är inte slutförd**. Öppna
-   **Tillbaka till kartan** i en ny flik och försök läsa kartan. I
-   inställningarnas sidmeny öppnar du **Fullständig export** i en ny
-   flik och väljer **Förbered fullständig export**.
-   Båda försöken ska avvisas; ingen karta eller export ska lämnas ut.
-3. Starta om enligt **Ny lokal provdatabas och omstart** ovan i serverns
-   terminal. Låt läsarens andra terminal vara kvar. Ladda om
-   raderingssidan när servern åter är redo.
-4. Kontrollera att raderingen fortfarande inte påstås vara slutförd och
-   att **Försök slutföra raderingen** erbjuds.
-5. Tryck Enter i läsarens terminal. Invänta **Läsningen är avslutad**.
-   Välj sedan **Försök slutföra raderingen** på raderingssidan.
-6. Invänta **Den permanenta raderingen är slutförd.** Välj **Läs in kartan på nytt**
-   och kontrollera att lampan saknas, stolen finns och **Visa utkastet**
-   visar **Oberoende privat förslag**. Öppna och ladda om lampans sparade
-   bildadress; **Network** ska visa HTTP 404 utan bild.
-
-Om fallet avbryts: avsluta läsaren med Enter eller Ctrl+C och använd samma
-väntande ärendes **Försök slutföra raderingen** innan nästa fall påbörjas.
+1. Markera lampan, granska och bekräfta med **RADERA PERMANENT**.
+   Läs **Raderingen är inte slutförd** och att innehållet är otillgängligt.
+2. Öppna **Tillbaka till kartan** i en ny flik: kartarbetet är stoppat.
+   Öppna **Fullständig export** i en annan flik och välj **Förbered
+   fullständig export**: ett fel visas och ingen **Hämta ZIP-fil** erbjuds.
+3. Operatören startar om samma server och behåller SQLite-läsaren.
+   Ladda om raderingssidan. Slutförandebesked saknas och **Försök slutföra
+   raderingen** erbjuds för det väntande ärendet.
+4. Operatören avslutar läsaren enligt förberedelsen. Välj **Försök
+   slutföra raderingen** och invänta slutfört besked.
+5. Välj **Läs in kartan på nytt → Tabell**. Lampan saknas, stolen finns
+   och **Visa utkastet** visar **Oberoende privat förslag**.
 
 **Förväntat resultat:**
 
-- Raderingen är inte slutförd medan äldre journalsidor är låsta.
-  Berört hushållsinnehåll kan inte läsas eller exporteras under väntan.
-- Väntande status och stängd tillgång finns kvar efter serveromstart.
-- När läsningen släpps kan samma ärende slutföras. Lampan och dess bild
-  återkommer inte; stolen och dess privata förslag finns kvar.
-
-### RADERING-08: En aktuell administratör fortsätter samma väntande ärende
-
-**Syfte:** Kontrollera aktuell behörighet, ärendets identitet och ett ärligt
-resultat när en annan administratör slutför städningen efter omstart och
-svaret försvinner.
-
-**Användare:** Alex och Robin i skilda webbläsarprofiler samt
-testinstallationens operatör.
-
-**Förutsättningar:** En ny provkarta enligt allmän förberedelse. Bjud in
-Robin och ge Robin administratörsrollen genom **Administrera tillgång**.
-Robin lägger dessutom **Robins eget privata förslag** i stolens
-**Beskrivning** genom **Lägg i utkastet och stäng**, utan att spara hela utkastet.
-Alex behåller sitt eget oberoende privata förslag. Öppna den separata
-SQLite-läsaren enligt RADERING-04 och behåll den till steg 6 nedan.
-
-**Integrationstest:**
-[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-08: a current administrator continues the same cleanup
-after role loss, restart and a lost resume reply”.
-
-**Steg:**
-
-1. Alex granskar lampan och bekräftar uttryckligen permanent radering.
-   Robins privata beskrivning ska inte visas. Invänta väntande städning
-   och anteckna den fullständiga identifieraren under **Raderingsförsök**.
-2. Robin öppnar **Administrera tillgång** och ändrar Alex till medlem.
-   Alex laddar om raderingssidan. Kontrollera **Du kan inte administrera
-   hushållet** och att ingen knapp för slutförande visas.
-3. Robin öppnar **Inställningar → Permanent radering** i sin profil.
-   Samma identifierare och väntande ärende ska visas utan automatisk
-   radering eller slutförande. Alex privata beskrivning ska inte visas.
-   Försök öppna kartan och förbereda en export i separata flikar;
-   hushållsinnehållet ska fortfarande vara otillgängligt.
-4. Operatören startar om med samma databas och den separata läsaren kvar.
-   Robin laddar om raderingssidan. Kontrollera samma identifierare och
-   välj **Försök slutföra raderingen** medan läsaren fortfarande är öppen.
-5. Kontrollera att inget slutförandebesked visas. Kartan och en ny export
-   ska fortfarande avvisas. I **Network** ger slutförandebegäran HTTP 202
-   med samma identifierare och väntande städning.
-6. Operatören avslutar läsaren med Enter. Robin förbereder utdraget från
-   RADERING-02 i sin webbläsare, men ändrar den enda adressändelsen
-   `/erasure/execute` till `/erasure/resume`. Detta kastar bara bort
-   leveransen av ett verkligt slutfört svar; serverns begäran är oförändrad.
-   Välj **Försök slutföra raderingen** igen.
-7. Kontrollera **Utfallet är oklart**, utan slutförandebesked eller
-   resultatantal. Välj **Översikt**, återvänd till **Permanent radering**
-   och ladda om sidan. Välj **Kontrollera raderingsstatus och läs in
-   aktuellt innehåll**. Samma identifierare ska nu visa slutfört resultat:
-   ett objekt, en bildversion och noll samband, objekttyper och sambandstyper.
-8. Kontrollera i **Network** att navigation och statusläsning inte skickar
-   nya `erasure/execute` eller `erasure/resume`. Välj **Läs in kartan på nytt**.
-   Lampan och dess bild ska saknas. Alex och Robin kontrollerar var för sig
-   stolen och sitt eget privata förslag; båda ska finnas kvar. Alex
-   personliga placering för stolen ska vara kvar.
-
-**Förväntat resultat:**
-
-- Bara en aktuell administratör får läsa och fortsätta ärendet. Automationen
-  kontrollerar också HTTP 403 för Alex exakta statusläsning och slutförande.
-- Ny webbläsarprofil och omstart hittar samma väntande ärende. Ett misslyckat
-  städningsförsök öppnar inte tillgången och påstår inte att allt är klart.
-- Det verkliga slutförandet kan återläsas efter förlorat svar utan en ny
-  radering. Automationen jämför identifierare, antal och hela oberoende
-  privata utkast samt kräver bara en ändring av innehållets generation.
-- Andras privata beskrivningar lämnas inte ut på raderingssidan. Lampans
-  bild ger HTTP 404; kvarvarande objekt, typer och personliga vyer bevaras.
-
-## Historiska bilder efter typbyte
+- Hushållsinnehåll och export är spärrade under verklig väntande städning.
+- Samma ärende slutförs först efter att läsaren släppts.
 
 ### RADERING-05: Radera en tidigare typ och dess sista historiska bild
 
-**Syfte:** Kontrollera att en tidigare bild försvinner även ur en ny export
-när dess sista historiska hänvisning raderas, medan objektet med ny typ och
-ny bild finns kvar efter omstart.
+**Syfte:** Historisk bildförstörelse efter typbyte bevarar nuvarande objekt,
+bild och oberoende arbete.
 
-**Användare:** Alex som administratör i profil A.
+**Användare:** Alex som administratör.
 
-**Förutsättningar:** Starta en ny lokal provdatabas enligt avsnittet ovan
-och skapa Linden. Förbered två tydligt olika påhittade PNG-bilder, till
-exempel en blå bild och en orange bild. Använd följande förberedelse i
-stället för allmän förberedelse steg 2–5:
+**Förutsättningar:** Använd ny provdatabas. Förbered två olika påhittade
+PNG-bilder, en blå och en orange. Ersätt allmän förberedelse steg 2–5 med:
 
-1. Öppna **Inställningar → Typer och egna fält**, välj **Ny objekttyp**,
-   skriv **Tidigare bildtyp** i **Typens namn** och
-   välj **Lägg typförslaget i mitt utkast**. Lägg inga egna fält till typen.
-   Välj **Tillbaka till kartan**.
-2. Skapa **Lampan att radera** av **Tidigare bildtyp** och **Stolen att
-   bevara** av **Fordon**. Lägg båda i utkastet och välj
-   **Spara hela utkastet**. Trots lampans testnamn ska själva objektet
-   bevaras i detta fall.
-3. Välj **Redigera Lampan att radera** i tabellen, öppna
-   **Livscykel och utseende**, välj den blå bilden med **Välj profilbild**
-   och välj **Lägg i utkastet och stäng**. Spara hela utkastet. Öppna
-   lampans detaljvy genom att expandera raden, kopiera bildens adress och anteckna
-   dess bild-ID, den sista delen efter `/profile-images/` i adressen.
-4. Välj **Redigera Lampan att radera**. Byt lampans
-   **Objekttyp** till **Fordon**. Bekräfta borttagningen av tidigare egna
-   fältvärden om valet visas. Öppna **Livscykel och utseende**, välj den
-   orange profilbilden och välj **Lägg i utkastet och stäng**.
-   Spara typbytet och bildbytet tillsammans med **Spara hela utkastet**.
-   Anteckna den nya bildens adress och ID. ID:na ska skilja sig åt.
-5. Flytta lampan och stolen enligt allmän förberedelse steg 4. Lägg
-   stolens **Oberoende privat förslag** i utkastet enligt steg 5 utan
-   att spara hela utkastet. Öppna den blå bildens adress i en annan flik;
-   bilden ska fortfarande gå att läsa från historiken före radering.
+1. Öppna **Inställningar → Typer och egna fält → Ny objekttyp**. Skriv
+   **Tidigare bildtyp** i **Typens namn**, lämna egna fält tomma och välj
+   **Lägg typförslaget i mitt utkast → Tillbaka till kartan**.
+2. Skapa lampan av **Tidigare bildtyp** och stolen av **Fordon** med **Nytt
+   objekt**, **Namn**, **Objekttyp** och **Lägg i utkastet och stäng**.
+   Öppna **Visa utkastet → Spara hela utkastet** och invänta kvittot.
+3. Stäng textvyn, välj **Tabell → Redigera Lampan att radera → Livscykel
+   och utseende → Välj profilbild** och välj den blå bilden. Välj **Lägg
+   i utkastet och stäng** och spara hela utkastet. Expandera lampans rad
+   och kopiera bildens adress för den separata tekniska kontrollen.
+4. Välj **Redigera Lampan att radera**, byt **Objekttyp** till **Fordon**
+   och bekräfta fältförlust om valet visas. Öppna **Livscykel och utseende**,
+   välj orange bild, välj **Lägg i utkastet och stäng** och spara hela
+   utkastet. Kopiera den nya bildadressen från lampans expanderade rad.
+5. Flytta båda objekten och lägg stolens **Oberoende privat förslag** i
+   utkastet enligt allmän förberedelse steg 4–5. Spara inte förslaget.
+
+**Separat förberedelse:** Separata bild- och arkivkontroller för RADERING-05
+före steg 2 och efter steg 5.
+Se [körbar förberedelse](household-erasure-preparation.md).
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-05: erasing a former type removes its historical image
-from a fresh export while preserving the current object after restart”.
+RADERING-05.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-05"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Historiska gamla bildversionen och typen förstörs efter omstart.",
+    "Nuvarande objekt och bild samt oberoende privat arbete bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna **Inställningar → Permanent radering**. Välj bara
-   **Tidigare bildtyp** under objekttyper och välj **Granska raderingen**.
-2. Kontrollera att inga objekt eller personliga placeringar ska raderas.
-   **Bildversioner: 1** ska visas. **Berörda bildversioner** ska innehålla
-   den blå bildens ID, men inte den orange bildens ID.
-3. Skriv **RADERA PERMANENT**, välj **Radera permanent** och invänta
-   **Den permanenta raderingen är slutförd.** Starta om enligt kommandot
-   för samma databas ovan. Ladda om och kontrollera slutförd status.
-4. Välj **Läs in kartan på nytt**. Lampan ska finnas med **Fordon** och orange
-   bild. Stolen och dess privata förslag samt båda placeringarna ska
-   finnas kvar. Öppna **Rapporter → Ändringshistorik → Visa ändringarna**:
-   stolen ska ha bevarad historik,
-   men lampans blå bild och tidigare typ ska inte visas.
-5. Öppna och ladda om de två sparade bildadresserna. I utvecklarverktygens
-   **Network** ska den blå bildens adress ge HTTP 404 och den orange
-   bildens adress HTTP 200 med bilden kvar.
-6. Hämta en ny fullständig export genom **Förbered fullständig export**
-   och **Hämta ZIP-fil**. Öppna ZIP-filen och sök i `content.json` efter
-   den blå bildens ID; det ska saknas i hela filen. Listan `images` ska
-   innehålla exakt en bild, med den orange bildens ID. Lampan, stolen och
-   **Oberoende privat förslag** ska finnas kvar i innehållet.
-7. Kopiera den exporterade `images.bin` till `kvarvarande-bild.webp`
-   och öppna kopian i webbläsaren. Eftersom exporten innehåller en enda
-   bild ska den visa den orange bilden. Radera hämtade provfiler efteråt.
+1. Öppna **Inställningar → Permanent radering**, välj bara **Tidigare
+   bildtyp** och **Granska raderingen**. Inga objekt eller placeringar
+   ingår. **Bildversioner: 1** visas och listan visar den gamla bildversionen,
+   inte den nya. Operatören kontrollerar att gamla bilden ännu kan läsas.
+2. Skriv **RADERA PERMANENT**, välj **Radera permanent**, invänta slutfört
+   besked. Operatören startar om samma installation. Ladda om sidan och
+   kontrollera slutfört besked igen.
+3. Välj **Läs in kartan på nytt → Tabell → Redigera Lampan att radera**.
+   Lampan finns med ny typ. Öppna **Livscykel och utseende** och läs den
+   orange profilbilden. Stäng med Escape utan ändring.
+4. Öppna **Visa utkastet** och läs stolens privata förslag. Stäng textvyn.
+   Öppna **Rapporter → Ändringshistorik → Visa ändringarna** för bevarade
+   sparanden: stolen finns, **Tidigare bildtyp** saknas.
+5. Välj **Tillbaka till arbetet → Inställningar → Fullständig export**.
+   Välj **Förbered fullständig export → Hämta ZIP-fil** och invänta faktisk
+   hämtning. Operatören utför de separata bild- och arkivkontrollerna.
 
 **Förväntat resultat:**
 
-- Granskningen räknar och visar den historiska bildversion som ska raderas
-  trots att dess nuvarande objekt bevaras.
-- Den tidigare typen och den blå bilden är borta ur historik, bildåtkomst
-  och en ny fullständig export, även efter omstart.
-- Det nuvarande objektet, dess orange bild, stolens oberoende historik
-  och privata förslag samt båda placeringarna finns kvar.
+- Historiska gamla bildversionen och typen förstörs efter omstart.
+- Nuvarande objekt och bild samt oberoende privat arbete bevaras.
 
-## Följ ett känt försök
+### RADERING-06: Avbryt granskningen och återgå till bevarat arbete
+
+**Syfte:** Fullständig tangentbordsgranskning, avbrytande och ny uttrycklig
+radering vid 1280 × 900 i ljust tema.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Allmän förberedelse. Välj ljust tema och 1280 × 900;
+verklig zoom hör till RADERING-21.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-06.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-06"
+  },
+  "reference": "1280 × 900, ljust tema; fullständigt tangentbordsflöde med fokus, läsbarhet och uttrycklig radering.",
+  "outcomes": [
+    "Avbruten granskning bevarar arbetet och nästa granskning kräver ny bekräftelse.",
+    "Hela UI-flödet, läsbart fokus och verifierad återgång fungerar i vald konfiguration."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **Nytt objekt**, skriv **Oskickat arbete före radering** i **Namn**.
+   Tryck Escape, välj **Fortsätt redigera** och kontrollera namn och fokus.
+   Tryck Escape igen och bekräfta **Kasta ändringarna och fortsätt**.
+2. Öppna **Inställningar → Permanent radering** med tangentbordet.
+   Huvudrubriken får synligt fokus, kartan är dold och det kastade formuläret
+   stängt. Läs den valda sidans länk. Vid smal bredd öppnas och stängs
+   **Välj inställning** med Enter kring läsningen.
+3. Markera lampan med mellanslag och välj **Granska raderingen** med Enter.
+   Rubriken **Omfattning att bekräfta** får fokus. Läs hela bildversionen,
+   lampans namn och en personlig placering. Stolen och privata förslaget
+   ska inte ingå. Fokusringar och text ska kunna läsas utan vågrät rullning.
+4. Kontrollera inaktiverad **Radera permanent**. Skriv **RADERA permanent**:
+   knappen förblir inaktiverad. Skriv **RADERA PERMANENT**, men aktivera
+   **Avbryt** med tangentbordet. Granskningen stängs, valrubriken får fokus
+   och lampans val finns kvar. Ingen radering görs.
+5. Välj **Tillbaka till kartan**, öppna **Nytt objekt** och kontrollera
+   tomt namnfält. Stäng utan ändring. Sparat innehåll och privata förslaget
+   bevaras; exakta placeringar verifieras som separat tekniskt underlag.
+6. Öppna samma inställningssida igen, välj lampan och granska på nytt.
+   Bekräftelsefältet är tomt och raderingsknappen inaktiverad. Skriv
+   **RADERA PERMANENT** och aktivera raderingen med Enter.
+7. Invänta slutfört besked och **Resultat**. Läs hela identifieraren och
+   resultatets ett objekt, en bildversion och noll samband och typer.
+   **Läs in kartan på nytt** får fokus; läs hela fokusringen och aktivera
+   med Enter. I **Tabell** saknas lampan och stolen finns. **Visa utkastet**
+   behåller **Oberoende privat förslag**.
+
+**Förväntat resultat:**
+
+- Avbruten granskning bevarar arbetet och nästa granskning kräver ny
+  bekräftelse.
+- Hela UI-flödet, läsbart fokus och verifierad återgång fungerar i vald
+  konfiguration.
 
 ### RADERING-07: Följ ett känt försök när ett senare resultat finns
 
-**Syfte:** Behåll rätt raderingsärende genom vanlig sidnavigation och
-omladdning även om en annan administratör slutför en senare radering.
+**Syfte:** Ett ursprungligt känt försök ersätts inte av en senare administratörs
+resultat.
 
-**Användare:** Alex och Robin, båda aktuella administratörer i skilda
-webbläsarprofiler.
+**Användare:** Alex och Robin, båda aktuella administratörer i skilda profiler.
 
-**Förutsättningar:** Förbered en ny provkarta enligt ovan med lampan,
-stolen och Alex oberoende privata förslag. Bjud in Robin och ge Robin
-administratörsrollen genom **Administrera tillgång**. Robin skapar och
-sparar den tomma sambandstypen **Senare tom sambandstyp** genom
-**Inställningar → Typer och egna fält**. Inget samband ska använda typen.
-Ange **använder** från startobjektet och **används av** från målobjektet.
-Alex privata förslag ska fortfarande vara osparat. Förbered samma
-kontrollerade bortkastade svar som i RADERING-02 i Alex profil.
+**Förutsättningar:** Allmän förberedelse. Robin skapar och sparar den oanvända
+sambandstypen **Senare tom sambandstyp** med etiketterna **använder** och
+**används av**; Alex privata förslag förblir osparat.
+
+**Separat förberedelse:** Tappa ett slutfört svar, execute, i Alex profil före
+steg 1; separat identitets- och begäranskontroll efteråt.
+Se [körbar förberedelse](household-erasure-preparation.md).
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-07: a known erasure survives Settings navigation and
-reload despite a newer result”.
+RADERING-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-07"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Navigation och omladdning följer första exakta ärendet.",
+    "Senare separat radering ändrar inte första resultatet eller oberoende arbete."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Alex granskar lampan och skriver **RADERA PERMANENT**. Välj
-   **Radera permanent**. Kontrollera **Utfallet är oklart**, utan något
-   slutförandebesked, och konsolens besked om det bortkastade slutförda
-   svaret. Anteckna försökets identifierare från dess begäran i **Network**.
-2. Robin öppnar **Inställningar → Permanent radering**, markerar bara
-   **Senare tom sambandstyp** och granskar. Inga objekt, bilder eller
-   privata ändringar ska ingå. Bekräfta uttryckligen och invänta slutfört
-   resultat. Anteckna Robins andra identifierare.
-3. Alex väljer **Översikt** i inställningarnas navigation och återvänder
-   till **Permanent radering**. Ladda om sidan. Välj **Kontrollera
-   raderingsstatus och läs in aktuellt innehåll**. Det slutförda resultatet
-   ska tydligt visa Alex
-   ursprungliga identifierare, aldrig Robins senare identifierare.
-   Resultatets antal ska vara ett objekt, en bildversion och noll samband,
-   objekttyper och sambandstyper.
-4. Öppna **Översikt**, återvänd till raderingssidan och kontrollera status
-   igen. Samma ursprungliga identifierare och slutförda resultat ska visas.
-   **Network** ska inte visa någon ny `erasure/execute` eller
-   `erasure/resume` i Alex profil.
-5. Läs in kartan på nytt. Lampan och den senare tomma sambandstypen ska
-   saknas; stolen, dess placering och Alex oberoende privata förslag ska
-   finnas kvar. Övriga typer ska vara oförändrade.
+1. Alex granskar lampan och skriver **RADERA PERMANENT**. Operatören
+   förbereder tappat execute-svar. Välj **Radera permanent** och läs
+   **Utfallet är oklart** utan slutförandebesked. Operatören behåller det
+   första försökets identifierare för separat jämförelse.
+2. Robin öppnar **Permanent radering**, markerar bara **Senare tom
+   sambandstyp**, granskar noll objekt, bilder och privata ändringar.
+   Bekräfta uttryckligen och invänta eget slutfört resultat.
+3. Alex väljer **Översikt**, återvänder till **Permanent radering** och
+   laddar om. Välj **Kontrollera raderingsstatus och läs in aktuellt
+   innehåll**. Det första försöket återfinns med ett objekt, en bildversion
+   och noll samband och typer; Robins senare resultat får inte ersätta det.
+4. Besök **Översikt**, återvänd och kontrollera status igen: samma första
+   resultat visas. Välj **Läs in kartan på nytt → Tabell**. Lampan saknas,
+   stolen och Alex privata förslag i **Visa utkastet** finns kvar.
+   Operatören kontrollerar de två exakta resultaten och bevarade typerna.
 
 **Förväntat resultat:**
 
-- Ett nytt senaste resultat ersätter inte identiteten hos ett redan känt
-  raderingsförsök när en sida lämnas eller laddas om.
-- Statusläsning återfinner det ursprungliga resultatet utan en ny
-  destruktiv begäran. Robins separata radering har sin egen identifierare.
-- Endast de två uttryckligen granskade omfattningarna raderas. Oberoende
-  sparat och privat innehåll förblir oförändrat.
+- Navigation och omladdning följer första exakta ärendet.
+- Senare separat radering ändrar inte första resultatet eller oberoende arbete.
+
+### RADERING-08: En aktuell administratör fortsätter samma väntande ärende
+
+**Syfte:** Aktuell auktoritet styr samma fastlåsta ärende genom omstart och
+förlorat slutförandesvar.
+
+**Användare:** Alex, Robin och installationens operatör.
+
+**Förutsättningar:** Allmän förberedelse. Robin är administratör och har
+**Robins eget privata förslag** på stolen i sitt osparade utkast. Alex behåller
+sitt eget förslag. SQLite-läsaren är öppen.
+
+**Separat förberedelse:** SQLite-läsare före steg 1 till steg 5; tappa slutfört
+resume-svar före andra fortsättningen; tekniska efterkontroller.
+Se [körbar förberedelse](household-erasure-preparation.md).
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-08.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-08"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Förlorad administratörstillgång kan inte fortsätta ärendet.",
+    "Aktuell administratör följer samma väntande och slutförda ärende.",
+    "Båda oberoende privata utkast bevaras utan att röjas på raderingssidan."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Alex granskar och bekräftar lampans radering. Robins privata
+   beskrivning ska inte synas. Invänta väntande städning och läs ärendet.
+2. Robin öppnar **Administrera tillgång → Medlemmar** och väljer **Gör
+   till medlem** på Alex rad. Alex laddar om raderingssidan; **Du kan inte
+   administrera hushållet** visas utan slutförandeknapp.
+3. Robin öppnar **Permanent radering**. Samma väntande ärende visas utan
+   automatisk fortsättning och utan Alex privata beskrivning. I separata
+   flikar är kartarbetet stoppat och **Förbered fullständig export** ger fel.
+4. Operatören startar om samma installation med läsaren kvar. Robin laddar
+   om och väljer **Försök slutföra raderingen**. Inget slutförandebesked
+   visas; karta och ny export förblir spärrade.
+5. Operatören avslutar läsaren och förbereder tappat resume-svar i Robins
+   profil. Robin väljer **Försök slutföra raderingen** igen. Läs **Utfallet
+   är oklart** utan slutförandebesked eller resultatantal.
+6. Robin besöker **Översikt**, återvänder, laddar om och väljer **Kontrollera
+   raderingsstatus och läs in aktuellt innehåll**. Samma ärende är slutfört:
+   ett objekt, en bildversion och noll samband och typer.
+7. Robin väljer **Läs in kartan på nytt → Tabell**. Alex öppnar sin karta.
+   Lampan saknas. Var och en öppnar stolen och **Visa utkastet** och läser
+   sitt eget bevarade privata förslag. Operatören gör efterkontrollerna.
+
+**Förväntat resultat:**
+
+- Förlorad administratörstillgång kan inte fortsätta ärendet.
+- Aktuell administratör följer samma väntande och slutförda ärende.
+- Båda oberoende privata utkast bevaras utan att röjas på raderingssidan.
 
 ### RADERING-09: Ett saknat känt försök har fortfarande okänt utfall
 
-**Syfte:** Kontrollera att ett känt försök utan bekräftat resultat beskrivs
-som okänt även efter navigation och omladdning, utan att ett annat
-slutfört försök används som svar.
+**Syfte:** Ett saknat exakt resultat får inte ersättas av ett annat slutfört
+försök.
 
-**Användare:** Alex som aktuell administratör i profilerna A och B.
+**Användare:** Alex i profilerna A och B.
 
-**Förutsättningar:** Ny provkarta enligt allmän förberedelse. Logga in med
-samma konto i profil B. Typen **Person** ska vara oanvänd; lampan och stolen
-använder **Fordon**. I profil A öppnar du utvecklarverktygen och använder
-**Network request blocking** för att blockera bara adressmönstret
-`*/erasure/execute`. Blockeringen ska hindra nästa begäran innan servern
-tar emot den. Inga andra adresser ska blockeras.
+**Förutsättningar:** Allmän förberedelse. Samma konto i båda profilerna;
+**Person** är oanvänd.
+
+**Separat förberedelse:** Blockera begäran innan den tas emot enligt separata
+tidpunkter i steg 1 och 4; tekniska efterkontroller.
+Se [körbar förberedelse](household-erasure-preparation.md).
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-09: an unavailable exact attempt stays explicitly
-unknown after navigation and a newer result”.
+RADERING-09.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-09"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Saknat eller otillgängligt resultat förblir uttryckligen okänt.",
+    "Andra ärendets slutförande ersätter aldrig det första."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Profil A öppnar **Inställningar → Permanent radering**, granskar lampan,
-   skriver **RADERA PERMANENT** och väljer **Radera permanent**. Kontrollera
-   **Utfallet är oklart**. Anteckna den fullständiga identifieraren under
-   **Raderingsförsök** och kontrollera i **Network** att begäran blockerades.
-   Stäng av blockeringen. Välj inte något återförsök av raderingen.
-2. Profil B öppnar raderingssidan, väljer bara den oanvända typen **Person**
-   och granskar. Kontrollera noll objekt, samband, privata ändringar och
-   bildversioner. Bekräfta den separata raderingen uttryckligen. Anteckna
-   dess andra identifierare och slutförda resultat med exakt en objekttyp.
-3. Profil A väljer **Översikt**, återvänder till **Permanent radering**
-   och laddar om sidan. Den första identifieraren ska fortfarande visas
-   tillsammans med ett uttryckligt besked om att utfallet är okänt.
-   **Network** ska visa HTTP 404 för läsningen av just den identifieraren.
-   Profil B:s identifierare, slutförandebesked och resultatantal får inte
-   visas som svar på profil A:s försök.
-4. Blockera tillfälligt bara adressen till profil A:s exakta statusläsning
-   i utvecklarverktygen. Välj **Kontrollera raderingsstatus och läs in
-   aktuellt innehåll**. Samma försök ska fortfarande ha okänt utfall.
-   Ta bort blockeringen och välj samma statusknapp igen. Kontrollera
-   beskedet **Inget bekräftat resultat hittades för ditt försök** och
-   fortsatt okänt utfall. Ingen radering ska skickas automatiskt.
-5. Läs kartan i profil B. Lampan, dess bild, stolen, stolens privata
-   förslag och personliga placeringar ska vara kvar. Bara den separat
-   granskade oanvända typen ska saknas. Kontrollera i profil A:s
-   **Network** att ingen ny `erasure/execute` eller `erasure/resume` har
-   skickats vid navigation, omladdning eller statusläsning.
+1. Operatören blockerar nästa execute i profil A före servermottagning.
+   Profil A granskar lampan, skriver **RADERA PERMANENT** och raderar.
+   **Utfallet är oklart** och ett känt försök visas. Operatören avblockerar.
+2. Profil B markerar bara **Person** på raderingssidan och granskar noll
+   objekt, samband, privata ändringar och bilder. Bekräfta uttryckligen.
+   Ett eget slutfört resultat med en objekttyp visas.
+3. Profil A besöker **Översikt**, återvänder och laddar om. Samma första
+   försök visas med okänt utfall, utan profil B:s slutförandebesked eller antal.
+4. Operatören blockerar bara första försökets statusläsning. Välj
+   **Kontrollera raderingsstatus och läs in aktuellt innehåll**: fortsatt
+   oklart. Operatören avblockerar. Kontrollera igen: **Inget bekräftat
+   resultat hittades för ditt försök** och fortsatt okänt utfall visas.
+5. Profil B öppnar kartans **Tabell**. Lampan och stolen är
+   kvar. **Visa utkastet** visar stolens privata förslag. Operatören
+   kontrollerar exakt saknat resultat, oförändrade placeringar och typer.
 
 **Förväntat resultat:**
 
-- HTTP 404 eller en otillgänglig statusläsning bekräftar inte att
-  raderingen är slutförd eller att ingen radering skett. Sidan visar
-  samma kända identifierare och ett uttryckligen okänt utfall.
-- Ett annat ärendes slutförda resultat ersätter inte det saknade resultatet.
-  Efter omladdning återskapas ingen destruktiv begäran från lagrad metadata.
-- Endast profil B:s separat bekräftade typ tas bort. Automationen jämför
-  hela kartan, det oberoende privata utkastet och personliga vyer samt
-  kontrollerar att lampans verkliga bild fortfarande kan läsas.
+- Saknat eller otillgängligt resultat förblir uttryckligen okänt.
+- Andra ärendets slutförande ersätter aldrig det första.
 
 ### RADERING-10: Ett gammalt statussvar ändrar inte ett nyare försök
 
-**Syfte:** Kontrollera att en fördröjd statusläsning från en lämnad sida
-inte ersätter ett senare uttryckligen granskat ärende eller tar dess fokus.
+**Syfte:** En fördröjd status från lämnad sida får inte ersätta nyare resultat
+eller fokus.
 
-**Användare:** Alex som aktuell administratör.
+**Användare:** Alex som administratör.
 
-**Förutsättningar:** Ny provkarta enligt allmän förberedelse. Typen
-**Person** är oanvänd; lampan och stolen använder **Fordon**. Genomför
-steg 1 innan det kontrollerade utdraget nedan installeras. Utdraget håller
-bara leveransen av ett verkligt svar; inga uppgifter eller begäranden ändras.
+**Förutsättningar:** Allmän förberedelse; **Person** är oanvänd.
+
+**Separat förberedelse:** Håll ett gammalt statussvar före steg 2, släpp i steg
+4; tekniska efterkontroller.
+Se [körbar förberedelse](household-erasure-preparation.md).
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-10: a retired status reply cannot replace a newer
-reviewed erasure after Settings navigation”.
+RADERING-10.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-10"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Sen response ersätter inte nyare resultat eller fokus.",
+    "Navigation och omladdning behåller nyare känt ärende utan ny radering."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Följ
+[håll ett gammalt statussvar](household-erasure-preparation.md#håll-ett-gammalt-statussvar)
+. Efter första verkliga slutförandet, före statuskontrollen i UI-steg 2:
+installera utdraget och meddela **Nästa gamla statussvar är förberett**. Efter
+statuskontrollen: invänta `RADERING-10: svaret väntar` för katalogsvaret efter
+den exakta statusläsningen, och meddela **Gamla svaret hålls** före
+navigationen. Behåll det under det nya försöket. Först efter nytt slutfört
+resultat och Översikts tangentbordsfokus i steg 4: tryck Alt+Skift+R och meddela
+**Gamla svaret är släppt**. Avbryt inte det nyare försöket. Utför de separata
+efterkontrollerna; vid avbrott släpp och ladda om enligt utdragets
+återställning.
 
 **Steg:**
 
-1. Öppna **Inställningar → Permanent radering**, granska lampan och
-   bekräfta uttryckligen. Invänta slutfört resultat med ett objekt och en
-   bildversion. Anteckna den fullständiga identifieraren.
-2. Installera utdraget nedan genom **Sources → Snippets** i
-   utvecklarverktygen. Välj **Kontrollera raderingsstatus och läs in
-   aktuellt innehåll**. Invänta konsolens **RADERING-10: svaret väntar**.
-   **Network** ska visa HTTP 200 för den exakta identifieraren och för
-   den efterföljande innehållsläsningen. Utdraget håller det senare svaret.
-3. Stäng utvecklarverktygen. Välj **Översikt** och återvänd till
-   **Permanent radering**. Välj bara **Person** och granska. Kontrollera
-   noll bildversioner, ett tomt bekräftelsefält och inaktiverad
-   **Radera permanent**. Skriv **RADERA PERMANENT** och bekräfta.
-4. Invänta ett nytt slutfört resultat med en annan identifierare,
-   en objekttyp och noll objekt, samband, sambandstyper och bildversioner.
-   Ge **Översikt** tangentbordsfokus utan att öppna länken.
-5. Tryck Alt+Skift+R för att släppa det gamla svaret. Samma nyare
-   identifierare och resultat ska vara kvar; fokus ska stanna på
-   **Översikt**. Tryck Enter, återvänd till raderingssidan och ladda om.
-   Kontrollera status igen. Bara det nyare försöket ska läsas och visas.
-6. Kontrollera i **Network** att bara de två uttryckliga raderingarna
-   skickas; inget slutförande eller ny radering startar av det gamla svaret.
-   Läs kartan: lampan, dess bild och den oanvända typen ska saknas.
-   Stolen, dess eget privata förslag, övriga typer och dess personliga
-   placering ska vara kvar.
-
-```js
-(() => {
-  const originalFetch = window.fetch;
-  let releaseResponse = () => {};
-  const held = new Promise((resolve) => { releaseResponse = resolve; });
-  function release(event) {
-    if (!event.altKey || !event.shiftKey || event.code !== 'KeyR') return;
-    event.preventDefault();
-    releaseResponse();
-    window.removeEventListener('keydown', release);
-  }
-  window.addEventListener('keydown', release);
-  window.fetch = async function (...args) {
-    const response = await originalFetch.apply(this, args);
-    const url = new URL(response.url);
-    if (url.origin === location.origin &&
-        url.pathname.endsWith('/erasure') && response.ok) {
-      window.fetch = originalFetch;
-      console.info('RADERING-10: svaret väntar');
-      await held;
-    }
-    return response;
-  };
-})();
-```
-
-Om fallet avbryts: tryck Alt+Skift+R och ladda om sidan innan nästa fall.
+1. Granska lampan, bekräfta uttryckligen och invänta slutfört resultat med ett
+   objekt och en bildversion.
+2. Operatören håller nästa gamla statussvar enligt länken nedan. Välj
+   **Kontrollera raderingsstatus och läs in aktuellt innehåll** och invänta
+   förberedelsebeskedet innan navigationen.
+3. Välj **Översikt**, återvänd och välj bara **Person**. Granska noll
+   bildversioner, tomt bekräftelsefält och inaktiverad raderingsknapp. Skriv
+   **RADERA PERMANENT** och radera uttryckligen.
+4. Invänta nytt slutfört resultat med en objekttyp och noll objekt, samband,
+   sambandstyper och bilder. Ge **Översikt** tangentbordsfokus utan att aktivera
+   länken. Be operatören släppa det gamla svaret och invänta bekräftelse. Nyare
+   resultat och fokus ska finnas kvar.
+5. Tryck Enter, återvänd till raderingssidan, ladda om och kontrollera status
+   igen: bara det nyare försöket visas. Välj **Läs in kartan på nytt → Tabell**.
+   Lampan saknas, stolen och dess privata förslag finns kvar. Operatören
+   kontrollerar exakta läsningar och bevarad lagring.
 
 **Förväntat resultat:**
 
-- Ett svar som hör till den lämnade sidan kan inte ersätta det aktuella
-  försökets identifierare, antal eller fokus. Navigation och omladdning
-  fortsätter att läsa det senare kända försöket.
-- De två verkliga raderingarna behåller var sin identifierare. Att lämna
-  en sida ångrar ingen serveråtgärd och utlöser ingen ny destruktiv begäran.
-- Automationen jämför hela det kvarvarande privata utkastet, objekt,
-  typer och personliga vyer samt bekräftar att lampans bild ger HTTP 404.
+- Sen response ersätter inte nyare resultat eller fokus.
+- Navigation och omladdning behåller nyare känt ärende utan ny radering.
 
 ### RADERING-11: Lagringsfel bevarar granskningen och samma väntande radering
 
-**Syfte:** Skilja ett fel i webbläsarens återhämtningsminne från ett
-verkligt serverresultat och stoppa nya åtgärder innan deras identifierare
-kan sparas.
+**Syfte:** Återhämtningsminnets fel skiljs från faktiskt serverresultat och
+stoppar osäkra nya åtgärder.
 
-**Användare:** Alex som administratör i profil A.
+**Användare:** Alex och installationens operatör.
 
-**Förutsättningar:** Ny provkarta med lampans bild och stolens privata
-förslag enligt allmän förberedelse. Använd Chromium och en andra terminal
-för SQLite-läsaren i RADERING-04. Installera följande utdrag en gång genom
-**Sources → Snippets** efter att raderingssidan har laddats. Det blockerar
-bara raderingsärendets lagring i denna flik. Stäng utvecklarverktygen.
-Alt+Skift+S blockerar skrivning, Alt+Skift+R blockerar borttagning och
-Alt+Skift+A tillåter båda igen. Ladda om efter fallet för att återställa
-webbläsarens vanliga funktioner.
+**Förutsättningar:** Allmän förberedelse; Chromium. Lagringsutdraget blockeras
+initialt för borttagning.
 
-```js
-(() => {
-  const prefix = 'skyttel-erasure:';
-  const originalSet = Storage.prototype.setItem;
-  const originalRemove = Storage.prototype.removeItem;
-  let blocked = 'removeItem';
-  window.addEventListener('keydown', (event) => {
-    if (!event.altKey || !event.shiftKey) return;
-    if (event.code === 'KeyS') blocked = 'setItem';
-    else if (event.code === 'KeyR') blocked = 'removeItem';
-    else if (event.code === 'KeyA') blocked = '';
-    else return;
-    event.preventDefault();
-  });
-  Storage.prototype.setItem = function (key, value) {
-    if (key.startsWith(prefix) && blocked === 'setItem')
-      throw new DOMException('Kontrollerat lagringsfel', 'QuotaExceededError');
-    return originalSet.call(this, key, value);
-  };
-  Storage.prototype.removeItem = function (key) {
-    if (key.startsWith(prefix) && blocked === 'removeItem')
-      throw new DOMException('Kontrollerat lagringsfel', 'SecurityError');
-    return originalRemove.call(this, key);
-  };
-})();
-```
+**Separat förberedelse:** Blockera återhämtningsminnet före steg 1;
+SQLite-läsare först i steg 3 till steg 6; tekniska efterkontroller.
+Se [körbar förberedelse](household-erasure-preparation.md).
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
-testfallet “RADERING-11: unavailable recovery storage preserves review
-and the exact pending cleanup without another erasure”.
+RADERING-11.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-11"
+  },
+  "reference": "Chromium, lokal provdatabas med verklig HTTP och SQLite; fallets angivna roller och felgräns.",
+  "outcomes": [
+    "Lagringsfel skapar varken falskt nytt försök eller falsk fortsättning.",
+    "Samma verkliga väntande ärende slutförs efter återställd lagring."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat operatörsförberedelse:**
+
+Följ
+[blockera återhämtningsminnet](household-erasure-preparation.md#blockera-återhämtningsminnet)
+och
+[håll en verklig SQLite-läsare](household-erasure-preparation.md#håll-en-verklig-sqlite-läsare)
+. Före UI-steg 1 installeras det oförändrade utdraget som blockerar borttagning;
+meddela **Borttagning ur återhämtningsminnet blockeras**.
+
+Vid första begäran i steg 2: tryck Alt+Skift+A och meddela **Lagring
+återställd** före markering. Efter granskning och bekräftelsetext men FÖRE
+Radera permanent: tryck Alt+Skift+S och meddela **Skrivning till
+återhämtningsminnet blockeras**. Läsaren ska inte vara öppnad här.
+
+Vid steg 3: öppna den befintliga SQLite-läsaren i samma databas och invänta
+**Läsningen är öppen**. Tryck Alt+Skift+A och meddela **Läsaren är öppen och
+lagringen återställd** före den första verkliga raderingen. Behåll läsaren under
+väntande städning. Vid steg 4: tryck Alt+Skift+S och bekräfta blockeringen FÖRE
+navigation. Behåll den genom navigation och den fortsättning som i steg 5 inte
+får skickas.
+
+Vid steg 6: tryck Alt+Skift+A, avsluta läsaren och invänta **Läsningen är
+avslutad**. Meddela **Lagringen återställd och läsaren avslutad** FÖRE samma
+fortsättningsknapp. Behåll samma ärende, session och databas; ladda inte om
+under felkedjan. Efter sista observationen i gränssnittet: utför de separata
+efterkontrollerna, tillåt lagring och ladda om enligt den befintliga
+återställningen. Vid avbrott avslutas läsaren och samma väntande ärende slutförs
+genom UI före ny provdatabas.
 
 **Steg:**
 
-1. Försök markera **Lampan att radera**. Ett meddelande om
-   **Webbläsarens återhämtningsminne** ska visas. Lampan ska förbli
-   omarkerad och sidan ska gå att använda; ingen radering skickas.
-2. Tryck Alt+Skift+A, markera lampan och välj **Granska raderingen**.
-   Skriv **RADERA PERMANENT**. Tryck Alt+Skift+S och välj
-   **Radera permanent**. Läs att ingen ny radering har startats.
-   Granskningen och bekräftelsetexten ska finnas kvar, utan en ny
-   identifierare för ett påstått raderingsförsök.
-3. Starta den oberoende SQLite-läsaren enligt RADERING-04 och låt den
-   behålla sin lästransaktion. Tryck Alt+Skift+A och bekräfta samma
-   granskning. Invänta verklig väntande städning och anteckna hela
-   identifieraren. Kartan är tillfälligt låst.
-4. Tryck Alt+Skift+S. Besök **Översikt** och återvänd till
-   **Permanent radering**. Samma identifierare och väntande städning ska
-   visas tillsammans med det separata lagringsfelet. Sidan får inte säga
-   att den framgångsrika statusläsningen misslyckades.
-5. Välj **Försök slutföra raderingen**. Läs att ingen fortsättning har
-   skickats. I **Network** ska ingen ny `/erasure/execute` eller
-   `/erasure/resume` ha skickats av detta försök.
-6. Tryck Alt+Skift+A och avsluta lästransaktionen enligt RADERING-04.
-   Välj samma fortsättningsknapp. Invänta slutförd radering med samma
-   identifierare. Läs in kartan och kontrollera stolen och dess privata
-   förslag. Lampan och dess tidigare bild ska vara borta.
+1. Försök markera lampan. Läs **Webbläsarens återhämtningsminne**; lampan
+   förblir omarkerad och sidan användbar.
+2. Be operatören återställa lagringen och invänta bekräftelse. Markera lampan
+   och granska. Skriv **RADERA PERMANENT**. Be operatören blockera nästa lagring
+   och invänta bekräftelse. Välj **Radera permanent**. Läs att ingen ny radering
+   startats. Granskningen och bekräftelsetexten finns kvar utan identifierare
+   för ett nytt påstått försök.
+3. Be operatören öppna läsaren och återställa lagringen. Invänta båda
+   bekräftelserna och bekräfta samma granskning. Invänta verklig städning med
+   känt försök och spärrat innehåll.
+4. Be operatören blockera lagringen och invänta bekräftelse. Besök **Översikt**
+   och återvänd. Samma försök och städning visas med separat lagringsfel. Sidan
+   får inte säga att den framgångsrika statusläsningen misslyckades.
+5. Välj **Försök slutföra raderingen**. Läs **Ingen fortsättning har skickats**;
+   ärendet förblir väntande.
+6. Be operatören återställa lagringen och avsluta läsaren. Invänta båda
+   bekräftelserna. Välj samma fortsättningsknapp och invänta slutfört resultat
+   för samma ärende. Välj **Läs in kartan på nytt → Tabell**. Lampan saknas,
+   stolen och dess privata förslag finns kvar. Operatören utför tekniska
+   efterkontroller.
 
 **Förväntat resultat:**
 
-- Lagringsfel blir synliga och lämnar granskning och kontroller användbara.
-  Ett blockerat nytt försök skapar ingen falsk identifierare.
-- Ett faktiskt väntande serverärende behåller sin identitet och status.
-  Endast den uttryckliga fortsättningen efter återställd lagring skickas;
-  ingen ersättande radering skapas.
-- Automationen jämför det oförändrade innehållet före den enda raderingen,
-  dess exakta identifierare, det oberoende privata utkastet och bildens HTTP 404.
+- Lagringsfel skapar varken falskt nytt försök eller falsk fortsättning.
+- Samma verkliga väntande ärende slutförs efter återställd lagring.
+
+## Hela granskningen vid andra konfigurationer
+
+### RADERING-12: Avbryt och radera vid 1280 × 900, mörkt tema
+
+**Syfte:** Skydda temakontrast och hela fokusringen.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny allmän förberedelse, 1280 × 900 och mörkt tema.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-12.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-12"
+  },
+  "reference": "1280 × 900, mörkt tema; hela flödet, skyddar temakontrast och hela fokusringen.",
+  "outcomes": [
+    "Avbrytande bevarar arbete och ny granskning kräver ny uttrycklig bekräftelse.",
+    "Full radering och återgång behåller oberoende privat arbete och synligt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför RADERING-06 steg 1–7 en gång i denna konfiguration. Under steg
+   2 öppnas smal sidmeny när **Välj inställning** visas. Under steg 3–4
+   och 6–7 kontrolleras hela fokusringen, läsbara bild- och
+   raderingsidentifierare samt nåbara kontroller i valt tema.
+
+**Förväntat resultat:**
+
+- Samma fullständiga avbrytande, nya granskning och uttryckliga radering
+  fungerar utan dolt fokus eller oläsbara identiteter.
+- Stolen och dess privata förslag finns kvar efter verifierad återgång.
+
+### RADERING-13: Avbryt och radera vid 390 × 900, ljust tema
+
+**Syfte:** Skydda smal sidnavigation och läsbara identiteter.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny allmän förberedelse, 390 × 900 och ljust tema.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-13.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-13"
+  },
+  "reference": "390 × 900, ljust tema; hela flödet, skyddar smal sidnavigation och läsbara identiteter.",
+  "outcomes": [
+    "Avbrytande bevarar arbete och ny granskning kräver ny uttrycklig bekräftelse.",
+    "Full radering och återgång behåller oberoende privat arbete och synligt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför RADERING-06 steg 1–7 en gång i denna konfiguration. Under steg
+   2 öppnas smal sidmeny när **Välj inställning** visas. Under steg 3–4
+   och 6–7 kontrolleras hela fokusringen, läsbara bild- och
+   raderingsidentifierare samt nåbara kontroller i valt tema.
+
+**Förväntat resultat:**
+
+- Samma fullständiga avbrytande, nya granskning och uttryckliga radering
+  fungerar utan dolt fokus eller oläsbara identiteter.
+- Stolen och dess privata förslag finns kvar efter verifierad återgång.
+
+### RADERING-14: Avbryt och radera vid 390 × 900, mörkt tema
+
+**Syfte:** Skydda smal sidnavigation och mörk temakontrast.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny allmän förberedelse, 390 × 900 och mörkt tema.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-14.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-14"
+  },
+  "reference": "390 × 900, mörkt tema; hela flödet, skyddar smal sidnavigation och mörk temakontrast.",
+  "outcomes": [
+    "Avbrytande bevarar arbete och ny granskning kräver ny uttrycklig bekräftelse.",
+    "Full radering och återgång behåller oberoende privat arbete och synligt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför RADERING-06 steg 1–7 en gång i denna konfiguration. Under steg
+   2 öppnas smal sidmeny när **Välj inställning** visas. Under steg 3–4
+   och 6–7 kontrolleras hela fokusringen, läsbara bild- och
+   raderingsidentifierare samt nåbara kontroller i valt tema.
+
+**Förväntat resultat:**
+
+- Samma fullständiga avbrytande, nya granskning och uttryckliga radering
+  fungerar utan dolt fokus eller oläsbara identiteter.
+- Stolen och dess privata förslag finns kvar efter verifierad återgång.
+
+### RADERING-15: Avbryt och radera vid 320 × 900, ljust tema
+
+**Syfte:** Skydda mycket smalt omflöde och nåbar bekräftelse.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny allmän förberedelse, 320 × 900 och ljust tema.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-15.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-15"
+  },
+  "reference": "320 × 900, ljust tema; hela flödet, skyddar mycket smalt omflöde och nåbar bekräftelse.",
+  "outcomes": [
+    "Avbrytande bevarar arbete och ny granskning kräver ny uttrycklig bekräftelse.",
+    "Full radering och återgång behåller oberoende privat arbete och synligt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför RADERING-06 steg 1–7 en gång i denna konfiguration. Under steg
+   2 öppnas smal sidmeny när **Välj inställning** visas. Under steg 3–4
+   och 6–7 kontrolleras hela fokusringen, läsbara bild- och
+   raderingsidentifierare samt nåbara kontroller i valt tema.
+
+**Förväntat resultat:**
+
+- Samma fullständiga avbrytande, nya granskning och uttryckliga radering
+  fungerar utan dolt fokus eller oläsbara identiteter.
+- Stolen och dess privata förslag finns kvar efter verifierad återgång.
+
+### RADERING-16: Avbryt och radera vid 320 × 900, mörkt tema
+
+**Syfte:** Skydda mycket smalt omflöde och mörk temakontrast.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny allmän förberedelse, 320 × 900 och mörkt tema.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-16.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-16"
+  },
+  "reference": "320 × 900, mörkt tema; hela flödet, skyddar mycket smalt omflöde och mörk temakontrast.",
+  "outcomes": [
+    "Avbrytande bevarar arbete och ny granskning kräver ny uttrycklig bekräftelse.",
+    "Full radering och återgång behåller oberoende privat arbete och synligt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför RADERING-06 steg 1–7 en gång i denna konfiguration. Under steg
+   2 öppnas smal sidmeny när **Välj inställning** visas. Under steg 3–4
+   och 6–7 kontrolleras hela fokusringen, läsbara bild- och
+   raderingsidentifierare samt nåbara kontroller i valt tema.
+
+**Förväntat resultat:**
+
+- Samma fullständiga avbrytande, nya granskning och uttryckliga radering
+  fungerar utan dolt fokus eller oläsbara identiteter.
+- Stolen och dess privata förslag finns kvar efter verifierad återgång.
+
+### RADERING-17: Avbryt och radera vid 640 × 500, ljust tema
+
+**Syfte:** Skydda kort arbetsyta och nåbara fokuserade kontroller.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny allmän förberedelse, 640 × 500 och ljust tema.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-17.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-17"
+  },
+  "reference": "640 × 500, ljust tema; hela flödet, skyddar kort arbetsyta och nåbara fokuserade kontroller.",
+  "outcomes": [
+    "Avbrytande bevarar arbete och ny granskning kräver ny uttrycklig bekräftelse.",
+    "Full radering och återgång behåller oberoende privat arbete och synligt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför RADERING-06 steg 1–7 en gång i denna konfiguration. Under steg
+   2 öppnas smal sidmeny när **Välj inställning** visas. Under steg 3–4
+   och 6–7 kontrolleras hela fokusringen, läsbara bild- och
+   raderingsidentifierare samt nåbara kontroller i valt tema.
+
+**Förväntat resultat:**
+
+- Samma fullständiga avbrytande, nya granskning och uttryckliga radering
+  fungerar utan dolt fokus eller oläsbara identiteter.
+- Stolen och dess privata förslag finns kvar efter verifierad återgång.
+
+### RADERING-18: Avbryt och radera vid 640 × 500, mörkt tema
+
+**Syfte:** Skydda kort arbetsyta och mörk temakontrast.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny allmän förberedelse, 640 × 500 och mörkt tema.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-18.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-18"
+  },
+  "reference": "640 × 500, mörkt tema; hela flödet, skyddar kort arbetsyta och mörk temakontrast.",
+  "outcomes": [
+    "Avbrytande bevarar arbete och ny granskning kräver ny uttrycklig bekräftelse.",
+    "Full radering och återgång behåller oberoende privat arbete och synligt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför RADERING-06 steg 1–7 en gång i denna konfiguration. Under steg
+   2 öppnas smal sidmeny när **Välj inställning** visas. Under steg 3–4
+   och 6–7 kontrolleras hela fokusringen, läsbara bild- och
+   raderingsidentifierare samt nåbara kontroller i valt tema.
+
+**Förväntat resultat:**
+
+- Samma fullständiga avbrytande, nya granskning och uttryckliga radering
+  fungerar utan dolt fokus eller oläsbara identiteter.
+- Stolen och dess privata förslag finns kvar efter verifierad återgång.
+
+### RADERING-19: Avbryt och radera vid 320 × 250, ljust tema
+
+**Syfte:** Skydda extremt kort och smal intern rullning utan dolt fokus.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny allmän förberedelse, 320 × 250 och ljust tema.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-19.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-19"
+  },
+  "reference": "320 × 250, ljust tema; hela flödet, skyddar extremt kort och smal intern rullning utan dolt fokus.",
+  "outcomes": [
+    "Avbrytande bevarar arbete och ny granskning kräver ny uttrycklig bekräftelse.",
+    "Full radering och återgång behåller oberoende privat arbete och synligt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför RADERING-06 steg 1–7 en gång i denna konfiguration. Under steg
+   2 öppnas smal sidmeny när **Välj inställning** visas. Under steg 3–4
+   och 6–7 kontrolleras hela fokusringen, läsbara bild- och
+   raderingsidentifierare samt nåbara kontroller i valt tema.
+
+**Förväntat resultat:**
+
+- Samma fullständiga avbrytande, nya granskning och uttryckliga radering
+  fungerar utan dolt fokus eller oläsbara identiteter.
+- Stolen och dess privata förslag finns kvar efter verifierad återgång.
+
+### RADERING-20: Avbryt och radera vid 320 × 250, mörkt tema
+
+**Syfte:** Skydda extremt kort och smal intern rullning i mörkt tema.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny allmän förberedelse, 320 × 250 och mörkt tema.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+RADERING-20.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-20"
+  },
+  "reference": "320 × 250, mörkt tema; hela flödet, skyddar extremt kort och smal intern rullning i mörkt tema.",
+  "outcomes": [
+    "Avbrytande bevarar arbete och ny granskning kräver ny uttrycklig bekräftelse.",
+    "Full radering och återgång behåller oberoende privat arbete och synligt fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför RADERING-06 steg 1–7 en gång i denna konfiguration. Under steg
+   2 öppnas smal sidmeny när **Välj inställning** visas. Under steg 3–4
+   och 6–7 kontrolleras hela fokusringen, läsbara bild- och
+   raderingsidentifierare samt nåbara kontroller i valt tema.
+
+**Förväntat resultat:**
+
+- Samma fullständiga avbrytande, nya granskning och uttryckliga radering
+  fungerar utan dolt fokus eller oläsbara identiteter.
+- Stolen och dess privata förslag finns kvar efter verifierad återgång.
+
+## Faktisk zoom och fysisk tangentbordsanvändning
+
+### RADERING-21: Läs och genomför vid verklig webbläsarzoom
+
+**Syfte:** Kontrollera verklig förstoring och fysisk tangentbordsåtkomst
+utan att likställa dessa med Chromium-viewport eller syntetiska tangenter.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ny påhittad provdatabas per full körning. Använd ett
+fysiskt tangentbord och webbläsarens faktiska zoom vid 200 och 400 procent.
+
+**Kräver mänsklig observation:** Läs hela omfattningen, bildversionerna och
+slutförandets identitet vid faktisk zoom; nå bekräftelse, avbrytande och
+återgång med det fysiska tangentbordet utan avklippt eller dolt fokus.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Fysisk tangentbordsåtkomst och läsbarhet vid faktisk webbläsarzoom 200 och 400 procent."
+  },
+  "reference": "Fysiskt tangentbord, faktisk zoom 200 och 400 procent; ny provdatabas per körning.",
+  "outcomes": ["Omfattning, kontroller, identiteter och hela fokusringar förblir läsbara och nåbara."],
+  "evidence": [{
+    "kind": "overlap",
+    "spec": "tests/integration/household-erasure.spec.ts",
+    "caseId": "RADERING-06",
+    "purpose": "Syntetiskt tangentbordsflöde; utför inte faktisk zoom eller fysisk input."
+  }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ställ webbläsarens zoom till 200 procent. Utför RADERING-06 steg 1–7
+   en gång med fysiska tangenter. Läs omfattning och resultat vid rätt steg.
+2. Återställ provdatabasen, ställ zoom till 400 procent och utför samma
+   hela procedur en gång. Återställ zoom och provmiljö efteråt.
+
+**Förväntat resultat:**
+
+- Ingen förstoring döljer fokus, information eller nödvändiga kontroller.
+- Fysisk tangentbordsanvändning kan genomföra båda fullständiga körningarna.

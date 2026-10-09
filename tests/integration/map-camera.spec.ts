@@ -53,6 +53,63 @@ async function arrange(page: Page, origin: string) {
       ).ok(),
     ).toBe(true);
   }
+  expect(
+    (
+      await page.request.post(`${path}/save`, {
+        headers: { origin },
+        data: { version: (await read()).draft.version, operationId: 'camera-fixture' },
+      })
+    ).ok(),
+  ).toBe(true);
+  const saved = await read();
+  expect(saved.objects).toHaveLength(4);
+  expect(saved.relationships).toHaveLength(2);
+  for (const object of saved.objects) {
+    expect(
+      (
+        await page.request.post(`${path}/draft`, {
+          headers: { origin },
+          data: {
+            version: (await read()).draft.version,
+            id: object.id,
+            baseRevision: object.revision,
+            value: {
+              name: object.name,
+              typeId: object.typeId,
+              description: 'Privat kameraförslag',
+            },
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+  }
+  for (const edge of saved.relationships) {
+    expect(
+      (
+        await page.request.post(`${path}/relationship`, {
+          headers: { origin },
+          data: {
+            version: (await read()).draft.version,
+            id: edge.id,
+            baseRevision: edge.revision,
+            value: {
+              sourceId: edge.sourceId,
+              targetId: edge.targetId,
+              typeId: edge.typeId,
+              knowledge: 'uncertain',
+            },
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+  }
+  const privateWork = (await read()).draft;
+  const privateRelationships = privateWork.relationships ?? [];
+  expect(privateWork.changes).toHaveLength(4);
+  expect(privateRelationships).toHaveLength(2);
+  for (const change of privateWork.changes)
+    expect(change.after?.description).toBe('Privat kameraförslag');
+  for (const change of privateRelationships) expect(change.after?.knowledge).toBe('uncertain');
   const view = await (await page.request.get(`${path}/view`)).json();
   for (const [id, x, y, z] of [
     ['lo', 8, 4, 10],
@@ -146,6 +203,14 @@ test('KAMERA-02: focus fits only selection and direct neighbors while camera his
     const overview = await separation();
     await lo.dblclick();
     const panel = page.getByRole('region', { name: 'Lo Exempel', exact: true });
+    await expect(panel).toContainText('Lo Exempel');
+    await expect(panel).toContainText(content.types[0].name);
+    await expect(panel.locator('.household-table-description')).toContainText(
+      'Sparat: Ej uppgivet',
+    );
+    await expect(panel.locator('.household-table-description')).toContainText(
+      'Ditt förslag: Privat kameraförslag',
+    );
     const panelPosition = await panel.boundingBox();
     await openSelectionFocus(page, lo);
     await focus.click();

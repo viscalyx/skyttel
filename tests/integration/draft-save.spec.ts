@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, openMap, signIn } from '../support/client.js';
+import { openSavedHistory } from '../support/conversation-page.js';
 import { prepareDraftSave, registerPendingSave } from '../support/draft-save.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -59,7 +60,7 @@ test('UTKAST-36: draft save opens immediately and confirms one persistent save w
 });
 
 for (const width of [390, 320])
-  test(`UTKAST-37: closing a pending mobile save preserves its follow-up across map and table without stealing later focus at ${width}px`, async ({
+  test(`${width === 390 ? 'UTKAST-37' : 'UTKAST-100'}: closing a pending mobile save preserves its follow-up across map and table without stealing later focus at ${width}px`, async ({
     page,
   }) => {
     const app = await createInstallation();
@@ -287,7 +288,7 @@ test('UTKAST-40: a verified receipt closes the save dialog despite a failed map 
   }
 });
 
-test('UTKAST-39: recovery after reload completes the existing attempt and retires its unknown follow-up without AI', async ({
+test('UTKAST-101: recovery after reload completes the existing attempt and retires its unknown follow-up without AI', async ({
   page,
 }) => {
   const app = await createInstallation();
@@ -323,7 +324,7 @@ test('UTKAST-39: recovery after reload completes the existing attempt and retire
   }
 });
 
-test('UTKAST-40: a rejected stale version retains every proposal until fresh reading and creates no saved history', async ({
+test('UTKAST-102: a rejected stale version retains every proposal until fresh reading and creates no saved history', async ({
   page,
 }) => {
   const app = await createInstallation();
@@ -373,12 +374,13 @@ test('UTKAST-40: a rejected stale version retains every proposal until fresh rea
       draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
     ).toBeEnabled();
     expect(await read()).toEqual(newer);
+    await expect(await openSavedHistory(page)).toContainText('Inga genomförda sparanden.');
   } finally {
     await app.close();
   }
 });
 
-test('UTKAST-37: a closed pending save restores the table heading when its focused follow-up disappears', async ({
+test('UTKAST-103: a closed pending save restores the table heading when its focused follow-up disappears', async ({
   page,
 }) => {
   const app = await createInstallation();
@@ -419,7 +421,7 @@ test('UTKAST-37: a closed pending save restores the table heading when its focus
 });
 
 for (const width of [1280, 390])
-  test(`UTKAST-38: Map receipt recovery restores visible draft context after its follow-up disappears at ${width}px`, async ({
+  test(`${width === 1280 ? 'UTKAST-104' : 'UTKAST-105'}: Map receipt recovery restores visible draft context after its follow-up disappears at ${width}px`, async ({
     page,
   }) => {
     const app = await createInstallation();

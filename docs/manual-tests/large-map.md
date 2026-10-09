@@ -34,12 +34,32 @@ inklusive ofullständiga och upphörda. Läsning ändrar inte informationen.
 
 ### STORKARTA-01: hela innehållet är åtkomligt i en tät karta
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/large-map.spec.ts",
+    "caseId": "STORKARTA-01"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kontrollera att färre etiketter och sidvisning inte gömmer innehåll eller tappar formulärtext, utkast eller personliga placeringar."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera att färre etiketter och sidvisning inte gömmer
 innehåll eller tappar formulärtext, utkast eller personliga placeringar.
 
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Den nya provkartan visar 500 objekt och 1 500 samband.
+Förbered en separat administratör enligt
+[medlemsfallen](membership.md#allmän-förberedelse). Den används endast för
+återkallelsen i steg 6; provkartan återställs efter fallet.
 
 **Integrationstest:**
 [large-map.spec.ts](../../tests/integration/large-map.spec.ts), testfallet
@@ -69,9 +89,9 @@ relationship reachable”.
    **Rapporter** → **Ändringshistorik**. Kontrollera de tidigare personliga
    placeringarna. Automatprovet läser även efter omstart av samma server
    med bibehållen databas.
-6. Logga ut. Kontrollera att provkartan inte visas för en oinloggad besökare.
-   Prova också återkallad medlemstillgång i en separat syntetisk profil om
-   rollen och förberedelsen tillåter det; annars anteckna den delen ej utförd.
+6. Öppna samma adress i en ny, oinloggad profil: hushållets tabell
+   visas inte. Återkalla sedan Alex tillgång från en annan administratörs
+   profil, ladda om Alex sida och kontrollera att tabellen stängs.
 
 **Förväntat resultat:**
 
@@ -85,5 +105,6 @@ relationship reachable”.
 - Kvittot, återlästa detaljer och historik beskriver samma sparade ändring.
   Automatprovet återläser även efter serveromstart och kontrollerar samtliga
   objekt, samband och tidigare personliga placeringar.
-- Utloggning tar bort tillgången till kartan. Automatprovet kontrollerar
-  även nekad åtkomst med en tidigare session efter återkallat medlemskap.
+- Oinloggad profil har ingen tillgång till kartan. Återkallat medlemskap
+  stänger även en tidigare sessions tabell. Automationen kontrollerar
+  dessutom nekad direkt HTTP-läsning.

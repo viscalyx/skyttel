@@ -23,14 +23,32 @@ fallen anger formulär, samtal, profil eller administration.
 2. Starta en ny installation för varje fall. Behåll samma databas och
    webbläsarfönster inom ett falls omstartsprov.
 3. KOST-01 och KOST-02 börjar med Google-inloggning som Alex. Skapa
-   **Kostnadsprov**, välj **Skriv till Skyttel** och **Godkänn och starta**
-   i medgivanderutan. KOST-03 och KOST-04 börjar utan hushåll.
+   **Kostnadsprov**, välj **Skriv till Skyttel**, **Nytt samtal** och
+   **Godkänn och starta** i medgivanderutan. KOST-03 och KOST-04 börjar
+   utan hushåll.
 4. Terminalkommandon nedan skrivs i startguidens terminal. Avsluta varje
    fall med `quit` och kontrollera borttagen tillfällig katalog enligt guiden.
 
 ## Underlag och beständighet
 
 ### KOST-01: separata kostnader och månadens antaganden återläses efter omstart
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-01"
+  },
+  "reference": "1280×900; ljust tema. KOST-04 växlar till ljust efter fördröjt sparande. Kontrollerade leverantörer, inga betalda anrop.",
+  "outcomes": [
+    "Uppdelade kostnader och månadsantaganden består efter omstart."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Förstå uppdelning, totalsumma, prisunderlag och sparade
 månadsantaganden utan att förväxla uppskattning med faktura.
@@ -43,33 +61,42 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 [costs.spec.ts](../../tests/integration/costs.spec.ts),
 “KOST-01: separata kostnader och månadens antaganden återläses efter omstart”.
 
+**Separat operatörsförberedelse:**
+
+Använd den befintliga [kostnadsinstallationen](#controlled-cost-fixture).
+Vid UI-steg 1, efter **Lyssnar**: kör `delegate` i terminalen. Det går
+genom serverns kontrollerade Terra-arbete. Bekräfta levererat uppdrag.
+Vid steg 2: kör `usage 90` och meddela **90 sekunders förbrukning förberedd**
+innan användaren stänger av mikrofonen. Vid steg 8: kör `restart`, behåll
+samma databas och invänta omstartens bekräftelse innan användaren laddar om.
+Följ startguidens återställning mellan fall och `quit` efter provningen.
+
 **Steg:**
 
-1. Välj **Prata med Skyttel**, vänta på **Lyssnar** och kör `delegate` i
-   terminalen. Uppdraget går genom röstens verkliga Terra-arbete. Vänta på
-   **Det kontrollerade kostnadsprovet är klart.**
-2. Kör `usage 90` och stäng av mikrofonen med **Prata med Skyttel**.
-   Vänta tills röstrutan har försvunnit och röstanslutningen har stängts,
-   några sekunder senare.
-3. Öppna **Månadskostnad**. Kontrollera aktuell månad i UTC, Render
-   **72,50 SEK (7,25 USD)**, Live **0,75 SEK (0,075 USD)** och Terra
-   **2,29 SEK (0,229 USD)**. Öppna **Visa mätvärden för Live** och
-   **Visa mätvärden för Terra**. Live visar 90 rapporterade sekunder.
-   Terra visar 100 000 indatatoken med cache och resonemang separat.
-4. Kräv delsumman **75,54 SEK (7,554 USD)** före de tre raderna.
-   Öppna **Visa driftantagandet**. Läs att Render avser hel
-   månad, tidigare förbrukning är okänd och cirka 200 kronor är ett
-   riktmärke utan automatisk spärr.
-5. Öppna modellpriserna under **Prisunderlag**. Kontrollera datum,
-   enheter, tabell, källor och uttryckligt antagande om 10 SEK per USD.
-   Startkrediten för Live ska inte läggas på en gång till.
-6. Öppna **Ändra månadens antaganden**, ändra **SEK per USD** till 11
-   och välj **Spara månadens antaganden**. Kräv **83,09 SEK (7,554 USD)**.
-7. Välj föregående månad. Dess förval är fortfarande 10 SEK per USD och
-   tidigare förbrukning är okänd. Återgå till aktuell månad; den har 11.
-8. Kör `restart`, ladda om webbläsaren och öppna mätvärdena igen.
-   Kontrollera samma uppdelning, ändrade valutantagande och delsumman
-   **83,09 SEK (7,554 USD)**.
+1. Välj **Prata med Skyttel**, vänta på **Lyssnar**. Be operatören leverera det
+   kontrollerade kostnadsuppdraget och invänta bekräftelse. Vänta på **Det
+   kontrollerade kostnadsprovet är klart.**
+2. Be operatören förbereda förbrukningen och invänta bekräftelse. Stäng av
+   mikrofonen med **Prata med Skyttel**. Vänta tills röstrutan har försvunnit
+   och röstanslutningen har stängts, några sekunder senare.
+3. Öppna **Månadskostnad**. Kontrollera aktuell månad i UTC, Render **72,50 SEK
+   (7,25 USD)**, Live **0,75 SEK (0,075 USD)** och Terra **2,29 SEK (0,229
+   USD)**. Öppna **Visa mätvärden för Live** och **Visa mätvärden för Terra**.
+   Live visar 90 rapporterade sekunder. Terra visar 100 000 indatatoken med
+   cache och resonemang separat.
+4. Kräv delsumman **75,54 SEK (7,554 USD)** före de tre raderna. Öppna **Visa
+   driftantagandet**. Läs att Render avser hel månad, tidigare förbrukning är
+   okänd och cirka 200 kronor är ett riktmärke utan automatisk spärr.
+5. Öppna modellpriserna under **Prisunderlag**. Kontrollera datum, enheter,
+   tabell, källor och uttryckligt antagande om 10 SEK per USD. Startkrediten för
+   Live ska inte läggas på en gång till.
+6. Öppna **Ändra månadens antaganden**, ändra **SEK per USD** till 11 och välj
+   **Spara månadens antaganden**. Kräv **83,09 SEK (7,554 USD)**.
+7. Välj föregående månad. Dess förval är fortfarande 10 SEK per USD och tidigare
+   förbrukning är okänd. Återgå till aktuell månad; den har 11.
+8. Be operatören starta om samma installation och invänta bekräftelse. Ladda om
+   webbläsaren och öppna mätvärdena igen. Kontrollera samma uppdelning, ändrade
+   valutantagande och delsumman **83,09 SEK (7,554 USD)**.
 
 **Förväntat resultat:**
 
@@ -82,6 +109,23 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 
 ### KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan dubbelräkning
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-02"
+  },
+  "reference": "1280×900; ljust tema. KOST-04 växlar till ljust efter fördröjt sparande. Kontrollerade leverantörer, inga betalda anrop.",
+  "outcomes": [
+    "Saknade slutvärden förblir osäkra; hämtningsfel behåller känt underlag utan dubbelräkning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Visa okänd förbrukning och bevara tidigare kända värden vid fel.
 
 **Användare:** Alex.
@@ -90,23 +134,48 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 
 **Integrationstest:**
 [costs.spec.ts](../../tests/integration/costs.spec.ts),
-“KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan dubbelräkning”.
+“KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan
+dubbelräkning”.
+
+**Separat operatörsförberedelse:**
+
+Använd den befintliga [kostnadsinstallationen](#controlled-cost-fixture).
+Efter **Lyssnar** i UI-steg 2: kör `usage 12`, `usage 15`, `usage 15` och
+`finalize off`, en rad i taget. Meddela **Kumulativ förbrukning utan
+slutvärde förberedd** innan mikrofonen stängs av. Vid steg 4: kör
+`restart`, behåll samma databas och invänta omstartens bekräftelse före
+omladdningen. Behåll det separat förberedda `text missing` och guidens
+hämtningsfel.
+
+När användaren har läst det återhämtade underlaget och delsumman efter
+omstarten i steg 4, före **Uppdatera underlaget** i steg 5: följ guidens
+[kontrollerade hämtningsfel](#a-failed-refresh-without-losing-the-last-values)
+och installera Chromium Network request blocking för
+`*/api/operator/costs?*`. Meddela **Hämtningsfelet är förberett**. Behåll
+sidan öppen; ladda inte om hela sidan medan blockeringen gäller. Först
+efter användarens synliga fel, inaktuella tidigare värden och oförändrade
+delsumma i steg 5: ta bort blockeringen och meddela **Hämtningen är
+återställd** före nästa **Uppdatera underlaget**. Avsluta enligt startguiden
+efter den lyckade återhämtningen.
 
 **Steg:**
 
 1. Skicka **Prova kostnadsunderlaget.** och vänta på det kontrollerade svaret.
-2. Välj **Prata med Skyttel** och vänta på **Lyssnar**. Kör `usage 12`,
-   `usage 15`, `usage 15` och `finalize off`, en rad i taget. Stäng av
+2. Välj **Prata med Skyttel** och vänta på **Lyssnar**. Be operatören förbereda
+   den kumulativa förbrukningen utan slutvärde och invänta bekräftelse. Stäng av
    mikrofonen och vänta tills röstanslutningen har stängts.
-3. Öppna **Månadskostnad** och **Visa mätvärden för Live** samt
-   **Visa mätvärden för Terra**. Live ska visa ett försök, 15 rapporterade
-   sekunder, osäkert slutunderlag och **0,13 SEK (0,0125 USD)**.
-   Terra ska visa **Belopp saknas** och saknade mätvärden.
-4. Läs texten om ofullständig delsumma. Anteckna delsumman. Kör
-   `restart` och ladda om; kräv samma kända underlag och osäkerhet.
-5. Följ guidens [kontrollerade hämtningsfel](#a-failed-refresh-without-losing-the-last-values).
-   Välj **Uppdatera underlaget**. Kräv synligt fel och inaktuella tidigare
-   värden med samma delsumma. Ta bort blockeringen och uppdatera igen.
+3. Öppna **Månadskostnad** och **Visa mätvärden för Live** samt **Visa mätvärden
+   för Terra**. Live ska visa ett försök, 15 rapporterade sekunder, osäkert
+   slutunderlag och **0,13 SEK (0,0125 USD)**. Terra ska visa **Belopp saknas**
+   och saknade mätvärden.
+4. Läs texten om ofullständig delsumma. Anteckna delsumman. Be operatören starta
+   om samma installation och invänta bekräftelse. Ladda om; kräv samma kända
+   underlag och osäkerhet.
+5. Be operatören förbereda hämtningsfelet och invänta bekräftelse. Välj
+   **Uppdatera underlaget**. Kräv synligt fel och inaktuella tidigare värden
+   med samma delsumma. Be operatören återställa hämtningen och invänta
+   bekräftelse. Välj **Uppdatera underlaget** igen; kräv samma delsumma och
+   att felstatus försvinner.
 
 **Förväntat resultat:**
 
@@ -118,22 +187,43 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 
 ### KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-04"
+  },
+  "reference": "1280×900; ljust tema. KOST-04 växlar till ljust efter fördröjt sparande. Kontrollerade leverantörer, inga betalda anrop.",
+  "outcomes": [
+    "Tappat svar efter sparande återhämtas, historik består efter omstart och fokus skyddas."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Återhämta ett sparat antagande efter tappat svar utan en extra
 skrivning och nå hela flödet med tangentbord på mobil och dator.
 
 **Användare:** Alex, utan hushåll.
 
-**Förutsättningar:** Ny installation. Prova dator, 390 och 320 pixlars bredd,
-ljust och mörkt tema samt verklig webbläsarzoom på 200 och 400 procent.
-För tappat svar behövs en lokal felproxy som låter servern slutföra
-`POST /api/operator/costs/assumptions` men släpper svaret. Att blockera
-anropet före servern provar inte samma fall. Det länkade testet ordnar detta
-automatiskt mot den riktiga servern och dess tillfälliga databas.
+**Förutsättningar:** Ny kontrollerad installation och 1280×900.
+
+**Separat förberedelse:** Operatören installerar
+[styrt kostnadssvar](#styrt-kostnadssvar) och armerar det tappade svaret
+före steg 3. Det tappas först sedan servern har svarat med framgång.
+Operatören återställer `fetch` och kör `restart` i installationens terminal
+med samma databas före omladdningen i steg 5. Operatören installerar
+fördröjningen före sparandet av 14 i steg 7 och släpper det svaret
+först när testaren har valt **Ljust** och bekräftat temaknappens fokus.
+Återställ `fetch` efter varje prov eller ladda om sidan. Avsluta
+installationen med `quit`.
 
 **Integrationstest:**
-[costs.spec.ts](../../tests/integration/costs.spec.ts),
-“KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer”
-med tilläggen “(1280px)”, “(390px)” och “(320px)”.
+[costs.spec.ts](../../tests/integration/costs.spec.ts), KOST-04.
+390px och 320px har egna fall KOST-05 och KOST-06 nedan.
 
 **Steg:**
 
@@ -141,16 +231,22 @@ med tilläggen “(1280px)”, “(390px)” och “(320px)”.
    delsumman 72,50 SEK och texten om separat driftbehörighet.
 2. Öppna **Ändra månadens antaganden**. Fokus ska stå i **SEK per USD**.
    Ange 12, välj **Uppdatera underlaget** och kontrollera att 12 står kvar.
-3. Aktivera det tappade svaret och välj **Spara månadens antaganden**.
+3. Invänta operatörens bekräftelse på förberedelsen av det tappade svaret
+   och välj **Spara månadens antaganden**.
    Kräv **Sparresultatet är okänt**, spärrat sparande och äldre känd summa.
 4. Välj **Uppdatera underlaget**. Kräv 87,00 SEK och besked att aktuella
-   antaganden är hämtade. Inget nytt sparande ska behövas.
-5. Återställ svaret, kör `restart` och ladda om. Öppna **Tidigare
-   antaganden för månaden**. Version 1 har kurs 10 och version 2 kurs 12.
+   antaganden är hämtade. Fokus ska stanna på **Uppdatera underlaget**.
+   Inget nytt sparande ska behövas.
+5. Invänta operatörens bekräftelse på återställningen och omstarten med
+   samma databas. Ladda om sidan.
+   Öppna **Tidigare antaganden för månaden**. Version 1 har kurs 10 och
+   version 2 kurs 12.
 6. Öppna redigeringen, ange 13 och spara. Fokus återgår till **Ändra
    månadens antaganden**. Öppna och stäng redigeringen; fokus återgår igen.
-7. Spara 14 med ett fördröjt svar. Välj tema medan sparandet pågår;
-   temaknappens fokus ska bestå när kvittot kommer.
+7. Invänta operatörens bekräftelse på fördröjningen. Spara 14.
+   Öppna **Tema** och välj **Ljust** medan sparandet pågår.
+   Kontrollera temaknappens fokus och be operatören släppa svaret.
+   Invänta bekräftelsen och sparbeskedet; temaknappens fokus ska bestå.
 8. Öppna mätvärden och hela prisunderlaget. Använd Tab och piltangenter
    för pristabellen. Kontrollera läsbarhet, synligt fokus och att övrigt
    innehåll inte kräver rullning i sidled.
@@ -163,12 +259,147 @@ med tilläggen “(1280px)”, “(390px)” och “(320px)”.
   från hushållets karta och byter inga leverantörstjänster.
 - Öppning, sparande och stängning behåller ett begripligt tangentbordsfokus.
   Belopp, osäkerhet, mätvärden och fullständiga priser går att läsa på alla
-  provade bredder och zoomnivåer. Fysiska enheter och skärmläsare dokumenteras
+  provade bredder. Fysiska enheter, verklig zoom och skärmläsare dokumenteras
   separat; automatiska prov innebär inte fullständig WCAG-överensstämmelse.
+
+### KOST-05: 390px bevarar återhämtning, priser och senare fokus
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-05"
+  },
+  "reference": "390×900; mörkt efter fördröjt sparande. Felgräns, fokus och prisrullning skyddas.",
+  "outcomes": [
+    "390px behåller återhämtning, synligt besked, tabellrullning och senare fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Skydda läsbara priser och tangentbordsarbete vid smal bredd.
+
+**Användare:** Alex, utan hushåll.
+
+**Förutsättningar:** Starta ny [kontrollerad installation](#controlled-cost-fixture).
+Ställ innehållsytan på 390×900; detta är syntetiskt omflödesprov.
+
+**Separat förberedelse:** Operatören använder
+[styrt kostnadssvar](#styrt-kostnadssvar) för tappat svar före steg 1
+och fördröjt svar före sparandet av 14 i steg 3. Operatören släpper
+fördröjningen först efter bekräftat framgångsrikt svar som hålls för
+just detta sparande enligt guiden, testarens val av **Mörkt** och läsning av
+temaknappens fokus. Återställ `fetch` och avsluta med `quit`.
+
+**Integrationstest:** [costs.spec.ts](../../tests/integration/costs.spec.ts),
+KOST-05.
+
+**Steg:**
+
+1. Följ KOST-04 steg 1–4 på 390px: ange 12, tappa svaret efter
+   verkligt sparande, läs okänt utfall och hämta aktuellt underlag.
+2. Öppna redigeringen, ange 13 och spara. Kräv sparbesked och fokus på
+   **Ändra månadens antaganden**. Öppna och stäng redigeringen; samma
+   knapp får fokus igen.
+3. Invänta operatörens bekräftelse på fördröjningen, ange 14 och spara.
+   Invänta operatörens bekräftelse att just detta framgångsrika svar hålls.
+   Öppna **Tema**, välj **Mörkt** och kontrollera temaknappens fokus.
+   Be operatören släppa svaret. Invänta bekräftelsen och sparbeskedet;
+   temaknappen ska behålla fokus när beskedet kommer.
+4. Öppna **Prisunderlag** och modellpriserna. Fokusera Terra-tabellens
+   rullbara region och tryck högerpil. Nå alla kolumner och priser utan
+   att hela sidan måste rullas i sidled.
+
+**Förväntat resultat:**
+
+- Det tappade svaret ger okänt utfall med spärrat sparande. Uppdatering
+  återläser 87,00 SEK och tillåter fortsatt arbete utan upprepat sparande.
+- Priser och sparbesked är läsbara. Öppning och stängning återger fokus;
+  fördröjd framgång tar inte fokus från senare temaåtgärd.
+
+### KOST-06: 320px bevarar återhämtning, priser och senare fokus
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-06"
+  },
+  "reference": "320×900; ljust efter fördröjt sparande. Felgräns, fokus och prisrullning skyddas.",
+  "outcomes": [
+    "320px behåller återhämtning, synligt besked, tabellrullning och senare fokus."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Skydda läsbara priser och tangentbordsarbete vid smal bredd.
+
+**Användare:** Alex, utan hushåll.
+
+**Förutsättningar:** Starta ny [kontrollerad installation](#controlled-cost-fixture).
+Ställ innehållsytan på 320×900; detta är syntetiskt omflödesprov.
+
+**Separat förberedelse:** Operatören använder
+[styrt kostnadssvar](#styrt-kostnadssvar) för tappat svar före steg 1
+och fördröjt svar före sparandet av 14 i steg 3. Operatören släpper
+fördröjningen först efter bekräftat framgångsrikt svar som hålls för
+just detta sparande enligt guiden, testarens val av **Ljust** och läsning av
+temaknappens fokus. Återställ `fetch` och avsluta med `quit`.
+
+**Integrationstest:** [costs.spec.ts](../../tests/integration/costs.spec.ts),
+KOST-06.
+
+**Steg:**
+
+1. Följ KOST-04 steg 1–4 på 320px: ange 12, tappa svaret efter
+   verkligt sparande, läs okänt utfall och hämta aktuellt underlag.
+2. Öppna redigeringen, ange 13 och spara. Kräv sparbesked och fokus på
+   **Ändra månadens antaganden**. Öppna och stäng redigeringen; samma
+   knapp får fokus igen.
+3. Invänta operatörens bekräftelse på fördröjningen, ange 14 och spara.
+   Invänta operatörens bekräftelse att just detta framgångsrika svar hålls.
+   Öppna **Tema**, välj **Ljust** och kontrollera temaknappens fokus.
+   Be operatören släppa svaret. Invänta bekräftelsen och sparbeskedet;
+   temaknappen ska behålla fokus när beskedet kommer.
+4. Öppna **Prisunderlag** och modellpriserna. Fokusera Terra-tabellens
+   rullbara region och tryck högerpil. Nå alla kolumner och priser utan
+   att hela sidan måste rullas i sidled.
+
+**Förväntat resultat:**
+
+- Det tappade svaret ger okänt utfall med spärrat sparande. Uppdatering
+  återläser 87,00 SEK och tillåter fortsatt arbete utan upprepat sparande.
+- Priser och sparbesked är läsbara. Öppning och stängning återger fokus;
+  fördröjd framgång tar inte fokus från senare temaåtgärd.
 
 ## Åtkomst
 
 ### KOST-03: endast driftansvarig har åtkomst oberoende av hushållets roller
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/costs.spec.ts",
+    "caseId": "KOST-03"
+  },
+  "reference": "1280×900; ljust tema. KOST-04 växlar till ljust efter fördröjt sparande. Kontrollerade leverantörer, inga betalda anrop.",
+  "outcomes": [
+    "Endast driftansvarig får kostnadsåtkomst; återkallat hushållsmedlemskap påverkar inte denna behörighet."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja installationens kostnadsbehörighet från hushållstillgång.
 
@@ -181,22 +412,31 @@ med tilläggen “(1280px)”, “(390px)” och “(320px)”.
 [costs.spec.ts](../../tests/integration/costs.spec.ts),
 “KOST-03: endast driftansvarig har åtkomst oberoende av hushållets roller”.
 
+**Separat operatörsförberedelse:**
+
+Följ [två identiteter](#two-identities). Efter att Alex skapat hushållet
+i UI-steg 2: kör `identity robin` före Microsoft-inloggningen i den andra
+profilen. Meddela **Robins testidentitet är vald**. Byt inte hushåll eller
+databas under rollprovet; behåll skilda verifierade sessioner. Avsluta
+startguiden med `quit` och kontrollera städningen efter fallet.
+
 **Steg:**
 
 1. Logga in som Alex. Öppna **Månadskostnad** redan före hushållets start.
    Kontrollera att Render-underlaget visas.
-2. Återgå och skapa Kostnadsprov. Kör `identity robin`. Logga in som
-   Robin med Microsoft i den andra profilen. Kopiera Robins användar-ID.
-3. Bjud in Robin från Alex medlemskapssida. Acceptera som Robin och ge
-   sedan Robin administratörsrollen som Alex.
+2. Återgå och skapa Kostnadsprov. Be operatören förbereda Robins inloggning och
+   invänta bekräftelse. Logga in som Robin med Microsoft i den andra profilen.
+   Kopiera Robins användar-ID.
+3. Bjud in Robin från Alex medlemskapssida. Acceptera som Robin och ge sedan
+   Robin administratörsrollen som Alex.
 4. Robin ska sakna länken **Månadskostnad**. Skriv `/costs` efter
    installationens adress i Robins profil; inga kostnadsuppgifter visas.
-5. Öppna kostnadsöversikten som Alex. Återkalla Alex hushållstillgång
-   som Robin på medlemskapssidan. Ladda om Alex kostnadssida;
-   kostnadsunderlaget är fortfarande åtkomligt.
+5. Öppna kostnadsöversikten som Alex. Återkalla Alex hushållstillgång som Robin
+   på medlemskapssidan. Ladda om Alex kostnadssida; kostnadsunderlaget är
+   fortfarande åtkomligt.
 6. Öppna en extra flik i Alex profil och logga ut där. Återgå till
-   kostnadsfliken och välj **Uppdatera underlaget**, om den fortfarande
-   visas. Skyddade belopp och kostnadslänken ska försvinna.
+   kostnadsfliken och välj **Uppdatera underlaget**, om den fortfarande visas.
+   Skyddade belopp och kostnadslänken ska försvinna.
 
 **Förväntat resultat:**
 
@@ -261,8 +501,8 @@ launcher for each case. Never reuse a real installation for these controls.
 | `quit` | Stop the application and remove its temporary directory. |
 <!-- markdownlint-enable MD013 -->
 
-To generate Terra usage, choose **Skriv till Skyttel**, select
-**Godkänn och starta** in the consent box, and send
+To generate Terra usage, choose **Skriv till Skyttel**, then **Nytt samtal**,
+select **Godkänn och starta** in the consent box, and send
 **Prova kostnadsunderlaget.** The fixed response is
 **Det kontrollerade kostnadsprovet är klart.** No map change is proposed.
 
@@ -321,3 +561,89 @@ The exact browser workflows are in
 [KOST-01–KOST-04](costs.md). Current operator configuration,
 rate maintenance and limits are described in the
 [operator runbook](../operations/costs.md).
+
+## Styrt kostnadssvar
+
+Operatören kör följande i webbläsarens konsol på den disponibla
+installationens kostnadssida före det angivna sparandet i KOST-04–06.
+Testaren utför därefter fallets UI-steg. `drop` tappar nästa framgångsrika
+svar efter verkligt sparande; `hold` håller nästa framgångsrika svar tills
+det släpps.
+Felaktiga svar passerar normalt. Välj läge före sparande, ett i taget.
+Inga riktiga kostnadskonton eller modellnycklar behövs.
+
+```javascript
+(() => {
+  const original = window.fetch.bind(window);
+  let mode;
+  window.armCostReply = next => { mode = next; };
+  window.restoreCostReplies = () => { window.fetch = original; };
+  window.fetch = async (...args) => {
+    const input = args[0];
+    const url = input instanceof Request ? input.url : input;
+    const method = args[1]?.method ?? input?.method ?? 'GET';
+    if (new URL(url, location.href).pathname === '/api/operator/costs/assumptions'
+        && method === 'POST' && mode) {
+      const selected = mode;
+      mode = undefined;
+      const response = await original(...args);
+      if (!response.ok) return response;
+      if (selected === 'hold') {
+        await new Promise(resolve => { window.releaseCostReply = resolve; });
+        return response;
+      }
+      throw new TypeError('Synthetic lost reply after completed cost save');
+    }
+    return original(...args);
+  };
+})();
+window.armCostReply('drop');
+```
+
+Efter återhämtning och eventuellt omstartsprov installerar operatören
+koden igen vid behov. Först när alla tidigare utfall är kända och inget
+äldre svar hålls, kör operatören `delete window.releaseCostReply` i
+Console och därefter `window.armCostReply('hold')` före det fördröjda
+sparandet av 14. Ta aldrig bort referensen till ett fortfarande väntande
+äldre svar. Bekräfta installation och armning före UI-sparandet; invänta
+inte det genomförda svaret före knappen.
+
+Följ den nya POST-begäran till kostnadsantaganden i nätverkspanelen och
+kontrollera att dess indata avser den aktuella månaden och kursen 14.
+Efter testarens **Spara månadens antaganden**, invänta dess verkliga
+framgångsrika HTTP-svar. Läs
+`typeof window.releaseCostReply === 'function'` i Console tills värdet
+är sant. Referensen tilldelas först efter det framgångsrika svaret i
+koden ovan; den borttagna äldre referensen kan inte bekräfta detta svar.
+Bekräfta för testaren att just detta genomförda sparandes svar
+hålls; om det inte kan bekräftas, släpp inget äldre svar och rapportera
+att förberedelsen inte är klar.
+
+Testaren väljer därefter fallets tema och kontrollerar temaknappens
+senare fokus medan samma svar fortfarande hålls. Först på testarens begäran
+kör operatören `window.releaseCostReply()` och bekräftar att svaret är släppt.
+Testaren läser sparbeskedet och kontrollerar samma senare fokus.
+Operatören avslutar alltid med `window.restoreCostReplies()` eller
+omladdning. Starta en ny fixture per fall; behåll samma databas bara inom
+dess omstartsprov. Vanligt offlineläge
+provar inte ett tappat svar efter slutförd transaktion.
+
+## Referenser och accepterad förlust
+
+KOST-04 behåller 1280px och hela kedjan med tappat verkligt sparresultat,
+återhämtning, omstart och versionshistorik. De befintliga 390px- och
+320px-scenarierna får KOST-05 och KOST-06. De behåller verkligt tillämpat
+sparande med tappat svar, återhämtning, synlig återkoppling, redigeringens
+fokus, fördröjd framgång utan stulen fokus och pristabellens rullning.
+Deras upprepade omstart och versionshistorik tas bort. Fel som bara uppstår
+vid dessa bredder i den kombinerade omstarts- och historikkedjan kan därför
+undgå referensen. Inget ID pensioneras eller återanvänds.
+
+KOST-01–03 behåller ofullständiga mätningar, hämtningsfel och separat
+driftåtkomst. Det separata
+[tekniska mätunderlaget](../../tests/integration/accessibility-measurements.spec.ts)
+provar färgtolkning och opaka ytor för kontrastmätaren. Det utför inget
+kostnadsflöde och ingen kostnadsspecifik kontrastmätning. Belopp och
+återkoppling granskas i de verkliga kostnadsflödena; manuell läsbarhet ska
+redovisas separat. Syntetiska ljudspår utför ingen fysisk mikrofon-,
+ljud- eller skärmläsarobservation.

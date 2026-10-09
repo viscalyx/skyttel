@@ -2,7 +2,14 @@ import { chmodSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
-import { createInstallation, robin } from '../support/installation.js';
+import {
+  expectEmptyRecoveryDraft,
+  expectRecoveryContent,
+  expectRecoveryDraft,
+  reloadRestoredHousehold,
+  seedRecoveryContent,
+} from '../support/household-recovery-reading.js';
+import { alex, createInstallation, robin } from '../support/installation.js';
 
 test('IMPORT-09: another administrator discovers the same committed import after a lost response and restart', async ({
   page,
@@ -37,6 +44,7 @@ test('IMPORT-09: another administrator discovers the same committed import after
         })
       ).status(),
     ).toBe(200);
+    await seedRecoveryContent(page.request, path);
     const before = await (await page.request.get(`${path}/map`)).json();
     expect(
       (
@@ -48,7 +56,7 @@ test('IMPORT-09: another administrator discovers the same committed import after
             baseRevision: null,
             value: {
               name: 'Privat arbete från exporten',
-              description: '',
+              description: 'Privat uppgift för Privat arbete från exporten',
               typeId: before.types[0].id,
             },
           },
@@ -103,6 +111,14 @@ test('IMPORT-09: another administrator discovers the same committed import after
       ...original,
       contentVersion: 2,
     });
+    const alexReader = await page.context().newPage();
+    const robinReader = await other.newPage();
+    await alexReader.goto(installation.origin);
+    await expectRecoveryContent(alexReader);
+    await expectRecoveryDraft(alexReader, 'Privat arbete från exporten');
+    await robinReader.goto(installation.origin);
+    await expectRecoveryContent(robinReader);
+    await expectEmptyRecoveryDraft(robinReader, 'Privat arbete från exporten');
     await installation.restart();
     await fresh.reload();
     await expect(fresh.getByText(committedId, { exact: true })).toBeVisible();
@@ -114,6 +130,14 @@ test('IMPORT-09: another administrator discovers the same committed import after
       contentVersion: 2,
     });
     expect(confirmations).toBe(1);
+    await alexReader.reload();
+    await expectRecoveryContent(alexReader);
+    await expectRecoveryDraft(alexReader, 'Privat arbete från exporten');
+    await robinReader.reload();
+    await expectRecoveryContent(robinReader);
+    await expectEmptyRecoveryDraft(robinReader, 'Privat arbete från exporten');
+    await alexReader.close();
+    await robinReader.close();
   } finally {
     await other.close();
     await installation.close();
@@ -160,6 +184,7 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
         })
       ).status(),
     ).toBe(200);
+    await seedRecoveryContent(page.request, path);
     const initial = await (await page.request.get(`${path}/map`)).json();
     expect(
       (
@@ -171,7 +196,7 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
             baseRevision: null,
             value: {
               name: 'Privat arbete genom rensningen',
-              description: '',
+              description: 'Privat uppgift för Privat arbete genom rensningen',
               typeId: initial.types[0].id,
             },
           },
@@ -203,8 +228,42 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
     await page.getByRole('checkbox', { name: 'Jag vill ersätta allt hushållsinnehåll' }).check();
     await page.getByRole('button', { name: 'Ersätt hushållets innehåll' }).click();
     await expect(page.getByText(/Tillfälliga filer behöver rensas/)).toBeVisible();
+    const fresh = await other.newPage();
+    const blockedMap = fresh.waitForResponse(`${path}/map/view`);
+    await fresh.goto(`${installation.origin}/households/${household.id}`);
+    expect((await blockedMap).status()).toBe(409);
+    await expect(fresh.getByRole('alert')).toContainText('Hushållets innehåll ändras');
+    await expect(fresh.getByRole('region', { name: 'Rymdkarta', exact: true })).toHaveCount(0);
+    await fresh.goto(`${installation.origin}/households/${household.id}/settings/export`);
+    const exportSection = fresh.getByRole('region', { name: 'Fullständig export' });
+    const blockedExport = fresh.waitForResponse(
+      (response) => response.request().method() === 'POST' && response.url() === `${path}/exports`,
+    );
+    await exportSection.getByRole('button', { name: 'Förbered fullständig export' }).click();
+    expect((await blockedExport).status()).toBe(409);
+    await expect(exportSection.getByRole('alert')).toContainText('Exporten kunde inte förberedas');
+    await expect(exportSection.getByRole('button', { name: 'Hämta ZIP-fil' })).toHaveCount(0);
     expect((await other.request.get(`${path}/map`)).status()).toBe(409);
     expect((await other.request.post(`${path}/exports`, { headers, data: {} })).status()).toBe(409);
+    await fresh.goto(`${installation.origin}/households/${household.id}/administration`);
+    const alexMembership = fresh
+      .getByRole('list', { name: 'Medlemmar', exact: true })
+      .getByRole('listitem')
+      .filter({ has: fresh.getByRole('heading', { name: owner.name, exact: true }) });
+    await expect(alexMembership.getByText('Administratör', { exact: true })).toBeVisible();
+    const changingRole = fresh.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        response.url() === `${path}/members/${owner.id}/role`,
+    );
+    await alexMembership.getByRole('button', { name: 'Gör till medlem', exact: true }).click();
+    const changedRole = await changingRole;
+    expect(changedRole.request().postDataJSON()).toEqual({ role: 'member' });
+    expect(changedRole.status()).toBe(200);
+    await expect(fresh.getByRole('status')).toHaveText('Rollen har ändrats.');
+    await expect(alexMembership.getByText('Medlem', { exact: true })).toBeVisible();
+    // Keep the original direct-route authority and status checks alongside
+    // the actual browser handoff; the same role remains a valid explicit request.
     expect(
       (
         await other.request.post(`${path}/members/${owner.id}/role`, {
@@ -215,7 +274,6 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
     ).toBe(200);
     expect((await page.request.get(`${path}/imports`)).status()).toBe(403);
     expect((await page.request.get(`${path}/imports/${ready.id}`)).status()).toBe(403);
-    const fresh = await other.newPage();
     await fresh.goto(administration);
     await expect(fresh.getByText(ready.id, { exact: true })).toBeVisible();
     await expect(fresh.getByText(/Tillfälliga filer behöver rensas/)).toBeVisible();
@@ -248,10 +306,26 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
       ...original,
       contentVersion: 2,
     });
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await expectRecoveryContent(reader);
+    await expectRecoveryDraft(reader, 'Privat arbete genom rensningen');
+    const robinReader = await other.newPage();
+    await robinReader.goto(installation.origin);
+    await expectRecoveryContent(robinReader);
+    await expectEmptyRecoveryDraft(robinReader, 'Privat arbete genom rensningen');
     await installation.restart();
     await fresh.reload();
     await expect(fresh.getByText(ready.id, { exact: true })).toBeVisible();
     expect((await (await page.request.get(`${path}/map`)).json()).contentVersion).toBe(2);
+    await reader.reload();
+    await expectRecoveryContent(reader);
+    await expectRecoveryDraft(reader, 'Privat arbete genom rensningen');
+    await reloadRestoredHousehold(fresh);
+    await expectRecoveryContent(fresh);
+    await expectEmptyRecoveryDraft(fresh, 'Privat arbete genom rensningen');
+    await reader.close();
+    await robinReader.close();
   } finally {
     if (directory && existsSync(directory)) chmodSync(directory, 0o700);
     await other.close();
@@ -265,10 +339,39 @@ test('IMPORT-10: the current administrator recovers a lost preparation before an
 }) => {
   const installation = await createInstallation();
   const other = await browser.newContext();
+  const administrator = await browser.newContext();
   try {
     await signIn(page.request, installation.origin);
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}`;
+    const headers = { origin: installation.origin };
+    installation.setIdentity(robin);
+    await signIn(administrator.request, installation.origin, 'microsoft');
+    const { user } = await (
+      await administrator.request.get(`${installation.origin}/api/bootstrap`)
+    ).json();
+    const { code } = await (
+      await page.request.post(`${path}/invitations`, {
+        headers,
+        data: { userId: user.id },
+      })
+    ).json();
+    expect(
+      (
+        await administrator.request.post(`${installation.origin}/api/invitations/accept`, {
+          headers,
+          data: { code },
+        })
+      ).status(),
+    ).toBe(200);
+    expect(
+      (
+        await page.request.post(`${path}/members/${user.id}/role`, {
+          headers,
+          data: { role: 'administrator' },
+        })
+      ).status(),
+    ).toBe(200);
     const exported = await (
       await page.request.post(`${path}/exports`, {
         headers: { origin: installation.origin },
@@ -305,6 +408,21 @@ test('IMPORT-10: the current administrator recovers a lost preparation before an
     await page.getByRole('button', { name: 'Kontrollera importfil' }).click();
     await expect(page.getByRole('alert')).toBeVisible();
     expect(readyId).not.toBe('');
+    const foreign = await administrator.newPage();
+    await foreign.goto(administration);
+    await expect(foreign.getByText(/Hushållets innehåll är ersatt/)).toBeVisible();
+    await expect(foreign.getByText(readyId, { exact: true })).toHaveCount(0);
+    await expect(foreign.getByRole('group', { name: 'Granska ersättningen' })).toHaveCount(0);
+    expect((await administrator.request.get(`${path}/imports/${readyId}`)).status()).toBe(404);
+    expect(
+      (
+        await administrator.request.post(`${path}/imports/${readyId}/confirm`, {
+          headers,
+          data: { confirmed: true, contentVersion: 2 },
+        })
+      ).status(),
+    ).toBe(404);
+    installation.setIdentity(alex);
     await signIn(other.request, installation.origin);
     const fresh = await other.newPage();
     await fresh.goto(administration);
@@ -320,6 +438,7 @@ test('IMPORT-10: the current administrator recovers a lost preparation before an
     expect(confirmations).toBe(1);
     expect((await (await page.request.get(`${path}/map`)).json()).contentVersion).toBe(3);
   } finally {
+    await administrator.close();
     await other.close();
     await installation.close();
   }
@@ -336,6 +455,7 @@ test('IMPORT-14: a locally known uncertain import keeps its exact identity after
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}`;
     const headers = { origin: installation.origin };
+    await seedRecoveryContent(page.request, path);
     const initial = await (await page.request.get(`${path}/map`)).json();
     expect(
       (
@@ -343,11 +463,11 @@ test('IMPORT-14: a locally known uncertain import keeps its exact identity after
           headers,
           data: {
             id: 'retained',
-            version: 0,
+            version: initial.draft.version,
             baseRevision: null,
             value: {
               name: 'Privat arbete i båda ersättningarna',
-              description: '',
+              description: 'Privat uppgift för Privat arbete i båda ersättningarna',
               typeId: initial.types[0].id,
             },
           },
@@ -442,6 +562,11 @@ test('IMPORT-14: a locally known uncertain import keeps its exact identity after
       ...original,
       contentVersion: 3,
     });
+    const reader = await page.context().newPage();
+    await reader.goto(installation.origin);
+    await expectRecoveryContent(reader);
+    await expectRecoveryDraft(reader, 'Privat arbete i båda ersättningarna');
+    await reader.close();
   } finally {
     await other.close();
     await installation.close();

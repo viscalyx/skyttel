@@ -1,7 +1,81 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { openSettings } from '../support/client.js';
+import { closeTextView, openSettings } from '../support/client.js';
 import { prepareArchiveConflict } from '../support/conflict-archive.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import {
+  expectConflictDraftValues,
+  expectConflictReadValue,
+  expectSavedConflictObject,
+  expectSavedConflictRelationship,
+  refreshConflictReader,
+} from '../support/current-conflict-reading.js';
+import {
+  expectHistoricalProposalAbsent,
+  readIndependentHistoricalProposal,
+} from '../support/historical-conflict-reading.js';
+
+async function readCorrectedProposal(
+  page: Page,
+  relationship: boolean,
+  typeName: string,
+  forwardLabel: string,
+  year?: string,
+) {
+  await expectConflictDraftValues(
+    page,
+    relationship ? `Lo Exempel → ${forwardLabel} → Molnmusik` : 'Solcellsanläggningen',
+    relationship
+      ? {
+          Från: 'Lo Exempel',
+          Till: 'Molnmusik',
+          Sambandstyp: typeName,
+          'Uppgiftens säkerhet': 'Bekräftat',
+          Gäller: 'Aktuellt',
+          ...(year ? { Installationsår: year } : {}),
+        }
+      : {
+          Namn: 'Solcellsanläggningen',
+          Beskrivning: 'Tidigare privat förslag',
+          Typ: typeName,
+          ...(year ? { Installationsår: year } : {}),
+        },
+  );
+  await closeTextView(page);
+  await readIndependentHistoricalProposal(page);
+}
+
+async function readSavedCorrection(
+  page: Page,
+  origin: string,
+  relationship: boolean,
+  typeName: string,
+  forwardLabel: string,
+  year?: string,
+) {
+  await refreshConflictReader(page, origin);
+  if (relationship)
+    await expectSavedConflictRelationship(
+      page,
+      'Lo Exempel',
+      `Lo Exempel → ${forwardLabel} → Molnmusik`,
+      {
+        Typ: typeName,
+        'Från objekt': 'Lo Exempel',
+        'Till objekt': 'Molnmusik',
+        ...(year ? { Installationsår: year } : {}),
+      },
+    );
+  else {
+    const details = await expectSavedConflictObject(
+      page,
+      'Solcellsanläggningen',
+      'Tidigare privat förslag',
+    );
+    await expectConflictReadValue(details, 'Typ', typeName);
+    if (year) await expectConflictReadValue(details, 'Installationsår', year);
+  }
+  await expectSavedConflictObject(page, 'Oberoende förslag');
+}
 
 async function closeConflictWithEscape(page: Page, dialog: Locator) {
   await expect(
@@ -45,6 +119,15 @@ test('UTKAST-75: a missing endpoint and missing relationship type remain visible
     await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
       'Molnmusik',
     );
+    await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
+      'Lo Exempel',
+    );
+    await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
+      'Installationsår',
+    );
+    await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
+      'Våren 2021',
+    );
     await closeConflictWithEscape(page, dialog);
     expect((await app.read()).draft).toEqual(before.draft);
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
@@ -60,6 +143,9 @@ test('UTKAST-75: a missing endpoint and missing relationship type remain visible
     expect(after.objects).toEqual(before.objects);
     expect(after.relationshipTypes).toEqual(before.relationshipTypes);
     expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+    await closeConflictWithEscape(page, dialog);
+    await expectHistoricalProposalAbsent(page, 'Lo Exempel → förvaras i → Molnmusik');
+    await readIndependentHistoricalProposal(page);
   } finally {
     await administrator.close();
     await app.installation.close();
@@ -67,7 +153,7 @@ test('UTKAST-75: a missing endpoint and missing relationship type remain visible
 });
 
 for (const kind of ['object', 'relationship'] as const)
-  test(`UTKAST-74: ${kind === 'object' ? 'an' : 'a'} ${kind} type with a replaced field preserves the owned historical answer label during explicit type-loss review`, async ({
+  test(`UTKAST-${kind === 'object' ? 74 : 138}: ${kind === 'object' ? 'an' : 'a'} ${kind} type with a replaced field preserves the owned historical answer label during explicit type-loss review`, async ({
     page,
     browser,
   }) => {
@@ -149,7 +235,22 @@ for (const kind of ['object', 'relationship'] as const)
       expect(corrected.draft.changes.find((change) => change.id === 'independent')).toEqual(
         before.draft.changes.find((change) => change.id === 'independent'),
       );
+      const selected = kind === 'object' ? before.types[0] : before.relationshipTypes[0];
+      await readCorrectedProposal(
+        page,
+        kind === 'relationship',
+        selected.name,
+        'forwardLabel' in selected ? (selected.forwardLabel ?? selected.name) : selected.name,
+      );
       await saveReviewedConflictDraft(page);
+      await app.installation.restart();
+      await readSavedCorrection(
+        page,
+        app.installation.origin,
+        kind === 'relationship',
+        selected.name,
+        'forwardLabel' in selected ? (selected.forwardLabel ?? selected.name) : selected.name,
+      );
     } finally {
       await administrator.close();
       await app.installation.close();
@@ -245,6 +346,7 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
     expect(corrected.draft.changes).toEqual(before.draft.changes);
     expect(corrected.relationships).toEqual(before.relationships);
     expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+    await readCorrectedProposal(page, true, 'Förvaras i', 'förvaras i', 'Ej uppgivet');
     await saveReviewedConflictDraft(page);
     const saved = await app.read();
     expect(saved.relationships.find((edge) => edge.id === 'private-target')).toMatchObject({
@@ -252,6 +354,15 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
     });
     expect(saved.relationshipTypes.find((type) => type.id === definition?.id)?.fields).toEqual(
       definition?.after?.fields,
+    );
+    await app.installation.restart();
+    await readSavedCorrection(
+      page,
+      app.installation.origin,
+      true,
+      'Förvaras i',
+      'förvaras i',
+      'Ej uppgivet',
     );
   } finally {
     await administrator.close();
@@ -285,6 +396,15 @@ test('UTKAST-64: a missing object type keeps its proposal readable and discards 
       'Stäng konfliktfönstret och lägg till objekttypen under Inställningar → Typer och egna fält. Ditt förslag ligger kvar. Alternativt kan du ta bort objektet ur ditt utkast nedan.',
     );
     await expect(dialog.getByRole('region', { name: 'Ditt förslag' })).toContainText('Våren 2021');
+    await expect(dialog.getByRole('region', { name: 'Ditt förslag' })).toContainText(
+      'Solcellsanläggningen',
+    );
+    await expect(dialog.getByRole('region', { name: 'Ditt förslag' })).toContainText(
+      'Tidigare privat förslag',
+    );
+    await expect(dialog.getByRole('region', { name: 'Ditt förslag' })).toContainText(
+      'Installationsår',
+    );
     const preview = dialog.getByRole('region', { name: 'Resultat av valen', exact: true });
     await expect(preview.locator('dt')).toHaveText('Objektet i ditt utkast');
     await expect(preview.locator('dd')).toHaveText('Tas bort ur ditt utkast');
@@ -313,6 +433,9 @@ test('UTKAST-64: a missing object type keeps its proposal readable and discards 
     );
     expect(after.objects).toEqual(before.objects);
     expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+    await closeConflictWithEscape(page, dialog);
+    await expectHistoricalProposalAbsent(page, 'Solcellsanläggningen');
+    await readIndependentHistoricalProposal(page);
   } finally {
     await administrator.close();
     await app.installation.close();
@@ -390,10 +513,20 @@ test('UTKAST-72: ordinary correction of a missing object type preserves historic
     await expect(
       page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }),
     ).toHaveCount(0);
+    await readCorrectedProposal(page, false, 'Solcellsanläggning', '', 'Ej uppgivet');
     await saveReviewedConflictDraft(page);
     expect(
       (await app.read()).objects.find((object) => object.id === 'private-target')?.typeId,
     ).toBe(definition?.id);
+    await app.installation.restart();
+    await readSavedCorrection(
+      page,
+      app.installation.origin,
+      false,
+      'Solcellsanläggning',
+      '',
+      'Ej uppgivet',
+    );
   } finally {
     await administrator.close();
     await app.installation.close();
@@ -446,10 +579,20 @@ test('UTKAST-65: an incompatible historical field is corrected in the ordinary o
       before.draft.changes.find((change) => change.id === 'independent'),
     );
     expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+    await readCorrectedProposal(page, false, 'Solcellsanläggning', '', '2021');
     await saveReviewedConflictDraft(page);
     expect(
       (await app.read()).objects.find((object) => object.id === 'private-target')?.customValues,
     ).toEqual({ year: 2021 });
+    await app.installation.restart();
+    await readSavedCorrection(
+      page,
+      app.installation.origin,
+      false,
+      'Solcellsanläggning',
+      '',
+      '2021',
+    );
   } finally {
     await administrator.close();
     await app.installation.close();

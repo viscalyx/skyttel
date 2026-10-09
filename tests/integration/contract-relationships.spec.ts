@@ -24,6 +24,7 @@ import {
   editObjectRelationship,
   editTableObject,
   openObjectRelationships,
+  openTypeDefinitions,
   readDraftProposal,
 } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
@@ -294,8 +295,9 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
 });
 
 test('AVTAL-06: upgrading preserves household definitions and an older private draft', async ({
-  request,
+  page,
 }) => {
+  const request = page.request;
   const migrationsDirectory = await mkdtemp(join(tmpdir(), 'skyttel-contract-upgrade-'));
   const names = (await readdir('migrations')).filter(
     (name) => name.endsWith('.sql') && name < '007',
@@ -405,14 +407,54 @@ test('AVTAL-06: upgrading preserves household definitions and an older private d
     expect(state.relationshipTypes.map((item) => item.name)).toEqual(
       expect.arrayContaining(['Gäller', 'Finansierar', 'Försäkrar', 'Hyresvärd', 'Långivare']),
     );
-    const saved = await request.post(`${path}/save`, {
-      headers: { origin: installation.origin },
-      data: {
-        version: draft.version,
-        contentVersion: state.contentVersion,
-        operationId: 'save-old-draft',
-      },
+    await page.goto(installation.origin);
+    await openTypeDefinitions(page);
+    await page.getByText('Objekttyper och egna fält', { exact: true }).click();
+    const homeType = page.getByRole('button', { name: 'Ändra typ: Bostad', exact: true });
+    await expect(homeType).toHaveCount(1);
+    await homeType.click();
+    await expect(page.getByLabel('Typens beskrivning', { exact: true })).toHaveValue(
+      type.description,
+    );
+    await page
+      .getByRole('button', { name: 'Stäng typformuläret utan att skicka', exact: true })
+      .click();
+    for (const name of [
+      'Garage',
+      'Fordon',
+      'Avtal',
+      'Hyresavtal',
+      'Låneavtal',
+      'Kreditavtal',
+      'Avbetalningsavtal',
+      'Försäkringsavtal',
+    ])
+      await expect(
+        page.getByRole('button', { name: `Ändra typ: ${name}`, exact: true }),
+      ).toBeVisible();
+    await page.getByText('Sambandstyper och riktning', { exact: true }).click();
+    const landlord = page.getByRole('button', {
+      name: 'Ändra sambandstyp: Hyresvärd',
+      exact: true,
     });
+    await expect(landlord).toHaveCount(1);
+    await landlord.click();
+    await expect(page.getByLabel('Sambandstypens beskrivning', { exact: true })).toHaveValue(
+      role.description,
+    );
+    await page
+      .getByRole('button', { name: 'Stäng sambandstypen utan att skicka', exact: true })
+      .click();
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    const proposal = await readDraftProposal(page, 'Björkbacken hemma');
+    await expect(proposal).toContainText('Björkbacken');
+    await expect(proposal).toContainText('Björkbacken hemma');
+    await closeSupportDialog(page, 'Björkbacken hemma');
+    const responsePromise = page.waitForResponse(
+      (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
+    );
+    await saveReviewedConflictDraft(page);
+    const saved = await responsePromise;
     expect(saved.status()).toBe(200);
     const { receipt }: { receipt: SaveReceipt } = await saved.json();
     expect(receipt.changes[0]).toMatchObject({
@@ -422,7 +464,12 @@ test('AVTAL-06: upgrading preserves household definitions and an older private d
     });
     expect(receipt.userId).toBe(user.id);
     expect((await (await request.get(`${path}/history`)).json()).history).toEqual([receipt]);
+    await closeTextView(page);
     await installation.restart();
+    await page.reload();
+    const form = await editTableObject(page, 'Björkbacken hemma');
+    await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Björkbacken hemma');
+    await expect(form.getByLabel('Objekttyp', { exact: true })).toHaveValue(type.id);
     const reopened: MapState = await (await request.get(path, { maxRetries: 1 })).json();
     expect(reopened.objects).toEqual([receipt.changes[0].after]);
     expect(reopened.types).toEqual(state.types);

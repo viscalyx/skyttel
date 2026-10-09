@@ -310,7 +310,7 @@ test('LISTA-02: sorting, pages and scroll survive native details, settings and m
 });
 
 for (const width of [390, 320]) {
-  test(`LISTA-04: narrow tables retain search and native details after graphics loss at ${width}px`, async ({
+  test(`${width === 320 ? 'LISTA-04' : 'LISTA-08'}: narrow tables retain search and native details after graphics loss at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -374,7 +374,9 @@ for (const width of [390, 320]) {
         details.getByRole('heading', { name: 'Lo Exempel · alla uppgifter', exact: true }),
       ).toBeVisible();
       await closeTableObject(page, 'Lo Exempel');
+      await expect(table.getByRole('button', { name: 'Lo Exempel', exact: true })).toBeFocused();
       const editor = await editTableObject(page, 'Lo Exempel');
+      await expect(editor.getByLabel('Namn', { exact: true })).toBeFocused();
       await editor.getByLabel('Beskrivning', { exact: true }).fill('Utan grafik');
       await editor.getByRole('button', { name: 'Avbryt', exact: true }).click();
       await page.keyboard.press('Escape');
@@ -386,6 +388,23 @@ for (const width of [390, 320]) {
         .click();
       await tableFilters(page);
       await expect(person).toBeChecked();
+      await person.focus();
+      await expect(person).toBeFocused();
+      const restoredTarget = await person.evaluate((element) => {
+        const label = element.closest('label');
+        if (!label) throw new Error('The post-loss native target must exist');
+        const box = label.getBoundingClientRect();
+        return {
+          width: box.width,
+          height: box.height,
+          hit: label.contains(
+            document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+          ),
+        };
+      });
+      expect(restoredTarget.width).toBeGreaterThanOrEqual(44);
+      expect(restoredTarget.height).toBeGreaterThanOrEqual(44);
+      expect(restoredTarget.hit).toBe(true);
       await closeFilters(page);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
       expect(await read()).toEqual(content);

@@ -264,7 +264,7 @@ test('KOST-03: endast driftansvarig har åtkomst oberoende av hushållets roller
 });
 
 for (const width of [1280, 390, 320]) {
-  test(`KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer (${width}px)`, async ({
+  test(`${width === 1280 ? 'KOST-04' : width === 390 ? 'KOST-05' : 'KOST-06'}: okänt sparresultat återläses med fokus och fullständiga detaljer (${width}px)`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -298,17 +298,22 @@ for (const width of [1280, 390, 320]) {
       await page.getByRole('button', { name: 'Uppdatera underlaget' }).click();
       await expect(page.getByRole('status')).toContainText('Aktuella antaganden är hämtade');
       await expect(category(page, 'Månadens kostnadsöversikt')).toContainText('87,00 SEK');
+      await expect(page.getByRole('button', { name: 'Uppdatera underlaget' })).toBeFocused();
       expect(writes).toBe(1);
       await page.unroute('**/api/operator/costs/assumptions');
-      await app.command('restart', 'restarted');
-      await page.reload();
-      await expect(category(page, 'Månadens kostnadsöversikt')).toContainText('87,00 SEK');
-      await page.getByText('Tidigare antaganden för månaden', { exact: true }).click();
-      const history = category(page, 'Månadens antaganden');
-      await expect(history).toContainText('Version 1');
-      await expect(history).toContainText('1 USD = 10 SEK');
-      await expect(history).toContainText('Version 2');
-      await expect(history).toContainText('1 USD = 12 SEK');
+      // The complete durable sequence uses the desktop reference. Narrow
+      // variants retain their recovery, focus and price-table browser paths.
+      if (width === 1280) {
+        await app.command('restart', 'restarted');
+        await page.reload();
+        await expect(category(page, 'Månadens kostnadsöversikt')).toContainText('87,00 SEK');
+        await page.getByText('Tidigare antaganden för månaden', { exact: true }).click();
+        const history = category(page, 'Månadens antaganden');
+        await expect(history).toContainText('Version 1');
+        await expect(history).toContainText('1 USD = 10 SEK');
+        await expect(history).toContainText('Version 2');
+        await expect(history).toContainText('1 USD = 12 SEK');
+      }
       await edit.click();
       await expect(rate).toBeFocused();
       await rate.fill('13');

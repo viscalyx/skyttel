@@ -37,17 +37,35 @@ tom installation. Den tredje installationen använder en ny egen hemlighet.
 
 **Förutsättningar:** Båda installationerna fungerar enligt förberedelsen.
 Ingen annan skriver till dem. Chromium med utvecklarverktyg finns tillgängligt.
-Blockera `*/text-assistant/recover` i nätverkspanelen i profil A och B
-innan de väntande försöken förbereds. Det hindrar kartans automatiska
-kontroll från att slutföra dem under flyttprovet. Ta bort blockeringen
-efter arkivjämförelsen och före det nya sparandet i steg 13.
-Den lokala MCP-kontrollklienten `scripts/manual-mcp-client.ts` från samma
-färdigställda batch används enbart med påhittade uppgifter.
+
+**Separat förberedelse:** Driftansvarig följer
+[återhämtningsblockeringen och åtkomstprovet](#flytt-01-separata-operatörssteg).
+Invänta besked att blockeringen är aktiv i A och B innan ett väntande
+försök registreras, och i C före återimporten i steg 11. Alla tre profiler
+behåller blockeringen genom båda privata läsningarna i steg 13. Den släpps
+först omedelbart före det nya uttryckliga sparandet med aktuellt underlag.
 
 **Integrationstest:**
 [household-recovery.spec.ts](../../tests/integration/household-recovery.spec.ts),
 testfallet “FLYTT-01: a fresh installation restores an archive, explicitly
 assigns private ownership and remains portable after restart”.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-recovery.spec.ts",
+    "caseId": "FLYTT-01"
+  },
+  "reference": "Tre tomma installationer med egna hemligheter; endast exportarkivet flyttas.",
+  "outcomes": [
+    "Kontrollera att en fullständig export ensam räcker för innehållet, att verifierad ny inloggning krävs och att privat arbete förblir återställbart."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -60,24 +78,16 @@ assigns private ownership and remains portable after restart”.
    Flytta objektet till en igenkännlig personlig plats i rymdkartan. Aktivera
    stjärnor och välj axelindikatorn i övre vänstra hörnet. Anteckna källans
    historiska innehålls-ID från **Koppla historiskt innehåll**.
-3. Kör **Förbered ett känt väntande försök** nedan i profil A, ange `source`
-   och behåll den hämtade JSON-filen privat. Detta skapar ett känt väntande
-   försök utan att skicka `/save`; det simulerar inget okänt verkligt sparande.
-4. Vidarebefordra port 47731 privat till samma värdport. I en tredje terminal,
-   från projektets rot, starta kontrollklienten:
-
-   ```sh
-   node --import tsx scripts/manual-mcp-client.ts http://localhost:5173 47731
-   ```
-
-   Öppna dess `authorize`-adress i profil A, välj källhushållet och godkänn
-   de särskilda AI- och kartmedgivandena. Invänta `ready`, kör `read` och
-   kontrollera det privata bildförslaget. Behåll processen öppen. Kopiera
-   inga token, cookies eller returadresser. Vid utgånget medgivande ska
-   åtkomstprovet göras om, inte räknas som bevis på avvisad gammal behörighet.
+3. Be driftansvarig registrera det väntande försöket i profil A enligt
+   [förberedelsen](household-recovery-console.md#flytt-01-förberedelse-1).
+   Invänta **Väntande försök förberett, begäransfilen sparad**.
+4. Be driftansvarig starta det separata åtkomstprovet. Öppna dess angivna
+   auktoriseringsadress i profil A, välj källhushållet och godkänn de
+   särskilda AI- och kartmedgivandena. Invänta bekräftelse att den gamla
+   behörigheten fungerar och kan läsa det privata bildförslaget.
 5. Stoppa alla innehållsändringar på källan. Hämta dess fullständiga export
-   och kör `read` en sista gång i kontrollklienten för att bekräfta att
-   behörigheten fortfarande fungerar. Stoppa sedan endast källservern i
+   och invänta driftansvarigs sista kontroll av fungerande behörighet
+   enligt åtkomstprovet. Stoppa sedan endast källservern i
    terminal A. Behåll profilen, konfigurationen, arkivet och kontrollklienten.
 6. I profil B: återimportera källarkivet genom
    **Inställningar → Återimportera hushållet** på målet.
@@ -86,8 +96,9 @@ assigns private ownership and remains portable after restart”.
    tredje bild ska inte visas som Robins förslag. Ingen identitet kopplas
    automatiskt, även om verkliga konton råkar ha samma namn eller e-postadress.
 7. Lägg **Nytt privat arbete** i Robins utkast utan att spara. Anteckna
-   Robins historiska innehålls-ID. Kör samma förberedelsekod i profil B med
-   namnet `destination`, och behåll även den JSON-filen privat.
+   Robins historiska innehålls-ID. Be driftansvarig registrera målets
+   väntande försök enligt förberedelsen. Invänta
+   **Väntande försök förberett, begäransfilen sparad**.
 8. Öppna **Inställningar → Koppla historiskt innehåll** och välj
    **Hämta aktuella innehållskopplingar**.
    Välj källans historiska ID och Robins aktuella verifierade användar-ID.
@@ -99,30 +110,74 @@ assigns private ownership and remains portable after restart”.
    Robins tidigare privata identitet ska fortfarande visas utan aktuell
    ägare i administrationslistan. Exportera målet på nytt; behåll det andra
    arkivet. Stoppa därefter målservern. Bara en installation ska vara skrivbar.
-10. Skapa den tredje tomma installationen enligt blocket nedan och starta
-    den på källans nu lediga port 5173. Innan någon ny inloggning i profil A:
-    öppna `/api/bootstrap` där och kontrollera att den gamla Skyttel-sessionen
-    inte är inloggad. Kör `read` i den gamla kontrollklienten: den ska få
-    `MCP HTTP 401`. Avsluta klienten med `quit`. Logga sedan in normalt som
+10. Be driftansvarig starta den tredje tomma installationen enligt den
+    separata förberedelsen. Innan någon ny inloggning i profil A:
+    invänta driftansvarigs bekräftelse från åtkomstprovet att både den gamla
+    sessionen och det gamla medgivandet saknar åtkomst. Logga sedan in som
     Alex i profil C och skapa ett nytt tomt hushåll.
 11. Återimportera målarkivet i profil C. Koppla uttryckligen källans
     historiska ID till profil C:s verifierade medlem. Starta om tredje
-    servern med samma konfiguration. Kontrollera samma privata bild och
-    historik. Kör **Avvisa de gamla försöken** nedan med de två JSON-filerna.
-    Båda ska få 409 trots att den nya aktuella innehållsgenerationen används.
-12. Hämta en tredje fullständig export. Kör **Jämför arkiven** nedan med
-    källans, målets och den tredje installationens arkiv. Kontrollera att
-    bildbytesföljden, borttaget objekt, definitioner och kvitton bevarats,
-    att båda väntande försök fortfarande är historiska och att Robins
-    privata arbete finns kvar utan ägare. Detta kräver ingen gammal databas.
+    servern med samma konfiguration; behåll begäransblockeringen aktiv.
+    Kontrollera samma privata bild och
+    historik. Invänta den separata tekniska kontrollen av gamla försök
+    innan nästa export.
+12. Hämta en tredje fullständig export genom
+    **Inställningar → Fullständig export → Förbered fullständig export →
+    Hämta ZIP-fil**. Behåll filen och invänta den separata arkivkontrollen
+    innan någon innehållskoppling ändras.
 13. Först efter jämförelsen: koppla Robins tidigare privata identitet till
     profil C:s medlem. Läs in kartan och kontrollera **Nytt privat arbete**.
     Koppla tillbaka källidentiteten och kontrollera det privata bildförslaget.
-    Medlemskapet ska bestå under båda bytena. Spara nu hela utkastet med ett
+    Medlemskapet ska bestå under båda bytena. Be först nu driftansvarig
+    släppa återhämtningsblockeringen i profil C enligt förberedelsen och
+    invänta besked. Spara omedelbart därefter hela utkastet med ett
     nytt aktuellt underlag och kontrollera kvittot efter omstart.
 14. Stäng testprofilerna. Stoppa servern, radera de privata export- och
     begäransfilerna och städa endast provkatalogen enligt förberedelseguiden.
     Starta inte den gamla källan för fortsatt arbete efter flytten.
+
+#### FLYTT-01: separata operatörssteg
+
+Driftansvarig utför följande förberedelse och tekniska kontroller vid de
+angivna UI-stegen. Anteckna resultaten separat från människans kartläsning.
+
+1. Före UI-steg 3 och 7: blockera `*/text-assistant/recover` med Chromiums
+   beständiga begäransblockering i profil A och B. Aktivera samma regel i
+   profil C före återimporten i steg 11. Behåll utvecklarverktygen och regeln
+   aktiva i alla tre profiler genom sidbyten, omladdningar, serveromstarter
+   och båda innehållskopplingarna och privata läsningarna i steg 13.
+   Kontrollera regeln i nätverkspanelen efter varje omladdning och meddela
+   **Återhämtningsblockeringen är aktiv**. En tillfällig ersättning av fetch
+   räcker inte. Lossa verktygen till ett separat fönster så att sidans
+   avsedda bredd bevaras; stäng dem inte medan blockeringen behövs.
+2. Vid UI-steg 4: vidarebefordra port 47731 privat till samma värdport.
+   Starta klienten i en tredje terminal från projektets rot:
+
+   ```sh
+   node --import tsx scripts/manual-mcp-client.ts http://localhost:5173 47731
+   ```
+
+   Lämna dess `authorize`-adress till människan. Efter godkännandet i profil
+   A: invänta `ready`, kör `read` och kontrollera det privata bildförslaget.
+   Meddela **Källans medgivande och privata läsning fungerar**. Behåll
+   processen öppen. Kopiera inga token, cookies eller returadresser.
+3. Vid UI-steg 5, efter exporten men före källserverns stopp: kör `read`
+   en sista gång i samma klient. Bekräfta att behörigheten fortfarande
+   fungerar. Vid utgånget medgivande görs åtkomstprovet om; en sådan
+   avvisning bevisar inte att en ny installation avvisar gammal behörighet.
+4. Vid UI-steg 10: skapa och starta den tredje tomma installationen på
+   källans lediga port 5173 enligt **Tredje installationen utan rå
+   databaskopia** nedan. Behåll samma provkatalog och egna nya hemlighet.
+   Före ny inloggning i profil A: öppna `/api/bootstrap` i profil A och
+   kontrollera att den gamla Skyttel-sessionen inte är inloggad. Kör `read`
+   i den gamla klienten och kräv `MCP HTTP 401`. Avsluta med `quit`.
+   Meddela **Gammal session och gammalt medgivande saknar åtkomst** innan
+   människan loggar in normalt i profil C.
+5. Först efter båda meningsfulla privata läsningarna i UI-steg 13: ta bort
+   blockeringen i profil C och meddela **Återhämtning är tillåten inför
+   nytt sparande** omedelbart före människans nya uttryckliga sparande.
+   Profiler A och B behåller sina regler tills de stängs i steg 14;
+   de gamla installationerna får inte användas för fortsatt arbete.
 
 **Förbered ett känt väntande försök:**
 
@@ -131,40 +186,8 @@ eller ägarbyte. Koden hämtar aktuellt bygg-ID och utkast, förbereder en
 operation och laddar ned endast dess tre begäransfält. Inga inloggningsdata
 följer med filen. Ange hushållets ID från sidans adress.
 
-```javascript
-await (async () => {
-  const slot = prompt('source eller destination');
-  const id = prompt('Hushållets ID från adressen');
-  if (!['source', 'destination'].includes(slot) || !/^[\w-]+$/.test(id)) {
-    throw new Error('invalid test input');
-  }
-  const path = `/api/households/${id}/map`;
-  const read = async url => {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`read failed: ${response.status}`);
-    return response.json();
-  };
-  const state = await read(path);
-  const build = await read('/api/version');
-  const body = { version: state.draft.version,
-    contentVersion: state.contentVersion, operationId: crypto.randomUUID() };
-  const response = await fetch(`${path}/operations`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json',
-      'X-Skyttel-Build': `${build.commit}:${build.version}` },
-    body: JSON.stringify(body),
-  });
-  const result = await response.json();
-  if (!response.ok || result.operation?.status !== 'pending') {
-    throw new Error('pending preparation failed; stop this case');
-  }
-  const url = URL.createObjectURL(new Blob([JSON.stringify(body)],
-    { type: 'application/json' }));
-  const link = document.createElement('a');
-  link.href = url; link.download = `skyttel-move-${slot}.json`; link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  console.info('FLYTT-01: känt väntande försök förberett');
-})();
-```
+Kör [den separata förberedelsen 1](household-recovery-console.md#flytt-01-förberedelse-1)
+för FLYTT-01 i det angivna läget.
 
 **Tredje installationen utan rå databaskopia:**
 
@@ -194,89 +217,26 @@ gammal databas, session eller historisk inloggningsbehörighet kopieras.
 
 **Avvisa de gamla försöken:**
 
-I profil C:s Console, efter import, ägarbyte och omstart, kör blocket.
+Separat tekniskt underlag efter UI-steg 11, före exporten i steg 12:
+i profil C:s Console, efter import, ägarbyte och omstart, kör blocket.
+Använd de två ursprungliga JSON-filerna från profilerna A och B. Båda
+gamla försök ska få HTTP 409 trots aktuell innehållsgeneration; utkast
+och historik ska vara oförändrade. Anteckna detta separat från UI-resultatet.
 Välj de två lokala JSON-filerna. Koden jämför aktuell karta och historik
 före och efter varje försök; inget gammalt lyckat kvitto får returneras.
 
-```javascript
-await (async () => {
-  const id = prompt('Tredje hushållets ID från adressen');
-  if (!/^[\w-]+$/.test(id)) throw new Error('invalid household');
-  const input = document.createElement('input');
-  input.type = 'file'; input.multiple = true; input.accept = '.json';
-  const files = await new Promise(resolve => {
-    input.onchange = () => resolve([...input.files]); input.click();
-  });
-  if (files.length !== 2) throw new Error('select both original requests');
-  const path = `/api/households/${id}/map`;
-  const read = async url => {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`read failed: ${response.status}`);
-    return response.json();
-  };
-  const snapshot = async () => JSON.stringify({ map: await read(path),
-    history: await read(`${path}/history`) });
-  const before = await snapshot();
-  const state = await read(path);
-  const build = await read('/api/version');
-  for (const file of files) {
-    const body = JSON.parse(await file.text());
-    const fields = Object.keys(body).sort().join(',');
-    if (fields !== 'contentVersion,operationId,version') {
-      throw new Error('unexpected request fields');
-    }
-    const response = await fetch(`${path}/save`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json',
-        'X-Skyttel-Build': `${build.commit}:${build.version}` },
-      body: JSON.stringify({ ...body, contentVersion: state.contentVersion }),
-    });
-    const result = await response.json();
-    console.info('FLYTT-01', file.name, response.status, result.error);
-    if (response.status !== 409 || result.error !== 'content_conflict'
-        || await snapshot() !== before) {
-      throw new Error('retired retry changed content');
-    }
-  }
-  console.info('FLYTT-01: båda avvisade, karta och historik oförändrade');
-})();
-```
+Kör [den separata förberedelsen 2](household-recovery-console.md#flytt-01-förberedelse-2)
+för FLYTT-01 i det angivna läget.
 
-**Jämför arkiven:**
+**Separat teknisk kontroll:**
 
-Ange de tre privata ZIP-filernas absoluta sökvägar i terminalen. Kopiera
-dem vid behov till provkatalogen via VS Code; öppna inga verkliga hushållsarkiv.
-Kontrollen skriver bara ut ett godkänt besked, inte privata innehållsvärden.
-
-```sh
-printf 'Source ZIP path: '; read -r SKYTTEL_MOVE_SOURCE_ZIP
-printf 'Target ZIP path: '; read -r SKYTTEL_MOVE_TARGET_ZIP
-printf 'Third ZIP path: '; read -r SKYTTEL_MOVE_THIRD_ZIP
-export SKYTTEL_MOVE_SOURCE_ZIP SKYTTEL_MOVE_TARGET_ZIP SKYTTEL_MOVE_THIRD_ZIP
-node --input-type=module <<'JS'
-import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { unzipSync } from 'fflate';
-const archives = ['SOURCE', 'TARGET', 'THIRD'].map(name => {
-  const parts = unzipSync(readFileSync(process.env[`SKYTTEL_MOVE_${name}_ZIP`]));
-  const content = JSON.parse(Buffer.from(parts['content.json']).toString());
-  return { parts, content };
-});
-const normalize = rows => rows.map(({ householdId, ...row }) => row);
-const source = archives[0];
-for (const current of archives.slice(1)) {
-  assert.deepEqual(current.parts['images.bin'], source.parts['images.bin']);
-  for (const key of ['objects', 'objectTypes', 'objectTypeFields', 'saves']) {
-    assert.deepEqual(normalize(current.content[key]), normalize(source.content[key]));
-  }
-  const pending = current.content.operations.filter(row => row.status === 'pending');
-  assert.equal(pending.length, 2);
-  assert.ok(current.content.drafts.some(row => row.changes.some(change =>
-    change.after?.name === 'Nytt privat arbete')));
-}
-console.log('FLYTT-01: bilder, identiteter, definitioner och historik bevarade.');
-JS
-unset SKYTTEL_MOVE_SOURCE_ZIP SKYTTEL_MOVE_TARGET_ZIP SKYTTEL_MOVE_THIRD_ZIP
-```
+Kör [arkivjämförelsen](household-recovery-console.md#flytt-01-arkivjämförelse)
+efter den tredje exporten, innan nytt arbete sparas. Den jämför de tre
+privata ZIP-filerna och redovisas separat från de synliga UI-resultaten.
+Kör efter UI-steg 12 och före första bytet i steg 13. Kontrollen jämför
+exakta bildbytesföljder, objekt inklusive borttagningar, definitioner och
+fullständiga kvitton. Den kräver också båda historiska väntande försöken
+och Robins undanträngda privata förslag. Inga gamla databaser används.
 
 **Förväntat resultat:**
 
@@ -304,18 +264,42 @@ nytt privat objekt i utkastet utan att spara och flytta det gemensamma
 objektet i din personliga vy. Exportera och återimportera på målet.
 Namnen får vara lika; verifiera den nuvarande personens användar-ID.
 
+**Separat förberedelse:** Driftansvarig följer
+[FLYTT-02:s operatörssteg](#flytt-02-separata-operatörssteg).
+Invänta besked om aktiv återhämtningsblockering före steg 1. Den ska bestå
+genom ägarbytet, båda statusläsningarna och källans privata läsning i steg 6.
+Den gamla formulärfliken laddas inte om innan den angivna återställningen.
+
 **Integrationstest:**
 [household-owners-ui.spec.ts](../../tests/integration/household-owners-ui.spec.ts),
 testfallet “FLYTT-02: an uncertain explicit identity assignment is read
 back while both private states and historical receipts remain intact”.
 
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-owners-ui.spec.ts",
+    "caseId": "FLYTT-02"
+  },
+  "reference": "Chromium, 390×900; två installationer och en gammal kartflik.",
+  "outcomes": [
+    "Följ ett uttryckligt ägarbyte efter tappat svar genom aktuell läsning och bevara två oberoende privata tillstånd utan obehörig insyn."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. På målet: kontrollera att källans privata utkast inte visas för Robin.
    Skapa ett annat privat objektförslag och en annan personlig placering.
-   Anteckna Robins innehålls-ID. Förbered ett känt väntande försök med
-   FLYTT-01:s kod och namnet `destination` efter att en extra kartflik
-   har öppnat ett nytt oskickat objektformulär.
+   Anteckna Robins innehålls-ID. Öppna ett nytt oskickat objektformulär
+   i en extra kartflik. Be därefter driftansvarig registrera målets
+   väntande försök enligt [förberedelsen](household-recovery-console.md#flytt-01-förberedelse-1).
+   Invänta **Väntande försök förberett, begäransfilen sparad**.
 2. Öppna **Inställningar → Koppla historiskt innehåll** och hämta aktuell
    metadata. Välj källans historiska identitet och Robins verifierade
    användar-ID. Kontrollera antal, tidigare koppling och följderna för
@@ -326,46 +310,37 @@ back while both private states and historical receipts remain intact”.
    ska visa detta och bekräftelsen nollställas. Markera igen och byt historisk
    identitet; bekräftelsen ska nollställas igen. Välj sedan källans identitet
    och Robin på nytt och kontrollera båda fullständiga ID:na före nästa steg.
-3. Kör följande kod i Console före bekräftelsen. Markera sedan
-   identitetsbekräftelsen och genomför kopplingen med tangentbordet.
-   Fortsätt endast om konsolen visar **FLYTT-02: kopplingen finns på servern**.
+3. Be driftansvarig installera [den separata svarsförberedelsen](household-recovery-console.md#flytt-02-förberedelse-1).
+   Invänta installationsbesked, markera sedan identitetsbekräftelsen och
+   genomför kopplingen med tangentbordet. Invänta därefter bekräftelse att
+   servern har sparat kopplingen och att just dess svar har tappats.
 4. Kontrollera okänt utfall, spärrad granskning och fokus på
-   **Hämta aktuella innehållskopplingar**. Slå tillfälligt på Offline i
-   utvecklarverktygens Network, välj hämtningen och kontrollera att
-   granskningen fortfarande är spärrad. Slå av Offline.
+   **Hämta aktuella innehållskopplingar**. Be driftansvarig förbereda det
+   tappade lässvaret enligt samma separata förberedelse. Invänta
+   installationsbesked före hämtningen. Välj hämtningen och invänta
+   bekräftelse att serverns verkliga lässvar har tappats.
+   Granskningen ska fortfarande vara spärrad.
 5. Hämta igen. Välj källans identitet och kontrollera den aktuella
    kopplingen. Hämtningen ska inte påstå att den bekräftar en tidigare
    begäran och ska inte skicka ett nytt ägarbyte.
 6. Kontrollera källans privata utkast och placering i Robins aktuella
-   karta. Den extra flikens gamla oskickade formulär ska försvinna och
-   det gamla sparförsöket ska avvisas. Historikens kvitto ska vara oförändrat.
+   karta. Öppna **Skriv till Skyttel → Utkast → Visa förslaget** för
+   källans privata objekt och läs hela beskrivningen. Robins oberoende
+   privata namn och uppgifter får inte visas i detta utkast. Stäng
+   läsningen utan att spara. Invänta den separat identifierade tekniska
+   kontrollen av den gamla begäran. Be driftansvarig släppa blockeringen
+   enligt operatörsstegen och återvänd sedan till den extra fliken.
+   Dess gamla oskickade formulär ska försvinna och
+   historikens kvitto ska vara oförändrat. Avvisning av den gamla
+   begäran kontrolleras separat i automationens tekniska underlag.
 7. Välj Robins tidigare innehålls-ID och samma medlem. Granska följderna
    och bekräfta uttryckligen igen. Robins oberoende privata utkast och
    placering ska återkomma. Starta om målet med samma databas och kontrollera
    båda dessa uppgifter samt det oförändrade historiska kvittot.
-
-```javascript
-(() => {
-  const originalFetch = window.fetch.bind(window);
-  window.fetch = async (input, init) => {
-    const request = new Request(input, init);
-    if (request.method !== 'POST'
-        || !/\/content-owners\/assign$/.test(new URL(request.url).pathname)) {
-      return originalFetch(input, init);
-    }
-    window.fetch = originalFetch;
-    const body = await request.json();
-    const response = await originalFetch(input, init);
-    const result = await response.clone().json();
-    if (!response.ok || !result.identities?.some(identity =>
-      identity.id === body.identityId && identity.userId === body.userId)) {
-      return response;
-    }
-    console.info('FLYTT-02: kopplingen finns på servern');
-    throw new TypeError('Synthetic lost ownership response');
-  };
-})();
-```
+   Öppna **Utkast → Visa förslaget** igen och läs Robins fullständiga
+   privata beskrivning. Källans privata namn och uppgifter får inte visas.
+   Öppna **Rapporter → Visa ändringarna** för det tidigare sparandet;
+   kontrollera den delade lampan, författaren och tidpunkten.
 
 **Förväntat resultat:**
 
@@ -379,6 +354,41 @@ back while both private states and historical receipts remain intact”.
 - Båda privata utkasten och placeringarna bevaras separat och kan kopplas
   tillbaka. Historiska författare, tidpunkter och kvitton ändras inte.
 - Gamla öppna formulär och sparförsök kan inte ändra den nya generationen.
+
+**Separat tekniskt underlag:** Motsvarigheten återanvänder exakt det
+registrerade sparförsöket efter ägarbytet och kontrollerar avvisning samt
+oförändrade utkast, placeringar och historik. Denna request-kontroll ingår
+inte i människans UI-steg. FLYTT-01 har en separat körbar filkontroll av
+gamla försök på den tredje installationen.
+
+#### FLYTT-02: separata operatörssteg
+
+1. Före det väntande försöket i UI-steg 1: aktivera beständig
+   begäransblockering för `*/text-assistant/recover` i Robins profil.
+   Behåll regeln i alla kartflikar genom ägarbytet, båda statusläsningarna
+   och den fullständiga privata läsningen i steg 6. Meddela
+   **Återhämtningsblockeringen är aktiv**. Lossa utvecklarverktygen till ett
+   separat fönster för att bevara 390×900, men håll dem och regeln aktiva.
+2. Vid UI-steg 3 och 4: följ
+   [de separata installera-och-invänta-tidpunkterna](household-recovery-console.md#flytt-02-förberedelse-1).
+   Installera alltid före respektive klick; invänta alltid servermarkören
+   först efter klicket. Utan lyckad servermarkör är felgränsen inte prövad.
+3. Efter källans privata läsning i UI-steg 6: avvisningen av exakt det
+   gamla registrerade försöket och oförändrade utkast, placeringar och
+   historik har sitt tekniska underlag i
+   [FLYTT-02:s motsvarighet](../../tests/integration/household-owners-ui.spec.ts).
+   Anteckna automationens faktiska resultat separat; en ny eller gissad
+   begäran ersätter inte den kontrollen. Om detta underlag saknas redovisas
+   gränsen som ej verifierad, även om UI-arbetet kan fortsätta.
+4. Efter denna kontroll, före återgången till den gamla formulärfliken i
+   steg 6: ta bort regeln i Robins profil och meddela
+   **Återhämtningsblockeringen är borttagen**. Ladda inte om den gamla
+   fliken i förväg; människan ska först observera att formuläret försvinner.
+   Kontrollera därefter båda privata tillstånden och historiken enligt steg 7.
+
+Vid avbrutet prov återställs tillfällig fetch-kod genom omladdning och den
+beständiga blockeringen tas bort. Stäng profilerna och städa provfilerna
+enligt den lokala förberedelsen; återanvänd inte ett gammalt väntande försök.
 
 ## Local recovery preparation
 
