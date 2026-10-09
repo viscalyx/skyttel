@@ -196,6 +196,5 @@ test('SÖK-12: dashed label leaders are readable against the map in both themes'
         document.querySelector('.workspace-context .map-legend-symbol.connector') as Element,
       ).color,
     ).toBe(style.stroke);
-    await page.screenshot({ path: `__screenshots__/label-leaders-${theme}.png` });
   }
 }, 30000);

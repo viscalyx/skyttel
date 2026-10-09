@@ -175,10 +175,16 @@ början tomt hushåll. Förberedelsen ovan kan fortfarande köras manuellt
 från ett tomt hushåll; vanlig motsvarighet är fortsatt KONTEXT-12.
 
 PCM-familjen har en upptäckt integrationsexekvering i stället för två.
-Hela förberedelsespecifikationen har tre i stället för fyra. Båda
-huvudreceptproven, på tom och fylld installation, finns kvar; det fyllda
-provet behåller konfliktlösningen före hela utkastets sparande. Den
-pensionerade tekniska titeln ska inte återanvändas.
+Hela förberedelsespecifikationen har tre i stället för fyra: PCM-testet
+ovan och de två huvudreceptproven som finns kvar:
+
+- “literal context preparation completes batch, questions, save,
+  rejection and admitted revoke on empty public installation”
+- “literal context preparation completes batch, questions, save,
+  rejection and admitted revoke on seeded public installation”
+
+Det fyllda huvudreceptprovet behåller konfliktlösningen före hela
+utkastets sparande. Den pensionerade tekniska titeln ska inte återanvändas.
 
 ## Ljudfragment och tid för sparbesked
 
