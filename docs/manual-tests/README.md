@@ -551,6 +551,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   och skilj bekräftat kvitto från fel vid efterföljande hämtning; återuppta
   utkast, hantera gamla kastförsök
   och konfliktval, kombinera egenskaper i Granska konflikter,
+  med separat HTTP-underlag i Vitests serverprojekt för privata utkast,
+  gamla konfliktval och återkallat medlemskap genom oberoende sessioner,
   separata Karta- och Tabellvägar för genomförda och uteblivna konfliktval,
   historisk fältförlust, skilda objekt- och sambandstypsåterställningar och
   avvisad gammal behörighet med
@@ -632,8 +634,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   TYP-13–22 skyddar angivna smala, korta och mörka browserflöden. Hela
   sparande- och omstartskedjan upprepas inte i varje konfiguration.
   TYP-23 kräver fysisk tangentbordsanvändning vid verklig förstoring.
-  Felaktiga värden har separat tekniskt underlag; TYP-01 jämför hela privata
-  förslag, beständigt kvitto, historik och återspelning i formulärflödet;
+  TYP-07:s HTTP-underlag i Vitests serverprojekt bevarar felaktiga värden,
+  ändrade definitioner, gamla sparbesked och senare privata fält efter
+  faktisk omstart.
+  TYP-01 jämför hela privata förslag, beständigt kvitto, historik och
+  återspelning i formulärflödet;
   typens och fältets formulärvalidering utförs genom riktiga kontroller.
   Konfigurerad fältordning följer med till formulär, utkast och tabellens
   fullständiga läsning, inklusive uttrycklig noll och Nej.

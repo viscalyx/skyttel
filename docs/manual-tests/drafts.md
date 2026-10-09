@@ -2158,9 +2158,11 @@ UTKAST-03.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/draft-conflicts.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/draft-conflicts-http.test.ts",
       "title": "HTTP clients reject stale conflict choices and enforce private drafts and revoked membership",
-      "purpose": "Separata HTTP-prov för inaktuella val, privata utkast och återkallat medlemskap; inga formulärhandlingar."
+      "purpose": "Separata HTTP-prov med oberoende riktiga sessioner och SQLite för inaktuella val, privata utkast och återkallat medlemskap; inga formulärhandlingar."
     }
   ]
 }
@@ -2195,6 +2197,11 @@ Namnförslaget
 - Det nya konfliktvalet uppmanar till granskning och ändrar bara utkastet.
   Medlemmen ser fortfarande **Lo Ek** före det uttryckliga sparandet.
 - Efter sparandet bekräftar kvittot **Lo Lind** och medlemmen ser det namnet.
+
+Separat tekniskt underlag i Vitests serverprojekt verifierar samma ägares
+åtkomst från en annan session, privata utkast, inaktuella val och att ett
+återkallat medlemskap stoppar varje läsning och ändring genom riktiga
+HTTP-anrop och SQLite. Det utför inte de manuella formulärstegen.
 
 ### UTKAST-04: godta ett borttaget objekt utan att tappa andra förslag
 
@@ -8088,3 +8095,15 @@ utkast, två lyckade oberoende sparanden, faktisk omstart och båda medlemmarnas
 läsning av exakta objektidentiteter och värden ingår i samma formulärflöde.
 Ingen funktionell fallidentitet avvecklas. Den separata direkta HTTP-kedjan
 upprepas inte; båda medlemmarnas förslag och sparanden görs genom Tabell.
+
+## Flyttat tekniskt underlag
+
+Det tekniska konfliktprovet i UTKAST-03:s metadata körs i
+[draft-conflicts-http.test.ts](../../tests/unit/server/draft-conflicts-http.test.ts)
+i Vitests serverprojekt med samma testtitel. Hela kontrollen av samma ägare
+i oberoende sessioner, inaktuella och ogiltiga konfliktval, gamla
+utkastversioner, privata utkast, uttryckligt nytt sparande och återkallat
+medlemskap består. Riktiga externa HTTP-anrop, sessioner och SQLite behålls.
+Oanvända webbläsarfixturer tas bort; ingen assertion eller funktionell
+fallidentitet avvecklas och ingen konfiguration förloras. Flytten eliminerar
+inte protokollflödet och innebär inget löfte om snabbare körning.

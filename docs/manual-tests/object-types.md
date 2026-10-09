@@ -792,9 +792,11 @@ Lo har aktuell tillgång till hushållet.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/type-change.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/draft-conflicts-http.test.ts",
       "title": "invalid values and concurrent definitions block whole saves until fresh choices and preserve later private fields",
-      "purpose": "Separat HTTP-verifiering av beständighet, avvisning och oförändrat underlag; utför inte formulärstegen."
+      "purpose": "Separat HTTP-verifiering med riktiga sessioner, SQLite och faktisk omstart av beständighet, avvisning och oförändrat underlag; utför inte formulärstegen."
     }
   ]
 }
@@ -805,7 +807,9 @@ Lo har aktuell tillgång till hushållet.
 **Separat förberedelse:** Skapa och spara typer, objekt och samband enligt
 TYP-06. Lo ska vara vanlig medlem i samma hushåll. Protokolltestet i
 metadata bevarar kontroll av felaktigt Nummer, gamla utkastversioner och
-exakt historik. För felaktigt Nummer kan koden i allmän förberedelse köras
+exakt historik i Vitests serverprojekt genom riktiga HTTP-anrop, sessioner,
+SQLite och faktisk omstart. För felaktigt Nummer kan koden i allmän
+förberedelse köras
 med ett giltigt objektförslag och värdet `fel`; detta är separat tekniskt
 underlag, inte en formulärhandling.
 
@@ -1644,3 +1648,16 @@ exakt kvitto, historik och återspelning ingår i det befintliga formulärflöde
 Ingen funktionell fallidentitet avvecklas. Direkta HTTP-förslag med fasta
 prov-ID:n körs inte längre som ett separat arbetsflöde; formulären skapar
 identiteterna och HTTP-kontrollerna följer dem genom hela sparandet.
+
+## Flyttat tekniskt underlag
+
+Det tekniska typbytesprovet i TYP-07:s metadata körs i
+[draft-conflicts-http.test.ts](../../tests/unit/server/draft-conflicts-http.test.ts)
+i Vitests serverprojekt. Det behåller samma testtitel och hela protokollet:
+felaktiga värden lämnar underlaget oförändrat, en ändrad definition stoppar
+hela sparandet, ett aktuellt konfliktval kräver nytt sparbesked och senare
+privata fält består efter faktisk omstart med sparat kvitto i historiken.
+Riktiga HTTP-anrop, sessioner och SQLite består. De oanvända
+webbläsarfixturerna tas bort; ingen assertion eller funktionell fallidentitet
+avvecklas och ingen bredd- eller temakombination förloras. Flytten eliminerar
+inte protokollflödet och innebär inget löfte om snabbare körning.
