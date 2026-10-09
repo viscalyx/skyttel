@@ -45,6 +45,7 @@ fallen anger formulär, samtal, profil eller administration.
 PLACERING-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -57,6 +58,7 @@ PLACERING-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -102,6 +104,7 @@ PLACERING-01.
 PLACERING-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -114,6 +117,7 @@ PLACERING-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -156,6 +160,7 @@ valet består. Markera även Lampan
 PLACERING-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -168,6 +173,7 @@ PLACERING-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -201,6 +207,7 @@ PLACERING-02.
 PLACERING-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -213,6 +220,7 @@ PLACERING-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -260,6 +268,7 @@ PLACERING-03.
 PLACERING-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -272,6 +281,7 @@ PLACERING-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -325,6 +335,7 @@ från Alex profil. Använd en tredje, utloggad profil för åtkomstprovet.
 PLACERING-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -337,6 +348,7 @@ PLACERING-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -387,6 +399,7 @@ anslutning ersätter inte denna bestämda ordning.
 PLACERING-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -399,6 +412,7 @@ PLACERING-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -462,6 +476,7 @@ befintliga guiden.
 PLACERING-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -474,6 +489,7 @@ PLACERING-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -510,6 +526,7 @@ PLACERING-11 gäller faktisk uppläsning.
 PLACERING-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -522,6 +539,7 @@ PLACERING-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -564,6 +582,7 @@ PLACERING-09.
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts), PLACERING-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -577,6 +596,7 @@ PLACERING-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -603,6 +623,7 @@ sparning utan att avbryta pågående läsning.
 per personlig sparning utan att avbryta pågående läsning.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -629,6 +650,7 @@ per personlig sparning utan att avbryta pågående läsning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -658,6 +680,7 @@ bildplan och höjd, medan avbrutna gester och flyttat ankare återställer utan
 oavsiktlig objektflytt.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -678,6 +701,7 @@ oavsiktlig objektflytt.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

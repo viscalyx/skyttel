@@ -49,6 +49,7 @@ otillgänglighet enligt
 , NOT-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -61,6 +62,7 @@ otillgänglighet enligt
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -107,6 +109,7 @@ vid de angivna stegen. Utför UI-flödet en gång.
 , NOT-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -119,6 +122,7 @@ vid de angivna stegen. Utför UI-flödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -165,6 +169,7 @@ Påhittad uppgift, mikrofon på och stängd textvy.
 , NOT-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -179,6 +184,7 @@ Påhittad uppgift, mikrofon på och stängd textvy.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -228,6 +234,7 @@ vid de angivna stegen. Utför UI-flödet en gång.
 , NOT-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -240,6 +247,7 @@ vid de angivna stegen. Utför UI-flödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -275,6 +283,7 @@ vid de angivna stegen. Utför UI-flödet en gång.
 , NOT-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -287,6 +296,7 @@ vid de angivna stegen. Utför UI-flödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -325,6 +335,7 @@ vid de angivna stegen. Utför UI-flödet en gång.
 , NOT-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -337,6 +348,7 @@ vid de angivna stegen. Utför UI-flödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -374,6 +386,7 @@ verktygsfältet även i korta fönster.
 , NOT-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -386,6 +399,7 @@ verktygsfältet även i korta fönster.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -433,6 +447,7 @@ konfiguration före samma steg.
 , NOT-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -445,6 +460,7 @@ konfiguration före samma steg.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -484,6 +500,7 @@ vid de angivna stegen. NOT-23 använder samma flöde en gång i mörkt tema.
 , NOT-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -496,6 +513,7 @@ vid de angivna stegen. NOT-23 använder samma flöde en gång i mörkt tema.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -535,6 +553,7 @@ inte genomfört försök.
 , NOT-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -547,6 +566,7 @@ inte genomfört försök.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -589,6 +609,7 @@ formbedömning redovisas som utförd.
 skillnader utan färg.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -601,6 +622,7 @@ skillnader utan färg.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -677,6 +699,7 @@ observationsstarten. Behåll samma anslutning och native kontroller.
 , NOT-16.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -690,6 +713,7 @@ observationsstarten. Behåll samma anslutning och native kontroller.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -721,6 +745,7 @@ observationsstarten. Behåll samma anslutning och native kontroller.
 , NOT-17.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -734,6 +759,7 @@ observationsstarten. Behåll samma anslutning och native kontroller.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -766,6 +792,7 @@ och End, kontrollera synlig fokusram och nå Återställ vy.
 , NOT-18.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -779,6 +806,7 @@ och End, kontrollera synlig fokusram och nå Återställ vy.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -810,6 +838,7 @@ observationsstarten. Behåll samma anslutning och native kontroller.
 , NOT-19.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -823,6 +852,7 @@ observationsstarten. Behåll samma anslutning och native kontroller.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -855,6 +885,7 @@ och End, kontrollera synlig fokusram och nå Återställ vy.
 , NOT-20.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -868,6 +899,7 @@ och End, kontrollera synlig fokusram och nå Återställ vy.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -898,6 +930,7 @@ konfiguration före den första UI-handlingen. Välj 820 × 1180.
 , NOT-21.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -911,6 +944,7 @@ konfiguration före den första UI-handlingen. Välj 820 × 1180.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -940,6 +974,7 @@ konfiguration före den första UI-handlingen. Välj 390 × 844.
 , NOT-22.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -953,6 +988,7 @@ konfiguration före den första UI-handlingen. Välj 390 × 844.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -983,6 +1019,7 @@ UI-handlingen.
 , NOT-23.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -995,6 +1032,7 @@ UI-handlingen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1026,6 +1064,7 @@ HTTPS-adress och konfigurerad inloggning.
 extra mikrofonstatus och ett köat återkomstbesked.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1039,6 +1078,7 @@ extra mikrofonstatus och ett köat återkomstbesked.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1071,6 +1111,7 @@ Starta samtalet med text och stäng textvyn.
 , NOT-12.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1084,6 +1125,7 @@ Starta samtalet med text och stäng textvyn.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1118,6 +1160,7 @@ Starta samtalet med text och stäng textvyn.
 , NOT-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1131,6 +1174,7 @@ Starta samtalet med text och stäng textvyn.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1165,6 +1209,7 @@ starten. Starta samtalet med text och stäng textvyn.
 , NOT-14.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1178,6 +1223,7 @@ starten. Starta samtalet med text och stäng textvyn.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1212,6 +1258,7 @@ Starta samtalet med text och stäng textvyn.
 , NOT-15.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1225,6 +1272,7 @@ Starta samtalet med text och stäng textvyn.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

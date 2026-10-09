@@ -31,6 +31,7 @@ RYMD-10 använder i stället sin egen förberedelse med ett nytt provhushåll.
 ### RYMD-01: samma utkast och beständiga sparande i båda vyerna
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -43,6 +44,7 @@ RYMD-10 använder i stället sin egen förberedelse med ett nytt provhushåll.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova att rymdkartan använder samma uppgifter som tabellen.
@@ -75,6 +77,7 @@ durable save”.
 ### RYMD-02: sökning och samband behåller markering och kamera
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -87,6 +90,7 @@ durable save”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova riktade samband, fokus och kamerans separata kontroller.
@@ -139,6 +143,7 @@ selection”.
 ### RYMD-03: menyer och symboler visar ändringar före sparande
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -151,6 +156,7 @@ selection”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja förslag från sparad karta och kasta vanlig borttagning.
@@ -209,6 +215,7 @@ from saved content”.
 ### RYMD-04: pekmeny och grafikavbrott bevarar oskickad text
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -221,6 +228,7 @@ from saved content”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova långtryck, orientering och fortsatt redigering vid avbrott.
@@ -265,6 +273,7 @@ unsent editing”.
 ### RYMD-05: etiketter och tangentbord behåller sambandets formulär
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -277,6 +286,7 @@ unsent editing”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova etikettläge och redigering utan rumsliga gester.
@@ -327,6 +337,7 @@ changes”.
 ### RYMD-06: förlorad tillgång stänger kartarbetet och visar inloggningsvägen
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -339,6 +350,7 @@ changes”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova att en nekad ändring inte låser navigationen.
@@ -376,6 +388,7 @@ navigation”.
 ### RYMD-07: upphörda uppgifter behåller status bredvid ändringssymboler
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -388,6 +401,7 @@ navigation”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja upphört från förslag i rymdkartans objekt och samband.
@@ -438,6 +452,7 @@ draft symbols”.
 ### RYMD-08: fokusera och granska tidigare och föreslagna samband
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -450,6 +465,7 @@ draft symbols”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Förstå en ändrad betalare utan att ändra det sparade sambandet.
@@ -494,6 +510,7 @@ valet.
 ### RYMD-09: täta mobilutsnitt och valbara etiketter
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -506,6 +523,7 @@ valet.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Välja tätt placerade objekt utan att flytta dem eller kameran.
@@ -550,6 +568,7 @@ selected label priority and text alternatives”.
 ### RYMD-10: etikettinformation bevarar karta och lista vid vybyte
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -562,6 +581,7 @@ selected label priority and text alternatives”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova att information om dolda etiketter förblir läsbar utan
@@ -608,6 +628,7 @@ its saved and private list”.
 ### RYMD-11: verklig pekning, orientering och zoom bevarar text
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -630,6 +651,7 @@ its saved and private list”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** verklig pekning, orientering och zoom bevarar text.
@@ -658,6 +680,7 @@ på fysisk enhet och kontrollera oskickad text och nåbara kontroller.
 ### RYMD-12: symbolernas betydelse känns igen utan hjälptext
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -679,6 +702,7 @@ på fysisk enhet och kontrollera oskickad text och nåbara kontroller.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** symbolernas betydelse känns igen utan hjälptext.

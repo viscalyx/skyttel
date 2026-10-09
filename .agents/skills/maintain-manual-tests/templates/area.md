@@ -37,6 +37,7 @@ ett upptäckt test.}}
 [{{filnamn}}.spec.ts](../../tests/integration/{{filnamn}}.spec.ts),
 {{identifierande namn eller stabilt ID för exakt ett motsvarande test}}.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -47,11 +48,13 @@ ett upptäckt test.}}
   "outcomes": ["{{observerbart skyddat resultat}}"]
 }
 ```
+-->
 
 **Kräver mänsklig observation:** {{Ange den faktiska observationen,
 utrustningen eller den externa klienten. Ange eventuellt närliggande
 automatiskt underlag separat; det utför inte denna observation.}}
 
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -62,6 +65,7 @@ automatiskt underlag separat; det utför inte denna observation.}}
   "outcomes": ["{{observerbart skyddat resultat}}"]
 }
 ```
+-->
 
 **Ytterligare underlag:** {{Ange vid behov separat tekniskt underlag,
 överlappande test eller verklig leverantörsverifiering med dess syfte.

@@ -40,6 +40,7 @@ Stäng textvyn före nästa steg i Tabell, Karta eller Inställningar.
 
 ### AVTAL-01: Registrera, hitta och rätta hyresuppgifter
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -52,6 +53,7 @@ Stäng textvyn före nästa steg i Tabell, Karta eller Inställningar.
   ]
 }
 ```
+-->
 
 **Syfte:** Kontrollera att frivilliga uppgifter kan lämnas öppna och att
 ett hyresavtal behåller sin typ när hyran betalas månadsvis.
@@ -111,6 +113,7 @@ corrected after reload”.
 ### AVTAL-02: Bevara skilda belopp och ofullständiga uppgifter
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -123,6 +126,7 @@ corrected after reload”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att skuld, beviljat kreditutrymme och utnyttjad
@@ -178,6 +182,7 @@ incomplete meanings in forms and drafts”.
 ### AVTAL-04: bevara daterade skuld- och kredituppgifter i historiken
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -198,6 +203,7 @@ incomplete meanings in forms and drafts”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja skuld, kreditutrymme och utnyttjad kredit genom utkast,
@@ -238,6 +244,7 @@ AVTAL-04. Separat HTTP-underlag finns i metadata ovan.
 ### AVTAL-05: Avtalens roller och identiteter bevaras vid rättelse
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -250,6 +257,7 @@ AVTAL-04. Separat HTTP-underlag finns i metadata ovan.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova flera hyresavtal, lån, kredit och bilavbetalning med
@@ -324,6 +332,7 @@ identities through a blocked save and correction”.
 ### AVTAL-06: Uppgradering bevarar egna definitioner och äldre utkast
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -336,6 +345,7 @@ identities through a blocked save and correction”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova att befintliga hushåll får avtalsstöd utan att egna
@@ -392,6 +402,7 @@ private draft”.
 ### AVTAL-07: avvisa ogiltiga uppgifter utan att ändra utkastet
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -412,6 +423,7 @@ private draft”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att valideringen bevarar övriga förslag och inte
@@ -448,6 +460,7 @@ AVTAL-07. Separat datumvalidering via HTTP anges i metadata ovan.
 ### AVTAL-08: lös en konflikt utan att förlora oberoende ekonomiska fakta
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -468,6 +481,7 @@ AVTAL-07. Separat datumvalidering via HTTP anges i metadata ovan.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevara separata fakta när två användare rättar samma avtal.

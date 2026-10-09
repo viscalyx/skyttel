@@ -61,6 +61,7 @@ testfallet “MEDLEM-01: an administrator invites an authenticated user who
 joins by keyboard on a phone”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -73,6 +74,7 @@ joins by keyboard on a phone”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -108,6 +110,7 @@ och att en återkallad inbjudan inte ger tillgång.
 testfallet “MEDLEM-02: invitation errors are recoverable and a revoked
 code cannot grant access”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -120,6 +123,7 @@ code cannot grant access”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -155,6 +159,7 @@ och att **Avbryt** lämnar den nya inbjudan användbar.
 testfallet “MEDLEM-04: replacing an invitation invalidates the old code
 and cancellation keeps the new code usable”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -167,6 +172,7 @@ and cancellation keeps the new code usable”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -207,6 +213,7 @@ Integrationstestet ordnar motsvarande datum i en separat testdatabas.
 testfallet “MEDLEM-05: an expired invitation is visibly unusable and a
 fresh invitation restores the join flow”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -219,6 +226,7 @@ fresh invitation restores the join flow”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -284,6 +292,7 @@ Använd Chromium eller Chrome med utvecklarverktyg i Robins profil.
 MEDLEM-07, båda leveransgränserna i samma återhämtningsflöde.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -297,6 +306,7 @@ MEDLEM-07, båda leveransgränserna i samma återhämtningsflöde.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -345,6 +355,7 @@ Alex håller sidan **Administrera tillgång** öppen.
 testfallet “MEDLEM-03: administrators share responsibility and open clients
 lose revoked access without disrupting input”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -357,6 +368,7 @@ lose revoked access without disrupting input”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -402,6 +414,7 @@ Behåll den accepterade koden för steg 4. Kartan saknar **Robin i kartan**.
 testfallet “MEDLEM-06: revocation preserves shared objects and only a
 new invitation restores membership”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -414,6 +427,7 @@ new invitation restores membership”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -464,6 +478,7 @@ testfallet “MEDLEM-08: staged invitation copies its one-time code and
 revocation retires an open recipient workspace”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -477,6 +492,7 @@ revocation retires an open recipient workspace”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -567,6 +583,7 @@ inte webbläsarens verkliga behörighetsbeslut. Tangentbordets kopiering,
 inklistringen och inbjudningstjänsten används på riktigt.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -579,6 +596,7 @@ inklistringen och inbjudningstjänsten används på riktigt.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

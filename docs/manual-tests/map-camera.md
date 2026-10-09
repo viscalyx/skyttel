@@ -45,6 +45,7 @@ KAMERA-03:s grafikdel har
 KAMERA-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -57,6 +58,7 @@ KAMERA-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -86,6 +88,7 @@ KAMERA-01.
 KAMERA-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -98,6 +101,7 @@ KAMERA-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -144,6 +148,7 @@ WebGL. Saknas det stödet, anteckna den delen som ej utförd.
 KAMERA-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -156,6 +161,7 @@ KAMERA-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -196,6 +202,7 @@ före varje försök i steg 7. Transporten håller samma verkliga svar efter
 att flytten genomförts; provet ändrar inte annan hushållsinformation.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -208,6 +215,7 @@ att flytten genomförts; provet ändrar inte annan hushållsinformation.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -282,6 +290,7 @@ transporten enligt den befintliga guiden efter båda fokusproven.
 KAMERA-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -294,6 +303,7 @@ KAMERA-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -337,6 +347,7 @@ KAMERA-05.
 KAMERA-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -349,6 +360,7 @@ KAMERA-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -386,6 +398,7 @@ KAMERA-06.
 KAMERA-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -398,6 +411,7 @@ KAMERA-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -431,6 +445,7 @@ KAMERA-07.
 KAMERA-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -443,6 +458,7 @@ KAMERA-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -487,6 +503,7 @@ om pekskärmen är emulerad eller fysisk.
 KAMERA-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -499,6 +516,7 @@ KAMERA-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -535,6 +553,7 @@ verklig 400 procents webbläsarzoom lämnar kamera, navigation och senare fokus
 nåbara.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -561,6 +580,7 @@ nåbara.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -587,6 +607,7 @@ etiketter med påläge och kameraknapparnas inaktiva lägen.
 olika syften, Alla etiketter med påläge och kameraknapparnas inaktiva lägen.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -619,6 +640,7 @@ olika syften, Alla etiketter med påläge och kameraknapparnas inaktiva lägen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -647,6 +669,7 @@ varje sammanhängande rotation, panorering och zoom till rätt hela steg i
 Föregående vy.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -667,6 +690,7 @@ Föregående vy.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

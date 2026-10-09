@@ -63,6 +63,7 @@ Databasförberedelsen tar bort tidigare utvecklingsdata och sessioner.
 [database-setup.spec.ts](../../tests/integration/database-setup.spec.ts),
 DEMO-01, Google som konfigurerad administratör.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -77,6 +78,7 @@ DEMO-01, Google som konfigurerad administratör.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -134,6 +136,7 @@ Databasförberedelsen tar bort tidigare utvecklingsdata och sessioner.
 [database-setup.spec.ts](../../tests/integration/database-setup.spec.ts),
 DEMO-02, Microsoft som konfigurerad administratör.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -148,6 +151,7 @@ DEMO-02, Microsoft som konfigurerad administratör.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -220,6 +224,7 @@ och armar `save:drop-after` före steg 2.
 SPAR-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -234,6 +239,7 @@ SPAR-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -294,6 +300,7 @@ antecknas som separat tekniskt underlag i Network-svaret från
 SPAR-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -309,6 +316,7 @@ SPAR-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -368,6 +376,7 @@ att nyare förslag kan granskas och sparas med ett nytt försök.
 SPAR-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -382,6 +391,7 @@ SPAR-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -437,6 +447,7 @@ testidentiteten. Använd skilda profiler för de två användarna och
 SPAR-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -451,6 +462,7 @@ SPAR-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -501,6 +513,7 @@ Använd inte utvecklarverktygens nätverksblockering samtidigt.
 SPAR-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -516,6 +529,7 @@ SPAR-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**

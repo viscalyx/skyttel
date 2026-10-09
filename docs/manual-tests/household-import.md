@@ -59,6 +59,7 @@ testfallet “IMPORT-01: an administrator reviews and explicitly replaces
 household content with the keyboard”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -71,6 +72,7 @@ household content with the keyboard”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -115,6 +117,7 @@ rejects old save
 attempts and permits ordinary corrections after restart”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -127,6 +130,7 @@ attempts and permits ordinary corrections after restart”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -267,6 +271,7 @@ IMPORT-07, med formulär, återimport och läsning i Rapporter.
 Det separata tekniska testet behåller exakta fältslag och kvitton.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -287,6 +292,7 @@ Det separata tekniska testet behåller exakta fältslag och kvitton.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -340,6 +346,7 @@ testfallet “IMPORT-08: an unavailable prepared archive allows fresh review
 after restart without changing content”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -352,6 +359,7 @@ after restart without changing content”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -399,6 +407,7 @@ testfallet “IMPORT-09: another administrator discovers the same committed
 import after a lost response and restart”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -411,6 +420,7 @@ import after a lost response and restart”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -455,6 +465,7 @@ testfallet “IMPORT-10: the current administrator recovers a lost
 preparation before an older completed import”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -467,6 +478,7 @@ preparation before an older completed import”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -526,6 +538,7 @@ testfallet “IMPORT-11: another administrator finishes the same gated
 cleanup after the original administrator loses authority”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -552,6 +565,7 @@ cleanup after the original administrator loses authority”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -605,6 +619,7 @@ testfallet “IMPORT-12: protected Settings recovery pages preserve ordinary
 work and retire it after replacement”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -617,6 +632,7 @@ work and retire it after replacement”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -667,6 +683,7 @@ testfallet “IMPORT-13: import and identity Settings destinations enforce
 current household administrator access”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -679,6 +696,7 @@ current household administrator access”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -724,6 +742,7 @@ testfallet “IMPORT-14: a locally known uncertain import keeps its exact
 identity after a newer replacement and a lost status response”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -736,6 +755,7 @@ identity after a newer replacement and a lost status response”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -795,6 +815,7 @@ testfallet “IMPORT-15: keyboard recovery controls remain visible through
 review, errors and assignment at 1280px”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -807,6 +828,7 @@ review, errors and assignment at 1280px”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -880,6 +902,7 @@ testfallet “IMPORT-16: an administrator explicitly cancels only an
 unconfirmed preparation and removes its staged archive”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -892,6 +915,7 @@ unconfirmed preparation and removes its staged archive”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -947,6 +971,7 @@ testfallet “IMPORT-17: failed cancellation cleanup and a lost success
 remain bound to the same unconfirmed preparation”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -973,6 +998,7 @@ remain bound to the same unconfirmed preparation”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1026,6 +1052,7 @@ testfallet “IMPORT-18: a fresh administrator client can find cancelled
 files even when another review is ready”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1052,6 +1079,7 @@ files even when another review is ready”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1092,6 +1120,7 @@ testfallet “IMPORT-19: a retired cancellation response cannot forget a
 newer preparation after Settings navigation”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1104,6 +1133,7 @@ newer preparation after Settings navigation”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1146,6 +1176,7 @@ testfallet “IMPORT-20: a retired unavailable status response cannot forget
 a newer preparation after Settings navigation”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1158,6 +1189,7 @@ a newer preparation after Settings navigation”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1212,6 +1244,7 @@ testfallet “IMPORT-21: unavailable recovery storage preserves the file,
 exact review and confirmed server result”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1224,6 +1257,7 @@ exact review and confirmed server result”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -1306,6 +1340,7 @@ IMPORT-15. Ställ fönstret till 390×900 CSS-pixlar före första steget.
 IMPORT-22.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1319,6 +1354,7 @@ IMPORT-22.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1358,6 +1394,7 @@ IMPORT-15. Ställ fönstret till 320×900 CSS-pixlar före första steget.
 IMPORT-23.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1371,6 +1408,7 @@ IMPORT-23.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1409,6 +1447,7 @@ IMPORT-15. Ställ fönstret till 640×500 CSS-pixlar före första steget.
 IMPORT-24.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1422,6 +1461,7 @@ IMPORT-24.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1463,6 +1503,7 @@ den avsedda aktuella medlemmens namn och ID utanför vallistorna. Valet och
 bekräftelsen ska kunna nås och utföras utan klippt text.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1481,6 +1522,7 @@ bekräftelsen ska kunna nås och utföras utan klippt text.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

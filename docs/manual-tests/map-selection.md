@@ -28,6 +28,7 @@ påhittade uppgifter. Administratörsrollen behövs inte för kartarbetet.
 ### MARKERING-01: flerval och uttrycklig detaljöppning
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -40,6 +41,7 @@ påhittade uppgifter. Administratörsrollen behövs inte för kartarbetet.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja markering från detaljöppning utan ändrade fakta eller kamera.
@@ -80,6 +82,7 @@ details separately”.
 ### MARKERING-02: tomrumsklick och avbrutna gester
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -92,6 +95,7 @@ details separately”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Avmarkera utan att ändra sökning eller oavsiktligt flytta kameran.
@@ -129,6 +133,7 @@ cancellation retain selection”.
 ### MARKERING-03: tangentbord, läsning och uttrycklig formulärförlust
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -141,6 +146,7 @@ cancellation retain selection”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa markerade uppgifter, skydda oskickad text och nå samma
@@ -201,6 +207,7 @@ flyttbara uppgiftsfönster prövas i MARKERING-06.
 ### MARKERING-05: läs markerade uppgifter och återgå från vanligt formulär
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -213,6 +220,7 @@ flyttbara uppgiftsfönster prövas i MARKERING-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa ett valt objekt och nå samma fullständiga objektformulär
@@ -267,6 +275,7 @@ MARKERING-05.
 ### MARKERING-06: flera flyttbara uppgiftsfönster med gemensamma ikoner
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -279,6 +288,7 @@ MARKERING-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa flera objekts uppgifter och flytta fönstren oberoende av
@@ -348,6 +358,7 @@ and move without moving the map”.
 ### MARKERING-07: MARKERING-03 vid 390 × 1000
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -361,6 +372,7 @@ and move without moving the map”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** MARKERING-03 vid 390 × 1000.
@@ -389,6 +401,7 @@ MARKERING-07.
 ### MARKERING-08: MARKERING-03 vid 320 × 1000
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -402,6 +415,7 @@ MARKERING-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** MARKERING-03 vid 320 × 1000.
@@ -430,6 +444,7 @@ MARKERING-08.
 ### MARKERING-09: MARKERING-05 vid 320 × 640
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -443,6 +458,7 @@ MARKERING-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** MARKERING-05 vid 320 × 640.
@@ -471,6 +487,7 @@ MARKERING-09.
 ### MARKERING-10: MARKERING-05 vid 320 × 250
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -484,6 +501,7 @@ MARKERING-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** MARKERING-05 vid 320 × 250.
@@ -512,6 +530,7 @@ MARKERING-10.
 ### MARKERING-11: fysiska modifierare skiljer flerval från detaljöppning
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -533,6 +552,7 @@ MARKERING-10.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** fysiska modifierare skiljer flerval från detaljöppning.
@@ -560,6 +580,7 @@ enheten och kontrollera vilka objekt som markeras och öppnas.
 ### MARKERING-12: fysisk pekdragning och avbrott bevarar fönster
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -581,6 +602,7 @@ enheten och kontrollera vilka objekt som markeras och öppnas.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** fysisk pekdragning och avbrott bevarar fönster.

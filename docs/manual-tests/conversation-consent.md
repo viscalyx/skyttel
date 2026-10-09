@@ -95,6 +95,7 @@ testfallet “MEDGIVANDE-01: samtalsknapparna visar medgivanderutan och
 Avbryt startar inget”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -109,6 +110,7 @@ Avbryt startar inget”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -154,6 +156,7 @@ testfallet “MEDGIVANDE-02: vald knapp avgör röst eller text och
 medgivandet gäller besöket”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -168,6 +171,7 @@ medgivandet gäller besöket”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -212,6 +216,7 @@ testfallet “MEDGIVANDE-03: sparat medgivande följer användaren men inte
 andra medlemmar”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -225,6 +230,7 @@ andra medlemmar”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -273,6 +279,7 @@ testfallet “MEDGIVANDE-04: medgivanderutan fungerar med tangentbord och
 pekskärm”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -287,6 +294,7 @@ pekskärm”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -336,6 +344,7 @@ testfallet “MEDGIVANDE-05: sidan Samtal med Skyttel visar medgivandet för
 alla medlemmar”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -351,6 +360,7 @@ alla medlemmar”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -391,6 +401,7 @@ testfallet “MEDGIVANDE-06: Spara medgivandet sparar direkt utan att starta
 ett samtal”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -406,6 +417,7 @@ ett samtal”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -442,6 +454,7 @@ testfallet “MEDGIVANDE-07: Återkalla medgivandet gäller genast och Skyttel
 frågar igen”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -455,6 +468,7 @@ frågar igen”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -490,6 +504,7 @@ testfallet “MEDGIVANDE-08: medgivande för besöket går att återkalla och at
 spara”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -505,6 +520,7 @@ spara”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -551,6 +567,7 @@ testfallet “MEDGIVANDE-09: sidan visas och återkallar när samtalet inte är
 tillgängligt”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -564,6 +581,7 @@ tillgängligt”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -596,6 +614,7 @@ testfallet “MEDGIVANDE-10: ett misslyckat sparande sägs och knappen behåller
 sitt läge”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -610,6 +629,7 @@ sitt läge”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -646,6 +666,7 @@ testfallet “MEDGIVANDE-11: sidan sköts med tangentbord och pekskärm i båda
 teman”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -661,6 +682,7 @@ teman”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -709,6 +731,7 @@ medgivande”.
 2. Bjud in Robins användar-ID igen, och acceptera inbjudan som Robin.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -722,6 +745,7 @@ medgivande”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -752,6 +776,7 @@ testfallet “MEDGIVANDE-13: ett återkallande på en annan enhet avslutar
 samtalet”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -765,6 +790,7 @@ samtalet”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -848,6 +874,7 @@ testfallet “MEDGIVANDE-14: ändrad medgivandetext kräver ett nytt sparat
 medgivande”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -861,6 +888,7 @@ medgivande”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -896,6 +924,7 @@ Utkastet har en osparad ändring. Inget medgivande är sparat.
 testfallet “MEDGIVANDE-15: återkallandet behåller utkast och oskickad text”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -912,6 +941,7 @@ testfallet “MEDGIVANDE-15: återkallandet behåller utkast och oskickad text�
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -976,6 +1006,7 @@ Skriv `hold-save on` i terminalen innan samtalet börjar.
 testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -991,6 +1022,7 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1038,6 +1070,7 @@ observationsfall.
 testfallet “MEDGIVANDE-17: återkallanderutan med tangentbord och pekskärm”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1052,6 +1085,7 @@ testfallet “MEDGIVANDE-17: återkallanderutan med tangentbord och pekskärm”
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1092,6 +1126,7 @@ testfallet “MEDGIVANDE-18: nästa textförsök visar återkallandet på en ann
 enhet”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1106,6 +1141,7 @@ enhet”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1153,6 +1189,7 @@ fjärråterkallandets notis. Den ska läsas en gång och ska inte säga att
 hushållets åtkomst har upphört.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1169,6 +1206,7 @@ hushållets åtkomst har upphört.
   }]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1270,6 +1308,7 @@ kryssrutans namn, återkallandets beskrivning och resultat läses i rätt ordnin
 Samma resultat läses igen efter upprepad handling.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1282,6 +1321,7 @@ Samma resultat läses igen efter upprepad handling.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1323,6 +1363,7 @@ och ta bort provhushållet när granskningen är klar.
 rubrik, text, fokus och alla kontroller är nåbara vid zoom utan sidrullning.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1335,6 +1376,7 @@ rubrik, text, fokus och alla kontroller är nåbara vid zoom utan sidrullning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

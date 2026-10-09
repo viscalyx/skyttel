@@ -47,6 +47,7 @@ riktiga enheter separat från Chromium-emulering.
 MIKROFONTRYCK-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -59,6 +60,7 @@ MIKROFONTRYCK-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -92,6 +94,7 @@ MIKROFONTRYCK-01.
 MIKROFONTRYCK-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -104,6 +107,7 @@ MIKROFONTRYCK-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -134,6 +138,7 @@ genvägskollisioner hör till MIKROFONTRYCK-10.
 MIKROFONTRYCK-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -146,6 +151,7 @@ MIKROFONTRYCK-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -188,6 +194,7 @@ systemavbrott hör till MIKROFONTRYCK-11.
 MIKROFONTRYCK-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -200,6 +207,7 @@ MIKROFONTRYCK-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -245,6 +253,7 @@ och återställning; verkligt tal provas i MIKROFONTRYCK-12.
 MIKROFONTRYCK-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -257,6 +266,7 @@ MIKROFONTRYCK-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -299,6 +309,7 @@ och återställning; verkligt tal provas i MIKROFONTRYCK-12.
 MIKROFONTRYCK-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -311,6 +322,7 @@ MIKROFONTRYCK-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -347,6 +359,7 @@ att sätta `setPlayback('blocked')` före trycket.
 MIKROFONTRYCK-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -359,6 +372,7 @@ MIKROFONTRYCK-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -392,6 +406,7 @@ och återställning; verkligt tal provas i MIKROFONTRYCK-12.
 MIKROFONTRYCK-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -404,6 +419,7 @@ MIKROFONTRYCK-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -453,6 +469,7 @@ alla stegen. Släpp även Skift före Mellanslag.
 MIKROFONTRYCK-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -466,6 +483,7 @@ MIKROFONTRYCK-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -500,6 +518,7 @@ Ctrl+Skift+Mellanslag, tangentupprepning och ordning på släpp med OS och
 skärmläsare.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -513,6 +532,7 @@ skärmläsare.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -545,6 +565,7 @@ HTTPS-adress och konfigurerad inloggning.
 riktig telefon/surfplatta och bedöm den faktiska mikrofonens avslag.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -558,6 +579,7 @@ riktig telefon/surfplatta och bedöm den faktiska mikrofonens avslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -591,6 +613,7 @@ HTTPS-adress och konfigurerad inloggning.
 före släpp respektive efter avslag och avbruten start.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -604,6 +627,7 @@ före släpp respektive efter avslag och avbruten start.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

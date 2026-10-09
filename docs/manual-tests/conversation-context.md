@@ -67,6 +67,7 @@ testfallet “KONTEXT-01: kontexten består efter utkast, sparande,
 avbrott och fel”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -81,6 +82,7 @@ avbrott och fel”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -128,6 +130,7 @@ testfallet “KONTEXT-02: röst och text delar kontext över avstängning och
 ny röstanslutning”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -141,6 +144,7 @@ ny röstanslutning”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -182,6 +186,7 @@ testfallet “KONTEXT-03: skrivna och talade kommandon börjar om samtalet
 och kastar utkastet”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -197,6 +202,7 @@ och kastar utkastet”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -297,6 +303,7 @@ testfallet “KONTEXT-04: textmätaren följer modellens mätning och nytt
 samtal tömmer den”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -310,6 +317,7 @@ samtal tömmer den”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -374,6 +382,7 @@ testfallet “KONTEXT-05: rösten visar procent från 85 och läser
 tröskeln en gång”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -388,6 +397,7 @@ tröskeln en gång”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -452,6 +462,7 @@ testfallet “KONTEXT-06: ogiltig mätning och gamla rösthändelser ändrar
 inte den nya kontexten”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -464,6 +475,7 @@ inte den nya kontexten”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -518,6 +530,7 @@ omflöde. Verklig utrustning och uppläsning provas i KONTEXT-16/17.
 KONTEXT-07 i gruppen pekskärm 390.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -530,6 +543,7 @@ KONTEXT-07 i gruppen pekskärm 390.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -591,6 +605,7 @@ testfallet “KONTEXT-08: full textkontext sammanfattas och senaste
 utkastet kan rättas”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -604,6 +619,7 @@ utkastet kan rättas”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -645,6 +661,7 @@ på. KONTEXT-14 provar valet av.
 KONTEXT-09, mikrofonen på.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -657,6 +674,7 @@ KONTEXT-09, mikrofonen på.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -713,6 +731,7 @@ provar röst som ingång.
 KONTEXT-10, text som ingång.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -726,6 +745,7 @@ KONTEXT-10, text som ingång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -786,6 +806,7 @@ testfallet “KONTEXT-11: sammanfattning väntar på talat sparande och dess
 hörda kvitto”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -798,6 +819,7 @@ hörda kvitto”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -857,6 +879,7 @@ testfallet “KONTEXT-12: sammanfattning bevarar tal som spelades in före
 släpp”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -869,6 +892,7 @@ släpp”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -927,6 +951,7 @@ KONTEXT-07. Följ dess förberedelse.
 KONTEXT-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -939,6 +964,7 @@ KONTEXT-13.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -966,6 +992,7 @@ KONTEXT-09. Följ dess förberedelse.
 KONTEXT-14.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -978,6 +1005,7 @@ KONTEXT-14.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1006,6 +1034,7 @@ KONTEXT-10. Följ dess förberedelse.
 KONTEXT-15.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1018,6 +1047,7 @@ KONTEXT-15.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -1069,6 +1099,7 @@ misslyckad sammanfattning i KONTEXT-10 och KONTEXT-15. Det särskilda felet
 ska höras; ett allmänt uppdragsfel får inte ersätta det.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1083,6 +1114,7 @@ ska höras; ett allmänt uppdragsfel får inte ersätta det.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1122,6 +1154,7 @@ uppläsning. Nytt samtal ger ett nytt enda besked; förnyelse upprepar inte
 mikrofonvalet.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1134,6 +1167,7 @@ mikrofonvalet.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1177,6 +1211,7 @@ sparkvitto avslutas före röstbyte. Procent, symbol och text kan läsas i båda
 teman och vid zoom.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1189,6 +1224,7 @@ teman och vid zoom.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

@@ -54,6 +54,7 @@ innan nästa handling. Läs eller ändra samband genom **Samband för
 ### MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -67,6 +68,7 @@ innan nästa handling. Läs eller ändra samband genom **Samband för
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova typkatalogen, obesvarade fält och ett nytt värdeslag.
@@ -121,6 +123,7 @@ testfallet “MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej�
 ### MCP-02: daterade avtal kan rättas utan påhittade uppgifter
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -134,6 +137,7 @@ testfallet “MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej�
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova hushållets utökade avtal genom samma MCP-ingång.
@@ -194,6 +198,7 @@ testfallet “MCP-02: daterade avtal kan rättas utan påhittade uppgifter”.
 ### MCP-03: typbyte bevarar riktade samband och äldre typers läsbara historik
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -207,6 +212,7 @@ testfallet “MCP-02: daterade avtal kan rättas utan påhittade uppgifter”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova typbyte, riktning, dubbletter och historiska typnamn.
@@ -256,6 +262,7 @@ historik”.
 ### MCP-04: upphört innehåll och privata utkast skyddar typer
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -269,6 +276,7 @@ historik”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova användningsspärrar utan att avslöja privata förslag.
@@ -331,6 +339,7 @@ Fall-ID:t återanvänds inte.
 ### MCP-06: importerad historik läses och vanliga rättelser använder färskt underlag
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -345,6 +354,7 @@ Fall-ID:t återanvänds inte.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova historisk författare, innehållsversion och vanliga rättelser.

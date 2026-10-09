@@ -61,6 +61,7 @@ testfallet “KÖ-01: datorn besvarar serverns kö i ordning och Escape
 avbryter bara i textvyn”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -76,6 +77,7 @@ avbryter bara i textvyn”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -120,6 +122,7 @@ testfallet “KÖ-02: smal dator visar stopp, behåller oskickad text och tillå
 Escape”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -134,6 +137,7 @@ Escape”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -172,6 +176,7 @@ testfallet “KÖ-03: röstrutans stopp avbryter talat arbete och textkön
 utan att ändra utkastet”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -186,6 +191,7 @@ utan att ändra utkastet”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -241,6 +247,7 @@ testfallet “KÖ-04: mobilens stopp skickar inte oskickad text och köar
 inget meddelande”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -254,6 +261,7 @@ inget meddelande”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -311,6 +319,7 @@ enbart uppspelning. Mobilens beröring fungerar och mikrofonen förblir av när
 användaren valt av.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -323,6 +332,7 @@ användaren valt av.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

@@ -24,6 +24,7 @@ underkänt resultat vid körning.
 ### IKON-01: Bevara ikon genom typbyte, bildval och omstart
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -36,6 +37,7 @@ underkänt resultat vid körning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevara ikon, text och bild i samma kompletta objektförslag.
@@ -76,6 +78,7 @@ restart before explicit reset”.
 ### IKON-02: Sök hela katalogen med tangentbord i smala teman
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -88,6 +91,7 @@ restart before explicit reset”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Verifiera sökresultat, sidval, fokus och tillgängliga kontroller.
@@ -123,6 +127,7 @@ pagination work in narrow themes”.
 ### IKON-03: Nå ikonval och sparande i ett kort fönster
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -135,6 +140,7 @@ pagination work in narrow themes”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Verifiera att kort höjd inte gör formuläret oåtkomligt.
@@ -168,6 +174,7 @@ shared save reachable”.
 ### IKON-04: Behåll tangentbordsfokus under lokalt ikonval
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -180,6 +187,7 @@ shared save reachable”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla fokus utan att lägga ett ofärdigt formulär i utkastet.
@@ -210,6 +218,7 @@ focus until complete staging”.
 ### IKON-05: Bevara ikon och text vid avvisat eller okänt tillägg
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -222,6 +231,7 @@ focus until complete staging”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Återhämta ett komplett objektförslag utan dubbla tillägg.
@@ -289,6 +299,7 @@ zoomreglage, använd datorns tangentbord och pekare, och kontrollera att
 fokus och ikonval går att nå utan att minska zoom.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -303,6 +314,7 @@ fokus och ikonval går att nå utan att minska zoom.
   }]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -331,6 +343,7 @@ som en cykel. DOM-symbolens identifierare och knappens namn bevisar inte
 denna igenkänning.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -345,6 +358,7 @@ denna igenkänning.
   }]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

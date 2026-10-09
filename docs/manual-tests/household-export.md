@@ -48,6 +48,7 @@ testfallet “EXPORT-01: an administrator downloads the complete household
 archive by keyboard”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -60,6 +61,7 @@ archive by keyboard”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -112,6 +114,7 @@ testfallet “EXPORT-02: an administrator cancels an export and prepares
 another”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -124,6 +127,7 @@ another”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -166,6 +170,7 @@ testfallet “EXPORT-03: an interrupted download offers a new export without
 reporting success”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -178,6 +183,7 @@ reporting success”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -212,6 +218,7 @@ testfallet “EXPORT-04: a changed administrator role blocks export and
 clears the ready download”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -224,6 +231,7 @@ clears the ready download”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -256,6 +264,7 @@ svar om utgången export; serverns tidsgräns kontrolleras separat.
 testfallet “EXPORT-05: an expired export requires a new preparation”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -268,6 +277,7 @@ testfallet “EXPORT-05: an expired export requires a new preparation”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -301,6 +311,7 @@ provbilder med olika motiv finns på datorn. Ingen röst eller AI behövs.
 EXPORT-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -322,6 +333,7 @@ EXPORT-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -374,6 +386,7 @@ Den tekniska HTTP-kontrollklienten nedan är ytterligare underlag.
 EXPORT-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -394,6 +407,7 @@ EXPORT-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -462,6 +476,7 @@ testfallet “EXPORT-08: canceling preparation with an unseen ready response
 explains cleanup uncertainty”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -475,6 +490,7 @@ explains cleanup uncertainty”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -529,6 +545,7 @@ före steg 5. Svaret ska hållas först efter serverns färdiga förberedelse.
 EXPORT-09 vid 1280 × 900 CSS-pixlar.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -541,6 +558,7 @@ EXPORT-09 vid 1280 × 900 CSS-pixlar.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -612,6 +630,7 @@ testfallet “EXPORT-10: the downloaded current-format archive restores shared,
 private and historical content after restart”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -624,6 +643,7 @@ private and historical content after restart”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -674,6 +694,7 @@ EXPORT-07 skyddar aktiv serveröverföring efter ändrad tillgång.
 EXPORT-11.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -686,6 +707,7 @@ EXPORT-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -725,6 +747,7 @@ Ställ in 390 × 900 CSS-pixlar i webbläsarens responsiva läge.
 EXPORT-12.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -737,6 +760,7 @@ EXPORT-12.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -768,6 +792,7 @@ Ställ in 320 × 900 CSS-pixlar i webbläsarens responsiva läge.
 EXPORT-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -780,6 +805,7 @@ EXPORT-13.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -811,6 +837,7 @@ Ställ in 640 × 500 CSS-pixlar i webbläsarens responsiva läge.
 EXPORT-14.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -823,6 +850,7 @@ EXPORT-14.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -858,6 +886,7 @@ hålls; detta är skilt från serverns aktiva ström i EXPORT-07.
 EXPORT-15.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -870,6 +899,7 @@ EXPORT-15.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**

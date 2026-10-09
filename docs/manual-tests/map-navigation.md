@@ -35,6 +35,7 @@ påhittade uppgifter. Administratörsrollen behövs inte för kartarbetet.
 NAVIGATION-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -47,6 +48,7 @@ NAVIGATION-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -85,6 +87,7 @@ De separata NAVIGATION-06–18 anger övriga mått och öppningsordning.
 NAVIGATION-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -97,6 +100,7 @@ NAVIGATION-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -193,6 +197,7 @@ för provinstallationen kan starta om dess server med samma databas.
 NAVIGATION-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -205,6 +210,7 @@ NAVIGATION-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -242,6 +248,7 @@ av typen Använder. Sambandet kan vara sparat eller ligga i utkastet.
 NAVIGATION-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -254,6 +261,7 @@ NAVIGATION-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -296,6 +304,7 @@ automationen. Faktiska Mac-gester och Safari provas i NAVIGATION-19.
 NAVIGATION-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -308,6 +317,7 @@ NAVIGATION-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -341,6 +351,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -354,6 +365,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -385,6 +397,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -398,6 +411,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -429,6 +443,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -442,6 +457,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -473,6 +489,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -486,6 +503,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -517,6 +535,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -530,6 +549,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -561,6 +581,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-11.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -574,6 +595,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -605,6 +627,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-12.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -618,6 +641,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -649,6 +673,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -662,6 +687,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -693,6 +719,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-14.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -706,6 +733,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -737,6 +765,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-15.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -750,6 +779,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -781,6 +811,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-16.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -794,6 +825,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -825,6 +857,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-17.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -838,6 +871,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -869,6 +903,7 @@ läsbart förslag.
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts), NAVIGATION-18.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -882,6 +917,7 @@ läsbart förslag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -915,6 +951,7 @@ styrbar kamerazoom i Chrome och Safari; ett Ctrl-hjulhack ger begränsad zoom
 utan sidförstoring.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -935,6 +972,7 @@ utan sidförstoring.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

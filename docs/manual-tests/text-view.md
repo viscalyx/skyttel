@@ -55,6 +55,7 @@ testfallet “TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan at
 avsluta samtalet”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -67,6 +68,7 @@ avsluta samtalet”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -113,6 +115,7 @@ Skyttel arbetar sist”.
 [Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -125,6 +128,7 @@ Skyttel arbetar sist”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -169,6 +173,7 @@ mikrofon”.
 [Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -181,6 +186,7 @@ mikrofon”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -233,6 +239,7 @@ skärm”.
 [Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -245,6 +252,7 @@ skärm”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -287,6 +295,7 @@ testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”
 [Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -299,6 +308,7 @@ testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -336,6 +346,7 @@ testfallet “TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts�
 [Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -348,6 +359,7 @@ testfallet “TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts�
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -386,6 +398,7 @@ testfallet “TEXTMOBIL-03: röstrutan och notisen lämnar kartans nederkant fri
 [Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -398,6 +411,7 @@ testfallet “TEXTMOBIL-03: röstrutan och notisen lämnar kartans nederkant fri
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -436,6 +450,7 @@ testfallet “TEXTMOBIL-04: en lång notis rullar och kan stängas i kort fönst
 [Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -448,6 +463,7 @@ testfallet “TEXTMOBIL-04: en lång notis rullar och kan stängas i kort fönst
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -483,6 +499,7 @@ testfallet “TEXTMOBIL-05: vald röstruta och kompakt textvy använder det
 riktiga samtalet”, i gruppen “valt mobilt samtalsflöde”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -495,6 +512,7 @@ riktiga samtalet”, i gruppen “valt mobilt samtalsflöde”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -547,6 +565,7 @@ testfallet “TEXTBREDD-01: handtagen ändrar bredderna var för sig utan att
 avbryta samtalet”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -559,6 +578,7 @@ avbryta samtalet”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -613,6 +633,7 @@ testfallet “TEXTBREDD-02: bredderna följer användaren och skärmens
 begränsning sparas inte”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -625,6 +646,7 @@ begränsning sparas inte”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -669,6 +691,7 @@ testfallet “TEXTBREDD-03: bredderna återställs i Inställningar även utan
 tillgängligt samtal”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -681,6 +704,7 @@ tillgängligt samtal”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -725,6 +749,7 @@ referensen smal dator. Pekare har egna fall nedan.
 [Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -737,6 +762,7 @@ referensen smal dator. Pekare har egna fall nedan.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -779,6 +805,7 @@ testfallet “EXPORT-10: the downloaded current-format archive restores
 shared, private and historical content after restart”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -799,6 +826,7 @@ shared, private and historical content after restart”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -844,6 +872,7 @@ vid 390 × 844, emulerad pekare CSS-pixlar.
 TEXTMOBIL-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -857,6 +886,7 @@ TEXTMOBIL-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -888,6 +918,7 @@ vid 844 × 390, emulerad pekare CSS-pixlar.
 TEXTMOBIL-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -901,6 +932,7 @@ TEXTMOBIL-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -932,6 +964,7 @@ vid 820 × 1180, emulerad pekare CSS-pixlar.
 TEXTMOBIL-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -945,6 +978,7 @@ TEXTMOBIL-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -976,6 +1010,7 @@ vid 320 × 250, mus CSS-pixlar.
 TEXTMOBIL-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -989,6 +1024,7 @@ TEXTMOBIL-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1020,6 +1056,7 @@ vid 700 × 500, mus CSS-pixlar.
 TEXTMOBIL-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1033,6 +1070,7 @@ TEXTMOBIL-10.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1064,6 +1102,7 @@ vid 1180 × 820 → 420, emulerad pekare CSS-pixlar.
 TEXTMOBIL-11.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1077,6 +1116,7 @@ TEXTMOBIL-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1108,6 +1148,7 @@ vid 844 × 390 → 190, emulerad pekare CSS-pixlar.
 TEXTMOBIL-12.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1121,6 +1162,7 @@ TEXTMOBIL-12.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1153,6 +1195,7 @@ vid 390 × 844, emulerad pekare CSS-pixlar.
 TEXTBREDD-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1166,6 +1209,7 @@ TEXTBREDD-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1201,6 +1245,7 @@ vid 1180 × 820, emulerad pekare CSS-pixlar.
 TEXTBREDD-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1214,6 +1259,7 @@ TEXTBREDD-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1289,6 +1335,7 @@ Du/Skyttel, utkastets tabellnavigation och handtagens hörbara namn, roller och
 värden.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1315,6 +1362,7 @@ värden.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1349,6 +1397,7 @@ Verkliga anrop kräver eget uttryckligt godkännande.
 kvarvarande osparad ändring genom fysisk ljudutgång, med faktisk mikrofon.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1369,6 +1418,7 @@ kvarvarande osparad ändring genom fysisk ljudutgång, med faktisk mikrofon.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1411,6 +1461,7 @@ OS-skärmtangentbordet, rotera enheten och tryck fält, Skicka, Avbryt och Stän
 notisen.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1431,6 +1482,7 @@ notisen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1480,6 +1532,7 @@ mediespåren bevisar ingen uppläsning.
 , TEXTBRICKA-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1492,6 +1545,7 @@ mediespåren bevisar ingen uppläsning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -1530,6 +1584,7 @@ resurser separat. Utför arbetsflödet en gång.
 , TEXTBRICKA-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1542,6 +1597,7 @@ resurser separat. Utför arbetsflödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -1577,6 +1633,7 @@ resurser separat. Utför arbetsflödet en gång.
 , TEXTBRICKA-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1589,6 +1646,7 @@ resurser separat. Utför arbetsflödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -1626,6 +1684,7 @@ resurser separat. Utför arbetsflödet en gång.
 , TEXTBRICKA-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1638,6 +1697,7 @@ resurser separat. Utför arbetsflödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -1677,6 +1737,7 @@ resurser separat. Utför arbetsflödet en gång.
 , TEXTBRICKA-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1689,6 +1750,7 @@ resurser separat. Utför arbetsflödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -1786,6 +1848,7 @@ första UI-handlingen.
 , TEXTBRICKA-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1799,6 +1862,7 @@ första UI-handlingen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1829,6 +1893,7 @@ första UI-handlingen.
 , TEXTBRICKA-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1842,6 +1907,7 @@ första UI-handlingen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1872,6 +1938,7 @@ första UI-handlingen.
 , TEXTBRICKA-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1885,6 +1952,7 @@ första UI-handlingen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1916,6 +1984,7 @@ HTTPS-adress och konfigurerad inloggning.
 själva svaret läses när textvyn är stängd.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1929,6 +1998,7 @@ själva svaret läses när textvyn är stängd.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1961,6 +2031,7 @@ HTTPS-adress och konfigurerad inloggning.
 och minskad rörelse på faktisk utrustning.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1974,6 +2045,7 @@ och minskad rörelse på faktisk utrustning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

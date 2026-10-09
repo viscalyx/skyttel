@@ -60,6 +60,7 @@ inloggningen innehåller enbart påhittade uppgifter.
 ### LÄS-01: följ Alex till cykel och garage med tabelläget kvar
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -72,6 +73,7 @@ inloggningen innehåller enbart påhittade uppgifter.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa hela sambandskedjan utan kartgrafik och bevara tabelläget.
@@ -112,6 +114,7 @@ without graphics or lost table state”.
 ### LÄS-02: läs samband och olika betydelser på smal skärm
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -124,6 +127,7 @@ without graphics or lost table state”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja okända mål, uttryckligen inga mål, osäkerhet och status.
@@ -162,6 +166,7 @@ targets, uncertainty and proposed removal”.
 ### LÄS-03: stäng läsning när öppningsraden försvinner
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -174,6 +179,7 @@ targets, uncertainty and proposed removal”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Återgå till en användbar radkontroll efter ett bakgrundsbesked.
@@ -207,6 +213,7 @@ control after a real background update”.
 ### LÄS-04: återgå till föregående rad eller rubriken
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -219,6 +226,7 @@ control after a real background update”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla användbart fokus när det saknas en följande rad.
@@ -247,6 +255,7 @@ LÄS-04.
 ### LÄS-05: läs identitet före och efter ett förslag
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -259,6 +268,7 @@ LÄS-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja ett identifierat objekt från ospecificerad eller oklar
@@ -296,6 +306,7 @@ and a proposal replacing unspecified identity”.
 ### LÄS-06: återgå när den sista tabellsidan försvinner
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -308,6 +319,7 @@ and a proposal replacing unspecified identity”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Återgå till föregående motsvarande radkontroll efter att
@@ -341,6 +353,7 @@ control after page collapse”.
 ### LÄS-07: läs ett långt namn på smal skärm
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -353,6 +366,7 @@ control after page collapse”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa hela objektnamnet även när det saknar mellanslag.
@@ -386,6 +400,7 @@ testfallet “LÄS-07: a long unbroken object name wraps in full reading at
 ### LISTA-01: flera typval kombineras med sökning och aktuell rad
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -398,6 +413,7 @@ testfallet “LÄS-07: a long unbroken object name wraps in full reading at
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Begränsa en stor tabell utan att ändra hushållets uppgifter.
@@ -440,6 +456,7 @@ across 500 objects”.
 ### LISTA-02: sortering, sida och rulläge består vid tillfälliga besök
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -452,6 +469,7 @@ across 500 objects”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla tabelläget och skydda oskickad formulärtext.
@@ -497,6 +515,7 @@ map-result navigation”.
 ### LISTA-03: kartträffen fokuserar direkta grannar och behåller samtalet
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -509,6 +528,7 @@ map-result navigation”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja tabellens aktuella rad från kartans fokuserade utsnitt.
@@ -545,6 +565,7 @@ conversation”.
 ### LISTA-04: smal tabell och uppgifter fungerar när grafiken avbryts
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -557,6 +578,7 @@ conversation”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla tabellens arbete vid förlorad kartgrafik.
@@ -603,6 +625,7 @@ LISTA-04.
 ### LISTA-05: återgång på kort skärm bevarar synlig träff och fokus
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -615,6 +638,7 @@ LISTA-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Återgå till samma tabellarbete i ett kort fönster.
@@ -662,6 +686,7 @@ Vanlig tabelläsning och återgång provas i LISTA-02 och LISTA-05.
 ### LISTA-07: textåtgärder tar bort valt objekt utan kartgrafik
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -674,6 +699,7 @@ Vanlig tabelläsning och återgång provas i LISTA-02 och LISTA-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Nå vanliga objektåtgärder utan kartgrafik och föreslå en
@@ -741,6 +767,7 @@ samband till objektet med typen **Endast i sambandet**.
 ### SÖK-01: alla ord, egna detaljfält och svensk teckensammansättning
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -753,6 +780,7 @@ samband till objektet med typen **Endast i sambandet**.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Hitta objekt genom deras fullständiga egna uppgifter.
@@ -793,6 +821,7 @@ samband till objektet med typen **Endast i sambandet**.
 ### SÖK-02: flerval skiljer utkastförslag från upphörda och borttagna
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -805,6 +834,7 @@ samband till objektet med typen **Endast i sambandet**.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kombinera filter utan att blanda samman olika statusar.
@@ -839,6 +869,7 @@ from lifecycle”.
 ### SÖK-03: kartans eget fokus startar sökning med färdigt tecken
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -851,6 +882,7 @@ from lifecycle”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Söka från kartan utan att fånga annan inmatning.
@@ -923,6 +955,7 @@ and Escape restrictions”.
 ### SÖK-04: sista förslaget återställer bara båda vyernas utkastfilter
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -935,6 +968,7 @@ and Escape restrictions”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla sökning när det villkorliga filtret inte längre behövs.
@@ -974,6 +1008,7 @@ type-only proposals expose them”.
 ### SÖK-05: mobil sökingång och filterdialog bevarar begränsningar
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -986,6 +1021,7 @@ type-only proposals expose them”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Sökning och filter behåller text, val och fokus i smala CSS-vyer.
@@ -1045,6 +1081,7 @@ mobile and desktop”.
 ### SÖK-10: synlig kapselsökning och liten filterdialog på olika skärmar
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1057,6 +1094,7 @@ mobile and desktop”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Nå kartans sökning och filter på dator och liten skärm.
@@ -1112,6 +1150,7 @@ screens”.
 ### SÖK-11: filterdialogen ligger ovanpå kartan utan att flytta etiketter
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1124,6 +1163,7 @@ screens”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Öppna och stänga filter utan att kartans layout ändras.
@@ -1160,6 +1200,7 @@ SÖK-11.
 ### SÖK-12: streckade linjer till etiketter syns i båda teman
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1172,6 +1213,7 @@ SÖK-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kunna följa linjerna från kartobjekt till deras etiketter.
@@ -1203,6 +1245,7 @@ both themes”.
 ### SÖK-06: direkta grannar och fortsatt utforskning bevarar sökträffarna
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1215,6 +1258,7 @@ both themes”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Följa en kedja i kartan utan automatisk indirekt expansion.
@@ -1261,6 +1305,7 @@ hits through return and table visits”.
 ### SÖK-07: sammanhang går utanför träfffilter men följer upphört
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1273,6 +1318,7 @@ hits through return and table visits”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja träfffilter från livscykelregler för sammanhang.
@@ -1324,6 +1370,7 @@ edges require inclusion”.
 ### SÖK-08: tabellens kartknapp återställer kartfilter och bevarar tabelläget
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1336,6 +1383,7 @@ edges require inclusion”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Visa ett valt tabellobjekt med direkt sammanhang i kartan.
@@ -1383,6 +1431,7 @@ SÖK-08.
 ### SÖK-09: ändrade samband visar tidigare och föreslagna direkta ändpunkter
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1395,6 +1444,7 @@ SÖK-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa en föreslagen kopplingsändring inom sökträffens sammanhang.
@@ -1430,6 +1480,7 @@ endpoints without expanding their chains”.
 ### LISTA-08: LISTA-04 vid 390 × 844
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1443,6 +1494,7 @@ endpoints without expanding their chains”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** LISTA-04 vid 390 × 844.
@@ -1472,6 +1524,7 @@ LISTA-08.
 ### SÖK-13: SÖK-08 vid 390 × 950
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1485,6 +1538,7 @@ LISTA-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** SÖK-08 vid 390 × 950.
@@ -1514,6 +1568,7 @@ SÖK-13.
 ### SÖK-14: SÖK-08 vid 320 × 950
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1527,6 +1582,7 @@ SÖK-13.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** SÖK-08 vid 320 × 950.
@@ -1556,6 +1612,7 @@ SÖK-14.
 ### SÖK-15: SÖK-11 vid 390 CSS-pixlar
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1569,6 +1626,7 @@ SÖK-14.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** SÖK-11 vid 390 CSS-pixlar.
@@ -1597,6 +1655,7 @@ SÖK-15.
 ### SÖK-16: fysisk mobilsökning bevarar text, filter och fokus
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1625,6 +1684,7 @@ SÖK-15.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova faktisk mobilinmatning och förstoring i sökning och filter.
@@ -1669,6 +1729,7 @@ skärmtangentbord och webbläsarens förstoring på både iPhone och iPad.
 ### LÄS-08: försvunnen sista läsrad återför fokus till rubriken
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1682,6 +1743,7 @@ skärmtangentbord och webbläsarens förstoring på både iPhone och iPad.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** försvunnen sista läsrad återför fokus till rubriken.
@@ -1711,6 +1773,7 @@ LÄS-08.
 ### LISTA-09: verklig zoom och uppläsning ger hela läsalternativet
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1751,6 +1814,7 @@ LÄS-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** verklig zoom och uppläsning ger hela läsalternativet.
@@ -1799,6 +1863,7 @@ och upplevt fokus från enbart DOM-namn.
 ### TABELL-01: svensk sortering och öppna rader består vid kartbesök
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1813,6 +1878,7 @@ och upplevt fokus från enbart DOM-namn.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** svensk sortering och öppna rader består vid kartbesök.
@@ -1847,6 +1913,7 @@ TABELL-01.
 ### TABELL-02: sparade och föreslagna värden har tydliga skilda statusar
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1862,6 +1929,7 @@ TABELL-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** sparade och föreslagna värden har tydliga skilda statusar.
@@ -1908,6 +1976,7 @@ TABELL-02.
 ### TABELL-03: sidledsläsning bevarar markering och oskickat samtal
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1921,6 +1990,7 @@ TABELL-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** sidledsläsning bevarar markering och oskickat samtal.
@@ -1956,6 +2026,7 @@ TABELL-03.
 ### TABELL-04: försvunnen rad återför fokus efter redigering
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1970,6 +2041,7 @@ TABELL-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** försvunnen rad återför fokus efter redigering.
@@ -2009,6 +2081,7 @@ TABELL-04.
 ### TABELL-05: försvunnen rad återför fokus efter kartbesök
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2023,6 +2096,7 @@ TABELL-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** försvunnen rad återför fokus efter kartbesök.

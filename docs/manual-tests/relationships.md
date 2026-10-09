@@ -38,6 +38,7 @@ testfallet “SAMBAND-01: separate complete objects connect and remain independe
 editable in the shared dialog”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -50,6 +51,7 @@ editable in the shared dialog”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -96,6 +98,7 @@ testfallet “SAMBAND-02: invalid next input and canceled form loss retain previ
 complete relationship proposals”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -108,6 +111,7 @@ complete relationship proposals”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -174,6 +178,7 @@ testfallet “SAMBAND-03: a lost duplicate result retains the attempted form and
 offers guarded editing without overwrite”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -186,6 +191,7 @@ offers guarded editing without overwrite”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -232,6 +238,7 @@ testfallet “SAMBAND-04: proposed relationship removal discards only confirmed
 unsent changes and keeps saved lifecycle facts”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -244,6 +251,7 @@ unsent changes and keeps saved lifecycle facts”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -281,6 +289,7 @@ testfallet “SAMBAND-05: full relationship values survive canceled type loss an
 absent targets keep their distinct meanings”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -293,6 +302,7 @@ absent targets keep their distinct meanings”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -330,6 +340,7 @@ testfallet “SAMBAND-06: read-chain navigation retains an uncertain staging out
 and restores the originating table control”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -342,6 +353,7 @@ and restores the originating table control”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -382,6 +394,7 @@ testfallet “SAMBAND-07: pending requests block duplicate sends and a rejected 
 relationship retains editable values”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -394,6 +407,7 @@ relationship retains editable values”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -436,6 +450,7 @@ testfallet “SAMBAND-08: recovery returns the current draft without replaying a
 earlier successful relationship over later changes”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -448,6 +463,7 @@ earlier successful relationship over later changes”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -491,6 +507,7 @@ Syftet är tangentbordsarbete och bekräftad navigation på dator.
 [relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
 SAMBAND-09.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -503,6 +520,7 @@ SAMBAND-09.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -536,6 +554,7 @@ Syftet är smalt omflöde, fokusfälla och nåbara åtgärder.
 [relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
 SAMBAND-16.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -548,6 +567,7 @@ SAMBAND-16.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -581,6 +601,7 @@ Syftet är nåbara åtgärder och förlustvarning vid extremt låg vyhöjd.
 [relationship-dialog.spec.ts](../../tests/integration/relationship-dialog.spec.ts),
 SAMBAND-17.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -593,6 +614,7 @@ SAMBAND-17.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -626,6 +648,7 @@ testfallet “SAMBAND-10: a request that never reached the server is checked bef
 safe retry and later duplicate removal is reported truthfully”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -638,6 +661,7 @@ safe retry and later duplicate removal is reported truthfully”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -688,6 +712,7 @@ testfallet “SAMBAND-11: the household object selector ignores table filters an
 excludes removed proposals while retaining effective type names”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -700,6 +725,7 @@ excludes removed proposals while retaining effective type names”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -736,6 +762,7 @@ det i det vanliga namnfältet; byt bokstav till L respektive F för de andra fä
 testfallet “SAMBAND-12: long relationship names and field labels reflow without
 horizontal overflow at 320 CSS pixels”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -748,6 +775,7 @@ horizontal overflow at 320 CSS pixels”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -796,6 +824,7 @@ testfallet “SAMBAND-13: staging cancel and explicit outcome checks retain mean
 focus without stealing later reading focus”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -808,6 +837,7 @@ focus without stealing later reading focus”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -875,6 +905,7 @@ testfallet “SAMBAND-14: an absent old-version attempt unlocks retained input a
 requires current-basis review before retry”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -887,6 +918,7 @@ requires current-basis review before retry”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -946,6 +978,7 @@ testfallet “SAMBAND-15: absent stale editing cannot overwrite or remove a late
 same-owner relationship proposal”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -958,6 +991,7 @@ same-owner relationship proposal”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -1014,6 +1048,7 @@ i utkastet. Anteckna skärmläsare, version och webbläsare.
 **Kräver mänsklig observation:** Lyssna på skärmläsarens faktiska uppläsning.
 DOM-fokus i SAMBAND-09 bevisar inte uppläst innehåll.
 
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1030,6 +1065,7 @@ DOM-fokus i SAMBAND-09 bevisar inte uppläst innehåll.
   }]
 }
 ```
+-->
 
 **Steg:**
 
@@ -1056,6 +1092,7 @@ i utkastet. Anteckna telefon, operativsystem och webbläsare.
 **Kräver mänsklig observation:** Öppna telefonens verkliga skärmtangentbord
 och kontrollera skymning och rullning. Ändrad Chromium-vyhöjd utför inte det.
 
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1072,6 +1109,7 @@ och kontrollera skymning och rullning. Ändrad Chromium-vyhöjd utför inte det.
   }]
 }
 ```
+-->
 
 **Steg:**
 

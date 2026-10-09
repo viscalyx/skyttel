@@ -94,6 +94,7 @@ testfallet “FRAGA-01: en nödvändig identitetsfråga finns i samtalstexten
 med serverns väntesignal”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -106,6 +107,7 @@ med serverns väntesignal”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -137,6 +139,7 @@ testfallet “FRAGA-02: Skyttel frågar om en verklig konflikt i samtalet
 utan en genererad frågeruta”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -150,6 +153,7 @@ utan en genererad frågeruta”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -184,6 +188,7 @@ invänta **Lyssnar**. Använd ett talat uppdrag. FRAGA-07 provar skriven ingång
 FRAGA-03, talat uppdrag.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -198,6 +203,7 @@ FRAGA-03, talat uppdrag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -252,6 +258,7 @@ testfallet “FRAGA-04: ett verifierat Sparat väntar på hela ordet och
 ljudet innan fyra sekunder börjar”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -266,6 +273,7 @@ ljudet innan fyra sekunder börjar”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -332,6 +340,7 @@ testfallet “FRAGA-05: stopp under det verifierade sparbeskedet startar de
 fyra sekunderna från avbrottet”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -345,6 +354,7 @@ fyra sekunderna från avbrottet”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -388,6 +398,7 @@ testfallet “FRAGA-06: providertext som säger Sparat utan beständigt
 kvitto ger inget grönt sparbesked”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -400,6 +411,7 @@ kvitto ger inget grönt sparbesked”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -471,6 +483,7 @@ stoppikonens avbrott ger däremot ett bestämt slut.
 FRAGA-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -483,6 +496,7 @@ FRAGA-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -518,6 +532,7 @@ nytt statusord. Utkastet är sparat annonseras artigt en gång; röstrutan uppre
 inte sparannonsen.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -530,6 +545,7 @@ inte sparannonsen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -570,6 +586,7 @@ innan fyra sekunder börjar; stopp ger ett bestämt slut. Fördröjt ljud och
 transporttext bedöms separat.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -582,6 +599,7 @@ transporttext bedöms separat.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

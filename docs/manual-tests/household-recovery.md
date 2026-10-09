@@ -51,6 +51,7 @@ testfallet “FLYTT-01: a fresh installation restores an archive, explicitly
 assigns private ownership and remains portable after restart”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -63,6 +64,7 @@ assigns private ownership and remains portable after restart”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -274,6 +276,7 @@ testfallet “FLYTT-02: an uncertain explicit identity assignment is read
 back while both private states and historical receipts remain intact”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -286,6 +289,7 @@ back while both private states and historical receipts remain intact”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

@@ -47,6 +47,7 @@ utan att skapa flera objekt eller förlora samtalstext.
 PANEL-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -59,6 +60,7 @@ PANEL-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -100,6 +102,7 @@ Prova 390, 320 och 1440 CSS-pixlars bredd med 844 pixlars höjd.
 PANEL-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -112,6 +115,7 @@ PANEL-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -144,6 +148,7 @@ underlaget innan det fullständiga formuläret skickas.
 PANEL-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -156,6 +161,7 @@ PANEL-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -194,6 +200,7 @@ Välj **Alla etiketter** i kartan.
 PANEL-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -206,6 +213,7 @@ PANEL-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -245,6 +253,7 @@ av objektformulärets POST-anrop, enligt integrationstestet.
 PANEL-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -257,6 +266,7 @@ PANEL-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -295,6 +305,7 @@ tillgänglig.
 PANEL-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -307,6 +318,7 @@ PANEL-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -354,6 +366,7 @@ ljudutgång; separat auktoriserad körning.
 hörbart samtal och oskickad text vid byte mellan arbetsyta och text.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -374,6 +387,7 @@ hörbart samtal och oskickad text vid byte mellan arbetsyta och text.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

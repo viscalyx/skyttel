@@ -51,6 +51,7 @@ fallen anger formulär, samtal, profil eller administration.
 **Integrationstest:**
 [bootstrap.spec.ts](../../tests/integration/bootstrap.spec.ts), ACCESS-23.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -63,6 +64,7 @@ fallen anger formulär, samtal, profil eller administration.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -89,6 +91,7 @@ fallen anger formulär, samtal, profil eller administration.
 testfallet “ACCESS-01: the configured administrator creates a private
 household and returns after restart”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -101,6 +104,7 @@ household and returns after restart”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -129,6 +133,7 @@ household and returns after restart”.
 testfallet “ACCESS-02: an invalid household name receives focus and can
 be corrected”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -141,6 +146,7 @@ be corrected”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -195,6 +201,7 @@ Efter avbruten körning återställer du med
 testfallet “ACCESS-03: checking an uncertain creation recovers the committed
 household”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -207,6 +214,7 @@ household”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -237,6 +245,7 @@ testfallet “ACCESS-04: setup works by keyboard within a narrow phone
 viewport”. Testet kontrollerar även automatisk anpassning till smal skärm.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -249,6 +258,7 @@ viewport”. Testet kontrollerar även automatisk anpassning till smal skärm.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -289,6 +299,7 @@ Behåll sidan öppen utan omladdning. Ta även bort blockeringen vid avslut.
 testfallet “ACCESS-05: failed startup read offers a working retry”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -301,6 +312,7 @@ testfallet “ACCESS-05: failed startup read offers a working retry”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -327,6 +339,7 @@ testfallet “ACCESS-05: failed startup read offers a working retry”.
 testfallet “ACCESS-06: a signed-in outsider sees an access explanation
 without setup controls”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -339,6 +352,7 @@ without setup controls”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -374,6 +388,7 @@ ut. Ta även bort blockeringen vid avslut.
 testfallet “ACCESS-07: failed logout preserves the session and a retry closes
 household access”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -386,6 +401,7 @@ household access”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -413,6 +429,7 @@ household access”.
 [usability.spec.ts](../../tests/integration/usability.spec.ts),
 testfallet “ACCESS-08: logout in another tab closes an already open household”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -425,6 +442,7 @@ testfallet “ACCESS-08: logout in another tab closes an already open household�
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -455,6 +473,7 @@ ACCESS-09, den fullständiga länkningen i webbläsaren. Separat tekniskt
 underlag provar samma e-postadress och protokollets behörighetsgränser.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -476,6 +495,7 @@ underlag provar samma e-postadress och protokollets behörighetsgränser.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -516,6 +536,7 @@ underlag provar samma e-postadress och protokollets behörighetsgränser.
 testfallet “ACCESS-10: cancelling a verified link requires fresh proof and
 preserves household access”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -528,6 +549,7 @@ preserves household access”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -561,6 +583,7 @@ preserves household access”.
 testfallet “ACCESS-11: the wrong existing identity leaves linking retryable
 without changing access”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -573,6 +596,7 @@ without changing access”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -609,6 +633,7 @@ och vid avslut. Webbläsarens klocka och testets tidsgränser ändras inte.
 Identitetsleverantören är en lokal testadapter, inte ett verkligt konto.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -621,6 +646,7 @@ Identitetsleverantören är en lokal testadapter, inte ett verkligt konto.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -661,6 +687,7 @@ serverklocka som i ACCESS-19 används; klockan återställs före ny verifiering
 och vid avslut. Webbläsarens klocka och testets tidsgränser ändras inte.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -673,6 +700,7 @@ och vid avslut. Webbläsarens klocka och testets tidsgränser ändras inte.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -717,6 +745,7 @@ Leverantörsfel provas separat i ACCESS-21.
 [usability.spec.ts](../../tests/integration/usability.spec.ts),
 ACCESS-12, anslutningsavbrott innan inloggningen når leverantören.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -729,6 +758,7 @@ ACCESS-12, anslutningsavbrott innan inloggningen når leverantören.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -760,6 +790,7 @@ utan `--microsoft`. Skriv `deny-consent` i terminalen före steg 1 och
 **Integrationstest:**
 [usability.spec.ts](../../tests/integration/usability.spec.ts), ACCESS-13.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -772,6 +803,7 @@ utan `--microsoft`. Skriv `deny-consent` i terminalen före steg 1 och
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -805,6 +837,7 @@ före steg 3. Avsluta med `quit` efter fallet.
 [usability.spec.ts](../../tests/integration/usability.spec.ts), ACCESS-22.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -817,6 +850,7 @@ före steg 3. Avsluta med `quit` efter fallet.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -852,6 +886,7 @@ före steg 3. Återställ alltid felet eller avsluta med `quit` efter fallet.
 [usability.spec.ts](../../tests/integration/usability.spec.ts), ACCESS-21.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -864,6 +899,7 @@ före steg 3. Återställ alltid felet eller avsluta med `quit` efter fallet.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -895,6 +931,7 @@ testfallet “ACCESS-14: external sign-in explains the return and can be
 cancelled before leaving”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -907,6 +944,7 @@ cancelled before leaving”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -943,6 +981,7 @@ enligt [mikrofonprovet](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon
 testfallet “ACCESS-15: first visits use toolbar entries and optional help”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -955,6 +994,7 @@ testfallet “ACCESS-15: first visits use toolbar entries and optional help”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -996,6 +1036,7 @@ fallet förbereds ett utgånget försök i den tillfälliga testdatabasen.
 testfallet “ACCESS-16: expired provider verification returns to login and
 a fresh attempt succeeds”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1008,6 +1049,7 @@ a fresh attempt succeeds”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -1036,6 +1078,7 @@ testfallet “ACCESS-17: revoked access retires protected work while the
 operator can open costs”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1048,6 +1091,7 @@ operator can open costs”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1077,6 +1121,7 @@ operator can open costs”.
 testfallet “ACCESS-18: the chosen map theme also applies when returning
 to login”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1089,6 +1134,7 @@ to login”.
   ]
 }
 ```
+-->
 
 **Steg:**
 

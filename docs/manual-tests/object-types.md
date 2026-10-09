@@ -117,6 +117,7 @@ Hämta då ett nytt giltigt underlag och gör om kontrollen utan samtidiga
 [object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -138,6 +139,7 @@ Hämta då ett nytt giltigt underlag och gör om kontrollen utan samtidiga
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -180,6 +182,7 @@ Hämta då ett nytt giltigt underlag och gör om kontrollen utan samtidiga
 [object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -193,6 +196,7 @@ Hämta då ett nytt giltigt underlag och gör om kontrollen utan samtidiga
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -242,6 +246,7 @@ denna förberedelse räknas inte som bevis för typformulärets hela flöde.
 [object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -256,6 +261,7 @@ denna förberedelse räknas inte som bevis för typformulärets hela flöde.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -311,6 +317,7 @@ denna förberedelse räknas inte som bevis för typformulärets hela flöde.
 [object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -324,6 +331,7 @@ denna förberedelse räknas inte som bevis för typformulärets hela flöde.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -378,6 +386,7 @@ denna förberedelse räknas inte som bevis för typformulärets hela flöde.
 [object-types.spec.ts](../../tests/integration/object-types.spec.ts), TYP-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -391,6 +400,7 @@ denna förberedelse räknas inte som bevis för typformulärets hela flöde.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -426,6 +436,7 @@ med verklig webbläsarzoom utförs separat i TYP-23.
 [object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -439,6 +450,7 @@ med verklig webbläsarzoom utförs separat i TYP-23.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -502,6 +514,7 @@ obesvarat, noll och nej som olika uppgifter.
 [object-sections.spec.ts](../../tests/integration/object-sections.spec.ts), TYP-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -515,6 +528,7 @@ obesvarat, noll och nej som olika uppgifter.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -560,6 +574,7 @@ Använd 1280 CSS-pixlar. De smala flödena har egna fall TYP-13 och TYP-14.
 [object-sections.spec.ts](../../tests/integration/object-sections.spec.ts), TYP-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -573,6 +588,7 @@ Använd 1280 CSS-pixlar. De smala flödena har egna fall TYP-13 och TYP-14.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -624,6 +640,7 @@ och sambandets ID från kartans publika HTTP-svar.
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -637,6 +654,7 @@ och sambandets ID från kartans publika HTTP-svar.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -705,6 +723,7 @@ På cykeln ska följande gemensamma ekonomiska uppgifter finnas:
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-11.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -718,6 +737,7 @@ På cykeln ska följande gemensamma ekonomiska uppgifter finnas:
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -761,6 +781,7 @@ Lo har aktuell tillgång till hushållet.
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -782,6 +803,7 @@ Lo har aktuell tillgång till hushållet.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Skapa och spara typer, objekt och samband enligt
@@ -893,6 +915,7 @@ uttryckliga presentationsordning är Andra fältet följt av Första fältet.
 [object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-12.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -906,6 +929,7 @@ uttryckliga presentationsordning är Andra fältet följt av Första fältet.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -950,6 +974,7 @@ Egna fält enligt TYP-09. Lo är vanlig medlem i samma hushåll.
 [object-sections.spec.ts](../../tests/integration/object-sections.spec.ts), TYP-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -963,6 +988,7 @@ Egna fält enligt TYP-09. Lo är vanlig medlem i samma hushåll.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1009,6 +1035,7 @@ Egna fält enligt TYP-09. Lo är vanlig medlem i samma hushåll.
 [object-sections.spec.ts](../../tests/integration/object-sections.spec.ts), TYP-14.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1022,6 +1049,7 @@ Egna fält enligt TYP-09. Lo är vanlig medlem i samma hushåll.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1068,6 +1096,7 @@ fält eller avsnitt enligt TYP-10.
 [object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-15.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1081,6 +1110,7 @@ fält eller avsnitt enligt TYP-10.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1131,6 +1161,7 @@ fält eller avsnitt enligt TYP-10.
 [object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-16.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1144,6 +1175,7 @@ fält eller avsnitt enligt TYP-10.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1194,6 +1226,7 @@ fält eller avsnitt enligt TYP-10.
 [object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts), TYP-17.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1207,6 +1240,7 @@ fält eller avsnitt enligt TYP-10.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1257,6 +1291,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-18.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1270,6 +1305,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1310,6 +1346,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-19.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1323,6 +1360,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1363,6 +1401,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-20.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1376,6 +1415,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1416,6 +1456,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-21.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1429,6 +1470,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1469,6 +1511,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts), TYP-22.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1482,6 +1525,7 @@ bilden, ekonomiska uppgifter och sambandet enligt TYP-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1523,6 +1567,7 @@ att formulärets egna rullning håller fel och sparknapp nåbara. Automatiken
 denna fysiska observation.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1543,6 +1588,7 @@ denna fysiska observation.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

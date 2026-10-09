@@ -34,6 +34,7 @@ fallen anger formulär, samtal, profil eller administration.
 ### KOST-01: separata kostnader och månadens antaganden återläses efter omstart
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -46,6 +47,7 @@ fallen anger formulär, samtal, profil eller administration.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Förstå uppdelning, totalsumma, prisunderlag och sparade
@@ -108,6 +110,7 @@ Följ startguidens återställning mellan fall och `quit` efter provningen.
 ### KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan dubbelräkning
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -120,6 +123,7 @@ Följ startguidens återställning mellan fall och `quit` efter provningen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Visa okänd förbrukning och bevara tidigare kända värden vid fel.
@@ -184,6 +188,7 @@ efter den lyckade återhämtningen.
 ### KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -196,6 +201,7 @@ efter den lyckade återhämtningen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Återhämta ett sparat antagande efter tappat svar utan en extra
@@ -259,6 +265,7 @@ installationen med `quit`.
 ### KOST-05: 390px bevarar återhämtning, priser och senare fokus
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -271,6 +278,7 @@ installationen med `quit`.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skydda läsbara priser och tangentbordsarbete vid smal bredd.
@@ -316,6 +324,7 @@ KOST-05.
 ### KOST-06: 320px bevarar återhämtning, priser och senare fokus
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -328,6 +337,7 @@ KOST-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skydda läsbara priser och tangentbordsarbete vid smal bredd.
@@ -375,6 +385,7 @@ KOST-06.
 ### KOST-03: endast driftansvarig har åtkomst oberoende av hushållets roller
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -387,6 +398,7 @@ KOST-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja installationens kostnadsbehörighet från hushållstillgång.

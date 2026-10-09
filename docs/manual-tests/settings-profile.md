@@ -39,6 +39,7 @@ använda dess lokala provinstallation.
 INST-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -51,6 +52,7 @@ INST-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -97,6 +99,7 @@ INST-01.
 INST-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -109,6 +112,7 @@ INST-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -144,6 +148,7 @@ INST-02.
 INST-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -156,6 +161,7 @@ INST-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -193,6 +199,7 @@ INST-08.
 INST-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -205,6 +212,7 @@ INST-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -248,6 +256,7 @@ INST-03.
 INST-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -260,6 +269,7 @@ INST-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -288,6 +298,7 @@ INST-04.
 INST-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -300,6 +311,7 @@ INST-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -329,6 +341,7 @@ INST-05.
 INST-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -341,6 +354,7 @@ INST-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -375,6 +389,7 @@ INST-11 anger 320 pixlar.
 INST-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -387,6 +402,7 @@ INST-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -418,6 +434,7 @@ INST-07.
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts), INST-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -431,6 +448,7 @@ INST-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -458,6 +476,7 @@ INST-07.
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts), INST-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -471,6 +490,7 @@ INST-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -499,6 +519,7 @@ kontrollen.
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts), INST-11.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -512,6 +533,7 @@ kontrollen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -542,6 +564,7 @@ tangentbord lämnar inställningarnas mobilnavigation, hela utkastet och profile
 båda Tab-riktningar nåbara.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -574,6 +597,7 @@ båda Tab-riktningar nåbara.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -603,6 +627,7 @@ profilens rubriker, länkar och utkastvärden i meningsfull ordning med återst�
 fokus.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -629,6 +654,7 @@ fokus.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

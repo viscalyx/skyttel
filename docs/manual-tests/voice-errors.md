@@ -45,6 +45,7 @@ för deny.
 ROSTFEL-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -59,6 +60,7 @@ ROSTFEL-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -97,6 +99,7 @@ voice-failure startup enligt
 ROSTFEL-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -111,6 +114,7 @@ ROSTFEL-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -140,6 +144,7 @@ ROSTFEL-02.
 ROSTFEL-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -152,6 +157,7 @@ ROSTFEL-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -202,6 +208,7 @@ spårkontroll; utför UI-flödet en gång.
 ROSTFEL-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -214,6 +221,7 @@ ROSTFEL-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -277,6 +285,7 @@ för error.
 ROSTFEL-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -291,6 +300,7 @@ ROSTFEL-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -325,6 +335,7 @@ för busy.
 ROSTFEL-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -339,6 +350,7 @@ ROSTFEL-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -373,6 +385,7 @@ för unsupported.
 ROSTFEL-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -387,6 +400,7 @@ ROSTFEL-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -422,6 +436,7 @@ voice-failure administration enligt
 ROSTFEL-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -436,6 +451,7 @@ ROSTFEL-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -468,6 +484,7 @@ HTTPS-adress och konfigurerad inloggning.
 eller upptagen fysisk mikrofon och återhämtning på verklig utrustning.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -481,6 +498,7 @@ eller upptagen fysisk mikrofon och återhämtning på verklig utrustning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

@@ -74,8 +74,11 @@ For index-only or testing-guide-only work, use steps 5 and 6.
 ## Mapping metadata
 
 Place one JSON block fenced as `manual-mapping` beneath each
-`### CASE-ID: ...` heading. Use the area template for the ordinary or
-human-observation branch. Supply:
+`### CASE-ID: ...` heading. Enclose only the fenced block in an HTML
+comment (`<!--` and `-->`) to hide metadata in rendered Markdown.
+Keep required configuration, preparation, steps, outcomes and human
+observations in visible case prose. Use the area template for the ordinary
+or human-observation branch. Supply:
 
 - `reference`: selected configuration and bounded variants, including
   their failure purpose where several variants share one discovered test.

@@ -132,6 +132,7 @@ testfallet “LIVSCYKEL-01: ended objects and relationships stay visible and
 independently correctable”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -145,6 +146,7 @@ independently correctable”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -192,6 +194,7 @@ testfallet “LIVSCYKEL-02: only a known elapsed end date ends content and
 dates or status can correct it”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -213,6 +216,7 @@ dates or status can correct it”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -274,6 +278,7 @@ testfallet “LIVSCYKEL-04: keyboard relationship targets expose ended status
 without changing saved facts”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -287,6 +292,7 @@ without changing saved facts”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse och tekniskt underlag:**
@@ -358,6 +364,7 @@ testfallet “LIVSCYKEL-05: object and relationship descriptions remain
 distinct for valid overlapping identities”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -371,6 +378,7 @@ distinct for valid overlapping identities”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse och tekniskt underlag:**
@@ -437,6 +445,7 @@ testfallet “LIVSCYKEL-06: current and previous relationships retain their
 own accessible status”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -458,6 +467,7 @@ own accessible status”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse och tekniskt underlag:**
@@ -523,6 +533,7 @@ testfallet “LIVSCYKEL-03: removing from the list immediately proposes every
 connected edge and preserves history”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -536,6 +547,7 @@ connected edge and preserves history”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -588,6 +600,7 @@ slutdatum och Upphört utan att tilldela
 Molnmusik-sambandet upphörandestatus.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -608,6 +621,7 @@ Molnmusik-sambandet upphörandestatus.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -637,6 +651,7 @@ Upphört och det separata Lo-sambandet
 som Upphört.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -657,6 +672,7 @@ som Upphört.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -686,6 +702,7 @@ Använder-sambandet från de två gällande
 Betalar-sambanden.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -706,6 +723,7 @@ Betalar-sambanden.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

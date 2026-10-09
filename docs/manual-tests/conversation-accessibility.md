@@ -55,6 +55,7 @@ verklig pekskärm hör till #220.
 , HJALP-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -67,6 +68,7 @@ verklig pekskärm hör till #220.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -110,6 +112,7 @@ mellan röstrutans plats och textvyn.
 , HJALP-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -122,6 +125,7 @@ mellan röstrutans plats och textvyn.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -175,6 +179,7 @@ besök i Inställningar.
 , HJALP-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -187,6 +192,7 @@ besök i Inställningar.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -252,6 +258,7 @@ mikrofonen av. Röstanslutningen ska inte redan vara igång.
 , HJALP-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -264,6 +271,7 @@ mikrofonen av. Röstanslutningen ska inte redan vara igång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -306,6 +314,7 @@ Mikrofonen är på. Ingen särskild appinställning ska användas.
 , HJALP-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -318,6 +327,7 @@ Mikrofonen är på. Ingen särskild appinställning ska användas.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -421,6 +431,7 @@ enhetsverktyg; ingen fysisk pekskärm är verifierad.
 , HJALP-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -434,6 +445,7 @@ enhetsverktyg; ingen fysisk pekskärm är verifierad.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -465,6 +477,7 @@ konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
 , HJALP-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -478,6 +491,7 @@ konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -510,6 +524,7 @@ konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
 , HJALP-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -523,6 +538,7 @@ konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -555,6 +571,7 @@ konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
 , HJALP-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -568,6 +585,7 @@ konfiguration före den första UI-handlingen. Sätt fönstret till 390 × 900.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -601,6 +619,7 @@ HTTPS-adress och konfigurerad inloggning.
 uppläsning och bedöm läsordning utan dubbla mikrofon- eller arbetsbesked.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -614,6 +633,7 @@ uppläsning och bedöm läsordning utan dubbla mikrofon- eller arbetsbesked.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -647,6 +667,7 @@ HTTPS-adress och konfigurerad inloggning.
 200/400 procents zoom, textavstånd och rörelse längre än fem sekunder.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -660,6 +681,7 @@ HTTPS-adress och konfigurerad inloggning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

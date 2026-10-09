@@ -47,6 +47,7 @@ testfallet “KATALOG-01: unused fields and custom and prefilled types are
 reviewed, discarded or saved without automatic cleanup”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -60,6 +61,7 @@ reviewed, discarded or saved without automatic cleanup”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -104,6 +106,7 @@ testfallet “KATALOG-02: private drafts and ended content block removal
 with a useful explanation and no private disclosure”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -117,6 +120,7 @@ with a useful explanation and no private disclosure”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -159,6 +163,7 @@ testfallet “KATALOG-03: history reads removed definitions and content without
 changing independent work”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -172,6 +177,7 @@ changing independent work”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

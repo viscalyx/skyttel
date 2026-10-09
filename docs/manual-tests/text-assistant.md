@@ -65,6 +65,7 @@ formulärtext”.
 [Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -77,6 +78,7 @@ formulärtext”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -130,6 +132,7 @@ nytt arbete”.
 [Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -142,6 +145,7 @@ nytt arbete”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -180,6 +184,7 @@ tillgängligt”.
 [Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -192,6 +197,7 @@ tillgängligt”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -232,6 +238,7 @@ dubbelt sparande”.
 [Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -244,6 +251,7 @@ dubbelt sparande”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -289,6 +297,7 @@ testfallet “TEXT-05: markering kräver visning och skyddar oskickad text”.
 [Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -301,6 +310,7 @@ testfallet “TEXT-05: markering kräver visning och skyddar oskickad text”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -342,6 +352,7 @@ i kartan innan du börjar. Inget sparande är genomfört.
 [Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -354,6 +365,7 @@ i kartan innan du börjar. Inget sparande är genomfört.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -400,6 +412,7 @@ finns nedan.
 [Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -412,6 +425,7 @@ finns nedan.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -463,6 +477,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 [Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -475,6 +490,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -519,6 +535,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 [assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts), TEXT-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -532,6 +549,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -556,6 +574,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 [assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts), TEXT-11.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -569,6 +588,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -593,6 +613,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 [assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts), TEXT-12.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -606,6 +627,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -630,6 +652,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 [assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts), TEXT-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -643,6 +666,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

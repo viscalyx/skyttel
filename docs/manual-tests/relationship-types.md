@@ -59,6 +59,7 @@ sparande av definition, objekt och samband.
 STY-01. Exakt HTTP-kvitto och återspelning är separat tekniskt underlag.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -79,6 +80,7 @@ STY-01. Exakt HTTP-kvitto och återspelning är separat tekniskt underlag.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -124,6 +126,7 @@ STY-01. Exakt HTTP-kvitto och återspelning är separat tekniskt underlag.
 testfallet “STY-02: forms show the same directed relationship from both
 objects and edit the shared definition”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -136,6 +139,7 @@ objects and edit the shared definition”.
   ]
 }
 ```
+-->
 
 **Ytterligare tekniskt underlag:** Efter det första gemensamma sparandet
 läser samma test kartans HTTP-svar och behåller sambandets identitet.
@@ -186,6 +190,7 @@ Dessa protokollkontroller är separata från den vanliga UI-proceduren.
 testfallet “STY-03: members share editable prefills while private definitions
 and household boundaries stay protected”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -198,6 +203,7 @@ and household boundaries stay protected”.
   ]
 }
 ```
+-->
 
 **Ytterligare tekniskt underlag:** Samma automatisering provar tomt namn,
 tom benämning från vardera håll, ogiltiga fältdefinitioner, oförändrat utkast
@@ -260,6 +266,7 @@ utförs genom den vanliga dialogen enligt stegen nedan.
 testfallet “STY-04: stale definitions stop the whole save and explicit
 resolution preserves independent edits”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -272,6 +279,7 @@ resolution preserves independent edits”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -323,6 +331,7 @@ protokollkontroller, inte extra steg i det vanliga browserfallet.
 testfallet “STY-05: duplicate adds, edits and concurrent saves preserve
 identity and reject every partial write”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -335,6 +344,7 @@ identity and reject every partial write”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -369,6 +379,7 @@ Använd webbläsarvy 1440 × 1000 för hela spara- och omstartskedjan.
 [relationship-fields.spec.ts](../../tests/integration/relationship-fields.spec.ts),
 STY-06, komplett referens vid 1440 × 1000.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -381,6 +392,7 @@ STY-06, komplett referens vid 1440 × 1000.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -422,6 +434,7 @@ Ett sparat samband av typen Förvaring har svaret Behåll som historik.
 testfallet “STY-07: relationship type changes require an explicit decision
 about earlier custom answers”.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -434,6 +447,7 @@ about earlier custom answers”.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -468,6 +482,7 @@ STY-10 och STY-11 skyddar separat mobilens native arbete.
 [relationship-sections.spec.ts](../../tests/integration/relationship-sections.spec.ts),
 STY-08, komplett referens vid 1440 × 1000.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -480,6 +495,7 @@ STY-08, komplett referens vid 1440 × 1000.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -529,6 +545,7 @@ rullning och fokus.
 [relationship-fields.spec.ts](../../tests/integration/relationship-fields.spec.ts),
 STY-09, native mobilreferens vid 390 × 1000.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -541,6 +558,7 @@ STY-09, native mobilreferens vid 390 × 1000.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -582,6 +600,7 @@ Syftet är mobil navigation och intern rullning.
 [relationship-sections.spec.ts](../../tests/integration/relationship-sections.spec.ts),
 STY-10, native referens vid 390 × 1000.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -594,6 +613,7 @@ STY-10, native referens vid 390 × 1000.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -641,6 +661,7 @@ Syftet är smalt omflöde och nåbara sista åtgärder.
 [relationship-sections.spec.ts](../../tests/integration/relationship-sections.spec.ts),
 STY-11, native referens vid 320 × 1000.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -653,6 +674,7 @@ STY-11, native referens vid 320 × 1000.
   ]
 }
 ```
+-->
 
 **Steg:**
 

@@ -49,6 +49,7 @@ loggar in med Google i den kontrollerade installationen.
 , RÖSTTEXT-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -61,6 +62,7 @@ loggar in med Google i den kontrollerade installationen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -105,6 +107,7 @@ resurser separat. Utför arbetsflödet en gång.
 , RÖSTTEXT-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -117,6 +120,7 @@ resurser separat. Utför arbetsflödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -158,6 +162,7 @@ resurser separat. Utför arbetsflödet en gång.
 , RÖSTTEXT-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -170,6 +175,7 @@ resurser separat. Utför arbetsflödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -216,6 +222,7 @@ resurser separat. Utför arbetsflödet en gång.
 , RÖSTTEXT-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -228,6 +235,7 @@ resurser separat. Utför arbetsflödet en gång.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -286,6 +294,7 @@ HTTPS-adress och konfigurerad inloggning.
 påslagen mikrofon och att gamla svar inte spelas upp vid återaktivering.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -299,6 +308,7 @@ påslagen mikrofon och att gamla svar inte spelas upp vid återaktivering.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -332,6 +342,7 @@ HTTPS-adress och konfigurerad inloggning.
 användarrader, redan talade svar eller gammal samtalstext.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -345,6 +356,7 @@ användarrader, redan talade svar eller gammal samtalstext.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

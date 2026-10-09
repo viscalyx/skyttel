@@ -44,6 +44,7 @@ leveransdiagnos.
 SPARKONTROLL-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -57,6 +58,7 @@ SPARKONTROLL-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -113,6 +115,7 @@ försöksidentifierare jämförs inte i de vanliga UI-stegen.
 SPARKONTROLL-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -126,6 +129,7 @@ SPARKONTROLL-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -177,6 +181,7 @@ historikposten. Råa försöksidentifierare jämförs inte i UI-stegen.
 SPARKONTROLL-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -190,6 +195,7 @@ SPARKONTROLL-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -263,6 +269,7 @@ inga sparverktyg. Se
 SPARKONTROLL-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -276,6 +283,7 @@ SPARKONTROLL-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -335,6 +343,7 @@ inga sparverktyg. Se
 SPARKONTROLL-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -348,6 +357,7 @@ SPARKONTROLL-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat tekniskt underlag:** Integrationstestet kontrollerar spårens
@@ -414,6 +424,7 @@ Lägg Lo i utkastet, öppna textsamtalet och slå på mikrofonen. Arma
 SPARKONTROLL-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -427,6 +438,7 @@ SPARKONTROLL-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat tekniskt underlag:** Integrationstestet kontrollerar spårens
@@ -505,6 +517,7 @@ Lämna Console och följ de synliga stegen nedan.
 SPARKONTROLL-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -519,6 +532,7 @@ SPARKONTROLL-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -577,6 +591,7 @@ efter återkallelsen. De råa identifierarna ingår inte i UI-stegen.
 SPARKONTROLL-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -590,6 +605,7 @@ SPARKONTROLL-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -636,6 +652,7 @@ i de vanliga UI-stegen.
 SPARKONTROLL-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -649,6 +666,7 @@ SPARKONTROLL-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -714,6 +732,7 @@ med mikrofon av och på. Mikrofon av ger en artig förklaring; mikrofon på ger
 ingen extra uppläsning av samma samtalstext.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -726,6 +745,7 @@ ingen extra uppläsning av samma samtalstext.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -776,6 +796,7 @@ godkänd extern röstkonfiguration. Lyssna på kontrollförklaringen med mikrofo
 på; avstängd mikrofon spelar inte upp den gamla förklaringen efter ny start.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -788,6 +809,7 @@ på; avstängd mikrofon spelar inte upp den gamla förklaringen efter ny start.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

@@ -35,6 +35,7 @@ inklusive ofullständiga och upphörda. Läsning ändrar inte informationen.
 ### STORKARTA-01: hela innehållet är åtkomligt i en tät karta
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -47,6 +48,7 @@ inklusive ofullständiga och upphörda. Läsning ändrar inte informationen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att färre etiketter och sidvisning inte gömmer

@@ -68,6 +68,7 @@ dessa kopior i filväljaren. Radera båda testmapparna efter körningen.
 ### BILD-01: Bevara text och läs tidigare bilder efter omstart
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -80,6 +81,7 @@ dessa kopior i filväljaren. Radera båda testmapparna efter körningen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Verifiera samma privata utkast, beständighet och historikläsning för
@@ -120,6 +122,7 @@ and expose historical replacements”.
 ### BILD-02: Avvisa felaktiga bilder och återhämta bildborttagning
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -132,6 +135,7 @@ and expose historical replacements”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevara tidigare förslag vid fel och bekräfta endast ett sparande.
@@ -180,6 +184,7 @@ recovers its durable receipt”.
 ### BILD-03: Neka privata och historiska bildadresser efter återkallad tillgång
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -192,6 +197,7 @@ recovers its durable receipt”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Verifiera privata förslag och aktuellt medlemskap för bildåtkomst.
@@ -337,6 +343,7 @@ await (async () => {
 ### BILD-04: Behåll kompletta bildformulär vid fördröjt avvisande
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -349,6 +356,7 @@ await (async () => {
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevara lokala uppgifter, tidigare bilder och oberoende förslag.
@@ -421,6 +429,7 @@ och meddela **Samma avslag är släppt**. Återställ HTTPS-ingången före
 ### BILD-05: Spärra navigering under bildtillägg och behåll inaktuellt formulär
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -433,6 +442,7 @@ och meddela **Samma avslag är släppt**. Återställ HTTPS-ingången före
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skydda komplett oskickat bildarbete vid navigering och samtidighet.
@@ -488,6 +498,7 @@ genom senare redigering; återställ HTTPS-ingången före `quit`.
 ### BILD-06: Dela text, ikon och bild tillsammans för Egen bildtyp
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -500,6 +511,7 @@ genom senare redigering; återställ HTTPS-ingången före `quit`.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Hantera bilder för Egen bildtyp i samma privata objektförslag
@@ -560,6 +572,7 @@ zoom eller fysisk telefoninmatning.
 ### BILD-07: Behåll komplett bildarbete vid 1440 × 1000, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -572,6 +585,7 @@ zoom eller fysisk telefoninmatning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Datorns mörka tema skyddar varningens kontrast och fokus.
@@ -610,6 +624,7 @@ BILD-07.
 ### BILD-08: Behåll komplett bildarbete vid 1440 × 500, ljust tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -622,6 +637,7 @@ BILD-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kort höjd skyddar rullning och varningens nåbarhet.
@@ -660,6 +676,7 @@ BILD-08.
 ### BILD-09: Behåll komplett bildarbete vid 1440 × 500, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -672,6 +689,7 @@ BILD-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kort höjd skyddar rullning och varningens nåbarhet.
@@ -710,6 +728,7 @@ BILD-09.
 ### BILD-10: Behåll komplett bildarbete vid 320 × 1000, ljust tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -722,6 +741,7 @@ BILD-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Smal bredd skyddar omflöde och varningens fokus.
@@ -760,6 +780,7 @@ BILD-10.
 ### BILD-11: Behåll komplett bildarbete vid 320 × 1000, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -772,6 +793,7 @@ BILD-10.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Smal bredd skyddar omflöde och varningens fokus.
@@ -810,6 +832,7 @@ BILD-11.
 ### BILD-12: Behåll komplett bildarbete vid 320 × 250, ljust tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -822,6 +845,7 @@ BILD-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kort höjd skyddar rullning och varningens nåbarhet.
@@ -860,6 +884,7 @@ BILD-12.
 ### BILD-13: Behåll komplett bildarbete vid 320 × 250, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -872,6 +897,7 @@ BILD-12.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kort höjd skyddar rullning och varningens nåbarhet.
@@ -910,6 +936,7 @@ BILD-13.
 ### BILD-14: Skydda navigering och inaktuellt bildarbete vid 390px
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -922,6 +949,7 @@ BILD-13.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skydda Bakåt och hela bildformuläret även vid smal bredd.
@@ -958,6 +986,7 @@ BILD-14.
 ### BILD-15: Skydda navigering och inaktuellt bildarbete vid 320px
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -970,6 +999,7 @@ BILD-14.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skydda Bakåt och hela bildformuläret även vid smal bredd.
@@ -1035,6 +1065,7 @@ för att kontrollera nåbara fält, knappar och synligt fokus i varningen.
 De automatiska CSS-storlekarna utför inte denna observation.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1049,6 +1080,7 @@ De automatiska CSS-storlekarna utför inte denna observation.
   }]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

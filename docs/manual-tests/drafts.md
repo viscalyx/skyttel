@@ -95,6 +95,7 @@ Terminalens kommandon styr bara leveransen av riktiga HTTP-svar. Skriv
 UTKAST-36.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -110,6 +111,7 @@ UTKAST-36.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -166,6 +168,7 @@ jämförelser av interna uppgifter ingår inte i de vanliga UI-stegen.
 UTKAST-37.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -180,6 +183,7 @@ UTKAST-37.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -235,6 +239,7 @@ med `hold-check` före steg 4 och `release-check` när vänteläget har lästs.
 UTKAST-38.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -249,6 +254,7 @@ UTKAST-38.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -298,6 +304,7 @@ nätkontroll blockeras tills du väljer `network-ok`.
 UTKAST-39.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -311,6 +318,7 @@ UTKAST-39.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -365,6 +373,7 @@ fall, UTKAST-102.
 UTKAST-40.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -377,6 +386,7 @@ UTKAST-40.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -530,6 +540,7 @@ Inga HTTP-statuskoder eller internidentifierare behöver läsas i UI-flödet.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-41.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -543,6 +554,7 @@ UTKAST-41.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -572,6 +584,7 @@ UTKAST-41.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-42.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -585,6 +598,7 @@ UTKAST-42.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -618,6 +632,7 @@ UTKAST-42.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-142.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -631,6 +646,7 @@ UTKAST-142.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -663,6 +679,7 @@ Spara inte.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-43.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -684,6 +701,7 @@ UTKAST-43.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -719,6 +737,7 @@ Lägg i utkastet med Enter och välj Stäng samband. Spara inte.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-143.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -740,6 +759,7 @@ UTKAST-143.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -771,6 +791,7 @@ UTKAST-143.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-44.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -784,6 +805,7 @@ UTKAST-44.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -818,6 +840,7 @@ pixlar.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-144.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -831,6 +854,7 @@ UTKAST-144.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -858,6 +882,7 @@ UTKAST-144.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-45.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -871,6 +896,7 @@ UTKAST-45.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -917,6 +943,7 @@ försvinner.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-46.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -930,6 +957,7 @@ UTKAST-46.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -957,6 +985,7 @@ UTKAST-46.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-145.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -970,6 +999,7 @@ UTKAST-145.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -1014,6 +1044,7 @@ Avsluta med `quit` och kontrollera borttagen provinstallation.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-146.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1027,6 +1058,7 @@ UTKAST-146.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -1071,6 +1103,7 @@ definitionen kastas.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-47.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1084,6 +1117,7 @@ UTKAST-47.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1116,6 +1150,7 @@ definitionen kastas.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-147.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1129,6 +1164,7 @@ UTKAST-147.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1163,6 +1199,7 @@ ovan.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-48.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1176,6 +1213,7 @@ UTKAST-48.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -1217,6 +1255,7 @@ Avsluta med `quit` och kontrollera borttagen provinstallation.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-148.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1230,6 +1269,7 @@ UTKAST-148.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -1273,6 +1313,7 @@ arbete.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-149.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1286,6 +1327,7 @@ UTKAST-149.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -1340,6 +1382,7 @@ och Följ slutdatum. Behåll det osparat.
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-150.
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1353,6 +1396,7 @@ UTKAST-150.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -1416,6 +1460,7 @@ Skriv `quit` i terminalen efter provningen för att ta bort installationen.
 UTKAST-90.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1431,6 +1476,7 @@ UTKAST-90.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1470,6 +1516,7 @@ och börjar med ett tomt utkast.
 UTKAST-91.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1484,6 +1531,7 @@ UTKAST-91.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1524,6 +1572,7 @@ Skriv `quit` i terminalen efter provningen.
 UTKAST-27.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1539,6 +1588,7 @@ UTKAST-27.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1582,6 +1632,7 @@ Ladda om administratörens sida. Använd 1440 × 900 pixlar.
 UTKAST-28.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1598,6 +1649,7 @@ UTKAST-28.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1649,6 +1701,7 @@ administratörens sida.
 UTKAST-29.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1663,6 +1716,7 @@ UTKAST-29.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1706,6 +1760,7 @@ Skriv `quit` i terminalen efter provningen.
 [draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
 UTKAST-31.
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1719,6 +1774,7 @@ UTKAST-31.
   ]
 }
 ```
+-->
 
 **Steg:**
 
@@ -1750,6 +1806,7 @@ fortfarande; inga andra uppgifter ändras. Skriv `quit` efter provningen.
 UTKAST-32.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1764,6 +1821,7 @@ UTKAST-32.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1798,6 +1856,7 @@ Spara båda. Gör varje delprov i ett nytt hushåll enligt allmän förberedelse
 UTKAST-33.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1811,6 +1870,7 @@ UTKAST-33.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1843,6 +1903,7 @@ Lägg definitionen i utkastet och spara.
 UTKAST-34.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1856,6 +1917,7 @@ UTKAST-34.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1889,6 +1951,7 @@ inte en inloggning. Använd faktiska förnamn om profilerna har andra namn.
 UTKAST-35.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1903,6 +1966,7 @@ UTKAST-35.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1941,6 +2005,7 @@ förslag får vara sparade eller kastade efter återställningen.
 UTKAST-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1956,6 +2021,7 @@ UTKAST-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2009,6 +2075,7 @@ enligt förberedelsen. Båda flikarna använder samma inloggning.
 UTKAST-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2023,6 +2090,7 @@ UTKAST-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2060,6 +2128,7 @@ UTKAST-02.
 UTKAST-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2082,6 +2151,7 @@ UTKAST-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2126,6 +2196,7 @@ objekt och att oberoende förslag kan sparas.
 UTKAST-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2140,6 +2211,7 @@ UTKAST-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2182,6 +2254,7 @@ konfliktval och sparbesked.
 UTKAST-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2196,6 +2269,7 @@ UTKAST-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2236,6 +2310,7 @@ en annan användare lägger till.
 UTKAST-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2250,6 +2325,7 @@ UTKAST-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2289,6 +2365,7 @@ säkerheten **Känt** utöver de två objekten enligt förberedelsen.
 UTKAST-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2302,6 +2379,7 @@ UTKAST-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2339,6 +2417,7 @@ säkerheten **Känt**, statusen **Följ slutdatum** och utan slutdatum.
 UTKAST-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2353,6 +2432,7 @@ UTKAST-10.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2403,6 +2483,7 @@ säkerheten **Känt** utöver de två objekten enligt förberedelsen.
 UTKAST-11.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2418,6 +2499,7 @@ UTKAST-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2472,6 +2554,7 @@ UTKAST-11.
 UTKAST-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2486,6 +2569,7 @@ UTKAST-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2519,6 +2603,7 @@ omstart och tas bort uttryckligen.
 UTKAST-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2533,6 +2618,7 @@ UTKAST-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2572,6 +2658,7 @@ och vänd sambandets riktning utan att spara. Välj ljust tema.
 UTKAST-25.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2585,6 +2672,7 @@ UTKAST-25.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2625,6 +2713,7 @@ inte sparadressen; om ordningen inte kan styras, anteckna begränsningen.
 UTKAST-26.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2638,6 +2727,7 @@ UTKAST-26.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -2694,6 +2784,7 @@ okänt resultat och verifierat sparande.
 UTKAST-12.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2708,6 +2799,7 @@ UTKAST-12.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -2768,6 +2860,7 @@ Välj `new-empty` och `hold-after`.
 UTKAST-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2782,6 +2875,7 @@ UTKAST-13.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -2835,6 +2929,7 @@ server, privata utkast och gemensamt sparande används.
 UTKAST-14.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2849,6 +2944,7 @@ UTKAST-14.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -2925,6 +3021,7 @@ server, privata utkast och gemensamt sparande används.
 UTKAST-15.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -2939,6 +3036,7 @@ UTKAST-15.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -2987,6 +3085,7 @@ av klienternas utkast innehåller tidigare förslag.
 UTKAST-17.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3001,6 +3100,7 @@ UTKAST-17.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -3048,6 +3148,7 @@ igen innan respektive typförslag läggs i utkastet.
 UTKAST-18.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3065,6 +3166,7 @@ UTKAST-18.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -3134,6 +3236,7 @@ Lo Berg, lägger till beskrivningen Spelar piano och sparar hela utkastet.
 UTKAST-19.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3148,6 +3251,7 @@ UTKAST-19.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -3196,6 +3300,7 @@ Robin tar bort Molnmusik och sparar.
 UTKAST-20.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3211,6 +3316,7 @@ UTKAST-20.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -3255,6 +3361,7 @@ Använd objekttyp vid 1440 × 844 pixlar.
 UTKAST-21.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3269,6 +3376,7 @@ UTKAST-21.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -3311,6 +3419,7 @@ Robin sparar Lo Berg. Använd 390 × 844 pixlar och välj sparade värden.
 UTKAST-22.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3325,6 +3434,7 @@ UTKAST-22.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -3364,6 +3474,7 @@ konflikten har skapats. Arma den angivna rutten före UI-handlingen.
 UTKAST-23.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3378,6 +3489,7 @@ UTKAST-23.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -3438,6 +3550,7 @@ konflikten har skapats. Arma den angivna rutten före UI-handlingen.
 UTKAST-24.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3453,6 +3566,7 @@ UTKAST-24.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -3521,6 +3635,7 @@ nytt privat förslag. Börja med stängd textvy och Navigation.
 UTKAST-16.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3535,6 +3650,7 @@ UTKAST-16.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -3605,6 +3721,7 @@ sig.
 UTKAST-49.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3619,6 +3736,7 @@ UTKAST-49.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -3660,6 +3778,7 @@ fallen och avsluta enligt förberedelsens städning.
 UTKAST-50.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3674,6 +3793,7 @@ UTKAST-50.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -3724,6 +3844,7 @@ kombination.
 UTKAST-51.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3737,6 +3858,7 @@ UTKAST-51.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -3782,6 +3904,7 @@ förslag.
 UTKAST-52.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3797,6 +3920,7 @@ UTKAST-52.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -3843,6 +3967,7 @@ och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 UTKAST-53.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3857,6 +3982,7 @@ UTKAST-53.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -3900,6 +4026,7 @@ pixlar.
 UTKAST-54.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3914,6 +4041,7 @@ UTKAST-54.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -3964,6 +4092,7 @@ stängd.
 UTKAST-55.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -3979,6 +4108,7 @@ UTKAST-55.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -4023,6 +4153,7 @@ livstid.
 UTKAST-56.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4037,6 +4168,7 @@ UTKAST-56.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -4085,6 +4217,7 @@ objektet. Kör `result` för att läsa utgångsläget.
 UTKAST-57.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4099,6 +4232,7 @@ UTKAST-57.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4141,6 +4275,7 @@ för ett sparat samband från Lo till Molnmusik. Robin tar bort sambandet.
 UTKAST-58.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4155,6 +4290,7 @@ UTKAST-58.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4193,6 +4329,7 @@ Robin sparar ett annat samband med samma typ, riktning och objekt.
 UTKAST-59.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4207,6 +4344,7 @@ UTKAST-59.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4246,6 +4384,7 @@ Molnmusik efter att Alex föreslår ett samband till det.
 UTKAST-60.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4259,6 +4398,7 @@ UTKAST-60.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4301,6 +4441,7 @@ Robin sparar **Lo Berg** och **Nya sparade fakta** innan Alex hinner spara.
 UTKAST-61.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4315,6 +4456,7 @@ UTKAST-61.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4354,6 +4496,7 @@ som berör Lo efter Alex borttagningsförslag.
 UTKAST-62.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4369,6 +4512,7 @@ UTKAST-62.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4411,6 +4555,7 @@ vid 320 × 900 pixlar.
 UTKAST-63.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4425,6 +4570,7 @@ UTKAST-63.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4467,6 +4613,7 @@ vid omstart inom fallet.
 UTKAST-64.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4480,6 +4627,7 @@ UTKAST-64.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4517,6 +4665,7 @@ vid omstart inom fallet.
 UTKAST-65.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4531,6 +4680,7 @@ UTKAST-65.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4569,6 +4719,7 @@ databas vid omstart inom fallet.
 UTKAST-66.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4583,6 +4734,7 @@ UTKAST-66.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4628,6 +4780,7 @@ vid omstart inom fallet.
 UTKAST-67.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4642,6 +4795,7 @@ UTKAST-67.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4687,6 +4841,7 @@ omstart inom fallet.
 UTKAST-68.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4701,6 +4856,7 @@ UTKAST-68.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4748,6 +4904,7 @@ databas vid omstart inom fallet.
 UTKAST-69.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4761,6 +4918,7 @@ UTKAST-69.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4800,6 +4958,7 @@ vid omstart inom fallet.
 UTKAST-70.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4814,6 +4973,7 @@ UTKAST-70.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4854,6 +5014,7 @@ vid omstart inom fallet.
 UTKAST-71.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4868,6 +5029,7 @@ UTKAST-71.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4910,6 +5072,7 @@ vid omstart inom fallet.
 UTKAST-72.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4924,6 +5087,7 @@ UTKAST-72.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -4965,6 +5129,7 @@ av Lo. Robin har sparat **Nya sparade fakta** och ett nytt samband för Lo.
 UTKAST-73.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -4980,6 +5145,7 @@ UTKAST-73.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -5036,6 +5202,7 @@ databas vid omstart inom fallet.
 UTKAST-74.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5050,6 +5217,7 @@ UTKAST-74.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5090,6 +5258,7 @@ vid omstart inom fallet.
 UTKAST-75.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5103,6 +5272,7 @@ UTKAST-75.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5139,6 +5309,7 @@ samma databas vid omstart inom fallet.
 UTKAST-76.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5152,6 +5323,7 @@ UTKAST-76.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5188,6 +5360,7 @@ men tappar svaret; `lose-unsent` hindrar leveransen före servern.
 UTKAST-77.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5203,6 +5376,7 @@ UTKAST-77.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -5254,6 +5428,7 @@ verklig konflikt enligt den gemensamma förberedelsen.
 UTKAST-78.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5268,6 +5443,7 @@ UTKAST-78.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5319,6 +5495,7 @@ Skriv `quit` i terminalen efter provningen för att ta bort installationen.
 UTKAST-92.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5334,6 +5511,7 @@ UTKAST-92.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5377,6 +5555,7 @@ Skriv `quit` i terminalen efter provningen.
 UTKAST-93.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5392,6 +5571,7 @@ UTKAST-93.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5431,6 +5611,7 @@ och vänd sambandets riktning utan att spara. Välj mörkt tema.
 UTKAST-94.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5444,6 +5625,7 @@ UTKAST-94.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5485,6 +5667,7 @@ okänt resultat och verifierat sparande.
 UTKAST-96.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5499,6 +5682,7 @@ UTKAST-96.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -5559,6 +5743,7 @@ okänt resultat och verifierat sparande.
 UTKAST-97.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5573,6 +5758,7 @@ UTKAST-97.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -5633,6 +5819,7 @@ nytt privat förslag. Börja med stängd textvy och Navigation.
 UTKAST-98.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5647,6 +5834,7 @@ UTKAST-98.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5694,6 +5882,7 @@ nytt privat förslag. Börja med stängd textvy och Navigation.
 UTKAST-99.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5708,6 +5897,7 @@ UTKAST-99.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5752,6 +5942,7 @@ kräver tomma sparförsök. Dessa API-jämförelser ingår inte i UI-stegen.
 UTKAST-100.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5766,6 +5957,7 @@ UTKAST-100.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -5821,6 +6013,7 @@ efter att Lo ligger i utkastet, före sparandet.
 UTKAST-95.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5834,6 +6027,7 @@ UTKAST-95.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -5879,6 +6073,7 @@ Välj `new-draft` och `pending-attempt`.
 UTKAST-101.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5892,6 +6087,7 @@ UTKAST-101.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -5935,6 +6131,7 @@ Välj `new-draft` och öppna samma adress i en andra flik.
 UTKAST-102.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5948,6 +6145,7 @@ UTKAST-102.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -5982,6 +6180,7 @@ Välj `new-draft` och `hold`.
 UTKAST-103.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -5995,6 +6194,7 @@ UTKAST-103.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -6037,6 +6237,7 @@ Välj `new-draft`, `lost-response` och 1280 pixlars bredd.
 UTKAST-104.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -6050,6 +6251,7 @@ UTKAST-104.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6086,6 +6288,7 @@ Välj `new-draft`, `lost-response` och 390 pixlars bredd.
 UTKAST-105.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -6099,6 +6302,7 @@ UTKAST-105.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6147,6 +6351,7 @@ Använd konfigurationen som anges här.
 UTKAST-106.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "390 × 900; Tabell och Karta med nytt underlag; smalt omflöde och tangentbordsfokus vid blandade val.",
@@ -6160,6 +6365,7 @@ UTKAST-106.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6189,6 +6395,7 @@ utan mellanslag och Molnmusik. Spara ett känt samband mellan objekten.
 UTKAST-107.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "320 × 900; sambandets rubrik och lista med långt obrutet namn.",
@@ -6202,6 +6409,7 @@ UTKAST-107.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6233,6 +6441,7 @@ Använd konfigurationen som anges här.
 UTKAST-108.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "390 × 844; alla konfliktslag med nåbar status och synligt fokus.",
@@ -6246,6 +6455,7 @@ UTKAST-108.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6277,6 +6487,7 @@ Använd konfigurationen som anges här.
 UTKAST-109.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "320 × 844; alla konfliktslag med nåbar status och synligt fokus.",
@@ -6290,6 +6501,7 @@ UTKAST-109.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6321,6 +6533,7 @@ Använd konfigurationen som anges här.
 UTKAST-110.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "640 × 456; alla konfliktslag med nåbar status och synligt fokus.",
@@ -6334,6 +6547,7 @@ UTKAST-110.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6365,6 +6579,7 @@ Använd konfigurationen som anges här.
 UTKAST-111.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "390 × 900; rätta borttaget mål genom vanligt sambandsformulär.",
@@ -6378,6 +6593,7 @@ UTKAST-111.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6408,6 +6624,7 @@ Använd konfigurationen som anges här.
 UTKAST-112.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Objekttyp, 390 × 844; rätt befintlig definitionsredigering.",
@@ -6421,6 +6638,7 @@ UTKAST-112.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6452,6 +6670,7 @@ Använd konfigurationen som anges här.
 UTKAST-113.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Sambandstyp, 1440 × 844; rätt befintlig definitionsredigering.",
@@ -6465,6 +6684,7 @@ UTKAST-113.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6497,6 +6717,7 @@ Använd konfigurationen som anges här.
 UTKAST-114.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Sambandstyp, 390 × 844; rätt befintlig definitionsredigering.",
@@ -6510,6 +6731,7 @@ UTKAST-114.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6543,6 +6765,7 @@ Använd konfigurationen som anges här.
 UTKAST-115.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "390 × 844, föreslaget värde; fokus efter egenskapsval.",
@@ -6556,6 +6779,7 @@ UTKAST-115.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6586,6 +6810,7 @@ Använd konfigurationen som anges här.
 UTKAST-116.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "390 × 844; tappade svar efter konfliktval och sparande.",
@@ -6600,6 +6825,7 @@ UTKAST-116.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6630,6 +6856,7 @@ Robin ändrar inte Molnmusiks namn i detta fall.
 UTKAST-117.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Tabell; sparat samband efter samtidiga typbyten.",
@@ -6643,6 +6870,7 @@ UTKAST-117.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6676,6 +6904,7 @@ Lo Lind. Robin behåller Lo Exempel, ändrar till Spelar piano och sparar.
 UTKAST-118.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Karta; eget namn och oberoende sparad beskrivning genom nytt sparande.",
@@ -6688,6 +6917,7 @@ UTKAST-118.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6717,6 +6947,7 @@ Använd konfigurationen som anges här.
 UTKAST-119.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "320 × 900; uteblivet anrop och misslyckad kontroll på smal skärm.",
@@ -6730,6 +6961,7 @@ UTKAST-119.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6760,6 +6992,7 @@ Använd konfigurationen som anges här.
 UTKAST-120.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Karta, 320 × 900, föreslagna värden; genomfört val med tappat svar.",
@@ -6773,6 +7006,7 @@ UTKAST-120.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6806,6 +7040,7 @@ Använd konfigurationen som anges här.
 UTKAST-121.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Karta, 1280 × 900, sparade värden; genomfört val med tappat svar.",
@@ -6819,6 +7054,7 @@ UTKAST-121.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6853,6 +7089,7 @@ Använd konfigurationen som anges här.
 UTKAST-122.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Karta, 320 × 900, sparade värden; genomfört val med tappat svar.",
@@ -6866,6 +7103,7 @@ UTKAST-122.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6900,6 +7138,7 @@ Använd konfigurationen som anges här.
 UTKAST-123.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Tabell, 1280 × 900, föreslagna värden; genomfört val med tappat svar.",
@@ -6913,6 +7152,7 @@ UTKAST-123.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6946,6 +7186,7 @@ Använd konfigurationen som anges här.
 UTKAST-124.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Tabell, 320 × 900, föreslagna värden; genomfört val med tappat svar.",
@@ -6959,6 +7200,7 @@ UTKAST-124.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -6992,6 +7234,7 @@ Använd konfigurationen som anges här.
 UTKAST-125.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Tabell, 1280 × 900, sparade värden; genomfört val med tappat svar.",
@@ -7005,6 +7248,7 @@ UTKAST-125.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7039,6 +7283,7 @@ Använd konfigurationen som anges här.
 UTKAST-126.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Tabell, 320 × 900, sparade värden; genomfört val med tappat svar.",
@@ -7052,6 +7297,7 @@ UTKAST-126.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7084,6 +7330,7 @@ konfliktinstallationen.
 UTKAST-127.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Karta; samma ändpunkt med nytt namn och bevarade val.",
@@ -7097,6 +7344,7 @@ UTKAST-127.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7126,6 +7374,7 @@ UTKAST-127.
 UTKAST-128.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Karta; annan klient för samma ägare löser en stängd konflikt.",
@@ -7139,6 +7388,7 @@ UTKAST-128.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7167,6 +7417,7 @@ UTKAST-128.
 UTKAST-129.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Karta, saved; annat fönster för Alex sparar och tömmer utkastet.",
@@ -7181,6 +7432,7 @@ UTKAST-129.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7213,6 +7465,7 @@ UTKAST-129.
 UTKAST-130.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Karta, proposed; annat fönster för Alex sparar och tömmer utkastet.",
@@ -7227,6 +7480,7 @@ UTKAST-130.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7258,6 +7512,7 @@ UTKAST-130.
 UTKAST-131.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Karta; senare sparat namn efter faktiskt genomfört privat val.",
@@ -7272,6 +7527,7 @@ UTKAST-131.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7303,6 +7559,7 @@ UTKAST-131.
 UTKAST-132.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "320 × 900, Karta; kastval stoppat före servern.",
@@ -7316,6 +7573,7 @@ UTKAST-132.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7349,6 +7607,7 @@ Använd konfigurationen som anges här.
 UTKAST-133.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "320 × 900, Tabell; genomfört dubblettkastande med tappat svar.",
@@ -7362,6 +7621,7 @@ UTKAST-133.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7389,6 +7649,7 @@ UTKAST-133.
 UTKAST-134.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "320 × 900, Tabell; kastval stoppat före servern.",
@@ -7402,6 +7663,7 @@ UTKAST-134.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7435,6 +7697,7 @@ Använd konfigurationen som anges här.
 UTKAST-135.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "320 × 900, Tabell; båda genomförda borttagningsvalen med tappat svar.",
@@ -7448,6 +7711,7 @@ UTKAST-135.
   }
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7476,6 +7740,7 @@ och väntan.
 Anteckna program, version och webbläsare.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Riktig skärmläsare; separat talobservation vid avvisning, återöppning och väntan.",
@@ -7509,6 +7774,7 @@ Anteckna program, version och webbläsare.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -7563,6 +7829,7 @@ databas vid omstart inom fallet.
 UTKAST-138.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -7577,6 +7844,7 @@ UTKAST-138.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7617,6 +7885,7 @@ behåll samma databas vid omstart inom fallet.
 UTKAST-139.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -7630,6 +7899,7 @@ UTKAST-139.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7663,6 +7933,7 @@ databas vid omstart inom fallet.
 UTKAST-140.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -7676,6 +7947,7 @@ UTKAST-140.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7711,6 +7983,7 @@ vid omstart inom fallet.
 UTKAST-141.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -7724,6 +7997,7 @@ UTKAST-141.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -7752,6 +8026,7 @@ två aktuella medlemmar och tomma egna utkast.
 UTKAST-137.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "reference": "Tabell; två medlemmars formulärförslag genom sparande och omstart.",
@@ -7774,6 +8049,7 @@ UTKAST-137.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

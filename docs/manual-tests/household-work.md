@@ -42,6 +42,7 @@ fallen anger formulär, samtal, profil eller administration.
 
 ### ARBETE-01: avbruten formulärförlust och lagt utkast bevaras vid navigation
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -55,6 +56,7 @@ fallen anger formulär, samtal, profil eller administration.
   ]
 }
 ```
+-->
 
 **Syfte:** Behåll text vid avbruten förlust och redan lagda förslag vid vybyte.
 
@@ -91,6 +93,7 @@ ARBETE-01 vid 1280 × 900; de två smala fallen har egna identiteter nedan.
 
 ### ARBETE-10: formulärförlust och lagt utkast vid 390 pixlar
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -104,6 +107,7 @@ ARBETE-01 vid 1280 × 900; de två smala fallen har egna identiteter nedan.
   ]
 }
 ```
+-->
 
 **Syfte:** Skydda mobil navigation och synligt återställt fokus.
 
@@ -125,6 +129,7 @@ tomma gemensamma karta som ARBETE-01, vid den valda smala bredden.
 
 ### ARBETE-11: formulärförlust och lagt utkast vid 320 pixlar
 
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -138,6 +143,7 @@ tomma gemensamma karta som ARBETE-01, vid den valda smala bredden.
   ]
 }
 ```
+-->
 
 **Syfte:** Skydda extremt smal navigation och nåbara formulär.
 
@@ -160,6 +166,7 @@ tomma gemensamma karta som ARBETE-01, vid den valda smala bredden.
 ### ARBETE-02: samtal och mikrofon består och avslutas vid utloggning
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -173,6 +180,7 @@ tomma gemensamma karta som ARBETE-01, vid den valda smala bredden.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevara samtalet och mikrofonens läge i en annan vy.
@@ -209,6 +217,7 @@ end on logout”.
 ### ARBETE-03: återkallad tillgång avvecklar oskickat arbete
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -222,6 +231,7 @@ end on logout”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevarande ger inte fortsatt tillgång efter återkallelse.
@@ -253,6 +263,7 @@ microphone”.
 ### ARBETE-04: ersatt innehåll avvecklar tidigare arbete
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -266,6 +277,7 @@ microphone”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Gamla formulär och samtal får inte fortsätta mot ersatt innehåll.
@@ -304,6 +316,7 @@ microphone”.
 ### ARBETE-07: väntande radering stoppar tidigare arbete före omladdning
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -317,6 +330,7 @@ microphone”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att oskickat formulär, samtal, mikrofon och ett
@@ -402,6 +416,7 @@ provmiljön avslutas enligt kostnadsfallets stoppanvisningar.
 ### ARBETE-05: samma sparförsök kan återhämtas efter vybyte
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -415,6 +430,7 @@ provmiljön avslutas enligt kostnadsfallets stoppanvisningar.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Ett okänt utfall får inte glömmas vid navigation.
@@ -462,6 +478,7 @@ response disappears”.
 ### ARBETE-06: urval och personlig vy består vid storleksbyte
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -474,6 +491,7 @@ response disappears”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla valt objekt och egna kartinställningar vid återgång.
@@ -512,6 +530,7 @@ and resizing”.
 ### ARBETE-08: familjeabonnemang från inloggning till delad karta
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -563,6 +582,7 @@ and resizing”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Prova ett oavbrutet arbete genom inloggning, text, kontrollerat
@@ -730,6 +750,7 @@ ljudprovet ARBETE-13.
 ### ARBETE-09: samma familjearbete med text och listor utan grafik eller ljud
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -781,6 +802,7 @@ ljudprovet ARBETE-13.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Genomföra samma arbete utan tal, ljuduppspelning eller grafisk karta.
@@ -826,6 +848,7 @@ vid varje profils första hushållsvisning och efter dess omladdningar.
 ### ARBETE-12: faktiskt hört tal genom navigation och textalternativ
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -846,6 +869,7 @@ vid varje profils första hushållsvisning och efter dess omladdningar.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Hör rubriker, namngivna kontroller, sparbesked och historik med NVDA;
@@ -884,6 +908,7 @@ för varje observation. Radera provdata och avsluta båda inloggningarna.
 ### ARBETE-13: fysisk mikrofon och hörbart svar genom familjearbetet
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -904,6 +929,7 @@ för varje observation. Radera provdata och avsluta båda inloggningarna.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Tala svenska i fysisk mikrofon och hör svaret, samma pågående

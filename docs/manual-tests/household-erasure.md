@@ -115,6 +115,7 @@ stolens privata förslag.
 RADERING-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -128,6 +129,7 @@ RADERING-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -175,6 +177,7 @@ Se [körbar förberedelse](household-erasure-preparation.md).
 RADERING-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -188,6 +191,7 @@ RADERING-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -220,6 +224,7 @@ RADERING-02.
 RADERING-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -233,6 +238,7 @@ RADERING-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -275,6 +281,7 @@ Se [körbar förberedelse](household-erasure-preparation.md).
 RADERING-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -288,6 +295,7 @@ RADERING-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -346,6 +354,7 @@ Se [körbar förberedelse](household-erasure-preparation.md).
 RADERING-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -359,6 +368,7 @@ RADERING-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -400,6 +410,7 @@ verklig zoom hör till RADERING-21.
 RADERING-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -413,6 +424,7 @@ RADERING-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -471,6 +483,7 @@ Se [körbar förberedelse](household-erasure-preparation.md).
 RADERING-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -484,6 +497,7 @@ RADERING-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -529,6 +543,7 @@ Se [körbar förberedelse](household-erasure-preparation.md).
 RADERING-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -543,6 +558,7 @@ RADERING-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -593,6 +609,7 @@ Se [körbar förberedelse](household-erasure-preparation.md).
 RADERING-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -606,6 +623,7 @@ RADERING-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -649,6 +667,7 @@ Se [körbar förberedelse](household-erasure-preparation.md).
 RADERING-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -662,6 +681,7 @@ RADERING-10.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -721,6 +741,7 @@ Se [körbar förberedelse](household-erasure-preparation.md).
 RADERING-11.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -734,6 +755,7 @@ RADERING-11.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat operatörsförberedelse:**
@@ -808,6 +830,7 @@ genom UI före ny provdatabas.
 RADERING-12.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -821,6 +844,7 @@ RADERING-12.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -849,6 +873,7 @@ RADERING-12.
 RADERING-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -862,6 +887,7 @@ RADERING-13.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -890,6 +916,7 @@ RADERING-13.
 RADERING-14.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -903,6 +930,7 @@ RADERING-14.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -931,6 +959,7 @@ RADERING-14.
 RADERING-15.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -944,6 +973,7 @@ RADERING-15.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -972,6 +1002,7 @@ RADERING-15.
 RADERING-16.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -985,6 +1016,7 @@ RADERING-16.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1013,6 +1045,7 @@ RADERING-16.
 RADERING-17.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1026,6 +1059,7 @@ RADERING-17.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1054,6 +1088,7 @@ RADERING-17.
 RADERING-18.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1067,6 +1102,7 @@ RADERING-18.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1095,6 +1131,7 @@ RADERING-18.
 RADERING-19.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1108,6 +1145,7 @@ RADERING-19.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1136,6 +1174,7 @@ RADERING-19.
 RADERING-20.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1149,6 +1188,7 @@ RADERING-20.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1181,6 +1221,7 @@ slutförandets identitet vid faktisk zoom; nå bekräftelse, avbrytande och
 återgång med det fysiska tangentbordet utan avklippt eller dolt fokus.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1197,6 +1238,7 @@ slutförandets identitet vid faktisk zoom; nå bekräftelse, avbrytande och
   }]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

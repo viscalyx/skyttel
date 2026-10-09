@@ -54,6 +54,7 @@ stängning.
 YTA-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -66,6 +67,7 @@ YTA-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -100,6 +102,7 @@ YTA-01.
 YTA-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -112,6 +115,7 @@ YTA-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -147,6 +151,7 @@ YTA-02.
 YTA-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -159,6 +164,7 @@ YTA-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -212,6 +218,7 @@ det egna fallet YTA-13; fysisk genväg bedöms i YTA-15.
 YTA-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -224,6 +231,7 @@ YTA-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -308,6 +316,7 @@ samtal pågår. Använd tangentbord; fysisk pekning bedöms i YTA-15.
 YTA-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -320,6 +329,7 @@ YTA-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -370,6 +380,7 @@ Fysisk kollision bedöms i YTA-15.
 YTA-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -383,6 +394,7 @@ YTA-13.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -416,6 +428,7 @@ HTTPS-adress och konfigurerad inloggning.
 återgångsfokus med riktiga NVDA/VoiceOver-kommandon.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -429,6 +442,7 @@ HTTPS-adress och konfigurerad inloggning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -460,6 +474,7 @@ HTTPS-adress och konfigurerad inloggning.
 på iPhone/iPad och läsbarhet vid 200/400 procents zoom.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -473,6 +488,7 @@ på iPhone/iPad och läsbarhet vid 200/400 procents zoom.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -508,6 +524,7 @@ med håll före applikationen och avbruten leverans. Inloggningen fungerar.
 YTA-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -520,6 +537,7 @@ YTA-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -550,6 +568,7 @@ Förlorad tillgång och avslutad mikrofon verifieras i
 YTA-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -562,6 +581,7 @@ YTA-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -597,6 +617,7 @@ verktygen är nåbara även på en tom karta.
 YTA-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -609,6 +630,7 @@ YTA-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -666,6 +688,7 @@ avsluta installationen enligt den allmänna förberedelsen.
 YTA-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -678,6 +701,7 @@ YTA-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -717,6 +741,7 @@ tema.
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts), YTA-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -730,6 +755,7 @@ tema.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -758,6 +784,7 @@ hopplänkar, inaktiva höjdhjälpen och det faktiska sparbeskedet med logisk
 fokusordning.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -790,6 +817,7 @@ fokusordning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -819,6 +847,7 @@ fysisk pekinmatning på surfplatta lämnar formulär, hjälp, sparbesked och
 fortsatt arbete nåbara.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -845,6 +874,7 @@ fortsatt arbete nåbara.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

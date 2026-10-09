@@ -46,6 +46,7 @@ Objektets namn öppnar den utökade läsraden och startar ingen redigering.
 ### KARTA-01: sök med svenska bokstäver och stäng text som inte skickas
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -58,6 +59,7 @@ Objektets namn öppnar den utökade läsraden och startar ingen redigering.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att sökning fungerar utan hänsyn till stora och små
@@ -102,6 +104,7 @@ the saved map”.
 ### KARTA-02: identifiera ett ospecificerat objekt utan att byta dess samband
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -114,6 +117,7 @@ the saved map”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera skillnaden mellan en obesvarad identitetsfråga och
@@ -158,6 +162,7 @@ identified without changing its links”.
 ### KARTA-08: kasta oskickad text och rätta en obesvarad identitet
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -170,6 +175,7 @@ identified without changing its links”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kasta enbart oskickat formulärarbete innan ett tidigare
@@ -210,6 +216,7 @@ Behåll databasen vid omstart.
 ### KARTA-05: skilj på obesvarat, osäkert, okänt och uttryckligen inget
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -222,6 +229,7 @@ Behåll databasen vid omstart.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att sambandsuppgifter bevarar sin betydelse och att
@@ -271,6 +279,7 @@ unanswered identity question”.
 ### KARTA-03: välj mellan lika namn och rätta ett enskilt samband
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -283,6 +292,7 @@ unanswered identity question”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att lika namn inte slår samman objekt och att ett
@@ -333,6 +343,7 @@ deleting a relationship”.
 ### KARTA-04: granska och kasta borttagning av ett objekt med flera samband
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -345,6 +356,7 @@ deleting a relationship”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att objektborttagning omfattar inkommande och
@@ -393,6 +405,7 @@ and can be discarded”.
 ### KARTA-09: skapa typer, kompletta objekt och samband i samma utkast
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -405,6 +418,7 @@ and can be discarded”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Använd nya typer i kompletta objektformulär och spara
@@ -464,6 +478,7 @@ och ljust tema. Behåll databasen vid omstart.
 ### KARTA-06: återuppta, rätta och kasta ett beständigt objektförslag
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -476,6 +491,7 @@ och ljust tema. Behåll databasen vid omstart.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att ett objektförslag bevaras före sparandet och
@@ -521,6 +537,7 @@ shared map after review”.
 ### KARTA-07: spara separata familjeobjekt och ett riktat samband tillsammans
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -541,6 +558,7 @@ shared map after review”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att tjänst, konto, abonnemang och övriga objekt
@@ -580,6 +598,7 @@ testinstallationen med samma databas.
 ### KARTA-25: samtidig dubblett öppnar det befintliga sambandet
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -592,6 +611,7 @@ testinstallationen med samma databas.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skydda mot ett annat medlems identiska sparande.
@@ -645,6 +665,7 @@ separat från automatiska fönster- och fokusprov.
 ### KARTA-10: skapa från tabellen och återgå till öppningsknappen
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -657,6 +678,7 @@ separat från automatiska fönster- och fokusprov.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera skapa från tabellen och återgå till öppningsknappen.
@@ -685,6 +707,7 @@ without saving”.
 ### KARTA-11: rätta fel i ett stängt avsnitt
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -697,6 +720,7 @@ without saving”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera rätta fel i ett stängt avsnitt.
@@ -726,6 +750,7 @@ linked correction”.
 ### KARTA-12: behåll alla uppgifter i skapa och redigera
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -738,6 +763,7 @@ linked correction”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera behåll alla uppgifter i skapa och redigera.
@@ -776,6 +802,7 @@ when staging and editing”.
 ### KARTA-13: bekräfta egna fält som försvinner vid typbyte
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -788,6 +815,7 @@ when staging and editing”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera bekräfta egna fält som försvinner vid typbyte.
@@ -825,6 +853,7 @@ values are lost”.
 ### KARTA-14: lägg bild och uppgifter i utkastet tillsammans
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -837,6 +866,7 @@ values are lost”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera lägg bild och uppgifter i utkastet tillsammans.
@@ -875,6 +905,7 @@ preserves the unsent form”.
 ### KARTA-15: skydda enbart oskickade formulärändringar
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -887,6 +918,7 @@ preserves the unsent form”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera skydda enbart oskickade formulärändringar.
@@ -917,6 +949,7 @@ restore the editing focus”.
 ### KARTA-16: skydda oskickat arbete vid bakåtnavigation
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -929,6 +962,7 @@ restore the editing focus”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera skydda oskickat arbete vid bakåtnavigation.
@@ -958,6 +992,7 @@ navigation”.
 ### KARTA-17: spärra väntande tillägg och behåll ett avvisat formulär
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -970,6 +1005,7 @@ navigation”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera spärra väntande tillägg och behåll ett avvisat formulär.
@@ -1028,6 +1064,7 @@ keeps all values”.
 ### KARTA-18: kontrollera tappat svar före övergång eller nytt försök
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1040,6 +1077,7 @@ keeps all values”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevara hela bildförslaget och kontrollera tillämpat tillägg
@@ -1078,6 +1116,7 @@ inte felet. Återställ ingången och skriv `quit` när utfallet är kontrollera
 ### KARTA-19: öppna samband utan ett onödigt förslag
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1090,6 +1129,7 @@ inte felet. Återställ ingången och skriv `quit` när utfallet är kontrollera
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera öppna samband utan ett onödigt förslag.
@@ -1122,6 +1162,7 @@ every reading entry uses the same object dialog”.
 ### KARTA-20: bevara typens ordning och dolda värden
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1134,6 +1175,7 @@ every reading entry uses the same object dialog”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Bevara konfigurerad ordning och dolda värden genom rättelse,
@@ -1172,6 +1214,7 @@ sparande, omstart och fullständig läsning.
 ### KARTA-21: kontrollera uteblivet tillägg före säkert återförsök
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1182,6 +1225,7 @@ sparande, omstart och fullständig läsning.
   "outcomes": ["Kontrollerat uteblivet tillägg tillåter nytt försök med namnet kvar."]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Tillåta återförsök först när det okända utfallet är kontrollerat.
@@ -1215,6 +1259,7 @@ innan den når servern. Återställ ingången och avsluta med `quit` efter prove
 ### KARTA-22: smalt objektformulär bevarar ordning, dolda värden och återfokus
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1225,6 +1270,7 @@ innan den når servern. Återställ ingången och avsluta med `quit` efter prove
   "outcomes": ["Hela rättelsen läggs i utkastet och fokus återgår till redigeringen."]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skydda smal redigering mot överflöde och förlust av dolda värden.
@@ -1308,6 +1354,7 @@ accepteras här. Inget gammalt ID pensioneras.
 ### KARTA-26: KARTA-08 vid 1280 × 900, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1322,6 +1369,7 @@ accepteras här. Inget gammalt ID pensioneras.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-08 vid 1280 × 900, mörkt tema.
@@ -1352,6 +1400,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
 ### KARTA-27: KARTA-08 vid 390 × 900, ljust tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1366,6 +1415,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-08 vid 390 × 900, ljust tema.
@@ -1396,6 +1446,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
 ### KARTA-28: KARTA-08 vid 390 × 900, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1410,6 +1461,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-08 vid 390 × 900, mörkt tema.
@@ -1440,6 +1492,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
 ### KARTA-29: KARTA-08 vid 320 × 900, ljust tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1454,6 +1507,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-08 vid 320 × 900, ljust tema.
@@ -1484,6 +1538,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
 ### KARTA-30: KARTA-08 vid 320 × 900, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1498,6 +1553,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-08 vid 320 × 900, mörkt tema.
@@ -1528,6 +1584,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
 ### KARTA-31: KARTA-09 vid 1280 × 900, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1541,6 +1598,7 @@ formulärförlust, identitetsrättelse och synligt fokus vid denna bredd.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-09 vid 1280 × 900, mörkt tema.
@@ -1569,6 +1627,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
 ### KARTA-32: KARTA-09 vid 390 × 900, ljust tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1582,6 +1641,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-09 vid 390 × 900, ljust tema.
@@ -1610,6 +1670,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
 ### KARTA-33: KARTA-09 vid 390 × 900, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1623,6 +1684,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-09 vid 390 × 900, mörkt tema.
@@ -1651,6 +1713,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
 ### KARTA-34: KARTA-09 vid 320 × 900, ljust tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1664,6 +1727,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-09 vid 320 × 900, ljust tema.
@@ -1692,6 +1756,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
 ### KARTA-35: KARTA-09 vid 320 × 900, mörkt tema
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1705,6 +1770,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** KARTA-09 vid 320 × 900, mörkt tema.
@@ -1733,6 +1799,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
 ### KARTA-23: inaktuellt objektformulär behåller oskickad text
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1746,6 +1813,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** inaktuellt objektformulär behåller oskickad text.
@@ -1777,6 +1845,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
 ### KARTA-24: inaktuellt sparunderlag och tappat svar återhämtas
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1790,6 +1859,7 @@ och hela typ-, objekt- och sambandsarbetet även efter omstart.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** inaktuellt sparunderlag och tappat svar återhämtas.

@@ -44,6 +44,7 @@ den isolerade installation som anges i testfallet.
 ### AI-01: OAuth krävs innan assistenten kan läsa kartan
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -57,6 +58,7 @@ den isolerade installation som anges i testfallet.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att en okänd klient saknar kartåtkomst.
@@ -92,6 +94,7 @@ protokollunderlag och ska inte leverera någon kartinformation.
 ### AI-02: uttryckligt AI-val ger läsning och återkallelse stoppar gamla token
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -105,6 +108,7 @@ protokollunderlag och ska inte leverera någon kartinformation.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera läsåtkomst och omedelbar återkallelse.
@@ -135,6 +139,7 @@ token”.
 ### AI-03: medgivandet kräver val av hushåll och AI-behandling
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -148,6 +153,7 @@ token”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera ett begripligt och aktivt behandlingsval.
@@ -179,6 +185,7 @@ testfallet “AI-03: medgivandet kräver val av hushåll och AI-behandling”.
 ### AI-04: inloggning följs av medgivande och ett nej bevarar kartarbete
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -192,6 +199,7 @@ testfallet “AI-03: medgivandet kräver val av hushåll och AI-behandling”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera inloggning och nekad anslutning.
@@ -223,6 +231,7 @@ kartarbete”.
 ### AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klienten
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -236,6 +245,7 @@ kartarbete”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera privata utkast, hushåll och aktuellt medlemskap.
@@ -275,6 +285,7 @@ klienten”.
 ### AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifter
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -288,6 +299,7 @@ klienten”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att en objektfråga får nödvändigt sammanhang utan
@@ -345,6 +357,7 @@ uppgifter”.
 ### AI-07: manuellt Codex CLI-prov med Google i devcontainern
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -372,6 +385,7 @@ uppgifter”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera verklig Google-inloggning, OAuth-medgivande, läsning
@@ -498,6 +512,7 @@ de kontrollerade fallen; #97 kräver ingen manuell upprepning.
 ### AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärendet
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -520,6 +535,7 @@ de kontrollerade fallen; #97 kräver ingen manuell upprepning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Fortsätta webbläsarens förslag och spara ett samlat familjeärende.
@@ -586,6 +602,7 @@ av besked och andra klienters inloggning bedöms separat.
 ### AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparande
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -599,6 +616,7 @@ av besked och andra klienters inloggning bedöms separat.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Stoppa ett gammalt sparunderlag från en annan klient.
@@ -642,6 +660,7 @@ ingen särskild funktion i en språkmodell behövs för att köra fallet.
 ### AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt sparande
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -655,6 +674,7 @@ ingen särskild funktion i en språkmodell behövs för att köra fallet.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Återfinna ett förlorat sparresultat efter serveromstart och prova
@@ -717,6 +737,7 @@ inte hur en verklig språkmodell reagerar på ett godtyckligt nätfel.
 ### AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kastade
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -730,6 +751,7 @@ inte hur en verklig språkmodell reagerar på ett godtyckligt nätfel.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla identitetsfrågor och respektera kastade förslag.
@@ -794,6 +816,7 @@ förblir kastade”.
 ### AI-12: nekade och hypotetiska sparbesked sparar inget
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -815,6 +838,7 @@ förblir kastade”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera den verkliga textklientens tolkning av sparregeln.
@@ -870,6 +894,7 @@ verktygsresultat; den påstår inte att ett mänskligt prov är genomfört.
 ### AI-13: Öppna assistentanslutningar och återgå till pågående arbete
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -883,6 +908,7 @@ verktygsresultat; den påstår inte att ett mänskligt prov är genomfört.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Ge tangentbordsfokus till profilens destination, skydda oskickad
@@ -936,6 +962,7 @@ unsent and private work”.
 ### AI-14: faktisk klient tolkar och genomför familjeärendet
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -963,6 +990,7 @@ unsent and private work”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja en faktisk klients inloggning och språktolkning från

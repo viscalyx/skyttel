@@ -48,6 +48,7 @@ testfallet “SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med
 kartans symboler”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -60,6 +61,7 @@ kartans symboler”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -111,6 +113,7 @@ testfallet “SAMTALSUTKAST-02: valet följer användaren mellan hushåll och
 enheter”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -123,6 +126,7 @@ enheter”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -169,6 +173,7 @@ Använd ett datorfönster 390 × 844 CSS-pixlar.
 testfallet “SAMTALSUTKAST-03: första förslaget öppnar utkastet på mobil enhet”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -181,6 +186,7 @@ testfallet “SAMTALSUTKAST-03: första förslaget öppnar utkastet på mobil en
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -239,6 +245,7 @@ installationen med Ctrl+C och kontrollerar att provkatalogen försvinner.
 testfallet “SAMTALSUTKAST-05: utkastvalet fungerar utan tillgängligt samtal”.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -251,6 +258,7 @@ testfallet “SAMTALSUTKAST-05: utkastvalet fungerar utan tillgängligt samtal�
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -281,6 +289,7 @@ med 820 × 1180 CSS-pixlar och emulerad pekare. Fysisk enhet har separat prov.
 SAMTALSUTKAST-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -293,6 +302,7 @@ SAMTALSUTKAST-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

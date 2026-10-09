@@ -63,6 +63,7 @@ ljud.
 TAL-01.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -83,6 +84,7 @@ TAL-01.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -151,6 +153,7 @@ Det verkliga talflödet har en egen mänsklig identitet, TAL-23.
 TAL-02.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -163,6 +166,7 @@ TAL-02.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -209,6 +213,7 @@ navigationen vid 640 × 500 och 320 × 250 CSS-pixlar.
 TAL-03.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -221,6 +226,7 @@ TAL-03.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -278,6 +284,7 @@ för hört tal.
 TAL-04.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -290,6 +297,7 @@ TAL-04.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -333,6 +341,7 @@ mediespår; verkligt tal redovisas separat i TAL-23.
 TAL-05.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -345,6 +354,7 @@ TAL-05.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -388,6 +398,7 @@ kvar. Anteckna utkastets innehåll och version.
 TAL-06.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -400,6 +411,7 @@ TAL-06.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -441,6 +453,7 @@ högtalare eller fysisk mikrofon.
 TAL-07.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -453,6 +466,7 @@ TAL-07.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -498,6 +512,7 @@ som ett hinder eller låta gamla frågor följa ett nytt uppdrag.
 TAL-08.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -510,6 +525,7 @@ TAL-08.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -551,6 +567,7 @@ start.
 TAL-09.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -563,6 +580,7 @@ TAL-09.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -614,6 +632,7 @@ att bara röstrutan visas.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-10.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -626,6 +645,7 @@ att bara röstrutan visas.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -678,6 +698,7 @@ röstrutan visar **Lyssnar**.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-11.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -690,6 +711,7 @@ röstrutan visar **Lyssnar**.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -737,6 +759,7 @@ utan att redan föreslagna ändringar försvinner.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-12.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -749,6 +772,7 @@ utan att redan föreslagna ändringar försvinner.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -795,6 +819,7 @@ samtal → Godkänn och starta**, utan mikrofonstart.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-13.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -807,6 +832,7 @@ samtal → Godkänn och starta**, utan mikrofonstart.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -846,6 +872,7 @@ formerna vid minskad rörelse.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-14.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -858,6 +885,7 @@ formerna vid minskad rörelse.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -907,6 +935,7 @@ hört besked.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-16.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -919,6 +948,7 @@ hört besked.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -977,6 +1007,7 @@ Samtalet är startat med text och mikrofonen är av.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-18.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -989,6 +1020,7 @@ Samtalet är startat med text och mikrofonen är av.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Separat förberedelse:** Följ
@@ -1068,6 +1100,7 @@ Anteckna faktiskt hört resultat separat från automatiska körningar.
 tillsammans med enhetens egna kontroller.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1081,6 +1114,7 @@ tillsammans med enhetens egna kontroller.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1385,6 +1419,7 @@ Skyttel arbetar och före Avbryt. Utför inte den påslagna varianten först.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-19.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1398,6 +1433,7 @@ Skyttel arbetar och före Avbryt. Utför inte den påslagna varianten först.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1426,6 +1462,7 @@ Skyttel arbetar och före Avbryt. Utför inte den påslagna varianten först.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-20.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1439,6 +1476,7 @@ Skyttel arbetar och före Avbryt. Utför inte den påslagna varianten först.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1471,6 +1509,7 @@ Skyttel arbetar och före Avbryt. Utför inte den påslagna varianten först.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-21.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1484,6 +1523,7 @@ Skyttel arbetar och före Avbryt. Utför inte den påslagna varianten först.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1514,6 +1554,7 @@ Skyttel arbetar och före Avbryt. Utför inte den påslagna varianten först.
 [voice-box.spec.ts](../../tests/integration/voice-box.spec.ts), TAL-22.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -1527,6 +1568,7 @@ Skyttel arbetar och före Avbryt. Utför inte den påslagna varianten först.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1560,6 +1602,7 @@ HTTPS-adress och konfigurerad inloggning.
 familjeärende, rättelser, fullständigt sparande och fortsatt formulärarbete.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1573,6 +1616,7 @@ familjeärende, rättelser, fullständigt sparande och fortsatt formulärarbete.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1648,6 +1692,7 @@ HTTPS-adress och konfigurerad inloggning.
 bedöm om skärmläsarens röst tas upp som nytt tal.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1669,6 +1714,7 @@ bedöm om skärmläsarens röst tas upp som nytt tal.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
@@ -1726,6 +1772,7 @@ HTTPS-adress och konfigurerad inloggning.
 riktiga mikrofonprompt, återkallad behörighet och användningsindikator.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -1739,6 +1786,7 @@ riktiga mikrofonprompt, återkallad behörighet och användningsindikator.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**

@@ -23,6 +23,7 @@ Använd inga verkliga personuppgifter.
 ### HISTORIK-01: läs sparanden senaste först och återgå till tabellens arbete
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -35,6 +36,7 @@ Använd inga verkliga personuppgifter.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa gemensamma sparanden utan att ändra det egna utkastet,
@@ -69,6 +71,7 @@ first”.
 ### HISTORIK-06: läs fullständiga historiska värden med tangentbord
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -81,6 +84,7 @@ first”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa sparandets fullständiga värden på dator och telefon.
@@ -119,6 +123,7 @@ formulär. Återställ genom ett nytt provhushåll mellan körningar.
 ### HISTORIK-07: återförsök bevarar ett senare fokusval
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -131,6 +136,7 @@ formulär. Återställ genom ett nytt provhushåll mellan körningar.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Återhämta en misslyckad historikhämtning utan påhittade resultat
@@ -182,6 +188,7 @@ släppt**. Ladda om efter fallet eller avbrott enligt den befintliga
 ### HISTORIK-10: öppna ett utpekat sparande efter ändrad typdefinition
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -194,6 +201,7 @@ släppt**. Ladda om efter fallet eller avbrott enligt den befintliga
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Läsa rätt historisk benämning genom en direktlänk.
@@ -225,6 +233,7 @@ change”.
 ### HISTORIK-11: privata väntande och avvisade sparförsök saknas i historiken
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -237,6 +246,7 @@ change”.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja privata sparförsök från genomförda gemensamma sparanden.
@@ -291,6 +301,7 @@ bort provdatabasen när installationen är avstängd.
 ### HISTORIK-12: följ sparlänkar och behåll pågående arbete
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -303,6 +314,7 @@ bort provdatabasen när installationen är avstängd.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Öppna utpekade sparanden utan att tappa tabellsökningen,
@@ -358,6 +370,7 @@ fysisk touch eller skärmläsaruppläsning.
 ### HISTORIK-14: Läs fullständiga historiska värden vid 390px
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -370,6 +383,7 @@ fysisk touch eller skärmläsaruppläsning.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla fullständig tangentbordsläsning vid smal bredd.
@@ -402,6 +416,7 @@ i det nya hushållet. Ladda om sidan innan stegen.
 ### HISTORIK-15: Läs fullständiga historiska värden vid 320px
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -414,6 +429,7 @@ i det nya hushållet. Ladda om sidan innan stegen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla fullständig tangentbordsläsning vid smal bredd.
@@ -446,6 +462,7 @@ i det nya hushållet. Ladda om sidan innan stegen.
 ### HISTORIK-16: Bevara arbete genom sparlänkar vid 390px
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -458,6 +475,7 @@ i det nya hushållet. Ladda om sidan innan stegen.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skydda återgångsknappen och pågående arbete i en smal vy.
@@ -489,6 +507,7 @@ Samtalsleverantör saknas. Använd 390 × 844 CSS-bildpunkter.
 ### HISTORIK-17: Bevara arbete genom sparlänkar vid 320px
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "counterpart": {
@@ -501,6 +520,7 @@ Samtalsleverantör saknas. Använd 390 × 844 CSS-bildpunkter.
   ]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skydda återgångsknappen och pågående arbete i en smal vy.
@@ -657,6 +677,7 @@ och fysiska tangentbord. Kontrollera att text och fokus går att läsa vid
 denna observation.
 
 <!-- markdownlint-disable MD013 -->
+<!--
 ```manual-mapping
 {
   "humanObservation": {
@@ -671,6 +692,7 @@ denna observation.
   }]
 }
 ```
+-->
 <!-- markdownlint-enable MD013 -->
 
 **Steg:**
