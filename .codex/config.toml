@@ -77,6 +77,7 @@ approval_mode = "approve"
 terminal_title = ["activity", "app-name"]
 status_line = ["model-with-reasoning", "context-used", "context-window-size", "fast-mode", "permissions", "thread-title"]
 status_line_use_colors = true
+animations = false
 
 [plugins.openai-templates]
 enabled = false
