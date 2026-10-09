@@ -796,7 +796,11 @@
     "begäransfilen",
     "provfilerna",
     "filfelet",
-    "återkallandekedjan"
+    "återkallandekedjan",
+    "vysvar",
+    "styrplatte",
+    "tvåfingersgest",
+    "integrationsvyer"
   ],
   "overrides": [
     {

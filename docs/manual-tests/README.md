@@ -501,8 +501,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   bevarat urval och filter, etikettikonens växling och sparade val,
   återställning från verktygsfältet och bevarade personliga placeringar,
   personlig rotationspunkt, direkta grannar,
-  vyhistorik steg för steg, nollställning, sammanhängande gester, mus,
-  tangentbord och pekskärm i smala och korta vyer;
+  vyhistorik steg för steg, nollställning och sammanhängande gester med
+  verklig Chromium-inmatning och kontrollerade svar i KAMERA-08/09;
+  mus, tangentbord och pekskärm i smala och korta integrationsvyer;
   nå återkoppling och alla sex personliga flyttar utan täckta kontroller,
   återfå fokus efter flytt och bevara senare fokus eller stängd navigering
   när ett verkligt svar hålls och släpps.
