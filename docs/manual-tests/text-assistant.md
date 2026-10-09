@@ -255,9 +255,9 @@ dubbelt sparande”.
 2. Låt operatören starta om samma server och databas. Ladda om sidan och
    öppna textvyn. Gör inget nytt sparförsök.
 3. Öppna **Rapporter → Ändringshistorik**, läs det enda sparandet med Lo.
-   Öppna **Identifiera sparandet och användaren**. Läs dess verkliga ID,
-   användare och tidpunkt. Det är samma identifierare som operatörens
-   faktiska genomförda försök, inte ett påhittat modell-ID.
+   Öppna **Identifiera sparandet och användaren**. Läs det visade sparandet,
+   användaren och tidpunkten. Låt operatören utföra den separata tekniska
+   jämförelsen efter denna läsning, före nästa steg.
 4. Öppna **Visa ändringarna** och läs **Person**, **Lo Exempel** och
    **Påhittad uppgift** efter sparandet. Återgå till arbetet och kontrollera
    det tomma utkastet.

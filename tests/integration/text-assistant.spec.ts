@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
 import type { TextAssistantReview, TextAssistantView } from '../../src/shared/text-assistant.js';
 import {
@@ -397,6 +397,21 @@ test('TEXT-03: nekade sparbesked och modellfel lämnar formulärarbetet tillgän
 test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt sparande', async ({
   page,
 }) => {
+  const preparation = await readFile(
+    new URL('../../docs/manual-tests/text-conversation-preparation.md', import.meta.url),
+    'utf8',
+  );
+  const consoleScripts = [...preparation.matchAll(/```js\n([\s\S]*?)\n```/g)].map(
+    (match) => match[1],
+  );
+  const captureScript = consoleScripts.find((script) =>
+    script.startsWith('const completedDelivery ='),
+  );
+  const comparisonScript = consoleScripts.find((script) =>
+    script.startsWith('const expectedOperationId ='),
+  );
+  expect(captureScript).toBeDefined();
+  expect(comparisonScript).toBeDefined();
   const model = textModel((body) => {
     const current = JSON.parse(
       String(body.input.findLast((item) => item.role === 'user')?.content),
@@ -412,6 +427,7 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
   const app = await createInstallation(undefined, { modelFetch: model.provider });
   try {
     const { path } = await arrange(page, app);
+    const beforeSave = await (await page.request.get(path)).json();
     await consent(page);
     await page.evaluate(manualTextDeliverySource);
     await page.evaluate(() => {
@@ -452,6 +468,11 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
           window as unknown as { skyttelTextDelivery: { status(): { operationId: string } } }
         ).skyttelTextDelivery.status().operationId,
     );
+    const capturedId = page.waitForEvent('console', {
+      predicate: (message) => message.type() === 'log' && message.text() === actualOperationId,
+    });
+    await page.evaluate(captureScript as string);
+    expect((await capturedId).text()).toBe(actualOperationId);
     await app.restart();
     await page.unroute('**/text-assistant/*/messages');
     await page.reload();
@@ -463,6 +484,17 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
     await expect(
       history.getByText(`Sparande: ${actualOperationId}`, { exact: true }),
     ).toBeVisible();
+    const verifiedComparison = page.waitForEvent('console', {
+      predicate: (message) =>
+        message.type() === 'log' &&
+        message.text() === 'Historiken visar det ursprungliga sparandets ID.',
+    });
+    await page.evaluate(
+      (comparisonScript as string).replace('KOPIERAT-FAKTISKT-ID', actualOperationId),
+    );
+    expect((await verifiedComparison).text()).toBe(
+      'Historiken visar det ursprungliga sparandets ID.',
+    );
     await history.getByText('Visa ändringarna', { exact: true }).click();
     await expect(history.locator('.history-changes')).toContainText('Påhittad uppgift');
     await expect(history.locator('.history-changes')).toContainText('Person');
@@ -471,6 +503,11 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
     expect(operations[0].status).toBe('succeeded');
     expect(operations[0].operationId).toBe(actualOperationId);
     expect((await (await page.request.get(path)).json()).objects).toHaveLength(1);
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    const recoveredDraft = await showDraft(page);
+    await expect(recoveredDraft.getByText('Utkastet är tomt.', { exact: true })).toBeVisible();
+    const afterRecovery = await (await page.request.get(path)).json();
+    expect(afterRecovery.draft).toEqual({ version: beforeSave.draft.version + 1, changes: [] });
   } finally {
     await app.close();
   }

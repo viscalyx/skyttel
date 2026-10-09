@@ -112,9 +112,44 @@ window.skyttelTextDelivery.status();
 
 Kräv `phase:"dropped-after-commit"`. `not-accepted`, `rejected` eller
 `not-completed` är andra utfall och får inte rapporteras som genomfört
-sparande med tappat svar. Läs användarens oklara utfall före omstart.
+sparande med tappat svar. **Före `restart`**, efter användarens läsning av
+det oklara utfallet i TEXT-04 steg 1, kör operatören följande i Console:
+
+<!-- markdownlint-disable MD013 -->
+```js
+const completedDelivery = window.skyttelTextDelivery.status();
+if (completedDelivery.phase !== 'dropped-after-commit') {
+  throw Error('Inget genomfört sparande med tappat svar');
+}
+console.log(completedDelivery.operationId);
+```
+<!-- markdownlint-enable MD013 -->
+
+Behåll det utskrivna faktiska operation-ID:t i en separat anteckning.
 Skriv `restart`, behåll samma databas och adress, och låt användaren
 ladda om. Skriptet börjar då utan armning. Gör inget nytt sparförsök.
+
+**Efter TEXT-04 steg 3 och före steg 4**, medan användaren har öppnat
+**Identifiera sparandet och användaren**, kör operatören följande i
+Console. Ersätt `KOPIERAT-FAKTISKT-ID` med exakt det behållna ID:t från
+före omstarten. Detta läser den öppna historikens faktiska innehåll utan
+att ändra sidan eller hushållet:
+
+<!-- markdownlint-disable MD013 -->
+```js
+const expectedOperationId = 'KOPIERAT-FAKTISKT-ID';
+const displayedIdentifiers = [...document.querySelectorAll('.map-history article details[open] p')]
+  .map((paragraph) => paragraph.textContent);
+if (displayedIdentifiers.filter((text) => text === `Sparande: ${expectedOperationId}`).length !== 1) {
+  throw Error('Historiken visar inte det ursprungliga sparandets ID');
+}
+console.log('Historiken visar det ursprungliga sparandets ID.');
+```
+<!-- markdownlint-enable MD013 -->
+
+Anteckna jämförelsens faktiska resultat som tekniskt underlag.
+TEXT-04:s integrationstest behåller dessutom likheten mellan detta ID,
+det enda serverförsöket och historikens visade ID efter omstart.
 
 Efter sista historikläsningen körs `window.skyttelTextDelivery.clear()`.
 Avsluta med `quit`, invänta `closed`, stäng provprofilen och ta bort
@@ -305,8 +340,10 @@ npm run test:integration -- tests/integration/conversation-audit.spec.ts --grep 
 ```
 <!-- markdownlint-enable MD013 -->
 
-Kör efter att scenarioförberedelsen är färdig och före rapportering av
-resultatet. Proven har egna engångsinstallationer; deras jämförelser är
-automatiserat underlag, inte manuella kontroller av samma databas. Ingen
+Kör efter scenariots sista UI-läsning och dess `quit`/`closed`, när den
+interaktiva installationen lämnat tillbaka det gemensamma låset, före
+rapportering av resultatet. Proven har egna engångsinstallationer; deras
+jämförelser är automatiserat underlag, inte manuella kontroller av samma
+databas. Ingen
 real-model- eller real-voice-svit ingår. Anteckna källa, Chromium-version
 och faktiskt resultat; påstå inte mänsklig/device- eller leverantörskörning.

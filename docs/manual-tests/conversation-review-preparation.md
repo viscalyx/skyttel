@@ -1,17 +1,18 @@
 # Förbered hela utkastet för läsning
 
 SAMTALSUTKAST-01 provar **läsning** av serverstödda förslag, inte att skapa
-typen i ett visst formulär. Använd en ny tillfällig installation enligt
-[textguiden](text-assistant.md#controlled-text-fixture). Logga in som Alex,
-skapa Utkastprov och lämna kartan tom. Alternativt får utkastet bara ha
-**Lo Exempel**, **Person**, med tom beskrivning och utan tidigare sparande.
-Inga andra objekt-, sambands- eller typförslag får finnas.
+typen i ett visst formulär. Förberedelsen använder en ny tillfällig
+installation med tom karta. Alternativt får utkastet bara ha **Lo Exempel**,
+**Person**, med tom beskrivning och utan tidigare sparande. Inga andra
+objekt-, sambands- eller typförslag får finnas.
 Fältet Sista fyra kan vara dolt i formuläret när det saknar sektion;
 förberedelsen ger därför dess värden genom det publika HTTP-gränssnittet.
 Försök inte skriva i ett fält som gränssnittet inte visar.
 
-Från repositoryts rot skriver operatören följande. Det skriver den
-körbara funktionen för exakt samma fiktiva data som browserprovet använder:
+**Före starten av den interaktiva installationen**, när ingen annan
+bygg- eller testprocess äger det gemensamma låset, kör operatören följande
+från repositoryts rot. Det skriver den körbara funktionen för exakt samma
+fiktiva data som browserprovet använder:
 
 <!-- markdownlint-disable MD013 -->
 ```sh
@@ -20,9 +21,18 @@ npm run test:env -- node --import tsx --input-type=module -e \
 ```
 <!-- markdownlint-enable MD013 -->
 
-Kopiera den utskrivna funktionen till provprofilens Console och kör den
-som en funktionsdeklaration. Kör därefter följande i samma Console, efter
-att `ID` ersatts med hushållets ID från sidans adress:
+Behåll hela den utskrivna funktionen i en separat textfil eller i
+urklippet. Vänta tills kommandot avslutas och lämnar tillbaka låset.
+Starta **därefter** den nya tillfälliga installationen enligt
+[textguiden](text-assistant.md#controlled-text-fixture). Logga in som Alex,
+skapa Utkastprov och lämna kartan tom eller med enbart Lo-förslaget ovan.
+Starta inget samtal ännu. Kör inga andra npm-bygg- eller testkommandon
+medan den interaktiva installationen äger låset.
+
+Efter inloggningen och hushållets skapande: öppna provprofilens Console,
+klistra in hela den behållna funktionen och kör den som en
+funktionsdeklaration. Kör därefter följande i samma Console, efter att
+`ID` ersatts med hushållets ID från sidans adress:
 
 <!-- markdownlint-disable MD013 -->
 ```js
@@ -56,7 +66,9 @@ Ladda om sidan efter förberedelsen; skapa inte ett nytt utkast under provet.
 Före granskningen och efter **Nytt samtal** läser användaren det enda
 baslinjesparandet i **Rapporter → Ändringshistorik → Visa ändringarna**.
 Kortets sparade Sista fyra ska fortfarande vara 1111. Hela private/saved
-HTTP-jämförelsen och symbolordningen är separat automatiserat underlag:
+HTTP-jämförelsen och symbolordningen är separat automatiserat underlag.
+Kör följande först **efter** `quit` och `closed`, när den interaktiva
+installationen lämnat tillbaka låset:
 
 <!-- markdownlint-disable MD013 -->
 ```sh

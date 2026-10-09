@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openSettings, signIn } from '../support/client.js';
+import { closeSupportDialog, createHousehold, openSettings, signIn } from '../support/client.js';
 import {
   openConversationText,
   openSavedHistory,
@@ -8,13 +8,25 @@ import {
 } from '../support/conversation-page.js';
 import { prepareConversationReview } from '../support/conversation-review-preparation.js';
 import { createInstallation, robin } from '../support/installation.js';
-import { modelMessage, modelTool, textModel } from '../support/text-model.js';
+import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
 
 const view = (page: Page) => page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
 const draft = (page: Page) => view(page).getByRole('region', { name: 'Utkastet', exact: true });
 const toggle = (page: Page) => view(page).getByRole('button', { name: /^(Visa|Dölj) utkastet/ });
 const preference = (page: Page) =>
   page.getByRole('checkbox', { name: 'Visa utkastet när ett samtal börjar', exact: true });
+async function readLoProposal(page: Page) {
+  await draft(page)
+    .getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true })
+    .click();
+  const proposal = page.getByRole('dialog', { name: 'Lo Exempel', exact: true });
+  await expect(proposal).toBeVisible();
+  await expect(proposal).toContainText('Person');
+  await expect(
+    proposal.getByText('Beskrivning', { exact: true }).locator('..').getByRole('definition'),
+  ).toHaveText('Ej uppgivet');
+  await closeSupportDialog(page, 'Lo Exempel');
+}
 async function settings(page: Page) {
   await openSettings(page);
   await page
@@ -33,7 +45,7 @@ async function installation(page: Page, proposals = true) {
       const current = JSON.parse(
         String(body.input.findLast((item) => item.role === 'user')?.content),
       );
-      if (!current?.draft?.changes?.length)
+      if (!current?.draft?.changes?.length && !lastToolResult(body))
         return [
           modelTool('propose_object', {
             version: current.draft.version,
@@ -47,7 +59,7 @@ async function installation(page: Page, proposals = true) {
             },
           }),
         ];
-      return [modelMessage('Ett provsvar.')];
+      return [modelMessage(proposals ? 'Ett provsvar.' : 'Lo ligger i utkastet.')];
     }).provider,
   });
   await signIn(page.request, app.origin);
@@ -164,7 +176,7 @@ test('SAMTALSUTKAST-02: valet följer användaren mellan hushåll och enheter', 
   page,
   browser,
 }) => {
-  const { app, household, post } = await installation(page);
+  const { app, path, household, read } = await installation(page);
   const device = await browser.newContext();
   const member = await browser.newContext();
   try {
@@ -185,7 +197,33 @@ test('SAMTALSUTKAST-02: valet följer användaren mellan hushåll och enheter', 
     await toggle(page).click();
     await view(page).getByRole('button', { name: 'Nytt samtal' }).click();
     await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
-    await post('save', { operationId: 'draft-save' });
+    await readLoProposal(page);
+    const beforeSave = await read();
+    const savedResponse = page.waitForResponse(
+      (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
+    );
+    await draft(page).getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    const response = await savedResponse;
+    expect(response.status(), await response.text()).toBe(200);
+    const { receipt } = await response.json();
+    expect(response.request().postDataJSON()).toEqual({
+      version: beforeSave.draft.version,
+      contentVersion: beforeSave.contentVersion,
+      operationId: receipt.operationId,
+    });
+    expect(receipt.operationId).toMatch(/^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i);
+    await expect(
+      page.getByRole('dialog', { name: 'Spara utkastet', exact: true }),
+    ).not.toBeVisible();
+    const saved = await read();
+    expect(saved.objects).toEqual([
+      expect.objectContaining({ id: 'lo', name: 'Lo Exempel', description: '' }),
+    ]);
+    expect(saved.draft).toEqual({ version: beforeSave.draft.version + 1, changes: [] });
+    const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
+    expect(operations).toEqual([
+      expect.objectContaining({ operationId: receipt.operationId, status: 'succeeded', receipt }),
+    ]);
     await view(page).getByRole('button', { name: 'Nytt samtal' }).click();
     await expect(toggle(page)).toHaveAttribute('aria-expanded', 'false');
     await toggle(page).click();
@@ -276,6 +314,11 @@ for (const configuration of [
         await view(page).getByRole('button', { name: 'Skicka', exact: true }).click();
         await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
         await expect(draft(page).getByRole('table')).toContainText('Lo Exempel');
+        await expect(toggle(page)).toHaveAccessibleName('Dölj utkastet (1)');
+        await expect(view(page).locator('.text-view-conversation')).toContainText(
+          'Lo ligger i utkastet.',
+        );
+        await readLoProposal(page);
         const button = await toggle(page).boundingBox();
         const box = await draft(page).boundingBox();
         const conversation = await view(page).locator('.text-view-conversation').boundingBox();

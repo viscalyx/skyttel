@@ -130,8 +130,10 @@ enheter”.
 1. Öppna **Inställningar**, **Samtal med Skyttel** och delen **Utkastet**.
    Markera **Visa utkastet när ett samtal börjar**. Läs återkopplingen.
 2. Återgå till kartan och starta med text. Dölj utkastet och välj
-   **Nytt samtal**. Spara sedan hela utkastet genom **Visa utkastet**,
-   återgå till textvyn och välj **Nytt samtal**. Öppna det tomma utkastet.
+   **Nytt samtal**. Öppna **Visa förslaget: Lo Exempel**, läs Person och
+   **Beskrivning: Ej uppgivet** och stäng dialogen. Välj **Spara hela
+   utkastet** i utkastet. Vänta tills sparandet är klart, återgå till
+   textvyn och välj **Nytt samtal**. Öppna det tomma utkastet.
 3. Logga in som Alex i den andra webbläsarprofilen. Öppna den utskrivna
    adressen följd av `/households/draft-other-household`. Öppna samma
    inställning. Avmarkera den där, ladda om Alex första sida och läs valet.
@@ -186,8 +188,9 @@ testfallet “SAMTALSUTKAST-03: första förslaget öppnar utkastet på mobil en
 1. Markera utkastvalet i Inställningar, återgå och starta med text.
 2. Skriv **Lägg till Lo.** Operatören levererar det första förslaget enligt
    [förberedelsen](text-conversation-preparation.md#första-förslaget).
-3. Läs **Lo Exempel**, **Person** och den tomma beskrivningen i utkastet
-   samt svaret **Lo ligger i utkastet.** i samtalet.
+3. Läs **Lo Exempel** i utkastet och svaret **Lo ligger i utkastet.** i
+   samtalet. Öppna **Visa förslaget: Lo Exempel**, läs **Person** och den
+   tomma beskrivningen som **Beskrivning: Ej uppgivet**. Stäng dialogen.
 4. Läs placeringen och fortsätt med samma samtal. Bred emulerad pekare
    har sitt eget fall nedan.
 
