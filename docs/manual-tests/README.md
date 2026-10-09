@@ -2,8 +2,12 @@
 
 Testfallen är grupperade efter område i applikationen. Varje områdesfil
 beskriver användare, förberedelser, steg och förväntat resultat samt länkar
-till motsvarande automatiserade integrationstester. Fall som uttryckligen
-kräver verkliga externa konton anges som enbart manuella och körs inte i CI.
+till motsvarande automatiserade prov i integrations- eller Chromium-sviten.
+Tekniskt stödjande prov anges separat från ett falls motsvarighet. Fall som
+kräver mänskliga observationer anger vad som behöver kontrolleras på riktigt;
+automatik ersätter inte de observationerna.
+Fall som kräver mänsklig användning av verkliga externa konton anges som
+manuella och körs inte i CI.
 
 Fallen fungerar som körbara beskrivningar och stöd för felsökning.
 Automatiserade fall behöver inte upprepas manuellt för specifikation #31.
