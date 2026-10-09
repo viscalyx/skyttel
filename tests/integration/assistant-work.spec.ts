@@ -330,12 +330,33 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     expect(outcome).toBe('unknown');
     expect(committedReceipt?.operationId).toBe(attempt.operationId);
     await page.unroute('**/mcp');
+    await page.reload();
+    await openTable(page);
+    const committedPerson = await editTableObject(page, 'Lo Exempel');
+    await expect(committedPerson.getByLabel('Objekttyp').locator('option:checked')).toHaveText(
+      'Person',
+    );
+    await expect(committedPerson.getByLabel('Namn', { exact: true })).toHaveValue('Lo Exempel');
+    await expect(committedPerson.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
+    await page.keyboard.press('Escape');
     await app.restart();
     const recoveredToken = await connection(page.request, app.origin, household.id);
     const recovered = await tool(app.origin, recoveredToken, 'read_save_operation', {
       operationId: attempt.operationId,
     });
     expect(recovered.operation).toMatchObject({ status: 'succeeded', receipt: committedReceipt });
+    await page.reload();
+    const recoveredHistory = await openSavedHistory(page);
+    await expect(recoveredHistory.getByRole('article')).toHaveCount(1);
+    await expect(recoveredHistory).toContainText('Lo Exempel');
+    await recoveredHistory
+      .getByText('Identifiera sparandet och användaren', { exact: true })
+      .click();
+    await expect(recoveredHistory).toContainText(attempt.operationId);
+    await page
+      .getByRole('region', { name: 'Rapporter', exact: true })
+      .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })
+      .click();
     expect(await tool(app.origin, recoveredToken, 'save_draft', attempt)).toEqual({
       receipt: committedReceipt,
     });

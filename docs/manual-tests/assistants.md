@@ -684,10 +684,11 @@ kvittot utan att kräva interna identifierare i webbläsarkontrollerna.
 2. Ge ditt sparbesked vid förberedelsens felpunkt. Klienten visar ett
    okänt utfall utan kvitto. Kontrollera inte ett lyckat sparande förrän
    en ny läsning ger besked.
-3. Ladda om kartan och kontrollera att Lo Exempel är sparad. Gör inga
-   nya ändringar. Stoppa servern i terminal A med Ctrl+C och starta om
-   med guidens exakta omstartskommando och samma databas. Behåll terminal
-   B öppen så att den ursprungliga begäran finns kvar.
+3. Ladda om kartan. Välj **Tabell → Redigera Lo Exempel** och kontrollera
+   namnet **Lo Exempel**, typen **Person** och tom beskrivning. Stäng
+   formuläret utan ändringar. Stoppa servern i terminal A med Ctrl+C och
+   starta om med guidens exakta omstartskommando och samma databas. Behåll
+   terminal B öppen så att den ursprungliga begäran finns kvar.
 4. Återfinn resultatet enligt förberedelsen. Öppna
    **Rapporter → Ändringshistorik** och kontrollera det enda sparandet
    av Lo Exempel. Välj **Identifiera sparandet och användaren** och

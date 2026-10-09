@@ -372,7 +372,9 @@ färskt underlag”.
    read-tool read_history {"objectId":"manual-lamp"}
    ```
 
-   Anteckna lampans sparandes `operationId` och historiska `userId`.
+   Följ den separata
+   [historikförberedelsens fångst](assistant-client-preparation.md#historikläsning-mcp-06)
+   direkt efter sparandet och behåll den under databasbytet.
    Namnet är ett syntetiskt provobjekt; Person ger ingen inloggning.
 2. Öppna **Inställningar → Fullständig export**. Läs informationen om
    insynen i privata uppgifter, skapa och ladda ned ZIP-filen. Följ
