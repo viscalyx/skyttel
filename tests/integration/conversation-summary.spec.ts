@@ -175,6 +175,7 @@ test('KONTEXT-08: full textkontext sammanfattas och senaste utkastet kan rättas
     await expect(meter(page)).not.toHaveAttribute('value', '99');
     await expect(log(page)).toContainText('Fyll kontexten.');
     await expect(log(page)).toContainText('kontextprovord');
+    await readPrivateLo(page);
     await send(page, 'Ändra den sista.');
     await expect.poll(async () => (await read()).draft.changes[0].after.name).toBe('Lo Senaste');
     await readPrivateLo(page, 'Lo Senaste');
@@ -252,6 +253,7 @@ for (const microphoneOn of [true, false]) {
         .poll(async () => Number(await meter(page).getAttribute('value')))
         .toBeLessThan(20);
       if (microphoneOn) await turnMicrophoneOff(page);
+      await readPrivateLo(page);
       await send(page, 'Ändra den sista.');
       await expect.poll(async () => (await read()).draft.changes[0].after.name).toBe('Lo Senaste');
       await readPrivateLo(page, 'Lo Senaste');
@@ -293,7 +295,16 @@ for (const mode of ['text', 'voice'] as const) {
       await readPrivateLo(page);
       expect((await read()).objects).toEqual(before.objects);
       const notice = page.locator('.conversation-notice').filter({ hasText: failureLine });
-      await notice.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+      const reset = notice.getByRole('button', { name: 'Nytt samtal', exact: true });
+      for (
+        let step = 0;
+        step < 40 && !(await reset.evaluate((element) => element === document.activeElement));
+        step++
+      ) {
+        await page.keyboard.press('Tab');
+      }
+      await expect(reset).toBeFocused();
+      await page.keyboard.press('Enter');
       await expect(page.getByText(failureLine, { exact: true })).toHaveCount(0);
       await expect(meter(page)).toHaveAttribute('value', '0');
       await expect(log(page)).not.toContainText('Fyll kontexten.');
@@ -349,6 +360,7 @@ test('KONTEXT-11: sammanfattning väntar på talat sparande och dess hörda kvit
     expect(live.requests).toHaveLength(1);
     expect(live.sent.some(({ event }) => event.type === 'session.close')).toBe(false);
     expect((await read()).draft.changes).toHaveLength(1);
+    await readPrivateLo(page);
     release();
     await expect.poll(async () => (await read()).objects[0]?.name).toBe('Lo Exempel');
     await expect
@@ -358,6 +370,20 @@ test('KONTEXT-11: sammanfattning väntar på talat sparande och dess hörda kvit
         ),
       )
       .toBe(true);
+    const beforeAudioLo = await readTableObject(page, 'Lo Exempel');
+    await expect(
+      beforeAudioLo
+        .locator('dt')
+        .filter({ hasText: /^Namn$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveText('Lo Exempel');
+    await expect(
+      beforeAudioLo.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
+    ).toHaveText('Person');
+    await expect(beforeAudioLo.locator('.household-table-description')).toHaveText(
+      'Påhittad uppgift',
+    );
     // The matching provider transcript alone cannot prove heard/drained audio.
     await page.evaluate(() =>
       window.skyttelVoiceFixture.emit({

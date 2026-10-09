@@ -39,11 +39,12 @@ nya förslag i utkastet eller utföra ett extra sparande.
 2. Skapa **Lo Exempel**, typ **Person**, beskrivning **Påhittad uppgift**,
    via **Tabell → Nytt objekt** och välj **Lägg i utkastet och stäng**.
    Lämna förslaget osparat.
-   Välj **Skriv till Skyttel** och **Godkänn och starta**.
+   Välj **Skriv till Skyttel → Nytt samtal → Godkänn och starta**.
 3. Terminalen håller modelluppdragen. Läs anrops-ID, `draft.version`,
    `draft.contentVersion` och Lo-förslagets ID från varje `held`.
-   När ett verktyg anropas används nästa anrops nya ID och de aktuella
-   versionerna från `lastToolResult`. Verktygskommandon beskrivs i
+   Varje nytt uppdrag får ett nytt ID och aktuella versioner i `draft`.
+   Terminalverktygen avslutar de angivna uppdragen enligt den separata
+   förberedelsen. Verktygskommandon beskrivs i
    [röstguiden](voice-assistant.md#transcript-fragments-and-delegation).
 4. Starta en ny installation mellan fallen. Avsluta med `quit` och
    kontrollera att den tillfälliga katalogen försvinner enligt startguiden.
@@ -192,7 +193,7 @@ och kastar utkastet”.
     "Kommandona har samma verkan som **Nytt samtal** och den befintliga funktionen för att kasta hela utkastet. Bara ett uttryckligt **Kasta utkastet** tar bort de osparade förslagen.",
     "Tidigare samtalsord och pågående arbete följer inte med till det nya samtalet. Utkast, mikrofonläge och annan oskickad text bevaras vid nytt samtal utan kastkommando. Redan sparade uppgifter påverkas inte.",
     "Logga ut avslutar samtalet. Samtalsord och ljud lagras inte. Faktiskt hört tal, mikrofon och skärmläsare återstår att prova manuellt enligt [förberedelsen i TAL-17](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare).",
-    "Ett skrivet nytt samtal med mikrofonen av ger enbart text. Ett talat nytt samtal får sitt röstbesked efter släpp eller avstängning, medan mikrofonen förblir av. Kontrollera överlämningen i `sessions`; faktiskt hört tal kräver den separata verkliga röstinstallationen."
+    "Ett skrivet nytt samtal med mikrofonen av ger enbart text. Ett talat nytt samtal får sitt röstbesked efter släpp eller avstängning, medan mikrofonen förblir av. Teknisk överlämning kontrolleras separat; faktiskt hört tal kräver den verkliga röstinstallationen."
   ]
 }
 ```
@@ -241,13 +242,18 @@ och kastar utkastet”.
   [förberedelsen i TAL-17](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare).
 - Ett skrivet nytt samtal med mikrofonen av ger enbart text. Ett talat
   nytt samtal får sitt röstbesked efter släpp eller avstängning, medan
-  mikrofonen förblir av. Kontrollera överlämningen i `sessions`; faktiskt
-  hört tal kräver den separata verkliga röstinstallationen.
+  mikrofonen förblir av. Överlämningens tekniska underlag finns i den
+  separata förberedelsen; faktiskt hört tal kräver den verkliga
+  röstinstallationen.
 
 ## Kontextmätaren
 
 För dessa fall behövs inget Lo-förslag. Starta en ny kontrollerad
-installation och skapa Kontextprov enligt den allmänna förberedelsen.
+installation och skapa Kontextprov enligt allmän förberedelse steg 1.
+Lägg inget förslag i utkastet. KONTEXT-04/07/13 startar samtalet i sitt
+första steg. Före KONTEXT-05/06: välj
+**Skriv till Skyttel → Nytt samtal → Godkänn och starta**; slå dessutom
+på mikrofonen före KONTEXT-06.
 Terminalkommandona ändrar endast den externa provleverantörens nästa
 mätning. Servern och den tillfälliga SQLite-databasen är riktiga.
 `context` gäller den aktuella röstanslutningen. `text-context` gäller
@@ -284,7 +290,7 @@ samtal tömmer den”.
 
 **Steg:**
 
-1. Välj **Skriv till Skyttel** och **Godkänn och starta**. Läs **Kontext**
+1. Välj **Skriv till Skyttel → Nytt samtal → Godkänn och starta**. Läs **Kontext**
    under textvyns rubrik. Kräv **0%**. Läs mätarens synliga namn och värde.
    Uppläsning och beskrivning bedöms separat i KONTEXT-16.
 2. Prova först `text-context 70` och `text-context 90`, med ett nytt
@@ -444,13 +450,15 @@ KONTEXT-07 i gruppen pekskärm 390.
 
 **Steg:**
 
-1. Välj **Skriv till Skyttel**, godkänn och kör `text-context 88`.
+1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn och kör `text-context 88`.
    Skicka **Ett prov på pekskärm** och släpp anropet med
    `reply ANROP Ett provsvar.`. Läs **Kontext**, **88%** och beskrivningen.
 2. Välj **Prata med Skyttel** och kör `context 88`. Läs symbolen och
    procenttalet. Kräv att statusord och **Avbryt**, när det visas,
    fortfarande går att läsa och använda.
-3. Kontrollera att mätaren och symbolen syns utan rullning i sidled.
+3. Stäng textvyn och öppna den igen med **Skriv till Skyttel**.
+   Läs samma **88%**. Kontrollera att mätaren och symbolen syns utan
+   rullning i sidled.
 
 **Förväntat resultat:**
 
@@ -666,12 +674,12 @@ hörda kvitto”.
 1. Kör `user Spara hela utkastet nu.` och `delegate`. Låt uppdraget
    vara hållet. Kör `context 89`. Läs kvarvarande Lo-förslag och att
    sammanfattning ännu inte visas.
-2. Släpp `save_draft` med aktuella versioner och
-   `operationId:"summary-active-save"`. Kräv Lo Exempel i kartan och
-   **Utkastet är sparat** under hushållsnamnet.
-3. Kör `assistant Sparat.`. Ett textfragment ensamt ska inte räcka för
-   röstbyte. Kör `window.skyttelVoiceFixture.setSound('remote', true)`
-   i konsolen. Kräv **Skyttel talar**. Kör samma kommando med `false`.
+2. Låt operatören släppa sparverktyget enligt den separata förberedelsen.
+   Läs hela sparade Lo Exempel i Tabell innan ljudsignalen börjar.
+   Läs **Utkastet är sparat** under hushållsnamnet.
+3. Operatören släpper först textfragmentet och därefter ljudaktiviteten
+   enligt förberedelsen. Ett textfragment ensamt ska inte räcka för
+   röstbyte. Läs **Skyttel talar** under signalen.
 4. Släpp det efterföljande sammanfattningsanropet. Kräv
    sammanfattningsraden, lägre procenttal, sparad Lo, tomt utkast,
    mikrofon på och inget återspelat sparkvitto.
@@ -877,6 +885,58 @@ vid röstens sammanfattningsfel.
 - Samma skyddade resultat som KONTEXT-10, med det angivna valet kvar.
 
 ## Observationer med verkliga hjälpmedel och utrustning
+
+### KONTEXT-18: skärmläsaren läser sammanfattningsfelets hinderbesked
+
+**Syfte:** Bevara den faktiska uppläsningen vid båda felingångarna.
+
+**Användare:** Alex.
+
+**Förutsättningar:** NVDA i Chromium på dator och hörlurar.
+
+**Separat förberedelse:**
+
+Starta en ny kontrollerad installation och skapa hela Lo-förslaget enligt
+områdets allmänna förberedelse. Starta NVDA i samma fönster. Provmedia är
+tysta; NVDA:s verkliga tal är observationen, inte leverantörens röst.
+Börja en ny installation mellan text- och röstingången. Avsluta med `quit`.
+
+**Kräver mänsklig observation:** Lyssna på NVDA:s hinderbesked efter
+misslyckad sammanfattning i KONTEXT-10 och KONTEXT-15. Det särskilda felet
+ska höras; ett allmänt uppdragsfel får inte ersätta det.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "NVDA läser det särskilda hinderbeskedet efter misslyckad sammanfattning från både text och röst."
+  },
+  "reference": "NVDA i Chromium på dator; text- och röstingång i separata nya installationer",
+  "outcomes": ["Det särskilda sammanfattningsfelet hörs och Nytt samtal kan nås och aktiveras med tangentbord."],
+  "evidence": [
+    {"kind":"overlap","spec":"tests/integration/conversation-summary.spec.ts","caseId":"KONTEXT-10","purpose":"Textingångens synliga fel och tangentbordsåterstart; hör inte NVDA."},
+    {"kind":"overlap","spec":"tests/integration/conversation-summary.spec.ts","caseId":"KONTEXT-15","purpose":"Röstingångens synliga fel och tangentbordsåterstart; hör inte NVDA."}
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ KONTEXT-10 steg 1–3 en gång. Lyssna när det hållna
+   sammanfattningsanropet misslyckas. Läs även samma kvarvarande Lo-förslag.
+2. Följ steg 4–5 med tangentbord. Lyssna på knappens namn och kontrollera
+   synligt fokus före Enter och att samtalet går att använda igen.
+3. Starta på nytt och följ KONTEXT-15 en gång, med dess röstingång och
+   samma lyssning vid felet och tangentbordsåterstart.
+
+**Förväntat resultat:**
+
+- NVDA läser **Kontexten är full, och Skyttel kunde inte sammanfatta
+  samtalet. Inget har gått förlorat, och utkastet ligger kvar.** vid båda
+  ingångarna. Ett allmänt uppdragsfel ersätter inte beskedet.
+- **Nytt samtal** kan nås, har synligt fokus och fungerar med tangentbord.
 
 ### KONTEXT-16: kontextens verkliga uppläsning
 

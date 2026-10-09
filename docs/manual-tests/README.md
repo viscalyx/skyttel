@@ -233,7 +233,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   inbjudan. Ändrad medgivandetext kräver ett nytt sparat medgivande;
   en separat tillfällig installation förbereder det syntetiska tillståndet.
   Vanliga syntetiska motsvarigheter hålls skilda från MEDGIVANDE-19/20:s
-  faktiska skärmläsning, beröring och förstoring.
+  faktiska skärmläsning, beröring och förstoring samt MEDGIVANDE-21:s
+  enda hörda fjärråterkallandebesked.
 - [Samtalsnotiser](conversation-notices.md): bruten kontakt, otillgängligt
   samtal och uppdragsfel; en gemensam ordning, bara ett besked, stängning och
   automatisk återkomst, textåtkomst utan tillgängligt samtal, bevarad text
@@ -317,7 +318,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sammanfattning blockerar nya uppdrag tills Nytt samtal. Pågående
   sparande och dess kontrollerade ljudkvittens avslutas före röstbytet.
   Mikrofonval, felingång och emulerade pekbredder har skilda identiteter;
-  KONTEXT-16/17 avser verklig uppläsning, mikrofon och beröring.
+  KONTEXT-16/17 avser verklig uppläsning, mikrofon och beröring;
+  KONTEXT-18 bevarar hört hinderbesked vid textens och röstens sammanfattningsfel.
   [Separat samtalsförberedelse](conversation-preparation.md) beskriver
   versionsvärden, paket, registrerat sparande och PCM genom hållen start.
 - [Samtal med Skyttel](text-assistant.md): hela utkast,

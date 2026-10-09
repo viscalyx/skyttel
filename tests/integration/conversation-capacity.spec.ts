@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
 import {
+  closeConversationText,
   microphoneButton,
   openConversationText,
   startConversationWithText,
@@ -233,8 +234,11 @@ for (const width of [390, 820])
         await expect(meter(page)).toHaveAttribute('value', '88');
         await expect(meter(page)).toHaveAccessibleDescription(description);
         await expect(symbol(page, 88)).toBeVisible();
+        await closeConversationText(page);
+        await expect(meter(page)).toHaveCount(0);
         await openConversationText(page);
         await expect(meter(page)).toBeVisible();
+        await expect(meter(page)).toHaveAttribute('value', '88');
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
         ).toBe(true);

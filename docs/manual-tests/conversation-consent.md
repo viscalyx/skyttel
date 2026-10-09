@@ -66,8 +66,9 @@ npm run test:env -- node --import tsx scripts/manual-voice.ts
 ```
 
 Öppna den utskrivna adressen privat och logga in som Alex med Google.
-Skapa hushållet Medgivandeprov. Lägg till den påhittade personen
-**Lo Exempel** genom **Nytt objekt → Lägg i utkastet och stäng**. Spara inte;
+Skapa hushållet Medgivandeprov. Lägg till **Lo Exempel**, typ **Person**,
+beskrivning **Påhittad uppgift**, genom
+**Nytt objekt → Lägg i utkastet och stäng**. Spara inte;
 utkastet ska innehålla exakt en ändring. Den kontrollerade mikrofonen
 använder tyst ljud och spelar inte in din riktiga mikrofon.
 
@@ -955,7 +956,7 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
   "outcomes": [
     "Rutan säger **Skyttel sparar ditt utkast. Sparandet slutförs.** i stället för att ange antal osparade ändringar.",
     "Medgivandet återkallas medan det registrerade sparandet slutförs. Kartan innehåller Lo Exempel och utkastet är tomt.",
-    "Ändringshistoriken visar sparandet med det noterade ID:t. Den har ett sparande för samma ID, även efter att det fördröjda svaret släpps.",
+    "Ändringshistoriken visar ett enda sparande med Lo:s fullständiga värden, även efter att det fördröjda svaret släpps. Identifierare jämförs separat i förberedelsen.",
     "Textvyn och röstrutan är stängda och ingen samtalsnotis visas. Sparresultatet går att kontrollera utan ett nytt samtalsmedgivande."
   ]
 }
@@ -985,8 +986,9 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
   stället för att ange antal osparade ändringar.
 - Medgivandet återkallas medan det registrerade sparandet slutförs.
   Kartan innehåller Lo Exempel och utkastet är tomt.
-- Ändringshistoriken visar sparandet med det noterade ID:t. Den har ett
-  sparande för samma ID, även efter att det fördröjda svaret släpps.
+- Ändringshistoriken visar ett enda sparande med Lo:s fullständiga värden,
+  även efter att det fördröjda svaret släpps. Identifierare jämförs
+  separat i förberedelsen.
 - Textvyn och röstrutan är stängda och ingen samtalsnotis visas.
   Sparresultatet går att kontrollera utan ett nytt samtalsmedgivande.
 
@@ -1068,7 +1070,7 @@ enhet”.
   },
   "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
   "outcomes": [
-    "Första profilen visar **Medgivandet är återkallat. Samtalet är avslutat. Utkastet ligger kvar.** senast vid nästa försök att skicka. Notisen läses upp en gång och säger inte att hushållets åtkomst har upphört.",
+    "Första profilen visar **Medgivandet är återkallat. Samtalet är avslutat. Utkastet ligger kvar.** senast vid nästa försök att skicka. Notisen säger inte att hushållets åtkomst har upphört; faktisk uppläsning provas i MEDGIVANDE-21.",
     "Textvyn och samtalet avslutas; kartan och utkastet finns kvar.",
     "Nästa start visar medgivanderutan. Skrivfältet har kvar **Text som inte hunnit skickas.**. Texten ingår inte i det nya samtalets historik."
   ]
@@ -1097,6 +1099,61 @@ enhet”.
 - Textvyn och samtalet avslutas; kartan och utkastet finns kvar.
 - Nästa start visar medgivanderutan. Skrivfältet har kvar **Text som inte
   hunnit skickas.**. Texten ingår inte i det nya samtalets historik.
+
+## Fjärråterkallandets uppläsning
+
+### MEDGIVANDE-21: fjärråterkallandets notis läses upp en gång
+
+**Syfte:** Bevara den faktiska hjälpmedelsobservationen från MEDGIVANDE-18.
+
+**Användare:** Alex i två webbläsarprofiler.
+
+**Förutsättningar:** NVDA med Chromium på dator och hörlurar.
+
+**Separat förberedelse:**
+
+Starta en ny kontrollerad installation enligt förberedelsen för återkallande.
+Skapa hela Lo-förslaget och spara medgivandet i Inställningar. Logga in
+Alex i den andra profilen. Starta NVDA i första profilen; tyst provmedia
+räcker eftersom observationen gäller skärmläsarens tal. Inga verkliga
+leverantörer behövs. Avsluta med `quit` efter provet.
+
+**Kräver mänsklig observation:** Lyssna på NVDA:s faktiska uppläsning av
+fjärråterkallandets notis. Den ska läsas en gång och ska inte säga att
+hushållets åtkomst har upphört.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "NVDA läser fjärråterkallandets notis en gång utan att säga att hushållets åtkomst har upphört."
+  },
+  "reference": "NVDA, Chromium på dator, två profiler med Alex i samma provhushåll",
+  "outcomes": ["Medgivandet är återkallat. Samtalet är avslutat. Utkastet ligger kvar. hörs en gång."],
+  "evidence": [{
+    "kind": "overlap",
+    "spec": "tests/integration/conversation-settings.spec.ts",
+    "caseId": "MEDGIVANDE-18",
+    "purpose": "Synlig notis, bevarat utkast och oskickad text; automatiseringen hör inte NVDA."
+  }]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Följ MEDGIVANDE-18 steg 1–3 en gång från dess utgångsläge.
+   Lyssna i första profilen när det nya skickförsöket eller serverns
+   kontroll visar återkallandet. Flytta inte fokus under uppläsningen.
+2. Vänta tills NVDA har talat färdigt och lyssna efter ett extra besked.
+   Följ därefter steg 4 och läs kvarvarande oskickad text och hela utkastet.
+
+**Förväntat resultat:**
+
+- NVDA läser **Medgivandet är återkallat. Samtalet är avslutat.
+  Utkastet ligger kvar.** en gång; inget besked om upphörd hushållsåtkomst hörs.
+- Bevarat utkast och oskickad text går att läsa efter nästa medgivande.
 
 ## Bedömning och återstående manuella prov
 

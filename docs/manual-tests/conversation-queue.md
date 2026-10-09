@@ -33,7 +33,7 @@ nya förslag i utkastet eller utföra ett extra sparande.
 2. Skapa Lo Exempel, typ Person, beskrivning Påhittad uppgift, via
    **Tabell → Nytt objekt** och välj **Lägg i utkastet och stäng**.
    Lämna förslaget osparat.
-   Välj **Skriv till Skyttel** och **Godkänn och starta**.
+   Välj **Skriv till Skyttel → Nytt samtal → Godkänn och starta**.
 3. Varje uppdrag hålls i terminalen som `held`. Släpp svaret med
    `reply REQUEST TEXT`, där REQUEST är anrops-ID och TEXT är provsvaret.
    Kör `pending` för att se vilka modelluppdrag som har börjat.

@@ -42,8 +42,7 @@ nya förslag i utkastet eller utföra ett extra sparande.
 
    <!-- markdownlint-disable MD013 -->
    ```text
-   tool REQUEST ask_questions {"questions":["Vilken person avses med Lo, och
-   vilket namn ska objektet ha?"]}
+   tool REQUEST ask_questions {"questions":["Vilken person avses med Lo, och vilket namn ska objektet ha?"]}
    ```
    <!-- markdownlint-enable MD013 -->
 
@@ -111,8 +110,8 @@ med serverns väntesignal”.
 
 **Steg:**
 
-1. Välj **Skriv till Skyttel**, godkänn medgivandet och skicka **Red ut
-   vilken Lo som avses.** Släpp frågan enligt förberedelsen.
+1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn medgivandet och
+   skicka **Red ut vilken Lo som avses.** Släpp frågan enligt förberedelsen.
 2. Läs frågan i **Samtalstext**. Kontrollera kartan och utkastet.
 
 **Förväntat resultat:**
@@ -155,8 +154,8 @@ utan en genererad frågeruta”.
 
 **Steg:**
 
-1. Alex väljer **Skriv till Skyttel** och skickar **Hjälp mig välja
-   vilket namn vi ska behålla.**
+1. Alex väljer **Skriv till Skyttel → Nytt samtal → Godkänn och starta**
+   och skickar **Hjälp mig välja vilket namn vi ska behålla.**
 2. Släpp en riktad `ask_questions`-fråga om Lo Exempel, Lo Lind och
    Lo Berg. Läs frågan och kontrollera båda klienternas karta.
 

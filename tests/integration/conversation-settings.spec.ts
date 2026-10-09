@@ -882,14 +882,50 @@ test('MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet', async (
 
 test('MEDGIVANDE-17: återkallanderutan med tangentbord och pekskärm', async ({ browser }) => {
   const app = await installation();
+  const desktop = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const device = await browser.newContext({
     viewport: { width: 390, height: 844 },
     isMobile: true,
     hasTouch: true,
   });
   try {
+    const keyboardPage = await desktop.newPage();
+    await signInWithHousehold(keyboardPage.request, app.origin);
+    await openHousehold(keyboardPage, app.origin);
+    await startConversationWithText(keyboardPage);
+    await openConversationSettings(keyboardPage);
+    for (const theme of ['light', 'dark'] as const) {
+      await keyboardPage.emulateMedia({ colorScheme: theme });
+      const revoke = consentPart(keyboardPage).revoke;
+      for (
+        let step = 0;
+        step < 40 && !(await revoke.evaluate((element) => element === document.activeElement));
+        step++
+      ) {
+        await keyboardPage.keyboard.press('Tab');
+      }
+      await expect(revoke).toBeFocused();
+      await keyboardPage.keyboard.press('Enter');
+      const dialog = revocation(keyboardPage);
+      await expect(dialog.getByRole('heading')).toBeFocused();
+      await keyboardPage.keyboard.press('Tab');
+      await expect(confirmRevocation(keyboardPage)).toBeFocused();
+      await keyboardPage.keyboard.press('Shift+Tab');
+      await expect(dialog.getByRole('button', { name: 'Avbryt', exact: true })).toBeFocused();
+      await keyboardPage.keyboard.press('Shift+Tab');
+      await expect(confirmRevocation(keyboardPage)).toBeFocused();
+      await keyboardPage.keyboard.press('Tab');
+      await keyboardPage.keyboard.press('Enter');
+      await expect(dialog).toHaveCount(0);
+      await expect(consentPart(keyboardPage).revoke).toBeFocused();
+      await keyboardPage.keyboard.press('Enter');
+      await expect(dialog.getByRole('heading')).toBeFocused();
+      await keyboardPage.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
+      await expect(consentPart(keyboardPage).revoke).toBeFocused();
+    }
     const page = await device.newPage();
-    await signInWithHousehold(page.request, app.origin);
+    await signIn(page.request, app.origin);
     await openHousehold(page, app.origin);
     await startConversationWithText(page);
     await expect(message(page)).toBeVisible();
@@ -922,6 +958,7 @@ test('MEDGIVANDE-17: återkallanderutan med tangentbord och pekskärm', async ({
     await confirmRevocation(page).tap();
     await expect(consentPart(page).save).toBeFocused();
   } finally {
+    await desktop.close();
     await device.close();
     await app.close();
   }

@@ -9,8 +9,8 @@ verkliga leverantörsanrop eller fysiska ljudprov ingår här.
 
 Vid ett angivet släpp i ett vanligt fall: kopiera `id`, `draft.version`,
 `draft.contentVersion`, Lo-förslagets `id` och hela `after` från aktuellt
-`held`. Vid nästa verktygsanrop används dess nya `id` och versionen i
-`lastToolResult`. Ta bort `id`, `householdId` och `revision` ur `value`;
+`held`. Vid nästa uppdrag används dess nya `id` och aktuella `draft`.
+Ta bort `id`, `householdId` och `revision` ur `value`;
 behåll typ, beskrivning och övriga värden. Sätt endast det angivna namnet.
 Ersätt REQUEST, V, C, LO och VALUE nedan med dessa verkliga värden:
 
@@ -21,9 +21,10 @@ tool REQUEST submit_changes {"version":V,"contentVersion":C,"completion":"draft"
 <!-- markdownlint-enable MD013 -->
 
 `baseRevision:null` gäller det nya, ännu osparade Lo-förslaget. För ett
-sparat objekt används dess verkliga tidigare revision. Efter verktyget,
-släpp nästa anrop med `reply REQUEST Namnet är ändrat.`. Ändringen ska
-läsas genom **Utkast → Visa förslaget** innan nästa uppdrag börjar.
+sparat objekt används dess verkliga tidigare revision. `submit_changes`
+avslutar uppdraget direkt: vänta på **Utkastet är uppdaterat.**, inte ett
+nytt `held`. Ändringen ska läsas genom **Utkast → Visa förslaget** innan
+nästa uppdrag börjar.
 
 För ett uttryckligen begärt sparande används aktuella V och C:
 
@@ -31,10 +32,12 @@ För ett uttryckligen begärt sparande används aktuella V och C:
 tool REQUEST save_draft {"version":V,"contentVersion":C,"operationId":"prov"}
 ```
 
-Släpp nästa anrop med `reply REQUEST Sparat.` efter att `lastToolResult`
-visar sparresultatet. I KONTEXT-01 och KONTEXT-08 prövas samma verktyg
-avsiktligt efter **Vad gjorde vi?**, utan ny sparbegäran. Det ska avvisas;
-släpp det efterföljande anropet med `reply REQUEST Uppdraget avvisades.`.
+Ett lyckat `save_draft` avslutar uppdraget direkt: vänta på
+**Utkastet är sparat**, tomt utkast och sparad Lo, inte ett nytt `held`.
+I KONTEXT-01 och KONTEXT-08 prövas samma verktyg avsiktligt efter
+**Vad gjorde vi?**, utan ny sparbegäran. Det ska avvisas direkt med
+**Skyttel kunde inte slutföra uppdraget. Försök igen.**. Inget
+efterföljande modelluppdrag ska släppas i dessa tre gränser.
 Röstkommentarer, råa operations-ID:n, exakta kvitton, anropsordning,
 `store:false`, filinnehåll och resursantal är tekniskt underlag i
 automationen, separat från de synliga vanliga arbetsstegen.
@@ -62,7 +65,12 @@ klientförfalskad mätning; de hör inte till vanliga UI-steg.
 
 ## Sparande som redan är registrerat
 
-MEDGIVANDE-16: kör `hold-save on` före **Spara hela utkastet nu.**.
+MEDGIVANDE-16 är ett självständigt fall. Gör ett nytt förslag enligt
+fallets förberedelse före **Nytt samtal**. Om recept provas efter
+ett tidigare misslyckat sparförsök, avsluta det samtalet först. Gör nästa
+förslag i det vanliga objektformuläret, så att textvyn har dess aktuella
+utkastversion. Läs hela förslaget före nästa sparande.
+Kör `hold-save on` före **Spara hela utkastet nu.**.
 Släpp `save_draft` enligt ovan och vänta på `save-registered` innan
 återkallanderutan öppnas. Anteckna dess `operationId` separat. Efter
 bekräftat återkallande körs `release-save`. Under **Identifiera sparandet
@@ -151,6 +159,75 @@ KONTEXT-11 använder `assistant Sparat.` före signalen och håller
 sammanfattningen tills signalen både har börjat och avslutats.
 Återställ alltid signalen till `false`. Faktiskt hört svenskt tal och
 hjälpmedlens röst har separata mänskliga observationsfall.
+
+KONTEXT-11: använd sparkommandot ovan med det hållna uppdragets aktuella
+versioner. Det inmatade `operationId` är provdata; servern väljer sitt
+verkliga ID. Läs sparade Lo-värden före ljudet. Kör därefter
+`assistant Sparat.` i terminalen för serverns fragment. Den tysta
+transporten skickar inte detta paket till webbläsarens mottagna ljudspår.
+Kopiera därför även följande paket i Console innan ljudet:
+
+```javascript
+window.skyttelVoiceFixture.emit({
+  type: 'session.output_transcript.delta',
+  event_id: crypto.randomUUID(),
+  delta: 'Sparat.', start_ms: 0, end_ms: 100
+});
+```
+
+Kör `window.skyttelVoiceFixture.setSound('remote', true)` i Console och
+slutligen samma kommando med `false`. Först efter mottaget fragment,
+observerad ljudaktivitet och avslutad signal börjar det nya
+sammanfattningsanropet. Släpp det med sammanfattningskommandot ovan.
+
+De vanliga fallen börjar utan `seed-family`. För ett separat prov av
+samma recept i familjens fyllda installation: skapa och behåll Robins
+oberoende Person-förslag **Robin privata Lo**, beskrivning
+**Oberoende påhittad uppgift**, i en separat medlemsprofil. Före
+samtalsstart, öppna Alex konflikt från kartans status,
+välj **Ditt föreslagna värde** för varje ändrad uppgift och
+**Lägg valen i utkastet**. Stäng med Escape. Alex namnändring till
+**Lo Lind** ska finnas kvar; beskrivningen som Alex inte ändrar följer
+den senare sparade **Spelar piano i musikföreningen.**. Läs hela förslaget.
+Konflikten ska vara löst. Kartan och historiken är oförändrade.
+Ett olöst provhushåll får inte användas för receptets lyckade hela sparande.
+Lägg till den oberoende medlemmen enligt
+[medlemsförberedelsen](membership.md) innan samtalet börjar.
+
+Ett kombinerat tekniskt receptprov avslutar alla sina röstanslutningar
+innan nästa självständiga textfall. Anteckna varje verkligt `POST /voice`
+med status 201 i Network, även anslutningen efter sammanfattningen.
+Läs `voice.id` i svaret. Sätt VOICE_STOP_URL till samma relativa
+anropsadress följd av `/voice.id/stop`, där `voice.id` ersätts med det
+verkliga ID:t. Kör följande hela Console-paket för varje egen anslutning:
+
+```javascript
+(async () => {
+  const response = await fetch(VOICE_STOP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}'
+  });
+  if (response.status !== 200) throw new Error('Voice stop did not return 200');
+  const result = await response.json();
+  if (result.voice.phase !== 'closed') throw new Error('Voice transport is not closed');
+  return result;
+})()
+```
+
+Läs status 200 och `voice.phase:"closed"` för varje ID. Ladda därefter
+om sidan och öppna **Skriv till Skyttel**. Kontrollera noll kontext,
+borttagen tidigare samtalstext och samma hela sparade karta, historik
+och Robins privata förslag. Gör nästa rättelse i det vanliga
+objektformuläret och läs hela förslaget. Välj därefter **Nytt samtal**,
+godkänn om rutan visas och skicka sparkommandot. Detta följer den
+vanliga förberedelsens ordning: förslag före samtalsstart.
+Mikrofon av lämnar röstanslutningen kvar; en omladdning
+av sidan behöver därför föregås av detta separata transportstopp.
+
+KONTEXT-03: kör `sessions` direkt efter det talade reset-kommandot och
+släpp eller mikrofonavstängning. Kontrollera reset-kommentaren och samma
+aktiva anslutning, separat från att faktiskt höra beskedet.
 
 KÖ-02: när endast uppspelning pågår, kör
 `window.skyttelVoiceFixture.setSound('remote', true, 0.2)`, tryck Escape
