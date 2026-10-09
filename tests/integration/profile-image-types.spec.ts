@@ -2,13 +2,15 @@ import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import {
+  closeSupportDialog,
   closeTextView,
   createHousehold,
   openDraftReview,
   openNewObject,
   signIn,
 } from '../support/client.js';
-import { editTableObject } from '../support/domain-work.js';
+import { openSavedHistory, readCommittedHistoryCard } from '../support/conversation-page.js';
+import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 const typeName = 'Egen bildtyp';
@@ -106,6 +108,103 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
       await closeTextView(page);
       return (await saved.json()).receipt;
     };
+    const readProposal = async (removal: boolean) => {
+      const proposal = await readDraftProposal(page, name);
+      for (const [title, description, image] of [
+        ...(removal ? [['Sparade värden', 'Text i samma förslag', true] as const] : []),
+        [
+          'Föreslagna värden',
+          removal ? 'Ny text före bildbytet' : 'Text i samma förslag',
+          !removal,
+        ] as const,
+      ]) {
+        const side = proposal
+          .locator('section')
+          .filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+        for (const [label, value] of [
+          ['Namn', name],
+          ['Typ', typeName],
+          ['Beskrivning', description],
+          ['Ikon', 'Cykel'],
+          ['Gäller', 'Aktuellt'],
+          ['Status', 'Följ slutdatum'],
+          ['Profilbild', image ? 'Profilbild finns' : 'Ej uppgivet'],
+        ])
+          await expect(
+            side
+              .locator('dt')
+              .filter({ hasText: new RegExp(`^${label}(?: · ändrat)?$`) })
+              .locator('..')
+              .locator('dd'),
+          ).toContainText(value);
+        if (image) {
+          const displayed = side.getByRole('img');
+          await expect(displayed).toBeVisible();
+          await expect(displayed).toHaveAttribute(
+            'src',
+            new RegExp(`${first.after?.profileImageId}$`),
+          );
+          await expect
+            .poll(() => displayed.evaluate((element) => (element as HTMLImageElement).naturalWidth))
+            .toBeGreaterThan(0);
+        } else await expect(side.getByRole('img')).toHaveCount(0);
+      }
+      await closeSupportDialog(page, name);
+    };
+    const readHistory = async (receipts: SaveReceipt[]) => {
+      const history = await openSavedHistory(page);
+      await expect(history.getByRole('article')).toHaveCount(receipts.length);
+      for (const [index, receipt] of receipts.entries()) {
+        await expect(history.getByRole('article').nth(index)).toHaveAttribute(
+          'data-save',
+          receipt.operationId,
+        );
+        const card = await readCommittedHistoryCard(history, receipt);
+        const changes = card.getByText('Visa ändringarna', { exact: true });
+        if ((await changes.locator('..').getAttribute('open')) === null) await changes.click();
+        const change = card
+          .locator('.history-changes > div')
+          .filter({ has: page.getByRole('heading', { name: `Objekt: ${name}`, exact: true }) });
+        for (const [title, value] of [
+          ['Före sparandet', receipt.changes[0].before],
+          ['Efter sparandet', receipt.changes[0].after],
+        ] as const) {
+          const side = change.locator(`xpath=./*[preceding-sibling::h5[1][text()="${title}"]]`);
+          if (!value) {
+            await expect(side.filter({ hasText: 'Fanns inte i kartan' })).toBeVisible();
+            continue;
+          }
+          await expect(side.filter({ hasText: `Namn: ${name}.` })).toBeVisible();
+          await expect(side.filter({ hasText: `Objekttyp: ${typeName}.` })).toBeVisible();
+          await expect(side.filter({ hasText: value.description })).toBeVisible();
+          const identity = side.filter({
+            has: page.getByText('Objektets identitet', { exact: true }),
+          });
+          if ((await identity.getAttribute('open')) === null)
+            await identity.getByText('Objektets identitet', { exact: true }).click();
+          await expect(identity.getByText(first.id, { exact: true })).toBeVisible();
+          if (value.profileImageId) {
+            const actualImage = change.locator(
+              `xpath=./img[preceding-sibling::h5[1][text()="${title}"]]`,
+            );
+            await expect(actualImage).toBeVisible();
+            await expect(actualImage).toHaveAttribute(
+              'src',
+              new RegExp(`${first.after?.profileImageId}$`),
+            );
+            await expect(side.filter({ hasText: 'Ikon: Cykel' })).toBeVisible();
+          } else {
+            await expect(side.filter({ hasText: 'Ingen profilbild' })).toBeVisible();
+            await expect(side.filter({ hasText: 'Cykel' })).toBeVisible();
+            await expect(
+              change.locator(`xpath=./img[preceding-sibling::h5[1][text()="${title}"]]`),
+            ).toHaveCount(0);
+          }
+        }
+      }
+      await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    };
+    await readProposal(false);
     const initialReceipt = await save();
     expect(initialReceipt.changes).toHaveLength(1);
     expect(initialReceipt.changes[0]).toMatchObject({ before: null, after: first.after });
@@ -113,6 +212,7 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
     expect(shared.objects).toHaveLength(1);
     expect(shared.objects[0]).toMatchObject({ ...first.after });
     expect(shared.draft.changes).toEqual([]);
+    await readHistory([initialReceipt]);
     await edit();
     await form.getByLabel('Beskrivning', { exact: true }).fill('Ny text före bildbytet');
     await appearance();
@@ -171,6 +271,7 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
       iconId: 'bike',
     });
     expect(removed.draft.changes[0].after).not.toHaveProperty('profileImageId');
+    await readProposal(true);
     const removedReceipt = await save();
     expect(removedReceipt.operationId).not.toBe(initialReceipt.operationId);
     expect(removedReceipt.changes).toHaveLength(1);
@@ -196,6 +297,7 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
       removedReceipt,
       initialReceipt,
     ]);
+    await readHistory([removedReceipt, initialReceipt]);
   } finally {
     await installation.close();
   }

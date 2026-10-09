@@ -1,7 +1,14 @@
 import { expect, type Page, test } from '@playwright/test';
-import { closeTextView, openDraftReview, utilityButton } from '../support/client.js';
+import { draftConflicts } from '../../src/shared/draft-conflicts.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  openDraftReview,
+  utilityButton,
+} from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
-import { editObjectRelationship } from '../support/domain-work.js';
+import { openSavedHistory, readCommittedHistoryCard } from '../support/conversation-page.js';
+import { editObjectRelationship, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { prepareMapExploration } from '../support/map-exploration.js';
 import { focusMapSearch, mapFilters } from '../support/object-search.js';
@@ -113,6 +120,63 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
     const state = await data.read();
     const edge = state.relationships.find((item) => item.id === 'uses');
     if (!edge) throw new Error('Expected connection');
+    const readNativeContext = async (previous: boolean) => {
+      await (await utilityButton(page, 'Karta')).click();
+      await focusMapSearch(page);
+      const search = page
+        .getByRole('region', { name: 'Kartans sökning och filter' })
+        .getByRole('searchbox');
+      await search.fill('Alex');
+      await search.press('Escape');
+      const labels = page.getByRole('button', { name: 'Alla etiketter', exact: true });
+      if ((await labels.getAttribute('aria-pressed')) !== 'true') await labels.click();
+      const nativeMap = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+      await expect(
+        nativeMap.getByRole('button', { name: 'Välj objekt: Alex Exempel', exact: true }),
+      ).toBeVisible();
+      await expect(
+        nativeMap.getByRole('button', { name: 'Välj objekt: Garaget', exact: true }),
+      ).toBeVisible();
+      await expect(
+        nativeMap.getByRole('button', { name: 'Välj objekt: Bostaden', exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        nativeMap.getByRole('button', { name: 'Välj objekt: Blå cykel', exact: true }),
+      ).toHaveCount(previous ? 1 : 0);
+      const current = nativeMap.locator(
+        'button[aria-label="Välj samband: Alex Exempel → Använder → Garaget"]',
+      );
+      await expect(current).toBeVisible();
+      await expect(current).toHaveAttribute('aria-describedby', new RegExp(`-current-${edge.id}$`));
+      await expect(current).toContainText('→');
+      await expect(current).toContainText('Använder');
+      const old = nativeMap.locator(
+        'button[aria-label="Välj tidigare samband: Alex Exempel → Använder → Blå cykel"]',
+      );
+      const geometry = nativeMap.locator(
+        `.connection.previous[data-previous-relationship="${edge.id}"]`,
+      );
+      await expect(old).toHaveCount(previous ? 1 : 0);
+      await expect(geometry).toHaveCount(previous ? 1 : 0);
+      if (previous) {
+        await expect(old).toBeVisible();
+        await expect(old).toHaveAttribute('aria-describedby', new RegExp(`-previous-${edge.id}$`));
+        await expect(old).toContainText('Använder');
+        await expect(old).toContainText('×');
+        await expect(geometry).toHaveAttribute('marker-end', 'url(#spatial-arrow-removed)');
+        await expect(geometry).toHaveAttribute('d', /.+/);
+        await expect(geometry.locator('title')).toHaveText(
+          'Tidigare samband: Alex Exempel → Använder → Blå cykel',
+        );
+      }
+      await expect(
+        page
+          .getByRole('complementary', { name: 'Kartans sökresultat' })
+          .getByText(`${previous ? 2 : 1} objekt visas som sammanhang, utöver sökträffarna.`, {
+            exact: true,
+          }),
+      ).toBeVisible();
+    };
     let form = await editObjectRelationship(
       page,
       'Alex Exempel',
@@ -128,6 +192,7 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
       targetId: 'garage',
       knowledge: edge.knowledge,
     });
+    await readNativeContext(true);
     await data.post('relationship', {
       id: edge.id,
       baseRevision: edge.revision,
@@ -179,11 +244,32 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
       knowledge: edge.knowledge,
       lifecycle: 'ended',
     });
-    await data.post('relationship', {
-      id: edge.id,
-      baseRevision: edge.revision,
-      value: { ...edge, lifecycle: 'ended' },
-    });
+    const endedProposal = await readDraftProposal(page, 'Alex Exempel → Använder → Blå cykel');
+    for (const [title, status, applies] of [
+      ['Sparade värden', 'Följ slutdatum', 'Aktuellt'],
+      ['Föreslagna värden', 'Manuellt upphört', 'Upphört'],
+    ]) {
+      const side = endedProposal
+        .locator('section')
+        .filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+      for (const [label, value] of [
+        ['Från', 'Alex Exempel'],
+        ['Sambandstyp', 'Använder'],
+        ['Till', 'Blå cykel'],
+        ['Uppgiftens säkerhet', 'Bekräftat'],
+        ['Status', status],
+        ['Gäller', applies],
+      ])
+        await expect(
+          side
+            .locator('dt')
+            .filter({ hasText: new RegExp(`^${label}(?: · ändrat)?$`) })
+            .locator('..')
+            .locator('dd'),
+        ).toHaveText(value);
+    }
+    await closeSupportDialog(page, 'Alex Exempel → Använder → Blå cykel');
+    await closeTextView(page);
     await page.reload();
     const completed = page.waitForResponse(
       (response) =>
@@ -195,6 +281,69 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
     await closeTextView(page);
     const ended = (await data.read()).relationships.find((item) => item.id === edge.id);
     if (!ended) throw new Error('Expected ended connection');
+    const endedReceipt = (await (await completed).json()).receipt;
+    const nativeHistory = await openSavedHistory(page);
+    const endedCard = await readCommittedHistoryCard(nativeHistory, endedReceipt);
+    await endedCard.getByText('Visa ändringarna', { exact: true }).click();
+    const change = endedCard
+      .locator('.history-changes > div')
+      .filter({ has: page.getByRole('heading', { name: 'Samband: Använder', exact: true }) });
+    await expect(change.getByText(`Identitet: ${edge.id}`, { exact: true })).toBeVisible();
+    for (const [title, status] of [
+      ['Före sparandet', 'Följ slutdatum'],
+      ['Efter sparandet', 'Manuellt upphört'],
+    ]) {
+      const side = change.locator(`xpath=./*[preceding-sibling::h5[1][text()="${title}"]]`);
+      await expect(side.filter({ hasText: 'Alex Exempel → Använder → Blå cykel' })).toBeVisible();
+      await expect(side.filter({ hasText: status })).toBeVisible();
+      const identities = side.filter({
+        has: page.getByText('Sambandets objektidentiteter', { exact: true }),
+      });
+      await identities.getByText('Sambandets objektidentiteter', { exact: true }).click();
+      await expect(
+        identities.getByText('Från objekt alex till objekt bike.', { exact: true }),
+      ).toBeVisible();
+    }
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    const committedState = await data.read();
+    const committedHistory = (
+      await (
+        await page.request.get(
+          `${installation.origin}/api/households/${data.household.id}/map/history`,
+        )
+      ).json()
+    ).history;
+    await data.post('relationship', {
+      id: edge.id,
+      baseRevision: ended.revision,
+      value: { ...ended, lifecycle: 'ended' },
+    });
+    expect(draftConflicts(await data.read())).toEqual([]);
+    await page.reload();
+    const redundant = await openDraftReview(page);
+    await redundant.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
+      .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
+      .click();
+    await closeTextView(page);
+    const { draft: committedDraft, ...committedShared } = committedState;
+    const { draft: discardedDraft, ...discardedShared } = await data.read();
+    expect(discardedShared).toEqual(committedShared);
+    expect(discardedDraft.changes).toEqual(committedDraft.changes);
+    expect(discardedDraft.objectTypes ?? []).toEqual([]);
+    expect(discardedDraft.relationshipTypes ?? []).toEqual([]);
+    expect(
+      (
+        await (
+          await page.request.get(
+            `${installation.origin}/api/households/${data.household.id}/map/history`,
+          )
+        ).json()
+      ).history,
+    ).toEqual(committedHistory);
+    expect((await data.read()).draft.relationships ?? []).toEqual([]);
+    expect(draftConflicts(await data.read())).toEqual([]);
     const table = await utilityButton(page, 'Tabell');
     await table.click();
     const householdTable = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
@@ -221,6 +370,15 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
       knowledge: ended.knowledge,
       lifecycle: 'active',
     });
+    await readNativeContext(false);
+    await page
+      .getByRole('complementary', { name: 'Kartans sökresultat' })
+      .getByRole('button', { name: 'Ta med upphörda', exact: true })
+      .click();
+    await readNativeContext(true);
+    await focusMapSearch(page);
+    await (await mapFilters(page)).getByLabel('Ta med upphörda', { exact: true }).uncheck();
+    await page.keyboard.press('Escape');
     await data.post('relationship', {
       id: ended.id,
       baseRevision: ended.revision,

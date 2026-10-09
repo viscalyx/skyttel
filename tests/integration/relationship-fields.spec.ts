@@ -7,6 +7,7 @@ import {
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { openSavedHistory, readCommittedHistoryCard } from '../support/conversation-page.js';
 import {
   editObjectRelationship,
   openObjectRelationships,
@@ -193,6 +194,7 @@ test('STY-07: relationship type changes require an explicit decision about earli
         })
       ).status(),
     ).toBe(200);
+    const originalReceipt = (await (await page.request.get(`${path}/history`)).json()).history[0];
     await page.goto(installation.origin);
     await editObjectRelationship(page, 'bike', 'bike → hör till → garage');
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption('second');
@@ -222,6 +224,37 @@ test('STY-07: relationship type changes require an explicit decision about earli
       beforeType: { id: 'first' },
       type: { id: 'second' },
     });
+    const nativeHistory = await openSavedHistory(page);
+    const changedCard = await readCommittedHistoryCard(nativeHistory, history[0]);
+    await changedCard.getByText('Visa ändringarna', { exact: true }).click();
+    const changedRelationship = changedCard
+      .locator('.history-changes > div')
+      .filter({ has: page.getByRole('heading', { name: 'Samband: Tillgång', exact: true }) });
+    await expect(changedRelationship.getByText('Identitet: edge', { exact: true })).toBeVisible();
+    for (const [title, answer] of [
+      ['Före sparandet', 'Behåll som historik'],
+      ['Efter sparandet', 'Ny betydelse'],
+    ]) {
+      const fields = changedRelationship.locator(
+        `xpath=./section[preceding-sibling::h5[1][text()="${title}"]]`,
+      );
+      await expect(fields.getByText(`Anteckning: ${answer}`, { exact: true })).toBeVisible();
+    }
+    const originalCard = await readCommittedHistoryCard(nativeHistory, originalReceipt);
+    await originalCard.getByText('Visa ändringarna', { exact: true }).click();
+    const definition = originalCard
+      .locator('.history-changes > div')
+      .filter({ has: page.getByRole('heading', { name: 'Sambandstyp: Förvaring', exact: true }) });
+    for (const value of ['Identitet: first', 'Förvaring', 'hör till', 'har', 'Anteckning', 'Text'])
+      await expect(definition).toContainText(value);
+    const originalRelationship = originalCard
+      .locator('.history-changes > div')
+      .filter({ has: page.getByRole('heading', { name: 'Samband: Förvaring', exact: true }) });
+    await expect(originalRelationship.getByText('Identitet: edge', { exact: true })).toBeVisible();
+    await expect(originalRelationship).toContainText('bike → hör till → garage');
+    await expect(
+      originalRelationship.getByText('Anteckning: Behåll som historik', { exact: true }),
+    ).toBeVisible();
   } finally {
     await installation.close();
   }

@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { access, readFile } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
+import type { SaveOperation, SaveReceipt } from '../../src/shared/map.js';
 import type { TextAssistantReview, TextAssistantView } from '../../src/shared/text-assistant.js';
 import {
   closeSupportDialog,
@@ -14,6 +15,7 @@ import {
 import {
   openConversationText,
   openSavedHistory,
+  readCommittedHistoryCard,
   startConversationWithText,
 } from '../support/conversation-page.js';
 import {
@@ -434,6 +436,7 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
       (window as unknown as { skyttelTextDelivery: { arm(): void } }).skyttelTextDelivery.arm();
     });
     let dropped = false;
+    let committedReceipt: SaveReceipt | undefined;
     await page.route('**/text-assistant/*/messages', async (route) => {
       const response = await route.fetch();
       expect(response.status()).toBe(202);
@@ -444,6 +447,12 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
           ),
         )
         .toBe(true);
+      const operations = (await (await page.request.get(`${path}/operations`)).json())
+        .operations as SaveOperation[];
+      const committed = operations.find((operation) => operation.status === 'succeeded');
+      if (committed?.status !== 'succeeded')
+        throw new Error('Missing original committed receipt before delivery loss');
+      committedReceipt = committed.receipt;
       dropped = true;
       await route.fulfill({ response });
     });
@@ -484,6 +493,9 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
     await expect(
       history.getByText(`Sparande: ${actualOperationId}`, { exact: true }),
     ).toBeVisible();
+    if (!committedReceipt) throw new Error('Missing captured original receipt');
+    expect(committedReceipt.operationId).toBe(actualOperationId);
+    await readCommittedHistoryCard(history, committedReceipt);
     const verifiedComparison = page.waitForEvent('console', {
       predicate: (message) =>
         message.type() === 'log' &&
@@ -502,6 +514,10 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
     expect(operations).toHaveLength(1);
     expect(operations[0].status).toBe('succeeded');
     expect(operations[0].operationId).toBe(actualOperationId);
+    expect(operations[0].receipt).toEqual(committedReceipt);
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([
+      committedReceipt,
+    ]);
     expect((await (await page.request.get(path)).json()).objects).toHaveLength(1);
     await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     const recoveredDraft = await showDraft(page);

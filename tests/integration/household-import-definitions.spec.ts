@@ -10,6 +10,7 @@ import {
   utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { readCommittedHistoryCard } from '../support/conversation-page.js';
 import { editTableObject } from '../support/domain-work.js';
 import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation } from '../support/installation.js';
@@ -140,8 +141,13 @@ test('IMPORT-07: browser field editing, replacement and historical reading prese
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
     };
     const save = async () => {
+      const saved = page.waitForResponse(
+        (response) =>
+          response.url() === `${path}/map/save` && response.request().method() === 'POST',
+      );
       await saveReviewedConflictDraft(page);
       await closeTextView(page);
+      return (await (await saved).json()).receipt as SaveReceipt;
     };
     const createMeter = async (name: string, value: string) => {
       const form = await openNewObject(page);
@@ -152,15 +158,15 @@ test('IMPORT-07: browser field editing, replacement and historical reading prese
       await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     };
     await editDefinition('text', true);
-    await save();
+    const definitionReceipt = await save();
     await editDefinition('number');
     await createMeter('Mätare', '42');
-    await save();
+    const additionReceipt = await save();
     await openTable(page);
     await page.getByRole('button', { name: 'Ta bort Mätare', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Ta bort Mätare', exact: true })).toBeDisabled();
     await editDefinition('text');
-    await save();
+    const removalReceipt = await save();
     const before = (await (await page.request.get(`${path}/map/history`)).json()).history;
     const archive = await downloadHouseholdExport(page, path);
     await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
@@ -193,6 +199,9 @@ test('IMPORT-07: browser field editing, replacement and historical reading prese
     await expect(removal).toContainText('Serienummer: Tal');
     await expect(removal).toContainText('Serienummer: Text');
     await expect(removal.locator('time')).toHaveAttribute('datetime', before[0].savedAt);
+    for (const receipt of [removalReceipt, additionReceipt, definitionReceipt])
+      await readCommittedHistoryCard(history, receipt);
+    expect(before).toEqual([removalReceipt, additionReceipt, definitionReceipt]);
     expect((await (await page.request.get(`${path}/map/history`)).json()).history).toEqual(before);
     await page.goto(installation.origin);
     await editDefinition('number');

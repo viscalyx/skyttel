@@ -1,6 +1,7 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, signIn, utilityButton } from '../support/client.js';
+import { readCommittedHistoryCard } from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
 
 async function setup(client: APIRequestContext, origin: string) {
@@ -39,9 +40,9 @@ test('HISTORIK-01: Reports preserves table work and lists only completed saves l
   try {
     const data = await setup(page.request, installation.origin);
     await data.object('person', 'Lo Exempel');
-    await data.save('initial');
+    const initialReceipt = await data.save('initial');
     await data.object('person', 'Lo Lind');
-    await data.save('rename');
+    const renameReceipt = await data.save('rename');
     await data.object('private', 'Privat person');
     const before = await data.read();
     await page.goto(`${installation.origin}/households/${data.household.id}`);
@@ -56,6 +57,13 @@ test('HISTORIK-01: Reports preserves table work and lists only completed saves l
     const first = history.getByRole('article').first();
     await expect(first).toContainText('Lo Lind');
     await expect(first).toContainText('Alex Exempel');
+    for (const [index, receipt] of [renameReceipt, initialReceipt].entries()) {
+      await expect(history.getByRole('article').nth(index)).toHaveAttribute(
+        'data-save',
+        receipt.operationId,
+      );
+      await readCommittedHistoryCard(history, receipt);
+    }
     await expect(history).not.toContainText('Privat person');
     await first.getByText('Visa ändringarna', { exact: true }).click();
     await expect(first.getByText('Namn: Lo Exempel.', { exact: true })).toBeVisible();

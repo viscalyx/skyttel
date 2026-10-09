@@ -65,10 +65,37 @@ test('AVTAL-04: dated financial proposals recover and a zero credit correction s
     await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await page.getByLabel('Utnyttjad kredit', { exact: true }).fill('0');
     await page.getByLabel('Utnyttjad kredit: datum för uppgiften').fill('2026-09-20');
+    await expect(page.getByLabel('Utnyttjad kredit: uppgiftens säkerhet')).toHaveValue('known');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const correction = await readDraftProposal(page, 'Exempelkredit');
     await expect(correction).toContainText('12 500');
     await expect(correction).toContainText('2026-09-20');
+    for (const [title, usedCredit] of [
+      ['Sparade värden', '12 500 · datum för uppgiften: 2026-09-02'],
+      ['Föreslagna värden', '0 · datum för uppgiften: 2026-09-20'],
+    ]) {
+      const side = correction
+        .locator('section')
+        .filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+      for (const [label, value] of [
+        [
+          'Senast uppgiven skuld',
+          '125 000,50 (Osäkert uppgivet) · datum för uppgiften: 2026-09-01',
+        ],
+        ['Beviljat kreditutrymme', '80 000 · datum för uppgiften: 2026-08-01'],
+        ['Utnyttjad kredit', usedCredit],
+        ['Valuta', 'SEK'],
+        ['Pris', 'Okänt'],
+        ['Avtalsvillkor', 'Uttryckligen inget'],
+      ]) {
+        const field = side
+          .locator('dt')
+          .filter({ hasText: new RegExp(`^${label}(?: · ändrat)?$`) })
+          .locator('..')
+          .locator('dd');
+        await expect(field).toHaveText(value);
+      }
+    }
     await closeSupportDialog(page, 'Exempelkredit');
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
