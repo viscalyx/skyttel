@@ -73,3 +73,33 @@ Utdraget förändrar inte begärans innehåll, medlemskap eller databas.
 Det skriver endast förberedelsens tillstånd; kopiera inga cookies, token
 eller privata svar till testprotokollet. Den tekniska rökprovningen bevisar
 ingen fysisk tangent, skärmläsaruppläsning eller verklig zoom.
+
+## Tidpunkter för IMPORT-14
+
+Driftansvarig installerar ovanstående block med `import-status-drop` i
+första profilens importflik efter omstarten och omladdningen i UI-steg 3,
+före statusknappen i steg 4. Meddela **Svarsförberedelsen är installerad**
+efter körning utan fel; gör ingen extra statusläsning före människans klick.
+Först efter **Hämta importens status**: invänta **Serverns svar tappat**
+och meddela att den verkliga lyckade statusresponsen har tappats. Människan
+läser sedan felet och gör nästa vanliga hämtning enligt UI-steg 5.
+Utan markören är felgränsen inte verifierad. Vid avbrutet prov laddas fliken
+om för att återställa förberedelsen; upprepa inte ersättningen.
+
+## Tidpunkter för IMPORT-15 och IMPORT-22–24
+
+Driftansvarig installerar ovanstående block med `prepare-delay` efter
+filfelet och det giltiga filvalet i UI-steg 3, före nästa filkontroll.
+Meddela **Svarsförberedelsen är installerad** efter körning utan fel.
+Stäng utvecklarverktygen så att den avsedda sidbredden bevaras. Först efter
+människans **Kontrollera importfil**: invänta **Serverns svar väntar** och
+meddela att serverns verkliga lyckade svar hålls kvar. Läs vid behov
+markören i ett separat verktygsfönster som inte ändrar sidbredden.
+
+Människan flyttar därefter fokus till **Tillbaka till kartan**. Först när
+det fokuset är synligt: släpp svaret med den oförändrade tangentkombinationen
+Alt+Skift+L i själva provsidan. Byt inte fokus till något annat element eller
+Console för att släppa svaret. Granskningen ska visas med människans senare
+fokus kvar. Samma tidpunkter gäller i båda teman och när IMPORT-22–24
+kör basfallet i sina egna bredder. Utan väntemarkören är provet inte utfört.
+Vid avbrutet prov återställs fetch och tangentbordsregeln genom omladdning.

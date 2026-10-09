@@ -16,6 +16,12 @@ deras uttryckliga städsteg; ta sedan bort dem och provinstallationens filer.
 UI-resultat och tekniska resultat antecknas separat. HTTP-status, exakta
 begäransfält och arkivjämförelser är tekniskt underlag. De påstår ingen
 mänsklig observation av skärmläsare, fysisk utrustning eller verklig zoom.
+Driftansvarig lämnar de angivna förberedelsebeskeden till människan vid
+respektive UI-steg. Efter en tillfällig konsolförberedelse kan verktygen
+stängas så att provets avsedda sidbredd bevaras; öppna dem igen för nästa
+markör eller släppning. Vid beständig begäransblockering ska verktygen
+i stället lossas till ett separat fönster och hållas öppna tills fallet
+uttryckligen tillåter att blockeringen tas bort.
 
 ## IMPORT-06: förberedelse 1
 
@@ -113,6 +119,17 @@ for (const slot of ['image', 'later']) {
 
 ## IMPORT-09: förberedelse 1
 
+Driftansvarig installerar blocket i Alex profil efter UI-steg 1 och före
+bekräftelsen i steg 3. Meddela **Svarsförberedelsen är installerad** när
+blocket har körts utan fel; invänta inte ett slutfört försök före klicket.
+Efter Alex bekräftelse: invänta **IMPORT-09: slutfört försök** och det
+faktiska ID:t. Meddela att just ersättningen är slutförd och svaret tappat.
+Om markören saknas är felgränsen inte verifierad. Fetch återställs när
+begäran fångas; vid avbrott före klicket återställs den genom omladdning.
+I IMPORT-14:s UI-steg 1 används samma block i första profilen efter
+filkontrollen och före bekräftelsen. Meddela först installationen, sedan
+det verkliga slutförda försöket och det tappade svaret efter klicket.
+
 ```javascript
 (() => {
   const originalFetch = window.fetch.bind(window);
@@ -134,6 +151,13 @@ for (const slot of ['image', 'later']) {
 
 ## IMPORT-10: förberedelse 1
 
+Driftansvarig installerar blocket i profil A efter filvalet i UI-steg 1,
+före **Kontrollera importfil**. Meddela **Svarsförberedelsen är installerad**
+efter körning utan fel. Först efter filkontrollen i steg 2: invänta
+**IMPORT-10: kontrollerad förberedelse** och det verkliga ID:t; meddela att
+förberedelsen finns på servern och svaret har tappats. Utan markören är
+provet inte verifierat. Återställning sker som i IMPORT-09 ovan.
+
 ```javascript
 (() => {
   const originalFetch = window.fetch.bind(window);
@@ -154,6 +178,15 @@ for (const slot of ['image', 'later']) {
 ```
 
 ## IMPORT-17: förberedelse 1
+
+Efter **Rensning tillåten** i UI-steg 4 installerar driftansvarig blocket
+i den andra profilens importflik. Meddela **Svarsförberedelsen är
+installerad** innan människan aktiverar rensningsknappen. Invänta därefter
+**Avbrott utfört, svar dolt** och meddela att det verkliga avbrottet är
+utfört. Filkontrollen i den separata filförberedelsen ska då passera.
+Första statusläsningen i steg 5 tappas också; den andra läsningen släpps
+igenom. Gör ingen extra läsning eller ny rensning däremellan.
+Ladda om först enligt steg 6 eller vid avbrutet prov för att återställa fetch.
 
 ```javascript
 const originalFetch = window.fetch;
@@ -181,6 +214,20 @@ window.fetch = async (...args) => {
 
 ## IMPORT-19: förberedelse 1
 
+Driftansvarig installerar blocket i samma importflik efter filkontrollen
+i UI-steg 1, före **Avbryt förberedelsen**. Meddela
+**Svarsförberedelsen är installerad** efter körning utan fel. Invänta först
+efter avbrottsklicket **Avbrottet är utfört, svaret väntar**. Meddela att
+serverns verkliga avbrott är utfört och det gamla svaret hålls kvar;
+människan kan nu navigera enligt steg 2.
+
+Håll kvar svaret genom navigeringen och den nya filkontrollen i steg 3.
+Först när den nya granskningen och dess nya ID visas: kör
+`window.releaseImportReply()` i samma fliks Console och meddela
+**Det gamla svaret har släppts**. Det gamla svaret får aldrig släppas före
+den nya förberedelsen. Omladdningen i steg 4 återställer förberedelsen.
+Vid avbrutet prov: släpp det hållna svaret och ladda om, utan ny ersättning.
+
 ```javascript
 const originalFetch = window.fetch;
 const heldReply = new Promise((resolve) => {
@@ -203,6 +250,19 @@ window.fetch = async (...args) => {
 ```
 
 ## IMPORT-20: förberedelse 1
+
+Driftansvarig installerar blocket i första fliken efter att den andra
+fliken har avbrutit just den gamla förberedelsen i UI-steg 1, före
+statusknappen i steg 2. Meddela **Svarsförberedelsen är installerad** efter
+körning utan fel. Först efter statusklicket: invänta **Försöket saknas,
+svaret väntar**. Markören kräver det verkliga svaret HTTP 404 med
+`import_unavailable`; meddela att det svaret hålls kvar före navigeringen.
+
+Behåll det gamla svaret genom steg 3 och den nya filkontrollen i steg 4.
+Först när den nya granskningen och dess nya ID visas: kör
+`window.releaseImportStatus()` i första flikens Console och meddela
+**Det gamla svaret har släppts**. Omladdningen i steg 5 återställer
+förberedelsen. Vid avbrutet prov: släpp det hållna svaret och ladda om.
 
 ```javascript
 const originalFetch = window.fetch;
@@ -257,6 +317,20 @@ window.fetch = async (...args) => {
 ```
 
 ## FLYTT-01: förberedelse 1
+
+Driftansvarig kör blocket på källans hushållssida i profil A vid UI-steg 3
+med `source`, samt på målets hushållssida i profil B vid steg 7 med
+`destination`. I FLYTT-02 används profil B vid steg 1 med `destination`,
+först efter att den extra flikens oskickade formulär är öppet. Använd
+respektive faktiskt hushålls-ID från adressen. Den beständiga blockeringen
+ska redan vara aktiv enligt respektive falls separata förberedelse.
+
+Invänta **FLYTT-01: känt väntande försök förberett** och kontrollera att
+`skyttel-move-source.json` eller `skyttel-move-destination.json` hämtas.
+Meddela **Väntande försök förberett, begäransfilen sparad** före fortsatt
+UI-arbete. Behåll filerna privat till den angivna tekniska kontrollen och
+städningen. Detta registrerar ett väntande försök utan att skicka `/save`;
+det är inte ett tappat svar från ett genomfört sparande.
 
 ```javascript
 await (async () => {
@@ -339,6 +413,24 @@ await (async () => {
 ```
 
 ## FLYTT-02: förberedelse 1
+
+Driftansvarig installerar blocket i Robins innehållskopplingsflik efter
+granskningen i UI-steg 2, före bekräftelsen i steg 3. Meddela
+**Svarsförberedelsen är installerad** efter körning utan fel. Invänta inte
+servermarkören innan människan markerar rutan och bekräftar med
+tangentbordet. Först efter bekräftelsen: invänta **FLYTT-02: kopplingen
+finns på servern** och meddela att den verkliga kopplingen är sparad och
+just dess svar har tappats. Om markören saknas är provet inte verifierat.
+
+Efter att människan läst okänt utfall i steg 4 installerar driftansvarig
+[svarsförberedelsen](household-recovery-faults.md#fördröj-eller-tappa-nästa-verkliga-svar)
+med `owner-status-drop` i samma flik. Meddela installationsbesked före
+**Hämta aktuella innehållskopplingar**. Först efter det klicket: invänta
+**Serverns svar tappat**, meddela att den verkliga metadataresponsen har
+tappats och låt människan läsa felet innan nästa vanliga hämtning i steg 5.
+Ingen ny innehållskoppling får ersätta en utebliven läsning.
+Fetch återställs när begäran fångas; vid avbrott före klick återställs den
+genom omladdning. Den beständiga återhämtningsblockeringen ska behållas.
 
 ```javascript
 (() => {

@@ -388,19 +388,18 @@ import after a lost response and restart”.
 **Steg:**
 
 1. Alex väljer exportfilen och **Kontrollera importfil**. Läs granskningen.
-2. Kör följande kod i utvecklarverktygens Console innan bekräftelsen.
-   Den släpper igenom serverns begäran och kastar bort ett lyckat svar.
-   Fortsätt endast om konsolen senare visar det slutförda försökets ID.
+2. Be driftansvarig förbereda det tappade bekräftelsesvaret enligt
+   [IMPORT-09:s separata förberedelse](household-recovery-console.md#import-09-förberedelse-1).
+   Invänta besked att förberedelsen är installerad före bekräftelsen.
 3. Alex markerar bekräftelsen och väljer **Ersätt hushållets innehåll**.
    Kontrollera beskedet **Utfallet är okänt** och att nytt filval är spärrat.
+   Invänta driftansvarigs bekräftelse att ersättningen är slutförd på
+   servern och att just dess svar har tappats innan Robin fortsätter.
 4. Robin öppnar importen i sin egen webbläsare. Kontrollera att slutfört
    resultat visas för samma försökets ID, utan uppladdning eller bekräftelse.
 5. Kontrollera återställt innehåll, privata utkast och aktuell tillgång.
    Starta om servern med samma databas och ladda om Robins importvy.
    Samma försök och resultat ska fortfarande visas.
-
-Kör [den separata förberedelsen 1](household-recovery-console.md#import-09-förberedelse-1)
-för IMPORT-09 i det angivna läget.
 
 **Förväntat resultat:**
 
@@ -444,10 +443,12 @@ preparation before an older completed import”.
 
 **Steg:**
 
-1. Öppna importen i profil A och välj exportfilen på nytt. Kör följande
-   kod i utvecklarverktygens Console före **Kontrollera importfil**.
-2. Välj **Kontrollera importfil**. Fortsätt endast om konsolen visar
-   ID för en kontrollerad förberedelse. Läs felbeskedet i gränssnittet.
+1. Öppna importen i profil A och välj exportfilen på nytt. Be driftansvarig
+   installera [IMPORT-10:s separata svarsförberedelse](household-recovery-console.md#import-10-förberedelse-1).
+   Invänta installationsbesked före **Kontrollera importfil**.
+2. Välj **Kontrollera importfil**. Invänta driftansvarigs bekräftelse att
+   servern har förberett filen och tappat svaret för just den granskningen.
+   Läs felbeskedet i gränssnittet.
    Robin öppnar importen utan att välja en fil. Den äldre slutförda
    importen visas; Alex nya obekräftade granskning och dess bekräftelse
    får inte visas för Robin.
@@ -457,9 +458,6 @@ preparation before an older completed import”.
 4. Kontrollera att innehållet fortfarande är oförändrat och att
    ersättning kräver en ny markering av bekräftelsen.
 5. Bekräfta ersättningen i profil B. Kontrollera det slutförda resultatet.
-
-Kör [den separata förberedelsen 1](household-recovery-console.md#import-10-förberedelse-1)
-för IMPORT-10 i det angivna läget.
 
 **Förväntat resultat:**
 
@@ -714,17 +712,20 @@ identity after a newer replacement and a lost status response”.
 
 **Steg:**
 
-1. Förbered filen i den första profilen. Kör koden i IMPORT-09 för att
-   kasta bort det riktiga lyckade bekräftelsesvaret. Bekräfta ersättningen
-   och anteckna försökets ID. Utfallet ska visas som okänt.
+1. Förbered filen i den första profilen. Be driftansvarig installera
+   [det tappade bekräftelsesvaret](household-recovery-console.md#import-09-förberedelse-1)
+   och invänta installationsbesked före bekräftelsen. Bekräfta ersättningen
+   och anteckna försökets ID. Utfallet ska visas som okänt. Invänta därefter
+   besked att servern har slutfört just försöket och att dess svar tappats.
 2. Öppna importen i den andra profilen. Den visar första försökets resultat.
    Välj sedan exporten igen, granska och bekräfta en ny ersättning.
    Anteckna det nya försökets ID; det ska skilja sig från det första.
 3. Starta om servern med samma databas. Ladda om den första profilens
    importsida. Det första ID:t ska finnas kvar och nytt filval vara spärrat.
-4. Följ [den separata svarsförberedelsen](household-recovery-faults.md#fördröj-eller-tappa-nästa-verkliga-svar)
-   med `import-status-drop` och välj **Hämta importens status**.
-   Serverns lyckade lässvar tappas. Ett fel ska visas utan slutfört resultat.
+4. Be driftansvarig installera [IMPORT-14:s separata läsfel](household-recovery-faults.md#tidpunkter-för-import-14).
+   Invänta installationsbesked, välj sedan **Hämta importens status**.
+   Invänta besked att serverns verkliga lyckade lässvar har tappats.
+   Ett fel ska visas utan slutfört resultat.
    Filvalet förblir spärrat och samma första ID ska fortfarande visas.
 5. Hämta status igen utan någon ny felregel. Det första försökets
    slutförda resultat ska visas. Ingen ny ersättning ska skickas.
@@ -787,12 +788,13 @@ review, errors and assignment at 1280px”.
 2. Välj `invalid.zip` och aktivera **Kontrollera importfil** med Enter.
    Kontrollera det tydliga felet och att fokus återgår till filvalet.
    Inget hushållsinnehåll ska ändras.
-3. Följ [den separata svarsförberedelsen](household-recovery-faults.md#fördröj-eller-tappa-nästa-verkliga-svar)
-   med `prepare-delay` före filkontrollen. Välj den riktiga exporten och
-   kontrollera filen. Invänta att serverns verkliga svar väntar. Flytta fokus
-   till
-   **Tillbaka till kartan** medan svaret väntar. Ditt nya fokus ska
-   finnas kvar när granskningen visas efter Alt+Skift+L.
+3. Välj den riktiga exporten. Be driftansvarig installera
+   [IMPORT-15:s separata fördröjning](household-recovery-faults.md#tidpunkter-för-import-15-och-import-2224)
+   och invänta installationsbesked före filkontrollen. Kontrollera filen
+   och invänta besked att serverns verkliga svar hålls kvar. Flytta fokus
+   till **Tillbaka till kartan** medan svaret väntar. Be först därefter
+   driftansvarig släppa svaret enligt förberedelsen. Ditt nya fokus ska
+   finnas kvar när granskningen visas.
 4. Aktivera **Hämta importens status**. Fokus ska gå till
    **Granska ersättningen**. Läs vad som ersätts och behålls.
 5. Aktivera **Avbryt förberedelsen** med Enter. Efter lyckat avbrott ska
@@ -957,17 +959,15 @@ remain bound to the same unconfirmed preparation”.
    Samma ID och **Slutför förberedelsens rensning** ska visas. Filval och
    ersättning ska vara spärrade.
 4. Invänta **Rensning tillåten** enligt den separata förberedelsen.
-   Kör svarsförberedelsen nedan i den andra profilens Console. Aktivera
-   rensningen.
-   Fortsätt endast om konsolen visar **Avbrott utfört, svar dolt**.
+   Be driftansvarig installera [IMPORT-17:s svarsförberedelse](household-recovery-console.md#import-17-förberedelse-1)
+   i den andra profilen. Invänta installationsbesked, aktivera sedan
+   **Slutför förberedelsens rensning**. Invänta driftansvarigs bekräftelse
+   att avbrottet är utfört och dess svar dolt innan nästa steg.
 5. Välj **Hämta importens status**. Det första lässvaret försvinner också;
    samma ID och spärrat filval ska finnas kvar. Välj status en gång till.
 6. Förberedelsen ska nu vara otillgänglig och filvalet tillgängligt.
    Detta ska inte presenteras som ett kvitto på avbrottet. Starta om
    servern och ladda om sidan. Kartan och det privata utkastet är kvar.
-
-Kör [den separata förberedelsen 1](household-recovery-console.md#import-17-förberedelse-1)
-för IMPORT-17 i det angivna läget.
 
 **Förväntat resultat:**
 
@@ -1080,20 +1080,20 @@ newer preparation after Settings navigation”.
 
 **Steg:**
 
-1. Kontrollera exportfilen och anteckna ID. Kör koden nedan och välj
-   **Avbryt förberedelsen**. Fortsätt när konsolen visar **Avbrottet är
-   utfört, svaret väntar**.
+1. Kontrollera exportfilen och anteckna ID. Be driftansvarig installera
+   [IMPORT-19:s svarsförberedelse](household-recovery-console.md#import-19-förberedelse-1)
+   och invänta installationsbesked. Välj **Avbryt förberedelsen**.
+   Invänta därefter besked att servern har utfört avbrottet och att det
+   gamla svaret hålls kvar, innan du navigerar.
 2. Öppna **Koppla historiskt innehåll** och återgå till importen. Hämta
    första försökets status och läs att förberedelsen inte finns längre.
-3. Kontrollera filen igen och anteckna det nya ID:t. Kör
-   `window.releaseImportReply()` i Console för att släppa det äldre svaret.
+3. Kontrollera filen igen och anteckna det nya ID:t. Läs den nya
+   granskningen innan du ber driftansvarig släppa det äldre svaret enligt
+   förberedelsen. Invänta besked att det gamla svaret har släppts.
 4. Ladda om sidan. Det nya ID:t ska finnas kvar med spärrat filval tills
    **Hämta importens status** läser just den nya förberedelsen.
 5. Läs den nya granskningen och avbryt den uttryckligen. Kartan ska vara
-   oförändrad genom hela provet. Omladdning återställer Console-koden.
-
-Kör [den separata förberedelsen 1](household-recovery-console.md#import-19-förberedelse-1)
-för IMPORT-19 i det angivna läget.
+   oförändrad genom hela provet. Följ förberedelsens återställning.
 
 **Förväntat resultat:**
 
@@ -1137,19 +1137,19 @@ a newer preparation after Settings navigation”.
 1. Kontrollera exportfilen i första fliken och anteckna ID. Öppna
    importen i en andra flik med samma inloggning och avbryt just den
    förberedelsen där. Läs att tillfälliga filer är borttagna.
-2. Kör koden nedan i första fliken och välj **Hämta importens status**.
-   Fortsätt när konsolen visar **Försöket saknas, svaret väntar**.
+2. Be driftansvarig installera [IMPORT-20:s svarsförberedelse](household-recovery-console.md#import-20-förberedelse-1)
+   i första fliken och invänta installationsbesked. Välj
+   **Hämta importens status**. Invänta därefter besked att servern har
+   svarat att det gamla försöket saknas och att svaret hålls kvar.
 3. Öppna **Koppla historiskt innehåll** och återgå till importen i
    första fliken. Hämta status igen och läs att förberedelsen inte finns.
-4. Kontrollera filen på nytt och anteckna det nya ID:t. Kör
-   `window.releaseImportStatus()` i Console för att släppa det äldre svaret.
+4. Kontrollera filen på nytt och anteckna det nya ID:t. Läs den nya
+   granskningen innan du ber driftansvarig släppa det äldre svaret enligt
+   förberedelsen. Invänta besked att det gamla svaret har släppts.
 5. Ladda om sidan. Det nya ID:t ska finnas kvar med spärrat filval tills
    **Hämta importens status** läser just den nya förberedelsen.
 6. Läs granskningen och avbryt den uttryckligen. Kartan ska vara
-   oförändrad. Omladdning återställer Console-koden.
-
-Kör [den separata förberedelsen 1](household-recovery-console.md#import-20-förberedelse-1)
-för IMPORT-20 i det angivna läget.
+   oförändrad. Följ förberedelsens återställning.
 
 **Förväntat resultat:**
 

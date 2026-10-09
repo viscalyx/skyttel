@@ -757,7 +757,10 @@
     "launchern",
     "fyrasekundersgräns",
     "avbrottsgräns",
-    "utkastbatchen"
+    "utkastbatchen",
+    "begäransfilen",
+    "provfilerna",
+    "filfelet"
   ],
   "overrides": [
     {
