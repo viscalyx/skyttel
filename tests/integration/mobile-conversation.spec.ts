@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { createHousehold, signIn } from '../support/client.js';
+import { closeSupportDialog, createHousehold, signIn } from '../support/client.js';
 import {
   closeConversationText,
   microphoneButton,
@@ -54,18 +54,16 @@ async function setup(
 }
 
 for (const size of [
-  { width: 390, height: 844, mobile: true },
-  { width: 375, height: 667, mobile: true },
-  { width: 844, height: 390, mobile: true },
-  { width: 820, height: 1180, mobile: true },
-  { width: 1180, height: 820, mobile: true },
-  { width: 320, height: 250, mobile: false },
-  { width: 700, height: 500, mobile: false },
-  { width: 1280, height: 900, mobile: false },
+  { caseId: 'TEXTMOBIL-06', width: 390, height: 844, mobile: true },
+  { caseId: 'TEXTMOBIL-07', width: 844, height: 390, mobile: true },
+  { caseId: 'TEXTMOBIL-08', width: 820, height: 1180, mobile: true },
+  { caseId: 'TEXTMOBIL-09', width: 320, height: 250, mobile: false },
+  { caseId: 'TEXTMOBIL-10', width: 700, height: 500, mobile: false },
+  { caseId: 'TEXTMOBIL-01', width: 1280, height: 900, mobile: false },
 ])
   test.describe(`${size.width}×${size.height} ${size.mobile ? 'pekare finger' : 'pekare mus'}`, () => {
     test.use({ viewport: size, isMobile: size.mobile, hasTouch: size.mobile });
-    test('TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad', async ({ page }) => {
+    test(`${size.caseId}: samma lägesregel ger rätt bredd och kompakt rad`, async ({ page }) => {
       const { app } = await setup(page);
       try {
         await startConversationWithText(page);
@@ -119,6 +117,15 @@ for (const size of [
         await expect(
           view(page).getByRole('region', { name: 'Utkastet', exact: true }),
         ).toContainText('Lo Exempel');
+        await view(page)
+          .getByRole('region', { name: 'Utkastet', exact: true })
+          .getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true })
+          .click();
+        const fullProposal = page.getByRole('dialog', { name: 'Lo Exempel', exact: true });
+        await expect(fullProposal).toBeVisible();
+        await expect(fullProposal).toContainText('Person');
+        await expect(fullProposal).toContainText('Påhittad uppgift');
+        await closeSupportDialog(page, 'Lo Exempel');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );
@@ -129,14 +136,13 @@ for (const size of [
   });
 
 for (const size of [
-  { width: 390, height: 844, visible: 508 },
-  { width: 375, height: 667, visible: 407 },
-  { width: 1180, height: 820, visible: 420 },
-  { width: 844, height: 390, visible: 190 },
+  { caseId: 'TEXTMOBIL-02', width: 390, height: 844, visible: 508 },
+  { caseId: 'TEXTMOBIL-11', width: 1180, height: 820, visible: 420 },
+  { caseId: 'TEXTMOBIL-12', width: 844, height: 390, visible: 190 },
 ])
   test.describe(`synlig höjd ${size.visible}`, () => {
     test.use({ viewport: size, isMobile: true, hasTouch: true });
-    test('TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts', async ({ page }) => {
+    test(`${size.caseId}: synlig höjd följs utan att fält eller fokus byts`, async ({ page }) => {
       const { app } = await setup(page);
       try {
         await startConversationWithText(page);

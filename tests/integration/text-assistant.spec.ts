@@ -1,15 +1,112 @@
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { access } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
 import type { TextAssistantReview, TextAssistantView } from '../../src/shared/text-assistant.js';
-import { closeTextView, createHousehold, openMap, openTable, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openMap,
+  openTable,
+  signIn,
+} from '../support/client.js';
 import {
   openConversationText,
   openSavedHistory,
   startConversationWithText,
 } from '../support/conversation-page.js';
-import { editTableObject } from '../support/domain-work.js';
+import {
+  editObjectRelationship,
+  editTableObject,
+  readDraftProposal,
+  readTableObject,
+} from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { manualTextDeliverySource } from '../support/manual-text-delivery.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
+import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
+
+for (const seeded of [false, true])
+  test(`manual text launcher public preparation ${seeded ? 'seeded' : 'empty'} rejects an unaccepted delivery`, {
+    tag: '@technical',
+  }, async ({ page }) => {
+    const child = spawn(process.execPath, ['--import', 'tsx', 'scripts/manual-text-assistant.ts'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let output = '';
+    let resolveReady!: (value: { origin: string; directory: string }) => void;
+    const ready = new Promise<{ origin: string; directory: string }>((resolve) => {
+      resolveReady = resolve;
+    });
+    child.stdout.on('data', (chunk) => {
+      output += String(chunk);
+      const line = output.split('\n').find((value) => value.includes('"event":"ready"'));
+      if (line) resolveReady(JSON.parse(line));
+    });
+    child.stderr.on('data', () => {});
+    const app = await ready;
+    try {
+      await signIn(page.request, app.origin);
+      const { household } = await (await createHousehold(page.request, app.origin)).json();
+      const path = `${app.origin}/api/households/${household.id}/map`;
+      if (seeded) {
+        const state = await (await page.request.get(path)).json();
+        const response = await page.request.post(`${path}/draft`, {
+          headers: { origin: app.origin },
+          data: {
+            version: state.draft.version,
+            contentVersion: state.contentVersion,
+            id: 'lo',
+            baseRevision: null,
+            value: {
+              typeId: state.types[0].id,
+              name: 'Lo Exempel',
+              description: 'Påhittad uppgift',
+            },
+          },
+        });
+        expect(response.status()).toBe(200);
+      }
+      const before = await (await page.request.get(path)).json();
+      await page.goto(`${app.origin}/households/${household.id}`);
+      const result = await page.evaluate(async (url) => {
+        const control = (
+          window as unknown as {
+            skyttelTextDelivery: { arm(): void; status(): { phase: string }; clear(): void };
+          }
+        ).skyttelTextDelivery;
+        control.arm();
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+        const result = { status: response.status, phase: control.status().phase };
+        control.clear();
+        return result;
+      }, `${app.origin}/api/households/${household.id}/text-assistant/missing-session/messages`);
+      expect(result).toEqual({ status: 404, phase: 'not-accepted' });
+      expect(await (await page.request.get(path)).json()).toEqual(before);
+      expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
+      await page.reload();
+      expect(
+        await page.evaluate(
+          () =>
+            (
+              window as unknown as { skyttelTextDelivery: { status(): { phase: string } } }
+            ).skyttelTextDelivery.status().phase,
+        ),
+      ).toBe('idle');
+    } finally {
+      child.stdin.end('quit\n');
+      if (child.exitCode === null) await once(child, 'exit');
+      expect(child.exitCode).toBe(0);
+      expect(output).toContain('"event":"closed"');
+      await expect(access(app.directory)).rejects.toThrow();
+    }
+  });
 
 const assistant = (page: Page) => page.getByRole('region', { name: 'Arbetsyta', exact: true });
 const transcript = (page: Page) => page.getByRole('log', { name: 'Samtalstext', exact: true });
@@ -53,108 +150,6 @@ async function arrange(page: Page, app: Awaited<ReturnType<typeof createInstalla
   await openTable(page);
   return { path, value };
 }
-
-test('TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och eftervärden', async ({
-  page,
-}) => {
-  const app = await createInstallation(undefined, {
-    modelFetch: textModel(() => [modelMessage('Ett provsvar.')]).provider,
-  });
-  try {
-    await signIn(page.request, app.origin);
-    const { household } = await (await createHousehold(page.request, app.origin)).json();
-    const path = `${app.origin}/api/households/${household.id}/map`;
-    const read = async () => (await page.request.get(path)).json();
-    const post = async (route: string, data: object) => {
-      const state = await read();
-      const response = await page.request.post(`${path}/${route}`, {
-        headers: { origin: app.origin },
-        data: { version: state.draft.version, contentVersion: state.contentVersion, ...data },
-      });
-      expect(response.status(), await response.text()).toBe(200);
-    };
-    const state = await read();
-    await post('object-type', {
-      id: 'card-type',
-      baseRevision: null,
-      value: {
-        name: 'Provkort',
-        description: '',
-        fields: [{ id: 'last-four', name: 'Sista fyra', description: '', kind: 'text' }],
-      },
-    });
-    const value = {
-      typeId: 'card-type',
-      name: 'Kortet',
-      description: '',
-      customValues: { 'last-four': '1111' },
-    };
-    await post('draft', { id: 'card', baseRevision: null, value });
-    await post('draft', {
-      id: 'kim',
-      baseRevision: null,
-      value: { typeId: state.types[0].id, name: 'Kim', description: '' },
-    });
-    await post('save', { operationId: 'summary-initial' });
-    await post('draft', {
-      id: 'card',
-      baseRevision: 1,
-      value: { ...value, customValues: { 'last-four': '2222' } },
-    });
-    await post('relationship', {
-      id: 'payment',
-      baseRevision: null,
-      value: {
-        typeId: state.relationshipTypes.find((type: { name: string }) => type.name === 'Betalar')
-          .id,
-        sourceId: 'kim',
-        targetId: 'card',
-        knowledge: 'known',
-      },
-    });
-    await post('object-type', {
-      id: 'storage-type',
-      baseRevision: null,
-      value: { name: 'Förvaring', description: 'Hushållets förvaring', fields: [] },
-    });
-    await post('relationship-type', {
-      id: 'storage-link',
-      baseRevision: null,
-      value: {
-        name: 'Förvaras',
-        description: '',
-        forwardLabel: 'förvaras i',
-        reverseLabel: 'innehåller',
-      },
-    });
-    await page.goto(app.origin);
-    await openTable(page);
-    await consent(page);
-    const summary = (await showDraft(page)).getByRole('table', { name: 'Osparade ändringar' });
-    await expect(summary.locator('tbody tr')).toHaveCount(4);
-    for (const line of [
-      'Sista fyra: 1111 → 2222',
-      'Kim → Betalar → Kortet',
-      'Förvaring',
-      'Förvaras',
-    ])
-      await expect(summary.getByText(line, { exact: false })).toBeVisible();
-    await expect(summary.getByRole('columnheader')).toHaveText([
-      'Symbol',
-      'Namn',
-      'Typ',
-      'Vad som ändras',
-    ]);
-    expect(
-      (await read()).objects.find((object: { id: string }) => object.id === 'card').customValues[
-        'last-four'
-      ],
-    ).toBe('1111');
-    expect((await read()).draft.relationships).toHaveLength(1);
-  } finally {
-    await app.close();
-  }
-});
 
 test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext', async ({
   page,
@@ -239,6 +234,19 @@ test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext'
     ).toHaveCount(1);
     await expect(await showDraft(page)).toContainText('Utkastet är tomt.');
     await expect(await showAttempts(page)).toContainText('Familjens Molnmusik');
+    const savedSubscription = await readTableObject(page, 'Familjens Molnmusik');
+    for (const value of ['Familjeabonnemang 189 kr per månad.', '189', 'SEK', 'månad'])
+      await expect(savedSubscription).toContainText(value);
+    const savedLo = await readTableObject(page, 'Lo Lind');
+    await expect(savedLo).toContainText('Spelar piano i musikföreningen.');
+    const familyHistory = await openSavedHistory(page);
+    const familyReceipt = familyHistory
+      .getByRole('article')
+      .filter({ hasText: 'Familjens Molnmusik' })
+      .first();
+    await familyReceipt.getByText('Visa ändringarna', { exact: true }).click();
+    for (const value of ['189', 'SEK', 'månad', 'Lo Lind', 'musik@example.test'])
+      await expect(familyReceipt.locator('.history-changes')).toContainText(value);
     const map = await (
       await page.request.get(`${app.origin}/api/households/${household.id}/map`)
     ).json();
@@ -316,6 +324,17 @@ test('TEXT-02: sena svar efter kastat utkast och avbrott ändrar inte nytt arbet
       'Avbrutet. Föreslagna ändringar ligger kvar i utkastet.',
     );
     expect((await (await page.request.get(path)).json()).draft.changes).toEqual([]);
+    await closeTextView(page);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    const newForm = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+    await newForm.getByLabel('Namn', { exact: true }).fill('Nytt vanligt arbete');
+    await newForm.getByLabel('Beskrivning', { exact: true }).fill('Efter båda sena svaren');
+    await newForm.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    expect((await (await page.request.get(path)).json()).draft.changes).toMatchObject([
+      { after: { name: 'Nytt vanligt arbete', description: 'Efter båda sena svaren' } },
+    ]);
+    const ordinaryProposal = await readDraftProposal(page, 'Nytt vanligt arbete');
+    await expect(ordinaryProposal).toContainText('Efter båda sena svaren');
   } finally {
     await app.close();
   }
@@ -367,6 +386,9 @@ test('TEXT-03: nekade sparbesked och modellfel lämnar formulärarbetet tillgän
     expect((await (await page.request.get(path)).json()).draft.changes[0].after.name).toBe(
       'Lo Lind',
     );
+    const corrected = await readDraftProposal(page, 'Lo Lind');
+    await expect(corrected).toContainText('Person');
+    await expect(corrected).toContainText('Påhittad uppgift');
   } finally {
     await app.close();
   }
@@ -391,6 +413,10 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
   try {
     const { path } = await arrange(page, app);
     await consent(page);
+    await page.evaluate(manualTextDeliverySource);
+    await page.evaluate(() => {
+      (window as unknown as { skyttelTextDelivery: { arm(): void } }).skyttelTextDelivery.arm();
+    });
     let dropped = false;
     await page.route('**/text-assistant/*/messages', async (route) => {
       const response = await route.fetch();
@@ -403,12 +429,28 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
         )
         .toBe(true);
       dropped = true;
-      await route.abort();
+      await route.fulfill({ response });
     });
     await send(page, 'Spara hela utkastet nu.');
     await expect.poll(() => dropped).toBe(true);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (
+              window as unknown as { skyttelTextDelivery: { status(): { phase: string } } }
+            ).skyttelTextDelivery.status().phase,
+        ),
+      )
+      .toBe('dropped-after-commit');
     await expect(notice(page)).toContainText(
       'Det är oklart om utkastet sparades. Skyttel kontrollerar det.',
+    );
+    const actualOperationId = await page.evaluate(
+      () =>
+        (
+          window as unknown as { skyttelTextDelivery: { status(): { operationId: string } } }
+        ).skyttelTextDelivery.status().operationId,
     );
     await app.restart();
     await page.unroute('**/text-assistant/*/messages');
@@ -418,9 +460,16 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
     const history = await showAttempts(page);
     await expect(history.getByRole('article')).toHaveCount(1);
     await expect(history).toContainText('Lo Exempel');
+    await expect(
+      history.getByText(`Sparande: ${actualOperationId}`, { exact: true }),
+    ).toBeVisible();
+    await history.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(history.locator('.history-changes')).toContainText('Påhittad uppgift');
+    await expect(history.locator('.history-changes')).toContainText('Person');
     const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
     expect(operations).toHaveLength(1);
     expect(operations[0].status).toBe('succeeded');
+    expect(operations[0].operationId).toBe(actualOperationId);
     expect((await (await page.request.get(path)).json()).objects).toHaveLength(1);
   } finally {
     await app.close();
@@ -448,6 +497,9 @@ test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ pa
     await expect(selected).toHaveAttribute('aria-pressed', 'true');
     const mapStatus = page.getByRole('region', { name: 'Kartans status', exact: true });
     await expect(mapStatus).toContainText('Markerat i kartan.');
+    await expect(page.getByRole('region', { name: 'Lo Exempel', exact: true })).toContainText(
+      'Påhittad uppgift',
+    );
     await openConversationText(page);
     await expect(selected).toHaveAttribute('aria-pressed', 'true');
     await send(page, 'Markera Lo igen.');
@@ -510,6 +562,14 @@ test('TEXT-06: obekräftad samtalstext skiljs från sparande och markering', asy
       expect(current.objects).toEqual(before.objects);
       expect(current.draft).toEqual(before.draft);
       expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
+      const retained = await readDraftProposal(page, 'Lo Exempel');
+      await expect(retained).toContainText('Lo Exempel');
+      await expect(retained).toContainText('Person');
+      await expect(retained).toContainText('Påhittad uppgift');
+      await closeSupportDialog(page, 'Lo Exempel');
+      await assistant(page)
+        .getByRole('button', { name: /^Dölj utkastet/ })
+        .click();
     }
     await send(page, 'Spara hela utkastet nu.');
     await expect(
@@ -521,6 +581,9 @@ test('TEXT-06: obekräftad samtalstext skiljs från sparande och markering', asy
     await expect(history.getByRole('article')).toHaveCount(1);
     await expect(history).toContainText('Lo Exempel');
     expect((await (await page.request.get(path)).json()).objects).toMatchObject([{ id: 'lo' }]);
+    await history.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(history.locator('.history-changes')).toContainText('Person');
+    await expect(history.locator('.history-changes')).toContainText('Påhittad uppgift');
   } finally {
     await app.close();
   }
@@ -579,6 +642,32 @@ test('TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitto', asyn
       value: { ...relationship, typeId: usageType.id },
     });
     await post('save', { operationId: 'details-baseline' });
+    await page.reload();
+    const relationshipForm = await editObjectRelationship(
+      page,
+      'Lo Exempel',
+      'Lo Exempel → Använder → Tonrum',
+    );
+    await relationshipForm
+      .getByLabel('Sambandstyp', { exact: true })
+      .selectOption({ label: 'Betalar' });
+    await stageRelationshipAndClose(page);
+    const objectForm = await editTableObject(page, 'Tonrum');
+    await objectForm.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+    await objectForm.getByLabel('Objektets status', { exact: true }).selectOption('ended');
+    await objectForm
+      .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
+      .click();
+    const nativeProposal = await showDraft(page);
+    await expect(nativeProposal).toContainText('Gäller: Aktuellt → Upphört');
+    await expect(nativeProposal).toContainText('Använder → Betalar');
+    const nativeState = await read();
+    expect(nativeState.draft.changes).toMatchObject([
+      { id: 'tonrum', after: { ...service, lifecycle: 'ended' } },
+    ]);
+    expect(nativeState.draft.relationships).toMatchObject([
+      { id: 'lo-tonrum', after: { ...relationship, typeId: paymentType.id } },
+    ]);
     await post('draft', {
       id: 'tonrum',
       baseRevision: 1,
@@ -617,6 +706,19 @@ test('TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitto', asyn
       'ended',
     );
     expect(saved.relationships).toMatchObject([{ typeId: paymentType.id }]);
+    await openTable(page);
+    await page
+      .getByRole('region', { name: 'Hushållets tabell', exact: true })
+      .getByRole('button', { name: 'Filter', exact: true })
+      .click();
+    await page
+      .getByRole('dialog', { name: 'Tabellens filter', exact: true })
+      .getByLabel('Ta med upphörda', { exact: true })
+      .check();
+    await page.keyboard.press('Escape');
+    const savedTonrum = await readTableObject(page, 'Tonrum');
+    await expect(savedTonrum).toContainText('Manuellt upphört');
+    await expect(savedTonrum).toContainText('Tjänst');
     const operations = await (await page.request.get(`${path}/operations`)).json();
 
     await send(page, 'Vad sparades senast?');

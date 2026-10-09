@@ -27,16 +27,18 @@ Escape visar **Lämna ändrade uppgifter?**. **Fortsätt redigera** behåller
 alla värden. **Kasta ändringarna och fortsätt** lämnar bara det oskickade
 formuläret; befintliga förslag i utkastet påverkas inte.
 
-1. TEXT-01 använder den
-   [verkliga modellens isolerade setup](../development/devcontainer.md#optional-assistant-access).
+1. TEXT-01 använder familjeunderlaget i
+   [separat förberedelse](text-conversation-preparation.md#familjerättelsen).
    Övriga fall använder den
    [kontrollerade startguiden](#controlled-text-fixture).
    Den senare håller varje modellsvar tills du släpper det i terminalen.
    Den provar inte en verklig modells svenska språkförståelse.
-2. Skapa hushållet Textprov. Skapa objektet **Lo Exempel** av typen
+2. För övriga fall: skapa hushållet Textprov. Skapa objektet **Lo Exempel** av typen
    **Person**, med beskrivningen **Påhittad uppgift**, genom formuläret.
    Välj **Lägg i utkastet och stäng** och lämna förslaget osparat.
-3. Välj **Skriv till Skyttel → Nytt samtal** och **Godkänn och starta**.
+3. När fallet inte anger en egen samtalsstart: välj **Skriv till Skyttel →
+   Nytt samtal** och **Godkänn och starta**. Övriga fall anger starten i
+   sina steg.
    [Samtalsmedgivandet](conversation-consent.md) har egna testfall.
 4. Starta en ny tom kontrollerad installation mellan TEXT-02 till TEXT-09.
    Behåll samma databas under ett omstartsprov. Avsluta med `quit` och
@@ -49,40 +51,53 @@ formuläret; befintliga förslag i utkastet påverkas inte.
 **Syfte:** Fortsätta ett befintligt utkast och spara en tydlig rättelse
 utan extra ja, med ett riktigt kvitto.
 
-**Användare:** Alex med verklig Terra low. CI använder en deterministisk
-leverantörsersättare för samma applikationsflöde.
+**Användare:** Alex i den kontrollerade installationen.
 
-**Förutsättningar:** Isolerad installation med serverns privata OpenAI-nyckel.
-Lo-förslaget finns redan. API-anrop i detta mänskliga prov kan kosta pengar.
+**Förutsättningar:** Det exakt förberedda familjeunderlaget enligt separat
+förberedelse, före inloggning. Ingen verklig API-nyckel krävs.
 
 **Integrationstest:**
 [text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
 testfallet “TEXT-01: familjeärendet sparas samlat med bevarad oskickad
 formulärtext”.
 
+**Separat förberedelse:**
+[Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-01"
+  },
+  "reference": "Kontrollerat familjeunderlag på dator; samtidig konflikt och oskickat objektformulär.",
+  "outcomes": [
+    "Fortsätta ett befintligt utkast och spara en tydlig rättelse utan extra ja, med ett riktigt kvitto."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Beskriv familjens påhittade Molnmusik: tjänstekonto, separat kontakt-
-   och inloggningsadress, Alex som avtalspart, Kim som betalare och ett
-   kort som betalningsmedel. Lo använder tjänsten. Ange 149 kr per månad.
-2. Svara på frågor om identiteter. Ange uttryckligen att ett omnämnt
-   bankkonto är ospecificerat; låt en uppgift vara okänd och en annan
-   osäkert uppgiven. Be om en begriplig sammanställning av hela utkastet.
-3. Kontrollera att tidigare Lo-förslaget ingår och att kontot inte har
-   blivit en e-postadress. Be om en rättelse av inloggningsadressen.
-4. Skicka **Rätta priset till 189 kr och spara**. Medan uppdraget arbetar,
-   stäng textvyn och välj **Tabell → Redigera Kim Exempel**. Skriv
-   **Osänd text som ska finnas kvar** i beskrivningen. Lägg den inte i
-   utkastet. Det kontrollerade testet håller modellsvar före rättelsen
-   tills formuläret är ändrat; anteckna om den verkliga modellen hinner
-   slutföra uppdraget före detta steg.
-5. När sparandet slutförs, kontrollera att formulärets oskickade text
-   ligger kvar. Tryck Escape, välj **Fortsätt redigera** och kontrollera
-   texten igen. Lämna sedan uttryckligen med **Kasta ändringarna och
-   fortsätt**. Läs **Sparat.** i textvyn och det tomma utkastet.
-6. Öppna **Rapporter → Ändringshistorik**. Återläs abonnemang, betalare,
-   betalningsmedel, konto och adresser. Kontrollera även okända och
-   osäkra uppgifter. Den oskickade texten ingår inte i sparandet.
+1. Börja med det kontrollerade, fullständiga familjeunderlaget. Öppna textvyn,
+   godkänn, öppna utkastet och läs Lo-förslaget med samtidig konflikt.
+2. Skicka **Behåll Lo-förslaget, rätta priset till 189 kr och spara.** Håll
+   svaret enligt separat förberedelse. Stäng textvyn och välj **Tabell →
+   Redigera Kim Exempel**. Skriv **Osänd text som ska finnas kvar** i
+   Beskrivning utan att lägga den i utkastet.
+3. Låt operatören släppa rättelsen och sparandet. Läs samma oskickade text.
+   Tryck Escape, välj **Fortsätt redigera**, läs igen och lämna sedan med
+   **Kasta ändringarna och fortsätt**.
+4. Läs **Sparat.** i textvyn och det tomma utkastet. Fäll ut
+   **Familjens Molnmusik** i Tabell och läs **Familjeabonnemang 189 kr per
+   månad.**, pris 189, valuta SEK och intervall månad. Fäll ut **Lo Lind**
+   och läs **Spelar piano i musikföreningen.**
+5. Öppna **Rapporter → Ändringshistorik**, senaste familjerättelsen och
+   **Visa ändringarna**. Läs Lo Lind, 189 SEK per månad och
+   `musik@example.test`. De skilda rollerna och kunskapsstatusarna hör till
+   det kompletta förberedda familjeunderlaget; tidigare kvitton finns kvar.
 
 **Förväntat resultat:**
 
@@ -111,21 +126,34 @@ Datorfönstret är bredare än 700 px.
 testfallet “TEXT-02: sena svar efter kastat utkast och avbrott ändrar inte
 nytt arbete”.
 
+**Separat förberedelse:**
+[Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-02"
+  },
+  "reference": "Dator; kontrollerad leverantör och den angivna motiverade felgränsen.",
+  "outcomes": [
+    "Ett äldre uppdrag får inte återinföra ett kastat förslag."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Skriv **Rätta namnet**. Behåll numret från terminalens `held`-händelse.
-   Kopiera `draft.version`, `contentVersion`, Lo-förslagets `id` och hela
-   dess `after`-objekt. Byt bara `name` till **För sent** i kopian.
-2. Välj **Kasta hela utkastet** i kartan medan svaret fortfarande hålls.
-3. Släpp det gamla numret med `tool NUMMER propose_object JSON`.
-   `JSON` ska innehålla de ursprungliga `version`, `contentVersion`,
-   `id`, `baseRevision: null` och det kopierade objektet under `value`.
-   Använd inte den nya versionen efter kastandet.
-4. Skicka **Skapa ett nytt förslag**. När nästa svar hålls, tryck Escape
-   med fokus i meddelandefältet. Släpp även det svaret som ett
-   `propose_object`
-   med den version som hörde till just det uppdraget och ett nytt ID.
-5. Kontrollera utkast och sparad karta. Fortsätt med ett vanligt formulär.
+1. Starta med text och skicka **Rätta namnet.** Läs **Skyttel arbetar**.
+   Välj **Kasta hela utkastet** medan operatören håller svaret.
+2. Låt operatören släppa det gamla förslaget. Läs felnotisen och tomt utkast.
+3. Skicka **Skapa ett nytt förslag.** När nästa svar hålls, tryck Escape
+   med fokus i meddelandefältet. Släpp det sena svaret. Läs avbrottsbeskedet
+   och tomt utkast; inget **För sent** har lagts tillbaka.
+4. Fortsätt genom det vanliga objektformuläret med ett nytt förslag och
+   kontrollera att endast detta nya arbete läggs i utkastet.
 
 **Förväntat resultat:**
 
@@ -148,16 +176,35 @@ leverantörsfel förstör inte utkastet.
 testfallet “TEXT-03: nekade sparbesked och modellfel lämnar formulärarbetet
 tillgängligt”.
 
+**Separat förberedelse:**
+[Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-03"
+  },
+  "reference": "Dator; kontrollerad leverantör och den angivna motiverade felgränsen.",
+  "outcomes": [
+    "Det verkliga meddelandet styr tillåtelsen att spara och ett leverantörsfel förstör inte utkastet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Skicka **Spara inte**. Släpp det hållna svaret med
-   `tool NUMMER save_draft JSON`, där `JSON` innehåller terminalens aktuella
-   `version`, `contentVersion` och `operationId: "nekad-1"`.
-2. Upprepa med **Vad händer om vi sparar?**, **Spara ej**, **Spara senare**
-   och **Skriv ”spara” i beskrivningen**. Använd ett nytt prov-ID varje gång.
-3. Skicka **Beskriv mitt utkast** och skriv `fail NUMMER` för det svaret.
-4. Öppna Lo i formuläret, rätta namnet till **Lo Lind** och lägg det i
-   utkastet. Kontrollera att tidigare förslag finns kvar.
+1. Skicka **Spara inte.**, **Vad händer om vi sparar?**, **Spara ej.**,
+   **Spara senare.** och **Skriv ”spara” i beskrivningen.**, ett i taget.
+   Låt operatören försöka spara efter varje meddelande. Vänta på den
+   uttryckliga felnotisen före nästa meddelande.
+2. Skicka **Beskriv mitt utkast.** och låt operatören ge leverantörsfel.
+   Läs felnotisen och kvarvarande Lo-förslag.
+3. Stäng textvyn, välj **Tabell → Redigera Lo Exempel**, rätta Namn till
+   **Lo Lind** och välj **Lägg i utkastet och stäng**. Läs Lo Lind med
+   oförändrad **Påhittad uppgift** i utkastets fullständiga uppgifter.
 
 **Förväntat resultat:**
 
@@ -181,30 +228,39 @@ tillgängligt”.
 testfallet “TEXT-04: ett tappat sparbesked återfinns efter omstart utan
 dubbelt sparande”.
 
+**Separat förberedelse:**
+[Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-04"
+  },
+  "reference": "Dator; faktisk202, native UUID, genomförd transaktion, tappat svar och samma databas efter restart.",
+  "outcomes": [
+    "Återfinna ett genomfört sparande när webbläsaren saknar svaret."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Skicka **Spara hela utkastet nu** och vänta på terminalens `held`.
-2. I Chrome Network, välj **Offline**. Detta bryter webbläsarens hämtning
-   av uppdragsstatus; serverns leverantörsersättare fortsätter i terminalen.
-3. Släpp det hållna svaret med `tool NUMMER save_draft JSON`. Ange den
-   ursprungliga utkastversionen, `contentVersion` och ett prov-ID.
-4. Välj **No throttling** igen och stäng eller ladda inte om sidan än.
-   Läs sparförsöken genom följande skrivskyddade konsolkommando. Ersätt
-   `HUSHÅLL` med hushållets ID från den hållna begärans objekttyp:
-
-   ```javascript
-   const kontroll = await fetch('/api/households/HUSHÅLL/map/operations');
-   console.log((await kontroll.json()).operations.map(
-     ({ operationId, status }) => ({ operationId, status })
-   ));
-   ```
-
-5. Vänta tills försöket visar `succeeded`. Om det ännu inte är klart,
-   upprepa bara den skrivskyddade kontrollen; gör inget nytt sparförsök.
-   Skriv sedan `restart` i launcher-terminalen.
-6. Ladda om sidan och invänta den automatiska kontrollen av sparandet.
-   Den kräver inget nytt medgivande. Öppna **Rapporter → Ändringshistorik**.
-   Kontrollera det enda sparandet, Lo och det tomma utkastet.
+1. Starta med text. Låt operatören arma faktisk svarsförlust före
+   **Spara hela utkastet nu.** Skicka meddelandet. Låt operatören genomföra
+   sparandet och tappa svaret först efter riktig commit. Läs
+   **Det är oklart om utkastet sparades. Skyttel kontrollerar det.**
+2. Låt operatören starta om samma server och databas. Ladda om sidan och
+   öppna textvyn. Gör inget nytt sparförsök.
+3. Öppna **Rapporter → Ändringshistorik**, läs det enda sparandet med Lo.
+   Öppna **Identifiera sparandet och användaren**. Läs dess verkliga ID,
+   användare och tidpunkt. Det är samma identifierare som operatörens
+   faktiska genomförda försök, inte ett påhittat modell-ID.
+4. Öppna **Visa ändringarna** och läs **Person**, **Lo Exempel** och
+   **Påhittad uppgift** efter sparandet. Återgå till arbetet och kontrollera
+   det tomma utkastet.
 
 **Förväntat resultat:**
 
@@ -213,8 +269,9 @@ dubbelt sparande”.
   misslyckades. Omstart bevarar det genomförda försöket och dess enda kvitto.
 - Den automatiska kontrollen återfinner kvittot med ursprungligt ID.
   Ingen extra kopia eller
-  nytt sparande behövs. Webbläsarens offlineprov bryter statushämtningen;
-  CI avbryter dessutom det accepterade meddelandesvaret efter verklig commit.
+  nytt sparande behövs. Den kontrollerade browserleveransen tappar accepterat
+  textsvar först
+  efter genomfört sparande; offlineläge används inte som ersättning.
 
 ### TEXT-05: markering kräver visning och skyddar oskickad text
 
@@ -228,24 +285,36 @@ dubbelt sparande”.
 [text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
 testfallet “TEXT-05: markering kräver visning och skyddar oskickad text”.
 
+**Separat förberedelse:**
+[Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-05"
+  },
+  "reference": "Dator; kontrollerad leverantör och den angivna motiverade felgränsen.",
+  "outcomes": [
+    "Markeringsbesked ska motsvara ett faktiskt visat urval."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Skriv **Markera Lo i kartan**. Kopiera Lo-förslagets ID från `held`.
-   Svara med `tool NUMMER show_map_object {"objectId":"LO-ID"}`, där
-   `LO-ID` ersätts med det verkliga prov-ID:t.
-2. Kontrollera att Lo blir valt och synligt i kartan och att valda uppgifter
-   visar **Lo Exempel** samt **Påhittad uppgift**.
-   Nästa `held` ska innehålla `displayed: true`. Svara
-   `reply NUMMER Markerat!` och kontrollera det faktiska urvalet samt
-   **Markerat i kartan.** under hushållets namn.
-3. Skicka **Markera Lo igen** och låt svaret hållas. Stäng textvyn och
-   välj **Tabell → Redigera Lo Exempel**. Skriv **Osänd uppgift** i
-   beskrivningen. Släpp sedan visningsanropet från det hållna uppdraget.
-4. Kontrollera `displayed: false` och släpp sluttexten **Markerat!** igen.
-   Formuläret har kvar texten. Tryck Escape och välj **Fortsätt redigera**;
-   texten bevaras. Lämna uttryckligen med **Kasta ändringarna och fortsätt**,
-   läs samtalstexten och återgå till Karta. Inget nytt **Markerat i kartan.**
-   ska bekräfta det avvisade försöket.
+1. Skicka **Markera Lo i kartan.** Släpp visningen enligt separat
+   förberedelse. Läs Lo markerad, **Påhittad uppgift** i detaljpanelen och
+   **Markerat i kartan.** i kartans status. Sluttexten är **Markerat!**.
+2. Skicka **Markera Lo igen.** Håll svaret. Stäng textvyn och välj
+   **Tabell → Redigera Lo Exempel**. Skriv **Osänd uppgift** i Beskrivning.
+3. Släpp det gamla visningsanropet och samma sluttext. Läs kvarvarande
+   oskickad beskrivning. Escape, **Fortsätt redigera**, läs igen, sedan
+   Escape och **Kasta ändringarna och fortsätt**.
+4. Läs den fria sluttexten i textvyn. Återgå till Karta; inget nytt
+   **Markerat i kartan.** ska bekräfta den avvisade visningen.
 
 **Förväntat resultat:**
 
@@ -269,43 +338,36 @@ i kartan innan du börjar. Inget sparande är genomfört.
 [text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
 “TEXT-06: obekräftad samtalstext skiljs från sparande och markering”.
 
+**Separat förberedelse:**
+[Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-06"
+  },
+  "reference": "Dator; kontrollerad leverantör och den angivna motiverade felgränsen.",
+  "outcomes": [
+    "Skilja modellens fria svar från bekräftade resultat, även när svaret påstår att något har utförts med andra ord."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Skicka **Kontrollera utkastet.** till Skyttel. Vänta på `held`
-   i terminalen och ersätt `NUMMER` med anropets ID:
-
-   ```text
-   reply NUMMER Klart. Ändringarna är nu lagrade i hushållets karta.
-   ```
-
-2. Kontrollera att svaret står i samtalstexten. Kontrollera det
-   osparade Lo-förslaget genom antalet på **Visa utkastet** och att inget
-   nytt kvitto eller urval har skapats.
-3. Skicka samma fråga på nytt för varje svar nedan. Använd det nya
-   `held`-numret och släpp ett svar i taget:
-
-   ```text
-   reply NUMMER Saved successfully.
-   reply NUMMER Lo är nu vald och visas i kartan.
-   reply NUMMER Har du sparat tidigare, och vem betalar?
-   ```
-
-4. Kontrollera att varje svar visas i samma tydligt märkta samtalsdel.
-   Frågan ska gå att läsa som en vanlig följdfråga. Kontrollera utkastet,
-   kartans urval och tomma **Rapporter → Ändringshistorik** igen.
-5. Skicka **Spara hela utkastet nu**. Läs `version` och `contentVersion`
-   från det nya `held.draft`. Släpp anropet med följande kommando, efter
-   att du ersatt `NUMMER`, `VERSION` och `CONTENT` med aktuella värden:
-
-   ```text
-   tool NUMMER save_draft
-   {"version":VERSION,"contentVersion":CONTENT,"operationId":"text-proof-save"}
-   ```
-
-6. Kräv det verifierade beskedet **Sparat.** i samtalstexten.
-   Öppna **Rapporter → Ändringshistorik** och kontrollera det enda
-   sparandet, Lo i den sparade kartan
-   samt ett tomt utkast.
+1. Anteckna kartans urval. Skicka **Beskriv mitt utkast.** fyra gånger,
+   ett meddelande för varje förberett fritt svar. Läs varje svar i
+   Samtalstext. Öppna **Visa utkastet → Visa förslaget: Lo Exempel** och
+   läs **Person** och **Påhittad uppgift** efter varje svar; stäng uppgifterna
+   och dölj utkastet före nästa meddelande.
+2. Kartans urval och utkast är oförändrade. Ingen av de fria texterna
+   skapar ett kvitto; historiken är tom.
+3. Skicka **Spara hela utkastet nu.** Låt operatören släppa faktiskt
+   sparverktyg. Kräv **Sparat.**, tomt utkast och ett enda Lo-sparande
+   i **Rapporter → Ändringshistorik**.
 
 **Förväntat resultat:**
 
@@ -316,48 +378,6 @@ i kartan innan du börjar. Inget sparande är genomfört.
   sparanropet ger däremot kvitto, sparad Lo och bekräftad status.
 - Användbara frågor försvinner inte genom en lista med förbjudna ord.
 
-### TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och eftervärden
-
-**Syfte:** Förstå hela utkastets ändringar utan att behöva öppna detaljer.
-
-**Användare:** Alex i den kontrollerade installationen.
-
-**Förutsättningar:** Ny isolerad installation enligt startguiden. Detta
-fall använder egna förberedelser i stället för det vanliga Lo-förslaget.
-Inga modellsvar behövs; Skyttel läser det befintliga utkastet.
-
-**Integrationstest:**
-[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
-“TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och
-eftervärden”.
-
-**Steg:**
-
-1. Skapa objekttypen **Provkort** med textfältet **Sista fyra**, enligt
-   [typfallen](object-types.md). Skapa **Kortet** av denna typ med värdet
-   **1111** i fältet och personen **Kim**. Spara hela utkastet.
-2. Rätta Kortets **Sista fyra** till **2222** och lägg ändringen i utkastet.
-3. Lägg till ett samband från **Kim** med typen **Betalar** till **Kortet**.
-   Skapa också den oanvända objekttypen **Förvaring** och sambandstypen
-   **Förvaras**, med riktningarna **förvaras i** och **innehåller**.
-   Lämna alla fyra förslagen osparade.
-4. Välj **Skriv till Skyttel → Nytt samtal** och **Godkänn och starta**. Läs
-   **Visa utkastet** och läs tabellen utan att öppna andra detaljer.
-5. Kräv **Sista fyra: 1111 → 2222**, sambandet från Kim som betalar
-   Kortet samt de båda nya typerna i den synliga listan.
-6. Välj **Visa förslaget: [namn]** för detaljer vid behov. Kontrollera att den
-   sparade kartan fortfarande
-   har värdet 1111 och att de fyra förslagen ligger kvar i utkastet.
-
-**Förväntat resultat:**
-
-- Objekt, samband, objekttyper och sambandstyper ingår i samma synliga
-  sammanfattning. Ett föreslaget samband döljs inte i en detaljsektion.
-- Rättelsen använder verkligt tidigare och föreslaget värde. Den får
-  aldrig beskrivas som 2222 → 2222.
-- Att läsa sammanfattningen sparar ingenting. Fullständiga detaljer finns
-  kvar för fortsatt granskning.
-
 ### TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen
 
 **Syfte:** Skyttels markeringsbesked ska följa synlig karta och rätt
@@ -367,54 +387,50 @@ och när skärmen är smal.
 **Användare:** Alex i den kontrollerade installationen.
 
 **Förutsättningar:** Lo-förslaget finns. Lägg även **Molnmusik**, typ
-**Tjänst**, och ett samband **Lo Exempel → Använder → Molnmusik** i
+**Person**, och ett samband **Lo Exempel → Använder → Molnmusik** i
 utkastet genom formulären. Stäng formulären utan oskickad text.
 
 **Integrationstest:**
 [assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts),
 testfallet “TEXT-08: markering öppnar och centrerar objekt och samband
-före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
-640 × 500 och 320 × 250 CSS-pixlar.
+före bekräftelsen”, referensen 1440 × 1000 CSS-pixlar. Separata storleksfall
+finns nedan.
+
+**Separat förberedelse:**
+[Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistant-map.spec.ts",
+    "caseId": "TEXT-08"
+  },
+  "reference": "1440 × 1000 CSS-pixlar; synlig karta och detaljer, bortpanorerat samband, oskickat sambandsformulär.",
+  "outcomes": [
+    "Skyttels markeringsbesked ska följa synlig karta och rätt uppgifter i detaljpanelen, även när kartan är stängd eller bortpanorerad och när skärmen är smal."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna **Skriv till Skyttel**. Skriv **Visa Lo i kartan** i textvyn.
-   Kopiera Lo-förslagets ID från terminalens `held`. Svara med
-   `tool NUMMER show_map_item {"kind":"object","id":"LO-ID"}`;
-   byt `NUMMER` och `LO-ID` mot provets verkliga värden.
-2. Kontrollera att kartan öppnas och att Lo syns markerad i den.
-   Detaljpanelen ska samtidigt synas med Lo och beskrivningen
-   **Påhittad uppgift**, utan att du behöver rulla sidan för att hitta den.
-   Nästa `held` ska innehålla `displayed: true`. Släpp det svaret med
-   `reply NUMMER Här är urvalet.`, stäng Los uppgiftsfönster med krysset
-   och öppna textvyn med **Skriv till Skyttel**
-   om den är stängd och kontrollera att Lo fortfarande är markerad i kartan.
-   **Markerat i kartan.** står under hushållets namn, utanför textvyn.
-3. Öppna **Navigera** och panorera tills objekten inte syns.
-   Öppna textvyn och skriv **Visa sambandet mellan Lo och Molnmusik**.
-   Kopiera sambandets
-   ID från `held` och svara med
-   `tool NUMMER show_map_item {"kind":"relationship","id":"SAMBANDS-ID"}`.
-4. Kontrollera att båda objekten och det valda sambandet syns igen.
-   Detaljpanelen ska samtidigt visa **Lo Exempel → Använder → Molnmusik**.
-   Kontrollera `displayed: true` och släpp sluttexten.
-5. Skriv **Visa Lo igen** och låt modellsvar hållas. Stäng textvyn och
-   välj **Redigera valt samband**. Ändra **Till objekt** i formuläret
-   utan att lägga ändringen i utkastet. Släpp sedan det hållna
-   visningsanropet från steg 1.
-   Kontrollera `displayed: false`, släpp sluttexten och kontrollera att
-   formulärets oskickade ändring finns kvar.
-6. Lämna formuläret uttryckligen: Escape, **Fortsätt redigera**, kontroll
-   av samma värde, Escape och **Kasta ändringarna och fortsätt**. Upprepa
-   steg 1–5 med ett smalt telefonfönster. Textvyn stängs när Skyttel visar
-   något i kartan. Valda uppgifter och karta syns samtidigt; längre
-   uppgifter rullas inuti sin läsvy. Markering öppnar inget formulär.
-7. Prova också faktisk webbläsarzoom 200 och 400 procent. I ett kort
-   fönster kan objektets uppgiftsfönster överlappa verktygen; stäng det
-   med krysset efter läsningen. Sambandets läsyta visas bredvid kartan.
-   Rulla ned för samtalsstatus och mikrofonkontroller. De ska gå att
-   nå med tangentbord utan horisontell sidrullning. **Visa verktygens namn**
-   visar textingången när verktygsraden är hopfälld.
+1. Skicka **Visa Lo i kartan.** Låt operatören släppa objektvisningen.
+   Läs Lo markerad och **Påhittad uppgift** samtidigt i detaljpanelen.
+   Stäng uppgifterna efter sluttexten och öppna textvyn; Lo är fortfarande
+   valt och **Markerat i kartan.** står i kartans status.
+2. Öppna **Navigera**, panorera vänster tills objekten inte syns. Skicka
+   **Visa sambandet mellan Lo och Molnmusik.** Släpp sambandsvisningen.
+   Läs båda objekten och det markerade sambandet samtidigt med
+   **Lo Exempel → Använder → Molnmusik** i detaljpanelen.
+3. Skicka **Visa Lo igen.** Håll svaret, stäng textvyn och välj
+   **Redigera valt samband** med tangentbord. Kontrollera Molnmusik i
+   **Till objekt** och ändra till Lo utan att lägga ändringen i utkastet.
+4. Släpp den gamla visningen. Läs samma oskickade värde Lo i formuläret.
+   Ingen ny bekräftad markering tillkommer. Avsluta provet utan att lägga
+   formulärändringen i utkastet. Vid hopfällda verktyg används
+   **Visa verktygens namn** före skrivandet.
 
 **Förväntat resultat:**
 
@@ -433,7 +449,9 @@ detaljer från kvittot efter ett kort sparbesked.
 
 **Användare:** Alex i den kontrollerade installationen.
 
-**Förutsättningar:** Lo-förslaget finns. Terminalen håller modellsvar.
+**Förutsättningar:** Lo och Tonrum (Tjänst, Gäller fortfarande) samt deras
+Använder-samband
+är samlat sparade. Terminalen håller modellsvar.
 Datorfönstret är bredare än 700 px.
 Alla uppgifter är påhittade.
 
@@ -441,48 +459,41 @@ Alla uppgifter är påhittade.
 [text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
 testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitto”.
 
+**Separat förberedelse:**
+[Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-09"
+  },
+  "reference": "Dator; kontrollerad leverantör och den angivna motiverade felgränsen.",
+  "outcomes": [
+    "Granska verkliga före- och eftervärden i samtalet och få samma detaljer från kvittot efter ett kort sparbesked."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
-1. Skapa **Tonrum**, typ **Tjänst**, genom formuläret. Välj **Gäller
-   fortfarande** under **Objektets status**. Lägg objektet och sambandet
-   **Lo Exempel → Använder → Tonrum** i utkastet. Spara hela utkastet.
-2. Redigera sambandet och byt typen till **Betalar**. Lägg rättelsen i
-   utkastet. Redigera sedan Tonrum, välj statusen **Upphört** och lägg
-   även den rättelsen i utkastet. Lämna båda osparade.
-3. Öppna **Tabell** och sedan textvyn med **Skriv till Skyttel**. Skicka
-   **Läs upp hela utkastet.** i
-   textvyn. Ersätt `NUMMER` med det aktuella `held`-numret i terminalen:
-
-   ```text
-   tool NUMMER report_result {"source":"draft"}
-   ```
-
-4. I **Samtalstext**, kräv **Utkast:**, **Gäller: aktuellt → upphört** för
-   Tonrum och **Lo Exempel Använder Tonrum → Lo Exempel Betalar Tonrum**.
-   Kontrollera att båda rättelserna fortfarande ligger i utkastet och att
-   **Tabell** fortfarande visar utkastet.
-5. Skicka **Spara hela utkastet nu.** Läs `version` och `contentVersion`
-   från det nya `held.draft`. Ersätt `NUMMER`, `VERSION` och `CONTENT`:
-
-   ```text
-   tool NUMMER save_draft
-   {"version":VERSION,"contentVersion":CONTENT,"operationId":"text-details-save"}
-   ```
-
-6. Kräv det korta beskedet **Sparat.** i samtalstexten och ett tomt utkast.
-   Kontrollera att **Tonrum** och sambandstypen **Betalar** finns i
-   Tabell. Det gemensamma sparandet finns i **Rapporter → Ändringshistorik**.
-   Välj **Tillbaka till arbetet** före nästa textmeddelande.
-7. Skicka **Vad sparades senast?** Använd det nya `held`-numret:
-
-   ```text
-   tool NUMMER report_result {"source":"latest_save"}
-   ```
-
-8. Kräv **Sparandet:** och samma tidigare och nya status respektive sambandstyp
-   i **Samtalstext**. Kontrollera att utkastet förblir tomt och att inget nytt
-   sparande tillkommer i **Ändringshistorik**. Tabell ska fortfarande
-   gå att öppna med **Tabell**.
+1. Redigera det sparade sambandet via **Tabell → Samband för Lo Exempel**.
+   Byt Använder till **Betalar**, välj **Lägg i utkastet**, läs bekräftelsen
+   och stäng samband. Redigera Tonrum och välj **Upphört** under
+   **Objektets status**, sedan **Lägg i utkastet och stäng**.
+2. Öppna utkastet och läs båda rättelserna innan något senare uppdrag.
+   Skicka **Läs upp hela utkastet.** Låt operatören leverera rapporten.
+   Läs **Utkast:**, **Tonrum (Gäller: aktuellt → upphört)** och
+   **Lo Exempel Använder Tonrum → Lo Exempel Betalar Tonrum**.
+3. Skicka **Spara hela utkastet nu.** Läs **Sparat.** och tomt utkast.
+   Öppna **Tabell → Filter**, markera **Ta med upphörda** och stäng
+   filtret med Escape. Fäll ut Tonrum och läs **Tjänst** och
+   **Manuellt upphört**.
+4. Skicka **Vad sparades senast?** Låt operatören leverera kvittorapporten.
+   Läs **Sparandet:** med samma före-/eftervärden. Tabell finns kvar och
+   inget nytt sparande har tillkommit.
 
 **Förväntat resultat:**
 
@@ -493,6 +504,162 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
   ingen kartmarkering och ändrar eller sparar inga uppgifter.
 - Själva sparandet bekräftas kort. Detaljer ges när de efterfrågas och
   bygger då på det beständiga kvittot.
+
+## Separata kvarvarande kartstorlekar
+
+### TEXT-10: markering öppnar och centrerar objekt och samband före bekräftelsen
+
+**Syfte:** Skydda kortare datorvy.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Nytt identiskt underlag som TEXT-08, vid 1280 × 720.
+
+**Integrationstest:**
+[assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts), TEXT-10.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistant-map.spec.ts",
+    "caseId": "TEXT-10"
+  },
+  "reference": "1280 × 720 CSS-pixlar; kortare datorvy.",
+  "outcomes": [
+    "Objekt och samband visas med läsbara detaljer före bekräftelsen.",
+    "Oskickad Till objekt-rättelse bevaras och hindrar ett nytt urval."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXT-08:s steg 1–4 **en gång** vid 1280 × 720. Under steg 1–2
+   bedöms samtidiga läsbara detaljer; under steg 3–4 bevarat formulär.
+
+**Förväntat resultat:**
+
+- Samma fullständiga visnings- och oskickade formulärgräns som TEXT-08
+  fungerar vid denna storlek. Ingen faktisk zoom eller fysisk pekare påstås.
+
+### TEXT-11: markering öppnar och centrerar objekt och samband före bekräftelsen
+
+**Syfte:** Skydda smal karta med samtidig detaljläsning.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Nytt identiskt underlag som TEXT-08, vid 390 × 844.
+
+**Integrationstest:**
+[assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts), TEXT-11.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistant-map.spec.ts",
+    "caseId": "TEXT-11"
+  },
+  "reference": "390 × 844 CSS-pixlar; smal karta med samtidig detaljläsning.",
+  "outcomes": [
+    "Objekt och samband visas med läsbara detaljer före bekräftelsen.",
+    "Oskickad Till objekt-rättelse bevaras och hindrar ett nytt urval."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXT-08:s steg 1–4 **en gång** vid 390 × 844. Under steg 1–2
+   bedöms samtidiga läsbara detaljer; under steg 3–4 bevarat formulär.
+
+**Förväntat resultat:**
+
+- Samma fullständiga visnings- och oskickade formulärgräns som TEXT-08
+  fungerar vid denna storlek. Ingen faktisk zoom eller fysisk pekare påstås.
+
+### TEXT-12: markering öppnar och centrerar objekt och samband före bekräftelsen
+
+**Syfte:** Skydda kort smal karta.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Nytt identiskt underlag som TEXT-08, vid 640 × 500.
+
+**Integrationstest:**
+[assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts), TEXT-12.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistant-map.spec.ts",
+    "caseId": "TEXT-12"
+  },
+  "reference": "640 × 500 CSS-pixlar; kort smal karta.",
+  "outcomes": [
+    "Objekt och samband visas med läsbara detaljer före bekräftelsen.",
+    "Oskickad Till objekt-rättelse bevaras och hindrar ett nytt urval."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXT-08:s steg 1–4 **en gång** vid 640 × 500. Under steg 1–2
+   bedöms samtidiga läsbara detaljer; under steg 3–4 bevarat formulär.
+
+**Förväntat resultat:**
+
+- Samma fullständiga visnings- och oskickade formulärgräns som TEXT-08
+  fungerar vid denna storlek. Ingen faktisk zoom eller fysisk pekare påstås.
+
+### TEXT-13: markering öppnar och centrerar objekt och samband före bekräftelsen
+
+**Syfte:** Skydda ytterst kort karta och nåbara detaljer.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Nytt identiskt underlag som TEXT-08, vid 320 × 250.
+
+**Integrationstest:**
+[assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts), TEXT-13.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistant-map.spec.ts",
+    "caseId": "TEXT-13"
+  },
+  "reference": "320 × 250 CSS-pixlar; ytterst kort karta och nåbara detaljer.",
+  "outcomes": [
+    "Objekt och samband visas med läsbara detaljer före bekräftelsen.",
+    "Oskickad Till objekt-rättelse bevaras och hindrar ett nytt urval."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför TEXT-08:s steg 1–4 **en gång** vid 320 × 250. Under steg 1–2
+   bedöms samtidiga läsbara detaljer; under steg 3–4 bevarat formulär.
+
+**Förväntat resultat:**
+
+- Samma fullständiga visnings- och oskickade formulärgräns som TEXT-08
+  fungerar vid denna storlek. Ingen faktisk zoom eller fysisk pekare påstås.
+
+## Pensionerat ID
+
+TEXT-07 får inte återanvändas. Dess fältvärde 1111 → 2222, nya
+sambandstyp och oförändrade sparade värden finns i SAMTALSUTKAST-01.
+Den separata generiska granskningen upphör efter demonstrerad överföring.
 
 ## Controlled text fixture
 
@@ -514,7 +681,7 @@ From the repository root, with dependencies installed, run:
 
 ```sh
 npm run build
-node --import tsx scripts/manual-text-assistant.ts
+npm run test:env -- node --import tsx scripts/manual-text-assistant.ts
 ```
 
 Keep this terminal open. The `ready` event prints an `origin` such as

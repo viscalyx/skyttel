@@ -1,5 +1,6 @@
 import { createInterface } from 'node:readline';
 import { createInstallation } from '../tests/support/installation.js';
+import { manualTextDeliverySource } from '../tests/support/manual-text-delivery.js';
 import {
   lastToolResult,
   type ModelRequest,
@@ -42,7 +43,10 @@ async function main() {
         // late provider work and check the application's own stale-work guard.
       }),
   );
-  const app = await createInstallation(undefined, { modelFetch: model.provider });
+  const app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    browserProviderScript: manualTextDeliverySource,
+  });
   const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   const stop = () => input.close();
   process.once('SIGINT', stop);

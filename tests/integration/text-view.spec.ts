@@ -1,5 +1,11 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { createHousehold, openTable, signIn, utilityButton } from '../support/client.js';
+import {
+  closeSupportDialog,
+  createHousehold,
+  openTable,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
 import {
   closeConversationText,
   consentBox,
@@ -8,6 +14,7 @@ import {
   startConversationWithText,
   startConversationWithVoice,
 } from '../support/conversation-page.js';
+import { readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -248,6 +255,16 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
       'Skyttel: Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
     );
     expect((await (await page.request.get(path)).json()).draft).toEqual(before);
+    {
+      const retained = await readDraftProposal(page, 'Lo Exempel');
+      await expect(retained).toContainText('Lo Exempel');
+      await expect(retained).toContainText('Person');
+      await expect(retained).toContainText('Påhittad uppgift');
+      await closeSupportDialog(page, 'Lo Exempel');
+      await textView(page)
+        .getByRole('button', { name: /^Dölj utkastet/ })
+        .click();
+    }
     // The same authorized microphone stays live. The provider context and
     // old playback are replaced, and Skyttel says what remains.
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([
@@ -306,6 +323,16 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
     );
     await expect(messageField(page)).toHaveValue('Oskickat vid omstart');
     expect((await (await page.request.get(path)).json()).draft).toEqual(before);
+    {
+      const retained = await readDraftProposal(page, 'Lo Exempel');
+      await expect(retained).toContainText('Lo Exempel');
+      await expect(retained).toContainText('Person');
+      await expect(retained).toContainText('Påhittad uppgift');
+      await closeSupportDialog(page, 'Lo Exempel');
+      await textView(page)
+        .getByRole('button', { name: /^Dölj utkastet/ })
+        .click();
+    }
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests)).toBe(
       1,
     );

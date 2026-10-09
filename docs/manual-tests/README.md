@@ -254,6 +254,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Utkastet i samtalet](conversation-draft.md): tabellen och dess symboler,
   personligt val mellan hushåll och enheter, första förslaget, tomt utkast,
   sparåterkoppling och kvittots plats i Rapporter → Ändringshistorik.
+  SAMTALSUTKAST-01 läser fältvärden före/efter och bevarad sparad historik
+  med [exakt läsförberedelse](conversation-review-preparation.md).
+  SAMTALSUTKAST-04 är pensionerat till TEXT-04 utan återanvänt ID;
+  smal dator och bred emulerad pekare har varsin motsvarighet.
 
 - [Mikrofontryck](microphone-press.md): kort och långt tryck, släpp och
   systemavbrott, medgivande, pekfångst och tangentkombinationer på riktiga
@@ -267,15 +271,19 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   går att använda på pekskärm och smal skärm. Textknappens överlagrade
   markeringar visar skrivet arbete, olästa svar och väntande frågor med
   en enda artig uppläsning, fasta mått och minskad rörelse. Kommentarspaket
-  och faktiskt hört tal provas separat. Mobilfallen provar iPhone och
-  iPad, fast sidofält på bred pekskärm, kompakt rad vid kort synlig höjd,
+  och faktiskt hört tal provas separat. Mobilfallen har separata ID för
+  varje kvarvarande emulerad konfiguration, fast sidofält på bred pekare,
+  kompakt rad vid kort synlig höjd,
   bibehållet fokus, 190 px synlig höjd med rösten på, fria kartkontroller
   och långa rullbara notiser. Datorfallen provar oberoende breddhandtag
   med mus och piltangenter, personliga bredder mellan hushåll och enheter,
   visningsbegränsning utan ändrat sparat val samt återställning även utan
   tillgängligt samtal. Mobil enhet och smal skärm behåller sina bredder.
   Aktuella och kompatibla äldre hushållsarkiv bevarar personliga samtalsval
-  och håller dem och medgivandet utanför hushållsfilen.
+  och håller dem och medgivandet utanför hushållsfilen. TEXTBREDD-05 har
+  en egen vanlig importmotsvarighet; EXPORT-10 är överlappande underlag.
+  Faktisk skärmläsning, mikrofonljud och fysisk inmatning har separata
+  observationsfall. De tre godkända mobilkonfigurationerna är borttagna.
 - [Samtalets kö och avbrott](conversation-queue.md): serverns kö på dator,
   fokusstyrd Escape, stopp på mobil och smal skärm, talade och skrivna
   uppdrag samt kvarvarande utkast, oskickad text och återkoppling.
@@ -300,7 +308,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   telefon, med skyddad formulärtext samt obekräftad samtalstext
   skild från resultat samt synliga samband, typer och före-/eftervärden
   i hela ändringslistan och begärda samtalsdetaljer från utkast och kvitto.
-  Kontrollerade lokala
+  TEXT-07 är pensionerat till SAMTALSUTKAST-01 utan återanvänt ID.
+  TEXT-04 återfinner den verkliga sparidentifieraren efter genomfört
+  sparande med tappat svar och omstart. Varje TEXT-08-storlek har eget ID.
+  [Operatörsförberedelsen](text-conversation-preparation.md) skiljer
+  leveransfel och rått protokoll från vanliga UI-steg. Kontrollerade lokala
   leverantörssvar och verklig modellförståelse redovisas separat.
 
 - [Permanent radering](household-erasure.md): egen inställningssida,

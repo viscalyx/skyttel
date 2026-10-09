@@ -6,6 +6,7 @@ import {
   openSavedHistory,
   startConversationWithText,
 } from '../support/conversation-page.js';
+import { prepareConversationReview } from '../support/conversation-review-preparation.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
 
@@ -81,61 +82,16 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
 }) => {
   const { app, read, post } = await installation(page);
   try {
-    await post('draft', {
-      id: 'kim',
-      baseRevision: null,
-      value: { typeId: (await read()).types[0].id, name: 'Kim', description: '' },
-    });
-    const initial = await read();
-    const accountName = 'Familjens gemensamma musikkonto hos Molnmusik';
-    for (const [id, type, name] of [
-      ['account', 'Tjänstekonto', accountName],
-      ['email', 'E-postadress', 'familjen@example.test'],
-      ['new-email', 'E-postadress', 'musik@example.test'],
-    ]) {
-      await post('draft', {
-        id,
-        baseRevision: null,
-        value: {
-          typeId: initial.types.find((entry) => entry.name === type)?.id,
-          name,
-          description: '',
-        },
-      });
-    }
-    const login = {
-      typeId: initial.relationshipTypes.find((entry) => entry.name === 'Inloggningsadress')?.id,
-      sourceId: 'account',
-      targetId: 'email',
-      knowledge: 'known',
-    };
-    await post('relationship', { id: 'login', baseRevision: null, value: login });
-    await post('save', { operationId: 'draft-initial' });
-    const state = await read();
-    await post('draft', {
-      id: 'lo',
-      baseRevision: 1,
-      value: { typeId: state.types[0].id, name: 'Lo Rättad', description: '' },
-    });
-    await post('draft', { id: 'kim', baseRevision: 1, value: null });
-    await post('relationship', {
-      id: 'login',
-      baseRevision: 1,
-      value: { ...login, targetId: 'new-email' },
-    });
-    await post('object-type', {
-      id: 'custom',
-      baseRevision: null,
-      value: { name: 'Provtyp', description: '', fields: [] },
-    });
-    await post('draft', {
-      id: 'new',
-      baseRevision: null,
-      value: { typeId: 'custom', name: 'Nytt objekt', description: '' },
-    });
+    await prepareConversationReview({ read, post });
+    const beforeReview = await read();
     await page.reload();
+    const savedBefore = await openSavedHistory(page);
+    await savedBefore.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(savedBefore.locator('.history-changes')).toContainText('Sista fyra: 1111');
+    await expect(savedBefore.locator('.history-changes')).not.toContainText('2222');
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await startConversationWithText(page);
-    await expect(toggle(page)).toHaveAccessibleName('Visa utkastet (5)');
+    await expect(toggle(page)).toHaveAccessibleName('Visa utkastet (8)');
     await expect(draft(page)).toHaveCount(0);
     await toggle(page).click();
     await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
@@ -146,14 +102,25 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
       'Typ',
       'Vad som ändras',
     ]);
-    await expect(table.locator('tbody tr')).toHaveCount(5);
+    await expect(table.locator('tbody tr')).toHaveCount(8);
     await expect(table.getByRole('row', { name: /Ändra.*Lo Rättad/ })).toContainText(
       'Namn: Lo Exempel → Lo Rättad',
     );
     await expect(table.getByRole('row', { name: /Ta bort.*Kim/ })).toContainText('Tas bort');
     expect(
       await table.locator('tbody td:first-child > span[aria-hidden]').allTextContents(),
-    ).toEqual(['✎', '×', '+', '✎', '+']);
+    ).toEqual(['✎', '×', '+', '✎', '✎', '+', '+', '+']);
+    for (const line of ['Sista fyra: 1111 → 2222', 'Lo Rättad → Betalar → Kortet'])
+      await expect(table.getByText(line, { exact: false })).toBeVisible();
+    for (const name of ['Provtyp', 'Förvaras'])
+      await expect(
+        table.getByRole('button', { name: `Visa förslaget: ${name}`, exact: true }),
+      ).toBeVisible();
+    expect((await read()).objects.find((object) => object.id === 'card')?.customValues).toEqual({
+      'last-four': '1111',
+    });
+    expect((await read()).draft.relationships).toHaveLength(2);
+    expect(await read()).toEqual(beforeReview);
     const relationship = table.getByRole('row', { name: /Ändra.*Familjens gemensamma musikkonto/ });
     await expect(relationship).toContainText('familjen@example.test');
     await expect(relationship).toContainText('musik@example.test');
@@ -181,7 +148,13 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     await toggle(page).click();
     await view(page).getByRole('button', { name: 'Nytt samtal' }).click();
     await expect(toggle(page)).toHaveAttribute('aria-expanded', 'false');
-    expect((await read()).draft.changes).toHaveLength(3);
+    expect((await read()).draft.changes).toHaveLength(4);
+    expect(await read()).toEqual(beforeReview);
+    const savedAfter = await openSavedHistory(page);
+    await savedAfter.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(savedAfter.locator('.history-changes')).toContainText('Sista fyra: 1111');
+    await expect(savedAfter.locator('.history-changes')).not.toContainText('2222');
+    expect(await read()).toEqual(beforeReview);
   } finally {
     await app.close();
   }
@@ -265,8 +238,20 @@ test('SAMTALSUTKAST-02: valet följer användaren mellan hushåll och enheter', 
 });
 
 for (const configuration of [
-  { name: 'smal skärm', viewport: { width: 390, height: 844 }, hasTouch: false, isMobile: false },
-  { name: 'bred pekskärm', viewport: { width: 820, height: 1180 }, hasTouch: true, isMobile: true },
+  {
+    caseId: 'SAMTALSUTKAST-03',
+    name: 'smal skärm',
+    viewport: { width: 390, height: 844 },
+    hasTouch: false,
+    isMobile: false,
+  },
+  {
+    caseId: 'SAMTALSUTKAST-06',
+    name: 'bred pekskärm',
+    viewport: { width: 820, height: 1180 },
+    hasTouch: true,
+    isMobile: true,
+  },
 ]) {
   test.describe(configuration.name, () => {
     test.use({
@@ -274,7 +259,9 @@ for (const configuration of [
       hasTouch: configuration.hasTouch,
       isMobile: configuration.isMobile,
     });
-    test('SAMTALSUTKAST-03: första förslaget öppnar utkastet på mobil enhet', async ({ page }) => {
+    test(`${configuration.caseId}: första förslaget öppnar utkastet på mobil enhet`, async ({
+      page,
+    }) => {
       const { app } = await installation(page, false);
       try {
         await settings(page);
@@ -304,22 +291,6 @@ for (const configuration of [
   });
 }
 
-test('SAMTALSUTKAST-04: sparandet finns i Rapporters ändringshistorik', async ({ page }) => {
-  const { app, post } = await installation(page);
-  try {
-    await post('save', { operationId: 'draft-receipt' });
-    await page.reload();
-    await startConversationWithText(page);
-    const history = await openSavedHistory(page);
-    await expect(history.getByRole('article')).toHaveCount(1);
-    await expect(history).toContainText('Lo Exempel');
-    await history.getByText('Identifiera sparandet och användaren', { exact: true }).click();
-    await expect(history).toContainText('draft-receipt');
-  } finally {
-    await app.close();
-  }
-});
-
 test('SAMTALSUTKAST-05: utkastvalet fungerar utan tillgängligt samtal', async ({ page }) => {
   const app = await createInstallation();
   try {
@@ -345,3 +316,50 @@ test('SAMTALSUTKAST-05: utkastvalet fungerar utan tillgängligt samtal', async (
     await app.close();
   }
 });
+
+// Request-only public preparation smoke, including the exact Console function source.
+for (const seeded of [false, true])
+  test(`conversation review preparation accepts a ${seeded ? 'seeded' : 'empty'} public household`, {
+    tag: '@technical',
+  }, async ({ page }) => {
+    const { app, path, read } = await installation(page, seeded);
+    try {
+      await page.evaluate(
+        `window.prepareConversationReview = (${prepareConversationReview.toString()})`,
+      );
+      await page.evaluate(async (path) => {
+        const read = async () => (await fetch(path)).json();
+        const post = async (route: string, data: object) => {
+          const state = await read();
+          const response = await fetch(`${path}/${route}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              version: state.draft.version,
+              contentVersion: state.contentVersion,
+              ...data,
+            }),
+          });
+          if (!response.ok) throw Error(await response.text());
+        };
+        await (
+          window as unknown as {
+            prepareConversationReview: typeof prepareConversationReview;
+          }
+        ).prepareConversationReview({ read, post });
+      }, path);
+      const state = await read();
+      expect(state.objects.find((object) => object.id === 'card')?.customValues).toEqual({
+        'last-four': '1111',
+      });
+      expect(
+        state.draft.changes.find((change) => change.id === 'card')?.after?.customValues,
+      ).toEqual({ 'last-four': '2222' });
+      expect(state.draft.changes).toHaveLength(4);
+      expect(state.draft.relationships).toHaveLength(2);
+      expect(state.draft.objectTypes).toHaveLength(1);
+      expect(state.draft.relationshipTypes).toHaveLength(1);
+    } finally {
+      await app.close();
+    }
+  });

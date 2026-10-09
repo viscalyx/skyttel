@@ -694,7 +694,21 @@
     "läsrad",
     "läsalternativet",
     "ikonförslaget",
-    "Läsobjekt"
+    "Läsobjekt",
+    "läsförberedelse",
+    "sidöverflöde",
+    "historiköppning",
+    "bortpanorerat",
+    "operationstal",
+    "breddprovuppgift",
+    "hörntryck",
+    "notisstängning",
+    "fjärrljudaktivitet",
+    "notisrullning",
+    "historiksektion",
+    "fokusfel",
+    "stängmål",
+    "breddåterställning"
   ],
   "overrides": [
     {
