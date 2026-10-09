@@ -401,7 +401,8 @@ npm run check
 ```
 
 This runs typechecking, Biome, documentation checks, workflow gate tests,
-the build and unit-test coverage. Run Playwright integration tests separately:
+manual-case mapping, the build and unit-test coverage. Run Playwright
+integration tests separately:
 
 ```sh
 npm run test:integration

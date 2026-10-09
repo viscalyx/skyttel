@@ -39,6 +39,9 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run lint:docs
+      - name: Manual mapping
+        run: |
+          npm run test:manual-mapping 2>&1 | tee logs/tests/manual-mapping.log
       - run: npm run build
       - name: Container checks
         run: |

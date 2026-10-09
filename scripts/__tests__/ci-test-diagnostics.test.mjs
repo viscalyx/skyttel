@@ -26,6 +26,7 @@ test('CI retains test output without turning failing commands into successful te
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   for (const [jobName, name] of [
     ['application', 'Workflow gate tests'],
+    ['application', 'Manual mapping'],
     ['unit', 'Unit coverage with CI fonts'],
     ['integration', 'Integration tests with CI fonts'],
     ['application', 'Container checks'],
@@ -35,6 +36,8 @@ test('CI retains test output without turning failing commands into successful te
     assert.ok(step, `Missing ${name}`);
     const script = step[1].match(/ {8}run: \|\n((?: {10}.*\n)+)/)?.[1].replace(/^ {10}/gmu, '');
     assert.ok(script, `Missing script for ${name}`);
+    if (name === 'Manual mapping')
+      assert.match(script, /^npm run test:manual-mapping 2>&1 \| tee /mu);
     await t.test(name, () => {
       const result = spawnSync(
         'bash',

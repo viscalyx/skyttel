@@ -42,7 +42,7 @@
     "test:devcontainer": "npm run test:env -- node scripts/check-devcontainer.mjs",
     "test:installation": "node scripts/security/verify-installation.mjs",
     "measure:map": "npm run build && npm run test:env -- tsx scripts/measure-map.ts",
-    "check": "npm run typecheck && npm run lint && npm run lint:docs && npm run test:gates && npm run build && npm run test:unit:coverage",
+    "check": "npm run typecheck && npm run lint && npm run lint:docs && npm run test:gates && npm run test:manual-mapping && npm run build && npm run test:unit:coverage",
     "purge:install": "node scripts/purge-install.mjs",
     "test:unit:ci": "npm run test:env -- --ci-fonts vitest run",
     "test:integration:ci": "npm run test:env -- --ci-fonts playwright test"
