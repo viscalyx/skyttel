@@ -231,7 +231,13 @@ Håll nästa skrivna uppdrag genom alla tre storleksbyten; släpp det efteråt.
 
 TEXTBREDD-03 använder röstinstallationen. Efter ändrade bredder och
 markerat startval, före UI-steg 1, kör operatören `available off`.
-Användaren laddar om och läser den otillgängliga sidan. Efter den lyckade
+Användaren laddar om och läser den otillgängliga sidan. Före första
+**Återställ bredderna** i UI-steg 2 aktiverar operatören Offline i
+webbläsarens utvecklarverktyg och bekräftar det för användaren. Detta
+provar ett misslyckat försök att spara de personliga bredderna. Efter
+feltexten och fokusläsningen, före återförsöket med Enter i steg 3,
+återställer operatören anslutningen till Online och bekräftar det.
+Efter den lyckade
 återställningen i steg 3 kör operatören `available on`, före återgången
 till kartan i steg 4. Återställ inte bredder eller startval vid denna gräns.
 Avsluta med `quit` och kräv borttagen provkatalog efter sista läsningen.

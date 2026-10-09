@@ -289,16 +289,32 @@ without changing saved facts”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse och tekniskt underlag:**
+
+När användaren har nått Lo-sambandet med Tab och Skift+Tab i steg 2,
+läser operatören båda sambandens tillgängliga beskrivningar med
+webbläsarens tillgänglighetsinspektör. Lo-sambandets namn behåller
+**Lo Exempel → Använder → Familjemusik** och beskrivningen anger
+**Upphört**; det andra sambandet behåller sin egen riktning och saknar
+Upphört. Anteckna hela läsningen separat och bekräfta den före Alt+Enter.
+Efter användarens läsning av Valt samband startar operatören om samma
+app med samma databas och bekräftar omstarten före omladdningen i steg 4.
+Efter den nya kartans synliga läsning upprepar operatören samma två
+Inspector-läsningar och bekräftar dem före det privata förslaget i steg 5.
+Detta är tekniskt underlag; faktisk uppläsning provas i LIVSCYKEL-07.
+
 **Steg:**
 
 1. Öppna kartan och välj **Alla etiketter**. Kontrollera de två sambanden.
 2. Använd Tab och Skift+Tab för att nå sambandet från Lo till Familjemusik.
-   Kontrollera synligt fokus och sambandets tillgängliga beskrivning med
-   webbläsarens tillgänglighetsinspektör.
+   Kontrollera synligt fokus. Be operatören läsa de separata beskrivningarna
+   och invänta bekräftelse enligt förberedelsen.
 3. Tryck Alt+Enter på sambandet.
    Läs **Valt samband** utan att redigera eller spara något.
-4. Starta om appen med samma databas, ladda om sidan och öppna kartan igen.
-   Kontrollera båda sambandens status och tillgängliga beskrivningar.
+4. Be operatören starta om appen med samma databas och invänta bekräftelse.
+   Ladda om sidan och öppna kartan igen. Kontrollera båda sambandens namn,
+   riktning och synliga status. Be operatören upprepa den separata läsningen
+   och invänta bekräftelse.
 
 5. Öppna Utkast efter omstart och läs Privat livscykelanteckning genom
    Visa förslaget. Hela den oberoende beskrivningen finns kvar och är osparad.
@@ -357,14 +373,32 @@ distinct for valid overlapping identities”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse och tekniskt underlag:**
+
+Behåll den befintliga förberedelsen av överlappande identiteter och det
+oberoende privata arbetet. Vid steg 2 läser operatören Kims namnetikett
+och objektsymbol med webbläsarens tillgänglighetsinspektör. Båda
+beskrivningarna anger **Kim Exempel** och **Person** utan Upphört eller
+det andra sambandets uppgifter. Vid steg 3 läser operatören beskrivningen
+för **Lo Exempel → Använder → Familjemusik**, som anger **Upphört**.
+Anteckna varje fullständig läsning separat och bekräfta den för användaren.
+Först därefter startar operatören om samma app med samma databas och
+bekräftar omstarten före omladdningen i steg 4. Efter användarens nya
+synliga läsning upprepas alla tre Inspector-läsningar och bekräftas före
+det privata förslaget i steg 5. Faktisk uppläsning provas i LIVSCYKEL-08.
+
 **Steg:**
 
 1. Öppna kartan och välj **Alla etiketter**. Kontrollera Kim och sambandet
    från Lo till Familjemusik.
-2. Läs den tillgängliga beskrivningen för Kims namnetikett och objektsymbol
-   med webbläsarens tillgänglighetsinspektör.
-3. Läs motsvarande beskrivning för sambandet från Lo till Familjemusik.
-4. Starta om appen med samma databas, ladda om kartan och kontrollera igen.
+2. Läs Kims namn, typ och synliga status. Be operatören läsa de separata
+   beskrivningarna för namnetiketten och objektsymbolen och invänta bekräftelse.
+3. Läs hela riktningen och Upphört för sambandet från Lo till Familjemusik.
+   Be operatören läsa dess separata beskrivning och invänta bekräftelse.
+4. Be operatören starta om appen med samma databas och invänta bekräftelse.
+   Ladda om kartan och kontrollera samma fullständiga namn, typ, riktning och
+   synliga status igen. Be operatören upprepa de separata läsningarna och
+   invänta bekräftelse.
 
 5. Öppna Utkast efter omstart och läs Privat livscykelanteckning genom
    Visa förslaget. Hela den oberoende beskrivningen finns kvar och är osparad.
@@ -426,6 +460,22 @@ own accessible status”.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse och tekniskt underlag:**
+
+Behåll den befintliga förberedelsen och användarens fullständiga
+privata ändring i steg 1. Efter kartläsningen i steg 2 läser operatören
+de tre kontrollernas tillgängliga beskrivningar med webbläsarens
+tillgänglighetsinspektör: tidigare **Lo Exempel → Använder →
+Familjemusik** anger **Använder** och **Upphört**; föreslaget
+**Molnmusik → Betalar → Familjemusik** och separat sparat
+**Molnmusik → Betalar → Lo Exempel** anger **Betalar** utan Upphört.
+Anteckna de tre fullständiga läsningarna separat och bekräfta dem i steg 3.
+Starta först därefter om samma app med samma databas och bekräfta
+omstarten före omladdningen i steg 4. Efter användarens nya kartläsning
+upprepas och bekräftas samma Inspector-läsningar före den fullständiga
+privata förslagsläsningen. Ingen separat kontroll sparar eller ändrar
+förslaget. Faktisk uppläsning provas i LIVSCYKEL-09.
+
 **Steg:**
 
 1. Redigera sambandet från Lo till Familjemusik. Ändra Från objekt till
@@ -438,9 +488,13 @@ own accessible status”.
    2000-01-01 på båda sidor. Stäng dialogen och textvyn.
 2. Öppna kartan och välj **Alla etiketter**. Granska det tidigare sambandet
    från Lo, det föreslagna sambandet och det sparade sambandet från Molnmusik.
-3. Läs kontrollernas tillgängliga beskrivningar med webbläsarens
-   tillgänglighetsinspektör.
-4. Starta om appen med samma databas, ladda om kartan och kontrollera igen.
+3. Be operatören läsa de tre kontrollernas separata beskrivningar och
+   invänta bekräftelse enligt förberedelsen.
+4. Be operatören starta om appen med samma databas och invänta bekräftelse.
+   Ladda om kartan och läs åter alla tre hela riktningar och egna synliga
+   statusuppgifter. Be operatören upprepa den separata läsningen och invänta
+   bekräftelse. Öppna Utkast → Visa förslaget och läs åter båda värdesidorna
+   med samma datum enligt steg 1. Förslaget är osparat; spara inget.
 
 **Förväntat resultat:**
 

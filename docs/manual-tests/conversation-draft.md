@@ -209,9 +209,9 @@ felåterkoppling.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Bygg med `npm run build` och starta denna tillfälliga
-installation utan samtalsleverantör. Vidarebefordra den utskrivna porten
-privat, logga in med Google och skapa Utkastprov.
+**Separat förberedelse:** Operatören bygger med `npm run build` och startar
+denna tillfälliga installation utan samtalsleverantör. Vidarebefordra
+den utskrivna porten privat, logga in med Google och skapa Utkastprov.
 
 <!-- markdownlint-disable MD013 -->
 ```sh
@@ -224,6 +224,15 @@ process.once('SIGINT', async () => { await app.close(); process.exit(); });
 JS
 ```
 <!-- markdownlint-enable MD013 -->
+
+Före kryssrutan i UI-steg 2 sätter operatören webbläsarens nätverk till
+Offline i utvecklingsverktygen och bekräftar det. Detta provar ett fel
+vid sparandet av det personliga valet, inte ett okänt sparande av kartan.
+Efter användarens fel- och fokusläsning, före kryssrutan i steg 3,
+återställer operatören nätverket till Online och bekräftar det.
+Först efter sista synliga **Valet är sparat** avslutar operatören
+installationen med Ctrl+C och kontrollerar att provkatalogen försvinner.
+Återställ även nätverket vid avslut om fallet avbryts.
 
 **Integrationstest:**
 [conversation-draft.spec.ts](../../tests/integration/conversation-draft.spec.ts),
@@ -247,11 +256,10 @@ testfallet “SAMTALSUTKAST-05: utkastvalet fungerar utan tillgängligt samtal�
 **Steg:**
 
 1. Öppna sidan **Samtal med Skyttel**. Läs att samtalet inte är tillgängligt.
-2. Sätt webbläsarens nätverk till Offline i utvecklingsverktygen och
-   markera utkastvalet. Läs återkopplingen och kontrollera fokus.
-3. Återställ nätverket till Online och markera kryssrutan igen.
-4. Avsluta installationen med Ctrl+C och kontrollera att provkatalogen
-   försvinner.
+2. Be operatören förbereda anslutningsfelet och invänta bekräftelse.
+   Markera utkastvalet. Läs återkopplingen och kontrollera fokus.
+3. Be operatören återställa anslutningen och invänta bekräftelse.
+   Markera kryssrutan igen och läs **Valet är sparat**.
 
 **Förväntat resultat:**
 

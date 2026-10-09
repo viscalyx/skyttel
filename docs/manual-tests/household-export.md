@@ -151,6 +151,15 @@ nedladdning och att användaren kan försöka igen.
 **Förutsättningar:** En export är färdig. Webbläsarens nätverksverktyg
 är öppna. Integrationstestet bryter motsvarande hämtning vid nätverket.
 
+**Separat operatörsförberedelse:** Efter användarens läsning av den
+färdiga exporten i steg 1, före **Hämta ZIP-fil**, sätter operatören
+webbläsarens nätverk till frånkopplat och bekräftar det. Behåll felet
+tills användaren har läst anslutningsfelet, utebliven fil och borttagen
+gammal hämtknapp. Återställ därefter nätverket och bekräfta det före
+**Förbered fullständig export** i steg 3. Återställ även vid avbrutet
+prov. Detta provar hämtning av en färdig export; det är inte ett tappat
+sparkvitto eller en avbruten ström med olästa arkivbyte.
+
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
 testfallet “EXPORT-03: an interrupted download offers a new export without
@@ -173,10 +182,12 @@ reporting success”.
 
 **Steg:**
 
-1. Sätt webbläsarens nätverk till frånkopplat efter att förberedelsen
-   är klar och före **Hämta ZIP-fil**.
+1. Läs att exporten är klar att hämta. Be operatören bryta anslutningen
+   och invänta bekräftelse före **Hämta ZIP-fil**.
 2. Välj **Hämta ZIP-fil** och kontrollera felmeddelandet och testmappen.
-3. Återställ nätverket. Välj **Förbered fullständig export** och hämta
+3. Kontrollera att ingen fil hämtas och att den gamla hämtknappen
+   försvinner. Be operatören återställa anslutningen och invänta bekräftelse.
+   Välj **Förbered fullständig export** och hämta
    den nya filen.
 
 **Förväntat resultat:**

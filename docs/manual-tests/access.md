@@ -278,6 +278,12 @@ viewport”. Testet kontrollerar även automatisk anpassning till smal skärm.
 utvecklarverktygens blockering av nätverksbegäranden. Övriga resurser ska
 kunna hämtas.
 
+**Separat operatörsförberedelse:** Operatören installerar enbart den
+angivna blockeringen före steg 1 och bekräftar att övriga resurser kan
+hämtas. Efter **Skyttel kunde inte öppnas**, före **Försök igen** i
+steg 2, tar operatören bort blockeringen och bekräftar återställningen.
+Behåll sidan öppen utan omladdning. Ta även bort blockeringen vid avslut.
+
 **Integrationstest:**
 [usability.spec.ts](../../tests/integration/usability.spec.ts),
 testfallet “ACCESS-05: failed startup read offers a working retry”.
@@ -300,7 +306,8 @@ testfallet “ACCESS-05: failed startup read offers a working retry”.
 **Steg:**
 
 1. Öppna installationen och kontrollera meddelandet.
-2. Ta bort blockeringen och välj **Försök igen**.
+2. Be operatören återställa anslutningen och invänta bekräftelse.
+   Välj **Försök igen** utan att ladda om sidan.
 
 **Förväntat resultat:**
 
@@ -355,6 +362,13 @@ without setup controls”.
 **Förutsättningar:** Hushållet är öppet. Anteckna dess adress. Blockera
 `*/api/auth/sign-out` i utvecklarverktygens nätverksblockering.
 
+**Separat operatörsförberedelse:** Operatören installerar enbart den
+angivna utloggningsblockeringen före steg 1. Efter felmeddelandet och
+läsningen av det fortfarande öppna hushållet, före nästa **Logga ut**
+i steg 2, tar operatören bort blockeringen och bekräftar återställningen.
+Behåll samma session och öppna hushåll tills användaren faktiskt loggar
+ut. Ta även bort blockeringen vid avslut.
+
 **Integrationstest:**
 [usability.spec.ts](../../tests/integration/usability.spec.ts),
 testfallet “ACCESS-07: failed logout preserves the session and a retry closes
@@ -376,7 +390,8 @@ household access”.
 **Steg:**
 
 1. Välj **Logga ut**. Kontrollera felmeddelandet och den öppna hushållssidan.
-2. Ta bort blockeringen och välj **Logga ut** igen.
+2. Be operatören återställa anslutningen och invänta bekräftelse.
+   Välj **Logga ut** igen.
 3. Öppna den antecknade hushållsadressen.
 
 **Förväntat resultat:**
@@ -692,8 +707,11 @@ och vid avslut. Webbläsarens klocka och testets tidsgränser ändras inte.
 
 **Separat förberedelse:** Öppna välkomstsidan och blockera
 `*/api/auth/sign-in/social` i utvecklarverktygens nätverksblockering.
-Endast starten av inloggningen ska blockeras. Återställ blockeringen
-i steg 2 och vid avslut. Leverantörsfel provas separat i ACCESS-21.
+Endast starten av inloggningen ska blockeras. Operatören bekräftar
+blockeringen före första inloggningsförsöket. Efter användarens synliga
+fel, före nästa **Fortsätt med Google** i steg 2, tar operatören bort
+blockeringen och bekräftar återställningen. Återställ även vid avslut.
+Leverantörsfel provas separat i ACCESS-21.
 
 **Integrationstest:**
 [usability.spec.ts](../../tests/integration/usability.spec.ts),
@@ -716,7 +734,8 @@ ACCESS-12, anslutningsavbrott innan inloggningen når leverantören.
 
 1. Välj **Fortsätt med Google**, läs övergången och välj
    **Fortsätt till Google**. Kontrollera felmeddelandet.
-2. Ta bort blockeringen. Välj **Fortsätt med Google** igen och logga in
+2. Be operatören återställa anslutningen och invänta bekräftelse.
+   Välj **Fortsätt med Google** igen och logga in
    som Alex.
 
 **Förväntat resultat:**

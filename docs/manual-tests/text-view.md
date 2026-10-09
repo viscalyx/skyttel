@@ -686,11 +686,13 @@ tillgängligt samtal”.
 **Steg:**
 
 1. Öppna **Inställningar**, **Samtal med Skyttel**. Läs **Textvyns bredd**.
-2. Aktivera offline i webbläsarens utvecklarverktyg. Välj
-   **Återställ bredderna** och läs återkopplingen. Återställ anslutningen.
-3. Använd Tab och Enter för att välja **Återställ bredderna** igen.
+2. Be operatören förbereda anslutningsfelet och invänta bekräftelse. Välj
+   **Återställ bredderna** och läs återkopplingen och knappens fokus.
+3. Be operatören återställa anslutningen och invänta bekräftelse.
+   Använd Tab och Enter för att välja **Återställ bredderna** igen.
    Kontrollera återkoppling, fokus och utkastets startval.
-4. Låt operatören återställa tillgängligheten enligt förberedelsen.
+4. Be operatören återställa tillgängligheten enligt förberedelsen och
+   invänta bekräftelse.
    Återgå till kartan, starta med text och öppna utkastet.
 
 **Förväntat resultat:**
@@ -702,8 +704,8 @@ tillgängligt samtal”.
 - Vid lyckad återställning står **Bredderna är återställda**. Knappen
   försvinner, **Du har inte ändrat bredderna.** visas och fokus går till
   delens rubrik. Valet **Visa utkastet när ett samtal börjar** ändras inte.
-- Samtalstext och utkast har grundbredderna igen. Knappen visas bara när
-  minst en sparad bredd skiljer sig från grundvärdet.
+- Samtalstext och utkast har grundbredderna 400 respektive 340 igen.
+  Knappen visas bara när minst en sparad bredd skiljer sig från grundvärdet.
 
 ### TEXTBREDD-04: mobil enhet och smal skärm har inga breddhandtag
 

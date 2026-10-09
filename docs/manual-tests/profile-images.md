@@ -362,7 +362,9 @@ datorreferensen för väntande och avvisat komplett bildarbete.
 
 **Separat förberedelse:** Förbered
 [styrd objektleverans](map.md#styrd-objektleverans). Inför steg 3, skriv
-`arm stage:after`. Vänta på `held-after` med status 400. Skriv `release`
+`arm stage:after` och bekräfta armningen före tillägget. Efter klicket på
+**Lägg i utkastet och stäng** i steg 3, vänta på `held-after` med status 400
+innan steg 4 börjar. Skriv `release`
 när steg 4 anger att svaret ska släppas. En regel förbrukas av nästa
 tillägg, så armera den först efter de giltiga tilläggen. Återställ
 HTTPS-ingången innan `quit`.

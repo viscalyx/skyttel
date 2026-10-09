@@ -650,6 +650,17 @@ visas ovanför kartans visningsval, med hushållets status synlig.
 förberedelsen, med ett tomt hushåll och stängda arbetsytor. Använd ett
 320 pixlar brett fönster med höjderna 900 och 568 pixlar.
 
+**Separat operatörsförberedelse:** Följ den
+[kontrollerade röstinstallationen](#allmän-förberedelse). Behåll
+anslutningen medan användaren läser **Lyssnar**, den tomma kartans
+status och tabellknappen vid både 900 och 568 pixlars höjd i steg 1–2.
+Först därefter, före notisläsningen i steg 3, slår operatören på
+**Offline** i webbläsarens nätverkspanel och bekräftar frånkopplingen.
+Behåll frånkopplingen under båda höjdläsningarna med notisen. Före
+**Tabell → Nytt objekt** i steg 4 slår operatören av **Offline** och
+bekräftar återställd anslutning. Återställ även vid avbrutet prov och
+avsluta installationen enligt den allmänna förberedelsen.
+
 **Integrationstest:**
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts),
 YTA-09.
@@ -675,11 +686,14 @@ YTA-09.
    i röstrutan. Panorera med **Navigera**, stäng navigeringen och välj
    **Återställ vy**. Ingen beständig rutinbekräftelse ska visas i kartan.
 2. Nå verktygsfältets **Tabell** med tangentbordet. Fokus och knappen ska synas
-   och vara fria från röstrutan. Kontrollera båda fönsterhöjderna.
-3. Slå på **Offline** i webbläsarens nätverkspanel. Läs samtalsnotisen
+   och vara fria från röstrutan. Läs också den tomma kartans statusyta under
+   hushållsnamnet. Kontrollera båda fönsterhöjderna före frånkopplingen.
+3. Be operatören bryta anslutningen efter båda höjdläsningarna och invänta
+   bekräftelse. Läs samtalsnotisen
    **Ingen kontakt med Skyttel. Mikrofonen är av.** och kontrollera samma
    tabellknapp vid båda höjderna.
-4. Slå av **Offline**, välj **Tabell** och sedan **Nytt objekt**.
+4. Be operatören återställa anslutningen efter båda höjdläsningarna med
+   notisen och invänta bekräftelse. Välj **Tabell** och sedan **Nytt objekt**.
    Formuläret med **Namn** ska gå att använda. Skapa inget objekt.
 
 **Förväntat resultat:**

@@ -23,8 +23,9 @@ fallen anger formulär, samtal, profil eller administration.
 2. Starta en ny installation för varje fall. Behåll samma databas och
    webbläsarfönster inom ett falls omstartsprov.
 3. KOST-01 och KOST-02 börjar med Google-inloggning som Alex. Skapa
-   **Kostnadsprov**, välj **Skriv till Skyttel** och **Godkänn och starta**
-   i medgivanderutan. KOST-03 och KOST-04 börjar utan hushåll.
+   **Kostnadsprov**, välj **Skriv till Skyttel**, **Nytt samtal** och
+   **Godkänn och starta** i medgivanderutan. KOST-03 och KOST-04 börjar
+   utan hushåll.
 4. Terminalkommandon nedan skrivs i startguidens terminal. Avsluta varje
    fall med `quit` och kontrollera borttagen tillfällig katalog enligt guiden.
 
@@ -270,7 +271,8 @@ Ställ innehållsytan på 390×900; detta är syntetiskt omflödesprov.
 **Separat förberedelse:** Operatören använder
 [styrt kostnadssvar](#styrt-kostnadssvar) för tappat svar före steg 1
 och fördröjt svar före sparandet av 14 i steg 3. Operatören släpper
-fördröjningen först efter testarens val av **Mörkt** och bekräftelse av
+fördröjningen först efter bekräftat framgångsrikt svar som hålls för
+just detta sparande enligt guiden, testarens val av **Mörkt** och läsning av
 temaknappens fokus. Återställ `fetch` och avsluta med `quit`.
 
 **Integrationstest:** [costs.spec.ts](../../tests/integration/costs.spec.ts),
@@ -284,6 +286,7 @@ KOST-05.
    **Ändra månadens antaganden**. Öppna och stäng redigeringen; samma
    knapp får fokus igen.
 3. Invänta operatörens bekräftelse på fördröjningen, ange 14 och spara.
+   Invänta operatörens bekräftelse att just detta framgångsrika svar hålls.
    Öppna **Tema**, välj **Mörkt** och kontrollera temaknappens fokus.
    Be operatören släppa svaret. Invänta bekräftelsen och sparbeskedet;
    temaknappen ska behålla fokus när beskedet kommer.
@@ -325,7 +328,8 @@ Ställ innehållsytan på 320×900; detta är syntetiskt omflödesprov.
 **Separat förberedelse:** Operatören använder
 [styrt kostnadssvar](#styrt-kostnadssvar) för tappat svar före steg 1
 och fördröjt svar före sparandet av 14 i steg 3. Operatören släpper
-fördröjningen först efter testarens val av **Ljust** och bekräftelse av
+fördröjningen först efter bekräftat framgångsrikt svar som hålls för
+just detta sparande enligt guiden, testarens val av **Ljust** och läsning av
 temaknappens fokus. Återställ `fetch` och avsluta med `quit`.
 
 **Integrationstest:** [costs.spec.ts](../../tests/integration/costs.spec.ts),
@@ -339,6 +343,7 @@ KOST-06.
    **Ändra månadens antaganden**. Öppna och stäng redigeringen; samma
    knapp får fokus igen.
 3. Invänta operatörens bekräftelse på fördröjningen, ange 14 och spara.
+   Invänta operatörens bekräftelse att just detta framgångsrika svar hålls.
    Öppna **Tema**, välj **Ljust** och kontrollera temaknappens fokus.
    Be operatören släppa svaret. Invänta bekräftelsen och sparbeskedet;
    temaknappen ska behålla fokus när beskedet kommer.
@@ -472,8 +477,8 @@ launcher for each case. Never reuse a real installation for these controls.
 | `quit` | Stop the application and remove its temporary directory. |
 <!-- markdownlint-enable MD013 -->
 
-To generate Terra usage, choose **Skriv till Skyttel**, select
-**Godkänn och starta** in the consent box, and send
+To generate Terra usage, choose **Skriv till Skyttel**, then **Nytt samtal**,
+select **Godkänn och starta** in the consent box, and send
 **Prova kostnadsunderlaget.** The fixed response is
 **Det kontrollerade kostnadsprovet är klart.** No map change is proposed.
 
@@ -572,10 +577,27 @@ window.armCostReply('drop');
 ```
 
 Efter återhämtning och eventuellt omstartsprov installerar operatören
-koden igen vid behov och kör `window.armCostReply('hold')` före det
-fördröjda sparandet av 14. Vänta medan testaren sparar, väljer fallets tema
-och kontrollerar temaknappens fokus. Först på testarens begäran kör
-operatören `window.releaseCostReply()` och bekräftar att svaret är släppt.
+koden igen vid behov. Först när alla tidigare utfall är kända och inget
+äldre svar hålls, kör operatören `delete window.releaseCostReply` i
+Console och därefter `window.armCostReply('hold')` före det fördröjda
+sparandet av 14. Ta aldrig bort referensen till ett fortfarande väntande
+äldre svar. Bekräfta installation och armning före UI-sparandet; invänta
+inte det genomförda svaret före knappen.
+
+Följ den nya POST-begäran till kostnadsantaganden i nätverkspanelen och
+kontrollera att dess indata avser den aktuella månaden och kursen 14.
+Efter testarens **Spara månadens antaganden**, invänta dess verkliga
+framgångsrika HTTP-svar. Läs
+`typeof window.releaseCostReply === 'function'` i Console tills värdet
+är sant. Referensen tilldelas först efter det framgångsrika svaret i
+koden ovan; den borttagna äldre referensen kan inte bekräfta detta svar.
+Bekräfta för testaren att just detta genomförda sparandes svar
+hålls; om det inte kan bekräftas, släpp inget äldre svar och rapportera
+att förberedelsen inte är klar.
+
+Testaren väljer därefter fallets tema och kontrollerar temaknappens
+senare fokus medan samma svar fortfarande hålls. Först på testarens begäran
+kör operatören `window.releaseCostReply()` och bekräftar att svaret är släppt.
 Testaren läser sparbeskedet och kontrollerar samma senare fokus.
 Operatören avslutar alltid med `window.restoreCostReplies()` eller
 omladdning. Starta en ny fixture per fall; behåll samma databas bara inom
