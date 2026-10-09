@@ -101,7 +101,7 @@ eller modelluppdrag.
 
 **Förutsättningar:**
 [Registrerat väntande försök](save-preparation.md#registrerat-väntande-försök)
-med Lo Exempel. Ta bort nätblockeringen före besöket.
+med Lo Exempel.
 
 **Separat tekniskt underlag:** Förberedelsen antecknar det registrerade
 försökets ID. Integrationstestet kräver samma beständiga försök efter
@@ -128,10 +128,21 @@ SPARKONTROLL-02.
 ```
 <!-- markdownlint-enable MD013 -->
 
+**Separat operatörsförberedelse:**
+
+Före UI-steg 1: utför
+[registreringen av det väntande försöket](save-preparation.md#registrerat-väntande-försök)
+med Lo Exempel och anteckna det faktiska försöks-ID:t och versionerna.
+Ta bort nätblockeringen före besöket. Kör `restart` i startguiden,
+behåll samma databas och session och invänta omstartens bekräftelse.
+Meddela **Försöket är registrerat och omstarten är klar** innan användaren
+laddar om. Skapa ingen ny installation och starta inget nytt samtal.
+Avsluta enligt startguiden efter sista observationen och känt utfall.
+
 **Steg:**
 
-1. Förbered ett registrerat försök enligt länken. Kör restart
-   och ladda om utan nytt samtalsmedgivande.
+1. Be operatören förbereda försöket och starta om samma installation.
+   Invänta bekräftelse och ladda om utan nytt samtalsmedgivande.
 2. Tillåt den automatiska kontrollen vid besöket. Starta inget nytt samtal och
    lämna mikrofonen av.
 3. Läs det enda kvittot för Lo Exempel i Rapporter → Ändringshistorik.
@@ -154,10 +165,7 @@ eller modelluppdrag.
 
 **Förutsättningar:**
 [Registrerat väntande försök](save-preparation.md#registrerat-väntande-försök)
-med Lo Exempel. Före omstart och omladdning aktiverar operatören beständig
-Network request blocking för `*/text-assistant/recover` i
-utvecklarverktygen. Konsolkontrollen överlever inte omladdning och används
-inte för att blockera den första kontrollen.
+med Lo Exempel.
 
 **Separat tekniskt underlag:** Förberedelsen antecknar det registrerade
 försökets ID. Integrationstestet kräver samma beständiga försök efter
@@ -186,6 +194,18 @@ SPARKONTROLL-07.
 
 **Separat operatörsförberedelse:**
 
+Före UI-steg 1: utför
+[registreringen av det väntande försöket](save-preparation.md#registrerat-väntande-försök)
+med Lo Exempel och anteckna det faktiska försöks-ID:t och versionerna.
+Före omstart och omladdning aktiverar operatören beständig
+Network request blocking för `*/text-assistant/recover` i
+utvecklarverktygen. Konsolkontrollen överlever inte omladdning och används
+inte för att blockera den första kontrollen. Kör `restart` i startguiden,
+behåll samma databas och session och invänta omstartens bekräftelse.
+Meddela **Försöket är registrerat, första kontrollen är blockerad och
+omstarten är klar** innan användaren laddar om. Skapa ingen ny installation
+och starta inget nytt samtal.
+
 Använd [leveranskontrollen](save-preparation.md#samtals--och-kontrollsvar)
 i den befintliga provinstallationen. Efter det första kontrollfelet i UI-steg 2,
 före Enter i steg 3:
@@ -204,8 +224,8 @@ väntande utfallet är känt. Inga verkliga leverantörsanrop ingår.
 
 **Steg:**
 
-1. Förbered ett registrerat försök och aktivera beständig nätblockering enligt
-   förberedelsen. Kör restart och ladda om utan nytt samtalsmedgivande.
+1. Be operatören förbereda försöket, första kontrollfelet och omstarten.
+   Invänta bekräftelse och ladda om utan nytt samtalsmedgivande.
 2. Vänta på Skyttel kunde inte kontrollera om utkastet sparades. Kontrollera den
    enda återförsöksknappen.
 3. Be operatören förbereda nästa kontroll och invänta bekräftelse. Tabba till

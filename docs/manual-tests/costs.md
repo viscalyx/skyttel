@@ -141,7 +141,18 @@ Efter **Lyssnar** i UI-steg 2: kör `usage 12`, `usage 15`, `usage 15` och
 slutvärde förberedd** innan mikrofonen stängs av. Vid steg 4: kör
 `restart`, behåll samma databas och invänta omstartens bekräftelse före
 omladdningen. Behåll det separat förberedda `text missing` och guidens
-hämtningsfel. Återställ blockeringen och avsluta enligt startguiden.
+hämtningsfel.
+
+När användaren har läst det återhämtade underlaget och delsumman efter
+omstarten i steg 4, före **Uppdatera underlaget** i steg 5: följ guidens
+[kontrollerade hämtningsfel](#a-failed-refresh-without-losing-the-last-values)
+och installera Chromium Network request blocking för
+`*/api/operator/costs?*`. Meddela **Hämtningsfelet är förberett**. Behåll
+sidan öppen; ladda inte om hela sidan medan blockeringen gäller. Först
+efter användarens synliga fel, inaktuella tidigare värden och oförändrade
+delsumma i steg 5: ta bort blockeringen och meddela **Hämtningen är
+återställd** före nästa **Uppdatera underlaget**. Avsluta enligt startguiden
+efter den lyckade återhämtningen.
 
 **Steg:**
 
@@ -156,10 +167,11 @@ hämtningsfel. Återställ blockeringen och avsluta enligt startguiden.
 4. Läs texten om ofullständig delsumma. Anteckna delsumman. Be operatören starta
    om samma installation och invänta bekräftelse. Ladda om; kräv samma kända
    underlag och osäkerhet.
-5. Följ guidens
-   [kontrollerade hämtningsfel](#a-failed-refresh-without-losing-the-last-values)
-   . Välj **Uppdatera underlaget**. Kräv synligt fel och inaktuella tidigare
-   värden med samma delsumma. Ta bort blockeringen och uppdatera igen.
+5. Be operatören förbereda hämtningsfelet och invänta bekräftelse. Välj
+   **Uppdatera underlaget**. Kräv synligt fel och inaktuella tidigare värden
+   med samma delsumma. Be operatören återställa hämtningen och invänta
+   bekräftelse. Välj **Uppdatera underlaget** igen; kräv samma delsumma och
+   att felstatus försvinner.
 
 **Förväntat resultat:**
 
