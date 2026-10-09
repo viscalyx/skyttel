@@ -186,7 +186,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   lagda objektförslag, oskickad samtalstext, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
   sparförsök vid tillfälliga vybyten;
-  [teknisk förberedelse vid rätt steg](household-work-preparation.md), faktiskt
+  [teknisk förberedelse vid rätt steg](household-work-preparation.md) med en
+  befolkad referens som bevarar tidigare objekt, kvitto och separat utkast;
+  den verktygskedjan upprepas inte separat från ett tomt hushåll. Faktiskt
   hört NVDA-tal och fysisk mikrofon som separata observationer; avveckling vid
   utloggning, återkallad
   tillgång
