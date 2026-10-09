@@ -215,7 +215,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Typer, historik och rättelser genom MCP](assistant-advanced.md):
   egna typer och fält, daterade avtal, riktning och typbyte, skyddade
   definitioner och läsbar historik efter import samt vanliga
-  rättelser med aktuellt underlag och avvecklade verktygs frånvaro.
+  rättelser med aktuellt underlag, hela valda kvitton och oförändrat
+  oberoende utkast. Separata
+  [klientfångster](assistant-client-preparation.md) ger körbara indata och
+  tekniska jämförelser utan modell.
 
 - [Samtalsmedgivandet](conversation-consent.md): medgivanderutan från
   verktygsraden och snabblänken, avbruten start med bevarat
@@ -397,6 +400,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   återkallad åtkomst, särskilt kartmedgivande, hela utkast, rättelser,
   konflikter och återfunna kvitton samt ett separat manuellt Codex CLI-prov
   med verklig Google-inloggning i devcontainern, utan CI-hemligheter.
+  AI-12 och AI-14 skiljer faktisk klientobservation från separat
+  verklig modellverifiering; vanliga fall använder kontrollerade anrop.
   En kontrollerad lokal MCP-klient behåller gamla begäranden, tappar ett
   lyckat sparbesked och provar exakta återförsök efter serveromstart.
   Profilens anslutningar får tangentbordsfokus och återgången behåller

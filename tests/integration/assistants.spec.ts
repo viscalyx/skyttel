@@ -3,12 +3,14 @@ import type { MapState } from '../../src/shared/map.js';
 import { beginAssistant, callAssistant } from '../support/assistant.js';
 import {
   createHousehold,
+  openDraftReview,
+  openNewObject,
   openProfile,
   openTable,
   signIn,
   utilityButton,
 } from '../support/client.js';
-import { editTableObject } from '../support/domain-work.js';
+import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 
@@ -161,6 +163,12 @@ test('AI-13: profile navigation focuses assistant connections and preserves unse
     expect(await read()).toEqual(before);
     expect(await (await page.request.get(`${path}/view`)).json()).toEqual(viewBefore);
     expect(await (await page.request.get(`${app.origin}/api/bootstrap`)).json()).toEqual(bootstrap);
+    await page.keyboard.press('Escape');
+    const privateProposal = await readDraftProposal(page, 'Bilen');
+    await expect(privateProposal).toContainText('Bilens oberoende privata förslag');
+    await expect(privateProposal).toContainText('Sparat om Bilen');
+    await page.keyboard.press('Escape');
+    expect(await read()).toEqual(before);
   } finally {
     await app.close();
   }
@@ -168,6 +176,7 @@ test('AI-13: profile navigation focuses assistant connections and preserves unse
 
 test('AI-02: uttryckligt AI-val ger läsning och återkallelse stoppar gamla token', async ({
   request,
+  page,
 }) => {
   const app = await createInstallation();
   try {
@@ -227,12 +236,50 @@ test('AI-02: uttryckligt AI-val ger läsning och återkallelse stoppar gamla tok
         })
       ).status(),
     ).toBe(401);
+    // Preserve the protocol-only cycle above; exercise the native grant/revoke
+    // cycle separately with actual saved household content.
+    await page.context().addCookies((await request.storageState()).cookies);
+    await page.goto(app.origin);
+    await openTable(page);
+    const object = await openNewObject(page);
+    await object.getByLabel('Namn', { exact: true }).fill('Läsningens lampa');
+    await object.getByLabel('Beskrivning', { exact: true }).fill('Sparad läsuppgift');
+    await object.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const draft = await openDraftReview(page);
+    await draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+      'Utkastet är sparat',
+    );
+    const nativeFlow = await beginAssistant(page.request, app.origin);
+    await page.goto(nativeFlow.consentUrl.href);
+    await page.getByLabel('Välj hushåll').selectOption(household.id);
+    await expect(page.getByRole('button', { name: 'Godkänn läsåtkomst' })).toBeDisabled();
+    await page.getByLabel(/Jag tillåter extern AI-behandling/).check();
+    await page.route('http://127.0.0.1:7777/callback**', (route) =>
+      route.fulfill({ body: 'Påhittad klient' }),
+    );
+    const nativeCallback = page.waitForRequest('http://127.0.0.1:7777/callback**');
+    await page.getByRole('button', { name: 'Godkänn läsåtkomst' }).click();
+    const nativeToken = await nativeFlow.exchange((await nativeCallback).url());
+    expect(nativeToken.status).toBe(200);
+    const nativeAccess = (await nativeToken.json()).access_token;
+    const nativeRead = await callAssistant(app.origin, nativeAccess, 'read_map');
+    expect(nativeRead.status).toBe(200);
+    expect(JSON.parse((await nativeRead.json()).result.content[0].text).objects).toEqual([
+      expect.objectContaining({ name: 'Läsningens lampa', description: 'Sparad läsuppgift' }),
+    ]);
+    await page.goto(`${app.origin}/assistants`);
+    await page
+      .getByRole('button', { name: 'Återkalla anslutning för Påhittad textassistent' })
+      .click();
+    await expect(page.getByText('Inga aktiva assistentanslutningar.')).toBeVisible();
+    expect((await callAssistant(app.origin, nativeAccess, 'read_map')).status).toBe(401);
   } finally {
     await app.close();
   }
 });
 
-test('AI-01: OAuth krävs innan assistenten kan läsa kartan', async ({ request }) => {
+test('AI-01: OAuth krävs innan assistenten kan läsa kartan', async ({ request, page }) => {
   const app = await createInstallation();
   try {
     const denied = await request.post(`${app.origin}/mcp`, {
@@ -262,6 +309,45 @@ test('AI-01: OAuth krävs innan assistenten kan läsa kartan', async ({ request 
       error: 'unauthenticated',
       message: 'Anslutningen behöver godkännas på nytt i Skyttel.',
     });
+    await page.context().addCookies((await request.storageState()).cookies);
+    await page.goto(app.origin);
+    await openTable(page);
+    await expect(await utilityButton(page, 'Nytt objekt')).toBeVisible();
+    const nativeCookieOnly = await page.evaluate(async () => {
+      const response = await fetch('/mcp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          accept: 'application/json, text/event-stream',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'tools/call',
+          params: { name: 'read_map', arguments: {} },
+        }),
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(nativeCookieOnly).toEqual({
+      status: 401,
+      body: {
+        error: 'unauthenticated',
+        message: 'Anslutningen behöver godkännas på nytt i Skyttel.',
+      },
+    });
+    const flow = await beginAssistant(page.request, app.origin);
+    await page.goto(flow.consentUrl.href);
+    await expect(page.getByRole('heading', { name: 'Anslut extern assistent' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Godkänn läsåtkomst' })).toBeDisabled();
+    await page.route('http://127.0.0.1:7777/callback**', (route) =>
+      route.fulfill({ body: 'Påhittad klient' }),
+    );
+    const callback = page.waitForRequest('http://127.0.0.1:7777/callback**');
+    await page.getByRole('button', { name: 'Nej, anslut inte' }).click();
+    expect(new URL((await callback).url()).searchParams.get('error')).toBe('access_denied');
+    await page.goto(`${app.origin}/assistants`);
+    await expect(page.getByText('Inga aktiva assistentanslutningar.')).toBeVisible();
   } finally {
     await app.close();
   }
@@ -269,6 +355,7 @@ test('AI-01: OAuth krävs innan assistenten kan läsa kartan', async ({ request 
 
 test('AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifter', async ({
   request,
+  page,
 }) => {
   const app = await createInstallation();
   try {
@@ -389,6 +476,32 @@ test('AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifte
     expect(map.objects).toHaveLength(5);
     expect(map.relationships).toHaveLength(4);
     expect(map.contextObjects).toEqual([]);
+    await page.context().addCookies((await request.storageState()).cookies);
+    await page.goto(app.origin);
+    const carForm = await editTableObject(page, 'Blå bilen');
+    await carForm.getByLabel('Namn', { exact: true }).fill('Rättad blå bil');
+    await carForm.getByLabel('Beskrivning', { exact: true }).fill('Bilens rättade uppgifter');
+    await carForm.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const nativeProposal = await readDraftProposal(page, 'Rättad blå bil');
+    await expect(nativeProposal).toContainText('Bilens sparade uppgifter');
+    await expect(nativeProposal).toContainText('Bilens rättade uppgifter');
+    for (const sectionName of ['Sparade värden', 'Föreslagna värden']) {
+      const values = nativeProposal.getByRole('heading', { name: sectionName }).locator('..');
+      await expect(values.locator('dt').filter({ hasText: /^Typ$/ }).locator('..')).toContainText(
+        'Fordon',
+      );
+    }
+    await page.keyboard.press('Escape');
+    expect((await read()).draft.changes).toEqual([
+      expect.objectContaining({
+        id: 'car',
+        after: expect.objectContaining({
+          typeId: vehicleType,
+          name: 'Rättad blå bil',
+          description: 'Bilens rättade uppgifter',
+        }),
+      }),
+    ]);
     await post('draft', {
       id: 'car',
       baseRevision: 1,
@@ -452,6 +565,7 @@ test('AI-04: inloggning följs av medgivande och ett nej bevarar kartarbete', as
 test('AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klienten', async ({
   request,
   browser,
+  page,
 }) => {
   const app = await createInstallation();
   const other = await browser.newContext();
@@ -487,6 +601,18 @@ test('AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klient
       ).toBe(200);
     }
     app.seedMembership(user.id, 'other-household', 'Hushållet Eken');
+    const robinPage = await other.newPage();
+    await robinPage.goto(`${app.origin}/households/${household.id}`);
+    const privateProposal = await readDraftProposal(robinPage, 'Robins privata förslag');
+    await expect(privateProposal).toContainText('Robins privata förslag');
+    await expect(privateProposal).not.toContainText('Alex privata förslag');
+    await expect(
+      privateProposal
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..'),
+    ).toContainText('Ej uppgivet');
+    await robinPage.keyboard.press('Escape');
     const flow = await beginAssistant(other.request, app.origin);
     const consent = await flow.consent(household.id);
     const { access_token } = await (await flow.exchange((await consent.json()).url)).json();
@@ -510,9 +636,19 @@ test('AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klient
       });
       expect(denied.isError).toBe(true);
       expect(JSON.stringify(denied)).not.toContain('Hushållet Eken');
-      expect(
-        (await request.post(`${base}/members/${user.id}/revoke`, { headers, data: {} })).status(),
-      ).toBe(200);
+      await page.context().addCookies((await request.storageState()).cookies);
+      await page.goto(`${app.origin}/households/${household.id}/administration`);
+      const member = page
+        .getByRole('list', { name: 'Medlemmar' })
+        .getByRole('listitem')
+        .filter({ hasText: robin.name });
+      await member.getByRole('button', { name: 'Återkalla tillgång' }).click();
+      const revoked = page.waitForResponse(`${base}/members/${user.id}/revoke`);
+      await member.getByRole('button', { name: 'Bekräfta återkallelse' }).click();
+      const revocationResponse = await revoked;
+      expect(revocationResponse.status()).toBe(200);
+      expect(revocationResponse.request().postDataJSON()).toEqual({});
+      await expect(member).toHaveCount(0);
       await expect(client.callTool({ name: 'read_my_draft', arguments: {} })).rejects.toThrow();
     } finally {
       await client.close();

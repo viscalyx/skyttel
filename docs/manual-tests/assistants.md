@@ -28,18 +28,35 @@ förslagen eller spara hela utkastet.
 Följande förberedelser gäller AI-01 till AI-06. För AI-07 används i stället
 den isolerade installation som anges i testfallet.
 
-1. Använd en testinstallation med enbart påhittade data. Förbered verklig
-   klientåtkomst enligt [klientens startguide](setup/assistants.md#real-text-client-verification).
-2. Skapa ett sparat objekt i Linden. Lägg olika privata förslag i Alex och
-   Robins utkast. Lämna dem osparade. Behåll data mellan fallen men
-   återkalla anslutningar och återställ medlemskap mellan körningarna.
-3. Håll Alex och Robin inloggade i skilda webbläsarprofiler. Anteckna om
-   klientprovet gäller ChatGPT web eller Codex-appen. CI använder riktiga
-   protokoll och ersatta identitetsleverantörer; det är ett separat resultat.
+1. Använd en testinstallation med enbart påhittade data. Förbered den
+   [kontrollerade läsklienten](assistant-client-preparation.md#installation-medgivande-och-städning).
+2. Skapa ett sparat objekt **Läsningens lampa**, beskrivning
+   **Sparad läsuppgift**, i Linden. Lägg olika privata förslag i Alex och
+   Robins utkast. Lämna dem osparade. Börja varje fall med ny databas;
+   återkalla anslutningarna och följ guidens städning efter körningen.
+3. Håll Alex och Robin inloggade i skilda webbläsarprofiler. Den
+   kontrollerade klienten gör inga modellanrop. AI-07, AI-12 och AI-14
+   anger separat faktisk klientobservation och leverantörsverifiering.
 
 ## Medgivande
 
 ### AI-01: OAuth krävs innan assistenten kan läsa kartan
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistants.spec.ts",
+    "caseId": "AI-01"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Klienten får ingen kartinformation utan OAuth-medgivande; vanlig webbinloggning räcker inte.",
+    "Ett nej skapar ingen assistentanslutning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att en okänd klient saknar kartåtkomst.
 
@@ -51,27 +68,19 @@ den isolerade installation som anges i testfallet.
 [assistants.spec.ts](../../tests/integration/assistants.spec.ts),
 testfallet “AI-01: OAuth krävs innan assistenten kan läsa kartan”.
 
+**Separat förberedelse:** Kör
+[cookiekontrollen](assistant-client-preparation.md#webbcookie-utan-assistentmedgivande-ai-01)
+efter vanlig webbinloggning, före assistentmedgivandet. Den är separat
+protokollunderlag och ska inte leverera någon kartinformation.
+
 **Steg:**
 
-1. Lägg till Skyttels MCP-adress i klienten med OAuth.
-2. Begär en läsning utan att slutföra Skyttels medgivande.
-3. Logga in i Skyttel i webbläsaren. Begär därefter `read_map` på `/mcp`
-   från samma webbläsarsession med dess vanliga inloggningscookie men utan
-   OAuth-token. Kör följande i utvecklarverktygens konsol på Skyttels sida:
-
-   ```javascript
-   const svar = await fetch('/mcp', {
-     method: 'POST',
-     headers: { 'Content-Type': 'application/json' },
-     body: JSON.stringify({
-       jsonrpc: '2.0',
-       id: 1,
-       method: 'tools/call',
-       params: { name: 'read_map', arguments: {} },
-     }),
-   });
-   console.log(svar.status, await svar.json());
-   ```
+1. Logga in i Skyttel och öppna **Tabell**. Manuellt kartarbete ska vara
+   tillgängligt utan någon assistentanslutning.
+2. Starta den kontrollerade läsklienten och öppna dess medgivandesida.
+   Utan hushållsval och AI-val ska **Godkänn läsåtkomst** vara inaktiverad.
+3. Välj **Nej, anslut inte**. Öppna **Assistentanslutningar** i Skyttel.
+   Inga aktiva anslutningar ska finnas och klienten ska sakna kartdata.
 
 **Förväntat resultat:**
 
@@ -80,6 +89,22 @@ testfallet “AI-01: OAuth krävs innan assistenten kan läsa kartan”.
   Även anropet med enbart inloggningscookie får HTTP 401 utan kartinnehåll.
 
 ### AI-02: uttryckligt AI-val ger läsning och återkallelse stoppar gamla token
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistants.spec.ts",
+    "caseId": "AI-02"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Ett aktivt läsmedgivande ger det sparade objektets namn och beskrivning.",
+    "Återkallelsen stoppar nästa läsning med samma anslutning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera läsåtkomst och omedelbar återkallelse.
 
@@ -95,9 +120,9 @@ token”.
 **Steg:**
 
 1. Anslut klienten, välj Linden och godkänn extern AI-behandling och
-   läsåtkomst. Be klienten läsa det sparade objektet.
+   läsåtkomst. Kör `map Läsningens lampa` och läs namn och beskrivning.
 2. Öppna Assistentanslutningar i Skyttel och återkalla klienten.
-3. Begär en ny läsning i samma öppna klient.
+3. Kör `map Läsningens lampa` igen i samma öppna klient.
 
 **Förväntat resultat:**
 
@@ -107,6 +132,22 @@ token”.
   hos klienten; Skyttel lovar inte att den raderas där.
 
 ### AI-03: medgivandet kräver val av hushåll och AI-behandling
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistants.spec.ts",
+    "caseId": "AI-03"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Både hushållsval och separat AI-val krävs.",
+    "Återkallelse lämnar manuellt kartarbete tillgängligt."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera ett begripligt och aktivt behandlingsval.
 
@@ -136,6 +177,22 @@ testfallet “AI-03: medgivandet kräver val av hushåll och AI-behandling”.
 
 ### AI-04: inloggning följs av medgivande och ett nej bevarar kartarbete
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistants.spec.ts",
+    "caseId": "AI-04"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Google-inloggningen återkommer till medgivandet.",
+    "Ett nej skapar ingen anslutning och kartarbete finns kvar."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera inloggning och nekad anslutning.
 
 **Användare:** Alex och textklienten.
@@ -164,6 +221,22 @@ kartarbete”.
 
 ### AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klienten
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistants.spec.ts",
+    "caseId": "AI-05"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Endast ansluten användares privata utkast i valt hushåll kan läsas.",
+    "Återkallat medlemskap stoppar den redan öppna SDK-sessionen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera privata utkast, hushåll och aktuellt medlemskap.
 
 **Användare:** Alex, Robin och Robins anslutna textklient.
@@ -178,10 +251,15 @@ klienten”.
 
 **Steg:**
 
-1. Be Robins klient läsa det egna utkastet och därefter Alex utkast.
-2. Begär att samma anslutning ska läsa Eken genom att ange dess namn.
+1. Öppna **Hushållet Linden** i Robins webbläsarprofil. Kör `read` i Robins
+   klient och jämför hela svaret med Robins förslag i **Visa utkastet**.
+   Alex privata förslag ska inte följa med.
+2. Kör `tools`: inget verktyg ska erbjuda byte till annan användare eller
+   annat hushåll. Kör `map Hushållet Eken` i samma anslutning; namnet
+   ska inte byta hushåll eller ge Eken-data. Automationen behåller också
+   det separata SDK-anropet med otillåten `householdId` som protokollskydd.
 3. Låt Alex återkalla Robins medlemskap genom Administrera tillgång.
-4. Be Robins fortfarande öppna klient läsa utkastet igen.
+4. Kör `read` igen i Robins fortfarande öppna klient.
 
 **Förväntat resultat:**
 
@@ -191,6 +269,22 @@ klienten”.
   Administrativa åtgärder saknas bland assistentens verktyg.
 
 ### AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifter
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistants.spec.ts",
+    "caseId": "AI-06"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Bilens direkta samband och nödvändiga ändpunkter läses utan orelaterade detaljer.",
+    "Den fulla formulärrättelsen syns i eget utkast med sparade värden kvar."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera att en objektfråga får nödvändigt sammanhang utan
 att hela kartan eller orelaterade typdefinitioner följer med.
@@ -212,14 +306,14 @@ uppgifter”.
 
 **Steg:**
 
-1. Anropa `read_map` med Blå bilens `objectId`. Granska verktygssvaret.
-2. Anropa samma verktyg med `query` satt till `BILEN`, och sedan med både
-   Blå bilens ID och söktexten `bilen`.
-3. Sök efter `ingen träff` och begär därefter ett obefintligt objekt-ID.
-4. Ange både Blå bilens ID och söktexten `Samlingen`.
-5. Begär slutligen hela den sparade kartan utan avgränsning.
-6. Föreslå i webbläsaren en rättelse av Blå bilens namn och beskrivning.
-   Spara inte. Anropa `read_my_draft` i klienten och granska hela svaret.
+1. Kör de sju exakta läsningarna i
+   [den separata förberedelsen](assistant-client-preparation.md#avgränsad-läsning-ai-06)
+   och jämför resultaten nedan. Den innehåller också tekniska ID-jämförelser.
+2. Öppna Blå bilen genom **Tabell → Redigera Blå bilen**. Ändra namnet
+   till **Rättad blå bil** och beskrivningen till **Bilens rättade uppgifter**.
+   Välj **Lägg i utkastet och stäng** och öppna förslagets fulla läsdialog
+   i **Visa utkastet**. Läs både sparad och föreslagen beskrivning. Spara inte.
+3. Kör `read` i klienten och granska hela svaret.
    Bilens sparade och föreslagna uppgifter ska finnas kvar; Kim och Lo
    får bara ID, namn och typ i `current.objects`. Deras egna beskrivningar,
    Cykeln två steg bort och Samlingen ska inte följa med automatiskt.
@@ -242,6 +336,36 @@ uppgifter”.
 ## Verklig lokal klient
 
 ### AI-07: manuellt Codex CLI-prov med Google i devcontainern
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "external-client",
+    "observation": "Människan slutför verklig Google- och Codex CLI-inloggning, granskar faktiska nya verktygsanrop efter återkallelse och ett nytt medgivande."
+  },
+  "reference": "Namngiven faktisk klient, konto, modell, datum och observerade nya verktygsanrop; separat resultat från syntetisk integration.",
+  "outcomes": [
+    "Verklig klientinloggning, sparad karta och eget utkast går att skilja åt.",
+    "Samma Codex-session stoppas efter återkallelse och nytt medgivande återger läsning."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistants.spec.ts",
+      "caseId": "AI-02",
+      "purpose": "Kontrollerat läsmedgivande och återkallelse."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistants.spec.ts",
+      "caseId": "AI-05",
+      "purpose": "SDK-sessionens privata och aktuella åtkomstgränser."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kontrollera verklig Google-inloggning, OAuth-medgivande, läsning
 av sparad karta och eget utkast samt återkallelse och ny anslutning från
@@ -266,7 +390,8 @@ tjänstekontot Familjens musikkonto och administratörens osparade demoutkast.
 Spara eller kasta inte utkastet under provet. Det innehåller även andra
 påhittade förslag; detta fall kontrollerar förslaget om inloggningsadress.
 
-**Integrationstest:** Endast manuellt. Verklig Google- och Codex-inloggning
+**Kräver mänsklig observation:** Verklig extern klient och konto. Verklig
+Google- och Codex-inloggning
 ingår inte i CI eller pull request-körningar och kräver inga hemligheter
 där. Närliggande protokollbeteenden täcks med ersatta identitetsleverantörer i
 [assistants.spec.ts](../../tests/integration/assistants.spec.ts), bland annat
@@ -351,26 +476,55 @@ Automatiskt verifierade verktygsregler behöver inte upprepas där.
 
 ## Hela kartärenden
 
-AI-08 och AI-12 använder en verklig textklient med kartmedgivande enligt
-[klientens startguide](setup/assistants.md#real-text-client-verification).
-AI-09 till AI-11 använder den
+AI-08–11 använder den
 [kontrollerade lokala MCP-klienten](assistant-advanced.md#controlled-mcp-client):
-starta en ny tom provdatabas och hjälpprocess inför varje fall. Guiden ger
+AI-09–11 börjar med ny tom databas; AI-08 använder en ny demokarta enligt
+sina förutsättningar. Starta en ny hjälpprocess inför varje fall. Guiden ger
 exakta kommandon för OAuth, omstart med samma databas och städning.
 Använd den konfigurerade administratörens egen inloggning och hushållet
-**MCP-prov**. Inga riktiga hushållsuppgifter, modellkostnader eller publika
-adresser behövs för dessa tre kontroller. Klienten skickar verktygsanrop;
+**MCP-prov** för tomma fall, **TestHousehold** för AI-08. Inga riktiga
+hushållsuppgifter, modellkostnader eller publika
+adresser behövs för dessa fyra kontroller. Klienten skickar verktygsanrop;
 den provar inte en språkmodells tolkning. Integrationstesterna verifierar
 de kontrollerade fallen; #97 kräver ingen manuell upprepning.
 
 ### AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärendet
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistant-work.spec.ts",
+    "caseId": "AI-08"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Kartmedgivandet fortsätter hela webbutkastet; konflikten rättas före sparandet.",
+    "Ett sparkvitto omfattar båda objekträttelserna och adressambandet.",
+    "Omstart bevarar hela familjeärendet och tömmer utkastet."
+  ],
+  "evidence": [
+    {
+      "kind": "real-provider",
+      "spec": "tests/real-model/assistant-language.spec.ts",
+      "caseId": "AI-08",
+      "purpose": "Separat uttryckligen auktoriserad modellkörning för samlad svensk instruktion; inga påståenden om annan klientinloggning."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Fortsätta webbläsarens förslag och spara ett samlat familjeärende.
 
 **Användare:** Den konfigurerade administratören i webbläsare och textklient.
 
-**Förutsättningar:** Ny demokarta med Lo-konflikten och förslaget om
-inloggningsadress. En äldre läsanslutning kan finnas men ger inte kartarbete.
+**Förutsättningar:** Använd den nya demokartan från
+[demoförberedelsen](setup/assistants.md#manual-local-codex-cli-setup),
+med Lo-konflikten och förslaget om inloggningsadress. Anslut den
+kontrollerade klienten på samma adress enligt dess startguide; starta
+inte samtidigt guidens andra server. Ingen modell behövs för detta fall.
+En äldre läsanslutning kan finnas men ger inte kartarbete.
 
 **Integrationstest:**
 [assistant-work.spec.ts](../../tests/integration/assistant-work.spec.ts),
@@ -389,19 +543,25 @@ MCP”, med [separat verklig modellkörning](real-model-tests.md).
    **Godkänn kartarbete** ännu inte kan väljas. Läs informationen om
    hela utkastet. Markera även valet om förslag och sparande med
    tangentbordet och godkänn.
-3. Be assistenten läsa hela utkastet, inklusive tidigare förslag och
-   konflikten mellan Lo Lind och Lo Berg. Be den behålla Lo Lind som
-   ditt förslag. Kontrollera att pianobeskrivningen finns kvar.
-4. Be den läsa Familjens Molnmusik och skilja den som står på avtalet
-   från den som betalar och det kort som används.
-5. Säg ”Ändra priset till 189 SEK per månad och spara hela utkastet”.
-   Granska de faktiska verktygsanropen och kvittot, inklusive det redan
-   föreslagna bytet till `musik@example.test`.
-6. Öppna kartan igen. Kontrollera det tomma utkastet och stäng textvyn.
+3. Läs hela utkastet i den kontrollerade klienten. Använd
+   [familjeärendets fångster](assistant-client-preparation.md#familjeärendet-ai-08)
+   för att välja ditt förslag Lo Lind i konflikten. Kontrollera att
+   pianobeskrivningen finns kvar.
+4. Läs Familjens Molnmusik genom klientens kartläsning. Skilj den som
+   står på avtalet från den som betalar och det kort som används.
+5. Följ samma förberedelses fulla prisrättelse och granska hela utkastet.
+   Ge ditt uttryckliga sparbesked med klientens fångade sparbegäran.
+   Kontrollera kvittot och det redan föreslagna adressbytet.
+6. Starta om servern med samma databas enligt klientguiden. Kontrollera
+   samma sparkvitto genom det oförändrade återförsöket. Öppna kartan igen.
+   Kontrollera det tomma utkastet och stäng textvyn.
    Öppna **Tabell** och kontrollera Lo Lind. Välj **Samband** för
    **Familjens musikkonto** och kontrollera den nya inloggningsadressen.
    Stäng läsningen, välj **Redigera Familjens Molnmusik** och öppna
-   **Ekonomiska uppgifter** för att kontrollera priset.
+   **Ekonomiska uppgifter** för att kontrollera pris **189**, valuta
+   **SEK** och betalningsintervall **månad**, alla som kända uppgifter.
+   Kontrollera beskrivningen **Familjeabonnemang, 189 kr per månad.**
+   Stäng formuläret och redigera Lo Lind: pianobeskrivningen ska finnas kvar.
 
 **Förväntat resultat:**
 
@@ -410,7 +570,7 @@ MCP”, med [separat verklig modellkörning](real-model-tests.md).
 - Hela utkastet följer med. Rättelsen och sparandet kräver inte ännu ett
   ja enbart för att rättelsen skapar en ny version.
 - Ett kvitto omfattar de två objekträttelserna och adressambandet.
-  Efter omladdning finns de sparade uppgifterna och **Utkastet är tomt.**
+  Efter omstart finns de fulla sparade uppgifterna och **Utkastet är tomt.**
 
 Vanlig CI använder bestämda MCP-anrop och provar dessutom omstart och
 exakt återförsök av kvittot. Den separata modellkörningen provar den
@@ -418,6 +578,22 @@ kombinerade instruktionen med verklig modell. Kvaliteten på formuleringen
 av besked och andra klienters inloggning bedöms separat.
 
 ### AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparande
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistant-work.spec.ts",
+    "caseId": "AI-09"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Nytt webbförslag avvisar gammalt sparbesked utan delsparande.",
+    "Färskt godkännande sparar båda förslagen; gammalt försök förblir avvisat."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Stoppa ett gammalt sparunderlag från en annan klient.
 
@@ -458,6 +634,22 @@ Den kontrollerade klienten skickar den fångade versionen oförändrad;
 ingen särskild funktion i en språkmodell behövs för att köra fallet.
 
 ### AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt sparande
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistant-work.spec.ts",
+    "caseId": "AI-10"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Ett verkligt genomfört sparande med tappat svar behandlas som okänt.",
+    "Samma beständiga kvitto återfinns efter omstart; exakt återförsök ger ett enda sparande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Återfinna ett förlorat sparresultat efter serveromstart och prova
 exakt återförsök utan dubbla ändringar.
@@ -510,6 +702,22 @@ Den bevisar återhämtning efter ett kontrollerat avbrott efter transaktionen,
 inte hur en verklig språkmodell reagerar på ett godtyckligt nätfel.
 
 ### AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kastade
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistant-work.spec.ts",
+    "caseId": "AI-11"
+  },
+  "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
+  "outcomes": [
+    "Olöst identitet blockerar hela sparandet.",
+    "Ett försenat förslag återinför inte det kastade objektet; ospecificerat konto bevaras."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla identitetsfrågor och respektera kastade förslag.
 
@@ -572,6 +780,30 @@ förblir kastade”.
 
 ### AI-12: nekade och hypotetiska sparbesked sparar inget
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "external-client",
+    "observation": "Människan ansluter den namngivna verkliga textklienten och granskar dess faktiska verktygsanrop och tolkning av nekade, hypotetiska och uttryckliga sparbesked."
+  },
+  "reference": "Namngiven faktisk klient, konto, modell, datum och observerade nya verktygsanrop; separat resultat från syntetisk integration.",
+  "outcomes": [
+    "Nekade och hypotetiska besked lämnar kartan och utkastet oförändrade.",
+    "Den uttryckliga rättelsen och sparbegäran ger ett beständigt kvitto med bibehållen beskrivning."
+  ],
+  "evidence": [
+    {
+      "kind": "real-provider",
+      "spec": "tests/real-model/assistant-language.spec.ts",
+      "caseId": "AI-12",
+      "purpose": "Separat verklig modellverifiering av språktolkningen, utan att utföra mänsklig klientobservation."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kontrollera den verkliga textklientens tolkning av sparregeln.
 
 **Användare:** Den konfigurerade administratören och den verkliga textklienten.
@@ -580,7 +812,13 @@ förblir kastade”.
 beskrivning **Spelar piano.**, känd utkastversion och godkänd anslutning för
 kartarbete. Anteckna den sparade kartans utgångsläge.
 
-**Integrationstest:**
+**Kräver mänsklig observation:** Anslut den namngivna verkliga klienten
+enligt [klientguiden](setup/assistants.md#real-text-client-verification).
+Kontrollera dess faktiska inloggning, verktygsanrop och svenska besked vid
+varje steg. Anteckna klientens eget resultat; den separata modellrapporten
+utför inte denna konto- och klientobservation.
+
+**Separat verklig leverantörsverifiering:**
 [assistant-language.spec.ts](../../tests/real-model/assistant-language.spec.ts),
 testfallet “AI-12: verklig modell skiljer nekade och hypotetiska besked från
 rättelse och sparande”. Följ den
@@ -617,6 +855,22 @@ verktygsresultat; den påstår inte att ett mänskligt prov är genomfört.
 ## Profilens anslutningar
 
 ### AI-13: Öppna assistentanslutningar och återgå till pågående arbete
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/assistants.spec.ts",
+    "caseId": "AI-13"
+  },
+  "reference": "390×900, ljust tema och verkligt tangentbordsfokus.",
+  "outcomes": [
+    "Profilens anslutningar får synligt tangentbordsfokus vid 390 pixlar.",
+    "Oskickad formulärtext skyddas före avresa; oberoende privata värden bevaras."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Ge tangentbordsfokus till profilens destination, skydda oskickad
 text före avresa och behålla oberoende privata förslag vid återgången.
@@ -663,3 +917,71 @@ unsent and private work”.
 - Profilnavigeringen skapar ingen assistentanslutning, inget medgivande
   och inget nytt förslag eller sparande. Automationen jämför kartans och
   anslutningarnas faktiska serverunderlag före och efter flödet.
+
+## Verklig klient för familjeärendet
+
+### AI-14: faktisk klient tolkar och genomför familjeärendet
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "external-client",
+    "observation": "Människan ansluter sin verkliga klient, granskar dess svenska tolkning och faktiska MCP-anrop för hela familjeärendet samt kontrollerar att sparbekräftelsen bygger på kvittot."
+  },
+  "reference": "Namngiven verklig klient och modell med påhittad demokarta; faktiskt observerad OAuth-inloggning och verktygsanrop.",
+  "outcomes": [
+    "Klientens samlade instruktion behåller hela utkastet och de avsedda familjerättelserna.",
+    "Ett faktiskt kvitto bekräftar hela sparandet; klientens egen försäkran räcker inte."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/assistant-work.spec.ts",
+      "caseId": "AI-08",
+      "purpose": "Kontrollerat helt familjeärende genom browser, MCP och beständig lagring."
+    },
+    {
+      "kind": "real-provider",
+      "spec": "tests/real-model/assistant-language.spec.ts",
+      "caseId": "AI-08",
+      "purpose": "Separat verklig modelltolkning med MCP SDK-klient; utför inte annan klients kontoobservation."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Skilja en faktisk klients inloggning och språktolkning från
+kontrollerade verktygsanrop.
+
+**Användare:** Administratören och den namngivna verkliga textklienten.
+
+**Förutsättningar:** Ny påhittad demokarta med Lo-konflikten och det
+osparade adressbytet. Förbered anslutningen enligt
+[den verkliga klientguiden](setup/assistants.md#real-text-client-verification).
+Använd redan godkänd klient- och leverantörskörning; detta dokument ger
+ingen auktorisation för avgiftsbelagda anrop.
+
+**Kräver mänsklig observation:** Slutför den faktiska klientens
+OAuth-flöde och granska nya verktygsanrop och svenska besked. En separat
+modellrapport utför inte denna klientobservation.
+
+**Steg:**
+
+1. Välj hushållet och ge både AI-medgivande och kartmedgivande i Skyttel.
+2. Be klienten läsa hela utkastet, behålla Lo Lind i namnkonflikten och
+   behålla pianobeskrivningen. Be den läsa Familjens Molnmusik och skilja
+   avtalspart, betalare och kort. Granska de faktiska verktygssvaren.
+3. Säg **Ändra priset till 189 SEK per månad och spara hela utkastet**.
+   Kontrollera verktygsanrop och sparkvitto för båda objekten och adressbytet.
+4. Följ AI-08:s slutliga webbläsarläsning av hela värdena efter omstart.
+5. Anteckna klient, konto-/leverantörssätt, modell, datum, faktiskt utfall
+   och städning. Återkalla anslutningen och ta bort de tillfälliga uppgifterna.
+
+**Förväntat resultat:** Den verkliga klienten kan anslutas och gör hela
+familjerättelsen utan att dölja misslyckade verktygsanrop bakom ett eget
+besked. Sparbekräftelsen går att verifiera med kvittot och webbläsarläsning.
+
+**Resultatstatus:** Inte genomfört. Rapportera klientobservation och
+separat verklig modellkörning var för sig.
