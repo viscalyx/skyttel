@@ -1,8 +1,75 @@
 import { expect, request, test } from '@playwright/test';
 import { draftChangeCount } from '../../src/shared/map.js';
-import { prepareDraftRemovalFocus, prepareDraftRemovalMeaning } from '../support/draft-removal.js';
+import {
+  prepareDraftRemovalFocus,
+  prepareDraftRemovalMeaning,
+  stageNewRemovalType,
+} from '../support/draft-removal.js';
 import { prepareDraftReview } from '../support/draft-review.js';
 import { createInstallation } from '../support/installation.js';
+import { readRemovalHistory, readRemovalProposals } from '../support/removal-reading.js';
+
+test('UTKAST-150: absent independent removal retains complete proposals until actual checking permits one fresh removal', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const data = await prepareDraftReview(page.request, installation.origin);
+    const before = await data.read();
+    const history = await (await page.request.get(`${data.path}/history`)).json();
+    let confirmations = 0;
+    let dropBefore = true;
+    await page.route('**/map/discard-review', async (route) => {
+      if (!route.request().postDataJSON().confirmation) return route.continue();
+      confirmations++;
+      if (dropBefore) return route.abort();
+      return route.continue();
+    });
+    await page.goto(`${installation.origin}/households/${data.household.id}`);
+    await page.getByRole('button', { name: 'Utkast', exact: true }).click();
+    await readRemovalProposals(page, before);
+    const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    const remove = draft.getByRole('button', {
+      name: 'Ta bort förslaget: Olöst fordon',
+      exact: true,
+    });
+    await remove.click();
+    const dialog = page.getByRole('dialog', {
+      name: 'Ta bort förslaget och dess beroenden?',
+      exact: true,
+    });
+    await expect(dialog.getByRole('alert')).toContainText('Borttagningen kunde inte bekräftas');
+    await expect(dialog.getByRole('button', { name: 'Ta bort', exact: true })).toBeDisabled();
+    expect(await data.read()).toEqual(before);
+    await page.keyboard.press('Escape');
+    await readRemovalProposals(page, before);
+    await draft.getByRole('button', { name: 'Kontrollera borttagningen', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: 'Ta bort', exact: true })).toBeDisabled();
+    expect(confirmations).toBe(1);
+    await dialog.getByRole('button', { name: 'Hämta aktuellt utkast', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: 'Ta bort', exact: true })).toBeEnabled();
+    await expect(dialog.getByRole('listitem')).toHaveCount(1);
+    expect(await data.read()).toEqual(before);
+    dropBefore = false;
+    await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(remove).toHaveCount(0);
+    expect(confirmations).toBe(2);
+    const after = await data.read();
+    expect(after.draft).toEqual({
+      ...before.draft,
+      version: before.draft.version + 1,
+      changes: before.draft.changes.filter(({ id }) => id !== 'draft-unresolved'),
+    });
+    expect(after.objects).toEqual(before.objects);
+    expect(after.relationships).toEqual(before.relationships);
+    expect(await (await page.request.get(`${data.path}/history`)).json()).toEqual(history);
+    await readRemovalProposals(page, after);
+    await readRemovalHistory(page);
+  } finally {
+    await installation.close();
+  }
+});
 
 test('UTKAST-46: removal of the final rows focuses the previous control and then the draft heading', async ({
   page,
@@ -13,6 +80,7 @@ test('UTKAST-46: removal of the final rows focuses the previous control and then
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await page.getByRole('button', { name: 'Utkast', exact: true }).click();
     const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    await readRemovalProposals(page, await data.read());
     const controls = draft.getByRole('button', { name: /^Ta bort förslaget:/ });
     await expect(controls).toHaveCount(2);
     await controls.last().click();
@@ -22,13 +90,15 @@ test('UTKAST-46: removal of the final rows focuses the previous control and then
     await expect(controls).toHaveCount(0);
     await expect(draft.getByRole('heading', { name: 'Utkast', exact: true })).toBeFocused();
     expect(draftChangeCount((await data.read()).draft)).toBe(0);
+    await readRemovalProposals(page, await data.read());
+    await readRemovalHistory(page);
   } finally {
     await installation.close();
   }
 });
 
 for (const preserveLaterFocus of [false, true]) {
-  test(`UTKAST-46: delayed removal restores a disappearing draft tool and preserves later focus (${preserveLaterFocus ? 'later control' : 'draft tool'})`, async ({
+  test(`${preserveLaterFocus ? 'UTKAST-146' : 'UTKAST-145'}: delayed removal restores a disappearing draft tool and preserves later focus (${preserveLaterFocus ? 'later control' : 'draft tool'})`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -52,6 +122,7 @@ for (const preserveLaterFocus of [false, true]) {
       await page.goto(`${installation.origin}/households/${data.household.id}`);
       const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
       await tools.getByRole('button', { name: 'Utkast', exact: true }).click();
+      await readRemovalProposals(page, await data.read());
       await page.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true });
       await dialog.getByRole('button', { name: 'Ta bort hela utkastet', exact: true }).click();
@@ -70,6 +141,8 @@ for (const preserveLaterFocus of [false, true]) {
       await expect(page.getByRole('status', { name: 'Utkastets åtgärdsstatus' })).toContainText(
         'Hela ditt utkast har tagits bort',
       );
+      await readRemovalProposals(page, await data.read());
+      await readRemovalHistory(page);
     } finally {
       release?.();
       await installation.close();
@@ -121,6 +194,7 @@ test('UTKAST-48: authoritative discard rejects forged or unauthorized requests a
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await page.getByRole('button', { name: 'Utkast', exact: true }).click();
     const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    await readRemovalProposals(page, await data.read());
     await draft.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true });
     await dialog.getByRole('button', { name: 'Ta bort hela utkastet', exact: true }).click();
@@ -137,6 +211,8 @@ test('UTKAST-48: authoritative discard rejects forged or unauthorized requests a
     expect(after.objects).toEqual(before.objects);
     expect(after.relationships).toEqual(before.relationships);
     expect(await (await page.request.get(`${data.path}/history`)).json()).toEqual(history);
+    await readRemovalProposals(page, await data.read());
+    await readRemovalHistory(page);
   } finally {
     await anonymous.dispose();
     await installation.close();
@@ -144,7 +220,7 @@ test('UTKAST-48: authoritative discard rejects forged or unauthorized requests a
 });
 
 for (const kind of ['objectType', 'relationshipType'] as const) {
-  test(`UTKAST-47: discarding an edited ${kind} retains incompatible values and displays the remaining type conflict`, async ({
+  test(`${kind === 'objectType' ? 'UTKAST-47' : 'UTKAST-147'}: discarding an edited ${kind} retains incompatible values and displays the remaining type conflict`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -155,6 +231,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
       await page.goto(`${installation.origin}/households/${data.household.id}`);
       await page.getByRole('button', { name: 'Utkast', exact: true }).click();
       const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+      await readRemovalProposals(page, await data.read());
       await draft
         .getByRole('button', { name: `Ta bort förslaget: ${data.type.name}`, exact: true })
         .click();
@@ -191,13 +268,15 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
       expect(after.types).toEqual(before.types);
       expect(after.relationshipTypes).toEqual(before.relationshipTypes);
       expect(await (await page.request.get(`${data.path}/history`)).json()).toEqual(history);
+      await readRemovalProposals(page, await data.read());
+      await readRemovalHistory(page);
     } finally {
       await installation.close();
     }
   });
 }
 
-test('UTKAST-48: lost independent removal checks actual draft before offering another removal', async ({
+test('UTKAST-148: lost independent removal checks actual draft before offering another removal', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -212,6 +291,7 @@ test('UTKAST-48: lost independent removal checks actual draft before offering an
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await page.getByRole('button', { name: 'Utkast', exact: true }).click();
     const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    await readRemovalProposals(page, await data.read());
     await draft
       .getByRole('button', { name: 'Ta bort förslaget: Olöst fordon', exact: true })
       .click();
@@ -237,12 +317,14 @@ test('UTKAST-48: lost independent removal checks actual draft before offering an
     });
     expect(after.objects).toEqual(before.objects);
     expect(after.relationships).toEqual(before.relationships);
+    await readRemovalProposals(page, await data.read());
+    await readRemovalHistory(page);
   } finally {
     await installation.close();
   }
 });
 
-test('UTKAST-48: a delayed independent removal failure preserves later composer focus and exposes persistent recovery', async ({
+test('UTKAST-149: a delayed independent removal failure preserves later composer focus and exposes persistent recovery', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -266,6 +348,7 @@ test('UTKAST-48: a delayed independent removal failure preserves later composer 
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await page.getByRole('button', { name: 'Utkast', exact: true }).click();
     const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    await readRemovalProposals(page, await data.read());
     await draft
       .getByRole('button', { name: 'Ta bort förslaget: Olöst fordon', exact: true })
       .click();
@@ -299,6 +382,8 @@ test('UTKAST-48: a delayed independent removal failure preserves later composer 
       draft.getByRole('button', { name: 'Ta bort förslaget: Olöst fordon', exact: true }),
     ).toHaveCount(0);
     await expect(message).toHaveValue('Min senare text och fokus ska finnas kvar');
+    await readRemovalProposals(page, await data.read());
+    await readRemovalHistory(page);
   } finally {
     release?.();
     await installation.close();
@@ -316,6 +401,7 @@ test('UTKAST-41: independent removal preserves other proposals and history and f
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await page.getByRole('button', { name: 'Utkast', exact: true }).click();
     const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    await readRemovalProposals(page, await data.read());
     const remove = draft.getByRole('button', {
       name: 'Ta bort förslaget: Olöst fordon',
       exact: true,
@@ -342,13 +428,15 @@ test('UTKAST-41: independent removal preserves other proposals and history and f
     await expect(page.getByRole('status', { name: 'Utkastets åtgärdsstatus' })).toContainText(
       'Förslaget är borttaget',
     );
+    await readRemovalProposals(page, await data.read());
+    await readRemovalHistory(page);
   } finally {
     await installation.close();
   }
 });
 
 for (const width of [1280, 320]) {
-  test(`UTKAST-42: dependent object removal shows its actual edge proposals and cancellation changes nothing at ${width}px`, async ({
+  test(`${width === 1280 ? 'UTKAST-42' : 'UTKAST-142'}: dependent object removal shows its actual edge proposals and cancellation changes nothing at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -360,6 +448,7 @@ for (const width of [1280, 320]) {
       await page.goto(`${installation.origin}/households/${data.household.id}`);
       await page.getByRole('button', { name: 'Utkast', exact: true }).click();
       const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+      await readRemovalProposals(page, await data.read());
       const remove = draft.getByRole('button', {
         name: 'Ta bort förslaget: Ospecificerat fordon',
         exact: true,
@@ -378,6 +467,7 @@ for (const width of [1280, 320]) {
       await expect(dialog).toHaveCount(0);
       await expect(remove).toBeFocused();
       expect(await data.read()).toEqual(before);
+      await readRemovalProposals(page, before);
       await remove.click();
       await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click();
       await expect(dialog).toHaveCount(0);
@@ -399,6 +489,8 @@ for (const width of [1280, 320]) {
       await expect(page.getByRole('status', { name: 'Utkastets åtgärdsstatus' })).toContainText(
         'Förslagen är borttagna',
       );
+      await readRemovalProposals(page, await data.read());
+      await readRemovalHistory(page);
     } finally {
       await installation.close();
     }
@@ -406,7 +498,7 @@ for (const width of [1280, 320]) {
 }
 
 for (const width of [1280, 320]) {
-  test(`UTKAST-44: whole draft discard requires confirmation and preserves unsent conversation and shared history at ${width}px`, async ({
+  test(`${width === 1280 ? 'UTKAST-44' : 'UTKAST-144'}: whole draft discard requires confirmation and preserves unsent conversation and shared history at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -420,6 +512,7 @@ for (const width of [1280, 320]) {
       const message = page.getByLabel('Meddelande till Skyttel', { exact: true });
       await message.fill('Min oskickade fråga ska finnas kvar');
       const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+      await readRemovalProposals(page, await data.read());
       const discard = draft.getByRole('button', { name: 'Kasta hela utkastet', exact: true });
       await discard.click();
       const dialog = page.getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true });
@@ -428,6 +521,7 @@ for (const width of [1280, 320]) {
       await dialog.getByRole('button', { name: 'Avbryt', exact: true }).click();
       await expect(discard).toBeFocused();
       expect(await data.read()).toEqual(before);
+      await readRemovalProposals(page, before);
       await discard.click();
       await dialog.getByRole('button', { name: 'Ta bort hela utkastet', exact: true }).click();
       await expect(dialog).toHaveCount(0);
@@ -449,6 +543,8 @@ for (const width of [1280, 320]) {
       await expect(page.getByRole('status', { name: 'Utkastets åtgärdsstatus' })).toContainText(
         'Hela ditt utkast har tagits bort',
       );
+      await readRemovalProposals(page, await data.read());
+      await readRemovalHistory(page);
     } finally {
       await installation.close();
     }
@@ -464,6 +560,7 @@ test('UTKAST-45: a stale discard confirmation preserves newer proposals and refr
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await page.getByRole('button', { name: 'Utkast', exact: true }).click();
     const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    await readRemovalProposals(page, await data.read());
     await draft
       .getByRole('button', { name: 'Ta bort förslaget: Ospecificerat fordon', exact: true })
       .click();
@@ -499,18 +596,104 @@ test('UTKAST-45: a stale discard confirmation preserves newer proposals and refr
       newer.draft.objectTypes?.find(({ id }) => id === 'newer-independent-type'),
     );
     expect(result.objects).toEqual(newer.objects);
+    await readRemovalProposals(page, await data.read());
+    await readRemovalHistory(page);
   } finally {
     await installation.close();
   }
 });
 
 for (const kind of ['objectType', 'relationshipType'] as const) {
-  test(`UTKAST-43: removing a new ${kind} preserves dependent proposals with a truthful type warning`, async ({
+  test(`${kind === 'objectType' ? 'UTKAST-43' : 'UTKAST-143'}: removing a new ${kind} preserves dependent proposals with a truthful type warning`, async ({
     page,
   }) => {
     const installation = await createInstallation();
     try {
       const data = await prepareDraftReview(page.request, installation.origin);
+      await page.goto(`${installation.origin}/households/${data.household.id}`);
+      await stageNewRemovalType(page, kind);
+      const before = await data.read();
+      const type = (
+        kind === 'objectType' ? before.draft.objectTypes : before.draft.relationshipTypes
+      )?.find(({ after }) => after?.name === 'Tillfällig typ');
+      if (!type) throw new Error('Missing native type proposal');
+      expect(type.after).toMatchObject({
+        name: 'Tillfällig typ',
+        description: 'Hela den tillfälliga typens betydelse',
+      });
+      if (kind === 'relationshipType')
+        expect(type.after).toMatchObject({ forwardLabel: 'granskar', reverseLabel: 'granskas av' });
+      const proposal = (
+        kind === 'objectType' ? before.draft.changes : before.draft.relationships
+      )?.find(({ after }) => after?.typeId === type.id);
+      if (!proposal) throw new Error('Missing native dependent proposal');
+      expect(proposal.after).toMatchObject(
+        kind === 'objectType'
+          ? {
+              typeId: type.id,
+              name: 'Tillfälligt föremål',
+              description: 'Hela den tillfälliga berättelsen',
+            }
+          : { typeId: type.id, sourceId: 'draft-bike', targetId: null, knowledge: 'unknown' },
+      );
+      const history = await (await page.request.get(`${data.path}/history`)).json();
+      await page.goto(`${installation.origin}/households/${data.household.id}`);
+      await page.getByRole('button', { name: 'Utkast', exact: true }).click();
+      const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+      await readRemovalProposals(page, await data.read());
+      await draft
+        .getByRole('button', { name: 'Ta bort förslaget: Tillfällig typ', exact: true })
+        .click();
+      const dialog = page.getByRole('dialog', {
+        name: 'Ta bort förslaget och dess beroenden?',
+        exact: true,
+      });
+      await expect(dialog.getByRole('button', { name: 'Avbryt', exact: true })).toBeFocused();
+      await expect(
+        dialog.getByRole('heading', { name: 'Förslag som blir kvar men påverkas' }),
+      ).toBeVisible();
+      const affected = dialog.getByRole('list', { name: 'Förslag som blir kvar men påverkas' });
+      await expect(affected.getByRole('listitem')).toHaveCount(1);
+      await expect(affected).toContainText(
+        kind === 'objectType' ? 'Tillfälligt föremål' : 'granskar',
+      );
+      await expect(affected).toContainText(
+        kind === 'objectType' ? 'Objekttypen saknas' : 'Sambandstypen saknas',
+      );
+      await dialog.getByRole('button', { name: 'Avbryt', exact: true }).click();
+      expect(await data.read()).toEqual(before);
+      await readRemovalProposals(page, before);
+      await draft
+        .getByRole('button', { name: 'Ta bort förslaget: Tillfällig typ', exact: true })
+        .click();
+      await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      const after = await data.read();
+      const changes = kind === 'objectType' ? after.draft.changes : after.draft.relationships;
+      expect(changes?.find(({ id }) => id === proposal.id)?.after?.typeId).toBe(type.id);
+      expect(after.objects).toEqual(before.objects);
+      expect(after.relationships).toEqual(before.relationships);
+      await expect(draft).toContainText(
+        kind === 'objectType' ? 'Objekttypen saknas' : 'Sambandstypen saknas',
+      );
+      expect(await (await page.request.get(`${data.path}/history`)).json()).toEqual(history);
+      await readRemovalProposals(page, await data.read());
+      await readRemovalHistory(page);
+    } finally {
+      await installation.close();
+    }
+  });
+}
+
+for (const kind of ['objectType', 'relationshipType'] as const) {
+  test(`direct ${kind} removal setup preserves the original public proposal routes and values`, {
+    tag: '@technical',
+  }, async ({ request }) => {
+    const installation = await createInstallation();
+    try {
+      const data = await prepareDraftReview(request, installation.origin);
+      const initial = await data.read();
+      const history = await (await request.get(`${data.path}/history`)).json();
       await data.post(kind === 'objectType' ? 'object-type' : 'relationship-type', {
         id: 'discard-type',
         baseRevision: null,
@@ -536,48 +719,41 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
                 knowledge: 'unknown',
               },
       });
-      const before = await data.read();
-      const history = await (await page.request.get(`${data.path}/history`)).json();
-      await page.goto(`${installation.origin}/households/${data.household.id}`);
-      await page.getByRole('button', { name: 'Utkast', exact: true }).click();
-      const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
-      await draft
-        .getByRole('button', { name: 'Ta bort förslaget: Tillfällig typ', exact: true })
-        .click();
-      const dialog = page.getByRole('dialog', {
-        name: 'Ta bort förslaget och dess beroenden?',
-        exact: true,
-      });
-      await expect(dialog.getByRole('button', { name: 'Avbryt', exact: true })).toBeFocused();
-      await expect(
-        dialog.getByRole('heading', { name: 'Förslag som blir kvar men påverkas' }),
-      ).toBeVisible();
-      const affected = dialog.getByRole('list', { name: 'Förslag som blir kvar men påverkas' });
-      await expect(affected.getByRole('listitem')).toHaveCount(1);
-      await expect(affected).toContainText(
-        kind === 'objectType' ? 'Tillfälligt föremål' : 'granskar',
-      );
-      await expect(affected).toContainText(
-        kind === 'objectType' ? 'Objekttypen saknas' : 'Sambandstypen saknas',
-      );
-      await dialog.getByRole('button', { name: 'Avbryt', exact: true }).click();
-      expect(await data.read()).toEqual(before);
-      await draft
-        .getByRole('button', { name: 'Ta bort förslaget: Tillfällig typ', exact: true })
-        .click();
-      await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click();
-      await expect(dialog).toHaveCount(0);
       const after = await data.read();
+      const type = (
+        kind === 'objectType' ? after.draft.objectTypes : after.draft.relationshipTypes
+      )?.find(({ id }) => id === 'discard-type');
+      expect(type?.after).toEqual({
+        id: 'discard-type',
+        householdId: data.household.id,
+        revision: 1,
+        name: 'Tillfällig typ',
+        description: '',
+        ...(kind === 'relationshipType'
+          ? { forwardLabel: 'granskar', reverseLabel: 'granskas av' }
+          : {}),
+      });
+      expect(type?.after?.fields ?? []).toEqual([]);
       const changes = kind === 'objectType' ? after.draft.changes : after.draft.relationships;
-      expect(changes?.find(({ id }) => id === 'typed-proposal')?.after?.typeId).toBe(
-        'discard-type',
+      expect(changes?.find(({ id }) => id === 'typed-proposal')?.after).toEqual(
+        kind === 'objectType'
+          ? { name: 'Tillfälligt föremål', description: '', typeId: 'discard-type' }
+          : {
+              sourceId: 'draft-bike',
+              targetId: null,
+              typeId: 'discard-type',
+              knowledge: 'unknown',
+            },
       );
-      expect(after.objects).toEqual(before.objects);
-      expect(after.relationships).toEqual(before.relationships);
-      await expect(draft).toContainText(
-        kind === 'objectType' ? 'Objekttypen saknas' : 'Sambandstypen saknas',
+      expect(after.draft.changes.filter(({ id }) => id !== 'typed-proposal')).toEqual(
+        initial.draft.changes,
       );
-      expect(await (await page.request.get(`${data.path}/history`)).json()).toEqual(history);
+      expect(after.draft.relationships?.filter(({ id }) => id !== 'typed-proposal')).toEqual(
+        initial.draft.relationships,
+      );
+      expect(after.objects).toEqual(initial.objects);
+      expect(after.relationships).toEqual(initial.relationships);
+      expect(await (await request.get(`${data.path}/history`)).json()).toEqual(history);
     } finally {
       await installation.close();
     }

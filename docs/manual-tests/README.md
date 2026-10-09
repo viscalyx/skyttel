@@ -550,6 +550,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sökfokus när svaret fördröjs.
   Återfinn privata konfliktval efter tappade svar och bekräfta samma
   kvitto efter ett nytt uttryckligt sparande utan dubbletter.
+  UTKAST-41–48 och UTKAST-142–150 har separata borttagningsflöden:
+  oberoende och beroende förslag, två typsamlingar, smala bekräftelser,
+  sena fokusutfall och tappat svar efter genomförd eller utebliven ändring.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
@@ -617,6 +620,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sina egna namn, typer och statusuppgifter även när identifierare liknar
   varandra.
   Det gäller även tidigare samband som visas tillsammans med aktuella förslag.
+  LIVSCYKEL-01–06 har en varsin funktionell motsvarighet; LIVSCYKEL-07–09
+  kräver faktisk NVDA-uppläsning och redovisar DOM-prov som separat underlag.
 
 Kamerans KAMERA-10/11, personliga vyns PLACERING-11/12 och profilens
 INST-12/13 och arbetsytans YTA-11/12 redovisar faktisk fysisk inmatning,

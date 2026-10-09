@@ -6,9 +6,11 @@ import {
   createHousehold,
   openDraftReview,
   openMap,
+  openNewObject,
   openTable,
   setAllLabels,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { closeConversationText, openConversationDraft } from '../support/conversation-page.js';
@@ -17,10 +19,12 @@ import {
   editTableObject,
   openObjectRelationships,
   readDraftProposal,
+  readTableObject,
 } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { includeEndedInMap } from '../support/object-search.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
+import { readRemovalProposals } from '../support/removal-reading.js';
 
 async function arrange(client: APIRequestContext, origin: string) {
   await signIn(client, origin);
@@ -86,6 +90,14 @@ async function includeEndedInTable(page: Page) {
   await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
 }
 
+async function stageIndependentLifecycleWork(page: Page) {
+  const form = await openNewObject(page);
+  await form.getByLabel('Namn', { exact: true }).fill('Privat livscykelanteckning');
+  await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Person' });
+  await form.getByLabel('Beskrivning', { exact: true }).fill('Hela mitt oberoende privata arbete');
+  await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+}
+
 test('LIVSCYKEL-01: ended objects and relationships stay visible and independently correctable', async ({
   page,
 }) => {
@@ -114,6 +126,8 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
     expect((await read()).objects.find((item) => item.id === 'subscription')).not.toHaveProperty(
       'lifecycle',
     );
+    await openDraftReview(page);
+    await readRemovalProposals(page, await read());
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
     await installation.restart();
@@ -132,6 +146,8 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
     await editObjectRelationship(page, 'Lo Exempel', 'Lo Exempel → Använder → Familjemusik');
     await page.getByLabel('Sambandets status').selectOption('ended');
     await stageRelationshipAndClose(page);
+    await openDraftReview(page);
+    await readRemovalProposals(page, await read());
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
     await openObjectRelationships(page, 'Familjemusik');
@@ -146,12 +162,16 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
     await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('active');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await openDraftReview(page);
+    await readRemovalProposals(page, await read());
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
     await page.reload();
     await openTable(page);
     await includeEndedInTable(page);
     await expect(subscription).not.toContainText('Upphört');
+    const corrected = await readTableObject(page, 'Familjemusik');
+    await expect(corrected).toContainText('Gäller fortfarande');
     await openObjectRelationships(page, 'Familjemusik');
     await expect(edges).toContainText('Upphört');
   } finally {
@@ -175,6 +195,7 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
       await stageRelationshipAndClose(page);
       await openDraftReview(page);
       await expect(review).toContainText('Lo Exempel → Betalar → Familjemusik');
+      await readRemovalProposals(page, await read());
       await closeTextView(page);
     };
     await proposeTypeChange();
@@ -198,6 +219,7 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     await expect(review.getByRole('button', { name: 'Spara hela utkastet' })).toBeEnabled();
     expect((await read()).objects).toEqual(initial.objects);
     expect((await read()).relationships).toEqual(initial.relationships);
+    await readRemovalProposals(page, await read());
     await page.reload();
     await openDraftReview(page);
     await expect(review.getByRole('row').filter({ hasText: 'Familjemusik' })).toHaveCount(3);
@@ -207,6 +229,7 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
         .filter({ hasText: 'Familjemusik' })
         .getByRole('cell', { name: 'Ta bort', exact: true }),
     ).toHaveCount(3);
+    await readRemovalProposals(page, await read());
     const draft = await openConversationDraft(page);
     await draft.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
     await page
@@ -226,6 +249,7 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     if ((await expand.getAttribute('aria-expanded')) !== 'true') await expand.click();
     await page.getByRole('button', { name: 'Ta bort Familjemusik', exact: true }).click();
     await openDraftReview(page);
+    await readRemovalProposals(page, await read());
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
     await installation.restart();
@@ -263,6 +287,15 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     ).toEqual({ person: 'Lo Exempel', subscription: 'Familjemusik' });
     expect(deletion.savedAt).toEqual(expect.any(String));
     expect(deletion.userId).toBe(saved.userId);
+    await (await utilityButton(page, 'Rapporter')).click();
+    const card = page
+      .getByRole('region', { name: 'Ändringshistorik', exact: true })
+      .getByRole('article')
+      .first();
+    await card.getByText('Visa ändringarna', { exact: true }).click();
+    for (const text of ['Familjemusik', 'Lo Exempel', 'Molnmusik', 'Använder', 'Abonnemang'])
+      await expect(card).toContainText(text);
+    await expect(card).toContainText('Borttaget');
   } finally {
     await installation.close();
   }
@@ -273,28 +306,48 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, post, save, path } = await arrange(page.request, installation.origin);
+    const { read, post, path } = await arrange(page.request, installation.origin);
     const initial = await read();
+    await page.goto(installation.origin);
+    for (const [name, knowledge] of [
+      ['Familjemusik', 'known'],
+      ['Lo Exempel', 'uncertain'],
+    ]) {
+      await editTableObject(page, name);
+      await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+      await page
+        .getByLabel('Slutdatum: uppgiftens säkerhet', { exact: true })
+        .selectOption(knowledge);
+      await page.getByLabel('Slutdatum', { exact: true }).fill('2031-03-12');
+      const reply = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'POST' && response.url().endsWith('/map/object-form'),
+      );
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      expect((await reply).ok()).toBe(true);
+    }
+    const nativeDates = await read();
     for (const [id, knowledge] of [
       ['subscription', 'known'],
       ['person', 'uncertain'],
-    ]) {
-      const object = initial.objects.find((item) => item.id === id);
-      expect(
-        (
-          await post('draft', {
-            version: (await read()).draft.version,
-            id,
-            baseRevision: object?.revision,
-            value: {
-              ...object,
-              financialFacts: { endDate: { knowledge, value: '2031-03-12' } },
-            },
-          })
-        ).ok(),
-      ).toBe(true);
+    ] as const) {
+      const original = initial.objects.find((item) => item.id === id);
+      if (!original) throw new Error('Missing original dated object');
+      expect(nativeDates.draft.changes.find((item) => item.id === id)?.after).toEqual({
+        typeId: original.typeId,
+        name: original.name,
+        description: original.description,
+        financialFacts: { endDate: { knowledge, value: '2031-03-12' } },
+      });
     }
-    expect((await save()).ok()).toBe(true);
+    await openDraftReview(page);
+    await readRemovalProposals(page, await read());
+    const initialSave = page.waitForResponse(
+      (response) => response.request().method() === 'POST' && response.url().endsWith('/map/save'),
+    );
+    await saveReviewedConflictDraft(page);
+    expect((await initialSave).ok()).toBe(true);
+    await closeTextView(page);
     await page.clock.install({ time: new Date('2031-03-12T23:59:58Z') });
     await page.goto(installation.origin);
     await openTable(page);
@@ -320,6 +373,8 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await page.getByLabel('Slutdatum', { exact: true }).fill('2031-03-20');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await openDraftReview(page);
+    await readRemovalProposals(page, await read());
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
     await expect(subscription).not.toContainText('Upphört');
@@ -327,6 +382,8 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     await page.getByLabel('Sambandets slutdatum: uppgiftens säkerhet').selectOption('known');
     await page.getByLabel('Sambandets slutdatum', { exact: true }).fill('2031-03-12');
     await stageRelationshipAndClose(page);
+    await openDraftReview(page);
+    await readRemovalProposals(page, await read());
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
     const edges = await openObjectRelationships(page, 'Lo Exempel');
@@ -341,20 +398,40 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     const statusProposal = await readDraftProposal(page, 'Lo Exempel → Använder → Familjemusik');
     await expect(statusProposal).toContainText('Gäller fortfarande');
     await closeSupportDialog(page, 'Lo Exempel → Använder → Familjemusik');
+    await openDraftReview(page);
+    await readRemovalProposals(page, await read());
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
     await installation.restart();
     await page.reload();
     await openTable(page);
     await expect(subscription).not.toContainText('Upphört');
+    const corrected = await readTableObject(page, 'Familjemusik');
+    await expect(corrected).toContainText('2031-03-20');
     await openObjectRelationships(page, 'Lo Exempel');
     await expect(incoming).not.toContainText('Upphört');
+    await expect(incoming).toContainText('Gäller fortfarande');
+    await expect(incoming).toContainText('2031-03-12');
     await closeSupportDialog(page, 'Samband för Lo Exempel');
     const { history } = await (await page.request.get(`${path}/history`)).json();
     expect(history[0].relationships[0]).toMatchObject({
       before: { endDate: { knowledge: 'known', value: '2031-03-12' } },
       after: { lifecycle: 'active', endDate: { knowledge: 'known', value: '2031-03-12' } },
     });
+    await (await utilityButton(page, 'Rapporter')).click();
+    const card = page
+      .getByRole('region', { name: 'Ändringshistorik', exact: true })
+      .getByRole('article')
+      .first();
+    await card.getByText('Visa ändringarna', { exact: true }).click();
+    for (const text of [
+      'Följ slutdatum',
+      'Gäller fortfarande',
+      '2031-03-12',
+      'Lo Exempel',
+      'Familjemusik',
+    ])
+      await expect(card).toContainText(text);
     for (const endDate of [
       { knowledge: 'known', value: '2031-02-30' },
       { knowledge: 'unknown', value: '2031-03-12' },
@@ -382,7 +459,7 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, post, save } = await arrange(page.request, installation.origin);
+    const { read, post, save, path } = await arrange(page.request, installation.origin);
     const initial = await read();
     for (const edge of initial.relationships) {
       expect(
@@ -401,8 +478,13 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
       ).toBe(true);
     }
     expect((await save()).ok()).toBe(true);
-    const saved = await read();
     await page.goto(installation.origin);
+    await stageIndependentLifecycleWork(page);
+    const saved = await read();
+    const history = await (await page.request.get(`${path}/history`)).json();
+    await openDraftReview(page);
+    await readRemovalProposals(page, saved);
+    await closeTextView(page);
     await openMap(page);
     await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
@@ -470,6 +552,9 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
     await expect(active).not.toContainText('Upphört');
     await expect(active).not.toHaveAccessibleDescription(/Upphört/);
     expect(await read()).toEqual(saved);
+    await openDraftReview(page);
+    await readRemovalProposals(page, saved);
+    expect(await (await page.request.get(`${path}/history`)).json()).toEqual(history);
   } finally {
     await installation.close();
   }
@@ -480,7 +565,7 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, post, save } = await arrange(page.request, installation.origin);
+    const { read, post, save, path } = await arrange(page.request, installation.origin);
     const initial = await read();
     expect(
       (
@@ -511,8 +596,13 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
       ).ok(),
     ).toBe(true);
     expect((await save()).ok()).toBe(true);
-    const saved = await read();
     await page.goto(installation.origin);
+    await stageIndependentLifecycleWork(page);
+    const saved = await read();
+    const history = await (await page.request.get(`${path}/history`)).json();
+    await openDraftReview(page);
+    await readRemovalProposals(page, saved);
+    await closeTextView(page);
     await openMap(page);
     await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
@@ -541,6 +631,9 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
     await expect(node).toHaveAccessibleDescription(/^Kim Exempel (?:● Sökträff )?Person$/);
     await expect(edge).toHaveAccessibleDescription(/Upphört/);
     expect(await read()).toEqual(saved);
+    await openDraftReview(page);
+    await readRemovalProposals(page, saved);
+    expect(await (await page.request.get(`${path}/history`)).json()).toEqual(history);
   } finally {
     await installation.close();
   }
@@ -588,18 +681,34 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
     ).toBe(true);
     expect((await save()).ok()).toBe(true);
     const saved = await read();
-    const ended = saved.relationships.find((edge) => edge.id === 'incoming');
-    expect(
-      (
-        await post('relationship', {
-          version: saved.draft.version,
-          id: 'incoming',
-          baseRevision: ended?.revision,
-          value: { ...ended, sourceId: 'service', typeId: pays?.id, lifecycle: 'active' },
-        })
-      ).ok(),
-    ).toBe(true);
+    await page.goto(installation.origin);
+    await editObjectRelationship(page, 'Lo Exempel', 'Lo Exempel → Använder → Familjemusik');
+    await page.getByLabel('Från objekt', { exact: true }).selectOption('service');
+    await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalar' });
+    await page.getByLabel('Sambandets status', { exact: true }).selectOption('active');
+    await expect(page.getByLabel('Sambandets slutdatum', { exact: true })).toHaveValue(
+      '2000-01-01',
+    );
+    const nativeReply = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' && response.url().endsWith('/map/relationship-form'),
+    );
+    await stageRelationshipAndClose(page);
+    expect((await nativeReply).ok()).toBe(true);
+    await openDraftReview(page);
+    await readRemovalProposals(page, await read());
+    await closeTextView(page);
     const privateProposal = await read();
+    expect(
+      privateProposal.draft.relationships?.find((edge) => edge.id === 'incoming')?.after,
+    ).toMatchObject({
+      sourceId: 'service',
+      targetId: 'subscription',
+      typeId: pays?.id,
+      knowledge: 'known',
+      lifecycle: 'active',
+      endDate: { knowledge: 'known', value: '2000-01-01' },
+    });
     expect(privateProposal.relationships).toEqual(saved.relationships);
     await page.goto(installation.origin);
     await openMap(page);
@@ -639,6 +748,118 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
     await expect(current).not.toHaveAccessibleDescription(/Upphört/);
     await expect(proposed).not.toHaveAccessibleDescription(/Upphört/);
     expect(await read()).toEqual(privateProposal);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('direct lifecycle date and current-versus-previous staging preserves original public request guards', {
+  tag: '@technical',
+}, async ({ request }) => {
+  const installation = await createInstallation();
+  try {
+    const { read, post, save, path } = await arrange(request, installation.origin);
+    {
+      const initial = await read();
+      for (const [id, knowledge] of [
+        ['subscription', 'known'],
+        ['person', 'uncertain'],
+      ]) {
+        const object = initial.objects.find((item) => item.id === id);
+        expect(
+          (
+            await post('draft', {
+              version: (await read()).draft.version,
+              id,
+              baseRevision: object?.revision,
+              value: {
+                ...object,
+                financialFacts: { endDate: { knowledge, value: '2031-03-12' } },
+              },
+            })
+          ).ok(),
+        ).toBe(true);
+      }
+      expect((await save()).ok()).toBe(true);
+      const dated = await read();
+      expect(
+        dated.objects.find(({ id }) => id === 'subscription')?.financialFacts?.endDate,
+      ).toEqual({ knowledge: 'known', value: '2031-03-12' });
+      expect(dated.objects.find(({ id }) => id === 'person')?.financialFacts?.endDate).toEqual({
+        knowledge: 'uncertain',
+        value: '2031-03-12',
+      });
+    }
+    const initial = await read();
+    const incoming = initial.relationships.find((edge) => edge.id === 'incoming');
+    const pays = initial.relationshipTypes.find((type) => type.name === 'Betalar');
+    expect(
+      (
+        await post('relationship', {
+          version: initial.draft.version,
+          id: 'incoming',
+          baseRevision: incoming?.revision,
+          value: {
+            ...incoming,
+            lifecycle: 'ended',
+            endDate: { knowledge: 'known', value: '2000-01-01' },
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+    expect(
+      (
+        await post('relationship', {
+          version: (await read()).draft.version,
+          id: 'previous-incoming',
+          baseRevision: null,
+          value: {
+            sourceId: 'service',
+            targetId: 'person',
+            typeId: pays?.id,
+            knowledge: 'known',
+            lifecycle: 'active',
+            endDate: { knowledge: 'known', value: '2000-01-01' },
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+    expect((await save()).ok()).toBe(true);
+    const saved = await read();
+    const ended = saved.relationships.find((edge) => edge.id === 'incoming');
+    expect(
+      (
+        await post('relationship', {
+          version: saved.draft.version,
+          id: 'incoming',
+          baseRevision: ended?.revision,
+          value: {
+            sourceId: 'service',
+            targetId: 'subscription',
+            typeId: pays?.id,
+            knowledge: 'known',
+            lifecycle: 'active',
+            endDate: { knowledge: 'known', value: '2000-01-01' },
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+    const privateProposal = await read();
+    expect(privateProposal.relationships).toEqual(saved.relationships);
+    expect(privateProposal.draft.relationships?.find(({ id }) => id === 'incoming')?.after).toEqual(
+      {
+        sourceId: 'service',
+        targetId: 'subscription',
+        typeId: pays?.id,
+        knowledge: 'known',
+        lifecycle: 'active',
+        endDate: { knowledge: 'known', value: '2000-01-01' },
+      },
+    );
+    const history = await (await request.get(`${path}/history`)).json();
+    await installation.restart();
+    expect(await read()).toEqual(privateProposal);
+    expect(await (await request.get(`${path}/history`)).json()).toEqual(history);
   } finally {
     await installation.close();
   }
