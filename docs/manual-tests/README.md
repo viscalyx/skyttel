@@ -157,7 +157,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   med öppen samtalsnotis, sex
   beständiga personliga riktningar och nypzoom med styrplatta.
   NAVIGATION-02 har komplett 1440 × 1000-referens; NAVIGATION-06–18
-  skyddar alla sju mått och båda öppningsordningarna. NAVIGATION-19
+  skyddar alla sju mått och båda öppningsordningarna. NAVIGATION-05 bevarar
+  native Ctrl/hjul, hastighet, begränsat hjulsteg och sidans skala i Chromium
+  med publik hushållskarta, produktstilar och kontrollerade svar för karta och vy;
+  serverlagring skyddas separat av de kvarvarande integrationsfallen.
+  NAVIGATION-19
   anger faktisk styrplatta och webbläsare.
 
 - [Inställningar och profil](settings-profile.md): helsida, mobilnavigation,
