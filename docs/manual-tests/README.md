@@ -693,6 +693,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   Det gäller även tidigare samband som visas tillsammans med aktuella förslag.
   LIVSCYKEL-01–06 har en varsin funktionell motsvarighet; LIVSCYKEL-07–09
   kräver faktisk NVDA-uppläsning och redovisar DOM-prov som separat underlag.
+  [Separat HTTP-underlag](lifecycle.md#separat-http-underlag) för datum,
+  aktuella och tidigare samband körs i Vitests serversvit med verklig
+  SQLite och faktisk omstart. Det flyttar en teknisk integrationsexekvering
+  utan att avveckla något arbetsflöde eller fall-ID.
 
 Kamerans KAMERA-10/11, personliga vyns PLACERING-11/12 och profilens
 INST-12/13 och arbetsytans YTA-11/12 redovisar faktisk fysisk inmatning,
