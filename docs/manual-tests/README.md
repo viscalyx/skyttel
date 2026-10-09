@@ -343,6 +343,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   [Operatörsförberedelsen](text-conversation-preparation.md) skiljer
   leveransfel och rått protokoll från vanliga UI-steg. Kontrollerade lokala
   leverantörssvar och verklig modellförståelse redovisas separat.
+  Textstartens tekniska avvisningsprov behåller ett faktiskt Lo-förslag,
+  oförändrat utkast, inga sparförsök samt återställning och städning;
+  avvisningen upprepas inte oberoende med tom samling av förslag.
 
 - [Permanent radering](household-erasure.md): egen inställningssida,
   avbruten granskning med bevarat kartarbete, uttrycklig granskning och
