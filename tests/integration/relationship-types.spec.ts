@@ -18,88 +18,6 @@ import {
 import { createInstallation } from '../support/installation.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
-test('directed definition HTTP staging preserves exact receipt and history replay', {
-  tag: '@technical',
-}, async ({ page }) => {
-  const installation = await createInstallation();
-  try {
-    await signIn(page.request, installation.origin);
-    const { household } = await (await createHousehold(page.request, installation.origin)).json();
-    const path = `${installation.origin}/api/households/${household.id}/map`;
-    const post = (route: string, data: unknown) =>
-      page.request.post(`${path}/${route}`, { headers: { origin: installation.origin }, data });
-    const read = async () => (await page.request.get(path)).json();
-    const state = await read();
-    const definition = {
-      name: 'Förvaring',
-      description: 'Var hushållets saker finns',
-      forwardLabel: 'förvaras i',
-      reverseLabel: 'innehåller',
-    };
-    expect(
-      (
-        await post('relationship-type', {
-          version: 0,
-          id: 'storage',
-          baseRevision: null,
-          value: definition,
-        })
-      ).status(),
-    ).toBe(200);
-    for (const [index, id, name] of [
-      [0, 'bike', 'Alex blå cykel'],
-      [1, 'garage', 'Garaget'],
-    ] as const) {
-      expect(
-        (
-          await post('draft', {
-            version: index + 1,
-            id,
-            baseRevision: null,
-            value: { typeId: state.types[index].id, name, description: '' },
-          })
-        ).status(),
-      ).toBe(200);
-    }
-    const value = { typeId: 'storage', sourceId: 'bike', targetId: 'garage', knowledge: 'known' };
-    expect(
-      (
-        await post('relationship', { version: 3, id: 'bike-storage', baseRevision: null, value })
-      ).status(),
-    ).toBe(200);
-    await installation.restart();
-    const proposed = await read();
-    expect(proposed.relationshipTypes.some((type: { id: string }) => type.id === 'storage')).toBe(
-      false,
-    );
-    expect(proposed.relationships).toEqual([]);
-    expect(proposed.objects).toEqual([]);
-    expect(proposed.draft.relationshipTypes[0].after).toMatchObject(definition);
-    expect(proposed.draft.relationships[0].after).toEqual(value);
-    const saved = await post('save', { version: 4, operationId: 'storage-save' });
-    expect(saved.status()).toBe(200);
-    const { receipt } = await saved.json();
-    expect(receipt.relationshipTypes[0]).toMatchObject({
-      before: null,
-      after: { id: 'storage', revision: 1, ...definition },
-    });
-    expect(receipt.relationships[0].type).toEqual(receipt.relationshipTypes[0].after);
-    await installation.restart();
-    const current = await read();
-    expect(current.relationshipTypes.find((type: { id: string }) => type.id === 'storage')).toEqual(
-      receipt.relationshipTypes[0].after,
-    );
-    expect(current.relationships).toHaveLength(1);
-    expect(current.relationships[0]).toMatchObject({ id: 'bike-storage', ...value });
-    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([receipt]);
-    expect(await (await post('save', { version: 4, operationId: 'storage-save' })).json()).toEqual({
-      receipt,
-    });
-  } finally {
-    await installation.close();
-  }
-});
-
 test('STY-01: native type and field forms share a durable directed relationship save', async ({
   page,
 }) => {
@@ -156,19 +74,105 @@ test('STY-01: native type and field forms share a durable directed relationship 
     await page.getByLabel('Anteckning', { exact: true }).fill('Låst skåp');
     await stageRelationshipAndClose(page);
     const proposed = await read();
+    expect(proposed.draft.relationshipTypes).toHaveLength(1);
+    expect(proposed.draft.changes).toHaveLength(2);
+    expect(proposed.draft.relationships).toHaveLength(1);
+    const definition = proposed.draft.relationshipTypes[0];
+    expect(definition.before).toBeNull();
+    expect(definition.after).toMatchObject({
+      id: definition.id,
+      householdId: household.id,
+      revision: 1,
+      name: 'Förvaring',
+      description: 'Var hushållets saker finns',
+      forwardLabel: 'förvaras i',
+      reverseLabel: 'innehåller',
+      fields: [{ name: 'Anteckning', description: '', kind: 'text' }],
+    });
+    const bike = proposed.draft.changes.find(
+      (change: { after: { name: string } }) => change.after.name === 'Alex blå cykel',
+    );
+    for (const [index, name, typeName] of [
+      [0, 'Alex blå cykel', 'Fordon'],
+      [1, 'Garaget', 'Bostad'],
+    ] as const) {
+      expect(proposed.draft.changes[index].before).toBeNull();
+      expect(proposed.draft.changes[index].after).toMatchObject({
+        name,
+        typeId: proposed.types.find((type: { name: string }) => type.name === typeName).id,
+        description: '',
+      });
+    }
+    const value = {
+      typeId: definition.id,
+      sourceId: bike.id,
+      targetId: garageId,
+      knowledge: 'known',
+      customValues: { [definition.after.fields[0].id]: 'Låst skåp' },
+    };
+    expect(proposed.draft.relationships[0].after).toEqual(value);
+    expect(
+      proposed.relationshipTypes.some((type: { id: string }) => type.id === definition.id),
+    ).toBe(false);
+    expect(proposed.objects).toEqual([]);
+    expect(proposed.relationships).toEqual([]);
     await installation.restart();
     await page.reload();
     expect((await read()).draft).toEqual(proposed.draft);
+    expect(
+      (await read()).relationshipTypes.some((type: { id: string }) => type.id === definition.id),
+    ).toBe(false);
     expect((await read()).objects).toEqual([]);
     expect((await read()).relationships).toEqual([]);
     const proposal = await readDraftProposal(page, 'Alex blå cykel → förvaras i → Garaget');
     await expect(proposal).toContainText('Låst skåp');
     await closeSupportDialog(page, 'Alex blå cykel → förvaras i → Garaget');
-    await saveReviewedConflictDraft(page);
+    const saved = await saveReviewedConflictDraft(page);
+    expect(saved.status()).toBe(200);
+    const saveRequest = saved.request().postDataJSON();
+    const { receipt } = await saved.json();
+    expect(receipt.relationshipTypes).toEqual([
+      { id: definition.id, before: null, after: { ...definition.after, revision: 1 } },
+    ]);
+    expect(receipt.changes).toHaveLength(2);
+    for (const [index, change] of proposed.draft.changes.entries()) {
+      expect(receipt.changes[index].before).toBeNull();
+      expect(receipt.changes[index].after).toEqual({
+        ...change.after,
+        id: change.id,
+        householdId: household.id,
+        revision: 1,
+      });
+      expect(receipt.changes[index].type).toEqual(change.type);
+    }
+    expect(receipt.relationships).toHaveLength(1);
+    expect(receipt.relationships[0].before).toBeNull();
+    expect(receipt.relationships[0].after).toEqual({
+      ...value,
+      id: proposed.draft.relationships[0].id,
+      householdId: household.id,
+      revision: 1,
+    });
+    expect(receipt.relationships[0].type).toEqual(receipt.relationshipTypes[0].after);
     await closeTextView(page);
     await installation.restart();
     await page.reload();
     const current = await read();
+    expect(
+      current.relationshipTypes.find((type: { id: string }) => type.id === definition.id),
+    ).toEqual(receipt.relationshipTypes[0].after);
+    expect(current.objects).toEqual(
+      receipt.changes.map((change: { after: unknown }) => change.after),
+    );
+    expect(current.relationships).toEqual([receipt.relationships[0].after]);
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([receipt]);
+    const replay = await page.request.post(`${path}/save`, {
+      headers: { origin: installation.origin },
+      data: saveRequest,
+    });
+    expect(replay.status()).toBe(200);
+    expect(await replay.json()).toEqual({ receipt });
+    expect(await read()).toEqual(current);
     expect(current.relationships).toHaveLength(1);
     expect(current.relationships[0].id).toBe(proposed.draft.relationships[0].id);
     expect(current.relationships[0].customValues).toEqual(
@@ -185,6 +189,7 @@ test('STY-01: native type and field forms share a durable directed relationship 
     await editObjectRelationship(page, 'Alex blå cykel', 'Alex blå cykel → förvaras i → Garaget');
     await expect(page.getByLabel('Anteckning', { exact: true })).toHaveValue('Låst skåp');
     const { history } = await (await page.request.get(`${path}/history`)).json();
+    expect(history).toEqual([receipt]);
     expect(history).toHaveLength(1);
     expect(history[0].relationshipTypes[0].after.name).toBe('Förvaring');
     expect(history[0].relationships[0].type.id).toBe(current.relationships[0].typeId);

@@ -7,6 +7,21 @@ permanent radering; dess oåterkalleliga omfattning provas separat i
 [raderingsfallen](household-erasure.md).
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
+## Separat HTTP-underlag
+
+[lifecycle-http.test.ts](../../tests/unit/server/lifecycle-http.test.ts)
+kör det direkta datum- och sambandsscenariot i Vitests serversvit. Det
+använder autentiserade HTTP-anrop till en verklig lokal installation och
+SQLite, med samma session och databas genom faktisk omstart. LIVSCYKEL-02
+och LIVSCYKEL-06 behåller sina ordinarie webbläsarfall; HTTP-underlaget
+ersätter ingen formulärkontroll eller mänsklig observation.
+
+Det tekniska scenariot byter svit med oförändrad titel och fullständiga
+kontroller av kända och osäkra datum, tidigare och föreslagna samband,
+privat utkast och historik efter omstart. En integrationsexekvering
+flyttas till serversviten; inget arbetsflöde eller fall-ID avvecklas.
+Upphört och borttaget behåller sina olika betydelser och ordinarie fall.
+
 ## Konfigurerade användare
 
 Använd den konfigurerade administratören i en separat testinstallation.
@@ -209,9 +224,11 @@ dates or status can correct it”.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/lifecycle.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/lifecycle-http.test.ts",
       "title": "direct lifecycle date and current-versus-previous staging preserves original public request guards",
-      "purpose": "Bevarar ursprungliga lyckade HTTP-förberedelser, exakta värden och statuskontroller separat från de ordinarie formulären."
+      "purpose": "Autentiserade HTTP-anrop med verklig SQLite och faktisk omstart bevarar ursprungliga lyckade förberedelser, exakta värden, privat utkast och historik separat från de ordinarie formulären."
     }
   ]
 }
@@ -460,9 +477,11 @@ own accessible status”.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/lifecycle.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/lifecycle-http.test.ts",
       "title": "direct lifecycle date and current-versus-previous staging preserves original public request guards",
-      "purpose": "Bevarar ursprungliga lyckade HTTP-förberedelser, exakta värden och statuskontroller separat från de ordinarie formulären."
+      "purpose": "Autentiserade HTTP-anrop med verklig SQLite och faktisk omstart bevarar ursprungliga lyckade förberedelser, exakta värden, privat utkast och historik separat från de ordinarie formulären."
     }
   ]
 }

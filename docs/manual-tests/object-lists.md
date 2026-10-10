@@ -1154,10 +1154,12 @@ screens”.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/object-search.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/object-search.test.tsx",
     "caseId": "SÖK-11"
   },
-  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "reference": "Chromium vid 1280 × 900 med fullständigt kontrollerat kartsvar från tabellförberedelsen, inklusive sparad borttagning och tre förslag; ingen serverbeständighet provas här.",
   "outcomes": [
     "Öppna och stänga filter utan att kartans layout ändras."
   ]
@@ -1170,12 +1172,19 @@ screens”.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** En ny provinstallation för sökning är öppen i Karta.
+**Förutsättningar:** Följ Förbered hushållets tabell ovan och välj Karta.
 Prova 1280 × 900 CSS-pixlar med flera objekt och synliga etiketter.
 
-**Integrationstest:**
-[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+**Automatiskt motsvarande webbläsartest:**
+[object-search.test.tsx](../../tests/browser/object-search.test.tsx),
 SÖK-11.
+
+Chromium-provet använder hela tabellförberedelsens kartsvar och profilbilder
+som kontrollerade svar. Det provar kartans verkliga kontroller och stilar
+och att filterarbetet inte skickar någon ändringsbegäran. SÖK-01, SÖK-03,
+SÖK-05 och SÖK-08 behåller sina egna verkliga HTTP-flöden och jämför
+hushållets fullständiga tillstånd; detta webbläsarprov bevisar inte
+beständigt sparande.
 
 **Steg:**
 
@@ -1204,10 +1213,12 @@ SÖK-11.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/object-search.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/object-search.test.tsx",
     "caseId": "SÖK-12"
   },
-  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "reference": "Chromium vid 1280 × 720, ljust och mörkt systemtema samt manuellt temaval; fullständigt kontrollerat kartsvar och profilbilder, produktens stilar och verklig canvasmätning.",
   "outcomes": [
     "Kunna följa linjerna från kartobjekt till deras etiketter."
   ]
@@ -1220,20 +1231,28 @@ SÖK-11.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** En ny provinstallation för sökning är öppen i Karta
-med synliga etiketter. Prova dator och telefon.
+**Förutsättningar:** Följ Förbered hushållets tabell ovan och välj Karta
+med synliga etiketter vid 1280 × 720 CSS-pixlar. Telefon och läsbarhet på
+verklig skärm är kompletterande manuella observationer.
 
-**Integrationstest:**
-[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+**Automatiskt motsvarande webbläsartest:**
+[object-search.test.tsx](../../tests/browser/object-search.test.tsx),
 testfallet “SÖK-12: dashed label leaders are readable against the map in
 both themes”.
 
+Provet använder samma fullständiga kontrollerade kartsvar och profilbilder
+som SÖK-11. Produktkontrasten mäts genom kartans faktiska linje, opacitet,
+bakgrund och teckenförklaring. De sex tekniska kontrastberäkningarna i
+hjälpsviten ersätter inte detta produktprov. Det provar inga serversparanden.
+
 **Steg:**
 
-1. Välj Tema → Mörkt. Följ de streckade linjerna mellan flera objekt
+1. Välj Tema → System. Ändra enhetens tema mellan ljust och mörkt och
+   kontrollera att kartan följer det.
+2. Välj Tema → Mörkt. Följ de streckade linjerna mellan flera objekt
    och deras etiketter. Kontrollera att linjerna syns mot bakgrunden
    och har samma färg som punkterna i teckenförklaringen.
-2. Välj Tema → Ljust och upprepa kontrollen.
+3. Välj Tema → Ljust och upprepa kontrollen.
 
 **Förväntat resultat:**
 
@@ -1616,10 +1635,12 @@ SÖK-14.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/object-search.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/object-search.test.tsx",
     "caseId": "SÖK-15"
   },
-  "reference": "390 CSS-pixlar",
+  "reference": "Chromium vid 390 × 900 med samma fullständiga kontrollerade kartsvar och profilbilder som SÖK-11; ingen serverbeständighet provas här.",
   "outcomes": [
     "Samma handlingar ger de skyddade resultaten under angivna steg.",
     "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
@@ -1633,19 +1654,22 @@ SÖK-14.
 
 **Användare:** Alex Exempel med tillgång till provhushållet.
 
-**Förutsättningar:** Förbered sökning vid 390 CSS-pixlars bredd.
+**Förutsättningar:** Följ Förbered hushållets tabell ovan och välj Karta
+vid 390 × 900 CSS-pixlar.
 Skyddet gäller att filterdialogen inte flyttar kartans etiketter.
 
-**Integrationstest:**
-[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+**Automatiskt motsvarande webbläsartest:**
+[object-search.test.tsx](../../tests/browser/object-search.test.tsx),
 SÖK-15.
+
+Kontrollerade svar och skyddets gräns är samma som i SÖK-11.
 
 **Steg:**
 
 1. Utför SÖK-11 en gång med denna konfiguration. Utför alla steg i samma
    ordning.
-2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
-   fokus och att nästa angivna kontroll går att nå.
+2. När du öppnar och stänger Filter kontrollerar du läsbart innehåll,
+   synligt fokus och att nästa angivna kontroll går att nå.
 
 **Förväntat resultat:**
 

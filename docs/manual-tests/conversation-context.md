@@ -886,6 +886,16 @@ släpp”.
     "spec": "tests/integration/conversation-summary.spec.ts",
     "caseId": "KONTEXT-12"
   },
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "integration",
+      "spec": "tests/integration/conversation-preparation.spec.ts",
+      "title": "context preparation preserves buffered PCM through summary on seeded public installation",
+      "purpose": "Det publicerade konsolreceptet håller verklig röststart och bevarar äldre PCM genom sammanfattning på fylld installation. Mikrofon av, en mikrofonbegäran, uteslutet senare ljud, återställd fetch samt hela karta, utkast och historik kontrolleras; separat PCM-receptprov från tomt hushåll ingår inte."
+    }
+  ],
   "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Angiven ingång, mikrofonval och bredd skyddar kontextens gräns, bevarat utkast och återstart.",
   "outcomes": [
     "Redan inspelat tal förs vidare i ordning över kontextbytet. Släpp stoppar inspelningen omedelbart, även medan sammanfattningen arbetar."

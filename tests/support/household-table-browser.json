@@ -1,0 +1,2577 @@
+{
+  "state": {
+    "userId": "0e663072-b43c-491a-84fd-c08725411222",
+    "contentVersion": 1,
+    "relationshipTypes": [
+      {
+        "id": "6d6826b8812d64b6087a079b16b7e872",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Använder",
+        "description": "Från person till det som personen använder."
+      },
+      {
+        "id": "b6a8574a7f4890753f19d806787c35bf",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Används av",
+        "description": "Från objekt till person som använder det."
+      },
+      {
+        "id": "99125e26f4cbf0def77b24dd37e0c1a8",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Betalar",
+        "description": "Från person till avtal."
+      },
+      {
+        "id": "5865cd07db4cdcf7d6c3ed04550e2e13",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Betalas med",
+        "description": "Från avtal till betalningsmedel."
+      },
+      {
+        "id": "b5d0388ce41e4ccc59f16ddbf3d24a88",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Erbjuder",
+        "description": "Från tjänsteleverantör till tjänst."
+      },
+      {
+        "id": "ad5edb7d83f44b59128a5e12b9acfab7",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Finansierar",
+        "description": "Från finansieringsavtal till det objekt som finansieras."
+      },
+      {
+        "id": "52d5daa2c03938554a47c0a8962e3d6d",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Försäkrar",
+        "description": "Från försäkringsavtal till det objekt som försäkras."
+      },
+      {
+        "id": "8d88db5cc3bf2cb34b15f21336e0a64c",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Gäller",
+        "description": "Från avtal till det objekt som avtalet gäller."
+      },
+      {
+        "id": "c8fcd8ecb7a8345cba3b73dbe8093607",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Gäller tjänstekontot",
+        "description": "Från abonnemang till tjänstekonto."
+      },
+      {
+        "id": "19d0d290904d31a77990a0e9bddd6fcd",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Hyresvärd",
+        "description": "Från hyresavtal till den person, det företag eller den förening som hyr ut."
+      },
+      {
+        "id": "a2a58cc430f36a3e4815a8112337599b",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Inloggningsadress",
+        "description": "Från tjänstekonto till e-postadress."
+      },
+      {
+        "id": "63b5cbc398a30edb016e873b79cdd386",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Kontaktadress",
+        "description": "Från tjänstekonto till e-postadress."
+      },
+      {
+        "id": "e9796e09ce76c322efa382c589dc2749",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Kontokoppling",
+        "description": "Från kort till bankkonto."
+      },
+      {
+        "id": "ec43376649f85d283ea8d0d343a90de3",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Kortfakturan betalas från",
+        "description": "Från kort till bankkontot som betalar kortfakturan."
+      },
+      {
+        "id": "e2a42c76d888a51149996d625808bf8e",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Långivare",
+        "description": "Från låneavtal eller kreditavtal till den person, det företag eller den förening som lämnar lånet eller krediten."
+      },
+      {
+        "id": "63e3cbe7a1584775b250f23f48fba0bc",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Står på avtalet",
+        "description": "Från avtal till avtalspart."
+      },
+      {
+        "id": "b828412e808cddda06274bacc4e2c599",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Tillhör tjänsten",
+        "description": "Från tjänstekonto eller abonnemang till tjänst."
+      },
+      {
+        "id": "0323569c883280f3900b97fa9163ab47",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Äger",
+        "description": "Från objekt till ägare."
+      }
+    ],
+    "relationships": [],
+    "types": [
+      {
+        "id": "8f8289af-87da-422b-b9ba-0b6133c02a71",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Person",
+        "description": "En person i hushållets karta. Ger inte tillgång till Skyttel."
+      },
+      {
+        "id": "e080e758b32f1e3ecc18414d1205a558",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Abonnemang",
+        "description": ""
+      },
+      {
+        "id": "5231dd070511ae9a42a304d5a205ded6",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Avbetalningsavtal",
+        "description": "Ett avtal om att betala ett köp i delar."
+      },
+      {
+        "id": "975453da343cb052df0a9ec0cf3eacc4",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Avtal",
+        "description": "En överenskommelse mellan parter."
+      },
+      {
+        "id": "e371a6abdb18c81c33f42b7babdaf45c",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Bankkonto",
+        "description": ""
+      },
+      {
+        "id": "993fdbca6a4c1783c0b49f1532e7fcb8",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Bostad",
+        "description": "En bostad som kan omfattas av flera avtal."
+      },
+      {
+        "id": "6f97eecaeb6b73ba36012df8b959412f",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "E-postadress",
+        "description": ""
+      },
+      {
+        "id": "fee51a75bf2d2ef5d8ee3845317c8799",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Fordon",
+        "description": "Ett fordon, oberoende av finansiering, ägande och användning."
+      },
+      {
+        "id": "dcf9b673623abff5b5d82a9cabf448e7",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Förening",
+        "description": ""
+      },
+      {
+        "id": "8b2f9794a45c38a2d82400db02c1a03e",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Företag",
+        "description": ""
+      },
+      {
+        "id": "731cc91bfb19bd1574f05131f4db8e66",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Försäkringsavtal",
+        "description": "Ett avtal om försäkring, skilt från det som försäkras."
+      },
+      {
+        "id": "905005a6ec2694ac62cabbf7e8e5fb36",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Garage",
+        "description": "Ett garage, skilt från avtalet som gäller det."
+      },
+      {
+        "id": "636faf449c00b296aed148739c49f7cf",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Hyresavtal",
+        "description": "Ett avtal om hyra. Återkommande betalning gör det inte till ett abonnemang."
+      },
+      {
+        "id": "78b46d64fcfc6bc3ad26e821b901f200",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Kort",
+        "description": ""
+      },
+      {
+        "id": "14d8826317b98129d6caa39730555eb1",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Kreditavtal",
+        "description": "Ett avtal om kredit. Beviljat kreditutrymme och utnyttjad kredit är olika uppgifter."
+      },
+      {
+        "id": "2846d2c060b5065d2cadccfa3f034353",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Låneavtal",
+        "description": "Ett avtal om lån, skilt från senast uppgiven skuld."
+      },
+      {
+        "id": "9a9a097d3eed6aafbadbafae80e617b4",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Tjänst",
+        "description": ""
+      },
+      {
+        "id": "f8d31dc3c89f52a975df9c89f403b177",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Tjänstekonto",
+        "description": ""
+      },
+      {
+        "id": "table-type-10",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Typ 10",
+        "description": ""
+      },
+      {
+        "id": "table-type-2",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "revision": 1,
+        "name": "Typ 2",
+        "description": "",
+        "fields": [
+          {
+            "id": "note",
+            "name": "Egen anteckning",
+            "description": "",
+            "kind": "text",
+            "sectionId": ""
+          }
+        ]
+      }
+    ],
+    "objects": [
+      {
+        "id": "table-1",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "A 10",
+        "description": "Beskrivning A 10"
+      },
+      {
+        "id": "table-0",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 2,
+        "name": "A 2",
+        "description": "En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. Föreslagen sluttext.",
+        "financialFacts": {
+          "price": {
+            "knowledge": "known",
+            "value": "299 SEK"
+          },
+          "currency": {
+            "knowledge": "unknown"
+          },
+          "debt": {
+            "knowledge": "none"
+          },
+          "creditLimit": {
+            "knowledge": "uncertain",
+            "value": "100 000 SEK",
+            "reportedOn": "2026-01-01"
+          }
+        },
+        "customValues": {
+          "note": "Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift "
+        },
+        "profileImageId": "f70e1fc7-1b8d-4c25-94ae-6e1b582a7093",
+        "iconId": "bike"
+      },
+      {
+        "id": "table-6",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 1",
+        "description": "Beskrivning B 1"
+      },
+      {
+        "id": "table-15",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 10",
+        "description": "Beskrivning B 10"
+      },
+      {
+        "id": "table-16",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 11",
+        "description": "Beskrivning B 11"
+      },
+      {
+        "id": "table-17",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 12",
+        "description": "Beskrivning B 12"
+      },
+      {
+        "id": "table-18",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 13",
+        "description": "Beskrivning B 13"
+      },
+      {
+        "id": "table-19",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 14",
+        "description": "Beskrivning B 14"
+      },
+      {
+        "id": "table-20",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 15",
+        "description": "Beskrivning B 15"
+      },
+      {
+        "id": "table-21",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 16",
+        "description": "Beskrivning B 16"
+      },
+      {
+        "id": "table-22",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 17",
+        "description": "Beskrivning B 17"
+      },
+      {
+        "id": "table-23",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 18",
+        "description": "Beskrivning B 18"
+      },
+      {
+        "id": "table-24",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 19",
+        "description": "Beskrivning B 19"
+      },
+      {
+        "id": "table-7",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 2",
+        "description": "Beskrivning B 2"
+      },
+      {
+        "id": "table-25",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 20",
+        "description": "Beskrivning B 20"
+      },
+      {
+        "id": "table-26",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 21",
+        "description": "Beskrivning B 21"
+      },
+      {
+        "id": "table-27",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 22",
+        "description": "Beskrivning B 22"
+      },
+      {
+        "id": "table-28",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 23",
+        "description": "Beskrivning B 23"
+      },
+      {
+        "id": "table-29",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 24",
+        "description": "Beskrivning B 24"
+      },
+      {
+        "id": "table-30",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 25",
+        "description": "Beskrivning B 25"
+      },
+      {
+        "id": "table-31",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 26",
+        "description": "Beskrivning B 26"
+      },
+      {
+        "id": "table-32",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 27",
+        "description": "Beskrivning B 27"
+      },
+      {
+        "id": "table-33",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 28",
+        "description": "Beskrivning B 28"
+      },
+      {
+        "id": "table-34",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 29",
+        "description": "Beskrivning B 29"
+      },
+      {
+        "id": "table-8",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 3",
+        "description": "Beskrivning B 3"
+      },
+      {
+        "id": "table-35",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 30",
+        "description": "Beskrivning B 30"
+      },
+      {
+        "id": "table-36",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 31",
+        "description": "Beskrivning B 31"
+      },
+      {
+        "id": "table-37",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 32",
+        "description": "Beskrivning B 32"
+      },
+      {
+        "id": "table-38",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 33",
+        "description": "Beskrivning B 33"
+      },
+      {
+        "id": "table-39",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 34",
+        "description": "Beskrivning B 34"
+      },
+      {
+        "id": "table-40",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 35",
+        "description": "Beskrivning B 35"
+      },
+      {
+        "id": "table-41",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 36",
+        "description": "Beskrivning B 36"
+      },
+      {
+        "id": "table-42",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 37",
+        "description": "Beskrivning B 37"
+      },
+      {
+        "id": "table-43",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 38",
+        "description": "Beskrivning B 38"
+      },
+      {
+        "id": "table-44",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 39",
+        "description": "Beskrivning B 39"
+      },
+      {
+        "id": "table-9",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 4",
+        "description": "Beskrivning B 4"
+      },
+      {
+        "id": "table-45",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 40",
+        "description": "Beskrivning B 40"
+      },
+      {
+        "id": "table-46",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 41",
+        "description": "Beskrivning B 41"
+      },
+      {
+        "id": "table-47",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 42",
+        "description": "Beskrivning B 42"
+      },
+      {
+        "id": "table-48",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 43",
+        "description": "Beskrivning B 43"
+      },
+      {
+        "id": "table-49",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 44",
+        "description": "Beskrivning B 44"
+      },
+      {
+        "id": "table-50",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 45",
+        "description": "Beskrivning B 45"
+      },
+      {
+        "id": "table-51",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 46",
+        "description": "Beskrivning B 46"
+      },
+      {
+        "id": "table-52",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 47",
+        "description": "Beskrivning B 47"
+      },
+      {
+        "id": "table-53",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 48",
+        "description": "Beskrivning B 48"
+      },
+      {
+        "id": "table-54",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 49",
+        "description": "Beskrivning B 49"
+      },
+      {
+        "id": "table-10",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 5",
+        "description": "Beskrivning B 5"
+      },
+      {
+        "id": "table-55",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 50",
+        "description": "Beskrivning B 50"
+      },
+      {
+        "id": "table-56",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 51",
+        "description": "Beskrivning B 51"
+      },
+      {
+        "id": "table-11",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 6",
+        "description": "Beskrivning B 6"
+      },
+      {
+        "id": "table-12",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 7",
+        "description": "Beskrivning B 7"
+      },
+      {
+        "id": "table-13",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "B 8",
+        "description": "Beskrivning B 8"
+      },
+      {
+        "id": "table-14",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "B 9",
+        "description": "Beskrivning B 9"
+      },
+      {
+        "id": "proposed-removal",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "Tas bort prov",
+        "description": "",
+        "lifecycle": "ended"
+      },
+      {
+        "id": "ended",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "Upphört prov",
+        "description": "",
+        "lifecycle": "ended"
+      },
+      {
+        "id": "table-2",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "Zebra",
+        "description": "Beskrivning Zebra"
+      },
+      {
+        "id": "table-4",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-2",
+        "revision": 1,
+        "name": "Älg",
+        "description": "Beskrivning Älg"
+      },
+      {
+        "id": "table-3",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "Åke",
+        "description": "Beskrivning Åke"
+      },
+      {
+        "id": "table-5",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "typeId": "table-type-10",
+        "revision": 1,
+        "name": "Örn",
+        "description": "Beskrivning Örn"
+      }
+    ],
+    "draft": {
+      "version": 71,
+      "changes": [
+        {
+          "proposedAt": "2026-10-09T16:43:33.750Z",
+          "id": "proposed-removal",
+          "before": {
+            "id": "proposed-removal",
+            "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+            "typeId": "table-type-2",
+            "revision": 1,
+            "name": "Tas bort prov",
+            "description": "",
+            "lifecycle": "ended"
+          },
+          "after": null,
+          "type": {
+            "id": "table-type-2",
+            "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+            "revision": 1,
+            "name": "Typ 2",
+            "description": "",
+            "fields": [
+              {
+                "id": "note",
+                "name": "Egen anteckning",
+                "description": "",
+                "kind": "text",
+                "sectionId": ""
+              }
+            ]
+          },
+          "beforeType": {
+            "id": "table-type-2",
+            "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+            "revision": 1,
+            "name": "Typ 2",
+            "description": "",
+            "fields": [
+              {
+                "id": "note",
+                "name": "Egen anteckning",
+                "description": "",
+                "kind": "text",
+                "sectionId": ""
+              }
+            ]
+          }
+        },
+        {
+          "proposedAt": "2026-10-09T16:43:33.754Z",
+          "id": "new-object",
+          "before": null,
+          "after": {
+            "typeId": "table-type-2",
+            "name": "Nytt prov",
+            "description": ""
+          },
+          "type": {
+            "id": "table-type-2",
+            "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+            "revision": 1,
+            "name": "Typ 2",
+            "description": "",
+            "fields": [
+              {
+                "id": "note",
+                "name": "Egen anteckning",
+                "description": "",
+                "kind": "text",
+                "sectionId": ""
+              }
+            ]
+          }
+        },
+        {
+          "proposedAt": "2026-10-09T16:43:33.747Z",
+          "id": "table-0",
+          "before": {
+            "id": "table-0",
+            "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+            "typeId": "table-type-2",
+            "revision": 2,
+            "name": "A 2",
+            "description": "En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. Föreslagen sluttext.",
+            "financialFacts": {
+              "price": {
+                "knowledge": "known",
+                "value": "299 SEK"
+              },
+              "currency": {
+                "knowledge": "unknown"
+              },
+              "debt": {
+                "knowledge": "none"
+              },
+              "creditLimit": {
+                "knowledge": "uncertain",
+                "value": "100 000 SEK",
+                "reportedOn": "2026-01-01"
+              }
+            },
+            "customValues": {
+              "note": "Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift "
+            },
+            "profileImageId": "f70e1fc7-1b8d-4c25-94ae-6e1b582a7093",
+            "iconId": "bike"
+          },
+          "after": {
+            "typeId": "table-type-2",
+            "name": "A 2",
+            "description": "En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. Nytt föreslaget slut.",
+            "financialFacts": {
+              "price": {
+                "knowledge": "known",
+                "value": "399 SEK"
+              },
+              "currency": {
+                "knowledge": "unknown"
+              },
+              "debt": {
+                "knowledge": "none"
+              },
+              "creditLimit": {
+                "knowledge": "uncertain",
+                "value": "100 000 SEK",
+                "reportedOn": "2026-01-01"
+              }
+            },
+            "customValues": {
+              "note": "Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift "
+            },
+            "profileImageId": "11f6ce12-a3d6-42b5-81d0-189b19d63339",
+            "iconId": "car"
+          },
+          "type": {
+            "id": "table-type-2",
+            "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+            "revision": 1,
+            "name": "Typ 2",
+            "description": "",
+            "fields": [
+              {
+                "id": "note",
+                "name": "Egen anteckning",
+                "description": "",
+                "kind": "text",
+                "sectionId": ""
+              }
+            ]
+          },
+          "beforeType": {
+            "id": "table-type-2",
+            "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+            "revision": 1,
+            "name": "Typ 2",
+            "description": "",
+            "fields": [
+              {
+                "id": "note",
+                "name": "Egen anteckning",
+                "description": "",
+                "kind": "text",
+                "sectionId": ""
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "removedObjects": [
+      {
+        "object": {
+          "id": "removed",
+          "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+          "typeId": "table-type-2",
+          "revision": 2,
+          "name": "Borttaget prov",
+          "description": ""
+        },
+        "type": {
+          "id": "table-type-2",
+          "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+          "revision": 1,
+          "name": "Typ 2",
+          "description": "",
+          "fields": [
+            {
+              "id": "note",
+              "name": "Egen anteckning",
+              "description": "",
+              "kind": "text",
+              "sectionId": ""
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "view": {
+    "contentVersion": 1,
+    "positions": [],
+    "settings": {
+      "invertX": false,
+      "invertY": false,
+      "axisCorner": "bottom-right",
+      "axisPinned": false,
+      "stars": false,
+      "allLabels": false,
+      "version": 0
+    }
+  },
+  "operations": {
+    "operations": [
+      {
+        "operationId": "table-deletion",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "userId": "0e663072-b43c-491a-84fd-c08725411222",
+        "draftVersion": 66,
+        "contentVersion": 1,
+        "createdAt": "2026-10-09T16:43:33.739Z",
+        "status": "succeeded",
+        "receipt": {
+          "contentVersion": 1,
+          "operationId": "table-deletion",
+          "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+          "userId": "0e663072-b43c-491a-84fd-c08725411222",
+          "draftVersion": 66,
+          "savedAt": "2026-10-09T16:43:33.740Z",
+          "actorName": "Alex Exempel",
+          "changes": [
+            {
+              "before": {
+                "id": "table-0",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "A 2",
+                "description": "En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. ",
+                "financialFacts": {
+                  "price": {
+                    "knowledge": "unknown"
+                  },
+                  "currency": {
+                    "knowledge": "unknown"
+                  },
+                  "debt": {
+                    "knowledge": "none"
+                  },
+                  "creditLimit": {
+                    "knowledge": "uncertain",
+                    "value": "100 000 SEK",
+                    "reportedOn": "2026-01-01"
+                  }
+                },
+                "customValues": {
+                  "note": "Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift "
+                },
+                "profileImageId": "f70e1fc7-1b8d-4c25-94ae-6e1b582a7093",
+                "iconId": "bike"
+              },
+              "after": {
+                "id": "table-0",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 2,
+                "name": "A 2",
+                "description": "En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. Föreslagen sluttext.",
+                "customValues": {
+                  "note": "Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift "
+                },
+                "iconId": "bike",
+                "profileImageId": "f70e1fc7-1b8d-4c25-94ae-6e1b582a7093",
+                "financialFacts": {
+                  "price": {
+                    "knowledge": "known",
+                    "value": "299 SEK"
+                  },
+                  "currency": {
+                    "knowledge": "unknown"
+                  },
+                  "debt": {
+                    "knowledge": "none"
+                  },
+                  "creditLimit": {
+                    "knowledge": "uncertain",
+                    "value": "100 000 SEK",
+                    "reportedOn": "2026-01-01"
+                  }
+                }
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": {
+                "id": "removed",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "Borttaget prov",
+                "description": ""
+              },
+              "after": null,
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "operationId": "table-initial",
+        "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+        "userId": "0e663072-b43c-491a-84fd-c08725411222",
+        "draftVersion": 63,
+        "contentVersion": 1,
+        "createdAt": "2026-10-09T16:43:33.712Z",
+        "status": "succeeded",
+        "receipt": {
+          "contentVersion": 1,
+          "operationId": "table-initial",
+          "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+          "userId": "0e663072-b43c-491a-84fd-c08725411222",
+          "draftVersion": 63,
+          "savedAt": "2026-10-09T16:43:33.713Z",
+          "actorName": "Alex Exempel",
+          "changes": [
+            {
+              "before": null,
+              "after": {
+                "id": "table-1",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "A 10",
+                "description": "Beskrivning A 10"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "Zebra",
+                "description": "Beskrivning Zebra"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-3",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "Åke",
+                "description": "Beskrivning Åke"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-4",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "Älg",
+                "description": "Beskrivning Älg"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-5",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "Örn",
+                "description": "Beskrivning Örn"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-6",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 1",
+                "description": "Beskrivning B 1"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-7",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 2",
+                "description": "Beskrivning B 2"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-8",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 3",
+                "description": "Beskrivning B 3"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-9",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 4",
+                "description": "Beskrivning B 4"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 5",
+                "description": "Beskrivning B 5"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-11",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 6",
+                "description": "Beskrivning B 6"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-12",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 7",
+                "description": "Beskrivning B 7"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-13",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 8",
+                "description": "Beskrivning B 8"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-14",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 9",
+                "description": "Beskrivning B 9"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-15",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 10",
+                "description": "Beskrivning B 10"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-16",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 11",
+                "description": "Beskrivning B 11"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-17",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 12",
+                "description": "Beskrivning B 12"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-18",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 13",
+                "description": "Beskrivning B 13"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-19",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 14",
+                "description": "Beskrivning B 14"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-20",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 15",
+                "description": "Beskrivning B 15"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-21",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 16",
+                "description": "Beskrivning B 16"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-22",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 17",
+                "description": "Beskrivning B 17"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-23",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 18",
+                "description": "Beskrivning B 18"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-24",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 19",
+                "description": "Beskrivning B 19"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-25",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 20",
+                "description": "Beskrivning B 20"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-26",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 21",
+                "description": "Beskrivning B 21"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-27",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 22",
+                "description": "Beskrivning B 22"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-28",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 23",
+                "description": "Beskrivning B 23"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-29",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 24",
+                "description": "Beskrivning B 24"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-30",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 25",
+                "description": "Beskrivning B 25"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-31",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 26",
+                "description": "Beskrivning B 26"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-32",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 27",
+                "description": "Beskrivning B 27"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-33",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 28",
+                "description": "Beskrivning B 28"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-34",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 29",
+                "description": "Beskrivning B 29"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-35",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 30",
+                "description": "Beskrivning B 30"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-36",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 31",
+                "description": "Beskrivning B 31"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-37",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 32",
+                "description": "Beskrivning B 32"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-38",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 33",
+                "description": "Beskrivning B 33"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-39",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 34",
+                "description": "Beskrivning B 34"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-40",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 35",
+                "description": "Beskrivning B 35"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-41",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 36",
+                "description": "Beskrivning B 36"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-42",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 37",
+                "description": "Beskrivning B 37"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-43",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 38",
+                "description": "Beskrivning B 38"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-44",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 39",
+                "description": "Beskrivning B 39"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-45",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 40",
+                "description": "Beskrivning B 40"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-46",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 41",
+                "description": "Beskrivning B 41"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-47",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 42",
+                "description": "Beskrivning B 42"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-48",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 43",
+                "description": "Beskrivning B 43"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-49",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 44",
+                "description": "Beskrivning B 44"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-50",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 45",
+                "description": "Beskrivning B 45"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-51",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 46",
+                "description": "Beskrivning B 46"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-52",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 47",
+                "description": "Beskrivning B 47"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-53",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 48",
+                "description": "Beskrivning B 48"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-54",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 49",
+                "description": "Beskrivning B 49"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-55",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-10",
+                "revision": 1,
+                "name": "B 50",
+                "description": "Beskrivning B 50"
+              },
+              "type": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-56",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "B 51",
+                "description": "Beskrivning B 51"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "ended",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "Upphört prov",
+                "description": "",
+                "lifecycle": "ended"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "removed",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "Borttaget prov",
+                "description": ""
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "proposed-removal",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "Tas bort prov",
+                "description": "",
+                "lifecycle": "ended"
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "before": null,
+              "after": {
+                "id": "table-0",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "typeId": "table-type-2",
+                "revision": 1,
+                "name": "A 2",
+                "description": "En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. En lång beskrivning med hushållets fullständiga uppgifter. ",
+                "customValues": {
+                  "note": "Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift Lång egen uppgift "
+                },
+                "iconId": "bike",
+                "profileImageId": "f70e1fc7-1b8d-4c25-94ae-6e1b582a7093",
+                "financialFacts": {
+                  "price": {
+                    "knowledge": "unknown"
+                  },
+                  "currency": {
+                    "knowledge": "unknown"
+                  },
+                  "debt": {
+                    "knowledge": "none"
+                  },
+                  "creditLimit": {
+                    "knowledge": "uncertain",
+                    "value": "100 000 SEK",
+                    "reportedOn": "2026-01-01"
+                  }
+                }
+              },
+              "type": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            }
+          ],
+          "objectTypes": [
+            {
+              "id": "table-type-2",
+              "before": null,
+              "after": {
+                "id": "table-type-2",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 2",
+                "description": "",
+                "fields": [
+                  {
+                    "id": "note",
+                    "name": "Egen anteckning",
+                    "description": "",
+                    "kind": "text",
+                    "sectionId": ""
+                  }
+                ]
+              }
+            },
+            {
+              "id": "table-type-10",
+              "before": null,
+              "after": {
+                "id": "table-type-10",
+                "householdId": "3f5e1ab7-4398-4661-b94b-e0bfe299b710",
+                "revision": 1,
+                "name": "Typ 10",
+                "description": ""
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "images": {
+    "f70e1fc7-1b8d-4c25-94ae-6e1b582a7093": {
+      "body": "UklGRlYAAABXRUJQVlA4IEoAAADwBACdASpgAGAAPm02mUmkIyKhIOgAgA2JaQB2AAAQOqvl7jT3k306dOnTp06dHAAA/u+ax//8s/8/vi71Of/oUbKJfMAAAAAAAA==",
+      "contentType": "image/webp"
+    },
+    "11f6ce12-a3d6-42b5-81d0-189b19d63339": {
+      "body": "UklGRlYAAABXRUJQVlA4IEoAAADQBACdASpgAGAAPm02mUmkIyKhIOgAgA2JaQB2AAAO7Kr5e4095N9OnTp06dOm+AD+rhf/ugyzhpt//+bA/bz7eeFgAAAAAAAAAA==",
+      "contentType": "image/webp"
+    }
+  }
+}

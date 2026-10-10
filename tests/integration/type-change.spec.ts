@@ -1,7 +1,6 @@
-import { type APIRequestContext, expect, type Locator, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 import sharp from 'sharp';
-import { draftConflicts } from '../../src/shared/draft-conflicts.js';
-import type { MapState, SaveReceipt } from '../../src/shared/map.js';
+import type { MapState } from '../../src/shared/map.js';
 import {
   closeSupportDialog,
   closeTextView,
@@ -19,94 +18,14 @@ import {
   readTableObject,
 } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
-
-async function setup(client: APIRequestContext, origin: string) {
-  await signIn(client, origin);
-  const { household } = await (await createHousehold(client, origin)).json();
-  const path = `${origin}/api/households/${household.id}/map`;
-  const read = async (actor = client): Promise<MapState> => (await actor.get(path)).json();
-  const post = (route: string, data: unknown, actor = client) =>
-    actor.post(`${path}/${route}`, { headers: { origin }, data });
-  const save = async (operationId: string, actor = client): Promise<SaveReceipt> => {
-    const response = await post(
-      'save',
-      { version: (await read(actor)).draft.version, operationId },
-      actor,
-    );
-    expect(response.status()).toBe(200);
-    return (await response.json()).receipt;
-  };
-  const object = async (id: string, update: Record<string, unknown>, actor = client) => {
-    const state = await read(actor);
-    const before = state.objects.find((item) => item.id === id);
-    return post(
-      'draft',
-      {
-        version: state.draft.version,
-        id,
-        baseRevision: before?.revision ?? null,
-        value: { typeId: 'cycle', name: id, description: '', ...before, ...update },
-      },
-      actor,
-    );
-  };
-  for (const [id, name, kind] of [
-    ['cycle', 'Cykel', 'text'],
-    ['vehicle', 'Motorfordon', 'number'],
-  ]) {
-    expect(
-      (
-        await post('object-type', {
-          version: (await read()).draft.version,
-          id,
-          baseRevision: null,
-          value: {
-            name,
-            description: '',
-            fields: [
-              { id: 'serial', name: 'Nummer', description: '', kind },
-              { id: 'insured', name: 'Försäkrad', description: '', kind: 'boolean' },
-            ],
-          },
-        })
-      ).status(),
-    ).toBe(200);
-  }
-  expect(
-    (
-      await object('bike', {
-        name: 'Alex blå cykel',
-        customValues: { serial: 'SYNTH-42', insured: false },
-      })
-    ).status(),
-  ).toBe(200);
-  expect((await object('garage', { name: 'Garaget' })).status()).toBe(200);
-  const state = await read();
-  expect(
-    (
-      await post('relationship', {
-        version: state.draft.version,
-        id: 'parking',
-        baseRevision: null,
-        value: {
-          typeId: state.relationshipTypes[0].id,
-          sourceId: 'bike',
-          targetId: 'garage',
-          knowledge: 'known',
-        },
-      })
-    ).status(),
-  ).toBe(200);
-  await save('setup');
-  return { path, read, post, save, object };
-}
+import { typeChangeHousehold } from '../support/type-change-http.js';
 
 test('TYP-06: type changes review displaced values and preserve identity, edges and historical reading through restart', async ({
   page,
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, post, save } = await setup(page.request, installation.origin);
+    const { read, post, save } = await typeChangeHousehold(page.request, installation.origin);
     const initial = await read();
     await page.goto(installation.origin);
     await openTable(page);
@@ -587,86 +506,6 @@ for (const width of [1280, 390, 320]) {
   }
 }
 
-test('invalid values and concurrent definitions block whole saves until fresh choices and preserve later private fields', {
-  tag: '@technical',
-}, async ({ page, browser }) => {
-  const installation = await createInstallation();
-  const other = await browser.newContext();
-  try {
-    const { path, read, post, object, save } = await setup(page.request, installation.origin);
-    installation.setIdentity(robin);
-    await signIn(other.request, installation.origin);
-    const { user } = await (await other.request.get(`${installation.origin}/api/bootstrap`)).json();
-    const { code } = await (
-      await page.request.post(`${path.replace('/map', '')}/invitations`, {
-        headers: { origin: installation.origin },
-        data: { userId: user.id },
-      })
-    ).json();
-    await other.request.post(`${installation.origin}/api/invitations/accept`, {
-      headers: { origin: installation.origin },
-      data: { code },
-    });
-    await object('garage', { name: 'Eget namn' });
-    const before = await read();
-    expect(
-      (await object('bike', { typeId: 'vehicle', customValues: { serial: 'fel' } })).status(),
-    ).toBe(400);
-    expect(await read()).toEqual(before);
-    expect(
-      (
-        await object('bike', { typeId: 'vehicle', customValues: { serial: 42, insured: false } })
-      ).status(),
-    ).toBe(200);
-    const target = (await read(other.request)).types.find((type) => type.id === 'vehicle');
-    expect(
-      (
-        await post(
-          'object-type',
-          {
-            version: 0,
-            id: 'vehicle',
-            baseRevision: target?.revision,
-            value: { ...target, description: 'Uppdaterad definition' },
-          },
-          other.request,
-        )
-      ).status(),
-    ).toBe(200);
-    await save('definition', other.request);
-    const stale = await read();
-    expect(
-      (await post('save', { version: stale.draft.version, operationId: 'blocked' })).status(),
-    ).toBe(409);
-    expect(await read()).toEqual(stale);
-    expect(stale.objects.find((item) => item.id === 'garage')?.name).toBe('Garaget');
-    const conflict = draftConflicts(stale)[0];
-    expect(
-      (
-        await post('resolve', { version: stale.draft.version, conflict, choice: 'proposed' })
-      ).status(),
-    ).toBe(200);
-    expect(
-      (await post('save', { version: stale.draft.version, operationId: 'old-approval' })).status(),
-    ).toBe(409);
-    const selected = await save('change-type');
-    await object('bike', { customValues: { serial: 43, insured: false } });
-    const own = await read();
-    await installation.restart();
-    expect((await read()).draft).toEqual(own.draft);
-    expect((await read()).objects.find((item) => item.id === 'bike')).toMatchObject({
-      typeId: 'vehicle',
-      customValues: { serial: 42, insured: false },
-    });
-    expect((await (await page.request.get(`${path}/history`)).json()).history).toContainEqual(
-      selected,
-    );
-  } finally {
-    await other.close();
-    await installation.close();
-  }
-});
-
 test('TYP-07: a native type change requires fresh definition review and preserves later private fields', async ({
   page,
   browser,
@@ -674,7 +513,10 @@ test('TYP-07: a native type change requires fresh definition review and preserve
   const installation = await createInstallation();
   const other = await browser.newContext();
   try {
-    const { read, post, object, save, path } = await setup(page.request, installation.origin);
+    const { read, post, object, save, path } = await typeChangeHousehold(
+      page.request,
+      installation.origin,
+    );
     installation.setIdentity(robin);
     await signIn(other.request, installation.origin);
     const { user } = await (await other.request.get(`${installation.origin}/api/bootstrap`)).json();

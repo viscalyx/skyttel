@@ -641,8 +641,8 @@ undgå referensen. Inget ID pensioneras eller återanvänds.
 
 KOST-01–03 behåller ofullständiga mätningar, hämtningsfel och separat
 driftåtkomst. Det separata
-[tekniska mätunderlaget](../../tests/integration/accessibility-measurements.spec.ts)
-provar färgtolkning och opaka ytor för kontrastmätaren. Det utför inget
+[tekniska mätunderlaget](../../tests/browser/accessibility-measurements.test.tsx)
+provar färgtolkning och opaka ytor för kontrastmätaren i Chromium. Det utför inget
 kostnadsflöde och ingen kostnadsspecifik kontrastmätning. Belopp och
 återkoppling granskas i de verkliga kostnadsflödena; manuell läsbarhet ska
 redovisas separat. Syntetiska ljudspår utför ingen fysisk mikrofon-,

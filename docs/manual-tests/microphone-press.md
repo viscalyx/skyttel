@@ -456,13 +456,15 @@ WCAG-verifiering.
 
 ### MIKROFONTRYCK-09: macOS-tangentkombinationens korta och långa tryck
 
-**Syfte:** Behålla hela arbetsflödet i den angivna konfigurationen.
+**Syfte:** Ge medgivande via första tangentkombinationen utan förtida
+inspelning, och styra samma mikrofon med korta och långa tryck.
 
 **Användare:** Alex.
 
 **Förutsättningar:** Starta en ny kontrollerad installation och välj denna
-konfiguration före den första UI-handlingen. Använd Ctrl+Skift+Mellanslag vid
-alla stegen. Släpp även Skift före Mellanslag.
+konfiguration före den första UI-handlingen. Inget samtal pågår och inget
+medgivande är sparat. Använd Ctrl+Skift+Mellanslag vid alla stegen. Släpp även
+Skift före Mellanslag vid det sista långa trycket.
 
 **Integrationstest:**
 [microphone-press.spec.ts](../../tests/integration/microphone-press.spec.ts),
@@ -476,8 +478,9 @@ MIKROFONTRYCK-09.
     "spec": "tests/integration/microphone-press.spec.ts",
     "caseId": "MIKROFONTRYCK-09"
   },
-  "reference": "Chromium, MacIntel-plattformsnamn; Ctrl+Skift+Mellanslag.",
+  "reference": "Chromium, MacIntel-plattformsnamn; Ctrl+Skift+Mellanslag från första medgivandet, med kontrollerad röst. Ingen inspelning eller röstanslutning före medgivandet.",
   "outcomes": [
+    "Första tangentkombinationen visar medgivandet efter släpp utan att starta mikrofonen i förväg.",
     "Kort och långt tryck styr samma mikrofon; tangentupprepning skapar inget extra tryck.",
     "Släpp lämnar mikrofonen av även om Ctrl- och Skift-tangenterna släpps först."
   ]
@@ -488,18 +491,29 @@ MIKROFONTRYCK-09.
 
 **Steg:**
 
-1. Utför
+1. Tryck Ctrl+Skift+Mellanslag kort. Kräv medgivanderutan utan startad
+   mikrofon. Läs att släpp stänger av ny inspelning direkt. Välj **Avbryt**
+   och kräv fokus på mikrofonknappen. Håll sedan Ctrl+Skift+Mellanslag
+   längre än 0,45 sekunder. Kräv att inget
+   medgivande visas medan kombinationen hålls och att mikrofonen inte startar.
+   Släpp Mellanslag, Skift och Ctrl. Kräv medgivanderutan och läs att släpp
+   stänger av ny inspelning direkt. Mikrofonen ska fortfarande inte spela in.
+2. Markera **Fråga inte igen för det här hushållet** och välj
+   **Godkänn och starta**. Kräv påslagen mikrofon och stäng sedan av den.
+3. Utför
    [MIKROFONTRYCK-03](#mikrofontryck-03-tangentkombinationen-styr-korta-och-långa-tryck)
-   en gång, med ovanstående konfiguration. Följ dess steg i ordning och samma
-   separata förberedelse. Upprepa inte basfallet först.
-2. Kontrollera variantens fokus, läsbarhet och kvarvarande innehåll vid
-   motsvarande steg. Avsluta när basfallet avslutas.
+   steg 1–4 en gång med ovanstående tangentkombination. Upprepa inte
+   basfallets start först. Släpp Ctrl och Skift före Mellanslag i det sista
+   långa trycket.
 
 **Förväntat resultat:**
 
 - Kort och långt tryck styr samma mikrofon; tangentupprepning skapar inget extra
   tryck.
 - Släpp lämnar mikrofonen av även om Ctrl- och Skift-tangenterna släpps först.
+- Första genvägen öppnar medgivandet efter släpp. Inget mikrofonanrop eller
+  röstanslutning sker före godkännandet. Efter godkännandet används samma enda
+  mikrofonspår vid de korta och långa trycken.
 
 ### MIKROFONTRYCK-10: fysiska tangentkombinationer och hjälpmedelskollisioner
 

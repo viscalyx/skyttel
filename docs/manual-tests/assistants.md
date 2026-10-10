@@ -101,6 +101,16 @@ protokollunderlag och ska inte leverera någon kartinformation.
     "spec": "tests/integration/assistants.spec.ts",
     "caseId": "AI-02"
   },
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "integration",
+      "spec": "tests/integration/manual-mcp-preparation.spec.ts",
+      "title": "manual MCP read-only preparation preserves empty then populated household work",
+      "purpose": "Den publicerade läsklienten läser tom och fylld karta och utkast med samma medgivande, utan ändringar; återkallelse stoppar läsning och quit avslutar processen."
+    }
+  ],
   "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
   "outcomes": [
     "Ett aktivt läsmedgivande ger det sparade objektets namn och beskrivning.",
@@ -135,6 +145,14 @@ token”.
 - Efter återkallelsen behövs ett nytt medgivande. Ingen ny läsning lyckas
   med den gamla anslutningen. Redan hämtad information kan finnas kvar
   hos klienten; Skyttel lovar inte att den raderas där.
+
+**Separat tekniskt underlag:**
+[manual-mcp-preparation.spec.ts](../../tests/integration/manual-mcp-preparation.spec.ts)
+provar den publicerade terminalklienten, tomma och fyllda resultat i samma
+medgivande, exakt läsande verktygslista, oförändrad karta och utkast samt
+återkallelse och processavslut. Det ersätter inte AI-02:s manuella steg.
+Följ [klientprovet](assistant-client-preparation.md#läsande-terminalklient-tom-och-fylld-karta)
+för motsvarande separat förberedelse utan språkmodell.
 
 ### AI-03: medgivandet kräver val av hushåll och AI-behandling
 

@@ -141,21 +141,42 @@ avslutar inte serverns gamla röstsession; en ny samtalsstart kan annars stänga
 den som förlorad åtkomst. Installera därefter blocken på nytt. Avsluta launchern
 med `quit` och kontrollera borttagen katalog enligt röstguiden.
 
-De fyra separata tekniska proven i
+De två separata tekniska proven för publika kontroller i
 [voice-controls-preparation.spec.ts](../../tests/integration/voice-controls-preparation.spec.ts)
-startar den faktiska publika launchern på tomt respektive `seed-family`
-underlag vid 320 × 250 och 1280 × 900. De provar blockens exakta text, båda
-startgränserna, toner, oförändrad karta/utkast/historik, exakt transportstopp,
+startar den faktiska publika launchern på `seed-family`-underlag vid
+320 × 250 respektive tomt underlag vid 1280 × 900. Både förberedelsesidan
+och observationswebbläsaren använder det angivna måttet. De provar
+blockens exakta text, båda startgränserna, toner, oförändrad
+karta/utkast/historik, exakt transportstopp,
 runnerns media- och HTTP-avbrott, klockans paus/återupptagning och städning.
 
 Ytterligare separata tekniska prov kör de ordagrant hämtade kommandona för
 ROSTFEL-04, notisernas tillgänglighet och uppdragsfel samt TAL-11:s inkommande
-ljudaktivitet med mikrofonen av. Varje prov använder en egen publik launcher
-med tomt eller `seed-family`-underlag vid samma korta eller höga vy. Proven
-hämtar kommandona före start och behåller egna samtyckesstarter,
+ljudaktivitet med mikrofonen av. Dessa två prov använder egna publika launchers
+med `seed-family`-underlag vid 320 × 250 respektive tomt underlag vid
+1280 × 900. Proven hämtar kommandona före start och behåller egna
+samtyckesstarter,
 återställningar, status 201/200, oförändrad karta/utkast/historik, tomma
 diagnostikutdata och borttagen provkatalog. De delar inte tidsbudget med
 blockens och runnerns fullständiga prov.
+
+Detta är representativ täckning: tomt underlag vid 320 × 250 och
+`seed-family`-underlag vid 1280 × 900 provas inte oberoende i något av
+de två scenarierna. Ett fel som kräver just någon av dessa kombinationer
+kan därför undgå proven.
+
+### Konsoliderade tekniska referenser
+
+De tekniska titlarna i `voice-controls-preparation.spec.ts` följer två
+mönster: `voice preparation controls the public launcher on …` och
+`voice preparation executes literal fault recipes on …`. För vartdera
+mönstret ersätts `empty content at 320x250` av
+`empty content at 1280x900`, och `seeded content at 1280x900` av
+`seeded content at 320x250`. De fullständiga kontrollerna behålls
+i respektive scenario: inga felgränser eller återställningar flyttas mellan
+scenarierna. Samtliga fyra kvarvarande prov använder fortfarande den riktiga
+applikationen, publika launchern, syntetisk media och tillfällig SQLite.
+De bortvalda titlarna är tekniskt underlag utan egna manuella fall-ID:n.
 
 ## Media, textfragment och tekniska observationer
 
@@ -1061,10 +1082,10 @@ kontrollerna finns kvar i NOT-10:s integrationstest.
 
 ## Hjälpens kontrollerade svar
 
-Gäller YTA-07 och YTA-13 vid steg 6. Använd en ny kontrollerad installation med
+Gäller YTA-07 vid steg 6. Använd en ny kontrollerad installation med
 Hjälpprov, Google-inloggning som Alex och 1280 × 720 före första handlingen.
-Windows/Linux använder vanlig Chromium-plattform. macOS använder Chrome på macOS
-för den dokumenterade kombinationen; syntetisk plattform är separat underlag.
+Windows/Linux använder vanlig Chromium-plattform. macOS-hjälpens läsning i
+YTA-13 behöver inget kontrollerat samtalssvar.
 Använd inga fysiska OS-genvägspåståenden från emulering. De faktiska
 tangentkommandona bedöms i YTA-15.
 

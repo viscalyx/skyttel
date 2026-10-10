@@ -2,6 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
 import {
   consentBox,
+  giveConversationConsent,
   startConversationWithText,
   startConversationWithVoice,
   turnMicrophoneOff,
@@ -291,10 +292,43 @@ for (const mac of [false, true])
     test(`${mac ? 'MIKROFONTRYCK-09' : 'MIKROFONTRYCK-03'}: tangentkombinationen har samma korta och långa tryck`, async ({
       page,
     }) => {
-      const { app } = await installation(page, mac);
+      const { app, live } = await installation(page, mac);
       const shortcut = mac ? 'Control+Shift+Space' : 'Control+Space';
       try {
-        await startConversationWithVoice(page);
+        if (mac) {
+          await expect(microphone(page)).toBeVisible();
+          await page.keyboard.press(shortcut);
+          await expect(consentBox(page)).toBeVisible();
+          await expect(consentBox(page)).toContainText('Släpp stänger av ny inspelning direkt.');
+          expect(
+            await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests),
+          ).toBe(0);
+          expect(live.requests).toHaveLength(0);
+          await consentBox(page).getByRole('button', { name: 'Avbryt', exact: true }).click();
+          await expect(microphone(page)).toBeFocused();
+          // A held native Mac chord also waits for release and consent before capture.
+          await page.keyboard.down('Control');
+          await page.keyboard.down('Shift');
+          await page.keyboard.down('Space');
+          await page.waitForTimeout(550);
+          await expect(consentBox(page)).toHaveCount(0);
+          expect(
+            await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests),
+          ).toBe(0);
+          expect(live.requests).toHaveLength(0);
+          await page.keyboard.up('Space');
+          await page.keyboard.up('Shift');
+          await page.keyboard.up('Control');
+          await expect(consentBox(page)).toBeVisible();
+          await expect(consentBox(page)).toContainText('Släpp stänger av ny inspelning direkt.');
+          expect(
+            await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests),
+          ).toBe(0);
+          expect(live.requests).toHaveLength(0);
+          await giveConversationConsent(page, { remember: true });
+        } else {
+          await startConversationWithVoice(page);
+        }
         await expect(microphone(page)).toHaveAttribute('aria-pressed', 'true');
         await turnMicrophoneOff(page);
         await expect(microphone(page)).toHaveAttribute(

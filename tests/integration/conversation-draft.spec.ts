@@ -1,5 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
+import { bounds } from '../support/accessibility.js';
 import { closeSupportDialog, createHousehold, openSettings, signIn } from '../support/client.js';
 import {
   openConversationText,
@@ -145,14 +146,26 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     expect(lineCount).toBeGreaterThanOrEqual(1);
     expect(lineCount).toBeLessThanOrEqual(3);
     await expect(typeCell).toBeVisible();
-    const draftBox = await draft(page).boundingBox();
-    const textBox = await view(page).locator('.text-view-conversation').boundingBox();
-    expect(draftBox?.width).toBe(340);
-    expect((draftBox?.x ?? 0) + (draftBox?.width ?? 0)).toBe(textBox?.x);
-    const panel = await view(page).boundingBox();
-    expect(draftBox?.y).toBe((panel?.y ?? 0) + 1);
-    for (const handle of await view(page).getByRole('separator').all())
-      expect((await handle.boundingBox())?.y).toBe((panel?.y ?? 0) + 1);
+    const draftBox = await bounds(draft(page));
+    const textBox = await bounds(view(page).locator('.text-view-conversation'));
+    // A resized draft must not cover the conversation or clip its own heading and types.
+    expect(draftBox.right).toBeLessThanOrEqual(textBox.x);
+    const heading = await bounds(draft(page).getByRole('heading', { name: 'Utkast', exact: true }));
+    expect(heading.x).toBeGreaterThanOrEqual(draftBox.x);
+    expect(heading.right).toBeLessThanOrEqual(draftBox.right);
+    expect(heading.y).toBeGreaterThanOrEqual(draftBox.y);
+    expect(heading.bottom).toBeLessThanOrEqual(draftBox.bottom);
+    expect(await typeCell.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+      true,
+    );
+    await view(page).getByRole('textbox', { name: 'Meddelande till Skyttel', exact: true }).click({
+      trial: true,
+    });
+    for (const name of ['Ändra utkastlistans bredd', 'Ändra samtalstextens bredd']) {
+      const handle = view(page).getByRole('separator', { name, exact: true });
+      await expect(handle).toHaveAccessibleName(name);
+      await handle.hover({ trial: true });
+    }
     await toggle(page).click();
     await openConversationText(page); // closes the text view
     await openConversationText(page); // opens it again

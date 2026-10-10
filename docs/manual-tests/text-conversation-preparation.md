@@ -157,6 +157,41 @@ portvidarebefordran. Offlineläge ersätter inte denna felgräns. Vanlig
 HTTPS-ingång, om en sådan tillfälligt används av operatören, återställs
 till applikationen **före** transportens `quit`.
 
+## Avvisad leverans med befintligt utkast
+
+TEXT-04 har separat tekniskt underlag för samma publika textstart och
+installerade `window.skyttelTextDelivery`. Det använder ett befintligt
+Lo-förslag med namnet **Lo Exempel** och beskrivningen **Påhittad uppgift**.
+Med aktiverad leveranskontroll ger ett meddelande till en saknad session
+HTTP 404 och
+`phase:"not-accepted"`. Hela kartan och det meningsfulla utkastet är exakt
+oförändrade, och inga sparförsök finns. Kontrollen rensas, omladdning ger
+`phase:"idle"`, och `quit` ger `closed`, exit 0 och borttagen provkatalog.
+Detta är automatiserat tekniskt underlag, inte TEXT-04:s vanliga UI-steg
+eller bevis på tappat svar efter genomfört sparande.
+
+Kör bara det publika avvisningsprovet när den gränsen ska kontrolleras:
+
+<!-- markdownlint-disable MD013 -->
+```sh
+npm run build
+npm run test:integration -- tests/integration/text-assistant.spec.ts --grep 'manual text launcher public preparation seeded rejects an unaccepted delivery'
+```
+<!-- markdownlint-enable MD013 -->
+
+### Konsoliderad teknisk identitet
+
+Den tekniska identiteten
+`manual text launcher public preparation empty rejects an unaccepted delivery`
+ersätts av
+`manual text launcher public preparation seeded rejects an unaccepted delivery`
+i [text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts).
+Familjen har ett integrationsexekverat prov i stället för två. Alla
+avvisnings-, bevarande-, återställnings- och städningskontroller finns i det
+behållna provet. En oberoende avvisningssekvens med tom samling av förslag
+ingår inte längre; den befolkade referensen gör inget anspråk på den
+kombinationen. Inget funktionellt fall-ID ändras eller återanvänds.
+
 ## Visningsanrop och obekräftade påståenden
 
 För TEXT-05 släpps `show_map_object` med Lo-förslagets ID under

@@ -678,6 +678,11 @@ Spara inte.
 **Integrationstest:**
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-43.
+
+**Tekniskt HTTP-underlag:**
+[draft-removal-http.test.ts](../../tests/unit/server/draft-removal-http.test.ts)
+provar publika förslagsvägar med verkliga sessioner och SQLite i
+server-sviten i Vitest. Formulär och borttagningsbekräftelse provas i UTKAST-43.
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
@@ -694,7 +699,9 @@ UTKAST-43.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/draft-removal.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/draft-removal-http.test.ts",
       "title": "direct objectType removal setup preserves the original public proposal routes and values",
       "purpose": "Bevarar ursprungliga lyckade HTTP-förberedelser, exakta värden och statuskontroller separat från de ordinarie formulären."
     }
@@ -736,6 +743,11 @@ Lägg i utkastet med Enter och välj Stäng samband. Spara inte.
 **Integrationstest:**
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
 UTKAST-143.
+
+**Tekniskt HTTP-underlag:**
+[draft-removal-http.test.ts](../../tests/unit/server/draft-removal-http.test.ts)
+provar publika förslagsvägar med verkliga sessioner och SQLite i
+server-sviten i Vitest. Formulär och borttagningsbekräftelse provas i UTKAST-143.
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
@@ -752,7 +764,9 @@ UTKAST-143.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/draft-removal.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/draft-removal-http.test.ts",
       "title": "direct relationshipType removal setup preserves the original public proposal routes and values",
       "purpose": "Bevarar ursprungliga lyckade HTTP-förberedelser, exakta värden och statuskontroller separat från de ordinarie formulären."
     }
@@ -2144,9 +2158,11 @@ UTKAST-03.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/draft-conflicts.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/draft-conflicts-http.test.ts",
       "title": "HTTP clients reject stale conflict choices and enforce private drafts and revoked membership",
-      "purpose": "Separata HTTP-prov för inaktuella val, privata utkast och återkallat medlemskap; inga formulärhandlingar."
+      "purpose": "Separata HTTP-prov med oberoende riktiga sessioner och SQLite för inaktuella val, privata utkast och återkallat medlemskap; inga formulärhandlingar."
     }
   ]
 }
@@ -2181,6 +2197,11 @@ Namnförslaget
 - Det nya konfliktvalet uppmanar till granskning och ändrar bara utkastet.
   Medlemmen ser fortfarande **Lo Ek** före det uttryckliga sparandet.
 - Efter sparandet bekräftar kvittot **Lo Lind** och medlemmen ser det namnet.
+
+Separat tekniskt underlag i Vitests serverprojekt verifierar samma ägares
+åtkomst från en annan session, privata utkast, inaktuella val och att ett
+återkallat medlemskap stoppar varje läsning och ändring genom riktiga
+HTTP-anrop och SQLite. Det utför inte de manuella formulärstegen.
 
 ### UTKAST-04: godta ett borttaget objekt utan att tappa andra förslag
 
@@ -8038,15 +8059,7 @@ UTKAST-137.
   "counterpart": {
     "spec": "tests/integration/draft-conflicts.spec.ts",
     "caseId": "UTKAST-137"
-  },
-  "evidence": [
-    {
-      "kind": "technical",
-      "spec": "tests/integration/draft-conflicts.spec.ts",
-      "title": "independent users save unrelated objects without a meaningless conflict",
-      "purpose": "Bevarat HTTP-prov för samtidiga oberoende förslag; omstart, sparad karta och båda privata utkast jämförs separat."
-    }
-  ]
+  }
 }
 ```
 -->
@@ -8068,3 +8081,29 @@ UTKAST-137.
 - Båda sparanden bekräftas utan konflikt om det andra objektet.
 - Lo Lind och Ny musiktjänst finns hos båda efter omstart.
 - Båda egna utkasten är tomma.
+- UTKAST-137 jämför dessutom de två samtidigt privata förslagen,
+  sparresultaten och objektens fullständiga identiteter och värden för båda
+  medlemmarna genom publika HTTP-svar. Dessa kontroller ingår i samma
+  formulärflöde och kräver inga ytterligare manuella UI-steg.
+
+## Avvecklat tekniskt underlag
+
+I [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts)
+ersätter UTKAST-137 det fristående tekniska testet “independent users save
+unrelated objects without a meaningless conflict”. Två samtidiga privata
+utkast, två lyckade oberoende sparanden, faktisk omstart och båda medlemmarnas
+läsning av exakta objektidentiteter och värden ingår i samma formulärflöde.
+Ingen funktionell fallidentitet avvecklas. Den separata direkta HTTP-kedjan
+upprepas inte; båda medlemmarnas förslag och sparanden görs genom Tabell.
+
+## Flyttat tekniskt underlag
+
+Det tekniska konfliktprovet i UTKAST-03:s metadata körs i
+[draft-conflicts-http.test.ts](../../tests/unit/server/draft-conflicts-http.test.ts)
+i Vitests serverprojekt med samma testtitel. Hela kontrollen av samma ägare
+i oberoende sessioner, inaktuella och ogiltiga konfliktval, gamla
+utkastversioner, privata utkast, uttryckligt nytt sparande och återkallat
+medlemskap består. Riktiga externa HTTP-anrop, sessioner och SQLite behålls.
+Oanvända webbläsarfixturer tas bort; ingen assertion eller funktionell
+fallidentitet avvecklas och ingen konfiguration förloras. Flytten eliminerar
+inte protokollflödet och innebär inget löfte om snabbare körning.

@@ -3,6 +3,12 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    tags: [
+      {
+        name: 'technical',
+        description: 'Supporting evidence without an ordinary manual counterpart',
+      },
+    ],
     maxWorkers: 1,
     fileParallelism: false,
     projects: [

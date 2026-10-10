@@ -52,6 +52,41 @@ Godkänn då både AI-val och kartarbete. Kontrollera `ready` före kommandon.
 Den sista parametern får bara vara `read` eller `write`; klienten
 beviljar aldrig större åtkomst än Skyttels aktuella medgivande.
 
+### Läsande terminalklient: tom och fylld karta
+
+Det separata tekniska provet i
+[manual-mcp-preparation.spec.ts](../../tests/integration/manual-mcp-preparation.spec.ts)
+använder en ny databas och ett läsmedgivande för båda utgångslägena.
+Det provar verklig webbläsare, den publicerade klienten, OAuth/MCP och SQLite
+utan språkmodell. Det är underlag för AI-02, inte ytterligare ett manuellt fall.
+
+1. Skapa Linden i en ny databas. Starta terminal B med `read`-kommandot
+   ovan, välj Linden och kontrollera att **Godkänn läsåtkomst** är inaktiv
+   före AI-valet. Markera AI-valet och godkänn en gång.
+2. Kör `tools`: enbart `read_map` och `read_my_draft` ska finnas. Kör
+   `map` och `read`: kartans objekt och samband samt utkastets förslag ska
+   vara tomma listor, inte saknade fält. Läsningen ändrar inget.
+3. Behåll samma terminalprocess och anslutning. Skapa personen **Alex**
+   med beskrivningen **Sparade uppgifter om Alex** genom **Nytt objekt**,
+   lägg i utkastet och spara hela utkastet i Skyttel. Ändra beskrivningen
+   genom **Tabell → Redigera Alex** till **Alex privata rättelse** och
+   lägg i utkastet utan att spara igen.
+4. Kör `map` och `read` i samma klient. Kartan visar det sparade värdet;
+   utkastet visar det sparade och det föreslagna värdet. Kartan och utkastet
+   ska behålla samma innehåll efter läsningen.
+5. Återkalla **Skyttel manual MCP controls** i Assistentanslutningar.
+   Kör `read`: förvänta `MCP HTTP 401`. Kör `quit`: klienten skriver
+   `closed` och avslutas. Följ installationens städning ovan.
+
+De separata tekniska definitionerna med titlarna
+`manual MCP read-only preparation preserves empty household work` och
+`manual MCP read-only preparation preserves seeded household work` ersätts
+av provfilens sammanhållna definition för tomt och sedan fyllt hushåll.
+Familjen omfattar en upptäckt integrationsexekvering i stället för två.
+Tom serialisering och fylld läsning behålls i samma medgivande; en separat
+medgivandesekvens från en redan fylld demoinstallation upprepas inte.
+Inga manuella fall-ID:n utgår eller återanvänds.
+
 ### Webbcookie utan assistentmedgivande, AI-01
 
 Efter vanlig webbinloggning, före ett godkänt assistentmedgivande, kör

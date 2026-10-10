@@ -2,10 +2,19 @@
 
 Operatören använder en separat provinstallation utan verkliga uppgifter.
 UI-fallen finns i [bevarat hushållsarbete](household-work.md).
-De två [automatiska förberedelseproven](../../tests/integration/household-work-preparation.spec.ts)
-kontrollerar de publicerade verktygen i tom och befolkad installation med
-Robins meningsfulla separata utkast. De utför inget mänskligt ljudprov.
+Det [automatiska förberedelseprovet](../../tests/integration/household-work-preparation.spec.ts)
+kontrollerar de publicerade verktygen i befolkad installation med ett tidigare
+sparat objekt, dess kvitto och Robins meningsfulla separata utkast. Det bevarar
+dessa genom hela text- och röstkedjan, rättelsen, sparandet och omstarten.
+Det utför inget mänskligt ljudprov.
 Kommandon nedan hör till förberedelsen, inte användarens kontroller.
+
+Den tekniska varianten **literal household preparation completes the family
+tools on empty public installation** är pensionerad till förmån för **literal
+household preparation completes the family tools on seeded public
+installation**. Förberedelsekedjan körs inte längre separat från ett hushåll
+utan sparade objekt eller kvitton. Ordinarie ARBETE-08/09 behåller sina tomma
+utgångslägen och UI-steg; det tekniska underlaget är en befolkad referens.
 
 ## Väntande radering
 

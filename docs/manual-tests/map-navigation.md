@@ -295,25 +295,34 @@ hastighet. Ett hack med Ctrl och mushjul zoomar begränsat.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Lo och Kim syns i Chromium. Styrplattans
+**Förutsättningar:** Lo och Kim syns i Chromium vid 1440 × 1000 CSS-pixlar.
+Styrplattans
 Ctrl-hjulhändelser och musens stora hjulsteg provas kontrollerat i
 automationen. Faktiska Mac-gester och Safari provas i NAVIGATION-19.
 
-**Integrationstest:**
-[map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts),
+**Automatiskt motsvarande webbläsartest:**
+[household-camera.test.tsx](../../tests/browser/household-camera.test.tsx),
 NAVIGATION-05.
+Testet använder den publika hushållskartan med produktens stilmallar och
+native tangent- och hjulhändelser i Chromium. Fullständiga svar för karta och vy
+är kontrollerade; inget skrivförsök får göras. Det verifierar kamerans
+beteende och oförändrade svar, men inte beständigt sparande på servern.
+NAVIGATION-03 behåller personlig flyttning och omstart mot verklig server.
 
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/map-navigation.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/household-camera.test.tsx",
     "caseId": "NAVIGATION-05"
   },
-  "reference": "Chromium, angiven vanlig navigering och sparade objekt.",
+  "reference": "Chromium 1440 × 1000, publik hushållskarta och produktstilar, native Ctrl och hjulhändelser, kontrollerade fullständiga svar för Lo och Kim och personlig vy; ingen verklig serverlagring.",
   "outcomes": [
-    "Navigation, riktning, fokus och personliga placeringar bevarar hushållets uppgifter."
+    "Långsamt och snabbt nyp ger skilda zoomhastigheter; ett Ctrl-hjulhack är begränsat.",
+    "Återställning återför kameran utan att förstora sidan eller skriva hushållsuppgifter och personliga placeringar."
   ]
 }
 ```
@@ -965,9 +974,11 @@ utan sidförstoring.
   "evidence": [
     {
       "kind": "overlap",
-      "spec": "tests/integration/map-navigation.spec.ts",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/household-camera.test.tsx",
       "caseId": "NAVIGATION-05",
-      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+      "purpose": "Native Chromium-hjulhändelser i publik hushållskarta med kontrollerade svar; utför inte faktisk observation med Mac, styrplatta eller Safari."
     }
   ]
 }
@@ -985,3 +996,13 @@ utan sidförstoring.
 
 - Mac-styrplattans långsamma och snabba nyp ger styrbar kamerazoom i Chrome och
   Safari; ett Ctrl-hjulhack ger begränsad zoom utan sidförstoring.
+
+## Svittillhörighet
+
+NAVIGATION-05 har samma stabila ID i Chromium-sviten. Dess motsvarighet är
+[household-camera.test.tsx](../../tests/browser/household-camera.test.tsx).
+Native inmatning, zoomhastighet, återställning, träffyta och sidans skala
+skyddas med kontrollerade fullständiga svar. Detta fall kör inte verklig
+HTTP-lagring; NAVIGATION-02, NAVIGATION-03 och NAVIGATION-06–18 behåller
+sina integrationsflöden och konfigureringar. Inget ID pensioneras eller
+återanvänds. NAVIGATION-19 kräver fortfarande mänsklig observation.

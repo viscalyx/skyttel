@@ -2,8 +2,12 @@
 
 Testfallen är grupperade efter område i applikationen. Varje områdesfil
 beskriver användare, förberedelser, steg och förväntat resultat samt länkar
-till motsvarande automatiserade integrationstester. Fall som uttryckligen
-kräver verkliga externa konton anges som enbart manuella och körs inte i CI.
+till motsvarande automatiserade prov i integrations- eller Chromium-sviten.
+Tekniskt stödjande prov anges separat från ett falls motsvarighet. Fall som
+kräver mänskliga observationer anger vad som behöver kontrolleras på riktigt;
+automatik ersätter inte de observationerna.
+Fall som kräver mänsklig användning av verkliga externa konton anges som
+manuella och körs inte i CI.
 
 Fallen fungerar som körbara beskrivningar och stöd för felsökning.
 Automatiserade fall behöver inte upprepas manuellt för specifikation #31.
@@ -124,7 +128,13 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   separat sökning, synligt kapselfält, kompakta snabbval och borttagning
   av aktiva filter med badges efter Filter, filterdialog utan
   förflyttning av etiketter
-  och synliga streckade etikettlinjer i båda teman,
+  och synliga streckade etikettlinjer i båda teman. SÖK-11/15 och SÖK-12
+  körs genom kartans publika kontroller i Chromium med produktens stilar,
+  fullständigt kontrollerat kartsvar och profilbilder från tabellförberedelsen.
+  De behåller sina ID och ersätter tre integrationsexekveringar; övriga
+  sökfall behåller verklig HTTP och jämförelse av hushållets tillstånd.
+  Webbläsarfallen bevisar inte beständigt sparande.
+  Området omfattar också
   Escape som rensar kartans text och filter, gemensamma kompakta
   filterdialoger med träffantal och sökfält med kryss,
   egna detaljträffar, aktuell rad, teckensammansättning,
@@ -151,7 +161,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   med öppen samtalsnotis, sex
   beständiga personliga riktningar och nypzoom med styrplatta.
   NAVIGATION-02 har komplett 1440 × 1000-referens; NAVIGATION-06–18
-  skyddar alla sju mått och båda öppningsordningarna. NAVIGATION-19
+  skyddar alla sju mått och båda öppningsordningarna. NAVIGATION-05 bevarar
+  native Ctrl/hjul, hastighet, begränsat hjulsteg och sidans skala i Chromium
+  med publik hushållskarta, produktstilar och kontrollerade svar för karta och vy;
+  serverlagring skyddas separat av de kvarvarande integrationsfallen.
+  NAVIGATION-19
   anger faktisk styrplatta och webbläsare.
 
 - [Inställningar och profil](settings-profile.md): helsida, mobilnavigation,
@@ -186,7 +200,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   lagda objektförslag, oskickad samtalstext, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
   sparförsök vid tillfälliga vybyten;
-  [teknisk förberedelse vid rätt steg](household-work-preparation.md), faktiskt
+  [teknisk förberedelse vid rätt steg](household-work-preparation.md) med en
+  befolkad referens som bevarar tidigare objekt, kvitto och separat utkast;
+  den verktygskedjan upprepas inte separat från ett tomt hushåll. Faktiskt
   hört NVDA-tal och fysisk mikrofon som separata observationer; avveckling vid
   utloggning, återkallad
   tillgång
@@ -249,8 +265,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   kontrollfel med full privat och sparad läsning samt mätt text- och
   symbolkontrast i båda teman. NOT-03 behåller båda fokusvägarna och
   den pensionerade HJALP-04:s nodidentitet utan återanvänt ID. NOT-12–23
-  har separata placeringar, korta fönster och teman; NOT-24 kräver hört
-  besked. NOT-11 har
+  har separata placeringar, korta fönster och teman. NOT-12–15 har sina
+  stabila motsvarigheter i Chromium med produktionsstilar, kontrollerade
+  HTTP-/mediesvar och återställning med fokus och Retur; verklig server,
+  medgivandelagring och SQLite skyddas av de kvarvarande integrationsfallen.
+  NOT-24 kräver hört besked. NOT-11 har
   en separat körbar mänsklig granskning av alla symbolformer och typfärger.
 - [Frågor och talade sparbesked](conversation-questions.md): identiteter,
   konflikter, väntan med mikrofonen av, beständigt kvitto och fyra
@@ -329,6 +348,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sammanfattningsfel.
   [Separat samtalsförberedelse](conversation-preparation.md) beskriver
   versionsvärden, paket, registrerat sparande och PCM genom hållen start.
+  PCM-receptets tekniska referens är fylld installation med oförändrad
+  karta, utkast och historik; separat körning från tomt hushåll ingår inte.
+  Båda huvudreceptproven finns kvar, inklusive fylld konfliktlösning.
 - [Samtal med Skyttel](text-assistant.md): hela utkast,
   rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
   samtidigt synliga objekt och samband i karta och detaljpanel även på
@@ -341,6 +363,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   [Operatörsförberedelsen](text-conversation-preparation.md) skiljer
   leveransfel och rått protokoll från vanliga UI-steg. Kontrollerade lokala
   leverantörssvar och verklig modellförståelse redovisas separat.
+  Textstartens tekniska avvisningsprov behåller ett faktiskt Lo-förslag,
+  oförändrat utkast, inga sparförsök samt återställning och städning;
+  avvisningen upprepas inte oberoende med tom samling av förslag.
 
 - [Permanent radering](household-erasure.md): egen inställningssida,
   avbruten granskning med bevarat kartarbete, uttrycklig granskning och
@@ -364,6 +389,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   fysiskt tangentbord. [Separat förberedelse](household-erasure-preparation.md)
   håller SQLite-läsning, tappar verkligt slutförda svar och blockerar
   återhämtningsminnet med tydliga tidpunkter och återställning.
+  Den tekniska receptkontrollen bevarar ett privat förslag; en självständig
+  receptkörning utan befintligt förslag ingår inte i den referensen.
 
 - [Fullständig återimport](household-import.md): egna inställningssidor,
   bevarat oskickat arbete före innehållsbyte, uttrycklig ersättning,
@@ -428,6 +455,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   verklig modellverifiering; vanliga fall använder kontrollerade anrop.
   En kontrollerad lokal MCP-klient behåller gamla begäranden, tappar ett
   lyckat sparbesked och provar exakta återförsök efter serveromstart.
+  [Separat läsklientprov](assistant-client-preparation.md#läsande-terminalklient-tom-och-fylld-karta)
+  läser tom och fylld karta och utkast under samma medgivande och kontrollerar
+  oförändrat innehåll, återkallelse och processavslut utan språkmodell.
   Profilens anslutningar får tangentbordsfokus och återgången behåller
   oskickad text och oberoende privata förslag.
 
@@ -478,8 +508,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   bevarat urval och filter, etikettikonens växling och sparade val,
   återställning från verktygsfältet och bevarade personliga placeringar,
   personlig rotationspunkt, direkta grannar,
-  vyhistorik steg för steg, nollställning, sammanhängande gester, mus,
-  tangentbord och pekskärm i smala och korta vyer;
+  vyhistorik steg för steg, nollställning och sammanhängande gester med
+  verklig Chromium-inmatning och kontrollerade svar i KAMERA-08/09;
+  mus, tangentbord och pekskärm i smala och korta integrationsvyer;
   nå återkoppling och alla sex personliga flyttar utan täckta kontroller,
   återfå fokus efter flytt och bevara senare fokus eller stängd navigering
   när ett verkligt svar hålls och släpps.
@@ -511,7 +542,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
   kommando förbereder äldre provdata för uppgraderingen. AVTAL-07 provar
   saknat känt skuldbelopp i formuläret och AVTAL-08 riktiga konfliktval;
-  HTTP-validering, kvitton och historik anges som separat tekniskt underlag.
+  HTTP-validering, kvitton och historik körs som separat tekniskt underlag
+  i Vitests serverprojekt med oberoende autentiserade klienter, verklig
+  lokal server, SQLite och faktisk omstart. De tre protokollarbetsflödena
+  behåller alla påståenden; tre integrationsexekveringar blir tre
+  serverexekveringar.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
   separata bredd-, tema- och återfokusfall med
@@ -534,6 +569,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   och skilj bekräftat kvitto från fel vid efterföljande hämtning; återuppta
   utkast, hantera gamla kastförsök
   och konfliktval, kombinera egenskaper i Granska konflikter,
+  med separat HTTP-underlag i Vitests serverprojekt för privata utkast,
+  gamla konfliktval och återkallat medlemskap genom oberoende sessioner,
   separata Karta- och Tabellvägar för genomförda och uteblivna konfliktval,
   historisk fältförlust, skilda objekt- och sambandstypsåterställningar och
   avvisad gammal behörighet med
@@ -594,6 +631,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   UTKAST-41–48 och UTKAST-142–150 har separata borttagningsflöden:
   oberoende och beroende förslag, två typsamlingar, smala bekräftelser,
   sena fokusutfall och tappat svar efter genomförd eller utebliven ändring.
+  UTKAST-137 följer två samtidigt privata, oberoende objektändringar till
+  separata sparanden och båda medlemmarnas läsning efter omstart.
+  UTKAST-43 och UTKAST-143 har separat
+  [tekniskt HTTP-underlag i server-sviten](../../tests/unit/server/draft-removal-http.test.ts)
+  för publika typförslag, beroende värden och oförändrad karta och historik.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
@@ -610,7 +652,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   TYP-13–22 skyddar angivna smala, korta och mörka browserflöden. Hela
   sparande- och omstartskedjan upprepas inte i varje konfiguration.
   TYP-23 kräver fysisk tangentbordsanvändning vid verklig förstoring.
-  Felaktiga värden och kvittots återspelning har separat tekniskt underlag;
+  TYP-07:s HTTP-underlag i Vitests serverprojekt bevarar felaktiga värden,
+  ändrade definitioner, gamla sparbesked och senare privata fält efter
+  faktisk omstart.
+  TYP-01 jämför hela privata förslag, beständigt kvitto, historik och
+  återspelning i formulärflödet;
   typens och fältets formulärvalidering utförs genom riktiga kontroller.
   Konfigurerad fältordning följer med till formulär, utkast och tabellens
   fullständiga läsning, inklusive uttrycklig noll och Nej.
@@ -631,6 +677,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   och samtidiga sparanden utan delsparande. Typ- och fältformulär provas
   genom native kontroller. Hela spara- och omstartskedjan har referensen
   1440px; 390/320px behåller eget formulärarbete, teman och fokus.
+  STY-01 jämför hela privata förslag, historiska typdefinitioner, exakt
+  kvitto, historik och återspelning i samma formulärflöde.
 - [Borttagning av typer och fält](definition-removal.md): granskad
   katalogborttagning, användningsspärrar för upphört innehåll och privata
   utkast utan privat läckage, fullständig förslagsläsning och läsning av
@@ -663,6 +711,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   Det gäller även tidigare samband som visas tillsammans med aktuella förslag.
   LIVSCYKEL-01–06 har en varsin funktionell motsvarighet; LIVSCYKEL-07–09
   kräver faktisk NVDA-uppläsning och redovisar DOM-prov som separat underlag.
+  [Separat HTTP-underlag](lifecycle.md#separat-http-underlag) för datum,
+  aktuella och tidigare samband körs i Vitests serversvit med verklig
+  SQLite och faktisk omstart. Det flyttar en teknisk integrationsexekvering
+  utan att avveckla något arbetsflöde eller fall-ID.
 
 Kamerans KAMERA-10/11, personliga vyns PLACERING-11/12 och profilens
 INST-12/13 och arbetsytans YTA-11/12 redovisar faktisk fysisk inmatning,
@@ -671,18 +723,40 @@ PLACERING-09 har komplett 1440-referens och PLACERING-10 behåller smal
 återkoppling, utgången toast och fokus. Den samlade omstartskedjan provas
 inte separat vid varje CSS-mått eller öppningsordning; en kombinationsbugg
 specifik för en annan konfiguration kan därför undgå referensen.
-[Kontrastmätningens sex hjälpprov](../../tests/integration/accessibility-measurements.spec.ts)
-är tekniskt underlag för beräkningen. De har ingen påhittad UI-procedur;
-INST-06 och YTA-02 behåller sina egna browserbaserade kontrastkontroller.
+[Kontrastmätningens sex hjälpprov](../../tests/browser/accessibility-measurements.test.tsx)
+körs i Chromium som tekniskt underlag för beräkningen. De provar
+färgtolkning, genomskinliga föräldraytor och avvisning utan opak yta.
+De har ingen påhittad UI-procedur; INST-06 och YTA-02 behåller sina egna
+browserbaserade kontrastkontroller. SÖK-12 provar separat produktens
+kontrast i båda teman; hjälpproven ersätter inte det scenariot.
 
 [Separat kontrollerad röstförberedelse](voice-controls-preparation.md)
 anger exakta kommandon, hållna startgränser, syntetiska toner, tekniska
 paket/resurser och återställning. Dess publika runner pausar klockan för
 manuell inspektion av media- och HTTP-avbrott och återupptar den vid
-återanslutning; det är inte naturlig förlupen tid. Tomt/seedat underlag
-vid kort/hög vy har separata tekniska röktest. De flyttade felkommandona och
+återanslutning; det är inte naturlig förlupen tid. Varje tekniskt scenario
+har `seed-family`-underlag vid 320 × 250 och tomt underlag vid 1280 × 900;
+tomt underlag i kort vy och `seed-family` i hög vy provas inte oberoende. De två
+scenarierna ger fyra tekniska prov. De flyttade felkommandona och
 TAL-11:s ljudaktivitet med mikrofonen av har egna publika prov med fullständig
 start, återställning och städning. ROSTFEL-01/05–08,
-HJALP-07–10, TEXTBRICKA-06–08 och YTA-13 har egna funktionella motsvarigheter.
+HJALP-07–10 och TEXTBRICKA-06–08 har egna funktionella motsvarigheter.
+HJALP-06/07/10 använder Chromium med hushållskartan, produktionsstilar,
+publika kontroller, kontrollerade samtalssvar och medieströmmar samt
+fullständig resursstädning. HJALP-07 behåller grov pekare och tangentbord;
+HJALP-06/10 behåller båda bredderna och ändrad rörelseinställning.
+HJALP-01:s tillgänglighetsväxling och mikrofon av samt TAL-14:s röstsignal
+och minskade rörelse behåller riktig HTTP-server. Server-/leverantörskedjan
+upprepas inte separat i de tre Chromium-fallen. Fysisk pekskärm och
+skärmläsarbesked hör fortsatt till HJALP-11/12.
+YTA-13 läser macOS-hjälpen i Chromium med produktens stilmall och kontrollerade
+svar. Första macOS-genvägens medgivande provas i MIKROFONTRYCK-09; hela
+formulär-, utkast-, samtals- och återkallandekedjan körs i YTA-07 och upprepas
+inte oberoende på macOS.
+TEXTBRICKA-06/07 använder Chromium med hushållskartan, produktionsstilar och
+kontrollerade textsvar för 390 px mörkt respektive 1280 px ljust.
+TEXTBRICKA-04/08 behåller hela serverflödet vid 390 px ljust respektive
+1280 px mörkt; medgivande och HTTP-flöde körs inte separat i de andra två
+kombinationerna.
 HJALP-11/12, TEXTBRICKA-09/10 och YTA-14/15 beskriver faktiskt hjälpmedel,
 fysisk inmatning eller zoom; syntetisk Chromium etablerar dem inte.

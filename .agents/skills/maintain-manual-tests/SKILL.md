@@ -1,9 +1,9 @@
 ---
 name: maintain-manual-tests
 description: >-
-  Synchronize manual cases and Playwright integration tests. Use when changing
-  manual cases or integration tests, maintaining the manual-test index, or
-  editing the testing guide.
+  Synchronize manual cases, integration/browser counterparts and mapped
+  technical evidence. Use when changing their scenarios or identities,
+  maintaining the manual-test index, or editing the testing guide.
 ---
 
 # Maintain Manual Tests
@@ -11,7 +11,8 @@ description: >-
 ## Workflow
 
 For index-only or testing-guide-only work, use steps 5 and 6. For case or
-integration-test changes, start at step 1 and follow the applicable branches.
+counterpart or mapped-evidence changes, start at step 1 and follow the
+applicable branches.
 
 1. Scope the change. Identify every requested scenario, its accepted
    requirements, affected specs, and existing cases under `docs/manual-tests/`.
@@ -20,7 +21,7 @@ integration-test changes, start at step 1 and follow the applicable branches.
    backfill unrelated scenarios only when requested.
 2. Classify and implement each change:
    - Functional scenario additions, revisions, or removals: synchronize manual
-     cases and Playwright coverage in the same change.
+     cases and integration/browser coverage in the same change.
    - Selector, flake, title, setup, or refactoring maintenance: preserve
      behavior and coverage; update manual cases when instructions or references
      change. These changes may stand alone without production edits.
@@ -52,11 +53,12 @@ integration-test changes, start at step 1 and follow the applicable branches.
    - Run `npm run test:manual-mapping` for complete migrations. During staged
      migration, select all affected areas with repeated `--area` arguments:
      `npm run test:manual-mapping -- --area docs/manual-tests/<file>.md`.
-     Scoped validation checks selected cases and global manual ID uniqueness;
-     full validation also requires every discovered functional test to have
-     one manual counterpart.
-   - For test behavior or execution changes, run affected integration tests
-     using [the testing guide](../../../docs/development/testing.md).
+     Scoped validation checks selected cases and global manual/functional ID
+     uniqueness;
+     full validation also requires every ordinary integration/browser test
+     to have one manual counterpart.
+   - For test behavior or execution changes, run affected suites using
+     [the testing guide](../../../docs/development/testing.md).
      For title-only changes, verify discovery.
    Finish when applicable checks pass and every affected ordinary case's
    actions and outcomes have been compared with its counterpart; mapping

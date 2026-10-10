@@ -147,6 +147,45 @@ innan mikrofontrycket. Blocket håller endast nästa POST före vidarebefordran:
    tidigare fetch och tar bort kontrollen. Omladdning kräver ny installation
    av blocket. Starta en ny launcher för nästa körning.
 
+### Automatiskt underlag och avgränsning
+
+Det separata tekniska testet
+`context preparation preserves buffered PCM through summary on seeded public installation`
+i [conversation-preparation.spec.ts](../../tests/integration/conversation-preparation.spec.ts)
+kör blocket ovan genom riktig röststart, sammanfattning och syntetiska
+PCM-prov i Chromium mot riktig server och tillfällig SQLite. Referensen
+använder `seed-family` före inloggning: tidigare sparade objekt, samband,
+historik och Alex hela befintliga utkast ska vara oförändrade efter bytet.
+Mikrofonen förblir av, bara en mikrofonbegäran görs, äldre 440 Hz förs
+vidare, senare 880 Hz utesluts och exakt tidigare fetch återställs.
+Launcher och provkatalog städas med `quit`. Det är tekniskt underlag för
+KONTEXT-12, inte fysisk mikrofon eller ett manuellt körresultat.
+
+Den tekniska identiteten
+`context preparation preserves buffered PCM through summary on empty public installation`
+är pensionerad till det fyllda testet ovan. Alla gemensamma kontroller
+behålls: hållen start utan tidigt utsänt ljud, status 201, verkligt
+sammanfattningsanrop, synligt kontextbesked, en öppen anslutning, äldre
+PCM efter bytet, inga nya inspelningsaktiveringar efter släpp, inget
+senare PCM, mikrofon av, en mikrofonbegäran, fetch och borttagen
+konsolkontroll, hela kartans och historikens likhet samt städning utan
+terminalfel. De tomma startobjekten och skapandet av ett första Lo-förslag
+är den accepterade förlusten av ett självständigt prov från ett från
+början tomt hushåll. Förberedelsen ovan kan fortfarande köras manuellt
+från ett tomt hushåll; vanlig motsvarighet är fortsatt KONTEXT-12.
+
+PCM-familjen har en upptäckt integrationsexekvering i stället för två.
+Hela förberedelsespecifikationen har tre i stället för fyra: PCM-testet
+ovan och de två huvudreceptproven som finns kvar:
+
+- “literal context preparation completes batch, questions, save,
+  rejection and admitted revoke on empty public installation”
+- “literal context preparation completes batch, questions, save,
+  rejection and admitted revoke on seeded public installation”
+
+Det fyllda huvudreceptprovet behåller konfliktlösningen före hela
+utkastets sparande. Den pensionerade tekniska titeln ska inte återanvändas.
+
 ## Ljudfragment och tid för sparbesked
 
 FRAGA-04/05 använder [områdets tysta mediesignal](conversation-questions.md#allmän-förberedelse).

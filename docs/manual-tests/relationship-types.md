@@ -56,7 +56,8 @@ sparande av definition, objekt och samband.
 
 **Integrationstest:**
 [relationship-types.spec.ts](../../tests/integration/relationship-types.spec.ts),
-STY-01. Exakt HTTP-kvitto och återspelning är separat tekniskt underlag.
+STY-01. Samma formulärflöde verifierar också exakta HTTP-kvitton och
+återspelning; dessa kontroller kräver inga ytterligare manuella UI-steg.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -68,15 +69,8 @@ STY-01. Exakt HTTP-kvitto och återspelning är separat tekniskt underlag.
   },
   "reference": "Chromium, datorvy; angivna roller och förberedda hushållsdata",
   "outcomes": [
-    "Typ- och fältformulär sparas med ett riktat samband"
-  ],
-  "evidence": [
-    {
-      "kind": "technical",
-      "spec": "tests/integration/relationship-types.spec.ts",
-      "title": "directed definition HTTP staging preserves exact receipt and history replay",
-      "purpose": "Exakt definitionsunderlag, beständigt kvitto och identisk återspelning"
-    }
+    "Definition, objekt och riktat samband består i ett privat utkast efter omstart.",
+    "Samlat sparande bevarar Anteckning och båda riktningarna efter omstart."
   ]
 }
 ```
@@ -112,6 +106,10 @@ STY-01. Exakt HTTP-kvitto och återspelning är separat tekniskt underlag.
   i utkastet efter omstart. Låst skåp går att läsa före gemensamt sparande.
 - Sparandet gör uppgifterna gemensamma tillsammans. Efter omstart visas
   cykeln förvaras i garaget och garaget innehåller cykeln.
+- Före sparandet saknas de nya objekten, sambandet och typen i den gemensamma
+  kartan. STY-01 jämför även de fullständiga förslagen, historiska
+  typdefinitionerna och det exakta kvittot samt återspelning utan dubbletter
+  genom publika HTTP-svar.
 
 ### STY-02: Båda benämningarna öppnar samma riktade samband
 
@@ -718,3 +716,14 @@ spara- och omstartskedjan som bara inträffar vid 390 eller 320px kan undgå
 referensen; mobilfallen påstår inte likvärdig beständighet vid alla bredder.
 STY-07 behåller typbyte mellan lika fältnamn med olika betydelse.
 Inga befintliga fallidentiteter pensioneras eller återanvänds.
+
+## Avvecklat tekniskt underlag
+
+I [relationship-types.spec.ts](../../tests/integration/relationship-types.spec.ts)
+ersätter STY-01 det fristående tekniska testet “directed definition HTTP
+staging preserves exact receipt and history replay”. Definition, beroende
+objekt och riktat samband följs i samma privata formulärflöde genom omstart,
+sparande, exakta kvitton, historiska typdefinitioner och återspelning.
+Ingen funktionell fallidentitet avvecklas. Den direkta HTTP-kedjan utan eget
+fält körs inte längre separat; referensen omfattar Anteckning och båda
+objekttyperna samt läsning av riktningen från båda ändpunkterna.

@@ -30,6 +30,19 @@ KAMERA-10/11/12 använder
 KAMERA-03:s grafikdel har
 [separat förberedelse med exakt tidpunkt](workspace-preparation.md#kontrollerat-grafikavbrott-för-kamera).
 
+## Automatiserat underlag
+
+KAMERA-08/09 har sina motsvarigheter i
+[kamerans webbläsartest](../../tests/browser/household-camera-history.test.tsx).
+De provar verkliga kartkontroller, produktionsstilar och inmatning i Chromium
+med kontrollerade svar för sparade uppgifter, utkast och personlig vy.
+Inga skrivningar till hushållet eller objektplaceringarna tillåts i dessa prov.
+De visar lokal vyhistorik, inte beständig serverlagring. KAMERA-01–07 behåller
+sina integrationstest med verklig installation och sparade provuppgifter.
+KAMERA-08/09 behåller samma fallidentiteter vid flytten; inga ID:n frigörs.
+Fysiska gester och faktisk uppläsning provas fortfarande separat i
+KAMERA-10–12.
+
 ## Rotation och kameravy
 
 ### KAMERA-01: Rotera kring personlig placering utan hopp
@@ -440,8 +453,8 @@ KAMERA-07.
 
 **Förutsättningar:** Omladdad karta på dator, utan sökning eller markering.
 
-**Integrationstest:**
-[map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
+**Webbläsartest:**
+[household-camera-history.test.tsx](../../tests/browser/household-camera-history.test.tsx),
 KAMERA-08.
 
 <!-- markdownlint-disable MD013 -->
@@ -449,12 +462,15 @@ KAMERA-08.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/map-camera.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/household-camera-history.test.tsx",
     "caseId": "KAMERA-08"
   },
-  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "reference": "Chromium 1440 × 1000, verkliga kartkontroller och produktionsstilar; kontrollerade kompletta kart- och vysvar med fyra sparade objekt, två samband, fyra objektförslag, två osäkra sambandsförslag och fyra personliga 3D-placeringar. Lokal kamera, inte beständig HTTP-lagring.",
   "outcomes": [
-    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+    "Varje kamerasteg återgår till föregående utsnitt i rätt ordning, med fokus kvar på Föregående vy även i inaktivt läge.",
+    "Sökning aktiverar bara återställning; återställning rensar sökning och historik utan att ändra hushållsuppgifter, utkast eller personliga placeringar."
   ]
 }
 ```
@@ -495,11 +511,14 @@ KAMERA-08.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Omladdad karta, mus och pekskärm tillgängliga. Anteckna
-om pekskärmen är emulerad eller fysisk.
+**Förutsättningar:** Omladdad karta på dator, mus och pekskärm tillgängliga.
+Anteckna om pekskärmen är emulerad eller fysisk. Automatiseringen använder
+Chromiums verkliga mus-, tangentbords- och pekinmatning via CDP och väljer
+Ctrl-rullning i steg 3. Fysiska styrplatte- och pekgester provas separat i
+KAMERA-12.
 
-**Integrationstest:**
-[map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
+**Webbläsartest:**
+[household-camera-history.test.tsx](../../tests/browser/household-camera-history.test.tsx),
 KAMERA-09.
 
 <!-- markdownlint-disable MD013 -->
@@ -507,12 +526,15 @@ KAMERA-09.
 ```manual-mapping
 {
   "counterpart": {
-    "spec": "tests/integration/map-camera.spec.ts",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/household-camera-history.test.tsx",
     "caseId": "KAMERA-09"
   },
-  "reference": "Chromium, dator samt de smala och korta CSS-mått som anges i fallet.",
+  "reference": "Chromium 1440 × 1000, verkliga kartkontroller, produktionsstilar och native CDP-inmatning: sexstegs musdragningar, fem Ctrl-rullningar och tvåfingersgest. Samma kompletta kontrollerade kart- och vysvar som KAMERA-08; lokal kamera, inte beständig HTTP-lagring eller fysisk enhet.",
   "outcomes": [
-    "Kameran och urvalet följer de uttryckliga åtgärderna med nåbara kontroller och bevarat arbete."
+    "Varje sammanhängande rotation, panorering, Ctrl-rullning och tvåfingersgest blir ett helt steg i Föregående vy; knappen blir inaktiv i startläget.",
+    "Gester och återgång bevarar hushållsuppgifter, utkast och personliga placeringar."
   ]
 }
 ```
@@ -528,7 +550,7 @@ KAMERA-09.
 4. Välj **Föregående vy** tre gånger. Kontrollera utsnitten efter varje steg.
 5. Panorera och zooma med två fingrar på pekskärm under samma gest. Släpp
    båda fingrarna och välj **Föregående vy** en gång.
-6. Kontrollera hushållets uppgifter och utkastet.
+6. Kontrollera hushållets uppgifter, utkastet och personliga placeringar.
 
 **Förväntat resultat:**
 
@@ -536,7 +558,8 @@ KAMERA-09.
   panoreringen och nästa före hela rotationen. Knappen blir sedan dimmad.
 - Hela tvåfingersgesten går att backa med ett tryck, även när den innehåller
   både panorering och zoom. Knappen blir dimmad i startläget.
-- Gester och återgång ändrar inga hushållsuppgifter eller utkast.
+- Gester och återgång ändrar inga hushållsuppgifter, utkast eller personliga
+  placeringar.
 
 ### KAMERA-10: fysisk pekrotation och riktig zoom
 
@@ -633,9 +656,11 @@ olika syften, Alla etiketter med påläge och kameraknapparnas inaktiva lägen.
     },
     {
       "kind": "overlap",
-      "spec": "tests/integration/map-camera.spec.ts",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/household-camera-history.test.tsx",
       "caseId": "KAMERA-08",
-      "purpose": "Kontrollerat webbläsarunderlag för vanliga kontroller; utför inte den faktiska mänskliga observationen."
+      "purpose": "Kartans faktiska kontroller och lokala vyhistorik med kontrollerade svar i Chromium; utför inte faktisk uppläsning eller beständig serverlagring."
     }
   ]
 }
@@ -683,9 +708,11 @@ Föregående vy.
   "evidence": [
     {
       "kind": "overlap",
-      "spec": "tests/integration/map-camera.spec.ts",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/household-camera-history.test.tsx",
       "caseId": "KAMERA-09",
-      "purpose": "Kontrollerad webbläsarobservation; utför inte den faktiska mänskliga observationen."
+      "purpose": "Native CDP-mus, Ctrl-rullning och tvåfingersgest grupperas i kartans lokala vyhistorik med kontrollerade svar; utför inte fysisk mus-, styrplatte- eller pekinmatning."
     }
   ]
 }
@@ -695,7 +722,8 @@ Föregående vy.
 
 **Steg:**
 
-1. Följ KAMERA-09 steg 1–6 en gång med faktisk inmatning.
+1. Följ KAMERA-09 steg 1–6 med fysisk mus och pekskärm. Upprepa zoomningen
+   i steg 3 med en sammanhängande nypgest på en fysisk styrplatta.
 2. Anteckna verklig gest, fingerordning och de tre återgångarna.
    Kontrollera att tvåfingersgesten går att backa som ett helt steg.
 

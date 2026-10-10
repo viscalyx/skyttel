@@ -248,6 +248,16 @@ dubbelt sparande”.
   "reference": "Dator; faktisk202, native UUID, genomförd transaktion, tappat svar och samma databas efter restart.",
   "outcomes": [
     "Återfinna ett genomfört sparande när webbläsaren saknar svaret."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "integration",
+      "spec": "tests/integration/text-assistant.spec.ts",
+      "title": "manual text launcher public preparation seeded rejects an unaccepted delivery",
+      "purpose": "Publik textstart med ett verkligt Lo-förslag: saknad session ger 404/not-accepted, oförändrat utkast, inga sparförsök, återställd leveranskontroll efter omladdning och borttagen provkatalog. Tomt utkast provas inte längre oberoende."
+    }
   ]
 }
 ```
@@ -280,6 +290,12 @@ dubbelt sparande”.
   nytt sparande behövs. Den kontrollerade browserleveransen tappar accepterat
   textsvar först
   efter genomfört sparande; offlineläge används inte som ersättning.
+
+**Separat tekniskt underlag:** Den publika textstartens avvisningsprov
+behåller ett faktiskt Lo-förslag. Det provar saknad session, oförändrat
+utkast, inga sparförsök samt återställning och städning enligt
+[förberedelsens avvisningsgräns](text-conversation-preparation.md#avvisad-leverans-med-befintligt-utkast).
+Det oberoende avvisningsprovet från tomt utkast ingår inte längre.
 
 ### TEXT-05: markering kräver visning och skyddar oskickad text
 

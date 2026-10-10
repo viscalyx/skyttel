@@ -2,11 +2,13 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, globSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
+import { createVitest } from 'vitest/node';
 
 const { values } = parseArgs({
   options: {
     'manual-dir': { type: 'string', default: 'docs/manual-tests' },
     config: { type: 'string', default: 'playwright.config.ts' },
+    'vitest-config': { type: 'string', default: 'vitest.config.ts' },
     area: { type: 'string', multiple: true },
   },
 });
@@ -35,6 +37,8 @@ function collect(suites, parents = []) {
       for (const test of spec.tests) {
         tests.push({
           ...test,
+          runner: 'playwright',
+          suite: 'integration',
           file: resolve(report.config.rootDir, spec.file),
           title: spec.title,
           fullTitle: [...titles, spec.title].join(' > '),
@@ -46,7 +50,45 @@ function collect(suites, parents = []) {
   }
 }
 collect(report.suites);
+const vitest = await createVitest({
+  config: values['vitest-config'],
+  project: ['graphics', 'server'],
+  watch: false,
+  run: true,
+  reporters: [],
+});
+try {
+  if ((await vitest.getRelevantTestSpecifications()).length) {
+    const collected = await vitest.collect([], { staticParse: false });
+    if (collected.unhandledErrors.length)
+      throw new Error(collected.unhandledErrors.map((error) => error.message).join('\n'));
+    for (const module of collected.testModules) {
+      const failures = [module, ...module.children.allSuites()].flatMap((suite) => suite.errors());
+      if (failures.length)
+        throw new Error(`${module.moduleId}: ${failures.map((error) => error.message).join('\n')}`);
+      for (const test of module.children.allTests()) {
+        tests.push({
+          runner: 'vitest',
+          suite: test.project.name === 'server' ? 'server' : 'browser',
+          file: resolve(module.moduleId),
+          title: test.name,
+          fullTitle: test.fullName,
+          tags: test.tags,
+        });
+      }
+    }
+  }
+} catch (error) {
+  console.error(`Vitest discovery failed: ${error.message}`);
+  process.exitCode = 1;
+} finally {
+  await vitest.close();
+}
+if (process.exitCode) process.exit(process.exitCode);
 const caseIdentity = (title) => title.match(/^([\p{Lu}\d]+(?:-[\p{Lu}\d]+)*-\d+):/u)?.[1];
+const technical = (test) => test.suite === 'server' || test.tags.includes('technical');
+const ordinary = (test) =>
+  !technical(test) && (test.suite === 'integration' || caseIdentity(test.title));
 let count = 0;
 const claimed = new Map();
 const identities = new Map();
@@ -61,7 +103,6 @@ const observationKinds = new Set([
   'external-client',
 ]);
 const selectedAreas = values.area?.map((file) => resolve(file));
-const selectedIdentities = new Set();
 const manualFiles = globSync(`${values['manual-dir']}/**/*.md`).sort();
 for (const area of selectedAreas ?? []) {
   if (!manualFiles.some((file) => resolve(file) === area))
@@ -80,7 +121,6 @@ for (const file of manualFiles) {
       identities.set(match[1], file);
     }
     if (selectedAreas && !selectedAreas.includes(resolve(file))) continue;
-    selectedIdentities.add(match[1]);
     const blocks = [...match[2].matchAll(/```manual-mapping\n([\s\S]*?)\n```/g)];
     if (!blocks.length) {
       errors.push(`${file}: ${match[1]}: missing manual-mapping metadata`);
@@ -151,6 +191,9 @@ for (const file of manualFiles) {
       }
       if (found.tags.includes('technical'))
         diagnostic('a technical test cannot be an ordinary counterpart');
+      if (found.suite === 'server') diagnostic('a server test cannot be an ordinary counterpart');
+      if (found.suite === 'browser' && !testIdentity)
+        diagnostic('a browser counterpart must have a stable case identity');
       if (claimed.has(found)) {
         errors.push(
           `${file}: ${match[1]}: ${found.title} is already the ordinary counterpart of ${claimed.get(found)}`,
@@ -163,6 +206,23 @@ for (const file of manualFiles) {
   }
 }
 function validateReference(reference, diagnostic) {
+  if (!reference || typeof reference !== 'object' || Array.isArray(reference)) {
+    diagnostic('reference must be an object');
+    return false;
+  }
+  const legacy = reference.runner === undefined && reference.suite === undefined;
+  if (
+    !legacy &&
+    !(
+      (reference.runner === 'playwright' && reference.suite === 'integration') ||
+      (reference.runner === 'vitest' && ['browser', 'server'].includes(reference.suite))
+    )
+  ) {
+    diagnostic(
+      'reference runner/suite must be playwright/integration, vitest/browser or vitest/server',
+    );
+    return false;
+  }
   if (!textPresent(reference.spec) || !existsSync(resolve(reference.spec))) {
     diagnostic(`missing spec reference ${reference.spec ?? '(no spec)'}`);
     return false;
@@ -178,13 +238,15 @@ function findReference(reference, role, diagnostic) {
   const found = tests.filter(
     (test) =>
       test.file === resolve(reference.spec) &&
+      test.runner === (reference.runner ?? 'playwright') &&
+      test.suite === (reference.suite ?? 'integration') &&
       (reference.title
         ? test.title === reference.title || test.fullTitle === reference.title
         : caseIdentity(test.title) === reference.caseId),
   );
   if (found.length !== 1) {
     diagnostic(
-      `${found.length ? 'ambiguous' : 'missing'} ${role} ${reference.spec} / ${reference.title ?? reference.caseId}: ${found.length} discovered tests${found.map((test) => `\n  ${test.fullTitle}`).join('')}`,
+      `${found.length ? 'ambiguous' : 'missing'} ${role} ${reference.runner ?? 'playwright'}/${reference.suite ?? 'integration'} ${reference.spec} / ${reference.title ?? reference.caseId}: ${found.length} discovered tests${found.map((test) => `\n  ${test.fullTitle}`).join('')}`,
     );
     return undefined;
   }
@@ -192,9 +254,8 @@ function findReference(reference, role, diagnostic) {
 }
 const functionalIdentities = new Map();
 for (const test of tests) {
-  if (!test.tags.includes('technical')) {
+  if (ordinary(test)) {
     const id = caseIdentity(test.title);
-    if (selectedAreas && !claimed.has(test) && !selectedIdentities.has(id)) continue;
     if (id && functionalIdentities.has(id)) {
       errors.push(
         `${test.file}: ${id}: duplicate functional case identity; ${test.fullTitle} and ${functionalIdentities.get(id)}`,
@@ -203,7 +264,7 @@ for (const test of tests) {
       functionalIdentities.set(id, test.fullTitle);
     }
   }
-  if (!selectedAreas && !test.tags.includes('technical') && !claimed.has(test)) {
+  if (!selectedAreas && ordinary(test) && !claimed.has(test)) {
     errors.push(`${test.file}: ${test.title}: no ordinary manual counterpart`);
   }
 }
