@@ -1,4 +1,4 @@
-// THROWAWAY: five depth/text comparisons on the existing entry route.
+// THROWAWAY: six depth/text comparisons on the existing entry route.
 // Open /?prototype=spatial-depth&variant=A. No server, login or persistence.
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -14,6 +14,14 @@ const variants = [
   { id: 'C', name: 'Stark · symboler', symbols: true, strong: true, text: false },
   { id: 'D', name: 'Mild · symboler + text', symbols: true, strong: false, text: true },
   { id: 'E', name: 'Stark · symboler + text', symbols: true, strong: true, text: true },
+  {
+    id: 'F',
+    name: 'Som E · text högst 15 px',
+    symbols: true,
+    strong: true,
+    text: true,
+    maxTextScale: 15 / 13,
+  },
 ];
 const examples = [
   ['Alex', 'Person', -7, 4, 12],
@@ -153,7 +161,11 @@ export function SpatialDepthPrototype() {
   });
   const limits = variant.strong ? [0.49, 1.69] : [0.7, 1.3];
   const symbolRange = limits.map((scale) => Math.round(34 * scale)).join('–');
-  const textRange = variant.text ? limits.map((scale) => (13 * scale).toFixed(1)).join('–') : '13';
+  const textRange = variant.text
+    ? limits
+        .map((scale) => (13 * Math.min(scale, variant.maxTextScale ?? Infinity)).toFixed(1))
+        .join('–')
+    : '13';
   return (
     <main
       className="household-map workspace-shell depth-prototype"
@@ -178,6 +190,9 @@ export function SpatialDepthPrototype() {
             Mild skala: 70–130 %. Stark skala: 49–169 %. Textlägena visar även små texter för att du
             ska kunna bedöma läsbarheten.
           </p>
+          {variant.id === 'F' && (
+            <p>Som E på avstånd. Närmaste namn stannar vid 15 px jämfört med dagens 13 px.</p>
+          )}
         </details>
       </header>
       <div className="depth-prototype-camera workspace-tools" ref={setCameraMount} />
@@ -241,7 +256,7 @@ export function SpatialDepthPrototype() {
           ←
         </button>
         <label>
-          <span>Jämför fem lägen</span>
+          <span>Jämför sex lägen</span>
           <select
             aria-label="Prototypvariant"
             value={variant.id}

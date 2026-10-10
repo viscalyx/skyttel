@@ -110,7 +110,7 @@ export function SpatialMap({
   depthPrototype,
 }: {
   /** Throwaway depth comparison, supplied only by the development prototype. */
-  depthPrototype?: { symbols: boolean; strong: boolean; text: boolean };
+  depthPrototype?: { symbols: boolean; strong: boolean; text: boolean; maxTextScale?: number };
   onAvailabilityChange?: (available: boolean) => void;
   theme?: 'light' | 'dark';
   state: MapState;
@@ -683,8 +683,13 @@ export function SpatialMap({
         depthPrototype?.strong ? { ...point, scale: point.scale ** 2 } : point,
       ]),
   );
-  function textScale(id: string) {
-    return depthPrototype?.text ? (locations.get(id)?.scale ?? 1) : 1;
+  function textScale(id: string, targetId?: string) {
+    if (!depthPrototype?.text) return 1;
+    const source = locations.get(id)?.scale ?? 1;
+    const scale = targetId
+      ? Math.sqrt(source * (locations.get(targetId)?.scale ?? source))
+      : source;
+    return Math.min(scale, depthPrototype.maxTextScale ?? Infinity);
   }
   const surfaceWidth = canvas.current?.clientWidth ?? 0;
   const surfaceHeight = canvas.current?.clientHeight ?? 0;
@@ -1378,14 +1383,8 @@ export function SpatialMap({
                   left: x,
                   top: y,
                   ...(depthPrototype?.text && {
-                    fontSize:
-                      12 *
-                      Math.sqrt(
-                        textScale(edge.sourceId) * textScale(edge.targetId ?? edge.sourceId),
-                      ),
-                    '--prototype-text-scale': Math.sqrt(
-                      textScale(edge.sourceId) * textScale(edge.targetId ?? edge.sourceId),
-                    ),
+                    fontSize: 12 * textScale(edge.sourceId, edge.targetId ?? undefined),
+                    '--prototype-text-scale': textScale(edge.sourceId, edge.targetId ?? undefined),
                   }),
                 } as CSSProperties
               }
