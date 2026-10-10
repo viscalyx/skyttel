@@ -2,6 +2,7 @@ import './spatial.css';
 import './spatial-camera.css';
 import {
   type ButtonHTMLAttributes,
+  type CSSProperties,
   useCallback,
   useEffect,
   useId,
@@ -106,7 +107,10 @@ export function SpatialMap({
   navigationHidden = false,
   navigationFocus = true,
   onAvailabilityChange,
+  depthPrototype,
 }: {
+  /** Throwaway depth comparison, supplied only by the development prototype. */
+  depthPrototype?: { symbols: boolean; strong: boolean; text: boolean };
   onAvailabilityChange?: (available: boolean) => void;
   theme?: 'light' | 'dark';
   state: MapState;
@@ -672,8 +676,16 @@ export function SpatialMap({
     };
   }
   const locations = new Map(
-    points.filter((point) => point.visible).map((point) => [point.id, point]),
+    points
+      .filter((point) => point.visible)
+      .map((point) => [
+        point.id,
+        depthPrototype?.strong ? { ...point, scale: point.scale ** 2 } : point,
+      ]),
   );
+  function textScale(id: string) {
+    return depthPrototype?.text ? (locations.get(id)?.scale ?? 1) : 1;
+  }
   const surfaceWidth = canvas.current?.clientWidth ?? 0;
   const surfaceHeight = canvas.current?.clientHeight ?? 0;
   function labelSize(id: string, fallback: { width: number; height: number }) {
@@ -1361,7 +1373,15 @@ export function SpatialMap({
               className={`spatial-edge ${kind}${selected ? ' selected' : ''}`}
               aria-label={`Välj ${previous ? 'tidigare samband' : 'samband'}: ${relationshipLabel(edge, state, objects)}`}
               aria-describedby={`${relationshipLabelPrefix}-${previous ? 'previous' : 'current'}-${edge.id}`}
-              style={{ left: x, top: y }}
+              style={{
+                left: x,
+                top: y,
+                ...(depthPrototype?.text && {
+                  fontSize:
+                    12 *
+                    Math.sqrt(textScale(edge.sourceId) * textScale(edge.targetId ?? edge.sourceId)),
+                }),
+              }}
               onClick={() => onSelectRelationship(edge, previous)}
               onDoubleClick={() => onOpenRelationshipDetails(edge, previous)}
               onKeyDown={(event) => {
@@ -1413,13 +1433,21 @@ export function SpatialMap({
                 style={{ left: label.x, top: label.y }}
               >
                 <span id={`${labelPrefix}-${id}`}>
-                  <span className="spatial-caption">{object.name}</span>
+                  <span
+                    className="spatial-caption"
+                    style={depthPrototype?.text ? { fontSize: 13 * textScale(id) } : undefined}
+                  >
+                    {object.name}
+                  </span>
                   {searchHitIds && (
                     <span className="spatial-search-kind">
                       {searchHitIds.has(id) ? '● Sökträff' : '↔ Sammanhang'}
                     </span>
                   )}
-                  <span className="spatial-type-name">
+                  <span
+                    className="spatial-type-name"
+                    style={depthPrototype?.text ? { fontSize: 11 * textScale(id) } : undefined}
+                  >
                     {kind === 'added'
                       ? '+ Nytt förslag'
                       : kind === 'changed'
@@ -1460,7 +1488,15 @@ export function SpatialMap({
                 >
                   <span
                     className="spatial-orb"
-                    style={{ width: 34 * point.scale, height: 34 * point.scale }}
+                    style={
+                      {
+                        width: 34 * point.scale,
+                        height: 34 * point.scale,
+                        ...(depthPrototype?.symbols && {
+                          '--prototype-glyph-size': `${24 * point.scale}px`,
+                        }),
+                      } as CSSProperties
+                    }
                   >
                     <SpatialObjectGlyph
                       typeName={state.types.find((type) => type.id === object.typeId)?.name ?? ''}
