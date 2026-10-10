@@ -33,6 +33,10 @@ const percentage = (used: number, capacity: number) =>
  * https://developers.openai.com/api/docs/guides/live-conversations
  */
 export class ConversationCapacity {
+  constructor(
+    private readonly textLimit: number = textConversationModel.tokens,
+    private readonly voiceLimit: number = voiceConversationModel.tokens,
+  ) {}
   private measuredText?: { tokens: number; bytes: number };
   private voiceSource?: string;
   private measuredVoice?: number;
@@ -65,24 +69,20 @@ export class ConversationCapacity {
   }
 
   private voiceRatio(dialogueBytes: number) {
-    return (
-      this.measuredVoice ??
-      (this.voiceSource ? dialogueBytes / 3 / voiceConversationModel.tokens : 0)
-    );
+    return this.measuredVoice ?? (this.voiceSource ? dialogueBytes / 3 / this.voiceLimit : 0);
   }
 
   needsSummary(textBytes: number, dialogueBytes: number) {
     // Live automatically replaces history above 90%; reserve one percentage
     // point for usage-event and polling latency. This is an effective limit.
     return (
-      this.textTokens(textBytes) >= textConversationModel.tokens * 0.95 ||
-      this.voiceRatio(dialogueBytes) >= 0.89
+      this.textTokens(textBytes) >= this.textLimit * 0.95 || this.voiceRatio(dialogueBytes) >= 0.89
     );
   }
 
   percent(textBytes: number, dialogueBytes: number) {
     return Math.max(
-      percentage(this.textTokens(textBytes), textConversationModel.tokens),
+      percentage(this.textTokens(textBytes), this.textLimit),
       percentage(this.voiceRatio(dialogueBytes), 1),
     );
   }

@@ -1,0 +1,209 @@
+import { randomUUID } from 'node:crypto';
+import type { EvaluationBudget } from './budget.js';
+import registry from './profiles.json' with { type: 'json' };
+
+export type EvaluationProfile = {
+  id: string;
+  provider: 'openai';
+  model: string;
+  role: 'backend' | 'judge';
+  effort: 'low' | 'medium' | 'high';
+  tokens: number;
+  maxInputTokens: number;
+  modelMaxOutputTokens: number;
+  maxOutputTokens: number;
+  serviceTier: 'default';
+  checkedAt: string;
+  prices: {
+    input: number;
+    cached: number;
+    cacheWrite: number;
+    output: number;
+    longContextThreshold: number;
+    longInputMultiplier: number;
+    longOutputMultiplier: number;
+  };
+  sources: string[];
+};
+export function verifiedProfile(id: string, temporary?: EvaluationProfile): EvaluationProfile {
+  const value = temporary ?? registry.profiles.find((profile) => profile.id === id);
+  if (
+    !value ||
+    !('prices' in value) ||
+    !value.prices ||
+    value.provider !== 'openai' ||
+    !/^[a-z0-9.-]+$/.test(value.model) ||
+    !['low', 'medium', 'high'].includes(value.effort) ||
+    value.serviceTier !== 'default' ||
+    !value.sources.length ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value.checkedAt) ||
+    !Number.isSafeInteger(value.maxInputTokens) ||
+    value.maxInputTokens <= 0 ||
+    value.tokens < value.maxInputTokens + value.maxOutputTokens ||
+    value.modelMaxOutputTokens < value.maxOutputTokens ||
+    value.maxOutputTokens !== (value.role === 'judge' ? 4096 : 8192) ||
+    Object.values(value.prices).some((price) => !Number.isFinite(price) || price < 0)
+  )
+    throw new Error('evaluation_invalid_profile');
+  return value as EvaluationProfile;
+}
+
+export type ProviderCall = {
+  id: string;
+  startedAt: number;
+  endedAt?: number;
+  kind: 'backend' | 'summary' | 'judge';
+  model: string;
+  request: Record<string, unknown>;
+  response?: Record<string, unknown>;
+  costUsd: number | null;
+  reservationUsd: number;
+  outcome: string;
+  requestId?: string;
+};
+export function requestMaximum(
+  profile: EvaluationProfile,
+  outputLimit: number,
+  exactInput?: number,
+) {
+  const input = exactInput ?? profile.maxInputTokens;
+  if (
+    !Number.isSafeInteger(input) ||
+    input < 0 ||
+    input > profile.maxInputTokens ||
+    outputLimit > profile.maxOutputTokens
+  )
+    throw new Error('evaluation_context_limit');
+  const long = input > profile.prices.longContextThreshold;
+  return (
+    (input *
+      Math.max(profile.prices.input, profile.prices.cacheWrite) *
+      (long ? profile.prices.longInputMultiplier : 1) +
+      outputLimit * profile.prices.output * (long ? profile.prices.longOutputMultiplier : 1)) /
+    1e6
+  );
+}
+export function modelCost(
+  profile: EvaluationProfile,
+  response: Record<string, unknown>,
+): number | null {
+  const usage = response.usage as
+    | {
+        input_tokens?: number;
+        output_tokens?: number;
+        input_tokens_details?: { cached_tokens?: number; cache_write_tokens?: number };
+        output_tokens_details?: { reasoning_tokens?: number };
+      }
+    | undefined;
+  const values = [
+    usage?.input_tokens,
+    usage?.output_tokens,
+    usage?.input_tokens_details?.cached_tokens,
+    usage?.input_tokens_details?.cache_write_tokens,
+    usage?.output_tokens_details?.reasoning_tokens,
+  ];
+  if (values.some((value) => !Number.isSafeInteger(value) || Number(value) < 0)) return null;
+  const [input, output, cached, write, reasoning] = values as number[];
+  if (cached + write > input || reasoning > output) return null;
+  const long = input > profile.prices.longContextThreshold;
+  return (
+    (((input - cached - write) * profile.prices.input +
+      cached * profile.prices.cached +
+      write * profile.prices.cacheWrite) *
+      (long ? profile.prices.longInputMultiplier : 1)) /
+      1e6 +
+    (output * profile.prices.output * (long ? profile.prices.longOutputMultiplier : 1)) / 1e6
+  );
+}
+
+/** The complete outgoing SDK payload is the reservation boundary. SDK retries
+ * are disabled by callers. Failures without usage keep their reservation. */
+export function budgetedProvider(
+  profile: EvaluationProfile,
+  budget: EvaluationBudget,
+  {
+    transport = fetch,
+    record,
+    countInput,
+  }: {
+    transport?: typeof fetch;
+    record: (call: ProviderCall) => void;
+    countInput?: (payload: Record<string, unknown>) => Promise<number>;
+  },
+) {
+  let calls = 0;
+  let deadline = 0;
+  return {
+    beginStep(audioMs = 0) {
+      calls = 0;
+      deadline = Date.now() + (profile.role === 'judge' ? 120_000 : 180_000 + audioMs);
+    },
+    fetch: (async (url, init) => {
+      const parsedUrl = new URL(
+        typeof url === 'string' ? url : url instanceof URL ? url.href : url.url,
+      );
+      if (parsedUrl.origin !== 'https://api.openai.com' || parsedUrl.pathname !== '/v1/responses')
+        throw new Error('evaluation_unverified_endpoint');
+      const payload = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      const limit = payload.max_output_tokens;
+      if (
+        payload.model !== profile.model ||
+        payload.service_tier !== 'default' ||
+        (payload.reasoning as { effort?: string })?.effort !== profile.effort ||
+        typeof limit !== 'number' ||
+        ![8192, 4096].includes(limit) ||
+        limit > profile.maxOutputTokens
+      )
+        throw new Error('evaluation_request_profile_mismatch');
+      if (!deadline || Date.now() >= deadline || ++calls > (profile.role === 'judge' ? 1 : 48))
+        throw new Error('evaluation_call_limit');
+      const kind = profile.role === 'judge' ? 'judge' : limit === 4096 ? 'summary' : 'backend';
+      if (kind === 'summary' && !countInput) throw new Error('evaluation_token_count_unverified');
+      const exact = countInput ? await countInput(payload) : undefined;
+      const maximum = requestMaximum(profile, limit, exact);
+      const reservation = budget.reserve(kind, maximum);
+      const call: ProviderCall = {
+        id: randomUUID(),
+        startedAt: Date.now(),
+        kind,
+        model: profile.model,
+        request: payload,
+        costUsd: null,
+        reservationUsd: maximum,
+        outcome: 'started',
+      };
+      record(structuredClone(call));
+      try {
+        const signal = AbortSignal.any([
+          ...(init?.signal ? [init.signal] : []),
+          AbortSignal.timeout(Math.max(1, deadline - Date.now())),
+        ]);
+        const response = await transport(url, { ...init, signal });
+        call.response = await response
+          .clone()
+          .json()
+          .catch(() => undefined);
+        call.requestId = response.headers.get('x-request-id') ?? undefined;
+        call.costUsd = call.response ? modelCost(profile, call.response) : null;
+        call.outcome = response.ok
+          ? String(call.response?.status ?? 'unknown')
+          : `http_${response.status}`;
+        if (
+          response.ok &&
+          (call.response?.model !== profile.model || call.response?.service_tier !== 'default')
+        ) {
+          budget.stop('evaluation_reported_profile_mismatch');
+          throw new Error('evaluation_reported_profile_mismatch');
+        }
+        return response;
+      } catch (error) {
+        call.outcome = init?.signal?.aborted ? 'aborted' : 'error';
+        throw error;
+      } finally {
+        call.endedAt = Date.now();
+        budget.settle(reservation, call.costUsd);
+        record(structuredClone(call));
+      }
+    }) as typeof fetch,
+  };
+}

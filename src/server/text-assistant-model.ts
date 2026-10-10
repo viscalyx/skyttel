@@ -3,11 +3,19 @@ import OpenAI from 'openai';
 import type { ResponseInputItem, Tool } from 'openai/resources/responses/responses';
 import { textConversationModel } from './conversation-capacity.js';
 
+export interface TextModelProfile {
+  provider: 'openai';
+  model: string;
+  effort: 'low' | 'medium' | 'high';
+  tokens: number;
+  maxOutputTokens: number;
+}
+
 export interface TextModelAttempt {
   attemptId: string;
   startedAt: string;
   endedAt: string | null;
-  model: 'gpt-5.6-terra';
+  model: string;
   resolvedModel?: string | null;
   serviceTier?: string | null;
   requestId: string | null;
@@ -28,7 +36,22 @@ const count = (value: unknown) =>
 const identifier = (value: unknown) =>
   typeof value === 'string' && /^[\w-]{1,200}$/.test(value) ? value : null;
 
-export function textModel(apiKey: string, modelFetch?: typeof fetch, record?: TextModelUsage) {
+export function textModel(
+  apiKey: string,
+  modelFetch?: typeof fetch,
+  record?: TextModelUsage,
+  profile?: TextModelProfile,
+) {
+  if (
+    profile &&
+    (profile.provider !== 'openai' ||
+      !/^[a-z0-9.-]+$/.test(profile.model) ||
+      !['low', 'medium', 'high'].includes(profile.effort) ||
+      !Number.isSafeInteger(profile.tokens) ||
+      profile.tokens <= 8192 ||
+      profile.maxOutputTokens !== 8192)
+  )
+    throw new Error('invalid_model_profile');
   const client = new OpenAI({
     apiKey,
     baseURL: 'https://api.openai.com/v1',
@@ -48,7 +71,7 @@ export function textModel(apiKey: string, modelFetch?: typeof fetch, record?: Te
       attemptId: randomUUID(),
       startedAt: new Date().toISOString(),
       endedAt: null,
-      model: textConversationModel.model,
+      model: profile?.model ?? textConversationModel.model,
       requestId: null,
       responseId: null,
       outcome: 'started',
@@ -60,13 +83,14 @@ export function textModel(apiKey: string, modelFetch?: typeof fetch, record?: Te
       const response = await client.responses.create(
         {
           model: attempt.model,
-          reasoning: { effort: 'low' },
+          reasoning: { effort: profile?.effort ?? 'low' },
+          ...(profile ? { service_tier: 'default' as const } : {}),
           store: false,
           parallel_tool_calls: false,
           instructions,
           input,
           tools,
-          ...(maxOutputTokens === undefined ? {} : { max_output_tokens: maxOutputTokens }),
+          max_output_tokens: maxOutputTokens ?? 8192,
         },
         { signal },
       );
@@ -98,6 +122,8 @@ export function textModel(apiKey: string, modelFetch?: typeof fetch, record?: Te
           ? 'partial'
           : 'unknown';
       attempt.outcome = response.status === 'completed' ? 'completed' : 'incomplete';
+      if (profile && (response.model !== profile.model || response.service_tier !== 'default'))
+        throw new Error('model_profile_mismatch');
       return response;
     } catch (error) {
       attempt.outcome = signal.aborted ? 'aborted' : 'failed';

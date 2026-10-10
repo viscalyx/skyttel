@@ -99,6 +99,35 @@ const receipt = (operationId: string): SaveReceipt => ({
   changes: [],
 });
 
+test('an unconfirmed reply is shown with a notice after fifteen idle seconds while the voice remains connected', {
+  tags: ['technical'],
+}, async () => {
+  const { server, tick } = await arrange();
+  server.assistant = {
+    ...initial,
+    revision: 1,
+    modelReply: 'Vilken cykel menar du?',
+    questionPending: true,
+  };
+  server.response = {
+    id: 'unconfirmed',
+    revision: 1,
+    text: 'Vilken cykel menar du?',
+    questionPending: true,
+  };
+  await tick(500);
+  await tick(14_000);
+  expect(
+    screen.queryByText('Uppläsningen kunde inte bekräftas. Du kan läsa svaret i textvyn.'),
+  ).toBeNull();
+  await tick(1500);
+  expect(
+    screen.getAllByText('Uppläsningen kunde inte bekräftas. Du kan läsa svaret i textvyn.').length,
+  ).toBeGreaterThan(0);
+  expect(screen.getByLabelText('Levererade svar').textContent).toContain('Vilken cykel menar du?');
+  expect(button().getAttribute('aria-pressed')).toBe('true');
+});
+
 test('an explicit necessary question waits only after its matching voice audio is heard and drains', async () => {
   const { media, server, tick } = await arrange();
   server.assistant = { ...initial, revision: 1, questionPending: true, taskId: 'question-task' };

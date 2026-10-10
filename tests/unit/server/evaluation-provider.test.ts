@@ -1,0 +1,108 @@
+import Database from 'better-sqlite3';
+import { expect, test } from 'vitest';
+import { EvaluationBudget } from '../../../scripts/model-evaluation/budget.js';
+import {
+  budgetedProvider,
+  modelCost,
+  requestMaximum,
+  verifiedProfile,
+} from '../../../scripts/model-evaluation/provider.js';
+
+test('complete payload reservations enforce output and round caps without retries', {
+  tags: ['technical'],
+}, async () => {
+  const db = new Database(':memory:');
+  const budget = new EvaluationBudget(db, {
+    authorized: true,
+    limitUsd: 10,
+    priorUsd: 1,
+    priorSource: 'verified prior ledger',
+  });
+  const profile = verifiedProfile('luna-low');
+  const requests: unknown[] = [];
+  const calls: unknown[] = [];
+  const provider = budgetedProvider(profile, budget, {
+    record: (call) => calls.push(call),
+    transport: async (_url, init) => {
+      requests.push(JSON.parse(String(init?.body)));
+      return Response.json({
+        model: profile.model,
+        service_tier: 'default',
+        status: 'completed',
+        usage: {
+          input_tokens: 20,
+          output_tokens: 10,
+          input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+          output_tokens_details: { reasoning_tokens: 5 },
+        },
+      });
+    },
+  });
+  provider.beginStep();
+  const payload = {
+    model: profile.model,
+    service_tier: 'default',
+    reasoning: { effort: 'low' },
+    max_output_tokens: 8192,
+    instructions: 'Full system instructions',
+    tools: [{ name: 'real-tool' }],
+    input: [{ role: 'user', content: 'Complete context' }],
+  };
+  const send = (body = payload) =>
+    provider.fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  await expect(send({ ...payload, max_output_tokens: 8193 })).rejects.toThrow('profile_mismatch');
+  expect(requests).toHaveLength(0);
+  for (let index = 0; index < 48; index++) await send();
+  await expect(send()).rejects.toThrow('call_limit');
+  expect(requests).toHaveLength(48);
+  expect(requests[0]).toEqual(payload);
+  expect(calls).toHaveLength(96);
+  expect(budget.snapshot()).toMatchObject({ stopped: false, reservedUsd: 0 });
+  provider.beginStep();
+  await expect(send({ ...payload, max_output_tokens: 4096 })).rejects.toThrow(
+    'token_count_unverified',
+  );
+  expect(requests).toHaveLength(48);
+  db.close();
+});
+
+test('missing usage retains the whole-context hold and blocks further paid calls', {
+  tags: ['technical'],
+}, async () => {
+  const db = new Database(':memory:');
+  const budget = new EvaluationBudget(db, {
+    authorized: true,
+    limitUsd: 10,
+    priorUsd: 1,
+    priorSource: 'verified prior ledger',
+  });
+  const profile = verifiedProfile('terra-low');
+  let requests = 0;
+  const provider = budgetedProvider(profile, budget, {
+    record: () => {},
+    transport: async () => {
+      requests++;
+      return Response.json({ model: profile.model, service_tier: 'default', status: 'completed' });
+    },
+  });
+  provider.beginStep();
+  const send = () =>
+    provider.fetch('https://api.openai.com/v1/responses', {
+      body: JSON.stringify({
+        model: profile.model,
+        service_tier: 'default',
+        reasoning: { effort: 'low' },
+        max_output_tokens: 8192,
+      }),
+    });
+  await send();
+  expect(budget.snapshot()).toMatchObject({ stopped: true, reason: 'evaluation_usage_unknown' });
+  expect(budget.snapshot().reservedUsd).toBeCloseTo(requestMaximum(profile, 8192), 5);
+  await expect(send()).rejects.toThrow('usage_unknown');
+  expect(requests).toBe(1);
+  expect(modelCost(profile, { usage: { input_tokens: 20, output_tokens: 10 } })).toBeNull();
+  db.close();
+});

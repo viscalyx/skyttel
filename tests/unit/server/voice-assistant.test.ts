@@ -8,6 +8,8 @@ import { lastToolResult, modelMessage, modelTool, textModel } from '../../suppor
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
+// A spoken task ends after two seconds without new speech or fragments.
+vi.setConfig({ expect: { poll: { timeout: 5000 } }, testTimeout: 12_000 });
 afterEach(async () => {
   await browser?.dispose();
   await app?.close();
@@ -442,17 +444,21 @@ test('long quoted model conversation cannot break the source boundary or Live co
       () =>
         voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
     )
-    .toBe(1);
-  const sent = voice.live.sent.at(-1)?.event as { content: string };
-  const lines = sent.content.split('\n');
+    .toBeGreaterThan(1);
+  const chunks = voice.live.sent
+    .filter(({ event }) => event.type === 'session.commentary.append')
+    .map(({ event }) => event as { content: string });
+  const lines = chunks
+    .map((item) => item.content)
+    .join('')
+    .split('\n');
   expect(lines).toHaveLength(2);
   expect(lines[0]).toBe('Utkast: 0 osparade förslag.');
   const label = 'Samtal (obekräftat): ';
   expect(lines[1].startsWith(label)).toBe(true);
-  const excerpt = JSON.parse(lines[1].slice(label.length));
-  expect(excerpt).toContain('Vem betalar?');
-  expect(modelReply.startsWith(excerpt)).toBe(true);
-  expect(Buffer.byteLength(sent.content, 'utf8')).toBeLessThanOrEqual(480);
+  expect(JSON.parse(lines[1].slice(label.length))).toBe(modelReply);
+  for (const chunk of chunks)
+    expect(Buffer.byteLength(chunk.content, 'utf8')).toBeLessThanOrEqual(480);
   expect((await voice.poll()).assistant.modelReply).toBe(modelReply);
 });
 
@@ -502,7 +508,7 @@ test('combined type proposals speak the directed question and retain the verifie
   expect(model.requests).toHaveLength(1);
 });
 
-test('large verified draft details finish within the Live limit and remain available in the text result', async () => {
+test('large verified draft details are delivered completely in chunks within the Live limit', async () => {
   const model = textModel(() => [modelTool('report_result', { source: 'draft' })]);
   const voice = await setupVoice(model.provider);
   const mapPath = voice.path.replace('/text-assistant', '/map');
@@ -528,13 +534,17 @@ test('large verified draft details finish within the Live limit and remain avail
       () =>
         voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
     )
-    .toBe(1);
+    .toBeGreaterThan(1);
   const status = await voice.poll();
   expect(status.assistant.result.message).toContain('3 Cykel');
-  const sent = voice.live.sent.at(-1)?.event as { content: string };
-  const content = sent.content;
+  const chunks = voice.live.sent
+    .filter(({ event }) => event.type === 'session.commentary.append')
+    .map(({ event }) => event as { content: string });
+  const content = chunks.map((item) => item.content).join('');
   expect(content).toContain('Lägg till 0 Cykel');
-  expect(Buffer.byteLength(content, 'utf8')).toBeLessThanOrEqual(480);
+  expect(content).toContain(status.assistant.result.message);
+  for (const chunk of chunks)
+    expect(Buffer.byteLength(chunk.content, 'utf8')).toBeLessThanOrEqual(480);
 });
 
 test.each([
@@ -689,7 +699,7 @@ test('the first fragment retains its displayed draft anchor when a web edit arri
   expect((await voice.poll()).assistant.review.changes).toHaveLength(1);
 });
 
-test('a spoken correction waits for held work and retains context without inheriting save authority', async () => {
+test('a spoken correction waits for held work, retains context and suppresses its superseded answer', async () => {
   let release: ((value: unknown[]) => void) | undefined;
   const model = textModel(() =>
     model.requests.length === 1
@@ -699,7 +709,7 @@ test('a spoken correction waits for held work and retains context without inheri
       : [modelMessage('Det nya uppdraget är förstått.')],
   );
   const voice = await setupVoice(model.provider);
-  voice.transcript('Spara.');
+  voice.transcript('Beskriv utkastet.');
   voice.delegate();
   await expect.poll(() => model.requests.length).toBe(1);
   voice.transcript('Nej, ändra namnet till Nytt.');
@@ -713,16 +723,16 @@ test('a spoken correction waits for held work and retains context without inheri
       () =>
         voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
     )
-    .toBe(2);
+    .toBe(1);
   expect((await voice.poll()).assistant.modelReply).toBe('Det nya uppdraget är förstått.');
   const turn = JSON.parse(
     String(model.requests[1].input.findLast((item) => item.role === 'user')?.content),
   );
   expect(turn.message).toBe('Nej, ändra namnet till Nytt.');
-  expect(JSON.stringify(model.requests[1].input)).toContain('Spara.');
+  expect(JSON.stringify(model.requests[1].input)).toContain('Beskriv utkastet.');
 });
 
-test('delegation timing cannot complete a transcript fragment or include a later save fragment', async () => {
+test('delegation timing preserves the entire overlapping transcript fragment', async () => {
   const model = textModel(() => [modelMessage('Ett ofullständigt uppdrag behöver förtydligas.')]);
   const voice = await setupVoice(model.provider);
   voice.live.emit(voice.providerId, {
@@ -744,7 +754,11 @@ test('delegation timing cannot complete a transcript fragment or include a later
         voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
     )
     .toBe(1);
-  expect(model.requests).toHaveLength(0);
+  expect(model.requests).toHaveLength(1);
+  const turn = JSON.parse(
+    String(model.requests[0].input.findLast((item) => item.role === 'user')?.content),
+  );
+  expect(turn.message).toBe('Förklara utkastet och spara.');
 });
 
 test('voice checks and completes only the original registered save before new work', async () => {

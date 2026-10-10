@@ -18,6 +18,8 @@ export function voiceWork({
   transcript,
   response,
   delivered,
+  input,
+  observe,
 }: {
   channel: LiveSideband;
   initial: TextAssistantView;
@@ -31,6 +33,11 @@ export function voiceWork({
     value: NonNullable<import('../shared/voice-assistant.js').VoiceAssistantView['response']>,
   ) => void;
   delivered?: (value: { id: string; voiced: boolean }) => void;
+  input?: (pending: boolean, text?: string) => void;
+  observe?: (
+    kind: 'voice_event' | 'voice_commentary' | 'backend_request' | 'backend_result',
+    data: unknown,
+  ) => void;
 }) {
   let rendered: Anchor = {
     revision: initial.revision,
@@ -41,6 +48,9 @@ export function voiceWork({
   let fragments: Fragment[] = [];
   let pending: Fragment[] = [];
   let generation = 0;
+  let inputVersion = 0;
+  let lastInputAt = 0;
+  let microphoneActive = false;
   let stopped = false;
   let owned: number | undefined;
   let dispatching: AbortController | undefined;
@@ -75,6 +85,7 @@ export function voiceWork({
       .catch(() => undefined);
   }
   function append(delegationId: string | null, content: string, view?: TextAssistantView) {
+    observe?.('voice_commentary', { delegationId, content, revision: view?.revision });
     // The acknowledgement of this command is transport receipt, never proof
     // that a person heard it. No transcript/audio is logged or persisted here.
     let part = '';
@@ -114,7 +125,7 @@ export function voiceWork({
       return `Nödvändig fråga (samtalsdata): ${JSON.stringify(view.modelReply)}`;
     if (view.phase === 'recovery')
       return 'Det är oklart om utkastet sparades. Skyttel kontrollerar det.';
-    if (view.error) return assistantFailureMessage(view.error);
+    if (view.error) return view.reply ?? assistantFailureMessage(view.error);
     const count =
       view.review.changes.length +
       (view.review.relationships?.length ?? 0) +
@@ -127,18 +138,9 @@ export function voiceWork({
         : view.result
           ? `Skyttels resultat (verifierat): ${view.result.message}`
           : `Utkast: ${count} ${count === 1 ? 'osparat förslag' : 'osparade förslag'}.`;
-    const resultPoints = Array.from(fullResult).slice(0, 480);
-    const resultBudget = view.modelReply ? 210 : 480;
-    while (Buffer.byteLength(resultPoints.join(''), 'utf8') > resultBudget - 3) resultPoints.pop();
-    const result =
-      resultPoints.join('') + (resultPoints.length < Array.from(fullResult).length ? '…' : '');
-    if (!view.modelReply) return result;
-    // Keep the source boundary and quoted conversation intact within Live's
-    // byte limit. Provider prose is data, never part of the verified result.
-    const prefix = `${result}\nSamtal (obekräftat): `;
-    const points = Array.from(view.modelReply).slice(0, 480);
-    while (Buffer.byteLength(prefix + JSON.stringify(points.join('')), 'utf8') > 480) points.pop();
-    return prefix + JSON.stringify(points.join(''));
+    if (!view.modelReply) return fullResult;
+    // append owns transport chunking; the canonical answer remains complete.
+    return `${fullResult}\nSamtal (obekräftat): ${JSON.stringify(view.modelReply)}`;
   }
   async function execute(
     id: string,
@@ -147,6 +149,7 @@ export function voiceWork({
     context: string,
     task: number,
   ) {
+    const acceptedInput = inputVersion;
     const current = () => !stopped && generation === task;
     inFlight.set(task, (inFlight.get(task) ?? 0) + 1);
     try {
@@ -178,6 +181,7 @@ export function voiceWork({
         const controller = new AbortController();
         dispatching = controller;
         const requestId = randomUUID();
+        observe?.('backend_request', { delegationId: id, requestId, text, context });
         owned = view.phase === 'working' ? view.revision : view.revision + 1;
         view = await request(
           'messages',
@@ -202,7 +206,7 @@ export function voiceWork({
           return;
         }
         owned = view.revision;
-        const deadline = Date.now() + 120_000;
+        const deadline = Date.now() + 180_000;
         while (current() && (view.taskStatus === 'queued' || view.taskStatus === 'working')) {
           update(view, true);
           if (Date.now() > deadline) throw new Error('voice_task_timeout');
@@ -221,6 +225,14 @@ export function voiceWork({
         }
       }
       if (!current()) return;
+      observe?.('backend_result', { delegationId: id, view });
+      while (
+        current() &&
+        inputVersion === acceptedInput &&
+        (microphoneActive || Date.now() - lastInputAt < 2000)
+      )
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      if (!current() || inputVersion !== acceptedInput || pending.length) return;
       owned = undefined;
       dispatching = undefined;
       rendered = { ...rendered, revision: Math.max(rendered.revision, view.revision) };
@@ -271,8 +283,12 @@ export function voiceWork({
       return;
     }
     events.add(event.event_id);
+    observe?.('voice_event', { role, ...event });
     transcript?.(role, event.delta);
     if (role === 'user') {
+      inputVersion++;
+      lastInputAt = Date.now();
+      input?.(true, event.delta);
       anchor ??= { ...rendered };
       pending.push({ role, text: event.delta, startMs: event.start_ms, endMs: event.end_ms });
       if (pending.map((item) => item.text).join('').length > 4000) {
@@ -302,16 +318,15 @@ export function voiceWork({
       return;
     }
     delegations.add(event.delegation.id);
-    // Do not splice words or invent a complete utterance across the provider's
-    // delegation boundary. Later/overlapping fragments require a later task.
-    const complete =
-      Number.isFinite(event.offset_ms) && pending.every((item) => item.endMs <= event.offset_ms);
-    const text = complete ? pending.map((item) => item.text).join('') : '';
+    observe?.('voice_event', event);
+    // Audio offsets describe observation, not a safe boundary within words.
+    // Consume whole observed fragments once, including the overlapping tail.
+    const selected = pending.filter((item) => item.startMs <= event.offset_ms);
+    const text = selected.map((item) => item.text).join('');
     const expected = anchor;
-    if (complete) {
-      pending = [];
-      anchor = undefined;
-    }
+    pending = pending.filter((item) => !selected.includes(item));
+    input?.(pending.length > 0 || microphoneActive);
+    if (!pending.length) anchor = undefined;
     if (!text.trim() || !expected) {
       append(
         event.delegation.id,
@@ -323,6 +338,7 @@ export function voiceWork({
   });
   function retire() {
     stopped = true;
+    input?.(false);
     generation++;
     dispatching?.abort();
     dispatching = undefined;
@@ -332,10 +348,17 @@ export function voiceWork({
     anchor = undefined;
   }
   return {
+    activity(active: boolean) {
+      if (stopped || (!active && !microphoneActive)) return;
+      microphoneActive = active;
+      lastInputAt = Date.now();
+      input?.(active || pending.length > 0);
+    },
     // Starting over owns cancellation of the conversation. Retiring its old
     // voice must invalidate late replies without sending a second cancel.
     retire,
-    readyForSummary: () => owned === undefined && inFlight.size === 0 && pending.length === 0,
+    readyForSummary: () =>
+      !microphoneActive && owned === undefined && inFlight.size === 0 && pending.length === 0,
     /** Consume each typed FIFO completion once, including while the next task works. */
     answer(view: TextAssistantView, microphoneOn = true) {
       if (stopped) return;
@@ -412,6 +435,7 @@ export function voiceWork({
     },
     stop() {
       stopped = true;
+      input?.(false);
       cancel();
       fragments = [];
       pending = [];

@@ -19,6 +19,31 @@ when the process exits, including after interruption. Use the npm scripts
 instead of launching test runners directly. These commands require Python 3
 on Linux or macOS; Python is included in the devcontainer.
 
+## Model evaluation history
+
+A **scenario** is a fixed starting map and a sequence of requests with
+expected results. An **evaluation run** executes selected scenarios with
+specified model profiles and repetitions. Its **run issue** is a GitHub
+issue labelled `model-evaluation`; **result history** is the collection of
+those issues and their versioned result comments, including corrections.
+
+Invoke `$evaluate-models` with the intended comparison and an explicit
+spending limit. The first baseline tries the complete text and voice catalog
+once. Later comparisons use three repetitions of the reference, a qualified
+candidate and the voice baseline. A stopped or incomplete run remains useful
+evidence but cannot establish a model's qualification.
+
+Find past runs in
+[open and closed evaluation issues](https://github.com/viscalyx/skyttel/issues?q=is%3Aissue%20label%3Amodel-evaluation).
+Read the run manifest before comparing results: catalog, application commit,
+profiles, modality and repetition plan must match. Read every correction
+comment and the final recommendation. Raw provider requests and transcripts
+stay in ignored local artifacts; the issue carries shareable results.
+
+For a single provider integration regression, use the real-model or real-voice
+suites below. Use `$evaluate-models` for catalog qualification and model
+comparison. Both workflows require explicit authorization for billable calls.
+
 ## CI font profile
 
 CI uses the bundled DejaVu Sans regular and bold fonts for system-font
