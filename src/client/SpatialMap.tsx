@@ -1373,15 +1373,22 @@ export function SpatialMap({
               className={`spatial-edge ${kind}${selected ? ' selected' : ''}`}
               aria-label={`Välj ${previous ? 'tidigare samband' : 'samband'}: ${relationshipLabel(edge, state, objects)}`}
               aria-describedby={`${relationshipLabelPrefix}-${previous ? 'previous' : 'current'}-${edge.id}`}
-              style={{
-                left: x,
-                top: y,
-                ...(depthPrototype?.text && {
-                  fontSize:
-                    12 *
-                    Math.sqrt(textScale(edge.sourceId) * textScale(edge.targetId ?? edge.sourceId)),
-                }),
-              }}
+              style={
+                {
+                  left: x,
+                  top: y,
+                  ...(depthPrototype?.text && {
+                    fontSize:
+                      12 *
+                      Math.sqrt(
+                        textScale(edge.sourceId) * textScale(edge.targetId ?? edge.sourceId),
+                      ),
+                    '--prototype-text-scale': Math.sqrt(
+                      textScale(edge.sourceId) * textScale(edge.targetId ?? edge.sourceId),
+                    ),
+                  }),
+                } as CSSProperties
+              }
               onClick={() => onSelectRelationship(edge, previous)}
               onDoubleClick={() => onOpenRelationshipDetails(edge, previous)}
               onKeyDown={(event) => {
@@ -1393,6 +1400,7 @@ export function SpatialMap({
             >
               <span
                 id={`${relationshipLabelPrefix}-${previous ? 'previous' : 'current'}-${edge.id}`}
+                className={depthPrototype?.text ? 'depth-prototype-label-card' : undefined}
               >
                 <span className="spatial-caption">
                   <ProposalSymbol
@@ -1430,9 +1438,18 @@ export function SpatialMap({
                 data-object-label={id}
                 ref={observeLabel}
                 className={`spatial-name ${kind}${searchHitIds && !searchHitIds.has(id) ? ' search-context' : ''}${adjacent.size && !adjacent.has(id) ? ' subdued' : ''}`}
-                style={{ left: label.x, top: label.y }}
+                style={
+                  {
+                    left: label.x,
+                    top: label.y,
+                    ...(depthPrototype?.text && { '--prototype-text-scale': textScale(id) }),
+                  } as CSSProperties
+                }
               >
-                <span id={`${labelPrefix}-${id}`}>
+                <span
+                  id={`${labelPrefix}-${id}`}
+                  className={depthPrototype?.text ? 'depth-prototype-label-card' : undefined}
+                >
                   <span
                     className="spatial-caption"
                     style={depthPrototype?.text ? { fontSize: 13 * textScale(id) } : undefined}

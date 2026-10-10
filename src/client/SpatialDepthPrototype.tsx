@@ -155,7 +155,12 @@ export function SpatialDepthPrototype() {
   const symbolRange = limits.map((scale) => Math.round(34 * scale)).join('–');
   const textRange = variant.text ? limits.map((scale) => (13 * scale).toFixed(1)).join('–') : '13';
   return (
-    <main className="household-map workspace-shell depth-prototype" data-theme="dark">
+    <main
+      className="household-map workspace-shell depth-prototype"
+      data-theme="dark"
+      data-symbol-scaling={variant.symbols || undefined}
+      data-text-scaling={variant.text || undefined}
+    >
       <header className="depth-prototype-intro workspace-context">
         <span className="depth-prototype-tag">PROTOTYP · RYMDKÄNSLA</span>
         <h1>Hur känns avståndet?</h1>
