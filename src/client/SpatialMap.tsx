@@ -1478,83 +1478,85 @@ export function SpatialMap({
             })}
         </div>
         <svg className="spatial-lines spatial-depth-lines" aria-hidden="true">
-          {edges.map(({ edge, start, tip, bend, geometry, selected, kind, previous, key }) => {
-            const maskId = `${occlusionPrefix}-${key}`;
-            const occluders = connectionOcclusion(start, tip, locations.values(), bend);
-            const arrowOccluders = connectionOcclusion(tip, tip, locations.values());
-            const masks = [
-              { id: maskId, points: occluders },
-              { id: `${maskId}-arrow`, points: arrowOccluders },
-            ];
-            // A short shaft establishes the endpoint tangent for the marker.
-            // Its separate mask uses endpoint depth across the entire arrowhead.
-            const tangentX = tip.x - start.x;
-            const tangentY = tip.y - start.y - 2 * bend;
-            const tangentLength = Math.hypot(tangentX, tangentY) || 1;
-            return (
-              <g key={key} className={`spatial-connection ${kind}${selected ? ' selected' : ''}`}>
-                <defs>
-                  {masks.map((mask) => (
-                    <g key={mask.id}>
-                      {mask.points.map((point) => (
-                        <clipPath key={point.id} id={`${mask.id}-${point.id}`}>
-                          <circle cx={point.x} cy={point.y} r={point.radius} />
-                        </clipPath>
-                      ))}
-                      <mask
-                        id={mask.id}
-                        maskUnits="userSpaceOnUse"
-                        x="0"
-                        y="0"
-                        width={surfaceWidth}
-                        height={surfaceHeight}
-                      >
-                        <rect width={surfaceWidth} height={surfaceHeight} fill="white" />
+          {surfaceWidth > 0 &&
+            surfaceHeight > 0 &&
+            edges.map(({ edge, start, tip, bend, geometry, selected, kind, previous, key }) => {
+              const maskId = `${occlusionPrefix}-${key}`;
+              const occluders = connectionOcclusion(start, tip, locations.values(), bend);
+              const arrowOccluders = connectionOcclusion(tip, tip, locations.values());
+              const masks = [
+                { id: maskId, points: occluders },
+                { id: `${maskId}-arrow`, points: arrowOccluders },
+              ];
+              // A short shaft establishes the endpoint tangent for the marker.
+              // Its separate mask uses endpoint depth across the entire arrowhead.
+              const tangentX = tip.x - start.x;
+              const tangentY = tip.y - start.y - 2 * bend;
+              const tangentLength = Math.hypot(tangentX, tangentY) || 1;
+              return (
+                <g key={key} className={`spatial-connection ${kind}${selected ? ' selected' : ''}`}>
+                  <defs>
+                    {masks.map((mask) => (
+                      <g key={mask.id}>
                         {mask.points.map((point) => (
-                          <path
-                            key={point.id}
-                            clipPath={`url(#${mask.id}-${point.id})`}
-                            d={point.path}
-                            fill="black"
-                          />
+                          <clipPath key={point.id} id={`${mask.id}-${point.id}`}>
+                            <circle cx={point.x} cy={point.y} r={point.radius} />
+                          </clipPath>
                         ))}
-                      </mask>
-                    </g>
-                  ))}
-                </defs>
-                {kind === 'removed' ? (
+                        <mask
+                          id={mask.id}
+                          maskUnits="userSpaceOnUse"
+                          x="0"
+                          y="0"
+                          width={surfaceWidth}
+                          height={surfaceHeight}
+                        >
+                          <rect width={surfaceWidth} height={surfaceHeight} fill="white" />
+                          {mask.points.map((point) => (
+                            <path
+                              key={point.id}
+                              clipPath={`url(#${mask.id}-${point.id})`}
+                              d={point.path}
+                              fill="black"
+                            />
+                          ))}
+                        </mask>
+                      </g>
+                    ))}
+                  </defs>
+                  {kind === 'removed' ? (
+                    <path
+                      d={geometry}
+                      fill="none"
+                      mask={occluders.length ? `url(#${maskId})` : undefined}
+                      className={`connection ${kind}${previous ? ' previous' : ''}${selected ? ' selected' : ''}`}
+                      data-previous-relationship={previous ? edge.id : undefined}
+                    >
+                      <title>
+                        {previous ? 'Tidigare samband: ' : ''}
+                        {relationshipLabel(edge, state, objects)}
+                      </title>
+                    </path>
+                  ) : (
+                    <line
+                      x1={start.x}
+                      y1={start.y}
+                      x2={tip.x}
+                      y2={tip.y}
+                      mask={occluders.length ? `url(#${maskId})` : undefined}
+                      className={`connection ${kind}${selected ? ' selected' : ''}`}
+                    />
+                  )}
                   <path
-                    d={geometry}
+                    d={`M ${tip.x - (tangentX / tangentLength) * 0.001} ${tip.y - (tangentY / tangentLength) * 0.001} L ${tip.x} ${tip.y}`}
                     fill="none"
-                    mask={occluders.length ? `url(#${maskId})` : undefined}
-                    className={`connection ${kind}${previous ? ' previous' : ''}${selected ? ' selected' : ''}`}
-                    data-previous-relationship={previous ? edge.id : undefined}
-                  >
-                    <title>
-                      {previous ? 'Tidigare samband: ' : ''}
-                      {relationshipLabel(edge, state, objects)}
-                    </title>
-                  </path>
-                ) : (
-                  <line
-                    x1={start.x}
-                    y1={start.y}
-                    x2={tip.x}
-                    y2={tip.y}
-                    mask={occluders.length ? `url(#${maskId})` : undefined}
-                    className={`connection ${kind}${selected ? ' selected' : ''}`}
+                    mask={arrowOccluders.length ? `url(#${maskId}-arrow)` : undefined}
+                    markerEnd={`url(#spatial-arrow-${kind})`}
+                    className={`connection-arrow-shaft ${kind}${selected ? ' selected' : ''}`}
                   />
-                )}
-                <path
-                  d={`M ${tip.x - (tangentX / tangentLength) * 0.001} ${tip.y - (tangentY / tangentLength) * 0.001} L ${tip.x} ${tip.y}`}
-                  fill="none"
-                  mask={arrowOccluders.length ? `url(#${maskId}-arrow)` : undefined}
-                  markerEnd={`url(#spatial-arrow-${kind})`}
-                  className={`connection-arrow-shaft ${kind}${selected ? ' selected' : ''}`}
-                />
-              </g>
-            );
-          })}
+                </g>
+              );
+            })}
         </svg>
         {(moving || preferences.axisPinned) && (
           <SpatialOrientation orientation={orientation} corner={preferences.axisCorner} />
