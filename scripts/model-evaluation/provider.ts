@@ -165,7 +165,6 @@ export function budgetedProvider(
       if (!deadline || Date.now() >= deadline || ++calls > (profile.role === 'judge' ? 1 : 48))
         throw new Error('evaluation_call_limit');
       const kind = profile.role === 'judge' ? 'judge' : limit === 4096 ? 'summary' : 'backend';
-      if (kind === 'summary' && !countInput) throw new Error('evaluation_token_count_unverified');
       const exact = countInput ? await countInput(payload) : undefined;
       const maximum = requestMaximum(profile, limit, exact);
       const reservation = budget.reserve(kind, maximum);

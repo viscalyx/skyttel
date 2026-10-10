@@ -66,30 +66,26 @@ export async function runVoiceScenario(
           result.reason = blocked ?? 'Evaluation stopped.';
         } else if (step.transition === 'summary') {
           await closeVoice();
-          if (!options.summaryCountingVerified) {
-            result.reason = 'Exact token counting support and fee are unverified.';
-          } else {
-            options.beginStep?.(0, {
-              scenario: scenario.id,
-              step: step.id,
-              modality: 'voice',
-              repetition: options.repetition,
-            });
-            startedAt = Date.now();
-            const summary = await environment.installation.summarizeForEvaluation(
-              environment.assistant.id,
-              catalog.summaryHistory as { role: 'user' | 'assistant'; text: string }[],
-            );
-            if (!summary.installed || !summary.summary || summary.retained.length !== 8)
-              throw new Error('evaluation_summary_installation_failed');
-            result.fixed = await environment.check(step, summary.view, []);
-            result.observedEndMs = Date.now() - startedAt;
-            result.content = await judge(
-              { backend: { text: summary.summary, complete: true } },
-              step.expected.requirements,
-            );
-            concludeAttempt(result, result.observedEndMs);
-          }
+          options.beginStep?.(0, {
+            scenario: scenario.id,
+            step: step.id,
+            modality: 'voice',
+            repetition: options.repetition,
+          });
+          startedAt = Date.now();
+          const summary = await environment.installation.summarizeForEvaluation(
+            environment.assistant.id,
+            catalog.summaryHistory as { role: 'user' | 'assistant'; text: string }[],
+          );
+          if (!summary.installed || !summary.summary || summary.retained.length !== 8)
+            throw new Error('evaluation_summary_installation_failed');
+          result.fixed = await environment.check(step, summary.view, []);
+          result.observedEndMs = Date.now() - startedAt;
+          result.content = await judge(
+            { backend: { text: summary.summary, complete: true } },
+            step.expected.requirements,
+          );
+          concludeAttempt(result, result.observedEndMs);
         } else {
           const reference = await referenceSpeech(step.id);
           if (reference.clip.text !== step.text)

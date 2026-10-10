@@ -57,12 +57,14 @@ with the application's recorded model. Correctness comes before time and cost.
 
 ## Spending authorization
 
-- Authorized ceiling and scope: <USD; per model run or combined campaign>
+- Authorized scope and optional ceiling: <selected work; USD and budget scope
+  if specified, otherwise no cost ceiling>
 - Authorization: <user instruction and date>
 - Prior spending and holds within scope: <USD and original evidence>
 - Conservative reservations and completion estimate: <USD or unknown; reason>
 - Actual run spending: pending
-- Outstanding holds and remaining budget: pending
+- Outstanding holds and remaining budget: <pending; budget not applicable
+  when no ceiling is specified>
 - Campaign spending outside this scope: <USD and evidence, or not applicable>
 
 ## Result and decision

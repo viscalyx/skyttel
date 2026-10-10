@@ -358,6 +358,6 @@
     "costVerified": false,
     "usdPerRequest": null,
     "sources": ["https://developers.openai.com/api/docs/guides/token-counting"],
-    "reason": "The official counting guide establishes request support but does not confirm the counting fee. Dependent summary attempts remain not runnable until billing is verified."
+    "reason": "The official guide establishes counting support but does not confirm its fee. Exact counting is optional; whole-context reservations support backend and summary calls without a counting request."
   }
 }

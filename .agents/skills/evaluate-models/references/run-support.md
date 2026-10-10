@@ -37,7 +37,9 @@ provider. Keep credential values out of chat, reports and committed files.
 ### Spending
 
 Credentials and opt-in flags are configuration. Require explicit authorization
-for the dollar ceiling and its scope: per model run or combined campaign.
+for billable calls. Apply a dollar ceiling only when the user specifies a
+budget; otherwise execute the authorized scope without a cost ceiling.
+For a specified budget, record its scope: per model run or combined campaign.
 Include prior calls and outstanding holds within that scope. A per-run ceiling
 covers calibration, backend, summary, voice and counting for that model's entire
 run, rather than a new allowance for each scenario. Report campaign spending
@@ -47,12 +49,14 @@ conservative reservation in full, distinguishing it from estimated actual
 spending. Unknown charges retain their holds and must be resolved before new
 payment.
 
-Verify exact token counting for the complete outgoing payload and its fee
-before supplying `EvaluationPlan.counting`. Reserve and settle counting fees
-through the same ledger. Without verified counting, leave dependent summary
-steps unrun; independent scenarios can proceed when conservative whole-context
-reservations fit. Byte-based estimates, assumed cache hits and missing fees
-cannot establish that a request fits.
+Use conservative whole-context reservations for every request, including
+summaries. Exact counting is optional: verify the complete outgoing payload and
+its fee before supplying `EvaluationPlan.counting`, then reserve and settle
+counting fees through the same ledger. Missing counting support or fee evidence
+does not block a run that uses whole-context reservations. With a specified
+budget, a request must fit using its verified exact count or conservative
+maximum. Byte-based estimates and assumed cache hits cannot establish that it
+fits.
 
 Run focused evaluation application, budget, provider, report, audio and voice
 integrity tests through npm before payment. Require real isolated SQLite/MCP
@@ -77,7 +81,8 @@ application's `baselineProfiles`,
 a separately verified `judgeProfile`, authorization, verified prior spending,
 local verification and eligible recorded `references`. Include prior spending
 in `priorUsd` only when it belongs to the authorized scope; explain that scope
-in `priorSource`. Read `EvaluationPlan`
+in `priorSource`. Supply `limitUsd` only for a user-specified budget; omit it
+for an authorized run without a ceiling. Read `EvaluationPlan`
 in `scripts/model-evaluation/evaluate.ts` for the current interface. Keep raw
 requests, observations, reports and the persistent atomic ledger in ignored
 `model-evaluation-results/<run-id>` artifacts. Keep raw transcripts and
@@ -121,7 +126,8 @@ delegations/transcripts.
 Reserve complete request maxima and remaining active dialog time before each
 paid call. Account for failures, interruptions, reasoning, cache writes and
 open judge waits. Unknown usage retains its hold and stops new calls. Close
-active voice sessions promptly on stop. The authorized ceiling stays fixed.
+active voice sessions promptly on stop. Any user-specified ceiling stays fixed
+within its ledger; a changed scope uses a separate ledger.
 
 ## Preserve and publish evidence
 
@@ -184,6 +190,7 @@ reference and qualified candidate may support a correctness recommendation
 without comparable speed. Three repetitions do not establish a statistically
 certain ranking.
 
-Even on stop, report missing attempts, remaining budget, a new conservative
-completion estimate, comparison limitations and a recommendation. Identify a
-single repetition as preliminary and an unfinished evaluation as incomplete.
+Even on stop, report missing attempts, remaining budget when applicable, a new
+conservative completion estimate, comparison limitations and a recommendation.
+Identify a single repetition as preliminary and an unfinished evaluation as
+incomplete.

@@ -33,7 +33,7 @@ export type EvaluationPlan = {
   directory: string;
   apiKey: string;
   authorized: boolean;
-  limitUsd: number;
+  limitUsd?: number;
   priorUsd: number;
   priorSource: string;
   commit: string;
@@ -267,7 +267,6 @@ export async function evaluateModels(plan: EvaluationPlan) {
               repetition,
               judge,
               beginStep: provider.beginStep,
-              summaryCountingVerified: Boolean(counted),
               costs: backendCost,
               judgeCosts: () => cost('judge'),
               stopped: () => budget.snapshot().stopped,
@@ -344,7 +343,6 @@ export async function evaluateModels(plan: EvaluationPlan) {
               stopped: () => budget.snapshot().stopped,
               stopReason: () => budget.snapshot().reason,
               providerCalls: () => budget.callsStarted,
-              summaryCountingVerified: Boolean(counted),
               recordObservation: (event) =>
                 privateRecords.observation({
                   scenario: scenario.id,
@@ -453,7 +451,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
         })),
       budget: budget.snapshot(),
       remainingEstimate:
-        'Recalculate exact complete-request reservations and counting fees before continuing.',
+        'Account for remaining complete-request maxima; apply a ceiling only if the user supplies one.',
       remainingTechnicalMaximumUsd: attempts
         .filter((item) => item.outcome === 'not_run' && item.modality === 'text')
         .reduce(

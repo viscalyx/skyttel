@@ -14,9 +14,10 @@ one per evaluated model, effort and modality.
 
 ## Establish the comparison
 
-Use the user's models, intended text or voice use, and authorized spending
-limit and scope. Ask for missing models or payment authorization before making
-paid calls.
+Use the user's models, intended text or voice use, and payment authorization.
+Ask for missing models or payment authorization before making paid calls.
+Apply a spending limit only when the user specifies one, using its stated
+scope. An authorized run without a specified budget has no cost ceiling.
 Resolve the provider for each supplied model; ask the user when it is unclear.
 Confirm that the selected providers are supported and their required credentials
 are available to this session. If a key or token is missing, stop paid execution
@@ -65,7 +66,8 @@ Use the catalog and approved scoring controls as the evaluation contract.
 Preserve real MCP writes, receipts and history. A failed calibration or unknown
 charge stops paid comparison. Record failures and missing evidence as observed;
 never retry a verdict to improve it or count an unrun attempt as successful.
-Keep every paid layer within the authorized budget scope.
+Account for every paid layer; enforce any user-specified budget across its
+authorized scope.
 
 ## Deliver a decision
 
@@ -79,6 +81,7 @@ the user.
 
 The work is complete when every model issue accounts for its selected attempts
 and contains the recommendation, evidence and limitations, actual spending,
-remaining budget and work needed to finish qualification. A stopped model
-still needs that report; it remains an incomplete evaluation. Link the model
-issues in the final response so the user can select individual follow-up runs.
+remaining budget when applicable and work needed to finish qualification.
+A stopped model still needs that report; it remains an incomplete evaluation.
+Link the model issues in the final response so the user can select individual
+follow-up runs.

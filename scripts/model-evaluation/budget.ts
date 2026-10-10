@@ -21,7 +21,7 @@ export class EvaluationBudget {
   constructor(
     private readonly db: Database.Database,
     config: {
-      limitUsd: number;
+      limitUsd?: number;
       priorUsd: number;
       priorSource: string;
       authorized: boolean;
@@ -29,22 +29,22 @@ export class EvaluationBudget {
   ) {
     if (!config.authorized || !config.priorSource.trim())
       throw new Error('evaluation_not_authorized');
+    const ceiling = config.limitUsd === undefined ? null : units(config.limitUsd);
     db.exec(`CREATE TABLE IF NOT EXISTS evaluation_budget (
-      id INTEGER PRIMARY KEY CHECK (id = 1), ceiling INTEGER NOT NULL,
+      id INTEGER PRIMARY KEY CHECK (id = 1), ceiling INTEGER,
       prior INTEGER NOT NULL, source TEXT NOT NULL, stopped TEXT);
       CREATE TABLE IF NOT EXISTS evaluation_charge (
       id TEXT PRIMARY KEY, kind TEXT NOT NULL, reserved INTEGER NOT NULL,
       actual INTEGER, uncertain INTEGER NOT NULL DEFAULT 0);`);
     db.prepare(
       'INSERT OR IGNORE INTO evaluation_budget (id, ceiling, prior, source) VALUES (1, ?, ?, ?)',
-    ).run(units(config.limitUsd), units(config.priorUsd), config.priorSource);
-    const saved = db.prepare('SELECT ceiling, prior, source FROM evaluation_budget').get() as {
-      ceiling: number;
-      prior: number;
-      source: string;
-    };
+    ).run(ceiling, units(config.priorUsd), config.priorSource);
+    const saved = db.prepare('SELECT ceiling, prior, source FROM evaluation_budget').get() as
+      | { ceiling: number | null; prior: number; source: string }
+      | undefined;
+    if (!saved) throw new Error('evaluation_budget_schema_incompatible');
     if (
-      saved.ceiling !== units(config.limitUsd) ||
+      saved.ceiling !== ceiling ||
       saved.prior !== units(config.priorUsd) ||
       saved.source !== config.priorSource
     )
@@ -52,7 +52,7 @@ export class EvaluationBudget {
   }
   snapshot() {
     const config = this.db.prepare('SELECT * FROM evaluation_budget WHERE id = 1').get() as {
-      ceiling: number;
+      ceiling: number | null;
       prior: number;
       stopped: string | null;
     };
@@ -62,10 +62,13 @@ export class EvaluationBudget {
       )
       .get() as { spent: number; held: number };
     return {
-      limitUsd: config.ceiling / 1e6,
+      limitUsd: config.ceiling === null ? null : config.ceiling / 1e6,
       spentUsd: (config.prior + totals.spent) / 1e6,
       reservedUsd: totals.held / 1e6,
-      availableUsd: (config.ceiling - config.prior - totals.spent - totals.held) / 1e6,
+      availableUsd:
+        config.ceiling === null
+          ? null
+          : (config.ceiling - config.prior - totals.spent - totals.held) / 1e6,
       stopped: Boolean(config.stopped),
       reason: config.stopped,
     };
@@ -76,7 +79,8 @@ export class EvaluationBudget {
         const state = this.snapshot();
         if (state.reason) throw new Error(state.reason);
         const maximum = units(maximumUsd);
-        if (maximum > Math.round(state.availableUsd * 1e6)) return undefined;
+        if (state.availableUsd !== null && maximum > Math.round(state.availableUsd * 1e6))
+          return undefined;
         const id = randomUUID();
         this.db
           .prepare('INSERT INTO evaluation_charge (id, kind, reserved) VALUES (?, ?, ?)')
@@ -106,7 +110,8 @@ export class EvaluationBudget {
       } else {
         const actual = units(actualUsd);
         this.db.prepare('UPDATE evaluation_charge SET actual = ? WHERE id = ?').run(actual, id);
-        if (actual > charge.reserved || this.snapshot().availableUsd < 0)
+        const available = this.snapshot().availableUsd;
+        if (actual > charge.reserved || (available !== null && available < 0))
           this.stop('evaluation_cost_above_reservation');
       }
     })();

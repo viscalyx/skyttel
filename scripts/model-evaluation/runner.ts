@@ -26,7 +26,6 @@ export type RunOptions = {
   stopped?: () => boolean;
   stopReason?: () => string | null;
   providerCalls?: () => number;
-  summaryCountingVerified?: boolean;
   recordObservation?: (event: AssistantObservation) => void;
 };
 
@@ -62,10 +61,6 @@ export async function runTextScenario(
       const result = attempt(step.id);
       if (blocked) {
         result.reason = `Dependent step not run: ${blocked}`;
-      } else if (step.transition === 'summary' && !options.summaryCountingVerified) {
-        result.reason =
-          'Exact token counting support and fee are not verified; dependent summary is not runnable.';
-        blocked = result.reason;
       } else {
         options.beginStep?.(0, {
           scenario: scenario.id,

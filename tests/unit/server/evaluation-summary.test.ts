@@ -1,9 +1,31 @@
 import { expect, test } from 'vitest';
 import rawCatalog from '../../../scripts/model-evaluation/catalog.json' with { type: 'json' };
 import { evaluationEnvironment } from '../../../scripts/model-evaluation/environment.js';
+import { runTextScenario } from '../../../scripts/model-evaluation/runner.js';
 import type { Catalog } from '../../../scripts/model-evaluation/types.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
+
+test('the scenario runner executes an ordinary summary without a counting adapter', {
+  tags: ['technical'],
+}, async () => {
+  const model = textModel(() => [modelMessage('Ett osparat utkast finns kvar.')]);
+  const result = await runTextScenario(
+    {
+      id: 'summary-without-counting',
+      title: 'Summary admission uses conservative reservations',
+      voice: false,
+      steps: [
+        { id: 'context', text: 'Beskriv utkastet.', expected: { requirements: [] } },
+        { id: 'summary', transition: 'summary', expected: { requirements: [] } },
+      ],
+    },
+    { modelFetch: model.provider },
+    { profile: 'local', repetition: 1 },
+  );
+  expect(result.attempts.map((attempt) => attempt.outcome)).toEqual(['pass', 'pass']);
+  expect(model.requests.filter((body) => !body.tools.length)).toHaveLength(1);
+});
 
 test('the evaluation summary uses real price turns and atomically installs ordinary generated context', {
   tags: ['technical'],

@@ -62,11 +62,66 @@ test('complete payload reservations enforce output and round caps without retrie
   expect(calls).toHaveLength(96);
   expect(budget.snapshot()).toMatchObject({ stopped: false, reservedUsd: 0 });
   provider.beginStep();
-  await expect(send({ ...payload, max_output_tokens: 4096 })).rejects.toThrow(
-    'token_count_unverified',
-  );
-  expect(requests).toHaveLength(48);
+  await send({ ...payload, max_output_tokens: 4096 });
+  expect(requests).toHaveLength(49);
+  expect(budget.snapshot()).toMatchObject({ stopped: false, reservedUsd: 0 });
   db.close();
+});
+
+test('an authorized uncapped Astra run admits backend and summary requests without counting', {
+  tags: ['technical'],
+}, async () => {
+  const db = new Database(':memory:');
+  try {
+    const budget = new EvaluationBudget(db, {
+      authorized: true,
+      priorUsd: 0,
+      priorSource: 'User authorizes the selected run without a budget.',
+    });
+    const profile = verifiedProfile('astra-low');
+    const requests: Record<string, unknown>[] = [];
+    const provider = budgetedProvider(profile, budget, {
+      record: () => {},
+      transport: async (_url, init) => {
+        requests.push(JSON.parse(String(init?.body)));
+        return Response.json({
+          model: profile.model,
+          service_tier: 'default',
+          status: 'completed',
+          usage: {
+            input_tokens: 20,
+            output_tokens: 10,
+            input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+            output_tokens_details: { reasoning_tokens: 5 },
+          },
+        });
+      },
+    });
+    for (const limit of [8192, 4096]) {
+      provider.beginStep();
+      await provider.fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        body: JSON.stringify({
+          model: profile.model,
+          service_tier: 'default',
+          reasoning: { effort: profile.effort },
+          max_output_tokens: limit,
+          input: [{ role: 'user', content: 'The complete selected context' }],
+        }),
+      });
+    }
+    expect(requests.map((request) => request.max_output_tokens)).toEqual([8192, 4096]);
+    expect(budget.callsStarted).toBe(2);
+    expect(budget.snapshot()).toMatchObject({
+      limitUsd: null,
+      availableUsd: null,
+      reservedUsd: 0,
+      stopped: false,
+    });
+    expect(budget.snapshot().spentUsd).toBeGreaterThan(0);
+  } finally {
+    db.close();
+  }
 });
 
 test('missing usage retains the whole-context hold and blocks further paid calls', {
