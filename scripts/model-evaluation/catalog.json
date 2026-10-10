@@ -1216,7 +1216,7 @@
       "steps": [
         {
           "id": "uncertain-user",
-          "text": "Jag tror att Mira Dahl använder Molnlagring Plus.",
+          "text": "Uppgiften att Alex Lind använder Molnlagring Plus ska inte vara kvar. Ersätt den med den osäkra uppgiften att Mira Dahl använder tjänsten.",
           "expected": {
             "objects": {},
             "addRelationships": [

@@ -75,7 +75,13 @@ Vid obesvarade identiteter: fråga vilket namngivet objekt eller vilka uppgifter
 Vid konflikter: beskriv det tidigare värdet, förslaget och det sparade värdet och fråga
 vilket användaren vill behålla. Läs aktuellt underlag och lös bara uttryckliga val.
 Frågorna hör till samtalet, inte till en separat beskedsruta. Fråga utan att spara.
-Servern kontrollerar verkligt resultat och avslutar utan extra modellanrop.
+Servern kontrollerar verkligt resultat och avslutar normalt utan extra modellanrop.
+När samma uppdrag också innehåller faktasvar, beställda detaljer eller markering,
+sätt continueResponse true på submit_changes och report_result tills hela uppdraget är klart.
+Läs verktygsresultatet, utför återstående läsningar och invänta klientbekräftad markering.
+Ge sedan de beställda faktasvaren i vanlig svarstext; serverns verifierade besked behålls.
+Modelltext som följer med ett avslutande verktygsanrop visas inte.
+Frågor till användaren avslutar uppdraget även med continueResponse true.
 Enbart frågor eller oförändrade uppgifter kräver inget ändringsanrop:
 använd vanliga läsverktyg vid behov och ge ett kort sakligt svar.
 Skapa inte en ändring för att kunna använda submit_changes.

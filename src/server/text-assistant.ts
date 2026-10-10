@@ -41,6 +41,7 @@ type AcceptedMessage = {
   status: NonNullable<TextAssistantView['taskStatus']>;
   result?: TextAssistantView;
 };
+const savedReply = 'Sparat. Hela utkastet finns i hushållets karta.';
 type Session = TextAssistantView & {
   id: string;
   actorId: string;
@@ -394,7 +395,7 @@ export function textAssistantRoutes({
   // This deliberately narrow command check is not general language
   // verification. Ambiguous, quoted, negative and hypothetical requests need
   // a new clear instruction; a model-supplied approval flag has no authority.
-  function descriptionForSaveCheck(description: string) {
+  function nominalTopicsForSaveCheck(description: string) {
     // A modifier such as "bara om" introduces a condition, even when its
     // subject and predicate also resemble a nominal topic. Keep it intact.
     if (
@@ -449,15 +450,20 @@ export function textAssistantRoutes({
     // The imperative introduces field data up to a sentence boundary or the
     // final save clause. Heading words and topic length do not grant authority;
     // the separate command and all remaining conditions are checked below.
-    const instruction = unquoted.replace(
-      /(^|[.!;]\s*)((?:ändra|rätta)\s+beskrivningen\s+till\s+)([^.!;?]+)/gu,
-      (_, boundary, correction, remainder: string) => {
-        const commandAt = remainder.search(/\b(?:och|sedan)\s+spara\b/u);
-        const payload = commandAt < 0 ? remainder : remainder.slice(0, commandAt);
-        const command = commandAt < 0 ? '' : remainder.slice(commandAt);
-        return `${boundary}${correction}${descriptionForSaveCheck(payload)}${command}`;
-      },
-    );
+    const instruction = unquoted
+      .replace(
+        /(^|[.!;]\s*)((?:ändra|rätta)\s+beskrivningen\s+till\s+)([^.!;?]+)/gu,
+        (_, boundary, correction, remainder: string) => {
+          const commandAt = remainder.search(/\b(?:och|sedan)\s+spara\b/u);
+          const payload = commandAt < 0 ? remainder : remainder.slice(0, commandAt);
+          const command = commandAt < 0 ? '' : remainder.slice(commandAt);
+          return `${boundary}${correction}${nominalTopicsForSaveCheck(payload)}${command}`;
+        },
+      )
+      .replace(
+        /(^|[.!;]\s*)(jag vill ordna (?:flera )?uppgifter\s+om\s+(?:våra|mina|era|dina)\s+[\p{L}\p{N}-]+)(?=[.!;]|$)/gu,
+        (_, boundary, topic: string) => `${boundary}${nominalTopicsForSaveCheck(topic)}`,
+      );
     const sentences = instruction
       .trim()
       .replace(/[.!;]+$/u, '')
@@ -570,12 +576,15 @@ export function textAssistantRoutes({
       (item: { id: string }) => item.id === selection.id,
     );
   }
+  function verifiedReply(session: Session) {
+    return session.result?.message ?? (session.receipt ? savedReply : undefined);
+  }
   function saved(session: Session, receipt: TextAssistantView['receipt']) {
     session.saveIntent = undefined;
     session.receipt = receipt;
     session.workVersion = receipt ? receipt.draftVersion + 1 : session.workVersion;
     session.pendingSave = undefined;
-    session.reply = 'Sparat. Hela utkastet finns i hushållets karta.';
+    session.reply = savedReply;
     session.conversation.push({ role: 'assistant', text: session.reply });
     session.modelReply = undefined;
     session.questions = undefined;
@@ -729,7 +738,7 @@ export function textAssistantRoutes({
     expected: { version: number; contentVersion: number },
   ) {
     const serial = session.inputSerial ?? 0;
-    const originalSaveIntent = Boolean(session.saveIntent);
+    let originalSaveIntent = Boolean(session.saveIntent);
     const guard = () => {
       if (task.signal.aborted || session.revision !== revision || !sessions.has(session.id))
         throw new MapError('assistant_canceled', 409);
@@ -758,7 +767,7 @@ export function textAssistantRoutes({
       }
       let version = review.version;
       const mutations = new Set<string>();
-      const contentVersion = review.contentVersion;
+      let contentVersion = review.contentVersion;
       finishInterruptedInput(session);
       const dialogue = session.conversation.slice(session.contextOffset);
       session.contextOffset = session.conversation.length;
@@ -833,13 +842,14 @@ export function textAssistantRoutes({
           type: 'function',
           name: 'submit_changes',
           description:
-            'Utför ett färdigt uppdrag som en ordnad batch och avsluta utan en extra modellomgång. Varje operation använder samma vanliga MCP-verktyg och aktuella versioner. Behåll andra förslag. completion draft lämnar allt osparat; save kräver ett aktuellt uttryckligt besked om hela utkastet. questions är korta riktade följdfrågor, aldrig resultatpåståenden. Använd vanliga verktyg om fler mellanliggande läsningar behövs.',
+            'Utför ändringarna som en ordnad batch med vanliga MCP-verktyg och aktuella versioner. Behåll andra förslag. completion draft lämnar allt osparat; save kräver ett aktuellt uttryckligt besked om hela utkastet. questions är korta riktade följdfrågor, aldrig resultatpåståenden. Sätt continueResponse true om användaren också begär faktasvar, detaljer eller markering som återstår efter ändringarna; läs då resultatet och slutför resten i nästa modellomgång. Annars avslutar servern. Frågor till användaren stoppar alltid fortsättningen.',
           parameters: {
             type: 'object',
             properties: {
               version: { type: 'integer', minimum: 0 },
               contentVersion: { type: 'integer', minimum: 1 },
               completion: { type: 'string', enum: ['draft', 'save'] },
+              continueResponse: { type: 'boolean' },
               questions: { type: 'array', maxItems: 3, items: { type: 'string', maxLength: 240 } },
               operations: {
                 type: 'array',
@@ -897,11 +907,12 @@ export function textAssistantRoutes({
           type: 'function',
           name: 'report_result',
           description:
-            'Ge detaljer från aktuellt utkast eller ett verkligt sparande utan ytterligare modellomgång. latest_save hämtar senaste kvittot; save kräver operationId och userId från historiken. last_failure återger det senaste registrerade felet i samtalet utan att upprepa uppdraget. Texten skapas av servern från faktiska poster och fel, inte av modellen.',
+            'Ge detaljer från aktuellt utkast eller ett verkligt sparande. latest_save hämtar senaste kvittot; save kräver operationId och userId från historiken. last_failure återger det senaste registrerade felet i samtalet utan att upprepa uppdraget. Texten skapas av servern från faktiska poster och fel, inte av modellen. Sätt continueResponse true om andra beställda faktasvar eller markeringar återstår; serverns detaljer behålls och resten slutförs i nästa modellomgång. Annars avslutar servern och medföljande modelltext används inte.',
           parameters: {
             type: 'object',
             properties: {
               source: { type: 'string', enum: ['draft', 'latest_save', 'save', 'last_failure'] },
+              continueResponse: { type: 'boolean' },
               operationId: { type: 'string' },
               userId: { type: 'string' },
             },
@@ -941,7 +952,12 @@ export function textAssistantRoutes({
             data: { name: action.name, arguments: action.arguments, callId: action.call_id },
           });
         let combined:
-          | { completion: 'draft' | 'save'; questions: string[]; callId: string }
+          | {
+              completion: 'draft' | 'save';
+              questions: string[];
+              callId: string;
+              continueResponse: boolean;
+            }
           | undefined;
         if (calls.some((action) => action.name === 'submit_changes')) {
           if (calls.length !== 1) throw new MapError('invalid_request', 400);
@@ -950,6 +966,7 @@ export function textAssistantRoutes({
               version: z.number().int().nonnegative(),
               contentVersion: z.number().int().positive(),
               completion: z.enum(['draft', 'save']),
+              continueResponse: z.boolean().default(false),
               questions: z.array(z.string().min(1).max(240)).max(3).default([]),
               operations: z
                 .array(
@@ -999,7 +1016,7 @@ export function textAssistantRoutes({
           if (response.output_text)
             session.conversation.push({ role: 'assistant', text: response.output_text });
           session.reply =
-            session.result?.message ??
+            verifiedReply(session) ??
             (session.displayedSelection ? 'Markerat i kartan.' : undefined);
           session.phase = session.pendingSave ? 'recovery' : 'ready';
           return;
@@ -1018,7 +1035,7 @@ export function textAssistantRoutes({
               .parse(args);
             session.questions = value.questions;
             session.modelReply = value.questions.join(' ');
-            session.reply = session.result?.message;
+            session.reply = verifiedReply(session);
             session.phase = 'ready';
             session.input.push({
               type: 'function_call_output',
@@ -1029,14 +1046,16 @@ export function textAssistantRoutes({
             return;
           }
           if (action.name === 'report_result') {
+            const continuation = { continueResponse: z.boolean().default(false) };
             const parsed = z
               .discriminatedUnion('source', [
-                z.object({ source: z.literal('draft') }).strict(),
-                z.object({ source: z.literal('latest_save') }).strict(),
-                z.object({ source: z.literal('last_failure') }).strict(),
+                z.object({ source: z.literal('draft'), ...continuation }).strict(),
+                z.object({ source: z.literal('latest_save'), ...continuation }).strict(),
+                z.object({ source: z.literal('last_failure'), ...continuation }).strict(),
                 z
                   .object({
                     source: z.literal('save'),
+                    ...continuation,
                     operationId: z.string().regex(/^[\w-]{1,128}$/),
                     userId: z.string().min(1).max(200),
                   })
@@ -1082,6 +1101,10 @@ export function textAssistantRoutes({
               call_id: action.call_id,
               output: JSON.stringify(session.result),
             });
+            if (report.continueResponse) {
+              session.phase = 'working';
+              break;
+            }
             return;
           }
           if (action.name === 'show_map_object' || action.name === 'show_map_item') {
@@ -1193,6 +1216,12 @@ export function textAssistantRoutes({
             verifyReceipt(session, value.receipt, session.pendingSave);
             saved(session, value.receipt);
             await refreshConfirmed(session, guard);
+            originalSaveIntent = false;
+            if (combined) {
+              version = session.review.version;
+              contentVersion = session.review.contentVersion;
+              continue;
+            }
             session.input.push({
               type: 'function_call_output',
               call_id: action.call_id,
@@ -1234,7 +1263,7 @@ export function textAssistantRoutes({
           }
         }
         if (combined) {
-          session.reply = session.result?.message;
+          session.reply = verifiedReply(session);
           session.modelReply = combined.questions.join(' ') || undefined;
           session.questions = combined.questions.length ? combined.questions : undefined;
           session.phase = 'ready';
@@ -1243,6 +1272,8 @@ export function textAssistantRoutes({
             call_id: combined.callId,
             output: JSON.stringify({
               result: session.result,
+              receipt: session.receipt,
+              reply: session.reply,
               review: session.review,
               questions: combined.questions,
             }),
@@ -1250,6 +1281,10 @@ export function textAssistantRoutes({
           if (session.reply) session.conversation.push({ role: 'assistant', text: session.reply });
           if (session.modelReply)
             session.conversation.push({ role: 'assistant', text: session.modelReply });
+          if (combined.continueResponse && !combined.questions.length) {
+            session.phase = 'working';
+            continue;
+          }
           return;
         }
       }

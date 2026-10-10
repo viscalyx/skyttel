@@ -595,6 +595,7 @@ test.each(['draft', 'save'])(
           arguments: { id, baseRevision: null, value: { typeId, name: id, description: '' } },
         })),
         questions: completion === 'draft' ? ['Vem använder cykeln?'] : [],
+        continueResponse: completion === 'draft',
       }),
     ]);
     await setup(model.provider);
@@ -617,6 +618,7 @@ test.each(['draft', 'save'])(
       expect(map.objects).toEqual([]);
     } else {
       expect(status.receipt.changes).toHaveLength(3);
+      expect(status.reply).toBe('Sparat. Hela utkastet finns i hushållets karta.');
       expect(map.objects.map(({ id }: { id: string }) => id).sort()).toEqual([
         'bike',
         'helmet',

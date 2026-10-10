@@ -6,6 +6,200 @@ import type { Scenario } from '../../../scripts/model-evaluation/types.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
+test('a mixed price and draft request keeps verified details and completes its factual answer', {
+  tags: ['technical'],
+}, async () => {
+  const scenario = catalog.scenarios.find((item) => item.id === 'read-price-draft') as Scenario;
+  const model = textModel((body) =>
+    body.input.at(-1)?.type === 'function_call_output'
+      ? [modelMessage('Spotify Premium Family kostar 179 kr per månad enligt kartan.')]
+      : [
+          modelMessage('En påhittad sammanfattning från leverantören.'),
+          modelTool('report_result', { source: 'draft', continueResponse: true }),
+        ],
+  );
+  const run = await runTextScenario(
+    scenario,
+    { modelFetch: model.provider },
+    {
+      profile: 'local',
+      repetition: 1,
+      judge: async (input) => {
+        const text = input.sources.backend?.text ?? '';
+        expect(text).toContain('179 kr per månad enligt kartan');
+        expect(text).toContain('Övar cello på tisdagar.');
+        expect(text).toContain('149 SEK');
+        expect(text).not.toContain('påhittad sammanfattning');
+        return input.requirements.map(({ id }) => ({ id, outcome: 'pass', reason: 'Verified.' }));
+      },
+    },
+  );
+  expect(run.attempts[0]).toMatchObject({ outcome: 'pass', fixed: [] });
+  expect(model.requests).toHaveLength(2);
+});
+
+test.each(['draft', 'save'] as const)(
+  'a mixed %s request can continue to client-confirmed selection and factual answers',
+  {
+    tags: ['technical'],
+  },
+  async (completion) => {
+    const scenario: Scenario = {
+      id: 'local-mixed-changes',
+      title: 'Mixed changes and questions',
+      voice: false,
+      selection: 'alex-work',
+      steps: [
+        {
+          id: 'mixed',
+          text: `Rätta Lo Bergs beskrivning till Läser poesi. Visa Alex arbete och berätta vad Spotify kostar. Läs upp ändringarna.${completion === 'save' ? ' Spara hela utkastet.' : ''}`,
+          expected: {
+            objects: { lo: { description: 'Läser poesi.' } },
+            saves: completion === 'save' ? 1 : 0,
+            saveAttempts: completion === 'save' ? 1 : 0,
+            requirements: ['Besvara prisfrågan och redovisa utkastet.'],
+          },
+        },
+      ],
+    };
+    let step = 0;
+    const model = textModel((body) => {
+      const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+      const proposal = turn.draft.changes.find((item: { id: string }) => item.id === 'lo');
+      switch (step++) {
+        case 0:
+          return [
+            modelTool('submit_changes', {
+              version: turn.draft.version,
+              contentVersion: turn.draft.contentVersion,
+              completion,
+              questions: [],
+              continueResponse: true,
+              operations: [
+                {
+                  name: 'propose_object',
+                  arguments: {
+                    id: 'lo',
+                    baseRevision: proposal.before.revision,
+                    value: { ...proposal.after, description: 'Läser poesi.' },
+                  },
+                },
+              ],
+            }),
+          ];
+        case 1:
+          if (completion === 'save') {
+            const result = JSON.parse(String(body.input.at(-1)?.output));
+            expect(result.receipt.changes).toHaveLength(2);
+            expect(result.reply).toBe('Sparat. Hela utkastet finns i hushållets karta.');
+            expect(result.review.changes).toEqual([]);
+          }
+          return [modelTool('show_map_object', { objectId: 'alex-work' })];
+        case 2:
+          if (completion === 'save')
+            return [
+              modelMessage(
+                'Spotify kostar 179 kr per månad. Lo Bergs beskrivning är Läser poesi. Alex arbete är markerat.',
+              ),
+            ];
+          return [
+            modelTool('report_result', {
+              source: 'draft',
+              continueResponse: true,
+            }),
+          ];
+        default:
+          return [modelMessage('Spotify kostar 179 kr per månad. Alex arbete är markerat.')];
+      }
+    });
+    const run = await runTextScenario(
+      scenario,
+      { modelFetch: model.provider },
+      {
+        profile: 'local',
+        repetition: 1,
+        judge: async (input) => {
+          expect(input.sources.backend?.text).toContain('179 kr per månad');
+          expect(input.sources.backend?.text).toContain('Läser poesi.');
+          if (completion === 'save')
+            expect(input.sources.backend?.text).toContain(
+              'Sparat. Hela utkastet finns i hushållets karta.',
+            );
+          expect(JSON.parse(input.context).observedState.displayedSelection).toBe('alex-work');
+          return input.requirements.map(({ id }) => ({ id, outcome: 'pass', reason: 'Verified.' }));
+        },
+      },
+    );
+    expect(run.attempts[0]).toMatchObject({ outcome: 'pass', fixed: [] });
+    expect(model.requests).toHaveLength(completion === 'save' ? 3 : 4);
+    const outputs =
+      model.requests.at(-1)?.input.filter((item) => item.type === 'function_call_output') ?? [];
+    expect(new Set(outputs.map((item) => item.call_id)).size).toBe(outputs.length);
+  },
+);
+
+test.each([
+  {
+    text: catalog.scenarios.find((item) => item.id === 'save-last')?.steps[0].text,
+    allowed: true,
+  },
+  { text: 'Jag vill ordna uppgifter om våra tjänster. Spara hela utkastet.', allowed: true },
+  { text: 'Ändra uppgifter om priset stämmer. Spara hela utkastet.', allowed: false },
+  { text: 'Ändra uppgifter bara om Lo säger ja. Spara hela utkastet.', allowed: false },
+  { text: 'Ändra uppgifter om Mira går med på det. Spara hela utkastet.', allowed: false },
+  { text: 'Ändra uppgifter om möjligt. Spara hela utkastet.', allowed: false },
+])(
+  'save authority distinguishes nominal topics from conditions: $text',
+  {
+    tags: ['technical'],
+  },
+  async ({ text, allowed }) => {
+    const scenario = catalog.scenarios.find((item) => item.id === 'save-last') as Scenario;
+    const model = textModel((body) => {
+      const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+      return [
+        modelTool('save_draft', {
+          version: turn.draft.version,
+          contentVersion: turn.draft.contentVersion,
+        }),
+      ];
+    });
+    const environment = await evaluationEnvironment(scenario, { modelFetch: model.provider });
+    try {
+      const view = await environment.get<TextAssistantView>(environment.path);
+      await environment.post(`${environment.path}/messages`, {
+        requestId: 'save-authority',
+        text,
+        revision: view.revision,
+        draftVersion: view.review.version,
+        contentVersion: view.review.contentVersion,
+      });
+      await expect
+        .poll(
+          async () =>
+            (
+              await environment.get<TextAssistantView>(
+                `${environment.path}/messages/save-authority`,
+              )
+            ).taskStatus,
+        )
+        .toBe('completed');
+      const finished = await environment.get<TextAssistantView>(environment.path);
+      if (allowed) {
+        expect(finished.error).toBeUndefined();
+        expect(finished.receipt?.changes).toHaveLength(2);
+        expect(finished.review.changes).toEqual([]);
+      } else {
+        expect(finished.error).toBe('assistant_save_not_requested');
+        expect(finished.receipt).toBeUndefined();
+        expect(finished.review.changes).toHaveLength(2);
+      }
+    } finally {
+      await environment.close();
+    }
+  },
+);
+
 test.each([
   { id: 'unknown-user', knowledge: 'unknown', target: null },
   { id: 'no-user', knowledge: 'none', target: null },

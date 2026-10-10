@@ -150,6 +150,8 @@ retain its charges and observed error time.
 
 Judge each step once in one tool-free call covering all requirements. Keep
 backend text and spoken transcript as separate sources.
+Score the application's collected answer. Provider prose discarded by the
+application is diagnostic evidence, not a delivered answer.
 Give the judge the actual state, receipt and history snapshot from the fixed
 checks; use those facts to ground confirmations. Historical summaries describe
 earlier context. Required response content must appear in its designated source.
@@ -182,8 +184,9 @@ then issue a separate literal
 body and retrieved comments. Publish corrections as new comments referencing
 the original records.
 
-When evaluator or fixture defects invalidate a run, explain the cause and
-affected evidence, remove its `model-evaluation` label and close the issue.
+When application, evaluator or fixture defects prevent a run from fairly
+assessing the model, explain the cause and affected evidence, remove its
+`model-evaluation` label and close the issue.
 Treat a calibration stop before candidate testing the same way. Retain the
 records and charges for diagnosis and spending reconciliation. Correct the
 cause before starting a new run; keep valid candidate failures in evaluation
