@@ -1,7 +1,8 @@
 # Manuella testfall för rymdkartan
 
 Testfallen omfattar gemensam redigering, navigering och bevarad text i
-tabell och rymdkarta samt djup vid överlappande symboler och linjer.
+tabell och rymdkarta samt djup vid överlappande symboler och linjer,
+storleksskillnader och valbara klickytor.
 Anteckna commit, webbläsare, enhet, fysisk eller
 emulerad inmatning samt godkänt eller underkänt resultat vid körning.
 Fysiska enhetsprov och hjälpmedelsprov följs separat i
@@ -799,3 +800,65 @@ Det är ett avgränsat tekniskt prov.
   kameranavigering.
 - Den sneda linjen syns över symbolens vänstra del och skyms av dess
   högra del. Djupet vid överlappningen avgör ordningen.
+
+### RYMD-14: storlek efter djup behåller valbara symboler och namn
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/spatial.test.tsx",
+    "caseId": "RYMD-14"
+  },
+  "reference": "Chromium med produktionsstilar, ljusa och mörka teman samt kontrollerade personliga placeringar vid 1280 × 1000 och 390 × 844 CSS-pixlar. Datorvyn skyddar storlek efter djup; mobilvyn skyddar valbara mindre etiketter och bakgrunder.",
+  "outcomes": [
+    "Närmare symboler och namn är större än motsvarande innehåll längre bort.",
+    "Cirkelns bakgrund och textens bakgrund följer den visade storleken.",
+    "Närliggande symboler och namn har begränsad förstoring även efter zoom och rotation.",
+    "Tangentbord kan välja mindre namn utan att flytta objekt eller kameran, och klickytorna behåller sin minsta storlek."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Prova storleksskillnader efter djup utan att förlora valbara
+symboler och namn.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Ett nytt provhushåll enligt
+[djupförberedelsen](map-depth-preparation.md), med varianten `sloping`.
+Använd 1280 × 1000 och 390 × 844 CSS-pixlar och prova både ljust och mörkt
+tema. Ladda om efter varje förberedelse. Använd **Återställ vy** när du
+byter fönsterstorlek.
+
+**Automatiskt motsvarande webbläsartest:**
+[spatial.test.tsx](../../tests/browser/spatial.test.tsx), RYMD-14.
+Webbläsarprovet använder kontrollerade personliga placeringar och
+inmatning. Beständigt sparande mot verklig server provas separat i RYMD-05.
+
+**Steg:**
+
+1. Öppna **Karta**. Jämför Lo Exempel med Molnmusik. Kontrollera både
+   symbol, cirkelbakgrund, namn, typtext och textbakgrund.
+2. Använd Tab och Enter för att välja Molnmusiks namn. Kontrollera
+   markering och synligt fokus samt att objekten och utsnittet står kvar.
+3. Slå på **Alla etiketter**. Öppna **Navigera**, välj **Zooma in** två
+   gånger, **Rotera vänster** och **Zooma ut**. Kontrollera storlekar och
+   markering efter varje åtgärd.
+4. Upprepa från samma förberedelse vid den andra fönsterstorleken och i
+   det andra temat.
+
+**Förväntat resultat:**
+
+- Lo Exempel ligger närmare och har större symbol och namn än Molnmusik.
+- Den synliga cirkelbakgrunden och textbakgrunden krymper tillsammans med
+  sitt innehåll. Mindre namn har en större, osynlig klickyta.
+- Zoom och rotation ändrar storlekar efter djup, med begränsad förstoring
+  av närliggande innehåll. Molnmusik förblir markerat.
+- Tangentbordsval visar fokus och markering utan att flytta objekten eller
+  kameran. Klickytorna förblir användbara i båda teman och fönsterstorlekar.

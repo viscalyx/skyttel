@@ -2,6 +2,7 @@ import './spatial.css';
 import './spatial-camera.css';
 import {
   type ButtonHTMLAttributes,
+  type CSSProperties,
   useCallback,
   useEffect,
   useId,
@@ -500,9 +501,9 @@ export function SpatialMap({
         // Keep a positive fitting area while protecting their full pointer box.
         const marginX = Math.min(64, Math.max(24, width / 4), (width - 1) / 2);
         const marginY = Math.min(64, Math.max(24, height / 4), (height - 1) / 2);
-        // Leave a row above the endpoints for the selected relationship's label.
+        // Leave the full 44px label target and collision gap above the endpoints.
         const labelRow = reveal?.relationshipId
-          ? Math.min(35, Math.max(0, height - 2 * marginY - 1))
+          ? Math.min(49, Math.max(0, height - 2 * marginY - 1))
           : 0;
         return {
           left: area.left + marginX,
@@ -671,9 +672,26 @@ export function SpatialMap({
       },
     };
   }
-  const locations = new Map(
-    points.filter((point) => point.visible).map((point) => [point.id, point]),
+  // Strengthen the depth cue while limiting foreground growth separately for
+  // symbols and text. Native click targets retain their minimum size.
+  const projectedLocations = new Map(
+    points
+      .filter((point) => point.visible)
+      .map((point) => [point.id, { ...point, scale: point.scale ** 2 }]),
   );
+  const locations = new Map(
+    [...projectedLocations].map(([id, point]) => [
+      id,
+      { ...point, scale: Math.min(point.scale, 1.15) },
+    ]),
+  );
+  function textScale(id: string, targetId?: string) {
+    const source = projectedLocations.get(id)?.scale ?? 1;
+    const scale = targetId
+      ? Math.sqrt(source * (projectedLocations.get(targetId)?.scale ?? source))
+      : source;
+    return Math.min(scale, 15 / 13);
+  }
   const surfaceWidth = canvas.current?.clientWidth ?? 0;
   const surfaceHeight = canvas.current?.clientHeight ?? 0;
   function labelSize(id: string, fallback: { width: number; height: number }) {
@@ -835,7 +853,7 @@ export function SpatialMap({
       const type = state.relationshipTypes.find((type) => type.id === edge.edge.typeId);
       const size = labelSize(`relationship-${edge.key}`, {
         width: Math.min(230, (type?.forwardLabel ?? type?.name ?? '').length * 7 + 24),
-        height: 30,
+        height: 44,
       });
       const positions = [0, 22, -22, 44, -44, 66, -66, 88, -88, 110, -110, 132, -132].flatMap(
         (offset) =>
@@ -1361,7 +1379,13 @@ export function SpatialMap({
               className={`spatial-edge ${kind}${selected ? ' selected' : ''}`}
               aria-label={`Välj ${previous ? 'tidigare samband' : 'samband'}: ${relationshipLabel(edge, state, objects)}`}
               aria-describedby={`${relationshipLabelPrefix}-${previous ? 'previous' : 'current'}-${edge.id}`}
-              style={{ left: x, top: y }}
+              style={
+                {
+                  left: x,
+                  top: y,
+                  '--label-scale': textScale(edge.sourceId, edge.targetId ?? undefined),
+                } as CSSProperties
+              }
               onClick={() => onSelectRelationship(edge, previous)}
               onDoubleClick={() => onOpenRelationshipDetails(edge, previous)}
               onKeyDown={(event) => {
@@ -1373,6 +1397,7 @@ export function SpatialMap({
             >
               <span
                 id={`${relationshipLabelPrefix}-${previous ? 'previous' : 'current'}-${edge.id}`}
+                className="spatial-label-card"
               >
                 <span className="spatial-caption">
                   <ProposalSymbol
@@ -1410,9 +1435,11 @@ export function SpatialMap({
                 data-object-label={id}
                 ref={observeLabel}
                 className={`spatial-name ${kind}${searchHitIds && !searchHitIds.has(id) ? ' search-context' : ''}${adjacent.size && !adjacent.has(id) ? ' subdued' : ''}`}
-                style={{ left: label.x, top: label.y }}
+                style={
+                  { left: label.x, top: label.y, '--label-scale': textScale(id) } as CSSProperties
+                }
               >
-                <span id={`${labelPrefix}-${id}`}>
+                <span id={`${labelPrefix}-${id}`} className="spatial-label-card">
                   <span className="spatial-caption">{object.name}</span>
                   {searchHitIds && (
                     <span className="spatial-search-kind">
@@ -1460,7 +1487,7 @@ export function SpatialMap({
                 >
                   <span
                     className="spatial-orb"
-                    style={{ width: 34 * point.scale, height: 34 * point.scale }}
+                    style={{ '--symbol-scale': point.scale } as CSSProperties}
                   >
                     <SpatialObjectGlyph
                       typeName={state.types.find((type) => type.id === object.typeId)?.name ?? ''}

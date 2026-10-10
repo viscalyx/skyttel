@@ -505,12 +505,16 @@ footer[hidden] {
   color: var(--space-text);
   border-color: var(--space-line);
 }
-.household-map.workspace-shell .spatial-edge,
-.household-map.workspace-shell .spatial-name,
+.household-map.workspace-shell .spatial-label-card {
+  background: var(--space-surface);
+}
 .household-map.workspace-shell .spatial-orb {
   background: var(--space-surface);
   color: var(--space-text);
   border-color: var(--space-line);
+}
+.household-map.workspace-shell :is(.spatial-node, .spatial-name, .spatial-edge) {
+  background: transparent;
 }
 .household-map.workspace-shell .workspace-utility .panel {
   padding: 0;
