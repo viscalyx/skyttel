@@ -38,9 +38,9 @@ answers are shown for comparison and never correct a model's choice.</p>
 <section aria-labelledby="free">
   <h2 id="free">Try actions in any order</h2>
   <div id="requests"></div>
-  <button id="edge">Try to create the proposed relationship</button>
-  <button id="save">Try to save the whole draft</button>
-  <button id="reset">Reset</button>
+  <button type="button" id="edge">Try to create the proposed relationship</button>
+  <button type="button" id="save">Try to save the whole draft</button>
+  <button type="button" id="reset">Reset</button>
 </section>
 <section aria-labelledby="guided">
   <h2 id="guided">Guided walkthroughs</h2>
@@ -104,7 +104,7 @@ answers are shown for comparison and never correct a model's choice.</p>
     } else state = transition(state, { type: action });
     render();
   }
-  function button(text, callback) { const element = document.createElement('button'); element.textContent = text; element.onclick = callback; return element; }
+  function button(text, callback) { const element = document.createElement('button'); element.type = 'button'; element.textContent = text; element.onclick = callback; return element; }
   function render() {
     const fields = { 'Latest request': state.request, 'Classifier decision': label(state.decision), 'Reference outcome': label(state.expected), 'Reported confidence': state.confidence ?? 'Unavailable', 'Pending question': state.question ?? 'None', 'Resolved direction': label(state.direction ?? 'Unresolved'), 'Draft relationship': label(state.edge ?? 'None'), 'Current save authority': state.saveAuthority ? 'Granted by classifier' : 'Absent', 'Simulated save': state.saved ? 'Completed' : 'Not completed', 'Blocked attempts': state.blocked };
     byId('state').replaceChildren();
