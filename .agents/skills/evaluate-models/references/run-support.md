@@ -34,6 +34,11 @@ the evaluation process, or explain which environment reload or session restart
 is needed. Give instructions for the selected provider rather than an assumed
 provider. Keep credential values out of chat, reports and committed files.
 
+If the provider rejects requests because of quota, credits or an enforced
+account spending limit, stop paid execution and explain the provider's error
+and the account setting needed to restore API access. Record untested models
+as unrun and preserve the rejected request's evidence and cost accounting.
+
 ### Spending
 
 Credentials and opt-in flags are configuration. Require explicit authorization
