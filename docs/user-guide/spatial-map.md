@@ -52,7 +52,12 @@ Ett redan markerat objekt behåller de andra markeringarna. Ctrl-klick
 eller Cmd-klick lägger till eller tar bort objekt. Samtliga markerades
 direkta samband framhävs och antalet visas vid flerval. Symbolen visar
 objektets profilbild eller en ikon för dess typ.
-Namnet visas bredvid symbolen. Förslag på samband visar etiketter direkt. När du
+Namnet visas bredvid symbolen. Symboler, text och deras bakgrunder blir
+mindre längre bort i vyn. Närmare innehåll blir något större, med begränsad
+förstoring så att det inte tar över utsnittet. Klickytorna behåller sin
+minsta storlek även när innehållet ser mindre ut. Om ett namn är svårt att
+läsa kan du zooma, fokusera objektet eller använda **Tabell**.
+Förslag på samband visar etiketter direkt. När du
 väljer ett objekt visas
 även etiketterna för dess sparade samband. **Alla etiketter** visar även de
 andra sambandsnamnen.

@@ -4,6 +4,7 @@ import { afterEach, expect, test } from 'vitest';
 import { cdp, page, userEvent } from 'vitest/browser';
 import { SpatialMap } from '../../src/client/SpatialMap.js';
 import '../../src/client/styles.css';
+import '../../src/client/workspace.css';
 import type { MapRevealRequest } from '../../src/client/map-display.js';
 import type { MapState } from '../../src/shared/map.js';
 import { defaultViewSettings, type PersonalView } from '../../src/shared/personal-view.js';
@@ -113,12 +114,14 @@ function MapView({
   active = true,
   revealRequest,
   positions = [],
+  theme = 'dark',
 }: {
   mapState?: MapState;
   relationships?: MapState['relationships'];
   active?: boolean;
   revealRequest?: MapRevealRequest;
   positions?: PersonalView['positions'];
+  theme?: 'light' | 'dark';
 } = {}) {
   const [settingsMount, setSettingsMount] = useState<HTMLDivElement | null>(null);
   const [view, setView] = useState<PersonalView>({
@@ -143,6 +146,7 @@ function MapView({
       <pre data-placement>{JSON.stringify(view.positions)}</pre>
       <div ref={setSettingsMount} />
       <SpatialMap
+        theme={theme}
         settingsMount={settingsMount}
         personal={{
           view,
@@ -227,10 +231,12 @@ test('RYMD-13: relationship lines and object symbols retain overlap depth throug
   const kim = page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
   await expect.element(kim).toBeVisible();
   const surface = document.querySelector('.spatial-surface') as HTMLElement;
-  const lineVisibleOnKim = async (offset = 10) => {
+  const lineVisibleOnKim = async (direction = 1) => {
     const surface = document.querySelector('.spatial-surface') as HTMLElement;
     const line = document.querySelector('line.connection') as SVGLineElement;
     const node = kim.element().getBoundingClientRect();
+    const orb = kim.element().querySelector('.spatial-orb') as HTMLElement;
+    const offset = direction * orb.getBoundingClientRect().width * 0.325;
     const box = surface.getBoundingClientRect();
     const x = node.left + node.width / 2 - box.left + offset;
     const x1 = Number(line.getAttribute('x1'));
@@ -238,7 +244,6 @@ test('RYMD-13: relationship lines and object symbols retain overlap depth throug
     const x2 = Number(line.getAttribute('x2'));
     const y2 = Number(line.getAttribute('y2'));
     const y = y1 + ((x - x1) / (x2 - x1)) * (y2 - y1);
-    const orb = kim.element().querySelector('.spatial-orb') as HTMLElement;
     expect(Math.hypot(offset, y - (node.top + node.height / 2 - box.top))).toBeLessThan(
       orb.getBoundingClientRect().width / 2 - 2,
     );
@@ -308,8 +313,108 @@ test('RYMD-13: relationship lines and object symbols retain overlap depth throug
     />,
   );
   await expect.element(kim).toBeVisible();
-  expect(await lineVisibleOnKim(-10)).toBe(true);
-  expect(await lineVisibleOnKim(10)).toBe(false);
+  expect(await lineVisibleOnKim(-1)).toBe(true);
+  expect(await lineVisibleOnKim(1)).toBe(false);
+});
+
+test('RYMD-14: depth-scaled symbols, text and backgrounds preserve targets and foreground limits', async ({
+  onTestFinished,
+}) => {
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  onTestFinished(() => page.viewport(viewport.width, viewport.height));
+  for (const [width, height] of [
+    [1280, 1000],
+    [390, 844],
+  ]) {
+    await page.viewport(width, height);
+    for (const theme of ['light', 'dark'] as const) {
+      const map = render(
+        <div className="household-map workspace-shell" data-theme={theme}>
+          <MapView
+            theme={theme}
+            mapState={{ ...state, draft: { version: 0, changes: [] } }}
+            relationships={[state.relationships[0]]}
+            positions={[
+              { id: 'lo', x: -6.008, y: 1.593, z: 12.701, version: 1 },
+              { id: 'music', x: 6.008, y: -1.593, z: -12.701, version: 1 },
+              { id: 'kim', x: 0, y: 0, z: 0, version: 1 },
+            ]}
+          />
+        </div>,
+      );
+      const near = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+      const far = page.getByRole('button', { name: 'Välj objekt: Musikspelaren', exact: true });
+      const farName = page.getByRole('button', {
+        name: 'Markera objekt: Musikspelaren',
+        exact: true,
+      });
+      await expect.element(near).toBeVisible();
+      await expect.element(farName).toBeVisible();
+      const orbSize = (element: Element) =>
+        (element.querySelector('.spatial-orb') as HTMLElement).getBoundingClientRect().width;
+      await expect.poll(() => orbSize(near.element()) > orbSize(far.element())).toBe(true);
+      const nameFont = (id: string) =>
+        Number.parseFloat(
+          getComputedStyle(
+            document.querySelector(`[data-object-label="${id}"] .spatial-caption`) as Element,
+          ).fontSize,
+        );
+      expect(nameFont('lo')).toBeGreaterThan(nameFont('music'));
+      const farCard = farName.element().querySelector('.spatial-label-card') as HTMLElement;
+      expect(farCard.getBoundingClientRect().height).toBeLessThan(
+        farName.element().getBoundingClientRect().height,
+      );
+      const positions = () =>
+        [...document.querySelectorAll<HTMLElement>('.spatial-node')].map((node) => [
+          node.dataset.objectId,
+          node.style.left,
+          node.style.top,
+        ]);
+      const beforeSelection = positions();
+      (farName.element() as HTMLElement).focus();
+      await userEvent.keyboard('{Enter}');
+      await expect.element(selectionStatus()).toHaveTextContent('Musikspelaren');
+      expect(positions()).toEqual(beforeSelection);
+      expect(farName.element().matches(':focus-visible')).toBe(true);
+      const checkPresentation = () => {
+        for (const node of document.querySelectorAll('.spatial-node')) {
+          const bounds = node.getBoundingClientRect();
+          expect(bounds.width).toBeGreaterThanOrEqual(44);
+          expect(bounds.height).toBeGreaterThanOrEqual(44);
+          expect(getComputedStyle(node).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+          const orb = orbSize(node);
+          expect(orb).toBeGreaterThanOrEqual(16.6);
+          expect(orb).toBeLessThanOrEqual(39.2);
+          const icon = (node.querySelector('svg') as SVGSVGElement).getBoundingClientRect().width;
+          expect(icon / orb).toBeCloseTo(24 / 34, 2);
+        }
+        for (const label of document.querySelectorAll('.spatial-name, .spatial-edge')) {
+          const bounds = label.getBoundingClientRect();
+          expect(bounds.width).toBeGreaterThanOrEqual(44);
+          expect(bounds.height).toBeGreaterThanOrEqual(44);
+          expect(getComputedStyle(label).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+          const card = label.querySelector('.spatial-label-card') as HTMLElement;
+          expect(getComputedStyle(card).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+          const font = Number.parseFloat(
+            getComputedStyle(label.querySelector('.spatial-caption') as Element).fontSize,
+          );
+          expect(font).toBeLessThanOrEqual(label.classList.contains('spatial-name') ? 15 : 14);
+        }
+      };
+      checkPresentation();
+      await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
+      await expect.poll(() => document.querySelectorAll('[data-object-label]').length).toBe(3);
+      await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+      for (const command of ['Zooma in', 'Zooma in', 'Rotera vänster', 'Zooma ut']) {
+        await page.getByRole('button', { name: command, exact: true }).click();
+        await expect.poll(() => positions()).not.toEqual(beforeSelection);
+        checkPresentation();
+        await expect.element(selectionStatus()).toHaveTextContent('Musikspelaren');
+      }
+      expect(document.querySelector('[data-placement]')?.textContent).toContain('12.701');
+      map.unmount();
+    }
+  }
 });
 
 test('the approved spatial presentation uses compact pictogram nodes, separate names and contextual relationship labels', async () => {

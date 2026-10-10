@@ -189,14 +189,18 @@
   stroke-dasharray: 6 5;
 }
 .spatial-labels .spatial-edge {
-  min-height: 30px;
+  display: grid;
+  place-items: center;
+  width: max-content;
+  min-width: 44px;
+  min-height: 44px;
   max-width: min(15rem, calc(100% - 16px));
-  padding: 3px 7px;
+  padding: 0;
   border: 0;
   border-radius: 4px;
   color: #8dbba5;
-  background: #132e25ed;
-  font-size: 12px;
+  background: transparent;
+  font-size: calc(12px * var(--label-scale, 1));
   line-height: 1.4;
   white-space: nowrap;
   pointer-events: auto;
@@ -256,21 +260,36 @@
   transform: translate(-50%, -50%);
 }
 .spatial-labels .spatial-name {
-  display: block;
+  display: grid;
+  place-items: center;
+  width: max-content;
   max-width: min(15rem, calc(100% - 16px));
   min-height: 44px;
-  padding: 2px 5px;
+  min-width: 44px;
+  padding: 0;
   border: 0;
   border-radius: 5px;
   pointer-events: auto;
   touch-action: none;
   cursor: pointer;
   color: #e4eee8;
-  background: #132e25e8;
+  background: transparent;
   text-align: center;
-  font-size: 13px;
+  font-size: calc(13px * var(--label-scale, 1));
   line-height: 1.4;
   white-space: nowrap;
+}
+.spatial-label-card {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  padding: calc(2px * var(--label-scale, 1)) calc(5px * var(--label-scale, 1));
+  border-radius: calc(5px * var(--label-scale, 1));
+  background: #132e25e8;
+}
+.spatial-edge .spatial-label-card {
+  padding: calc(3px * var(--label-scale, 1)) calc(7px * var(--label-scale, 1));
+  background: #132e25ed;
 }
 .spatial-caption {
   display: block;
@@ -280,13 +299,13 @@
 .spatial-type-name {
   display: block;
   color: #bfd6c1;
-  font-size: 11px;
+  font-size: calc(11px * var(--label-scale, 1));
 }
 .spatial-labels .ended-status {
   display: block;
   width: fit-content;
   margin: 0.2rem auto 0;
-  font-size: 0.7rem;
+  font-size: calc(0.7rem * var(--label-scale, 1));
 }
 .spatial-objects .spatial-node {
   --node-color: #8dbba5;
@@ -310,22 +329,22 @@
   background: transparent;
   border: 0;
 }
-.spatial-labels .spatial-edge:hover:enabled {
+.spatial-labels .spatial-edge:hover:enabled .spatial-label-card {
   background: #1c3c31;
   color: #e4eee8;
 }
 .spatial-orb {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: calc(34px * var(--symbol-scale, 1));
+  height: calc(34px * var(--symbol-scale, 1));
   border: 1.5px solid currentColor;
   border-radius: 50%;
   background: #203f31;
 }
 .spatial-type-icon {
-  width: 24px;
-  height: 24px;
+  width: calc(24px * var(--symbol-scale, 1));
+  height: calc(24px * var(--symbol-scale, 1));
 }
 .spatial-portrait {
   width: 100%;
@@ -629,7 +648,7 @@
 }
 .spatial-search-kind {
   display: block;
-  font-size: 12px;
+  font-size: calc(12px * var(--label-scale, 1));
   color: var(--space-text);
 }
 .spatial-object-actions button:hover:enabled,

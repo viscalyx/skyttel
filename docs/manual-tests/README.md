@@ -523,6 +523,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   täta etiketter, publicerat medlemsbortfall och återhämtning av grafik.
   RYMD-13 provar djupordning mellan symboler och samband under flyttning,
   efter kameranavigering och för linjer med olika ändpunktsdjup.
+  RYMD-14 provar storlek efter djup, skalade bakgrunder, begränsad
+  förstoring och valbara klickytor i ljusa och mörka mobil- och datorvyer.
   RYMD-11–12 skiljer fysisk pekning, orientering, zoom och faktisk
   symboltolkning från syntetisk Chromium-inmatning.
 
