@@ -64,7 +64,11 @@ commands and evidence in `localVerification`.
 Before payment, create each model issue using
 [issue templates](issue-templates.md). Each issue represents one model, effort
 and modality at a specific evaluation revision. A voice profile also identifies
-its backend model. Keep a separate directory and ledger for each model run.
+its backend model and effort selected from text evidence or supplied by the
+user. Resolve that selection before creating the voice issue; include the
+supporting text result or the user's explicit backend selection in its
+description. Keep a separate directory and ledger
+for each model run.
 
 Call `evaluateModels` through `npm run test:env -- tsx` using a temporary
 agent-written driver. Supply one selected text profile in `textProfiles`, or an

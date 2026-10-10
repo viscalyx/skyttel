@@ -31,6 +31,16 @@ Test each supplied model at its requested effort directly. A supplied high
 profile starts at high; lower-effort results are not prerequisites. Explore
 other efforts only when the user requests an effort survey.
 
+For a voice comparison, select the backend model and effort from the supplied
+models' text evidence before creating the voice issue. Reuse recorded text
+results or complete the selected text evaluations first. Choose the candidate
+whose correctness, response time and cost support the comparison, and record
+the linked text result and selection reason. If the text evidence supports no
+candidate, report the gap and defer automatic voice selection. A user-supplied
+voice backend can be evaluated directly, with its qualification state reported.
+Record the voice model and backend profile together; use the application's
+recorded voice result as the comparison reference.
+
 Search open and closed `model-evaluation` issues in `viscalyx/skyttel`,
 including corrections. Identify comparable results by catalog, fixture, commit,
 profile, scoring configuration, modality, limits and repetitions. Explain gaps

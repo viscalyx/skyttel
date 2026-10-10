@@ -2,8 +2,9 @@
 
 Create one `model-evaluation` issue per model and effort level, recording its
 modality. A model evaluated at low and high effort gets two separate issues.
-For voice,
-include the backend profile in the model identity. Fill the description before
+For voice, include the selected backend profile in the model identity and link
+the text evidence supporting its selection, or the user's explicit selection.
+Fill the description before
 payment and update its result and spending fields when execution ends. Keep
 versioned evidence in comments; link it from the description.
 
@@ -19,7 +20,8 @@ For evaluator defects or calibration failures, follow the exclusion guidance in
 `Model evaluation: <provider>/<model> | <effort> | <text or voice>`
 
 Use `not applicable` for models without an effort setting. For voice, write
-`<voice model> + <backend model>/<backend effort>` in the model field.
+`<voice model> + <backend model>` in the model field and the backend's effort
+in the effort field. Include both providers when they differ.
 Keep the title stable; the description carries the current outcome.
 
 ## Description template
@@ -42,6 +44,8 @@ with the application's recorded model. Correctness comes before time and cost.
 - Scenarios and repetitions: <catalog selection; preliminary or qualification>
 - Application model: <effective profile and recorded result issue, or missing>
 - Related results: <comparable issues; explicit rerun predecessor if present>
+- Voice backend selection: <linked text evidence and reason, explicit user
+  selection, or not applicable>
 
 ## Reproducibility
 
