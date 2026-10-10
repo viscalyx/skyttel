@@ -89,9 +89,10 @@ async function expectVisibleDirection(space: Locator) {
   const line = space.locator('line.connection');
   const { arrow, surface, target } = await line.evaluate((element: SVGLineElement) => {
     const region = element.closest('.spatial-map');
-    const svg = region?.querySelector('.spatial-lines');
+    const svg = element.ownerSVGElement;
+    const connection = element.closest('.spatial-connection');
     const node = region?.querySelector('[aria-label="Välj objekt: Molnmusik"]');
-    if (!svg || !node) throw new Error('The map and target must be visible');
+    if (!svg || !node || !connection) throw new Error('The map and target must be visible');
     const bounds = (item: Element) => {
       const { x, y, width, height } = item.getBoundingClientRect();
       return { x, y, width, height };
@@ -101,14 +102,14 @@ async function expectVisibleDirection(space: Locator) {
         start: { x: element.x1.baseVal.value, y: element.y1.baseVal.value },
         tip: { x: element.x2.baseVal.value, y: element.y2.baseVal.value },
         color: getComputedStyle(element).stroke.match(/\d+/g)?.map(Number) ?? [],
-        opacity: Number(getComputedStyle(element).opacity),
+        opacity: Number(getComputedStyle(connection).opacity),
         width: Number.parseFloat(getComputedStyle(element).strokeWidth),
       },
       surface: bounds(svg),
       target: bounds(node),
     };
   });
-  const svg = space.locator('svg.spatial-lines');
+  const svg = space.locator('svg.spatial-depth-lines');
   const tip = { x: arrow.tip.x + surface.x, y: arrow.tip.y + surface.y };
   expect(
     tip.x < target.x ||

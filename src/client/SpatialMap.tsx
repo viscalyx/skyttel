@@ -1481,39 +1481,52 @@ export function SpatialMap({
           {edges.map(({ edge, start, tip, bend, geometry, selected, kind, previous, key }) => {
             const maskId = `${occlusionPrefix}-${key}`;
             const occluders = connectionOcclusion(start, tip, locations.values(), bend);
+            const arrowOccluders = connectionOcclusion(tip, tip, locations.values());
+            const masks = [
+              { id: maskId, points: occluders },
+              { id: `${maskId}-arrow`, points: arrowOccluders },
+            ];
+            // A short shaft establishes the endpoint tangent for the marker.
+            // Its separate mask uses endpoint depth across the entire arrowhead.
+            const tangentX = tip.x - start.x;
+            const tangentY = tip.y - start.y - 2 * bend;
+            const tangentLength = Math.hypot(tangentX, tangentY) || 1;
             return (
-              <g key={key}>
+              <g key={key} className={`spatial-connection ${kind}${selected ? ' selected' : ''}`}>
                 <defs>
-                  {occluders.map((point) => (
-                    <clipPath key={point.id} id={`${maskId}-${point.id}`}>
-                      <circle cx={point.x} cy={point.y} r={point.radius} />
-                    </clipPath>
+                  {masks.map((mask) => (
+                    <g key={mask.id}>
+                      {mask.points.map((point) => (
+                        <clipPath key={point.id} id={`${mask.id}-${point.id}`}>
+                          <circle cx={point.x} cy={point.y} r={point.radius} />
+                        </clipPath>
+                      ))}
+                      <mask
+                        id={mask.id}
+                        maskUnits="userSpaceOnUse"
+                        x="0"
+                        y="0"
+                        width={surfaceWidth}
+                        height={surfaceHeight}
+                      >
+                        <rect width={surfaceWidth} height={surfaceHeight} fill="white" />
+                        {mask.points.map((point) => (
+                          <path
+                            key={point.id}
+                            clipPath={`url(#${mask.id}-${point.id})`}
+                            d={point.path}
+                            fill="black"
+                          />
+                        ))}
+                      </mask>
+                    </g>
                   ))}
-                  <mask
-                    id={maskId}
-                    maskUnits="userSpaceOnUse"
-                    x="0"
-                    y="0"
-                    width={surfaceWidth}
-                    height={surfaceHeight}
-                  >
-                    <rect width={surfaceWidth} height={surfaceHeight} fill="white" />
-                    {occluders.map((point) => (
-                      <path
-                        key={point.id}
-                        clipPath={`url(#${maskId}-${point.id})`}
-                        d={point.path}
-                        fill="black"
-                      />
-                    ))}
-                  </mask>
                 </defs>
                 {kind === 'removed' ? (
                   <path
                     d={geometry}
                     fill="none"
                     mask={occluders.length ? `url(#${maskId})` : undefined}
-                    markerEnd={`url(#spatial-arrow-${kind})`}
                     className={`connection ${kind}${previous ? ' previous' : ''}${selected ? ' selected' : ''}`}
                     data-previous-relationship={previous ? edge.id : undefined}
                   >
@@ -1529,10 +1542,16 @@ export function SpatialMap({
                     x2={tip.x}
                     y2={tip.y}
                     mask={occluders.length ? `url(#${maskId})` : undefined}
-                    markerEnd={`url(#spatial-arrow-${kind})`}
                     className={`connection ${kind}${selected ? ' selected' : ''}`}
                   />
                 )}
+                <path
+                  d={`M ${tip.x - (tangentX / tangentLength) * 0.001} ${tip.y - (tangentY / tangentLength) * 0.001} L ${tip.x} ${tip.y}`}
+                  fill="none"
+                  mask={arrowOccluders.length ? `url(#${maskId}-arrow)` : undefined}
+                  markerEnd={`url(#spatial-arrow-${kind})`}
+                  className={`connection-arrow-shaft ${kind}${selected ? ' selected' : ''}`}
+                />
               </g>
             );
           })}

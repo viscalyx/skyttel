@@ -147,37 +147,46 @@
   z-index: 2;
 }
 .connection,
+.connection-arrow-shaft,
 .connection-arrow {
   --connection-color: #8dbba5;
 }
-:is(.connection, .connection-arrow).added {
+:is(.connection, .connection-arrow-shaft, .connection-arrow).added {
   --connection-color: var(--proposal-added, #64dfa0);
 }
-:is(.connection, .connection-arrow).changed {
+:is(.connection, .connection-arrow-shaft, .connection-arrow).changed {
   --connection-color: var(--proposal-changed, #fbbf24);
 }
-:is(.connection, .connection-arrow).removed {
+:is(.connection, .connection-arrow-shaft, .connection-arrow).removed {
   --connection-color: var(--proposal-removed, #ff858a);
 }
-.connection {
+.connection,
+.connection-arrow-shaft {
   stroke: var(--connection-color);
   stroke-width: 1.4;
+}
+.spatial-connection {
   opacity: 0.25;
 }
-/* The line's opacity already applies to its marker. */
+/* Group opacity composites the shaft and its marker together. */
 .connection-arrow {
   fill: var(--connection-color);
 }
-.connection.selected {
-  opacity: 0.95;
+.connection.selected,
+.connection-arrow-shaft.selected {
   stroke-width: 2;
 }
-.connection:is(.added, .changed) {
+.spatial-connection.selected {
+  opacity: 0.95;
+}
+.spatial-connection:is(.added, .changed) {
   opacity: 0.7;
+}
+.spatial-connection.removed {
+  opacity: 0.6;
 }
 .connection.removed {
   stroke-dasharray: 6 5;
-  opacity: 0.6;
 }
 .spatial-labels .spatial-edge {
   min-height: 30px;
@@ -522,7 +531,8 @@
   pointer-events: stroke;
   cursor: pointer;
 }
-.spatial-depth-lines .connection {
+.spatial-depth-lines .connection,
+.spatial-depth-lines .connection-arrow-shaft {
   pointer-events: none;
 }
 .connection-hit {

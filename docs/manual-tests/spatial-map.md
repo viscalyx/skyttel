@@ -752,7 +752,7 @@ skilda betydelser på faktiska återgivna objekt och samband.
       "suite": "browser",
       "spec": "tests/browser/spatial-occlusion.test.tsx",
       "title": "a foreground branch of a retraced curved relationship remains visible over an object",
-      "purpose": "Pixelprov av djupmasken för en böjd linje som återvänder över samma skärmpunkter; inte ett fullständigt arbetsflöde."
+      "purpose": "Pixelprov av djupmaskerna för en böjd linje som återvänder över samma skärmpunkter och dess pilspets; inte ett fullständigt arbetsflöde."
     }
   ]
 }
@@ -775,7 +775,8 @@ beständigt sparande mot verklig server provas separat i RYMD-05.
 **Ytterligare underlag:**
 [spatial-occlusion.test.tsx](../../tests/browser/spatial-occlusion.test.tsx)
 provar djupmaskens faktiska bildpunkter för en böjd linje som återvänder
-över samma skärmpunkter. Det är ett avgränsat tekniskt prov.
+över samma skärmpunkter och för dess pilspets.
+Det är ett avgränsat tekniskt prov.
 
 **Steg:**
 

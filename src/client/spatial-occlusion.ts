@@ -47,7 +47,7 @@ export function connectionOcclusion(
       : 0;
     if (
       Math.hypot(point.x - source.x - dx * t, point.y - source.y - dy * t) >
-      radius + 10 + Math.abs(bend) / 2
+      radius + 16 + Math.abs(bend) / 2
     )
       continue;
     // Reciprocal camera depth is linear in projected screen distance.
