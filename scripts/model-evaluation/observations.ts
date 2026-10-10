@@ -27,6 +27,17 @@ export function modelActions(events: AssistantObservation[]) {
       };
     });
 }
+
+/** Status reads emit MCP diagnostics too; only task MCP calls represent
+ * conversation activity that should extend voice quiet observation. */
+export function lastVoiceActivityAt(events: AssistantObservation[], fallback: number) {
+  return (
+    events.findLast(
+      (event) => !['mcp_started', 'mcp_completed'].includes(event.kind) || Boolean(event.taskId),
+    )?.at ?? fallback
+  );
+}
+
 export function concludeAttempt(result: Attempt, elapsedMs: number | null) {
   result.outcome =
     result.fixed.length || result.content?.some((item) => item.outcome === 'fail')

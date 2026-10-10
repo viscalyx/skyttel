@@ -6,6 +6,7 @@ import { evaluationEnvironment } from './environment.js';
 import {
   concludeAttempt,
   failAttempt,
+  lastVoiceActivityAt,
   modelActions,
   observationDiagnostics,
   retainedObservation,
@@ -155,7 +156,7 @@ export async function runVoiceScenario(
             );
             output = outputs.map((event) => (event.data as { delta: string }).delta).join('');
             latestOutput = outputs.at(-1)?.at ?? startedAt;
-            latestEvent = observed.at(-1)?.at ?? startedAt;
+            latestEvent = lastVoiceActivityAt(observed, startedAt);
             const actions = modelActions(observed);
             fixed = await environment.check(step, view, actions);
             if (scenario.selection && view.displayedSelection !== scenario.selection)
