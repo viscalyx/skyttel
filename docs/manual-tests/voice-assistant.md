@@ -900,10 +900,11 @@ till TAL-17/23/24.
 2. Låt inkommande aktivitet börja medan mikrofonaktiviteten finns kvar. Skyttel
    talar ska gå före Du talar.
 3. Låt Beskriv utkastet vänta och läs Skyttel arbetar före båda andra
-   statusarna. Låt Utkastet har ett förslag. tillkomma enligt tidslinjen;
-   Skyttel talar återkommer.
-4. Emulera minskad rörelse. Läs samma stilla staplar för inkommande och egen
-   aktivitet. När båda avslutas återkommer sju stilla punkter och Lyssnar.
+   statusarna. Låt mikrofonaktiviteten upphöra och låt Utkastet har ett
+   förslag. tillkomma enligt tidslinjen; Skyttel talar återkommer.
+4. Emulera minskad rörelse. Läs samma stilla staplar för inkommande och
+   återupptagen egen aktivitet. När båda avslutas återkommer sju stilla
+   punkter och Lyssnar.
 
 **Förväntat resultat:**
 

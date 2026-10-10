@@ -1,6 +1,10 @@
 import { expect, test } from 'vitest';
 import catalog from '../../../scripts/model-evaluation/catalog.json' with { type: 'json' };
-import { compareProfiles, summarizeProfile } from '../../../scripts/model-evaluation/report.js';
+import {
+  compareEvaluationProfiles,
+  compareProfiles,
+  summarizeProfile,
+} from '../../../scripts/model-evaluation/report.js';
 import { referenceSpeech } from '../../../scripts/model-evaluation/speech.js';
 import type { Attempt } from '../../../scripts/model-evaluation/types.js';
 
@@ -59,4 +63,109 @@ test('the eight voice scenarios use all thirteen original verified PCM clips', {
     frames += reference.clip.frames;
   }
   expect(frames).toBe(6_849_024);
+});
+
+test('one supplied candidate can be recommended using a recorded text or voice reference', {
+  tags: ['technical'],
+}, () => {
+  const summary = {
+    profile: 'reference',
+    modality: 'text' as 'text' | 'voice',
+    qualified: true,
+    finalQualified: true,
+    meanScenarioMedianMs: 10_000,
+    totals: [10_000, 10_000, 10_000],
+    scenarioTimes: [{ scenario: 'one', medianMs: 10_000, minMs: 10_000, maxMs: 10_000 }],
+    outcomes: { pass: 3 },
+    backendCostUsd: 0.03,
+  };
+  for (const modality of ['text', 'voice'] as const) {
+    const reference = {
+      issue: 300,
+      url: 'https://github.com/viscalyx/skyttel/issues/300',
+      commit: 'same',
+      catalogSha256: 'catalog',
+      judgeSha256: 'judge',
+      summary: { ...summary, modality },
+    };
+    const candidate = {
+      ...summary,
+      profile: 'supplied',
+      modality,
+      meanScenarioMedianMs: 8000,
+      totals: [8000, 8000, 8000],
+    };
+    const current = {
+      commit: 'same',
+      catalogSha256: 'catalog',
+      judgeSha256: 'judge',
+      baselineProfiles: { [modality]: 'reference' },
+    };
+    const result = compareEvaluationProfiles([candidate], [reference], current);
+    expect(result.comparisons).toEqual([]);
+    expect(result.historicalComparisons).toHaveLength(1);
+    expect(result.recommendation).toContain('motiverar ett byte');
+    expect(result.recommendationBasis).toMatchObject({
+      reference: 'reference',
+      referenceIssue: 300,
+      candidate: 'supplied',
+      rule: true,
+    });
+    expect(
+      compareEvaluationProfiles([candidate], [reference], {
+        ...current,
+        commit: 'changed',
+      }).recommendationBasis,
+    ).toBeNull();
+    expect(
+      compareEvaluationProfiles([{ ...candidate, finalQualified: false }], [reference], current)
+        .recommendationBasis,
+    ).toBeNull();
+    expect(
+      compareEvaluationProfiles(
+        [candidate],
+        [
+          {
+            ...reference,
+            summary: {
+              ...reference.summary,
+              finalQualified: false,
+              qualified: false,
+              outcomes: { not_run: 3 },
+            },
+          },
+        ],
+        current,
+      ).recommendationBasis,
+    ).toBeNull();
+    expect(
+      compareEvaluationProfiles(
+        [candidate],
+        [
+          {
+            ...reference,
+            summary: {
+              ...reference.summary,
+              finalQualified: false,
+              qualified: false,
+              outcomes: { fail: 1, pass: 2 },
+            },
+          },
+        ],
+        current,
+      ).recommendationBasis,
+    ).toMatchObject({ referenceIssue: 300, baseline: true });
+    for (const judgeSha256 of ['different-judge', undefined]) {
+      expect(
+        compareEvaluationProfiles([candidate], [{ ...reference, judgeSha256 }], current)
+          .recommendationBasis,
+      ).toBeNull();
+    }
+    expect(
+      compareEvaluationProfiles([candidate], [reference], {
+        ...current,
+        baselineProfiles: { [modality]: 'current-application-model' },
+      }).recommendationBasis,
+    ).toBeNull();
+  }
 });

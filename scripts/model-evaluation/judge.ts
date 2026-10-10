@@ -30,6 +30,8 @@ const resultSchema = z
   .strict();
 
 export function contentJudge(apiKey: string, provider: ReturnType<typeof budgetedProvider>) {
+  const { profile } = provider;
+  if (profile.role !== 'judge') throw new Error('evaluation_judge_profile_required');
   const client = new OpenAI({
     apiKey,
     fetch: provider.fetch,
@@ -41,9 +43,9 @@ export function contentJudge(apiKey: string, provider: ReturnType<typeof budgete
     provider.beginStep();
     try {
       const response = await client.responses.create({
-        model: 'gpt-6.1-sol',
-        reasoning: { effort: 'high' },
-        service_tier: 'default',
+        model: profile.model,
+        reasoning: { effort: profile.effort },
+        service_tier: profile.serviceTier,
         store: false,
         max_output_tokens: 4096,
         tools: [],

@@ -104,7 +104,7 @@ export function compareProfiles(
   reference: ReturnType<typeof summarizeProfile>,
   candidate: ReturnType<typeof summarizeProfile>,
 ) {
-  if (!reference.finalQualified && candidate.finalQualified)
+  if (!reference.finalQualified && reference.outcomes.fail > 0 && candidate.finalQualified)
     return {
       label: 'Ej jämförbart',
       recommendation:
@@ -149,5 +149,87 @@ export function compareProfiles(
         ? [{ scenario: item.scenario, deltaSeconds: (item.medianMs - old.medianMs) / 1000 }]
         : [];
     }),
+  };
+}
+
+type ProfileSummary = ReturnType<typeof summarizeProfile>;
+export type RecordedReference = {
+  issue: number;
+  url: string;
+  commit: string;
+  catalogSha256: string;
+  judgeSha256?: string;
+  summary: ProfileSummary;
+};
+
+/** Recorded references contribute to the same decision as current profiles,
+ * without scheduling provider calls for the reference model. */
+export function compareEvaluationProfiles(
+  summaries: ProfileSummary[],
+  references: RecordedReference[],
+  current: {
+    commit: string;
+    catalogSha256: string;
+    judgeSha256: string;
+    baselineProfiles: Partial<Record<'text' | 'voice', string>>;
+  },
+) {
+  const comparisons = summaries.flatMap((candidate) => {
+    const reference = summaries.find(
+      (item) =>
+        item.modality === candidate.modality &&
+        item.profile === current.baselineProfiles[candidate.modality],
+    );
+    return reference && reference !== candidate
+      ? [
+          {
+            reference: reference.profile,
+            candidate: candidate.profile,
+            baseline: true,
+            ...compareProfiles(reference, candidate),
+          },
+        ]
+      : [];
+  });
+  const historicalComparisons = references.flatMap((reference) =>
+    summaries
+      .filter((candidate) => candidate.modality === reference.summary.modality)
+      .map((candidate) => ({
+        reference: reference.summary.profile,
+        referenceIssue: reference.issue,
+        referenceUrl: reference.url,
+        candidate: candidate.profile,
+        baseline: reference.summary.profile === current.baselineProfiles[candidate.modality],
+        ...(reference.commit === current.commit &&
+        reference.catalogSha256 === current.catalogSha256 &&
+        reference.judgeSha256 === current.judgeSha256
+          ? compareProfiles(reference.summary, candidate)
+          : {
+              label: 'Ej jämförbart',
+              recommendation:
+                'Ändrad eller okänd kod, katalog eller bedömarkonfiguration: bedöm skillnaderna innan jämförelse.',
+              changed: {
+                commit: reference.commit !== current.commit,
+                catalog: reference.catalogSha256 !== current.catalogSha256,
+                judge: reference.judgeSha256 !== current.judgeSha256,
+              },
+            }),
+      })),
+  );
+  const eligible = [...comparisons, ...historicalComparisons].filter(
+    (item) =>
+      item.baseline &&
+      !('changed' in item) &&
+      item.recommendation !== 'Otillräckligt underlag för ett modellbyte.',
+  );
+  const basis =
+    eligible.find((item) => 'rule' in item && item.rule) ??
+    eligible.find((item) => !('rule' in item)) ??
+    eligible[0];
+  return {
+    comparisons,
+    historicalComparisons,
+    recommendation: basis?.recommendation ?? 'Otillräckligt underlag för ett modellbyte.',
+    recommendationBasis: basis ?? null,
   };
 }

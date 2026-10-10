@@ -12,6 +12,22 @@ export type LiveEvaluationProfile = {
   backend: string;
 };
 
+export function verifiedLiveProfile(profile: LiveEvaluationProfile) {
+  if (profile.provider !== 'openai')
+    throw new Error(`evaluation_provider_unsupported:${profile.provider}`);
+  if (
+    !/^[a-z0-9.-]+$/.test(profile.model) ||
+    !Number.isSafeInteger(profile.tokens) ||
+    profile.tokens <= 0 ||
+    !Number.isFinite(profile.usdPerMinute) ||
+    profile.usdPerMinute <= 0 ||
+    !profile.sources.length ||
+    !profile.checkedAt
+  )
+    throw new Error('evaluation_live_profile_unverified');
+  return profile;
+}
+
 /** A dialog reservation includes audio, startup, collection and intermediate
  * judge waits. Partial usage never releases the outstanding hold. */
 export function budgetedLive(
@@ -23,17 +39,7 @@ export function budgetedLive(
     (profile) => profile.role === 'voice',
   ) as LiveEvaluationProfile,
 ) {
-  if (
-    profile.provider !== 'openai' ||
-    !/^[a-z0-9.-]+$/.test(profile.model) ||
-    !Number.isSafeInteger(profile.tokens) ||
-    profile.tokens <= 0 ||
-    !Number.isFinite(profile.usdPerMinute) ||
-    profile.usdPerMinute <= 0 ||
-    !profile.sources.length ||
-    !profile.checkedAt
-  )
-    throw new Error('evaluation_live_profile_unverified');
+  verifiedLiveProfile(profile);
   if (!Number.isSafeInteger(maximumSeconds) || maximumSeconds <= 0 || maximumSeconds > 3420)
     throw new Error('evaluation_live_time_limit');
   const pending: string[] = [];

@@ -1,6 +1,6 @@
 interface:
   display_name: "Evaluate Models"
   short_description: "Compare Skyttel models with recorded evidence"
-  default_prompt: "Use $evaluate-models to run Skyttel's scenario catalog within my authorized budget and record comparable results."
+  default_prompt: "Use $evaluate-models to evaluate the models I supply, compare them with recorded results within my authorized budget, and recommend a model based on correctness, response time and cost."
 policy:
   allow_implicit_invocation: false

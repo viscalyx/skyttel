@@ -27,17 +27,28 @@ specified model profiles and repetitions. Its **run issue** is a GitHub
 issue labelled `model-evaluation`; **result history** is the collection of
 those issues and their versioned result comments, including corrections.
 
+The comparison baseline is the model currently configured in the application
+and its corresponding result in a labelled run issue. Every evaluation follows
+the same workflow and creates a new run issue.
+
 Invoke `$evaluate-models` with one or more models, the intended comparison
 and an explicit spending limit. An initial survey uses one repetition;
 qualification uses three. Previously tested models are compared using their
 recorded results and run again only when explicitly supplied for the new
-run. A stopped or incomplete run remains useful evidence but cannot establish
-a model's qualification.
+run. A supplied effort is tested directly; testing high does not require
+testing low or medium first. Other efforts are explored only for a requested
+effort survey. A stopped or incomplete run remains useful evidence but cannot
+establish a model's qualification.
+
+Identify the API provider for each model; specify it when the model name is
+ambiguous. Required credentials must be available to the evaluation process.
+Missing credentials stop paid execution with provider-specific setup guidance.
 
 Find past runs in
 [open and closed evaluation issues](https://github.com/viscalyx/skyttel/issues?q=is%3Aissue%20label%3Amodel-evaluation).
 Read the run manifest before comparing results: catalog, application commit,
-profiles, modality and repetition plan must match. Read every correction
+scoring configuration, modality and repetition plan must match. Review profile
+settings, limits and prices. Read every correction
 comment and the final recommendation. Raw provider requests and transcripts
 stay in ignored local artifacts; the issue carries shareable results.
 

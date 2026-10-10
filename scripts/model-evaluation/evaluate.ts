@@ -5,17 +5,23 @@ import Database from 'better-sqlite3';
 import audioManifest from './audio/manifest.json' with { type: 'json' };
 import { EvaluationBudget } from './budget.js';
 import rawCatalog from './catalog.json' with { type: 'json' };
-import { contentJudge, verifyJudge } from './judge.js';
+import { contentJudge, judgeInstructions, verifyJudge } from './judge.js';
 import controls from './judge-controls.json' with { type: 'json' };
-import { budgetedLive, type LiveEvaluationProfile } from './live.js';
+import { budgetedLive, type LiveEvaluationProfile, verifiedLiveProfile } from './live.js';
 import registry from './profiles.json' with { type: 'json' };
 import {
   budgetedProvider,
+  type EvaluationProfile,
   type ProviderCall,
   requestMaximum,
   verifiedProfile,
 } from './provider.js';
-import { compareProfiles, evaluationReporter, summarizeProfile } from './report.js';
+import {
+  compareEvaluationProfiles,
+  evaluationReporter,
+  type RecordedReference,
+  summarizeProfile,
+} from './report.js';
 import { runTextScenario } from './runner.js';
 import { referenceSpeech } from './speech.js';
 import type { Attempt, Catalog, Scenario } from './types.js';
@@ -32,16 +38,13 @@ export type EvaluationPlan = {
   commit: string;
   localVerification: { passed: boolean; commands: string[]; evidence: string };
   textProfiles: string[];
+  judgeProfile: EvaluationProfile;
+  baselineProfiles: Partial<Record<'text' | 'voice', string>>;
   voice?: boolean;
   voiceProfile?: LiveEvaluationProfile;
   repetitions?: number[];
-  references?: {
-    issue: number;
-    url: string;
-    commit: string;
-    catalogSha256: string;
-    summary: ReturnType<typeof summarizeProfile>;
-  }[];
+  escalateEffort?: boolean;
+  references?: RecordedReference[];
   // Exact counting, including its verified billing, is supplied only by an
   // agent after checking the official endpoint/model/pricing documentation.
   counting?: {
@@ -64,6 +67,35 @@ export async function evaluateModels(plan: EvaluationPlan) {
     plan.issue <= 0
   )
     throw new Error('evaluation_prerequisites_missing');
+  if (new Set(plan.textProfiles).size !== plan.textProfiles.length)
+    throw new Error('evaluation_duplicate_profiles');
+  if (!plan.judgeProfile) throw new Error('evaluation_judge_profile_required');
+  if (!plan.baselineProfiles) throw new Error('evaluation_baseline_configuration_required');
+  const judgeProfile = verifiedProfile(plan.judgeProfile.id, plan.judgeProfile);
+  if (judgeProfile.role !== 'judge') throw new Error('evaluation_judge_profile_required');
+  for (const id of plan.textProfiles) {
+    if (verifiedProfile(id).role !== 'backend')
+      throw new Error('evaluation_backend_profile_required');
+  }
+  if (plan.voice) {
+    if (!plan.voiceProfile) throw new Error('evaluation_voice_model_required');
+    const voiceProfile = verifiedLiveProfile(plan.voiceProfile);
+    if (verifiedProfile(voiceProfile.backend).role !== 'backend')
+      throw new Error('evaluation_backend_profile_required');
+  }
+  const judgeSha256 = createHash('sha256')
+    .update(
+      JSON.stringify({
+        provider: judgeProfile.provider,
+        model: judgeProfile.model,
+        effort: judgeProfile.effort,
+        serviceTier: judgeProfile.serviceTier,
+        outputLimit: judgeProfile.maxOutputTokens,
+        instructions: judgeInstructions,
+        controls,
+      }),
+    )
+    .digest('hex');
   const catalog = rawCatalog as Catalog;
   const directory = plan.directory;
   await mkdir(directory, { recursive: true });
@@ -108,7 +140,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
         }
       }
     : undefined;
-  const judgeProvider = budgetedProvider(verifiedProfile('judge-sol-high'), budget, {
+  const judgeProvider = budgetedProvider(judgeProfile, budget, {
     record,
     countInput: counted,
   });
@@ -141,7 +173,11 @@ export async function evaluateModels(plan: EvaluationPlan) {
       controls: controls.source,
       profiles: registry,
       repetitions,
+      escalateEffort: plan.escalateEffort ?? false,
       textProfiles: profiles,
+      judgeProfile,
+      judgeSha256,
+      baselineProfiles: plan.baselineProfiles,
       voice: plan.voice ?? false,
       voiceProfile,
       audio: audioManifest,
@@ -168,19 +204,26 @@ export async function evaluateModels(plan: EvaluationPlan) {
             singleBackendReservationUsd: requestMaximum(verifiedProfile(id), 8192),
             textTechnicalMaximumUsd:
               requestMaximum(verifiedProfile(id), 8192) * 913 +
-              requestMaximum(verifiedProfile('judge-sol-high'), 4096) * 20,
+              requestMaximum(judgeProfile, 4096) * 20,
           },
         ]),
       ),
     });
     await emit('local_verification', 'Lokal verifiering', plan.localVerification);
+    let previousJudgeCost: number | null = cost('judge');
     const calibrated = await verifyJudge(judge, async (id, result, expected) => {
+      const cumulativeJudgeCostUsd = cost('judge');
       await emit('judge_control', `Bedömarkontroll ${id}`, {
         id,
         result,
         expected,
-        costUsd: cost('judge'),
+        costUsd:
+          previousJudgeCost === null || cumulativeJudgeCostUsd === null
+            ? null
+            : cumulativeJudgeCostUsd - previousJudgeCost,
+        cumulativeJudgeCostUsd,
       });
+      previousJudgeCost = cumulativeJudgeCostUsd;
     });
     if (!calibrated) {
       budget.stop(budget.snapshot().reason ?? 'evaluation_judge_control_failed');
@@ -193,22 +236,10 @@ export async function evaluateModels(plan: EvaluationPlan) {
     for (const repetition of repetitions) {
       const order = repetition % 2 ? [...profiles] : [...profiles].reverse();
       for (const id of order) {
-        // Escalate only after a complete lower-effort round with a confirmed
-        // behavior failure. Errors/inconclusive rounds do not permit escalation.
+        // Explicit selections can start at any supported effort. Automatic
+        // survey escalation below requires a completed failed round.
         const model = id.replace(/-(low|medium|high)$/, '');
         const effort = id.split('-').at(-1);
-        const previous =
-          effort === 'medium' ? `${model}-low` : effort === 'high' ? `${model}-medium` : undefined;
-        if (
-          previous &&
-          (!attempts.some((item) => item.profile === previous && item.outcome === 'fail') ||
-            attempts
-              .filter((item) => item.profile === previous)
-              .some((item) =>
-                ['error', 'inconclusive', 'not_run', 'aborted'].includes(item.outcome),
-              ))
-        )
-          continue;
         const profile = verifiedProfile(id);
         const provider = budgetedProvider(profile, budget, { record, countInput: counted });
         for (const scenario of catalog.scenarios) {
@@ -240,6 +271,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
           (item) => item.profile === id && item.repetition === repetition,
         );
         if (
+          plan.escalateEffort === true &&
           repetitions.length === 1 &&
           effort !== 'high' &&
           round.some((item) => item.outcome === 'fail') &&
@@ -248,7 +280,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
           )
         ) {
           const next = `${model}-${effort === 'low' ? 'medium' : 'high'}`;
-          order.push(next);
+          if (!order.includes(next)) order.push(next);
           if (!profiles.includes(next)) profiles.push(next);
           await emit('diagnostic', 'Höjd resonemangsnivå', {
             previous: id,
@@ -330,56 +362,49 @@ export async function evaluateModels(plan: EvaluationPlan) {
       'voice',
       repetitions,
     );
-    const comparisons = summaries
-      .slice(1)
-      .map((candidate) => compareProfiles(summaries[0], candidate));
     const catalogSha256 = createHash('sha256').update(JSON.stringify(rawCatalog)).digest('hex');
-    const historicalComparisons = (plan.references ?? []).flatMap((reference) =>
-      summaries.map((candidate) => ({
-        referenceIssue: reference.issue,
-        referenceUrl: reference.url,
-        candidate: candidate.profile,
-        ...(reference.commit === plan.commit &&
-        reference.catalogSha256 === catalogSha256 &&
-        reference.summary.modality === candidate.modality
-          ? compareProfiles(reference.summary, candidate)
-          : {
-              label: 'Ej jämförbart',
-              recommendation:
-                'Ändrad kod, katalog eller modalitet: bedöm skillnaderna innan jämförelse.',
-              changed: {
-                commit: reference.commit !== plan.commit,
-                catalog: reference.catalogSha256 !== catalogSha256,
-                modality: reference.summary.modality !== candidate.modality,
-              },
-            }),
-      })),
-    );
-    await emit(
-      'diagnostic',
-      'Observerade provideranrop',
-      [...calls.values()].map((call) => ({
-        id: call.id,
-        requestId: call.requestId ?? null,
-        context: call.context ?? null,
-        profile: call.profile,
-        model: call.model,
-        kind: call.kind,
-        startedAt: call.startedAt,
-        endedAt: call.endedAt ?? null,
-        outcome: call.outcome,
-        costUsd: call.costUsd,
-        reservationUsd: call.reservationUsd,
-        toolCallIds: Array.isArray(call.response?.output)
-          ? call.response.output
-              .filter((item) => item && typeof item === 'object' && item.type === 'function_call')
-              .map((item) => item.call_id)
-          : [],
-        correlation: call.context
-          ? 'Observed step identity; tool-call IDs link to application model_action records.'
-          : 'Step identity unavailable; inspect the private request before attributing.',
-      })),
-    );
+    const { comparisons, historicalComparisons, recommendation, recommendationBasis } =
+      compareEvaluationProfiles(
+        [...summaries, ...(plan.voice ? [voice] : [])],
+        plan.references ?? [],
+        {
+          commit: plan.commit,
+          catalogSha256,
+          judgeSha256,
+          baselineProfiles: plan.baselineProfiles,
+        },
+      );
+    const diagnostics = [...calls.values()].map((call) => ({
+      id: call.id,
+      requestId: call.requestId ?? null,
+      context: call.context ?? null,
+      profile: call.profile,
+      model: call.model,
+      kind: call.kind,
+      startedAt: call.startedAt,
+      endedAt: call.endedAt ?? null,
+      outcome: call.outcome,
+      costUsd: call.costUsd,
+      reservationUsd: call.reservationUsd,
+      toolCallIds: Array.isArray(call.response?.output)
+        ? call.response.output
+            .filter((item) => item && typeof item === 'object' && item.type === 'function_call')
+            .map((item) => item.call_id)
+        : [],
+      correlation: call.context
+        ? 'Observed step identity; tool-call IDs link to application model_action records.'
+        : 'Step identity unavailable; inspect the private request before attributing.',
+    }));
+    let batch: typeof diagnostics = [];
+    for (const diagnostic of diagnostics) {
+      if (batch.length && JSON.stringify([...batch, diagnostic], null, 2).length > 45_000) {
+        await emit('diagnostic', 'Observerade provideranrop', batch);
+        batch = [];
+      }
+      batch.push(diagnostic);
+    }
+    if (batch.length || !diagnostics.length)
+      await emit('diagnostic', 'Observerade provideranrop', batch);
     await emit('comparison', 'Modelljämförelse', {
       profiles: summaries,
       voice,
@@ -387,18 +412,15 @@ export async function evaluateModels(plan: EvaluationPlan) {
       historicalComparisons,
     });
     await emit('recommendation', 'Rekommendation', {
-      recommendation:
-        comparisons.find(
-          (item) => item.recommendation !== 'Otillräckligt underlag för ett modellbyte.',
-        )?.recommendation ?? 'Otillräckligt underlag för ett modellbyte.',
+      recommendation,
+      recommendationBasis,
       preliminary: repetitions.length === 1,
-      completeBaseline:
+      qualificationComplete:
         repetitions.length === 3 &&
         calibrated &&
-        voice.finalQualified &&
-        summaries[0]?.finalQualified &&
-        summaries.slice(1).some((candidate) => candidate.finalQualified),
-      initialRoundCollected: attempts.every((item) => item.outcome !== 'not_run') && calibrated,
+        summaries.every((candidate) => candidate.finalQualified) &&
+        (!plan.voice || voice.finalQualified),
+      runCollected: attempts.every((item) => item.outcome !== 'not_run') && calibrated,
       missing: attempts
         .filter((item) => item.outcome !== 'pass')
         .map(({ scenario, step, profile, modality, outcome }) => ({
@@ -418,7 +440,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
             sum +
             requestMaximum(verifiedProfile(item.profile), item.step === 'summary' ? 4096 : 8192) *
               (item.step === 'summary' ? 1 : 48) +
-            requestMaximum(verifiedProfile('judge-sol-high'), 4096),
+            requestMaximum(judgeProfile, 4096),
           0,
         ),
       productionModelChanged: false,
@@ -429,7 +451,8 @@ export async function evaluateModels(plan: EvaluationPlan) {
     await emit('diagnostic', 'Körningen avbröts', { reason: budget.snapshot().reason });
     await emit('recommendation', 'Rekommendation efter avbrott', {
       recommendation: 'Otillräckligt underlag för ett modellbyte.',
-      completeBaseline: false,
+      qualificationComplete: false,
+      runCollected: false,
       budget: budget.snapshot(),
       completedAttempts: attempts.length,
       remaining:

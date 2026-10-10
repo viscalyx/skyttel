@@ -27,6 +27,8 @@ export type EvaluationProfile = {
 };
 export function verifiedProfile(id: string, temporary?: EvaluationProfile): EvaluationProfile {
   const value = temporary ?? registry.profiles.find((profile) => profile.id === id);
+  if (value && value.provider !== 'openai')
+    throw new Error(`evaluation_provider_unsupported:${value.provider}`);
   if (
     !value ||
     !('prices' in value) ||
@@ -137,6 +139,7 @@ export function budgetedProvider(
   let deadline = 0;
   let context: ProviderCall['context'];
   return {
+    profile,
     beginStep(audioMs = 0, step?: ProviderCall['context']) {
       calls = 0;
       context = step;
