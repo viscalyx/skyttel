@@ -1,6 +1,20 @@
 import type { AssistantObservation } from '../../src/server/assistant-observation.js';
 import type { Attempt } from './types.js';
 
+/** Full payloads go to the private stream; in-memory MCP diagnostics need
+ * only identity and timing. Other events retain their semantic evidence. */
+export function retainedObservation(
+  event: AssistantObservation,
+  record?: (event: AssistantObservation) => void,
+): AssistantObservation {
+  record?.(event);
+  if (record && ['mcp_started', 'mcp_completed'].includes(event.kind)) {
+    const data = event.data as { name: string; startedAt?: number };
+    return { ...event, data: { name: data.name, startedAt: data.startedAt } };
+  }
+  return structuredClone(event);
+}
+
 export function modelActions(events: AssistantObservation[]) {
   return events
     .filter((event) => event.kind === 'model_action')
@@ -21,6 +35,26 @@ export function concludeAttempt(result: Attempt, elapsedMs: number | null) {
         ? 'inconclusive'
         : 'pass';
   result.elapsedMs = result.outcome === 'pass' ? elapsedMs : null;
+}
+
+export function failAttempt(
+  result: Attempt,
+  error: unknown,
+  observedEndMs: number,
+  stop: { stopped: boolean; reason: string | null; attempted: boolean },
+) {
+  result.outcome = stop.stopped ? (stop.attempted ? 'aborted' : 'not_run') : 'error';
+  result.reason = stop.stopped
+    ? (stop.reason ?? 'evaluation_stopped')
+    : error instanceof Error
+      ? error.message
+      : 'evaluation_step_failed';
+  result.observedEndMs = result.outcome === 'not_run' ? undefined : observedEndMs;
+  if (stop.stopped) {
+    result.fixed = [];
+    result.content = undefined;
+    result.elapsedMs = null;
+  }
 }
 
 /** Metadata only for shareable diagnostics. Raw words and payloads remain in

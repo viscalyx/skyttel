@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { expect, test, vi } from 'vitest';
 import catalog from '../../../scripts/model-evaluation/catalog.json' with { type: 'json' };
 import { type EvaluationPlan, evaluateModels } from '../../../scripts/model-evaluation/evaluate.js';
+import controls from '../../../scripts/model-evaluation/judge-controls.json' with { type: 'json' };
 import type { LiveEvaluationProfile } from '../../../scripts/model-evaluation/live.js';
 import profiles from '../../../scripts/model-evaluation/profiles.json' with { type: 'json' };
 import { verifiedProfile } from '../../../scripts/model-evaluation/provider.js';
@@ -46,6 +47,12 @@ test('an explicitly selected high-effort model is accounted for without adding p
     await expect(
       evaluateModels({ ...plan, textProfiles: ['sol-high', 'sol-high'] }),
     ).rejects.toThrow('evaluation_duplicate_profiles');
+    await expect(
+      evaluateModels({ ...plan, textProfiles: ['sol-high', 'luna-low'] }),
+    ).rejects.toThrow('evaluation_one_model_per_issue');
+    await expect(
+      evaluateModels({ ...plan, textProfiles: ['sol-high'], voice: true }),
+    ).rejects.toThrow('evaluation_one_model_per_issue');
     await expect(evaluateModels({ ...plan, apiKey: '' })).rejects.toThrow(
       'evaluation_prerequisites_missing',
     );
@@ -58,6 +65,7 @@ test('an explicitly selected high-effort model is accounted for without adding p
     await expect(
       evaluateModels({
         ...plan,
+        textProfiles: [],
         voice: true,
         voiceProfile: { ...voiceProfile, backend: 'judge-sol-high' },
       }),
@@ -65,6 +73,7 @@ test('an explicitly selected high-effort model is accounted for without adding p
     await expect(
       evaluateModels({
         ...plan,
+        textProfiles: [],
         voice: true,
         voiceProfile: {
           ...voiceProfile,
@@ -78,3 +87,103 @@ test('an explicitly selected high-effort model is accounted for without adding p
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test.each([false, true])(
+  'budget refusal preserves paid counting=%s without a behavior verdict',
+  {
+    tags: ['technical'],
+  },
+  async (counting) => {
+    const directory = await mkdtemp(join(tmpdir(), 'skyttel-evaluation-refusal-'));
+    const judge = verifiedProfile('judge-sol-high');
+    let controlIndex = 0;
+    const localFetch = globalThis.fetch;
+    const network = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+      const address = new URL(url instanceof Request ? url.url : String(url));
+      if (address.hostname === '127.0.0.1') return localFetch(url, init);
+      expect(address.origin).toBe('https://api.openai.com');
+      const payload = JSON.parse(String(init?.body));
+      expect(payload.model).toBe(judge.model);
+      const control = controls.cases[controlIndex++];
+      expect(control).toBeDefined();
+      const text = JSON.stringify({
+        verdicts: Object.entries(control.expected).map(([id, outcome]) => ({
+          id,
+          outcome,
+          reason: 'Verifierat kontrollutfall.',
+        })),
+      });
+      return Response.json({
+        model: judge.model,
+        service_tier: 'default',
+        status: 'completed',
+        output_text: text,
+        output: [
+          {
+            type: 'message',
+            role: 'assistant',
+            content: [{ type: 'output_text', text, annotations: [] }],
+          },
+        ],
+        usage: {
+          input_tokens: 20,
+          output_tokens: 10,
+          input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+          output_tokens_details: { reasoning_tokens: 5 },
+        },
+      });
+    });
+    try {
+      const run = await evaluateModels({
+        issue: 341,
+        directory,
+        apiKey: 'not-a-real-key',
+        authorized: true,
+        limitUsd: 10,
+        priorUsd: 0,
+        priorSource: 'Isolated non-billable run.',
+        commit: 'test',
+        textProfiles: ['astra-low'],
+        judgeProfile: judge,
+        baselineProfiles: { text: 'terra-low' },
+        repetitions: [1],
+        counting: counting
+          ? {
+              source: 'Isolated synthetic counting transport, with a known test fee.',
+              feeUsd: 0.01,
+              count: async (payload) =>
+                payload.model === judge.model ? 20 : verifiedProfile('astra-low').maxInputTokens,
+            }
+          : undefined,
+        localVerification: {
+          passed: true,
+          commands: ['npm run test:unit'],
+          evidence: 'Isolated real application with fake provider transport.',
+        },
+      });
+      expect(controlIndex).toBe(19);
+      expect(run.budget).toMatchObject({
+        stopped: true,
+        reason: 'evaluation_budget_exceeded',
+        reservedUsd: 0,
+      });
+      expect(run.attempts).toHaveLength(20);
+      for (const [index, attempt] of run.attempts.entries()) {
+        const paid = counting && index === 0;
+        expect(attempt).toMatchObject({
+          outcome: paid ? 'aborted' : 'not_run',
+          fixed: [],
+          elapsedMs: null,
+          backendCostUsd: 0,
+        });
+        expect(attempt.content).toBeUndefined();
+        if (paid) expect(attempt.observedEndMs).toEqual(expect.any(Number));
+        else expect(attempt.observedEndMs).toBeUndefined();
+      }
+      expect(controlIndex).toBe(19);
+    } finally {
+      network.mockRestore();
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);

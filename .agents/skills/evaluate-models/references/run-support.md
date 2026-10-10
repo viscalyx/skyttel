@@ -37,10 +37,15 @@ provider. Keep credential values out of chat, reports and committed files.
 ### Spending
 
 Credentials and opt-in flags are configuration. Require explicit authorization
-for the complete dollar ceiling, including prior calls and outstanding holds.
+for the dollar ceiling and its scope: per model run or combined campaign.
+Include prior calls and outstanding holds within that scope. A per-run ceiling
+covers calibration, backend, summary, voice and counting for that model's entire
+run, rather than a new allowance for each scenario. Report campaign spending
+separately; preserve historical ledgers when the authorization scope changes.
 Verify prior consumption from original usage evidence. Account for a documented
 conservative reservation in full, distinguishing it from estimated actual
-spending. Unknown prior charges block payment.
+spending. Unknown charges retain their holds and must be resolved before new
+payment.
 
 Verify exact token counting for the complete outgoing payload and its fee
 before supplying `EvaluationPlan.counting`. Reserve and settle counting fees
@@ -56,15 +61,19 @@ commands and evidence in `localVerification`.
 
 ## Use the runner
 
-Create a distinct `model-evaluation` run issue before payment. Record a run
-identifier, timestamp, commit, selected scenarios, repetitions, profiles,
-authorization, catalog provenance and previous comparable runs.
+Before payment, create each model issue using
+[issue templates](issue-templates.md). Each issue represents one model, effort
+and modality at a specific evaluation revision. A voice profile also identifies
+its backend model. Keep a separate directory and ledger for each model run.
 
 Call `evaluateModels` through `npm run test:env -- tsx` using a temporary
-agent-written driver. Supply the user's selected `textProfiles`, an explicit
-`voiceProfile` when evaluating voice, the application's `baselineProfiles`,
+agent-written driver. Supply one selected text profile in `textProfiles`, or an
+empty list and an explicit `voiceProfile` when evaluating voice. Supply the
+application's `baselineProfiles`,
 a separately verified `judgeProfile`, authorization, verified prior spending,
-local verification and eligible recorded `references`. Read `EvaluationPlan`
+local verification and eligible recorded `references`. Include prior spending
+in `priorUsd` only when it belongs to the authorized scope; explain that scope
+in `priorSource`. Read `EvaluationPlan`
 in `scripts/model-evaluation/evaluate.ts` for the current interface. Keep raw
 requests, observations, reports and the persistent atomic ledger in ignored
 `model-evaluation-results/<run-id>` artifacts. Keep raw transcripts and
@@ -80,10 +89,9 @@ The runner executes 19 independent human-approved judge controls first, using
 one call to the selected judge per control and requiring all 21 expected
 outcomes. A control deviation, missing usage or failed local gate stops
 comparison. Selected text profiles use all 14 text scenarios; selected voice
-profiles use eight voice scenarios. Alternate supplied profile order between
-repetitions.
+profiles use eight voice scenarios.
 
-Enable `EvaluationPlan.escalateEffort` only for a requested effort survey.
+For a requested effort survey, schedule each effort in its own issue.
 Explicitly supplied profiles run directly at their requested effort.
 Within a survey, escalate a supplied model to medium, then high, only
 after a confirmed behavior failure in a complete lower-effort round. Repeat
@@ -114,6 +122,13 @@ times, actual backend text, MCP calls/results, commentary and output
 transcripts. Label missing or ambiguous links; diagnostics cannot establish
 success without the required evidence.
 
+Stream private calls and observations to the runner's JSONL gzip files as they
+arrive. Decompress concatenated gzip members to read the original records.
+Keep full MCP payloads on disk and identity/timing metadata in memory.
+Admission refused before any provider call is `not_run`, with no behavior
+verdict or completion time. A stop after paid execution begins is `aborted`;
+retain its charges and observed error time.
+
 Judge each step once in one tool-free call covering all requirements. Keep
 backend text and spoken transcript as separate sources. Missing required
 content in complete text fails; incomplete collection without proof is
@@ -126,8 +141,19 @@ negative voice times. Report the two-second quiet observation separately,
 along with startup, first backend/result and individual MCP timings. Failed
 attempts retain observed stop/error times without successful completion times.
 
-Publish all returned records on the run issue with their embedded versioned
-JSON intact. Group related records into readable comments when useful.
+Preserve every returned record's original versioned JSON. Use
+`scripts/model-evaluation/publication.ts` to prepare issue comments: ordinary
+records retain their Markdown, while oversized records use lossless
+`gzip+base64` transport with a SHA-256 of the original JSON. Group related
+records into readable comments when useful; keep every comment within the
+publication size limit.
+
+Before using transported results, collect every part with the same hash in
+part order, join the payloads, decode base64 and decompress gzip. Verify the
+SHA-256 of the restored UTF-8 bytes before parsing the original record.
+Transport parts represent storage, not additional evaluation attempts.
+After publication, retrieve comments and verify ordinary JSON or restored
+transported JSON against the local originals.
 For multiline GitHub text, write an exact temporary file with an editing tool,
 then issue a separate literal
 `gh ... --body-file /absolute/path` command. Verify real newlines in the issue

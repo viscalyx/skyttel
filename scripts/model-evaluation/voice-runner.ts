@@ -3,7 +3,13 @@ import type { VoiceAssistantResponse } from '../../src/shared/voice-assistant.js
 import type { createInstallation } from '../../tests/support/installation.js';
 import catalog from './catalog.json' with { type: 'json' };
 import { evaluationEnvironment } from './environment.js';
-import { concludeAttempt, modelActions, observationDiagnostics } from './observations.js';
+import {
+  concludeAttempt,
+  failAttempt,
+  modelActions,
+  observationDiagnostics,
+  retainedObservation,
+} from './observations.js';
 import type { RunOptions } from './runner.js';
 import { referenceSpeech, speechConnection } from './speech.js';
 import type { Attempt, JudgeInput, Scenario } from './types.js';
@@ -19,7 +25,7 @@ export async function runVoiceScenario(
   const environment = await evaluationEnvironment(scenario, {
     ...installationOptions,
     observe: (event) => {
-      events.push(structuredClone(event));
+      events.push(retainedObservation(event, options.recordObservation));
       installationOptions?.observe?.(event);
     },
   });
@@ -52,6 +58,8 @@ export async function runVoiceScenario(
       };
       const before = options.costs?.() ?? 0;
       const judgeBefore = options.judgeCosts?.() ?? 0;
+      const callsBefore = options.providerCalls?.() ?? 0;
+      let voiceAttempted = Boolean(voiceId);
       let startedAt = Date.now();
       try {
         if (blocked || options.stopped?.()) {
@@ -90,6 +98,7 @@ export async function runVoiceScenario(
             connection = await speechConnection(environment);
             voiceId = await connection.start();
           }
+          voiceAttempted = true;
           const offset = events.length;
           options.beginStep?.(reference.clip.frames / 22.05, {
             scenario: scenario.id,
@@ -194,10 +203,13 @@ export async function runVoiceScenario(
           );
           concludeAttempt(result, completionMs);
         }
+        if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
       } catch (error) {
-        result.outcome = 'error';
-        result.reason = error instanceof Error ? error.message : 'evaluation_voice_failed';
-        result.observedEndMs = Date.now() - startedAt;
+        failAttempt(result, error, Date.now() - startedAt, {
+          stopped: options.stopped?.() ?? false,
+          reason: options.stopReason?.() ?? null,
+          attempted: voiceAttempted || (options.providerCalls?.() ?? 0) > callsBefore,
+        });
       }
       const after = options.costs?.();
       result.backendCostUsd = after == null ? null : after - before;
@@ -210,6 +222,7 @@ export async function runVoiceScenario(
         await closeVoice();
       }
       async function judge(sources: JudgeInput['sources'], requirements: string[]) {
+        if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
         if (!requirements.length) return [];
         const input: JudgeInput = {
           context: JSON.stringify({

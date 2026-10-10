@@ -10,6 +10,14 @@ const units = (usd: number) => {
 /** One persistent, atomic ledger shared by voice, backend, summary, judge and
  * any billed counting calls. Unknown charges keep their conservative hold. */
 export class EvaluationBudget {
+  private dispatchedCalls = 0;
+  get callsStarted() {
+    return this.dispatchedCalls;
+  }
+  /** Mark paid dispatch after reservation, across all provider adapters. */
+  beginCall() {
+    this.dispatchedCalls++;
+  }
   constructor(
     private readonly db: Database.Database,
     config: {

@@ -4,7 +4,13 @@ import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import type { createInstallation } from '../../tests/support/installation.js';
 import rawCatalog from './catalog.json' with { type: 'json' };
 import { evaluationEnvironment } from './environment.js';
-import { concludeAttempt, modelActions, observationDiagnostics } from './observations.js';
+import {
+  concludeAttempt,
+  failAttempt,
+  modelActions,
+  observationDiagnostics,
+  retainedObservation,
+} from './observations.js';
 import type { ProviderCall } from './provider.js';
 import type { Attempt, Catalog, JudgeInput, JudgeResult, Scenario } from './types.js';
 
@@ -18,7 +24,10 @@ export type RunOptions = {
   costs?: () => number | null;
   judgeCosts?: () => number | null;
   stopped?: () => boolean;
+  stopReason?: () => string | null;
+  providerCalls?: () => number;
   summaryCountingVerified?: boolean;
+  recordObservation?: (event: AssistantObservation) => void;
 };
 
 export async function runTextScenario(
@@ -30,7 +39,7 @@ export async function runTextScenario(
   const environment = await evaluationEnvironment(scenario, {
     ...installationOptions,
     observe: (event) => {
-      events.push(structuredClone(event));
+      events.push(retainedObservation(event, options.recordObservation));
       installationOptions?.observe?.(event);
     },
   });
@@ -68,6 +77,7 @@ export async function runTextScenario(
         const startedAt = Date.now();
         const costBefore = options.costs?.() ?? 0;
         const judgeBefore = options.judgeCosts?.() ?? 0;
+        const callsBefore = options.providerCalls?.() ?? 0;
         try {
           let view: TextAssistantView;
           let responseText: string;
@@ -130,6 +140,7 @@ export async function runTextScenario(
             if (scenario.selection && view.displayedSelection !== scenario.selection)
               result.fixed.push('selection_unconfirmed');
           }
+          if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
           const finishedAt = Date.now();
           const observed = events.slice(offset);
           const actions = modelActions(observed);
@@ -162,6 +173,7 @@ export async function runTextScenario(
                   reason: 'No content judge supplied.',
                 }));
           }
+          if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
           concludeAttempt(result, finishedAt - startedAt);
           result.observedEndMs = finishedAt - startedAt;
           result.backendCostUsd = options.costs
@@ -175,11 +187,15 @@ export async function runTextScenario(
               : (options.judgeCosts() ?? 0) - judgeBefore
             : 0;
         } catch (error) {
-          result.outcome = 'error';
-          result.reason = error instanceof Error ? error.message : 'evaluation_step_failed';
-          result.observedEndMs = Date.now() - startedAt;
+          failAttempt(result, error, Date.now() - startedAt, {
+            stopped: options.stopped?.() ?? false,
+            reason: options.stopReason?.() ?? null,
+            attempted: (options.providerCalls?.() ?? 0) > callsBefore,
+          });
           const costAfter = options.costs?.();
           result.backendCostUsd = costAfter == null ? null : costAfter - costBefore;
+          const judgeAfter = options.judgeCosts?.();
+          result.judgeCostUsd = judgeAfter == null ? null : judgeAfter - judgeBefore;
         }
         if (result.outcome !== 'pass') blocked = `${step.id}: ${result.outcome}`;
       }

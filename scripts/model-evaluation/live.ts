@@ -59,6 +59,7 @@ export function budgetedLive(
       if (++sessions > 2) throw new Error('evaluation_live_start_limit');
       const reservation = budget.reserve('voice', (maximumSeconds * profile.usdPerMinute) / 60);
       pending.push(reservation);
+      budget.beginCall();
       return transport(url, {
         ...init,
         signal: AbortSignal.any([

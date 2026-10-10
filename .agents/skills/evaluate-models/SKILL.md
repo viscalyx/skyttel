@@ -9,13 +9,14 @@ disable-model-invocation: true
 Determine whether the models supplied by the user meet Skyttel's requirements
 and whether the evidence supports choosing them over the application model.
 Evaluate correctness first, then response time and cost. Deliver a
-recommendation backed by reproducible results in a GitHub issue labelled
-`model-evaluation`.
+recommendation backed by reproducible results in `model-evaluation` issues,
+one per evaluated model, effort and modality.
 
 ## Establish the comparison
 
-Use the user's models, intended text or voice use, and authorized total spending
-limit. Ask for missing models or payment authorization before making paid calls.
+Use the user's models, intended text or voice use, and authorized spending
+limit and scope. Ask for missing models or payment authorization before making
+paid calls.
 Resolve the provider for each supplied model; ask the user when it is unclear.
 Confirm that the selected providers are supported and their required credentials
 are available to this session. If a key or token is missing, stop paid execution
@@ -40,7 +41,12 @@ repetitions qualify a model.
 
 Before paid execution, read [run support](references/run-support.md) for the
 runner interface, local verification, provider verification and cost accounting.
-Create a new run issue recording the agreed comparison, references and budget.
+Create one issue for each supplied model and effort level using the title and
+description templates in [issue templates](references/issue-templates.md).
+Evaluating the same model at low and high effort creates two separate issues.
+Execute and account for each model independently so a stopped model does not
+prevent the others from completing. Reuse completed results when evaluating
+another model.
 Use `scripts/model-evaluation/evaluate.ts` to exercise the real application
 against the checked-in catalog. The runner owns scenario ordering, fixtures,
 audio, timing and result collection; keep those consistent across runs.
@@ -49,11 +55,11 @@ Use the catalog and approved scoring controls as the evaluation contract.
 Preserve real MCP writes, receipts and history. A failed calibration or unknown
 charge stops paid comparison. Record failures and missing evidence as observed;
 never retry a verdict to improve it or count an unrun attempt as successful.
-Keep every paid layer within the authorized total, including prior spending.
+Keep every paid layer within the authorized budget scope.
 
 ## Deliver a decision
 
-Publish the runner's versioned results on the newly created run issue, using
+Publish each model's versioned results on its issue, using
 the publication guidance in [run support](references/run-support.md). Compare
 qualified models with the application's recorded baseline.
 Recommend a model when correctness and the comparison rules support it;
@@ -61,7 +67,8 @@ otherwise explain which evidence is missing. Report regressions and costs
 alongside any response-time improvement. Leave production model selection to
 the user.
 
-The work is complete when the issue accounts for every selected attempt and
-contains the recommendation, its evidence and limitations, actual spending,
-remaining budget and any work needed to finish qualification. A stopped run
-still needs that report; it remains an incomplete evaluation.
+The work is complete when every model issue accounts for its selected attempts
+and contains the recommendation, evidence and limitations, actual spending,
+remaining budget and work needed to finish qualification. A stopped model
+still needs that report; it remains an incomplete evaluation. Link the model
+issues in the final response so the user can select individual follow-up runs.

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { appendFile, mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
 import audioManifest from './audio/manifest.json' with { type: 'json' };
@@ -8,6 +8,7 @@ import rawCatalog from './catalog.json' with { type: 'json' };
 import { contentJudge, judgeInstructions, verifyJudge } from './judge.js';
 import controls from './judge-controls.json' with { type: 'json' };
 import { budgetedLive, type LiveEvaluationProfile, verifiedLiveProfile } from './live.js';
+import { privateEvaluationRecords } from './private-records.js';
 import registry from './profiles.json' with { type: 'json' };
 import {
   budgetedProvider,
@@ -43,7 +44,6 @@ export type EvaluationPlan = {
   voice?: boolean;
   voiceProfile?: LiveEvaluationProfile;
   repetitions?: number[];
-  escalateEffort?: boolean;
   references?: RecordedReference[];
   // Exact counting, including its verified billing, is supplied only by an
   // agent after checking the official endpoint/model/pricing documentation.
@@ -69,6 +69,12 @@ export async function evaluateModels(plan: EvaluationPlan) {
     throw new Error('evaluation_prerequisites_missing');
   if (new Set(plan.textProfiles).size !== plan.textProfiles.length)
     throw new Error('evaluation_duplicate_profiles');
+  const selected = plan.textProfiles.length + (plan.voice ? 1 : 0);
+  if (!selected) throw new Error('evaluation_models_required');
+  if (selected !== 1) throw new Error('evaluation_one_model_per_issue');
+  const repetitions = plan.repetitions ?? [1, 2, 3];
+  if (![1, 3].includes(repetitions.length) || new Set(repetitions).size !== repetitions.length)
+    throw new Error('evaluation_invalid_repetitions');
   if (!plan.judgeProfile) throw new Error('evaluation_judge_profile_required');
   if (!plan.baselineProfiles) throw new Error('evaluation_baseline_configuration_required');
   const judgeProfile = verifiedProfile(plan.judgeProfile.id, plan.judgeProfile);
@@ -108,10 +114,25 @@ export async function evaluateModels(plan: EvaluationPlan) {
     published.push(path);
   }
   const calls = new Map<string, ProviderCall>();
-  const raw: unknown[] = [];
+  const privateRecords = privateEvaluationRecords(directory);
   const record = (call: ProviderCall) => {
-    calls.set(call.id, call);
-    raw.push(call);
+    privateRecords.call(call);
+    calls.set(call.id, {
+      ...call,
+      request: {},
+      response: call.response
+        ? {
+            model: call.response.model,
+            status: call.response.status,
+            usage: call.response.usage,
+            output: Array.isArray(call.response.output)
+              ? call.response.output
+                  .filter((item) => item.type === 'function_call')
+                  .map((item) => ({ type: item.type, call_id: item.call_id }))
+              : [],
+          }
+        : undefined,
+    });
   };
   const cost = (kind: 'backend' | 'summary' | 'judge') => {
     const selected = [...calls.values()].filter((call) => call.kind === kind && call.endedAt);
@@ -131,6 +152,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
           throw new Error('evaluation_count_fee_unverified');
         const charge = budget.reserve('counting', fee);
         try {
+          budget.beginCall();
           const tokens = await plan.counting.count(payload);
           budget.settle(charge, fee);
           return tokens;
@@ -146,13 +168,8 @@ export async function evaluateModels(plan: EvaluationPlan) {
   });
   const judge = contentJudge(plan.apiKey, judgeProvider);
   const attempts: Attempt[] = [];
-  const repetitions = plan.repetitions ?? [1, 2, 3];
   const profiles = [...plan.textProfiles];
-  if (!profiles.length && !plan.voice) throw new Error('evaluation_models_required');
-  if (plan.voice && !plan.voiceProfile) throw new Error('evaluation_voice_model_required');
   const voiceProfile = plan.voiceProfile;
-  if (![1, 3].includes(repetitions.length) || new Set(repetitions).size !== repetitions.length)
-    throw new Error('evaluation_invalid_repetitions');
   try {
     const audio = await Promise.all(Object.keys(audioManifest.clips).map(referenceSpeech));
     await emit('manifest', 'Utvärderingskörning', {
@@ -173,7 +190,6 @@ export async function evaluateModels(plan: EvaluationPlan) {
       controls: controls.source,
       profiles: registry,
       repetitions,
-      escalateEffort: plan.escalateEffort ?? false,
       textProfiles: profiles,
       judgeProfile,
       judgeSha256,
@@ -236,10 +252,6 @@ export async function evaluateModels(plan: EvaluationPlan) {
     for (const repetition of repetitions) {
       const order = repetition % 2 ? [...profiles] : [...profiles].reverse();
       for (const id of order) {
-        // Explicit selections can start at any supported effort. Automatic
-        // survey escalation below requires a completed failed round.
-        const model = id.replace(/-(low|medium|high)$/, '');
-        const effort = id.split('-').at(-1);
         const profile = verifiedProfile(id);
         const provider = budgetedProvider(profile, budget, { record, countInput: counted });
         for (const scenario of catalog.scenarios) {
@@ -259,33 +271,27 @@ export async function evaluateModels(plan: EvaluationPlan) {
               costs: backendCost,
               judgeCosts: () => cost('judge'),
               stopped: () => budget.snapshot().stopped,
+              stopReason: () => budget.snapshot().reason,
+              providerCalls: () => budget.callsStarted,
+              recordObservation: (event) =>
+                privateRecords.observation({
+                  scenario: scenario.id,
+                  profile: id,
+                  repetition,
+                  modality: 'text',
+                  event,
+                }),
               record: async (attempt) => {
                 attempts.push(attempt);
                 await emit('attempt', `${scenario.title}: ${attempt.step}`, attempt);
               },
             },
           );
-          raw.push({ scenario: scenario.id, profile: id, repetition, ...run });
-        }
-        const round = attempts.filter(
-          (item) => item.profile === id && item.repetition === repetition,
-        );
-        if (
-          plan.escalateEffort === true &&
-          repetitions.length === 1 &&
-          effort !== 'high' &&
-          round.some((item) => item.outcome === 'fail') &&
-          !round.some((item) =>
-            ['error', 'aborted', 'inconclusive', 'not_run'].includes(item.outcome),
-          )
-        ) {
-          const next = `${model}-${effort === 'low' ? 'medium' : 'high'}`;
-          if (!order.includes(next)) order.push(next);
-          if (!profiles.includes(next)) profiles.push(next);
-          await emit('diagnostic', 'Höjd resonemangsnivå', {
-            previous: id,
-            next,
-            reason: 'Confirmed behavior failure in a complete round.',
+          privateRecords.observation({
+            scenario: scenario.id,
+            profile: id,
+            repetition,
+            finalMap: run.finalMap,
           });
         }
       }
@@ -336,7 +342,17 @@ export async function evaluateModels(plan: EvaluationPlan) {
               costs: backendCost,
               judgeCosts: () => cost('judge'),
               stopped: () => budget.snapshot().stopped,
+              stopReason: () => budget.snapshot().reason,
+              providerCalls: () => budget.callsStarted,
               summaryCountingVerified: Boolean(counted),
+              recordObservation: (event) =>
+                privateRecords.observation({
+                  scenario: scenario.id,
+                  profile: id,
+                  repetition,
+                  modality: 'voice',
+                  event,
+                }),
               record: async (attempt) => {
                 attempts.push(attempt);
                 await emit('attempt', `${scenario.title}: ${attempt.step}`, attempt);
@@ -349,7 +365,12 @@ export async function evaluateModels(plan: EvaluationPlan) {
             stepCost: 'Estimated allocations are not used to rank models.',
             observation: 'Output transcript is observed; acoustic audibility is not measured.',
           });
-          raw.push({ scenario: scenario.id, repetition, ...run, liveUsage });
+          privateRecords.observation({
+            scenario: scenario.id,
+            repetition,
+            finalMap: run.finalMap,
+            liveUsage,
+          });
         }
     }
     const summaries = profiles.map((id) =>
@@ -460,15 +481,11 @@ export async function evaluateModels(plan: EvaluationPlan) {
     });
     return { paths: published, attempts, budget: budget.snapshot() };
   } finally {
-    await writeFile(
-      join(directory, 'private-observations.json'),
-      `${JSON.stringify(raw, null, 2)}\n`,
-    );
-    await appendFile(
-      join(directory, 'private-calls.jsonl'),
-      `${[...calls.values()].map((call) => JSON.stringify(call)).join('\n')}\n`,
-    );
-    db.close();
+    try {
+      privateRecords.close();
+    } finally {
+      db.close();
+    }
   }
   async function missing(
     scenario: Scenario,

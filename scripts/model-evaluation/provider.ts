@@ -187,6 +187,7 @@ export function budgetedProvider(
           ...(init?.signal ? [init.signal] : []),
           AbortSignal.timeout(Math.max(1, deadline - Date.now())),
         ]);
+        budget.beginCall();
         const response = await transport(url, { ...init, signal });
         call.response = await response
           .clone()
