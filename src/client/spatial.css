@@ -140,6 +140,12 @@
   pointer-events: none;
   overflow: visible;
 }
+.spatial-depth-lines {
+  z-index: 1;
+}
+.spatial-labels {
+  z-index: 2;
+}
 .connection,
 .connection-arrow {
   --connection-color: #8dbba5;
@@ -515,6 +521,9 @@
 .connection {
   pointer-events: stroke;
   cursor: pointer;
+}
+.spatial-depth-lines .connection {
+  pointer-events: none;
 }
 .connection-hit {
   fill: none;

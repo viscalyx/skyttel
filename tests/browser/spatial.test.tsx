@@ -112,16 +112,18 @@ function MapView({
   relationships = mapState.relationships,
   active = true,
   revealRequest,
+  positions = [],
 }: {
   mapState?: MapState;
   relationships?: MapState['relationships'];
   active?: boolean;
   revealRequest?: MapRevealRequest;
+  positions?: PersonalView['positions'];
 } = {}) {
   const [settingsMount, setSettingsMount] = useState<HTMLDivElement | null>(null);
   const [view, setView] = useState<PersonalView>({
     contentVersion: 1,
-    positions: [],
+    positions,
     settings: { ...defaultViewSettings, version: 0 },
   });
   const [selection, setSelection] = useState<{
@@ -204,6 +206,111 @@ function MapView({
     </>
   );
 }
+
+test('RYMD-13: relationship lines and object symbols retain overlap depth through movement and camera navigation', async ({
+  onTestFinished,
+}) => {
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  onTestFinished(() => page.viewport(viewport.width, viewport.height));
+  await page.viewport(1280, 1000);
+  const map = render(
+    <MapView
+      mapState={{ ...state, draft: { version: 0, changes: [] } }}
+      relationships={[state.relationships[0]]}
+      positions={[
+        { id: 'lo', x: -7.701, y: 0.797, z: 8.065, version: 1 },
+        { id: 'music', x: 11.086, y: 0.797, z: 1.207, version: 1 },
+        { id: 'kim', x: -1.693, y: -0.797, z: -4.636, version: 1 },
+      ]}
+    />,
+  );
+  const kim = page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
+  await expect.element(kim).toBeVisible();
+  const surface = document.querySelector('.spatial-surface') as HTMLElement;
+  const lineVisibleOnKim = async (offset = 10) => {
+    const surface = document.querySelector('.spatial-surface') as HTMLElement;
+    const line = document.querySelector('line.connection') as SVGLineElement;
+    const node = kim.element().getBoundingClientRect();
+    const box = surface.getBoundingClientRect();
+    const x = node.left + node.width / 2 - box.left + offset;
+    const x1 = Number(line.getAttribute('x1'));
+    const y1 = Number(line.getAttribute('y1'));
+    const x2 = Number(line.getAttribute('x2'));
+    const y2 = Number(line.getAttribute('y2'));
+    const y = y1 + ((x - x1) / (x2 - x1)) * (y2 - y1);
+    const orb = kim.element().querySelector('.spatial-orb') as HTMLElement;
+    expect(Math.hypot(offset, y - (node.top + node.height / 2 - box.top))).toBeLessThan(
+      orb.getBoundingClientRect().width / 2 - 2,
+    );
+    const screenshot = await page.screenshot({ element: surface, base64: true });
+    const picture = new Image();
+    picture.src = `data:image/png;base64,${screenshot.base64}`;
+    await picture.decode();
+    const sample = document.createElement('canvas');
+    sample.width = picture.width;
+    sample.height = picture.height;
+    const context = sample.getContext('2d');
+    if (!context) throw new Error('Pixel sampling unavailable');
+    context.drawImage(picture, 0, 0);
+    // Sample a short vertical strip to tolerate stroke antialiasing.
+    const pixels = context.getImageData(Math.round(x), Math.round(y) - 2, 1, 5).data;
+    return Array.from({ length: 5 }, (_, index) => pixels[index * 4]).some((red) => red > 45);
+  };
+  expect(await lineVisibleOnKim()).toBe(true);
+  // Check during the drag and again after the personal placement settles.
+  const capture = surface.setPointerCapture;
+  surface.setPointerCapture = () => {};
+  const node = kim.element().getBoundingClientRect();
+  const pointer = { pointerId: 1, isPrimary: true, button: 0, buttons: 1, clientY: node.top + 22 };
+  fireEvent.pointerDown(kim.element(), { ...pointer, clientX: node.left + 22 });
+  fireEvent.pointerMove(surface, { ...pointer, clientX: node.left + 42 });
+  expect(await lineVisibleOnKim()).toBe(true);
+  fireEvent.pointerUp(surface, { ...pointer, buttons: 0, clientX: node.left + 42 });
+  surface.setPointerCapture = capture;
+  await expect.poll(() => document.querySelector('[data-placement]')?.textContent).toContain('kim');
+  expect(await lineVisibleOnKim()).toBe(true);
+  for (const name of ['Panorera vänster', 'Zooma in', 'Rotera vänster']) {
+    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    await page.getByRole('button', { name, exact: true }).click();
+    await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+    expect(await lineVisibleOnKim()).toBe(true);
+  }
+  map.unmount();
+  const foreground = render(
+    <MapView
+      mapState={{ ...state, draft: { version: 0, changes: [] } }}
+      relationships={[state.relationships[0]]}
+      positions={[
+        { id: 'lo', x: -7.701, y: 0.797, z: 8.065, version: 1 },
+        { id: 'music', x: 11.086, y: 0.797, z: 1.207, version: 1 },
+        { id: 'kim', x: 5.078, y: 2.39, z: 13.908, version: 1 },
+      ]}
+    />,
+  );
+  await expect.element(kim).toBeVisible();
+  expect(await lineVisibleOnKim()).toBe(false);
+  for (const name of ['Panorera vänster', 'Zooma in', 'Rotera vänster']) {
+    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    await page.getByRole('button', { name, exact: true }).click();
+    await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+    expect(await lineVisibleOnKim()).toBe(false);
+  }
+  foreground.unmount();
+  render(
+    <MapView
+      mapState={{ ...state, draft: { version: 0, changes: [] } }}
+      relationships={[state.relationships[0]]}
+      positions={[
+        { id: 'lo', x: -6.008, y: 1.593, z: 12.701, version: 1 },
+        { id: 'music', x: 6.008, y: -1.593, z: -12.701, version: 1 },
+        { id: 'kim', x: 0, y: 0, z: 0, version: 1 },
+      ]}
+    />,
+  );
+  await expect.element(kim).toBeVisible();
+  expect(await lineVisibleOnKim(-10)).toBe(true);
+  expect(await lineVisibleOnKim(10)).toBe(false);
+});
 
 test('the approved spatial presentation uses compact pictogram nodes, separate names and contextual relationship labels', async () => {
   render(<MapView />);
