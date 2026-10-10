@@ -16,11 +16,12 @@ const variants = [
   { id: 'E', name: 'Stark · symboler + text', symbols: true, strong: true, text: true },
   {
     id: 'F',
-    name: 'Som E · text högst 15 px',
+    name: 'Som E · mindre nära',
     symbols: true,
     strong: true,
     text: true,
     maxTextScale: 15 / 13,
+    maxSymbolScale: 1.15,
   },
 ];
 const examples = [
@@ -160,7 +161,9 @@ export function SpatialDepthPrototype() {
     return () => window.removeEventListener('keydown', key);
   });
   const limits = variant.strong ? [0.49, 1.69] : [0.7, 1.3];
-  const symbolRange = limits.map((scale) => Math.round(34 * scale)).join('–');
+  const symbolRange = limits
+    .map((scale) => Math.round(34 * Math.min(scale, variant.maxSymbolScale ?? Infinity)))
+    .join('–');
   const textRange = variant.text
     ? limits
         .map((scale) => (13 * Math.min(scale, variant.maxTextScale ?? Infinity)).toFixed(1))
@@ -191,7 +194,10 @@ export function SpatialDepthPrototype() {
             ska kunna bedöma läsbarheten.
           </p>
           {variant.id === 'F' && (
-            <p>Som E på avstånd. Närmaste namn stannar vid 15 px jämfört med dagens 13 px.</p>
+            <p>
+              Som E på avstånd. Närmaste symboler stannar vid 115 % av grundstorleken, och namn vid
+              15 px jämfört med dagens 13 px.
+            </p>
           )}
         </details>
       </header>

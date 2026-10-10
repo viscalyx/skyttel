@@ -110,7 +110,13 @@ export function SpatialMap({
   depthPrototype,
 }: {
   /** Throwaway depth comparison, supplied only by the development prototype. */
-  depthPrototype?: { symbols: boolean; strong: boolean; text: boolean; maxTextScale?: number };
+  depthPrototype?: {
+    symbols: boolean;
+    strong: boolean;
+    text: boolean;
+    maxTextScale?: number;
+    maxSymbolScale?: number;
+  };
   onAvailabilityChange?: (available: boolean) => void;
   theme?: 'light' | 'dark';
   state: MapState;
@@ -675,7 +681,7 @@ export function SpatialMap({
       },
     };
   }
-  const locations = new Map(
+  const projectedLocations = new Map(
     points
       .filter((point) => point.visible)
       .map((point) => [
@@ -683,11 +689,19 @@ export function SpatialMap({
         depthPrototype?.strong ? { ...point, scale: point.scale ** 2 } : point,
       ]),
   );
+  const locations = depthPrototype?.maxSymbolScale
+    ? new Map(
+        [...projectedLocations].map(([id, point]) => [
+          id,
+          { ...point, scale: Math.min(point.scale, depthPrototype.maxSymbolScale ?? Infinity) },
+        ]),
+      )
+    : projectedLocations;
   function textScale(id: string, targetId?: string) {
     if (!depthPrototype?.text) return 1;
-    const source = locations.get(id)?.scale ?? 1;
+    const source = projectedLocations.get(id)?.scale ?? 1;
     const scale = targetId
-      ? Math.sqrt(source * (locations.get(targetId)?.scale ?? source))
+      ? Math.sqrt(source * (projectedLocations.get(targetId)?.scale ?? source))
       : source;
     return Math.min(scale, depthPrototype.maxTextScale ?? Infinity);
   }
