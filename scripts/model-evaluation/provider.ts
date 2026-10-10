@@ -184,7 +184,7 @@ export function budgetedProvider(
       try {
         const signal = AbortSignal.any([
           ...(init?.signal ? [init.signal] : []),
-          AbortSignal.timeout(Math.max(1, deadline - Date.now())),
+          AbortSignal.timeout(Math.max(1, Math.ceil(deadline - Date.now()))),
         ]);
         budget.beginCall();
         const response = await transport(url, { ...init, signal });

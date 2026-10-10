@@ -161,3 +161,50 @@ test('missing usage retains the whole-context hold and blocks further paid calls
   expect(modelCost(profile, { usage: { input_tokens: 20, output_tokens: 10 } })).toBeNull();
   db.close();
 });
+
+test('voice audio with fractional milliseconds reaches the provider and settles usage', {
+  tags: ['technical'],
+}, async () => {
+  const db = new Database(':memory:');
+  try {
+    const budget = new EvaluationBudget(db, {
+      authorized: true,
+      priorUsd: 0,
+      priorSource: 'Authorized voice evaluation with fractional reference audio duration',
+    });
+    const profile = verifiedProfile('sol-high');
+    let requests = 0;
+    const provider = budgetedProvider(profile, budget, {
+      record: () => {},
+      transport: async () => {
+        requests++;
+        return Response.json({
+          model: profile.model,
+          service_tier: 'default',
+          status: 'completed',
+          usage: {
+            input_tokens: 20,
+            output_tokens: 10,
+            input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+            output_tokens_details: { reasoning_tokens: 5 },
+          },
+        });
+      },
+    });
+    provider.beginStep(1000.5);
+    await provider.fetch('https://api.openai.com/v1/responses', {
+      body: JSON.stringify({
+        model: profile.model,
+        service_tier: 'default',
+        reasoning: { effort: profile.effort },
+        max_output_tokens: 8192,
+      }),
+    });
+    expect(requests).toBe(1);
+    expect(budget.callsStarted).toBe(1);
+    expect(budget.snapshot()).toMatchObject({ reservedUsd: 0, stopped: false });
+    expect(budget.snapshot().spentUsd).toBeGreaterThan(0);
+  } finally {
+    db.close();
+  }
+});
