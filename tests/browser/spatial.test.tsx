@@ -406,8 +406,9 @@ test('RYMD-14: depth-scaled symbols, text and backgrounds preserve targets and f
       await expect.poll(() => document.querySelectorAll('[data-object-label]').length).toBe(3);
       await page.getByRole('button', { name: 'Navigera', exact: true }).click();
       for (const command of ['Zooma in', 'Zooma in', 'Rotera vänster', 'Zooma ut']) {
+        const beforeCommand = positions();
         await page.getByRole('button', { name: command, exact: true }).click();
-        await expect.poll(() => positions()).not.toEqual(beforeSelection);
+        await expect.poll(() => positions()).not.toEqual(beforeCommand);
         checkPresentation();
         await expect.element(selectionStatus()).toHaveTextContent('Musikspelaren');
       }
