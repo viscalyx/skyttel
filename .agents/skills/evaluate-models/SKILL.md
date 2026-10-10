@@ -17,6 +17,10 @@ disable-model-invocation: true
   `viscalyx/skyttel`. Read their versioned manifest, attempts, controls and
   corrections before selecting a reference. Compare matching catalog,
   fixture, commit, profile, limits, modality and repetition plans.
+- Require one or more models from the user. Run only those models; do not
+  add historical reference models, previously tested models or a voice
+  baseline. Reuse their recorded issue results when comparable. Rerun a
+  previous model only when the user explicitly supplies it for this run.
 - Create a distinct run issue with label `model-evaluation` before payment.
   Link the catalog's provenance and previous comparable runs. Record an identifier, timestamp,
   commit, selected scenarios, repetitions, profiles and authorization.
@@ -44,18 +48,19 @@ disable-model-invocation: true
   ignored `model-evaluation-results/<run-id>` directory for raw requests,
   audio observations, JSON reports and the persistent atomic cost ledger.
   Do not commit run results or publish raw transcripts/credentials.
-- First baseline: Terra low, Luna low, Sol low, Astra low in table order,
-  all 14 text scenarios once; then Live with Terra low for eight voice
-  scenarios once. Run 19 independent human-approved judge controls first,
+- Run the selected text profiles over all 14 text scenarios and selected
+  voice profiles over eight voice scenarios. Run 19 independent
+  human-approved judge controls first,
   one Sol high call per control, requiring all 21 expected outcomes.
   A control deviation, missing usage or failed local gate stops comparison.
 - Escalate a model to medium, then high, only after a confirmed behavior
   failure in a complete lower-effort round. Repeat all 14 scenarios at each
   effort. Provider errors, timeouts, inconclusive judgments and budget stops
   do not authorize escalation or retries.
-- Later comparison: select the reference and fastest qualified candidate,
-  plus the voice baseline; use three repetitions and alternate profile
-  order. Qualification requires every selected fixed/content check to pass
+- Use one repetition for an explicitly requested initial survey, and three
+  for qualification. Alternate the order of the supplied profiles between
+  repetitions. Compare against recorded qualified references without
+  rerunning them. Qualification requires every selected fixed/content check to pass
   in all three repetitions. A single repetition is preliminary.
 - Preserve the real application, assistant, MCP, write guards and SQLite.
   Select one backend/summary profile and its context capacity per run.

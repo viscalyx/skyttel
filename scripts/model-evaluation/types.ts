@@ -80,4 +80,5 @@ export type Attempt = {
   backendCostUsd: number | null;
   judgeCostUsd?: number | null;
   voiceCostUsd?: number | null;
+  diagnostics?: ReturnType<typeof import('./observations.js').observationDiagnostics>;
 };

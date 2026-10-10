@@ -31,10 +31,17 @@ export type EvaluationPlan = {
   priorSource: string;
   commit: string;
   localVerification: { passed: boolean; commands: string[]; evidence: string };
-  textProfiles?: string[];
+  textProfiles: string[];
   voice?: boolean;
   voiceProfile?: LiveEvaluationProfile;
   repetitions?: number[];
+  references?: {
+    issue: number;
+    url: string;
+    commit: string;
+    catalogSha256: string;
+    summary: ReturnType<typeof summarizeProfile>;
+  }[];
   // Exact counting, including its verified billing, is supplied only by an
   // agent after checking the official endpoint/model/pricing documentation.
   counting?: {
@@ -107,11 +114,11 @@ export async function evaluateModels(plan: EvaluationPlan) {
   });
   const judge = contentJudge(plan.apiKey, judgeProvider);
   const attempts: Attempt[] = [];
-  const repetitions = plan.repetitions ?? [1];
-  const profiles = plan.textProfiles ?? ['terra-low', 'luna-low', 'sol-low', 'astra-low'];
-  const voiceProfile =
-    plan.voiceProfile ??
-    (registry.profiles.find((profile) => profile.role === 'voice') as LiveEvaluationProfile);
+  const repetitions = plan.repetitions ?? [1, 2, 3];
+  const profiles = [...plan.textProfiles];
+  if (!profiles.length && !plan.voice) throw new Error('evaluation_models_required');
+  if (plan.voice && !plan.voiceProfile) throw new Error('evaluation_voice_model_required');
+  const voiceProfile = plan.voiceProfile;
   if (![1, 3].includes(repetitions.length) || new Set(repetitions).size !== repetitions.length)
     throw new Error('evaluation_invalid_repetitions');
   try {
@@ -135,7 +142,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
       profiles: registry,
       repetitions,
       textProfiles: profiles,
-      voice: plan.voice ?? true,
+      voice: plan.voice ?? false,
       voiceProfile,
       audio: audioManifest,
       frames: audio.reduce((sum, item) => sum + item.clip.frames, 0),
@@ -233,7 +240,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
           (item) => item.profile === id && item.repetition === repetition,
         );
         if (
-          !plan.textProfiles &&
+          repetitions.length === 1 &&
           effort !== 'high' &&
           round.some((item) => item.outcome === 'fail') &&
           !round.some((item) =>
@@ -250,8 +257,9 @@ export async function evaluateModels(plan: EvaluationPlan) {
           });
         }
       }
-      if (plan.voice !== false)
+      if (plan.voice === true)
         for (const scenario of catalog.scenarios.filter((item) => item.voice)) {
+          if (!voiceProfile) throw new Error('evaluation_voice_model_required');
           const id = voiceProfile.id;
           if (budget.snapshot().stopped) {
             await missing(scenario, id, repetition, 'voice', budget.snapshot().reason as string);
@@ -318,17 +326,65 @@ export async function evaluateModels(plan: EvaluationPlan) {
     const voice = summarizeProfile(
       attempts,
       catalog.scenarios.filter((item) => item.voice),
-      voiceProfile.id,
+      voiceProfile?.id ?? '',
       'voice',
       repetitions,
     );
     const comparisons = summaries
       .slice(1)
       .map((candidate) => compareProfiles(summaries[0], candidate));
+    const catalogSha256 = createHash('sha256').update(JSON.stringify(rawCatalog)).digest('hex');
+    const historicalComparisons = (plan.references ?? []).flatMap((reference) =>
+      summaries.map((candidate) => ({
+        referenceIssue: reference.issue,
+        referenceUrl: reference.url,
+        candidate: candidate.profile,
+        ...(reference.commit === plan.commit &&
+        reference.catalogSha256 === catalogSha256 &&
+        reference.summary.modality === candidate.modality
+          ? compareProfiles(reference.summary, candidate)
+          : {
+              label: 'Ej jämförbart',
+              recommendation:
+                'Ändrad kod, katalog eller modalitet: bedöm skillnaderna innan jämförelse.',
+              changed: {
+                commit: reference.commit !== plan.commit,
+                catalog: reference.catalogSha256 !== catalogSha256,
+                modality: reference.summary.modality !== candidate.modality,
+              },
+            }),
+      })),
+    );
+    await emit(
+      'diagnostic',
+      'Observerade provideranrop',
+      [...calls.values()].map((call) => ({
+        id: call.id,
+        requestId: call.requestId ?? null,
+        context: call.context ?? null,
+        profile: call.profile,
+        model: call.model,
+        kind: call.kind,
+        startedAt: call.startedAt,
+        endedAt: call.endedAt ?? null,
+        outcome: call.outcome,
+        costUsd: call.costUsd,
+        reservationUsd: call.reservationUsd,
+        toolCallIds: Array.isArray(call.response?.output)
+          ? call.response.output
+              .filter((item) => item && typeof item === 'object' && item.type === 'function_call')
+              .map((item) => item.call_id)
+          : [],
+        correlation: call.context
+          ? 'Observed step identity; tool-call IDs link to application model_action records.'
+          : 'Step identity unavailable; inspect the private request before attributing.',
+      })),
+    );
     await emit('comparison', 'Modelljämförelse', {
       profiles: summaries,
       voice,
       comparisons,
+      historicalComparisons,
     });
     await emit('recommendation', 'Rekommendation', {
       recommendation:
@@ -336,7 +392,13 @@ export async function evaluateModels(plan: EvaluationPlan) {
           (item) => item.recommendation !== 'Otillräckligt underlag för ett modellbyte.',
         )?.recommendation ?? 'Otillräckligt underlag för ett modellbyte.',
       preliminary: repetitions.length === 1,
-      completeBaseline: attempts.every((item) => item.outcome !== 'not_run') && calibrated,
+      completeBaseline:
+        repetitions.length === 3 &&
+        calibrated &&
+        voice.finalQualified &&
+        summaries[0]?.finalQualified &&
+        summaries.slice(1).some((candidate) => candidate.finalQualified),
+      initialRoundCollected: attempts.every((item) => item.outcome !== 'not_run') && calibrated,
       missing: attempts
         .filter((item) => item.outcome !== 'pass')
         .map(({ scenario, step, profile, modality, outcome }) => ({

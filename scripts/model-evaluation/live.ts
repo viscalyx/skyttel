@@ -1,5 +1,6 @@
 import type { LiveUsageAttempt } from '../../src/server/live-provider.js';
 import type { EvaluationBudget } from './budget.js';
+import registry from './profiles.json' with { type: 'json' };
 export type LiveEvaluationProfile = {
   id: string;
   provider: 'openai';
@@ -18,16 +19,9 @@ export function budgetedLive(
   maximumSeconds: number,
   record: (usage: LiveUsageAttempt) => void,
   transport: typeof fetch = fetch,
-  profile: LiveEvaluationProfile = {
-    id: 'live-terra-low',
-    provider: 'openai',
-    model: 'gpt-live-1',
-    tokens: 128_000,
-    usdPerMinute: 0.05,
-    checkedAt: '2026-10-10',
-    sources: ['https://developers.openai.com/api/docs/pricing'],
-    backend: 'terra-low',
-  },
+  profile: LiveEvaluationProfile = registry.profiles.find(
+    (profile) => profile.role === 'voice',
+  ) as LiveEvaluationProfile,
 ) {
   if (
     profile.provider !== 'openai' ||

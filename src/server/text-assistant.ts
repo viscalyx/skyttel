@@ -1350,7 +1350,7 @@ export function textAssistantRoutes({
             throw new MapError('assistant_canceled', 409);
         };
         if (
-          (session.questions?.length || (!session.result && session.modelReply?.includes('?'))) &&
+          (session.questions?.length || session.modelReply?.includes('?')) &&
           session.saveIntent
         ) {
           session.saveIntent = undefined;
@@ -1421,8 +1421,7 @@ export function textAssistantRoutes({
         if (task.signal.aborted || session.task !== task || !sessions.has(session.id)) return;
         accepted.status = 'completed';
         if (
-          !session.queue.length &&
-          !session.voiceInputPending &&
+          (!session.saveIntent || (!session.queue.length && !session.voiceInputPending)) &&
           (session.modelReply || session.reply)
         )
           session.completedReplies?.push({
@@ -1979,6 +1978,7 @@ export function textAssistantRoutes({
       const session = sessions.get(sessionId);
       if (!session) return;
       session.voiceInputPending = pending;
+      session.lastVoiceInputAt = Date.now();
       if (text !== undefined) {
         session.inputSerial = (session.inputSerial ?? 0) + 1;
         session.lastVoiceInputAt = Date.now();

@@ -60,6 +60,8 @@ export type ProviderCall = {
   reservationUsd: number;
   outcome: string;
   requestId?: string;
+  context?: { scenario: string; step: string; modality: 'text' | 'voice'; repetition: number };
+  profile: string;
 };
 export function requestMaximum(
   profile: EvaluationProfile,
@@ -133,9 +135,11 @@ export function budgetedProvider(
 ) {
   let calls = 0;
   let deadline = 0;
+  let context: ProviderCall['context'];
   return {
-    beginStep(audioMs = 0) {
+    beginStep(audioMs = 0, step?: ProviderCall['context']) {
       calls = 0;
+      context = step;
       deadline = Date.now() + (profile.role === 'judge' ? 120_000 : 180_000 + audioMs);
     },
     fetch: (async (url, init) => {
@@ -166,6 +170,8 @@ export function budgetedProvider(
         id: randomUUID(),
         startedAt: Date.now(),
         kind,
+        context,
+        profile: profile.id,
         model: profile.model,
         request: payload,
         costUsd: null,

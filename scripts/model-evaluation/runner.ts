@@ -4,6 +4,8 @@ import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import type { createInstallation } from '../../tests/support/installation.js';
 import rawCatalog from './catalog.json' with { type: 'json' };
 import { evaluationEnvironment } from './environment.js';
+import { concludeAttempt, modelActions, observationDiagnostics } from './observations.js';
+import type { ProviderCall } from './provider.js';
 import type { Attempt, Catalog, JudgeInput, JudgeResult, Scenario } from './types.js';
 
 const catalog = rawCatalog as Catalog;
@@ -12,7 +14,7 @@ export type RunOptions = {
   repetition: number;
   judge?: (input: JudgeInput) => Promise<JudgeResult>;
   record?: (attempt: Attempt) => Promise<void>;
-  beginStep?: (audioMs?: number) => void;
+  beginStep?: (audioMs?: number, context?: ProviderCall['context']) => void;
   costs?: () => number | null;
   judgeCosts?: () => number | null;
   stopped?: () => boolean;
@@ -56,7 +58,12 @@ export async function runTextScenario(
           'Exact token counting support and fee are not verified; dependent summary is not runnable.';
         blocked = result.reason;
       } else {
-        options.beginStep?.();
+        options.beginStep?.(0, {
+          scenario: scenario.id,
+          step: step.id,
+          modality: 'text',
+          repetition: options.repetition,
+        });
         const offset = events.length;
         const startedAt = Date.now();
         const costBefore = options.costs?.() ?? 0;
@@ -125,13 +132,8 @@ export async function runTextScenario(
           }
           const finishedAt = Date.now();
           const observed = events.slice(offset);
-          const actions = observed
-            .filter((event) => event.kind === 'model_action')
-            .map((event) => {
-              const data = event.data as { name: string; arguments: string };
-              const args = JSON.parse(data.arguments) as { completion?: string };
-              return { name: data.name, completion: args.completion };
-            });
+          const actions = modelActions(observed);
+          result.diagnostics = observationDiagnostics(observed, startedAt);
           result.fixed.push(...(await environment.check(step, view, actions)));
           if (step.expected.requirements.length) {
             result.content = options.judge
@@ -160,13 +162,7 @@ export async function runTextScenario(
                   reason: 'No content judge supplied.',
                 }));
           }
-          result.outcome =
-            result.fixed.length || result.content?.some((item) => item.outcome === 'fail')
-              ? 'fail'
-              : result.content?.some((item) => item.outcome === 'inconclusive')
-                ? 'inconclusive'
-                : 'pass';
-          result.elapsedMs = result.outcome === 'pass' ? finishedAt - startedAt : null;
+          concludeAttempt(result, finishedAt - startedAt);
           result.observedEndMs = finishedAt - startedAt;
           result.backendCostUsd = options.costs
             ? options.costs() === null

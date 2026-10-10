@@ -3,6 +3,7 @@ import type { VoiceAssistantResponse } from '../../src/shared/voice-assistant.js
 import type { createInstallation } from '../../tests/support/installation.js';
 import catalog from './catalog.json' with { type: 'json' };
 import { evaluationEnvironment } from './environment.js';
+import { concludeAttempt, modelActions, observationDiagnostics } from './observations.js';
 import type { RunOptions } from './runner.js';
 import { referenceSpeech, speechConnection } from './speech.js';
 import type { Attempt, JudgeInput, Scenario } from './types.js';
@@ -60,7 +61,12 @@ export async function runVoiceScenario(
           if (!options.summaryCountingVerified) {
             result.reason = 'Exact token counting support and fee are unverified.';
           } else {
-            options.beginStep?.();
+            options.beginStep?.(0, {
+              scenario: scenario.id,
+              step: step.id,
+              modality: 'voice',
+              repetition: options.repetition,
+            });
             startedAt = Date.now();
             const summary = await environment.installation.summarizeForEvaluation(
               environment.assistant.id,
@@ -74,7 +80,7 @@ export async function runVoiceScenario(
               { backend: { text: summary.summary, complete: true } },
               step.expected.requirements,
             );
-            finish(result, result.observedEndMs);
+            concludeAttempt(result, result.observedEndMs);
           }
         } else {
           const reference = await referenceSpeech(step.id);
@@ -85,7 +91,12 @@ export async function runVoiceScenario(
             voiceId = await connection.start();
           }
           const offset = events.length;
-          options.beginStep?.(reference.clip.frames / 22.05);
+          options.beginStep?.(reference.clip.frames / 22.05, {
+            scenario: scenario.id,
+            step: step.id,
+            modality: 'voice',
+            repetition: options.repetition,
+          });
           const playback = connection.play(step.id);
           let playbackError: unknown;
           let audioEnd: number | undefined;
@@ -140,15 +151,7 @@ export async function runVoiceScenario(
             output = outputs.map((event) => (event.data as { delta: string }).delta).join('');
             latestOutput = outputs.at(-1)?.at ?? startedAt;
             latestEvent = observed.at(-1)?.at ?? startedAt;
-            const actions = observed
-              .filter((event) => event.kind === 'model_action')
-              .map((event) => {
-                const data = event.data as { name: string; arguments: string };
-                return {
-                  name: data.name,
-                  completion: (JSON.parse(data.arguments) as { completion?: string }).completion,
-                };
-              });
+            const actions = modelActions(observed);
             fixed = await environment.check(step, view, actions);
             if (scenario.selection && view.displayedSelection !== scenario.selection)
               fixed.push('selection_unconfirmed');
@@ -156,7 +159,8 @@ export async function runVoiceScenario(
               view.phase !== 'working' &&
               !view.queuedMessages &&
               status.voice.phase === 'listening';
-            if (!fixed.length && idle) stateAt ??= Date.now();
+            if (!fixed.length && view.phase !== 'working' && !view.queuedMessages)
+              stateAt ??= Date.now();
             else stateAt = undefined;
             const quiet =
               audioEnd !== undefined && Date.now() - Math.max(latestEvent, audioEnd) >= 2000;
@@ -177,6 +181,7 @@ export async function runVoiceScenario(
           startedAt = audio.endedAt;
           result.fixed.push(...fixed);
           result.observedEndMs = Date.now() - startedAt;
+          result.diagnostics = observationDiagnostics(events.slice(offset), startedAt);
           const completionMs =
             stateAt === undefined ? null : Math.max(stateAt, latestOutput) - startedAt;
           if (index === scenario.steps.length - 1) await closeVoice();
@@ -187,7 +192,7 @@ export async function runVoiceScenario(
             },
             step.expected.requirements,
           );
-          finish(result, completionMs);
+          concludeAttempt(result, completionMs);
         }
       } catch (error) {
         result.outcome = 'error';
@@ -238,13 +243,4 @@ export async function runVoiceScenario(
       await environment.close();
     }
   }
-}
-function finish(result: Attempt, elapsed: number | null) {
-  result.outcome =
-    result.fixed.length || result.content?.some((item) => item.outcome === 'fail')
-      ? 'fail'
-      : elapsed === null || result.content?.some((item) => item.outcome === 'inconclusive')
-        ? 'inconclusive'
-        : 'pass';
-  result.elapsedMs = result.outcome === 'pass' ? elapsed : null;
 }

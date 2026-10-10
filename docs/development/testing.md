@@ -27,11 +27,12 @@ specified model profiles and repetitions. Its **run issue** is a GitHub
 issue labelled `model-evaluation`; **result history** is the collection of
 those issues and their versioned result comments, including corrections.
 
-Invoke `$evaluate-models` with the intended comparison and an explicit
-spending limit. The first baseline tries the complete text and voice catalog
-once. Later comparisons use three repetitions of the reference, a qualified
-candidate and the voice baseline. A stopped or incomplete run remains useful
-evidence but cannot establish a model's qualification.
+Invoke `$evaluate-models` with one or more models, the intended comparison
+and an explicit spending limit. An initial survey uses one repetition;
+qualification uses three. Previously tested models are compared using their
+recorded results and run again only when explicitly supplied for the new
+run. A stopped or incomplete run remains useful evidence but cannot establish
+a model's qualification.
 
 Find past runs in
 [open and closed evaluation issues](https://github.com/viscalyx/skyttel/issues?q=is%3Aissue%20label%3Amodel-evaluation).
