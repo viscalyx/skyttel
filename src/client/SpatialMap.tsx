@@ -734,6 +734,10 @@ export function SpatialMap({
           : selectedIds.includes(edge.sourceId) ||
             Boolean(edge.targetId && selectedIds.includes(edge.targetId));
       const length = Math.hypot(tip.x - start.x, tip.y - start.y) || 1;
+      const bend = kind === 'removed' ? 23 : 0;
+      const geometry = bend
+        ? `M ${start.x} ${start.y} Q ${(start.x + tip.x) / 2} ${(start.y + tip.y) / 2 + bend} ${tip.x} ${tip.y}`
+        : `M ${start.x} ${start.y} L ${tip.x} ${tip.y}`;
       reserve({
         x: tip.x - ((tip.x - start.x) / length) * 7,
         y: tip.y - ((tip.y - start.y) / length) * 7,
@@ -747,6 +751,8 @@ export function SpatialMap({
           start,
           end,
           tip,
+          bend,
+          geometry,
           selected,
           kind,
           previous,
@@ -1316,11 +1322,7 @@ export function SpatialMap({
               strokeDasharray="1 4"
             />
           ))}
-          {edges.map(({ edge, start, tip, kind, previous, key }) => {
-            const geometry =
-              kind === 'removed'
-                ? `M ${start.x} ${start.y} Q ${(start.x + tip.x) / 2} ${(start.y + tip.y) / 2 + 23} ${tip.x} ${tip.y}`
-                : `M ${start.x} ${start.y} L ${tip.x} ${tip.y}`;
+          {edges.map(({ edge, geometry, previous, key }) => {
             return (
               // biome-ignore lint/a11y/useSemanticElements: SVG geometry supplies pointer selection; the HTML label supplies the keyboard route.
               <g
@@ -1476,14 +1478,9 @@ export function SpatialMap({
             })}
         </div>
         <svg className="spatial-lines spatial-depth-lines" aria-hidden="true">
-          {edges.map(({ edge, start, tip, selected, kind, previous, key }) => {
+          {edges.map(({ edge, start, tip, bend, geometry, selected, kind, previous, key }) => {
             const maskId = `${occlusionPrefix}-${key}`;
-            const occluders = connectionOcclusion(
-              start,
-              tip,
-              locations.values(),
-              kind === 'removed' ? 23 : 0,
-            );
+            const occluders = connectionOcclusion(start, tip, locations.values(), bend);
             return (
               <g key={key}>
                 <defs>
@@ -1506,18 +1503,16 @@ export function SpatialMap({
                         key={point.id}
                         clipPath={`url(#${maskId}-${point.id})`}
                         d={point.path}
-                        stroke="black"
-                        strokeWidth={point.radius * 2 + 20}
-                        fill="none"
+                        fill="black"
                       />
                     ))}
                   </mask>
                 </defs>
                 {kind === 'removed' ? (
                   <path
-                    d={`M ${start.x} ${start.y} Q ${(start.x + tip.x) / 2} ${(start.y + tip.y) / 2 + 23} ${tip.x} ${tip.y}`}
+                    d={geometry}
                     fill="none"
-                    mask={`url(#${maskId})`}
+                    mask={occluders.length ? `url(#${maskId})` : undefined}
                     markerEnd={`url(#spatial-arrow-${kind})`}
                     className={`connection ${kind}${previous ? ' previous' : ''}${selected ? ' selected' : ''}`}
                     data-previous-relationship={previous ? edge.id : undefined}
@@ -1533,7 +1528,7 @@ export function SpatialMap({
                     y1={start.y}
                     x2={tip.x}
                     y2={tip.y}
-                    mask={`url(#${maskId})`}
+                    mask={occluders.length ? `url(#${maskId})` : undefined}
                     markerEnd={`url(#spatial-arrow-${kind})`}
                     className={`connection ${kind}${selected ? ' selected' : ''}`}
                   />

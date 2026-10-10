@@ -744,6 +744,16 @@ skilda betydelser på faktiska återgivna objekt och samband.
     "En närmare linje syns över ett bakomliggande objekt under och efter flyttning samt efter panorering, zoom och rotation.",
     "Ett närmare objekt skymmer linjen även efter kameranavigering.",
     "En linje med olika ändpunktsdjup växlar mellan framför och bakom inom symbolen."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/spatial-occlusion.test.tsx",
+      "title": "a foreground branch of a retraced curved relationship remains visible over an object",
+      "purpose": "Pixelprov av djupmasken för en böjd linje som återvänder över samma skärmpunkter; inte ett fullständigt arbetsflöde."
+    }
   ]
 }
 ```
@@ -761,6 +771,11 @@ skilda betydelser på faktiska återgivna objekt och samband.
 [spatial.test.tsx](../../tests/browser/spatial.test.tsx), RYMD-13.
 Chromium-provet använder kontrollerade svar för personlig flyttning;
 beständigt sparande mot verklig server provas separat i RYMD-05.
+
+**Ytterligare underlag:**
+[spatial-occlusion.test.tsx](../../tests/browser/spatial-occlusion.test.tsx)
+provar djupmaskens faktiska bildpunkter för en böjd linje som återvänder
+över samma skärmpunkter. Det är ett avgränsat tekniskt prov.
 
 **Steg:**
 
