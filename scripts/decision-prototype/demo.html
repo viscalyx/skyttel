@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype: ask before choosing a relationship direction</title>
+<style>
+  body { max-width: 920px; margin: 40px auto; padding: 0 20px; font: 17px/1.55 system-ui; color: #22312b; background: #f8faf8; }
+  h1 { line-height: 1.2; } section { background: white; border: 1px solid #ced8d1; border-radius: 10px; padding: 22px; margin: 20px 0; }
+  button, select, input { font: inherit; padding: 8px 12px; margin: 5px; } button { cursor: pointer; background: #e9f3ed; color: #204b36; border: 1px solid #8ca695; border-radius: 6px; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #147d48; outline-offset: 3px; }
+  dl { display: grid; grid-template-columns: 200px 1fr; gap: 10px; } dt { font-weight: 600; } dd { margin: 0; overflow-wrap: anywhere; }
+  .muted { color: #53625a; } [role=tab][aria-selected=true] { background: #204b36; color: white; }
+</style>
+<h1>Prototype: ask before choosing a direction</h1>
+<p>Can a separate decision stop an assistant from creating a relationship whose
+direction the user has not supplied? Explore that rule, a clarified request,
+and a withdrawn save request. This is a throwaway, in-memory demonstration.
+It changes no household data and makes no API calls.</p>
+<p class="muted">Without an observation file, choices below are illustrative
+reference outcomes. Load the experiment's <code>report.json</code> to drive
+the same logic with actual returned choices, including mistakes. Expected
+answers are shown for comparison and never correct a model's choice.</p>
+<section aria-labelledby="settings">
+  <h2 id="settings">Choose the evidence</h2>
+  <label>Observation file <input id="file" type="file" accept="application/json,.json"></label><br>
+  <label>Model <select id="profile"><option value="luna-decisions">Luna Decisions</option><option value="luna-responses-high">Luna high, Responses</option><option value="sol-responses-high">Sol 6.1 high, Responses</option></select></label>
+  <label>Direction guidance <select id="policy"><option value="explicit">Explicit direction rule</option><option value="generic">General ambiguity rule</option></select></label><br>
+  <label>Minimum reported confidence <input id="threshold" type="range" min="0" max="1" step="0.05" value="0"><output id="thresholdValue">0</output></label>
+  <p class="muted">This threshold is exploratory and uncalibrated. Responses
+  choices have no comparable confidence, so the slider applies only to Decisions.</p>
+  <p id="evidence" role="status">Illustrative reference outcomes</p>
+</section>
+<section aria-labelledby="current">
+  <h2 id="current">Current state</h2>
+  <dl id="state"></dl>
+  <p id="notice" role="status" aria-live="polite"></p>
+</section>
+<section aria-labelledby="free">
+  <h2 id="free">Try actions in any order</h2>
+  <div id="requests"></div>
+  <button id="edge">Try to create the proposed relationship</button>
+  <button id="save">Try to save the whole draft</button>
+  <button id="reset">Reset</button>
+</section>
+<section aria-labelledby="guided">
+  <h2 id="guided">Guided walkthroughs</h2>
+  <div id="tabs" role="tablist" aria-label="Walkthroughs"></div>
+  <div id="walkthrough" role="tabpanel"></div>
+</section>
+<script>
+  // Portable policy logic. A classifier result is fallible; this gate cannot repair it.
+  const initial = () => ({ request: 'No request yet', decision: 'None', expected: 'None', confidence: null, direction: null, question: null, edge: null, saveAuthority: false, saved: false, blocked: 0, notice: 'Choose a request.' });
+  function transition(state, event) {
+    if (event.type === 'reset') return initial();
+    if (event.type === 'request') {
+      const next = { ...state, request: event.item.message, decision: event.choice ?? 'Missing answer', expected: event.item.expected, confidence: event.confidence, direction: null, question: null, saveAuthority: false };
+      if (event.item.family === 'direction') {
+        const lowConfidence = event.confidence !== null && event.confidence < event.threshold;
+        if (!['A_to_B', 'B_to_A'].includes(event.choice) || lowConfidence) {
+          next.question = 'Which object delivers to the other?';
+          next.notice = 'Direction stays unresolved; a relationship proposal will be blocked.';
+        } else {
+          next.direction = event.choice;
+          next.notice = 'The classifier resolved a direction. Compare it with the reference before trusting this approach.';
+        }
+      } else {
+        next.saveAuthority = event.choice === 'save_now';
+        next.notice = next.saveAuthority ? 'The classifier reports a current whole-draft save request.' : 'This request grants no save authority.';
+      }
+      return next;
+    }
+    if (event.type === 'edge') {
+      if (!state.direction || state.question) return { ...state, blocked: state.blocked + 1, notice: 'Relationship proposal blocked while direction is unresolved.' };
+      return { ...state, edge: state.direction, notice: 'Relationship added to the simulated draft. A wrong classifier choice still causes a wrong relationship.' };
+    }
+    if (event.type === 'save') {
+      if (!state.saveAuthority || state.question) return { ...state, blocked: state.blocked + 1, notice: 'Save blocked: no current authority, or a question is pending.' };
+      return { ...state, saved: true, saveAuthority: false, notice: 'Simulated whole-draft save; authority consumed once. Real Skyttel guards and receipts remain necessary.' };
+    }
+    return state;
+  }
+  const fixtures = [
+    { id: 'd01-original', family: 'direction', title: 'Direction unspecified', message: 'Skapa ett samband av typen Levererar till mellan Microsoft 365 och Tenant Norrsken Bygg.', expected: 'needs_clarification' },
+    { id: 'd03-forward', family: 'direction', title: 'Microsoft delivers to Tenant', message: 'Microsoft 365 ska leverera till Tenant Norrsken Bygg.', expected: 'A_to_B' },
+    { id: 'd04-reverse', family: 'direction', title: 'Tenant delivers to Microsoft', message: 'Tenant Norrsken Bygg ska leverera till Microsoft 365.', expected: 'B_to_A' },
+    { id: 's01-whole-save', family: 'save', title: 'Request whole-draft save', message: 'Spara hela utkastet nu.', expected: 'save_now' },
+    { id: 's03-negation', family: 'save', title: 'Withdraw save request', message: 'Spara inte. Låt förslagen ligga kvar i utkastet.', expected: 'no_save' },
+    { id: 's04-hypothetical', family: 'save', title: 'Ask about saving', message: 'Vad händer med förslagen om vi sparar nu?', expected: 'hypothetical_or_conditional' },
+  ];
+  const walks = [
+    { title: 'Missing direction', description: 'Submit the unspecified direction and try the relationship. Clarify it, then try again.', actions: ['d01-original', 'edge', 'd03-forward', 'edge'] },
+    { title: 'Reverse direction', description: 'Submit the reverse direction and inspect the model choice before creating the relationship. A gate cannot repair a confidently wrong answer.', actions: ['d04-reverse', 'edge'] },
+    { title: 'Withdraw saving', description: 'Request saving, withdraw that request, and attempt a save. Try again with a fresh request.', actions: ['s01-whole-save', 's03-negation', 'save', 's01-whole-save', 'save', 'save'] },
+  ];
+  let state = initial(), observations = null, tab = 0, step = 0;
+  const byId = id => document.getElementById(id);
+  const label = value => ({ A_to_B: 'Microsoft 365 → Tenant Norrsken Bygg', B_to_A: 'Tenant Norrsken Bygg → Microsoft 365', needs_clarification: 'Direction unresolved', save_now: 'Whole draft requested now', no_save: 'Saving forbidden', hypothetical_or_conditional: 'Hypothetical or conditional', no_save_request: 'No save requested' }[value] ?? value);
+  function send(action) {
+    const item = fixtures.find(fixture => fixture.id === action);
+    if (item) {
+      const policy = item.family === 'direction' ? byId('policy').value : 'explicit';
+      const observed = observations?.find(record => record.case === item.id && record.policy === policy && record.profile === byId('profile').value);
+      state = transition(state, { type: 'request', item, choice: observations ? observed?.choice ?? null : item.expected, confidence: observed?.confidence ?? null, threshold: Number(byId('threshold').value) });
+    } else state = transition(state, { type: action });
+    render();
+  }
+  function button(text, callback) { const element = document.createElement('button'); element.textContent = text; element.onclick = callback; return element; }
+  function render() {
+    const fields = { 'Latest request': state.request, 'Classifier decision': label(state.decision), 'Reference outcome': label(state.expected), 'Reported confidence': state.confidence ?? 'Unavailable', 'Pending question': state.question ?? 'None', 'Resolved direction': label(state.direction ?? 'Unresolved'), 'Draft relationship': label(state.edge ?? 'None'), 'Current save authority': state.saveAuthority ? 'Granted by classifier' : 'Absent', 'Simulated save': state.saved ? 'Completed' : 'Not completed', 'Blocked attempts': state.blocked };
+    byId('state').replaceChildren();
+    for (const [name, value] of Object.entries(fields)) { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = name; dd.textContent = String(value); byId('state').append(dt, dd); }
+    byId('notice').textContent = state.notice;
+    byId('thresholdValue').textContent = byId('threshold').value;
+    byId('tabs').replaceChildren(...walks.map((walk, index) => { const element = button(walk.title, () => { tab = index; step = 0; state = initial(); render(); }); element.setAttribute('role', 'tab'); element.setAttribute('aria-selected', String(index === tab)); return element; }));
+    const description = document.createElement('p'); description.textContent = walks[tab].description;
+    byId('walkthrough').replaceChildren(description);
+    walks[tab].actions.forEach((action, index) => { const text = fixtures.find(item => item.id === action)?.title ?? (action === 'edge' ? 'Try the relationship' : 'Try saving'); const element = button(`${index + 1}. ${text}`, () => { send(action); step++; render(); }); element.disabled = index !== step; byId('walkthrough').append(element); });
+  }
+  byId('requests').append(...fixtures.map(item => button(item.title, () => send(item.id))));
+  byId('edge').onclick = () => send('edge'); byId('save').onclick = () => send('save'); byId('reset').onclick = () => { step = 0; send('reset'); };
+  byId('threshold').oninput = render;
+  for (const id of ['profile', 'policy']) byId(id).onchange = () => { state = initial(); step = 0; render(); };
+  byId('file').onchange = async event => {
+    try { const report = JSON.parse(await event.target.files[0].text()); if (!Array.isArray(report.records)) throw new Error('Expected an experiment report'); observations = report.records; state = initial(); step = 0; byId('evidence').textContent = `Loaded ${observations.length} observed decisions. Missing observations stay unresolved.`; render(); }
+    catch (error) { byId('evidence').textContent = `Could not load observations: ${error.message}`; }
+  };
+  render();
+</script>
+</html>
