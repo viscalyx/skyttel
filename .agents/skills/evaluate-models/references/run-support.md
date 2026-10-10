@@ -83,6 +83,10 @@ requests, observations, reports and the persistent atomic ledger in ignored
 `model-evaluation-results/<run-id>` artifacts. Keep raw transcripts and
 credentials private.
 
+Set `voiceProfile.backend` to the selected text profile and `voiceProfile.id`
+to the identity of that voice/backend combination. Keep the verified voice
+provider's model, limits and pricing in the profile.
+
 The judge is a separate model that assesses semantic response requirements
 that fixed application-state checks cannot decide. Choose and record its model
 and effort in the run configuration. Its calibration must pass before its
