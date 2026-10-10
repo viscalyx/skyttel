@@ -1,6 +1,77 @@
 import { expect, test } from 'vitest';
+import catalog from '../../../scripts/model-evaluation/catalog.json' with { type: 'json' };
+import { evaluationEnvironment } from '../../../scripts/model-evaluation/environment.js';
 import { runTextScenario } from '../../../scripts/model-evaluation/runner.js';
+import type { Scenario } from '../../../scripts/model-evaluation/types.js';
+import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
+
+test.each([
+  { id: 'unknown-user', knowledge: 'unknown', target: null },
+  { id: 'no-user', knowledge: 'none', target: null },
+  { id: 'uncertain-user', knowledge: 'uncertain', target: 'mira' },
+])(
+  'the $id fixture accepts the correct certainty with a short confirmation',
+  {
+    tags: ['technical'],
+  },
+  async ({ id, knowledge, target }) => {
+    const scenario = catalog.scenarios.find((item) => item.id === id) as Scenario;
+    let environment: Awaited<ReturnType<typeof evaluationEnvironment>>;
+    const model = textModel(async (body) => {
+      if (body.input.at(-1)?.type === 'function_call_output')
+        return [modelMessage('Utkastet är uppdaterat.')];
+      const state = await environment.read();
+      const type = state.relationshipTypes.find((item) => item.name === 'Används av');
+      const edge = state.relationships.find(
+        (item) => item.sourceId === 'cloud' && item.typeId === type?.id,
+      );
+      if (!edge || !type) throw new Error('Missing known-user fixture relationship');
+      return [
+        modelTool('propose_relationship', {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id: edge.id,
+          baseRevision: edge.revision,
+          value: { typeId: type.id, sourceId: 'cloud', targetId: target, knowledge },
+        }),
+      ];
+    });
+    environment = await evaluationEnvironment(scenario, { modelFetch: model.provider });
+    try {
+      const step = scenario.steps[0];
+      const view = await environment.get<TextAssistantView>(environment.path);
+      await environment.post(`${environment.path}/messages`, {
+        requestId: step.id,
+        text: step.text,
+        revision: view.revision,
+        draftVersion: view.review.version,
+        contentVersion: view.review.contentVersion,
+      });
+      await expect
+        .poll(
+          async () =>
+            (await environment.get<TextAssistantView>(`${environment.path}/messages/${step.id}`))
+              .taskStatus,
+        )
+        .toBe('completed');
+      const finished = await environment.get<TextAssistantView>(environment.path);
+      const failures = await environment.check(step, finished, []);
+      expect(failures).toEqual([]);
+      expect([finished.reply, finished.modelReply].join(' ')).toContain('Utkastet är uppdaterat.');
+      const context = JSON.parse(environment.judgeContext(step, failures));
+      expect(context.observedState.effective.relationships).toContainEqual({
+        source: 'cloud',
+        type: 'Används av',
+        target,
+        knowledge,
+      });
+      expect(context.observedState.historyChanges).toBe(0);
+    } finally {
+      await environment.close();
+    }
+  },
+);
 
 test('evaluation uses real save gates, receipts and history and records rejected unsolicited saves', {
   tags: ['technical'],
@@ -13,7 +84,7 @@ test('evaluation uses real save gates, receipts and history and records rejected
       {
         id: 'save',
         text: 'Spara hela utkastet.',
-        expected: { saves: 1, saveAttempts: 1, requirements: [] },
+        expected: { saves: 1, saveAttempts: 1, requirements: ['Bekräfta sparandet.'] },
       },
     ],
   };
@@ -29,7 +100,27 @@ test('evaluation uses real save gates, receipts and history and records rejected
   const success = await runTextScenario(
     scenario,
     { modelFetch: allowed.provider },
-    { profile: 'local', repetition: 1 },
+    {
+      profile: 'local',
+      repetition: 1,
+      judge: async (input) => {
+        const context = JSON.parse(input.context);
+        expect(context.fixedChecks).toEqual({ checked: true, passed: true, failures: [] });
+        expect(context.observedState.saveReceipt).toBeTruthy();
+        expect(context.observedState.saveOperations).toHaveLength(1);
+        expect(context.observedState.saveOperations[0].status).toBe('succeeded');
+        expect(context.observedState.historyChanges).toBe(1);
+        expect(context.observedState.draft.changes).toEqual([]);
+        expect(context.observedState.saved.objects).toEqual(
+          context.observedState.effective.objects,
+        );
+        expect(
+          context.observedState.saved.objects.find((object: { id: string }) => object.id === 'lo')
+            .description,
+        ).toBe('Övar cello på tisdagar.');
+        return [{ id: 'backend-0', outcome: 'pass', reason: 'Observed real receipt and history.' }];
+      },
+    },
   );
   expect(success.attempts[0]).toMatchObject({ outcome: 'pass', fixed: [] });
   expect(

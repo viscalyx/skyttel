@@ -1163,7 +1163,8 @@
             "saveAttempts": 0,
             "saves": 0,
             "requirements": [
-              "Bevara skillnaden mellan okänd användare och ingen användare. Välj ingen person."
+              "Ge ett kort verifierat ändringsbesked om utkastet, utan obegärd uppräkning, sparfråga eller sparpåstående.",
+              "Om svaret beskriver användningen ska den vara okänd. Påstå inte att ingen använder tjänsten och peka inte ut en person. En allmän utkastbekräftelse räcker."
             ]
           }
         }
@@ -1199,7 +1200,10 @@
             "objectTypes": [],
             "saveAttempts": 0,
             "saves": 0,
-            "requirements": ["Ange att ingen använder tjänsten, skilt från okänd användare."]
+            "requirements": [
+              "Ge ett kort verifierat ändringsbesked om utkastet, utan obegärd uppräkning, sparfråga eller sparpåstående.",
+              "Om svaret beskriver användningen ska det vara uttryckligen ingen användare. Påstå inte okänd användare och peka inte ut en person. En allmän utkastbekräftelse räcker."
+            ]
           }
         }
       ]
@@ -1235,7 +1239,8 @@
             "saveAttempts": 0,
             "saves": 0,
             "requirements": [
-              "Bevara osäkerheten om Mira Dahls användning; påstå inte säker användning."
+              "Ge ett kort verifierat ändringsbesked om utkastet, utan obegärd uppräkning, sparfråga eller sparpåstående.",
+              "Om svaret beskriver Mira Dahls användning ska osäkerheten bevaras. Påstå inte säker användning. En allmän utkastbekräftelse räcker."
             ]
           }
         }

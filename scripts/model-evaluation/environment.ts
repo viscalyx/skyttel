@@ -125,6 +125,7 @@ export async function evaluationEnvironment(
     const initialHistory = (await get<{ history: unknown[] }>('map/history')).history.length;
     const objectIds = new Map(initialObjects.map((item) => [item.name, item.id]));
     const appliedSteps = new Set<string>();
+    let observedState: Record<string, unknown> | undefined;
     function normalObjects(map: MapState, effective: boolean) {
       const objects: (ObjectValue & { id: string })[] = [...map.objects];
       if (effective)
@@ -199,6 +200,16 @@ export async function evaluationEnvironment(
       get,
       post,
       read,
+      judgeContext(step: Scenario['steps'][number], failures: string[], summary = '') {
+        if (!observedState) throw new Error('evaluation_state_evidence_missing');
+        return JSON.stringify({
+          scenario: scenario.title,
+          request: step.text,
+          historicalSummary: summary,
+          fixedChecks: { checked: true, passed: failures.length === 0, failures },
+          observedState,
+        });
+      },
       async check(
         step: Scenario['steps'][number],
         view: TextAssistantView,
@@ -295,6 +306,22 @@ export async function evaluationEnvironment(
           failures.push('saved_map_changed');
         if (view.error || view.phase === 'error' || view.phase === 'recovery')
           failures.push(view.error ?? view.phase);
+        observedState = structuredClone({
+          saved: {
+            objects: normalObjects(map, false),
+            relationships: normalRelationships(map, false),
+          },
+          effective: {
+            objects: normalObjects(map, true),
+            relationships: normalRelationships(map, true),
+          },
+          types: map.types,
+          draft: map.draft,
+          saveReceipt: view.receipt ?? null,
+          saveOperations: operations,
+          historyChanges: history.history.length - initialHistory,
+          displayedSelection: view.displayedSelection ?? null,
+        });
         return failures;
       },
       async close() {

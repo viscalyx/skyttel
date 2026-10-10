@@ -221,11 +221,7 @@ export async function runVoiceScenario(
         if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
         if (!requirements.length) return [];
         const input: JudgeInput = {
-          context: JSON.stringify({
-            scenario: scenario.title,
-            request: step.text,
-            fixed: result.fixed,
-          }),
+          context: environment.judgeContext(step, result.fixed),
           sources,
           requirements: Object.keys(sources).flatMap((source) =>
             requirements.map((text, i) => ({

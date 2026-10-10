@@ -63,7 +63,10 @@ test('the evaluation summary uses real price turns and atomically installs ordin
           ...value,
           financialFacts: {
             ...value.financialFacts,
-            price: { knowledge: 'known', value: first ? '189' : '229' },
+            price: {
+              knowledge: 'known',
+              value: turn.message.includes('239') ? '239' : first ? '189' : '229',
+            },
           },
         },
       }),
@@ -104,6 +107,38 @@ test('the evaluation summary uses real price turns and atomically installs ordin
     expect(model.requests.filter((body) => !body.tools.length)).toHaveLength(1);
     expect(summary.view.contextGeneration).toBe(1);
     expect(await environment.read()).toEqual(before);
+    const correction = scenario.steps[3];
+    await environment.post(`${environment.path}/messages`, {
+      requestId: correction.id,
+      text: correction.text,
+      revision: summary.view.revision,
+      draftVersion: summary.view.review.version,
+      contentVersion: summary.view.review.contentVersion,
+    });
+    await expect
+      .poll(
+        async () =>
+          (
+            await environment.get<TextAssistantView>(
+              `${environment.path}/messages/${correction.id}`,
+            )
+          ).taskStatus,
+      )
+      .toBe('completed');
+    const corrected = await environment.get<TextAssistantView>(environment.path);
+    const failures = await environment.check(correction, corrected, []);
+    expect(failures).toEqual([]);
+    const context = JSON.parse(environment.judgeContext(correction, failures, summary.summary));
+    expect(context.historicalSummary).toContain('229');
+    expect(context.fixedChecks).toEqual({ checked: true, passed: true, failures: [] });
+    expect(
+      context.observedState.effective.objects.find(
+        (object: { id: string }) => object.id === 'cloud-sub',
+      ).financialFacts.price.value,
+    ).toBe('239');
+    expect(context.observedState.saveReceipt).toBeNull();
+    expect(context.observedState.saveOperations).toEqual([]);
+    expect(context.observedState.historyChanges).toBe(0);
   } finally {
     await environment.close();
   }

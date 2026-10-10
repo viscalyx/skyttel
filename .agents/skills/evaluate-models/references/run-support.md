@@ -144,10 +144,13 @@ verdict or completion time. A stop after paid execution begins is `aborted`;
 retain its charges and observed error time.
 
 Judge each step once in one tool-free call covering all requirements. Keep
-backend text and spoken transcript as separate sources. Missing required
-content in complete text fails; incomplete collection without proof is
-inconclusive. Stop dependent steps after fail, error, aborted or inconclusive
-outcomes. Unrun steps have no judge result.
+backend text and spoken transcript as separate sources.
+Give the judge the actual state, receipt and history snapshot from the fixed
+checks; use those facts to ground confirmations. Historical summaries describe
+earlier context. Required response content must appear in its designated source.
+Missing required content in complete text fails; incomplete collection without
+proof is inconclusive. Stop dependent steps after fail, error, aborted or
+inconclusive outcomes. Unrun steps have no judge result.
 
 Timing starts at text submission or reference-audio end and finishes at the
 later of correct state and the final required response fragment. Preserve

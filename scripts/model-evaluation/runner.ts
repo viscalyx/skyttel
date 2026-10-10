@@ -144,12 +144,7 @@ export async function runTextScenario(
           if (step.expected.requirements.length) {
             result.content = options.judge
               ? await options.judge({
-                  context: JSON.stringify({
-                    scenario: scenario.title,
-                    request: step.text,
-                    summary: summaryText,
-                    fixed: result.fixed,
-                  }),
+                  context: environment.judgeContext(step, result.fixed, summaryText),
                   sources: {
                     backend: {
                       text: responseText,

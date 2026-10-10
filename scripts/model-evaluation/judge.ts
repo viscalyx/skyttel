@@ -9,6 +9,11 @@ export const judgeInstructions =
   'Bedöm varje angivet innehållskrav efter betydelse, inte exakt ordalydelse. ' +
   'Behåll svarskällorna separata: backendtext ersätter aldrig talets uttranskription. ' +
   'Bedöm all insamlad text, inklusive mellanbesked. Fasta tillståndsutfall får inte ändras. ' +
+  'Observerat tillstånd, sparkvitto, sparoperationer och ändringshistorik verifierar ' +
+  'om ett ändrings- eller sparbesked är sant. fixedChecks anger redan utförda kontroller. ' +
+  'historicalSummary beskriver tidigare samtalskontext, inte aktuellt tillstånd. ' +
+  'Tillståndsbevis ersätter aldrig fakta, frågor eller fel som uttryckligen måste finnas ' +
+  'i den angivna svarskällan; bedöm sådant innehåll enbart från sources. ' +
   'Fullständig text utan obligatoriskt innehåll är fail. Vid uttryckligen ofullständig ' +
   'insamling är bevisade krav pass och saknade krav inconclusive. Bevara osäkra uppgifter. ' +
   'Kort verifierat ändringsbesked är normalfall; uppräkning kräver användarens begäran. ' +
