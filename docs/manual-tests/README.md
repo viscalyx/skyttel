@@ -521,6 +521,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   stängning;
   sökning och direkta samband, läsbara tidigare sparade samband,
   täta etiketter, publicerat medlemsbortfall och återhämtning av grafik.
+  RYMD-13 provar djupordning mellan symboler och samband under flyttning,
+  efter kameranavigering och för linjer med olika ändpunktsdjup.
   RYMD-11–12 skiljer fysisk pekning, orientering, zoom och faktisk
   symboltolkning från syntetisk Chromium-inmatning.
 

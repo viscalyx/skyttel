@@ -1,7 +1,8 @@
 # Manuella testfall för rymdkartan
 
 Testfallen omfattar gemensam redigering, navigering och bevarad text i
-tabell och rymdkarta. Anteckna commit, webbläsare, enhet, fysisk eller
+tabell och rymdkarta samt djup vid överlappande symboler och linjer.
+Anteckna commit, webbläsare, enhet, fysisk eller
 emulerad inmatning samt godkänt eller underkänt resultat vid körning.
 Fysiska enhetsprov och hjälpmedelsprov följs separat i
 [uppföljningen för manuella prov](https://github.com/viscalyx/skyttel/issues/97).
@@ -725,3 +726,76 @@ skilda betydelser på faktiska återgivna objekt och samband.
 
 - Plus, penna och kryss skiljer nya, ändrade och borttagna förslag.
 - Riktning och upphörd status kan skiljas från privata förslag utan enbart färg.
+
+### RYMD-13: överlappande objekt och samband följer djupet
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/spatial.test.tsx",
+    "caseId": "RYMD-13"
+  },
+  "reference": "Chromium med produktionsstilar och kontrollerad personlig vy vid 1280 × 1000 CSS-pixlar. Varianterna skiljer linje framför objekt, objekt framför linje och djupväxling inom samma symbol.",
+  "outcomes": [
+    "En närmare linje syns över ett bakomliggande objekt under och efter flyttning samt efter panorering, zoom och rotation.",
+    "Ett närmare objekt skymmer linjen även efter kameranavigering.",
+    "En linje med olika ändpunktsdjup växlar mellan framför och bakom inom symbolen."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/spatial-occlusion.test.tsx",
+      "title": "a foreground branch of a retraced curved relationship remains visible over an object",
+      "purpose": "Pixelprov av djupmaskerna för en böjd linje som återvänder över samma skärmpunkter och dess pilspets; inte ett fullständigt arbetsflöde."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Prova djupordningen där ett objekt överlappar ett samband.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Ett nytt provhushåll och placeringarna enligt
+[djupförberedelsen](map-depth-preparation.md). Börja med varianten `behind`.
+
+**Automatiskt motsvarande webbläsartest:**
+[spatial.test.tsx](../../tests/browser/spatial.test.tsx), RYMD-13.
+Chromium-provet använder kontrollerade svar för personlig flyttning;
+beständigt sparande mot verklig server provas separat i RYMD-05.
+
+**Ytterligare underlag:**
+[spatial-occlusion.test.tsx](../../tests/browser/spatial-occlusion.test.tsx)
+provar djupmaskens faktiska bildpunkter för en böjd linje som återvänder
+över samma skärmpunkter och för dess pilspets.
+Det är ett avgränsat tekniskt prov.
+
+**Steg:**
+
+1. Öppna Karta och kontrollera linjen över Kims runda symbol. Dra Kim en
+   kort sträcka i sidled längs linjen. Kontrollera överlappningen både
+   medan du drar och efter släppet.
+2. Öppna **Navigera**, välj **Panorera vänster** och stäng navigeringen.
+   Kontrollera linjen över Kim. Upprepa med **Zooma in** och
+   **Rotera vänster**; stäng navigeringen före varje avläsning.
+3. Förbered varianten `ahead`, ladda om och öppna Karta. Kontrollera att
+   Kim skymmer linjen. Upprepa kamerakontrollerna i steg 2.
+4. Förbered varianten `sloping`, ladda om och öppna Karta. Kontrollera
+   linjen vid Kims symbol från vänster till höger.
+
+**Förväntat resultat:**
+
+- Linjen framför Kim syns över symbolen under och efter flyttning samt
+  efter panorering, zoom och rotation.
+- Kim framför linjen skymmer linjen inom symbolen, även efter
+  kameranavigering.
+- Den sneda linjen syns över symbolens vänstra del och skyms av dess
+  högra del. Djupet vid överlappningen avgör ordningen.

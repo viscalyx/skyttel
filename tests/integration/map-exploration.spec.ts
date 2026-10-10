@@ -163,7 +163,10 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
         await expect(old).toHaveAttribute('aria-describedby', new RegExp(`-previous-${edge.id}$`));
         await expect(old).toContainText('Använder');
         await expect(old).toContainText('×');
-        await expect(geometry).toHaveAttribute('marker-end', 'url(#spatial-arrow-removed)');
+        await expect(geometry.locator('..').locator('.connection-arrow-shaft')).toHaveAttribute(
+          'marker-end',
+          'url(#spatial-arrow-removed)',
+        );
         await expect(geometry).toHaveAttribute('d', /.+/);
         await expect(geometry.locator('title')).toHaveText(
           'Tidigare samband: Alex Exempel → Använder → Blå cykel',

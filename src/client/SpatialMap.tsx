@@ -22,6 +22,7 @@ import { SpatialHeightGuide } from './SpatialHeightGuide.js';
 import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
 import { SpatialOrientation } from './SpatialOrientation.js';
 import { navigationDragThreshold } from './spatial-navigation.js';
+import { connectionOcclusion } from './spatial-occlusion.js';
 import { type ProjectedPoint, spatialScene } from './spatial-scene.js';
 import { useObjectMovement } from './use-object-movement.js';
 import type { usePersonalView } from './use-personal-view.js';
@@ -49,11 +50,19 @@ export function ProposalSymbol({ change }: { change?: { before: unknown; after: 
 }
 
 const connectionKinds = ['existing', 'added', 'changed', 'removed'] as const;
-function arrowTip(source: { x: number; y: number }, target: { x: number; y: number }, radius = 28) {
+function arrowTip(
+  source: Pick<ProjectedPoint, 'x' | 'y' | 'depth'>,
+  target: Pick<ProjectedPoint, 'x' | 'y' | 'depth'>,
+  radius = 28,
+) {
   const dx = source.x - target.x;
   const dy = source.y - target.y;
   const fraction = Math.min(radius / (Math.hypot(dx, dy) || 1), 0.45);
-  return { x: target.x + dx * fraction, y: target.y + dy * fraction };
+  return {
+    x: target.x + dx * fraction,
+    y: target.y + dy * fraction,
+    depth: 1 / ((1 - fraction) / target.depth + fraction / source.depth),
+  };
 }
 
 export function SpatialMap({
@@ -149,6 +158,7 @@ export function SpatialMap({
     [active],
   );
   const relationshipLabelPrefix = useId();
+  const occlusionPrefix = useId();
   const [navigationOpen, setNavigationOpen] = useState(false);
   const navigationTrigger = useRef<HTMLButtonElement>(null);
   function changeNavigation(open: boolean) {
@@ -714,6 +724,7 @@ export function SpatialMap({
       const end = target ?? {
         x: source.x + (source.x > surfaceWidth * 0.65 ? -100 : 100),
         y: source.y + (source.y > surfaceHeight * 0.65 ? -80 : 80),
+        depth: source.depth,
       };
       const tip = arrowTip(source, end, target ? 29 : 0);
       const start = arrowTip(end, source, 22);
@@ -723,6 +734,10 @@ export function SpatialMap({
           : selectedIds.includes(edge.sourceId) ||
             Boolean(edge.targetId && selectedIds.includes(edge.targetId));
       const length = Math.hypot(tip.x - start.x, tip.y - start.y) || 1;
+      const bend = kind === 'removed' ? 23 : 0;
+      const geometry = bend
+        ? `M ${start.x} ${start.y} Q ${(start.x + tip.x) / 2} ${(start.y + tip.y) / 2 + bend} ${tip.x} ${tip.y}`
+        : `M ${start.x} ${start.y} L ${tip.x} ${tip.y}`;
       reserve({
         x: tip.x - ((tip.x - start.x) / length) * 7,
         y: tip.y - ((tip.y - start.y) / length) * 7,
@@ -736,6 +751,8 @@ export function SpatialMap({
           start,
           end,
           tip,
+          bend,
+          geometry,
           selected,
           kind,
           previous,
@@ -1305,11 +1322,7 @@ export function SpatialMap({
               strokeDasharray="1 4"
             />
           ))}
-          {edges.map(({ edge, start, tip, selected, kind, previous, key }) => {
-            const geometry =
-              kind === 'removed'
-                ? `M ${start.x} ${start.y} Q ${(start.x + tip.x) / 2} ${(start.y + tip.y) / 2 + 23} ${tip.x} ${tip.y}`
-                : `M ${start.x} ${start.y} L ${tip.x} ${tip.y}`;
+          {edges.map(({ edge, geometry, previous, key }) => {
             return (
               // biome-ignore lint/a11y/useSemanticElements: SVG geometry supplies pointer selection; the HTML label supplies the keyboard route.
               <g
@@ -1333,29 +1346,6 @@ export function SpatialMap({
                 }}
               >
                 <path d={geometry} className="connection-hit" />
-                {kind === 'removed' ? (
-                  <path
-                    d={geometry}
-                    fill="none"
-                    markerEnd={`url(#spatial-arrow-${kind})`}
-                    className={`connection ${kind}${previous ? ' previous' : ''}${selected ? ' selected' : ''}`}
-                    data-previous-relationship={previous ? edge.id : undefined}
-                  >
-                    <title>
-                      {previous ? 'Tidigare samband: ' : ''}
-                      {relationshipLabel(edge, state, objects)}
-                    </title>
-                  </path>
-                ) : (
-                  <line
-                    x1={start.x}
-                    y1={start.y}
-                    x2={tip.x}
-                    y2={tip.y}
-                    markerEnd={`url(#spatial-arrow-${kind})`}
-                    className={`connection ${kind}${selected ? ' selected' : ''}`}
-                  />
-                )}
               </g>
             );
           })}
@@ -1487,6 +1477,87 @@ export function SpatialMap({
               );
             })}
         </div>
+        <svg className="spatial-lines spatial-depth-lines" aria-hidden="true">
+          {surfaceWidth > 0 &&
+            surfaceHeight > 0 &&
+            edges.map(({ edge, start, tip, bend, geometry, selected, kind, previous, key }) => {
+              const maskId = `${occlusionPrefix}-${key}`;
+              const occluders = connectionOcclusion(start, tip, locations.values(), bend);
+              const arrowOccluders = connectionOcclusion(tip, tip, locations.values());
+              const masks = [
+                { id: maskId, points: occluders },
+                { id: `${maskId}-arrow`, points: arrowOccluders },
+              ];
+              // A short shaft establishes the endpoint tangent for the marker.
+              // Its separate mask uses endpoint depth across the entire arrowhead.
+              const tangentX = tip.x - start.x;
+              const tangentY = tip.y - start.y - 2 * bend;
+              const tangentLength = Math.hypot(tangentX, tangentY) || 1;
+              return (
+                <g key={key} className={`spatial-connection ${kind}${selected ? ' selected' : ''}`}>
+                  <defs>
+                    {masks.map((mask) => (
+                      <g key={mask.id}>
+                        {mask.points.map((point) => (
+                          <clipPath key={point.id} id={`${mask.id}-${point.id}`}>
+                            <circle cx={point.x} cy={point.y} r={point.radius} />
+                          </clipPath>
+                        ))}
+                        <mask
+                          id={mask.id}
+                          maskUnits="userSpaceOnUse"
+                          x="0"
+                          y="0"
+                          width={surfaceWidth}
+                          height={surfaceHeight}
+                        >
+                          <rect width={surfaceWidth} height={surfaceHeight} fill="white" />
+                          {mask.points.map((point) => (
+                            <path
+                              key={point.id}
+                              clipPath={`url(#${mask.id}-${point.id})`}
+                              d={point.path}
+                              fill="black"
+                            />
+                          ))}
+                        </mask>
+                      </g>
+                    ))}
+                  </defs>
+                  {kind === 'removed' ? (
+                    <path
+                      d={geometry}
+                      fill="none"
+                      mask={occluders.length ? `url(#${maskId})` : undefined}
+                      className={`connection ${kind}${previous ? ' previous' : ''}${selected ? ' selected' : ''}`}
+                      data-previous-relationship={previous ? edge.id : undefined}
+                    >
+                      <title>
+                        {previous ? 'Tidigare samband: ' : ''}
+                        {relationshipLabel(edge, state, objects)}
+                      </title>
+                    </path>
+                  ) : (
+                    <line
+                      x1={start.x}
+                      y1={start.y}
+                      x2={tip.x}
+                      y2={tip.y}
+                      mask={occluders.length ? `url(#${maskId})` : undefined}
+                      className={`connection ${kind}${selected ? ' selected' : ''}`}
+                    />
+                  )}
+                  <path
+                    d={`M ${tip.x - (tangentX / tangentLength) * 0.001} ${tip.y - (tangentY / tangentLength) * 0.001} L ${tip.x} ${tip.y}`}
+                    fill="none"
+                    mask={arrowOccluders.length ? `url(#${maskId}-arrow)` : undefined}
+                    markerEnd={`url(#spatial-arrow-${kind})`}
+                    className={`connection-arrow-shaft ${kind}${selected ? ' selected' : ''}`}
+                  />
+                </g>
+              );
+            })}
+        </svg>
         {(moving || preferences.axisPinned) && (
           <SpatialOrientation orientation={orientation} corner={preferences.axisCorner} />
         )}
