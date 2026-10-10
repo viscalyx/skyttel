@@ -1,0 +1,939 @@
+{
+  "calibration": true,
+  "controls": [
+    {
+      "id": "1",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "pass",
+          "reason": "Kort, verifierat besked om ändringarna i utkastet, utan uppräkning, sparfråga eller sparpåstående."
+        }
+      ],
+      "expected": {
+        "content": "pass"
+      }
+    },
+    {
+      "id": "2",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "pass",
+          "reason": "Kort, verifierat besked om att utkastet är uppdaterat, utan uppräkning, sparfråga eller sparpåstående."
+        }
+      ],
+      "expected": {
+        "content": "pass"
+      }
+    },
+    {
+      "id": "3",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Svaret påstår att ändringarna är sparade trots att inget är sparat. Det bryter mot kravet på ett verifierat ändringsbesked om utkastet utan sparpåstående."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "4",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Ändringsbeskedet är kort och verifierat, men innehåller den obeställda sparfrågan ”Vill du spara?”."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "5",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Svaret redovisar de enskilda ändringarna och deras värden trots att ingen detaljbeskrivning begärts. Det är en obegärd uppräkning, inte en allmän bekräftelse om utkastet."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "6",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Svaret ger bara ett mellanbesked och saknar ett verifierat ändringsbesked om utkastet."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "7",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "pass",
+          "reason": "Svaret ger ett kort ändringsbesked som stämmer med utkastets tillstånd, utan uppräkning, sparfråga eller sparpåstående."
+        }
+      ],
+      "expected": {
+        "content": "pass"
+      }
+    },
+    {
+      "id": "8",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "pass",
+          "reason": "Backendtexten ställer båda riktade identitetsfrågorna med alternativen Alex Lind/Alex Berg respektive Bankkonto Hushåll/Bankkonto Reserv."
+        }
+      ],
+      "expected": {
+        "content": "pass"
+      }
+    },
+    {
+      "id": "9",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Frågan om Alex Lind eller Alex Berg finns, men frågan om Bankkonto Hushåll eller Bankkonto Reserv saknas."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "10",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Svaret ställer bara en allmän förtydligandefråga. Det saknar båda riktade identitetsfrågorna med alternativen Alex Lind/Alex Berg respektive Bankkonto Hushåll/Bankkonto Reserv."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "11",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "pass",
+          "reason": "Backendtexten redovisar båda utkastförslagen: Lo Bergs beskrivning ”Övar cello på tisdagar.” och Netflix Standards pris 149 kronor."
+        }
+      ],
+      "expected": {
+        "content": "pass"
+      }
+    },
+    {
+      "id": "12",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Backendtexten redovisar Netflix Standards pris på 149 kronor men saknar Lo Bergs beskrivning ”Övar cello på tisdagar.”"
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "13",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "pass",
+          "reason": "Svaret anger uttryckligen att uppgiften är osäker och framställer inte Miras användning som säker."
+        }
+      ],
+      "expected": {
+        "content": "pass"
+      }
+    },
+    {
+      "id": "14",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Backendtexten anger Miras användning som säker och bevarar inte osäkerheten."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "15",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Svaret frågar efter sambandstypen, trots att den är given, och frågar inte om riktningen."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "16",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Backendtexten frågar varken om Alex Lind eller Alex Berg, eller om Bankkonto Hushåll eller Bankkonto Reserv."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "17",
+      "verdicts": [
+        {
+          "id": "content",
+          "outcome": "fail",
+          "reason": "Backendtexten saknar båda identitetsfrågorna med alternativen Alex Lind/Alex Berg respektive Bankkonto Hushåll/Bankkonto Reserv."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "18",
+      "verdicts": [
+        {
+          "id": "alex",
+          "outcome": "pass",
+          "reason": "Backendtexten frågar uttryckligen om Alex Lind eller Alex Berg."
+        },
+        {
+          "id": "bank",
+          "outcome": "inconclusive",
+          "reason": "Frågan om bankkontot saknas i den insamlade texten, men insamlingen är uttryckligen ofullständig."
+        }
+      ],
+      "expected": {
+        "alex": "pass",
+        "bank": "inconclusive"
+      }
+    },
+    {
+      "id": "19",
+      "verdicts": [
+        {
+          "id": "backend",
+          "outcome": "pass",
+          "reason": "Backendtexten ställer båda identitetsfrågorna med alternativen Alex Lind/Alex Berg och Bankkonto Hushåll/Bankkonto Reserv."
+        },
+        {
+          "id": "voice",
+          "outcome": "fail",
+          "reason": "Talets fullständiga uttranskription saknar båda identitetsfrågorna och de namngivna alternativen."
+        }
+      ],
+      "expected": {
+        "backend": "pass",
+        "voice": "fail"
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "scenario": "relationship-direction",
+      "step": "samband-utan-riktning",
+      "profile": "sol-high",
+      "repetition": 1,
+      "modality": "text",
+      "outcome": "pass",
+      "fixed": [],
+      "elapsedMs": 12871,
+      "backendCostUsd": 0.068595,
+      "content": [
+        {
+          "id": "backend-0",
+          "outcome": "pass",
+          "reason": "Svaret frågar vilken av de två tjänsterna som levererar till den andra, utan att fråga efter den redan angivna sambandstypen."
+        }
+      ],
+      "observedEndMs": 12871,
+      "judgeCostUsd": 0.014196
+    },
+    {
+      "scenario": "relationship-direction",
+      "step": "samband-foljdsvar",
+      "profile": "sol-high",
+      "repetition": 1,
+      "modality": "text",
+      "outcome": "pass",
+      "fixed": [],
+      "elapsedMs": 7865,
+      "backendCostUsd": 0.036535700000000004,
+      "content": [
+        {
+          "id": "backend-0",
+          "outcome": "pass",
+          "reason": "Kort, allmänt ändringsbesked som styrks av utkastet och observerat tillstånd, utan uppräkning, sparfråga eller sparpåstående."
+        }
+      ],
+      "observedEndMs": 7865,
+      "judgeCostUsd": 0.014713499999999997
+    },
+    {
+      "scenario": "relationship-direction",
+      "step": "samband-utan-riktning",
+      "profile": "luna-high",
+      "repetition": 1,
+      "modality": "text",
+      "outcome": "pass",
+      "fixed": [],
+      "elapsedMs": 14459,
+      "backendCostUsd": 0.004036515,
+      "content": [
+        {
+          "id": "backend-0",
+          "outcome": "pass",
+          "reason": "Svaret frågar vilken riktning leveransen ska ha mellan de två tjänsterna, utan att fråga efter den redan angivna sambandstypen."
+        }
+      ],
+      "observedEndMs": 14459,
+      "judgeCostUsd": 0.014163499999999996
+    },
+    {
+      "scenario": "relationship-direction",
+      "step": "samband-foljdsvar",
+      "profile": "luna-high",
+      "repetition": 1,
+      "modality": "text",
+      "outcome": "pass",
+      "fixed": [],
+      "elapsedMs": 8097,
+      "backendCostUsd": 0.00117673,
+      "content": [
+        {
+          "id": "backend-0",
+          "outcome": "pass",
+          "reason": "Kort allmän bekräftelse om utkastet, verifierad av den nya relationen i utkastet och effektivt tillstånd. Ingen uppräkning, sparfråga eller sparpåstående."
+        }
+      ],
+      "observedEndMs": 8097,
+      "judgeCostUsd": 0.014548500000000006
+    }
+  ],
+  "calls": [
+    {
+      "id": "900adf8f-0c48-4453-92f3-15cd8ae6e304",
+      "startedAt": 1791661094181,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002236,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_20262e1f01704563a9105cc879853d96",
+      "endedAt": 1791661097420
+    },
+    {
+      "id": "abf82939-800a-41ab-8ecb-40924414ed93",
+      "startedAt": 1791661097427,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0022979999999999997,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_e735f9dac3744595a803db783145baa4",
+      "endedAt": 1791661100795
+    },
+    {
+      "id": "94d3fca1-b4c7-4b02-8328-5b035b6d733c",
+      "startedAt": 1791661100809,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002966,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_10eca2730bbe4a99b8a69fc77cba1ecd",
+      "endedAt": 1791661104749
+    },
+    {
+      "id": "187f75d5-0f8e-4137-b0f6-7be9245fe059",
+      "startedAt": 1791661104763,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002326,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_f2012219bec9417cb099c0ed0b724a0a",
+      "endedAt": 1791661107908
+    },
+    {
+      "id": "9feb714a-9feb-471c-8c38-074797b1b045",
+      "startedAt": 1791661107922,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.00237,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_2dd89f9686064f1ab576c0075f4c7fa9",
+      "endedAt": 1791661111728
+    },
+    {
+      "id": "0bc9118a-43c4-4bc2-b80d-48f483beeb46",
+      "startedAt": 1791661111741,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002408,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_dc79f77c29c84810b1ef8b26a28108d3",
+      "endedAt": 1791661115272
+    },
+    {
+      "id": "ad3120cb-413e-45c9-aae0-858eb88da873",
+      "startedAt": 1791661115283,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002486,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_4560e7589b574a75a0e1d6242d579a58",
+      "endedAt": 1791661118179
+    },
+    {
+      "id": "fde983ac-1919-4125-83c9-dd143913b650",
+      "startedAt": 1791661118196,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.00207,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_01b8b49292bf44fdbc6e56864b173a5f",
+      "endedAt": 1791661121337
+    },
+    {
+      "id": "ea9c472c-425a-4681-a2d9-cbf45d22850f",
+      "startedAt": 1791661121349,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.00198,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_4c3db8ece4ee4bc69fe79c8873d5bda1",
+      "endedAt": 1791661124277
+    },
+    {
+      "id": "668d2e16-6e10-4771-b210-c826d3c2d434",
+      "startedAt": 1791661124289,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002504,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_6c49ef85bbc844abb8e3ed57896dd687",
+      "endedAt": 1791661127491
+    },
+    {
+      "id": "bbbdb073-0c44-4e8d-bbc5-bb34960ce42f",
+      "startedAt": 1791661127504,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0022040000000000002,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_3e3d3812d5a94ccfb3d70b0a2f4c047d",
+      "endedAt": 1791661130534
+    },
+    {
+      "id": "7eea83af-66ba-4e1e-85b5-7c3817fab169",
+      "startedAt": 1791661130547,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002022,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_f99d590dcad648aa81c77959722dd9e2",
+      "endedAt": 1791661133435
+    },
+    {
+      "id": "3305d47e-b0d6-4d66-8dc4-27ff71a7903b",
+      "startedAt": 1791661133442,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002266,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_1aadc03bf06b4cbcb77f51fe3b92f597",
+      "endedAt": 1791661136668
+    },
+    {
+      "id": "f4e80327-330c-4288-a373-028337631d6f",
+      "startedAt": 1791661136678,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.001884,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_fb82b301bdc74223a0088a213fc2d8d4",
+      "endedAt": 1791661139944
+    },
+    {
+      "id": "1713b3f0-2e1a-429e-8168-13dac9c71858",
+      "startedAt": 1791661139956,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002056,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_9cc1ee486e6945fb836c3eb89cd303bc",
+      "endedAt": 1791661143227
+    },
+    {
+      "id": "51efa30e-acbe-410d-8c21-2462037854a5",
+      "startedAt": 1791661143242,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002132,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_005749ebe2e64b84a4e7e328f7bee053",
+      "endedAt": 1791661146988
+    },
+    {
+      "id": "14104013-d3d3-4011-8138-ddc2c7218302",
+      "startedAt": 1791661147004,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002266,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_0d8d7057bf2d4059b655c1c9e47028d3",
+      "endedAt": 1791661149987
+    },
+    {
+      "id": "cb08053e-cdb9-4393-990f-a40291947a16",
+      "startedAt": 1791661149998,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0023699999999999997,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_df446b2b8fa642cc911195e38f279c82",
+      "endedAt": 1791661153060
+    },
+    {
+      "id": "b8e27c70-bf79-492c-b60e-b1a0a3c71a22",
+      "startedAt": 1791661153072,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.002944,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_e79d28507b534e45be7197da6dec45f3",
+      "endedAt": 1791661157128
+    },
+    {
+      "id": "9b3f361a-5747-4035-a1d3-e22a05a4cf40",
+      "startedAt": 1791661157638,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.024531,
+      "reservationUsd": 4.73288,
+      "outcome": "completed",
+      "requestId": "req_51f0332b815a4ff7ac7a3b9821325917",
+      "endedAt": 1791661160257
+    },
+    {
+      "id": "634413c2-b00d-4f63-9320-b250940cd0d7",
+      "startedAt": 1791661160274,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0046906000000000005,
+      "reservationUsd": 4.73288,
+      "outcome": "completed",
+      "requestId": "req_91d5a3947e9644d5aaba2546d2d3fadf",
+      "endedAt": 1791661162273
+    },
+    {
+      "id": "df0c66be-c785-48ba-8f37-658faba907ec",
+      "startedAt": 1791661162292,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.021437599999999998,
+      "reservationUsd": 4.73288,
+      "outcome": "completed",
+      "requestId": "req_058efc358c0a48d2bbcca7d35390e44b",
+      "endedAt": 1791661164376
+    },
+    {
+      "id": "5c8c5212-bdae-45d5-b3a0-a34928a15692",
+      "startedAt": 1791661164395,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0049847,
+      "reservationUsd": 4.73288,
+      "outcome": "completed",
+      "requestId": "req_4c215ce52eb9419c92269843c04e152b",
+      "endedAt": 1791661166524
+    },
+    {
+      "id": "a65e2ac9-8758-4854-ae08-64b5070cd874",
+      "startedAt": 1791661166549,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0027224000000000003,
+      "reservationUsd": 4.73288,
+      "outcome": "completed",
+      "requestId": "req_5e6ac2e05bdc43029b51f4d35a72be08",
+      "endedAt": 1791661168400
+    },
+    {
+      "id": "8e44f71f-26d4-4509-984b-79f29c84956d",
+      "startedAt": 1791661168415,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.010228700000000002,
+      "reservationUsd": 4.73288,
+      "outcome": "completed",
+      "requestId": "req_0a68f57ef3c64a5cbd7fbe6743f4ba25",
+      "endedAt": 1791661170458
+    },
+    {
+      "id": "c377c4d7-609d-42f8-8509-b20fc3ec7391",
+      "startedAt": 1791661170496,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.014196,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_ea7840cf3ba246bb87877ebe01b4d563",
+      "endedAt": 1791661173839
+    },
+    {
+      "id": "edc4c097-e88c-45c9-81b9-cd78a6109692",
+      "startedAt": 1791661173896,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-foljdsvar",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0064029,
+      "reservationUsd": 4.73288,
+      "outcome": "completed",
+      "requestId": "req_b234dc23e7c94a73a2c0222c51de07d1",
+      "endedAt": 1791661175924
+    },
+    {
+      "id": "b71ce36f-c4e3-494b-b87e-397f60fa8c6e",
+      "startedAt": 1791661175945,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-foljdsvar",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0062329,
+      "reservationUsd": 4.73288,
+      "outcome": "completed",
+      "requestId": "req_9c9b69ab9706410a9b5f7f96d1f1a2ac",
+      "endedAt": 1791661177914
+    },
+    {
+      "id": "80142de1-8e87-48b1-adb7-47e06b33f400",
+      "startedAt": 1791661177929,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-foljdsvar",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0238999,
+      "reservationUsd": 4.73288,
+      "outcome": "completed",
+      "requestId": "req_2678a1f86f494ad9adc66ade7d3a8cef",
+      "endedAt": 1791661181652
+    },
+    {
+      "id": "646d924d-7e8e-4b52-8291-3ac006faa06c",
+      "startedAt": 1791661181727,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.014713500000000001,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_6f896d32b4a143ef8a0f6bb06bb6134c",
+      "endedAt": 1791661185122
+    },
+    {
+      "id": "2cc4e572-4422-40ee-b645-51405001f7ef",
+      "startedAt": 1791661185468,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "luna-high",
+      "model": "gpt-6-luna",
+      "costUsd": 0.0012501749999999999,
+      "reservationUsd": 0.236644,
+      "outcome": "completed",
+      "requestId": "req_f47bb640f3554306879fe20ef0f12512",
+      "endedAt": 1791661187394
+    },
+    {
+      "id": "c7a40402-464a-4f18-87ee-b62732bd23a8",
+      "startedAt": 1791661187415,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "luna-high",
+      "model": "gpt-6-luna",
+      "costUsd": 0.00028756999999999996,
+      "reservationUsd": 0.236644,
+      "outcome": "completed",
+      "requestId": "req_dbb85d062e534cac9fcd7be376df4ccd",
+      "endedAt": 1791661189144
+    },
+    {
+      "id": "06ae3cc5-3413-467f-b6c9-f1169d8ce542",
+      "startedAt": 1791661189174,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "luna-high",
+      "model": "gpt-6-luna",
+      "costUsd": 0.0011913800000000001,
+      "reservationUsd": 0.236644,
+      "outcome": "completed",
+      "requestId": "req_0cb7cc93a1f946a280c346592de8be13",
+      "endedAt": 1791661192518
+    },
+    {
+      "id": "5705facd-9ec4-4956-84d9-bfa3f153b648",
+      "startedAt": 1791661192534,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "luna-high",
+      "model": "gpt-6-luna",
+      "costUsd": 0.00035929500000000004,
+      "reservationUsd": 0.236644,
+      "outcome": "completed",
+      "requestId": "req_4f26930e147049f0b3b6bde701f53d54",
+      "endedAt": 1791661194179
+    },
+    {
+      "id": "db3745a4-aac2-43d1-a454-b110e12dfdd3",
+      "startedAt": 1791661194207,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "luna-high",
+      "model": "gpt-6-luna",
+      "costUsd": 0.00023657500000000002,
+      "reservationUsd": 0.236644,
+      "outcome": "completed",
+      "requestId": "req_a1f193dafa7a4f379085f488f4e8b233",
+      "endedAt": 1791661195836
+    },
+    {
+      "id": "460fce76-95dc-47a7-b451-c8ca29dd2b7c",
+      "startedAt": 1791661195856,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-utan-riktning",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "luna-high",
+      "model": "gpt-6-luna",
+      "costUsd": 0.00071152,
+      "reservationUsd": 0.236644,
+      "outcome": "completed",
+      "requestId": "req_953a0320468243c98c3644230fcb6cc9",
+      "endedAt": 1791661199877
+    },
+    {
+      "id": "88e754b5-5ea8-41a5-95d1-8f59480627a5",
+      "startedAt": 1791661199911,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0141635,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_2ccc7ac05275434083f578dcd5500f6b",
+      "endedAt": 1791661203330
+    },
+    {
+      "id": "833f6d36-6d84-4810-8336-c4e1b4b5b2e4",
+      "startedAt": 1791661203374,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-foljdsvar",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "luna-high",
+      "model": "gpt-6-luna",
+      "costUsd": 0.00059118,
+      "reservationUsd": 0.236644,
+      "outcome": "completed",
+      "requestId": "req_5c60235f8bb94f5fa947710d9158b525",
+      "endedAt": 1791661207519
+    },
+    {
+      "id": "aef25e9a-8e4d-45d5-9150-d413d3ff7b7f",
+      "startedAt": 1791661207543,
+      "kind": "backend",
+      "context": {
+        "scenario": "relationship-direction",
+        "step": "samband-foljdsvar",
+        "modality": "text",
+        "repetition": 1
+      },
+      "profile": "luna-high",
+      "model": "gpt-6-luna",
+      "costUsd": 0.00058555,
+      "reservationUsd": 0.236644,
+      "outcome": "completed",
+      "requestId": "req_7d2f54b4b8e1420f94bf5bd99746df89",
+      "endedAt": 1791661211408
+    },
+    {
+      "id": "978ac667-ddef-4214-bdd0-f99209cf2d17",
+      "startedAt": 1791661211439,
+      "kind": "judge",
+      "profile": "judge-sol-high",
+      "model": "gpt-6.1-sol",
+      "costUsd": 0.0145485,
+      "reservationUsd": 4.67144,
+      "outcome": "completed",
+      "requestId": "req_fb4fd7c3bbd3444a9ef18fadd448eb7d",
+      "endedAt": 1791661214467
+    }
+  ],
+  "actualCostUsd": 0.21175344499999993,
+  "ledger": {
+    "limitUsd": null,
+    "spentUsd": 0.211763,
+    "reservedUsd": 0,
+    "availableUsd": null,
+    "stopped": false,
+    "reason": null
+  }
+}

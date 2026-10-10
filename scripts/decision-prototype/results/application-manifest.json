@@ -1,0 +1,57 @@
+{
+  "startedAt": "2026-10-10T19:38:14.169Z",
+  "sourceCommit": "7f7cc2e3eb8d98ef37343c6fff8fa20189582613",
+  "runnerSha256": "ba6ffb274b3e5cfc5bf674a488b8892e8466a91f698847c299be76cd50cdc155",
+  "catalogSha256": "275edc8a80cd21cfe508347510c7ad33e35c588b860ce68db940542d324fd76f",
+  "scenario": {
+    "id": "relationship-direction",
+    "title": "Samband med oklar riktning",
+    "voice": true,
+    "steps": [
+      {
+        "id": "samband-utan-riktning",
+        "text": "Skapa ett samband av typen Levererar till mellan Microsoft 365 och Tenant Norrsken Bygg.",
+        "expected": {
+          "objects": {},
+          "addRelationships": [],
+          "removeRelationships": [],
+          "objectTypes": [],
+          "saveAttempts": 0,
+          "saves": 0,
+          "requirements": [
+            "Fråga vilken av Microsoft 365 och Tenant Norrsken Bygg som levererar till den andra. Fråga inte efter den redan givna typen Levererar till."
+          ]
+        }
+      },
+      {
+        "id": "samband-foljdsvar",
+        "text": "Microsoft 365 ska leverera till Tenant Norrsken Bygg.",
+        "expected": {
+          "objects": {},
+          "addRelationships": [
+            {
+              "source": "m365",
+              "type": "Levererar till",
+              "target": "tenant",
+              "knowledge": "known"
+            }
+          ],
+          "removeRelationships": [],
+          "objectTypes": [],
+          "saveAttempts": 0,
+          "saves": 0,
+          "requirements": [
+            "Ge ett kort verifierat ändringsbesked om utkastet, utan obegärd uppräkning, sparfråga eller sparpåstående."
+          ]
+        }
+      }
+    ]
+  },
+  "rule": "När ett riktat samband beställs mellan två objekt eller genom en uppräkning, är bara ändpunkterna givna. Objektens ordning och vad som verkar rimligt fastställer inte riktningen. Läs samtalets uttryckliga uppgifter; om riktningen saknas, skapa inget sådant samband. Ställ en riktad fråga med de två namngivna riktningarna via ask_questions eller submit_changes.questions, och gör samtidigt bara oberoende entydiga ändringar. Fråga inte om redan given sambandstyp. Ett tydligt följdsvar fastställer riktningen; föreslå då sambandet i utkastet, utan att spara eller fråga om sparande.",
+  "profiles": ["sol-high", "luna-high"],
+  "repetitions": 1,
+  "modality": "text",
+  "authorization": "User explicitly authorized the #187 model experiment.",
+  "budgetUsd": null,
+  "productionChanges": false
+}
