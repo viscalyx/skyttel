@@ -4,7 +4,91 @@ import type { LiveSideband } from '../../../src/server/live-provider.js';
 import { voiceWork } from '../../../src/server/voice-work.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
+
+test.each(['complete', 'stop'])(
+  'a slow accepted voice task remains active until the model finishes or the user stops: %s',
+  { tags: ['technical'] },
+  async (action) => {
+    vi.useFakeTimers();
+    const initial: TextAssistantView = {
+      id: 'slow-voice',
+      revision: 0,
+      phase: 'ready',
+      operations: [],
+      review: {
+        version: 1,
+        contentVersion: 1,
+        changes: [],
+        readyToSave: true,
+        conflicts: [],
+        unresolvedIdentities: [],
+        pendingOperations: [],
+      },
+    };
+    const working: TextAssistantView = {
+      ...initial,
+      revision: 1,
+      phase: 'working',
+      taskStatus: 'working',
+    };
+    let completed = false;
+    const channel = Object.assign(new EventEmitter(), { send: vi.fn() });
+    const request = vi.fn(async (path?: string) => {
+      if (path === 'cancel') return initial;
+      if (path === 'messages' || path?.startsWith('messages/'))
+        return completed
+          ? {
+              ...working,
+              phase: 'ready' as const,
+              taskStatus: 'completed' as const,
+              modelReply: 'Klart.',
+            }
+          : working;
+      return initial;
+    });
+    const failed = vi.fn();
+    const response = vi.fn();
+    const work = voiceWork({
+      channel: channel as unknown as LiveSideband,
+      initial,
+      request,
+      failed,
+      response,
+      update: vi.fn(),
+      interrupt: vi.fn(),
+    });
+    channel.emit('session.input_transcript.delta', {
+      event_id: 'slow-input',
+      delta: 'Besvara frågan.',
+      start_ms: 0,
+      end_ms: 100,
+    });
+    channel.emit('session.delegation.created', {
+      offset_ms: 100,
+      delegation: { id: 'slow-task', target: 'client' },
+    });
+    await vi.advanceTimersByTimeAsync(100);
+    vi.setSystemTime(Date.now() + 11 * 60_000);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(work.readyForSummary()).toBe(false);
+    expect(channel.send).not.toHaveBeenCalled();
+    expect(request.mock.calls.some(([path]) => path === 'cancel')).toBe(false);
+    if (action === 'stop') await work.stop();
+    completed = true;
+    await vi.advanceTimersByTimeAsync(100);
+    expect(failed).not.toHaveBeenCalled();
+    expect(work.readyForSummary()).toBe(true);
+    if (action === 'complete') expect(response).toHaveBeenCalledOnce();
+    else {
+      expect(response).not.toHaveBeenCalled();
+      expect(request.mock.calls.some(([path]) => path === 'cancel')).toBe(true);
+    }
+  },
+);
 
 test.each(['receipt', 'answer', 'stopped'])(
   'new speech during the delivery wait preserves only a current verified save: %s',

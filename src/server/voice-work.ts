@@ -206,10 +206,8 @@ export function voiceWork({
           return;
         }
         owned = view.revision;
-        const deadline = Date.now() + 180_000;
         while (current() && (view.taskStatus === 'queued' || view.taskStatus === 'working')) {
           update(view, true);
-          if (Date.now() > deadline) throw new Error('voice_task_timeout');
           await new Promise((resolve) => setTimeout(resolve, 50));
           view = await request(`messages/${requestId}`);
         }

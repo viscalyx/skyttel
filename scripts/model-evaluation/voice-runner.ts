@@ -128,13 +128,11 @@ export async function runVoiceScenario(
           let latestOutput = startedAt;
           let latestEvent = startedAt;
           let fixed: string[] = [];
-          // The deadline begins at reference-audio end, including negative
-          // completion times. Quiet observation is reported separately.
+          // Measure from reference-audio end, including negative completion
+          // times. Quiet observation is reported separately.
           for (;;) {
             if (options.stopped?.()) throw new Error('evaluation_budget_stopped');
             if (playbackError) throw playbackError;
-            if (Date.now() >= startedAt + reference.clip.frames / 22.05 + 180_000)
-              throw new Error('evaluation_voice_collection_timeout');
             const status = await environment.post<VoiceAssistantResponse>(
               `${environment.path}/voice/${voiceId}/poll`,
               {
@@ -187,7 +185,6 @@ export async function runVoiceScenario(
               break;
             }
             if (status.voice.error) throw new Error(status.voice.error);
-            if (audioEnd !== undefined && Date.now() >= audioEnd + 180_000) break;
             await new Promise((resolve) => setTimeout(resolve, 25));
           }
           const audio = await playback;

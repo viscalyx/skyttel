@@ -39,7 +39,7 @@ test('qualification needs every step and repetition, with equal scenario weighti
   }));
   expect(
     compareProfiles(reference, summarizeProfile(faster, scenarios, 'candidate', 'text', [1, 2, 3])),
-  ).toMatchObject({ rule: true, deltaSeconds: 3, percent: 20 });
+  ).toMatchObject({ faster: true, deltaSeconds: 3, percent: 20 });
   faster[0].outcome = 'fail';
   faster[0].elapsedMs = null;
   expect(
@@ -56,7 +56,14 @@ test('qualification needs every step and repetition, with equal scenario weighti
     'text',
     [1],
   );
-  expect(compareProfiles(singleReference, singleCandidate)).toMatchObject({ rule: true });
+  expect(compareProfiles(singleReference, singleCandidate)).toMatchObject({ faster: true });
+  const slightlyFaster = compareProfiles(singleReference, {
+    ...singleCandidate,
+    meanScenarioMedianMs: 14_900,
+    totals: [29_800],
+  });
+  expect(slightlyFaster).toMatchObject({ faster: true, deltaSeconds: 0.1 });
+  expect(slightlyFaster.recommendation).toContain('Bedöm redovisad svarstid och kostnad');
   expect(compareProfiles(reference, singleCandidate)).toMatchObject({ label: 'Ej jämförbart' });
   expect(summarizeProfile(singleRound.slice(1), scenarios, 'reference', 'text', [1])).toMatchObject(
     { qualified: false, finalQualified: false },
@@ -126,12 +133,12 @@ test('one supplied candidate can be recommended using a recorded text or voice r
     const result = compareEvaluationProfiles([candidate], [reference], current);
     expect(result.comparisons).toEqual([]);
     expect(result.historicalComparisons).toHaveLength(1);
-    expect(result.recommendation).toContain('motiverar ett byte');
+    expect(result.recommendation).toContain('Bedöm redovisad svarstid och kostnad');
     expect(result.recommendationBasis).toMatchObject({
       reference: 'reference',
       referenceIssue: 300,
       candidate: 'supplied',
-      rule: true,
+      faster: true,
     });
     expect(
       compareEvaluationProfiles(
@@ -149,7 +156,7 @@ test('one supplied candidate can be recommended using a recorded text or voice r
         ],
         current,
       ).recommendationBasis,
-    ).toMatchObject({ referenceIssue: 300, rule: true });
+    ).toMatchObject({ referenceIssue: 300, faster: true });
     expect(
       compareEvaluationProfiles([candidate], [reference], {
         ...current,

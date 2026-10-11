@@ -530,10 +530,8 @@ export function voiceAssistantRoutes({
       for (const voice of active) {
         // An accepted delegate can race the last browser poll. Finish its
         // checked result before retiring context, rather than canceling it.
-        const deadline = Date.now() + 120_000;
         while (!voice.closed && voice.work && !voice.work.readyForSummary()) {
-          if (signal.aborted || Date.now() > deadline)
-            throw new Error('context_handoff_interrupted');
+          if (signal.aborted) throw new Error('context_handoff_interrupted');
           voice.heartbeat = Date.now();
           await new Promise((resolve) => setTimeout(resolve, 50));
         }

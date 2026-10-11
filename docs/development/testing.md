@@ -44,6 +44,11 @@ testing low or medium first. Other efforts are explored only for a requested
 effort survey. A stopped or incomplete run remains useful evidence but cannot
 establish a model's qualification.
 
+Model calls and test steps have no fixed processing deadline. Record elapsed
+time for each call and response; assess correctness before speed and cost.
+The user decides whether the measured speed is reasonable for its cost.
+User cancellation and transport failures still stop work.
+
 Identify the API provider for each model; specify it when the model name is
 ambiguous. Required credentials must be available to the evaluation process.
 Missing credentials stop paid execution with provider-specific setup guidance.

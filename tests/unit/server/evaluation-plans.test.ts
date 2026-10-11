@@ -8,12 +8,15 @@ import controls from '../../../scripts/model-evaluation/judge-controls.json' wit
 import type { LiveEvaluationProfile } from '../../../scripts/model-evaluation/live.js';
 import profiles from '../../../scripts/model-evaluation/profiles.json' with { type: 'json' };
 import { verifiedProfile } from '../../../scripts/model-evaluation/provider.js';
+import * as modelClient from '../../../src/server/model-client.js';
 
 test('an explicitly selected high-effort model is accounted for without adding prior models', {
   tags: ['technical'],
 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-evaluation-plan-'));
-  const network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('unexpected_network'));
+  const network = vi
+    .spyOn(modelClient, 'modelTransport')
+    .mockRejectedValue(new Error('unexpected_network'));
   try {
     const plan: EvaluationPlan = {
       issue: 341,
@@ -101,42 +104,42 @@ test.each([false, true])(
     const directory = await mkdtemp(join(tmpdir(), 'skyttel-evaluation-refusal-'));
     const judge = verifiedProfile('judge-sol-high');
     let controlIndex = 0;
-    const localFetch = globalThis.fetch;
-    const network = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
-      const address = new URL(url instanceof Request ? url.url : String(url));
-      if (address.hostname === '127.0.0.1') return localFetch(url, init);
-      expect(address.origin).toBe('https://api.openai.com');
-      const payload = JSON.parse(String(init?.body));
-      expect(payload.model).toBe(judge.model);
-      const control = controls.cases[controlIndex++];
-      expect(control).toBeDefined();
-      const text = JSON.stringify({
-        verdicts: Object.entries(control.expected).map(([id, outcome]) => ({
-          id,
-          outcome,
-          reason: 'Verifierat kontrollutfall.',
-        })),
-      });
-      return Response.json({
-        model: judge.model,
-        service_tier: 'default',
-        status: 'completed',
-        output_text: text,
-        output: [
-          {
-            type: 'message',
-            role: 'assistant',
-            content: [{ type: 'output_text', text, annotations: [] }],
+    const network = vi
+      .spyOn(modelClient, 'modelTransport')
+      .mockImplementation(async (url, init) => {
+        const address = new URL(url instanceof Request ? url.url : String(url));
+        expect(address.origin).toBe('https://api.openai.com');
+        const payload = JSON.parse(String(init?.body));
+        expect(payload.model).toBe(judge.model);
+        const control = controls.cases[controlIndex++];
+        expect(control).toBeDefined();
+        const text = JSON.stringify({
+          verdicts: Object.entries(control.expected).map(([id, outcome]) => ({
+            id,
+            outcome,
+            reason: 'Verifierat kontrollutfall.',
+          })),
+        });
+        return Response.json({
+          model: judge.model,
+          service_tier: 'default',
+          status: 'completed',
+          output_text: text,
+          output: [
+            {
+              type: 'message',
+              role: 'assistant',
+              content: [{ type: 'output_text', text, annotations: [] }],
+            },
+          ],
+          usage: {
+            input_tokens: 20,
+            output_tokens: 10,
+            input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+            output_tokens_details: { reasoning_tokens: 5 },
           },
-        ],
-        usage: {
-          input_tokens: 20,
-          output_tokens: 10,
-          input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
-          output_tokens_details: { reasoning_tokens: 5 },
-        },
+        });
       });
-    });
     try {
       const run = await evaluateModels({
         issue: 341,

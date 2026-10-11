@@ -103,7 +103,6 @@ export async function runTextScenario(
               contentVersion: view.review.contentVersion,
               text: step.text,
             });
-            const deadline = startedAt + 180_000;
             for (;;) {
               view = await environment.get<TextAssistantView>(
                 `${environment.path}/messages/${requestId}`,
@@ -122,12 +121,12 @@ export async function runTextScenario(
                 if (!matches) result.fixed.push('unexpected_selection');
               }
               if (view.taskStatus === 'completed' || view.taskStatus === 'canceled') break;
-              if (Date.now() >= deadline || options.stopped?.()) {
+              if (options.stopped?.()) {
                 await environment.post(`${environment.path}/cancel`, {
                   revision: view.revision,
                   all: true,
                 });
-                throw new Error('evaluation_step_timeout');
+                throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
               }
               await new Promise((resolve) => setTimeout(resolve, 20));
             }

@@ -126,24 +126,16 @@ export function compareProfiles(
   const deltaMs = reference.meanScenarioMedianMs - candidate.meanScenarioMedianMs;
   const percent = (100 * deltaMs) / reference.meanScenarioMedianMs;
   const consistent = reference.totals.every((total, index) => candidate.totals[index] < total);
-  const rule = deltaMs >= 1000 && percent >= 10 && consistent;
-  const label =
-    deltaMs < 0
-      ? '🔴 Röd: sämre'
-      : rule
-        ? '🟢 Grön: bättre, tidsvinstregeln uppfylld'
-        : deltaMs > 0
-          ? '🟡 Gul: bättre, tidsvinstregeln ej uppfylld'
-          : 'Oförändrat';
+  const faster = deltaMs > 0;
+  const label = deltaMs < 0 ? '🔴 Röd: sämre' : faster ? '🟢 Grön: snabbare' : 'Oförändrat';
   return {
     label,
     deltaSeconds: deltaMs / 1000,
     percent,
     consistent,
-    rule,
-    recommendation: rule
-      ? 'Tidsunderlaget motiverar ett byte; bedöm merkostnaden separat.'
-      : 'Behåll modellen enligt tidsvinstregeln.',
+    faster,
+    recommendation:
+      'Båda modellerna uppfyller kraven. Bedöm redovisad svarstid och kostnad innan modellval.',
     costDifferenceUsd:
       reference.backendCostUsd !== null && candidate.backendCostUsd !== null
         ? candidate.backendCostUsd - reference.backendCostUsd
@@ -233,8 +225,8 @@ export function compareEvaluationProfiles(
       item.recommendation !== 'Otillräckligt underlag för ett modellbyte.',
   );
   const basis =
-    eligible.find((item) => 'rule' in item && item.rule) ??
-    eligible.find((item) => !('rule' in item)) ??
+    eligible.find((item) => 'faster' in item && item.faster && item.consistent) ??
+    eligible.find((item) => !('faster' in item)) ??
     eligible[0];
   return {
     comparisons,

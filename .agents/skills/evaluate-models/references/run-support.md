@@ -172,6 +172,13 @@ negative voice times. Report the two-second quiet observation separately,
 along with startup, first backend/result and individual MCP timings. Failed
 attempts retain observed stop/error times without successful completion times.
 
+Allow model calls and accepted tasks to finish without processing deadlines,
+including SDK and response-header/body timers. Preserve user cancellation,
+transport failures and any user-specified spending ceiling. Record each call's
+start, end and elapsed time, and each completed step's response time.
+Present correctness first, then speed, then cost. Leave the decision about
+acceptable speed for its cost to the user; elapsed time alone is no failure.
+
 Preserve every returned record's original versioned JSON. Use
 `scripts/model-evaluation/publication.ts` to prepare issue comments: ordinary
 records retain their Markdown, while oversized records use lossless
@@ -203,8 +210,8 @@ Present correctness first. Use one repetition by default. Qualification requires
 every fixed/content check to pass in the complete selected catalog; all
 repetitions requested by the user must pass. Report equally weighted scenario
 medians, min/max, each repetition's total, costs and regressions. Label
-comparisons in text as well as red/yellow/green. A timing-based switch requires
-at least 10% and one second improvement, with lower totals in every repetition.
+comparisons in text as well as red/yellow/green. Show response-time differences
+and their costs so the user can decide whether the improvement warrants a switch.
 A failed reference and qualified candidate may support a correctness
 recommendation without comparable speed. Compare timing only for matching
 repetition plans.

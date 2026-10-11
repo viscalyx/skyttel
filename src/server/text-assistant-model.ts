@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import OpenAI from 'openai';
 import type { ResponseInputItem, Tool } from 'openai/resources/responses/responses';
 import { textConversationModel } from './conversation-capacity.js';
+import { ModelClient } from './model-client.js';
 
 export interface TextModelProfile {
   provider: 'openai';
@@ -53,12 +54,11 @@ export function textModel(
       profile.tokens <= profile.maxOutputTokens)
   )
     throw new Error('invalid_model_profile');
-  const client = new OpenAI({
+  const client = new ModelClient({
     apiKey,
     baseURL: 'https://api.openai.com/v1',
     fetch: modelFetch,
     maxRetries: 0,
-    timeout: 120_000,
     logLevel: 'off',
   });
   return async (

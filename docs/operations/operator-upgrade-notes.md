@@ -146,6 +146,11 @@ cost and duration of an individual request. After rollout, monitor actual
 token use, incomplete responses and response times before you set a lower
 limit. Output use includes internal reasoning as well as visible text.
 
+Assistant model calls and accepted tasks have no fixed processing deadline.
+Slow work stays active until it completes, fails or the user stops it. After
+rollout, monitor response times and active work. Use the stop control when
+work must end; a long response time alone no longer stops it automatically.
+
 Personal conversation choices remain in the installation database and apply
 to the user's households. Household export and import do not transfer or
 restore these choices. Include them in installation backups if they must

@@ -1,5 +1,7 @@
+import { once } from 'node:events';
+import { createServer } from 'node:http';
 import Database from 'better-sqlite3';
-import { expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { EvaluationBudget } from '../../../scripts/model-evaluation/budget.js';
 import {
   budgetedProvider,
@@ -8,11 +10,47 @@ import {
   verifiedProfile,
 } from '../../../scripts/model-evaluation/provider.js';
 import { summarizeConversation } from '../../../src/server/conversation-summary.js';
+import { modelTransport } from '../../../src/server/model-client.js';
 import { textModel } from '../../../src/server/text-assistant-model.js';
+
+afterEach(() => vi.useRealTimers());
+
+test.each(['headers', 'body'])(
+  'model transport honors cancellation while waiting for response %s',
+  { tags: ['technical'] },
+  async (phase) => {
+    const server = createServer((_request, reply) => {
+      if (phase === 'body') {
+        reply.writeHead(200, { 'Content-Type': 'application/json' });
+        reply.write('{');
+      }
+    });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('missing_test_port');
+      const controller = new AbortController();
+      const accepted = once(server, 'request');
+      const response = modelTransport(`http://127.0.0.1:${address.port}`, {
+        signal: controller.signal,
+      });
+      await accepted;
+      const result = phase === 'body' ? (await response).json() : response;
+      const rejected = expect(result).rejects.toMatchObject({ name: 'AbortError' });
+      controller.abort();
+      await rejected;
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  },
+);
 
 test('backend and historical summary use the selected model limit and settle separate costs', {
   tags: ['technical'],
 }, async () => {
+  vi.useFakeTimers();
   const db = new Database(':memory:');
   try {
     const profile = verifiedProfile('luna-high');
@@ -25,6 +63,8 @@ test('backend and historical summary use the selected model limit and settle sep
     const provider = budgetedProvider(profile, budget, {
       record: (call) => calls.push({ ...call }),
       transport: async (_url, init) => {
+        await vi.advanceTimersByTimeAsync(11 * 60_000);
+        expect(init?.signal?.aborted).toBe(false);
         const request = JSON.parse(String(init?.body));
         expect(request.max_output_tokens).toBe(profile.modelMaxOutputTokens);
         return Response.json({
@@ -61,8 +101,56 @@ test('backend and historical summary use the selected model limit and settle sep
       true,
     );
     expect(settled.every((call) => call.costUsd !== null)).toBe(true);
+    expect(settled.map((call) => (call.endedAt ?? 0) - call.startedAt)).toEqual([
+      11 * 60_000,
+      11 * 60_000,
+    ]);
     expect(budget.snapshot()).toMatchObject({ stopped: false, reservedUsd: 0 });
     expect(budget.callsStarted).toBe(2);
+  } finally {
+    db.close();
+  }
+});
+
+test('caller cancellation still stops a model and retains its unknown-charge hold', {
+  tags: ['technical'],
+}, async () => {
+  vi.useFakeTimers();
+  const db = new Database(':memory:');
+  try {
+    const profile = verifiedProfile('luna-high');
+    const budget = new EvaluationBudget(db, {
+      authorized: true,
+      priorUsd: 0,
+      priorSource: 'Non-billable cancellation regression.',
+    });
+    const calls: ProviderCall[] = [];
+    const controller = new AbortController();
+    const provider = budgetedProvider(profile, budget, {
+      record: (call) => calls.push(call),
+      transport: async (_url, init) => {
+        await vi.advanceTimersByTimeAsync(11 * 60_000);
+        expect(init?.signal?.aborted).toBe(false);
+        const canceled = new Promise<never>((_resolve, reject) =>
+          init?.signal?.addEventListener('abort', () => reject(new Error('user_stopped')), {
+            once: true,
+          }),
+        );
+        controller.abort();
+        return canceled;
+      },
+    });
+    provider.beginStep();
+    // Time between calls must not exhaust a hidden per-step allowance either.
+    await vi.advanceTimersByTimeAsync(11 * 60_000);
+    const model = textModel('synthetic-key', provider.fetch, undefined, profile);
+    await expect(model('Instruktion.', [], [], controller.signal)).rejects.toThrow();
+    expect(calls.at(-1)).toMatchObject({ outcome: 'aborted', costUsd: null });
+    expect(budget.snapshot()).toMatchObject({
+      stopped: true,
+      reservedUsd: requestMaximum(profile, 128000),
+    });
+    expect(budget.callsStarted).toBe(1);
   } finally {
     db.close();
   }

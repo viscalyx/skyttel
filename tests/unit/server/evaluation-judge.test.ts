@@ -1,12 +1,15 @@
 import Database from 'better-sqlite3';
-import { expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { EvaluationBudget } from '../../../scripts/model-evaluation/budget.js';
 import { contentJudge } from '../../../scripts/model-evaluation/judge.js';
 import { budgetedProvider, verifiedProfile } from '../../../scripts/model-evaluation/provider.js';
 
+afterEach(() => vi.useRealTimers());
+
 test('the selected judge model and effort govern calibration requests', {
   tags: ['technical'],
 }, async () => {
+  vi.useFakeTimers();
   const db = new Database(':memory:');
   try {
     const profile = verifiedProfile('judge-luna-medium', {
@@ -25,6 +28,8 @@ test('the selected judge model and effort govern calibration requests', {
     const provider = budgetedProvider(profile, budget, {
       record: () => {},
       transport: async (_url, init) => {
+        await vi.advanceTimersByTimeAsync(11 * 60_000);
+        expect(init?.signal?.aborted).not.toBe(true);
         requests.push(JSON.parse(String(init?.body)));
         return Response.json({
           model: profile.model,

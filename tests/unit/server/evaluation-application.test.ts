@@ -1,10 +1,39 @@
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 import catalog from '../../../scripts/model-evaluation/catalog.json' with { type: 'json' };
 import { evaluationEnvironment } from '../../../scripts/model-evaluation/environment.js';
 import { runTextScenario } from '../../../scripts/model-evaluation/runner.js';
 import type { Scenario } from '../../../scripts/model-evaluation/types.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
+
+test('text evaluation waits for a slow accepted task and records its full response time', {
+  tags: ['technical'],
+}, async () => {
+  const began = Date.now();
+  const model = textModel(async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(began + 11 * 60_000);
+    // Leave the application task working through several runner polls.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    return [modelMessage('Svar.')];
+  });
+  try {
+    const run = await runTextScenario(
+      {
+        id: 'slow-text',
+        title: 'Slow completed text response',
+        voice: false,
+        steps: [{ id: 'read', text: 'Vad vet du?', expected: { saves: 0, requirements: [] } }],
+      },
+      { modelFetch: model.provider },
+      { profile: 'local', repetition: 1 },
+    );
+    expect(run.attempts[0]).toMatchObject({ outcome: 'pass', fixed: [] });
+    expect(run.attempts[0].elapsedMs).toBeGreaterThan(10 * 60_000);
+    expect(model.requests).toHaveLength(1);
+  } finally {
+    vi.restoreAllMocks();
+  }
+});
 
 test('a mixed price and draft request keeps verified details and completes its factual answer', {
   tags: ['technical'],

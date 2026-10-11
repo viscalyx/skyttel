@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { modelTransport } from '../../src/server/model-client.js';
 import type { EvaluationBudget } from './budget.js';
 import registry from './profiles.json' with { type: 'json' };
 
@@ -131,7 +132,7 @@ export function budgetedProvider(
   profile: EvaluationProfile,
   budget: EvaluationBudget,
   {
-    transport = fetch,
+    transport = modelTransport,
     record,
     countInput,
   }: {
@@ -141,14 +142,14 @@ export function budgetedProvider(
   },
 ) {
   let calls = 0;
-  let deadline = 0;
+  let begun = false;
   let context: ProviderCall['context'];
   return {
     profile,
-    beginStep(audioMs = 0, step?: ProviderCall['context']) {
+    beginStep(_audioMs = 0, step?: ProviderCall['context']) {
       calls = 0;
       context = step;
-      deadline = Date.now() + (profile.role === 'judge' ? 120_000 : 180_000 + audioMs);
+      begun = true;
     },
     fetch: (async (url, init) => {
       const parsedUrl = new URL(
@@ -168,7 +169,7 @@ export function budgetedProvider(
         limit > profile.maxOutputTokens
       )
         throw new Error('evaluation_request_profile_mismatch');
-      if (!deadline || Date.now() >= deadline || ++calls > (profile.role === 'judge' ? 1 : 48))
+      if (!begun || ++calls > (profile.role === 'judge' ? 1 : 48))
         throw new Error('evaluation_call_limit');
       const kind =
         profile.role === 'judge' ? 'judge' : context?.step === 'summary' ? 'summary' : 'backend';
@@ -189,12 +190,8 @@ export function budgetedProvider(
       };
       record(structuredClone(call));
       try {
-        const signal = AbortSignal.any([
-          ...(init?.signal ? [init.signal] : []),
-          AbortSignal.timeout(Math.max(1, Math.ceil(deadline - Date.now()))),
-        ]);
         budget.beginCall();
-        const response = await transport(url, { ...init, signal });
+        const response = await transport(url, init);
         call.response = await response
           .clone()
           .json()

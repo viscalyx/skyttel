@@ -1,5 +1,5 @@
-import OpenAI from 'openai';
 import { z } from 'zod';
+import { ModelClient } from '../../src/server/model-client.js';
 import controls from './judge-controls.json' with { type: 'json' };
 import type { budgetedProvider } from './provider.js';
 import type { JudgeInput, JudgeResult } from './types.js';
@@ -41,11 +41,10 @@ const resultSchema = z
 export function contentJudge(apiKey: string, provider: ReturnType<typeof budgetedProvider>) {
   const { profile } = provider;
   if (profile.role !== 'judge') throw new Error('evaluation_judge_profile_required');
-  const client = new OpenAI({
+  const client = new ModelClient({
     apiKey,
     fetch: provider.fetch,
     maxRetries: 0,
-    timeout: 120_000,
     logLevel: 'off',
   });
   return async (input: JudgeInput): Promise<JudgeResult> => {
