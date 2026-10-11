@@ -32,9 +32,11 @@ and its corresponding result in a labelled run issue. Every evaluation follows
 the same workflow and creates a new run issue.
 
 Invoke `$evaluate-models` with one or more models, the intended comparison
-and an explicit spending limit. An initial survey uses one repetition;
-qualification uses three. Previously tested models are compared using their
-recorded results and run again only when explicitly supplied for the new
+and payment authorization; provide a spending limit when one is needed.
+One complete passing repetition qualifies the model for the evaluated modality.
+Additional repetitions run only when requested, and every planned check must
+pass. Previously tested models are compared using their recorded results and
+run again only when explicitly supplied for the new
 run. A supplied effort is tested directly; testing high does not require
 testing low or medium first. Other efforts are explored only for a requested
 effort survey. A stopped or incomplete run remains useful evidence but cannot

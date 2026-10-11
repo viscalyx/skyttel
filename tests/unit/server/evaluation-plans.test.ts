@@ -28,7 +28,6 @@ test('an explicitly selected high-effort model is accounted for without adding p
       textProfiles: ['sol-high'],
       judgeProfile: verifiedProfile('judge-sol-high'),
       baselineProfiles: { text: 'terra-low' },
-      repetitions: [1],
       localVerification: {
         passed: true,
         commands: ['npm run test:unit'],
@@ -44,6 +43,11 @@ test('an explicitly selected high-effort model is accounted for without adding p
     expect(
       run.attempts.every((item) => item.profile === 'sol-high' && item.outcome === 'not_run'),
     ).toBe(true);
+    expect(run.attempts.every((item) => item.repetition === 1)).toBe(true);
+    for (const repetitions of [[], [0], [1, 1], [1.5]])
+      await expect(evaluateModels({ ...plan, repetitions })).rejects.toThrow(
+        'evaluation_invalid_repetitions',
+      );
     await expect(
       evaluateModels({ ...plan, textProfiles: ['sol-high', 'sol-high'] }),
     ).rejects.toThrow('evaluation_duplicate_profiles');

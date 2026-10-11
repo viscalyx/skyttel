@@ -46,7 +46,29 @@ test('qualification needs every step and repetition, with equal scenario weighti
     compareProfiles(reference, summarizeProfile(faster, scenarios, 'candidate', 'text', [1, 2, 3]))
       .label,
   ).toBe('Ej jämförbart');
-  expect(summarizeProfile(values, scenarios, 'reference', 'text', [1]).finalQualified).toBe(false);
+  const singleRound = values.filter((item) => item.repetition === 1);
+  const singleReference = summarizeProfile(singleRound, scenarios, 'reference', 'text', [1]);
+  expect(singleReference.finalQualified).toBe(true);
+  const singleCandidate = summarizeProfile(
+    singleRound.map((item) => ({ ...item, profile: 'candidate', elapsedMs: 8000 })),
+    scenarios,
+    'candidate',
+    'text',
+    [1],
+  );
+  expect(compareProfiles(singleReference, singleCandidate)).toMatchObject({ rule: true });
+  expect(compareProfiles(reference, singleCandidate)).toMatchObject({ label: 'Ej jämförbart' });
+  expect(summarizeProfile(singleRound.slice(1), scenarios, 'reference', 'text', [1])).toMatchObject(
+    { qualified: false, finalQualified: false },
+  );
+  expect(summarizeProfile(singleRound, scenarios, 'reference', 'text', [1, 2])).toMatchObject({
+    qualified: false,
+    finalQualified: false,
+  });
+  expect(summarizeProfile([], scenarios, 'reference', 'text', [])).toMatchObject({
+    qualified: false,
+    finalQualified: false,
+  });
 });
 
 test('the eight voice scenarios use all thirteen original verified PCM clips', {
@@ -111,6 +133,23 @@ test('one supplied candidate can be recommended using a recorded text or voice r
       candidate: 'supplied',
       rule: true,
     });
+    expect(
+      compareEvaluationProfiles(
+        [{ ...candidate, totals: [8000], outcomes: { pass: 1 } }],
+        [
+          {
+            ...reference,
+            summary: {
+              ...reference.summary,
+              finalQualified: false,
+              totals: [10_000],
+              outcomes: { pass: 1 },
+            },
+          },
+        ],
+        current,
+      ).recommendationBasis,
+    ).toMatchObject({ referenceIssue: 300, rule: true });
     expect(
       compareEvaluationProfiles([candidate], [reference], {
         ...current,

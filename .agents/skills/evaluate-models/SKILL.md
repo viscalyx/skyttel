@@ -45,8 +45,11 @@ recorded voice result as the comparison reference.
 Search open and closed `model-evaluation` issues in `viscalyx/skyttel`,
 including corrections. Identify comparable results by catalog, fixture, commit,
 profile, scoring configuration, modality, limits and repetitions. Explain gaps
-that prevent a comparison. One repetition is preliminary; three passing
-repetitions qualify a model.
+that prevent a comparison. One complete passing repetition qualifies a model
+for its evaluated modality. Run additional repetitions only when the user
+requests them; every planned check must pass. Reuse earlier complete passing
+results under this rule, preserving original records and linking a policy
+correction when their recorded qualification changes.
 
 ## Gather evidence
 

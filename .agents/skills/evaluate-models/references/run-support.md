@@ -192,16 +192,19 @@ records and charges for diagnosis and spending reconciliation. Correct the
 cause before starting a new run; keep valid candidate failures in evaluation
 history.
 
-Present correctness first. Qualification requires every fixed/content check
-to pass in all three repetitions. Report equally weighted scenario medians,
-min/max, each repetition's total, costs and regressions. Label comparisons in
-text as well as red/yellow/green. A timing-based switch requires at least 10%
-and one second improvement, with lower totals in every repetition. A failed
+Present correctness first. Use one repetition by default. Qualification requires
+every fixed/content check to pass in the complete selected catalog; all
+repetitions requested by the user must pass. Report equally weighted scenario
+medians, min/max, each repetition's total, costs and regressions. Label
+comparisons in text as well as red/yellow/green. A timing-based switch requires
+at least 10% and one second improvement, with lower totals in every repetition. A failed
 reference and qualified candidate may support a correctness recommendation
-without comparable speed. Three repetitions do not establish a statistically
+without comparable speed. Compare timing only for matching repetition plans.
+Report the repetition count; qualification does not establish a statistically
 certain ranking.
 
 Even on stop, report missing attempts, remaining budget when applicable, a new
 conservative completion estimate, comparison limitations and a recommendation.
-Identify a single repetition as preliminary and an unfinished evaluation as
-incomplete.
+Identify an unfinished evaluation as incomplete. Preserve original evidence
+when applying the current qualification rule to earlier complete passing runs;
+publish the changed interpretation as a linked policy correction.

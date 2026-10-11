@@ -41,7 +41,7 @@ with the application's recorded model. Correctness comes before time and cost.
 - Provider and model: <provider>, <exact model ID>
 - Effort, service tier and limits: <settings>
 - Modality: <text or voice; voice model and backend profile when applicable>
-- Scenarios and repetitions: <catalog selection; preliminary or qualification>
+- Scenarios and repetitions: <complete catalog; one unless more are requested>
 - Application model: <effective profile and recorded result issue, or missing>
 - Related results: <comparable issues; explicit rerun predecessor if present>
 - Voice backend selection: <linked text evidence and reason, explicit user
@@ -71,7 +71,8 @@ with the application's recorded model. Correctness comes before time and cost.
 
 - Status: pending
 - Attempts: <pass/fail/inconclusive/error/aborted/not run counts, or pending>
-- Qualification: <preliminary, qualified, failed or incomplete>
+- Qualification: <qualified, failed or incomplete; one complete passing round
+  qualifies, every explicitly requested round must pass>
 - Response time and costs: <comparable results and regressions, or unavailable>
 - Recommendation: pending
 - Evidence: <links to versioned records in comments>

@@ -44,7 +44,7 @@ export function summarizeProfile(
   );
   const totals: number[] = [];
   const scenarioTimes: { scenario: string; medianMs: number; minMs: number; maxMs: number }[] = [];
-  let qualified = true;
+  let qualified = repetitions.length > 0 && scenarios.length > 0;
   for (const scenario of scenarios) {
     const times: number[] = [];
     for (const repetition of repetitions) {
@@ -82,7 +82,7 @@ export function summarizeProfile(
     profile,
     modality,
     qualified,
-    finalQualified: qualified && repetitions.length === 3,
+    finalQualified: qualified,
     meanScenarioMedianMs:
       qualified && scenarioTimes.length
         ? scenarioTimes.reduce((sum, item) => sum + item.medianMs, 0) / scenarioTimes.length
@@ -117,6 +117,12 @@ export function compareProfiles(
     candidate.meanScenarioMedianMs === null
   )
     return { label: 'Ej jämförbart', recommendation: 'Otillräckligt underlag för ett modellbyte.' };
+  if (reference.totals.length !== candidate.totals.length)
+    return {
+      label: 'Ej jämförbart',
+      recommendation: 'Otillräckligt underlag för ett modellbyte.',
+      limitations: 'Olika antal upprepningar: jämför tidsunderlag från samma upprepningsplan.',
+    };
   const deltaMs = reference.meanScenarioMedianMs - candidate.meanScenarioMedianMs;
   const percent = (100 * deltaMs) / reference.meanScenarioMedianMs;
   const consistent = reference.totals.every((total, index) => candidate.totals[index] < total);
@@ -142,7 +148,8 @@ export function compareProfiles(
       reference.backendCostUsd !== null && candidate.backendCostUsd !== null
         ? candidate.backendCostUsd - reference.backendCostUsd
         : null,
-    limitations: 'Tre upprepningar ger ingen statistiskt säker rangordning.',
+    limitations:
+      'Kvalificering ger ingen statistiskt säker rangordning; redovisa antalet upprepningar.',
     regressions: candidate.scenarioTimes.flatMap((item) => {
       const old = reference.scenarioTimes.find((value) => value.scenario === item.scenario);
       return old && item.medianMs > old.medianMs
@@ -203,7 +210,10 @@ export function compareEvaluationProfiles(
         ...(reference.commit === current.commit &&
         reference.catalogSha256 === current.catalogSha256 &&
         reference.judgeSha256 === current.judgeSha256
-          ? compareProfiles(reference.summary, candidate)
+          ? compareProfiles(
+              { ...reference.summary, finalQualified: reference.summary.qualified },
+              candidate,
+            )
           : {
               label: 'Ej jämförbart',
               recommendation:

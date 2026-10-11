@@ -72,8 +72,12 @@ export async function evaluateModels(plan: EvaluationPlan) {
   const selected = plan.textProfiles.length + (plan.voice ? 1 : 0);
   if (!selected) throw new Error('evaluation_models_required');
   if (selected !== 1) throw new Error('evaluation_one_model_per_issue');
-  const repetitions = plan.repetitions ?? [1, 2, 3];
-  if (![1, 3].includes(repetitions.length) || new Set(repetitions).size !== repetitions.length)
+  const repetitions = plan.repetitions ?? [1];
+  if (
+    !repetitions.length ||
+    repetitions.some((repetition) => !Number.isSafeInteger(repetition) || repetition <= 0) ||
+    new Set(repetitions).size !== repetitions.length
+  )
     throw new Error('evaluation_invalid_repetitions');
   if (!plan.judgeProfile) throw new Error('evaluation_judge_profile_required');
   if (!plan.baselineProfiles) throw new Error('evaluation_baseline_configuration_required');
@@ -190,6 +194,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
       controls: controls.source,
       profiles: registry,
       repetitions,
+      qualification: { minimumRepetitions: 1, allPlannedChecksRequired: true },
       textProfiles: profiles,
       judgeProfile,
       judgeSha256,
@@ -433,9 +438,8 @@ export async function evaluateModels(plan: EvaluationPlan) {
     await emit('recommendation', 'Rekommendation', {
       recommendation,
       recommendationBasis,
-      preliminary: repetitions.length === 1,
+      preliminary: false,
       qualificationComplete:
-        repetitions.length === 3 &&
         calibrated &&
         summaries.every((candidate) => candidate.finalQualified) &&
         (!plan.voice || voice.finalQualified),
