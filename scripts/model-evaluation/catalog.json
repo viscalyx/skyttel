@@ -1360,7 +1360,7 @@
           "transition": "summary",
           "expected": {
             "requirements": [
-              "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 2 TB 229 kronor per månad, som genomförda utkaständringar. Inget sparpåstående."
+              "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 2 TB 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
             ]
           }
         },

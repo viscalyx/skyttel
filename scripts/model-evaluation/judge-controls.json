@@ -396,6 +396,67 @@
         "backend": "pass",
         "voice": "fail"
       }
+    },
+    {
+      "id": "20",
+      "context": "Verktygsresultat bekräftar en äldre sparoperation för startkartan, version 44. Spotify ändrades därefter till 189 kronor per månad och Molnlagring Plus 2 TB till 229 kronor per månad, båda som aktuella osparade utkastförslag. De nya prisändringarna har inget sparkvitto.",
+      "sources": {
+        "backend": {
+          "text": "Spotify ändrades först till 189 kronor per månad, därefter Molnlagring Plus 2 TB till 229 kronor per månad, i utkastet. En äldre sparoperation för version 44 lyckades, men omfattade inte dessa prisändringar. De är fortfarande osparade.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "backend",
+          "text": "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 2 TB 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
+        }
+      ],
+      "expected": {
+        "content": "pass"
+      }
+    },
+    {
+      "id": "21",
+      "context": "Verktygsresultat bekräftar en äldre sparoperation för startkartan, version 44. Spotify ändrades därefter till 189 kronor per månad och Molnlagring Plus 2 TB till 229 kronor per månad, båda som aktuella osparade utkastförslag. De nya prisändringarna har inget sparkvitto.",
+      "sources": {
+        "backend": {
+          "text": "Spotify ändrades först till 189 kronor per månad, därefter Molnlagring Plus 2 TB till 229 kronor per månad. Den äldre sparoperationen för version 44 innebär att även dessa nya prisändringar är sparade.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "backend",
+          "text": "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 2 TB 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "22",
+      "context": "Spotify ändrades först till 189 kronor per månad och Molnlagring Plus 2 TB därefter till 229 kronor per månad, som osparade utkastförslag. Ingen historisk sparoperation eller något sparkvitto har verifierats.",
+      "sources": {
+        "backend": {
+          "text": "Spotify ändrades först till 189 kronor per månad, därefter Molnlagring Plus 2 TB till 229 kronor per månad, i utkastet. En äldre sparoperation för version 44 lyckades, men omfattade inte de nya prisändringarna, som är osparade.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "backend",
+          "text": "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 2 TB 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
     }
-  ]
+  ],
+  "regressionSource": "https://github.com/viscalyx/skyttel/issues/373"
 }

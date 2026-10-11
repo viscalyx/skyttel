@@ -165,7 +165,7 @@ test.each([false, true])(
           evidence: 'Isolated real application with fake provider transport.',
         },
       });
-      expect(controlIndex).toBe(19);
+      expect(controlIndex).toBe(controls.cases.length);
       expect(run.budget).toMatchObject({
         stopped: true,
         reason: 'evaluation_budget_exceeded',
@@ -184,7 +184,7 @@ test.each([false, true])(
         if (paid) expect(attempt.observedEndMs).toEqual(expect.any(Number));
         else expect(attempt.observedEndMs).toBeUndefined();
       }
-      expect(controlIndex).toBe(19);
+      expect(controlIndex).toBe(controls.cases.length);
     } finally {
       network.mockRestore();
       await rm(directory, { recursive: true, force: true });

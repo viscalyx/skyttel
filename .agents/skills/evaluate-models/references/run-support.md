@@ -110,9 +110,9 @@ and effort in the run configuration. Its calibration must pass before its
 verdicts can support a comparison. Check recorded references against the current
 `judgeSha256`, which identifies the judge provider, model, effort, instructions
 and controls.
-The runner executes 19 independent human-approved judge controls first, using
-one call to the selected judge per control and requiring all 21 expected
-outcomes. A control deviation, missing usage or failed local gate stops
+The runner executes every checked-in judge control first, using one call to
+the selected judge per control and requiring all expected outcomes.
+A control deviation, missing usage or failed local gate stops
 comparison. Selected text profiles use all 14 text scenarios; selected voice
 profiles use eight voice scenarios.
 

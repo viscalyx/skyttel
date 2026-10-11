@@ -4,7 +4,7 @@ import { evaluationEnvironment } from '../../../scripts/model-evaluation/environ
 import { runTextScenario } from '../../../scripts/model-evaluation/runner.js';
 import type { Catalog } from '../../../scripts/model-evaluation/types.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
-import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
 test('the scenario runner executes an ordinary summary without a counting adapter', {
   tags: ['technical'],
@@ -40,12 +40,13 @@ test('the evaluation summary uses real price turns and atomically installs ordin
       source = JSON.parse(String(body.input[0].content)).source;
       return [
         modelMessage(
-          'Spotify ändrades först till 189 kronor per månad. Den senaste ändringen är Molnlagring Plus 2 TB till 229 kronor per månad. Allt är osparat.',
+          'En äldre sparoperation för startkartan är verifierad. Spotify ändrades först till 189 kronor per månad. Den senaste ändringen är Molnlagring Plus 2 TB till 229 kronor per månad. Dessa ändringar är osparade.',
         ),
       ];
     }
-    if (body.input.at(-1)?.type === 'function_call_output')
-      return [modelMessage('Utkastet är uppdaterat.')];
+    if (body.input.at(-1)?.type !== 'function_call_output')
+      return [modelTool('read_my_save_operations', {})];
+    if (!lastToolResult(body)?.operations) return [modelMessage('Utkastet är uppdaterat.')];
     const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     const first = turn.message.includes('Spotify');
     const id = first ? 'spotify-sub' : 'cloud-sub';
@@ -103,6 +104,8 @@ test('the evaluation summary uses real price turns and atomically installs ordin
     expect(summary.source).toBe(source);
     expect(source).toContain('Spotify Premium Family till 189');
     expect(source).toContain('Molnlagring Plus 2 TB till 229');
+    expect(source).toContain('evaluation-start');
+    expect(source).toContain('savedAt');
     expect(source.length).toBeLessThanOrEqual(240_000);
     expect(model.requests.filter((body) => !body.tools.length)).toHaveLength(1);
     expect(summary.view.contextGeneration).toBe(1);
