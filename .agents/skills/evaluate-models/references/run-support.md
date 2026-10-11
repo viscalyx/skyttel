@@ -197,9 +197,10 @@ every fixed/content check to pass in the complete selected catalog; all
 repetitions requested by the user must pass. Report equally weighted scenario
 medians, min/max, each repetition's total, costs and regressions. Label
 comparisons in text as well as red/yellow/green. A timing-based switch requires
-at least 10% and one second improvement, with lower totals in every repetition. A failed
-reference and qualified candidate may support a correctness recommendation
-without comparable speed. Compare timing only for matching repetition plans.
+at least 10% and one second improvement, with lower totals in every repetition.
+A failed reference and qualified candidate may support a correctness
+recommendation without comparable speed. Compare timing only for matching
+repetition plans.
 Report the repetition count; qualification does not establish a statistically
 certain ranking.
 
