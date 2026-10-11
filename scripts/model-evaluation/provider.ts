@@ -36,14 +36,17 @@ export function verifiedProfile(id: string, temporary?: EvaluationProfile): Eval
     value.provider !== 'openai' ||
     !/^[a-z0-9.-]+$/.test(value.model) ||
     !['low', 'medium', 'high'].includes(value.effort) ||
+    !['backend', 'judge'].includes(value.role) ||
     value.serviceTier !== 'default' ||
     !value.sources.length ||
     !/^\d{4}-\d{2}-\d{2}$/.test(value.checkedAt) ||
     !Number.isSafeInteger(value.maxInputTokens) ||
     value.maxInputTokens <= 0 ||
     value.tokens < value.maxInputTokens + value.maxOutputTokens ||
+    !Number.isSafeInteger(value.modelMaxOutputTokens) ||
+    !Number.isSafeInteger(value.maxOutputTokens) ||
+    value.maxOutputTokens <= 0 ||
     value.modelMaxOutputTokens < value.maxOutputTokens ||
-    value.maxOutputTokens !== (value.role === 'judge' ? 4096 : 8192) ||
     Object.values(value.prices).some((price) => !Number.isFinite(price) || price < 0)
   )
     throw new Error('evaluation_invalid_profile');
@@ -75,6 +78,8 @@ export function requestMaximum(
     !Number.isSafeInteger(input) ||
     input < 0 ||
     input > profile.maxInputTokens ||
+    !Number.isSafeInteger(outputLimit) ||
+    outputLimit <= 0 ||
     outputLimit > profile.maxOutputTokens
   )
     throw new Error('evaluation_context_limit');
@@ -158,13 +163,15 @@ export function budgetedProvider(
         payload.service_tier !== 'default' ||
         (payload.reasoning as { effort?: string })?.effort !== profile.effort ||
         typeof limit !== 'number' ||
-        ![8192, 4096].includes(limit) ||
+        !Number.isSafeInteger(limit) ||
+        limit <= 0 ||
         limit > profile.maxOutputTokens
       )
         throw new Error('evaluation_request_profile_mismatch');
       if (!deadline || Date.now() >= deadline || ++calls > (profile.role === 'judge' ? 1 : 48))
         throw new Error('evaluation_call_limit');
-      const kind = profile.role === 'judge' ? 'judge' : limit === 4096 ? 'summary' : 'backend';
+      const kind =
+        profile.role === 'judge' ? 'judge' : context?.step === 'summary' ? 'summary' : 'backend';
       const exact = countInput ? await countInput(payload) : undefined;
       const maximum = requestMaximum(profile, limit, exact);
       const reservation = budget.reserve(kind, maximum);

@@ -13,7 +13,7 @@ test('the selected judge model and effort govern calibration requests', {
       ...verifiedProfile('luna-medium'),
       id: 'judge-luna-medium',
       role: 'judge',
-      maxOutputTokens: 4096,
+      maxOutputTokens: 32768,
     });
     const budget = new EvaluationBudget(db, {
       authorized: true,
@@ -70,7 +70,7 @@ test('the selected judge model and effort govern calibration requests', {
     expect(requests[0]).toMatchObject({
       model: 'gpt-6-luna',
       reasoning: { effort: 'medium' },
-      max_output_tokens: 4096,
+      max_output_tokens: 32768,
       tools: [],
     });
     expect(budget.snapshot()).toMatchObject({ stopped: false, reservedUsd: 0 });

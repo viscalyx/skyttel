@@ -18,6 +18,13 @@ service tier and all applicable input/cache-read/cache-write/output prices
 against that provider's official documentation. Refresh `profiles.json` when
 needed. Record unavailable profiles without substituting a model or provider.
 
+Use the selected model's verified maximum output for backend and summary
+evaluation calls unless the user requests a lower limit. Output includes
+reasoning as well as visible text. Record any lower limit and classify a
+response truncated by it as configuration-limited evidence. Preserve the
+selected judge's recorded output limit for comparable scoring; record and
+recalibrate any change to that profile.
+
 ### Credentials
 
 Find each provider adapter's credential configuration and verify that the

@@ -56,7 +56,7 @@ export function contentJudge(apiKey: string, provider: ReturnType<typeof budgete
         reasoning: { effort: profile.effort },
         service_tier: profile.serviceTier,
         store: false,
-        max_output_tokens: 4096,
+        max_output_tokens: profile.maxOutputTokens,
         tools: [],
         instructions: judgeInstructions,
         input: [{ role: 'user', content: JSON.stringify(input) }],

@@ -18,7 +18,10 @@ test('complete payload reservations enforce output and round caps without retrie
     priorUsd: 1,
     priorSource: 'verified prior ledger',
   });
-  const profile = verifiedProfile('luna-low');
+  const profile = verifiedProfile('luna-low', {
+    ...verifiedProfile('luna-low'),
+    maxOutputTokens: 32768,
+  });
   const requests: unknown[] = [];
   const calls: unknown[] = [];
   const provider = budgetedProvider(profile, budget, {
@@ -43,7 +46,7 @@ test('complete payload reservations enforce output and round caps without retrie
     model: profile.model,
     service_tier: 'default',
     reasoning: { effort: 'low' },
-    max_output_tokens: 8192,
+    max_output_tokens: profile.maxOutputTokens,
     instructions: 'Full system instructions',
     tools: [{ name: 'real-tool' }],
     input: [{ role: 'user', content: 'Complete context' }],
@@ -53,7 +56,10 @@ test('complete payload reservations enforce output and round caps without retrie
       method: 'POST',
       body: JSON.stringify(body),
     });
-  await expect(send({ ...payload, max_output_tokens: 8193 })).rejects.toThrow('profile_mismatch');
+  for (const limit of [0, -1, 1.5, profile.maxOutputTokens + 1])
+    await expect(send({ ...payload, max_output_tokens: limit })).rejects.toThrow(
+      'profile_mismatch',
+    );
   expect(requests).toHaveLength(0);
   for (let index = 0; index < 48; index++) await send();
   await expect(send()).rejects.toThrow('call_limit');
@@ -97,7 +103,7 @@ test('an authorized uncapped Astra run admits backend and summary requests witho
         });
       },
     });
-    for (const limit of [8192, 4096]) {
+    for (const limit of [profile.maxOutputTokens, 4096]) {
       provider.beginStep();
       await provider.fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
@@ -110,7 +116,10 @@ test('an authorized uncapped Astra run admits backend and summary requests witho
         }),
       });
     }
-    expect(requests.map((request) => request.max_output_tokens)).toEqual([8192, 4096]);
+    expect(requests.map((request) => request.max_output_tokens)).toEqual([
+      profile.maxOutputTokens,
+      4096,
+    ]);
     expect(budget.callsStarted).toBe(2);
     expect(budget.snapshot()).toMatchObject({
       limitUsd: null,

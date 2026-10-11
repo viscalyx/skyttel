@@ -210,9 +210,14 @@ export async function evaluateModels(plan: EvaluationPlan) {
         : registry.counting,
       maxima: {
         backendPerStep: 48,
-        backendOutput: 8192,
-        summaryOutput: 4096,
-        judgeOutput: 4096,
+        backendOutput: Object.fromEntries(
+          [...profiles, ...(voiceProfile ? [voiceProfile.backend] : [])].map((id) => [
+            id,
+            verifiedProfile(id).maxOutputTokens,
+          ]),
+        ),
+        summaryOutput: 'Uses the selected backend profile output limit.',
+        judgeOutput: judgeProfile.maxOutputTokens,
         stepSeconds: 180,
         judgeSeconds: 120,
         startupSeconds: 30,
@@ -222,10 +227,13 @@ export async function evaluateModels(plan: EvaluationPlan) {
         profiles.map((id) => [
           id,
           {
-            singleBackendReservationUsd: requestMaximum(verifiedProfile(id), 8192),
+            singleBackendReservationUsd: requestMaximum(
+              verifiedProfile(id),
+              verifiedProfile(id).maxOutputTokens,
+            ),
             textTechnicalMaximumUsd:
-              requestMaximum(verifiedProfile(id), 8192) * 913 +
-              requestMaximum(judgeProfile, 4096) * 20,
+              requestMaximum(verifiedProfile(id), verifiedProfile(id).maxOutputTokens) * 913 +
+              requestMaximum(judgeProfile, judgeProfile.maxOutputTokens) * 20,
           },
         ]),
       ),
@@ -461,9 +469,12 @@ export async function evaluateModels(plan: EvaluationPlan) {
         .reduce(
           (sum, item) =>
             sum +
-            requestMaximum(verifiedProfile(item.profile), item.step === 'summary' ? 4096 : 8192) *
+            requestMaximum(
+              verifiedProfile(item.profile),
+              verifiedProfile(item.profile).maxOutputTokens,
+            ) *
               (item.step === 'summary' ? 1 : 48) +
-            requestMaximum(judgeProfile, 4096),
+            requestMaximum(judgeProfile, judgeProfile.maxOutputTokens),
           0,
         ),
       productionModelChanged: false,

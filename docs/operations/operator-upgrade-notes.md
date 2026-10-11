@@ -140,6 +140,12 @@ copies when that history is required; this upgrade adds no automatic backup.
 
 ### Built-in text and voice assistants
 
+Assistant responses and conversation summaries use the provider's output
+limit unless a lower limit is configured. A higher limit can increase the
+cost and duration of an individual request. After rollout, monitor actual
+token use, incomplete responses and response times before you set a lower
+limit. Output use includes internal reasoning as well as visible text.
+
 Personal conversation choices remain in the installation database and apply
 to the user's households. Household export and import do not transfer or
 restore these choices. Include them in installation backups if they must

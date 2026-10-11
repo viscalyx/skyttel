@@ -48,8 +48,9 @@ export function textModel(
       !/^[a-z0-9.-]+$/.test(profile.model) ||
       !['low', 'medium', 'high'].includes(profile.effort) ||
       !Number.isSafeInteger(profile.tokens) ||
-      profile.tokens <= 8192 ||
-      profile.maxOutputTokens !== 8192)
+      !Number.isSafeInteger(profile.maxOutputTokens) ||
+      profile.maxOutputTokens <= 0 ||
+      profile.tokens <= profile.maxOutputTokens)
   )
     throw new Error('invalid_model_profile');
   const client = new OpenAI({
@@ -67,6 +68,14 @@ export function textModel(
     signal: AbortSignal,
     maxOutputTokens?: number,
   ) => {
+    const outputLimit = maxOutputTokens ?? profile?.maxOutputTokens;
+    if (
+      outputLimit !== undefined &&
+      (!Number.isSafeInteger(outputLimit) ||
+        outputLimit <= 0 ||
+        (profile && outputLimit > profile.maxOutputTokens))
+    )
+      throw new Error('invalid_model_output_limit');
     const attempt: TextModelAttempt = {
       attemptId: randomUUID(),
       startedAt: new Date().toISOString(),
@@ -90,7 +99,7 @@ export function textModel(
           instructions,
           input,
           tools,
-          max_output_tokens: maxOutputTokens ?? 8192,
+          ...(outputLimit === undefined ? {} : { max_output_tokens: outputLimit }),
         },
         { signal },
       );
