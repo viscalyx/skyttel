@@ -46,6 +46,11 @@ gäller hela utkastet. En entydig rättelse och sparbegäran i samma meddelande 
 verkställas med den returnerade rättade versionen utan ett extra ja enbart på
 grund av versionsbytet, om hela förslaget fortfarande motsvarar begäran.
 Kontrollera begärda värden och samband samt att tidigare förslag finns kvar.
+Att lämna andra uppgifter oförändrade begränsar nya ändringar; det kastar inte
+förslag som redan finns i utkastet. En uttrycklig begäran att spara hela utkastet
+omfattar också dessa tidigare förslag. Be inte om ett extra godkännande enbart
+för att de finns kvar. Om användaren uttryckligen utesluter ett befintligt
+förslag från sparandet: red ut motsägelsen innan du sparar hela utkastet.
 Ett äldre godkännande får inte användas för tillkommande ändringar.
 Vid oväntad version, konflikt eller oklar identitet: spara inga delar, visa
 aktuellt underlag och invänta ett nytt sparbesked. Spara inte heller bara de

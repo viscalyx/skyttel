@@ -167,7 +167,7 @@
       "modelMaxOutputTokens": 128000,
       "maxOutputTokens": 8192,
       "serviceTier": "default",
-      "checkedAt": "2026-10-10",
+      "checkedAt": "2026-10-11",
       "prices": {
         "input": 2,
         "cached": 0.1,
@@ -323,7 +323,7 @@
       "modelMaxOutputTokens": 128000,
       "maxOutputTokens": 4096,
       "serviceTier": "default",
-      "checkedAt": "2026-10-10",
+      "checkedAt": "2026-10-11",
       "prices": {
         "input": 2,
         "cached": 0.1,
