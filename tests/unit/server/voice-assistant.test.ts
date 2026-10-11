@@ -732,6 +732,43 @@ test('a spoken correction waits for held work, retains context and suppresses it
   expect(JSON.stringify(model.requests[1].input)).toContain('Beskriv utkastet.');
 });
 
+test('a queued correction prevents a held save response from saving the stale draft', async () => {
+  let release: ((value: unknown[]) => void) | undefined;
+  const model = textModel(() =>
+    model.requests.length === 1
+      ? new Promise<unknown[]>((resolve) => {
+          release = resolve;
+        })
+      : [modelMessage('Rättelsen är förstådd. Inget är sparat.')],
+  );
+  const voice = await setupVoice(model.provider);
+  await proposal(voice.path);
+  const initial = (await voice.poll()).assistant;
+  const mapPath = voice.path.replace('/text-assistant', '/map');
+  const before = await (await browser.get(mapPath)).json();
+  voice.transcript('Spara.');
+  voice.delegate();
+  await expect.poll(() => model.requests.length).toBe(1);
+  voice.transcript('Nej, vänta med att spara. Ändra namnet till Nytt.');
+  voice.delegate();
+  await expect.poll(async () => (await voice.poll()).assistant.queuedMessages).toBe(1);
+  expect(model.requests).toHaveLength(1);
+  release?.([
+    modelTool('save_draft', {
+      version: initial.review.version,
+      contentVersion: initial.review.contentVersion,
+      operationId: 'stale-save',
+    }),
+  ]);
+  await expect.poll(() => model.requests.length).toBe(2);
+  await expect.poll(async () => (await voice.poll()).assistant.phase).toBe('ready');
+  const result = (await voice.poll()).assistant;
+  expect(result.queuedMessages).toBe(0);
+  expect(result.receipt).toBeUndefined();
+  expect(result.operations).toEqual([]);
+  expect(await (await browser.get(mapPath)).json()).toEqual(before);
+});
+
 test('delegation timing preserves the entire overlapping transcript fragment', async () => {
   const model = textModel(() => [modelMessage('Ett ofullständigt uppdrag behöver förtydligas.')]);
   const voice = await setupVoice(model.provider);

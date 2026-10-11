@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
@@ -12,6 +12,25 @@ import {
 } from '../../../scripts/model-evaluation/report.js';
 import { referenceSpeech } from '../../../scripts/model-evaluation/speech.js';
 import type { Attempt } from '../../../scripts/model-evaluation/types.js';
+
+test.each(['json', 'md'])(
+  'reporter refuses to overwrite existing %s evidence in a reused directory',
+  { tags: ['technical'] },
+  async (extension) => {
+    const directory = await mkdtemp(join(tmpdir(), 'skyttel-report-collision-'));
+    const path = join(directory, `0001-diagnostic.${extension}`);
+    const original = 'Original evaluation evidence.\n';
+    try {
+      await writeFile(path, original, { flag: 'wx' });
+      await expect(
+        evaluationReporter(directory, 368)('diagnostic', 'Replacement', { replacement: true }),
+      ).rejects.toMatchObject({ code: 'EEXIST' });
+      expect(await readFile(path, 'utf8')).toBe(original);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);
 
 test('public report artifacts hash session IDs throughout JSON, titles and prose', {
   tags: ['technical'],
