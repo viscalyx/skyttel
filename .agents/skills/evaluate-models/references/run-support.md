@@ -179,10 +179,14 @@ start, end and elapsed time, and each completed step's response time.
 Present correctness first, then speed, then cost. Leave the decision about
 acceptable speed for its cost to the user; elapsed time alone is no failure.
 
-Preserve every returned record's original versioned JSON. Use
-`scripts/model-evaluation/publication.ts` to prepare issue comments: ordinary
-records retain their Markdown, while oversized records use lossless
-`gzip+base64` transport with a SHA-256 of the original JSON. Group related
+Use `publicEvaluationText` from
+`scripts/model-evaluation/public-output.ts` on issue titles, descriptions and
+agent-written commentary before publication. Provider session IDs become stable
+SHA-256 references; raw IDs belong in private artifacts.
+Use `scripts/model-evaluation/publication.ts` to prepare result comments. It
+sanitizes ordinary and oversized records before sizing, hashing or compression.
+Preserve every returned record's versioned public JSON; oversized records use
+lossless `gzip+base64` transport with a SHA-256 of that public JSON. Group related
 records into readable comments when useful; keep every comment within the
 publication size limit.
 
@@ -191,7 +195,8 @@ part order, join the payloads, decode base64 and decompress gzip. Verify the
 SHA-256 of the restored UTF-8 bytes before parsing the original record.
 Transport parts represent storage, not additional evaluation attempts.
 After publication, retrieve comments and verify ordinary JSON or restored
-transported JSON against the local originals.
+transported JSON against the sanitized local records. For older artifacts,
+apply `publicEvaluationText` before comparison.
 For multiline GitHub text, write an exact temporary file with an editing tool,
 then issue a separate literal
 `gh ... --body-file /absolute/path` command. Verify real newlines in the issue

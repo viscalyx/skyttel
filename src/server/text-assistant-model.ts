@@ -7,7 +7,7 @@ import { ModelClient } from './model-client.js';
 export interface TextModelProfile {
   provider: 'openai';
   model: string;
-  effort: 'low' | 'medium' | 'high';
+  effort: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
   tokens: number;
   maxOutputTokens: number;
 }
@@ -47,7 +47,7 @@ export function textModel(
     profile &&
     (profile.provider !== 'openai' ||
       !/^[a-z0-9.-]+$/.test(profile.model) ||
-      !['low', 'medium', 'high'].includes(profile.effort) ||
+      !['low', 'medium', 'high', 'xhigh', 'max'].includes(profile.effort) ||
       !Number.isSafeInteger(profile.tokens) ||
       !Number.isSafeInteger(profile.maxOutputTokens) ||
       profile.maxOutputTokens <= 0 ||

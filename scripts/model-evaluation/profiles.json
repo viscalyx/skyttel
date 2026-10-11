@@ -157,6 +157,58 @@
       ]
     },
     {
+      "id": "luna-xhigh",
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "role": "backend",
+      "effort": "xhigh",
+      "tokens": 1050000,
+      "maxInputTokens": 922000,
+      "modelMaxOutputTokens": 128000,
+      "maxOutputTokens": 128000,
+      "serviceTier": "default",
+      "checkedAt": "2026-10-11",
+      "prices": {
+        "input": 0.1,
+        "cached": 0.01,
+        "cacheWrite": 0.125,
+        "output": 0.5,
+        "longContextThreshold": 272000,
+        "longInputMultiplier": 2,
+        "longOutputMultiplier": 1.5
+      },
+      "sources": [
+        "https://developers.openai.com/api/docs/models/gpt-6-luna",
+        "https://developers.openai.com/api/docs/pricing"
+      ]
+    },
+    {
+      "id": "luna-max",
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "role": "backend",
+      "effort": "max",
+      "tokens": 1050000,
+      "maxInputTokens": 922000,
+      "modelMaxOutputTokens": 128000,
+      "maxOutputTokens": 128000,
+      "serviceTier": "default",
+      "checkedAt": "2026-10-11",
+      "prices": {
+        "input": 0.1,
+        "cached": 0.01,
+        "cacheWrite": 0.125,
+        "output": 0.5,
+        "longContextThreshold": 272000,
+        "longInputMultiplier": 2,
+        "longOutputMultiplier": 1.5
+      },
+      "sources": [
+        "https://developers.openai.com/api/docs/models/gpt-6-luna",
+        "https://developers.openai.com/api/docs/pricing"
+      ]
+    },
+    {
       "id": "sol-low",
       "provider": "openai",
       "model": "gpt-6.1-sol",

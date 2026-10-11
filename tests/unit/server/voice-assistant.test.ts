@@ -67,7 +67,7 @@ test('voice requires the existing current assistant consent and creates only the
     },
   ]);
   expect(live.requests[0].session?.instructions).toContain(
-    'Lägg inte till en uppräkning av planerade eller genomförda ändringar',
+    'Räkna inte upp ändringar eller kvarvarande förslag efter varje åtgärd.',
   );
   live.configure({ seconds: 15 });
   const stopped = await browser.post(`${base}/${assistant.id}/voice/${result.voice.id}/stop`, {

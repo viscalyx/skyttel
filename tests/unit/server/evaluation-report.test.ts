@@ -1,12 +1,69 @@
+import { createHash } from 'node:crypto';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import catalog from '../../../scripts/model-evaluation/catalog.json' with { type: 'json' };
 import {
   compareEvaluationProfiles,
   compareProfiles,
+  evaluationReporter,
   summarizeProfile,
 } from '../../../scripts/model-evaluation/report.js';
 import { referenceSpeech } from '../../../scripts/model-evaluation/speech.js';
 import type { Attempt } from '../../../scripts/model-evaluation/types.js';
+
+test('public report artifacts hash session IDs throughout JSON, titles and prose', {
+  tags: ['technical'],
+}, async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'skyttel-public-report-'));
+  const sessionId = ['live', 'u1', 'A'.repeat(32)].join('_');
+  const otherId = ['live', 'u1', 'B'.repeat(32)].join('_');
+  const reference = (id: string) =>
+    `session-sha256-${createHash('sha256').update(id).digest('hex')}`;
+  const data = {
+    sessions: [{ sessionId }, { sessionId }, { sessionId: otherId }, { sessionId: null }],
+    details: { reason: `Session ${sessionId} ended.`, attemptId: 'voice-attempt' },
+    seconds: 5,
+    costUsd: 0.01,
+  };
+  const original = structuredClone(data);
+  try {
+    const path = await evaluationReporter(directory, 368)(
+      'diagnostic',
+      `Session ${sessionId}`,
+      data,
+      `Compared with ${otherId}.`,
+    );
+    const json = await readFile(join(directory, '0001-diagnostic.json'), 'utf8');
+    const markdown = await readFile(path, 'utf8');
+    expect(JSON.parse(json)).toEqual({
+      format: 'skyttel-model-evaluation',
+      version: 1,
+      issue: 368,
+      type: 'diagnostic',
+      data: {
+        ...data,
+        sessions: [
+          { sessionId: reference(sessionId) },
+          { sessionId: reference(sessionId) },
+          { sessionId: reference(otherId) },
+          { sessionId: null },
+        ],
+        details: { ...data.details, reason: `Session ${reference(sessionId)} ended.` },
+      },
+    });
+    expect(markdown).toBe(
+      `## Session ${reference(sessionId)}\n\nCompared with ${reference(otherId)}.\n\n` +
+        `\`\`\`json\n${json}\`\`\`\n`,
+    );
+    expect(json + markdown).not.toContain(sessionId);
+    expect(json + markdown).not.toContain(otherId);
+    expect(data).toEqual(original);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 test('qualification needs every step and repetition, with equal scenario weighting', {
   tags: ['technical'],

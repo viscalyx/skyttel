@@ -8,7 +8,7 @@ export type EvaluationProfile = {
   provider: 'openai';
   model: string;
   role: 'backend' | 'judge';
-  effort: 'low' | 'medium' | 'high';
+  effort: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
   tokens: number;
   maxInputTokens: number;
   modelMaxOutputTokens: number;
@@ -36,7 +36,7 @@ export function verifiedProfile(id: string, temporary?: EvaluationProfile): Eval
     !value.prices ||
     value.provider !== 'openai' ||
     !/^[a-z0-9.-]+$/.test(value.model) ||
-    !['low', 'medium', 'high'].includes(value.effort) ||
+    !['low', 'medium', 'high', 'xhigh', 'max'].includes(value.effort) ||
     !['backend', 'judge'].includes(value.role) ||
     value.serviceTier !== 'default' ||
     !value.sources.length ||

@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { publicEvaluationText } from './public-output.js';
 import type { Attempt } from './types.js';
 
 export type RecordType =
@@ -16,11 +17,14 @@ export function evaluationReporter(directory: string, issue: number) {
   return async (type: RecordType, title: string, data: unknown, prose = '') => {
     await mkdir(directory, { recursive: true });
     const record = { format: 'skyttel-model-evaluation', version: 1, issue, type, data };
+    const json = publicEvaluationText(JSON.stringify(record, null, 2));
     const stem = `${String(++sequence).padStart(4, '0')}-${type}`;
-    await writeFile(join(directory, `${stem}.json`), `${JSON.stringify(record, null, 2)}\n`);
+    await writeFile(join(directory, `${stem}.json`), `${json}\n`);
     await writeFile(
       join(directory, `${stem}.md`),
-      `## ${title}\n\n${prose ? `${prose}\n\n` : ''}\`\`\`json\n${JSON.stringify(record, null, 2)}\n\`\`\`\n`,
+      publicEvaluationText(
+        `## ${title}\n\n${prose ? `${prose}\n\n` : ''}\`\`\`json\n${json}\n\`\`\`\n`,
+      ),
     );
     return join(directory, `${stem}.md`);
   };

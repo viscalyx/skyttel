@@ -1,8 +1,11 @@
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
+import { publicEvaluationText } from './public-output.js';
 
-/** Keep original JSON lossless when diagnostics exceed issue comment limits. */
+/** Sanitize before sizing, hashing or compression, including older artifacts.
+ * Keep the public JSON lossless when diagnostics exceed issue comment limits. */
 export function evaluationPublication(markdown: string): string[] {
+  markdown = publicEvaluationText(markdown);
   if (markdown.length <= 55_000) return [markdown];
   const matches = [...markdown.matchAll(/```json\n([\s\S]*?)\n```/g)];
   if (matches.length !== 1) throw new Error('evaluation_publication_record_required');
@@ -46,7 +49,7 @@ export function evaluationPublication(markdown: string): string[] {
     };
     const body =
       `${markdown.split('\n')[0]} (part ${index + 1}/${parts})\n\n` +
-      'Lossless original JSON: join payloads in part order, decode base64, ' +
+      'Lossless public JSON: join payloads in part order, decode base64, ' +
       'decompress gzip and verify SHA-256 before parsing.\n\n' +
       `\`\`\`json\n${JSON.stringify(transport, null, 2)}\n\`\`\`\n`;
     if (body.length > 55_000) throw new Error('evaluation_publication_metadata_too_large');
