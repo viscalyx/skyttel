@@ -103,7 +103,7 @@ test('the evaluation summary uses real price turns and atomically installs ordin
     expect(summary.retained).toEqual(catalog.summaryHistory);
     expect(summary.source).toBe(source);
     expect(source).toContain('Spotify Premium Family till 189');
-    expect(source).toContain('Molnlagring Plus 2 TB till 229');
+    expect(source).toContain('Molnlagring Plus till 229');
     expect(source).toContain('evaluation-start');
     expect(source).toContain('savedAt');
     expect(source.length).toBeLessThanOrEqual(240_000);

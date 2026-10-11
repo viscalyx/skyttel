@@ -12,7 +12,7 @@ import {
   retainedObservation,
 } from './observations.js';
 import type { RunOptions } from './runner.js';
-import { referenceSpeech, speechConnection } from './speech.js';
+import { type ReferenceVoice, referenceSpeech, speechConnection } from './speech.js';
 import type { Attempt, JudgeInput, Scenario } from './types.js';
 
 /** Keeps ordinary multi-step dialogs connected, closes before the final judge,
@@ -20,7 +20,7 @@ import type { Attempt, JudgeInput, Scenario } from './types.js';
 export async function runVoiceScenario(
   scenario: Scenario,
   installationOptions: Parameters<typeof createInstallation>[1],
-  options: RunOptions,
+  options: RunOptions & { referenceVoice?: ReferenceVoice },
 ) {
   const events: AssistantObservation[] = [];
   const environment = await evaluationEnvironment(scenario, {
@@ -95,16 +95,14 @@ export async function runVoiceScenario(
           );
           concludeAttempt(result, result.observedEndMs);
         } else {
-          const reference = await referenceSpeech(step.id);
-          if (reference.clip.text !== step.text)
-            throw new Error('evaluation_audio_reference_mismatch');
+          const reference = await referenceSpeech(step.id, step.text, options.referenceVoice);
           if (!connection) {
-            connection = await speechConnection(environment);
+            connection = await speechConnection(environment, options.referenceVoice);
             voiceId = await connection.start();
           }
           voiceAttempted = true;
           const offset = events.length;
-          options.beginStep?.(reference.clip.frames / 22.05, {
+          options.beginStep?.((reference.clip.frames * 1000) / reference.clip.sampleRate, {
             scenario: scenario.id,
             step: step.id,
             modality: 'voice',

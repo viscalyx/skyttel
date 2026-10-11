@@ -24,7 +24,7 @@ import {
   summarizeProfile,
 } from './report.js';
 import { runTextScenario } from './runner.js';
-import { referenceSpeech } from './speech.js';
+import { type ReferenceVoice, referenceSpeech } from './speech.js';
 import type { Attempt, Catalog, Scenario } from './types.js';
 import { runVoiceScenario } from './voice-runner.js';
 
@@ -43,6 +43,7 @@ export type EvaluationPlan = {
   baselineProfiles: Partial<Record<'text' | 'voice', string>>;
   voice?: boolean;
   voiceProfile?: LiveEvaluationProfile;
+  referenceVoice?: ReferenceVoice;
   repetitions?: number[];
   references?: RecordedReference[];
   // Exact counting, including its verified billing, is supplied only by an
@@ -107,6 +108,14 @@ export async function evaluateModels(plan: EvaluationPlan) {
     )
     .digest('hex');
   const catalog = rawCatalog as Catalog;
+  if (plan.voice) {
+    for (const scenario of catalog.scenarios.filter((item) => item.voice)) {
+      for (const step of scenario.steps) {
+        if (typeof step.text === 'string')
+          await referenceSpeech(step.id, step.text, plan.referenceVoice);
+      }
+    }
+  }
   const directory = plan.directory;
   await mkdir(directory, { recursive: true });
   const db = new Database(join(directory, 'budget.sqlite'));
@@ -175,7 +184,13 @@ export async function evaluateModels(plan: EvaluationPlan) {
   const profiles = [...plan.textProfiles];
   const voiceProfile = plan.voiceProfile;
   try {
-    const audio = await Promise.all(Object.keys(audioManifest.clips).map(referenceSpeech));
+    const audio = await Promise.all(
+      Object.entries(audioManifest.voices).flatMap(([voice, variant]) =>
+        Object.keys(variant.clips).map((id) =>
+          referenceSpeech(id, undefined, voice as ReferenceVoice),
+        ),
+      ),
+    );
     await emit('manifest', 'Utvärderingskörning', {
       commit: plan.commit,
       catalog: {
@@ -201,6 +216,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
       baselineProfiles: plan.baselineProfiles,
       voice: plan.voice ?? false,
       voiceProfile,
+      referenceVoice: plan.referenceVoice ?? 'marin',
       audio: audioManifest,
       frames: audio.reduce((sum, item) => sum + item.clip.frames, 0),
       budget: budget.snapshot(),
@@ -314,16 +330,16 @@ export async function evaluateModels(plan: EvaluationPlan) {
             await missing(scenario, id, repetition, 'voice', budget.snapshot().reason as string);
             continue;
           }
-          const frames = (
+          const audioSeconds = (
             await Promise.all(
               scenario.steps
                 .filter((step) => !step.transition)
-                .map((step) => referenceSpeech(step.id)),
+                .map((step) => referenceSpeech(step.id, step.text, plan.referenceVoice)),
             )
-          ).reduce((sum, item) => sum + item.clip.frames, 0);
+          ).reduce((sum, item) => sum + item.clip.frames / item.clip.sampleRate, 0);
           const utterances = scenario.steps.filter((step) => !step.transition).length;
           const maximumSeconds = Math.ceil(
-            frames / 22050 + utterances * 180 + 32 + (utterances - 1) * 120,
+            audioSeconds + utterances * 180 + 32 + (utterances - 1) * 120,
           );
           const liveUsage: unknown[] = [];
           const live = budgetedLive(
@@ -347,6 +363,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
             },
             {
               profile: id,
+              referenceVoice: plan.referenceVoice,
               repetition,
               judge,
               beginStep: provider.beginStep,

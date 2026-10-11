@@ -4,9 +4,18 @@ import { chromium, type Page } from '@playwright/test';
 import manifest from './audio/manifest.json' with { type: 'json' };
 import type { evaluationEnvironment } from './environment.js';
 
-export async function referenceSpeech(id: string) {
-  const clip = manifest.clips[id as keyof typeof manifest.clips];
+export type ReferenceVoice = keyof typeof manifest.voices;
+
+export async function referenceSpeech(
+  id: string,
+  expectedText?: string,
+  voice: ReferenceVoice = 'marin',
+) {
+  const clips = manifest.voices[voice]?.clips;
+  const clip = clips?.[id as keyof typeof clips];
   if (!clip) throw new Error('evaluation_audio_missing');
+  if (expectedText !== undefined && clip.text !== expectedText)
+    throw new Error(`evaluation_audio_reference_mismatch:${id}`);
   const bytes = await readFile(new URL(`./audio/${clip.file}`, import.meta.url));
   if (
     createHash('sha256').update(bytes).digest('hex') !== clip.sha256 ||
@@ -25,7 +34,9 @@ export async function referenceSpeech(id: string) {
         size >= 16 &&
         bytes.readUInt16LE(offset + 8) === 1 &&
         bytes.readUInt16LE(offset + 10) === 1 &&
-        bytes.readUInt32LE(offset + 12) === 22050 &&
+        bytes.readUInt32LE(offset + 12) === clip.sampleRate &&
+        bytes.readUInt32LE(offset + 16) === clip.sampleRate * 2 &&
+        bytes.readUInt16LE(offset + 20) === 2 &&
         bytes.readUInt16LE(offset + 22) === 16;
     if (kind === 'data') pcm = bytes.subarray(offset + 8, offset + 8 + size);
     offset += 8 + size + (size % 2);
@@ -49,6 +60,7 @@ type EvaluationWindow = Window & { evaluationVoice?: BrowserVoice };
  * delegation or model output is substituted; acoustic output is not recorded. */
 export async function speechConnection(
   environment: Awaited<ReturnType<typeof evaluationEnvironment>>,
+  referenceVoice: ReferenceVoice = 'marin',
 ) {
   const browser = await chromium.launch({
     headless: true,
@@ -68,7 +80,7 @@ export async function speechConnection(
       const voice = await page.evaluate(
         async ({ path, revision, draftVersion, contentVersion }) => {
           const peer = new RTCPeerConnection();
-          const audio = new AudioContext({ sampleRate: 22050 });
+          const audio = new AudioContext();
           const destination = audio.createMediaStreamDestination();
           const oscillator = audio.createOscillator();
           const gain = audio.createGain();
@@ -127,14 +139,14 @@ export async function speechConnection(
       return voice;
     },
     async play(id: string) {
-      const reference = await referenceSpeech(id);
+      const reference = await referenceSpeech(id, undefined, referenceVoice);
       const sent = await page.evaluate(
-        async ({ pcm, frames }) => {
+        async ({ pcm, frames, sampleRate }) => {
           const voice = (window as EvaluationWindow).evaluationVoice;
           if (!voice || voice.closed) throw new Error('evaluation_voice_not_connected');
           const bytes = Uint8Array.from(atob(pcm), (char) => char.charCodeAt(0));
           const values = new DataView(bytes.buffer);
-          const buffer = voice.audio.createBuffer(1, frames, 22050);
+          const buffer = voice.audio.createBuffer(1, frames, sampleRate);
           const floats = buffer.getChannelData(0);
           for (let index = 0; index < frames; index++)
             floats[index] = values.getInt16(index * 2, true) / 32768;
@@ -150,7 +162,11 @@ export async function speechConnection(
           source.disconnect();
           return { startedAt, endedAt: Date.now() };
         },
-        { pcm: reference.pcm, frames: reference.clip.frames },
+        {
+          pcm: reference.pcm,
+          frames: reference.clip.frames,
+          sampleRate: reference.clip.sampleRate,
+        },
       );
       return { ...sent, frames: reference.clip.frames, sha256: reference.clip.sha256 };
     },

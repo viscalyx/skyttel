@@ -32,15 +32,16 @@ Test each supplied model at its requested effort directly. A supplied high
 profile starts at high; lower-effort results are not prerequisites. Explore
 other efforts only when the user requests an effort survey.
 
-For a voice comparison, select the backend model and effort from the supplied
-models' text evidence before creating the voice issue. Reuse recorded text
-results or complete the selected text evaluations first. Choose the candidate
-whose correctness, response time and cost support the comparison, and record
-the linked text result and selection reason. If the text evidence supports no
-candidate, report the gap and defer automatic voice selection. A user-supplied
-voice backend can be evaluated directly, with its qualification state reported.
-Record the voice model and backend profile together; use the application's
-recorded voice result as the comparison reference.
+Read the reference for each requested modality before selecting profiles or
+creating issues:
+
+- Text: [text evaluation](references/text-evaluation.md) covers profile setup,
+  scenario coverage, effort surveys and timing.
+- Voice: [voice evaluation](references/voice-evaluation.md) covers backend
+  selection, approved audio, session handling, evidence and timing.
+
+Load both references when both modalities are requested. Reusing recorded text
+evidence to select a voice backend requires only the voice reference.
 
 Search open and closed `model-evaluation` issues in `viscalyx/skyttel`,
 including corrections. Identify comparable results by catalog, fixture, commit,
@@ -55,7 +56,7 @@ correction when their recorded qualification changes.
 
 Before paid execution, read [run support](references/run-support.md) for the
 runner interface, local verification, provider verification and cost accounting.
-Create one issue for each supplied model and effort level using the title and
+Create one issue for each supplied model, effort and modality using the title and
 description templates in [issue templates](references/issue-templates.md).
 Evaluating the same model at low and high effort creates two separate issues.
 Execute and account for each model independently so a stopped model does not
@@ -65,7 +66,10 @@ Use `scripts/model-evaluation/evaluate.ts` to exercise the real application
 against the checked-in catalog. The runner owns scenario ordering, fixtures,
 audio, timing and result collection; keep those consistent across runs.
 
-Use the catalog and approved scoring controls as the evaluation contract.
+Use the existing catalog, approved fixtures and scoring controls as the
+evaluation contract. Scenario authoring and audio creation or modification
+are separate tasks. If required fixtures are missing, invalid or unreviewed,
+stop the affected evaluation and report what needs attention.
 Preserve real MCP writes, receipts and history. A failed calibration or unknown
 charge stops paid comparison. Record failures and missing evidence as observed;
 never retry a verdict to improve it or count an unrun attempt as successful.

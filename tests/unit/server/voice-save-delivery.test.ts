@@ -71,7 +71,7 @@ test.each(['complete', 'stop'])(
       offset_ms: 100,
       delegation: { id: 'slow-task', target: 'client' },
     });
-    await vi.advanceTimersByTimeAsync(100);
+    await vi.advanceTimersByTimeAsync(2100);
     vi.setSystemTime(Date.now() + 11 * 60_000);
     await vi.advanceTimersByTimeAsync(100);
     expect(work.readyForSummary()).toBe(false);
@@ -134,6 +134,11 @@ test.each(['receipt', 'answer', 'stopped'])(
     const channel = Object.assign(new EventEmitter(), { send });
     const response = vi.fn();
     const update = vi.fn();
+    let finish: (view: TextAssistantView) => void = () => {};
+    const result = new Promise<TextAssistantView>((resolve) => {
+      finish = resolve;
+    });
+    const request = vi.fn(async (action?: string) => (action === 'messages' ? result : initial));
     const work = voiceWork({
       channel: channel as unknown as LiveSideband,
       initial,
@@ -141,7 +146,7 @@ test.each(['receipt', 'answer', 'stopped'])(
       update,
       failed: vi.fn(),
       interrupt: vi.fn(),
-      request: async (action) => (action === 'messages' ? view : initial),
+      request,
     });
     const speech = (id: string) =>
       channel.emit('session.input_transcript.delta', {
@@ -155,8 +160,13 @@ test.each(['receipt', 'answer', 'stopped'])(
       offset_ms: 100,
       delegation: { id: 'save-task', target: 'client' },
     });
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(request.mock.calls.some(([action]) => action === 'messages')).toBe(true);
+    work.activity(true);
+    finish(view);
     await vi.advanceTimersByTimeAsync(100);
     expect(send).not.toHaveBeenCalled();
+    work.activity(false);
     speech('next');
     if (variant === 'stopped') await work.stop();
     await vi.advanceTimersByTimeAsync(50);

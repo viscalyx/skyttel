@@ -154,20 +154,37 @@ test('qualification needs every step and repetition, with equal scenario weighti
   });
 });
 
-test('the eight voice scenarios use all thirteen original verified PCM clips', {
+test.each(['marin', 'cedar'] as const)(
+  '%s has verified PCM matching every voice utterance',
+  {
+    tags: ['technical'],
+  },
+  async (voice) => {
+    const steps = catalog.scenarios
+      .filter((scenario) => scenario.voice)
+      .flatMap((scenario) => scenario.steps.filter((step) => 'text' in step));
+    expect(steps).toHaveLength(13);
+    for (const step of steps) {
+      const reference = await referenceSpeech(step.id, step.text, voice);
+      expect(reference.clip.sampleRate).toBe(24000);
+      expect(reference.clip.file).toBe(`${voice}/${step.id}.wav`);
+      expect(Buffer.from(reference.pcm, 'base64').length).toBe(reference.clip.frames * 2);
+      expect(reference.clip.durationSeconds).toBe(
+        reference.clip.frames / reference.clip.sampleRate,
+      );
+    }
+  },
+);
+
+test('voice references reject scenario wording that differs from their recorded text', {
   tags: ['technical'],
 }, async () => {
-  const steps = catalog.scenarios
-    .filter((scenario) => scenario.voice)
-    .flatMap((scenario) => scenario.steps.filter((step) => 'text' in step));
-  expect(steps).toHaveLength(13);
-  let frames = 0;
-  for (const step of steps) {
-    const reference = await referenceSpeech(step.id);
-    expect(reference.clip.text).toBe(step.text);
-    frames += reference.clip.frames;
-  }
-  expect(frames).toBe(6_849_024);
+  const id = 'kort-utan-sparande';
+  const reference = await referenceSpeech(id);
+  await expect(referenceSpeech(id, reference.clip.text)).resolves.toEqual(reference);
+  await expect(referenceSpeech(id, `${reference.clip.text} Extra text.`)).rejects.toThrow(
+    `evaluation_audio_reference_mismatch:${id}`,
+  );
 });
 
 test('one supplied candidate can be recommended using a recorded text or voice reference', {

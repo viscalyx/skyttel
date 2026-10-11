@@ -5,7 +5,7 @@ import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
-import { liveProvider } from '../../support/live-provider.js';
+import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
@@ -110,9 +110,7 @@ test.each([false, true])(
     expect(consumed.voice.replyDelivery).toEqual([
       { id: 'long-typed-reply', voiced: microphoneOn },
     ]);
-    const commentary = live.sent.flatMap(({ event }) =>
-      event.type === 'session.commentary.append' ? [event.content] : [],
-    );
+    const commentary = voiceAnswerParts(live.sent);
     if (microphoneOn) {
       expect(commentary.length).toBeGreaterThan(1);
       expect(commentary.join('')).toBe(`Samtal (obekräftat): ${JSON.stringify(text)}`);
@@ -127,7 +125,7 @@ test.each([false, true])(
     expect(replay.voice.replyDelivery).toEqual(consumed.voice.replyDelivery);
     expect(
       live.sent.filter(({ event }) => event.type === 'session.commentary.append'),
-    ).toHaveLength(commentary.length);
+    ).toHaveLength(microphoneOn ? 1 : 0);
     expect(await readMap()).toEqual(before);
     expect(await (await client.get(`${path}/map/history`)).json()).toEqual({ history: [] });
   },
