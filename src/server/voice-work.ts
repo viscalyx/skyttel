@@ -232,7 +232,20 @@ export function voiceWork({
         (microphoneActive || Date.now() - lastInputAt < 2000)
       )
         await new Promise((resolve) => setTimeout(resolve, 50));
-      if (!current() || inputVersion !== acceptedInput || pending.length) return;
+      if (!current()) return;
+      if (inputVersion !== acceptedInput || pending.length) {
+        // New speech supersedes the answer, but cannot undo a verified save.
+        // Deliver only its receipt; leave the newer input and view untouched.
+        if (view.receipt)
+          append(id, 'Sparat.', {
+            ...view,
+            saveCheck: undefined,
+            modelReply: undefined,
+            reply: undefined,
+            questionPending: false,
+          });
+        return;
+      }
       owned = undefined;
       dispatching = undefined;
       rendered = { ...rendered, revision: Math.max(rendered.revision, view.revision) };

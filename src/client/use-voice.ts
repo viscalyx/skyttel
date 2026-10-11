@@ -215,6 +215,7 @@ export function useVoice(options: {
     // observed, and then drain. Live offers no complete-turn event; future
     // unsolicited output cannot be ruled out by this bounded-word check.
     completedOutput.current.add(response.id);
+    setFailure((previous) => (previous?.noticeId === 'voiceReplyUnconfirmed' ? null : previous));
     attempt.output = { text: '', heard: false, speaking: false };
     if (response.questionPending) setSpokenQuestion(response.revision);
     if (

@@ -1128,6 +1128,40 @@ test('content replacement invalidates cached conversation and held provider work
   expect(model.requests).toHaveLength(1);
 });
 
+test('a lost automatic save response enters recovery and verifies the original operation without resaving', {
+  tags: ['technical'],
+}, async () => {
+  const model = textModel(() => [modelMessage('Utkastet är klart.')]);
+  let lost = false;
+  await setup(model.provider, undefined, async (request, dispatch) => {
+    const rpc =
+      request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+        ? await request.clone().json()
+        : null;
+    const response = await dispatch(request);
+    if (rpc?.params?.name === 'save_draft' && !lost) {
+      lost = true;
+      throw new TypeError('Lost automatic save response after commit');
+    }
+    return response;
+  });
+  await webProposal();
+  const view = await message(await start(), 'Spara hela utkastet.');
+  expect(lost).toBe(true);
+  expect(view).toMatchObject({ phase: 'recovery', error: 'assistant_save_unknown' });
+  const mapPath = path.replace('/text-assistant', '/map');
+  const history = (await (await browser.get(`${mapPath}/history`)).json()).history;
+  expect(history).toHaveLength(1);
+  const recovered = await browser.post(`${path}/${view.id}/recover`, {
+    headers: { origin: app.origin },
+    data: {},
+  });
+  expect(recovered.status()).toBe(200);
+  expect(await recovered.json()).toMatchObject({ phase: 'ready', receipt: history[0] });
+  expect((await (await browser.get(`${mapPath}/history`)).json()).history).toEqual(history);
+  expect(model.requests).toHaveLength(1);
+});
+
 test('a new authorized session finds an interrupted persistent save before accepting work and retries only that exact operation', async () => {
   const model = textModel(() => [modelMessage('Fortsätt.')]);
   await setup(model.provider);

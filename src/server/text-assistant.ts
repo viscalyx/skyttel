@@ -1444,8 +1444,8 @@ export function textAssistantRoutes({
     void execute()
       .catch(() => {
         if (task.signal.aborted || session.revision !== revision) return;
-        session.phase = 'error';
-        session.error = 'assistant_draft_changed';
+        session.phase = session.pendingSave ? 'recovery' : 'error';
+        session.error = session.pendingSave ? 'assistant_save_unknown' : 'assistant_draft_changed';
         session.reply = assistantFailureMessage(session.error);
         if (session.saveIntent)
           session.reply +=

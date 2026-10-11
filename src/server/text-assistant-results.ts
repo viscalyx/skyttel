@@ -33,7 +33,7 @@ function price(facts: FinancialFacts | undefined) {
   if (!value || !['known', 'uncertain'].includes(value.knowledge)) return fact(value);
   const currency = facts?.currency;
   const interval = facts?.paymentInterval;
-  return `${fact(value)}${currency?.knowledge === 'known' ? ` ${currency.value}` : ''}${interval?.knowledge === 'known' ? ` / ${interval.value}` : ''}`;
+  return `${fact({ ...value, reportedOn: undefined })}${currency?.knowledge === 'known' ? ` ${currency.value}` : ''}${interval?.knowledge === 'known' ? ` / ${interval.value}` : ''}${value.reportedOn ? ` (${value.reportedOn})` : ''}`;
 }
 
 function lifecycle(value: RelationshipValue['lifecycle']) {

@@ -29,6 +29,39 @@ const usageType: RelationshipType = {
   forwardLabel: 'används av',
 };
 
+test.each(['known', 'uncertain', 'unknown', 'none', 'missing'] as const)(
+  'price details keep the date last and preserve %s knowledge',
+  (knowledge) => {
+    const after = card({
+      financialFacts: {
+        currency: { knowledge: 'known', value: 'SEK' },
+        paymentInterval: { knowledge: 'known', value: 'månad' },
+        ...(knowledge === 'missing'
+          ? {}
+          : {
+              price:
+                knowledge === 'known' || knowledge === 'uncertain'
+                  ? { knowledge, value: '129', reportedOn: '2026-10-01' }
+                  : { knowledge, reportedOn: '2026-10-01' },
+            }),
+      },
+    });
+    const expected = {
+      known: '129 SEK / månad (2026-10-01)',
+      uncertain: 'osäkert uppgivet: 129 SEK / månad (2026-10-01)',
+      unknown: 'okänt (2026-10-01)',
+      none: 'uttryckligen inget (2026-10-01)',
+      missing: 'ej angivet',
+    }[knowledge];
+    const before = card({ financialFacts: { price: { knowledge: 'known', value: '119' } } });
+    for (const result of [
+      draftResult({ version: 1, changes: [{ id: after.id, type: cardType, before, after }] }),
+      historyResult(receipt({ changes: [{ type: cardType, before, after }] })),
+    ])
+      expect(result.message).toContain(`Pris: 119 → ${expected}`);
+  },
+);
+
 function card(value: Partial<MapObject> = {}): MapObject {
   return {
     id: 'household-card',

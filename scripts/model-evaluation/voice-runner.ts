@@ -78,8 +78,15 @@ export async function runVoiceScenario(
             environment.assistant.id,
             catalog.summaryHistory as { role: 'user' | 'assistant'; text: string }[],
           );
-          if (!summary.installed || !summary.summary || summary.retained.length !== 8)
+          if (!summary.installed || !summary.summary)
             throw new Error('evaluation_summary_installation_failed');
+          if (
+            summary.retained.length !== 8 ||
+            summary.retained.some(
+              (row) => !catalog.summaryHistory.some((fixture) => fixture.text === row.text),
+            )
+          )
+            throw new Error('evaluation_summary_tail_invalid');
           result.fixed = await environment.check(step, summary.view, []);
           result.observedEndMs = Date.now() - startedAt;
           result.content = await judge(

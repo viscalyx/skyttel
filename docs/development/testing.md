@@ -29,10 +29,12 @@ those issues and their versioned result comments, including corrections.
 
 The comparison baseline is the model currently configured in the application
 and its corresponding result in a labelled run issue. Every evaluation follows
-the same workflow and creates a new run issue.
+the same workflow and creates a separate run issue for each model, effort level
+and modality.
 
 Invoke `$evaluate-models` with one or more models, the intended comparison
-and payment authorization; provide a spending limit when one is needed.
+and the required payment authorization. A spending limit is optional; provide
+one only when a cost ceiling is wanted.
 One complete passing repetition qualifies the model for the evaluated modality.
 Additional repetitions run only when requested, and every planned check must
 pass. Previously tested models are compared using their recorded results and
