@@ -439,7 +439,7 @@ export function textAssistantRoutes({
     return description.replace(/\bom\b/gu, '');
   }
 
-  function requestsSave(text: string) {
+  function requestsSave(text: string, purpose: 'authority' | 'clarification' = 'authority') {
     // A negated map fact does not negate a separate save command. A correction
     // may precede that command in the same sentence, but its imperative must
     // itself be affirmative. Conditions and withheld saving still block it.
@@ -501,7 +501,7 @@ export function textAssistantRoutes({
       ) ||
         (!command.includes('?') &&
           new RegExp(
-            `(?:^|[.!;]\\s*|\\boch\\s+|\\bsedan\\s+|\\bja,?\\s+)spara${suffix}[.!]?$`,
+            `(?:^|[.!;]\\s*|\\boch\\s+|\\bsedan\\s+|\\bja,?\\s+${purpose === 'clarification' ? '|\\s+' : ''})spara${suffix}[.!]?$`,
             'u',
           ).test(command.trim())))
     );
@@ -1386,7 +1386,9 @@ export function textAssistantRoutes({
         };
         if (
           (session.questions?.length || session.modelReply?.includes('?')) &&
-          session.saveIntent
+          // Speech may omit the sentence boundary before a final save request.
+          // Explain renewal in that case without granting save authority.
+          (session.saveIntent || (message.voice && requestsSave(message.text, 'clarification')))
         ) {
           session.saveIntent = undefined;
           const notice =

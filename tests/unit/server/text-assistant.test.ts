@@ -308,8 +308,8 @@ test('a provider discovers the actual MCP catalog and makes a persistent proposa
   );
   for (const call of model.requests) {
     expect(call).toMatchObject({
-      model: 'gpt-5.6-terra',
-      reasoning: { effort: 'low' },
+      model: 'gpt-6.1-sol',
+      reasoning: { effort: 'high' },
       store: false,
     });
     expect(call.tools.find((tool) => tool.name === 'propose_object')).toMatchObject({
@@ -1552,7 +1552,7 @@ test('an incomplete provider response cannot execute a save and retains only kno
           object: 'response',
           created_at: 1,
           status: 'incomplete',
-          model: 'gpt-5.6-terra',
+          model: 'gpt-6.1-sol',
           output: [
             modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'partial-save' }),
           ],

@@ -503,6 +503,58 @@ test('combined type proposals speak the directed question and retain the verifie
   expect(model.requests).toHaveLength(1);
 });
 
+test.each([
+  { text: 'Alex använder cykeln Spara hela utkastet', renewal: true },
+  { text: 'Alex använder cykeln spara ändringarna nu', renewal: true },
+  { text: 'Om Alex använder cykeln spara hela utkastet', renewal: false },
+  { text: 'Spara inte Alex använder cykeln spara hela utkastet', renewal: false },
+  { text: 'Alex använder cykeln säg ”spara hela utkastet”', renewal: false },
+])(
+  'voice clarification explains save renewal=$renewal for $text',
+  {
+    tags: ['technical'],
+  },
+  async ({ text, renewal }) => {
+    const model = textModel(() => [
+      modelTool('ask_questions', { questions: ['Vilken Alex menar du?'] }),
+    ]);
+    const voice = await setupVoice(model.provider);
+    await proposal(voice.path);
+    await voice.poll();
+    voice.transcript(text);
+    voice.delegate();
+    await expect.poll(() => voiceAnswerParts(voice.live.sent).join('')).toContain('Vilken Alex');
+    const status = await voice.poll();
+    expect(status.assistant.modelReply.includes('Be om sparande igen')).toBe(renewal);
+    expect(voiceAnswerParts(voice.live.sent).join('').includes('Be om sparande igen')).toBe(
+      renewal,
+    );
+    expect(status.assistant.receipt).toBeUndefined();
+    expect(
+      (await (await browser.get(voice.path.replace('/text-assistant', '/map/history'))).json())
+        .history,
+    ).toEqual([]);
+  },
+);
+
+test('an unpunctuated save mention used for guidance does not grant automatic save authority', {
+  tags: ['technical'],
+}, async () => {
+  const voice = await setupVoice(textModel(() => [modelMessage('Utkastet är granskat.')]).provider);
+  await proposal(voice.path);
+  await voice.poll();
+  voice.transcript('Alex använder cykeln Spara hela utkastet');
+  voice.delegate();
+  await expect
+    .poll(() => voiceAnswerParts(voice.live.sent).join(''))
+    .toContain('Utkastet är granskat.');
+  expect((await voice.poll()).assistant.receipt).toBeUndefined();
+  expect(
+    (await (await browser.get(voice.path.replace('/text-assistant', '/map/history'))).json())
+      .history,
+  ).toEqual([]);
+});
+
 test('large verified draft details are assembled completely within the Live limit', async () => {
   const model = textModel(() => [modelTool('report_result', { source: 'draft' })]);
   const voice = await setupVoice(model.provider);

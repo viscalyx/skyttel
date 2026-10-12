@@ -1,7 +1,8 @@
 /** Provider profiles used by the actual requests, not a client-selected denominator. */
 export const textConversationModel = {
   provider: 'openai',
-  model: 'gpt-5.6-terra',
+  model: 'gpt-6.1-sol',
+  effort: 'high',
   tokens: 1_050_000,
 } as const;
 export const voiceConversationModel = {
@@ -28,8 +29,8 @@ const percentage = (used: number, capacity: number) =>
  * its first measurement, estimate the canonical dialogue with its own capacity.
  * Report the larger proportion: either model can constrain this same conversation.
  * Reset retires every measurement, so an empty conversation starts at zero.
- * Sources checked 2026-10-03:
- * https://developers.openai.com/api/docs/models/gpt-5.6-terra
+ * Sources checked 2026-10-12:
+ * https://developers.openai.com/api/docs/models/gpt-6.1-sol
  * https://developers.openai.com/api/docs/guides/live-conversations
  */
 export class ConversationCapacity {

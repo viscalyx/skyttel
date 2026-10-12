@@ -5,8 +5,8 @@ modality. A model evaluated at low and high effort gets two separate issues.
 For voice, include the selected backend profile in the model identity and link
 the text evidence supporting its selection, or the user's explicit selection.
 Fill the description before
-payment and update its result and spending fields when execution ends. Keep
-versioned evidence in comments; link it from the description.
+payment and update its conclusion, result and spending fields when execution
+ends. Keep versioned evidence in comments; link it from the description.
 
 A valid failure belongs in evaluation history. A later explicit rerun gets a
 new issue linked to its predecessor; completed models keep their recorded
@@ -28,8 +28,16 @@ Keep the title stable; the description carries the current outcome.
 
 Copy the following structure and replace placeholders with concrete values.
 Use `pending` for uncollected results and `not applicable` for unused settings.
+Put the conclusion first: one short sentence, at most two lines, stating whether
+the model is qualified, still incomplete or unsuitable, and the decisive reason.
+For a diagnostic, state what improved and what still prevents qualification.
+Keep counts and technical evidence in the result section below.
 
 ```markdown
+## Conclusion
+
+<One short sentence: overall verdict and reason; pending before execution.>
+
 ## Goal
 
 Evaluate <model/profile> against Skyttel's requirements and compare the result

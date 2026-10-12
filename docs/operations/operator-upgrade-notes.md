@@ -6,6 +6,17 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Conversation model
+
+The application uses GPT-6.1 Sol with high reasoning effort for text,
+voice backend work and conversation summaries. Before rollout, confirm that
+the configured OpenAI project permits this model. Monitor response times and
+spending after rollout. GPT-Live 1 continues to handle speech.
+
+New text model usage uses Sol prices. Earlier measurements keep their saved
+prices. The cost page combines text model usage and shows the model for each
+price table. Existing credentials and database content remain usable.
+
 ### Private type restoration
 
 Full household files can contain private proposals to restore removed type

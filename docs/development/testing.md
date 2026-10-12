@@ -507,7 +507,7 @@ These commands require explicit private configuration:
 - `npm run test:real-model`: model interpretation through MCP. Follow the
   [model evaluation guide](../manual-tests/real-model-tests.md).
 - `npm run test:real-voice`: recorded Swedish speech through WebRTC, Live
-  and Terra. Follow the
+  and the application's text model. Follow the
   [speech evaluation guide](../manual-tests/real-voice-tests.md).
 - `npm run test:installation`: read-only checks of HTTPS, deployed version
   and security monitoring against actual Render images. Follow the

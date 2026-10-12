@@ -92,7 +92,7 @@ export function textModel(
       const response = await client.responses.create(
         {
           model: attempt.model,
-          reasoning: { effort: profile?.effort ?? 'low' },
+          reasoning: { effort: profile?.effort ?? textConversationModel.effort },
           ...(profile ? { service_tier: 'default' as const } : {}),
           store: false,
           parallel_tool_calls: false,
