@@ -566,7 +566,10 @@ test('TAL-14: röstrutan visar ett statusord åt gången och en vågform som fö
 
     // Skyttel arbetar goes before both: the dots are still.
     speak(live, 'Beskriv utkastet.');
+    // Finish the utterance before expecting the delegated task to start.
+    await sound(page, 'microphone', 0);
     await expect.poll(() => model.waiting()).toBe(1);
+    await sound(page, 'microphone', 0.9);
     await expect(box).toHaveText('Skyttel arbetar');
     await expect(wave).toHaveAttribute('data-form', 'still');
     expect(await heights()).toEqual(Array(7).fill(4));

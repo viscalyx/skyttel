@@ -610,7 +610,10 @@ steg 4 till UI-steg 3 och steg 5 till UI-steg 4. Efter avbrottet ska
    `setSound('microphone', true, 0.9)`.
 2. Kör `setSound('remote', true)` med mikrofonljudet kvar.
 3. Kör `user Beskriv utkastet.` och `delegate`. Stoppa mikrofonljudet med
-   `setSound('microphone', false)` och släpp sedan anropet med
+   `setSound('microphone', false)` och vänta tills anropet är hållet.
+   Återuppta mikrofonljudet med `setSound('microphone', true, 0.9)` och
+   kontrollera **Skyttel arbetar**. Stoppa mikrofonljudet igen med
+   `setSound('microphone', false)` och släpp anropet med
    `reply REQUEST Utkastet har ett förslag.`.
 4. Slå på minskad rörelse i operativsystemet eller i webbläsarens
    utvecklarverktyg. Återuppta mikrofonljudet med
