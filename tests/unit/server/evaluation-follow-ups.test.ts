@@ -247,6 +247,122 @@ test('conditional reply identities cannot collide with ordinary steps', {
   expect(() => scenarioUtterances(invalid, true)).toThrow('evaluation_duplicate_step_ids');
 });
 
+test.each(['pass', 'missing-fact', 'unsafe-save', 'missing-context'])(
+  'a separate waiting contract preserves independent obligations: %s',
+  { tags: ['technical'] },
+  async (mode) => {
+    const step = structuredClone(scenario.steps[0]);
+    const reply = step.followUps?.[0];
+    if (!reply) throw new Error('Missing reply fixture');
+    reply.waiting.requirements = ['Answer the independent price question.'];
+    const attempt: Attempt = {
+      scenario: scenario.id,
+      step: step.id,
+      profile: 'local',
+      repetition: 1,
+      modality: 'voice',
+      outcome: 'fail',
+      fixed: ['effective_objects'],
+      content: [{ id: 'backend-0', outcome: 'fail', reason: 'Work awaits clarification.' }],
+      elapsedMs: null,
+      backendCostUsd: 0,
+    };
+    const originalContent = structuredClone(attempt.content);
+    const selected = await selectFollowUp({
+      step,
+      attempt,
+      stateFailures: ['effective_objects'],
+      questionPending: true,
+      sources: {
+        backend: { text: 'Price and question.', complete: true },
+        voice: { text: 'Spoken price and question.', complete: true },
+      },
+      checkWaiting: async () => (mode === 'unsafe-save' ? ['unrequested_save_attempt'] : []),
+      waitingContext: mode === 'missing-context' ? undefined : () => 'Verified waiting state.',
+      judge: async (input) => {
+        expect(input.context).toContain('Verified waiting state.');
+        expect(input.requirements.filter((item) => item.id.includes('-waiting-'))).toHaveLength(2);
+        return (await passingJudge(input)).map((item) => ({
+          ...item,
+          outcome: mode === 'missing-fact' && item.id === 'voice-waiting-0' ? 'fail' : item.outcome,
+        }));
+      },
+    });
+    expect(selected?.id).toBe(mode === 'pass' ? reply.id : undefined);
+    expect(attempt.outcome).toBe('fail');
+    expect(attempt.content).toEqual(originalContent);
+  },
+);
+
+test('a renewed save after clarification completes the original target exactly once', {
+  tags: ['technical'],
+}, async () => {
+  const saveScenario: Scenario = {
+    id: 'clarified-save',
+    title: 'Save after clarification',
+    voice: false,
+    steps: [
+      {
+        id: 'save',
+        text: 'Spara hela utkastet.',
+        expected: { saves: 1, requirements: ['Report the verified save.'] },
+        followUps: [
+          {
+            id: 'renew-save',
+            text: 'Jag menar hela utkastet. Spara hela utkastet nu.',
+            when: 'The response asks which draft to save.',
+            waiting: { saves: 0, requirements: ['Ask for a renewed save request.'] },
+            requirements: ['Report the verified save.'],
+          },
+        ],
+      },
+    ],
+  };
+  let environment: Awaited<ReturnType<typeof environments.evaluationEnvironment>>;
+  let turn = 0;
+  const model = textModel(async () => {
+    if (turn++ === 0)
+      return [modelTool('ask_questions', { questions: ['Vilket utkast menar du?'] })];
+    const state = await environment.read();
+    return [
+      modelTool('save_draft', {
+        version: state.draft.version,
+        contentVersion: state.contentVersion,
+      }),
+    ];
+  });
+  environment = await environments.evaluationEnvironment(saveScenario, {
+    modelFetch: model.provider,
+  });
+  vi.spyOn(environments, 'evaluationEnvironment').mockResolvedValue(environment);
+  const result = await runTextScenario(
+    saveScenario,
+    {},
+    {
+      profile: 'local',
+      repetition: 1,
+      followUps: true,
+      judge: async (input) => {
+        const context = input.context.startsWith('{') ? JSON.parse(input.context) : undefined;
+        if (context?.observedState.saveOperations.length) {
+          expect(context.observedState.saveOperations).toHaveLength(1);
+          expect(context.observedState.historyChanges).toBe(1);
+        }
+        return (await passingJudge(input)).map((item) => ({
+          ...item,
+          outcome: context?.request === saveScenario.steps[0].text ? 'fail' : item.outcome,
+        }));
+      },
+    },
+  );
+  expect(result.attempts.map((item) => [item.step, item.outcome, item.fixed])).toEqual([
+    ['save', 'fail', ['save_receipts_history', 'save_incomplete']],
+    ['renew-save', 'pass', []],
+  ]);
+  expect(result.attempts[1].followUpFor).toBe('save');
+  expect(result.finalMap.draft.changes).toEqual([]);
+});
+
 test.each([0, 12000])(
   'voice retains the base verdict and connection during %i ms judge calls',
   {
@@ -289,8 +405,15 @@ test.each([0, 12000])(
         }
         return { assistant: view(), voice: { phase: 'listening' } };
       },
-      check: async (_step: unknown, _view: unknown, _actions: unknown, waiting?: unknown) =>
-        current === 'price' && !waiting ? ['effective_objects'] : [],
+      check: async (
+        step: Scenario['steps'][number],
+        _view: unknown,
+        _actions: unknown,
+        waiting?: unknown,
+      ) => {
+        if (current === 'clarify-price') expect(step.id).toBe('price');
+        return current === 'price' && !waiting ? ['effective_objects'] : [];
+      },
       judgeContext: () => 'Fixture',
       read: async () => ({}),
       close: vi.fn(async () => {}),

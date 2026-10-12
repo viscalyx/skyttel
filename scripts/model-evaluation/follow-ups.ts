@@ -27,6 +27,7 @@ export async function selectFollowUp({
   questionPending,
   sources,
   checkWaiting,
+  waitingContext,
   judge,
 }: {
   step: ScenarioStep;
@@ -35,6 +36,7 @@ export async function selectFollowUp({
   questionPending: boolean;
   sources: JudgeInput['sources'];
   checkWaiting: (expected: Expected) => Promise<string[]>;
+  waitingContext?: () => string;
   judge?: (input: JudgeInput) => Promise<JudgeResult>;
 }) {
   if (
@@ -42,11 +44,9 @@ export async function selectFollowUp({
     attempt.outcome !== 'fail' ||
     !stateFailures.length ||
     attempt.fixed.some((failure) => !stateFailures.includes(failure)) ||
-    (step.expected.saves ?? 0) !== 0 ||
     !questionPending ||
     !judge ||
     !attempt.content?.length ||
-    attempt.content.some((item) => item.outcome !== 'pass') ||
     Object.values(sources).some((source) => !source.complete)
   )
     return undefined;
@@ -55,21 +55,36 @@ export async function selectFollowUp({
   attempt.followUpSelection = { candidates, reason: 'No reply selected.' };
   for (const reply of step.followUps) {
     if ((reply.waiting.saves ?? 0) !== 0) throw new Error('evaluation_follow_up_save_not_allowed');
+    // A separate waiting contract must verify the clarification and independent
+    // work when the original completion requirements cannot yet be satisfied.
+    if (
+      (!reply.waiting.requirements.length &&
+        ((step.expected.saves ?? 0) !== 0 ||
+          attempt.content.some((item) => item.outcome !== 'pass'))) ||
+      (reply.waiting.requirements.length && !waitingContext)
+    ) {
+      candidates.push({ id: reply.id, fixed: ['follow_up_waiting_contract_missing'] });
+      continue;
+    }
     const fixed = await checkWaiting(reply.waiting);
     if (fixed.length) {
       candidates.push({ id: reply.id, fixed });
       continue;
     }
-    const requirements = Object.keys(sources).map((source) => ({
-      id: `${source}-follow-up`,
-      source: source as 'backend' | 'voice',
-      text: reply.when,
-    }));
+    const requirements = Object.keys(sources).flatMap((source) => [
+      { id: `${source}-follow-up`, source: source as 'backend' | 'voice', text: reply.when },
+      ...reply.waiting.requirements.map((text, index) => ({
+        id: `${source}-waiting-${index}`,
+        source: source as 'backend' | 'voice',
+        text,
+      })),
+    ]);
     let content: JudgeResult;
     try {
       content = await judge({
         context:
-          'Select a catalog reply only when its question is explicitly asked. This selection does not decide whether the question was necessary or change any original verdict.',
+          'Select a catalog reply only when its question is explicitly asked and all waiting requirements are satisfied. This selection does not decide whether the question was necessary or change any original verdict.\n' +
+          (waitingContext?.() ?? ''),
         sources,
         requirements,
       });

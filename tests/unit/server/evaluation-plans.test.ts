@@ -40,7 +40,7 @@ test('voice plans validate optional audio and enable clarification in the runner
         textProfiles: [],
         voice: true,
         followUps: true,
-        referenceVoice: 'cedar',
+        referenceVoice: 'marin',
         voiceProfile: profiles.profiles.find(
           (item) => item.role === 'voice',
         ) as LiveEvaluationProfile,
@@ -58,10 +58,10 @@ test('voice plans validate optional audio and enable clarification in the runner
     expect(audio).toHaveBeenCalledWith(
       'oklarheter-pris-foljdsvar',
       'Jag menar abonnemanget Molnlagring Plus.',
-      'cedar',
+      'marin',
     );
     expect(runner).toHaveBeenCalledOnce();
-    expect(runner.mock.calls[0][2]).toMatchObject({ followUps: true, referenceVoice: 'cedar' });
+    expect(runner.mock.calls[0][2]).toMatchObject({ followUps: true, referenceVoice: 'marin' });
     expect(network).not.toHaveBeenCalled();
   } finally {
     audio.mockRestore();
@@ -160,7 +160,7 @@ test('an explicitly selected high-effort model is accounted for without adding p
   }
 });
 
-test.each(['marin', 'cedar'] as const)(
+test.each(['marin'] as const)(
   'voice preflight validates only scenario utterances for %s',
   { tags: ['technical'] },
   async (referenceVoice) => {

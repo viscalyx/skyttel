@@ -38,13 +38,9 @@ Keep ordinary dialogs connected, close before final judging and summary, then
 reopen after summary installation. Use the actual audio path rather than
 replacement speech or injected delegations/transcripts.
 
-Declare voice order and outcome policy before payment. The default is Marin
-first, then Cedar as a diagnostic investigation of a failed scenario. Select
-the variant with `EvaluationPlan.referenceVoice` or `runVoiceScenario`'s
-`referenceVoice` option. Keep the first verdict and record each alternate
-attempt's voice, audio hash, cost and outcome separately from qualification.
-An alternate success does not replace a failure or establish qualification.
-Use a different acceptance policy only when the user explicitly selects it.
+Use the approved Marin recordings for every scenario and conditional reply.
+Set `referenceVoice` to `marin`. Preserve each attempt's outcome; investigate
+failures using its evidence and record any explicitly requested rerun separately.
 
 Replay the complete affected scenario from its original isolated fixture,
 including preceding utterances. Continue ordinary multi-step conversations

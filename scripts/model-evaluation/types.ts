@@ -25,7 +25,8 @@ export type FollowUp = {
   text: string;
   /** Semantic question that this answer resolves; shared by all candidate models. */
   when: string;
-  /** Complete allowed state delta while waiting, including independent changes. */
+  /** Complete allowed waiting delta; requirements validate the clarification
+   * and still-answerable content instead of the parent's completion response. */
   waiting: Expected;
   requirements: string[];
 };

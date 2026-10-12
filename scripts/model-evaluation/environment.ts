@@ -360,6 +360,9 @@ export async function evaluationEnvironment(
           draft: map.draft,
           saveReceipt: view.receipt ?? null,
           saveOperations: operations,
+          historicalSaveOperations: view.operations.filter(
+            (operation) => operation.operationId === 'evaluation-start',
+          ),
           historyChanges: history.history.length - initialHistory,
           displayedSelection: view.displayedSelection ?? null,
         });

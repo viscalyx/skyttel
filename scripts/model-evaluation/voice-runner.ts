@@ -56,9 +56,12 @@ export async function runVoiceScenario(
   let sessionTimer: ReturnType<typeof setTimeout> | undefined;
   let closing: Promise<void> | undefined;
   let sessionExpired = false;
-  const queue: { step: ScenarioStep; parent?: string; startedAt?: number }[] = scenario.steps.map(
-    (step) => ({ step }),
-  );
+  const queue: {
+    step: ScenarioStep;
+    parent?: string;
+    target?: ScenarioStep;
+    startedAt?: number;
+  }[] = scenario.steps.map((step) => ({ step }));
   async function judgeWithHeartbeat(input: JudgeInput) {
     if (!options.judge) throw new Error('evaluation_judge_missing');
     const id = voiceId;
@@ -267,7 +270,7 @@ export async function runVoiceScenario(
             latestOutput = outputs.at(-1)?.at ?? startedAt;
             latestEvent = lastVoiceActivityAt(observed, startedAt);
             const actions = modelActions(observed);
-            stateFailures = await environment.check(step, view, actions);
+            stateFailures = await environment.check(entry.target ?? step, view, actions);
             fixed = [...stateFailures];
             if (scenario.selection && view.displayedSelection !== scenario.selection)
               fixed.push('selection_unconfirmed');
@@ -329,6 +332,7 @@ export async function runVoiceScenario(
               },
               checkWaiting: (waiting) =>
                 environment.check(step, view, modelActions(events.slice(offset)), waiting),
+              waitingContext: () => environment.judgeContext(step, []),
               judge: options.judge ? judgeWithHeartbeat : undefined,
             });
             if (followUp && !options.stopped?.()) {
@@ -339,6 +343,7 @@ export async function runVoiceScenario(
                   expected: { requirements: followUp.requirements },
                 },
                 parent: step.id,
+                target: step,
                 startedAt,
               });
               continuing = true;

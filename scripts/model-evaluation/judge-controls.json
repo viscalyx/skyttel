@@ -243,7 +243,7 @@
     },
     {
       "id": "13",
-      "context": "Användaren tror att Mira Dahl använder Molnlagring Plus. Uppgiften är lagd som osäker i utkastet.",
+      "context": "Användaren tror att Mira Dahl använder Norrsken Molnlagring. Uppgiften är lagd som osäker i utkastet.",
       "sources": {
         "backend": {
           "text": "Jag har lagt in uppgiften som osäker i ditt utkast.",
@@ -263,10 +263,10 @@
     },
     {
       "id": "14",
-      "context": "Användaren tror att Mira Dahl använder Molnlagring Plus. Uppgiften är lagd som osäker i utkastet.",
+      "context": "Användaren tror att Mira Dahl använder Norrsken Molnlagring. Uppgiften är lagd som osäker i utkastet.",
       "sources": {
         "backend": {
-          "text": "Mira Dahl använder Molnlagring Plus.",
+          "text": "Mira Dahl använder Norrsken Molnlagring.",
           "complete": true
         }
       },
@@ -399,10 +399,10 @@
     },
     {
       "id": "20",
-      "context": "Verktygsresultat bekräftar en äldre sparoperation för startkartan, version 44. Spotify Premium Family ändrades därefter till 189 kronor per månad och Molnlagring Plus 2 TB till 229 kronor per månad, båda som aktuella osparade utkastförslag. De nya prisändringarna har inget sparkvitto.",
+      "context": "Verktygsresultat bekräftar en äldre sparoperation för startkartan, version 44. Spotify Premium Family ändrades därefter till 189 kronor per månad och Molnlagring Plus till 229 kronor per månad, båda som aktuella osparade utkastförslag. De nya prisändringarna har inget sparkvitto.",
       "sources": {
         "backend": {
-          "text": "Spotify Premium Family ändrades först till 189 kronor per månad, därefter Molnlagring Plus 2 TB till 229 kronor per månad, i utkastet. En äldre sparoperation för version 44 lyckades, men omfattade inte dessa prisändringar. De är fortfarande osparade.",
+          "text": "Spotify Premium Family ändrades först till 189 kronor per månad, därefter Molnlagring Plus till 229 kronor per månad, i utkastet. En äldre sparoperation för version 44 lyckades, men omfattade inte dessa prisändringar. De är fortfarande osparade.",
           "complete": true
         }
       },
@@ -410,7 +410,7 @@
         {
           "id": "content",
           "source": "backend",
-          "text": "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 2 TB 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
+          "text": "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
         }
       ],
       "expected": {
@@ -419,10 +419,10 @@
     },
     {
       "id": "21",
-      "context": "Verktygsresultat bekräftar en äldre sparoperation för startkartan, version 44. Spotify Premium Family ändrades därefter till 189 kronor per månad och Molnlagring Plus 2 TB till 229 kronor per månad, båda som aktuella osparade utkastförslag. De nya prisändringarna har inget sparkvitto.",
+      "context": "Verktygsresultat bekräftar en äldre sparoperation för startkartan, version 44. Spotify Premium Family ändrades därefter till 189 kronor per månad och Molnlagring Plus till 229 kronor per månad, båda som aktuella osparade utkastförslag. De nya prisändringarna har inget sparkvitto.",
       "sources": {
         "backend": {
-          "text": "Spotify Premium Family ändrades först till 189 kronor per månad, därefter Molnlagring Plus 2 TB till 229 kronor per månad. Den äldre sparoperationen för version 44 innebär att även dessa nya prisändringar är sparade.",
+          "text": "Spotify Premium Family ändrades först till 189 kronor per månad, därefter Molnlagring Plus till 229 kronor per månad. Den äldre sparoperationen för version 44 innebär att även dessa nya prisändringar är sparade.",
           "complete": true
         }
       },
@@ -430,7 +430,7 @@
         {
           "id": "content",
           "source": "backend",
-          "text": "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 2 TB 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
+          "text": "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
         }
       ],
       "expected": {
@@ -439,10 +439,10 @@
     },
     {
       "id": "22",
-      "context": "Spotify Premium Family ändrades först till 189 kronor per månad och Molnlagring Plus 2 TB därefter till 229 kronor per månad, som osparade utkastförslag. Ingen historisk sparoperation eller något sparkvitto har verifierats.",
+      "context": "Spotify Premium Family ändrades först till 189 kronor per månad och Molnlagring Plus därefter till 229 kronor per månad, som osparade utkastförslag. Ingen historisk sparoperation eller något sparkvitto har verifierats.",
       "sources": {
         "backend": {
-          "text": "Spotify Premium Family ändrades först till 189 kronor per månad, därefter Molnlagring Plus 2 TB till 229 kronor per månad, i utkastet. En äldre sparoperation för version 44 lyckades, men omfattade inte de nya prisändringarna, som är osparade.",
+          "text": "Spotify Premium Family ändrades först till 189 kronor per månad, därefter Molnlagring Plus till 229 kronor per månad, i utkastet. En äldre sparoperation för version 44 lyckades, men omfattade inte de nya prisändringarna, som är osparade.",
           "complete": true
         }
       },
@@ -450,7 +450,7 @@
         {
           "id": "content",
           "source": "backend",
-          "text": "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 2 TB 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
+          "text": "Sammanfattningen anger först Spotify Premium Family 189 kronor per månad, därefter Molnlagring Plus 229 kronor per månad, som genomförda utkaständringar. Påstå inte att dessa prisändringar är sparade. Äldre verifierade sparresultat får återges när de tydligt skiljs från de aktuella osparade ändringarna; obestyrkta sparpåståenden är fel."
         }
       ],
       "expected": {
@@ -661,6 +661,102 @@
           "id": "content",
           "source": "voice",
           "text": "Fråga vilket konto som avses och besvara den oberoende frågan om kostnaden: 99 kronor per månad."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "save-renewal-paraphrase",
+      "context": "Inget sparande har genomförts. Identitetsfrågor väntar och den tidigare sparbegäran har upphört.",
+      "sources": {
+        "backend": {
+          "text": "Din tidigare sparbegäran gäller inte längre. Be om sparande igen när frågorna är lösta.",
+          "complete": true
+        },
+        "voice": {
+          "text": "När vi har rett ut frågorna behöver du säga till på nytt om du vill spara; ditt förra klartecken gäller inte längre.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "voice",
+          "text": "Förmedla att den tidigare sparbegäran inte längre gäller och att användaren behöver be om sparande igen när frågorna är lösta. Innebörden i båda delarna ska framgå; ordval och ordning är fria."
+        }
+      ],
+      "expected": {
+        "content": "pass"
+      }
+    },
+    {
+      "id": "save-renewal-missing-next-action",
+      "context": "Inget sparande har genomförts. Identitetsfrågor väntar och den tidigare sparbegäran har upphört.",
+      "sources": {
+        "backend": {
+          "text": "Din tidigare sparbegäran gäller inte längre. Be om sparande igen när frågorna är lösta.",
+          "complete": true
+        },
+        "voice": {
+          "text": "Ditt förra klartecken till sparande gäller inte längre. Vilken person menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "voice",
+          "text": "Förmedla att den tidigare sparbegäran inte längre gäller och att användaren behöver be om sparande igen när frågorna är lösta. Innebörden i båda delarna ska framgå; ordval och ordning är fria."
+        }
+      ],
+      "expected": {
+        "content": "fail"
+      }
+    },
+    {
+      "id": "save-renewal-implicit-expiry",
+      "context": "Inget sparande har genomförts. Identitetsfrågor väntar och den tidigare sparbegäran har upphört.",
+      "sources": {
+        "backend": {
+          "text": "Din tidigare sparbegäran gäller inte längre. Be om sparande igen när frågorna är lösta.",
+          "complete": true
+        },
+        "voice": {
+          "text": "När frågorna är lösta behöver du säga till om sparandet på nytt. Vilken person menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "voice",
+          "text": "Förmedla att den tidigare sparbegäran inte längre gäller och att användaren behöver be om sparande igen när frågorna är lösta. Innebörden i båda delarna ska framgå; ordval och ordning är fria."
+        }
+      ],
+      "expected": {
+        "content": "pass"
+      }
+    },
+    {
+      "id": "save-renewal-retained-permission",
+      "context": "Inget sparande har genomförts. Identitetsfrågor väntar och den tidigare sparbegäran har upphört.",
+      "sources": {
+        "backend": {
+          "text": "Din tidigare sparbegäran gäller inte längre. Be om sparande igen när frågorna är lösta.",
+          "complete": true
+        },
+        "voice": {
+          "text": "När frågorna är lösta sparar jag enligt din tidigare begäran. Vilken person menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "voice",
+          "text": "Förmedla att den tidigare sparbegäran inte längre gäller och att användaren behöver be om sparande igen när frågorna är lösta. Innebörden i båda delarna ska framgå; ordval och ordning är fria."
         }
       ],
       "expected": {

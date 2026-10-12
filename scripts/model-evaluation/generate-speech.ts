@@ -11,10 +11,10 @@ import type { Catalog } from './types.js';
 
 export const speechRecipe = {
   model: 'gpt-4o-mini-tts',
-  voices: ['marin', 'cedar'],
+  voices: ['marin'],
   instructions:
     'Läs den givna texten ordagrant på tydlig, naturlig svenska med normalt samtalstempo. Uttala svenska sammansatta ord sammanhängande och egennamn omsorgsfullt. Bevara alla namn, belopp och relationer. Låt det låta som en person som ger ett uppdrag i ett samtal.',
-  speeds: { marin: 1.15, cedar: 1.25 } as Record<string, number>,
+  speeds: { marin: 1.15 } as Record<string, number>,
   sampleRate: 24000,
   pricing: {
     checkedAt: '2026-10-12',

@@ -59,9 +59,12 @@ export async function runTextScenario(
     elapsedMs: null,
     backendCostUsd: 0,
   });
-  const queue: { step: ScenarioStep; parent?: string; startedAt?: number }[] = scenario.steps.map(
-    (step) => ({ step }),
-  );
+  const queue: {
+    step: ScenarioStep;
+    parent?: string;
+    target?: ScenarioStep;
+    startedAt?: number;
+  }[] = scenario.steps.map((step) => ({ step }));
   try {
     for (const [index, entry] of queue.entries()) {
       const { step } = entry;
@@ -148,7 +151,7 @@ export async function runTextScenario(
           const observed = events.slice(offset);
           const actions = modelActions(observed);
           result.diagnostics = observationDiagnostics(observed, startedAt);
-          const stateFailures = await environment.check(step, view, actions);
+          const stateFailures = await environment.check(entry.target ?? step, view, actions);
           result.fixed.push(...stateFailures);
           if (step.expected.requirements.length) {
             result.content = options.judge
@@ -191,6 +194,7 @@ export async function runTextScenario(
                 },
               },
               checkWaiting: (waiting) => environment.check(step, view, actions, waiting),
+              waitingContext: () => environment.judgeContext(step, [], summaryText),
               judge: options.judge,
             });
             if (followUp && !options.stopped?.()) {
@@ -201,6 +205,7 @@ export async function runTextScenario(
                   expected: { requirements: followUp.requirements },
                 },
                 parent: step.id,
+                target: step,
                 startedAt,
               });
               continuing = true;
