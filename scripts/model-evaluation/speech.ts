@@ -51,6 +51,7 @@ type BrowserVoice = {
   audio: AudioContext;
   destination: MediaStreamAudioDestinationNode;
   output: HTMLAudioElement;
+  channel: RTCDataChannel;
   source?: AudioBufferSourceNode;
   closed: boolean;
 };
@@ -95,12 +96,13 @@ export async function speechConnection(
             output.srcObject = event.streams[0];
             void output.play();
           };
-          peer.createDataChannel('oai-events');
+          const channel = peer.createDataChannel('oai-events');
           (window as EvaluationWindow).evaluationVoice = {
             peer,
             audio,
             destination,
             output,
+            channel,
             closed: false,
           };
           const deadline = new Promise<never>((_resolve, reject) =>
@@ -188,6 +190,8 @@ async function retire(page: Page) {
     const voice = (window as EvaluationWindow).evaluationVoice;
     if (!voice) return;
     voice.closed = true;
+    if (voice.channel.readyState === 'open')
+      voice.channel.send(JSON.stringify({ type: 'session.close' }));
     voice.source?.stop();
     voice.peer.close();
     voice.output.pause();

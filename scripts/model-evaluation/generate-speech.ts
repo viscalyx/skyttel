@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -105,7 +105,7 @@ export async function generateSpeech({
   const records: SpeechRecord[] = [];
   for (const voice of recipe.voices) {
     await mkdir(resolve(directory, voice), { recursive: true });
-    for (const step of steps.filter((step) => !ids?.length || ids.includes(step.id))) {
+    for (const step of steps.filter((step) => ids === undefined || ids.includes(step.id))) {
       const stem = resolve(directory, voice, step.id);
       const request = {
         model: speechRecipe.model,
@@ -213,8 +213,9 @@ export async function generateSpeech({
     costUsd: records.reduce((sum, record) => sum + record.costUsd, 0),
     records,
   };
-  await writeFile(resolve(directory, 'manifest.json'), json(result));
-  return result;
+  const manifestPath = resolve(directory, `manifest.${randomUUID()}.json`);
+  await writeFile(manifestPath, json(result), { flag: 'wx', mode: 0o600 });
+  return { ...result, manifestPath };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
@@ -235,7 +236,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     maxRetries: 0,
     logLevel: 'off',
   });
-  await generateSpeech({
+  const result = await generateSpeech({
     directory: resolve(values.output),
     ids: values.step,
     voices: values.voice,
@@ -243,4 +244,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     create: client.audio.speech.create.bind(client.audio.speech),
     progress: (record) => console.log(JSON.stringify(record)),
   });
+  console.log(JSON.stringify({ manifestPath: result.manifestPath }));
 }

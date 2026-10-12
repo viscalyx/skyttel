@@ -20,8 +20,19 @@ import type { Attempt, JudgeInput, Scenario } from './types.js';
 export async function runVoiceScenario(
   scenario: Scenario,
   installationOptions: Parameters<typeof createInstallation>[1],
-  options: RunOptions & { referenceVoice?: ReferenceVoice },
+  options: RunOptions & {
+    referenceVoice?: ReferenceVoice;
+    maximumSeconds?: number;
+    sessionTimeLimit?: () => void;
+  },
 ) {
+  if (
+    options.maximumSeconds !== undefined &&
+    (!Number.isSafeInteger(options.maximumSeconds) ||
+      options.maximumSeconds <= 2 ||
+      options.maximumSeconds > 3420)
+  )
+    throw new Error('evaluation_live_time_limit');
   const events: AssistantObservation[] = [];
   const environment = await evaluationEnvironment(scenario, {
     ...installationOptions,
@@ -34,15 +45,30 @@ export async function runVoiceScenario(
   let voiceId: string | undefined;
   let blocked: string | undefined;
   const attempts: Attempt[] = [];
+  let sessionTimer: ReturnType<typeof setTimeout> | undefined;
+  let closing: Promise<void> | undefined;
+  let sessionExpired = false;
   async function closeVoice() {
-    if (!connection) return;
-    try {
-      if (voiceId) await environment.post(`${environment.path}/voice/${voiceId}/stop`, {});
-    } finally {
-      await connection.close();
-      connection = undefined;
-      voiceId = undefined;
-    }
+    clearTimeout(sessionTimer);
+    sessionTimer = undefined;
+    if (!connection) return closing;
+    const active = connection;
+    const id = voiceId;
+    connection = undefined;
+    voiceId = undefined;
+    closing = (async () => {
+      // Retire media before awaiting HTTP shutdown, including during startup.
+      try {
+        await active.retire();
+      } finally {
+        try {
+          if (id) await environment.post(`${environment.path}/voice/${id}/stop`, {});
+        } finally {
+          await active.close();
+        }
+      }
+    })();
+    return closing;
   }
   try {
     for (const [index, step] of scenario.steps.entries()) {
@@ -63,6 +89,7 @@ export async function runVoiceScenario(
       let voiceAttempted = Boolean(voiceId);
       let startedAt = Date.now();
       try {
+        if (sessionExpired) throw new Error('evaluation_live_time_limit');
         if (blocked || options.stopped?.()) {
           result.reason = blocked ?? 'Evaluation stopped.';
         } else if (step.transition === 'summary') {
@@ -98,6 +125,20 @@ export async function runVoiceScenario(
           const reference = await referenceSpeech(step.id, step.text, options.referenceVoice);
           if (!connection) {
             connection = await speechConnection(environment, options.referenceVoice);
+            if (options.maximumSeconds !== undefined) {
+              // Start before paid dispatch and leave the server's two-second
+              // close grace inside the reservation. This also covers judge waits.
+              sessionTimer = setTimeout(
+                () => {
+                  sessionExpired = true;
+                  options.sessionTimeLimit?.();
+                  void closeVoice().catch(() => {
+                    // Final cleanup awaits this same closure and reports its failure.
+                  });
+                },
+                (options.maximumSeconds - 2) * 1000,
+              );
+            }
             voiceId = await connection.start();
           }
           voiceAttempted = true;
@@ -129,6 +170,7 @@ export async function runVoiceScenario(
           // Measure from reference-audio end, including negative completion
           // times. Quiet observation is reported separately.
           for (;;) {
+            if (sessionExpired) throw new Error('evaluation_live_time_limit');
             if (options.stopped?.()) throw new Error('evaluation_budget_stopped');
             if (playbackError) throw playbackError;
             const status = await environment.post<VoiceAssistantResponse>(
@@ -202,6 +244,7 @@ export async function runVoiceScenario(
           );
           concludeAttempt(result, completionMs);
         }
+        if (sessionExpired) throw new Error('evaluation_live_time_limit');
         if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
       } catch (error) {
         failAttempt(result, error, Date.now() - startedAt, {

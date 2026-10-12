@@ -8,6 +8,8 @@ import controls from '../../../scripts/model-evaluation/judge-controls.json' wit
 import type { LiveEvaluationProfile } from '../../../scripts/model-evaluation/live.js';
 import profiles from '../../../scripts/model-evaluation/profiles.json' with { type: 'json' };
 import { verifiedProfile } from '../../../scripts/model-evaluation/provider.js';
+import * as speech from '../../../scripts/model-evaluation/speech.js';
+import type { Catalog } from '../../../scripts/model-evaluation/types.js';
 import * as modelClient from '../../../src/server/model-client.js';
 
 test('an explicitly selected high-effort model is accounted for without adding prior models', {
@@ -17,6 +19,7 @@ test('an explicitly selected high-effort model is accounted for without adding p
   const network = vi
     .spyOn(modelClient, 'modelTransport')
     .mockRejectedValue(new Error('unexpected_network'));
+  const audio = vi.spyOn(speech, 'referenceSpeech').mockRejectedValue(new Error('bad_audio'));
   try {
     const plan: EvaluationPlan = {
       issue: 341,
@@ -38,6 +41,7 @@ test('an explicitly selected high-effort model is accounted for without adding p
       },
     };
     const run = await evaluateModels(plan);
+    expect(audio).not.toHaveBeenCalled();
     expect(network).not.toHaveBeenCalled();
     expect(run.budget.stopped).toBe(true);
     expect(run.attempts).toHaveLength(
@@ -91,9 +95,64 @@ test('an explicitly selected high-effort model is accounted for without adding p
     expect(network).not.toHaveBeenCalled();
   } finally {
     network.mockRestore();
+    audio.mockRestore();
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test.each(['marin', 'cedar'] as const)(
+  'voice preflight validates only scenario utterances for %s',
+  { tags: ['technical'] },
+  async (referenceVoice) => {
+    const directory = await mkdtemp(join(tmpdir(), 'skyttel-evaluation-audio-'));
+    const audio = vi
+      .spyOn(speech, 'referenceSpeech')
+      .mockImplementation(async (_id, text, voice) => {
+        if (voice !== referenceVoice || text === undefined) throw new Error('unselected_audio');
+        return { clip: { frames: 24000, sampleRate: 24000 }, pcm: '' } as Awaited<
+          ReturnType<typeof speech.referenceSpeech>
+        >;
+      });
+    const network = vi.spyOn(modelClient, 'modelTransport').mockRejectedValue(new Error('network'));
+    try {
+      await evaluateModels({
+        issue: 341,
+        directory,
+        apiKey: 'not-a-real-key',
+        authorized: true,
+        limitUsd: 0.001,
+        priorUsd: 0,
+        priorSource: 'Isolated non-billable audio selection.',
+        commit: 'test',
+        textProfiles: [],
+        voice: true,
+        referenceVoice,
+        voiceProfile: profiles.profiles.find(
+          (item) => item.role === 'voice',
+        ) as LiveEvaluationProfile,
+        judgeProfile: verifiedProfile('judge-sol-high'),
+        baselineProfiles: { voice: 'live' },
+        localVerification: {
+          passed: true,
+          commands: ['npm run test:unit'],
+          evidence: 'Local test.',
+        },
+      });
+      expect(audio.mock.calls).toEqual(
+        (catalog as Catalog).scenarios
+          .filter((scenario) => scenario.voice)
+          .flatMap((scenario) => scenario.steps)
+          .filter((step) => !('transition' in step))
+          .map((step) => [step.id, 'text' in step ? step.text : undefined, referenceVoice]),
+      );
+      expect(network).not.toHaveBeenCalled();
+    } finally {
+      audio.mockRestore();
+      network.mockRestore();
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);
 
 test.each([false, true])(
   'budget refusal preserves paid counting=%s without a behavior verdict',

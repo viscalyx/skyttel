@@ -2,7 +2,9 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, expect, test, vi } from 'vitest';
+import catalog from '../../../scripts/model-evaluation/catalog.json' with { type: 'json' };
 import { generateSpeech, speechRecipe } from '../../../scripts/model-evaluation/generate-speech.js';
+import type { Catalog } from '../../../scripts/model-evaluation/types.js';
 
 const directories: string[] = [];
 afterEach(async () => {
@@ -25,6 +27,52 @@ function response(usage: unknown = { input_tokens: 100, output_tokens: 25, total
       .join(''),
   );
 }
+
+test.each([undefined, [], ['kort-utan-sparande']])(
+  'speech generation respects explicit step selection: %j',
+  { tags: ['technical'] },
+  async (ids) => {
+    const create = vi.fn(async () => response());
+    const result = await generateSpeech({
+      directory: await directory(),
+      create,
+      ids,
+      voices: ['marin'],
+    });
+    const expected =
+      ids ??
+      (catalog as Catalog).scenarios
+        .filter((scenario) => scenario.voice)
+        .flatMap((scenario) => scenario.steps)
+        .filter((step) => 'text' in step)
+        .map((step) => step.id);
+    expect(result.records.map((record) => record.id)).toEqual(expected);
+    expect(create).toHaveBeenCalledTimes(expected.length);
+  },
+);
+
+test('partial generation preserves prior manifests and writes independently reviewable runs', {
+  tags: ['technical'],
+}, async () => {
+  const output = await directory();
+  const create = vi.fn(async () => response());
+  const first = await generateSpeech({ directory: output, create, voices: ['marin'] });
+  const original = await readFile(first.manifestPath, 'utf8');
+  // A directory-wide manifest from an earlier generator must also survive.
+  await writeFile(join(output, 'manifest.json'), original);
+  const partial = await generateSpeech({
+    directory: output,
+    create,
+    voices: ['marin'],
+    ids: ['kort-utan-sparande'],
+  });
+  expect(partial.manifestPath).not.toBe(first.manifestPath);
+  expect(await readFile(first.manifestPath, 'utf8')).toBe(original);
+  expect(await readFile(join(output, 'manifest.json'), 'utf8')).toBe(original);
+  expect(JSON.parse(await readFile(partial.manifestPath, 'utf8')).records).toEqual(partial.records);
+  expect(partial.records).toHaveLength(1);
+  expect(create).toHaveBeenCalledTimes(first.records.length);
+});
 
 test('speech generation reuses complete matching audio without a second provider charge', {
   tags: ['technical'],

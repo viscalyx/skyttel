@@ -108,14 +108,15 @@ export async function evaluateModels(plan: EvaluationPlan) {
     )
     .digest('hex');
   const catalog = rawCatalog as Catalog;
-  if (plan.voice) {
-    for (const scenario of catalog.scenarios.filter((item) => item.voice)) {
-      for (const step of scenario.steps) {
-        if (typeof step.text === 'string')
-          await referenceSpeech(step.id, step.text, plan.referenceVoice);
-      }
-    }
-  }
+  const audio = plan.voice
+    ? await Promise.all(
+        catalog.scenarios
+          .filter((scenario) => scenario.voice)
+          .flatMap((scenario) => scenario.steps)
+          .filter((step) => !step.transition)
+          .map((step) => referenceSpeech(step.id, step.text, plan.referenceVoice)),
+      )
+    : [];
   const directory = plan.directory;
   await mkdir(directory, { recursive: true });
   const db = new Database(join(directory, 'budget.sqlite'));
@@ -184,13 +185,6 @@ export async function evaluateModels(plan: EvaluationPlan) {
   const profiles = [...plan.textProfiles];
   const voiceProfile = plan.voiceProfile;
   try {
-    const audio = await Promise.all(
-      Object.entries(audioManifest.voices).flatMap(([voice, variant]) =>
-        Object.keys(variant.clips).map((id) =>
-          referenceSpeech(id, undefined, voice as ReferenceVoice),
-        ),
-      ),
-    );
     await emit('manifest', 'Utvärderingskörning', {
       commit: plan.commit,
       catalog: {
@@ -364,6 +358,8 @@ export async function evaluateModels(plan: EvaluationPlan) {
             {
               profile: id,
               referenceVoice: plan.referenceVoice,
+              maximumSeconds,
+              sessionTimeLimit: () => budget.stop('evaluation_live_time_limit'),
               repetition,
               judge,
               beginStep: provider.beginStep,

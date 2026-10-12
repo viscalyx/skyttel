@@ -88,6 +88,8 @@ async function restored(options: Parameters<typeof createInstallation>[1]) {
 
 test.each(['text', 'voice'] as const)(
   '%s confirms an imported owner save immediately and retries only the same pending receipt',
+  // Archive restoration and both speech turns include real quiet-input waits.
+  { timeout: 12_000 },
   async (mode) => {
     const live = liveProvider();
     const model = textModel((body) => {
