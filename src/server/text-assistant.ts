@@ -454,6 +454,9 @@ export function textAssistantRoutes({
     // final save clause. Heading words and topic length do not grant authority;
     // the separate command and all remaining conditions are checked below.
     const instruction = unquoted
+      // Speech can mark a clause break or interrupted word with a dash.
+      // Keep word-internal hyphens; only a following space ends the clause.
+      .replace(/\s*[-–—]\s+/gu, '. ')
       .replace(
         /(^|[.!;]\s*)((?:ändra|rätta)\s+beskrivningen\s+till\s+)([^.!;?]+)/gu,
         (_, boundary, correction, remainder: string) => {
@@ -479,10 +482,14 @@ export function textAssistantRoutes({
         unquoted,
       ) ||
       /\b(om|när|kanske|skulle|exempel|citat|förklara)\b/u.test(instruction) ||
-      sentences
-        .slice(0, -1)
+      // Check withheld saving before splitting spoken dash boundaries: in
+      // "spara - inte" the negation still belongs to the same command.
+      unquoted
+        .replace(/[.!;]+$/u, '')
+        .split(/[.!;]/u)
         .some(
-          (sentence) =>
+          (sentence, index, originalSentences) =>
+            (index < originalSentences.length - 1 || /[-–—]\s/u.test(sentence)) &&
             /\bspara(?:r|nde)?\b/u.test(sentence) &&
             /\b(inte|ej|ingenting|aldrig|utan|vänta)\b/u.test(sentence),
         )
