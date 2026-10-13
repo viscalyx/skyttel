@@ -81,13 +81,18 @@ with the application's recorded model. Correctness comes before time and cost.
 - Status: pending
 - Automated checks: <pass/fail/inconclusive/error/aborted/not run counts;
   raw outcomes, not counts of model errors>
-- Behavioral assessment: <completed, safely awaiting clarification, actual
-  failures and unassessed steps; evidence for each reinterpretation>
+- Behavioral assessment: <passed without extra clarification, accepted correct
+  clarification, completed after extra clarification, failed or unassessed;
+  separate scenario and step counts; evidence for each reinterpretation>
 - Accepted recognition limitations: <count, affected names/addresses and safe
   handling; separate from actual failures, including in a qualified run>
 - Assistance: <extra replies, completion after help, question necessity and
   additional time/cost; preserve the unassisted outcomes>
-- Qualification: <qualified, qualified with limitations, failed or incomplete;
+- Clarification log: <scenario/step, model/effort, ordinary or extra question,
+  reference and recognized wording, actual backend/spoken question, blocked
+  work, justification, selected reply and outcome; recurring questions and
+  potential additional replies>
+- Qualification: <qualified, accepted with clarifications, failed or incomplete;
   one fully verified round qualifies under the modality's acceptance policy,
   every explicitly requested round must meet it>
 - Response time and costs: <comparable results and regressions, or unavailable>

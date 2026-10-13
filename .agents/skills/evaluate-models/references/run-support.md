@@ -169,9 +169,11 @@ Report unassisted outcomes and assisted completion separately, including the
 question, selected reply, additional calls, elapsed time and costs. A successful
 reply does not erase an unnecessary question or an independent failure.
 For justified voice clarification, apply the acceptance policy in
-[voice evaluation](voice-evaluation.md#evidence-and-timing). The runner's raw
+[voice evaluation](voice-evaluation.md#behavioral-assessment). The runner's raw
 qualification remains the unassisted result; publish the evidence-based
 behavioral assessment alongside it, including accepted limitations and gaps.
+An accepted voice question does not require an optional reply; continuation
+testing and its existing safety gates remain separate from that assessment.
 Assess question necessity from recognized input and available facts. Include
 waiting and routing time in assisted completion time; never substitute it for
 the base attempt's timing. For voice, verify every possible reply's reviewed
