@@ -167,7 +167,7 @@ test.each(['marin'] as const)(
     const steps = (catalog as Catalog).scenarios
       .filter((scenario) => scenario.voice)
       .flatMap((scenario) => scenarioUtterances(scenario, true));
-    expect(steps).toHaveLength(20);
+    expect(steps).toHaveLength(21);
     const files = new Set<string>();
     for (const step of steps) {
       const reference = await referenceSpeech(step.id, step.text, voice);

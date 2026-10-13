@@ -405,6 +405,30 @@
           },
           "provenance": "tmp/voice-samples/clarification-followups/save-repair.json",
           "replacesSha256": "0b624a038c50bea28e08b14b6674fb4b3fe9abc190b74122b45ad9b07c5dd609"
+        },
+        "kontext-pris-foljdsvar": {
+          "text": "Jag menar abonnemanget Molnlagring Plus.",
+          "file": "marin/oklarheter-pris-foljdsvar.wav",
+          "frames": 81425,
+          "sha256": "41d16ee4a45c68636cf554b2502246088f2cb16a5214906651fe353fb2712ae9",
+          "sampleRate": 24000,
+          "channels": 1,
+          "sampleWidth": 2,
+          "durationSeconds": 3.392708333333333,
+          "recipe": {
+            "model": "gpt-4o-mini-tts",
+            "instructions": "Läs den givna texten ordagrant på tydlig, naturlig svenska med normalt samtalstempo. Uttala svenska sammansatta ord sammanhängande och egennamn omsorgsfullt. Bevara alla namn, belopp och relationer. Låt det låta som en person som ger ett uppdrag i ett samtal.",
+            "speed": 1.15,
+            "generatorSha256": "d2a65b845b8644aacf76171b425e6c21067a5bfe12c271b91d54d220a3f9aa09"
+          },
+          "review": {
+            "status": "approved",
+            "reviewer": "user",
+            "date": "2026-10-12",
+            "statement": "Det låter okej.",
+            "sha256": "41d16ee4a45c68636cf554b2502246088f2cb16a5214906651fe353fb2712ae9"
+          },
+          "provenance": "Reuses unchanged approved audio and exact text from oklarheter-pris-foljdsvar; no new synthesis."
         }
       }
     }

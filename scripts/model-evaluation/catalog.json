@@ -1012,7 +1012,7 @@
             {
               "id": "oklarheter-pris-foljdsvar",
               "text": "Jag menar abonnemanget Molnlagring Plus.",
-              "when": "Svaret ber uttryckligen användaren klargöra om månadspriset gäller tjänsten Norrsken Molnlagring eller dess abonnemang. Ett påstående om priset eller enbart frågor om person och bank uppfyller inte kravet.",
+              "when": "Svaret ber uttryckligen användaren bekräfta att månadspriset avser det befintliga abonnemanget Molnlagring Plus. Frågan får gälla ett osäkert uppfattat namn eller skilja abonnemanget från tjänsten. Ett påstående om priset eller enbart frågor om person och bank uppfyller inte kravet. Övriga obesvarade frågor gäller endast vilken Alex och vilket bankkonto som avses.",
               "waiting": {
                 "addRelationships": [
                   {
@@ -1755,7 +1755,28 @@
             "requirements": [
               "Ge ett kort verifierat ändringsbesked om utkastet, utan obegärd uppräkning, sparfråga eller sparpåstående."
             ]
-          }
+          },
+          "followUps": [
+            {
+              "id": "kontext-pris-foljdsvar",
+              "text": "Jag menar abonnemanget Molnlagring Plus.",
+              "when": "Svaret ber användaren bekräfta att prisändringen avser det befintliga abonnemanget Molnlagring Plus. Inga andra obesvarade frågor kräver ett annat följdsvar.",
+              "waiting": {
+                "objects": {},
+                "addRelationships": [],
+                "removeRelationships": [],
+                "objectTypes": [],
+                "saveAttempts": 0,
+                "saves": 0,
+                "requirements": [
+                  "Fråga efter prisobjektets identitet utan att påstå att den väntande prisändringen är genomförd eller att något är sparat. Ställ ingen sparfråga."
+                ]
+              },
+              "requirements": [
+                "Ge ett kort verifierat ändringsbesked om utkastet, utan obegärd uppräkning, sparfråga eller sparpåstående."
+              ]
+            }
+          ]
         },
         {
           "id": "summary",
