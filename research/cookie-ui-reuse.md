@@ -167,8 +167,8 @@ befintliga Tab-hjälpfunktion ger en lokal jämförelse inför anpassningen.
 Referensens integrationstest definierar första visning, acceptera/avvisa,
 kategorival, omladdning och begränsad tangentbords-/fokuskontroll. Sidans
 enhetstest simulerar sparfel genom en funktion som kastar ett fel. Det
-provar inte produktens uppfångade localStorage-fel. Dessa tester är användbart
-scenariounderlag, men inget påstående om att de passerar i denna version.
+provar inte produktens uppfångade localStorage-fel. Testerna ger användbart
+scenariounderlag, men underlaget påstår inte att de passerar i denna version.
 [Integrationstest](https://github.com/viscalyx/viscalyx.se/blob/72d6554acf3915cf8cc4dc80800dec9e9780c823/tests/integration/cookie-consent.spec.ts#L29-L250),
 [mockad lagring](https://github.com/viscalyx/viscalyx.se/blob/72d6554acf3915cf8cc4dc80800dec9e9780c823/components/__tests__/CookieSettings.test.tsx#L7-L28),
 [mockat sparfel](https://github.com/viscalyx/viscalyx.se/blob/72d6554acf3915cf8cc4dc80800dec9e9780c823/components/__tests__/CookieSettings.test.tsx#L176-L195).
