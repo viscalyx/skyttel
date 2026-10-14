@@ -47,7 +47,7 @@ och
 
 - Innehåll: signerad sessionsidentifierare; inte användarens hela profil
   eller Google-/Microsoft-token.
-- Skapas efter lyckad inloggning. Lästs och verifieras på servern när
+- Skapas efter lyckad inloggning. Läses och verifieras på servern när
   sessionen hämtas; Skyttels API använder den för användarens identitet.
 - Normal `Max-Age`: 604800 sekunder, alltså sju dygn.
   Serverns session har samma standardlivslängd och blir förnybar efter
@@ -221,6 +221,19 @@ och den granskade
 
 ## Webbläsarval, profil och personliga vyer
 
+Det finns också serverlagrade användarpreferenser som är gemensamma för
+Skyttel-användaren oberoende av hushåll: `conversation_preferences`
+innehåller `showDraftOnStart`, `textWidth` och `draftWidth`, med enbart
+`userId` som nyckel. De styr om utkastet visas vid samtalets start och
+bredden på text- och utkastvyerna. Läsning och ändring sker i serverns
+SQLite-databas; browserlagring och samtalsmedgivande är inte deras
+lagringsmodell. Rensning av browserlagring tar inte bort dessa val.
+Det är en befintlig användaranknuten preferensmodell som ett senare
+beslut om profilsparade cookieval kan jämföra med, utan att den i sig
+avgör om cookieval ska ha samma scope.
+
+[Användarens samtalspreferenser](https://github.com/viscalyx/skyttel/blob/99f3ead1ea5fbdb6a354f6ebf678b315b7535f8c/src/server/conversation-preferences.ts#L18).
+
 Temat är ett webbläsarval. Auth identifierar Skyttel-användaren på
 servern. Personliga kartinställningar och objektpositioner lagras däremot
 i SQLite med både `userId` och `householdId`: inverterade axlar,
@@ -259,7 +272,8 @@ Beslutsarbetet behöver särskilt avgöra följande:
 4. Vilken giltighetstid, versionering och lagringsplats ska det nya
    cookievalet få? Ingen sådan livslängd kan kopieras från produktkoden.
 5. Ska cookieval knytas till användarprofilen? Underlaget visar tre olika
-   befintliga scopes men fattar inget synkroniseringsbeslut.
+   befintliga scopes för browser, användare och användare i hushåll,
+   men fattar inget synkroniseringsbeslut.
 
 Före implementationens slutverifiering behövs en kontrollerad
 browserinventering av HTTPS och lokal HTTP: före inloggning, start av
