@@ -1,6 +1,8 @@
 import {
   type FormEvent,
+  lazy,
   type ReactNode,
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -33,6 +35,14 @@ import { MapRequestError as RequestError, request } from './map-request.js';
 import { SettingsOverview, SettingsScreen, settingsEntries } from './SettingsScreen.js';
 import { useWorkspaceTheme } from './WorkspaceTheme.js';
 import './access.css';
+
+// Throwaway development-only page; cookie changes remain simulated.
+const CookiePrototypeInApp = import.meta.env.DEV
+  ? lazy(async () => {
+      const module = await import('./CookieFlows.prototype.js');
+      return { default: module.CookiePrototypeInApp };
+    })
+  : null;
 
 type Provider = 'google' | 'microsoft';
 type Household = { id: string; name: string; role: 'administrator' | 'member' };
@@ -1304,9 +1314,14 @@ function Application() {
   const mapActive =
     data?.status === 'ready' && Boolean(matchPath('/households/:id', location.pathname));
   const authenticated = data && data.status !== 'anonymous';
-  const personal = ['/profile', '/login-methods', '/assistants', '/assistant-consent'].includes(
-    location.pathname,
-  );
+  const cookiePage =
+    import.meta.env.DEV &&
+    location.pathname === '/cookies' &&
+    new URLSearchParams(location.search).get('variant') === 'D';
+  const personal =
+    ['/profile', '/login-methods', '/assistants', '/assistant-consent'].includes(
+      location.pathname,
+    ) || cookiePage;
   const settingsPage =
     authenticated &&
     !mapActive &&
@@ -1357,12 +1372,18 @@ function Application() {
       <div className="settings-profile-links">
         <Link to="/login-methods">Inloggningssätt</Link>
         <Link to="/assistants">Assistentanslutningar</Link>
+        {import.meta.env.DEV && <Link to="/cookies?variant=D">Cookies och lagring</Link>}
       </div>
       {logout}
     </>
   );
   const pages = authenticated && (
     <>
+      {cookiePage && CookiePrototypeInApp && (
+        <Suspense fallback={<Loading />}>
+          <CookiePrototypeInApp key={data.user.id} signedIn />
+        </Suspense>
+      )}
       {location.pathname === '/login-methods' && <LoginMethods />}
       {data.status === 'forbidden' &&
         ['/assistants', '/assistant-consent'].includes(location.pathname) && (
@@ -1400,7 +1421,8 @@ function Application() {
             <Link to="/">Till startsidan</Link>
           </section>
         ))}
-      {!['/login-methods', '/profile', '/costs'].includes(location.pathname) &&
+      {!cookiePage &&
+        !['/login-methods', '/profile', '/costs'].includes(location.pathname) &&
         (data.status === 'ready' || data.status === 'setup') && (
           <Routes>
             <Route path="/assistant-consent" element={<Assistants consent />} />
@@ -1493,7 +1515,7 @@ function Application() {
   );
   return (
     <div
-      className={`app-shell${mapActive ? ' has-workspace' : ''}${settingsPage ? ' has-settings' : ''}${accessGate ? ' access-shell' : ''}`}
+      className={`app-shell${mapActive ? ' has-workspace' : ''}${settingsPage ? ' has-settings' : ''}${accessGate ? ' access-shell' : ''}${cookiePage ? ' cookie-variant-D' : ''}`}
       data-theme={theme.theme}
     >
       <a className="skip-link" href="#main">
@@ -1519,7 +1541,12 @@ function Application() {
       <main id="main" tabIndex={-1}>
         {bootstrap.status === 'loading' && <Loading />}
         {bootstrap.status === 'error' && <Failure onRetry={reload} />}
-        {data?.status === 'anonymous' && <Login providers={data.providers} />}
+        {data?.status === 'anonymous' && !cookiePage && <Login providers={data.providers} />}
+        {data?.status === 'anonymous' && cookiePage && CookiePrototypeInApp && (
+          <Suspense fallback={<Loading />}>
+            <CookiePrototypeInApp signedIn={false} />
+          </Suspense>
+        )}
         {settingsPage ? (
           <SettingsScreen
             household={household}
@@ -1555,7 +1582,10 @@ function Application() {
           </>
         )}
       </main>
-      <footer hidden={mapActive || Boolean(settingsPage)}>Det som hör ihop, samlat.</footer>
+      <footer hidden={mapActive || Boolean(settingsPage)}>
+        Det som hör ihop, samlat.
+        {import.meta.env.DEV && <Link to="/cookies?variant=D">Cookies och lagring</Link>}
+      </footer>
     </div>
   );
 }

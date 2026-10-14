@@ -1,0 +1,395 @@
+/* THROWAWAY. Values mirror viscalyx.se's CookieSettings/Tailwind classes.
+ * Copyright (c) 2025 Viscalyx. See prototypes/cookie-flows/REFERENCE-LICENSE. */
+.cookie-prototype .cookie-reference {
+  --reference-surface: #fff;
+  --reference-subtle: #f9fafb;
+  --reference-text: #111827;
+  --reference-muted: #4b5563;
+  --reference-faint: #6b7280;
+  --reference-line: #e5e7eb;
+  --reference-blue: #2563eb;
+  --reference-secondary: #e5e7eb;
+  --reference-success-bg: #f0fdf4;
+  --reference-success-text: #166534;
+  --reference-success-line: #bbf7d0;
+  --reference-danger-bg: #fef2f2;
+  --reference-danger-text: #dc2626;
+  max-width: 896px;
+  margin: 0 auto;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--reference-text);
+  line-height: 1.625;
+}
+.cookie-prototype[data-theme="dark"] .cookie-reference {
+  --reference-surface: #111827;
+  --reference-subtle: #1f293780;
+  --reference-text: #fff;
+  --reference-muted: #d1d5db;
+  --reference-faint: #9ca3af;
+  --reference-line: #374151;
+  --reference-blue: #60a5fa;
+  --reference-secondary: #374151;
+  --reference-success-bg: #14532d33;
+  --reference-success-text: #86efac;
+  --reference-success-line: #166534;
+  --reference-danger-bg: #7f1d1d33;
+  --reference-danger-text: #f87171;
+}
+.cookie-variant-D .settings-content:has(.cookie-reference),
+.cookie-variant-D .cookie-public-content:has(.cookie-reference) {
+  background: #fff;
+}
+.cookie-variant-D[data-theme="dark"] .settings-content:has(.cookie-reference),
+.cookie-variant-D[data-theme="dark"] .cookie-public-content:has(.cookie-reference) {
+  background: #111827;
+}
+.cookie-prototype .cookie-reference svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.cookie-prototype .cookie-reference p {
+  margin: 0 0 16px;
+  color: var(--reference-muted);
+}
+.cookie-prototype .cookie-reference h1 {
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: normal;
+  margin: 0;
+}
+.cookie-prototype .cookie-reference h2 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  margin: 0 0 24px;
+}
+.cookie-prototype .cookie-reference h3 {
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 500;
+  margin: 0;
+}
+.cookie-prototype .cookie-reference button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+.cookie-prototype .cookie-reference :focus-visible {
+  outline-color: var(--reference-blue);
+}
+.cookie-prototype .cookie-reference .reference-form-header {
+  margin-bottom: 32px;
+}
+.cookie-prototype .cookie-reference .reference-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.cookie-prototype .cookie-reference .reference-title svg {
+  width: 32px;
+  height: 32px;
+  color: var(--reference-blue);
+}
+.cookie-prototype .cookie-reference .reference-last-saved,
+.cookie-prototype .cookie-reference .reference-success:not(:empty) {
+  padding: 16px;
+  border: 1px solid var(--reference-success-line);
+  border-radius: 8px;
+  background: var(--reference-success-bg);
+  color: var(--reference-success-text);
+  font-size: 14px;
+  margin: 16px 0 0;
+}
+.cookie-prototype .cookie-reference .reference-error:not(:empty) {
+  padding: 16px;
+  background: var(--reference-danger-bg);
+  color: var(--reference-danger-text);
+  border: 1px solid var(--reference-danger-text);
+  border-radius: 8px;
+}
+.cookie-prototype
+  .cookie-reference
+  :is(.reference-success, .reference-error, .reference-dirty):empty {
+  margin: 0;
+}
+.cookie-prototype .cookie-reference .reference-quick {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: var(--reference-subtle);
+  border-radius: 8px;
+}
+.cookie-prototype .cookie-reference .reference-quick h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+.cookie-prototype .cookie-reference .reference-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cookie-prototype .cookie-reference .reference-primary {
+  background: #2563eb;
+  color: #fff;
+}
+.cookie-prototype .cookie-reference .reference-primary:hover:enabled {
+  background: #1d4ed8;
+  color: #fff;
+}
+.cookie-prototype .cookie-reference .reference-secondary {
+  background: var(--reference-secondary);
+  color: var(--reference-muted);
+}
+.cookie-prototype .cookie-reference .reference-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--reference-danger-bg);
+  color: var(--reference-danger-text);
+}
+.cookie-prototype .cookie-reference .reference-actions svg {
+  width: 16px;
+  height: 16px;
+}
+.cookie-prototype .cookie-reference .reference-quick-note {
+  font-size: 13px;
+  margin: 16px 0 0;
+}
+.cookie-prototype .cookie-reference .reference-card {
+  margin-bottom: 24px;
+  border: 1px solid var(--reference-line);
+  border-radius: 8px;
+  padding: 24px;
+  background: var(--reference-surface);
+}
+.cookie-prototype .cookie-reference .reference-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.cookie-prototype .cookie-reference .reference-category-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.cookie-prototype .cookie-reference .reference-shield {
+  display: flex;
+  color: #16a34a;
+}
+.cookie-prototype .cookie-reference .reference-clock {
+  display: flex;
+  color: #9333ea;
+}
+.cookie-prototype .cookie-reference .reference-required {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 16px;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--reference-success-bg);
+  color: var(--reference-success-text);
+}
+.cookie-prototype .cookie-reference .reference-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  margin: 0;
+  cursor: pointer;
+}
+.cookie-prototype .cookie-reference .reference-toggle input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+}
+.cookie-prototype .cookie-reference .reference-toggle span,
+.cookie-prototype .cookie-reference .reference-fixed-track {
+  width: 44px;
+  height: 24px;
+  flex: none;
+  border-radius: 12px;
+  background: #d1d5db;
+  pointer-events: none;
+}
+.cookie-prototype .cookie-reference .reference-toggle span::after,
+.cookie-prototype .cookie-reference .reference-fixed-track::after {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 2px;
+  border-radius: 50%;
+  background: #fff;
+}
+.cookie-prototype .cookie-reference .reference-fixed-track,
+.cookie-prototype .cookie-reference .reference-toggle input:checked + span {
+  background: #2563eb;
+}
+.cookie-prototype .cookie-reference .reference-fixed-track::after,
+.cookie-prototype .cookie-reference .reference-toggle input:checked + span::after {
+  transform: translateX(20px);
+}
+.cookie-prototype .cookie-reference .reference-fixed-track,
+.cookie-prototype .cookie-reference .reference-toggle:has(input:disabled) {
+  opacity: 0.5;
+}
+.cookie-prototype .cookie-reference .reference-toggle input:focus-visible + span {
+  outline: 2px solid var(--reference-blue);
+  outline-offset: 4px;
+}
+.cookie-prototype .cookie-reference .reference-details summary {
+  min-height: 44px;
+  display: list-item;
+  align-content: center;
+  color: var(--reference-blue);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.cookie-prototype .cookie-reference .reference-entry-list {
+  border-left: 2px solid var(--reference-line);
+  padding-left: 16px;
+  margin-top: 16px;
+}
+.cookie-prototype .cookie-reference .reference-entry {
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--reference-subtle);
+  border-radius: 8px;
+}
+.cookie-prototype .cookie-reference .reference-entry h4 {
+  font:
+    500 14px / 20px ui-monospace,
+    monospace;
+  color: var(--reference-blue);
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+.cookie-prototype .cookie-reference .reference-entry p {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.cookie-prototype .cookie-reference .reference-entry dl {
+  font-size: 14px;
+  color: var(--reference-faint);
+  margin: 0;
+}
+.cookie-prototype .cookie-reference .reference-entry dl div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cookie-prototype .cookie-reference .reference-entry dt {
+  font-weight: 400;
+}
+.cookie-prototype .cookie-reference .reference-entry dd {
+  font-weight: 500;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.cookie-prototype
+  .cookie-reference
+  :is(.reference-scope-note, .reference-detail-note, .reference-session-status) {
+  font-size: 14px;
+  color: var(--reference-faint);
+}
+.cookie-prototype .cookie-reference .reference-recovery,
+.cookie-prototype .cookie-reference .reference-dirty:not(:empty) {
+  padding: 16px;
+  border: 1px solid var(--reference-line);
+  border-radius: 8px;
+}
+.cookie-prototype .cookie-reference .reference-save-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 32px;
+}
+.cookie-prototype .cookie-reference .reference-save {
+  padding: 12px 32px;
+  font-size: 16px;
+  line-height: 24px;
+}
+.cookie-prototype .cookie-reference .reference-link {
+  padding: 0;
+  background: transparent;
+  color: var(--reference-blue);
+  text-decoration: underline;
+}
+.cookie-prototype .reference-modal {
+  background: #fff;
+  color: #111827;
+  border: 0;
+  border-radius: 8px;
+  padding: 24px;
+  font-family: Inter, system-ui, sans-serif;
+}
+.cookie-prototype.cookie-in-app .reference-modal p,
+.cookie-variant-D.cookie-prototype .reference-modal p {
+  color: #4b5563;
+}
+.cookie-prototype.cookie-in-app {
+  min-height: 0;
+  padding-bottom: 110px;
+  width: 100%;
+}
+.cookie-in-app-label {
+  font-size: 12px;
+  color: var(--space-muted);
+}
+.cookie-prototype .cookie-prototype-tools a {
+  color: #fff;
+  padding: 10px;
+  min-height: 44px;
+}
+.cookie-prototype .reference-modal button {
+  background: #e5e7eb;
+  color: #4b5563;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.cookie-prototype .reference-modal .primary,
+.cookie-prototype .reference-modal .primary:hover:enabled {
+  background: #dc2626;
+  color: #fff;
+}
+.cookie-prototype[data-theme="dark"] .reference-modal {
+  background: #111827;
+  color: #fff;
+}
+.cookie-prototype[data-theme="dark"] .reference-modal p {
+  color: #d1d5db;
+}
+.cookie-prototype[data-theme="dark"] .reference-modal button:not(.primary) {
+  background: #374151;
+  color: #d1d5db;
+}
+@media (max-width: 480px) {
+  .cookie-prototype .cookie-reference .reference-title {
+    align-items: flex-start;
+  }
+  .cookie-prototype .cookie-reference .reference-card,
+  .cookie-prototype .cookie-reference .reference-quick {
+    padding: 20px;
+  }
+  .cookie-prototype .cookie-reference .reference-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}

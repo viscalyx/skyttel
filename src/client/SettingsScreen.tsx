@@ -145,6 +145,9 @@ export function SettingsScreen({
         { to: '/profile', title: 'Din profil', group: 'Ditt Skyttel' },
         { to: '/login-methods', title: 'Inloggningssätt', group: 'Ditt Skyttel' },
         { to: '/assistants', title: 'Assistentanslutningar', group: 'Ditt Skyttel' },
+        ...(import.meta.env.DEV
+          ? [{ to: '/cookies?variant=D', title: 'Cookies och lagring', group: 'Ditt Skyttel' }]
+          : []),
       ].filter((entry) => location.pathname !== '/profile' || entry.to === '/profile')
     : [
         ...(household
@@ -214,7 +217,9 @@ export function SettingsScreen({
                     <Link
                       key={entry.to}
                       to={entry.to}
-                      aria-current={location.pathname === entry.to ? 'page' : undefined}
+                      aria-current={
+                        location.pathname === entry.to.split('?')[0] ? 'page' : undefined
+                      }
                     >
                       {entry.title}
                     </Link>

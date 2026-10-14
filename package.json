@@ -18,6 +18,7 @@
   "scripts": {
     "dev": "tsx watch src/server/index.ts",
     "dev:client": "vite --host 127.0.0.1",
+    "dev:cookie-prototype": "tsx scripts/cookie-prototype.ts",
     "dev:all": "node scripts/develop.mjs",
     "dev:prodlike": "node scripts/develop-prodlike.mjs",
     "db:setup": "tsx scripts/setup-database.ts",

@@ -1,17 +1,24 @@
-// THROWAWAY. Three cookie-flow frames on /cookies?variant=A|B|C.
+// THROWAWAY. Four cookie-flow frames on /cookies?variant=A|B|C|D.
 // Existing Skyttel CSS + viscalyx.se's category/disclosure patterns; memory only.
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import logo from '../../docs/images/shuttle-logo-transparent-small.png';
+import { CookieSettingsReference } from './CookieSettingsReference.prototype.js';
+import { useFormLeave } from './FormLeave.js';
 import { trapDialogTab, usableFocusTarget } from './modal-focus.js';
-import { type ThemeMode, WorkspaceTheme } from './WorkspaceTheme.js';
+import { type ThemeMode, useWorkspaceTheme, WorkspaceTheme } from './WorkspaceTheme.js';
 import './settings.css';
 import './CookieFlows.prototype.css';
 
 type View = 'home' | 'cookies' | 'profile';
-type Variant = 'A' | 'B' | 'C';
-const variants: Variant[] = ['A', 'B', 'C'];
-const names = { A: 'Fristående sida', B: 'Skyttels inställningsram', C: 'Gemensam sidram' };
+type Variant = 'A' | 'B' | 'C' | 'D';
+const variants: Variant[] = ['A', 'B', 'C', 'D'];
+const names = {
+  A: 'Fristående sida',
+  B: 'Skyttels inställningsram',
+  C: 'Gemensam sidram',
+  D: 'Viscalyx-formulär i B:s sidram',
+};
 const entries = [
   {
     name: 'better-auth.session_token',
@@ -46,10 +53,12 @@ function Modal({
   title,
   children,
   close,
+  reference = false,
 }: {
   title: string;
   children: ReactNode;
   close: () => void;
+  reference?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useLayoutEffect(() => {
@@ -63,12 +72,19 @@ function Modal({
   }, []);
   return (
     <dialog
-      className="cookie-modal"
+      className={`cookie-modal${reference ? ' reference-modal' : ''}`}
       ref={dialog}
       aria-labelledby="cookie-modal-title"
-      onKeyDown={trapDialogTab}
+      onKeyDown={(event) => {
+        event.stopPropagation();
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          close();
+        } else trapDialogTab(event);
+      }}
       onCancel={(event) => {
         event.preventDefault();
+        event.stopPropagation();
         close();
       }}
     >
@@ -99,10 +115,214 @@ function Avatar({ style }: { style: 'initials' | 'symbol' }) {
   );
 }
 
+// Actual App owns identity, navigation, SettingsScreen and WorkspaceTools.
+// Only cookie states are fictional here; the production contract is undecided.
+export function CookiePrototypeInApp({ signedIn }: { signedIn: boolean }) {
+  const navigate = useNavigate();
+  const theme = useWorkspaceTheme();
+  const { register } = useFormLeave();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const [remembered, setRemembered] = useState(signedIn);
+  const [rememberDraft, setRememberDraft] = useState(signedIn);
+  const [failure, setFailure] = useState(false);
+  const [recovery, setRecovery] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  const [savedAt, setSavedAt] = useState('14 oktober 2026 kl. 10.00');
+  const [modal, setModal] = useState<'reset' | 'leave' | null>(null);
+  const pending = useRef<{ proceed: () => void; cancel: () => void } | null>(null);
+  const dirty = remembered !== rememberDraft;
+  useLayoutEffect(() => {
+    heading.current?.focus();
+  }, []);
+  useEffect(
+    () =>
+      register({
+        active: () => dirty,
+        leave: (proceed, cancel) => {
+          pending.current = { proceed, cancel };
+          setModal('leave');
+        },
+      }),
+    [register, dirty],
+  );
+  useEffect(() => {
+    if (!dirty) return;
+    const protect = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', protect);
+    return () => window.removeEventListener('beforeunload', protect);
+  }, [dirty]);
+  function save(reset: boolean) {
+    if (failure) {
+      setNotice('');
+      setError(
+        'Ändringen kunde inte sparas. Ihågkommen inloggning är fortfarande på. Försök igen.',
+      );
+      return;
+    }
+    setRemembered(false);
+    setRememberDraft(false);
+    setError('');
+    setModal(null);
+    setSavedAt('14 oktober 2026 kl. 10.05');
+    setNotice(
+      reset
+        ? 'Valfri lagring är återställd. Du är fortfarande inloggad i den här webbläsaren.'
+        : 'Sparat. Ihågkommen inloggning är avstängd i den här webbläsaren. Du är fortfarande inloggad.',
+    );
+  }
+  function cancelLeave() {
+    pending.current?.cancel();
+    pending.current = null;
+    setModal(null);
+  }
+  return (
+    <section className="cookie-prototype cookie-in-app" data-theme={theme.theme}>
+      <p className="cookie-in-app-label">Prototyp D i Skyttel · cookievalen är simulerade</p>
+      <CookieSettingsReference
+        heading={heading}
+        entries={entries}
+        signedIn={signedIn}
+        remembered={remembered}
+        rememberDraft={rememberDraft}
+        dirty={dirty}
+        notice={notice}
+        error={error}
+        savedAt={savedAt}
+        recovery={recovery}
+        change={(value) => {
+          setRememberDraft(value);
+          setNotice('');
+          setError('');
+        }}
+        undo={() => {
+          setRememberDraft(remembered);
+          setNotice('Ändringen är ångrad. Ditt sparade val gäller.');
+          setError('');
+        }}
+        save={() => save(false)}
+        reset={() => {
+          setError('');
+          setModal('reset');
+        }}
+        login={() => navigate('/')}
+      />
+      <aside className="cookie-prototype-tools" aria-label="Prototypverktyg">
+        <div className="cookie-variant-switcher">
+          <strong>D · Viscalyx-formulär i den faktiska appen</strong>
+          <a href="/cookies?variant=B" target="_blank" rel="noreferrer">
+            Jämför A–C
+          </a>
+        </div>
+        <details>
+          <summary>Simulerade cookieval</summary>
+          <div className="cookie-scenario-controls">
+            <label className="cookie-checkbox">
+              <input
+                type="checkbox"
+                checked={failure}
+                onChange={(event) => setFailure(event.target.checked)}
+              />
+              Simulera nästa sparfel
+            </label>
+            <label className="cookie-checkbox">
+              <input
+                type="checkbox"
+                checked={recovery}
+                onChange={(event) => setRecovery(event.target.checked)}
+              />
+              Import med osäkert utfall
+            </label>
+            <button
+              type="button"
+              disabled={dirty || !signedIn}
+              onClick={() => {
+                setRemembered(true);
+                setRememberDraft(true);
+                setNotice('');
+                setError('');
+              }}
+            >
+              Starta om exemplet
+            </button>
+          </div>
+          <pre>
+            {JSON.stringify(
+              { signedIn, remembered, rememberDraft, dirty, failure, recovery },
+              null,
+              2,
+            )}
+          </pre>
+        </details>
+      </aside>
+      {modal === 'reset' && (
+        <Modal
+          reference
+          title="Återställ valfri lagring?"
+          close={() => {
+            setModal(null);
+            setError('');
+          }}
+        >
+          <p>
+            Ihågkommen inloggning stängs av för den här webbläsaren. Du fortsätter vara inloggad.
+            Andra enheter och återhämtningsuppgifter påverkas inte.
+          </p>
+          <p className="cookie-error" role="alert">
+            {error}
+          </p>
+          <div className="cookie-actions">
+            <button
+              type="button"
+              onClick={() => {
+                setModal(null);
+                setError('');
+              }}
+            >
+              Avbryt
+            </button>
+            <button type="button" className="primary" onClick={() => save(true)}>
+              Återställ valfri lagring
+            </button>
+          </div>
+        </Modal>
+      )}
+      {modal === 'leave' && (
+        <Modal reference title="Lämna utan att spara?" close={cancelLeave}>
+          <p>
+            Din ändring är inte sparad. Ditt sparade val fortsätter att gälla om du lämnar sidan.
+          </p>
+          <div className="cookie-actions">
+            <button type="button" onClick={cancelLeave}>
+              Stanna kvar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRememberDraft(remembered);
+                setModal(null);
+                const action = pending.current;
+                pending.current = null;
+                action?.proceed();
+              }}
+            >
+              Lämna utan att spara
+            </button>
+          </div>
+        </Modal>
+      )}
+    </section>
+  );
+}
+
 export default function CookiePrototype() {
   const [params, setParams] = useSearchParams();
   const candidate = params.get('variant');
-  const variant: Variant = candidate === 'B' || candidate === 'C' ? candidate : 'A';
+  const variant: Variant =
+    candidate === 'B' || candidate === 'C' || candidate === 'D' ? candidate : 'A';
   const [view, setView] = useState<View>('cookies');
   const [signedIn, setSignedIn] = useState(true);
   const [remembered, setRemembered] = useState(true);
@@ -684,7 +904,44 @@ export default function CookiePrototype() {
       </button>
     </section>
   );
-  const content = view === 'cookies' ? cookies : view === 'profile' ? profile : home;
+  const referenceCookies = (
+    <CookieSettingsReference
+      heading={heading}
+      entries={entries}
+      signedIn={signedIn}
+      remembered={remembered}
+      rememberDraft={rememberDraft}
+      dirty={dirty}
+      notice={notice}
+      error={error}
+      savedAt={savedAt}
+      recovery={recovery}
+      change={(value) => {
+        setRememberDraft(value);
+        setNotice('');
+        setError('');
+      }}
+      undo={() => {
+        setRememberDraft(remembered);
+        setError('');
+        setNotice('Ändringen är ångrad. Ditt sparade val gäller.');
+      }}
+      save={() => revoke(false)}
+      reset={() => {
+        setError('');
+        setModal('reset');
+      }}
+      login={() => go('home')}
+    />
+  );
+  const content =
+    view === 'cookies'
+      ? variant === 'D'
+        ? referenceCookies
+        : cookies
+      : view === 'profile'
+        ? profile
+        : home;
 
   return (
     <div
@@ -730,7 +987,7 @@ export default function CookiePrototype() {
         </section>
       )}
       <main id="cookie-main" tabIndex={-1}>
-        {variant === 'B' && view !== 'home' && signedIn ? (
+        {(variant === 'B' || variant === 'D') && view !== 'home' && signedIn ? (
           <section className="settings-screen">
             <div className="settings-layout">
               <nav className="settings-navigation" aria-label="Dina kontosidor">
@@ -806,6 +1063,7 @@ export default function CookiePrototype() {
       {modal === 'reset' && (
         <Modal
           title="Återställ valfri lagring?"
+          reference={variant === 'D'}
           close={() => {
             setModal(null);
             setError('');
@@ -839,7 +1097,11 @@ export default function CookiePrototype() {
         </Modal>
       )}
       {modal === 'leave' && (
-        <Modal title="Lämna utan att spara?" close={() => setModal(null)}>
+        <Modal
+          title="Lämna utan att spara?"
+          reference={variant === 'D'}
+          close={() => setModal(null)}
+        >
           <p>
             Din ändring av ihågkommen inloggning är inte sparad. Ditt sparade val fortsätter att
             gälla om du lämnar sidan.

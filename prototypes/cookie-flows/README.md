@@ -3,26 +3,42 @@
 Prototypen ger underlag till
 [Hur utformas Skyttels cookieflöden med viscalyx.se:s layout och formulär?](https://github.com/viscalyx/skyttel/issues/413).
 Den är till för att välja sidram, profilingång och formulärbeteende.
-Alternativen är förslag som användaren behöver bedöma.
+Användaren bedömer cookieformulärets utseende i D som fungerande och
+begär att få prova det med appens riktiga profilverktyg och navigation.
+Det integrerade flödet är underlag för den fortsatta bedömningen.
 
 ## Öppna prototypen
 
 Kör från denna gren med projektets installerade beroenden:
 
 ```sh
-npm run dev:client -- --port 5413 --strictPort
+npm run dev:cookie-prototype
 ```
 
-Öppna <http://localhost:5413/cookies?variant=A>. Pilarna i den flytande
-prototypbaren byter variant och uppdaterar adressen. Vänster- och högerpil
-fungerar också när fokus inte är på en kontroll eller i en dialog.
+Öppna <http://localhost:5416/>. Det är den faktiska applikationen med
+ett isolerat testhushåll. Tryck på verktygsfältets befintliga profilikon,
+välj **Cookies och lagring** i **Din profil** och prova D.
+**Tillbaka till kartan** återgår till det riktiga kartverktyget.
+På mobil kan verktygsfältet behöva fällas ut först.
+
+D kan också öppnas direkt på
+<http://localhost:5416/cookies?variant=D>. Konto, hushåll, profilpanel,
+inställningsram, temakontroll och navigationsskydd är appens befintliga
+komponenter. Den publika sidan kan visas utan inloggning när grenen körs
+mot en vanlig utvecklingsserver.
+
+Startkommandot använder appens riktiga serverkod med tillfällig databas,
+påhittat demoinnehåll och en syntetisk inloggningsleverantör. Testsessionen
+läggs på den lokala proxyn. Inga egna konton, AI-nycklar eller externa
+modellanrop används. Databasen tas bort när processen avslutas.
+
+Cookieval, giltighetstid, sparande och återställning är simulerade i
+minnet. De påstår inte att visa testsessionens verkliga cookieval och
+ändrar inte autentiseringscookien. Appens övriga funktioner använder
+den isolerade servern och kan ändra testhushållet på vanligt sätt.
 Prototypen är tillgänglig endast i utvecklingsläge.
 
-Alla uppgifter är påhittade. Inloggning, utloggning, tema och sparande
-simuleras i minnet. Omladdning återgår till startläget. Inga API-anrop,
-cookies eller lagringsposter skapas av flödet.
-
-## Jämför tre sidramar
+## Jämför fyra alternativ
 
 - **A, fristående sida:** ett centrerat formulär före och efter
   inloggning. Detaljregistret ligger i den nödvändiga lagringens kort.
@@ -35,17 +51,45 @@ cookies eller lagringsposter skapas av flödet.
   inloggning, med separata avsnitt för val och lagringsregister.
   Webbläsarens omfattning får en egen sidokolumn på datorn.
   [Dator](C-1280.png) och [mobil](C-390.png).
+- **D, viscalyx.se:s cookieformulär i appen:** blå rubrikikon,
+  snabbåtgärder på grå yta, kategorikort med reglage till höger,
+  utvecklingsbara detaljlistor, gröna sparbesked och sparknapp längst ned.
+  Övriga delar använder appens faktiska sidram från B.
+  [Profilverktyg på dator](D-app-profile-1280.png),
+  [profilverktyg på mobil](D-app-profile-390.png),
+  [cookiesidan på dator](D-app-1280.png),
+  [cookiesidan på mobil](D-app-390.png) och
+  [sparande på mobil](D-app-save-390.png).
 
-Alla använder Skyttels befintliga tema och CSS. B visar
+På D kan **Jämför A–C** öppna de fristående alternativen i en ny flik.
+Deras konton, inloggning, tema och flöden simuleras helt i minnet;
+de gör inga API-anrop. Pilarna byter variant och uppdaterar adressen.
+Vänster- och högerpil fungerar också utanför kontroller och dialoger.
+
+A–C använder Skyttels befintliga tema och CSS. B visar
 inställningsramens befintliga struktur; innehållet och kontodata
 är simulerade. Den befintliga temahooken används inte, eftersom
 den skriver till lokal lagring. Temakontrollen får minnestillstånd.
 Viscalyx.se är förebild för kategorikort, utvecklingsbara detaljer,
 sparbesked och återställningsdialog.
+D anpassar referensens konkreta struktur, färger, avstånd och kontroller
+till React och vanlig CSS. Skyttels lagringsposter och beslutade val
+ersätter referensens kategorier. Ingen analyskategori, exportfunktion
+eller aktivering av ihågkommen inloggning i en redan skapad session
+införs för att fylla ut snabbåtgärderna. Referensens MIT-text finns i
+`REFERENCE-LICENSE`.
+
+De fristående [detaljbilderna](D-details-1280.png) och
+[återställningsbilden](D-reset-1280.png) visar också formulärutseendet.
 
 ## Prova flödena
 
-Öppna **Scenarier och simulerat tillstånd** i prototypbaren.
+På D öppnar **Simulerade cookieval** sparfel, osäker import och
+omstart av cookieexemplet. Sparande och återställning påverkar bara
+exemplet. Osparade ändringar skyddas av appens `FormLeaveProvider`,
+även vid byte via riktiga länkar och **Tillbaka till kartan**.
+
+På A–C: öppna **Scenarier och simulerat tillstånd** i prototypbaren.
 Välj scenario och stäng sedan verktygen för att bedöma produktvyn.
 
 1. **Första besöket:** information visas utan acceptera-/avvisaknappar.
@@ -76,13 +120,14 @@ Välj scenario och stäng sedan verktygen för att bedöma produktvyn.
    Efter inloggning styr kontots simulerade temaval. Utloggning återgår
    till systemtemat och lämnar nästa **Kom ihåg mig** avmarkerat.
 
-## Förslag att bedöma
+## Flöden att bedöma
 
-- B behåller Skyttels befintliga inställningsnavigation och ger en
-  permanent publik cookiesida före inloggning.
-- En kompakt profilknapp med initialer och en meny med vanliga knappar
-  ger en kort väg till cookieinställningarna. Menyn är en vanlig
-  navigationsyta, utan ett särskilt menyprotokoll för tangentbordet.
+- D kombinerar referensens cookieutseende med appens faktiska
+  inställningsnavigation och den befintliga profilpanelen.
+- Appens nuvarande profilikon öppnar **Din profil**. En länk under
+  **Ditt konto** går direkt till cookiesidan. Initialer och en separat
+  profilmeny är tidigare jämförelsealternativ och ingår inte i D:s
+  faktiska verktygsfält.
 - Ett uttryckligt sparande, möjlighet att ångra och skydd vid sidbyte
   gör skillnaden mellan redigerat och sparat val synlig.
 - Första informationen är en ruta över innehållet utan modal fokusfälla.
@@ -90,8 +135,8 @@ Välj scenario och stäng sedan verktygen för att bedöma produktvyn.
   stängas och samma innehåll finns på den permanenta sidan.
   Stängningen finns bara i minnet; den skapar ingen ny lagringsnyckel.
 
-Dessa förslag är inte resolutioner. Användaren kan välja en variant
-eller kombinera delar från flera.
+Det integrerade flödet behöver fortfarande användarens bedömning.
+Det är inte en resolution av hela beslutsärendet.
 
 ## Kontroller och begränsningar
 
@@ -109,8 +154,14 @@ Körda kontroller 2026-10-14:
 - Simulerade sparfel, lyckat sparande, återställning, bevarad
   återhämtning, blockerad inloggning och avmarkerat inloggningsval
   efter utloggning ger de avsedda observerade tillstånden.
-- Den observerade prototypsessionen gör inga `/api/`-anrop och har
+- Den observerade fristående prototypsessionen gör inga `/api/`-anrop och har
   tom lokal lagring, fliklagring och cookielista.
+- Den integrerade D-vyn går från appens riktiga profilverktyg till
+  den riktiga inställningsramen och tillbaka till kartan på dator och
+  mobil. Vid 1280, 390 och 320 pixlar finns inget horisontellt
+  sidöverflöde. Osparade val ger dialog genom appens navigationsskydd.
+  Inga klientfel eller skrivande API-anrop observeras under detta flöde.
+  Den riktiga testsessionen är fortsatt inloggad efter simulerat sparande.
 
 HTML innehåller namngivna kontroller, beskrivningar, status- och
 felregioner samt native modala dialoger. Ingen faktisk provning med
