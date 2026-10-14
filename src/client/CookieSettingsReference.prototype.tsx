@@ -72,7 +72,7 @@ export function CookieSettingsReference({
         <div className="reference-title">
           <Icon kind="settings" />
           <h1 ref={heading} tabIndex={-1}>
-            Cookies och lagring
+            Kakor och lagring
           </h1>
         </div>
         <p>
@@ -132,9 +132,8 @@ export function CookieSettingsReference({
             <span className="reference-fixed-track" aria-hidden="true" />
           </div>
           <p>
-            Cookies behövs för säker inloggning. Fliklagring hjälper dig att följa samma import
-            eller permanenta radering som du har begärt. Den här gruppen går inte att slå av i
-            formuläret.
+            Kakor behövs för säker inloggning. Fliklagring hjälper dig att följa samma import eller
+            permanenta radering som du har begärt. Den här gruppen går inte att slå av i formuläret.
           </p>
           <details className="reference-details">
             <summary>Visa lagring ({entries.length})</summary>

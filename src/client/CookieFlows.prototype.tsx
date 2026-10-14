@@ -22,14 +22,14 @@ const names = {
 const entries = [
   {
     name: 'better-auth.session_token',
-    kind: 'Cookie',
+    kind: 'Kaka',
     purpose:
       'Identifierar din inloggning hos Skyttel. Innehåller en signerad sessionsidentifierare.',
     time: 'Sessionscookie som standard. Med Kom ihåg mig: högst sju dygn från inloggningen, utan förlängning. Logga ut avslutar sessionen tidigare.',
   },
   {
     name: 'better-auth.state',
-    kind: 'Cookie',
+    kind: 'Kaka',
     purpose:
       'Skyddar inloggning och koppling av ett inloggningssätt. Innehåller en identifierare för inloggningsförsöket.',
     time: 'Högst fem minuter; tas bort när inloggningsförsöket godkänns.',
@@ -181,7 +181,7 @@ export function CookiePrototypeInApp({ signedIn }: { signedIn: boolean }) {
   }
   return (
     <section className="cookie-prototype cookie-in-app" data-theme={theme.theme}>
-      <p className="cookie-in-app-label">Prototyp D i Skyttel · cookievalen är simulerade</p>
+      <p className="cookie-in-app-label">Prototyp D i Skyttel · lagringsvalen är simulerade</p>
       <CookieSettingsReference
         heading={heading}
         entries={entries}
@@ -218,7 +218,7 @@ export function CookiePrototypeInApp({ signedIn }: { signedIn: boolean }) {
           </a>
         </div>
         <details>
-          <summary>Simulerade cookieval</summary>
+          <summary>Simulerade lagringsval</summary>
           <div className="cookie-scenario-controls">
             <label className="cookie-checkbox">
               <input
@@ -486,7 +486,7 @@ export default function CookiePrototype() {
   function login() {
     if (blocked || failure) {
       setError(
-        'Du kunde inte logga in. Skyttel behöver kunna lagra cookies för inloggningen. Kontrollera webbläsarens inställningar och försök igen.',
+        'Du kunde inte logga in. Skyttel behöver kunna lagra kakor för inloggningen. Kontrollera webbläsarens inställningar och försök igen.',
       );
       return;
     }
@@ -510,7 +510,7 @@ export default function CookiePrototype() {
           Din profil
         </button>
         <button type="button" onClick={() => go('cookies')}>
-          Cookies och lagring
+          Kakor och lagring
         </button>
       </nav>
       <button
@@ -588,7 +588,7 @@ export default function CookiePrototype() {
             ? signedIn
               ? 'Tillbaka till kartan'
               : 'Till startsidan'
-            : 'Cookies och lagring'}
+            : 'Kakor och lagring'}
         </button>
         {profileControl}
       </div>
@@ -648,7 +648,7 @@ export default function CookiePrototype() {
           <span className="cookie-badge">Vid begärd funktion</span>
         </div>
         <p>
-          Cookies behövs för att logga in säkert. Fliklagring hjälper dig att följa en import eller
+          Kakor behövs för att logga in säkert. Fliklagring hjälper dig att följa en import eller
           permanent radering som du har begärt.
         </p>
         <p className="muted">
@@ -761,7 +761,7 @@ export default function CookiePrototype() {
     <div className="cookie-document">
       <p className="eyebrow">Din webbläsare</p>
       <h1 ref={heading} tabIndex={-1}>
-        Cookies och lagring
+        Kakor och lagring
       </h1>
       <p className="settings-intro">
         Här ser du vad Skyttel lagrar och hanterar ihågkommen inloggning för den här webbläsaren.
@@ -796,7 +796,7 @@ export default function CookiePrototype() {
               <aside>
                 <h2>Den här webbläsaren</h2>
                 <p>{signedIn ? 'Alex Lind är inloggad.' : 'Du är inte inloggad.'}</p>
-                <p>Inga analys- eller marknadsföringscookies används.</p>
+                <p>Inga analys- eller marknadsföringskakor används.</p>
               </aside>
               <div>{choices}</div>
             </div>
@@ -824,11 +824,11 @@ export default function CookiePrototype() {
         <span>Inloggningssätt</span>
         <span>Assistentanslutningar</span>
         <button type="button" onClick={() => go('cookies')}>
-          Cookies och lagring
+          Kakor och lagring
         </button>
       </div>
       <p className="muted">
-        Cookievalet gäller den här webbläsarens session. Temavalet hör till ditt konto.
+        Lagringsvalet gäller den här webbläsarens session. Temavalet hör till ditt konto.
       </p>
     </section>
   );
@@ -841,7 +841,7 @@ export default function CookiePrototype() {
         <span>Inställningar</span>
         {profileControl}
         <button type="button" onClick={() => go('cookies')}>
-          Cookies och lagring
+          Kakor och lagring
         </button>
       </aside>
       <div>
@@ -900,7 +900,7 @@ export default function CookiePrototype() {
         {error}
       </p>
       <button type="button" className="cookie-text-button" onClick={() => go('cookies')}>
-        Cookies och lagring
+        Kakor och lagring
       </button>
     </section>
   );
@@ -961,7 +961,7 @@ export default function CookiePrototype() {
             <h2 id="cookie-banner-title">Så använder Skyttel lagring</h2>
             <p>
               Skyttel använder lagring för funktioner du begär, som inloggning. Kom ihåg mig är ett
-              separat val vid inloggning. Inga analys- eller marknadsföringscookies används.
+              separat val vid inloggning. Inga analys- eller marknadsföringskakor används.
             </p>
           </div>
           <div className="cookie-actions">
@@ -972,7 +972,7 @@ export default function CookiePrototype() {
                 go('cookies');
               }}
             >
-              Läs om cookies och lagring
+              Läs om kakor och lagring
             </button>
             <button
               type="button"
@@ -1017,7 +1017,7 @@ export default function CookiePrototype() {
                       aria-current={view === 'cookies' ? 'page' : undefined}
                       onClick={() => go('cookies')}
                     >
-                      Cookies och lagring
+                      Kakor och lagring
                     </button>
                   </section>
                 </details>
@@ -1039,7 +1039,7 @@ export default function CookiePrototype() {
                   aria-current={view === 'cookies' ? 'page' : undefined}
                   onClick={() => go('cookies')}
                 >
-                  Cookies och lagring
+                  Kakor och lagring
                 </button>
               </nav>
             )}
@@ -1049,7 +1049,7 @@ export default function CookiePrototype() {
       </main>
       <footer>
         <button type="button" className="cookie-text-button" onClick={() => go('cookies')}>
-          Cookies och lagring
+          Kakor och lagring
         </button>
       </footer>
       {profileOpen && profileMode === 'dialog' && (
@@ -1151,7 +1151,7 @@ export default function CookiePrototype() {
                   <option value="remembered">Inloggad · Kom ihåg mig</option>
                   <option value="normal">Inloggad · vanlig session</option>
                   <option value="first">Första besöket</option>
-                  <option value="anonymous">Cookiesidan utan konto</option>
+                  <option value="anonymous">Kakor och lagring utan konto</option>
                   <option value="blocked">Blockerad lagring vid inloggning</option>
                   <option value="recovery">Import med osäkert utfall</option>
                 </select>

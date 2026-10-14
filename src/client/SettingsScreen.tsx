@@ -146,7 +146,7 @@ export function SettingsScreen({
         { to: '/login-methods', title: 'Inloggningssätt', group: 'Ditt Skyttel' },
         { to: '/assistants', title: 'Assistentanslutningar', group: 'Ditt Skyttel' },
         ...(import.meta.env.DEV
-          ? [{ to: '/cookies?variant=D', title: 'Cookies och lagring', group: 'Ditt Skyttel' }]
+          ? [{ to: '/cookies?variant=D', title: 'Kakor och lagring', group: 'Ditt Skyttel' }]
           : []),
       ].filter((entry) => location.pathname !== '/profile' || entry.to === '/profile')
     : [

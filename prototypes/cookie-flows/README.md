@@ -5,7 +5,9 @@ Prototypen ger underlag till
 Den är till för att välja sidram, profilingång och formulärbeteende.
 Användaren bedömer cookieformulärets utseende i D som fungerande och
 begär att få prova det med appens riktiga profilverktyg och navigation.
-Det integrerade flödet är underlag för den fortsatta bedömningen.
+Användaren godkänner därefter D i den faktiska applikationen.
+Sidans svenska benämning är **Kakor och lagring**, i linje med
+viscalyx.se:s svenska texter som använder kakor och Kakinställningar.
 
 ## Öppna prototypen
 
@@ -17,7 +19,7 @@ npm run dev:cookie-prototype
 
 Öppna <http://localhost:5416/>. Det är den faktiska applikationen med
 ett isolerat testhushåll. Tryck på verktygsfältets befintliga profilikon,
-välj **Cookies och lagring** i **Din profil** och prova D.
+välj **Kakor och lagring** i **Din profil** och prova D.
 **Tillbaka till kartan** återgår till det riktiga kartverktyget.
 På mobil kan verktygsfältet behöva fällas ut först.
 
@@ -84,7 +86,7 @@ De fristående [detaljbilderna](D-details-1280.png) och
 
 ## Prova flödena
 
-På D öppnar **Simulerade cookieval** sparfel, osäker import och
+På D öppnar **Simulerade lagringsval** sparfel, osäker import och
 omstart av cookieexemplet. Sparande och återställning påverkar bara
 exemplet. Osparade ändringar skyddas av appens `FormLeaveProvider`,
 även vid byte via riktiga länkar och **Tillbaka till kartan**.
@@ -135,8 +137,9 @@ Välj scenario och stäng sedan verktygen för att bedöma produktvyn.
   stängas och samma innehåll finns på den permanenta sidan.
   Stängningen finns bara i minnet; den skapar ingen ny lagringsnyckel.
 
-Det integrerade flödet behöver fortfarande användarens bedömning.
-Det är inte en resolution av hela beslutsärendet.
+D är det valda underlaget för cookieformulärets utseende och vägen
+från appens befintliga profilverktyg. Produktionsimplementationen
+behöver serverunderlaget och den avslutande specifikationsgranskningen.
 
 ## Kontroller och begränsningar
 

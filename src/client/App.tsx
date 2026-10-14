@@ -1372,7 +1372,7 @@ function Application() {
       <div className="settings-profile-links">
         <Link to="/login-methods">Inloggningssätt</Link>
         <Link to="/assistants">Assistentanslutningar</Link>
-        {import.meta.env.DEV && <Link to="/cookies?variant=D">Cookies och lagring</Link>}
+        {import.meta.env.DEV && <Link to="/cookies?variant=D">Kakor och lagring</Link>}
       </div>
       {logout}
     </>
@@ -1584,7 +1584,7 @@ function Application() {
       </main>
       <footer hidden={mapActive || Boolean(settingsPage)}>
         Det som hör ihop, samlat.
-        {import.meta.env.DEV && <Link to="/cookies?variant=D">Cookies och lagring</Link>}
+        {import.meta.env.DEV && <Link to="/cookies?variant=D">Kakor och lagring</Link>}
       </footer>
     </div>
   );
