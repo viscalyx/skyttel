@@ -4,6 +4,13 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "avvisaknappar",
+    "kastbar",
+    "kastbart",
+    "produktvyn",
+    "sidram",
+    "sidramar",
+    "temahooken",
     "backendbegäran",
     "besvarbara",
     "frågedelen",

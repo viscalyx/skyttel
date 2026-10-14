@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { App } from './App.js';
@@ -7,6 +7,11 @@ import './styles.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('The application root element is missing.');
+// Throwaway route: no App, auth, server requests, or persisted product state.
+const cookiePrototype = import.meta.env.DEV && window.location.pathname === '/cookies';
+const CookiePrototype = import.meta.env.DEV
+  ? lazy(() => import('./CookieFlows.prototype.js'))
+  : null;
 createRoot(root).render(
   <StrictMode>
     <RouterProvider
@@ -15,8 +20,16 @@ createRoot(root).render(
           path: '*',
           element: (
             <>
-              <BuildNotice />
-              <App />
+              {cookiePrototype && CookiePrototype ? (
+                <Suspense fallback={<p>Öppnar prototypen…</p>}>
+                  <CookiePrototype />
+                </Suspense>
+              ) : (
+                <>
+                  <BuildNotice />
+                  <App />
+                </>
+              )}
             </>
           ),
         },
