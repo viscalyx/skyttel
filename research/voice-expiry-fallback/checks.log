@@ -1,0 +1,5 @@
+npm notice run skyttel@0.1.0 test:env
+npm notice run python3 scripts/testing/run-with-test-environment.py node research/voice-expiry-fallback/check-artifacts.mjs
+Markdownlint: 1 file, 0 errors
+CSpell: Files checked: 1, Issues found: 0 in 0 files.
+Checked 6 files in 6ms. No fixes applied.

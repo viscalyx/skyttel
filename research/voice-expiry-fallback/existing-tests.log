@@ -1,0 +1,12 @@
+npm notice run skyttel@0.1.0 test:unit
+npm notice run npm run test:env -- vitest run tests/unit/server/voice-assistant.test.ts tests/unit/server/text-assistant.test.ts tests/unit/server/conversation-consent.test.ts -t a queued correction prevents|ending the shared text authority|an aborted public retry|a lost automatic save response|a new authorized session finds|revoking the actual MCP grant|revoking removes the saved consent|revoking ends a conversation that was approved|a consent that is revoked while
+npm notice run skyttel@0.1.0 test:env
+npm notice run python3 scripts/testing/run-with-test-environment.py vitest run tests/unit/server/voice-assistant.test.ts tests/unit/server/text-assistant.test.ts tests/unit/server/conversation-consent.test.ts -t a queued correction prevents|ending the shared text authority|an aborted public retry|a lost automatic save response|a new authorized session finds|revoking the actual MCP grant|revoking removes the saved consent|revoking ends a conversation that was approved|a consent that is revoked while
+
+ RUN  v5.0.3 /tmp/skyttel-research-443
+
+
+ Test Files  3 passed (3)
+      Tests  9 passed | 206 skipped (215)
+   Start at  19:28:03
+   Duration  11.55s (tests 85%, import 11%, transform 3%)

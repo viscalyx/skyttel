@@ -1,0 +1,6 @@
+{
+  "extends": "//",
+  "root": false,
+  "vcs": { "enabled": false },
+  "files": { "includes": ["**"] }
+}
