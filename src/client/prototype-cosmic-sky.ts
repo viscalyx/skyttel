@@ -25,12 +25,12 @@ export function prototypeCosmicSky(pixelRatio: number) {
   // x/y are directions in the first camera's field, not household coordinates.
   // A quiet central region lets the household map remain the visual subject.
   const placements = [
-    [-1.05, 0.65, 0.21, 0.62, 0.5, 0], // spiral
-    [1.25, 0.55, 0.18, 0.2, -0.4, 1], // edge-on disk
-    [1.15, -0.72, 0.12, 0.82, 0.7, 2], // elliptical
-    [-1.25, -0.55, 0.28, 0.85, 0.3, 3], // cloud and dust
-    [0.25, 1.0, 0.095, 1.0, 0.0, 4], // compact cluster
-    [-0.45, -1.12, 0.11, 0.8, 0.3, 5], // ring/filament accent
+    [-0.63, 0.39, 0.135, 0.62, 0.5, 0], // spiral
+    [0.75, 0.33, 0.117, 0.2, -0.4, 1], // edge-on disk
+    [0.69, -0.43, 0.078, 0.82, 0.7, 2], // elliptical
+    [-0.75, -0.33, 0.182, 0.85, 0.3, 3], // cloud and dust
+    [0.15, 0.6, 0.062, 1.0, 0.0, 4], // compact cluster
+    [-0.27, -0.67, 0.072, 0.8, 0.3, 5], // ring/filament accent
     [2.8, -0.1, 0.14, 0.62, 0.9, 0],
     [-2.5, 1.65, 0.13, 0.8, -0.5, 2],
     [0.4, -2.7, 0.12, 0.23, 0.6, 1],
@@ -244,17 +244,17 @@ export function prototypeCosmicSky(pixelRatio: number) {
         shapes[index].copy(baseShapes[index]);
       }
       if (composition === 'galaxies') {
-        directions[6].set(0.7, 0.95, -1).normalize().applyEuler(initialRotation);
-        directions[7].set(1.1, 0.8, -1).normalize().applyEuler(initialRotation);
-        directions[8].set(0.9, 1.3, -1).normalize().applyEuler(initialRotation);
-        shapes[6].x = 0.12;
-        shapes[7].x = 0.07;
-        shapes[8].x = 0.09;
+        directions[6].set(0.45, 0.45, -1).normalize().applyEuler(initialRotation);
+        directions[7].set(0.8, 0.55, -1).normalize().applyEuler(initialRotation);
+        directions[8].set(0.65, 0.68, -1).normalize().applyEuler(initialRotation);
+        shapes[6].x = 0.08;
+        shapes[7].x = 0.045;
+        shapes[8].x = 0.06;
       } else if (composition === 'nebulae') {
-        directions[3].set(-0.9, 0.1, -1).normalize().applyEuler(initialRotation);
-        directions[9].set(1.3, -0.25, -1).normalize().applyEuler(initialRotation);
-        shapes[3].x = 0.42;
-        shapes[9].x = 0.38;
+        directions[3].set(-0.75, -0.2, -1).normalize().applyEuler(initialRotation);
+        directions[9].set(0.85, -0.25, -1).normalize().applyEuler(initialRotation);
+        shapes[3].x = 0.3;
+        shapes[9].x = 0.26;
       }
       group.visible = active;
       stars.visible = points;
