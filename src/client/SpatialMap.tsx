@@ -293,7 +293,12 @@ export function SpatialMap({
       previous.enabled === next.enabled &&
       previous.composition === next.composition &&
       previous.palette === next.palette &&
-      previous.oceanLife === next.oceanLife
+      previous.oceanLife === next.oceanLife &&
+      previous.motion === next.motion &&
+      previous.strength === next.strength &&
+      previous.layerDepth === next.layerDepth &&
+      previous.simulateReduced === next.simulateReduced &&
+      previous.reducedBackground === next.reducedBackground
         ? previous
         : next,
     );
@@ -445,7 +450,10 @@ export function SpatialMap({
   useEffect(() => {
     if (!activated || !personalReady) return;
     scene.current?.configure(
-      { ...preferences, stars: preferences.stars && !reducedMotion },
+      {
+        ...preferences,
+        stars: preferences.stars && (backgroundPrototypeEnabled || !reducedMotion),
+      },
       theme,
       backgroundPrototypeEnabled ? { ...backgroundPreview, reducedMotion } : undefined,
     );
@@ -1152,16 +1160,27 @@ export function SpatialMap({
             <label>
               <input
                 type="checkbox"
-                checked={preferences.stars && !reducedMotion}
+                checked={preferences.stars && (backgroundPrototypeEnabled || !reducedMotion)}
                 disabled={
-                  reducedMotion || Boolean(personal && (!personal.view || personal.pending))
+                  (!backgroundPrototypeEnabled && reducedMotion) ||
+                  Boolean(personal && (!personal.view || personal.pending))
                 }
                 onChange={(event) => configure({ stars: event.target.checked })}
               />
               Visa stjärnhimmel
             </label>
-            {reducedMotion && <span>Minskad rörelse: stjärnhimlen är avstängd.</span>}
-            <p>Stjärnhimlen följer panorering, rotation och zoom. Ditt val sparas direkt.</p>
+            {reducedMotion && (
+              <span>
+                {backgroundPrototypeEnabled
+                  ? 'Rörelseprovet styr hur det sparade valet visas vid minskad rörelse.'
+                  : 'Minskad rörelse: stjärnhimlen är avstängd.'}
+              </span>
+            )}
+            <p>
+              {backgroundPrototypeEnabled
+                ? 'Testkontots sparade val. Rörelse provas i prototypmenyn längst ned.'
+                : 'Stjärnhimlen följer panorering, rotation och zoom. Ditt val sparas direkt.'}
+            </p>
             <div role="status" aria-atomic="true">
               {personal?.message && (
                 <p

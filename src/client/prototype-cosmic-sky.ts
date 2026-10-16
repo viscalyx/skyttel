@@ -264,11 +264,11 @@ export function prototypeCosmicSky(pixelRatio: number) {
       material.uniforms.composition.value = ['sparse', 'galaxies', 'nebulae'].indexOf(composition);
       material.uniforms.palette.value = ['pearl', 'dawn', 'lavender'].indexOf(palette);
     },
-    update(camera: PerspectiveCamera, rotation: Matrix3, offset: Vector3, reduced: boolean) {
+    update(camera: PerspectiveCamera, rotation: Matrix3, offset: Vector3) {
       material.uniforms.rotation.value.copy(rotation);
       material.uniforms.offset.value.copy(offset);
       material.uniforms.aspect.value = camera.aspect;
-      material.uniforms.tangent.value = Math.tan(((reduced ? 45 : camera.fov) * Math.PI) / 360);
+      material.uniforms.tangent.value = Math.tan((camera.fov * Math.PI) / 360);
     },
     dispose() {
       geometry.dispose();

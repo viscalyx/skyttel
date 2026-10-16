@@ -1,4 +1,4 @@
-// THROWAWAY: preserve A/B, compare dark D and separate light/dark ocean E.
+// THROWAWAY motion comparison in the real map: layered, gentle and frozen.
 import {
   Group,
   Matrix3,
@@ -18,13 +18,37 @@ import { type OceanLife, oceanLifeOptions, prototypeOcean } from './prototype-oc
 export const backgroundPrototypeEnabled = import.meta.env.MODE === 'prototype';
 
 export type BackgroundVariant = 'reference' | 'A' | 'B' | 'A-light' | 'B-light' | 'D' | 'E';
+export type BackgroundMotion = 'layered' | 'gentle' | 'still';
+export type ReducedBackground = 'freeze' | 'quiet' | 'off';
 export type BackgroundPreview = {
   variant: BackgroundVariant;
   enabled: boolean;
   composition: CosmicComposition;
   palette: CosmicPalette;
   oceanLife: OceanLife;
+  motion: BackgroundMotion;
+  strength: number;
+  layerDepth: number;
+  simulateReduced: boolean;
+  reducedBackground: ReducedBackground;
 };
+export const backgroundMotions = [
+  { key: 'layered', name: 'Lager med parallax' },
+  { key: 'gentle', name: 'Försiktig kamerarörelse' },
+  { key: 'still', name: 'Stilla vid aktuell vy' },
+] as const;
+
+function boundedParam(
+  params: URLSearchParams,
+  key: string,
+  fallback: number,
+  min: number,
+  max: number,
+) {
+  const raw = params.get(key);
+  const value = raw === null || raw.trim() === '' ? fallback : Number(raw);
+  return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
+}
 export const backgroundVariants: { key: BackgroundVariant; name: string; detail: string }[] = [
   { key: 'reference', name: 'Referens', detail: 'Dagens enfärgade bakgrund och stjärnhimmel.' },
   {
@@ -83,12 +107,20 @@ export function readBackgroundPreview(
   const composition = params.get('composition');
   const palette = params.get('palette');
   const oceanLife = params.get('life');
+  const motion = params.get('motion');
+  const reducedBackground = params.get('reduced');
   return {
     variant: readBackgroundVariant(value),
     enabled: params.get('background') !== 'off',
     composition: composition === 'galaxies' || composition === 'nebulae' ? composition : 'sparse',
     palette: palette === 'dawn' || palette === 'lavender' ? palette : 'pearl',
     oceanLife: oceanLifeOptions.find(({ key }) => key === oceanLife)?.key ?? 'all',
+    motion: motion === 'gentle' || motion === 'still' ? motion : 'layered',
+    strength: boundedParam(params, 'strength', 0.7, 0, 1),
+    layerDepth: boundedParam(params, 'depth', 1, 0.5, 2),
+    simulateReduced: params.get('reduce') === 'on',
+    reducedBackground:
+      reducedBackground === 'quiet' || reducedBackground === 'off' ? reducedBackground : 'freeze',
   };
 }
 
@@ -196,56 +228,82 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
   mesh.visible = false;
   group.add(mesh, cosmic.group, ocean.mesh);
   const stillCamera = new PerspectiveCamera(45, 1, 0.1, 1000);
-  stillCamera.rotation.set(-0.16, 0.35, 0);
-  stillCamera.updateMatrixWorld();
-  let reduced = false;
+  const renderCamera = new PerspectiveCamera(45, 1, 0.1, 1000);
+  const nearOffset = new Vector3();
+  let hasFrame = false;
+  let frozen = false;
+  let preview = readBackgroundPreview(new URLSearchParams(), 'dark');
+  let reduce = false;
   return {
     mesh: group,
     configure(
       variant: BackgroundVariant,
       theme: 'light' | 'dark',
       enabled: boolean,
-      reduce: boolean,
+      reducedMotion: boolean,
       composition: CosmicComposition = 'sparse',
       palette: CosmicPalette = 'pearl',
       points = true,
       oceanLife: OceanLife = 'all',
+      motionPreview?: BackgroundPreview,
     ) {
+      if (motionPreview) preview = motionPreview;
+      reduce = reducedMotion || preview.simulateReduced;
+      enabled &&= !(reduce && preview.reducedBackground === 'off');
       mesh.visible = !['reference', 'D', 'E'].includes(variant) && enabled;
       material.uniforms.variant.value = ['A', 'B', 'A-light', 'B-light'].indexOf(variant);
       material.uniforms.dark.value = theme === 'dark' ? 1 : 0;
-      reduced = reduce;
-      ocean.configure(variant === 'E' && enabled, theme === 'dark', oceanLife);
+      ocean.configure(
+        variant === 'E' && enabled,
+        theme === 'dark',
+        oceanLife,
+        !(reduce && preview.reducedBackground !== 'freeze'),
+      );
       cosmic.configure(
         variant === 'D' && enabled,
         theme === 'dark',
         composition,
         palette,
-        points && !reduce,
+        points && !(reduce && preview.reducedBackground !== 'freeze'),
       );
     },
     update(camera: PerspectiveCamera) {
+      // The reference retains the real app's original camera response.
+      if (preview.variant === 'reference') return camera;
+      const freeze = reduce || preview.motion === 'still';
+      // Capture the last displayed frame, rather than jump to a preset view.
+      // Full rotation remains 1:1 in moving modes: E must retain up/down and
+      // repeated complete turns must have no interpolation seam.
+      if (freeze && !frozen && hasFrame) stillCamera.copy(renderCamera);
+      if (!freeze || !hasFrame) {
+        renderCamera.copy(camera);
+        const factor = preview.motion === 'gentle' ? 0.2 : 1;
+        renderCamera.position.multiplyScalar(preview.strength * factor * preview.layerDepth);
+        renderCamera.fov = 45 * (camera.fov / 45) ** (preview.strength * factor);
+        if (freeze) stillCamera.copy(renderCamera);
+      } else {
+        renderCamera.copy(stillCamera);
+      }
+      frozen = freeze;
+      hasFrame = true;
+      renderCamera.aspect = camera.aspect;
+      renderCamera.updateProjectionMatrix();
+      renderCamera.updateMatrixWorld();
       camera.updateMatrixWorld();
-      material.uniforms.rotation.value.setFromMatrix4(
-        reduced ? stillCamera.matrixWorld : camera.matrixWorld,
-      );
+      material.uniforms.rotation.value.setFromMatrix4(renderCamera.matrixWorld);
       material.uniforms.offset.value
-        .copy(reduced ? stillCamera.position : camera.position)
-        .multiplyScalar(0.0015);
+        .copy(renderCamera.position)
+        .multiplyScalar(0.0015 / preview.layerDepth);
       material.uniforms.aspect.value = camera.aspect;
-      material.uniforms.tangent.value = Math.tan(((reduced ? 45 : camera.fov) * Math.PI) / 360);
-      cosmic.update(
-        camera,
-        material.uniforms.rotation.value,
-        material.uniforms.offset.value,
-        reduced,
-      );
+      material.uniforms.tangent.value = Math.tan((renderCamera.fov * Math.PI) / 360);
+      cosmic.update(renderCamera, material.uniforms.rotation.value, material.uniforms.offset.value);
       ocean.update(
         material.uniforms.rotation.value,
-        material.uniforms.offset.value,
+        nearOffset.copy(renderCamera.position).multiplyScalar(0.0015),
         camera.aspect,
         material.uniforms.tangent.value,
       );
+      return renderCamera;
     },
     dispose() {
       geometry.dispose();

@@ -44,6 +44,10 @@
   width: 100%;
   min-height: 44px;
 }
+.prototype-background-options input[type="range"] {
+  width: 100%;
+  min-height: 44px;
+}
 .prototype-background-options .prototype-background-check {
   display: flex;
   gap: 8px;

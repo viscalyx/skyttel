@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router';
 import { oceanLifeOptions } from './prototype-ocean.js';
 import {
   type BackgroundPreview,
+  backgroundMotions,
   backgroundVariants,
   readBackgroundPreview,
   variantsForTheme,
@@ -23,44 +24,79 @@ export function PrototypeBackgroundControls({
   objectCount: number;
   onPreview: (preview: BackgroundPreview) => void;
 }) {
-  const [params, setParams] = useSearchParams();
+  const [routeParams, setRouteParams] = useSearchParams();
+  // React state queues rapid control changes. Router search-param callbacks
+  // alone can overwrite a choice when two controls change before navigation.
+  const [params, setParams] = useState(() => new URLSearchParams(routeParams));
+  useEffect(() => {
+    if (routeParams.toString() !== params.toString())
+      setRouteParams(params, { replace: true, preventScrollReset: true });
+  }, [params, routeParams, setRouteParams]);
   const [host, setHost] = useState<HTMLElement | null>(null);
   useEffect(() => setHost(document.querySelector('.household-map.workspace-shell')), []);
   const theme = useWorkspaceTheme();
-  const { variant, composition, palette, oceanLife } = readBackgroundPreview(params, theme.theme);
+  const preview = readBackgroundPreview(params, theme.theme);
+  const {
+    variant,
+    composition,
+    palette,
+    oceanLife,
+    motion,
+    strength,
+    layerDepth,
+    simulateReduced,
+    reducedBackground,
+  } = preview;
+  const reduce = reducedMotion || simulateReduced;
   const current = backgroundVariants.find(({ key }) => key === variant) ?? backgroundVariants[0];
   const available = variantsForTheme(theme.theme);
   const currentIndex = available.findIndex(({ key }) => key === variant);
   const displayKey = (key: string) => key.replace('-light', '-ljus');
-  const backgroundParam = params.get('background');
-  const [enabled, setEnabled] = useState(backgroundParam !== 'off');
-  useEffect(() => setEnabled(backgroundParam !== 'off'), [backgroundParam]);
+  const enabled = params.get('background') !== 'off';
   useEffect(
-    () => onPreview({ variant, enabled, composition, palette, oceanLife }),
-    [variant, enabled, composition, palette, oceanLife, onPreview],
+    () =>
+      onPreview({
+        variant,
+        enabled,
+        composition,
+        palette,
+        oceanLife,
+        motion,
+        strength,
+        layerDepth,
+        simulateReduced,
+        reducedBackground,
+      }),
+    [
+      variant,
+      enabled,
+      composition,
+      palette,
+      oceanLife,
+      motion,
+      strength,
+      layerDepth,
+      simulateReduced,
+      reducedBackground,
+      onPreview,
+    ],
   );
   const update = (key: string, value: string) => {
-    setParams(
-      (previous) => {
-        const next = new URLSearchParams(previous);
-        next.set(key, value);
-        return next;
-      },
-      { replace: true, preventScrollReset: true },
-    );
+    setParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.set(key, value);
+      return next;
+    });
   };
   const selectAppearance = (targetTheme: 'light' | 'dark', value: string) => {
-    setParams(
-      (previous) => {
-        const next = new URLSearchParams(previous);
-        next.set('light', readBackgroundPreview(previous, 'light').variant);
-        next.set('dark', readBackgroundPreview(previous, 'dark').variant);
-        next.set(targetTheme, value);
-        next.delete('variant');
-        return next;
-      },
-      { replace: true, preventScrollReset: true },
-    );
+    setParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.set('light', readBackgroundPreview(previous, 'light').variant);
+      next.set('dark', readBackgroundPreview(previous, 'dark').variant);
+      next.set(targetTheme, value);
+      next.delete('variant');
+      return next;
+    });
   };
   const cycle = (step: number) =>
     selectAppearance(
@@ -73,13 +109,87 @@ export function PrototypeBackgroundControls({
       <aside className="prototype-background-controls" aria-label="Bakgrundsprototyp">
         <details className="prototype-background-details">
           <summary>
-            Prototyp · {displayKey(variant)} · {theme.theme === 'dark' ? 'Mörkt' : 'Ljust'}
+            Rörelseprototyp · {displayKey(variant)} ·{' '}
+            {reduce || motion === 'still' ? 'Stilla' : motion === 'gentle' ? 'Försiktig' : 'Lager'}
           </summary>
           <div className="prototype-background-options">
             <p>
               <strong>Kastbar bakgrundsprototyp</strong>
             </p>
             <p>{current.detail}</p>
+            <label>
+              Rörelsealternativ
+              <select
+                aria-label="Rörelsealternativ"
+                value={motion}
+                onChange={(event) => update('motion', event.target.value)}
+              >
+                {backgroundMotions.map(({ key, name }) => (
+                  <option key={key} value={key}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Panorering och zoom: {Math.round(strength * 100)} %
+              <input
+                aria-label="Styrka för panorering och zoom"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={strength}
+                disabled={reduce || motion === 'still' || variant === 'reference'}
+                onChange={(event) => update('strength', event.target.value)}
+              />
+            </label>
+            <label>
+              Lageravstånd: {layerDepth.toFixed(1)}
+              <input
+                aria-label="Lageravstånd"
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.1"
+                value={layerDepth}
+                disabled={reduce || motion === 'still' || variant === 'reference'}
+                onChange={(event) => update('depth', event.target.value)}
+              />
+            </label>
+            <label className="prototype-background-check">
+              <input
+                type="checkbox"
+                checked={simulateReduced}
+                onChange={(event) => update('reduce', event.target.checked ? 'on' : 'off')}
+              />
+              Prova minskad rörelse
+            </label>
+            <label>
+              Bakgrund vid minskad rörelse
+              <select
+                aria-label="Bakgrund vid minskad rörelse"
+                value={reducedBackground}
+                onChange={(event) => update('reduced', event.target.value)}
+              >
+                <option value="freeze">Behåll alla lager stilla</option>
+                <option value="quiet">Stilla utan små ljuspunkter</option>
+                <option value="off">Enfärgat · dölj hela bakgrunden</option>
+              </select>
+            </label>
+            <p>
+              Systemets minskade rörelse: {reducedMotion ? 'på' : 'av'}. Provet kan slå på minskad
+              rörelse, men kan inte åsidosätta systemets val. Stilla läge låser den aktuella
+              bakgrundsvyn. Återgång följer kartans aktuella kamera.
+            </p>
+            <p>
+              Lager: full rotation, vald styrka för panorering och zoom. Försiktig: full rotation,
+              en femtedel av vald styrka. Lageravstånd ändrar stjärnornas parallax mot det avlägsna
+              diset och förflyttningen genom E:s vatten. A:s breda ljusfält följer rotation och
+              zoom; där finns inga punktlager. E:s sand och yta följer kamerans riktning i båda
+              rörliga lägena. Ingen egen animation, efterrörelse, puls eller blinkning. Referens
+              visar applikationens tidigare beteende utan de nya rörelsevalen.
+            </p>
             {(['light', 'dark'] as const).map((targetTheme) => (
               <label key={targetTheme}>
                 Bakgrund i {targetTheme === 'light' ? 'ljust' : 'mörkt'} tema
@@ -176,7 +286,6 @@ export function PrototypeBackgroundControls({
                 type="checkbox"
                 checked={enabled}
                 onChange={(event) => {
-                  setEnabled(event.target.checked);
                   update('background', event.target.checked ? 'on' : 'off');
                 }}
               />
@@ -184,23 +293,26 @@ export function PrototypeBackgroundControls({
             </label>
             <p>
               Du kan välja olika bakgrunder för ljust och mörkt tema. Temat sparas i testkontot;
-              bakgrundsvalen och D:s fördelning finns i länken.
+              bakgrundsvalen och rörelseprovet finns i länken.
             </p>
             <p>
               {objectCount} objekt · Sparat val ”Visa stjärnhimmel”: {stars ? 'på' : 'av'} · Minskad
-              rörelse: {reducedMotion ? 'på' : 'av'}.
+              rörelse: {reduce ? 'på' : 'av'}.
             </p>
             <p>
               Stjärnor visas:{' '}
-              {stars && enabled && !reducedMotion && ['reference', 'B', 'D'].includes(variant)
+              {stars &&
+              enabled &&
+              (!reduce || (variant !== 'reference' && reducedBackground === 'freeze')) &&
+              ['reference', 'B', 'D'].includes(variant)
                 ? 'ja'
                 : 'nej'}
               .
             </p>
             <p>
-              {reducedMotion
-                ? 'Stillastående bakgrund, inga stjärnor.'
-                : 'Bakgrunden följer kameran. Ingen egen animation.'}
+              Aktuellt prov: {backgroundMotions.find(({ key }) => key === motion)?.name} · styrka{' '}
+              {strength.toFixed(2)} · lageravstånd {layerDepth.toFixed(1)} ·
+              {reduce ? `minskad rörelse (${reducedBackground})` : 'vanlig rörelse'}.
             </p>
             <p>
               Rotation, panorering och zoom: använd kartans vanliga verktyg. Piltangenter växlar

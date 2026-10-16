@@ -234,9 +234,22 @@ export function spatialScene(
     skyCamera.aspect = camera.aspect;
     skyCamera.fov = Math.max(15, Math.min(110, 45 * Math.sqrt(controls.getDistance() / 30)));
     skyCamera.updateProjectionMatrix();
-    prototypeBackground?.update(skyCamera);
+    const backgroundCamera = prototypeBackground?.update(skyCamera) ?? skyCamera;
+    if (backgroundPrototypeEnabled) {
+      canvas.dataset.prototypeCamera = JSON.stringify({
+        position: backgroundCamera.position.toArray(),
+        rotation: backgroundCamera.quaternion.toArray(),
+        fov: backgroundCamera.fov,
+        stars: stars.visible,
+      });
+      canvas.dataset.prototypeSource = JSON.stringify({
+        position: skyCamera.position.toArray(),
+        rotation: skyCamera.quaternion.toArray(),
+        fov: skyCamera.fov,
+      });
+    }
     renderer.clear();
-    renderer.render(sky, skyCamera);
+    renderer.render(sky, backgroundCamera);
     onOrientation(
       [new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1)].map((axis) =>
         axis.applyQuaternion(camera.quaternion.clone().invert()),
@@ -507,9 +520,14 @@ export function spatialScene(
       prototype?: BackgroundPreview & { reducedMotion: boolean },
     ) {
       settings = value;
+      const reduce = prototype && (prototype.reducedMotion || prototype.simulateReduced);
       stars.visible =
         value.stars &&
-        (!prototype || (prototype.enabled && ['reference', 'B'].includes(prototype.variant)));
+        (!prototype ||
+          (prototype.enabled &&
+            (!reduce ||
+              (prototype.variant !== 'reference' && prototype.reducedBackground === 'freeze')) &&
+            ['reference', 'B'].includes(prototype.variant)));
       prototypeBackground?.configure(
         prototype?.variant ?? 'reference',
         theme,
@@ -519,6 +537,7 @@ export function spatialScene(
         prototype?.palette,
         value.stars,
         prototype?.oceanLife,
+        prototype,
       );
       sky.background = new Color(theme === 'light' ? '#eef3f3' : '#101b29');
       draw();

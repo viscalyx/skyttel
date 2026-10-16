@@ -6,7 +6,10 @@ import { defaultViewSettings } from '../src/shared/personal-view.js';
 import { prototypeBackgroundInstallation } from './prototype-background-installation.js';
 import { seedDemo } from './seeds/demo.js';
 
-const installation = await prototypeBackgroundInstallation(process.argv.includes('--dev'));
+const installation = await prototypeBackgroundInstallation(
+  process.argv.includes('--dev'),
+  process.argv.includes('--dense') ? 5189 : 5188,
+);
 const { database, config } = installation;
 const origin = config.origin;
 const household = seedDemo(database, config);
@@ -54,7 +57,7 @@ view.configure({
 console.log(
   `\nTHROWAWAY background prototype: ${process.argv.includes('--dense') ? 'dense (80 objects)' : 'sparse (16 objects)'}`,
 );
-console.log(`Open ${origin}/?variant=E`);
+console.log(`Open ${origin}/?light=E&dark=D&motion=layered`);
 console.log(
   'Choose "Öppna testkartan som Alex". No personal credentials, external provider or billable APIs.',
 );
@@ -62,6 +65,9 @@ console.log(
   'Variants: reference, A, B, A-light, B-light, dark D, E. Independent light/dark choices.',
 );
 console.log('Ctrl+C deletes this scratch installation.');
+console.log(
+  'Motion: layered, gentle, still. Reduced motion: reduce=on; reduced=freeze, quiet, off.',
+);
 let stopping = false;
 async function stop() {
   if (stopping) return;

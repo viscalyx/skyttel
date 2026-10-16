@@ -14,12 +14,12 @@ import type { Config } from '../src/server/config.js';
 import { openDatabase } from '../src/server/database.js';
 import { attachTaskDelivery } from '../src/server/task-delivery-transport.js';
 
-export async function prototypeBackgroundInstallation(development = false) {
+export async function prototypeBackgroundInstallation(development = false, port = 5188) {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-background-prototype-'));
   const config: Config = {
-    origin: 'http://localhost:5187',
+    origin: `http://localhost:${port}`,
     host: '127.0.0.1',
-    port: 5187,
+    port,
     databasePath: join(directory, 'skyttel.db'),
     firstAdmin: { provider: 'google', subject: 'alex-google' },
     authSecret: 'synthetic-background-prototype-secret-32-characters',
@@ -40,11 +40,12 @@ export async function prototypeBackgroundInstallation(development = false) {
   context.authCookies = getCookies(context.options);
   context.createAuthCookie = createCookieGetter(context.options);
   const bindingCookie = `${cookiePrefix}_binding`;
+  const server = createHttpServer();
   const vite = development
     ? await createViteServer({
         mode: 'prototype',
         cacheDir: join(directory, 'vite'),
-        server: { middlewareMode: true, hmr: false },
+        server: { middlewareMode: true, port, hmr: false, ws: { server } },
         plugins: [
           {
             name: 'prototype-cookie-metadata',
@@ -142,7 +143,7 @@ export async function prototypeBackgroundInstallation(development = false) {
     }
     return response;
   });
-  const server = createHttpServer((request, response) => {
+  server.on('request', (request, response) => {
     const url = new URL(request.url ?? '/', config.origin);
     if (
       vite &&
@@ -163,8 +164,19 @@ export async function prototypeBackgroundInstallation(development = false) {
     server.once('error', reject);
     server.listen(config.port, config.host);
   });
-  attachTaskDelivery(server, config.origin, (request) =>
-    app.prepareTaskDelivery(prototypeRequest(request)),
+  attachTaskDelivery(
+    {
+      on(event, listener) {
+        server.on(event, (request, socket, head) => {
+          // Vite owns its own development connection on this same port.
+          if (['vite-hmr', 'vite-ping'].includes(String(request.headers['sec-websocket-protocol'])))
+            return;
+          listener(request, socket, head);
+        });
+      },
+    },
+    config.origin,
+    (request) => app.prepareTaskDelivery(prototypeRequest(request)),
   );
   return {
     directory,

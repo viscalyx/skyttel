@@ -34,6 +34,7 @@ export function prototypeOcean() {
     uniforms: {
       dark: { value: 0 },
       life: { value: 0 },
+      particles: { value: 1 },
       aspect: { value: 1 },
       tangent: { value: 0.4142 },
       rotation: { value: new Matrix3() },
@@ -74,7 +75,7 @@ export function prototypeOcean() {
     `,
     fragmentShader: `
       varying vec2 screen;
-      uniform float dark, life, aspect, tangent;
+      uniform float dark, life, particles, aspect, tangent;
       uniform mat3 rotation, worldRotation;
       uniform vec3 offset;
       uniform vec4 creatures[8];
@@ -284,7 +285,7 @@ export function prototypeOcean() {
         vec2 cell=floor(q*100.), f=fract(q*100.)-.5;
         float grain=exp(-dot(f,f)*100.)*step(.985,hash(cell));
         float quiet=smoothstep(.15,.65,abs(q.x));
-        if(dark>.5) colour+=mix(vec3(.04,.055,.05),vec3(.035,.08,.085),dark)*grain*quiet;
+        if(dark>.5) colour+=mix(vec3(.04,.055,.05),vec3(.035,.08,.085),dark)*grain*quiet*particles;
         gl_FragColor=vec4(colour,1.);
       }
     `,
@@ -295,9 +296,10 @@ export function prototypeOcean() {
   mesh.visible = false;
   return {
     mesh,
-    configure(active: boolean, dark: boolean, life: OceanLife) {
+    configure(active: boolean, dark: boolean, life: OceanLife, particles = true) {
       mesh.visible = active;
       material.uniforms.dark.value = dark ? 1 : 0;
+      material.uniforms.particles.value = particles ? 1 : 0;
       material.uniforms.life.value =
         life === 'original'
           ? -1
