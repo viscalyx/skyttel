@@ -2,7 +2,7 @@
 
 For designers comparing quiet ocean backgrounds for Skyttel's household map.
 Source review: 2026-10-16. Dark E works for the user; this note supplies
-possible animal forms for a later comparison, without changing that version.
+the references for six additional animal forms requested for comparison.
 See [the ocean study](./ocean-background.md) for light-theme references.
 
 ## What produces the light
@@ -114,13 +114,15 @@ bioluminescence. MBARI confirms that *Mnemiopsis leidyi* and
 [Smithsonian: Jellyfish and Comb Jellies](https://ocean.si.edu/ocean-life/invertebrates/jellyfish-and-comb-jellies)
 [MBARI: Comb jellies make their own glowing compounds](https://www.mbari.org/news/glow-your-own-comb-jellies-make-their-own-glowing-compounds-instead-of-getting-them-from-food/)
 
-## Suggested next comparison
+## Prototype composition
 
-Start with three complementary silhouettes: an Atolla-inspired crown, a
-segmented siphonophore ribbon, and a small lanternfish-like body with light
-rows. This is a design recommendation, not a claim that these animals form
-one observed community. Their scales, positions and colors would be freely
-composed for the interface. Keep the current dark E available for comparison.
+The user requests all six forms. Offer the combined composition and each
+form individually, alongside the original dark E jellyfish for comparison.
+The crown, segmented colony and fish with light rows provide complementary
+silhouettes; arm-tip lights with fluid, secretion trails and a bacterial
+lure add different light placements. This composition does not claim that
+these animals form one observed community. Scales, positions and colors
+are freely composed for the interface.
 
 Use sparse blue and cyan accents near the edges with a dark, quiet center.
 Freeze the illustrative forms: no autonomous swimming, flashing or pulsing.

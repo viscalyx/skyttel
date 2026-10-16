@@ -292,7 +292,8 @@ export function SpatialMap({
       previous.variant === next.variant &&
       previous.enabled === next.enabled &&
       previous.composition === next.composition &&
-      previous.palette === next.palette
+      previous.palette === next.palette &&
+      previous.oceanLife === next.oceanLife
         ? previous
         : next,
     );

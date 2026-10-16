@@ -54,24 +54,22 @@ and dark treatments. Source review: 2026-10-16.
 
 ## Light theme: design inference
 
-Start with sunlit open water: pearl white near the upper edge, pale aqua
-through the center, and slightly deeper blue-green toward the lower edges.
-This palette is an illustration chosen for interface legibility, not a
-claim that the deep ocean has ambient white daylight.
+The user requests a sand bed below the viewpoint and a water surface above
+it, with refracted light in between and light patterns on the sand. Looking
+down should reveal sand; looking up should reveal the surface. A spiral,
+central focus or spherical texture around the viewpoint does not fit.
 
-1. Distribute diffuse light across the water surface, with faint broken
-   caustic ribbons near an edge. The user rejects a visible common origin
-   or converging fan of rays in light E. Prefer gently varying, approximately
-   parallel light bands rather than a single point source. Avoid a sharp
-   mesh across the map: it could resemble household connections or a grid.
-2. Place two or three transparent jelly silhouettes off center, using soft
-   blue-green outlines and pale internal shading. Leave the main object and
-   label area visually quiet. Keep tentacles faint and away from labels.
-3. Add occasional small, softly shaded particles at different apparent
-   sizes. Treat these as suspended material, with no sparkle crosses.
-4. Consider a small, restrained iridescent accent on a comb jelly as a
-   secondary study. Its rainbow suggests scattered ambient light; avoid
-   describing it as bioluminescence or filling the whole scene with rainbow.
+1. Intersect view rays with two horizontal planes. Map sand grain and light
+   patterns onto the lower plane, and wave patterns onto the upper plane.
+   Avoid projecting either pattern through spherical angle coordinates.
+2. Fade distant sand into blue-green water to suggest absorption and depth.
+   The warm sand, pale surface and turquoise volume are artistic choices
+   for interface legibility, not a physical underwater light simulation.
+3. Distribute diffuse light through the surface without one common origin.
+   Reserve focused caustic patterns for the sand and surface, leaving the
+   water between them quiet enough for household objects and connections.
+4. Keep luminous animals in the separate dark treatment. Do not overlay
+   animal silhouettes on the sand when the user looks down.
 
 ## Dark theme: design inference
 

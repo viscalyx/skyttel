@@ -518,6 +518,7 @@ export function spatialScene(
         prototype?.composition,
         prototype?.palette,
         value.stars,
+        prototype?.oceanLife,
       );
       sky.background = new Color(theme === 'light' ? '#eef3f3' : '#101b29');
       draw();

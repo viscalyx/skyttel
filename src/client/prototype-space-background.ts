@@ -13,7 +13,7 @@ import {
   type CosmicPalette,
   prototypeCosmicSky,
 } from './prototype-cosmic-sky.js';
-import { prototypeOcean } from './prototype-ocean.js';
+import { type OceanLife, oceanLifeOptions, prototypeOcean } from './prototype-ocean.js';
 
 export const backgroundPrototypeEnabled = import.meta.env.MODE === 'prototype';
 
@@ -23,6 +23,7 @@ export type BackgroundPreview = {
   enabled: boolean;
   composition: CosmicComposition;
   palette: CosmicPalette;
+  oceanLife: OceanLife;
 };
 export const backgroundVariants: { key: BackgroundVariant; name: string; detail: string }[] = [
   { key: 'reference', name: 'Referens', detail: 'Dagens enfärgade bakgrund och stjärnhimmel.' },
@@ -81,11 +82,13 @@ export function readBackgroundPreview(
     value = theme === 'light' ? 'A-light' : 'A';
   const composition = params.get('composition');
   const palette = params.get('palette');
+  const oceanLife = params.get('life');
   return {
     variant: readBackgroundVariant(value),
     enabled: params.get('background') !== 'off',
     composition: composition === 'galaxies' || composition === 'nebulae' ? composition : 'sparse',
     palette: palette === 'dawn' || palette === 'lavender' ? palette : 'pearl',
+    oceanLife: oceanLifeOptions.find(({ key }) => key === oceanLife)?.key ?? 'all',
   };
 }
 
@@ -206,12 +209,13 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
       composition: CosmicComposition = 'sparse',
       palette: CosmicPalette = 'pearl',
       points = true,
+      oceanLife: OceanLife = 'all',
     ) {
       mesh.visible = !['reference', 'D', 'E'].includes(variant) && enabled;
       material.uniforms.variant.value = ['A', 'B', 'A-light', 'B-light'].indexOf(variant);
       material.uniforms.dark.value = theme === 'dark' ? 1 : 0;
       reduced = reduce;
-      ocean.configure(variant === 'E' && enabled, theme === 'dark');
+      ocean.configure(variant === 'E' && enabled, theme === 'dark', oceanLife);
       cosmic.configure(
         variant === 'D' && enabled,
         theme === 'dark',

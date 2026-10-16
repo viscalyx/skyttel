@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router';
+import { oceanLifeOptions } from './prototype-ocean.js';
 import {
   type BackgroundPreview,
   backgroundVariants,
@@ -26,7 +27,7 @@ export function PrototypeBackgroundControls({
   const [host, setHost] = useState<HTMLElement | null>(null);
   useEffect(() => setHost(document.querySelector('.household-map.workspace-shell')), []);
   const theme = useWorkspaceTheme();
-  const { variant, composition, palette } = readBackgroundPreview(params, theme.theme);
+  const { variant, composition, palette, oceanLife } = readBackgroundPreview(params, theme.theme);
   const current = backgroundVariants.find(({ key }) => key === variant) ?? backgroundVariants[0];
   const available = variantsForTheme(theme.theme);
   const currentIndex = available.findIndex(({ key }) => key === variant);
@@ -35,8 +36,8 @@ export function PrototypeBackgroundControls({
   const [enabled, setEnabled] = useState(backgroundParam !== 'off');
   useEffect(() => setEnabled(backgroundParam !== 'off'), [backgroundParam]);
   useEffect(
-    () => onPreview({ variant, enabled, composition, palette }),
-    [variant, enabled, composition, palette, onPreview],
+    () => onPreview({ variant, enabled, composition, palette, oceanLife }),
+    [variant, enabled, composition, palette, oceanLife, onPreview],
   );
   const update = (key: string, value: string) => {
     setParams(
@@ -145,12 +146,30 @@ export function PrototypeBackgroundControls({
               </>
             )}
             {variant === 'E' && (
-              <p>
-                {theme.theme === 'light'
-                  ? 'Solstrålar, mjukt ljusspel och genomskinliga manetformer i pärlemor och turkos.'
-                  : 'Djupblått vatten med glesa blågröna ljusorgan och manetformer. Inga solstrålar.'}{' '}
-                Fria illustrationer av havet. Ingen egen animation eller blinkningar.
-              </p>
+              <>
+                <p>
+                  {theme.theme === 'light'
+                    ? 'Sandbotten nedanför, vattenyta ovanför och brutet ljus genom vattnet. Titta uppåt eller nedåt med kartans rotation.'
+                    : 'Djupblått vatten med sex olika former av bioluminiscens. Fria illustrationer av djur från olika havsdjup.'}{' '}
+                  Ingen egen animation eller blinkningar.
+                </p>
+                {theme.theme === 'dark' && (
+                  <label>
+                    Djurliv i mörkt E
+                    <select
+                      aria-label="Djurliv i mörkt E"
+                      value={oceanLife}
+                      onChange={(event) => update('life', event.target.value)}
+                    >
+                      {oceanLifeOptions.map(({ key, name }) => (
+                        <option key={key} value={key}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </>
             )}
             <label className="prototype-background-check">
               <input
@@ -172,7 +191,7 @@ export function PrototypeBackgroundControls({
               rörelse: {reducedMotion ? 'på' : 'av'}.
             </p>
             <p>
-              Ljuspunkter visas:{' '}
+              Stjärnor visas:{' '}
               {stars && enabled && !reducedMotion && ['reference', 'B', 'D'].includes(variant)
                 ? 'ja'
                 : 'nej'}
@@ -180,7 +199,7 @@ export function PrototypeBackgroundControls({
             </p>
             <p>
               {reducedMotion
-                ? 'Stillastående bakgrund, inga ljuspunkter.'
+                ? 'Stillastående bakgrund, inga stjärnor.'
                 : 'Bakgrunden följer kameran. Ingen egen animation.'}
             </p>
             <p>
@@ -204,7 +223,10 @@ export function PrototypeBackgroundControls({
             ←
           </button>
           <output aria-live="polite">
-            {displayKey(variant)} · {current.name}
+            {displayKey(variant)} ·{' '}
+            {variant === 'E' && theme.theme === 'dark'
+              ? oceanLifeOptions.find(({ key }) => key === oceanLife)?.name.split(' · ')[0]
+              : current.name}
           </output>
           <button type="button" aria-label="Nästa bakgrund" onClick={() => cycle(1)}>
             →
