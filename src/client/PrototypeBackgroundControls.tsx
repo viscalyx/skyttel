@@ -45,7 +45,6 @@ export function PrototypeBackgroundControls({
     strength,
     layerDepth,
     simulateReduced,
-    reducedBackground,
   } = preview;
   const reduce = reducedMotion || simulateReduced;
   const current = backgroundVariants.find(({ key }) => key === variant) ?? backgroundVariants[0];
@@ -65,7 +64,6 @@ export function PrototypeBackgroundControls({
         strength,
         layerDepth,
         simulateReduced,
-        reducedBackground,
       }),
     [
       variant,
@@ -77,7 +75,6 @@ export function PrototypeBackgroundControls({
       strength,
       layerDepth,
       simulateReduced,
-      reducedBackground,
       onPreview,
     ],
   );
@@ -165,22 +162,13 @@ export function PrototypeBackgroundControls({
               />
               Prova minskad rörelse
             </label>
-            <label>
-              Bakgrund vid minskad rörelse
-              <select
-                aria-label="Bakgrund vid minskad rörelse"
-                value={reducedBackground}
-                onChange={(event) => update('reduced', event.target.value)}
-              >
-                <option value="freeze">Behåll alla lager stilla</option>
-                <option value="quiet">Stilla utan små ljuspunkter</option>
-                <option value="off">Enfärgat · dölj hela bakgrunden</option>
-              </select>
-            </label>
+            <p>Vid minskad rörelse behålls alla lager synliga och stilla.</p>
             <p>
               Systemets minskade rörelse: {reducedMotion ? 'på' : 'av'}. Provet kan slå på minskad
               rörelse, men kan inte åsidosätta systemets val. Stilla läge låser den aktuella
-              bakgrundsvyn. Återgång följer kartans aktuella kamera.
+              bakgrundsvyn. När minskad rörelse upphör ligger bakgrunden kvar och följer nya
+              kamerarörelser från den platsen. Inga tidigare rörelser spelas ikapp. Återställ vy
+              riktar åter bakgrunden efter kartan när minskad rörelse är av.
             </p>
             <p>
               Båda rörliga lägena följer full rotation och kartans försiktiga panorering med vald
@@ -304,7 +292,7 @@ export function PrototypeBackgroundControls({
               Stjärnor visas:{' '}
               {stars &&
               enabled &&
-              (!reduce || (variant !== 'reference' && reducedBackground === 'freeze')) &&
+              (!reduce || variant !== 'reference') &&
               ['reference', 'B', 'D'].includes(variant)
                 ? 'ja'
                 : 'nej'}
@@ -313,7 +301,7 @@ export function PrototypeBackgroundControls({
             <p>
               Aktuellt prov: {backgroundMotions.find(({ key }) => key === motion)?.name} · styrka{' '}
               {strength.toFixed(2)} · lageravstånd {layerDepth.toFixed(1)} ·
-              {reduce ? `minskad rörelse (${reducedBackground})` : 'vanlig rörelse'}.
+              {reduce ? 'alla lager stilla' : 'vanlig rörelse'}.
             </p>
             <p>
               Rotation, panorering och zoom: använd kartans vanliga verktyg. Piltangenter växlar

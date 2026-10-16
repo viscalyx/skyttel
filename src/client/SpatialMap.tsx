@@ -297,8 +297,7 @@ export function SpatialMap({
       previous.motion === next.motion &&
       previous.strength === next.strength &&
       previous.layerDepth === next.layerDepth &&
-      previous.simulateReduced === next.simulateReduced &&
-      previous.reducedBackground === next.reducedBackground
+      previous.simulateReduced === next.simulateReduced
         ? previous
         : next,
     );

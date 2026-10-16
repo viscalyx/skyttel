@@ -5,6 +5,7 @@ import {
   Mesh,
   PerspectiveCamera,
   PlaneGeometry,
+  Quaternion,
   ShaderMaterial,
   Vector3,
 } from 'three';
@@ -19,7 +20,6 @@ export const backgroundPrototypeEnabled = import.meta.env.MODE === 'prototype';
 
 export type BackgroundVariant = 'reference' | 'A' | 'B' | 'A-light' | 'B-light' | 'D' | 'E';
 export type BackgroundMotion = 'layered' | 'gentle' | 'still';
-export type ReducedBackground = 'freeze' | 'quiet' | 'off';
 export type BackgroundPreview = {
   variant: BackgroundVariant;
   enabled: boolean;
@@ -30,7 +30,6 @@ export type BackgroundPreview = {
   strength: number;
   layerDepth: number;
   simulateReduced: boolean;
-  reducedBackground: ReducedBackground;
 };
 export const backgroundMotions = [
   { key: 'layered', name: 'Lager med parallax' },
@@ -108,7 +107,6 @@ export function readBackgroundPreview(
   const palette = params.get('palette');
   const oceanLife = params.get('life');
   const motion = params.get('motion');
-  const reducedBackground = params.get('reduced');
   return {
     variant: readBackgroundVariant(value),
     enabled: params.get('background') !== 'off',
@@ -119,8 +117,6 @@ export function readBackgroundPreview(
     strength: boundedParam(params, 'strength', 0.7, 0, 1),
     layerDepth: boundedParam(params, 'depth', 1, 0.5, 2),
     simulateReduced: params.get('reduce') === 'on',
-    reducedBackground:
-      reducedBackground === 'quiet' || reducedBackground === 'off' ? reducedBackground : 'freeze',
   };
 }
 
@@ -232,9 +228,13 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
   group.add(mesh, cosmic.group, ocean.mesh);
   const stillCamera = new PerspectiveCamera(45, 1, 0.1, 1000);
   const renderCamera = new PerspectiveCamera(45, 1, 0.1, 1000);
+  const resumeSource = new PerspectiveCamera();
+  const resumeView = new PerspectiveCamera();
+  const resumeRotation = new Quaternion();
   const nearOffset = new Vector3();
   let hasFrame = false;
   let frozen = false;
+  let rebased = false;
   let preview = readBackgroundPreview(new URLSearchParams(), 'dark');
   let reduce = false;
   return {
@@ -252,23 +252,11 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
     ) {
       if (motionPreview) preview = motionPreview;
       reduce = reducedMotion || preview.simulateReduced;
-      enabled &&= !(reduce && preview.reducedBackground === 'off');
       mesh.visible = !['reference', 'D', 'E'].includes(variant) && enabled;
       material.uniforms.variant.value = ['A', 'B', 'A-light', 'B-light'].indexOf(variant);
       material.uniforms.dark.value = theme === 'dark' ? 1 : 0;
-      ocean.configure(
-        variant === 'E' && enabled,
-        theme === 'dark',
-        oceanLife,
-        !(reduce && preview.reducedBackground !== 'freeze'),
-      );
-      cosmic.configure(
-        variant === 'D' && enabled,
-        theme === 'dark',
-        composition,
-        palette,
-        points && !(reduce && preview.reducedBackground !== 'freeze'),
-      );
+      ocean.configure(variant === 'E' && enabled, theme === 'dark', oceanLife);
+      cosmic.configure(variant === 'D' && enabled, theme === 'dark', composition, palette, points);
     },
     update(camera: PerspectiveCamera) {
       // The reference retains the real app's original camera response.
@@ -278,13 +266,40 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
       // Full rotation remains 1:1 in moving modes: E must retain up/down and
       // repeated complete turns must have no interpolation seam.
       if (freeze && !frozen && hasFrame) stillCamera.copy(renderCamera);
+      if (!freeze && frozen) {
+        // Continue from the displayed pose. Camera movement made while frozen
+        // must not be replayed when the accessibility preference changes.
+        resumeSource.copy(camera);
+        resumeView.copy(stillCamera);
+        resumeRotation
+          .copy(resumeView.quaternion)
+          .multiply(resumeSource.quaternion.clone().invert());
+        rebased = true;
+      }
       if (!freeze || !hasFrame) {
         renderCamera.copy(camera);
         const factor = preview.motion === 'gentle' ? 0.2 : 1;
         // The scene already bounds pan like the real app. Keep the extra
         // gentle factor for the approved zoom response only.
-        renderCamera.position.multiplyScalar(preview.strength * preview.layerDepth);
-        renderCamera.fov = 45 * (camera.fov / 45) ** (preview.strength * factor);
+        const panGain = preview.strength * preview.layerDepth;
+        const zoomGain = preview.strength * factor;
+        if (rebased) {
+          if (camera.quaternion.equals(resumeSource.quaternion))
+            renderCamera.quaternion.copy(resumeView.quaternion);
+          else renderCamera.quaternion.premultiply(resumeRotation);
+          renderCamera.position
+            .sub(resumeSource.position)
+            .applyQuaternion(resumeRotation)
+            .multiplyScalar(panGain)
+            .add(resumeView.position);
+          renderCamera.fov = resumeView.fov * (camera.fov / resumeSource.fov) ** zoomGain;
+        } else {
+          renderCamera.position.multiplyScalar(panGain);
+          renderCamera.fov = 45 * (camera.fov / 45) ** zoomGain;
+        }
+        // Repeated freeze/resume cycles must stay inside the star sphere.
+        renderCamera.position.clampLength(0, 280);
+        renderCamera.fov = Math.max(15, Math.min(110, renderCamera.fov));
         if (freeze) stillCamera.copy(renderCamera);
       } else {
         renderCamera.copy(stillCamera);
@@ -309,6 +324,14 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
         material.uniforms.tangent.value,
       );
       return renderCamera;
+    },
+    reset() {
+      // An explicit view reset realigns the decorative world with the map.
+      // While reduced motion is on, even reset leaves the backdrop still.
+      if (!reduce && preview.motion !== 'still') rebased = false;
+    },
+    needsReset() {
+      return rebased;
     },
     dispose() {
       geometry.dispose();
