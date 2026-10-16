@@ -12,6 +12,11 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { PersonalPosition, Position, ViewSettings } from '../shared/personal-view.js';
+import {
+  type BackgroundVariant,
+  backgroundPrototypeEnabled,
+  prototypeSpaceBackground,
+} from './prototype-space-background.js';
 import { cameraGestures } from './spatial-navigation.js';
 
 export type ProjectedPoint = {
@@ -41,6 +46,8 @@ export function spatialScene(
   const sky = new Scene();
   sky.background = new Color('#132e25');
   const skyCamera = new PerspectiveCamera(45, 1, 0.1, 1000);
+  const prototypeBackground = backgroundPrototypeEnabled ? prototypeSpaceBackground() : null;
+  if (prototypeBackground) sky.add(prototypeBackground.mesh);
   const camera = new PerspectiveCamera(45, 1, 0.1, 500000);
   renderer.autoClear = false;
   const controls = new OrbitControls(camera, canvas);
@@ -225,6 +232,7 @@ export function spatialScene(
     skyCamera.aspect = camera.aspect;
     skyCamera.fov = Math.max(15, Math.min(110, 45 * Math.sqrt(controls.getDistance() / 30)));
     skyCamera.updateProjectionMatrix();
+    prototypeBackground?.update(skyCamera);
     renderer.clear();
     renderer.render(sky, skyCamera);
     onOrientation(
@@ -491,9 +499,25 @@ export function spatialScene(
       onMotion();
       return true;
     },
-    configure(value: ViewSettings, theme: 'light' | 'dark' = 'dark') {
+    configure(
+      value: ViewSettings,
+      theme: 'light' | 'dark' = 'dark',
+      prototype?: {
+        variant: BackgroundVariant;
+        enabled: boolean;
+        reducedMotion: boolean;
+      },
+    ) {
       settings = value;
-      stars.visible = value.stars;
+      starGeometry.setDrawRange(0, prototype?.variant === 'C' ? 900 : 3600);
+      stars.visible =
+        value.stars && (!prototype || (prototype.enabled && prototype.variant !== 'A'));
+      prototypeBackground?.configure(
+        prototype?.variant ?? 'reference',
+        theme,
+        prototype?.enabled ?? false,
+        prototype?.reducedMotion ?? false,
+      );
       sky.background = new Color(theme === 'light' ? '#eef3f3' : '#101b29');
       draw();
     },
@@ -554,6 +578,7 @@ export function spatialScene(
       gestures.dispose();
       starGeometry.dispose();
       starMaterial.dispose();
+      prototypeBackground?.dispose();
       renderer.dispose();
     },
   };

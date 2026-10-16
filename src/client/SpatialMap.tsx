@@ -19,6 +19,12 @@ import { MapNavigation } from './MapNavigation.js';
 import type { MapRevealRequest } from './map-display.js';
 import { mapConnections, proposalKind } from './map-presentation.js';
 import { ObjectActions, type ObjectActionsEntry } from './ObjectActions.js';
+import { PrototypeBackgroundControls } from './PrototypeBackgroundControls.js';
+import {
+  type BackgroundVariant,
+  backgroundPrototypeEnabled,
+  readBackgroundVariant,
+} from './prototype-space-background.js';
 import { SpatialHeightGuide } from './SpatialHeightGuide.js';
 import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
 import { SpatialOrientation } from './SpatialOrientation.js';
@@ -278,6 +284,17 @@ export function SpatialMap({
     };
   }, [activated]);
   const scene = useRef<ReturnType<typeof spatialScene> | null>(null);
+  const [backgroundPreview, setBackgroundPreview] = useState(() => ({
+    variant: readBackgroundVariant(new URLSearchParams(window.location.search).get('variant')),
+    enabled: new URLSearchParams(window.location.search).get('background') !== 'off',
+  }));
+  const changeBackgroundPreview = useCallback((variant: BackgroundVariant, enabled: boolean) => {
+    setBackgroundPreview((previous) =>
+      previous.variant === variant && previous.enabled === enabled
+        ? previous
+        : { variant, enabled },
+    );
+  }, []);
   const [orientation, setOrientation] = useState<Position[]>([]);
   const [moving, setMoving] = useState(false);
   const motionTimer = useRef<number>(0);
@@ -424,14 +441,18 @@ export function SpatialMap({
   }, [activated, selectedIds]);
   useEffect(() => {
     if (!activated || !personalReady) return;
-    scene.current?.configure({ ...preferences, stars: preferences.stars && !reducedMotion }, theme);
+    scene.current?.configure(
+      { ...preferences, stars: preferences.stars && !reducedMotion },
+      theme,
+      backgroundPrototypeEnabled ? { ...backgroundPreview, reducedMotion } : undefined,
+    );
     if (!active) return;
     if (preferences.allLabels && !previousLabels.current) {
       if (scene.current?.openLabelView(labelsInitialized.current)) setCloserLabels(true);
     }
     labelsInitialized.current = true;
     previousLabels.current = preferences.allLabels;
-  }, [preferences, activated, active, personalReady, reducedMotion, theme]);
+  }, [preferences, activated, active, personalReady, reducedMotion, theme, backgroundPreview]);
   const focusObjects = useCallback((ids: string[], reveal?: MapRevealRequest) => {
     const element = canvas.current;
     if (!element) return false;
@@ -1203,6 +1224,14 @@ export function SpatialMap({
         <p className="graphics-notice">Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.</p>
       )}
       {unavailable && <p>Rymdkartan kan inte visas. Använd Tabell för att fortsätta.</p>}
+      {backgroundPrototypeEnabled && active && (
+        <PrototypeBackgroundControls
+          onPreview={changeBackgroundPreview}
+          reducedMotion={reducedMotion}
+          stars={preferences.stars}
+          objectCount={objects.size}
+        />
+      )}
       <div
         ref={surface}
         className="spatial-surface"

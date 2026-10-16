@@ -1,0 +1,89 @@
+.prototype-background-controls {
+  position: fixed;
+  z-index: 80;
+  left: 50%;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(350px, calc(100vw - 160px));
+  min-width: 160px;
+  color: var(--space-text);
+  background: var(--space-surface);
+  border: 1px solid var(--space-control);
+  border-radius: 16px;
+  box-shadow: var(--space-shadow);
+  font-size: 13px;
+}
+.prototype-background-details summary {
+  min-height: 36px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.prototype-background-options {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(350px, calc(100vw - 24px));
+  max-height: calc(100dvh - 130px);
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--space-surface);
+  border: 1px solid var(--space-control);
+  border-radius: 16px;
+  box-shadow: var(--space-shadow);
+}
+.prototype-background-options p {
+  margin: 0 0 12px;
+}
+.prototype-background-options label {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+.prototype-background-options select {
+  width: 100%;
+  min-height: 44px;
+}
+.prototype-background-options .prototype-background-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+}
+.prototype-background-check input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+}
+.household-map .prototype-background-cycle {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  border-top: 1px solid var(--space-control);
+}
+.prototype-background-cycle button {
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: 14px;
+  font-size: 20px;
+}
+.prototype-background-cycle output {
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px;
+}
+@media (max-height: 450px) {
+  .prototype-background-controls {
+    bottom: 4px;
+  }
+  .prototype-background-details summary {
+    min-height: 28px;
+    padding-block: 4px;
+  }
+}

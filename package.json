@@ -16,6 +16,8 @@
     }
   },
   "scripts": {
+    "prototype:background:build": "npm run test:env -- vite build --mode prototype",
+    "prototype:background": "npm run prototype:background:build && tsx scripts/prototype-space-background.ts",
     "dev": "tsx watch src/server/index.ts",
     "dev:client": "vite --host 127.0.0.1",
     "dev:all": "node scripts/develop.mjs",

@@ -50,6 +50,7 @@ import { HouseholdExport } from './HouseholdExport.js';
 import { HouseholdImport } from './HouseholdImport.js';
 import { HouseholdMap } from './HouseholdMap.js';
 import { MapRequestError as RequestError, request } from './map-request.js';
+import { backgroundPrototypeEnabled } from './prototype-space-background.js';
 import { SettingsOverview, SettingsScreen, settingsEntries } from './SettingsScreen.js';
 import { useSessionActivity } from './session-activity.js';
 import { TaskDeliveryContext, TaskDeliveryResults, useTaskDelivery } from './task-delivery.js';
@@ -247,7 +248,12 @@ function Login({ providers }: { providers: Provider[] }) {
               provider,
               rememberMe,
               informationVersion: rememberedLoginInformation.version,
-              callbackURL: location.pathname === '/costs' ? '/costs' : '/',
+              callbackURL:
+                location.pathname === '/costs'
+                  ? '/costs'
+                  : backgroundPrototypeEnabled
+                    ? `/${location.search}`
+                    : '/',
               ...(location.pathname === '/assistant-consent'
                 ? { oauth_query: location.search.slice(1) }
                 : {}),
@@ -1625,7 +1631,13 @@ function Application() {
                 data.status === 'setup' ? (
                   <Setup onCreated={created} onReload={reload} />
                 ) : (
-                  <Navigate to={`/households/${encodeURIComponent(data.household.id)}`} replace />
+                  <Navigate
+                    to={{
+                      pathname: `/households/${encodeURIComponent(data.household.id)}`,
+                      search: backgroundPrototypeEnabled ? location.search : '',
+                    }}
+                    replace
+                  />
                 )
               }
             />
