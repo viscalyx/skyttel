@@ -176,6 +176,9 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
       void main() {
         vec3 d = normalize(rotation * vec3(screen.x * aspect * tangent,
           screen.y * tangent, -1.0));
+        // View the distant field from the translated camera, including A's
+        // broad light fields. Moving only noise coordinates leaves A fixed.
+        d = normalize(d + offset);
         vec3 p = d * 2.4 + offset;
         vec3 colour;
         if (variant < 0.5) {
@@ -278,7 +281,9 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
       if (!freeze || !hasFrame) {
         renderCamera.copy(camera);
         const factor = preview.motion === 'gentle' ? 0.2 : 1;
-        renderCamera.position.multiplyScalar(preview.strength * factor * preview.layerDepth);
+        // The scene already bounds pan like the real app. Keep the extra
+        // gentle factor for the approved zoom response only.
+        renderCamera.position.multiplyScalar(preview.strength * preview.layerDepth);
         renderCamera.fov = 45 * (camera.fov / 45) ** (preview.strength * factor);
         if (freeze) stillCamera.copy(renderCamera);
       } else {

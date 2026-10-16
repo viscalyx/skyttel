@@ -39,6 +39,7 @@ export function prototypeOcean() {
       tangent: { value: 0.4142 },
       rotation: { value: new Matrix3() },
       worldRotation: { value: new Matrix3() },
+      localOffset: { value: new Vector3() },
       offset: { value: new Vector3() },
       creatures: {
         value: [
@@ -77,7 +78,7 @@ export function prototypeOcean() {
       varying vec2 screen;
       uniform float dark, life, particles, aspect, tangent;
       uniform mat3 rotation, worldRotation;
-      uniform vec3 offset;
+      uniform vec3 offset, localOffset;
       uniform vec4 creatures[8];
       uniform vec4 wildlife[12];
       float hash(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
@@ -180,8 +181,8 @@ export function prototypeOcean() {
       }
       void main() {
         vec3 d=normalize(rotation*vec3(screen.x*aspect*tangent,screen.y*tangent,-1.));
+        d=normalize(d+localOffset);
         vec2 q=vec2(atan(d.x,-d.z),asin(clamp(d.y,-1.,1.)));
-        q+=offset.xy*.12;
         float veil=noise(q*3.5)+noise(q*8.+13.)*.25;
         vec3 colour;
         if(dark<.5) {
@@ -317,6 +318,7 @@ export function prototypeOcean() {
       material.uniforms.rotation.value.copy(rotation).premultiply(initialInverse);
       material.uniforms.worldRotation.value.copy(rotation);
       material.uniforms.offset.value.copy(offset);
+      material.uniforms.localOffset.value.copy(offset).applyMatrix3(initialInverse);
       material.uniforms.aspect.value = aspect;
       material.uniforms.tangent.value = tangent;
     },

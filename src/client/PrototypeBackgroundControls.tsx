@@ -183,12 +183,13 @@ export function PrototypeBackgroundControls({
               bakgrundsvyn. Återgång följer kartans aktuella kamera.
             </p>
             <p>
-              Lager: full rotation, vald styrka för panorering och zoom. Försiktig: full rotation,
-              en femtedel av vald styrka. Lageravstånd ändrar stjärnornas parallax mot det avlägsna
-              diset och förflyttningen genom E:s vatten. A:s breda ljusfält följer rotation och
-              zoom; där finns inga punktlager. E:s sand och yta följer kamerans riktning i båda
-              rörliga lägena. Ingen egen animation, efterrörelse, puls eller blinkning. Referens
-              visar applikationens tidigare beteende utan de nya rörelsevalen.
+              Båda rörliga lägena följer full rotation och kartans försiktiga panorering med vald
+              styrka. Försiktig använder en femtedel av vald styrka för zoom. Lager använder hela
+              zoomstyrkan. Lageravstånd ändrar stjärnornas parallax mot det avlägsna diset och
+              förflyttningen genom E:s vatten. A:s breda ljusfält följer också panorering; där finns
+              inga punktlager. E:s sand och yta följer kamerans riktning i båda rörliga lägena.
+              Ingen egen animation, efterrörelse, puls eller blinkning. Referens visar
+              applikationens tidigare beteende utan de nya rörelsevalen.
             </p>
             {(['light', 'dark'] as const).map((targetTheme) => (
               <label key={targetTheme}>

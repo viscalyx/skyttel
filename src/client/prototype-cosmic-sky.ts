@@ -95,6 +95,7 @@ export function prototypeCosmicSky(pixelRatio: number) {
       float mist(vec3 p) { return noise(p)*.65 + noise(p*2.1+7.)*.25 + noise(p*4.3+19.)*.1; }
       void main() {
         vec3 d=normalize(rotation*vec3(screen.x*aspect*tangent,screen.y*tangent,-1.));
+        d=normalize(d+offset);
         float cloud=mist(d*3.+offset);
         vec3 paper=vec3(.95,.94,.91);
         if(palette>.5) paper=palette<1.5 ? vec3(.81,.87,.94) : vec3(.91,.87,.94);
@@ -106,7 +107,6 @@ export function prototypeCosmicSky(pixelRatio: number) {
           float facing=dot(d,c); if(facing<.7) continue;
           vec3 right=normalize(cross(vec3(0,1,0),c)), up=cross(c,right);
           vec2 q=vec2(dot(d,right),dot(d,up))/max(.1,facing);
-          q-=offset.xy*.04;
           float co=cos(shape.z), si=sin(shape.z);
           q=mat2(co,-si,si,co)*q/shape.x;
           q.y/=shape.y;
