@@ -144,6 +144,14 @@ export function PrototypeBackgroundControls({
                 </p>
               </>
             )}
+            {variant === 'E' && (
+              <p>
+                {theme.theme === 'light'
+                  ? 'Solstrålar, mjukt ljusspel och genomskinliga manetformer i pärlemor och turkos.'
+                  : 'Djupblått vatten med glesa blågröna ljusorgan och manetformer. Inga solstrålar.'}{' '}
+                Fria illustrationer av havet. Ingen egen animation eller blinkningar.
+              </p>
+            )}
             <label className="prototype-background-check">
               <input
                 type="checkbox"

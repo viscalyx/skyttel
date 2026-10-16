@@ -1,4 +1,4 @@
-// THROWAWAY: three background structures on the real map, plus its reference.
+// THROWAWAY: preserve A/B, compare dark D and separate light/dark ocean E.
 import {
   Group,
   Matrix3,
@@ -13,10 +13,11 @@ import {
   type CosmicPalette,
   prototypeCosmicSky,
 } from './prototype-cosmic-sky.js';
+import { prototypeOcean } from './prototype-ocean.js';
 
 export const backgroundPrototypeEnabled = import.meta.env.MODE === 'prototype';
 
-export type BackgroundVariant = 'reference' | 'A' | 'B' | 'A-light' | 'B-light' | 'D';
+export type BackgroundVariant = 'reference' | 'A' | 'B' | 'A-light' | 'B-light' | 'D' | 'E';
 export type BackgroundPreview = {
   variant: BackgroundVariant;
   enabled: boolean;
@@ -50,6 +51,11 @@ export const backgroundVariants: { key: BackgroundVariant; name: string; detail:
     name: 'Universum',
     detail: 'Stjärnhimmel, galaxer, nebulosor, stoft, stjärnhopar och en gles ringform.',
   },
+  {
+    key: 'E',
+    name: 'Under världshavet',
+    detail: 'Solbelyst vatten i ljust tema. Ett eget djuphav med bioluminiscens i mörkt tema.',
+  },
 ];
 
 export function readBackgroundVariant(value: string | null): BackgroundVariant {
@@ -58,7 +64,9 @@ export function readBackgroundVariant(value: string | null): BackgroundVariant {
 
 export function variantsForTheme(theme: 'light' | 'dark') {
   const keys =
-    theme === 'light' ? ['reference', 'A-light', 'B-light', 'D'] : ['reference', 'A', 'B', 'D'];
+    theme === 'light'
+      ? ['reference', 'A-light', 'B-light', 'E']
+      : ['reference', 'A', 'B', 'D', 'E'];
   return backgroundVariants.filter(({ key }) => keys.includes(key));
 }
 
@@ -84,6 +92,7 @@ export function readBackgroundPreview(
 export function prototypeSpaceBackground(pixelRatio = 1) {
   const group = new Group();
   const cosmic = prototypeCosmicSky(pixelRatio);
+  const ocean = prototypeOcean();
   const geometry = new PlaneGeometry(2, 2);
   const material = new ShaderMaterial({
     depthTest: false,
@@ -182,7 +191,7 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
   mesh.frustumCulled = false;
   mesh.renderOrder = -100;
   mesh.visible = false;
-  group.add(mesh, cosmic.group);
+  group.add(mesh, cosmic.group, ocean.mesh);
   const stillCamera = new PerspectiveCamera(45, 1, 0.1, 1000);
   stillCamera.rotation.set(-0.16, 0.35, 0);
   stillCamera.updateMatrixWorld();
@@ -198,10 +207,11 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
       palette: CosmicPalette = 'pearl',
       points = true,
     ) {
-      mesh.visible = variant !== 'reference' && variant !== 'D' && enabled;
+      mesh.visible = !['reference', 'D', 'E'].includes(variant) && enabled;
       material.uniforms.variant.value = ['A', 'B', 'A-light', 'B-light'].indexOf(variant);
       material.uniforms.dark.value = theme === 'dark' ? 1 : 0;
       reduced = reduce;
+      ocean.configure(variant === 'E' && enabled, theme === 'dark');
       cosmic.configure(
         variant === 'D' && enabled,
         theme === 'dark',
@@ -226,11 +236,18 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
         material.uniforms.offset.value,
         reduced,
       );
+      ocean.update(
+        material.uniforms.rotation.value,
+        material.uniforms.offset.value,
+        camera.aspect,
+        material.uniforms.tangent.value,
+      );
     },
     dispose() {
       geometry.dispose();
       material.dispose();
       cosmic.dispose();
+      ocean.dispose();
     },
   };
 }
