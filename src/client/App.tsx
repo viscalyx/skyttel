@@ -308,15 +308,20 @@ function Login({ providers }: { providers: Provider[] }) {
   return (
     <section className="panel access-gate">
       <p className="eyebrow">Skyttel · ditt hushåll, sammanbundet</p>
-      <Heading>Välkommen till Skyttel</Heading>
+      <Heading>
+        {backgroundPrototypeEnabled ? 'Öppna bakgrundsprototypen' : 'Välkommen till Skyttel'}
+      </Heading>
       <p className="intro">
-        En gemensam plats för det som hör ihop. Logga in med ditt eget Google- eller
-        Microsoft-konto.
+        {backgroundPrototypeEnabled
+          ? 'Här använder du det påhittade testkontot Alex Exempel och påhittade hushållsuppgifter. Du behöver ingen e-postadress, inget lösenord och inget eget Google- eller Microsoft-konto.'
+          : 'En gemensam plats för det som hör ihop. Logga in med ditt eget Google- eller Microsoft-konto.'}
       </p>
       {selected ? (
         <div className="access-transition">
           <p className="access-note">
-            Du går vidare till {label}. Efter inloggningen kommer du tillbaka till Skyttel.
+            {backgroundPrototypeEnabled
+              ? 'Du öppnar det påhittade testkontot Alex Exempel. Ingen riktig Google- eller Microsoft-inloggning används i denna prototyp.'
+              : `Du går vidare till ${label}. Efter inloggningen kommer du tillbaka till Skyttel.`}
           </p>
           <label className="remember-login">
             <input
@@ -347,13 +352,18 @@ function Login({ providers }: { providers: Provider[] }) {
         </div>
       ) : (
         <fieldset ref={options} className="sign-in-options" aria-label="Inloggningssätt">
-          {providers.map((provider) => (
+          {(backgroundPrototypeEnabled ? (['google'] as Provider[]) : providers).map((provider) => (
             <button
               type="button"
               key={provider}
               data-provider={provider}
               className={provider === 'google' ? 'provider primary' : 'provider'}
+              disabled={backgroundPrototypeEnabled && pending}
               onClick={() => {
+                if (backgroundPrototypeEnabled) {
+                  void signIn(provider);
+                  return;
+                }
                 lastProvider.current = provider;
                 setCancelled(false);
                 setResetDone(false);
@@ -362,7 +372,11 @@ function Login({ providers }: { providers: Provider[] }) {
                 setSelected(provider);
               }}
             >
-              Fortsätt med {provider === 'google' ? 'Google' : 'Microsoft'}
+              {backgroundPrototypeEnabled
+                ? pending
+                  ? 'Öppnar testkartan…'
+                  : 'Öppna testkartan som Alex'
+                : `Fortsätt med ${provider === 'google' ? 'Google' : 'Microsoft'}`}
             </button>
           ))}
         </fieldset>
@@ -371,14 +385,20 @@ function Login({ providers }: { providers: Provider[] }) {
         <p className="muted" role="status">
           {resetPair
             ? 'Rensar den gamla inloggningskopplingen…'
-            : `Öppnar ${label} för att verifiera din inloggning…`}
+            : backgroundPrototypeEnabled
+              ? 'Öppnar det påhittade testkontot…'
+              : `Öppnar ${label} för att verifiera din inloggning…`}
         </p>
       )}
       {cancelled && (
         <p role="status">Inloggningen avbröts. Välj ett inloggningssätt när du vill fortsätta.</p>
       )}
       {resetDone && (
-        <p role="status">Klart för en ny inloggning. Välj Google eller Microsoft igen.</p>
+        <p role="status">
+          {backgroundPrototypeEnabled
+            ? 'Klart för en ny inloggning. Öppna testkartan igen.'
+            : 'Klart för en ny inloggning. Välj Google eller Microsoft igen.'}
+        </p>
       )}
       {error && (
         <p className="error access-note" role="alert">
@@ -405,7 +425,9 @@ function Login({ providers }: { providers: Provider[] }) {
         </div>
       )}
       <p className="muted">
-        Använd det inloggningssätt som är kopplat till din tillgång till hushållet.
+        {backgroundPrototypeEnabled
+          ? 'Testkontot och hushållsuppgifterna hör till denna tillfälliga prototyp.'
+          : 'Använd det inloggningssätt som är kopplat till din tillgång till hushållet.'}
       </p>
       <div className="privacy-note">
         <span aria-hidden="true">●</span>

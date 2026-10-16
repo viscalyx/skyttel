@@ -53,7 +53,28 @@ export async function prototypeBackgroundInstallation() {
     };
   }
   const app = createApp({ config, database, auth });
-  const server = serve({ fetch: app.fetch, hostname: config.host, port: config.port });
+  const server = serve({
+    fetch: (request) => {
+      const url = new URL(request.url);
+      // Enter through the canonical origin before the browser creates any
+      // cookies. The real app correctly rejects a different origin at login.
+      if (
+        (request.method === 'GET' || request.method === 'HEAD') &&
+        !url.pathname.startsWith('/api/') &&
+        url.origin !== config.origin &&
+        ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) &&
+        url.port === String(config.port)
+      ) {
+        const destination = new URL(config.origin);
+        destination.pathname = url.pathname;
+        destination.search = url.search;
+        return Response.redirect(destination, 307);
+      }
+      return app.fetch(request);
+    },
+    hostname: config.host,
+    port: config.port,
+  });
   await new Promise<void>((resolve, reject) => {
     server.once('listening', resolve);
     server.once('error', reject);

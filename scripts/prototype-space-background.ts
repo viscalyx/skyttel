@@ -56,7 +56,7 @@ console.log(
 );
 console.log(`Open ${origin}/?variant=A`);
 console.log(
-  'Sign in with Google as synthetic Alex Exempel. No external provider or billable APIs.',
+  'Choose "Öppna testkartan som Alex". No personal credentials, external provider or billable APIs.',
 );
 console.log('Variants: reference, A, B, C. Ctrl+C deletes this scratch installation.');
 let stopping = false;
