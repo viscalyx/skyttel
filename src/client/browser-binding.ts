@@ -1,9 +1,20 @@
 import { MapRequestError, request } from './map-request.js';
+import { backgroundPrototypeEnabled } from './prototype-space-background.js';
 
 export const browserBindingLock = 'skyttel-browser-binding';
 
+function bindingCookieName() {
+  if (backgroundPrototypeEnabled) {
+    const prefix = document.querySelector<HTMLMetaElement>(
+      'meta[name="skyttel-background-cookie-prefix"]',
+    )?.content;
+    if (prefix && /^skyttel_background_[a-f0-9]{16}$/.test(prefix)) return `${prefix}_binding`;
+  }
+  return window.location.protocol === 'https:' ? '__Host-skyttel_binding' : 'skyttel_binding';
+}
+
 function bindingPair() {
-  const name = window.location.protocol === 'https:' ? '__Host-skyttel_binding' : 'skyttel_binding';
+  const name = bindingCookieName();
   const matches = document.cookie
     .split(';')
     .map((part) => part.trim())
@@ -51,7 +62,7 @@ async function initialize(signal?: AbortSignal) {
     if (signal?.aborted) throw new Error('binding_cancelled');
     const https = window.location.protocol === 'https:';
     const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
-    const name = https ? '__Host-skyttel_binding' : 'skyttel_binding';
+    const name = bindingCookieName();
     if (
       result.origin !== window.location.origin ||
       (!https && !loopback) ||
@@ -122,8 +133,7 @@ export async function confirmBrowserLogin(proof: string, signal: AbortSignal) {
     const result = await read();
     if (signal.aborted || result.status !== 'confirmed' || result.origin !== window.location.origin)
       throw new Error('login_unconfirmed');
-    const name =
-      window.location.protocol === 'https:' ? '__Host-skyttel_binding' : 'skyttel_binding';
+    const name = bindingCookieName();
     const pair = document.cookie
       .split(';')
       .map((part) => part.trim())
@@ -195,8 +205,7 @@ export async function revokeRememberedLogin(id: string, expected: StoragePrefere
       // The server change is confirmed independently of replacement-cookie
       // registration. A failure below cannot undo that confirmed OFF result.
       try {
-        const name =
-          window.location.protocol === 'https:' ? '__Host-skyttel_binding' : 'skyttel_binding';
+        const name = bindingCookieName();
         if (
           result.origin !== window.location.origin ||
           result.cookieName !== name ||

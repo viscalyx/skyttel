@@ -1,8 +1,11 @@
 // THROWAWAY fixture: real app and authentication; only Google's external response is synthetic.
+
+import { randomBytes } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
+import { createCookieGetter, getCookies } from 'better-auth/cookies';
 import { createApp } from '../src/server/app.js';
 import { createAuth, verifyAuthSchema } from '../src/server/auth.js';
 import type { Config } from '../src/server/config.js';
@@ -26,6 +29,15 @@ export async function prototypeBackgroundInstallation() {
   const auth = createAuth(config, database);
   await verifyAuthSchema(auth);
   const context = await auth.$context;
+  // Each disposable database owns fresh cookies. Other localhost installations
+  // and earlier prototype runs must never supply or lose their login keys here.
+  const cookiePrefix = `skyttel_background_${randomBytes(8).toString('hex')}`;
+  Object.assign(context.options.advanced, {
+    cookiePrefix: `${cookiePrefix}.better-auth`,
+  });
+  context.authCookies = getCookies(context.options);
+  context.createAuthCookie = createCookieGetter(context.options);
+  const bindingCookie = `${cookiePrefix}_binding`;
   for (const provider of context.socialProviders) {
     provider.createAuthorizationURL = async ({ state, redirectURI }) => {
       const callback = new URL(redirectURI);
@@ -52,9 +64,23 @@ export async function prototypeBackgroundInstallation() {
       };
     };
   }
+  function prototypeRequest(request: Request) {
+    const headers = new Headers(request.headers);
+    const cookies = (headers.get('cookie') ?? '')
+      .split(';')
+      .map((item) => item.trim())
+      .filter((item) => item && !item.startsWith('skyttel_binding='))
+      .map((item) =>
+        item.startsWith(`${bindingCookie}=`)
+          ? `skyttel_binding=${item.slice(bindingCookie.length + 1)}`
+          : item,
+      );
+    headers.set('cookie', cookies.join('; '));
+    return new Request(request, { headers });
+  }
   const app = createApp({ config, database, auth });
   const server = serve({
-    fetch: (request) => {
+    fetch: async (request) => {
       const url = new URL(request.url);
       // Enter through the canonical origin before the browser creates any
       // cookies. The real app correctly rejects a different origin at login.
@@ -70,7 +96,31 @@ export async function prototypeBackgroundInstallation() {
         destination.search = url.search;
         return Response.redirect(destination, 307);
       }
-      return app.fetch(request);
+      // Adapt only this throwaway installation's cookie names at its boundary.
+      // The ordinary binding protocol, origin checks and session policy remain.
+      const response = await app.fetch(prototypeRequest(request));
+      if (
+        url.pathname.startsWith('/api/browser-binding/') &&
+        response.headers.get('content-type')?.includes('application/json')
+      ) {
+        const body = (await response.json()) as Record<string, unknown>;
+        if (body.cookieName === 'skyttel_binding') body.cookieName = bindingCookie;
+        const output = new Headers(response.headers);
+        output.delete('content-length');
+        return new Response(JSON.stringify(body), { status: response.status, headers: output });
+      }
+      if (response.headers.get('content-type')?.includes('text/html')) {
+        const html = (await response.text()).replace(
+          '<head>',
+          `<head><meta name="skyttel-background-cookie-prefix" content="${cookiePrefix}">`,
+        );
+        const output = new Headers(response.headers);
+        output.delete('content-length');
+        output.delete('etag');
+        output.delete('last-modified');
+        return new Response(html, { status: response.status, headers: output });
+      }
+      return response;
     },
     hostname: config.host,
     port: config.port,
@@ -79,7 +129,9 @@ export async function prototypeBackgroundInstallation() {
     server.once('listening', resolve);
     server.once('error', reject);
   });
-  attachTaskDelivery(server, config.origin, app.prepareTaskDelivery);
+  attachTaskDelivery(server, config.origin, (request) =>
+    app.prepareTaskDelivery(prototypeRequest(request)),
+  );
   return {
     directory,
     config,
