@@ -2,17 +2,19 @@
 
 import { randomBytes } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
+import { createServer as createHttpServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { serve } from '@hono/node-server';
+import { getRequestListener } from '@hono/node-server';
 import { createCookieGetter, getCookies } from 'better-auth/cookies';
+import { createServer as createViteServer } from 'vite';
 import { createApp } from '../src/server/app.js';
 import { createAuth, verifyAuthSchema } from '../src/server/auth.js';
 import type { Config } from '../src/server/config.js';
 import { openDatabase } from '../src/server/database.js';
 import { attachTaskDelivery } from '../src/server/task-delivery-transport.js';
 
-export async function prototypeBackgroundInstallation() {
+export async function prototypeBackgroundInstallation(development = false) {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-background-prototype-'));
   const config: Config = {
     origin: 'http://localhost:5187',
@@ -38,6 +40,25 @@ export async function prototypeBackgroundInstallation() {
   context.authCookies = getCookies(context.options);
   context.createAuthCookie = createCookieGetter(context.options);
   const bindingCookie = `${cookiePrefix}_binding`;
+  const vite = development
+    ? await createViteServer({
+        mode: 'prototype',
+        cacheDir: join(directory, 'vite'),
+        server: { middlewareMode: true, hmr: false },
+        plugins: [
+          {
+            name: 'prototype-cookie-metadata',
+            transformIndexHtml: () => [
+              {
+                tag: 'meta',
+                attrs: { name: 'skyttel-background-cookie-prefix', content: cookiePrefix },
+                injectTo: 'head-prepend',
+              },
+            ],
+          },
+        ],
+      })
+    : null;
   for (const provider of context.socialProviders) {
     provider.createAuthorizationURL = async ({ state, redirectURI }) => {
       const callback = new URL(redirectURI);
@@ -79,55 +100,68 @@ export async function prototypeBackgroundInstallation() {
     return new Request(request, { headers });
   }
   const app = createApp({ config, database, auth });
-  const server = serve({
-    fetch: async (request) => {
-      const url = new URL(request.url);
-      // Enter through the canonical origin before the browser creates any
-      // cookies. The real app correctly rejects a different origin at login.
-      if (
-        (request.method === 'GET' || request.method === 'HEAD') &&
-        !url.pathname.startsWith('/api/') &&
-        url.origin !== config.origin &&
-        ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) &&
-        url.port === String(config.port)
-      ) {
-        const destination = new URL(config.origin);
-        destination.pathname = url.pathname;
-        destination.search = url.search;
-        return Response.redirect(destination, 307);
-      }
-      // Adapt only this throwaway installation's cookie names at its boundary.
-      // The ordinary binding protocol, origin checks and session policy remain.
-      const response = await app.fetch(prototypeRequest(request));
-      if (
-        url.pathname.startsWith('/api/browser-binding/') &&
-        response.headers.get('content-type')?.includes('application/json')
-      ) {
-        const body = (await response.json()) as Record<string, unknown>;
-        if (body.cookieName === 'skyttel_binding') body.cookieName = bindingCookie;
-        const output = new Headers(response.headers);
-        output.delete('content-length');
-        return new Response(JSON.stringify(body), { status: response.status, headers: output });
-      }
-      if (response.headers.get('content-type')?.includes('text/html')) {
-        const html = (await response.text()).replace(
-          '<head>',
-          `<head><meta name="skyttel-background-cookie-prefix" content="${cookiePrefix}">`,
-        );
-        const output = new Headers(response.headers);
-        output.delete('content-length');
-        output.delete('etag');
-        output.delete('last-modified');
-        return new Response(html, { status: response.status, headers: output });
-      }
-      return response;
-    },
-    hostname: config.host,
-    port: config.port,
+  const handler = getRequestListener(async (request) => {
+    const url = new URL(request.url);
+    // Enter through the canonical origin before the browser creates any
+    // cookies. The real app correctly rejects a different origin at login.
+    if (
+      (request.method === 'GET' || request.method === 'HEAD') &&
+      !url.pathname.startsWith('/api/') &&
+      url.origin !== config.origin &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) &&
+      url.port === String(config.port)
+    ) {
+      const destination = new URL(config.origin);
+      destination.pathname = url.pathname;
+      destination.search = url.search;
+      return Response.redirect(destination, 307);
+    }
+    // Adapt only this throwaway installation's cookie names at its boundary.
+    // The ordinary binding protocol, origin checks and session policy remain.
+    const response = await app.fetch(prototypeRequest(request));
+    if (
+      url.pathname.startsWith('/api/browser-binding/') &&
+      response.headers.get('content-type')?.includes('application/json')
+    ) {
+      const body = (await response.json()) as Record<string, unknown>;
+      if (body.cookieName === 'skyttel_binding') body.cookieName = bindingCookie;
+      const output = new Headers(response.headers);
+      output.delete('content-length');
+      return new Response(JSON.stringify(body), { status: response.status, headers: output });
+    }
+    if (response.headers.get('content-type')?.includes('text/html')) {
+      const html = (await response.text()).replace(
+        '<head>',
+        `<head><meta name="skyttel-background-cookie-prefix" content="${cookiePrefix}">`,
+      );
+      const output = new Headers(response.headers);
+      output.delete('content-length');
+      output.delete('etag');
+      output.delete('last-modified');
+      return new Response(html, { status: response.status, headers: output });
+    }
+    return response;
+  });
+  const server = createHttpServer((request, response) => {
+    const url = new URL(request.url ?? '/', config.origin);
+    if (
+      vite &&
+      request.headers.host === new URL(config.origin).host &&
+      (request.method === 'GET' || request.method === 'HEAD') &&
+      !url.pathname.startsWith('/api/') &&
+      !url.pathname.startsWith('/assets/') &&
+      url.pathname !== '/healthz' &&
+      url.searchParams.get('compiled') !== '1'
+    ) {
+      vite.middlewares(request, response, () => void handler(request, response));
+    } else {
+      void handler(request, response);
+    }
   });
   await new Promise<void>((resolve, reject) => {
     server.once('listening', resolve);
     server.once('error', reject);
+    server.listen(config.port, config.host);
   });
   attachTaskDelivery(server, config.origin, (request) =>
     app.prepareTaskDelivery(prototypeRequest(request)),
@@ -137,6 +171,7 @@ export async function prototypeBackgroundInstallation() {
     config,
     database,
     async close() {
+      await vite?.close();
       await app.close();
       await new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));

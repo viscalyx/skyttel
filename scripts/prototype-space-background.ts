@@ -6,7 +6,7 @@ import { defaultViewSettings } from '../src/shared/personal-view.js';
 import { prototypeBackgroundInstallation } from './prototype-background-installation.js';
 import { seedDemo } from './seeds/demo.js';
 
-const installation = await prototypeBackgroundInstallation();
+const installation = await prototypeBackgroundInstallation(process.argv.includes('--dev'));
 const { database, config } = installation;
 const origin = config.origin;
 const household = seedDemo(database, config);
