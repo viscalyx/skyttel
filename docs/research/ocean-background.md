@@ -59,9 +59,11 @@ through the center, and slightly deeper blue-green toward the lower edges.
 This palette is an illustration chosen for interface legibility, not a
 claim that the deep ocean has ambient white daylight.
 
-1. Use broad shafts of diffuse light entering from above, with faint broken
-   caustic ribbons near an edge. Avoid a sharp mesh across the map: it could
-   resemble household connections or a graph grid.
+1. Distribute diffuse light across the water surface, with faint broken
+   caustic ribbons near an edge. The user rejects a visible common origin
+   or converging fan of rays in light E. Prefer gently varying, approximately
+   parallel light bands rather than a single point source. Avoid a sharp
+   mesh across the map: it could resemble household connections or a grid.
 2. Place two or three transparent jelly silhouettes off center, using soft
    blue-green outlines and pale internal shading. Leave the main object and
    label area visually quiet. Keep tentacles faint and away from labels.

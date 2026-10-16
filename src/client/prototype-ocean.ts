@@ -76,9 +76,12 @@ export function prototypeOcean() {
           float depth=1.-smoothstep(-.75,.65,q.y);
           colour=mix(vec3(.92,.98,.95),vec3(.64,.85,.87),depth);
           colour+=vec3(.03,.035,.02)*(veil-.6);
-          float fan=atan(q.x+.28,.95-q.y);
-          float beam=pow(.5+.5*cos(fan*46.+sin(fan*13.)*.9),14.);
-          float broad=pow(.5+.5*cos(fan*15.+.7),7.);
+          // Wave refraction is distributed across the surface, without a
+          // shared point of origin or a converging fan of rays.
+          float drift=sin(q.y*3.5+q.x*2.)*.025;
+          float surface=q.x+drift;
+          float beam=pow(.5+.5*cos(surface*33.+sin(surface*7.)*1.2),12.);
+          float broad=pow(.5+.5*cos((q.x+sin(q.y*1.8)*.035)*13.+.7),7.);
           float below=1.-smoothstep(.55,.95,q.y);
           colour=mix(colour,vec3(.98,1.,.95),
             (beam*.10+broad*.10)*below*exp(-depth*.9));
