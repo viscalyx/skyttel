@@ -13,7 +13,7 @@ import {
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { PersonalPosition, Position, ViewSettings } from '../shared/personal-view.js';
 import {
-  type BackgroundVariant,
+  type BackgroundPreview,
   backgroundPrototypeEnabled,
   prototypeSpaceBackground,
 } from './prototype-space-background.js';
@@ -46,7 +46,9 @@ export function spatialScene(
   const sky = new Scene();
   sky.background = new Color('#132e25');
   const skyCamera = new PerspectiveCamera(45, 1, 0.1, 1000);
-  const prototypeBackground = backgroundPrototypeEnabled ? prototypeSpaceBackground() : null;
+  const prototypeBackground = backgroundPrototypeEnabled
+    ? prototypeSpaceBackground(renderer.getPixelRatio())
+    : null;
   if (prototypeBackground) sky.add(prototypeBackground.mesh);
   const camera = new PerspectiveCamera(45, 1, 0.1, 500000);
   renderer.autoClear = false;
@@ -502,21 +504,20 @@ export function spatialScene(
     configure(
       value: ViewSettings,
       theme: 'light' | 'dark' = 'dark',
-      prototype?: {
-        variant: BackgroundVariant;
-        enabled: boolean;
-        reducedMotion: boolean;
-      },
+      prototype?: BackgroundPreview & { reducedMotion: boolean },
     ) {
       settings = value;
-      starGeometry.setDrawRange(0, prototype?.variant === 'C' ? 900 : 3600);
       stars.visible =
-        value.stars && (!prototype || (prototype.enabled && prototype.variant !== 'A'));
+        value.stars &&
+        (!prototype || (prototype.enabled && ['reference', 'B'].includes(prototype.variant)));
       prototypeBackground?.configure(
         prototype?.variant ?? 'reference',
         theme,
         prototype?.enabled ?? false,
         prototype?.reducedMotion ?? false,
+        prototype?.composition,
+        prototype?.palette,
+        value.stars,
       );
       sky.background = new Color(theme === 'light' ? '#eef3f3' : '#101b29');
       draw();

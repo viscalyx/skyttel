@@ -1,9 +1,28 @@
 // THROWAWAY: three background structures on the real map, plus its reference.
-import { Matrix3, Mesh, PerspectiveCamera, PlaneGeometry, ShaderMaterial, Vector3 } from 'three';
+import {
+  Group,
+  Matrix3,
+  Mesh,
+  PerspectiveCamera,
+  PlaneGeometry,
+  ShaderMaterial,
+  Vector3,
+} from 'three';
+import {
+  type CosmicComposition,
+  type CosmicPalette,
+  prototypeCosmicSky,
+} from './prototype-cosmic-sky.js';
 
 export const backgroundPrototypeEnabled = import.meta.env.MODE === 'prototype';
 
-export type BackgroundVariant = 'reference' | 'A' | 'B' | 'C';
+export type BackgroundVariant = 'reference' | 'A' | 'B' | 'A-light' | 'B-light' | 'D';
+export type BackgroundPreview = {
+  variant: BackgroundVariant;
+  enabled: boolean;
+  composition: CosmicComposition;
+  palette: CosmicPalette;
+};
 export const backgroundVariants: { key: BackgroundVariant; name: string; detail: string }[] = [
   { key: 'reference', name: 'Referens', detail: 'Dagens enfärgade bakgrund och stjärnhimmel.' },
   {
@@ -17,9 +36,19 @@ export const backgroundVariants: { key: BackgroundVariant; name: string; detail:
     detail: 'Oregelbundet dis, fina stråk och avlägsna ljuspunkter.',
   },
   {
-    key: 'C',
-    name: 'Böjda skikt',
-    detail: 'Stora sammanhängande valv och glest placerade ljuspunkter.',
+    key: 'A-light',
+    name: 'Pärlemor',
+    detail: 'Ny ljus atmosfär med varm pärlemor, aprikos och stora ljusfält.',
+  },
+  {
+    key: 'B-light',
+    name: 'Gryningsdis',
+    detail: 'Ny ljus riktning med blått och rosafärgat dis samt ljusa öppningar.',
+  },
+  {
+    key: 'D',
+    name: 'Universum',
+    detail: 'Stjärnhimmel, galaxer, nebulosor, stoft, stjärnhopar och en gles ringform.',
   },
 ];
 
@@ -27,7 +56,34 @@ export function readBackgroundVariant(value: string | null): BackgroundVariant {
   return backgroundVariants.find(({ key }) => key === value)?.key ?? 'A';
 }
 
-export function prototypeSpaceBackground() {
+export function variantsForTheme(theme: 'light' | 'dark') {
+  const keys =
+    theme === 'light' ? ['reference', 'A-light', 'B-light', 'D'] : ['reference', 'A', 'B', 'D'];
+  return backgroundVariants.filter(({ key }) => keys.includes(key));
+}
+
+export function readBackgroundPreview(
+  params: URLSearchParams,
+  theme: 'light' | 'dark',
+): BackgroundPreview {
+  let value = params.get(theme) ?? params.get('variant') ?? (theme === 'light' ? 'A-light' : 'A');
+  if (theme === 'light' && (value === 'A' || value === 'B')) value += '-light';
+  if (theme === 'dark' && value.endsWith('-light')) value = value.slice(0, 1);
+  if (!variantsForTheme(theme).some(({ key }) => key === value))
+    value = theme === 'light' ? 'A-light' : 'A';
+  const composition = params.get('composition');
+  const palette = params.get('palette');
+  return {
+    variant: readBackgroundVariant(value),
+    enabled: params.get('background') !== 'off',
+    composition: composition === 'galaxies' || composition === 'nebulae' ? composition : 'sparse',
+    palette: palette === 'dawn' || palette === 'lavender' ? palette : 'pearl',
+  };
+}
+
+export function prototypeSpaceBackground(pixelRatio = 1) {
+  const group = new Group();
+  const cosmic = prototypeCosmicSky(pixelRatio);
   const geometry = new PlaneGeometry(2, 2);
   const material = new ShaderMaterial({
     depthTest: false,
@@ -103,19 +159,19 @@ export function prototypeSpaceBackground() {
           night += vec3(0.06,0.16,0.19) * mist;
           night += vec3(0.12,0.065,0.19) * band * wisps * 0.65;
           colour = mix(light, night, dark);
+        } else if (variant < 2.5) {
+          // A-light: luminous pearl with warm edges, independently authored.
+          float glow=pow(max(0.0,dot(d,normalize(vec3(-.6,.5,-1.)))),2.);
+          float warmth=pow(max(0.0,dot(d,normalize(vec3(.9,-.6,-.7)))),3.);
+          colour=mix(vec3(.88,.89,.94),vec3(.995,.99,.96),glow*.95);
+          colour=mix(colour,vec3(.96,.81,.73),warmth*.55);
         } else {
-          // C: coherent curved shells, deliberately unlike irregular cloud noise.
-          float latitude = dot(d, normalize(vec3(-0.3,0.88,0.4)));
-          float curve = latitude + 0.07 * sin(d.x * 3.0 + d.z);
-          float shell = pow(0.5 + 0.5 * cos(curve * 19.0 + 0.5), 14.0);
-          float veil = smoothstep(-0.6,0.3,curve);
-          float glow = exp(-pow((curve + 0.28) * 4.0,2.0));
-          vec3 light = mix(vec3(0.95,0.94,0.91), vec3(0.78,0.87,0.88), veil * 0.6);
-          light = mix(light, vec3(0.66,0.80,0.81), shell * 0.17);
-          light += vec3(0.035) * glow;
-          vec3 night = mix(vec3(0.035,0.045,0.09),vec3(0.085,0.09,0.17),veil);
-          night += shell * vec3(0.055,0.08,0.11) + glow * vec3(0.025,0.045,0.04);
-          colour = mix(light, night, dark);
+          // B-light: daylight through cloud, not a negative of the night sky.
+          float cloud=fbm(p*1.8+vec3(8.,2.,5.));
+          float opening=smoothstep(.30,.65,cloud);
+          float band=.5+.5*sin(d.y*3.+d.x*2.+cloud*2.);
+          colour=mix(vec3(.72,.83,.93),vec3(.98,.98,.99),opening);
+          colour=mix(colour,vec3(.92,.78,.84),band*(1.-opening)*.35);
         }
         // Colours above are authored in display space.
         gl_FragColor = vec4(colour, 1.0);
@@ -126,22 +182,33 @@ export function prototypeSpaceBackground() {
   mesh.frustumCulled = false;
   mesh.renderOrder = -100;
   mesh.visible = false;
+  group.add(mesh, cosmic.group);
   const stillCamera = new PerspectiveCamera(45, 1, 0.1, 1000);
   stillCamera.rotation.set(-0.16, 0.35, 0);
   stillCamera.updateMatrixWorld();
   let reduced = false;
   return {
-    mesh,
+    mesh: group,
     configure(
       variant: BackgroundVariant,
       theme: 'light' | 'dark',
       enabled: boolean,
       reduce: boolean,
+      composition: CosmicComposition = 'sparse',
+      palette: CosmicPalette = 'pearl',
+      points = true,
     ) {
-      mesh.visible = variant !== 'reference' && enabled;
-      material.uniforms.variant.value = ['A', 'B', 'C'].indexOf(variant);
+      mesh.visible = variant !== 'reference' && variant !== 'D' && enabled;
+      material.uniforms.variant.value = ['A', 'B', 'A-light', 'B-light'].indexOf(variant);
       material.uniforms.dark.value = theme === 'dark' ? 1 : 0;
       reduced = reduce;
+      cosmic.configure(
+        variant === 'D' && enabled,
+        theme === 'dark',
+        composition,
+        palette,
+        points && !reduce,
+      );
     },
     update(camera: PerspectiveCamera) {
       camera.updateMatrixWorld();
@@ -153,10 +220,17 @@ export function prototypeSpaceBackground() {
         .multiplyScalar(0.0015);
       material.uniforms.aspect.value = camera.aspect;
       material.uniforms.tangent.value = Math.tan(((reduced ? 45 : camera.fov) * Math.PI) / 360);
+      cosmic.update(
+        camera,
+        material.uniforms.rotation.value,
+        material.uniforms.offset.value,
+        reduced,
+      );
     },
     dispose() {
       geometry.dispose();
       material.dispose();
+      cosmic.dispose();
     },
   };
 }

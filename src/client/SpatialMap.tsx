@@ -21,9 +21,9 @@ import { mapConnections, proposalKind } from './map-presentation.js';
 import { ObjectActions, type ObjectActionsEntry } from './ObjectActions.js';
 import { PrototypeBackgroundControls } from './PrototypeBackgroundControls.js';
 import {
-  type BackgroundVariant,
+  type BackgroundPreview,
   backgroundPrototypeEnabled,
-  readBackgroundVariant,
+  readBackgroundPreview,
 } from './prototype-space-background.js';
 import { SpatialHeightGuide } from './SpatialHeightGuide.js';
 import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
@@ -284,15 +284,17 @@ export function SpatialMap({
     };
   }, [activated]);
   const scene = useRef<ReturnType<typeof spatialScene> | null>(null);
-  const [backgroundPreview, setBackgroundPreview] = useState(() => ({
-    variant: readBackgroundVariant(new URLSearchParams(window.location.search).get('variant')),
-    enabled: new URLSearchParams(window.location.search).get('background') !== 'off',
-  }));
-  const changeBackgroundPreview = useCallback((variant: BackgroundVariant, enabled: boolean) => {
+  const [backgroundPreview, setBackgroundPreview] = useState(() =>
+    readBackgroundPreview(new URLSearchParams(window.location.search), theme),
+  );
+  const changeBackgroundPreview = useCallback((next: BackgroundPreview) => {
     setBackgroundPreview((previous) =>
-      previous.variant === variant && previous.enabled === enabled
+      previous.variant === next.variant &&
+      previous.enabled === next.enabled &&
+      previous.composition === next.composition &&
+      previous.palette === next.palette
         ? previous
-        : { variant, enabled },
+        : next,
     );
   }, []);
   const [orientation, setOrientation] = useState<Position[]>([]);

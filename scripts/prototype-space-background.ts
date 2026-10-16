@@ -54,11 +54,12 @@ view.configure({
 console.log(
   `\nTHROWAWAY background prototype: ${process.argv.includes('--dense') ? 'dense (80 objects)' : 'sparse (16 objects)'}`,
 );
-console.log(`Open ${origin}/?variant=A`);
+console.log(`Open ${origin}/?variant=D`);
 console.log(
   'Choose "Öppna testkartan som Alex". No personal credentials, external provider or billable APIs.',
 );
-console.log('Variants: reference, A, B, C. Ctrl+C deletes this scratch installation.');
+console.log('Variants: reference, A, B, A-light, B-light, D. Independent light/dark choices.');
+console.log('Ctrl+C deletes this scratch installation.');
 let stopping = false;
 async function stop() {
   if (stopping) return;

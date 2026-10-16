@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router';
 import {
-  type BackgroundVariant,
+  type BackgroundPreview,
   backgroundVariants,
-  readBackgroundVariant,
+  readBackgroundPreview,
+  variantsForTheme,
 } from './prototype-space-background.js';
 import { useWorkspaceTheme } from './WorkspaceTheme.js';
 import './prototype-space-background.css';
@@ -19,18 +20,24 @@ export function PrototypeBackgroundControls({
   reducedMotion: boolean;
   stars: boolean;
   objectCount: number;
-  onPreview: (variant: BackgroundVariant, enabled: boolean) => void;
+  onPreview: (preview: BackgroundPreview) => void;
 }) {
   const [params, setParams] = useSearchParams();
   const [host, setHost] = useState<HTMLElement | null>(null);
   useEffect(() => setHost(document.querySelector('.household-map.workspace-shell')), []);
   const theme = useWorkspaceTheme();
-  const variant = readBackgroundVariant(params.get('variant'));
-  const current = backgroundVariants.findIndex(({ key }) => key === variant);
+  const { variant, composition, palette } = readBackgroundPreview(params, theme.theme);
+  const current = backgroundVariants.find(({ key }) => key === variant) ?? backgroundVariants[0];
+  const available = variantsForTheme(theme.theme);
+  const currentIndex = available.findIndex(({ key }) => key === variant);
+  const displayKey = (key: string) => key.replace('-light', '-ljus');
   const backgroundParam = params.get('background');
   const [enabled, setEnabled] = useState(backgroundParam !== 'off');
   useEffect(() => setEnabled(backgroundParam !== 'off'), [backgroundParam]);
-  useEffect(() => onPreview(variant, enabled), [variant, enabled, onPreview]);
+  useEffect(
+    () => onPreview({ variant, enabled, composition, palette }),
+    [variant, enabled, composition, palette, onPreview],
+  );
   const update = (key: string, value: string) => {
     setParams(
       (previous) => {
@@ -41,11 +48,23 @@ export function PrototypeBackgroundControls({
       { replace: true, preventScrollReset: true },
     );
   };
+  const selectAppearance = (targetTheme: 'light' | 'dark', value: string) => {
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        next.set('light', readBackgroundPreview(previous, 'light').variant);
+        next.set('dark', readBackgroundPreview(previous, 'dark').variant);
+        next.set(targetTheme, value);
+        next.delete('variant');
+        return next;
+      },
+      { replace: true, preventScrollReset: true },
+    );
+  };
   const cycle = (step: number) =>
-    update(
-      'variant',
-      backgroundVariants[(current + step + backgroundVariants.length) % backgroundVariants.length]
-        .key,
+    selectAppearance(
+      theme.theme,
+      available[(currentIndex + step + available.length) % available.length].key,
     );
   return (
     host &&
@@ -53,27 +72,29 @@ export function PrototypeBackgroundControls({
       <aside className="prototype-background-controls" aria-label="Bakgrundsprototyp">
         <details className="prototype-background-details">
           <summary>
-            Prototyp · {variant} · {theme.theme === 'dark' ? 'Mörkt' : 'Ljust'}
+            Prototyp · {displayKey(variant)} · {theme.theme === 'dark' ? 'Mörkt' : 'Ljust'}
           </summary>
           <div className="prototype-background-options">
             <p>
               <strong>Kastbar bakgrundsprototyp</strong>
             </p>
-            <p>{backgroundVariants[current].detail}</p>
-            <label>
-              Jämför bakgrund
-              <select
-                aria-label="Jämför bakgrund"
-                value={variant}
-                onChange={(event) => update('variant', event.target.value)}
-              >
-                {backgroundVariants.map(({ key, name }) => (
-                  <option key={key} value={key}>
-                    {key} · {name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <p>{current.detail}</p>
+            {(['light', 'dark'] as const).map((targetTheme) => (
+              <label key={targetTheme}>
+                Bakgrund i {targetTheme === 'light' ? 'ljust' : 'mörkt'} tema
+                <select
+                  aria-label={`Bakgrund i ${targetTheme === 'light' ? 'ljust' : 'mörkt'} tema`}
+                  value={readBackgroundPreview(params, targetTheme).variant}
+                  onChange={(event) => selectAppearance(targetTheme, event.target.value)}
+                >
+                  {variantsForTheme(targetTheme).map(({ key, name }) => (
+                    <option key={key} value={key}>
+                      {displayKey(key)} · {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
             <label>
               Tema
               <select
@@ -89,6 +110,40 @@ export function PrototypeBackgroundControls({
                 <option value="system">System</option>
               </select>
             </label>
+            {variant === 'D' && (
+              <>
+                <label>
+                  Fördelning i D
+                  <select
+                    aria-label="Fördelning i D"
+                    value={composition}
+                    onChange={(event) => update('composition', event.target.value)}
+                  >
+                    <option value="sparse">Gles rymd · mycket tomrum</option>
+                    <option value="galaxies">Galaxfält · fler grupper</option>
+                    <option value="nebulae">Nebulosor · bredare dis och stoft</option>
+                  </select>
+                </label>
+                {theme.theme === 'light' && (
+                  <label>
+                    Färger i ljust D
+                    <select
+                      aria-label="Färger i ljust D"
+                      value={palette}
+                      onChange={(event) => update('palette', event.target.value)}
+                    >
+                      <option value="pearl">Pärlemor</option>
+                      <option value="dawn">Gryningsblå</option>
+                      <option value="lavender">Lavendel</option>
+                    </select>
+                  </label>
+                )}
+                <p>
+                  Spiralgalax, galax från kanten, elliptiska galaxer, nebulosor, stoft, stjärnhopar
+                  och en ringform. Illustration av rymden med fria färger och skalor.
+                </p>
+              </>
+            )}
             <label className="prototype-background-check">
               <input
                 type="checkbox"
@@ -100,14 +155,20 @@ export function PrototypeBackgroundControls({
               />
               Visa prototypens bakgrund
             </label>
-            <p>Temat sparas i testkontot. Bakgrundsalternativet finns bara i länken.</p>
+            <p>
+              Du kan välja olika bakgrunder för ljust och mörkt tema. Temat sparas i testkontot;
+              bakgrundsvalen och D:s fördelning finns i länken.
+            </p>
             <p>
               {objectCount} objekt · Sparat val ”Visa stjärnhimmel”: {stars ? 'på' : 'av'} · Minskad
               rörelse: {reducedMotion ? 'på' : 'av'}.
             </p>
             <p>
               Ljuspunkter visas:{' '}
-              {stars && enabled && !reducedMotion && variant !== 'A' ? 'ja' : 'nej'}.
+              {stars && enabled && !reducedMotion && ['reference', 'B', 'D'].includes(variant)
+                ? 'ja'
+                : 'nej'}
+              .
             </p>
             <p>
               {reducedMotion
@@ -135,7 +196,7 @@ export function PrototypeBackgroundControls({
             ←
           </button>
           <output aria-live="polite">
-            {variant} · {backgroundVariants[current].name}
+            {displayKey(variant)} · {current.name}
           </output>
           <button type="button" aria-label="Nästa bakgrund" onClick={() => cycle(1)}>
             →
