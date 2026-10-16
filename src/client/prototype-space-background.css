@@ -91,3 +91,26 @@
     padding-block: 4px;
   }
 }
+
+.prototype-background-settings fieldset {
+  margin-block: 16px;
+  padding: 12px;
+  border: 1px solid var(--space-line);
+  min-width: 0;
+}
+.prototype-background-settings fieldset:disabled {
+  opacity: 0.55;
+}
+.map-settings .prototype-background-settings fieldset label {
+  display: grid;
+  gap: 8px;
+  margin-block: 12px;
+}
+.prototype-background-settings :is(select, input[type="range"]) {
+  width: 100%;
+  min-height: 44px;
+}
+.prototype-background-settings :is(input, select, button):focus-visible {
+  outline: 3px solid var(--space-accent);
+  outline-offset: 3px;
+}

@@ -8,7 +8,13 @@ import { seedDemo } from './seeds/demo.js';
 
 const installation = await prototypeBackgroundInstallation(
   process.argv.includes('--dev'),
-  process.argv.includes('--dense') ? 5189 : 5188,
+  process.argv.includes('--legacy-on')
+    ? 5192
+    : process.argv.includes('--legacy-off')
+      ? 5193
+      : process.argv.includes('--dense')
+        ? 5191
+        : 5190,
 );
 const { database, config } = installation;
 const origin = config.origin;
@@ -48,25 +54,42 @@ if (process.argv.includes('--dense')) {
 }
 const view = personalView(database, userId, household.id);
 const saved = view.read();
-view.configure({
-  contentVersion: saved.contentVersion,
-  version: saved.settings.version,
-  settings: { ...defaultViewSettings, stars: true, allLabels: false },
-});
+const legacy = process.argv.includes('--legacy-on') || process.argv.includes('--legacy-off');
+if (legacy) {
+  // Intentionally omit new fields, exactly like a pre-change saved view.
+  database
+    .prepare(`INSERT INTO personal_view_settings (householdId, userId, version, settings)
+    VALUES (?, ?, 1, ?)`)
+    .run(
+      household.id,
+      userId,
+      JSON.stringify({
+        ...defaultViewSettings,
+        stars: process.argv.includes('--legacy-on'),
+      }),
+    );
+} else {
+  const { version: _version, ...settings } = saved.settings;
+  view.configure({
+    contentVersion: saved.contentVersion,
+    version: saved.settings.version,
+    settings: { ...settings, allLabels: false },
+  });
+}
 
 console.log(
   `\nTHROWAWAY background prototype: ${process.argv.includes('--dense') ? 'dense (80 objects)' : 'sparse (16 objects)'}`,
 );
-console.log(`Open ${origin}/?light=E&dark=D&motion=layered`);
+console.log(`Open ${origin}/`);
 console.log(
   'Choose "Öppna testkartan som Alex". No personal credentials, external provider or billable APIs.',
 );
 console.log(
-  'Variants: reference, A, B, A-light, B-light, dark D, E. Independent light/dark choices.',
+  'Settings → Rymdkartan → Bakgrund. Seven approved appearances; independent pan and zoom.',
 );
 console.log('Ctrl+C deletes this scratch installation.');
 console.log(
-  'Motion: layered, gentle, still. Reduced motion: reduce=on; reduced=freeze, quiet, off.',
+  `Personal view fixture: ${legacy ? (process.argv.includes('--legacy-on') ? 'legacy ON' : 'legacy OFF') : 'NEW'}. Reduced motion: ?reduce=on.`,
 );
 let stopping = false;
 async function stop() {

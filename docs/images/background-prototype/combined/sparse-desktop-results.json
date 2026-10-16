@@ -1,0 +1,74 @@
+{
+  "key": "sparse-desktop",
+  "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+  "objectCount": 16,
+  "independentSettings": true,
+  "backgroundOffLocks": true,
+  "reducedLocksOnlyMotion": true,
+  "resetMotion": true,
+  "keyboardFocus": {
+    "focused": true,
+    "outline": "solid"
+  },
+  "settingsOverflow": false,
+  "saveFailureRollback": true,
+  "reloadPersistence": true,
+  "results": [
+    {
+      "theme": "light",
+      "variant": "A-light",
+      "freezeAndResumePoseWithin1eMinus9": true,
+      "savedChoicesRetained": true,
+      "panHandlerAndFinishCallUpperMedianMs": 0.5,
+      "panHandlerAndFinishCallP95Ms": 1.7999999970197678
+    },
+    {
+      "theme": "light",
+      "variant": "B-light",
+      "freezeAndResumePoseWithin1eMinus9": true,
+      "savedChoicesRetained": true,
+      "panHandlerAndFinishCallUpperMedianMs": 1,
+      "panHandlerAndFinishCallP95Ms": 1.4000000059604645
+    },
+    {
+      "theme": "light",
+      "variant": "E",
+      "freezeAndResumePoseWithin1eMinus9": true,
+      "savedChoicesRetained": true,
+      "panHandlerAndFinishCallUpperMedianMs": 0.6000000089406967,
+      "panHandlerAndFinishCallP95Ms": 0.6000000089406967
+    },
+    {
+      "theme": "dark",
+      "variant": "A",
+      "freezeAndResumePoseWithin1eMinus9": true,
+      "savedChoicesRetained": true,
+      "panHandlerAndFinishCallUpperMedianMs": 0.5,
+      "panHandlerAndFinishCallP95Ms": 1.0999999940395355
+    },
+    {
+      "theme": "dark",
+      "variant": "B",
+      "freezeAndResumePoseWithin1eMinus9": true,
+      "savedChoicesRetained": true,
+      "panHandlerAndFinishCallUpperMedianMs": 0.7000000029802322,
+      "panHandlerAndFinishCallP95Ms": 0.7999999970197678
+    },
+    {
+      "theme": "dark",
+      "variant": "D",
+      "freezeAndResumePoseWithin1eMinus9": true,
+      "savedChoicesRetained": true,
+      "panHandlerAndFinishCallUpperMedianMs": 1.2999999970197678,
+      "panHandlerAndFinishCallP95Ms": 1.4000000059604645
+    },
+    {
+      "theme": "dark",
+      "variant": "E",
+      "freezeAndResumePoseWithin1eMinus9": true,
+      "savedChoicesRetained": true,
+      "panHandlerAndFinishCallUpperMedianMs": 0.7000000029802322,
+      "panHandlerAndFinishCallP95Ms": 1.1000000089406967
+    }
+  ]
+}

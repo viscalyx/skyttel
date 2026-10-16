@@ -1,0 +1,15 @@
+{
+  "panZeroStopsOnlyPan": true,
+  "zoomZeroStopsOnlyZoom": true,
+  "fullStrengthAndBothDepthExtremes": true,
+  "resetMotionKeepsMapCamera": true,
+  "keyboardFocusRetained": true,
+  "focusOutline": {
+    "style": "solid",
+    "width": "3px"
+  },
+  "pointerRotation": true,
+  "ctrlWheelZoom": true,
+  "simulationSurvivesSettings": true,
+  "narrowSettingsNoHorizontalOverflow": true
+}

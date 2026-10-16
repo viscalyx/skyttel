@@ -12,14 +12,22 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
-import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
+import {
+  defaultViewSettings,
+  type Position,
+  prototypeBackgroundSettings,
+  type ViewSettings,
+} from '../shared/personal-view.js';
 import { relationshipLabel } from '../shared/relationship-label.js';
 import { LifecycleStatus } from './Lifecycle.js';
 import { MapNavigation } from './MapNavigation.js';
 import type { MapRevealRequest } from './map-display.js';
 import { mapConnections, proposalKind } from './map-presentation.js';
 import { ObjectActions, type ObjectActionsEntry } from './ObjectActions.js';
-import { PrototypeBackgroundControls } from './PrototypeBackgroundControls.js';
+import {
+  PrototypeBackgroundControls,
+  PrototypeBackgroundSettingsPanel,
+} from './PrototypeBackgroundControls.js';
 import {
   type BackgroundPreview,
   backgroundPrototypeEnabled,
@@ -296,6 +304,7 @@ export function SpatialMap({
       previous.oceanLife === next.oceanLife &&
       previous.motion === next.motion &&
       previous.strength === next.strength &&
+      previous.zoomStrength === next.zoomStrength &&
       previous.layerDepth === next.layerDepth &&
       previous.simulateReduced === next.simulateReduced
         ? previous
@@ -1156,30 +1165,41 @@ export function SpatialMap({
       {settingsMount &&
         createPortal(
           <div className="map-settings">
-            <label>
-              <input
-                type="checkbox"
-                checked={preferences.stars && (backgroundPrototypeEnabled || !reducedMotion)}
-                disabled={
-                  (!backgroundPrototypeEnabled && reducedMotion) ||
-                  Boolean(personal && (!personal.view || personal.pending))
-                }
-                onChange={(event) => configure({ stars: event.target.checked })}
+            {backgroundPrototypeEnabled ? (
+              <PrototypeBackgroundSettingsPanel
+                value={prototypeBackgroundSettings(preferences)}
+                pending={Boolean(personal && (!personal.view || personal.pending))}
+                reduced={reducedMotion || backgroundPreview.simulateReduced}
+                onChange={(background) => configure({ background })}
               />
-              Visa stjärnhimmel
-            </label>
-            {reducedMotion && (
-              <span>
-                {backgroundPrototypeEnabled
-                  ? 'Rörelseprovet styr hur det sparade valet visas vid minskad rörelse.'
-                  : 'Minskad rörelse: stjärnhimlen är avstängd.'}
-              </span>
+            ) : (
+              <>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={preferences.stars && (backgroundPrototypeEnabled || !reducedMotion)}
+                    disabled={
+                      (!backgroundPrototypeEnabled && reducedMotion) ||
+                      Boolean(personal && (!personal.view || personal.pending))
+                    }
+                    onChange={(event) => configure({ stars: event.target.checked })}
+                  />
+                  Visa stjärnhimmel
+                </label>
+                {reducedMotion && (
+                  <span>
+                    {backgroundPrototypeEnabled
+                      ? 'Rörelseprovet styr hur det sparade valet visas vid minskad rörelse.'
+                      : 'Minskad rörelse: stjärnhimlen är avstängd.'}
+                  </span>
+                )}
+                <p>
+                  {backgroundPrototypeEnabled
+                    ? 'Testkontots sparade val. Rörelse provas i prototypmenyn längst ned.'
+                    : 'Stjärnhimlen följer panorering, rotation och zoom. Ditt val sparas direkt.'}
+                </p>
+              </>
             )}
-            <p>
-              {backgroundPrototypeEnabled
-                ? 'Testkontots sparade val. Rörelse provas i prototypmenyn längst ned.'
-                : 'Stjärnhimlen följer panorering, rotation och zoom. Ditt val sparas direkt.'}
-            </p>
             <div role="status" aria-atomic="true">
               {personal?.message && (
                 <p
@@ -1245,11 +1265,15 @@ export function SpatialMap({
         <p className="graphics-notice">Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.</p>
       )}
       {unavailable && <p>Rymdkartan kan inte visas. Använd Tabell för att fortsätta.</p>}
-      {backgroundPrototypeEnabled && active && (
+      {backgroundPrototypeEnabled && (
         <PrototypeBackgroundControls
           onPreview={changeBackgroundPreview}
           reducedMotion={reducedMotion}
-          stars={preferences.stars}
+          settings={prototypeBackgroundSettings(preferences)}
+          onChange={(background) => configure({ background })}
+          ready={personalReady}
+          pending={Boolean(personal?.pending)}
+          active={active}
           objectCount={objects.size}
         />
       )}

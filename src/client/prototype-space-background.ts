@@ -28,6 +28,7 @@ export type BackgroundPreview = {
   oceanLife: OceanLife;
   motion: BackgroundMotion;
   strength: number;
+  zoomStrength: number;
   layerDepth: number;
   simulateReduced: boolean;
 };
@@ -113,8 +114,9 @@ export function readBackgroundPreview(
     composition: composition === 'galaxies' || composition === 'nebulae' ? composition : 'sparse',
     palette: palette === 'dawn' || palette === 'lavender' ? palette : 'pearl',
     oceanLife: oceanLifeOptions.find(({ key }) => key === oceanLife)?.key ?? 'all',
-    motion: motion === 'gentle' || motion === 'still' ? motion : 'layered',
-    strength: boundedParam(params, 'strength', 0.7, 0, 1),
+    motion: motion === 'layered' || motion === 'still' ? motion : 'gentle',
+    strength: boundedParam(params, 'pan', boundedParam(params, 'strength', 0.7, 0, 1), 0, 1),
+    zoomStrength: boundedParam(params, 'zoom', 0.7, 0, 1),
     layerDepth: boundedParam(params, 'depth', 1, 0.5, 2),
     simulateReduced: params.get('reduce') === 'on',
   };
@@ -282,7 +284,7 @@ export function prototypeSpaceBackground(pixelRatio = 1) {
         // The scene already bounds pan like the real app. Keep the extra
         // gentle factor for the approved zoom response only.
         const panGain = preview.strength * preview.layerDepth;
-        const zoomGain = preview.strength * factor;
+        const zoomGain = preview.zoomStrength * factor;
         if (rebased) {
           if (camera.quaternion.equals(resumeSource.quaternion))
             renderCamera.quaternion.copy(resumeView.quaternion);

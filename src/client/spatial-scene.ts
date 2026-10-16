@@ -525,7 +525,7 @@ export function spatialScene(
       settings = value;
       const reduce = prototype && (prototype.reducedMotion || prototype.simulateReduced);
       stars.visible =
-        value.stars &&
+        (prototype && prototype.variant !== 'reference' ? prototype.enabled : value.stars) &&
         (!prototype ||
           (prototype.enabled &&
             (!reduce || prototype.variant !== 'reference') &&
@@ -537,7 +537,7 @@ export function spatialScene(
         prototype?.reducedMotion ?? false,
         prototype?.composition,
         prototype?.palette,
-        value.stars,
+        prototype?.variant === 'reference' ? value.stars : true,
         prototype?.oceanLife,
         prototype,
       );

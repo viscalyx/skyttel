@@ -1,0 +1,30 @@
+[
+  {
+    "legacyStars": true,
+    "initialReducedMotion": true,
+    "initial": {
+      "enabled": true,
+      "light": "A-light",
+      "dark": "B",
+      "pan": 0.7,
+      "zoom": 0.7,
+      "depth": 1
+    },
+    "newChoiceRetainedAfterReload": true,
+    "anotherBrowserReadsSamePersonalChoice": true
+  },
+  {
+    "legacyStars": false,
+    "initialReducedMotion": true,
+    "initial": {
+      "enabled": false,
+      "light": "A-light",
+      "dark": "A",
+      "pan": 0.7,
+      "zoom": 0.7,
+      "depth": 1
+    },
+    "newChoiceRetainedAfterReload": true,
+    "anotherBrowserReadsSamePersonalChoice": true
+  }
+]

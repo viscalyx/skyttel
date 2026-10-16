@@ -4,6 +4,8 @@ import {
   defaultViewSettings,
   type PersonalPosition,
   type PersonalView,
+  prototypeBackgroundDefaults,
+  prototypeBackgroundSettings,
   type ViewSettings,
 } from '../shared/personal-view.js';
 import { assertContentVersion } from './content-maintenance.js';
@@ -36,6 +38,17 @@ const preferences = z
         axisPinned: z.boolean(),
         stars: z.boolean(),
         allLabels: z.boolean(),
+        background: z
+          .object({
+            enabled: z.boolean(),
+            light: z.enum(['A-light', 'B-light', 'E']),
+            dark: z.enum(['A', 'B', 'D', 'E']),
+            pan: z.number().min(0).max(1),
+            zoom: z.number().min(0).max(1),
+            depth: z.number().min(0.5).max(2),
+          })
+          .strict()
+          .optional(),
       })
       .strict(),
   })
@@ -64,9 +77,11 @@ export function personalView(database: Database.Database, actorId: string, house
         'SELECT version, settings FROM personal_view_settings WHERE householdId = ? AND userId = ?',
       )
       .get(householdId, userId) as { version: number; settings: string } | undefined;
-    return row
-      ? { ...(JSON.parse(row.settings) as ViewSettings), version: row.version }
-      : { ...defaultViewSettings, version: 0 };
+    if (row) {
+      const stored = JSON.parse(row.settings) as ViewSettings;
+      return { ...stored, background: prototypeBackgroundSettings(stored), version: row.version };
+    }
+    return { ...defaultViewSettings, background: { ...prototypeBackgroundDefaults }, version: 0 };
   }
   function positions() {
     return database
