@@ -1,12 +1,53 @@
 # Background performance observations
 
-All 36 configurations of the optimized client meet the frozen local budget:
+All 72 measurements of the integrated client meet the frozen local budget:
 response median/p95 at most 1000/1750 ms and full-frame pipeline median/p95
-at most 180/800 ms. The unoptimized dense desktop Universe exceeds both
-its response median and full-frame p95 limits; the optimized result is
-772 ms and 552 ms respectively, compared with 1034 ms and 875 ms before.
-These are local SwiftShader regression observations. Physical GPU/mobile
-and extended-use verification remain a separate tester follow-up.
+at most 180/800 ms. The largest observed response median/p95 is 420/679 ms;
+the largest full-frame median/p95 is 31/350 ms. These are local SwiftShader
+regression observations. Physical GPU/mobile and extended-use verification
+remain a separate tester follow-up.
+
+## Combined production verification
+
+The combined run includes the connection contrast surrounds, settings
+changes and all background optimizations. It uses the committed default
+of two rounds with 12 completed PNG observations per cell: 72 measured
+cells and 864 responses, with the same panels, sizes, widths and seven
+appearances as the paired comparison below. The frozen budget is unchanged.
+
+The first combined production version, source
+`25a6de380950d5914a921e93721fee046da111a4`, exceeds the frame median limit
+in one cell: dense desktop Universe, first round, 183.299 ms against
+180 ms. Its second round is 131.412 ms. Both response limits, every frame
+p95 and all resource, placement and idle checks pass. This complete failed
+measurement remains available as a
+[readable report](measurements/background-combined-before-summary.json) and
+[raw trace](measurements/background-combined-before.json.gz).
+
+The integrated repair, source
+`15e1c1fd407979d1c379633b9e86d59c4df3a217`, bounds connection mask surfaces
+to the shaft control hull or arrow tip, with conservative paint margins.
+It preserves stroke widths, colors, occlusion geometry, depth and all
+motifs. A controlled Chromium raster comparison of the actual depth SVG
+in 12 existing movement and camera states produces zero changed RGBA
+pixels when only those mask regions expand to the former viewport bounds.
+Full composed-page screenshots can differ at unrelated antialiased edges
+after such a mutation; the equality result applies to the isolated SVG.
+All 37 spatial graphics tests, the painted-arrow regression and 28 dense
+desktop contrast captures across all seven appearances pass after repair.
+
+The complete repaired profile has zero violations and 5634 full-frame
+samples. Resource counts stabilize after warm-up, saved placements remain
+unchanged and idle full-page images remain identical. Dense desktop
+Universe frame medians are 26.490/26.727 ms across the two rounds;
+response medians are 380.417/419.653 ms. Every measured cell, its median
+and p95, frame-state counts and settings are in the
+[readable repaired report](measurements/background-combined-after-summary.json).
+The [raw repaired trace](measurements/background-combined-after.json.gz)
+retains individual observations and complete trace events. Both reports
+identify source, exact built assets and hashes, browser, environment and
+the same software graphics device described below. The repaired JS SHA-256
+is `2ce402c19d0ddbbe748bbd53057a986066079612f6d1acddf065b4854f4d3417`.
 
 ## Method and production versions
 
