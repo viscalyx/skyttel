@@ -445,7 +445,7 @@ befintliga guiden.
    utsnittet.
 5. Välj Läs in min aktuella vy under Ordna min vy. Vänta tills läsningen är klar
    och jämför utsnittet med det du valde i föregående steg.
-6. Öppna Inställningar → Rymdkartan och aktivera Visa bakgrund. Återgå med
+6. Öppna Inställningar → Rymdkartan och slå av Visa bakgrund. Återgå med
    Tillbaka till kartan. Vänta på beskedet att vyn är sparad och jämför
    utsnittet igen.
 
@@ -457,7 +457,7 @@ befintliga guiden.
 - Efter den första inramningen kan användaren välja ett eget utsnitt.
   Läs in min aktuella vy bevarar det utsnittet utan att kameran hoppar
   tillbaka eller zoomar om.
-- Stjärnhimlen visas. Även efter att valet sparas ligger objekten kvar
+- Bakgrunden är enfärgad. Även efter att valet sparas ligger objekten kvar
   på samma ställen i utsnittet och kameran bevaras.
 
 ### PLACERING-07: bakgrundsval i Rymdkartans inställningar
@@ -518,6 +518,8 @@ PLACERING-07.
 - Kartans urval, kamera och tidigare placeringar består genom vybytet.
 - Kontrollerna finns i inställningarna, går att nå med tangentbord och
   behåller fokus under sparande.
+- Under väntan på ett nytt sparresultat visas att vyn sparas. Ett tidigare
+  sparbesked bekräftar inte det nya valet.
 
 ### PLACERING-09: Sparbekräftelse som toast med bevarat fokus
 

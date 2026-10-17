@@ -885,8 +885,9 @@ test('PLACERING-07: background choices follow the theme and persist without movi
   page,
 }) => {
   const installation = await createInstallation();
+  let releaseSave = () => {};
   try {
-    const { read } = await arrange(page, installation.origin);
+    const { read, path } = await arrange(page, installation.origin);
     await selectAndArrange(page);
     await page.getByRole('button', { name: /^Flytta .+: uppåt$/ }).click();
     await expect.poll(async () => (await read()).positions.length).toBe(1);
@@ -908,11 +909,27 @@ test('PLACERING-07: background choices follow the theme and persist without movi
     await expect(background).toBeChecked();
     await expect(light).toHaveValue('pearl');
     await expect(dark).toHaveValue('atmosphere');
+    // Keep the real committed reply pending, after the earlier move's success,
+    // so that its obsolete toast cannot confirm this new background choice.
+    const heldSave = new Promise<void>((resolve) => {
+      releaseSave = resolve;
+    });
+    await page.route(`${path}/view/settings`, async (route) => {
+      const response = await route.fetch();
+      await heldSave;
+      await route.fulfill({ response });
+    });
     await dark.focus();
     await dark.selectOption('mist');
+    await expect(page.locator('.map-settings').getByRole('status')).toHaveText(
+      'Din personliga vy sparas…',
+    );
+    await expect(dark).toBeFocused();
+    releaseSave();
     await expect(
       page.locator('.map-settings').getByText('Din personliga vy är sparad.', { exact: true }),
     ).toBeVisible();
+    await page.unroute(`${path}/view/settings`);
     await expect(dark).toBeFocused();
     await expect.poll(async () => (await read()).settings.darkBackground).toBe('mist');
     await background.uncheck();
@@ -959,6 +976,7 @@ test('PLACERING-07: background choices follow the theme and persist without movi
     await expect(dark).toHaveValue('mist');
     expect(await read()).toEqual(finalSaved);
   } finally {
+    releaseSave();
     await installation.close();
   }
 });
