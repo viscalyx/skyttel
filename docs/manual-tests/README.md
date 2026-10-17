@@ -664,6 +664,10 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   och mörkt Under världshavet som personliga temaval, återläsning utan
   ändrad karta, sandbotten, vattenyta och sex ljusformer genom vanlig
   kameranavigering.
+- [Bakgrundens tillgänglighet](background-accessibility.md): sambandens
+  färdiga kontrast, sju motiv i gles och tät karta, textalternativ,
+  tangentbord, pekemulering, omflöde och sparstatus. Fysisk pekskärm,
+  verklig förstoring och längre bruk har en separat mänsklig observation.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt

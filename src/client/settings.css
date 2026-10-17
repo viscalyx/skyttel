@@ -478,7 +478,15 @@
   opacity: 0.55;
 }
 .settings-screen .background-choices select {
+  display: block;
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--space-control);
+  border-radius: 8px;
+  font: inherit;
 }
 .background-motion-value {
   display: flex;

@@ -365,6 +365,9 @@ och båda temana. **Återställ rörelse** sparar 70 procent, 70 procent och
 1,0. Bakgrundsval, synlighet, kamera och objektplaceringar behålls.
 När bakgrunden är av eller systemets minskade rörelse gäller visar de
 inaktiva rörelsereglagen dina sparade värden.
+Reglagen kan ändras med piltangenterna, Home och End eller genom att peka
+en gång i reglagets spår. Du behöver inte dra reglaget. Tab följer ordningen
+synlighet, bakgrundsval och rörelse; inaktiva kontroller hoppas över.
 
 Med systemets minskade rörelse är hela den valda bakgrunden synlig och
 stilla. Ändringar i systemet gäller direkt i en öppen karta. Bakgrunden
@@ -396,6 +399,14 @@ Etiketterna får egna träffytor och linjer till objektens verkliga lägen.
 Markerade objekt får etikettutrymme först. Använd **Tabell** och sökningen
 för objekt vars etiketter inte ryms. Tabellen fungerar även när kartgrafiken
 inte kan visas. Tangentbordets Tab och Enter kan också markera objekten.
+Markörer kan överlappa och öppna paneler täcka delar av kartan, särskilt
+på en smal skärm. Även en karta med få objekt kan bli trång när alla
+etiketter visas. Tabellens sökning och fullständiga uppgifter är tillgängliga
+också när ett objekt saknar fri pekyta i kartan.
+Om uppgifter och navigering täcker varandra kan du stänga det främre
+fönstret först. Tab höjer de kontroller du fokuserar; Escape i ett
+uppgiftsfönster stänger det. På en smal skärm kan du stänga uppgifterna
+för att nå verktygen igen.
 
 Hjälpvisare, avstånd och placeringar är presentation;
 de tillför inga uppgifter om hushållet.

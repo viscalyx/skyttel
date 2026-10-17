@@ -1399,9 +1399,11 @@ export function SpatialMap({
                 viewBox="0 0 10 10"
                 refX="10"
                 refY="5"
-                markerWidth="7"
-                markerHeight="7"
+                markerUnits="userSpaceOnUse"
+                markerWidth="12"
+                markerHeight="12"
                 orient="auto-start-reverse"
+                overflow="visible"
               >
                 <path d="M 0 0 L 10 5 L 0 10 z" className={`connection-arrow ${kind}`} />
               </marker>
@@ -1653,6 +1655,12 @@ export function SpatialMap({
                       </g>
                     ))}
                   </defs>
+                  <path
+                    d={geometry}
+                    fill="none"
+                    mask={occluders.length ? `url(#${maskId})` : undefined}
+                    className={`connection-underlay ${kind}${selected ? ' selected' : ''}`}
+                  />
                   {kind === 'removed' ? (
                     <path
                       d={geometry}
