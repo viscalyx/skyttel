@@ -237,3 +237,80 @@ bevisar inte att alla objekt har en fri pekyta.
   uppgifter med tangentbordet visar inte att alla pekytor är fria.
 - Valet sparas för användaren i hushållet. Byten flyttar inte kartan eller
   objekten. Sparbesked och tangentbordsfokus fungerar.
+
+### BAKGRUND-04: Mörkt hav med alla sex ljusformer och sparade val
+
+**Syfte:** Kontrollera hela djurlivsmotivet i mörkt Under världshavet och
+att separata temaval sparas utan att flytta kartan eller objekten.
+
+**Användare:** Den inloggade användaren från förberedelsen.
+
+**Förutsättningar:** Välj mörkt tema och slå av **Alla etiketter** för
+automatisk etikettvisning. Prova 16 och 80 objekt i datorvy och smal vy
+med navigeringspanel respektive objektuppgifter öppna. Flytta ett
+objekt i din personliga vy, markera det och panorera innan bakgrundsbytet.
+Den kända överlappningen i det täta provunderlaget ovan gäller även här.
+
+**Automatiskt motsvarande test (integration):**
+[background-ocean.spec.ts](../../tests/integration/background-ocean.spec.ts),
+BAKGRUND-04. Riktig app och scen samt isolerad SQLite-installation provar
+val, sparbesked, fokus, stillastående bild, temabyte, omladdning, omstart
+och en andra webbläsare. Bilder från matrisen stödjer visuell granskning
+av djurformer, objekt, samband, etiketter och kontroller. Automatiken
+identifierar inte djurens former och bevisar inte fri pekyta eller
+läsbarhet för alla etiketter i täta vyer. Fysisk grafikhårdvara och
+fullständig tillgänglighet behöver bedömas separat.
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/background-ocean.spec.ts",
+    "caseId": "BAKGRUND-04"
+  },
+  "reference": "Mörkt hav, 16/80 objekt, dator/smal, riktningar och två klienter.",
+  "outcomes": [
+    "Mörkt hav återkommer efter omladdning, omstart och i en annan webbläsare.",
+    "Motivet står still utan kamerarörelse och följer vanlig navigering.",
+    "Temabyte bevarar båda bakgrundsvalen, kameran och objektplaceringar.",
+    "Navigering, objektval och uppgifter fungerar över bakgrunden."
+  ]
+}
+```
+-->
+
+**Steg:**
+
+1. Öppna **Inställningar → Rymdkartan**. Välj **Under världshavet** i
+   **Bakgrund i mörkt tema** med tangentbordet. Kontrollera sparbesked,
+   bevarat fokus och att det ljusa bakgrundsvalet finns kvar.
+2. Återgå till kartan. Kontrollera oförändrat utsnitt, markering och
+   objektplaceringar. Låt kameran stå still och kontrollera att motivet
+   inte simmar, pulserar, blinkar eller fortsätter röra sig.
+3. Öppna **Navigera**. Prova rotation åt båda hållen, lutning uppåt och
+   nedåt, panorering och zoom. Jämför hela motivet: kronmanet, sifonofor,
+   lanternfish, vampyrbläckfisk, musselkräftors ljusspår och
+   djuphavsmarulk med lysande lockbete. Formerna ingår tillsammans;
+   kamerans riktning avgör vilka delar som syns i utsnittet.
+4. Välj ett objekt och öppna dess uppgifter. Använd vid tät överlappning
+   tangentbordets **Skift+F10 → Visa uppgifter**. Granska objekt,
+   samband, etiketter, markering och kontroller i flera riktningar.
+   Upprepa med båda kartstorlekarna och bredderna. Anteckna dolda
+   etiketter och överlappande pekytor.
+5. Växla till ljust tema och tillbaka. Kontrollera att respektive
+   bakgrund återkommer utan att kameran eller objekten flyttar sig.
+6. Ladda om sidan och öppna samma hushåll i den andra webbläsaren.
+   Kontrollera att det mörka valet och det ljusa valet finns kvar.
+
+**Förväntat resultat:**
+
+- Det mörkblå vattnet och de sex blågröna ljusformerna bildar ett
+  sammanhängande motiv med tomrum bakom hushållets information.
+- Motivet följer kartans navigering utan egen rörelse. Kartans vanliga
+  reglage, objektval och uppgifter går att använda.
+- Valet sparas per användare i hushållet. Temabyte och bakgrundsbyte
+  bevarar kamera, markering och personliga placeringar.
+- Läsbarhetsbedömningen redovisar faktiska överlappningar och dolda
+  etiketter; tangentbordsvägen visar inte att alla pekytor är fria.

@@ -7,7 +7,7 @@ export type ViewSettings = {
   axisPinned: boolean;
   background: boolean;
   lightBackground: 'pearl' | 'dawn' | 'ocean';
-  darkBackground: 'atmosphere' | 'mist' | 'universe';
+  darkBackground: 'atmosphere' | 'mist' | 'universe' | 'ocean';
   panStrength: number;
   zoomStrength: number;
   layerDistance: number;

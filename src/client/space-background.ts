@@ -13,6 +13,7 @@ import {
 } from 'three';
 import { defaultViewSettings, type ViewSettings } from '../shared/personal-view.js';
 import { cosmicSky } from './cosmic-sky.js';
+import { darkOceanBackground } from './dark-ocean-background.js';
 import { lightOceanBackground } from './light-ocean-background.js';
 
 /** Decorative graphics only. Extend theme choices here; camera navigation and
@@ -187,7 +188,8 @@ export function spaceBackground(pixelRatio: number) {
   mesh.renderOrder = -100;
   mesh.visible = false;
   const ocean = lightOceanBackground();
-  group.add(mesh, cosmic.group, ocean.mesh);
+  const deepOcean = darkOceanBackground();
+  group.add(mesh, cosmic.group, ocean.mesh, deepOcean.mesh);
 
   return {
     group,
@@ -196,7 +198,8 @@ export function spaceBackground(pixelRatio: number) {
       group.visible = value.background;
       ocean.mesh.visible = theme === 'light' && value.lightBackground === 'ocean';
       const universe = theme === 'dark' && value.darkBackground === 'universe';
-      mesh.visible = !ocean.mesh.visible && !universe;
+      deepOcean.mesh.visible = theme === 'dark' && value.darkBackground === 'ocean';
+      mesh.visible = !ocean.mesh.visible && !deepOcean.mesh.visible && !universe;
       cosmic.configure(universe);
       stars.visible = theme === 'dark' && value.darkBackground === 'mist';
       material.uniforms.variant.value =
@@ -228,6 +231,12 @@ export function spaceBackground(pixelRatio: number) {
         material.uniforms.tangent.value,
       );
       cosmic.update(renderCamera, material.uniforms.rotation.value, material.uniforms.offset.value);
+      deepOcean.update(
+        material.uniforms.rotation.value,
+        material.uniforms.offset.value,
+        material.uniforms.aspect.value,
+        material.uniforms.tangent.value,
+      );
       return renderCamera;
     },
     dispose() {
@@ -237,6 +246,7 @@ export function spaceBackground(pixelRatio: number) {
       starMaterial.dispose();
       ocean.dispose();
       cosmic.dispose();
+      deepOcean.dispose();
     },
   };
 }

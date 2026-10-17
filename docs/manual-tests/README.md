@@ -658,9 +658,10 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   provhushåll på samma installation förbereds med ett lokalt kommando.
   Höjdhjälpen har stabil förhandsvisning och ett bevarat val i båda
   navigeringsstorlekarna.
-- [Kartans bakgrunder](background.md): Gryningsdis, Universum och ljust
-  Under världshavet som personliga temaval, återläsning utan ändrad karta
-  samt sandbotten, vattenyta och mellanvatten genom vanlig kameranavigering.
+- [Kartans bakgrunder](background.md): Gryningsdis, Universum samt ljust
+  och mörkt Under världshavet som personliga temaval, återläsning utan
+  ändrad karta, sandbotten, vattenyta och sex ljusformer genom vanlig
+  kameranavigering.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt

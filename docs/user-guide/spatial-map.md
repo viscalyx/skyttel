@@ -347,6 +347,12 @@ stoft i mörkt tema. Det aktiva temat, även systemtema, väljer vilken
 bakgrund som visas. Tema- och bakgrundsbyten behåller kamerans utsnitt och
 dina objektplaceringar.
 
+Under världshavet i mörkt tema visar blågröna ljusformer i mörkt vatten:
+kronmanet, sifonofor, lanternfish, vampyrbläckfisk, musselkräftors ljusspår
+och djuphavsmarulk med lysande lockbete. Alla ingår tillsammans. Motivet
+är en fri illustration av djur från olika havsdjup och står still när
+kameran står still.
+
 **Panoreringsstyrka** och **Zoomstyrka** styr responsen oberoende, från
 0 till 100 procent i steg om 5 procent. Noll stoppar respektive respons;
 bakgrunden följer fortfarande rotation. **Lageravstånd** styr intrycket av
