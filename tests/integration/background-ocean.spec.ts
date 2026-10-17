@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import type { PersonalView } from '../../src/shared/personal-view.js';
-import { createHousehold, openMap, openSettings, signIn } from '../support/client.js';
+import { createHousehold, openMap, openSettings, setAllLabels, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
@@ -20,13 +20,20 @@ async function back(page: Page) {
 }
 async function tint(page: Page) {
   const pixels = await sharp(await space(page).locator('canvas').screenshot())
-    .resize(30, 30)
     .removeAlpha()
     .raw()
     .toBuffer();
   let warmth = 0;
-  for (let i = 0; i < pixels.length; i += 3) warmth += pixels[i] - pixels[i + 2];
-  return warmth / (pixels.length / 3);
+  let samples = 0;
+  for (let i = 0; i < pixels.length; i += 3) {
+    // The canvas capture includes overlaid labels and panels. Their white
+    // cards must not dilute the background's sand/water colour comparison.
+    if (Math.min(pixels[i], pixels[i + 1], pixels[i + 2]) > 235) continue;
+    warmth += pixels[i] - pixels[i + 2];
+    samples++;
+  }
+  expect(samples).toBeGreaterThan(0);
+  return warmth / samples;
 }
 async function captureViews(page: Page, reference: string) {
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
@@ -127,6 +134,11 @@ test('BAKGRUND-03: light ocean persists and ordinary navigation reaches sand, wa
     ).toBe(true);
     await page.goto(installation.origin);
     await openMap(page);
+    await setAllLabels(page, true);
+    await expect(page.getByRole('button', { name: 'Alla etiketter', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     const markers = space(page).getByRole('button', {
       name: 'Välj objekt: Havsobjekt 0',
       exact: true,
@@ -157,7 +169,11 @@ test('BAKGRUND-03: light ocean persists and ordinary navigation reaches sand, wa
     expect(await markers.getAttribute('style')).toBe(projection);
     const saved = await read();
     expect(saved.positions).toEqual(before.positions);
-    expect(saved.settings).toEqual({ ...before.settings, lightBackground: 'ocean', version: 1 });
+    expect(saved.settings).toEqual({
+      ...before.settings,
+      lightBackground: 'ocean',
+      version: before.settings.version + 1,
+    });
     const water = await captureViews(page, 'light-ocean-16-1440');
     const themeProjection = await markers.getAttribute('style');
     await page.emulateMedia({ colorScheme: 'dark' });
@@ -177,13 +193,20 @@ test('BAKGRUND-03: light ocean persists and ordinary navigation reaches sand, wa
     await second.goto(installation.origin);
     await settings(second);
     await expect(second.getByLabel('Bakgrund i ljust tema', { exact: true })).toHaveValue('ocean');
+    await back(second);
+    await expect(
+      second.getByRole('button', { name: 'Alla etiketter', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
     await back(page);
     for (const count of [16, 80]) {
       if (count === 80) await arrangeMap(page, installation.origin, path, count);
       for (const width of [1440, 390]) {
-        await page.setViewportSize({ width, height: 960 });
+        await page.setViewportSize({ width, height: width === 390 ? 844 : 960 });
         await page.reload();
         await openMap(page);
+        await expect(
+          page.getByRole('button', { name: 'Alla etiketter', exact: true }),
+        ).toHaveAttribute('aria-pressed', 'true');
         await expect(space(page).locator('button[data-object-id]')).toHaveCount(count);
         const marker = space(page).getByRole('button', {
           name: 'Välj objekt: Havsobjekt 0',

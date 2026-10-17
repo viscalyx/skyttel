@@ -16,8 +16,9 @@ Alla uppgifter ska vara påhittade.
    [provförberedelsen](../development/devcontainer.md#disposable-local-database).
 2. Skapa och spara 16 objekt med namn **Provobjekt 00** till **Provobjekt
    15**, olika objekttyper och samband mellan dem. Aktivera **Alla
-   etiketter**. Använd ett separat hushåll med 80 objekt, **Provobjekt 00**
-   till **Provobjekt 79**, för jämförelsen av en tät karta. Beskrivningen
+   etiketter** för BAKGRUND-01–03. Använd ett separat hushåll med 80 objekt,
+   **Provobjekt 00** till **Provobjekt 79**, för jämförelsen av en tät
+   karta. Beskrivningen
    kan vara **Påhittat underlag för bakgrundsbedömning.** Återställ inte
    personliga val mellan återläsningarna inom samma fall.
 3. Använd datorvy 1440 × 960 och smal vy 390 × 844. Öppna **Karta**.
@@ -170,6 +171,7 @@ kameran, vattenyta ovanför och vatten däremellan, och att valet sparas.
 **Användare:** Den inloggade användaren från förberedelsen.
 
 **Förutsättningar:** Prova båda kartstorlekarna i datorvy och smal vy.
+Behåll **Alla etiketter** aktiverat enligt den allmänna förberedelsen.
 Öppna navigeringspanelen och ett objekts uppgifter växelvis under
 granskningen.
 Flytta ett objekt i din personliga vy, markera det och panorera kameran
@@ -178,14 +180,25 @@ innan du ändrar bakgrundsvalet.
 **Automatiskt motsvarande test (integration):**
 [background-ocean.spec.ts](../../tests/integration/background-ocean.spec.ts),
 BAKGRUND-03. Provet använder riktig app, scen och isolerad SQLite-databas.
-De sparade inställningarna kontrolleras även efter omstart och i en andra
-webbläsare. Bilderna är underlag för visuell granskning, inte ett intyg om
-prestanda på fysisk grafikhårdvara eller fullständig tillgänglighet.
+De sparade inställningarna, inklusive **Alla etiketter**, kontrolleras
+även efter omstart och i en andra webbläsare. Bilderna är underlag för
+visuell granskning, inte ett intyg om prestanda på fysisk grafikhårdvara
+eller fullständig tillgänglighet.
 
-**Känd begränsning i provunderlaget:** I det syntetiska 80-objektsprovet
-vid 390 px överlappar Havsobjekt 1 pekytan för Havsobjekt 0. Provet öppnar
-därför uppgifter via tangentbordets snabbmeny. Dolda etiketter och denna
-överlappning ska redovisas vid läsbarhetsbedömningen; tangentbordsvägen
+**Bildobservation med Alla etiketter:** Bilderna omfattar 16 och 80 objekt
+i 1440 × 960 och 390 × 844, med uppgifter eller navigering öppna. Objekt-
+och sambandsetiketter visas, men flera täcker varandra och panelerna
+skymmer delar av kartan. Trängseln är särskilt stor med 80 objekt i den
+smala vyn; även 16 objekt har överlappande etiketter. Sand och vattenyta
+går att skilja från mellanläget. Bilderna visar inte att alla etiketter
+går att läsa samtidigt eller att varje objekt har en fri pekyta.
+
+**Separat observation med automatiska etiketter:** I det syntetiska
+80-objektsprovet vid 390 px överlappar Havsobjekt 1 pekytan för
+Havsobjekt 0, och många objektetiketter döljs. Denna observation gäller
+automatiskt etikettläge och ersätts inte av bilderna med **Alla etiketter**.
+Provet öppnar uppgifter via tangentbordets snabbmeny. Dolda etiketter och
+överlappningar ska redovisas vid läsbarhetsbedömningen; tangentbordsvägen
 bevisar inte att alla objekt har en fri pekyta.
 
 <!--
@@ -197,7 +210,7 @@ bevisar inte att alla objekt har en fri pekyta.
     "spec": "tests/integration/background-ocean.spec.ts",
     "caseId": "BAKGRUND-03"
   },
-  "reference": "Ljust hav, 16/80 objekt, dator/smal, tre vyer, två klienter.",
+  "reference": "Ljust hav, Alla etiketter, 16/80 objekt, 1440/390 px, två klienter.",
   "outcomes": [
     "Ljust hav återkommer efter omladdning och i en annan webbläsare.",
     "Vanlig navigering visar sand nedanför, yta ovanför och vatten mellan dem.",
@@ -225,7 +238,8 @@ bevisar inte att alla objekt har en fri pekyta.
 5. Växla till mörkt tema och tillbaka. Kontrollera att det mörka valet
    och den personliga placeringen bevaras och att ljust hav återkommer.
 6. Ladda om sidan och öppna samma hushåll i den andra webbläsaren.
-   Kontrollera att **Under världshavet** finns kvar i den ljusa väljaren.
+   Kontrollera att **Under världshavet** finns kvar i den ljusa väljaren
+   och att **Alla etiketter** fortfarande är aktiverat i kartan.
 
 **Förväntat resultat:**
 
