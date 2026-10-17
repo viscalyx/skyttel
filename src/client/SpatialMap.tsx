@@ -1615,9 +1615,37 @@ export function SpatialMap({
               const maskId = `${occlusionPrefix}-${key}`;
               const occluders = connectionOcclusion(start, tip, locations.values(), bend);
               const arrowOccluders = connectionOcclusion(tip, tip, locations.values());
+              const region = (left: number, top: number, right: number, bottom: number) => {
+                // Round outward to retain a whole-pixel margin at every edge.
+                const x = Math.max(0, Math.min(surfaceWidth, Math.floor(left)));
+                const y = Math.max(0, Math.min(surfaceHeight, Math.floor(top)));
+                return {
+                  x,
+                  y,
+                  width: Math.max(0, Math.min(surfaceWidth, Math.ceil(right)) - x),
+                  height: Math.max(0, Math.min(surfaceHeight, Math.ceil(bottom)) - y),
+                };
+              };
+              const controlY = (start.y + tip.y) / 2 + bend;
               const masks = [
-                { id: maskId, points: occluders },
-                { id: `${maskId}-arrow`, points: arrowOccluders },
+                {
+                  id: maskId,
+                  points: occluders,
+                  // The quadratic stays inside its control hull; eight pixels
+                  // also enclose the selected 7.4px surround and antialiasing.
+                  bounds: region(
+                    Math.min(start.x, tip.x) - 8,
+                    Math.min(start.y, tip.y, controlY) - 8,
+                    Math.max(start.x, tip.x) + 8,
+                    Math.max(start.y, tip.y, controlY) + 8,
+                  ),
+                },
+                {
+                  id: `${maskId}-arrow`,
+                  points: arrowOccluders,
+                  // Include the 12px marker, its outline and rotated miters.
+                  bounds: region(tip.x - 16, tip.y - 16, tip.x + 16, tip.y + 16),
+                },
               ];
               // A short shaft establishes the endpoint tangent for the marker.
               // Its separate mask uses endpoint depth across the entire arrowhead.
@@ -1634,15 +1662,8 @@ export function SpatialMap({
                             <circle cx={point.x} cy={point.y} r={point.radius} />
                           </clipPath>
                         ))}
-                        <mask
-                          id={mask.id}
-                          maskUnits="userSpaceOnUse"
-                          x="0"
-                          y="0"
-                          width={surfaceWidth}
-                          height={surfaceHeight}
-                        >
-                          <rect width={surfaceWidth} height={surfaceHeight} fill="white" />
+                        <mask id={mask.id} maskUnits="userSpaceOnUse" {...mask.bounds}>
+                          <rect {...mask.bounds} fill="white" />
                           {mask.points.map((point) => (
                             <path
                               key={point.id}
