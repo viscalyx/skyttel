@@ -270,8 +270,8 @@ for (const viewport of [
                 return {
                   top: box.top,
                   bottom: box.bottom,
-                  replyBottom: reply?.bottom ?? 0,
-                  belowReply: box.top >= (reply?.bottom ?? 0),
+                  replyBottom: reply?.bottom ?? null,
+                  belowReply: Boolean(reply && box.top >= reply.bottom),
                   // Native focus can round scrolling by a CSS pixel while
                   // the reply's reserved height is fractional.
                   withinViewport: box.bottom <= innerHeight + 1,
