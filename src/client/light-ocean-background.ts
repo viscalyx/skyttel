@@ -1,4 +1,5 @@
 import { Matrix3, Mesh, PlaneGeometry, ShaderMaterial, Vector3 } from 'three';
+import type { BackgroundProjection } from './background-projection.js';
 
 /** Sunlit water with patterns attached to horizontal sand and surface planes.
  * Its only movement comes from the shared background camera. */
@@ -93,7 +94,7 @@ export function lightOceanBackground() {
   mesh.visible = false;
   return {
     mesh,
-    update(rotation: Matrix3, offset: Vector3, aspect: number, tangent: number) {
+    update({ rotation, offset, aspect, tangent }: BackgroundProjection) {
       material.uniforms.rotation.value = rotation;
       material.uniforms.offset.value = offset;
       material.uniforms.aspect.value = aspect;

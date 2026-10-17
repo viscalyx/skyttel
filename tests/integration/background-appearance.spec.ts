@@ -1,8 +1,8 @@
 import type { Browser, Page } from '@playwright/test';
 import sharp from 'sharp';
-import type { MapState } from '../../src/shared/map.js';
 import type { PersonalView } from '../../src/shared/personal-view.js';
-import { createHousehold, openMap, openSettings, setAllLabels, signIn } from '../support/client.js';
+import { createBackgroundMapFixture } from '../support/background-map.js';
+import { openMap, openSettings, setAllLabels, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
@@ -22,60 +22,12 @@ async function back(page: Page) {
 }
 
 async function arrange(page: Page, origin: string, count: number) {
-  await signIn(page.request, origin);
-  const created = await createHousehold(page.request, origin);
-  expect(created.ok()).toBe(true);
-  const { household } = await created.json();
-  const path = `${origin}/api/households/${household.id}/map`;
-  const state: MapState = await (await page.request.get(path)).json();
-  let version = 0;
-  for (let index = 0; index < count; index += 1) {
-    expect(
-      (
-        await page.request.post(`${path}/draft`, {
-          headers: { origin },
-          data: {
-            version: version++,
-            id: `background-${index}`,
-            baseRevision: null,
-            value: {
-              name: `Provobjekt ${String(index).padStart(2, '0')}`,
-              description: 'Påhittat underlag för bakgrundsbedömning.',
-              typeId: state.types[index % state.types.length].id,
-            },
-          },
-        })
-      ).ok(),
-    ).toBe(true);
-  }
-  for (let index = 1; index < count; index += 1) {
-    expect(
-      (
-        await page.request.post(`${path}/relationship`, {
-          headers: { origin },
-          data: {
-            version: version++,
-            id: `background-edge-${index}`,
-            baseRevision: null,
-            value: {
-              sourceId: `background-${index - 1}`,
-              targetId: `background-${index}`,
-              typeId: state.relationshipTypes[0].id,
-              knowledge: 'known',
-            },
-          },
-        })
-      ).ok(),
-    ).toBe(true);
-  }
-  expect(
-    (
-      await page.request.post(`${path}/save`, {
-        headers: { origin },
-        data: { version, operationId: 'background-fixture' },
-      })
-    ).ok(),
-  ).toBe(true);
+  const { path, household } = await createBackgroundMapFixture(
+    page.request,
+    origin,
+    count,
+    'appearance',
+  );
   await page.goto(`${origin}/households/${household.id}`);
   await openMap(page);
   await setAllLabels(page, true);

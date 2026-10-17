@@ -8,6 +8,7 @@ import {
   Vector3,
   Vector4,
 } from 'three';
+import type { BackgroundProjection } from './background-projection.js';
 
 /** The complete approved deep-water illustration. All six forms share the
  * background camera; there is no time uniform or independent movement. */
@@ -175,7 +176,7 @@ export function darkOceanBackground() {
   mesh.visible = false;
   return {
     mesh,
-    update(rotation: Matrix3, offset: Vector3, aspect: number, tangent: number) {
+    update({ rotation, offset, aspect, tangent }: BackgroundProjection) {
       material.uniforms.rotation.value.copy(rotation).premultiply(initialInverse);
       material.uniforms.localOffset.value.copy(offset).applyMatrix3(initialInverse);
       material.uniforms.aspect.value = aspect;

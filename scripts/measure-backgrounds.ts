@@ -4,15 +4,9 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { availableParallelism, cpus, loadavg, platform, release, totalmem } from 'node:os';
 import { dirname } from 'node:path';
 import { type CDPSession, chromium, expect, type Page } from '@playwright/test';
-import type { MapState } from '../src/shared/map.js';
 import type { PersonalView } from '../src/shared/personal-view.js';
-import {
-  createHousehold,
-  openMap,
-  openProfile,
-  openSettings,
-  signIn,
-} from '../tests/support/client.js';
+import { createBackgroundMapFixture } from '../tests/support/background-map.js';
+import { openMap, openProfile, openSettings } from '../tests/support/client.js';
 import { createInstallation } from '../tests/support/installation.js';
 import { createPreparedContext } from '../tests/support/test.js';
 
@@ -29,60 +23,12 @@ export const backgrounds = [
 ] as const;
 
 export async function prepareBackgroundMap(page: Page, origin: string, count: number) {
-  await signIn(page.request, origin);
-  const created = await createHousehold(page.request, origin);
-  expect(created.status()).toBe(201);
-  const { household } = await created.json();
-  const path = `${origin}/api/households/${household.id}/map`;
-  const state: MapState = await (await page.request.get(path)).json();
-  let version = state.draft.version;
-  for (let index = 0; index < count; index++) {
-    expect(
-      (
-        await page.request.post(`${path}/draft`, {
-          headers: { origin },
-          data: {
-            version: version++,
-            id: `profile-${index}`,
-            baseRevision: null,
-            value: {
-              name: `Provobjekt ${String(index).padStart(2, '0')}`,
-              description: 'Påhittat mätunderlag.',
-              typeId: state.types[index % state.types.length].id,
-            },
-          },
-        })
-      ).ok(),
-    ).toBe(true);
-  }
-  for (let index = 1; index < count; index++) {
-    expect(
-      (
-        await page.request.post(`${path}/relationship`, {
-          headers: { origin },
-          data: {
-            version: version++,
-            id: `profile-edge-${index}`,
-            baseRevision: null,
-            value: {
-              sourceId: `profile-${index - 1}`,
-              targetId: `profile-${index}`,
-              typeId: state.relationshipTypes[0].id,
-              knowledge: 'known',
-            },
-          },
-        })
-      ).ok(),
-    ).toBe(true);
-  }
-  expect(
-    (
-      await page.request.post(`${path}/save`, {
-        headers: { origin },
-        data: { version, operationId: `profile-${count}` },
-      })
-    ).ok(),
-  ).toBe(true);
+  const { path, household } = await createBackgroundMapFixture(
+    page.request,
+    origin,
+    count,
+    'measurement',
+  );
   await page.goto(`${origin}/households/${household.id}`);
   await openMap(page);
   return path;

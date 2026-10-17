@@ -13,6 +13,7 @@ import {
   Vector3,
 } from 'three';
 import { defaultViewSettings, type ViewSettings } from '../shared/personal-view.js';
+import type { BackgroundProjection } from './background-projection.js';
 import { cosmicSky } from './cosmic-sky.js';
 import { darkOceanBackground } from './dark-ocean-background.js';
 import { lightOceanBackground } from './light-ocean-background.js';
@@ -192,6 +193,12 @@ export function spaceBackground(pixelRatio: number) {
       }
     `,
   });
+  const projection: BackgroundProjection = {
+    rotation: material.uniforms.rotation.value,
+    offset: material.uniforms.offset.value,
+    aspect: material.uniforms.aspect.value,
+    tangent: material.uniforms.tangent.value,
+  };
   const mesh = new Mesh(geometry, material);
   mesh.frustumCulled = false;
   mesh.renderOrder = -100;
@@ -264,19 +271,11 @@ export function spaceBackground(pixelRatio: number) {
       material.uniforms.offset.value.copy(renderCamera.position).multiplyScalar(0.0015);
       material.uniforms.aspect.value = renderCamera.aspect;
       material.uniforms.tangent.value = Math.tan((renderCamera.fov * Math.PI) / 360);
-      ocean.update(
-        material.uniforms.rotation.value,
-        material.uniforms.offset.value,
-        material.uniforms.aspect.value,
-        material.uniforms.tangent.value,
-      );
+      projection.aspect = material.uniforms.aspect.value;
+      projection.tangent = material.uniforms.tangent.value;
+      ocean.update(projection);
       cosmic.update(renderCamera, material.uniforms.rotation.value, material.uniforms.offset.value);
-      deepOcean.update(
-        material.uniforms.rotation.value,
-        material.uniforms.offset.value,
-        material.uniforms.aspect.value,
-        material.uniforms.tangent.value,
-      );
+      deepOcean.update(projection);
       return renderCamera;
     },
     reset() {
