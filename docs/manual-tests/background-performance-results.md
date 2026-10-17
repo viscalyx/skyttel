@@ -138,12 +138,13 @@ set them. No arbitrary FPS requirement is attributed to the design.
 | Full-frame pipeline | 95.869 | 641.858 | 75.879 | 180 | 800 |
 <!-- markdownlint-enable MD013 -->
 
-An initial mixed full/partial frame summary was corrected using the same
-original off-only events before any optimized measurement. Primary timing
-uses only `STATE_PRESENTED_ALL`, because partial updates can retain older
-regions. The corrected 180/800 ms limits replace the mixed-state 130/730 ms
-limits because the metric changed; original mixed summaries remain in the
-reference raw report. No optimized result informed this correction.
+The full-frame summary is a correction of the initial mixed full/partial
+summary, using the same original off-only events. That correction precedes
+any optimized measurement. Primary timing uses only `STATE_PRESENTED_ALL`,
+because partial updates can retain older regions. The corrected 180/800 ms
+limits replace the mixed-state 130/730 ms limits because the metrics differ;
+original mixed summaries remain in the reference raw report. No optimized
+result contributes to this correction.
 
 The reference dense desktop Universe has response median 1033.740 ms and
 full-frame p95 875.360 ms, exceeding 1000/800 ms. The optimized client has
@@ -217,7 +218,7 @@ synchronous. Actual camera/content changes, resize, background settings
 and graphics restoration invalidate their appropriate work. Existing
 shader equations, material resolution, underwater planes and all six
 animal forms are retained. Local inspection of the resulting desktop
-captures found the seven expected appearances, including stars, haze,
+captures confirms the seven expected appearances, including stars, haze,
 ocean surface/seabed and visible animal motifs. The existing motif cases
 remain the detailed identity checks.
 
@@ -229,7 +230,7 @@ common unobscured background pixels and positive changed-motion controls.
 Ordinary near/far full-page captures are retained by Playwright. Cases
 15/16 verify all-seven reduced-motion freeze/resume and resets at desktop
 and narrow 80-object layouts. RYMD-04 also passes viewport, touch and
-graphics-context recovery. No tolerance was added to pixel equality.
+graphics-context recovery. Pixel equality retains zero tolerance.
 
 Each profile makes four full nine-choice cycles per object count after
 timing. Both before and after have stable live WebGL counts every cycle:
@@ -259,12 +260,12 @@ object details panel or frame trace and is not the paired comparison.
 Its compositor gaps include capture/input idle time and are not pure
 render durations.
 
-An optimized attempt was terminated with exit 143 after 20/36
+The interrupted optimized attempt ends with exit 143 after 20/36
 cells, with no application traceback or budget failure. Its
 [partial raw artifact](measurements/background-interrupted-after.json.gz)
-is incomplete and excluded from the paired result. The signal's origin was
-not established. A fresh full run uses
-the same workload and unchanged caps and completes successfully.
+is incomplete and excluded from the paired result. The signal's origin
+remains unknown. The complete replacement run uses the same workload and
+unchanged caps and completes successfully.
 
 Representative accelerated GPU and physical mobile testing, real touch
 interaction, higher pixel density, longer use, power/temperature behavior
