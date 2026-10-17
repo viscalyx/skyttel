@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Browser, Page } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import type { PersonalView } from '../../src/shared/personal-view.js';
@@ -35,7 +35,7 @@ async function tint(page: Page) {
   expect(samples).toBeGreaterThan(0);
   return warmth / samples;
 }
-async function captureViews(page: Page, reference: string) {
+async function captureLightViews(page: Page, reference: string) {
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   const water = await tint(page);
   await page.screenshot({ path: test.info().outputPath(`${reference}-water.png`) });
@@ -103,137 +103,6 @@ async function arrangeMap(page: Page, origin: string, path: string, count: numbe
   ).toBe(true);
 }
 
-test('BAKGRUND-03: light ocean persists and ordinary navigation reaches sand, water and surface', async ({
-  page,
-  browser,
-}) => {
-  test.setTimeout(120_000);
-  page.setDefaultTimeout(10_000);
-  const installation = await createInstallation();
-  const other = await createPreparedContext(browser);
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
-  });
-  try {
-    await page.setViewportSize({ width: 1440, height: 960 });
-    await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
-    await signIn(page.request, installation.origin);
-    const { household } = await (await createHousehold(page.request, installation.origin)).json();
-    const path = `${installation.origin}/api/households/${household.id}/map`;
-    const read = async (): Promise<PersonalView> => (await page.request.get(`${path}/view`)).json();
-    await arrangeMap(page, installation.origin, path, 16);
-    expect(
-      (
-        await page.request.post(`${path}/view/position`, {
-          headers: { origin: installation.origin },
-          data: { id: 'ocean-0', version: 0, position: { x: 3, y: 2, z: -1 } },
-        })
-      ).ok(),
-    ).toBe(true);
-    await page.goto(installation.origin);
-    await openMap(page);
-    await setAllLabels(page, true);
-    await expect(page.getByRole('button', { name: 'Alla etiketter', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    const markers = space(page).getByRole('button', {
-      name: 'Välj objekt: Havsobjekt 0',
-      exact: true,
-    });
-    await markers.focus();
-    await page.keyboard.press('Enter');
-    await expect(markers).toHaveAttribute('aria-pressed', 'true');
-    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
-    await page.getByRole('button', { name: 'Panorera höger', exact: true }).click();
-    await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
-    const projection = await markers.getAttribute('style');
-    const before = await read();
-    await settings(page);
-    const light = page.getByLabel('Bakgrund i ljust tema', { exact: true });
-    await expect(light.locator('option[value="ocean"]')).toHaveCount(1);
-    await light.focus();
-    await light.selectOption({ label: 'Under världshavet' });
-    await expect(light).toBeFocused();
-    await expect(page.locator('.map-settings').getByRole('status')).toHaveText(
-      'Din personliga vy är sparad.',
-    );
-    await expect.poll(async () => (await read()).settings.lightBackground).toBe('ocean');
-    await expect(page.getByLabel('Bakgrund i mörkt tema', { exact: true })).toHaveValue(
-      before.settings.darkBackground,
-    );
-    await back(page);
-    await expect(markers).toHaveAttribute('aria-pressed', 'true');
-    expect(await markers.getAttribute('style')).toBe(projection);
-    const saved = await read();
-    expect(saved.positions).toEqual(before.positions);
-    expect(saved.settings).toEqual({
-      ...before.settings,
-      lightBackground: 'ocean',
-      version: before.settings.version + 1,
-    });
-    const water = await captureViews(page, 'light-ocean-16-1440');
-    const themeProjection = await markers.getAttribute('style');
-    await page.emulateMedia({ colorScheme: 'dark' });
-    const dark = await tint(page);
-    expect(Math.abs(dark - water)).toBeGreaterThan(5);
-    expect(await markers.getAttribute('style')).toBe(themeProjection);
-    await page.emulateMedia({ colorScheme: 'light' });
-    expect(await tint(page)).toBeCloseTo(water, 0);
-    expect(await markers.getAttribute('style')).toBe(themeProjection);
-    await installation.restart();
-    await page.reload();
-    await settings(page);
-    await expect(light).toHaveValue('ocean');
-    expect(await read()).toEqual(saved);
-    await signIn(other.request, installation.origin);
-    const second = await other.newPage();
-    await second.goto(installation.origin);
-    await settings(second);
-    await expect(second.getByLabel('Bakgrund i ljust tema', { exact: true })).toHaveValue('ocean');
-    await back(second);
-    await expect(
-      second.getByRole('button', { name: 'Alla etiketter', exact: true }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    await back(page);
-    for (const count of [16, 80]) {
-      if (count === 80) await arrangeMap(page, installation.origin, path, count);
-      for (const width of [1440, 390]) {
-        await page.setViewportSize({ width, height: width === 390 ? 844 : 960 });
-        await page.reload();
-        await openMap(page);
-        await expect(
-          page.getByRole('button', { name: 'Alla etiketter', exact: true }),
-        ).toHaveAttribute('aria-pressed', 'true');
-        await expect(space(page).locator('button[data-object-id]')).toHaveCount(count);
-        const marker = space(page).getByRole('button', {
-          name: 'Välj objekt: Havsobjekt 0',
-          exact: true,
-        });
-        await marker.focus();
-        await marker.press('Shift+F10');
-        await page
-          .getByRole('button', { name: 'Visa uppgifter för Havsobjekt 0', exact: true })
-          .click();
-        const details = page.getByRole('region', { name: 'Havsobjekt 0', exact: true });
-        await expect(details).toBeVisible();
-        await page.screenshot({
-          path: test.info().outputPath(`light-ocean-${count}-${width}-details.png`),
-        });
-        await details.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
-        await captureViews(page, `light-ocean-${count}-${width}`);
-        expect((await read()).positions).toEqual(saved.positions);
-      }
-    }
-    expect(errors).toEqual([]);
-  } finally {
-    await other.close();
-    await installation.close();
-  }
-});
-
 // Capture actual pixels and UI-controlled directions. Shape recognition and
 // dense-map label overlap are assessed from these images, not shader internals.
 async function captureDarkViews(page: Page, reference: string) {
@@ -268,10 +137,18 @@ async function captureDarkViews(page: Page, reference: string) {
   return tint(page);
 }
 
-test('BAKGRUND-04: complete dark ocean persists and stays still through ordinary map navigation', async ({
-  page,
-  browser,
-}) => {
+async function checkOceanPersistence(
+  page: Page,
+  browser: Browser,
+  { theme, allLabels }: { theme: 'light' | 'dark'; allLabels: boolean },
+) {
+  const background = theme === 'light' ? 'lightBackground' : 'darkBackground';
+  const otherBackground = theme === 'light' ? 'darkBackground' : 'lightBackground';
+  const backgroundLabel = theme === 'light' ? 'Bakgrund i ljust tema' : 'Bakgrund i mörkt tema';
+  const otherBackgroundLabel =
+    theme === 'light' ? 'Bakgrund i mörkt tema' : 'Bakgrund i ljust tema';
+  const otherTheme = theme === 'light' ? 'dark' : 'light';
+  const capture = theme === 'light' ? captureLightViews : captureDarkViews;
   test.setTimeout(120_000);
   page.setDefaultTimeout(10_000);
   const installation = await createInstallation();
@@ -283,7 +160,7 @@ test('BAKGRUND-04: complete dark ocean persists and stays still through ordinary
   });
   try {
     await page.setViewportSize({ width: 1440, height: 960 });
-    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
+    await page.emulateMedia({ colorScheme: theme, reducedMotion: 'no-preference' });
     await signIn(page.request, installation.origin);
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}/map`;
@@ -299,9 +176,10 @@ test('BAKGRUND-04: complete dark ocean persists and stays still through ordinary
     ).toBe(true);
     await page.goto(installation.origin);
     await openMap(page);
+    if (allLabels) await setAllLabels(page, true);
     await expect(page.getByRole('button', { name: 'Alla etiketter', exact: true })).toHaveAttribute(
       'aria-pressed',
-      'false',
+      String(allLabels),
     );
     const markers = space(page).getByRole('button', {
       name: 'Välj objekt: Havsobjekt 0',
@@ -316,43 +194,51 @@ test('BAKGRUND-04: complete dark ocean persists and stays still through ordinary
     const projection = await markers.getAttribute('style');
     const before = await read();
     await settings(page);
-    const darkChoice = page.getByLabel('Bakgrund i mörkt tema', { exact: true });
-    await expect(darkChoice.locator('option[value="ocean"]')).toHaveCount(1);
-    await darkChoice.focus();
-    await darkChoice.selectOption({ label: 'Under världshavet' });
-    await expect(darkChoice).toBeFocused();
+    const choice = page.getByLabel(backgroundLabel, { exact: true });
+    await expect(choice.locator('option[value="ocean"]')).toHaveCount(1);
+    await choice.focus();
+    await choice.selectOption({ label: 'Under världshavet' });
+    await expect(choice).toBeFocused();
     await expect(page.locator('.map-settings').getByRole('status')).toHaveText(
       'Din personliga vy är sparad.',
     );
-    await expect.poll(async () => (await read()).settings.darkBackground).toBe('ocean');
-    await expect(page.getByLabel('Bakgrund i ljust tema', { exact: true })).toHaveValue(
-      before.settings.lightBackground,
+    await expect.poll(async () => (await read()).settings[background]).toBe('ocean');
+    await expect(page.getByLabel(otherBackgroundLabel, { exact: true })).toHaveValue(
+      before.settings[otherBackground],
     );
     await back(page);
     await expect(markers).toHaveAttribute('aria-pressed', 'true');
     expect(await markers.getAttribute('style')).toBe(projection);
     const saved = await read();
     expect(saved.positions).toEqual(before.positions);
-    expect(saved.settings).toEqual({ ...before.settings, darkBackground: 'ocean', version: 1 });
-    const water = await captureDarkViews(page, 'dark-ocean-16-1440');
+    expect(saved.settings).toEqual({
+      ...before.settings,
+      [background]: 'ocean',
+      version: theme === 'light' ? before.settings.version + 1 : 1,
+    });
+    const water = await capture(page, `${theme}-ocean-16-1440`);
     const themeProjection = await markers.getAttribute('style');
-    await page.emulateMedia({ colorScheme: 'light' });
-    const dark = await tint(page);
-    expect(Math.abs(dark - water)).toBeGreaterThan(5);
+    await page.emulateMedia({ colorScheme: otherTheme });
+    const otherWater = await tint(page);
+    expect(Math.abs(otherWater - water)).toBeGreaterThan(5);
     expect(await markers.getAttribute('style')).toBe(themeProjection);
-    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.emulateMedia({ colorScheme: theme });
     expect(await tint(page)).toBeCloseTo(water, 0);
     expect(await markers.getAttribute('style')).toBe(themeProjection);
     await installation.restart();
     await page.reload();
     await settings(page);
-    await expect(darkChoice).toHaveValue('ocean');
+    await expect(choice).toHaveValue('ocean');
     expect(await read()).toEqual(saved);
     await signIn(other.request, installation.origin);
     const second = await other.newPage();
     await second.goto(installation.origin);
     await settings(second);
-    await expect(second.getByLabel('Bakgrund i mörkt tema', { exact: true })).toHaveValue('ocean');
+    await expect(second.getByLabel(backgroundLabel, { exact: true })).toHaveValue('ocean');
+    await back(second);
+    await expect(
+      second.getByRole('button', { name: 'Alla etiketter', exact: true }),
+    ).toHaveAttribute('aria-pressed', String(allLabels));
     await back(page);
     for (const count of [16, 80]) {
       if (count === 80) await arrangeMap(page, installation.origin, path, count);
@@ -360,6 +246,9 @@ test('BAKGRUND-04: complete dark ocean persists and stays still through ordinary
         await page.setViewportSize({ width, height: width === 390 ? 844 : 960 });
         await page.reload();
         await openMap(page);
+        await expect(
+          page.getByRole('button', { name: 'Alla etiketter', exact: true }),
+        ).toHaveAttribute('aria-pressed', String(allLabels));
         await expect(space(page).locator('button[data-object-id]')).toHaveCount(count);
         const marker = space(page).getByRole('button', {
           name: 'Välj objekt: Havsobjekt 0',
@@ -373,10 +262,10 @@ test('BAKGRUND-04: complete dark ocean persists and stays still through ordinary
         const details = page.getByRole('region', { name: 'Havsobjekt 0', exact: true });
         await expect(details).toBeVisible();
         await page.screenshot({
-          path: test.info().outputPath(`dark-ocean-${count}-${width}-details.png`),
+          path: test.info().outputPath(`${theme}-ocean-${count}-${width}-details.png`),
         });
         await details.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
-        await captureDarkViews(page, `dark-ocean-${count}-${width}`);
+        await capture(page, `${theme}-ocean-${count}-${width}`);
         expect((await read()).positions).toEqual(saved.positions);
       }
     }
@@ -385,4 +274,18 @@ test('BAKGRUND-04: complete dark ocean persists and stays still through ordinary
     await other.close();
     await installation.close();
   }
+}
+
+test('BAKGRUND-03: light ocean persists and ordinary navigation reaches sand, water and surface', async ({
+  page,
+  browser,
+}) => {
+  await checkOceanPersistence(page, browser, { theme: 'light', allLabels: true });
+});
+
+test('BAKGRUND-04: complete dark ocean persists and stays still through ordinary map navigation', async ({
+  page,
+  browser,
+}) => {
+  await checkOceanPersistence(page, browser, { theme: 'dark', allLabels: false });
 });
