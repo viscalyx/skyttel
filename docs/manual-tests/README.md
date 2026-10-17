@@ -651,9 +651,10 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Personliga placeringar](personal-view.md): bakgrundsval per tema i Rymdkartans
   inställningar, oberoende panorering, zoom och lageravstånd med återställning,
   sparbekräftelse som toast i tre sekunder med bevarat fokus,
-  minskad rörelse, flyttning med mus, pekgester
-  och tangentbord, stabila fingerpar och kameraväxling, systemets minskade
-  rörelse, visningsval, samtidighetskonflikter, bevarad text,
+  stilla bakgrund vid minskad rörelse, återgång utan hopp och separat
+  återställning av kamerakopplingen för alla sju bakgrunder, flyttning med mus,
+  pekgester och tangentbord, stabila fingerpar och kameraväxling,
+  visningsval, samtidighetskonflikter, bevarad text,
   beständighet och avskildhet mellan användare samt inramning vid sen
   första inläsning med bevarad kamera vid senare uppdateringar. Separata
   provhushåll på samma installation förbereds med ett lokalt kommando.

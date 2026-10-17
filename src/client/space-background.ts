@@ -8,6 +8,7 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   Points,
+  Quaternion,
   ShaderMaterial,
   Vector3,
 } from 'three';
@@ -24,6 +25,14 @@ export function spaceBackground(pixelRatio: number) {
   group.visible = false;
   let settings = defaultViewSettings;
   const renderCamera = new PerspectiveCamera();
+  const stillCamera = new PerspectiveCamera();
+  const resumeSource = new PerspectiveCamera();
+  const resumeView = new PerspectiveCamera();
+  const resumeRotation = new Quaternion();
+  let reducedMotion = false;
+  let hasFrame = false;
+  let frozen = false;
+  let rebased = false;
   const starGeometry = new BufferGeometry();
   const starVertices = [];
   const starColours = [];
@@ -193,8 +202,9 @@ export function spaceBackground(pixelRatio: number) {
 
   return {
     group,
-    configure(value: ViewSettings, theme: 'light' | 'dark') {
+    configure(value: ViewSettings, theme: 'light' | 'dark', reduce = false) {
       settings = value;
+      reducedMotion = reduce;
       group.visible = value.background;
       ocean.mesh.visible = theme === 'light' && value.lightBackground === 'ocean';
       const universe = theme === 'dark' && value.darkBackground === 'universe';
@@ -213,11 +223,41 @@ export function spaceBackground(pixelRatio: number) {
       material.uniforms.dark.value = theme === 'dark' ? 1 : 0;
     },
     update(camera: PerspectiveCamera) {
-      renderCamera.copy(camera);
-      renderCamera.position.multiplyScalar(settings.panStrength * settings.layerDistance);
-      renderCamera.position.clampLength(0, 280);
-      renderCamera.fov = 45 * (camera.fov / 45) ** (settings.zoomStrength * 0.2);
-      renderCamera.fov = Math.max(15, Math.min(110, renderCamera.fov));
+      // Freeze the displayed pose, including every decorative layer. Resume
+      // from that pose with only subsequent camera changes, never paused ones.
+      if (reducedMotion && !frozen && hasFrame) stillCamera.copy(renderCamera);
+      if (!reducedMotion && frozen) {
+        resumeSource.copy(camera);
+        resumeView.copy(stillCamera);
+        resumeRotation.copy(resumeView.quaternion).multiply(camera.quaternion.clone().invert());
+        rebased = true;
+      }
+      if (!reducedMotion || !hasFrame) {
+        renderCamera.copy(camera);
+        const panGain = settings.panStrength * settings.layerDistance;
+        const zoomGain = settings.zoomStrength * 0.2;
+        if (rebased) {
+          // Preserve the exact frozen orientation when no new rotation occurs.
+          if (camera.quaternion.equals(resumeSource.quaternion))
+            renderCamera.quaternion.copy(resumeView.quaternion);
+          else renderCamera.quaternion.premultiply(resumeRotation);
+          renderCamera.position
+            .sub(resumeSource.position)
+            .applyQuaternion(resumeRotation)
+            .multiplyScalar(panGain)
+            .add(resumeView.position);
+          renderCamera.fov = resumeView.fov * (camera.fov / resumeSource.fov) ** zoomGain;
+        } else {
+          renderCamera.position.multiplyScalar(panGain);
+          renderCamera.fov = 45 * (camera.fov / 45) ** zoomGain;
+        }
+        renderCamera.position.clampLength(0, 280);
+        renderCamera.fov = Math.max(15, Math.min(110, renderCamera.fov));
+        if (reducedMotion) stillCamera.copy(renderCamera);
+      } else renderCamera.copy(stillCamera);
+      frozen = reducedMotion;
+      hasFrame = true;
+      renderCamera.aspect = camera.aspect;
       renderCamera.updateProjectionMatrix();
       renderCamera.updateMatrixWorld();
       material.uniforms.rotation.value.setFromMatrix4(renderCamera.matrixWorld);
@@ -238,6 +278,12 @@ export function spaceBackground(pixelRatio: number) {
         material.uniforms.tangent.value,
       );
       return renderCamera;
+    },
+    reset() {
+      if (!reducedMotion) rebased = false;
+    },
+    needsReset() {
+      return !reducedMotion && rebased;
     },
     dispose() {
       geometry.dispose();

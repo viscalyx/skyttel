@@ -428,14 +428,14 @@ export function SpatialMap({
   }, [activated, selectedIds]);
   useEffect(() => {
     if (!activated || !personalReady) return;
-    scene.current?.configure(preferences, theme);
+    scene.current?.configure(preferences, theme, reducedMotion);
     if (!active) return;
     if (preferences.allLabels && !previousLabels.current) {
       if (scene.current?.openLabelView(labelsInitialized.current)) setCloserLabels(true);
     }
     labelsInitialized.current = true;
     previousLabels.current = preferences.allLabels;
-  }, [preferences, activated, active, personalReady, theme]);
+  }, [preferences, activated, active, personalReady, theme, reducedMotion]);
   const focusObjects = useCallback((ids: string[], reveal?: MapRevealRequest) => {
     const element = canvas.current;
     if (!element) return false;
@@ -1222,7 +1222,7 @@ export function SpatialMap({
                 Återställ rörelse
               </button>
             </fieldset>
-            {reducedMotion && <p>Minskad rörelse är aktiverad. Ditt bakgrundsval behålls.</p>}
+            {reducedMotion && <p>Bakgrunden är stilla eftersom minskad rörelse är aktiverad.</p>}
             <p>Bakgrunden är dekorativ. Dina val sparas direkt för dig i det här hushållet.</p>
             <div role="status" aria-atomic="true">
               {hasUnsavedMotion && !personal?.pending ? (

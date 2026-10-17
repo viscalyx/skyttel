@@ -62,7 +62,7 @@ export function spatialScene(
     const current = view();
     onHistoryChange({
       canGoBack: history.length > 0 || Boolean(gestureStart && !sameView(gestureStart, current)),
-      changed: Boolean(originalView && !sameView(originalView, current)),
+      changed: Boolean(originalView && !sameView(originalView, current)) || background.needsReset(),
     });
   }
   function remember(before: CameraView) {
@@ -180,6 +180,7 @@ export function spatialScene(
   }
   function reset() {
     gestures.finish();
+    background.reset();
     // Establish the initial view with the real canvas size. A later resize
     // notification must not overwrite the user's first gesture or its history.
     if (canvas.clientWidth && canvas.clientHeight) {
@@ -421,11 +422,12 @@ export function spatialScene(
       onMotion();
       return true;
     },
-    configure(value: ViewSettings, theme: 'light' | 'dark' = 'dark') {
+    configure(value: ViewSettings, theme: 'light' | 'dark' = 'dark', reducedMotion = false) {
       settings = value;
-      background.configure(value, theme);
+      background.configure(value, theme, reducedMotion);
       sky.background = new Color(theme === 'light' ? '#eef3f3' : '#101b29');
       draw();
+      publishHistory();
     },
     beginCameraGesture: gestures.beginTouch,
     position(id: string): Position | null {

@@ -189,6 +189,10 @@ kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga
 hushållsuppgifter. Återställningen tömmer kamerans vyhistorik. Både
 **Föregående vy** och **Återställ vy** blir dimmade. Återställningsknappen
 aktiveras igen när kameran, sökningen, filtren eller markeringen ändras.
+Om bakgrunden fortsätter från en stilla vy efter minskad rörelse kan
+**Återställ vy** också användas när kartkameran redan är återställd.
+Den återger då bakgrundens vanliga koppling till kartan. Med minskad
+rörelse återställer handlingen endast kartan; bakgrunden ligger kvar.
 Översikten visar de etiketter som får plats utan överlappning. Ett valt
 sambands etikett får plats först, sedan objektnamn och därefter automatiska
 sambandsetiketter. Etiketter för nya, borttagna och ändrade samband i
@@ -361,6 +365,20 @@ och båda temana. **Återställ rörelse** sparar 70 procent, 70 procent och
 1,0. Bakgrundsval, synlighet, kamera och objektplaceringar behålls.
 När bakgrunden är av eller systemets minskade rörelse gäller visar de
 inaktiva rörelsereglagen dina sparade värden.
+
+Med systemets minskade rörelse är hela den valda bakgrunden synlig och
+stilla. Ändringar i systemet gäller direkt i en öppen karta. Bakgrunden
+behåller den senast visade vyn när minskad rörelse aktiveras, även om du
+sedan panorerar, roterar, zoomar eller återställer kartan. När minskad
+rörelse upphör ligger samma bakgrundsvy kvar och bara nya kamerarörelser
+påverkar den. Pausade rörelser spelas inte upp i efterhand.
+
+**Visa bakgrund** visar ditt sparade önskemål även med minskad rörelse.
+När bakgrunden är på kan du ändra båda bakgrundsvalen. De tre
+rörelsereglagen och **Återställ rörelse** är inaktiva och förklaringen
+**Bakgrunden är stilla eftersom minskad rörelse är aktiverad.** visas.
+Systemvalet ändrar inga sparade inställningar. När bakgrunden är av är
+även bakgrundsväljarna inaktiva med sina sparade värden kvar.
 
 Valen sparas direkt för dig i det aktuella hushållet och återkommer vid
 omladdning, omstart och på andra enheter. Ett tillgängligt besked bekräftar

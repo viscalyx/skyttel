@@ -32,6 +32,148 @@ fallen anger formulär, samtal, profil eller administration.
 
 ## Flyttning och beständighet
 
+### PLACERING-15: stilla bakgrund och återgång utan hopp på dator
+
+**Syfte:** Behålla den synliga bakgrundsvyn vid minskad rörelse och
+återge vanlig kamerakoppling genom Återställ vy.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ett nytt provhushåll med 16 sparade, påhittade objekt
+med namnen Provobjekt 0–15. Använd automatisk etikettvisning och 1440 × 960
+CSS-pixlar. Bakgrunden är på. Systemets minskade rörelse är aktiverad redan
+när sidan öppnas. Använd inga verkliga modell- eller röstanrop.
+
+**Automatiskt motsvarande test:**
+[background-reduced-motion.spec.ts](../../tests/integration/background-reduced-motion.spec.ts),
+PLACERING-15. Automationen jämför fria bakgrundspixlar och bekräftar sparade
+inställningar genom den befintliga tjänsten. Den använder programstyrda
+knappar i Chromium och ersätter inte fysiska enhetsprov eller faktisk
+uppläsning med skärmläsare.
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/background-reduced-motion.spec.ts",
+    "caseId": "PLACERING-15"
+  },
+  "reference": "16 objekt, 1440 × 960, alla sju motiv och minskad rörelse.",
+  "outcomes": [
+    "Hela bakgrunden är synlig och stilla vid sidstart med minskad rörelse.",
+    "Frysning och återgång behåller utsnittet utan uppspelad rörelse.",
+    "Bara nya kamerarörelser påverkar bakgrunden efter återgång.",
+    "Återställ vy lämnar bakgrunden stilla under minskad rörelse.",
+    "Återställ vy återger kopplingen även när kartkameran är återställd.",
+    "Bakgrundsval och synlighet är redigerbara under minskad rörelse.",
+    "Rörelsereglage och Återställ rörelse är inaktiva med värden kvar.",
+    "Systemvalet ändrar inga sparade inställningar."
+  ]
+}
+```
+-->
+
+**Steg:**
+
+1. Öppna rymdkartan med minskad rörelse aktiverad. Öppna Navigera,
+   panorera höger tre gånger, rotera vänster två gånger och zooma in.
+   Kartan rör sig men hela bakgrunden ligger kvar. Välj Återställ vy:
+   endast kartan återställs. Avaktivera minskad rörelse; bakgrunden ligger
+   fortfarande kvar. Välj Återställ vy och stäng navigeringen.
+2. Prova följande en gång vardera med respektive tema: Pärlemor,
+   Gryningsdis och Under världshavet i ljust tema; Atmosfär, Dis och
+   ljuspunkter, Universum och Under världshavet i mörkt tema. Välj
+   bakgrund under Inställningar → Rymdkartan och återgå till kartan.
+   Öppna Navigera och återställ vyn om knappen är aktiv.
+3. Anteckna bakgrundens utsnitt. Rotera vänster två gånger, panorera höger
+   två gånger och zooma in. Bakgrunden svarar. Aktivera minskad rörelse
+   utan omladdning: det senast visade utsnittet ligger kvar utan hopp.
+4. Rotera höger tre gånger, panorera vänster tre gånger och zooma ut två
+   gånger. Kartan rör sig men bakgrunden ligger kvar. Avaktivera minskad
+   rörelse: samma utsnitt ligger kvar. Rotera vänster en gång: endast den
+   nya rörelsen påverkar bakgrunden.
+5. Aktivera minskad rörelse igen och välj Återställ vy. Bakgrunden ligger
+   kvar medan kartan återställs. Avaktivera minskad rörelse och kontrollera
+   att Återställ vy är aktiv trots att kartan redan är återställd. Välj
+   knappen: bakgrunden återgår till utsnittet från steg 3 före navigeringen,
+   och knappen blir dimmad. Sparade inställningar och placeringar behålls.
+6. Öppna Inställningar → Rymdkartan. Ställ in 35 procent panorering,
+   55 procent zoom och lageravstånd 1,4. Aktivera minskad rörelse. Prova
+   väljarnas tangentbordsstyrning och kontrollera att båda bakgrundsvalen
+   kan ändras. Välj Pärlemor med Home i den ljusa väljaren och sedan
+   Gryningsdis med nedåtpil. Välj Atmosfär med Home i den mörka väljaren
+   och sedan Dis och ljuspunkter med nedåtpil. Fokus behålls efter sparande.
+7. Kontrollera förklaringen **Bakgrunden är stilla eftersom minskad rörelse
+   är aktiverad.** och de tre inaktiva rörelsereglagen med kvarvarande
+   sparade värden. **Återställ rörelse** är också inaktiv. Stäng av
+   **Visa bakgrund** med tangentbordet: båda väljarna och rörelsegruppen
+   blir inaktiva. Slå på igen: värden och bakgrundsval finns kvar.
+8. Återgå till kartan och öppna Navigera. Byt till ljust tema, rotera
+   vänster och panorera höger. Prova sedan samma handlingar i mörkt tema.
+   Respektive nya motiv är fullt synligt och förblir stilla.
+
+**Förväntat resultat:**
+
+- Alla sju motiv behåller sitt synliga utsnitt vid frysning och återgång.
+  Alla lager är kvar; bakgrunden spelar inte upp pausade rörelser.
+- De två återställningshandlingarna har skilda betydelser. Systemvalet
+  skriver aldrig över synlighet, bakgrundsval, rörelsevärden eller placeringar.
+- Kontrollerna har begripliga namn, rätt semantiska tillstånd och synligt
+  tangentbordsfokus. Automationen verifierar inte faktisk uppläsning.
+
+### PLACERING-16: stilla bakgrund och återgång i tät, smal karta
+
+**Syfte:** Samma minskade rörelse och återställning som på dator ska fungera
+när en tät karta och öppna paneler lämnar mindre synlig bakgrundsyta.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ett nytt provhushåll med 80 sparade, påhittade objekt
+med namnen Provobjekt 0–79, automatisk etikettvisning och 390 × 844
+CSS-pixlar. Bakgrunden är på och minskad rörelse gäller vid sidstart.
+
+**Automatiskt motsvarande test:**
+[background-reduced-motion.spec.ts](../../tests/integration/background-reduced-motion.spec.ts),
+PLACERING-16. Chromium använder emulerad skärmstorlek och programstyrd
+navigation; fysisk mobil och fysisk pekinmatning behöver provas separat.
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/background-reduced-motion.spec.ts",
+    "caseId": "PLACERING-16"
+  },
+  "reference": "80 objekt, 390 × 844, alla sju motiv och öppna paneler.",
+  "outcomes": [
+    "Minskad rörelse behåller hela bakgrunden stilla även i tät och smal karta.",
+    "Återgång behåller utsnittet och bara nya rörelser påverkar motivet.",
+    "Återställ vy och reglagetillstånden fungerar med sparade värden kvar."
+  ]
+}
+```
+-->
+
+**Steg:**
+
+1. Följ PLACERING-15 steg 1–8 i denna storlek med 80 objekt. Behåll
+   Navigera öppen under kamerahandlingarna och använd panelens rullning
+   när en knapp ligger utanför den synliga delen.
+2. Granska de fria bakgrundsytorna före och efter varje kamerahandling.
+   Anteckna separat om paneler eller befintlig etikettträngsel skymmer
+   kartans objekt; sådana hinder får inte räknas som bevis för stillhet.
+
+**Förväntat resultat:**
+
+- Samma stillhet, omedelbara systemrespons, återgång och återställning som
+  i PLACERING-15 fungerar utan ändrade sparade värden.
+- Panelernas knappar går att nå genom rullning. Etikettträngsel kan kräva
+  Tabell för läsning; provet innebär inte att alla etiketter ryms samtidigt.
+
 ### PLACERING-13: oberoende rörelsereglage och avgränsad återställning
 
 **Syfte:** Kontrollera reglagens värden, personligt sparande, fokus och fel.
