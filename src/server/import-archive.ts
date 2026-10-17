@@ -8,10 +8,11 @@ import sharp from 'sharp';
 import { openPromise } from 'yauzl';
 import { defaultViewSettings } from '../shared/personal-view.js';
 import { validateImportReferences } from './import-references.js';
-import { importContentSchema, importManifestSchema } from './import-schema.js';
+import { type ImportContent, importContentSchema, importManifestSchema } from './import-schema.js';
 import { MapError } from './map-error.js';
 
 export const importUploadLimit = 1_100_000_000;
+export type ValidatedImportContent = ImportContent & { legacyBackgrounds: boolean };
 const limits = {
   'manifest.json': 16_384,
   'content.json': 32 * 1024 * 1024,
@@ -137,5 +138,5 @@ export async function validateImportArchive(directory: string, signal: AbortSign
     if (signal.aborted) throw error;
     throw new MapError('invalid_archive', 400);
   }
-  return content;
+  return { ...content, legacyBackgrounds: manifest.data.schemaVersion < 34 };
 }

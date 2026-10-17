@@ -499,6 +499,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Fullständig återimport](household-import.md): egna inställningssidor,
   bevarat oskickat arbete före innehållsbyte, uttrycklig ersättning,
   bevarad åtkomst, privata uppgifter, bildhistorik, äldre fältbetydelser,
+  personliga bakgrundsval och rörelsevärden genom export och återimport,
   lokalt prov med tappat sparbesked, avvisade gamla sparbegäranden,
   ny förberedelse efter omstart, samma importförsök i en annan
   administratörs webbläsare, tappat förberedelsesvar, väntande rensning

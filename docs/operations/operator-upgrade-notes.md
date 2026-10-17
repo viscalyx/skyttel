@@ -19,6 +19,11 @@ Use the upgraded application for new household exports and imports. New
 exports include background choices and require the upgraded importer.
 Keep the pre-upgrade backup for recovery with an older application;
 the upgraded database cannot be opened by an older application.
+Older archives also preserve the disabled default for current household
+members with no personal settings in the archive. Import keeps current
+access. In a new installation, explicitly assign historical personal
+content to verified members before they use it. Later new personal views
+use enabled backgrounds.
 
 ### Browser storage consent and policy contact
 
