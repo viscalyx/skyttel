@@ -5,7 +5,12 @@ export type ViewSettings = {
   invertY: boolean;
   axisCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   axisPinned: boolean;
-  stars: boolean;
+  background: boolean;
+  lightBackground: 'pearl';
+  darkBackground: 'atmosphere' | 'mist';
+  panStrength: number;
+  zoomStrength: number;
+  layerDistance: number;
   allLabels: boolean;
 };
 export const defaultViewSettings: ViewSettings = {
@@ -13,7 +18,12 @@ export const defaultViewSettings: ViewSettings = {
   invertY: false,
   axisCorner: 'bottom-right',
   axisPinned: false,
-  stars: false,
+  background: true,
+  lightBackground: 'pearl',
+  darkBackground: 'atmosphere',
+  panStrength: 0.7,
+  zoomStrength: 0.7,
+  layerDistance: 1,
   allLabels: false,
 };
 export type PersonalView = {

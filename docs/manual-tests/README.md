@@ -647,7 +647,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
   genom sidvisning, sökning och fokus, med bevarad text och placering.
   Sparat resultat och historik läses genom webbläsaren efter omstart.
-- [Personliga placeringar](personal-view.md): stjärnval i Rymdkartans
+- [Personliga placeringar](personal-view.md): bakgrundsval per tema i Rymdkartans
   inställningar, sparbekräftelse som toast i tre sekunder med bevarat fokus,
   minskad rörelse, flyttning med mus, pekgester
   och tangentbord, stabila fingerpar och kameraväxling, systemets minskade

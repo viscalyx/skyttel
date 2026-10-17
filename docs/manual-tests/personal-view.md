@@ -72,11 +72,11 @@ PLACERING-01.
    nedåt från den nya starten. Slå av höjdhjälpen och flytta nedåt igen.
    Valet ska förbli av. Slå på det och kontrollera två steg från samma start.
    Öppna Inställningar → Rymdkartan och aktivera Visa
-   stjärnhimmel.
+   bakgrund.
    Återgå med Tillbaka till kartan.
 3. Ladda om, starta om servern och öppna samma hushåll i en annan klient
    med Alex inloggning.
-4. Läs det sparade stjärnvalet i den andra klientens inställningar och
+4. Läs det sparade bakgrundsvalet i den andra klientens inställningar och
    återgå till kartan. Markera Lampan, öppna **Navigera** och flytta uppåt
    med Enter. Kontrollera att flytten fortsätter från sparad placering
    och att den aktiva flyttknappen behåller fokus.
@@ -86,7 +86,7 @@ PLACERING-01.
 - Vanligt drag flyttar i bildplanet. Shift-drag ändrar bara rummets höjd.
   Shift visar höjdhjälp före drag. Senaste start och höjdskillnad går att
   granska efteråt. Höjdknapparna följer höjdhjälpsvalet.
-- Knappar fungerar med tangentbord. Flyttar och stjärnval återkommer
+- Knappar fungerar med tangentbord. Flyttar och bakgrundsval återkommer
   efter omstart och i den andra klienten.
 - Hushållets sparade uppgifter och utkast ändras inte av flyttningen.
 - Höjdhjälpsvalet är av efter omladdning.
@@ -182,8 +182,8 @@ PLACERING-02.
    nedåt i den andra.
 2. Läs konfliktbeskedet i den andra klienten och flytta nedåt igen.
 3. Flytta Cykeln från den första klienten utan att läsa om Lampan.
-4. Aktivera Visa axlar hela tiden i den första klienten. Försök aktivera
-   Visa stjärnhimmel från den andra klientens äldre inställningar under
+4. Aktivera Visa axlar hela tiden i den första klienten. Försök ändra
+   Visa bakgrund från den andra klientens äldre inställningar under
    Inställningar → Rymdkartan. Återgå till kartan för att kontrollera axlarna.
 
 **Förväntat resultat:**
@@ -289,12 +289,10 @@ PLACERING-04.
 1. Flytta Lampan. Öppna Ordna min vy i Navigera. Aktivera Visa axlar hela
    tiden och välj hörnet uppe
    till vänster. Vänd panorering separat i sidled och höjdled.
-2. Öppna Inställningar → Rymdkartan. Kontrollera att stjärnhimlen är
-   avstängd och reglaget inaktivt. Stäng
-   av systemets minskade rörelse och aktivera stjärnhimlen. Slå på
-   minskad rörelse igen utan omladdning och granska samma reglage och
-   bakgrund genom att växla mellan inställningarna och kartan. Stäng av
-   minskad rörelse igen och välj Tillbaka till kartan.
+2. Öppna Inställningar → Rymdkartan. Slå av Visa bakgrund och granska
+   kartans enfärgade bakgrund. Slå på Visa bakgrund igen. Växla systemets
+   minskade rörelse utan omladdning och kontrollera att det sparade
+   synlighetsvalet och bakgrunden finns kvar. Välj Tillbaka till kartan.
 3. Välj **Nytt objekt** i verktygen, ange Ny sak och välj
    **Lägg i utkastet och stäng**. Öppna **Karta** igen.
 4. Välj **Tabell** och **Redigera Lampan**. Skriv Oskickad text som nytt namn.
@@ -309,10 +307,9 @@ PLACERING-04.
 
 **Förväntat resultat:**
 
-- Visningsval sparas personligt. Minskad rörelse stänger av stjärnorna
-  och inaktiverar reglaget, även när det personliga valet är på. När
-  minskad rörelse stängs av återkommer det personliga valet. Axelvisaren
-  stannar inom kartans synliga yta. Ingen automatisk animation krävs.
+- Visningsval sparas personligt. Minskad rörelse ändrar inte bakgrundens
+  synlighet eller det sparade valet. Axelvisaren stannar inom kartans
+  synliga yta. Ingen automatisk animation krävs.
 - Nya förslag flyttar inte befintliga placeringar eller kameran.
 - Lampans oskickade namn består genom storleksbyten och avbruten förlust.
   Efter uttryckligt kastande finns sparade namn, personliga val och hela
@@ -357,7 +354,7 @@ PLACERING-05.
    Kontrollera att ingen av profilerna får se Lindens karta.
 2. Bjud in Robin till Linden och acceptera inbjudan som Robin. Öppna
    Lindens adress uttryckligen även om startsidan visar Eken. Flytta Lampan
-   och ändra stjärnvalet som Robin. För stjärnvalet, öppna Lindens
+   och ändra bakgrundsvalet som Robin. För bakgrundsvalet, öppna Lindens
    adress följd av `/settings/map` i adressfältet; den vanliga
    inställningsöversikten kan utgå från Eken som först valt hushåll.
    Öppna uttryckligen Lindens kartadress igen efter inställningsprovet.
@@ -422,7 +419,7 @@ Följ
 . Arma efter sparade placeringar men före omladdningen i UI-steg 2. Efter
 omladdningen: invänta det verkliga genomförda personliga svarets hållning och
 meddela **Samma första personliga svar hålls**. Behåll det genom användarens
-inaktiva stjärnval. Vid steg 3: släpp samma personliga svar i
+inaktiva bakgrundsval. Vid steg 3: släpp samma personliga svar i
 förberedelseterminalen och meddela **Samma första personliga svar är släppt**.
 Arma inte senare läsningar; återställ transporten efter fallet enligt den
 befintliga guiden.
@@ -436,11 +433,11 @@ befintliga guiden.
 2. Be operatören förbereda den separata personliga läsningen och invänta
    installationen. Ladda om sidan. Invänta operatörens bekräftelse att samma
    genomförda svar hålls. Kontrollera att **Tabell** och **Karta** kan öppnas.
-   Kontrollera Visa stjärnhimmel under Inställningar → Rymdkartan medan valet är
+   Kontrollera Visa bakgrund under Inställningar → Rymdkartan medan valet är
    inaktivt i väntan på de personliga placeringarna. Använd inte Återställ vy
    eller kameraknapparna.
 3. Be operatören släppa samma personliga svar enligt förberedelsen och invänta
-   bekräftelse. Vänta tills Visa stjärnhimmel går att använda. Välj Tillbaka
+   bekräftelse. Vänta tills Visa bakgrund går att använda. Välj Tillbaka
    till kartan och kontrollera att båda objekten syns. Låt senare läsningar
    passera normalt.
 4. Öppna Navigera och använd Panorera höger så att objekten hamnar tydligt vid
@@ -448,7 +445,7 @@ befintliga guiden.
    utsnittet.
 5. Välj Läs in min aktuella vy under Ordna min vy. Vänta tills läsningen är klar
    och jämför utsnittet med det du valde i föregående steg.
-6. Öppna Inställningar → Rymdkartan och aktivera Visa stjärnhimmel. Återgå med
+6. Öppna Inställningar → Rymdkartan och aktivera Visa bakgrund. Återgå med
    Tillbaka till kartan. Vänta på beskedet att vyn är sparad och jämför
    utsnittet igen.
 
@@ -463,7 +460,7 @@ befintliga guiden.
 - Stjärnhimlen visas. Även efter att valet sparas ligger objekten kvar
   på samma ställen i utsnittet och kameran bevaras.
 
-### PLACERING-07: stjärnval i Rymdkartans inställningar
+### PLACERING-07: bakgrundsval i Rymdkartans inställningar
 
 **Syfte:** Anpassa bakgrunden utan att förlora urval eller personlig vy.
 
@@ -496,20 +493,31 @@ PLACERING-07.
 
 1. Markera Lampan. Öppna Navigera och flytta den uppåt. Stäng navigeringen
    och lägg märke till urval och utsnitt.
-2. Öppna Inställningar → Rymdkartan. Aktivera Visa stjärnhimmel och vänta
-   på beskedet att din personliga vy är sparad.
-3. Slå på systemets minskade rörelse. Kontrollera att reglaget är avstängt
-   och inaktivt. Stäng av minskad rörelse och kontrollera att valet återkommer.
+2. Öppna Inställningar → Rymdkartan → Bakgrund. Kontrollera att Visa
+   bakgrund är på med Pärlemor i ljust tema och Atmosfär i mörkt tema.
+   Fokusera Bakgrund i mörkt tema och välj Dis och ljuspunkter. Vänta på
+   sparbeskedet och kontrollera att väljaren behåller fokus.
+3. Slå av Visa bakgrund. Kontrollera att båda väljarna blir inaktiva men
+   visar samma val. Slå på bakgrunden igen och kontrollera att väljarna
+   går att använda. Slå på och av systemets minskade rörelse; det sparade
+   synlighetsvalet ska ligga kvar och gå att använda.
 4. Välj Tillbaka till kartan. Kontrollera samma urval och utsnitt.
+   Med systemtema valt: växla systemets tema till mörkt och granska Dis
+   och ljuspunkter. Välj Atmosfär i inställningarna och granska dess mjuka
+   mörka ljusfält i kartan. Växla systemets tema till ljust och granska
+   Pärlemor. Urval, utsnitt och objektplaceringar ska vara kvar. Välj Dis
+   och ljuspunkter för mörkt tema igen.
 5. Starta om testinstallationen och ladda om sidan. Öppna Rymdkartans
-   inställningar och kontrollera att stjärnvalet består.
+   inställningar och kontrollera att bakgrundsvalen består.
 
 **Förväntat resultat:**
 
-- Valet sparas personligt och återkommer efter omstart.
-- Minskad rörelse stänger av stjärnorna utan att radera det sparade valet.
+- Valen sparas personligt och återkommer efter omstart.
+- Av bevarar bakgrundsvalen i inaktiva väljare. Minskad rörelse ändrar
+  inte det sparade synlighetsvalet.
 - Kartans urval, kamera och tidigare placeringar består genom vybytet.
-- Reglaget finns i inställningarna och går att nå med tangentbord.
+- Kontrollerna finns i inställningarna, går att nå med tangentbord och
+  behåller fokus under sparande.
 
 ### PLACERING-09: Sparbekräftelse som toast med bevarat fokus
 

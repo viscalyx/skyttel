@@ -331,12 +331,28 @@ flyttknapparna; kameraknapparna finns kvar även vid tomt urval eller flerval.
 Under **Ordna min vy** i navigeringsfönstret kan du vända panoreringen
 separat i sidled och
 höjdled. Axelvisaren visas under rörelse och en kort stund efteråt.
-Välj mellan fyra hörn eller **Visa axlar hela tiden**. **Visa stjärnhimmel**
-finns under **Inställningar → Rymdkartan**. Stjärnhimlen följer panorering,
-rotation och zoom. Objektflyttning ändrar inte bakgrunden. Systemets minskade
-rörelse stänger av stjärnorna och
-inaktiverar reglaget, även om ditt sparade val är på. Om systemvalet
-stängs av igen kan stjärnhimlen användas enligt ditt personliga val.
+Välj mellan fyra hörn eller **Visa axlar hela tiden**.
+
+Under **Inställningar → Rymdkartan → Bakgrund** styr **Visa bakgrund** hela
+den dekorativa miljön. Av ger en enfärgad bakgrund. Dina bakgrundsval finns
+kvar och visas i inaktiva väljare tills du slår på bakgrunden igen.
+Välj separat för ljust och mörkt tema. Pärlemor ger en varm, ljus miljö.
+Atmosfär har mjuka mörka ljusfält; Dis och ljuspunkter har mörkt dis och
+avlägsna ljuspunkter. Det aktiva temat, även systemtema, väljer vilken
+bakgrund som visas. Tema- och bakgrundsbyten behåller kamerans utsnitt och
+dina objektplaceringar.
+
+Valen sparas direkt för dig i det aktuella hushållet och återkommer vid
+omladdning, omstart och på andra enheter. Ett tillgängligt besked bekräftar
+sparandet. Om en annan klient hinner ändra vyn avvisas det äldre valet och
+de bekräftade inställningarna visas. Granska dem innan du försöker igen.
+
+En ny personlig vy har bakgrunden på med Pärlemor och Atmosfär. Vid
+uppgradering behåller en befintlig vy sitt tidigare val: av, även när du
+inte har sparat något stjärnval, förblir av. På blir Pärlemor och Dis och
+ljuspunkter. Systemets minskade rörelse ändrar inte det sparade önskemålet
+eller vilka bakgrundslager som visas.
+
 I täta utsnitt kan du välja ett objekt genom dess namnetikett eller markör.
 Etiketterna får egna träffytor och linjer till objektens verkliga lägen.
 Markerade objekt får etikettutrymme först. Använd **Tabell** och sökningen

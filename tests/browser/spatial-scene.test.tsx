@@ -134,7 +134,7 @@ test('projected symbols expose perspective size and depth while their canvas rem
   expect([...pixel]).toEqual([19, 46, 37, 255]);
 });
 
-test('the varied universe sky follows pan, rotation and zoom but stays fixed during personal placement', () => {
+test('the mist background follows pan, rotation and zoom but stays fixed during personal placement', () => {
   const { scene, canvas } = openScene();
   scene.update(['home']);
   const context = canvas.getContext('webgl2') as WebGL2RenderingContext;
@@ -151,14 +151,13 @@ test('the varied universe sky follows pan, rotation and zoom but stays fixed dur
     );
     return data;
   };
-  scene.configure({ ...defaultViewSettings, stars: true });
+  scene.configure({ ...defaultViewSettings, background: true, darkBackground: 'mist' });
   const first = pixels();
   const colours = new Map<string, number>();
   for (let index = 0; index < first.length; index += 4) {
     const colour = [...first.slice(index, index + 3)].join(',');
     colours.set(colour, (colours.get(colour) ?? 0) + 1);
   }
-  expect(colours.get('16,27,41')).toBeGreaterThan(canvas.width * canvas.height * 0.95);
   expect(colours.size).toBeGreaterThan(15);
   scene.navigate('left');
   const panned = pixels();
@@ -171,7 +170,7 @@ test('the varied universe sky follows pan, rotation and zoom but stays fixed dur
   expect(pixels()).toEqual(panned);
   scene.navigate('in');
   expect(pixels()).not.toEqual(first);
-  scene.configure(defaultViewSettings);
+  scene.configure({ ...defaultViewSettings, background: false });
   expect([...pixels().slice(0, 4)]).toEqual([16, 27, 41, 255]);
 });
 

@@ -468,6 +468,16 @@
   margin: 0;
   accent-color: var(--space-accent);
 }
+.background-choices {
+  min-width: 0;
+  margin-block: 16px;
+}
+.background-choices:disabled {
+  opacity: 0.55;
+}
+.settings-screen .background-choices select {
+  max-width: 100%;
+}
 .settings-screen .login-method-providers {
   display: grid;
   gap: 16px;
