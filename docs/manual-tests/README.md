@@ -99,6 +99,8 @@ uttryckligen till det verifierade kontot före de mänskliga observationerna.
 
 För [stora kartor](large-map-performance.md) finns en separat mätplan och
 [uppmätta resultat](large-map-results.md).
+För [kartans bakgrunder](background-performance.md) finns en separat
+respons- och stabilitetsmatris med [mätresultat](background-performance-results.md).
 Den samlade kartupplevelsens
 [verifieringsrapport](connected-experience-verification.md) redovisar hela
 familjeflöden, verklig webbläsarzoom, granskade bilder och miljöbegränsningar.
@@ -663,7 +665,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Kartans bakgrunder](background.md): Gryningsdis, Universum samt ljust
   och mörkt Under världshavet som personliga temaval, återläsning utan
   ändrad karta, sandbotten, vattenyta och sex ljusformer genom vanlig
-  kameranavigering.
+  kameranavigering. [Respons och stabilitet](background-performance.md)
+  prövar alla sju utföranden med hela varv, zoomens ytterlägen,
+  rörelsestyrkor, lageravstånd, objektflyttning och upprepade byten.
 - [Bakgrundens tillgänglighet](background-accessibility.md): sambandens
   färdiga kontrast, sju motiv i gles och tät karta, textalternativ,
   tangentbord, pekemulering, omflöde och sparstatus. Fysisk pekskärm,
