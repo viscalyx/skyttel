@@ -1,19 +1,164 @@
-# Manuella testfall för bakgrunder
+# Manuella testfall för kartans bakgrunder
 
-Testfallen hjälper testare att kontrollera den dekorativa miljön i
-rymdkartan. Anteckna commit, webbläsare och resultat vid körning.
+Testfallen är för den som verifierar personliga bakgrundsval i den vanliga
+rymdkartan. Anteckna commit, webbläsare, skärmstorlek och resultat.
+Bildgranskning i Chromium är separat från prov på fysisk GPU eller mobil.
 
 ## Konfigurerade användare
 
-Använd en inloggad Skyttel-användare med tillgång till ett provhushåll.
-Använd samma konto i en andra webbläsare för att kontrollera sparade val.
+Alex Exempel har tillgång till ett isolerat provhushåll. Använd samma konto
+i två webbläsarprofiler för att kontrollera återläsning på annan klient.
+Alla uppgifter ska vara påhittade.
 
 ## Allmän förberedelse
 
-1. Använd en testinstallation med påhittade hushållsuppgifter. Förbered
-   kartor med 16 respektive 80 objekt och samband mellan objekten.
-2. Kör i datorvy och smal vy. Börja med ljust tema och synlig bakgrund.
-   Behåll kartan mellan vybyten; återställ bakgrundsvalen efter provet.
+1. Starta en isolerad installation enligt
+   [provförberedelsen](../development/devcontainer.md#disposable-local-database).
+2. Skapa och spara 16 objekt med namn **Provobjekt 00** till **Provobjekt
+   15**, olika objekttyper och samband mellan dem. Aktivera **Alla
+   etiketter**. Använd ett separat hushåll med 80 objekt, **Provobjekt 00**
+   till **Provobjekt 79**, för jämförelsen av en tät karta. Beskrivningen
+   kan vara **Påhittat underlag för bakgrundsbedömning.** Återställ inte
+   personliga val mellan återläsningarna inom samma fall.
+3. Använd datorvy 1440 × 960 och smal vy 390 × 844. Öppna **Karta**.
+   Jämför fria kartvyer samt vyer med **Navigera** och ett objekts
+   egenskapsfönster öppna. Bedöm ikoner, samband, etiketter, urval och
+   kontroller mot det godkända uttrycket: blårosa moln och ljusa öppningar
+   för Gryningsdis; stjärnor, galaxer, nebulosor, stoft, stjärnhopar och en
+   gles ringform för Universum. Bildresultatet ska vara lugnt utan egen
+   animation. Automatiken dokumenterar bilder; den fastställer inte
+   fullständig tillgänglighet eller prestanda på fysisk hårdvara.
+4. I kartan med 16 objekt: välj ett objekt, öppna **Navigera** och flytta
+   objektet uppåt i din personliga vy. Rotera åt vänster, panorera åt höger
+   och stäng navigeringen innan du byter bakgrund. Det ger en sparad
+   placering och en egen kameravy att kontrollera vid bytena.
+
+Kartan med 80 objekt och **Alla etiketter** aktiverat är ett stressprov.
+Etiketter och markörer kan överlappa, särskilt i den smala vyn. Anteckna
+trängseln separat från bakgrundens färger och motiv. Öppna det valda
+objektets uppgifter med tangentbordsmenyn för att läsa hela innehållet.
+De automatiska bilderna döljer inte denna begränsning och bevisar inte att
+alla etiketter går att läsa samtidigt.
+
+## Personliga val
+
+### BAKGRUND-01: Gryningsdis följer ljust tema och återläses
+
+**Syfte:** Verifiera ett synligt personligt val utan att ändra kartan.
+
+**Användare:** Alex Exempel i två klienter.
+
+**Förutsättningar:** Kartan med 16 objekt och ljust systemtema.
+
+**Automatiskt motsvarande test:**
+[background-appearance.spec.ts](../../tests/integration/background-appearance.spec.ts),
+BAKGRUND-01. Provet använder riktig app, scen och isolerad SQLite, inklusive
+serveromstart och en andra klient.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/background-appearance.spec.ts",
+    "caseId": "BAKGRUND-01"
+  },
+  "reference": "Chromium, ljust systemtema: 16/80 objekt prövar luftig/tät karta, 1440/390 px prövar dator/omflöde, öppna paneler prövar läsbarhet; två klienter prövar beständighet.",
+  "outcomes": [
+    "Gryningsdis syns och kan endast väljas för ljust tema.",
+    "Valet återläses efter omstart och i annan klient.",
+    "Kamera, placeringar och övriga inställningar bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **Inställningar → Rymdkartan** och välj **Gryningsdis** under
+   **Bakgrund i ljust tema**. Kontrollera att det andra temats val består.
+2. Återgå med **Tillbaka till kartan**. Kontrollera blårosa dis med ljusa
+   öppningar och markera ett objekt genom dess synliga markör.
+3. Växla systemtema till mörkt. Kontrollera att mörka temats tidigare
+   bakgrund visas. Växla tillbaka och kontrollera samma kameravy.
+4. Ladda om, starta om servern och öppna samma hushåll i den andra klienten.
+   Läs bakgrundsvalet i inställningarna.
+5. Jämför 16 och 80 objekt i datorvy och smal vy. Öppna ett objekts
+   egenskapsfönster: fokusera markören, tryck Skift+F10 och välj **Visa
+   uppgifter för Provobjekt 00**. Stäng det och öppna
+   **Navigera**. Rotera åt vänster och luta uppåt. Granska de ljusa
+   öppningarna, etiketterna och kontrollerna i de olika kamerariktningarna.
+
+**Förväntat resultat:**
+
+- Gryningsdis finns endast i den ljusa väljaren och har inga mörka
+  stjärnprickar. Kartans markörer kan fortfarande väljas.
+- Valet består efter omladdning, serveromstart och på den andra klienten.
+- Kamerans utsnitt, objektplaceringar och övriga personliga val består.
+
+### BAKGRUND-02: Universum följer mörkt tema och återläses
+
+**Syfte:** Verifiera en läsbar stjärnhimmel som ett beständigt personligt val.
+
+**Användare:** Alex Exempel i två klienter.
+
+**Förutsättningar:** Kartan med 16 objekt och mörkt systemtema.
+
+**Automatiskt motsvarande test:**
+[background-appearance.spec.ts](../../tests/integration/background-appearance.spec.ts),
+BAKGRUND-02. Provet använder riktig app, scen och isolerad SQLite, inklusive
+serveromstart och en andra klient. Bilder av 16/80 objekt i båda bredderna
+ger underlag för visuell jämförelse; motivens igenkänning granskas av
+människan.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/background-appearance.spec.ts",
+    "caseId": "BAKGRUND-02"
+  },
+  "reference": "Chromium, mörkt systemtema: 16/80 objekt prövar luftig/tät karta, 1440/390 px prövar dator/omflöde, öppna paneler prövar läsbarhet; två klienter prövar beständighet.",
+  "outcomes": [
+    "Universum syns och kan endast väljas för mörkt tema.",
+    "Valet återläses efter omstart och i annan klient.",
+    "Kamera, placeringar och övriga inställningar bevaras."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **Inställningar → Rymdkartan** och välj **Universum** under
+   **Bakgrund i mörkt tema**. Kontrollera att det ljusa temats val består.
+2. Återgå med **Tillbaka till kartan** och markera ett objekt. Kontrollera
+   stjärnhimlen med galaxer, nebulosor, stoft, stjärnhopar och en gles
+   ringform runt den lugna ytan bakom hushållsinformationen.
+3. Växla systemtema till ljust. Kontrollera det ljusa temats tidigare
+   bakgrund. Växla tillbaka och kontrollera samma kameravy.
+4. Ladda om, starta om servern och öppna samma hushåll i den andra klienten.
+   Läs bakgrundsvalet i inställningarna.
+5. Jämför 16 och 80 objekt i datorvy och smal vy. Öppna ett objekts
+   egenskapsfönster: fokusera markören, tryck Skift+F10 och välj **Visa
+   uppgifter för Provobjekt 00**. Stäng det och öppna
+   **Navigera**. Rotera åt vänster och luta uppåt. Granska motiv, urval,
+   samband, etiketter och kontroller från de olika kamerariktningarna.
+
+**Förväntat resultat:**
+
+- Universum finns endast i den mörka väljaren. Markörer kan väljas genom
+  bakgrunden och öppna egenskapsfönster visar objektets uppgifter.
+- Stjärnhimlen har ingen egen animation, puls eller blinkning.
+- Valet består efter omladdning, serveromstart och på den andra klienten.
+- Kamerans utsnitt, objektplaceringar och övriga personliga val består.
 
 ## Under världshavet
 

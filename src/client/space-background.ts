@@ -12,12 +12,14 @@ import {
   Vector3,
 } from 'three';
 import { defaultViewSettings, type ViewSettings } from '../shared/personal-view.js';
+import { cosmicSky } from './cosmic-sky.js';
 import { lightOceanBackground } from './light-ocean-background.js';
 
 /** Decorative graphics only. Extend theme choices here; camera navigation and
  * personal object placement remain owned by spatialScene. No animation loop. */
 export function spaceBackground(pixelRatio: number) {
   const group = new Group();
+  const cosmic = cosmicSky(pixelRatio);
   group.visible = false;
   let settings = defaultViewSettings;
   const renderCamera = new PerspectiveCamera();
@@ -167,6 +169,13 @@ export function spaceBackground(pixelRatio: number) {
           float warmth=pow(max(0.0,dot(d,normalize(vec3(.9,-.6,-.7)))),3.);
           colour=mix(vec3(.88,.89,.94),vec3(.995,.99,.96),glow*.95);
           colour=mix(colour,vec3(.96,.81,.73),warmth*.55);
+        } else {
+          // Daylight through blue and rose cloud banks with bright openings.
+          float cloud=fbm(p*1.8+vec3(8.,2.,5.));
+          float opening=smoothstep(.30,.65,cloud);
+          float band=.5+.5*sin(d.y*3.+d.x*2.+cloud*2.);
+          colour=mix(vec3(.72,.83,.93),vec3(.98,.98,.99),opening);
+          colour=mix(colour,vec3(.92,.78,.84),band*(1.-opening)*.35);
         }
         // Colours above are authored in display space.
         gl_FragColor = vec4(colour, 1.0);
@@ -177,9 +186,8 @@ export function spaceBackground(pixelRatio: number) {
   mesh.frustumCulled = false;
   mesh.renderOrder = -100;
   mesh.visible = false;
-  group.add(mesh);
   const ocean = lightOceanBackground();
-  group.add(ocean.mesh);
+  group.add(mesh, cosmic.group, ocean.mesh);
 
   return {
     group,
@@ -187,10 +195,18 @@ export function spaceBackground(pixelRatio: number) {
       settings = value;
       group.visible = value.background;
       ocean.mesh.visible = theme === 'light' && value.lightBackground === 'ocean';
-      mesh.visible = !ocean.mesh.visible;
+      const universe = theme === 'dark' && value.darkBackground === 'universe';
+      mesh.visible = !ocean.mesh.visible && !universe;
+      cosmic.configure(universe);
       stars.visible = theme === 'dark' && value.darkBackground === 'mist';
       material.uniforms.variant.value =
-        theme === 'light' ? 2 : value.darkBackground === 'mist' ? 1 : 0;
+        theme === 'light'
+          ? value.lightBackground === 'dawn'
+            ? 3
+            : 2
+          : value.darkBackground === 'mist'
+            ? 1
+            : 0;
       material.uniforms.dark.value = theme === 'dark' ? 1 : 0;
     },
     update(camera: PerspectiveCamera) {
@@ -211,6 +227,7 @@ export function spaceBackground(pixelRatio: number) {
         material.uniforms.aspect.value,
         material.uniforms.tangent.value,
       );
+      cosmic.update(renderCamera, material.uniforms.rotation.value, material.uniforms.offset.value);
       return renderCamera;
     },
     dispose() {
@@ -219,6 +236,7 @@ export function spaceBackground(pixelRatio: number) {
       starGeometry.dispose();
       starMaterial.dispose();
       ocean.dispose();
+      cosmic.dispose();
     },
   };
 }

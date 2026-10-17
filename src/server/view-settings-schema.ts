@@ -13,8 +13,8 @@ export const viewSettingsSchema = z
   .object({
     ...presentation,
     background: z.boolean(),
-    lightBackground: z.enum(['pearl', 'ocean']),
-    darkBackground: z.enum(['atmosphere', 'mist']),
+    lightBackground: z.enum(['pearl', 'dawn', 'ocean']),
+    darkBackground: z.enum(['atmosphere', 'mist', 'universe']),
     panStrength: strength,
     zoomStrength: strength,
     layerDistance: z.number().min(0.5).max(2).multipleOf(0.1),

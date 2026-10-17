@@ -1157,6 +1157,7 @@ export function SpatialMap({
                 }}
               >
                 <option value="pearl">Pärlemor</option>
+                <option value="dawn">Gryningsdis</option>
                 <option value="ocean">Under världshavet</option>
               </select>
               <label htmlFor={`${labelPrefix}-dark-background`}>Bakgrund i mörkt tema</label>
@@ -1173,6 +1174,7 @@ export function SpatialMap({
               >
                 <option value="atmosphere">Atmosfär</option>
                 <option value="mist">Dis och ljuspunkter</option>
+                <option value="universe">Universum</option>
               </select>
             </fieldset>
             {reducedMotion && <p>Minskad rörelse är aktiverad. Ditt bakgrundsval behålls.</p>}
