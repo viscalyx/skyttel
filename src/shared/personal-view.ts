@@ -6,7 +6,7 @@ export type ViewSettings = {
   axisCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   axisPinned: boolean;
   background: boolean;
-  lightBackground: 'pearl';
+  lightBackground: 'pearl' | 'ocean';
   darkBackground: 'atmosphere' | 'mist';
   panStrength: number;
   zoomStrength: number;

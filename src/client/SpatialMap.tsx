@@ -1157,6 +1157,7 @@ export function SpatialMap({
                 }}
               >
                 <option value="pearl">Pärlemor</option>
+                <option value="ocean">Under världshavet</option>
               </select>
               <label htmlFor={`${labelPrefix}-dark-background`}>Bakgrund i mörkt tema</label>
               <select

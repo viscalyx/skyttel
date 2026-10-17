@@ -337,6 +337,9 @@ Under **Inställningar → Rymdkartan → Bakgrund** styr **Visa bakgrund** hela
 den dekorativa miljön. Av ger en enfärgad bakgrund. Dina bakgrundsval finns
 kvar och visas i inaktiva väljare tills du slår på bakgrunden igen.
 Välj separat för ljust och mörkt tema. Pärlemor ger en varm, ljus miljö.
+Under världshavet i ljust tema har sand nedanför kameran och vattenyta
+ovanför. Använd kartans vanliga lutning för att se planen och vattnet
+däremellan.
 Atmosfär har mjuka mörka ljusfält; Dis och ljuspunkter har mörkt dis och
 avlägsna ljuspunkter. Det aktiva temat, även systemtema, väljer vilken
 bakgrund som visas. Tema- och bakgrundsbyten behåller kamerans utsnitt och

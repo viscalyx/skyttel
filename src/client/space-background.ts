@@ -12,6 +12,7 @@ import {
   Vector3,
 } from 'three';
 import { defaultViewSettings, type ViewSettings } from '../shared/personal-view.js';
+import { lightOceanBackground } from './light-ocean-background.js';
 
 /** Decorative graphics only. Extend theme choices here; camera navigation and
  * personal object placement remain owned by spatialScene. No animation loop. */
@@ -177,13 +178,16 @@ export function spaceBackground(pixelRatio: number) {
   mesh.renderOrder = -100;
   mesh.visible = false;
   group.add(mesh);
+  const ocean = lightOceanBackground();
+  group.add(ocean.mesh);
 
   return {
     group,
     configure(value: ViewSettings, theme: 'light' | 'dark') {
       settings = value;
       group.visible = value.background;
-      mesh.visible = true;
+      ocean.mesh.visible = theme === 'light' && value.lightBackground === 'ocean';
+      mesh.visible = !ocean.mesh.visible;
       stars.visible = theme === 'dark' && value.darkBackground === 'mist';
       material.uniforms.variant.value =
         theme === 'light' ? 2 : value.darkBackground === 'mist' ? 1 : 0;
@@ -201,6 +205,12 @@ export function spaceBackground(pixelRatio: number) {
         .multiplyScalar(0.0015 / settings.layerDistance);
       material.uniforms.aspect.value = renderCamera.aspect;
       material.uniforms.tangent.value = Math.tan((renderCamera.fov * Math.PI) / 360);
+      ocean.update(
+        material.uniforms.rotation.value,
+        material.uniforms.offset.value,
+        material.uniforms.aspect.value,
+        material.uniforms.tangent.value,
+      );
       return renderCamera;
     },
     dispose() {
@@ -208,6 +218,7 @@ export function spaceBackground(pixelRatio: number) {
       material.dispose();
       starGeometry.dispose();
       starMaterial.dispose();
+      ocean.dispose();
     },
   };
 }
