@@ -2,10 +2,26 @@
 
 All 72 measurements of the integrated client meet the frozen local budget:
 response median/p95 at most 1000/1750 ms and full-frame pipeline median/p95
-at most 180/800 ms. The largest observed response median/p95 is 420/679 ms;
-the largest full-frame median/p95 is 31/350 ms. These are local SwiftShader
+at most 180/800 ms. The largest observed response median/p95 is 388/550 ms;
+the largest full-frame median/p95 is 28/281 ms. These are local SwiftShader
 regression observations. Physical GPU/mobile and extended-use verification
 remain a separate tester follow-up.
+
+## Final source verification
+
+The final production source
+`92aa02f0d4c63750ddb84d76c1e497d808fa5bd8` shares synthetic map preparation
+between appearance checks and profiling, and groups the ocean projection
+inputs. Fixture data, UI preparation, rendering calculations and the
+frozen budget remain unchanged. Its complete default profile has 72 cells,
+864 responses, 5658 full presentations and zero violations. Resource,
+placement and idle-image checks all pass. The largest observed medians
+and p95 values appear above; individual cells and exact environment,
+settings and asset metadata are in the
+[readable final report](measurements/background-final-summary.json).
+The [raw final trace](measurements/background-final.json.gz) retains every
+observation and complete trace events. The exact final JS SHA-256 is
+`46212566f0b934de0f8dc5b710b041744d57d3e946c610c99d5a4921b85e6d05`.
 
 ## Combined production verification
 
