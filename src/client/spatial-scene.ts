@@ -1,4 +1,4 @@
-import { Box3, Color, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
+import { Box3, Color, Matrix4, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { PersonalPosition, Position, ViewSettings } from '../shared/personal-view.js';
 import { spaceBackground } from './space-background.js';
@@ -144,6 +144,17 @@ export function spatialScene(
   sky.add(background.group);
   let lost = false;
   let needsFrame = true;
+  let painted = false;
+  let backgroundKey = '';
+  let paintedKey = '';
+  let backgroundVisible = false;
+  const paintedWorld = new Matrix4();
+  const paintedProjection = new Matrix4();
+  const projectedWorld = new Matrix4();
+  const projectedProjection = new Matrix4();
+  let projectionRevision = 0;
+  let projectedRevision = -1;
+  let projectedOverviewDistance = -1;
   function draw() {
     if (lost || rotating) return;
     camera.updateMatrixWorld();
@@ -155,8 +166,38 @@ export function spatialScene(
     skyCamera.aspect = camera.aspect;
     skyCamera.fov = Math.max(15, Math.min(110, 45 * Math.sqrt(controls.getDistance() / 30)));
     skyCamera.updateProjectionMatrix();
-    renderer.clear();
-    renderer.render(sky, background.update(skyCamera));
+    // Controls can publish the same pose more than once per command. Object
+    // placement and frozen-background navigation also change DOM projections
+    // without changing these pixels. Keep the synchronous motion lifecycle,
+    // but submit decorative work only when its actual inputs change.
+    const decorativeCamera = background.update(skyCamera);
+    if (
+      !painted ||
+      paintedKey !== backgroundKey ||
+      (backgroundVisible &&
+        (!paintedWorld.equals(decorativeCamera.matrixWorld) ||
+          !paintedProjection.equals(decorativeCamera.projectionMatrix)))
+    ) {
+      renderer.clear();
+      renderer.render(sky, decorativeCamera);
+      paintedWorld.copy(decorativeCamera.matrixWorld);
+      paintedProjection.copy(decorativeCamera.projectionMatrix);
+      paintedKey = backgroundKey;
+      painted = true;
+    }
+    // DOM labels and SVG lines belong to the same completed map frame. A
+    // duplicate camera notification must not rerun their collision layout.
+    if (
+      projectedRevision === projectionRevision &&
+      projectedOverviewDistance === overviewDistance &&
+      projectedWorld.equals(camera.matrixWorld) &&
+      projectedProjection.equals(camera.projectionMatrix)
+    )
+      return;
+    projectedRevision = projectionRevision;
+    projectedOverviewDistance = overviewDistance;
+    projectedWorld.copy(camera.matrixWorld);
+    projectedProjection.copy(camera.projectionMatrix);
     onOrientation(
       [new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1)].map((axis) =>
         axis.applyQuaternion(camera.quaternion.clone().invert()),
@@ -218,6 +259,8 @@ export function spatialScene(
     const height = canvas.clientHeight;
     if (!width || !height) return;
     renderer.setSize(width, height, false);
+    painted = false;
+    projectionRevision++;
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     if (needsFrame) {
@@ -233,6 +276,7 @@ export function spatialScene(
       saved: PersonalPosition[] = [],
       relationships: { sourceId: string; targetId: string | null }[] = [],
     ) {
+      projectionRevision++;
       const first = locations.size === 0;
       const neighbours = new Map<string, Set<string>>();
       for (const { sourceId, targetId } of relationships) {
@@ -425,6 +469,8 @@ export function spatialScene(
     configure(value: ViewSettings, theme: 'light' | 'dark' = 'dark', reducedMotion = false) {
       settings = value;
       background.configure(value, theme, reducedMotion);
+      backgroundVisible = value.background;
+      backgroundKey = `${theme}:${value.background}:${theme === 'light' ? value.lightBackground : value.darkBackground}`;
       sky.background = new Color(theme === 'light' ? '#eef3f3' : '#101b29');
       draw();
       publishHistory();
@@ -435,6 +481,7 @@ export function spatialScene(
       return value ? { x: value.x, y: value.y, z: value.z } : null;
     },
     place(id: string, position: Position) {
+      projectionRevision++;
       const value = new Vector3(position.x, position.y, position.z).clampScalar(-10000, 10000);
       locations.set(id, value);
       draw();
@@ -476,6 +523,7 @@ export function spatialScene(
     },
     contextLost(value: boolean) {
       lost = value;
+      painted = false;
       gestures.enabled(!value);
       controls.enabled = !value;
       if (!value) draw();
