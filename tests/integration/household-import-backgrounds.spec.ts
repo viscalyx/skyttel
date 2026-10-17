@@ -1,4 +1,4 @@
-import type { APIRequestContext } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 import sharp from 'sharp';
 import {
   defaultViewSettings,
@@ -36,6 +36,33 @@ async function backgroundDifference(before: Buffer, after: Buffer) {
   return difference / original.length;
 }
 
+async function expectBackgroundSettings(page: Page, settings: ViewSettings) {
+  await openSettings(page);
+  await page
+    .getByRole('link', { name: /^Rymdkartan/ })
+    .first()
+    .click();
+  await expect(page.getByLabel('Visa bakgrund', { exact: true })).toBeChecked({
+    checked: settings.background,
+  });
+  await expect(page.getByLabel('Bakgrund i ljust tema', { exact: true })).toHaveValue(
+    settings.lightBackground,
+  );
+  await expect(page.getByLabel('Bakgrund i mörkt tema', { exact: true })).toHaveValue(
+    settings.darkBackground,
+  );
+  await expect(page.getByRole('slider', { name: 'Panoreringsstyrka', exact: true })).toHaveValue(
+    String(settings.panStrength * 100),
+  );
+  await expect(page.getByRole('slider', { name: 'Zoomstyrka', exact: true })).toHaveValue(
+    String(settings.zoomStrength * 100),
+  );
+  await expect(page.getByRole('slider', { name: 'Lageravstånd', exact: true })).toHaveValue(
+    String(settings.layerDistance),
+  );
+  await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+}
+
 test('IMPORT-26: full export and reimport restore all background choices and motion endpoints per personal view', async ({
   page,
   browser,
@@ -66,6 +93,10 @@ test('IMPORT-26: full export and reimport restore all background choices and mot
         })
       ).status(),
     ).toBe(200);
+    const memberPage = await member.newPage();
+    await memberPage.emulateMedia({ reducedMotion: 'reduce' });
+    await memberPage.goto(installation.origin);
+    await openMap(memberPage);
     const read = async (actor: APIRequestContext = page.request): Promise<PersonalView> =>
       (await actor.get(`${path}/map/view`)).json();
     const configure = async (settings: ViewSettings, actor: APIRequestContext = page.request) => {
@@ -180,30 +211,9 @@ test('IMPORT-26: full export and reimport restore all background choices and mot
         ...memberSaved,
         contentVersion: memberSaved.contentVersion + 1,
       });
-      await openSettings(page);
-      await page
-        .getByRole('link', { name: /^Rymdkartan/ })
-        .first()
-        .click();
-      await expect(page.getByLabel('Visa bakgrund', { exact: true })).toBeChecked({
-        checked: settings.background,
-      });
-      await expect(page.getByLabel('Bakgrund i ljust tema', { exact: true })).toHaveValue(
-        lightBackground,
-      );
-      await expect(page.getByLabel('Bakgrund i mörkt tema', { exact: true })).toHaveValue(
-        darkBackground,
-      );
-      await expect(
-        page.getByRole('slider', { name: 'Panoreringsstyrka', exact: true }),
-      ).toHaveValue(String(settings.panStrength * 100));
-      await expect(page.getByRole('slider', { name: 'Zoomstyrka', exact: true })).toHaveValue(
-        String(settings.zoomStrength * 100),
-      );
-      await expect(page.getByRole('slider', { name: 'Lageravstånd', exact: true })).toHaveValue(
-        String(settings.layerDistance),
-      );
-      await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+      await expectBackgroundSettings(page, settings);
+      await memberPage.reload();
+      await expectBackgroundSettings(memberPage, memberSettings);
       await openMap(page);
       const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
       await expect(
@@ -228,6 +238,9 @@ test('IMPORT-26: full export and reimport restore all background choices and mot
     await page.reload();
     expect(await read()).toEqual(final);
     expect((await read(member.request)).settings).toMatchObject(memberSettings);
+    await expectBackgroundSettings(page, final.settings);
+    await memberPage.reload();
+    await expectBackgroundSettings(memberPage, memberSettings);
   } finally {
     await member.close();
     await installation.close();
