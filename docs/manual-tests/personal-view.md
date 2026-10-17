@@ -32,6 +32,144 @@ fallen anger formulär, samtal, profil eller administration.
 
 ## Flyttning och beständighet
 
+### PLACERING-13: oberoende rörelsereglage och avgränsad återställning
+
+**Syfte:** Kontrollera reglagens värden, personligt sparande, fokus och fel.
+
+**Användare:** Alex Exempel i två klienter.
+
+**Förutsättningar:** Lampan och Cykeln är sparade. Börja med bakgrunden på
+och rörelsevärdena 70 procent, 70 procent och 1,0. Sätt inte systemets
+minskade rörelse förrän steget anger det.
+
+**Automatiskt motsvarande test:**
+[personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
+PLACERING-13. Automationen provar sparfel genom ett kontrollerat felsvar.
+För den manuella felvarianten, använd webbläsarens nätverkspanel för att
+blockera skrivningen till den personliga vyns inställningar; ta bort
+blockeringen efter försöket.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-13"
+  },
+  "reference": "Chromium, Lampan och Cykeln, två klienter för Alex; omstart samt kontrollerat skrivfel och versionskonflikt provar återläsning av bekräftade värden.",
+  "outcomes": [
+    "Oberoende värden sparas med bevarat fokus och återkommer efter omstart och i en annan klient.",
+    "Av och minskad rörelse inaktiverar rörelseändringar med sparade värden kvar.",
+    "Återställning ändrar bara de tre rörelsevärdena; fel och konflikt visar bekräftade värden."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Markera Lampan och flytta den uppåt med Navigera. Stäng navigeringen.
+   Lägg märke till urvalet och utsnittet.
+2. Öppna Inställningar → Rymdkartan → Bakgrund. Kontrollera standarderna
+   ovan. Dra Panoreringsstyrka hela vägen till 100 procent i en enda
+   rörelse. Hela slutvärdet ska sparas, även med långsam anslutning.
+   Medan reglaget visar ett ändrat värde före släpp visas att ändringen
+   inte är sparad än; ett tidigare sparbesked bekräftar inte det nya värdet.
+   Håll vänsterpil nere en kort stund och släpp: reglaget fortsätter
+   ändras under tangentupprepningen och slutvärdet sparas vid släpp.
+   Fokusera varje rörelsereglage med Tab och tryck End: panorering
+   och zoom visar 100 procent, lageravstånd 2,0. Vänta på sparbesked efter
+   varje ändring. Fokus ska stanna kvar.
+3. Slå av Visa bakgrund. Alla tre reglage och Återställ rörelse är
+   dimmade och inaktiva med värdena kvar. Slå på igen. Aktivera systemets
+   minskade rörelse och kontrollera samma inaktivering. Avaktivera den.
+4. Fokusera Återställ rörelse och tryck Enter. Kontrollera 70 procent,
+   70 procent och 1,0 samt bevarat fokus, synlighet och bakgrundsval.
+   Återvänd till kartan: samma urval, utsnitt och placering finns kvar.
+5. Sätt Panoreringsstyrka till noll med Home. Starta om installationen
+   och ladda om sidan. Kontrollera noll och oförändrad Zoomstyrka.
+   Logga in som Alex i den andra klienten och kontrollera samma värden.
+6. Sätt Panoreringsstyrka till 100 procent i den andra klienten. I första
+   klienten, försök sätta Zoomstyrka till noll. Konfliktbeskedet visas
+   med aktuella bekräftade värden: 100 procent och 70 procent. Fokus
+   stannar på Zoomstyrka.
+7. Förbered skrivfelet enligt ovan och försök sätta Zoomstyrka till noll.
+   Ett felbesked visas, värdet återgår till 70 procent och fokus bevaras.
+   Ta bort blockeringen.
+
+**Förväntat resultat:** Reglagen sparas oberoende. Återställ rörelse
+påverkar bara rörelsevärdena. Inaktivering, fel och konflikt bevarar
+bekräftade val och tydlig återkoppling.
+
+### PLACERING-14: synlig respons vid noll, full styrka och ytterlägen
+
+**Syfte:** Granska bakgrundens oberoende respons genom den riktiga kartan.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Lampan och Cykeln är sparade. Använd ljust tema,
+Pärlemor, påslagen bakgrund och ingen minskad rörelse. Prova vid
+1440 CSS-pixlars bredd. Granska fria bakgrundsytor under kamerahandlingar.
+
+**Automatiskt motsvarande test:**
+[personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
+PLACERING-14. Automationen jämför skärmbilder av fria bakgrundsytor;
+den verifierar inte fysisk hårdvaruprestanda.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/personal-view.spec.ts",
+    "caseId": "PLACERING-14"
+  },
+  "reference": "Chromium, Pärlemor i ljust tema, två sparade objekt; noll, 70 och 100 procent, lageravstånd 0,5 och 2,0, rotation, upprepad panorering och zoomens ytterlägen.",
+  "outcomes": [
+    "Noll stoppar respektive respons medan rotation finns kvar; 70 och 100 procent ger synlig respons.",
+    "Lageravståndets ytterlägen påverkar bakgrundens djuprespons.",
+    "Rotation över hela varv, upprepade kamerahandlingar och återställning ger en sammanhängande vy.",
+    "Bakgrunden står stilla utan kamerahandlingar och vid personlig objektflyttning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Sätt båda styrkorna till noll och lageravstånd till 1,0. Återvänd
+   till kartan och öppna Navigera. Återställ vy. Panorera höger fem
+   gånger och zooma in fem gånger. Bakgrunden står stilla. Rotera
+   vänster fyra gånger; bakgrunden följer rotationen.
+2. Sätt Panoreringsstyrka till 70 procent och Zoomstyrka till noll.
+   Återställ vy, panorera höger fem gånger och granska synlig respons.
+   Återställ igen och zooma in fem gånger: bakgrunden står stilla.
+   Upprepa med Panoreringsstyrka 100 procent.
+3. Sätt Panoreringsstyrka till noll. Prova Zoomstyrka 70 respektive
+   100 procent: återställ, zooma in fem gånger och granska responsen.
+   Återställ och panorera höger fem gånger: bakgrunden står stilla.
+4. Sätt båda styrkorna till 70 procent. Prova lageravstånd 0,5 och 2,0.
+   Återställ före varje variant och panorera höger fem gånger.
+   Djupresponsen skiljer sig mellan varianterna.
+5. Återställ vy. Rotera vänster 42 gånger och höger lika många gånger.
+   Ingen skarv ska synas genom varvet och utgångsvyn återkommer.
+   Panorera höger 30 gånger, zooma in 30 gånger och ut 60 gånger.
+   Bakgrunden ska täcka kartan utan tomma kanter. Återställ vy;
+   utgångsvyn återkommer.
+6. Låt kartan stå stilla. Ingen egen rörelse ska synas. Markera Lampan
+   och flytta den uppåt med Navigera: bakgrunden står fortfarande stilla.
+
+**Förväntat resultat:** Oberoende styrkor och lageravstånd ger beskriven
+respons. Kartans rotation är sammanhängande och bakgrunden svarar endast
+på kamerahandlingar.
+
 ### PLACERING-01: mus, höjdled, tangentbord och återläsning
 
 **Syfte:** Kontrollera tre dimensioner och beständig personlig lagring.

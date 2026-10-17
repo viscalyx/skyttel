@@ -14,6 +14,7 @@ import { createPortal } from 'react-dom';
 import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
 import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
 import { relationshipLabel } from '../shared/relationship-label.js';
+import { BackgroundMotionSlider } from './BackgroundMotionSlider.js';
 import { LifecycleStatus } from './Lifecycle.js';
 import { MapNavigation } from './MapNavigation.js';
 import type { MapRevealRequest } from './map-display.js';
@@ -290,9 +291,12 @@ export function SpatialMap({
   const settings = personal?.view?.settings ?? defaultViewSettings;
   const [localSettings, setLocalSettings] = useState(defaultViewSettings);
   const preferences = personal ? settings : localSettings;
+  const [hasUnsavedMotion, setHasUnsavedMotion] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   );
+  const backgroundMotionDisabled =
+    !preferences.background || reducedMotion || Boolean(personal && !personal.view);
   useEffect(() => {
     const preference = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     if (!preference) return;
@@ -1177,16 +1181,60 @@ export function SpatialMap({
                 <option value="universe">Universum</option>
               </select>
             </fieldset>
+            <fieldset
+              disabled={backgroundMotionDisabled}
+              aria-busy={personal?.pending || undefined}
+              className="background-motion"
+            >
+              <legend>Bakgrundens rörelse</legend>
+              {(
+                [
+                  ['panStrength', 'Panoreringsstyrka'],
+                  ['zoomStrength', 'Zoomstyrka'],
+                  ['layerDistance', 'Lageravstånd'],
+                ] as const
+              ).map(([key, label]) => (
+                <BackgroundMotionSlider
+                  key={key}
+                  id={`${labelPrefix}-${key}`}
+                  label={label}
+                  value={preferences[key]}
+                  percent={key !== 'layerDistance'}
+                  busy={personal?.pending ?? false}
+                  disabled={backgroundMotionDisabled}
+                  onCommit={(value) => configure({ [key]: value })}
+                  onUnsavedChange={setHasUnsavedMotion}
+                />
+              ))}
+              <button
+                type="button"
+                aria-disabled={personal?.pending || undefined}
+                onClick={() => {
+                  if (!personal?.pending)
+                    configure({
+                      panStrength: defaultViewSettings.panStrength,
+                      zoomStrength: defaultViewSettings.zoomStrength,
+                      layerDistance: defaultViewSettings.layerDistance,
+                    });
+                }}
+              >
+                Återställ rörelse
+              </button>
+            </fieldset>
             {reducedMotion && <p>Minskad rörelse är aktiverad. Ditt bakgrundsval behålls.</p>}
             <p>Bakgrunden är dekorativ. Dina val sparas direkt för dig i det här hushållet.</p>
             <div role="status" aria-atomic="true">
-              {personal?.message && (
-                <p
-                  key={personal.messageId}
-                  className={personal.toast ? 'personal-view-toast' : undefined}
-                >
-                  {personal.message}
-                </p>
+              {hasUnsavedMotion && !personal?.pending ? (
+                <p>Ändringen är inte sparad än.</p>
+              ) : (
+                personal?.message && (
+                  <p
+                    key={personal.messageId}
+                    className={personal.toast ? 'personal-view-toast' : undefined}
+                  >
+                    {personal.message}
+                  </p>
+                )
               )}
             </div>
             {personal && (

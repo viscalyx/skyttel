@@ -212,13 +212,13 @@ export function spaceBackground(pixelRatio: number) {
     update(camera: PerspectiveCamera) {
       renderCamera.copy(camera);
       renderCamera.position.multiplyScalar(settings.panStrength * settings.layerDistance);
+      renderCamera.position.clampLength(0, 280);
       renderCamera.fov = 45 * (camera.fov / 45) ** (settings.zoomStrength * 0.2);
+      renderCamera.fov = Math.max(15, Math.min(110, renderCamera.fov));
       renderCamera.updateProjectionMatrix();
       renderCamera.updateMatrixWorld();
       material.uniforms.rotation.value.setFromMatrix4(renderCamera.matrixWorld);
-      material.uniforms.offset.value
-        .copy(renderCamera.position)
-        .multiplyScalar(0.0015 / settings.layerDistance);
+      material.uniforms.offset.value.copy(renderCamera.position).multiplyScalar(0.0015);
       material.uniforms.aspect.value = renderCamera.aspect;
       material.uniforms.tangent.value = Math.tan((renderCamera.fov * Math.PI) / 360);
       ocean.update(

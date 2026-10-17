@@ -347,6 +347,15 @@ stoft i mörkt tema. Det aktiva temat, även systemtema, väljer vilken
 bakgrund som visas. Tema- och bakgrundsbyten behåller kamerans utsnitt och
 dina objektplaceringar.
 
+**Panoreringsstyrka** och **Zoomstyrka** styr responsen oberoende, från
+0 till 100 procent i steg om 5 procent. Noll stoppar respektive respons;
+bakgrunden följer fortfarande rotation. **Lageravstånd** styr intrycket av
+djup, från 0,5 till 2,0 i steg om 0,1. Samma värden gäller alla bakgrunder
+och båda temana. **Återställ rörelse** sparar 70 procent, 70 procent och
+1,0. Bakgrundsval, synlighet, kamera och objektplaceringar behålls.
+När bakgrunden är av eller systemets minskade rörelse gäller visar de
+inaktiva rörelsereglagen dina sparade värden.
+
 Valen sparas direkt för dig i det aktuella hushållet och återkommer vid
 omladdning, omstart och på andra enheter. Ett tillgängligt besked bekräftar
 sparandet. Om en annan klient hinner ändra vyn avvisas det äldre valet och
