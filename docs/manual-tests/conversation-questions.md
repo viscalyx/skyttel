@@ -19,11 +19,11 @@ angivet arbetssteg, tillsammans med UI-proceduren en gång.
 När ett steg kräver kvarvarande eller rättat Lo-förslag: öppna
 **Skriv till Skyttel → Visa utkastet → Visa förslaget: Lo Exempel**
 (eller det rättade namnet).
-Läs Person, det aktuella namnet och tom beskrivning (**Ej uppgivet**).
+Läs Person, det aktuella namnet och kontrollera att ingen egenskap Beskrivning finns.
 Stäng dialogen före nästa samtalssteg. När ett steg kräver sparad Lo:
 öppna **Tabell**, fäll ut objektets rad och läs samma fullständiga värden.
 Ett kvitto läses genom **Rapporter → Ändringshistorik → Visa ändringarna**.
-Läs objektets namn, typ och tom beskrivning (**Ingen beskrivning**) och välj
+Läs objektets namn, typ och **Inga egenskaper.** och välj
 **Tillbaka till arbetet**.
 Gör läsningen vid respektive bevarat/rättat/sparat steg, utan att lägga
 nya förslag i utkastet eller utföra ett extra sparande.
@@ -749,7 +749,7 @@ med isolerad, nåbar HTTPS-installation, verklig inloggning och påhittade
 uppgifter. Loopback-adressen från launchern når inte en fysisk telefon.
 Verkliga leverantörsanrop kräver separat godkännande innan körning.
 Skapa Lo Exempel som Person med Påhittad uppgift när fallet behöver utkast;
-använd tom beskrivning för FRAGA. Återställ utkast och samtal mellan fallen,
+lägg inte till någon egenskap Beskrivning för FRAGA. Återställ utkast och samtal mellan fallen,
 och ta bort provhushållet när granskningen är klar.
 
 **Kräver mänsklig observation:** Frågan hörs, kan besvaras med tal eller text,

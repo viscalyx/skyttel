@@ -20,6 +20,7 @@ import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
+import { readVoiceProposal } from '../support/voice-work-reading.js';
 
 const field = (page: Page) => page.getByLabel('Meddelande till Skyttel');
 const textView = (page: Page) =>
@@ -105,37 +106,6 @@ async function waitForResponse(live: ReturnType<typeof liveProvider>) {
   await expect.poll(() => commentary(live).length).toBeGreaterThan(0);
 }
 
-async function readPrivateLo(page: Page, name = 'Lo Exempel') {
-  const draft = await openConversationDraft(page);
-  await draft.getByRole('button', { name: `Visa förslaget: ${name}`, exact: true }).click();
-  const proposal = page.getByRole('dialog', { name, exact: true });
-  const proposedValues = proposal
-    .getByRole('heading', { name: 'Föreslagna värden', exact: true })
-    .locator('..');
-  await expect(
-    proposedValues
-      .locator('dt')
-      .filter({ hasText: /^Namn(?:\s+· ändrat)?$/ })
-      .locator('..')
-      .locator('dd'),
-  ).toHaveText(name);
-  await expect(
-    proposedValues
-      .locator('dt')
-      .filter({ hasText: /^Typ(?:\s+· ändrat)?$/ })
-      .locator('..')
-      .locator('dd'),
-  ).toHaveText('Person');
-  await expect(
-    proposedValues
-      .locator('dt')
-      .filter({ hasText: /^Beskrivning(?:\s+· ändrat)?$/ })
-      .locator('..')
-      .locator('dd'),
-  ).toHaveText('Ej uppgivet');
-  await closeSupportDialog(page, name);
-}
-
 test('FRAGA-01: en nödvändig identitetsfråga finns i samtalstexten med serverns väntesignal', async ({
   page,
 }) => {
@@ -154,7 +124,7 @@ test('FRAGA-01: en nödvändig identitetsfråga finns i samtalstexten med server
     const request = model.requests[0];
     expect(request.tools.some((tool) => tool.name === 'ask_questions')).toBe(true);
     expect((await (await page.request.get(path)).json()).objects).toEqual([]);
-    await readPrivateLo(page);
+    await readVoiceProposal(page, 'Lo Exempel', null);
   } finally {
     await app.close();
   }
@@ -180,7 +150,7 @@ test('FRAGA-10: en väntande fråga bevarar oberoende svar och besked om nytt sp
     await expect(transcript).toContainText('Din tidigare sparbegäran gäller inte längre.');
     await expect(transcript).toContainText('Be om sparande igen när frågorna är lösta.');
     await expect.poll(() => views.at(-1)?.questionPending).toBe(true);
-    await readPrivateLo(page);
+    await readVoiceProposal(page, 'Lo Exempel', null);
     expect((await (await page.request.get(path)).json()).objects).toEqual([]);
     expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([]);
   } finally {
@@ -202,7 +172,7 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
   const model = textModel((body) => {
     const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     const lo = turn.draft.changes.find((change: { id: string }) => change.id === 'lo');
-    const { description: _description, ...value } = lo?.after ?? {};
+    const value = lo?.after ?? {};
     const properties = value.properties;
     if (call++ === 0)
       return [
@@ -308,6 +278,7 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
     }
     await page.reload();
     await startConversationWithVoice(page);
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
     speak(
       live,
       'Lägg till telefon 0700123456 på Lo. Lägg till Kod 0012. Töm Notering. Alex använder Molnmusik. Spara hela utkastet.',
@@ -434,7 +405,7 @@ test('FRAGA-02: Skyttel frågar om en verklig konflikt i samtalet utan en genere
     await expect(page.getByText('Utkastet har konflikter', { exact: false })).toHaveCount(0);
     await expect(voiceBox(page)).toHaveCount(0);
     expect((await (await page.request.get(path)).json()).objects[0].name).toBe('Lo Berg');
-    await readPrivateLo(page, 'Lo Lind');
+    await readVoiceProposal(page, 'Lo Lind', null);
     const savedReader = await other.newPage();
     await savedReader.goto(app.origin);
     const savedLo = await readTableObject(savedReader, 'Lo Berg');
@@ -601,7 +572,7 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
     await expect(
       history
         .locator('.history-changes')
-        .getByText('Beskrivning: Ingen beskrivning', { exact: true }),
+        .getByText('Inga egenskaper.', { exact: true }),
     ).toBeVisible();
     await expect(
       history.locator('.history-changes').getByText('Namn: Lo Exempel.', { exact: true }),
@@ -671,7 +642,7 @@ test('FRAGA-05: stopp under det verifierade sparbeskedet startar de fyra sekunde
     await expect(
       history
         .locator('.history-changes')
-        .getByText('Beskrivning: Ingen beskrivning', { exact: true }),
+        .getByText('Inga egenskaper.', { exact: true }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     const savedLo = await readTableObject(page, 'Lo Exempel');
@@ -717,7 +688,7 @@ test('FRAGA-06: providertext som säger Sparat utan beständigt kvitto ger inget
     await expect(voiceBox(page).locator('.voice-saved')).toHaveCount(0);
     expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
     expect((await (await page.request.get(path)).json()).objects).toEqual([]);
-    await readPrivateLo(page);
+    await readVoiceProposal(page, 'Lo Exempel', null);
     const history = await openSavedHistory(page);
     await expect(history.getByRole('article')).toHaveCount(0);
     await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).focus();
