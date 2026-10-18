@@ -37,6 +37,19 @@ test('UTKAST-155: withdraw an object removal after reviewing new consequences an
     await expect(draft).toContainText('Följer objektborttagning: Lo Exempel.');
     await draft.locator('#draft-remove-object-lo').focus();
     await page.keyboard.press('Enter');
+    const discard = page.getByRole('dialog', {
+      name: 'Ta bort förslaget och dess beroenden?',
+      exact: true,
+    });
+    await expect(discard.getByRole('listitem')).toHaveText([
+      'Lo Exempel · Objekt',
+      'Lo Exempel → Använder → Molnmusik · Samband',
+    ]);
+    await expect(discard.getByRole('button', { name: 'Avbryt', exact: true })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(discard.getByRole('button', { name: 'Ta bort', exact: true })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(discard).toHaveCount(0);
     await expect(draft).not.toContainText('Följer objektborttagning:');
     await expect(draft.locator('#draft-read-relationship-new-edge')).toHaveCount(0);
     await expect(

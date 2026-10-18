@@ -8208,7 +8208,7 @@ autentiserade användare och verifierar separat begärda sambandsborttagningar.
 {
   "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/changed-removal.spec.ts", "caseId": "UTKAST-155" },
   "reference": "320 × 900, Chromium, ljust tema. Nytt sparat samband efter förslag om objektborttagning. Återtagning efter uttrycklig granskning av följderna.",
-  "outcomes": ["Objektets och det nya sambandets borttagning kräver egna val i konfliktfönstret med rubrikfokus och tangentbord.", "Det granskade sambandet anges som en följd av objektborttagningen. När objektborttagningen återtas försvinner även den följden ur utkastet; oberoende arbete finns kvar.", "Efter separat sparande finns Lo Exempel, det nya sambandet till Molnmusik och det oberoende objektet kvar."],
+  "outcomes": ["Objektets och det nya sambandets borttagning kräver egna val i konfliktfönstret med rubrikfokus och tangentbord.", "Det granskade sambandet anges som en följd av objektborttagningen. Bekräftelsen listar objektets och sambandets förslag, med fokus på Avbryt. Efter bekräftad återtagning med tangentbord försvinner båda förslagen ur utkastet; oberoende arbete finns kvar.", "Efter separat sparande finns Lo Exempel, det nya sambandet till Molnmusik och det oberoende objektet kvar."],
   "evidence": [{ "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/changed-removal-http.test.ts", "title": "withdrawing an object removal restores newly reviewed connections while preserving independent deletions and work", "purpose": "Inkommande samband, självsamband, tomma egenskaper och separat sambandsborttagning med verkligt beständigt samlat sparande." }]
 }
 ```
@@ -8225,8 +8225,12 @@ autentiserade användare och verifierar separat begärda sambandsborttagningar.
 3. Stäng med Escape och öppna **Skriv till Skyttel → Visa utkastet**.
    Läs **Följer objektborttagning: Lo Exempel.** på sambandsraden.
 4. Återta Lo Exempels borttagningsförslag med radens ta bort-knapp och
-   Enter. Kontrollera att även sambandets borttagning försvinner ur
-   utkastet, medan **Oberoende förslag** finns kvar.
+   Enter. Läs **Ta bort förslaget och dess beroenden?** och kontrollera att
+   listan innehåller endast Lo Exempels objektförslag och sambandsförslaget
+   **Lo Exempel → Använder → Molnmusik**. Kontrollera fokus på **Avbryt**.
+   Nå **Ta bort** med Tab och bekräfta med Enter. Kontrollera att även
+   sambandets borttagning försvinner ur utkastet, medan **Oberoende förslag**
+   finns kvar.
 5. Välj **Spara hela utkastet**. Läs sparbekräftelsen och öppna **Tabell**.
    Kontrollera Lo Exempel och Oberoende förslag. Öppna **Samband för Lo
    Exempel** och läs sambandet till Molnmusik.
