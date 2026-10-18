@@ -528,11 +528,11 @@ test('EXPORT-06: browser image proposals, history and restart lead to a download
     const editFirst = async (buffer: Buffer) => {
       await openTable(page);
       // Equal display names remain distinct: select the row by its description.
-      const row = page
-        .getByRole('region', { name: 'Hushållets tabell', exact: true })
+      const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+      await table.getByRole('searchbox', { name: 'Sök objekt i tabellen' }).fill('Första objektet');
+      const row = table
         .getByRole('row')
-        .filter({ has: page.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }) })
-        .first();
+        .filter({ has: page.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }) });
       await expect(row).toHaveCount(1);
       await expect(row).toBeVisible();
       await row.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();

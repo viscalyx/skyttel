@@ -346,12 +346,14 @@ EXPORT-06.
    Välj den första provbilden på det andra objektet under
    **Livscykel och utseende → Profilbild**. Lägg båda i utkastet och
    välj **Spara hela utkastet**. Vänta på sparbekräftelsen.
-2. Redigera det första objektet. Öppna **Fria egenskaper** och kontrollera
+2. Sök på **Första objektet** i tabellen och kontrollera att endast en rad
+   återstår. Redigera objektet. Öppna **Fria egenskaper** och kontrollera
    Beskrivning så att samma namn inte blandar ihop objekten.
    Välj samma provbild, lägg i utkastet
    och spara hela utkastet. Öppna **Rapporter**, fäll ut det senaste
    sparandets **Visa ändringarna** och kontrollera objektets namn och bild.
-3. Stäng Rapporter. Redigera det första objektet och välj den andra bilden.
+3. Stäng Rapporter. Sök på **Första objektet** igen, redigera den enda raden
+   och välj den andra bilden.
    Lägg i utkastet och lämna förslaget osparat.
 4. Låt den driftansvariga starta om samma installation och ladda om sidan.
    Öppna **Visa utkastet → Visa förslaget: Lo Exempel**. Kontrollera att
