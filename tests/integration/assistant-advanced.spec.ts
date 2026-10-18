@@ -436,7 +436,7 @@ test('MCP-03: typbyte bevarar riktade samband och äldre typers läsbara histori
         `Objekttyp: ${kind}.`,
       );
       await expect(
-        values.getByText(`${number} (${phase === 'Före sparandet' ? 'Text' : 'Tal'})`, {
+        values.getByText(`Ramnummer: ${number} (${phase === 'Före sparandet' ? 'Text' : 'Tal'})`, {
           exact: true,
         }),
       ).toBeVisible();
