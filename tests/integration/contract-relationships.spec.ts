@@ -127,7 +127,7 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
     const review = await openDraftReview(page);
     await expect(review).toContainText('Lo → Använder → Blå bilen');
     const bankProposal = await readDraftProposal(page, 'Betalkontot');
-    await expect(bankProposal).toContainText('Ospecificerat objekt');
+    await expect(bankProposal).toContainText('Identiteten behöver redas ut');
     await closeSupportDialog(page, 'Betalkontot');
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     const blocked = await read();
