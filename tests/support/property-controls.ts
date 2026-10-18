@@ -24,9 +24,7 @@ export function propertyValue(
 
 /** Find a uniquely labelled free property through the ordinary editor. */
 export function propertyRow(form: Locator | Page, label: string) {
-  return form.locator('.property-editor-row').filter({
-    has: form.locator(`input[value=${JSON.stringify(label)}]`),
-  });
+  return form.locator(`.property-editor-row:has(input[value=${JSON.stringify(label)}])`);
 }
 
 export async function openProperties(form: Locator | Page) {

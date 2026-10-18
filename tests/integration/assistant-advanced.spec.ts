@@ -17,7 +17,7 @@ import {
 } from '../support/domain-work.js';
 import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation, robin } from '../support/installation.js';
-import { propertyRow, setProperty } from '../support/property-controls.js';
+import { openProperties, propertyRow, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 async function connect(actor: APIRequestContext, origin: string, householdId: string) {
@@ -168,9 +168,8 @@ test('MCP-06: importerad historik läses och vanliga rättelser använder färsk
     expect(ordinary.objects[0].name).toBe('Historisk lampa');
     const lamp = await editTableObject(page, 'Historisk lampa');
     await expect(lamp.getByLabel('Namn', { exact: true })).toHaveValue('Historisk lampa');
-    await expect(propertyRow(lamp, 'Beskrivning').getByLabel('Värde', { exact: true })).toHaveValue(
-      '',
-    );
+    await openProperties(lamp);
+    await expect(propertyRow(lamp, 'Beskrivning')).toHaveCount(0);
     await expect(lamp.getByLabel('Objekttyp')).toHaveValue(typeId);
     await page.keyboard.press('Escape');
     // A meaningful independent proposal must survive every historical reading.
@@ -248,17 +247,10 @@ test('MCP-06: importerad historik läses och vanliga rättelser använder färsk
     await expect(correctionProposal).toContainText('Rättad historisk lampa');
     for (const sectionName of ['Sparade värden', 'Föreslagna värden']) {
       const values = correctionProposal.getByRole('heading', { name: sectionName }).locator('..');
-      for (const [label, value] of [
-        ['Typ', before.types[0].name],
-        ['Beskrivning', 'Ej uppgivet'],
-      ]) {
-        await expect(
-          values
-            .locator('dt')
-            .filter({ hasText: new RegExp(`^${label}$`) })
-            .locator('..'),
-        ).toContainText(value);
-      }
+      await expect(values.locator('dt').filter({ hasText: /^Typ$/ }).locator('..')).toContainText(
+        before.types[0].name,
+      );
+      await expect(values.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
     }
     await page.keyboard.press('Escape');
     expect((await targetMcp.tool('read_my_draft')).changes).toEqual([
@@ -281,6 +273,7 @@ test('MCP-06: importerad historik läses och vanliga rättelser använder färsk
     await expect(corrected.getByLabel('Namn', { exact: true })).toHaveValue(
       'Rättad historisk lampa',
     );
+    await openProperties(corrected);
     await expect(propertyRow(corrected, 'Beskrivning')).toHaveCount(0);
     await expect(corrected.getByLabel('Objekttyp')).toHaveValue(typeId);
     await page.keyboard.press('Escape');
@@ -417,8 +410,8 @@ test('MCP-03: typbyte bevarar riktade samband och äldre typers läsbara histori
     await page.reload();
     const changedForm = await editTableObject(page, 'Alex blå cykel');
     await expect(changedForm.getByLabel('Objekttyp')).toHaveValue('vehicle');
+    await openProperties(changedForm);
     await expect(propertyRow(changedForm, 'Beskrivning')).toHaveCount(0);
-    await changedForm.getByRole('button', { name: 'Fria egenskaper', exact: true }).click();
     await expect(
       propertyRow(changedForm, 'Ramnummer').getByLabel('Värde', { exact: true }),
     ).toHaveValue('42');
@@ -515,7 +508,7 @@ test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ pag
           name: 'Andras privata namn',
           properties: [
             {
-              id: 'description',
+              id: expect.any(String),
               label: 'Beskrivning',
               kind: 'text' as const,
               value: 'Privat hemlig anteckning',
@@ -553,12 +546,9 @@ test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ pag
       .click();
     privateProposal = await readDraftProposal(otherPage, 'Senare privat användning');
     await expect(privateProposal).toContainText('Samtidig typ');
-    await expect(
-      privateProposal
-        .locator('dt')
-        .filter({ hasText: /^Beskrivning$/ })
-        .locator('..'),
-    ).toContainText('Tomt');
+    await expect(privateProposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(
+      0,
+    );
     await otherPage.keyboard.press('Escape');
     const nativeRace = (await otherMcp.tool('read_my_draft')).changes.find(
       (change: { after: { name: string } }) => change.after.name === 'Senare privat användning',
@@ -600,13 +590,7 @@ test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ pag
     await otherPage.keyboard.press('Escape');
     const restoredRace = await readDraftProposal(otherPage, 'Senare privat användning');
     await expect(restoredRace).toContainText('Samtidig typ');
-    await expect(
-      restoredRace
-        .locator('dt')
-        .filter({ hasText: /^Beskrivning$/ })
-        .locator('..')
-        .locator('dd'),
-    ).toHaveText('Ej uppgivet');
+    await expect(restoredRace.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
     await otherPage.keyboard.press('Escape');
     const persistedPrivate = await otherMcp.tool('read_my_draft');
     expect(persistedPrivate.changes).toEqual([
@@ -744,10 +728,8 @@ test('MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej', async 
     await page.reload();
     const roof = await editTableObject(page, 'Paneler på taket');
     await expect(roof.getByLabel('Objekttyp')).toHaveValue('solar');
-    await expect(propertyRow(roof, 'Beskrivning').getByLabel('Värde', { exact: true })).toHaveValue(
-      '',
-    );
-    await roof.getByRole('button', { name: 'Fria egenskaper', exact: true }).click();
+    await openProperties(roof);
+    await expect(propertyRow(roof, 'Beskrivning')).toHaveCount(0);
     await expect(propertyRow(page, 'Leverantör').getByLabel('Värde', { exact: true })).toHaveValue(
       'Exempelsol',
     );
@@ -761,8 +743,8 @@ test('MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej', async 
     await page.keyboard.press('Escape');
     const garage = await editTableObject(page, 'Paneler på garaget');
     await expect(garage.getByLabel('Objekttyp')).toHaveValue('solar');
+    await openProperties(garage);
     await expect(propertyRow(garage, 'Beskrivning')).toHaveCount(0);
-    await garage.getByRole('button', { name: 'Fria egenskaper', exact: true }).click();
     await expect(propertyRow(page, 'Batteri').getByLabel('Värde', { exact: true })).toHaveValue(
       'false',
     );
