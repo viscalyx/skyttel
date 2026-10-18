@@ -8090,6 +8090,76 @@ UTKAST-137.
   medlemmarna genom publika HTTP-svar. Dessa kontroller ingår i samma
   formulärflöde och kräver inga ytterligare manuella UI-steg.
 
+### UTKAST-154: återta objektborttagningar med bevarat sambandsarbete
+
+**Syfte:** Återge egna sambandsförslag utan att tappa deras innehåll eller
+återta en separat begärd sambandsborttagning.
+
+**Användare:** Alex enligt områdets förberedelse.
+
+**Förutsättningar:** Använd ett syntetiskt hushåll med sparade objekt
+Lo Exempel och Molnmusik. Skapa och spara ett samband från Lo till
+Molnmusik och ett självsamband för Molnmusik. Använd samma sambandstyp.
+I ditt utkast ändrar du det första sambandet: lägg till två egenskaper
+med etiketten Samma, först ja/nej med Nej och sedan tal med 0.
+Lägg till ett nytt omvänt samband från Molnmusik till Lo med
+textegenskapen Anteckning och värdet Bevarat nytt samband, samt ett nytt
+självsamband för Lo. Föreslå separat att ta bort Molnmusiks sparade
+självsamband. Spara inte dessa ändringar ännu.
+
+**Automatiskt motsvarande test:**
+[object-removal-suppression.spec.ts](../../tests/integration/object-removal-suppression.spec.ts),
+UTKAST-154. Fokuserat HTTP/MCP-underlag använder riktig server och SQLite.
+Chromium-underlaget kontrollerar läsdialogens tangentbord och text med
+styrt utkast; det bevisar inte beständighet.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/object-removal-suppression.spec.ts", "caseId": "UTKAST-154" },
+  "reference": "320 × 900, ljust tema, Chromium. Nya, ändrade, inkommande, utgående och självkopplade samband; två borttagningsorsaker och separat sambandsborttagning.",
+  "outcomes": ["Utkastet visar vilka samband som följer objektborttagningarna och låter användaren läsa det bevarade nya förslaget.", "Återtagning av en orsak lämnar den andra kvar. Efter den sista återtagningen återkommer sambandsförslagen med egenskaperna i samma ordning; separat sambandsborttagning består.", "Läsdialogen ger rubrikfokus och återlämnar fokus med Escape. Efter samlat sparande finns båda objekten kvar."],
+  "evidence": [
+    { "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/object-removal-suppression-http.test.ts", "title": "object removal suppresses new and edited relationships until every cause is undone, preserving exact proposals after restart", "purpose": "Exakta förslag, identiteter, egenskapsordning och flera orsaker genom omstart och återtagning." },
+    { "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/object-removal-suppression-http.test.ts", "title": "explicit relationship deletion survives undo while cascade save records only saved relationships atomically", "purpose": "Separat borttagning, atomiskt slutresultat samt gemensam historik och kvitto." },
+    { "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/object-removal-suppression-http.test.ts", "title": "undo restores a proposal that remains blocked by another member removal without resurrecting objects or partially saving", "purpose": "Kvarstående blockering, oförändrat utkast efter avvisat sparande och ingen objektåterställning." },
+    { "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/object-removal-suppression-http.test.ts", "title": "MCP object removal and undo retain suppressed contents and independently requested relationship deletions", "purpose": "MCP följer samma regler för borttagning, läsning och återtagning." },
+    { "kind": "technical", "runner": "vitest", "suite": "browser", "spec": "tests/browser/object-removal-suppression.test.tsx", "title": "suppressed new relationship reader names both removal causes and retained values with keyboard focus", "purpose": "Tangentbord, fokus, begriplig orsakstext, egenskapsordning och smal läsdialog med styrt innehåll." }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **Tabell** och välj **Ta bort Lo Exempel**, sedan
+   **Ta bort Molnmusik**. Öppna **Utkast** och läs vilka samband som
+   följer de två objektborttagningarna.
+2. Nå **Visa förslaget** för det nya sambandet från Molnmusik till Lo med
+   tangentbord och aktivera med Enter. Kontrollera rubrikfokus och läs
+   **Bevarat sambandsförslag** med anteckningen. Stäng med Escape och
+   kontrollera att fokus återgår till samma knapp.
+3. Ta bort objektets borttagningsförslag för Lo med radens papperskorg.
+   Kontrollera att sambanden mellan Lo och Molnmusik fortfarande följer
+   borttagningen av Molnmusik. Lo:s självsamband återkommer som nytt förslag.
+4. Återta även Molnmusiks objektborttagning. Kontrollera att inga rader
+   längre anger **Följer objektborttagning**. Läs det ändrade sambandet
+   från Lo och kontrollera Nej före 0 bland de föreslagna egenskaperna.
+   Molnmusiks separat borttagna självsamband ska fortfarande ange
+   **Tas bort**.
+5. Spara hela utkastet. Öppna tabellen och kontrollera att både
+   Lo Exempel och Molnmusik finns kvar.
+
+**Förväntat resultat:** Alla undertryckta förslag går att läsa och återges
+efter sista återtagningen. En separat sambandsborttagning behålls.
+Inget sparat objekt behöver återskapas och sparandet är gemensamt.
+
+**Kvarstående mänsklig observation:** Faktisk uppläsning, fysiskt mobilt
+tangentbord, förstoring och omflöde bedöms i områdets befintliga
+hjälpmedelsfall. Automatiken utgör inget mänskligt godkännande.
+
 ### UTKAST-151: rätta ett bevarat nytt samband efter borttagen ändpunkt
 
 **Syfte:** Behålla eget arbete och rätta ändpunkten före samlat sparande.

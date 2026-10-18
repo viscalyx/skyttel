@@ -82,6 +82,21 @@ dialog vilka förslag som blir kvar men påverkas. De behåller sina värden
 och visar eventuell typkonflikt med varningssymbol och text. Rätta dem
 i ordinarie formulär eller typinställningar.
 
+När du föreslår att ta bort ett sparat objekt följer dess inkommande och
+utgående samband med, även självsamband. Utkastet visar
+**Följer objektborttagning** och vilka objekt som orsakar borttagningen.
+Egna nya och ändrade sambandsförslag bevaras under tiden. Öppna deras rad
+för att läsa **Bevarat sambandsförslag**, inklusive egenskaper och ordning.
+
+Ta bort objektets borttagningsförslag med radens papperskorg för att återta
+borttagningen. Sambandsförslagen återkommer för granskning när alla berörda
+objektborttagningar återtas. Samband som du separat föreslår att ta bort
+förblir borttagna i utkastet. Om någon annan tar bort en ändpunkt kan ett
+återgivet förslag vara blockerat: rätta ändpunkterna eller kasta förslaget
+innan du sparar hela utkastet. Borttagna sparade objekt återställs inte.
+Återtagningen gäller utkastet; redan sparade borttagningar kan inte ångras
+på detta sätt.
+
 Rubrikens **Kasta hela utkastet** visar alla dina förslag och kräver
 bekräftelse. **Avbryt** ändrar ingenting. Om utkastet har ändrats eller
 svaret försvinner väljer du **Hämta aktuellt utkast** för att kontrollera

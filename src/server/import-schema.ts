@@ -139,6 +139,14 @@ const draftRelationship = z
     ...relationshipChangeShape,
     proposedAt: z.iso.datetime().optional(),
     removedWithObjects: z.array(id).optional(),
+    suppressed: z
+      .object({
+        ...relationshipChangeShape,
+        proposedAt: z.iso.datetime().optional(),
+        endpointRecovery: z.object({ removedRevision: positive }).strict().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 const savedRelationship = z

@@ -294,6 +294,10 @@ export function validateImportReferences(
     names(change.objectNames);
     if ('removedWithObjects' in change)
       for (const id of change.removedWithObjects ?? []) requireReference(objects.has(id));
+    if ('suppressed' in change && change.suppressed) {
+      requireReference(change.after === null && change.suppressed.id === change.id);
+      edgeChange(change.suppressed, types);
+    }
   }
   for (const row of content.objects) {
     const {

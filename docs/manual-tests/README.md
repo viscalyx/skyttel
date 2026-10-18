@@ -690,7 +690,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   serverexekveringar.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
   samt samtidiga fria egenskapsändringar med separata egenskaps- och
-  ordningsval, rättning eller kastande av bevarade sambandsförslag efter någon
+  ordningsval, objektborttagning med bevarade sambandsförslag, flera orsaker och
+  återtagning som behåller separata sambandsborttagningar,
+  samt rättning eller kastande av bevarade sambandsförslag efter någon
   annans ändpunktsborttagning, med blockering av hela sparandet,
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
   separata bredd-, tema- och återfokusfall med

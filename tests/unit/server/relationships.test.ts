@@ -206,6 +206,7 @@ test('a status proposal preserves saved relationship meaning after an old endpoi
       )
     ).status,
   ).toBe(200);
+  expect((await save(actor)).status).toBe(200);
   expect((await object('a', null, actor)).status).toBe(200);
   expect((await save(actor)).status).toBe(200);
   const state = await read();
@@ -662,13 +663,27 @@ test('a draft endpoint move retains its generated deletion until the object remo
   ]);
 
   expect((await object('c', { name: 'Behåll mig' })).status).toBe(200);
-  expect((await read()).draft.relationships ?? []).toEqual([]);
+  const restored = await read();
+  expect(restored.draft.relationships).toMatchObject([{ id: 'edge', after: { targetId: 'c' } }]);
+  const restoredConflict = draftConflicts(restored).find(
+    (item) => item.kind === 'relationship' && item.id === 'edge',
+  );
+  expect(restoredConflict?.type).toBeDefined();
+  expect(
+    (
+      await client.json(`${path}/resolve`, {
+        version: restored.draft.version,
+        conflict: restoredConflict,
+        choice: 'proposed',
+      })
+    ).status,
+  ).toBe(200);
   expect((await save()).status).toBe(200);
   const saved = await read();
   expect(saved.objects).toHaveLength(3);
   expect(saved.objects.find((value) => value.id === 'b')?.name).toBe('Annat förslag');
   expect(saved.objects.find((value) => value.id === 'c')?.name).toBe('Behåll mig');
-  expect(saved.relationships).toMatchObject([{ id: 'edge', sourceId: 'a', targetId: 'b' }]);
+  expect(saved.relationships).toMatchObject([{ id: 'edge', sourceId: 'a', targetId: 'c' }]);
 });
 
 test('independent roles and shared endpoints survive edits, deletion and receipt retries', async () => {

@@ -25,6 +25,7 @@ export type DraftProposal = {
   before: Property[] | null;
   after: Property[] | null;
   images?: { before?: ObjectValue; after?: ObjectValue; householdId: string };
+  suppression?: { causes: string[]; values: Property[] | null };
 };
 function text(value: string | number | boolean | undefined) {
   return value === undefined || value === ''
@@ -173,6 +174,20 @@ export function draftProposals(draft: MapDraft): DraftProposal[] {
           change.objectNames ?? {},
         ),
         after: relationship(change.after, change.type, proposedRelationshipNames(draft, change)),
+        ...(change.removedWithObjects?.length
+          ? {
+              suppression: {
+                causes: change.removedWithObjects.map((id) => change.objectNames?.[id] ?? id),
+                values: change.suppressed
+                  ? relationship(
+                      change.suppressed.after,
+                      change.suppressed.type,
+                      change.suppressed.objectNames ?? {},
+                    )
+                  : null,
+              },
+            }
+          : {}),
       };
     }
     return {
@@ -241,6 +256,28 @@ export function DraftProposalDetails({ proposal }: { proposal: DraftProposal }) 
             ),
         )}
       </div>
+      {proposal.suppression && (
+        <section aria-label="Följder av objektborttagning">
+          <p>Följer objektborttagning: {proposal.suppression.causes.join(', ')}.</p>
+          {proposal.suppression.values && (
+            <>
+              <h3>Bevarat sambandsförslag</h3>
+              <p>
+                Förslaget återkommer för granskning när alla berörda objektborttagningar återtas.
+                Separata sambandsborttagningar behålls.
+              </p>
+              <dl>
+                {proposal.suppression.values.map(({ key, label, value }) => (
+                  <div key={key}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          )}
+        </section>
+      )}
     </>
   );
 }

@@ -182,7 +182,10 @@ export function erasureContent(database: Database.Database, householdId: string,
   for (const draft of drafts) {
     const own = draft.userId === ownerId;
     for (const change of draft.changes) objectChange(change, own);
-    for (const change of draft.relationships) edgeChange(change, own);
+    for (const change of draft.relationships) {
+      edgeChange(change, own);
+      if (change.suppressed) edgeChange(change.suppressed, own);
+    }
     for (const change of draft.objectTypes)
       for (const type of [change.before, change.after])
         if (type) {
@@ -306,15 +309,17 @@ export function planErasure(
     )
       relationships.add(edge.id);
   for (const draft of content.drafts)
-    for (const change of draft.relationships)
+    for (const change of draft.relationships) {
+      const after = change.after ?? change.suppressed?.after;
       if (
-        change.after &&
+        after &&
         !content.relationships.some((edge) => edge.id === change.id) &&
-        (objects.has(change.after.sourceId) ||
-          (change.after.targetId && objects.has(change.after.targetId)) ||
-          relationshipTypes.has(change.after.typeId))
+        (objects.has(after.sourceId) ||
+          (after.targetId && objects.has(after.targetId)) ||
+          relationshipTypes.has(after.typeId))
       )
         relationships.add(change.id);
+    }
   const scope = {
     objects: [...objects],
     relationships: [...relationships],

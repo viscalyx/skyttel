@@ -155,17 +155,22 @@ export function relationships(database: Database.Database, householdId: string) 
   }
   function reconcileObjectRemovals(draft: MapDraft) {
     const removedObjects = draft.changes.filter((change) => !change.after);
-    draft.relationships = draft.relationships?.filter((change) => {
+    draft.relationships = draft.relationships?.flatMap((change) => {
       const causes = change.removedWithObjects;
       // Explicit deletions and older drafts without provenance keep their proposals.
-      if (!causes) return true;
+      if (!causes) return [change];
       change.removedWithObjects = removedObjects
         .filter(
           ({ id }) =>
-            causes.includes(id) || change.before?.sourceId === id || change.before?.targetId === id,
+            causes.includes(id) ||
+            change.before?.sourceId === id ||
+            change.before?.targetId === id ||
+            change.suppressed?.after?.sourceId === id ||
+            change.suppressed?.after?.targetId === id,
         )
         .map(({ id }) => id);
-      return change.removedWithObjects.length > 0;
+      if (change.removedWithObjects.length) return [change];
+      return change.suppressed ? [change.suppressed] : [];
     });
   }
   return {
@@ -174,29 +179,44 @@ export function relationships(database: Database.Database, householdId: string) 
     reconcileObjectRemovals,
     assertValid,
     removeObject(draft: MapDraft, id: string) {
-      for (const value of effective(draft)) {
+      const retainedRemoval = draft.changes.some(
+        (change) => change.id === id && change.before && !change.after,
+      );
+      // Deletion consequences include both saved endpoints and this owner's edits.
+      for (const value of [...read(), ...effective(draft)]) {
         if (value.sourceId !== id && value.targetId !== id) continue;
         const existing = draft.relationships?.find((change) => change.id === value.id);
+        // A second endpoint removal adds a cause during reconciliation, never a nested snapshot.
+        // Separately requested deletions retain their independent intent.
+        if (existing && !existing.after) continue;
         const before = existing ? existing.before : value;
-        draft.relationships = (draft.relationships ?? []).filter(
-          (change) => change.id !== value.id,
-        );
-        if (before)
-          draft.relationships.push({
-            id: value.id,
-            before,
-            after: null,
-            removedWithObjects: [id],
-            beforeType:
-              existing?.beforeType ?? definitions.read().find((type) => type.id === before.typeId),
-            objectNames: existing?.objectNames ?? objectNames(draft, before, null),
-            type:
-              existing?.type.id === before.typeId
-                ? existing.type
-                : (definitions
-                    .effective(draft)
-                    .find((type) => type.id === before.typeId) as RelationshipType),
-          });
+        if (!retainedRemoval && !before) {
+          draft.relationships = draft.relationships?.filter((change) => change.id !== value.id);
+          continue;
+        }
+        const removal: DraftRelationshipChange = {
+          id: value.id,
+          before,
+          after: null,
+          removedWithObjects: [id],
+          ...(existing && retainedRemoval ? { suppressed: structuredClone(existing) } : {}),
+          beforeType:
+            existing?.beforeType ?? definitions.read().find((type) => type.id === before?.typeId),
+          objectNames: existing?.objectNames ?? objectNames(draft, before, null),
+          type:
+            existing && existing.type.id === before?.typeId
+              ? existing.type
+              : (definitions
+                  .effective(draft)
+                  .find(
+                    (type) => type.id === (before?.typeId ?? value.typeId),
+                  ) as RelationshipType),
+        };
+        if (existing) Object.assign(existing, removal);
+        else {
+          draft.relationships ??= [];
+          draft.relationships.push(removal);
+        }
       }
     },
     propose(draft: MapDraft, body: Record<string, unknown>, duplicateOutcome = false) {
@@ -289,7 +309,7 @@ export function relationships(database: Database.Database, householdId: string) 
     },
     save(draft: MapDraft, previousTypes: RelationshipType[]): SavedRelationshipChange[] {
       const current = read();
-      const changes = [...(draft.relationships ?? [])];
+      const changes = (draft.relationships ?? []).filter((change) => change.before || change.after);
       const final = effective({ ...draft, relationships: changes });
       for (const value of final) {
         // Objects have already been written in this same atomic save transaction.

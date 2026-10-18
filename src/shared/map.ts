@@ -219,6 +219,10 @@ export interface DraftRelationshipChange extends RelationshipChange {
   endpointRecovery?: { removedRevision: number };
   // Object deletions that require this generated relationship deletion.
   removedWithObjects?: string[];
+  /** Original private proposal retained while object removals suppress it. */
+  suppressed?: RelationshipChange & {
+    endpointRecovery?: { removedRevision: number };
+  };
 }
 export interface SavedRelationshipChange extends RelationshipChange {
   after: MapRelationship | null;

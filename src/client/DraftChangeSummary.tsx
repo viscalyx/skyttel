@@ -137,6 +137,13 @@ function action(before: unknown, after: unknown) {
 }
 
 export function relationshipDifferences(change: DraftRelationshipChange) {
+  if (change.removedWithObjects?.length)
+    return [
+      `Följer objektborttagning: ${change.removedWithObjects.map((id) => change.objectNames?.[id] ?? id).join(', ')}.`,
+      ...(change.suppressed
+        ? ['Ditt sambandsförslag bevaras och återkommer när objektborttagningen återtas.']
+        : []),
+    ];
   if (!change.before || !change.after) return [];
   const names = change.objectNames ?? {};
   const target = (value: NonNullable<typeof change.after>) =>
