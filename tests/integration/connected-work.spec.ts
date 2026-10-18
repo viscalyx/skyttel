@@ -78,15 +78,22 @@ async function tableValues(root: Locator, name: string, description: string, pri
     ['Namn', name],
     ['Typ', price ? 'Abonnemang' : 'Person'],
   ];
-  if (price) values.push(['Pris', price], ['Valuta', 'SEK'], ['Betalningsintervall', 'månad']);
-  for (const [label, value] of values)
+  if (price)
+    values.push(
+      ['Pris', `${price} (Text)`],
+      ['Valuta', 'SEK (Text)'],
+      ['Betalningsintervall', 'månad (Text)'],
+    );
+  for (const [label, value] of values) {
+    const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     await expect(
       root
         .locator('dt')
         .filter({ hasText: new RegExp(`^${label}$`) })
         .locator('..')
         .locator('dd'),
-    ).toHaveText(new RegExp(`^(?:◇ Ditt förslag: )?${value}$`));
+    ).toHaveText(new RegExp(`^(?:◇ Ditt förslag: )?${escaped}$`));
+  }
   const descriptionRow = root
     .locator('dt')
     .filter({ hasText: /^Beskrivning$/ })
@@ -101,21 +108,27 @@ async function objectValues(page: Page, name: string, price?: string, descriptio
   await expect(form.getByLabel('Objekttyp').locator('option:checked')).toHaveText(
     price ? 'Abonnemang' : 'Person',
   );
-  if (description)
+  await openProperties(form);
+  if (description) {
     await expect(propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true })).toHaveValue(
       description,
     );
-  else await expect(propertyRow(form, 'Beskrivning')).toHaveCount(0);
+    await expect(propertyRow(form, 'Beskrivning').getByLabel('Datatyp', { exact: true })).toHaveValue(
+      'text',
+    );
+  } else await expect(propertyRow(form, 'Beskrivning')).toHaveCount(0);
   if (price) {
-    await openProperties(form);
     for (const [label, value] of [
       ['Pris', price],
       ['Valuta', 'SEK'],
       ['Betalningsintervall', 'månad'],
     ]) {
-      await expect(form.getByLabel(label, { exact: true })).toHaveValue(value);
+      const row = propertyRow(form, label);
+      await expect(row.getByLabel('Värde', { exact: true })).toHaveValue(value);
+      await expect(row.getByLabel('Datatyp', { exact: true })).toHaveValue('text');
     }
   }
+  await expect(form.locator('.property-editor-row')).toHaveCount(price ? (description ? 4 : 3) : 0);
   await page.keyboard.press('Escape');
 }
 
@@ -129,8 +142,8 @@ async function paymentValues(page: Page) {
     ['Från objekt', 'Kim Exempel'],
     ['Riktning', 'Betalar'],
     ['Till objekt', 'Familjens Molnmusik'],
-    ['Uppgiftens säkerhet', 'Känt'],
   ]);
+  await expect(edge.locator('dt').filter({ hasText: /^Uppgiftens säkerhet$/ })).toHaveCount(0);
   await closeSupportDialog(page, 'Samband för Kim Exempel');
 }
 
@@ -147,21 +160,28 @@ async function historyValues(group: Locator, receipt: SaveReceipt) {
     await expect(group.getByText(text, { exact: true })).toBeVisible();
   for (const [name, type, description] of [
     ['Familjens Molnmusik', 'Abonnemang', 'Rättad för hand'],
-    ['Kim Exempel', 'Person', 'Ingen beskrivning'],
+    ['Kim Exempel', 'Person', ''],
   ]) {
     const object = group
       .getByRole('heading', { name: `Objekt: ${name}`, exact: true })
       .locator('..');
     await expect(object.getByText(`Namn: ${name}.`, { exact: true })).toBeVisible();
     await expect(object.getByText(`Objekttyp: ${type}.`, { exact: true })).toBeVisible();
-    await expect(object.getByText(`Beskrivning: ${description}`, { exact: true })).toBeVisible();
+    if (description)
+      await expect(
+        object.getByText(`Beskrivning: ${description} (Text)`, { exact: true }),
+      ).toBeVisible();
+    else {
+      await expect(object.getByText(/^Beskrivning:/)).toHaveCount(0);
+      await expect(object.getByText('Inga egenskaper.', { exact: true })).toBeVisible();
+    }
     if (type === 'Abonnemang')
       for (const [label, value] of [
         ['Pris', '189'],
         ['Valuta', 'SEK'],
         ['Betalningsintervall', 'månad'],
       ])
-        await expect(object.getByText(`${label}: ${value}`, { exact: true })).toBeVisible();
+        await expect(object.getByText(`${label}: ${value} (Text)`, { exact: true })).toBeVisible();
   }
   const edge = group.getByRole('heading', { name: 'Samband: Betalar', exact: true }).locator('..');
   await expect(
@@ -541,24 +561,27 @@ for (const mode of ['voice', 'text'] as const) {
           await fieldValues(proposal, [
             ['Namn', name],
             ['Typ', 'Abonnemang'],
-            ['Beskrivning', 'Rättad för hand'],
-            ['Pris', '189'],
-            ['Valuta', 'SEK'],
-            ['Betalningsintervall', 'månad'],
+            ['Beskrivning', 'Rättad för hand (Text)'],
+            ['Pris', '189 (Text)'],
+            ['Valuta', 'SEK (Text)'],
+            ['Betalningsintervall', 'månad (Text)'],
           ]);
-        else if (name === 'Kim Exempel')
+        else if (name === 'Kim Exempel') {
           await fieldValues(proposal, [
             ['Namn', name],
             ['Typ', 'Person'],
-            ['Beskrivning', 'Ej uppgivet'],
           ]);
-        else
+          await expect(proposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
+        } else {
           await fieldValues(proposal, [
             ['Från', 'Kim Exempel'],
             ['Sambandstyp', 'Betalar'],
             ['Till', 'Familjens Molnmusik'],
-            ['Uppgiftens säkerhet', 'Bekräftat'],
           ]);
+          await expect(
+            proposal.locator('dt').filter({ hasText: /^Uppgiftens säkerhet$/ }),
+          ).toHaveCount(0);
+        }
         await closeSupportDialog(page, name);
       }
       expect(await read()).toEqual(corrected);
@@ -829,9 +852,11 @@ for (const mode of ['voice', 'text'] as const) {
           ['Från objekt', 'Kim Exempel'],
           ['Riktning', 'Betalar'],
           ['Till objekt', 'Familjens Molnmusik'],
-          ['Uppgiftens säkerhet', 'Känt'],
         ],
       );
+      await expect(
+        memberRelationships.locator('dt').filter({ hasText: /^Uppgiftens säkerhet$/ }),
+      ).toHaveCount(0);
       await closeSupportDialog(member, 'Samband för Kim Exempel');
       await objectValues(member, 'Familjens Molnmusik', '189', 'Rättad för hand');
       await objectValues(member, 'Kim Exempel');

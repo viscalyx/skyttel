@@ -653,7 +653,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
    på samma sätt och kontrollera **Kim Exempel**, **Person** och
    att ingen egenskap Beskrivning finns. Fäll ihop raden och välj
    **Redigera Kim Exempel**. Skriv
-   **Oskickat om Kim** som beskrivning utan att lägga i utkastet.
+   **Oskickat om Kim** i en ny textegenskap **Beskrivning** under
+   **Fria egenskaper** utan att lägga i utkastet.
    Välj **Avbryt**, kontrollera förvalt **Fortsätt redigera** och tryck
    Escape. Kontrollera kvarvarande text. Välj **Avbryt** igen och
    **Kasta ändringarna och fortsätt**. Läs Kims uppgifter på nytt:
@@ -671,11 +672,12 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Välj **Tillbaka till kartan** och välj
    abonnemanget och Kim genom att expandera deras rader i **Tabell**.
    Fäll ihop varje rad med namnet innan nästa öppnas. Kontrollera
-   båda objektens fullständiga namn, typer och beskrivningar,
-   abonnemangets tre märkta ekonomiska värden i de expanderade raderna.
-   Läs **Känt** för varje ekonomisk uppgift i abonnemangets fullständiga
-   editor enligt steg 4 och stäng utan ändring. Öppna **Samband för
-   Kim Exempel**, läs riktning, ändpunkter och **Känt**, och stäng
+   båda objektens fullständiga namn och typer, abonnemangets Beskrivning
+   och tre märkta ekonomiska värden samt att Kim saknar fria egenskaper.
+   Läs **datatyp Text** för varje ekonomisk uppgift i abonnemangets
+   fullständiga editor enligt steg 4 och stäng utan ändring. Öppna **Samband för
+   Kim Exempel**, läs riktning och ändpunkter. Kontrollera att ingen egenskap
+   **Uppgiftens säkerhet** har lagts till, och stäng
    läsmodalen. Återgå till textvyn och kontrollera samma detaljvy och
    samtalets oskickade text. Kims uttryckligen kastade text återkommer inte.
    Robins notering ska fortfarande vara privat.
@@ -685,7 +687,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Ersätt samtalets oskickade text med **Spara hela utkastet nu.** och skicka.
    Be operatören släppa helhetssparandet enligt förberedelsen.
    Öppna **Rapporter → Ändringshistorik → Visa ändringarna**.
-   Läs båda objektens namn, typ och beskrivning, abonnemangets märkta
+   Läs båda objektens namn och typ, abonnemangets egenskap Beskrivning
+   och att Kim saknar fria egenskaper. Läs abonnemangets märkta
    **Pris 189**, **Valuta SEK**, **Betalningsintervall månad**, hela
    **Kim Exempel → Betalar → Familjens Molnmusik**, Alex som sparande
    användare och den visade tidpunkten. Öppna **Identifiera sparandet
@@ -694,7 +697,7 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Kontrollera ett kvitto för båda objekten och sambandet, tomt Alex-utkast
    och välj **Tillbaka till arbetet** i Rapporter. Stäng textvyn och läs
    Kims fullständiga uppgifter genom **Tabell**. Kontrollera att
-   **Oskickat om Kim** saknas både i detaljvyn och sparad beskrivning.
+   **Oskickat om Kim** saknas både i detaljvyn och bland sparade egenskaper.
    Fäll ihop raden och återgå till textvyn. Kvittot
    finns kvar i **Rapporter → Ändringshistorik**, och
    mikrofonknappen finns kvar i verktygsraden. Robins privata notering
@@ -705,9 +708,9 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Ladda om Alex flik och öppna
    **Rapporter → Ändringshistorik → Visa ändringarna** för samma
    kvitto. Upprepa hela den märkta historikläsningen från steg 6,
-   inklusive båda typerna, Kims tomma beskrivning, användare och tidpunkt.
+   inklusive båda typerna, **Inga egenskaper.** för Kim, användare och tidpunkt.
    Läs sedan båda fullständiga objektformulären samt sambandets typ,
-   riktning, ändpunkter och säkerhet i Tabell innan nästa privata rättelse.
+   riktning och ändpunkter i Tabell innan nästa privata rättelse.
    Oskickad lokal text
    behöver inte överleva den uttryckliga omladdningen.
 8. Välj **Tillbaka till arbetet**. Som Alex, öppna **Tabell** och
@@ -724,7 +727,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
    för Kim Exempel**, läs hela riktningen och båda ändpunkterna, och stäng
    modalens
    kryss. Kontrollera samma fullständiga historik från steg 6,
-   inklusive typer, beskrivningar, märkta ekonomiska värden, Alex och tidpunkt.
+   inklusive typer, abonnemangets Beskrivning, Kims avsaknad av fria egenskaper,
+   märkta ekonomiska värden, Alex och tidpunkt.
    Alex ska inte se
    Robins notering. Avsluta provmiljön med `quit` enligt röstguiden.
 
