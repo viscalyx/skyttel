@@ -255,7 +255,10 @@ async function iconContrast(page: Page) {
 test('BAKGRUND-06: all backgrounds retain readable connections and an ordinary text alternative', async ({
   page,
 }) => {
-  test.setTimeout(480_000);
+  // This is the budget for all 28 background/map/viewport combinations and
+  // their four contrast views. Software rendering on CI can spend several
+  // seconds on one navigation action; the per-action timeout stays bounded.
+  test.setTimeout(1_200_000);
   page.setDefaultTimeout(10_000);
   const installation = await createInstallation();
   const measurements: unknown[] = [];

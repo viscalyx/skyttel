@@ -149,7 +149,10 @@ async function checkOceanPersistence(
     theme === 'light' ? 'Bakgrund i mörkt tema' : 'Bakgrund i ljust tema';
   const otherTheme = theme === 'light' ? 'dark' : 'light';
   const capture = theme === 'light' ? captureLightViews : captureDarkViews;
-  test.setTimeout(120_000);
+  // Persistence plus five complete capture passes share this deadline. Each
+  // dark-ocean navigation click can take seconds on software-rendered CI.
+  // The shorter timeout below still bounds each individual action.
+  test.setTimeout(600_000);
   page.setDefaultTimeout(10_000);
   const installation = await createInstallation();
   const other = await createPreparedContext(browser);

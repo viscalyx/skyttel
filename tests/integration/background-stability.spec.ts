@@ -15,8 +15,9 @@ test('BAKGRUND-05: every background retains navigation, placement and stability 
   page,
 }) => {
   // Seven complete semantic workloads include more than a thousand ordinary
-  // control actions; local response/frame limits are enforced by the profiler.
-  test.setTimeout(600_000);
+  // control actions. Allow for software rendering and trace capture across
+  // the whole matrix; response/frame limits are enforced by the profiler.
+  test.setTimeout(1_800_000);
   const installation = await createInstallation();
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
