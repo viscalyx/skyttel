@@ -252,7 +252,20 @@ test('literal household preparation completes the family tools on seeded public 
       );
     });
     await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    expect((await correction).status()).toBe(200);
+    const correctionResponse = await correction;
+    expect(correctionResponse.status()).toBe(200);
+    const correctedProperties = correctionResponse.request().postDataJSON().value.properties;
+    expect(correctedProperties).toEqual([
+      { id: 'price', label: 'Pris', kind: 'text', value: '189' },
+      { id: 'currency', label: 'Valuta', kind: 'text', value: 'SEK' },
+      { id: 'paymentInterval', label: 'Betalningsintervall', kind: 'text', value: 'månad' },
+      {
+        id: expect.stringMatching(/^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i),
+        label: 'Beskrivning',
+        kind: 'text',
+        value: 'Rättad för hand',
+      },
+    ]);
     await (await correctedMap).finished();
     await expect(form).not.toBeVisible();
     const corrected = await read();
@@ -306,22 +319,7 @@ test('literal household preparation completes the family tools on seeded public 
     expect(saved.relationships).toHaveLength(before.relationships.length + 1);
     expect(saved.objects.find((object) => object.id === replacements.SUB)).toMatchObject({
       name: 'Familjens Molnmusik',
-      properties: [
-        {
-          id: 'description',
-          label: 'Beskrivning',
-          kind: 'text' as const,
-          value: 'Rättad för hand',
-        },
-        { id: 'price', label: 'Pris', kind: 'text' as const, value: '189' },
-        { id: 'currency', label: 'Valuta', kind: 'text' as const, value: 'SEK' },
-        {
-          id: 'paymentInterval',
-          label: 'Betalningsintervall',
-          kind: 'text' as const,
-          value: 'månad',
-        },
-      ],
+      properties: correctedProperties,
     });
     expect((await (await member.request.get(path)).json()).draft).toEqual(privateDraft);
     await microphoneButton(page).click();
