@@ -335,52 +335,47 @@ test('malformed current and nested relationship fields or values cannot replace 
   expect((await archive()).content).toEqual(source.content);
 });
 
-test.each([14, 15, 16, 17, 18])(
-  'legacy archive %i imports genuinely absent relationship field storage and answers without rewriting snapshots',
-  async (schemaVersion) => {
-    const { fields: _fields, sections: _sections, ...legacy } = definition;
-    await define(legacy);
-    await edge({});
-    await save('legacy');
-    await edge({}, { sourceId: 'spare' });
-    await define({ ...legacy, description: 'Privat äldre beskrivning' });
-    const source = await archive();
-    source.manifest.schemaVersion = schemaVersion;
-    Reflect.deleteProperty(source.content, 'relationshipTypeFields');
-    for (const relationship of source.content.relationships) delete relationship.customValues;
-    for (const row of source.content.objectTypeFields) delete row.sections;
-    if (schemaVersion < 17) for (const object of source.content.objects) delete object.iconId;
-    const saved = source.content.saves.find(({ operationId }) => operationId === 'legacy');
-    const snapshots = [
-      source.content.drafts[0].relationships[0].type,
-      source.content.drafts[0].relationshipTypes[0].before,
-      source.content.drafts[0].relationshipTypes[0].after,
-      saved?.receipt.relationshipTypes?.[0].after,
-      saved?.receipt.relationships?.[0].type,
-    ];
-    for (const snapshot of snapshots) {
-      expect(snapshot).toBeTruthy();
-      expect(snapshot).not.toHaveProperty('fields');
-    }
-    expect(saved?.receipt.relationships?.[0].after).not.toHaveProperty('customValues');
-    expect(source.content.drafts[0].relationships[0].after).not.toHaveProperty('customValues');
-    await restore(source);
-    const imported = await read();
-    const relationship = imported.relationships.find(({ id }) => id === 'edge');
-    expect(relationship).toMatchObject({ typeId: 'storage', sourceId: 'bike', targetId: 'garage' });
-    expect(relationship).not.toHaveProperty('customValues');
-    expect(imported.relationshipTypes.find(({ id }) => id === 'storage')).not.toHaveProperty(
-      'fields',
-    );
-    expect(imported.draft.relationships?.[0].after).toMatchObject({ sourceId: 'spare' });
-    expect(imported.draft.relationships?.[0].after).not.toHaveProperty('customValues');
-    const exported = await archive();
-    expect(exported.content.relationshipTypeFields).toEqual([]);
-    expect(exported.content.drafts).toEqual(source.content.drafts);
-    expect(exported.content.saves).toEqual(source.content.saves);
-    expect(exported.content.history).toEqual(source.content.history);
-  },
-);
+test('new-format archives preserve absent optional relationship field storage and snapshots', async () => {
+  const { fields: _fields, sections: _sections, ...legacy } = definition;
+  await define(legacy);
+  await edge({});
+  await save('legacy');
+  await edge({}, { sourceId: 'spare' });
+  await define({ ...legacy, description: 'Privat äldre beskrivning' });
+  const source = await archive();
+  Reflect.deleteProperty(source.content, 'relationshipTypeFields');
+  for (const relationship of source.content.relationships) delete relationship.customValues;
+  for (const row of source.content.objectTypeFields) delete row.sections;
+  const saved = source.content.saves.find(({ operationId }) => operationId === 'legacy');
+  const snapshots = [
+    source.content.drafts[0].relationships[0].type,
+    source.content.drafts[0].relationshipTypes[0].before,
+    source.content.drafts[0].relationshipTypes[0].after,
+    saved?.receipt.relationshipTypes?.[0].after,
+    saved?.receipt.relationships?.[0].type,
+  ];
+  for (const snapshot of snapshots) {
+    expect(snapshot).toBeTruthy();
+    expect(snapshot).not.toHaveProperty('fields');
+  }
+  expect(saved?.receipt.relationships?.[0].after).not.toHaveProperty('customValues');
+  expect(source.content.drafts[0].relationships[0].after).not.toHaveProperty('customValues');
+  await restore(source);
+  const imported = await read();
+  const relationship = imported.relationships.find(({ id }) => id === 'edge');
+  expect(relationship).toMatchObject({ typeId: 'storage', sourceId: 'bike', targetId: 'garage' });
+  expect(relationship).not.toHaveProperty('customValues');
+  expect(imported.relationshipTypes.find(({ id }) => id === 'storage')).not.toHaveProperty(
+    'fields',
+  );
+  expect(imported.draft.relationships?.[0].after).toMatchObject({ sourceId: 'spare' });
+  expect(imported.draft.relationships?.[0].after).not.toHaveProperty('customValues');
+  const exported = await archive();
+  expect(exported.content.relationshipTypeFields).toEqual([]);
+  expect(exported.content.drafts).toEqual(source.content.drafts);
+  expect(exported.content.saves).toEqual(source.content.saves);
+  expect(exported.content.history).toEqual(source.content.history);
+});
 
 test('erasing a former relationship type removes its values and snapshots while preserving current zero/false answers and independent private work', async () => {
   const oldDefinition = {
@@ -502,7 +497,7 @@ test('erasing a former relationship type removes its values and snapshots while 
   expect((await read()).relationships).toEqual(remaining.relationships);
 });
 
-test('archive 19 preserves genuine absence of relationship sections and placement, including private and historical snapshots', async () => {
+test('new-format archive preserves absence of relationship sections and placement, including private and historical snapshots', async () => {
   const { sections: _sections, ...base } = definition;
   const legacy = {
     ...base,
@@ -514,7 +509,6 @@ test('archive 19 preserves genuine absence of relationship sections and placemen
   await edge({ ...values, note: 'Privat anteckning' });
   await define({ ...legacy, description: 'Äldre privat definition' });
   const source = await archive();
-  source.manifest.schemaVersion = 19;
   for (const row of source.content.relationshipTypeFields) delete row.sections;
   const snapshots = [
     source.content.drafts[0].relationships[0].type,

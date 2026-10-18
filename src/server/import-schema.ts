@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { DraftChange } from '../shared/map.js';
 import { isObjectIconId } from '../shared/object-icons.js';
-import { legacyViewSettingsSchema, viewSettingsSchema } from './view-settings-schema.js';
+import { viewSettingsSchema } from './view-settings-schema.js';
 
 const id = z.string().regex(/^[\w-]{1,128}$/);
 const text = z.string().max(10000);
@@ -195,7 +195,7 @@ const receipt = z
     relationshipTypes: z.array(relationshipTypeChange).optional(),
   })
   .strict();
-const viewSettings = z.union([viewSettingsSchema, legacyViewSettingsSchema]);
+const viewSettings = viewSettingsSchema;
 
 export const importContentSchema = z
   .object({
@@ -352,32 +352,10 @@ export type ImportContent = z.infer<typeof importContentSchema>;
 export const importManifestSchema = z
   .object({
     format: z.literal('skyttel-household'),
-    version: z.literal(1),
+    version: z.literal(2),
     createdAt: text,
     householdId: id,
-    schemaVersion: z.union([
-      z.literal(14),
-      z.literal(15),
-      z.literal(16),
-      z.literal(17),
-      z.literal(18),
-      z.literal(19),
-      z.literal(20),
-      z.literal(21),
-      z.literal(22),
-      z.literal(23),
-      z.literal(24),
-      z.literal(25),
-      z.literal(26),
-      z.literal(27),
-      z.literal(28),
-      z.literal(29),
-      z.literal(30),
-      z.literal(31),
-      z.literal(32),
-      z.literal(33),
-      z.literal(34),
-    ]),
+    schemaVersion: z.literal(34),
     parts: z
       .array(
         z

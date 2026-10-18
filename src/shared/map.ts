@@ -1,5 +1,6 @@
 import type { FinancialFact, FinancialFacts, FinancialField } from './financial-facts.js';
 import type { Lifecycle } from './lifecycle.js';
+import type { Property } from './properties.js';
 
 export interface TypeDefinition {
   id: string;
@@ -84,6 +85,7 @@ export interface DraftRelationshipTypeChange extends RelationshipTypeChange {
 }
 
 export interface ObjectValue {
+  properties?: Property[];
   profileImageId?: string;
   iconId?: string;
   typeId: string;
@@ -189,6 +191,7 @@ export type SaveOperation = SaveOperationIdentity &
 
 export type Knowledge = 'known' | 'unknown' | 'none' | 'uncertain' | 'unresolved';
 export interface RelationshipValue {
+  properties?: Property[];
   customValues?: CustomValues;
   typeId: string;
   sourceId: string;

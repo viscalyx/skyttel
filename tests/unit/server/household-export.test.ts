@@ -686,7 +686,7 @@ test('an administrator downloads a versioned complete archive with private state
   expect(bytes.byteLength).toBe(ready.bytes);
   const parts = unzipSync(bytes);
   const manifest = JSON.parse(Buffer.from(parts['manifest.json']).toString());
-  expect(manifest).toMatchObject({ format: 'skyttel-household', version: 1, householdId });
+  expect(manifest).toMatchObject({ format: 'skyttel-household', version: 2, householdId });
   expect(manifest.parts.map((part: { path: string }) => part.path)).toEqual([
     'content.json',
     'images.bin',

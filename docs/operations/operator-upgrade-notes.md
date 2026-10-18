@@ -6,24 +6,27 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### New household database and archive format
+
+This release requires a new database and new household archives. Startup
+and database maintenance commands reject older databases before changing
+their contents. Imports reject older archives before replacement. There is
+no automatic migration, conversion, deletion or replacement of older data.
+These limits also apply to the login upgrade and restore procedures below.
+
+Keep the existing installation and its recovery copies intact. Before a
+production transition, agree and approve a separate replacement procedure,
+including the data to retain, recovery evidence and a new database location.
+Do not delete the existing database or change its format marker to force
+startup. Use a compatible release to read an older copy. Normal restarts
+of a database created by this release preserve its format identity.
+
 ### Personal map backgrounds
 
-Back up the installation before upgrade. The database upgrade preserves
-each existing personal view's background visibility, including views with
-only object placements or household access. An old enabled star field
-becomes the dark mist background. An old disabled or unset star field
-stays disabled. New personal views use enabled backgrounds. Later saved
-choices remain unchanged on restart.
-
-Use the upgraded application for new household exports and imports. New
-exports include background choices and require the upgraded importer.
-Keep the pre-upgrade backup for recovery with an older application;
-the upgraded database cannot be opened by an older application.
-Older archives also preserve the disabled default for current household
-members with no personal settings in the archive. Import keeps current
-access. In a new installation, explicitly assign historical personal
-content to verified members before they use it. Later new personal views
-use enabled backgrounds.
+New household exports preserve each personal view's background choices and
+motion settings. Import keeps current access. In a new installation,
+explicitly assign historical personal content to verified members before
+they use it. New personal views use enabled backgrounds.
 
 ### New image security alerts after closure
 
@@ -58,8 +61,8 @@ Keep unresolved action references. Reset must preserve household data,
 account settings and suppressed login offers. The database upgrade adds
 activation results to the existing 24-hour recovery window; it does not
 create a general consent history.
-New household exports require an upgraded importer. Existing supported
-exports remain readable.
+New household exports require an upgraded importer. Older exports are
+rejected before replacement.
 
 ### Development configuration examples
 
@@ -294,7 +297,7 @@ removal does not permanently erase retained information. Follow the
 
 New household archives can contain a private identifier for each complete
 object-form addition to a draft. Use the upgraded application to read these
-archives. Supported older archives and drafts remain readable without this
+archives. Current archives and drafts remain readable without this
 identifier. Shared history contains saved values and save attribution; it
 does not contain private form-attempt identifiers.
 
@@ -303,7 +306,7 @@ does not contain private form-attempt identifiers.
 This release stores each object's selected icon with its other content.
 Objects without a selection use their type's default icon. Full household
 archives from this release need an upgraded reader. The upgraded application
-also accepts supported older archives and uses default icons where no
+uses default icons in current archives where no
 selection exists. Use the controlled database recovery procedure above
 for controlled recovery with the current or a corrected newer application;
 changing the image alone does not remove icon storage.
@@ -316,7 +319,7 @@ uses a null value. Icons are bundled locally and need no external service.
 
 This release stores named sections, field order and hidden field placement
 with object and relationship type definitions. Existing definitions and
-supported older archives keep their field order and use a default section.
+current archives preserve field order and optional presentation choices.
 Hidden fields retain their values, including in drafts, history and recovery
 copies.
 Hiding a field does not erase its content or limit access to it.
@@ -324,7 +327,7 @@ Hiding a field does not erase its content or limit access to it.
 Object types can also store the placement and order of built-in description
 and financial properties. These settings do not change the financial values,
 their certainty or their reported dates. Existing common values remain
-accessible outside type sections, including after a type change. Older
+accessible outside type sections, including after a type change. Current
 definitions and archives keep their original presentation until it is changed.
 
 New household archives require an upgraded reader. Refresh connected
@@ -339,7 +342,7 @@ application.
 
 This release stores optional custom field definitions and answers for
 relationships. Existing relationships keep empty answers. New full household
-archives require an upgraded reader; supported older archives remain readable.
+archives require an upgraded reader; older archives are rejected.
 Keep custom answers under the same access and retention controls as other
 household content, including private drafts and recovery copies.
 
@@ -383,7 +386,7 @@ procedure above for controlled data recovery with the current or a newer
 application. Older application versions are unsupported.
 
 New household archives need an upgraded reader. The upgraded application
-continues to read supported older archives.
+rejects older archives before replacement.
 
 To enable the optional assistants, configure the AI provider key in the server's
 private environment and restart. Keep the key out of browser settings, public
@@ -419,9 +422,10 @@ contain it, and import does not transfer or change it. After a move to
 another installation, each user gives consent again. When a user loses access
 to a household, that user's saved consent is removed.
 
-New household archives require an upgraded reader; supported older archives
-remain readable. After rollout, each user must give consent before the first
-text or voice conversation, and can save it for the household.
+New household archives require an upgraded reader. Older archives are
+rejected before replacement. After rollout, each user must give consent
+before the first text or voice conversation, and can save it for the
+household.
 
 This release changes the consent text. A saved consent for the previous text
 does not apply. Verify that users must approve the new text before text or
@@ -441,7 +445,7 @@ or permit automatic model work.
 Verify that only current administrators can prepare and download a full
 household archive after rollout. Archives include every user's private drafts,
 personal views, history and retained images. Restrict access to downloaded
-archives. Archive readers must support version 1 of the full archive format and
+archives. Archive readers must support version 2 of the full archive format and
 ZIP64 when needed. No automatic backup is added; keep usable recovery copies
 outside the running disk.
 

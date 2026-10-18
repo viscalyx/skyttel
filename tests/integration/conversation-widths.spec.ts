@@ -395,7 +395,9 @@ for (const mode of [
   });
 }
 
-test('TEXTBREDD-05: äldre hushållsarkiv lämnar personliga samtalsval kvar', async ({ page }) => {
+test('TEXTBREDD-05: hushållsarkiv i aktuellt format lämnar personliga samtalsval kvar', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   const { app, household, path, read } = await arrange(page);
   try {
@@ -432,10 +434,6 @@ test('TEXTBREDD-05: äldre hushållsarkiv lämnar personliga samtalsval kvar', a
       'conversationConsent',
     ])
       expect(encoded).not.toContain(field);
-    // Household payload and checksums are unchanged by the personal-only migration.
-    // This is a valid schema-23 archive, submitted through the actual upload UI.
-    manifest.schemaVersion = 23;
-    parts['manifest.json'] = Buffer.from(JSON.stringify(manifest));
     await page
       .getByRole('navigation', { name: 'Inställningarnas sidor' })
       .getByRole('link', { name: 'Samtal med Skyttel', exact: true })
@@ -451,7 +449,7 @@ test('TEXTBREDD-05: äldre hushållsarkiv lämnar personliga samtalsval kvar', a
       .getByRole('link', { name: 'Återimportera hushållet', exact: true })
       .click();
     await page.getByLabel('Skyttel-export (ZIP)').setInputFiles({
-      name: 'skyttel-schema-23.zip',
+      name: 'skyttel-current-format.zip',
       mimeType: 'application/zip',
       buffer: Buffer.from(zipSync(parts)),
     });

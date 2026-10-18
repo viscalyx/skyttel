@@ -209,6 +209,14 @@ linked provider then reaches the same user and household. See the
 
 ## Build, start, and restart
 
+Use a new database location for this format. Startup and database tools
+reject older databases with `unsupported_database_format` before changing
+their contents. There is no automatic conversion, deletion or replacement.
+Keep old data intact and agree a separate, explicit replacement procedure
+before a production transition. Login upgrade and restore declarations do
+not bypass this format check. Use a compatible release to read old copies.
+A database created by this release keeps its format identity on restart.
+
 For the local Compose workflow, after filling every required value:
 
 ```sh

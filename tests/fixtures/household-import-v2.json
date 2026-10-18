@@ -1,10 +1,10 @@
 {
   "manifest": {
     "format": "skyttel-household",
-    "version": 1,
+    "version": 2,
     "createdAt": "2026-09-24T22:29:21.826Z",
     "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
-    "schemaVersion": 14,
+    "schemaVersion": 34,
     "parts": [
       {
         "path": "content.json",
@@ -909,7 +909,27 @@
         "z": 3
       }
     ],
-    "viewSettings": [],
+    "viewSettings": [
+      {
+        "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
+        "userId": "c6fbe94a-b7ed-4a24-8193-570563e7bd1c",
+        "version": 0,
+        "backgroundVersion": 1,
+        "settings": {
+          "invertX": false,
+          "invertY": false,
+          "axisCorner": "bottom-right",
+          "axisPinned": false,
+          "allLabels": false,
+          "background": false,
+          "lightBackground": "pearl",
+          "darkBackground": "atmosphere",
+          "panStrength": 0.7,
+          "zoomStrength": 0.7,
+          "layerDistance": 1
+        }
+      }
+    ],
     "images": [
       {
         "id": "0f430dbd-4918-4d39-8e65-6ff06efb17f5",

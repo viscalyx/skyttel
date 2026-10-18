@@ -238,51 +238,34 @@ test('archive 21 preserves canonical property placement, sections and hidden val
   ).toEqual(source.content.saves.map(({ receipt }) => receipt.changes.map(({ type }) => type)));
 });
 
-test.each([14, 15, 16, 17, 18, 19, 20])(
-  'legacy archive %i keeps absent presentation metadata and original snapshot field order',
-  async (version) => {
-    const legacy = {
-      name: definition.name,
-      description: '',
-      fields: definition.fields.map(({ sectionId: _placement, ...field }) => field),
-    };
-    await define(legacy);
-    await object('first');
-    await save('legacy');
-    const source = await archive();
-    source.manifest.schemaVersion = version;
-    for (const row of source.content.objectTypeFields) {
-      delete row.sections;
-      delete row.builtins;
-      delete row.propertyOrder;
-    }
-    if (version < 17) {
-      for (const object of source.content.objects) delete object.iconId;
-      for (const entry of source.content.history)
-        for (const change of entry.changes) {
-          if (change.before) delete change.before.iconId;
-          if (change.after) delete change.after.iconId;
-        }
-      for (const entry of source.content.saves)
-        for (const change of entry.receipt.changes) {
-          if (change.before) delete change.before.iconId;
-          if (change.after) delete change.after.iconId;
-        }
-    }
-    await restore(source);
-    const imported = (await read()).types.find(({ id }) => id === 'solar');
-    expect(imported).toMatchObject(legacy);
-    expect(imported).not.toHaveProperty('sections');
-    expect(imported).not.toHaveProperty('builtins');
-    expect(imported).not.toHaveProperty('propertyOrder');
-    for (const field of imported?.fields ?? []) expect(field).not.toHaveProperty('sectionId');
-    const exported = await archive();
-    expect(exported.content.history.map(({ changes }) => changes.map(({ type }) => type))).toEqual(
-      source.content.history.map(({ changes }) => changes.map(({ type }) => type)),
-    );
-    expect((await read()).objects[0].customValues).toEqual(values);
-  },
-);
+test('new-format archive keeps absent optional presentation metadata and snapshot field order', async () => {
+  const legacy = {
+    name: definition.name,
+    description: '',
+    fields: definition.fields.map(({ sectionId: _placement, ...field }) => field),
+  };
+  await define(legacy);
+  await object('first');
+  await save('legacy');
+  const source = await archive();
+  for (const row of source.content.objectTypeFields) {
+    delete row.sections;
+    delete row.builtins;
+    delete row.propertyOrder;
+  }
+  await restore(source);
+  const imported = (await read()).types.find(({ id }) => id === 'solar');
+  expect(imported).toMatchObject(legacy);
+  expect(imported).not.toHaveProperty('sections');
+  expect(imported).not.toHaveProperty('builtins');
+  expect(imported).not.toHaveProperty('propertyOrder');
+  for (const field of imported?.fields ?? []) expect(field).not.toHaveProperty('sectionId');
+  const exported = await archive();
+  expect(exported.content.history.map(({ changes }) => changes.map(({ type }) => type))).toEqual(
+    source.content.history.map(({ changes }) => changes.map(({ type }) => type)),
+  );
+  expect((await read()).objects[0].customValues).toEqual(values);
+});
 
 test('erasing an unrelated object preserves section metadata and hidden answers in surviving draft and history', async () => {
   await define();

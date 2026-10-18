@@ -101,7 +101,7 @@ async function archive(download: Download) {
   const parts = unzipSync(new Uint8Array(bytes));
   expect(Object.keys(parts).sort()).toEqual(['content.json', 'images.bin', 'manifest.json']);
   const manifest = JSON.parse(Buffer.from(parts['manifest.json']).toString());
-  expect(manifest).toMatchObject({ format: 'skyttel-household', version: 1 });
+  expect(manifest).toMatchObject({ format: 'skyttel-household', version: 2 });
   return { bytes, parts, content: JSON.parse(Buffer.from(parts['content.json']).toString()) };
 }
 

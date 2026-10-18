@@ -199,6 +199,12 @@ Use the [access guide](../user-guide/access.md) when testing another identity.
 
 ## Reset demo data
 
+The current database format must use a new database location. Startup,
+`db:setup` and `db:migrate` reject older databases before changing their
+contents. Keep old databases intact. Select a separate disposable path for
+the new development database; these commands do not convert or replace an
+older format.
+
 After configuring provider credentials and a verified administrator subject,
 container creation and rebuilding reset the database to the demo household.
 To perform the same reset without rebuilding:

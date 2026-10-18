@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { chmodSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import Database from 'better-sqlite3';
 
@@ -11,6 +11,7 @@ interface MigrationRecord {
 
 type DatabaseFailure =
   | 'database_unavailable'
+  | 'unsupported_database_format'
   | 'migration_failed'
   | 'migration_files_missing'
   | 'invalid_migration_sequence'
@@ -22,6 +23,19 @@ export class DatabaseInitializationError extends Error {
   }
 }
 
+// Independent of migration history: older household models cannot be upgraded.
+const applicationId = 0x534b5954;
+const formatVersion = 2;
+
+function checkFormat(database: Database.Database) {
+  const application = database.pragma('application_id', { simple: true });
+  const version = database.pragma('user_version', { simple: true });
+  if (application === applicationId && version === formatVersion) return;
+  const empty = !database.prepare('SELECT 1 FROM sqlite_schema LIMIT 1').get();
+  if (application === 0 && version === 0 && empty) return;
+  throw new DatabaseInitializationError('unsupported_database_format');
+}
+
 export function openDatabase(
   path: string,
   { migrationsDirectory = resolve('migrations') }: { migrationsDirectory?: string } = {},
@@ -29,8 +43,18 @@ export function openDatabase(
   let database: Database.Database | undefined;
   let reason: DatabaseFailure = 'database_unavailable';
   try {
+    if (path !== ':memory:' && existsSync(path)) {
+      // Inspect before opening a writer, changing permissions or journal mode.
+      const reader = new Database(path, { readonly: true, fileMustExist: true });
+      try {
+        checkFormat(reader);
+      } finally {
+        reader.close();
+      }
+    }
     if (path !== ':memory:') mkdirSync(dirname(resolve(path)), { recursive: true, mode: 0o700 });
     database = new Database(path);
+    checkFormat(database);
     if (path !== ':memory:') chmodSync(path, 0o600);
     database.pragma('foreign_keys = ON');
     database.pragma('busy_timeout = 5000');
@@ -38,6 +62,8 @@ export function openDatabase(
     if (path !== ':memory:' && journalMode !== 'wal') throw new DatabaseInitializationError(reason);
     database.pragma('synchronous = FULL');
     reason = 'migration_failed';
+    database.pragma(`application_id = ${applicationId}`);
+    database.pragma(`user_version = ${formatVersion}`);
     migrate(database, migrationsDirectory);
     return database;
   } catch (error) {

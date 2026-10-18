@@ -1586,8 +1586,8 @@ i båda temana. Minskad rörelse gör bilderna stilla utan att ändra sparvärde
     "runner": "vitest",
     "suite": "server",
     "spec": "tests/unit/server/household-import.test.ts",
-    "title": "legacy archives without identities preserve implicit off for current access and later choices survive restart",
-    "purpose": "Verklig temporär databas visar att ett äldre arkiv utan identiteter bevarar implicit av för aktuell åtkomst och inte skriver över senare val."
+    "title": "older archives are rejected before preview without changing map, private work, access or personal views",
+    "purpose": "Verklig temporär databas visar att äldre arkiv avvisas före granskning och bevarar karta, utkast, åtkomst och personliga vyer."
   }]
 }
 ```
@@ -1634,8 +1634,7 @@ i båda temana. Minskad rörelse gör bilderna stilla utan att ändra sparvärde
 - Båda användarna får tillbaka sina egna värden. Alex placering, övriga
   kartinställningar och medlemmarnas aktuella åtkomst bevaras.
 - Omstart ändrar inte det återställda resultatet. Separata serverprov
-  verifierar äldre stjärnval, enbart placeringar, implicit av, uttrycklig
-  innehållskoppling och avvisning av felaktiga värden före ersättning.
+  verifierar avvisning av äldre arkiv och felaktiga värden före ersättning.
 
 ## Identiteter och automatiskt underlag
 

@@ -13,10 +13,10 @@ type ArchiveFixture = {
   content: Record<string, Record<string, unknown>[]> & { household: { id: string } };
   imagesBase64: string;
 };
-// Synthetic v1/schema14 export: two merged identities, three retained image
+// Synthetic v2/schema34 export: two merged identities, three retained image
 // versions, a private proposal, immutable receipts and personal positions.
 const golden = JSON.parse(
-  readFileSync(new URL('../../fixtures/household-import-v1.json', import.meta.url), 'utf8'),
+  readFileSync(new URL('../../fixtures/household-import-v2.json', import.meta.url), 'utf8'),
 ) as ArchiveFixture;
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
 let client: ReturnType<typeof fixture.client>;
@@ -58,7 +58,7 @@ async function upload(bytes: Uint8Array) {
   });
 }
 
-test('schema14 merge image archive retains every historical receipt and unmapped private row through import and re-export', async () => {
+test('new-format merge image archive retains every historical receipt and unmapped private row through import and re-export', async () => {
   const response = await upload(archive());
   expect(response.status).toBe(201);
   const ready = await response.json();
@@ -90,10 +90,7 @@ test('schema14 merge image archive retains every historical receipt and unmapped
   expect(content.identities.filter((row: { id: string }) => row.id !== current.userId)).toEqual(
     golden.content.identities,
   );
-  expect(content.identities).toContainEqual({ id: current.userId, name: 'Alex Exempel' });
-  expect(
-    content.viewSettings.find((row: { userId: string }) => row.userId === current.userId),
-  ).toMatchObject({ version: 0, backgroundVersion: 1, settings: { background: false } });
+  expect((await (await client.request(`${path}/map/view`)).json()).settings.background).toBe(true);
   expect(content.saves.map((row: { receipt: unknown }) => row.receipt)).toEqual(
     golden.content.saves.map((row) => row.receipt),
   );

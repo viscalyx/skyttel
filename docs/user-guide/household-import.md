@@ -23,18 +23,14 @@ Nuvarande medlemmar, administratörer, inbjudningar och inloggningar behålls.
 
 Om någon ändrar innehållet under förberedelsen måste filen förberedas igen.
 En trasig, ofullständig eller okänd export avvisas före ersättning. Stöd
-finns för formatversion 1 från databasversion 14–34. Gränserna är cirka
+finns för det nya formatets version 2. Äldre filer avvisas utan ändring.
+Gränserna är cirka
 1,1 GB för ZIP-filen, 32 MiB för innehållsfilen och 1 GiB för bilddelen.
 Förberedda kopior rensas efter tio minuter eller vid serverns nästa start.
 
-Nya exporter bevarar varje personlig vys bakgrund, val för båda temana och
-rörelsevärden. I äldre exporter blir ett påslaget stjärnval **Visa bakgrund**
-med **Pärlemor** och **Dis och ljuspunkter**. Avslagna eller osparade äldre
-val ger bakgrunden av med **Pärlemor** och **Atmosfär**. Rörelsevärdena blir
-70 procent, 70 procent och 1,0. Det gäller också äldre vyer med enbart
-placeringar och nuvarande medlemmar utan egen vy i arkivet. Helt nya vyer
-som tillkommer senare har bakgrunden på. Systemets minskade rörelse ändrar
-inte de återställda värdena.
+Exporter bevarar varje personlig vys bakgrund, val för båda temana och
+rörelsevärden. Nya personliga vyer har bakgrunden på. Systemets minskade
+rörelse ändrar inte de återställda värdena.
 
 Om filkontrollens svar försvinner kan samma administratör hämta sin
 obekräftade granskning igen, även i en annan webbläsare. Välj

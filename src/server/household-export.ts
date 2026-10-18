@@ -244,7 +244,7 @@ async function snapshot(database: Database.Database, job: Job): Promise<ExportMa
     ];
     return {
       format: 'skyttel-household',
-      version: 1,
+      version: 2,
       createdAt: new Date().toISOString(),
       householdId: job.householdId,
       schemaVersion,
