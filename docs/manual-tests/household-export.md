@@ -615,9 +615,13 @@ för fullständig återimport av gemensamma, privata och historiska uppgifter.
 **Användare:** Alex som administratör.
 
 **Förutsättningar:** Använd ett separat testhushåll som får ersättas.
-Förbered två objekt och ett samband med egna fält för text, tal, datum
-och ja/nej. Ange bland annat noll och nej. Ordna beskrivning och egna fält
-i typavsnitt, dölj ett eget fält och en osäkert uppgiven skuld med datum.
+Förbered Gemensam lampa och Garaget samt ett Förvaring-samband mellan dem.
+Lampan har ordnade fria egenskaper: Beskrivning (Text), Antal (Tal, 0),
+Bekräftad (Ja/nej, Nej), Senast uppgiven skuld (Text, 12 300), en separat
+textegenskap om Osäkert uppgivet och en datumegenskap 2026-09-01.
+Sambandet har Belopp (Tal, 0), Låst (Ja/nej, Nej), Anteckning (Text,
+Övre hyllan) och Startdatum (Datum, 2026-09-01). Typdefinitionerna har
+namn, beskrivning och sambandets två benämningar.
 Spara uppgifterna och två olika profilbilder i separata sparanden.
 Lägg därefter ett nytt objekt i det privata utkastet utan att spara det
 gemensamt. Flytta ett objekt personligen och slå på bakgrunden.
@@ -669,7 +673,8 @@ private and historical content after restart”.
 **Förväntat resultat:**
 
 - Den hämtade filen går att återimportera. Ursprungliga namn, samband,
-  typavsnitt, ordning, egna värden, noll, nej och dolda uppgifter består.
+  typdefinitioner, fria egenskapers identiteter och ordning samt noll och Nej
+  består.
 - Historiken och båda bildversionerna finns kvar. Det privata förslaget
   återkommer i utkastet och blir inte gemensamt före det nya uttryckliga
   sparandet i steg 6.
@@ -820,7 +825,8 @@ EXPORT-13.
 **Förväntat resultat:**
 
 - Samma fokus, avbrott, hämtning och oförändrade karta som i EXPORT-09.
-- Omflöde och nåbara exportknappar vid den smalaste bredden fungerar i båda teman.
+- Omflöde och nåbara exportknappar vid den smalaste bredden fungerar i båda
+  teman.
   CSS-storleken är automatiserat underlag; den bevisar inte fysisk touch.
 
 ### EXPORT-14: Tangentbord och export vid 640 × 500 CSS-pixlar
