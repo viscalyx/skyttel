@@ -967,7 +967,7 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
   const choices = [...source.options].filter((option) => option.value);
   expect(choices).toHaveLength(2);
   expect(choices[0].text).not.toBe(choices[1].text);
-  expect(choices[0].text).toContain('påhittad person');
+  for (const choice of choices) expect(choice.text).toContain(`[${choice.value}]`);
   const targetId = choices.find((choice) => choice.value !== source.value)?.value;
   if (!targetId) throw new Error('Missing independent equal-name target');
   const type = screen.getByLabelText('Sambandstyp') as HTMLSelectElement;
@@ -1783,7 +1783,7 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
   expect(currentDetails.queryByText('Upphört', { exact: true })).toBeNull();
   await user.click(currentDetails.getByRole('button', { name: 'Redigera samband' }));
   editor = within(screen.getByRole('dialog', { name: /^Samband för / }));
-  await user.selectOptions(editor.getByLabelText('Sambandets status'), '');
+  await user.selectOptions(editor.getByLabelText('Sambandets status'), 'ended');
   expect(
     (editor.getByLabelText('Sambandets slutdatum', { exact: true }) as HTMLInputElement).value,
   ).toBe('2000-01-01');
@@ -1792,12 +1792,12 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
   ).toBe('uncertain');
   await stageRelationship();
   const followingReview = await readDraftProposal('Lo Exempel → Använder → Familjemusik');
-  expect(followingReview.getByText('Följ slutdatum', { exact: true })).toBeTruthy();
+  expect(followingReview.getByText('Manuellt upphört', { exact: true })).toBeTruthy();
   await closeProposal();
   const following = await read();
   expect(following.relationships).toEqual(active.relationships);
   expect(following.draft.relationships?.[0].before).toEqual(active.relationships[0]);
-  expect(following.draft.relationships?.[0].after).not.toHaveProperty('lifecycle');
+  expect(following.draft.relationships?.[0].after).toHaveProperty('lifecycle', 'ended');
   expect(following.draft.relationships?.[0].after?.endDate).toEqual({
     knowledge: 'uncertain',
     value: '2000-01-01',
@@ -1812,11 +1812,11 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
     targetId: 'subscription',
     endDate: { knowledge: 'uncertain', value: '2000-01-01' },
   });
-  expect(final.relationships[0]).not.toHaveProperty('lifecycle');
+  expect(final.relationships[0]).toHaveProperty('lifecycle', 'ended');
   expect(final.draft.relationships ?? []).toEqual([]);
   expect(final.draft.changes).toEqual([]);
   const finalDetails = await openObjectRelationships('Lo Exempel');
-  expect(finalDetails.getByText('Följ slutdatum', { exact: true })).toBeTruthy();
+  expect(finalDetails.getByText('Manuellt upphört', { exact: true })).toBeTruthy();
   expect(finalDetails.getByText('2000-01-01 (Osäkert uppgivet)', { exact: true })).toBeTruthy();
-  expect(finalDetails.queryByText('Upphört', { exact: true })).toBeNull();
+  expect(finalDetails.getByText('Upphört', { exact: true })).toBeTruthy();
 });

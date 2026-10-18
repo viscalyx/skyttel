@@ -3,6 +3,7 @@ import { propertyValueText } from '../shared/properties.js';
 import { knowledgeLabels } from '../shared/relationship-label.js';
 import { factText } from './ObjectReadDetails.js';
 import { customReadFields, lifecycleText } from './read-field-values.js';
+import { SavedPropertyOrder } from './SavedPropertyOrder.js';
 
 export function relationshipPropertyValues(
   value: RelationshipValue,
@@ -73,28 +74,31 @@ export function RelationshipReadDetails({
     ? relationshipPropertyValues(before, beforeType ?? type, objects)
     : new Map();
   return (
-    <dl className="household-read-properties">
-      {[...new Set([...after.keys(), ...saved.keys()])].map((key) => {
-        const current = after.get(key);
-        const previous = saved.get(key);
-        const changed = Boolean(
-          before && (current?.value !== previous?.value || current?.label !== previous?.label),
-        );
-        return (
-          <div key={key}>
-            <dt>{current?.label ?? previous?.label}</dt>
-            <dd>
-              {changed && (
-                <div className="household-table-before">
-                  Sparat: {previous?.value ?? 'Ej uppgivet'}
-                </div>
-              )}
-              {changed && <span className="household-table-proposed">◇ Ditt förslag: </span>}
-              {current?.value ?? 'Ej uppgivet'}
-            </dd>
-          </div>
-        );
-      })}
-    </dl>
+    <>
+      <dl className="household-read-properties">
+        {[...new Set([...after.keys(), ...saved.keys()])].map((key) => {
+          const current = after.get(key);
+          const previous = saved.get(key);
+          const changed = Boolean(
+            before && (current?.value !== previous?.value || current?.label !== previous?.label),
+          );
+          return (
+            <div key={key}>
+              <dt>{current?.label ?? previous?.label}</dt>
+              <dd>
+                {changed && (
+                  <div className="household-table-before">
+                    Sparat: {previous?.value ?? 'Ej uppgivet'}
+                  </div>
+                )}
+                {changed && <span className="household-table-proposed">◇ Ditt förslag: </span>}
+                {current?.value ?? 'Ej uppgivet'}
+              </dd>
+            </div>
+          );
+        })}
+      </dl>
+      <SavedPropertyOrder before={before?.properties} after={value.properties} />
+    </>
   );
 }

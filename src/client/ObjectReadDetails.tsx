@@ -6,6 +6,7 @@ import { propertyValueText } from '../shared/properties.js';
 import type { HouseholdTableRow } from './HouseholdTable.js';
 import { ProfileImage } from './ProfileImage.js';
 import { customReadFields, lifecycleText } from './read-field-values.js';
+import { SavedPropertyOrder } from './SavedPropertyOrder.js';
 
 const knowledge = {
   known: 'Känt',
@@ -153,6 +154,7 @@ export function ObjectReadDetails({
             );
           })}
       </dl>
+      <SavedPropertyOrder before={row.before?.properties} after={row.object.properties} />
     </div>
   );
 }

@@ -18,7 +18,6 @@ import {
   editObjectRelationship,
   editTableObject,
   openObjectRelationships,
-  readDraftProposal,
   readTableObject,
 } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
@@ -302,103 +301,31 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
   }
 });
 
-test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or status can correct it', async ({
+test('LIVSCYKEL-02: a Slutdatum property preserves active status until an explicit status change', async ({
   page,
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, post, path } = await arrange(page.request, installation.origin);
-    const initial = await read();
+    const { read } = await arrange(page.request, installation.origin);
     await page.goto(installation.origin);
-    for (const [name, knowledge] of [
-      ['Familjemusik', 'known'],
-      ['Lo Exempel', 'uncertain'],
-    ]) {
-      await editTableObject(page, name);
-      await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
-      await page
-        .getByLabel('Slutdatum: uppgiftens säkerhet', { exact: true })
-        .selectOption(knowledge);
-      await page.getByLabel('Slutdatum', { exact: true }).fill('2031-03-12');
-      const reply = page.waitForResponse(
-        (response) =>
-          response.request().method() === 'POST' && response.url().endsWith('/map/object-form'),
-      );
-      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-      expect((await reply).ok()).toBe(true);
-    }
-    const nativeDates = await read();
-    for (const [id, knowledge] of [
-      ['subscription', 'known'],
-      ['person', 'uncertain'],
-    ] as const) {
-      const original = initial.objects.find((item) => item.id === id);
-      if (!original) throw new Error('Missing original dated object');
-      expect(nativeDates.draft.changes.find((item) => item.id === id)?.after).toEqual({
-        typeId: original.typeId,
-        name: original.name,
-        description: original.description,
-        financialFacts: { endDate: { knowledge, value: '2031-03-12' } },
-      });
-    }
-    await openDraftReview(page);
-    await readRemovalProposals(page, await read());
-    const initialSave = page.waitForResponse(
-      (response) => response.request().method() === 'POST' && response.url().endsWith('/map/save'),
-    );
-    await saveReviewedConflictDraft(page);
-    expect((await initialSave).ok()).toBe(true);
-    await closeTextView(page);
-    await page.clock.install({ time: new Date('2031-03-12T23:59:58Z') });
-    await page.goto(installation.origin);
-    await openTable(page);
-    await includeEndedInTable(page);
-    const objects = page.getByRole('table');
-    const subscription = objects
-      .getByRole('row')
-      .filter({ has: page.getByRole('button', { name: 'Familjemusik', exact: true }) });
-    await expect(objects).not.toContainText('Upphört');
-    await page.clock.fastForward(5_000);
-    await expect(subscription).toContainText('Upphört');
-    await expect(
-      objects
-        .getByRole('row')
-        .filter({ has: page.getByRole('button', { name: 'Lo Exempel', exact: true }) }),
-    ).not.toContainText('Upphört');
-    await expect(
-      objects
-        .getByRole('row')
-        .filter({ has: page.getByRole('button', { name: 'Molnmusik', exact: true }) }),
-    ).not.toContainText('Upphört');
     await editTableObject(page, 'Familjemusik');
-    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
-    await page.getByLabel('Slutdatum', { exact: true }).fill('2031-03-20');
+    await page.getByRole('button', { name: 'Fria egenskaper', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg till egenskap', exact: true }).click();
+    const property = page.getByRole('group', { name: 'Egenskap 1', exact: true });
+    await property.getByLabel('Etikett', { exact: true }).fill('Slutdatum');
+    await property.getByLabel('Datatyp', { exact: true }).selectOption('date');
+    await property.getByLabel('Värde', { exact: true }).fill('2000-01-01');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(await readTableObject(page, 'Familjemusik')).toContainText('2000-01-01 (Datum)');
+    await expect(await readTableObject(page, 'Familjemusik')).toContainText('Gäller fortfarande');
     await openDraftReview(page);
     await readRemovalProposals(page, await read());
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
-    await expect(subscription).not.toContainText('Upphört');
-    await editObjectRelationship(page, 'Lo Exempel', 'Lo Exempel → Använder → Familjemusik');
-    await page.getByLabel('Sambandets slutdatum: uppgiftens säkerhet').selectOption('known');
-    await page.getByLabel('Sambandets slutdatum', { exact: true }).fill('2031-03-12');
-    await stageRelationshipAndClose(page);
-    await openDraftReview(page);
-    await readRemovalProposals(page, await read());
-    await saveReviewedConflictDraft(page);
-    await closeTextView(page);
-    const edges = await openObjectRelationships(page, 'Lo Exempel');
-    const incoming = edges
-      .locator('.household-read-relationships > li')
-      .filter({ hasText: 'Familjemusik' });
-    await expect(incoming).toContainText('Upphört');
-    await closeSupportDialog(page, 'Samband för Lo Exempel');
-    await editObjectRelationship(page, 'Lo Exempel', 'Lo Exempel → Använder → Familjemusik');
-    await page.getByLabel('Sambandets status').selectOption('active');
-    await stageRelationshipAndClose(page);
-    const statusProposal = await readDraftProposal(page, 'Lo Exempel → Använder → Familjemusik');
-    await expect(statusProposal).toContainText('Gäller fortfarande');
-    await closeSupportDialog(page, 'Lo Exempel → Använder → Familjemusik');
+    await editTableObject(page, 'Familjemusik');
+    await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+    await page.getByLabel('Objektets status', { exact: true }).selectOption('ended');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openDraftReview(page);
     await readRemovalProposals(page, await read());
     await saveReviewedConflictDraft(page);
@@ -406,50 +333,16 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     await installation.restart();
     await page.reload();
     await openTable(page);
-    await expect(subscription).not.toContainText('Upphört');
-    const corrected = await readTableObject(page, 'Familjemusik');
-    await expect(corrected).toContainText('2031-03-20');
-    await openObjectRelationships(page, 'Lo Exempel');
-    await expect(incoming).not.toContainText('Upphört');
-    await expect(incoming).toContainText('Gäller fortfarande');
-    await expect(incoming).toContainText('2031-03-12');
-    await closeSupportDialog(page, 'Samband för Lo Exempel');
-    const { history } = await (await page.request.get(`${path}/history`)).json();
-    expect(history[0].relationships[0]).toMatchObject({
-      before: { endDate: { knowledge: 'known', value: '2031-03-12' } },
-      after: { lifecycle: 'active', endDate: { knowledge: 'known', value: '2031-03-12' } },
-    });
-    await (await utilityButton(page, 'Rapporter')).click();
-    const card = page
-      .getByRole('region', { name: 'Ändringshistorik', exact: true })
-      .getByRole('article')
-      .first();
-    await card.getByText('Visa ändringarna', { exact: true }).click();
-    for (const text of [
-      'Följ slutdatum',
-      'Gäller fortfarande',
-      '2031-03-12',
-      'Lo Exempel',
-      'Familjemusik',
-    ])
-      await expect(card).toContainText(text);
-    for (const endDate of [
-      { knowledge: 'known', value: '2031-02-30' },
-      { knowledge: 'unknown', value: '2031-03-12' },
-    ]) {
-      const state = await read();
-      const edge = state.relationships.find((item) => item.id === 'incoming');
-      expect(
-        (
-          await post('relationship', {
-            version: state.draft.version,
-            id: 'incoming',
-            baseRevision: edge?.revision,
-            value: { ...edge, endDate },
-          })
-        ).status(),
-      ).toBe(400);
-    }
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    await expect(table.getByRole('button', { name: 'Familjemusik', exact: true })).toHaveCount(0);
+    await includeEndedInTable(page);
+    await expect(await readTableObject(page, 'Familjemusik')).toContainText('Manuellt upphört');
+    await editTableObject(page, 'Familjemusik');
+    await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+    await page.getByLabel('Objektets status', { exact: true }).selectOption('active');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(await readTableObject(page, 'Familjemusik')).toContainText('2000-01-01 (Datum)');
+    await expect(await readTableObject(page, 'Familjemusik')).toContainText('Gäller fortfarande');
   } finally {
     await installation.close();
   }
@@ -472,7 +365,7 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
             value: {
               ...edge,
               endDate: { knowledge: 'known', value: '2000-01-01' },
-              ...(edge.id === 'outgoing' ? { lifecycle: 'active' } : {}),
+              lifecycle: edge.id === 'outgoing' ? 'active' : 'ended',
             },
           })
         ).ok(),
@@ -535,7 +428,7 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
         .locator('dt')
         .filter({ hasText: /^Status$/ })
         .locator('..'),
-    ).toContainText('Följ slutdatum');
+    ).toContainText('Manuellt upphört');
     await expect(
       details
         .locator('dt')

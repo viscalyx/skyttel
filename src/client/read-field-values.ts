@@ -3,8 +3,7 @@ import type { CustomValues } from '../shared/map.js';
 
 export function lifecycleText(lifecycle?: Lifecycle) {
   if (lifecycle === 'ended') return 'Manuellt upphört';
-  if (lifecycle === 'active') return 'Gäller fortfarande';
-  return 'Följ slutdatum';
+  return 'Gäller fortfarande';
 }
 
 function answerText(answer: string | number | boolean | undefined) {

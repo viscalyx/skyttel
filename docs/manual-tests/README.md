@@ -241,6 +241,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   SÖK-variant. LISTA-09 skiljer faktisk uppläsning och förstoring från
   Chromium-proven, även för sökning med NVDA och VoiceOver. SÖK-16 har
   fysisk pekning, skärmtangentbord och förstoring på iPhone och iPad.
+  SÖK-17 och SÖK-18 skyddar fria egenskaper i sparade och föreslagna
+  detaljer, sökning på etiketter och värden samt granskning före ett
+  uttryckligt ändpunktsval mellan objekt med lika namn.
   Grafikavbrott har separat
   [körbar förberedelse](map-graphics-preparation.md).
 

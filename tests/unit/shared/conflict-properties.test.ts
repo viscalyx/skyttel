@@ -32,7 +32,7 @@ test('conflict values distinguish identified objects and lifecycle modes from mi
   expect(conflictValueText(state, property('identity'), 'unspecified')).toBe(
     'Ospecificerat objekt',
   );
-  expect(conflictValueText(state, property('lifecycle'), undefined)).toBe('Följ slutdatum');
+  expect(conflictValueText(state, property('lifecycle'), undefined)).toBe('Gäller fortfarande');
   expect(conflictValueText(state, property('lifecycle'), 'active')).toBe('Gäller fortfarande');
   expect(conflictValueText(state, property('lifecycle'), 'ended')).toBe('Manuellt upphört');
   expect(conflictValueText(state, property('customValues.note'), undefined)).toBe('Ej uppgivet');

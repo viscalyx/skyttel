@@ -150,9 +150,12 @@ for (const width of [1280, 390, 320]) {
         await openObjectRelationships(page, 'Paneler på taket');
         await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
         const relationship = page.getByRole('group', { name: 'Sambandets detaljer', exact: true });
-        await relationship.getByLabel('Från objekt').selectOption({
-          label: 'Paneler på taket · Solutrustning · Beskrivning till den nya typen',
-        });
+        await relationship
+          .getByLabel('Från objekt')
+          .selectOption(
+            (await read()).draft.changes.find((change) => change.after?.name === 'Paneler på taket')
+              ?.id ?? '',
+          );
         await relationship
           .getByLabel('Sambandstyp', { exact: true })
           .selectOption({ label: 'Komplettering' });
@@ -161,7 +164,10 @@ for (const width of [1280, 390, 320]) {
           .selectOption('uncertain');
         await relationship
           .getByLabel('Till objekt')
-          .selectOption({ label: 'Batteriet · Solutrustning · Ingen beskrivning' });
+          .selectOption(
+            (await read()).draft.changes.find((change) => change.after?.name === 'Batteriet')?.id ??
+              '',
+          );
         await stageRelationshipAndClose(page);
         const proposed = await read();
         expect(proposed.objects).toEqual([]);

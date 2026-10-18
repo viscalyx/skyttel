@@ -95,6 +95,33 @@ async function member() {
   return other;
 }
 
+test('map and draft reads expose property identities and search own labels, values and types', async () => {
+  const properties = [
+    { id: 'empty', label: 'Ramnummer' },
+    { id: 'mark', label: 'Ramnummer', kind: 'text', value: 'Blå' },
+    { id: 'false', label: 'Kontrollerad', kind: 'boolean', value: false },
+  ];
+  await object('one', { name: 'Cykel', properties });
+  await object('two', {
+    name: 'Cykel',
+    properties: [{ id: 'red', label: 'Ramnummer', kind: 'text', value: 'Röd' }],
+  });
+  const proposed = await tool('read_my_draft');
+  expect(
+    proposed.changes.find((change: { id: string }) => change.id === 'one').after.properties,
+  ).toEqual(properties);
+  await save('searchable-properties');
+  const found = await tool('read_map', { query: 'ramnummer blå' });
+  expect(found.objects).toHaveLength(1);
+  expect(found.objects[0]).toMatchObject({ id: 'one', properties });
+  expect((await tool('read_map', { query: found.types[0].name })).objects).toHaveLength(2);
+  await object('one', { properties: [...properties].reverse() });
+  expect((await tool('read_my_draft')).changes[0].after.properties).toEqual(
+    [...properties].reverse(),
+  );
+  expect((await tool('read_map', { objectId: 'one' })).objects[0].properties).toEqual(properties);
+});
+
 test('advanced tools use actual SDK contracts, preserve old read grants and current revocation', async () => {
   const client = new Client({ name: 'Avancerad provklient', version: '1' });
   const readClient = new Client({ name: 'Äldre läsande klient', version: '1' });

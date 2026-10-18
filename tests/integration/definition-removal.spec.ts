@@ -561,7 +561,7 @@ test('KATALOG-03: history reads removed definitions and content without changing
         Beskrivning: 'Ej uppgivet',
         Typ: initial.types[1].name,
         Gäller: 'Aktuellt',
-        Status: 'Följ slutdatum',
+        Status: 'Gäller fortfarande',
         Ikon: 'Typens ikon',
         Profilbild: 'Ej uppgivet',
         Identitet: 'Identifierat objekt',

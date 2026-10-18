@@ -6,6 +6,7 @@ import type Database from 'better-sqlite3';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
+import { objectMatchesQuery } from '../shared/object-search.js';
 import {
   assistantConsent,
   assistantScope,
@@ -230,7 +231,7 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
       'read_map',
       {
         description:
-          'Läs hushållets sparade karta. Avgränsa med söktext i namn och beskrivning eller objekt-ID. Om båda anges krävs båda. Svar innehåller valda objekt, deras direkta inkommande och utgående samband samt endast ID, namn och typ för övriga ändpunkter i contextObjects. Läs andra ändpunkters detaljer med en ny avgränsad läsning endast när de behövs för uppdraget. Bara berörda typdefinitioner följer med. Identitet och hushåll kommer från medgivandet.',
+          'Läs hushållets sparade karta med alla egenskapers identiteter, etiketter, datatyper, värden och ordning. Avgränsa med söktext i objektets eget namn, typ, egenskapsetiketter och värden eller objekt-ID. Alla sökord krävs. Om båda anges krävs båda. Svar innehåller valda objekt, deras direkta inkommande och utgående samband med alla egenskaper samt endast ID, namn och typ för övriga ändpunkter i contextObjects. Läs kandidaters detaljer före val; lika namn är olika identiteter. Bara berörda typdefinitioner följer med. Identitet och hushåll kommer från medgivandet.',
         inputSchema: z
           .object({
             query: z.string().max(100).optional(),
@@ -244,10 +245,11 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
         const objects = state.objects.filter(
           (object) =>
             (!objectId || object.id === objectId) &&
-            (!query ||
-              `${object.name} ${object.description}`
-                .toLocaleLowerCase('sv')
-                .includes(query.toLocaleLowerCase('sv'))),
+            objectMatchesQuery(
+              object,
+              state.types.find((type) => type.id === object.typeId),
+              query ?? '',
+            ),
         );
         const ids = new Set(objects.map((object) => object.id));
         const relationships = state.relationships.filter(

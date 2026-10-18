@@ -4,6 +4,7 @@ import type { MapObject, MapState, RelationshipValue } from '../shared/map.js';
 import { proposedRelationships } from '../shared/map.js';
 import type { RelationshipFormResult } from '../shared/relationship-form.js';
 import { knowledgeLabels } from '../shared/relationship-label.js';
+import { EndpointPicker } from './EndpointPicker.js';
 import { useFormLeave } from './FormLeave.js';
 import { FormLossGuard } from './FormLossGuard.js';
 import { validateFormControls } from './form-validation.js';
@@ -60,7 +61,8 @@ export function RelationshipForm({
     () => new Map(state.relationshipTypes.map((type) => [type.id, type.revision])),
   );
   const [nextType, setNextType] = useState<string>();
-  const [query, setQuery] = useState('');
+  const [sourceQuery, setSourceQuery] = useState('');
+  const [targetQuery, setTargetQuery] = useState('');
   const [pending, setPending] = useState(false);
   const [unknown, setUnknown] = useState(false);
   const [stale, setStale] = useState(false);
@@ -73,7 +75,10 @@ export function RelationshipForm({
   const summary = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<{ id: string; label: string; message: string }[]>([]);
   const { requestLeave } = useFormLeave();
-  const dirty = invalidProperties || !sameConflictValue(value, initial.value) || Boolean(query);
+  const dirty =
+    invalidProperties ||
+    !sameConflictValue(value, initial.value) ||
+    Boolean(sourceQuery || targetQuery);
   useLayoutEffect(() => {
     onDirty?.(dirty || busy);
     return () => onDirty?.(false);
@@ -97,17 +102,6 @@ export function RelationshipForm({
   const choices = [...objects.values()].filter(
     (object) => !state.draft.changes.some((change) => change.id === object.id && !change.after),
   );
-  const objectLabel = (object: MapObject) =>
-    `${object.name} · ${state.types.find((type) => type.id === object.typeId)?.name ?? 'Typ saknas'} · ${object.description || 'Ingen beskrivning'}`;
-  const labelCounts = new Map<string, number>();
-  for (const object of choices) {
-    const label = objectLabel(object);
-    labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1);
-  }
-  const description = (object: MapObject) => {
-    const label = objectLabel(object);
-    return (labelCounts.get(label) ?? 0) > 1 ? `${label} [${object.id}]` : label;
-  };
   const source = objects.get(value.sourceId)?.name ?? 'Välj frånobjekt';
   const target = objects.get(value.targetId ?? '')?.name ?? 'Välj tillobjekt';
   const label = type?.forwardLabel || type?.name || 'välj sambandstyp';
@@ -329,22 +323,17 @@ export function RelationshipForm({
               ))}
             </select>
           </div>
-          <div className="">
-            {' '}
-            <label htmlFor={`${prefix}-source`}>Från objekt</label>
-            <select
-              id={`${prefix}-source`}
-              required
+          <div className="relationship-form-wide">
+            <EndpointPicker
+              label="Från objekt"
+              searchLabel="Sök frånobjekt"
+              query={sourceQuery}
+              onQueryChange={setSourceQuery}
               value={value.sourceId}
-              onChange={(event) => setValue({ ...value, sourceId: event.target.value })}
-            >
-              <option value="">Välj objekt</option>
-              {choices.map((object) => (
-                <option key={object.id} value={object.id}>
-                  {description(object)}
-                </option>
-              ))}
-            </select>
+              objects={choices}
+              state={state}
+              onChange={(sourceId) => setValue({ ...value, sourceId })}
+            />
           </div>
           <button
             type="button"
@@ -356,39 +345,16 @@ export function RelationshipForm({
             Byt riktning
           </button>
           <div className="relationship-form-wide">
-            {' '}
-            <label htmlFor={`${prefix}-search`}>Sök det andra objektet</label>
-            <input
-              id={`${prefix}-search`}
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-          <div className="relationship-form-wide">
-            {' '}
-            <label htmlFor={`${prefix}-target`}>Till objekt</label>
-            <select
-              id={`${prefix}-target`}
-              required
+            <EndpointPicker
+              label="Till objekt"
+              searchLabel="Sök det andra objektet"
+              query={targetQuery}
+              onQueryChange={setTargetQuery}
               value={value.targetId ?? ''}
-              onChange={(event) => setValue({ ...value, targetId: event.target.value })}
-            >
-              <option value="">Välj objekt</option>
-              {choices
-                .filter(
-                  (object) =>
-                    object.id === value.targetId ||
-                    description(object)
-                      .toLocaleLowerCase('sv')
-                      .includes(query.toLocaleLowerCase('sv')),
-                )
-                .map((object) => (
-                  <option key={object.id} value={object.id}>
-                    {description(object)}
-                  </option>
-                ))}
-            </select>
+              objects={choices}
+              state={state}
+              onChange={(targetId) => setValue({ ...value, targetId })}
+            />
           </div>
           <div className="relationship-form-wide">
             {' '}
@@ -461,7 +427,8 @@ export function RelationshipForm({
         householdId={state.types[0]?.householdId ?? ''}
         onDiscard={() => {
           setValue(initial.value);
-          setQuery('');
+          setSourceQuery('');
+          setTargetQuery('');
           setError('');
           setErrors([]);
           setDuplicateId(undefined);

@@ -427,7 +427,7 @@ draft symbols”.
    lägg i utkastet.
 3. Öppna **Samband för Lo Exempel** och **Redigera samband**. Ange ett
    känt slutdatum 2000-01-01,
-   behåll Följ slutdatum och lägg sambandet i utkastet.
+   behåll Gäller fortfarande och lägg sambandet i utkastet.
 4. Öppna rymdkartan och välj Alla etiketter. Klicka i kartans sökfält,
    öppna Filter, markera **Ta med upphörda** och stäng filterdialogen.
    Kontrollera sedan

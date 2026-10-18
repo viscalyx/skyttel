@@ -146,11 +146,11 @@
 .household-table :is(th, td):nth-child(2) {
   min-width: 120px;
 }
-.household-table :is(th, td):nth-child(4) {
+.household-table :is(th, td):nth-child(3) {
   min-width: 145px;
   overflow-wrap: normal;
 }
-.household-table :is(th, td):nth-child(5) {
+.household-table :is(th, td):nth-child(4) {
   min-width: 150px;
 }
 .household-table thead th {

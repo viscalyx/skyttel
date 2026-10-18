@@ -250,7 +250,7 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
     });
     const endedProposal = await readDraftProposal(page, 'Alex Exempel → Använder → Blå cykel');
     for (const [title, status, applies] of [
-      ['Sparade värden', 'Följ slutdatum', 'Aktuellt'],
+      ['Sparade värden', 'Gäller fortfarande', 'Aktuellt'],
       ['Föreslagna värden', 'Manuellt upphört', 'Upphört'],
     ]) {
       const side = endedProposal
@@ -294,7 +294,7 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
       .filter({ has: page.getByRole('heading', { name: 'Samband: Använder', exact: true }) });
     await expect(change.getByText(`Identitet: ${edge.id}`, { exact: true })).toBeVisible();
     for (const [title, status] of [
-      ['Före sparandet', 'Följ slutdatum'],
+      ['Före sparandet', 'Gäller fortfarande'],
       ['Efter sparandet', 'Manuellt upphört'],
     ]) {
       const side = change.locator(`xpath=./*[preceding-sibling::h5[1][text()="${title}"]]`);

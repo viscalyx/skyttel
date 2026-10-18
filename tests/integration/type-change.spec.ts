@@ -347,7 +347,7 @@ for (const width of [1280, 390, 320]) {
         const commonReadings = [
           ['Identitet', 'Ospecificerat objekt'],
           ['Ikon', 'Cykel'],
-          ['Status', 'Följ slutdatum'],
+          ['Status', 'Gäller fortfarande'],
           ['Profilbild', 'Profilbild finns'],
           [
             'Senast uppgiven skuld',
@@ -409,7 +409,7 @@ for (const width of [1280, 390, 320]) {
             ['Riktning', type.forwardLabel ?? type.name],
             ['Omvänd riktning', type.reverseLabel || 'Ej uppgivet'],
             ['Uppgiftens säkerhet', 'Osäkert uppgivet'],
-            ['Status', 'Följ slutdatum'],
+            ['Status', 'Gäller fortfarande'],
           ]);
           await closeSupportDialog(page, 'Samband för Alex blå cykel');
         };

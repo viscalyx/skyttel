@@ -148,7 +148,7 @@ for (const width of [1440, 390])
       await expectConflictReadValue(
         tableDetails,
         'Status',
-        /^Sparat: Följ slutdatum\s*◇ Ditt förslag: Gäller fortfarande$/,
+        /^Sparat: Gäller fortfarande\s*◇ Ditt förslag: Gäller fortfarande$/,
       );
       await expectConflictDraftValues(page, 'Lo Lind', {
         Namn: 'Lo Lind',

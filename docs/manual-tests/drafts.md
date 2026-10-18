@@ -1391,7 +1391,7 @@ Avsluta med `quit` och kontrollera borttagen provinstallation.
 **Förutsättningar:** Förbered provkommandot ovan, välj `new-base` och
 `other-member`. Läs Robins fullständiga förslag genom Visa förslaget:
 Person, Robins privata anteckning, hela beskrivningen, Identifierat objekt
-och Följ slutdatum. Behåll det osparat.
+och Gäller fortfarande. Behåll det osparat.
 
 **Integrationstest:**
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
@@ -1596,7 +1596,7 @@ UTKAST-27.
   },
   "reference": "1440 × 1000; historiska statusar, bilder och egna fältnamn.",
   "outcomes": [
-    "Sparade objektet och sambandet visar Upphört och Följ slutdatum. Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum. Giltighet och status är markerade som ändrade.",
+    "Sparade objektet och sambandet visar Upphört och Manuellt upphört. Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum. Giltighet och status är markerade som ändrade.",
     "Båda verkliga profilbilderna visas och bildändringen markeras även när båda sidorna har en bild. Bilderna skiljer sig i färg.",
     "Beskrivningen har respektive typs eget namn och markerad ändring. Föreslagen beskrivning och båda prisvärdena visar Ej uppgivet. Oförändrat saknat pris markeras inte som ändrat. Dolda egenskaper kan läsas.",
     "Läsningen ändrar inget underlag och startar inget samtal eller medgivande."
@@ -1617,7 +1617,7 @@ UTKAST-27.
 
 **Förväntat resultat:**
 
-- Sparade objektet och sambandet visar Upphört och Följ slutdatum.
+- Sparade objektet och sambandet visar Upphört och Manuellt upphört.
   Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum.
   Giltighet och status är markerade som ändrade.
 - Båda verkliga profilbilderna visas och bildändringen markeras även när
@@ -1816,8 +1816,9 @@ i både sammanfattningen och den fullständiga läsningen.
 `node --import tsx scripts/manual-draft-review.ts --lifecycle`.
 Logga in med den syntetiska Google-identiteten. Utgånget provobjekt och
 dess samband har slutdatum 2000-01-01. Framtida provobjekt och dess
-samband har slutdatum 9999-12-31. De fyra förslagen anger Gäller
-fortfarande; inga andra uppgifter ändras. Skriv `quit` efter provningen.
+samband har slutdatum 9999-12-31. Det utgångna paret har uttrycklig
+status Upphört och föreslås gälla; det andra paret föreslås upphöra.
+Inga andra uppgifter ändras. Skriv `quit` efter provningen.
 
 **Integrationstest:**
 [draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
@@ -1833,8 +1834,8 @@ UTKAST-32.
   },
   "reference": "Utgånget och framtida objekt samt samband; faktisk giltighet mot uttrycklig status.",
   "outcomes": [
-    "Alla fyra rader visar Status: Följ slutdatum → Gäller fortfarande.",
-    "Det utgångna objektet och dess samband visar dessutom Gäller: Upphört → Aktuellt. Framtida uppgifter får ingen falsk giltighetsändring; den uttryckliga statusändringen syns ändå.",
+    "Alla fyra rader visar en uttrycklig statusändring i båda riktningarna.",
+    "Det utgångna objektet och dess samband visar dessutom Gäller: Upphört → Aktuellt. Det andra paret visar Gäller: Aktuellt → Upphört.",
     "Den fullständiga läsningen visar samma betydelser som sammanfattningen. De fyra kolumnerna är kvar. Läsningen ändrar inga förslag eller sparade uppgifter och Escape återför fokus till den använda läsknappen."
   ]
 }
@@ -1850,10 +1851,9 @@ UTKAST-32.
 
 **Förväntat resultat:**
 
-- Alla fyra rader visar Status: Följ slutdatum → Gäller fortfarande.
+- Alla fyra rader visar en uttrycklig statusändring i båda riktningarna.
 - Det utgångna objektet och dess samband visar dessutom
-  Gäller: Upphört → Aktuellt. Framtida uppgifter får ingen falsk
-  giltighetsändring; den uttryckliga statusändringen syns ändå.
+  Gäller: Upphört → Aktuellt. Det andra paret visar Gäller: Aktuellt → Upphört.
 - Den fullständiga läsningen visar samma betydelser som sammanfattningen.
   De fyra kolumnerna är kvar. Läsningen ändrar inga förslag eller sparade
   uppgifter och Escape återför fokus till den använda läsknappen.
@@ -2435,7 +2435,7 @@ görs och låta ett överlappande datumval omfatta både datum och säkerhet.
 **Användare:** Administratören och medlemmen.
 
 **Förutsättningar:** Spara **Lo Exempel → Använder → Molnmusik** med
-säkerheten **Känt**, statusen **Följ slutdatum** och utan slutdatum.
+säkerheten **Känt**, statusen **Gäller fortfarande** och utan slutdatum.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
@@ -5589,7 +5589,7 @@ UTKAST-93.
   },
   "reference": "390 × 844; bilder och fullständiga fältnamn i smal läsdialog.",
   "outcomes": [
-    "Sparade objektet och sambandet visar Upphört och Följ slutdatum. Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum. Giltighet och status är markerade som ändrade.",
+    "Sparade objektet och sambandet visar Upphört och Manuellt upphört. Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum. Giltighet och status är markerade som ändrade.",
     "Båda verkliga profilbilderna visas och bildändringen markeras även när båda sidorna har en bild. Bilderna skiljer sig i färg.",
     "Beskrivningen har respektive typs eget namn och markerad ändring. Föreslagen beskrivning och båda prisvärdena visar Ej uppgivet. Oförändrat saknat pris markeras inte som ändrat. Dolda egenskaper kan läsas.",
     "Läsningen ändrar inget underlag och startar inget samtal eller medgivande."
@@ -5610,7 +5610,7 @@ UTKAST-93.
 
 **Förväntat resultat:**
 
-- Sparade objektet och sambandet visar Upphört och Följ slutdatum.
+- Sparade objektet och sambandet visar Upphört och Manuellt upphört.
   Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum.
   Giltighet och status är markerade som ändrade.
 - Båda verkliga profilbilderna visas och bildändringen markeras även när

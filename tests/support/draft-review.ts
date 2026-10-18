@@ -146,7 +146,11 @@ export async function prepareDraftReviewMeanings(client: APIRequestContext, orig
   await post('draft', {
     id: bike.id,
     baseRevision: bike.revision,
-    value: { ...bike, financialFacts: { endDate: { knowledge: 'known', value: '2000-01-01' } } },
+    value: {
+      ...bike,
+      lifecycle: 'ended',
+      financialFacts: { endDate: { knowledge: 'known', value: '2000-01-01' } },
+    },
   });
   await post('draft', {
     id: 'draft-peer',
@@ -157,6 +161,7 @@ export async function prepareDraftReviewMeanings(client: APIRequestContext, orig
     id: 'draft-expired-edge',
     baseRevision: null,
     value: {
+      lifecycle: 'ended',
       sourceId: bike.id,
       targetId: 'draft-peer',
       typeId: 'draft-uses',
@@ -257,6 +262,7 @@ export async function prepareDraftReviewLifecycle(client: APIRequestContext, ori
         typeId: 'draft-vehicle',
         name,
         description: '',
+        ...(id === 'past' ? { lifecycle: 'ended' } : {}),
         financialFacts: { endDate: { knowledge: 'known', value: date } },
       },
     });
@@ -268,6 +274,7 @@ export async function prepareDraftReviewLifecycle(client: APIRequestContext, ori
         sourceId: id,
         targetId: 'draft-bike',
         knowledge: 'known',
+        ...(id === 'past' ? { lifecycle: 'ended' } : {}),
         endDate: { knowledge: 'known', value: date },
       },
     });
@@ -278,13 +285,13 @@ export async function prepareDraftReviewLifecycle(client: APIRequestContext, ori
     await fixture.post('draft', {
       id: value.id,
       baseRevision: value.revision,
-      value: { ...value, lifecycle: 'active' },
+      value: { ...value, lifecycle: value.lifecycle === 'ended' ? 'active' : 'ended' },
     });
   for (const value of saved.relationships.filter(({ id }) => id.startsWith('edge-')))
     await fixture.post('relationship', {
       id: value.id,
       baseRevision: value.revision,
-      value: { ...value, lifecycle: 'active' },
+      value: { ...value, lifecycle: value.lifecycle === 'ended' ? 'active' : 'ended' },
     });
   return fixture;
 }

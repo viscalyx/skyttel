@@ -50,7 +50,7 @@ describe.each([undefined, 'active', 'ended'] as const)('read lifecycle %s', (lif
           ? 'Gäller fortfarande'
           : lifecycle === 'ended'
             ? 'Manuellt upphört'
-            : 'Följ slutdatum',
+            : 'Gäller fortfarande',
       );
     }
   });

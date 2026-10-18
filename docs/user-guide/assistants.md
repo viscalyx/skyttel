@@ -35,6 +35,10 @@ namn, ID och typ, utan sina övriga uppgifter eller samband. Be om en
 ny avgränsad läsning om även deras detaljer behövs. Bara berörda
 typdefinitioner följer med; en sökning utan träffar lämnar inget
 kartinnehåll. Andra medlemmars privata utkast ingår inte.
+Sökning omfattar objektets eget namn, typ, egenskapsetiketter och värden.
+Alla egenskapers identiteter, datatyper, värden och ordning följer med
+objektets och sambandets fullständiga läsning. Be assistenten granska
+kandidaternas uppgifter före ett ändpunktsval; lika namn är olika objekt.
 Om resultatet uteblir ska assistenten inte påstå sig ha läst informationen.
 
 ## Förslag, rättelser och sparande

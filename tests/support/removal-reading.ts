@@ -14,7 +14,7 @@ const meanings: Record<string, string> = {
 
 async function readValues(side: Locator, value: object) {
   const data = value as Record<string, unknown>;
-  if ('typeId' in data && !data.lifecycle) await expect(side).toContainText('Följ slutdatum');
+  if ('typeId' in data && !data.lifecycle) await expect(side).toContainText('Gäller fortfarande');
   if ('description' in data && !data.description) {
     const description = side
       .locator('dt')

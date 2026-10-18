@@ -111,7 +111,9 @@ for (const [caseId, action, title] of [
         const details = table.getByRole('cell').filter({
           has: page.getByRole('heading', { name: `Fokus ${name} · alla uppgifter`, exact: true }),
         });
-        await expect(details.getByText('Sparat: Följ slutdatum', { exact: true })).toBeVisible();
+        await expect(
+          details.getByText('Sparat: Gäller fortfarande', { exact: true }),
+        ).toBeVisible();
         await expect(details).toContainText('◇ Ditt förslag: Manuellt upphört');
       }
       await page.getByRole('button', { name: 'Utkast', exact: true }).click();
@@ -121,7 +123,7 @@ for (const [caseId, action, title] of [
         const row = draft.getByRole('row').filter({
           has: page.getByRole('button', { name: `Visa förslaget: Fokus ${name}`, exact: true }),
         });
-        await expect(row).toContainText('Status: Följ slutdatum → Manuellt upphört');
+        await expect(row).toContainText('Status: Gäller fortfarande → Manuellt upphört');
       }
       expect((await read()).objects).toEqual(saved.objects);
     } finally {

@@ -84,13 +84,21 @@ test('UTKAST-32: lifecycle-only object and relationship proposals distinguish ef
         .getByRole('cell')
         .last();
       await expect(summary).toHaveText(
-        `${expired ? 'Gäller: Upphört → Aktuellt' : ''}Status: Följ slutdatum → Gäller fortfarande`,
+        `Gäller: ${expired ? 'Upphört → Aktuellt' : 'Aktuellt → Upphört'}Status: ${expired ? 'Manuellt upphört → Gäller fortfarande' : 'Gäller fortfarande → Manuellt upphört'}`,
       );
       await opener.click();
       const modal = page.getByRole('dialog', { name, exact: true });
       for (const [title, applies, mode] of [
-        ['Sparade värden', expired ? 'Upphört' : 'Aktuellt', 'Följ slutdatum'],
-        ['Föreslagna värden', 'Aktuellt', 'Gäller fortfarande'],
+        [
+          'Sparade värden',
+          expired ? 'Upphört' : 'Aktuellt',
+          expired ? 'Manuellt upphört' : 'Gäller fortfarande',
+        ],
+        [
+          'Föreslagna värden',
+          expired ? 'Aktuellt' : 'Upphört',
+          expired ? 'Gäller fortfarande' : 'Manuellt upphört',
+        ],
       ]) {
         const side = modal
           .locator('section')
@@ -317,7 +325,7 @@ for (const mobile of [false, true])
       async function lifecycle() {
         await expect(field(saved, 'Gäller').locator('dd')).toHaveText('Upphört');
         await expect(field(proposed, 'Gäller').locator('dd')).toHaveText('Aktuellt');
-        await expect(field(saved, 'Status').locator('dd')).toHaveText('Följ slutdatum');
+        await expect(field(saved, 'Status').locator('dd')).toHaveText('Manuellt upphört');
         await expect(field(proposed, 'Status').locator('dd')).toHaveText('Gäller fortfarande');
         await expect(field(proposed, 'Gäller')).toHaveClass('draft-value-changed');
         await expect(field(proposed, 'Status')).toHaveClass('draft-value-changed');

@@ -127,7 +127,7 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
           ['Beskrivning', description],
           ['Ikon', 'Cykel'],
           ['Gäller', 'Aktuellt'],
-          ['Status', 'Följ slutdatum'],
+          ['Status', 'Gäller fortfarande'],
           ['Profilbild', image ? 'Profilbild finns' : 'Ej uppgivet'],
         ])
           await expect(

@@ -714,7 +714,10 @@ test('SAMBAND-01: separate complete objects connect and remain independently edi
     await dialog.getByLabel('Sök det andra objektet', { exact: true }).fill('garaget');
     await dialog
       .getByLabel('Till objekt', { exact: true })
-      .selectOption({ label: 'Blå cykeln · Fordon · Cykeln i garaget' });
+      .selectOption(
+        (await read()).draft.changes.find((change) => change.after?.name === 'Blå cykeln')?.id ??
+          '',
+      );
     await expect(dialog.getByRole('region', { name: 'Sambandet före inskickning' })).toContainText(
       'Alex använder Blå cykeln',
     );

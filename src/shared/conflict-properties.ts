@@ -439,7 +439,7 @@ export function conflictValueText(
         : 'Behöver redas ut';
   if (field.key === 'lifecycle')
     return value === undefined
-      ? 'Följ slutdatum'
+      ? 'Gäller fortfarande'
       : value === 'ended'
         ? 'Manuellt upphört'
         : 'Gäller fortfarande';

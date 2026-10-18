@@ -455,10 +455,7 @@ test('indistinguishable object names in a relationship selector include identity
     [...target.options]
       .filter((option) => option.text.startsWith('Samma namn'))
       .map((option) => option.text),
-  ).toEqual([
-    'Samma namn · Läsobjekt · Ingen beskrivning [same-one]',
-    'Samma namn · Läsobjekt · Ingen beskrivning [same-two]',
-  ]);
+  ).toEqual(['Samma namn · Läsobjekt [same-one]', 'Samma namn · Läsobjekt [same-two]']);
   await userEvent.selectOptions(target, 'same-one');
   await userEvent.type(dialog.getByLabelText('Sök det andra objektet'), 'Garage');
   expect([...target.options].map((option) => option.value).sort()).toEqual([

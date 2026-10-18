@@ -2206,3 +2206,134 @@ faktiskt uppnådda positionen, men inget bestämt rullsteg på 40 pixlar.
 Detta avstår endast från skydd mot ändrad steglängd. Markering, utkast
 och oskickad samtalstext är kvar. LISTA-06 är fortsatt pensionerat och
 återanvänds inte. LÄS-08 skiljer tom tabell från LÄS-04:s föregående rad.
+
+## Fria egenskaper och ändpunktskandidater
+
+### SÖK-17: läs och sök sparade och föreslagna egenskaper
+
+**Syfte:** Hitta objekt på egna egenskaper och läsa alla uppgifter utan
+att välja en grafisk punkt.
+
+**Användare:** En konfigurerad hushållsmedlem med rätt att läsa och redigera.
+
+**Förutsättningar:** Förbered ett eget tomt provhushåll. Skapa Alex och
+två objekt som båda heter Cykel. På första cykeln, lägg egenskaperna i
+denna ordning: Ramnummer utan datatyp eller värde, Ramnummer som text
+Röd, Antal som tal 0, Kontrollerad som ja/nej Nej och Slutdatum som datum
+2000-01-01. På andra cykeln lägger du Ramnummer som text Blå och Antal
+som tomt tal. Skapa ett samband från Alex till den röda cykeln med två
+egenskaper Avtal: en tom utan datatyp och en med ja/nej Nej. Spara allt.
+Ändra sedan Röd till Grön i utkastet. På sambandet flyttar du Nej först
+och väljer Text för den tomma egenskapen. Lägg i utkastet utan att spara.
+
+**Automatiskt motsvarande test:**
+[property-reading.spec.ts](../../tests/integration/property-reading.spec.ts),
+SÖK-17. Förberedelsen använder publika HTTP-anrop mot riktig SQLite.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/property-reading.spec.ts",
+    "caseId": "SÖK-17"
+  },
+  "reference": "320 × 800; syntetiskt hushåll med sparade och föreslagna fria egenskaper, lika etiketter, tomma värden, noll och nej.",
+  "outcomes": [
+    "Tabellen visar Namn, Typ, Status och radåtgärder; detaljerna bevarar ordning och skiljer sparade värden från förslag.",
+    "Sökning på objektets egna etiketter och värden hittar rätt objekt i tabell och karta utan att ändra hushållets innehåll.",
+    "Sambandsdetaljer visar alla egenskaper även när etiketterna är lika eller värden är tomma."
+  ],
+  "evidence": [{
+    "kind": "technical",
+    "runner": "vitest",
+    "suite": "server",
+    "spec": "tests/unit/server/assistant-advanced.test.ts",
+    "title": "map and draft reads expose property identities and search own labels, values and types",
+    "purpose": "MCP-läsning mot riktig server och SQLite bevarar identiteter och ordning samt hittar objekt via etikett, värde och typ."
+  }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Tabell på en smal skärm. Läs kolumnerna och sök på
+   **ramnummer grön**. Öppna cykelns namn med tangentbordet.
+2. Läs båda Ramnummer och alla efterföljande egenskaper i ordning.
+   Läs det sparade röda och det föreslagna gröna värdet. Fäll ihop raden
+   och kontrollera att fokus stannar på objektets namn.
+3. Sök på **ramnummer blå**, öppna cykeln och läs det tomma talvärdet.
+   Rensa sökningen. Öppna **Samband för Alex** och läs båda Avtal.
+   Öppna **Sparade egenskaper i sin ordning** för den tidigare ordningen.
+4. Stäng sambanden med Escape. Välj Karta och sök på **ramnummer grön**.
+   Kontrollera att den avsedda cykeln visas som sökträff.
+
+**Förväntat resultat:**
+
+- Alla uppgifter finns i fullständiga detaljer och bryts inom skärmen.
+  Tomt utan datatyp, tomt tal, 0 och Nej är skilda tillstånd.
+- Sparade värden och förslag är tydliga. Slutdatum ändrar inte status.
+- Läsning och sökning skapar eller sparar inga ändringar.
+
+### SÖK-18: granska lika namn före uttryckligt ändpunktsval
+
+**Syfte:** Välja rätt objektidentitet efter att ha granskat kandidaterna.
+
+**Användare och förutsättningar:** Samma medlem och provhushåll som i
+SÖK-17. Behåll sparade uppgifter och utkastet. Använd en smal skärm.
+
+**Automatiskt motsvarande test:**
+[property-reading.spec.ts](../../tests/integration/property-reading.spec.ts),
+SÖK-18. HTTP-läsningen kontrollerar det valda objektets identitet.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/property-reading.spec.ts",
+    "caseId": "SÖK-18"
+  },
+  "reference": "320 × 800; två Cykel med olika Ramnummer; tangentbord och uttryckligt val efter granskning.",
+  "outcomes": [
+    "Samma objektsökning används för ändpunkter och visar kandidatens fullständiga uppgifter före valet.",
+    "Granskning väljer inte en ändpunkt; den uttryckligen valda blå cykeln används i förslaget och fokus återgår till ändpunktskontrollen."
+  ],
+  "evidence": [{
+    "kind": "technical",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/property-reading.test.tsx",
+    "title": "endpoint inspection searches property labels and values without choosing a same-name candidate at 320px",
+    "purpose": "Chromium kontrollerar formulärets tangentbord, fokus och omflöde med kontrollerat underlag; beständighet provas separat mot riktig server."
+  }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Samband för Alex och välj Nytt samband. Välj en sambandstyp.
+2. Sök på **ramnummer** vid Till objekt. Fokusera **Granska Cykel**
+   för den blå cykeln och tryck Enter. Läs Ramnummer Blå.
+3. Kontrollera att Till objekt fortfarande saknar ett val. Fokusera
+   kandidatens **Välj Cykel** och tryck Enter.
+4. Kontrollera fokus och valet i Till objekt. Lägg sambandet i utkastet
+   och stäng samband. Granska det nya sambandet före gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Lika namn visas som olika kandidater med skilda identiteter.
+- Alla kandidatens uppgifter kan läsas utan att lämna formuläret.
+- Endast det uttryckliga valet ändrar ändpunkten. Fokus återgår till
+  Till objekt och förslaget använder den blå cykeln.
+
+Faktisk uppläsning, fysiskt mobilt tangentbord, förstoring och omflöde
+med hjälpmedel behåller sina separata mänskliga prov i LISTA-09 och SÖK-16.

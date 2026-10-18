@@ -39,13 +39,20 @@ De styr ingen ekonomi eller livscykel automatiskt. Välj objektets eller
 sambandets status uttryckligen. Typens förklarande beskrivning hör till
 typdefinitionen.
 
+När du väljer sambandets ändpunkter kan du söka i objektets eget namn,
+typ, egenskapsetiketter och värden. Öppna **Granska [namn] [identitet]**
+för att läsa alla uppgifter före valet. Granskning väljer inget objekt.
+Välj rätt kandidat uttryckligen med dess valknapp eller listans alternativ.
+Lika namn har skilda identiteter.
+
 ## Läs hushållets objekt i tabellen
 
 Välj **Tabell** i verktygsfältet för att läsa underlaget utan kartgrafik.
-Tabellen visar Namn, Typ, Beskrivning och Status. Expandera objektets namn
-för hela beskrivningen, egna fält och ekonomi. Flera rader kan vara öppna
-samtidigt. Ändrade uppgifter visar **Sparat** och **Ditt förslag** intill
-varandra; symbolen ◇ märker Nytt, Ändrat och Föreslagen borttagning.
+Tabellen visar Namn, Typ, Status och radåtgärder. Expandera objektets namn
+för alla egenskaper i vald ordning, även lika etiketter och tomma värden.
+Flera rader kan vara öppna samtidigt. Ändrade uppgifter visar **Sparat**
+och **Ditt förslag** intill varandra; symbolen ◇ märker Nytt, Ändrat och
+Föreslagen borttagning.
 
 Namn sorteras från A till Ö från början. Klicka på kolumnrubriken **Namn**
 eller **Typ** för att sortera; klicka igen för att växla riktning. Pilen
@@ -66,12 +73,12 @@ tabellen i sidled; fullständiga detaljtexter bryts inom skärmbredden.
 ### Läs objekt och följ samband
 
 Expandera raden genom att välja objektets namn. Alla uppgifter visas direkt
-i raden, även dolda fält och ekonomiska uppgifter. Pennikonen bland radens
+i raden, med egenskapernas datatyper och tomma värden. Pennikonen bland radens
 åtgärder öppnar objektets redigeringsformulär. **Samband för [objektnamn]**
 är en separat åtgärd med antal
 samband. Samma sambandsdialog kan öppnas från objektets uppgifter.
-Dialogen visar riktning, båda ändpunkterna, säkerhet, egna fält och
-slutdatum, även för upphörda samband och föreslagna borttagningar.
+Dialogen visar riktning, båda ändpunkterna, status och alla egenskaper,
+även för upphörda samband och föreslagna borttagningar.
 
 Välj det andra objektets namn för att läsa det och fortsätt via dess
 samband. **Tillbaka** går ett steg i läskedjan. Du behöver inte visa
