@@ -55,13 +55,11 @@ for (const viewport of [
       await expect(editor.getByLabel('Namn', { exact: true })).toHaveValue(current.name);
       await expect(editor.getByLabel('Objekttyp', { exact: true })).toHaveValue(current.typeId);
       await expect(editor.getByLabel('Identitet', { exact: true })).toHaveValue('identified');
+      await openProperties(editor);
       await expect(
         propertyRow(editor, 'Beskrivning').getByLabel('Värde', { exact: true }),
       ).toHaveValue(String(propertyValue(current, 'Beskrivning') ?? ''));
-      await openProperties(editor);
-      await expect(
-        propertyRow(editor, 'Pris: uppgiftens säkerhet').getByLabel('Värde', { exact: true }),
-      ).toHaveValue('known');
+      await expect(propertyRow(editor, 'Pris: uppgiftens säkerhet')).toHaveCount(0);
       await expect(propertyRow(editor, 'Pris').getByLabel('Värde', { exact: true })).toHaveValue(
         '2500 SEK',
       );
@@ -69,10 +67,14 @@ for (const viewport of [
         propertyRow(editor, 'Senast uppgiven skuld: uppgiftens säkerhet').getByLabel('Värde', {
           exact: true,
         }),
-      ).toHaveValue('none');
+      ).toHaveValue('Uttryckligen inget');
       await expect(
         propertyRow(editor, 'Slutdatum: uppgiftens säkerhet').getByLabel('Värde', { exact: true }),
-      ).toHaveValue('unknown');
+      ).toHaveValue('Okänt');
+      for (const label of ['Senast uppgiven skuld', 'Slutdatum'])
+        await expect(propertyRow(editor, label).getByLabel('Värde', { exact: true })).toHaveValue(
+          '',
+        );
 
       await editor.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
       await expect(editor).not.toBeVisible();
