@@ -326,8 +326,10 @@ EXPORT-06.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/household-export-content.spec.ts",
-      "title": "technical: a full archive preserves object identities and saved, historical and private image versions",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/household-export-property-images-http.test.ts",
+      "title": "a full archive preserves object identities and saved, historical and private image versions",
       "purpose": "Separat arkivinnehåll och kontrollsummor"
     }
   ]
@@ -944,9 +946,11 @@ från EXPORT-11. Inga exportfall eller ursprungliga kontroller tas bort.
 
 Arkivets identiteter, sparkvitto, bildversioner, byteintervall,
 kontrollsummor, privata utkast och personliga placeringar kontrolleras av
-det separat märkta tekniska testet i
-[household-export-content.spec.ts](../../tests/integration/household-export-content.spec.ts).
-Det andra tekniska testet behåller HTTP-strömmens avbrott efter både
+det separat märkta tekniska servertestet i
+[household-export-property-images-http.test.ts](../../tests/unit/server/household-export-property-images-http.test.ts).
+Det andra tekniska testet i
+[household-export-content.spec.ts](../../tests/integration/household-export-content.spec.ts)
+behåller HTTP-strömmens avbrott efter både
 rolländring och återkallelse, nekad ny hämtning och tom serverkatalog.
 Det är ytterligare underlag till EXPORT-06/07, inte deras UI-motsvarigheter.
 EXPORT-10 är dessutom arkivunderlag till TEXTBREDD-05; dess egen vanliga
