@@ -16,7 +16,7 @@ const tables = [
   ['relationshipTypeFields', 'relationship_type_fields', ['fields', 'sections']],
   ['relationshipTypeLabels', 'relationship_type_labels', []],
   ['removedTypes', 'removed_type', []],
-  ['objects', 'map_object', ['financialFacts', 'customValues']],
+  ['objects', 'map_object', ['financialFacts', 'customValues', 'properties']],
   ['relationships', 'map_relationship', ['endDate', 'customValues']],
   ['drafts', 'map_draft', ['changes', 'relationships', 'objectTypes', 'relationshipTypes']],
   ['saves', 'map_save', ['receipt']],

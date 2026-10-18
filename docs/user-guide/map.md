@@ -16,6 +16,27 @@ Hjälpknappen syns även när telefonens verktyg är hopfällda. Hopplänkarna n
 verktyg,
 formulär och text med tangentbord före kartgrafiken.
 
+## Beskriv ett objekt med fria egenskaper
+
+Öppna **Fria egenskaper** i objektformuläret och välj
+**Lägg till egenskap**. Ange en egen **Etikett** och välj **Text**, **Tal**,
+**Datum** eller **Ja/nej** som datatyp. Du kan lämna en egenskap tom,
+även utan datatyp. Noll, Nej och **Tom text** är värden och skiljer sig
+från tomt. **Ange tom text** registrerar en avsiktligt tom text.
+
+Flera egenskaper kan ha samma etikett. **Töm värdet** behåller etiketten,
+datatypen och egenskapen. **Ta bort egenskapen** tar bort hela posten.
+Använd **Flytta upp** och **Flytta ned** för att välja ordning utan dragning.
+Ordningen och egenskaperna behålls när du byter objekttyp.
+
+Datatypbyte kräver ett giltigt eller tomt värde. Felaktig inmatning finns
+kvar tills du rättar den eller tömmer värdet. Hela formuläret läggs i
+**ditt utkast** och sparas tillsammans med övrigt arbete.
+
+Beskrivning, Pris och Slutdatum kan vara vanliga fria etiketter.
+De styr ingen ekonomi eller livscykel automatiskt. Välj objektets status
+uttryckligen. Typens förklarande beskrivning hör till typdefinitionen.
+
 ## Läs hushållets objekt i tabellen
 
 Välj **Tabell** i verktygsfältet för att läsa underlaget utan kartgrafik.

@@ -120,7 +120,7 @@ const collections = [
   [
     'objects',
     'SELECT * FROM map_object WHERE householdId = ? ORDER BY id',
-    ['financialFacts', 'customValues'],
+    ['financialFacts', 'customValues', 'properties'],
   ],
   [
     'relationships',

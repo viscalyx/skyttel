@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { DraftChange } from '../shared/map.js';
 import { isObjectIconId } from '../shared/object-icons.js';
+import { propertiesSchema } from '../shared/properties.js';
 import { viewSettingsSchema } from './view-settings-schema.js';
 
 const id = z.string().regex(/^[\w-]{1,128}$/);
@@ -84,6 +85,7 @@ const values = z.record(id, z.union([text, z.number(), z.boolean()]));
 const financialFacts = z.record(id, fact);
 const objectValue = z
   .object({
+    properties: propertiesSchema.optional(),
     typeId: id,
     name,
     description,
@@ -240,6 +242,7 @@ export const importContentSchema = z
           identity: z.enum(['unspecified', 'unresolved']).nullable(),
           financialFacts: financialFacts.nullable(),
           customValues: values.nullable(),
+          properties: propertiesSchema.nullable().optional(),
           lifecycle: lifecycle.nullable(),
           profileImageId: id.nullable(),
           iconId: iconId.nullable().optional(),
@@ -355,7 +358,7 @@ export const importManifestSchema = z
     version: z.literal(2),
     createdAt: text,
     householdId: id,
-    schemaVersion: z.literal(34),
+    schemaVersion: z.literal(35),
     parts: z
       .array(
         z

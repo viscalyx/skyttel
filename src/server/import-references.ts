@@ -296,12 +296,21 @@ export function validateImportReferences(
       for (const id of change.removedWithObjects ?? []) requireReference(objects.has(id));
   }
   for (const row of content.objects) {
-    const { customValues, financialFacts, profileImageId, iconId, lifecycle, identity, ...value } =
-      row;
+    const {
+      customValues,
+      financialFacts,
+      profileImageId,
+      iconId,
+      lifecycle,
+      identity,
+      properties,
+      ...value
+    } = row;
     object(
       {
         ...value,
         ...(customValues ? { customValues } : {}),
+        ...(properties ? { properties } : {}),
         ...(financialFacts ? { financialFacts } : {}),
         ...(profileImageId ? { profileImageId } : {}),
         ...(iconId ? { iconId } : {}),

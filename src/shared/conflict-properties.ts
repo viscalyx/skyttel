@@ -5,6 +5,7 @@ import type { MapState, ObjectType, ObjectValue, RelationshipValue } from './map
 import { proposedObjectTypes, proposedRelationshipTypes } from './map.js';
 import { objectIconLabel } from './object-icons.js';
 import { objectProperties } from './object-properties.js';
+import { propertiesSchema, propertyValueText } from './properties.js';
 import { relationshipLabel } from './relationship-label.js';
 
 export type ConflictSide = 'saved' | 'proposed';
@@ -77,6 +78,7 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
     conflict.kind === 'object'
       ? [
           ['name', 'Namn'],
+          ['properties', 'Fria egenskaper'],
           ['typeId', 'Objekttyp'],
           ['description', 'Beskrivning'],
           ['identity', 'Identifiering'],
@@ -381,6 +383,14 @@ export function conflictValueText(
       ? 'Den sparade profilbilden'
       : 'Din föreslagna profilbild';
   if (Array.isArray(value)) {
+    if (field.key === 'properties') {
+      const properties = propertiesSchema.safeParse(value);
+      return properties.success
+        ? properties.data
+            .map((property) => `${property.label}: ${propertyValueText(property)}`)
+            .join('; ') || 'Inga egenskaper'
+        : 'Ogiltiga egenskaper';
+    }
     const types = [
       ...state.types,
       ...state.relationshipTypes,

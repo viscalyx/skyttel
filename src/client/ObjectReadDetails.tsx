@@ -2,6 +2,7 @@ import { type FinancialFact, financialFields } from '../shared/financial-facts.j
 import type { ObjectType, ObjectValue } from '../shared/map.js';
 import { objectIconLabel } from '../shared/object-icons.js';
 import { objectProperties } from '../shared/object-properties.js';
+import { propertyValueText } from '../shared/properties.js';
 import type { HouseholdTableRow } from './HouseholdTable.js';
 import { ProfileImage } from './ProfileImage.js';
 import { customReadFields, lifecycleText } from './read-field-values.js';
@@ -60,6 +61,11 @@ export function objectPropertyValues(value: ObjectValue, type?: ObjectType) {
         value: factText(value.financialFacts?.[field.key]),
       });
   }
+  for (const property of value.properties ?? [])
+    fields.set(`property:${property.id}`, {
+      label: property.label,
+      value: propertyValueText(property),
+    });
   return fields;
 }
 

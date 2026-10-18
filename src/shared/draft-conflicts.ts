@@ -78,6 +78,10 @@ export function resolvedObjectValue(
   const lifecycle = field('lifecycle');
   const profileImageId = field('profileImageId');
   const iconId = field('iconId');
+  const properties =
+    JSON.stringify(after.properties) === JSON.stringify(before.properties)
+      ? current.properties
+      : after.properties;
   const financialFacts: FinancialFacts = {};
   for (const { key } of financialFields) {
     // The value, certainty and date describe one fact and must stay together.
@@ -115,6 +119,7 @@ export function resolvedObjectValue(
     ...(lifecycle ? { lifecycle } : {}),
     ...(profileImageId ? { profileImageId } : {}),
     ...(iconId ? { iconId } : {}),
+    ...(properties ? { properties } : {}),
     ...(Object.keys(financialFacts).length ? { financialFacts } : {}),
     ...(Object.keys(customValues).length ? { customValues } : {}),
   };

@@ -15,6 +15,7 @@ import type {
 import { objectTypePresentation } from '../shared/map.js';
 import { objectIconLabel } from '../shared/object-icons.js';
 import { builtinPresentationChanges } from '../shared/object-properties.js';
+import { propertyDifferences } from '../shared/properties.js';
 import type { TextAssistantResult, TextAssistantReview } from '../shared/text-assistant.js';
 
 function fact(value: FinancialFact | undefined) {
@@ -178,6 +179,7 @@ function details(
       current?.types.find((type) => type.id === change.before?.typeId) ??
       (change.type.id === change.before?.typeId ? change.type : undefined);
     const fields: string[] = [];
+    fields.push(...propertyDifferences(change.before?.properties, change.after?.properties));
     if (change.before?.typeId !== change.after?.typeId)
       fields.push(
         `objekttyp: ${change.before ? (beforeType?.name ?? 'okänd objekttyp') : 'ej angivet'} → ${change.after ? change.type.name : 'ej angivet'}`,

@@ -72,7 +72,17 @@ beforeEach(async () => {
       ).status,
     ).toBe(200);
   }
-  expect((await object({ customValues: { number: 5, insured: false } })).status).toBe(200);
+  expect(
+    (
+      await object({
+        customValues: { number: 5, insured: false },
+        properties: [
+          { id: 'memo', label: 'Beskrivning', kind: 'text', value: 'Behåll oberoende av typ' },
+          { id: 'empty', label: 'Tom uppgift' },
+        ],
+      })
+    ).status,
+  ).toBe(200);
   expect((await object({ name: 'Garaget', customValues: {} }, client, 'garage')).status).toBe(200);
   const state = await read();
   expect(
@@ -97,6 +107,7 @@ afterEach(() => fixture.close());
 test('resolving a type change keeps target values separate from same-ID source fields and preserves independent edits', async () => {
   const { actor } = await member();
   const edges = (await read()).relationships;
+  const properties = (await read()).objects.find(({ id }) => id === 'bike')?.properties;
   expect((await object({ typeId: 'vehicle', customValues: { number: 5 } })).status).toBe(200);
   expect(
     (await object({ name: 'Rättat namn', customValues: { number: 7, insured: false } }, actor))
@@ -129,6 +140,7 @@ test('resolving a type change keeps target values separate from same-ID source f
   ).toBe(409);
   await save('type-change');
   expect((await read()).relationships).toEqual(edges);
+  expect((await read()).objects.find(({ id }) => id === 'bike')?.properties).toEqual(properties);
 });
 
 test('the durable type-change review retains the source definition when its catalog names change', async () => {

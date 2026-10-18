@@ -50,6 +50,13 @@ ska assistenten fråga. En olöst identitet stoppar hela sparandet. Du kan
 uttryckligen välja ett ospecificerat objekt när det är det du menar.
 Okänt, uttryckligen inget och osäkert uppgivet behåller olika betydelser.
 
+Du kan be assistenten lägga till, rätta, tömma, ta bort och ordna objektets
+[fria egenskaper](map.md#beskriv-ett-objekt-med-fria-egenskaper).
+Upprepade etiketter är separata egenskaper. Beskriv vilken post du menar
+vid en rättelse. Typbyte bevarar egenskaperna och ordningen. Etiketter
+som Pris och Slutdatum får ingen automatisk ekonomisk eller datumstyrd
+verkan; ange uttryckligen om objektet är aktuellt eller upphört.
+
 ”Spara” gäller hela ditt aktuella utkast, även förslag från andra klienter.
 En tydlig rättelse och ”spara” i samma meddelande kan utföras utan ett
 extra ja bara för att rättelsen ger en ny utkastversion. ”Spara inte”

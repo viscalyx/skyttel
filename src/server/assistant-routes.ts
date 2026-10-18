@@ -22,6 +22,7 @@ import {
 import type { Auth } from './auth.js';
 import { householdAccess } from './households.js';
 import { householdMap, MapError } from './map.js';
+import { propertyWriteLimit } from './properties.js';
 
 type Connection = { id: string; userId: string; householdId: string; clientId: string };
 
@@ -156,7 +157,7 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
     return context.json({ revoked: true });
   });
 
-  routes.use('/mcp', bodyLimit({ maxSize: 16_384 }));
+  routes.use('/mcp', bodyLimit({ maxSize: propertyWriteLimit }));
   routes.all('/mcp', async (context) => {
     if (context.req.header('Origin') && context.req.header('Origin') !== origin)
       return context.json({ error: 'forbidden' }, 403);

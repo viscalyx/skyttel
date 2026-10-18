@@ -47,6 +47,7 @@ import { mapOperations } from './map-operations.js';
 import { mapTombstones } from './map-tombstones.js';
 import { objectTypes, readCustomValues } from './object-types.js';
 import { type EncodedImage, profileImages } from './profile-images.js';
+import { readProperties } from './properties.js';
 import { relationshipFormAttempts } from './relationship-form-attempts.js';
 import { relationshipTypes } from './relationship-types.js';
 import { relationships } from './relationships.js';
@@ -121,29 +122,45 @@ export function householdMap(database: Database.Database, actorId: string, house
   function object(id: string) {
     const row = database
       .prepare(
-        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId FROM map_object WHERE householdId = ? AND id = ? AND deleted = 0',
+        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId, properties FROM map_object WHERE householdId = ? AND id = ? AND deleted = 0',
       )
       .get(householdId, id);
     return row ? readObject(row) : undefined;
   }
   function readObject(row: unknown): MapObject {
-    const { identity, financialFacts, customValues, lifecycle, profileImageId, iconId, ...value } =
-      row as Omit<
-        MapObject,
-        'identity' | 'financialFacts' | 'customValues' | 'lifecycle' | 'profileImageId' | 'iconId'
-      > & {
-        identity: MapObject['identity'] | null;
-        financialFacts: string | null;
-        customValues: string | null;
-        lifecycle: MapObject['lifecycle'] | null;
-        profileImageId: string | null;
-        iconId: string | null;
-      };
+    const {
+      identity,
+      financialFacts,
+      customValues,
+      lifecycle,
+      profileImageId,
+      iconId,
+      properties,
+      ...value
+    } = row as Omit<
+      MapObject,
+      | 'identity'
+      | 'financialFacts'
+      | 'customValues'
+      | 'lifecycle'
+      | 'profileImageId'
+      | 'iconId'
+      | 'properties'
+    > & {
+      identity: MapObject['identity'] | null;
+      financialFacts: string | null;
+      customValues: string | null;
+      properties: string | null;
+      lifecycle: MapObject['lifecycle'] | null;
+      profileImageId: string | null;
+      iconId: string | null;
+    };
     return {
       ...value,
       ...(identity ? { identity } : {}),
       ...(financialFacts ? { financialFacts: JSON.parse(financialFacts) } : {}),
       ...(customValues ? { customValues: JSON.parse(customValues) } : {}),
+      ...(properties ? { properties: JSON.parse(properties) } : {}),
       ...(lifecycle ? { lifecycle } : {}),
       ...(profileImageId ? { profileImageId } : {}),
       ...(iconId ? { iconId } : {}),
@@ -188,7 +205,7 @@ export function householdMap(database: Database.Database, actorId: string, house
   function readState(): MapState {
     const removed = database
       .prepare(
-        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId FROM map_object WHERE householdId = ? AND deleted = 1 ORDER BY name, id',
+        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId, properties FROM map_object WHERE householdId = ? AND deleted = 1 ORDER BY name, id',
       )
       .all(householdId)
       .map(readObject);
@@ -220,7 +237,7 @@ export function householdMap(database: Database.Database, actorId: string, house
       types: types.read(),
       objects: database
         .prepare(
-          'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId FROM map_object WHERE householdId = ? AND deleted = 0 ORDER BY name, id',
+          'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId, properties FROM map_object WHERE householdId = ? AND deleted = 0 ORDER BY name, id',
         )
         .all(householdId)
         .map(readObject),
@@ -500,6 +517,7 @@ export function householdMap(database: Database.Database, actorId: string, house
             const type = types.effective(current).find((type) => type.id === value.typeId);
             if (!type) throw new MapError('type_conflict');
             const after = value as unknown as ObjectValue;
+            readProperties(after.properties);
             readCustomValues(after.customValues, type);
             readFinancialFacts(after.financialFacts);
             readLifecycle(after.lifecycle);
@@ -713,6 +731,10 @@ export function householdMap(database: Database.Database, actorId: string, house
           if (body.typeRevision !== undefined && body.typeRevision !== type.revision)
             throw new MapError('type_conflict');
           const customValues = readCustomValues(value.customValues, type);
+          const properties = readProperties(
+            value.properties,
+            existing ? existing.after?.properties : before?.properties,
+          );
           const financialFacts = readFinancialFacts(value.financialFacts);
           const lifecycle = readLifecycle(value.lifecycle);
           // Older/manual clients that edit other facts must retain the image.
@@ -738,6 +760,7 @@ export function householdMap(database: Database.Database, actorId: string, house
             ...(value.identity ? { identity: value.identity } : {}),
             ...(financialFacts ? { financialFacts } : {}),
             ...(customValues ? { customValues } : {}),
+            ...(properties ? { properties } : {}),
             ...(lifecycle ? { lifecycle } : {}),
             ...(profileImageId ? { profileImageId } : {}),
             ...(iconId ? { iconId } : {}),
@@ -871,6 +894,7 @@ export function householdMap(database: Database.Database, actorId: string, house
               )
                 throw new MapError('type_conflict');
               if (change.after) {
+                readProperties(change.after.properties);
                 if (change.after.iconId !== undefined && !isObjectIconId(change.after.iconId))
                   throw new MapError('invalid_request', 400);
                 readCustomValues(change.after.customValues, type);
@@ -885,6 +909,7 @@ export function householdMap(database: Database.Database, actorId: string, house
                     revision: (saved?.revision ?? 0) + 1,
                     name: change.after.name,
                     description: change.after.description,
+                    ...(change.after.properties ? { properties: change.after.properties } : {}),
                     ...(change.after.customValues
                       ? { customValues: change.after.customValues }
                       : {}),
@@ -902,8 +927,8 @@ export function householdMap(database: Database.Database, actorId: string, house
               if (after) {
                 if (!saved) tombstones.assertCreation('object', change.id);
                 database
-                  .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues, lifecycle = excluded.lifecycle, profileImageId = excluded.profileImageId, iconId = excluded.iconId, deleted = 0`)
+                  .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId, properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues, lifecycle = excluded.lifecycle, profileImageId = excluded.profileImageId, iconId = excluded.iconId, properties = excluded.properties, deleted = 0`)
                   .run(
                     after.id,
                     householdId,
@@ -917,6 +942,7 @@ export function householdMap(database: Database.Database, actorId: string, house
                     after.lifecycle ?? null,
                     after.profileImageId ?? null,
                     after.iconId ?? null,
+                    after.properties ? JSON.stringify(after.properties) : null,
                   );
               } else
                 database

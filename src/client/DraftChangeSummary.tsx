@@ -9,6 +9,7 @@ import type {
 } from '../shared/map.js';
 import { objectIconLabel } from '../shared/object-icons.js';
 import { builtinPresentationChanges } from '../shared/object-properties.js';
+import { propertyDifferences } from '../shared/properties.js';
 import { lifecycleText } from './read-field-values.js';
 import { relationshipDetails, relationshipTarget } from './relationship-description.js';
 
@@ -54,6 +55,7 @@ export function objectDifferences({ before, after, type, beforeType }: DraftChan
   );
   return [
     ...difference('Namn', before.name, after.name),
+    ...propertyDifferences(before.properties, after.properties),
     ...difference(
       'Ikon',
       objectIconLabel(before.iconId, (beforeType ?? type).name),

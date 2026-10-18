@@ -5,7 +5,7 @@ import { type APIRequestContext, request } from '@playwright/test';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { beginAssistant, callAssistant } from '../../support/assistant.js';
-import { createHousehold, signIn } from '../../support/client.js';
+import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { createInstallation, robin } from '../../support/installation.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
@@ -145,6 +145,76 @@ test('assistant icon search and set/reset proposals share the private object and
   expect(reset.error).toBe(false);
   expect(reset.value.changes[0].after).not.toHaveProperty('iconId');
   expect((await (await browser.get(path)).json()).objects).toEqual([]);
+});
+
+test('MCP allocates property identities and edits, clears, removes and orders the returned identities', async () => {
+  const token = await connect();
+  const state = await (await browser.get(path)).json();
+  const value = {
+    typeId: state.types[0].id,
+    name: 'MCP-egenskaper',
+    description: '',
+    properties: [
+      { label: 'Samma', kind: 'text', value: 'Första' },
+      { label: 'Samma', kind: 'number', value: 0 },
+      { label: 'Nej', kind: 'boolean', value: false },
+      { label: 'Datum', kind: 'date', value: '2026-01-01' },
+      { label: 'Tomt' },
+      ...Array.from({ length: 101 }, (_, index) => ({
+        label: 'Extra',
+        kind: 'text',
+        value: String(index).repeat(200),
+      })),
+    ],
+  };
+  const proposed = await tool(token, 'propose_object', {
+    version: 0,
+    contentVersion: 1,
+    id: 'properties',
+    baseRevision: null,
+    value,
+  });
+  expect(proposed.error).toBe(false);
+  const properties = proposed.value.changes[0].after.properties;
+  expect(properties).toHaveLength(106);
+  expect(new Set(properties.map((property: { id: string }) => property.id)).size).toBe(106);
+  expect(properties[1]).toMatchObject({ label: 'Samma', kind: 'number', value: 0 });
+  const changed = [
+    properties[2],
+    { ...properties[1], value: undefined },
+    { ...properties[0], label: 'Rättad', value: 'Bevarad identitet' },
+    ...properties.slice(4),
+  ];
+  const corrected = await tool(token, 'propose_object', {
+    version: 1,
+    contentVersion: 1,
+    id: 'properties',
+    baseRevision: null,
+    value: { ...value, properties: changed },
+  });
+  expect(corrected.error).toBe(false);
+  expect(corrected.value.changes[0].after.properties).toEqual(JSON.parse(JSON.stringify(changed)));
+  const before = await (await browser.get(path)).json();
+  const rejected = await callAssistant(app.origin, token, 'propose_object', {
+    version: 2,
+    contentVersion: 1,
+    id: 'properties',
+    baseRevision: null,
+    value: { ...value, properties: [{ ...properties[0], kind: 'date', value: 'invalid' }] },
+  });
+  const rejectedBody = await rejected.json();
+  expect(rejectedBody.result?.isError || rejectedBody.error).toBeTruthy();
+  expect(await (await browser.get(path)).json()).toEqual(before);
+  const saved = await tool(token, 'save_draft', {
+    version: 2,
+    contentVersion: 1,
+    operationId: 'save-properties',
+  });
+  expect(saved.error).toBe(false);
+  browser = await restartWithSession(browser, () => app.restart());
+  expect((await (await browser.get(path)).json()).objects[0].properties).toEqual(
+    JSON.parse(JSON.stringify(changed)),
+  );
 });
 
 test('explicit write consent permits proposals while an earlier read grant stays read-only', async () => {

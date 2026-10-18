@@ -4,6 +4,7 @@ import { draftConflicts } from '../shared/draft-conflicts.js';
 import { financialFields } from '../shared/financial-facts.js';
 import { proposedObjectTypes, proposedRelationshipTypes } from '../shared/map.js';
 import { isObjectIconId, searchObjectIcons } from '../shared/object-icons.js';
+import { propertyInputSchema } from '../shared/properties.js';
 import type { householdMap } from './map.js';
 import { MapError } from './map.js';
 
@@ -122,6 +123,8 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
       const known = error instanceof MapError;
       const code = known ? error.code : 'result_unknown';
       const messages: Record<string, string> = {
+        invalid_properties:
+          'Ogiltiga egenskaper. Behåll egenskapernas ID och ordning. Ange ett giltigt värde för datatypen eller töm värdet. Ditt övriga utkast finns kvar.',
         unresolved_identity:
           'Identiteten är olöst. Fråga vilken person eller sak som avses, eller låt användaren uttryckligen välja ospecificerat objekt. Inget sparades.',
         operation_pending:
@@ -279,7 +282,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'propose_object',
     {
       description:
-        'Föreslå ett nytt objekt, ersätt hela dess förslagsvärde eller föreslå vanlig borttagning med value null. Behåll alla fakta som inte ska ändras. Använd aktuella typ-ID, typrevision och stabila objekt-ID. Bara eget utkast ändras; hela utkastet returneras. iconId väljs från search_object_icons: ett ID sätter ikonen, null återgår till typens standardikon och utelämnat fält behåller valet. Bildbyte och typbyte behåller ikonen. Olöst identitet måste anges som unresolved; unspecified kräver användarens uttryckliga val.',
+        'Föreslå ett nytt objekt, ersätt hela dess förslagsvärde eller föreslå vanlig borttagning med value null. Behåll alla fakta som inte ska ändras. Använd aktuella typ-ID, typrevision och stabila objekt-ID. Bara eget utkast ändras; hela utkastet returneras. properties är hela den ordnade listan fria egenskaper: behåll returnerade egenskaps-ID vid rättelser, töm genom att utelämna value, ta bort genom att utesluta posten, ordna genom listans ordning. Utelämna id på nya egenskaper så tilldelas och returneras identiteten. Etiketter får upprepas och har ingen automatisk ekonomisk eller datumstyrd betydelse. Utelämnad properties behåller listan, [] tar bort alla. kind är text, number, date eller boolean; utelämnat kind tillåts bara utan value. 0, false och tom text är värden. Typbyte kräver giltigt eller tomt värde. iconId väljs från search_object_icons: ett ID sätter ikonen, null återgår till typens standardikon och utelämnat fält behåller valet. Bildbyte och typbyte behåller ikonen. Olöst identitet måste anges som unresolved; unspecified kräver användarens uttryckliga val.',
       inputSchema: z
         .object({
           ...proposalFields,
@@ -289,6 +292,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
               name: z.string().min(1).max(200),
               description: z.string().max(2000),
               identity: z.enum(['unspecified', 'unresolved']).optional(),
+              properties: z.array(propertyInputSchema).optional(),
               financialFacts: z
                 .object(
                   Object.fromEntries(financialFields.map(({ key }) => [key, fact.optional()])),

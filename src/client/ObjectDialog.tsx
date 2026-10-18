@@ -22,6 +22,7 @@ import { trapDialogTab } from './modal-focus.js';
 import { ObjectIconPicker } from './ObjectIconPicker.js';
 import { CustomFieldValueEditor } from './ObjectTypes.js';
 import type { ObjectEditor } from './object-editor.js';
+import { PropertyEditor } from './PropertyEditor.js';
 import './object-dialog.css';
 
 /** One complete object proposal; shared saving belongs to the household owner. */
@@ -81,6 +82,7 @@ export function ObjectDialog({
   } | null>(null);
   const busy = pending || unknown;
   const [image, setImage] = useState<File | null | undefined>();
+  const [invalidProperties, setInvalidProperties] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>();
   const imageRead = useRef(0);
   const comparable = (value: ObjectValue) => ({
@@ -91,12 +93,14 @@ export function ObjectDialog({
     lifecycle: value.lifecycle,
     profileImageId: value.profileImageId,
     iconId: value.iconId,
+    properties: value.properties,
     customValues: Object.keys(value.customValues ?? {}).length ? value.customValues : undefined,
     financialFacts: Object.keys(value.financialFacts ?? {}).length
       ? value.financialFacts
       : undefined,
   });
   const dirty =
+    invalidProperties ||
     !sameConflictValue(comparable(editor.value), comparable(initial.value)) ||
     image instanceof File;
   const needsDefinitionReview = Boolean(
@@ -507,6 +511,15 @@ export function ObjectDialog({
                 {!placedBuiltins.has('builtin:description') && description('Beskrivning')}
               </>,
               'basic',
+            )}
+            {accordion(
+              'Fria egenskaper',
+              'properties',
+              <PropertyEditor
+                value={editor.value.properties ?? []}
+                onChange={(properties) => change({ ...editor.value, properties })}
+                onInvalidChange={setInvalidProperties}
+              />,
             )}
             {presentation.sections.flatMap((customSection) => {
               const entries = properties.filter(

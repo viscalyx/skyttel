@@ -31,11 +31,16 @@ export function erasureContent(database: Database.Database, householdId: string,
   const objects: MapObject[] = (
     database
       .prepare('SELECT * FROM map_object WHERE householdId = ? ORDER BY id')
-      .all(householdId) as (MapObject & { financialFacts: string; customValues: string })[]
+      .all(householdId) as (Omit<MapObject, 'financialFacts' | 'customValues' | 'properties'> & {
+      financialFacts: string;
+      customValues: string;
+      properties: string | null;
+    })[]
   ).map((row) => ({
     ...row,
     financialFacts: row.financialFacts ? JSON.parse(row.financialFacts) : undefined,
     customValues: row.customValues ? JSON.parse(row.customValues) : undefined,
+    properties: row.properties ? JSON.parse(row.properties) : undefined,
   }));
   const relationships: MapRelationship[] = (
     database
