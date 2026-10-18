@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { availableParallelism, cpus, freemem, loadavg, totalmem } from 'node:os';
 import { join } from 'node:path';
 
@@ -120,8 +120,16 @@ function processes(previous: ResourceSample | undefined, now: number) {
           ? (100 * (cpuTicks - before.cpuTicks)) / ticks / elapsed
           : null,
     });
-    for (const child of read(`/proc/${pid}/task/${pid}/children`)?.split(/\s+/) ?? []) {
-      if (Number(child) > 0) pending.push(Number(child));
+    let tids: string[];
+    try {
+      tids = readdirSync(`/proc/${pid}/task`);
+    } catch {
+      tids = [String(pid)];
+    }
+    for (const tid of tids) {
+      for (const child of read(`/proc/${pid}/task/${tid}/children`)?.split(/\s+/) ?? []) {
+        if (Number(child) > 0) pending.push(Number(child));
+      }
     }
   }
   return result;
