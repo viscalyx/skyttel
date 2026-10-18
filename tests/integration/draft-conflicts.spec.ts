@@ -626,23 +626,25 @@ for (const width of [1440, 390]) {
       const editor = await editObjectRelationship(
         page,
         'Lo Exempel',
-        'Lo Exempel → Använder → Molnmusik (Osäkert uppgivet)',
+        'Lo Exempel → Använder → Molnmusik',
       );
       await expect(
         editor.getByRole('heading', { name: 'Redigera samband', exact: true }),
       ).toBeVisible();
-      await expect(editor.getByLabel('Från objekt')).toHaveValue('lo');
+      await expect(editor.getByLabel('Från objekt', { exact: true })).toHaveValue('lo');
       await expect(editor.getByLabel('Sambandstyp', { exact: true })).toHaveValue(edge.typeId);
       await expect(
         propertyRow(editor, 'Uppgiftens säkerhet').getByLabel('Värde', { exact: true }),
       ).toHaveValue('Osäkert uppgivet');
       await expect(
-        editor.getByLabel('Till objekt').getByRole('option', { name: /Molnmusik/ }),
+        editor
+          .getByLabel('Till objekt', { exact: true })
+          .getByRole('option', { name: /Molnmusik/ }),
       ).toHaveCount(0);
-      await editor.getByLabel('Till objekt').selectOption('garage');
+      await editor.getByLabel('Till objekt', { exact: true }).selectOption('garage');
       await stageRelationshipAndClose(page);
       const review = await openDraftReview(page);
-      await expect(review).toContainText('Lo Exempel → Använder → Garaget (osäkert uppgivet)');
+      await expect(review).toContainText('Lo Exempel → Använder → Garaget');
       await expect(review).toContainText('Privat stol');
       const corrected = await app.read();
       expect(corrected.objects).toEqual(saved.objects);
@@ -674,7 +676,7 @@ for (const width of [1440, 390]) {
       await expectSavedConflictRelationship(
         member,
         'Lo Exempel',
-        'Lo Exempel → Använder → Garaget (Osäkert uppgivet)',
+        'Lo Exempel → Använder → Garaget',
         {
           Typ: 'Använder',
           'Från objekt': 'Lo Exempel',
@@ -796,13 +798,7 @@ for (const kind of ['object-type', 'relationship-type'] as const) {
             id: type.id,
             after: expect.objectContaining({
               name: 'Rättad typ',
-              properties: expect.arrayContaining([
-                expect.objectContaining({
-                  label: 'Beskrivning',
-                  kind: 'text',
-                  value: 'Oberoende typförklaring',
-                }),
-              ]),
+              description: 'Oberoende typförklaring',
             }),
           }),
         ]);
@@ -1074,7 +1070,7 @@ for (const width of [1440, 390]) {
         member,
         2,
         ['Lo Berg', 'Robin Exempel'],
-        ['Namn: Lo Exempel.', 'Namn: Lo Berg.', 'Beskrivning: Spelar piano'],
+        ['Namn: Lo Exempel.', 'Namn: Lo Berg.', 'Beskrivning: Spelar piano (Text)'],
       );
       await conflict
         .getByRole('button', { name: 'Kontrollera om valet lades i utkastet', exact: true })
@@ -1127,8 +1123,8 @@ for (const width of [1440, 390]) {
         [
           'Namn: Lo Berg.',
           'Namn: Lo Lind.',
-          'Beskrivning: Spelar piano',
-          'Beskrivning: Spelar piano',
+          'Beskrivning: Spelar piano (Text)',
+          'Beskrivning: Spelar piano (Text)',
           'Namn: Privat stol.',
         ],
       );
@@ -1304,7 +1300,7 @@ test('UTKAST-06: deleting an object requires reviewing newly saved relationships
     await expectSavedConflictRelationship(
       member,
       'Lo Exempel',
-      'Lo Exempel → Använder → Molnmusik (Osäkert uppgivet)',
+      'Lo Exempel → Använder → Molnmusik',
       {
         Typ: 'Använder',
         'Från objekt': 'Lo Exempel',
@@ -1785,7 +1781,10 @@ test('UTKAST-09: a deleted relationship endpoint has an explicit recovery choice
     await app.installation.restart();
     await page.reload();
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
-    await expect(review).toContainText('Lo Exempel → Använder → Molnmusik (Osäkert uppgivet)');
+    await expect(review).toContainText('Lo Exempel → Använder → Molnmusik');
+    await expect(review.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
+      'Osäkert uppgivet (Text)',
+    );
     await review
       .getByRole('button', { name: 'Ta bort sambandet ur ditt utkast', exact: true })
       .click();
@@ -1947,11 +1946,11 @@ test('UTKAST-02: a stale discard preserves newer object and relationship proposa
     await newer.goto(app.installation.origin);
     const relationship = await openObjectRelationships(newer, 'Lo Lind');
     await relationship.getByRole('button', { name: 'Nytt samband', exact: true }).click();
-    await relationship.getByLabel('Från objekt').selectOption('lo');
+    await relationship.getByLabel('Från objekt', { exact: true }).selectOption('lo');
     await relationship
       .getByLabel('Sambandstyp', { exact: true })
       .selectOption(initial.relationshipTypes[0].id);
-    await relationship.getByLabel('Till objekt').selectOption('service');
+    await relationship.getByLabel('Till objekt', { exact: true }).selectOption('service');
     await stageRelationshipAndClose(newer);
     await expect(await openDraftReview(newer)).toContainText('Lo Lind → Använder → Molnmusik');
     const updated = await app.read();

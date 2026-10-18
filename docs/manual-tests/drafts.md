@@ -3323,7 +3323,8 @@ UTKAST-19.
 **Användare:** Alex och Robin i skilda sessioner i samma hushåll.
 
 **Förutsättningar:** Lo Exempel, Molnmusik och Garaget finns sparade.
-Alex föreslår Lo Exempel → Använder → Molnmusik med osäker uppgift,
+Alex föreslår Lo Exempel → Använder → Molnmusik med den fria textegenskapen
+**Uppgiftens säkerhet: Osäkert uppgivet**,
 och lägger det nya objektet Privat stol i samma privata utkast.
 Robin tar bort Molnmusik och sparar.
 
@@ -3360,7 +3361,7 @@ UTKAST-20.
 3. Stäng med Escape. Öppna Tabell → **Samband för Lo Exempel** och välj
    **Redigera samband** vid det befintliga privata sambandsförslaget.
 4. Kontrollera Från objekt, Till objekt, Sambandstyp och den fria egenskapen
-   Uppgiftens säkerhet.
+   **Uppgiftens säkerhet** med datatyp **Text** och värdet **Osäkert uppgivet**.
    Välj Garaget som Till objekt; Molnmusik ska inte kunna väljas.
 5. Välj **Lägg i utkastet** och **Stäng samband**. Läs hela utkastet:
    det rättade sambandet och Privat stol finns kvar.
