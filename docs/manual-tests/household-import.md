@@ -1690,7 +1690,8 @@ IMPORT-27. Riktig applikation och isolerad SQLite-installation används.
    hämta ZIP-filen.
 2. Öppna **Återimportera hushållet**, välj filen och **Kontrollera
    importfil**. Kontrollera att ersättning kräver bekräftelse. Markera
-   **Jag vill ersätta allt hushållsinnehåll** och välj **Ersätt hushållets
+   **Jag vill ersätta allt hushållsinnehåll med den kontrollerade filen.**
+   och välj **Ersätt hushållets
    innehåll**. Invänta beskedet att innehållet är ersatt.
 3. Efter den förberedda serveromstarten läser du in hushållet igen.
    Öppna **Skriv till Skyttel** och visa **Utkastet**. Läs orsaken

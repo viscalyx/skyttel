@@ -48,7 +48,7 @@ for (const [id, variant, width] of [
         .setInputFiles({ name: 'skyttel.zip', mimeType: 'application/zip', buffer: archive });
       await page.getByRole('button', { name: 'Kontrollera importfil', exact: true }).click();
       const confirmation = page.getByRole('checkbox', {
-        name: 'Jag vill ersätta allt hushållsinnehåll',
+        name: 'Jag vill ersätta allt hushållsinnehåll med den kontrollerade filen.',
         exact: true,
       });
       await expect(confirmation).toBeVisible();
