@@ -32,14 +32,16 @@ import { createPreparedContext, expect, test } from '../support/test.js';
 import { modelMessage, textModel } from '../support/text-model.js';
 
 async function nativeFields(root: Locator, values: readonly (readonly [string, string])[]) {
-  for (const [label, value] of values)
+  for (const [label, value] of values) {
+    const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     await expect(
       root
         .locator('dt')
         .filter({ hasText: new RegExp(`^${label}(?: · ändrat)?$`) })
         .locator('..')
         .locator('dd'),
-    ).toHaveText(new RegExp(`^(?:◇ Ditt förslag: )?${value}$`));
+    ).toHaveText(new RegExp(`^(?:◇ Ditt förslag: )?${escaped}$`));
+  }
 }
 
 async function startConversation(page: Page, origin: string) {
@@ -330,7 +332,7 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
       [
         ['Namn', 'Stolen att bevara'],
         ['Typ', 'Person'],
-        ['Beskrivning', 'Oberoende privat förslag'],
+        ['Beskrivning', 'Oberoende privat förslag (Text)'],
       ],
     );
     expect(await read()).toEqual(retained);
@@ -420,7 +422,7 @@ for (const [caseId, width] of [
           .filter({ hasText: /^Beskrivning$/ })
           .locator('..')
           .locator('dd'),
-      ).toContainText(/^(?:◇ Ditt förslag: )?Behåll denna text$/);
+      ).toHaveText(/^(?:◇ Ditt förslag: )?Behåll denna text \(Text\)$/);
       const state = await (await page.request.get(path)).json();
       expect(state.objects).toEqual([]);
       expect(state.draft.changes).toHaveLength(1);

@@ -71,7 +71,8 @@ ARBETE-01 vid 1280 × 900; de två smala fallen har egna identiteter nedan.
 
 1. Öppna **Tabell** och skriv **cykel** i **Sök objekt i tabellen**. Välj
    **Nytt objekt**,
-   skriv **Oskickad cykel** och beskrivningen **Behåll denna text**.
+   skriv **Oskickad cykel** och lägg till **Beskrivning** under
+   **Fria egenskaper**, med datatyp **Text** och värdet **Behåll denna text**.
 2. Stäng objektdialogen med krysset **Stäng objektdialogen**. Kontrollera att
    **Fortsätt redigera** är förvalt.
    Tryck Escape. Namn och beskrivning ska finnas kvar, fokus ska återgå
@@ -80,7 +81,8 @@ ARBETE-01 vid 1280 × 900; de två smala fallen har egna identiteter nedan.
    tangentbord. Kontrollera rubrikfokus och att kartans kontroller är dolda.
 4. Välj **Till startsidan** och öppna **Tabell**. Kontrollera sökningen
    **cykel**, namn **Oskickad cykel** och typ **Person**,
-   expandera raden **Oskickad cykel** och läs beskrivningen direkt i raden.
+   expandera raden **Oskickad cykel** och läs **Behåll denna text (Text)**
+   för egenskapen Beskrivning direkt i raden.
 
 **Förväntat resultat:**
 
@@ -393,7 +395,7 @@ an admitted save before reloading”.
    starta ett samtal: tidigare dialog och oskickat svar ska saknas.
    Välj uttryckligen **Nytt samtal** och kontrollera ett nytt medgivande.
    Avböj, öppna **Visa utkastet** och läs stolens fullständiga privata förslag:
-   **Stolen att bevara**, **Person**, **Oberoende privat förslag**.
+   **Stolen att bevara**, **Person**, **Oberoende privat förslag (Text)**.
    Det gamla objektformuläret
    och sparförsökets återförsök ska saknas. Stolen, dess privata förslag och
    placering är kvar; lampan är borta och Alex är fortfarande administratör.
