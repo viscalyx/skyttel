@@ -5,7 +5,8 @@ import type { MapState, ObjectType, ObjectValue, RelationshipValue } from './map
 import { proposedObjectTypes, proposedRelationships, proposedRelationshipTypes } from './map.js';
 import { objectIconLabel } from './object-icons.js';
 import { objectProperties } from './object-properties.js';
-import { propertiesSchema, propertyValueText } from './properties.js';
+import { type Property, propertiesSchema, propertyValueText } from './properties.js';
+import { mergedPropertyOrder, propertyMergeSide, propertyOrderSide } from './property-merge.js';
 import { relationshipLabel } from './relationship-label.js';
 
 export type ConflictSide = 'saved' | 'proposed';
@@ -17,6 +18,8 @@ export interface ConflictProperty {
   saved: unknown;
   proposed: unknown;
   before: unknown;
+  automatic?: ConflictSide;
+  orderLabels?: Record<string, string>;
 }
 export function sameConflictValue(left: unknown, right: unknown): boolean {
   if (left === right) return true;
@@ -40,6 +43,13 @@ export function conflictChange(state: MapState, conflict: Pick<DraftConflict, 'k
   return changes?.find((change) => change.id === conflict.id);
 }
 export function conflictPropertyValue(value: unknown, key: ConflictProperty['key']): unknown {
+  if (value && typeof value === 'object' && 'properties' in value) {
+    const properties = (value as { properties?: Property[] }).properties ?? [];
+    if (key === 'propertiesOrder') return properties.map(({ id }) => id);
+    if (key.startsWith('properties.')) return properties.find(({ id }) => id === key.slice(11));
+  }
+  if (key === 'propertiesOrder') return [];
+  if (key.startsWith('properties.')) return undefined;
   return key
     .split('.')
     .reduce<unknown>(
@@ -78,7 +88,6 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
     conflict.kind === 'object'
       ? [
           ['name', 'Namn'],
-          ['properties', 'Fria egenskaper'],
           ['typeId', 'Objekttyp'],
           ['description', 'Beskrivning'],
           ['identity', 'Identifiering'],
@@ -88,7 +97,6 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
         ]
       : conflict.kind === 'relationship'
         ? [
-            ['properties', 'Fria egenskaper'],
             ['typeId', 'Sambandstyp'],
             ['sourceId', 'Från objekt'],
             ['targetId', 'Till objekt'],
@@ -153,37 +161,103 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
       entries.push([`customValues.${key}`, sideLabels.proposed]);
     }
   }
-  return entries
-    .map(([key, label]) => ({
-      key,
-      label: labels.get(key)?.proposed ?? label,
-      ...(labels.has(key) ? { labels: labels.get(key) } : {}),
-      saved: conflictPropertyValue(conflict.current, key),
-      proposed: conflictPropertyValue(change.after, key),
-      before: conflictPropertyValue(change.before, key),
-    }))
-    .filter(
-      (field) =>
-        field.saved !== undefined || field.proposed !== undefined || field.before !== undefined,
+  const propertyFields: ConflictProperty[] = [];
+  if (conflict.kind === 'object' || conflict.kind === 'relationship') {
+    const before =
+      change.before && 'properties' in change.before ? (change.before.properties ?? []) : [];
+    const saved = 'properties' in conflict.current ? (conflict.current.properties ?? []) : [];
+    const proposed = 'properties' in change.after ? (change.after.properties ?? []) : [];
+    const ids = [...new Set([...before, ...saved, ...proposed].map(({ id }) => id))];
+    const [previousValues, savedValues, proposedValues] = [before, saved, proposed].map(
+      (properties) => new Map(properties.map((property) => [property.id, property])),
     );
+    for (const [index, id] of ids.entries()) {
+      const previous = previousValues.get(id);
+      const current = savedValues.get(id);
+      const after = proposedValues.get(id);
+      const label = (after ?? current ?? previous)?.label ?? id;
+      const identify = (label: string) => `${label} · egenskap ${index + 1}`;
+      propertyFields.push({
+        key: `properties.${id}`,
+        label: identify(label),
+        labels: {
+          saved: identify(current?.label ?? label),
+          proposed: identify(after?.label ?? label),
+        },
+        before: previous,
+        saved: current,
+        proposed: after,
+        automatic: propertyMergeSide(previous, current, after),
+      });
+    }
+    if (ids.length) {
+      const orders = [before, saved, proposed].map((properties) => properties.map(({ id }) => id));
+      propertyFields.push({
+        key: 'propertiesOrder',
+        label: 'Egenskapernas ordning',
+        before: orders[0],
+        saved: orders[1],
+        proposed: orders[2],
+        orderLabels: Object.fromEntries(ids.map((id, index) => [id, `Egenskap ${index + 1}`])),
+        automatic: propertyOrderSide(orders[0], orders[1], orders[2]),
+      });
+    }
+  }
+  return [
+    ...propertyFields,
+    ...entries
+      .map(([key, label]) => ({
+        key,
+        label: labels.get(key)?.proposed ?? label,
+        ...(labels.has(key) ? { labels: labels.get(key) } : {}),
+        saved: conflictPropertyValue(conflict.current, key),
+        proposed: conflictPropertyValue(change.after, key),
+        before: conflictPropertyValue(change.before, key),
+      }))
+      .filter(
+        (field) =>
+          field.saved !== undefined || field.proposed !== undefined || field.before !== undefined,
+      ),
+  ];
 }
 /** Present each property under its actual side's definition without changing its identity. */
 export function conflictPropertyLabel(field: ConflictProperty, side?: ConflictSide): string {
-  return side ? (field.labels?.[side] ?? field.label) : field.label;
+  const selected = side ?? field.automatic;
+  return selected ? (field.labels?.[selected] ?? field.label) : field.label;
 }
 export function combineConflictProperties(fields: ConflictProperty[], choices: ConflictChoices) {
   const result: Record<string, unknown> = {};
+  const propertyValues = new Map<string, Property>();
   for (const field of fields) {
     const same = sameConflictValue(field.saved, field.proposed);
-    if (!same && !choices[field.key]) return null;
-    const value = same || choices[field.key] === 'saved' ? field.saved : field.proposed;
+    if (!same && !field.automatic && !choices[field.key]) return null;
+    const side = field.automatic ?? choices[field.key];
+    const value = same || side === 'saved' ? field.saved : field.proposed;
+    if (field.key === 'propertiesOrder') continue;
     if (value === undefined) continue;
+    if (field.key.startsWith('properties.')) {
+      propertyValues.set(field.key.slice(11), value as Property);
+      continue;
+    }
     const [group, key] = field.key.split('.');
     if (key) {
       const nested = (result[group] ?? {}) as Record<string, unknown>;
       nested[key] = value;
       result[group] = nested;
     } else result[group] = value;
+  }
+  const order = fields.find((field) => field.key === 'propertiesOrder');
+  if (order) {
+    result.properties = mergedPropertyOrder(
+      order.before as string[],
+      order.saved as string[],
+      order.proposed as string[],
+      [...propertyValues.keys()],
+      order.automatic ?? choices.propertiesOrder ?? 'saved',
+    ).flatMap((id) => {
+      const property = propertyValues.get(id);
+      return property ? [property] : [];
+    });
   }
   return result;
 }
@@ -336,6 +410,16 @@ export function conflictValueText(
   field: ConflictProperty,
   value: unknown,
 ): string {
+  if (field.key.startsWith('properties.'))
+    return value
+      ? `${(value as Property).label}: ${propertyValueText(value as Property)}`
+      : 'Borttaget';
+  if (field.key === 'propertiesOrder' && Array.isArray(value)) {
+    return (
+      value.map((id, index) => `${index + 1}. ${field.orderLabels?.[id] ?? id}`).join(' → ') ||
+      'Inga egenskaper'
+    );
+  }
   if (field.key === 'relationship' && value && typeof value === 'object')
     return relationshipLabel(
       value as RelationshipValue,

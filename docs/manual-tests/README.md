@@ -689,7 +689,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   behåller alla påståenden; tre integrationsexekveringar blir tre
   serverexekveringar.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
-  samt rättning eller kastande av bevarade sambandsförslag efter någon
+  samt samtidiga fria egenskapsändringar med separata egenskaps- och
+  ordningsval, rättning eller kastande av bevarade sambandsförslag efter någon
   annans ändpunktsborttagning, med blockering av hela sparandet,
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
   separata bredd-, tema- och återfokusfall med

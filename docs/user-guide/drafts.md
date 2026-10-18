@@ -115,11 +115,25 @@ namn. **Granska konflikter** öppnas med fokus på rubriken från både karta
 och tabell, även när sökningen döljer det berörda objektet.
 
 Välj posten i **Alla konflikter**. Jämförelsen visar **Sparat i kartan nu**
-och **Ditt förslag**. Varje egenskap som skiljer sig behöver ett aktivt
-val. Rader med ram går att välja. Klicka på raden på den sida du vill
+och **Ditt förslag**. Motstridiga ändringar behöver ett aktivt val.
+Rader med ram går att välja. Klicka på raden på den sida du vill
 använda, eller välj den med Tab och Enter. Valda värden har starkare ramar.
 Du kan kombinera egenskaper från båda sidorna. Identiska värden visas som
 vanlig text och behöver inget val. Egna fältnamn visas som sina vanliga etiketter.
+
+Ändringar av olika fria egenskaper kombineras, även om etiketterna är lika.
+De visas som **Oberoende ändring · kombineras** och ingår i resultatet utan
+extra val. Lika etiketter skiljs åt med egenskapens nummer i jämförelsen.
+För en motstridig egenskap visas även tidigare innehåll. Etikett, datatyp
+och värde väljs tillsammans. Om någon tar bort en egenskap som den andra
+ändrar behöver du välja mellan borttagningen och den ändrade egenskapen.
+
+Samtidiga tillägg finns kvar med skilda identiteter. Tillägg på samma plats
+får en beständig ordning; varje användares inbördes ordning på sina egna
+tillägg behålls. Motstridiga ändringar av befintliga egenskapers ordning
+kräver ett val under **Egenskapernas ordning**. Ordningens val tar aldrig
+bort egenskaper som ingår i kombinationen. Läs hela **Efter dina val**
+innan du bekräftar.
 
 **Efter dina val** visar den exakta kombinationen och vilken sida varje
 valt värde kommer från. **Lägg valen i utkastet**

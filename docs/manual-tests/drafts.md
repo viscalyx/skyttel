@@ -8214,6 +8214,71 @@ integrationstestet kontrollerar det synliga rättningsflödet.
 mobilt tangentbord, förstoring och omflöde bedöms i områdets befintliga
 hjälpmedelsfall. Automatiken utgör inget mänskligt godkännande.
 
+### UTKAST-153: skilj lika etiketter åt och kombinera egenskaper och ordning
+
+**Syfte:** Välja rätt uppgift utan att förlora oberoende ändringar.
+
+**Användare:** Alex och Robin i samma syntetiska hushåll.
+
+**Förutsättningar:** Skapa Cykeln med tre fria egenskaper, alla med
+etiketten Samma: ett tal med värdet 1, en text med värdet Tidigare och
+ett ja/nej-värde Ja, i den ordningen. Spara kartan.
+
+**Separat förberedelse:** Alex ändrar talets etikett till Egen etikett,
+flyttar ja/nej-egenskapen före texten och lägger till Eget tillägg utan
+datatyp. Lägg ändringarna i utkastet utan att spara. Robin ändrar talets
+datatyp till ja/nej och värdet till Nej, texten till Sparad ändring och
+det ursprungliga ja/nej-värdet till Nej. Robin flyttar texten före den
+första egenskapen, lägger till Annans tillägg utan datatyp och sparar.
+Återvänd till Alex och försök spara; inget från det försöket får sparas.
+
+**Automatiskt motsvarande test:**
+[property-conflicts.test.tsx](../../tests/browser/property-conflicts.test.tsx),
+UTKAST-153, använder riktig Chromium och produktionsstilar med styrda
+svar för konfliktvalet. Beständigt sparande och omstart verifieras separat
+genom HTTP med två autentiserade användare, riktig server och SQLite.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": { "runner": "vitest", "suite": "browser", "spec": "tests/browser/property-conflicts.test.tsx", "caseId": "UTKAST-153" },
+  "reference": "320 × 900, Chromium, ljust tema. Tangentbordsval av atomärt egenskapsinnehåll och motstridig ordning. Styrd konfliktgräns; ingen faktisk lagring i webbläsarfallet.",
+  "outcomes": ["Lika etiketter skiljs åt med egenskapens nummer och jämförelsen visar tidigare, sparat och föreslaget innehåll.", "Oberoende ändringar kombineras utan extra val. Både egenskapsvalet och ordningsvalet krävs före bekräftelse.", "Förhandsvisningen behåller båda användarnas tillägg och oberoende värden. Enter och mellanslag fungerar, fokus börjar på rubriken och resultatet meddelas utan gemensamt sparande."],
+  "evidence": [
+    { "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/property-conflicts-http.test.ts", "title": "independent equal-label property edits and additions combine for objects and relationships and persist after restart", "purpose": "Separata identiteter, lika etiketter, beständig ordning efter sparande och SQLite-omstart för objekt och samband." },
+    { "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/property-conflicts-http.test.ts", "title": "atomic property and delete-edit choices preserve independent work and require fresh approval for both entity kinds", "purpose": "Etikett, datatyp och värde som en enhet, borttagning mot ändring, korrekt upphovsperson och blockerat helt sparande utan ändring av historiken." },
+    { "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/property-conflicts-http.test.ts", "title": "contradictory property orders require a choice and preserve every selected identity and independent value", "purpose": "Uttryckligt ordningsval behåller oberoende innehåll och alla valda identiteter på både objekt och samband." }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Visa hushållet i 320 pixlars bredd. Öppna **1 konflikt i ditt utkast**.
+   Kontrollera fokus på rubriken **Granska konflikter**.
+2. Jämför **Sparat i kartan nu** med **Ditt förslag**. Läs egenskapens
+   nummer, tidigare innehåll och hela värdet med datatyp. Kontrollera
+   att den andra egenskapens Sparad ändring kombineras utan extra val.
+3. Nå **Egen etikett · egenskap 1** på förslagssidan med Tab och välj med
+   Enter. Kontrollera att **Lägg valen i utkastet** fortfarande är spärrad.
+4. Nå **Egenskapernas ordning** på förslagssidan och välj med mellanslag.
+   Läs resultatet: Egen etikett har talet 1, texten Sparad ändring och
+   det ursprungliga ja/nej-värdet Nej finns kvar, liksom båda tilläggen.
+5. Bekräfta **Lägg valen i utkastet** med Enter. Läs beskedet att valen
+   finns i utkastet och att kartan sparas separat. Stäng med Escape.
+
+**Förväntat resultat:** Numren skiljer lika etiketter åt. Varje verkligt
+motstridigt val krävs, och oberoende innehåll behålls. Dialogen fungerar
+utan dragning, tal eller vågrät rullning. Bekräftelsen ändrar utkastet;
+ett aktuellt uttryckligt sparbesked behövs för att ändra kartan.
+
+**Kvarstående mänsklig observation:** Faktisk skärmläsaruppläsning,
+fysiskt mobilt tangentbord, kontrast och förstoring bedöms i områdets
+hjälpmedelsfall. Automatiken utgör inget mänskligt godkännande.
+
 ## Avvecklat tekniskt underlag
 
 I [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts)

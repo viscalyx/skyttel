@@ -19,6 +19,7 @@ import {
   proposedRelationships,
   proposedRelationshipTypes,
 } from './map.js';
+import { resolvedProperties } from './property-merge.js';
 import { resolveTypeDefinition } from './type-definition.js';
 
 export type DraftConflict = {
@@ -79,9 +80,9 @@ export function resolvedObjectValue(
   const profileImageId = field('profileImageId');
   const iconId = field('iconId');
   const properties =
-    JSON.stringify(after.properties) === JSON.stringify(before.properties)
-      ? current.properties
-      : after.properties;
+    before.properties || current.properties || after.properties
+      ? resolvedProperties(before.properties, current.properties, after.properties)
+      : undefined;
   const financialFacts: FinancialFacts = {};
   for (const { key } of financialFields) {
     // The value, certainty and date describe one fact and must stay together.
@@ -150,9 +151,9 @@ export function resolvedRelationshipValue(
   const lifecycle = after.lifecycle === before.lifecycle ? current.lifecycle : after.lifecycle;
   const endDate = sameFact(after.endDate, before.endDate) ? current.endDate : after.endDate;
   const properties =
-    JSON.stringify(after.properties) === JSON.stringify(before.properties)
-      ? current.properties
-      : after.properties;
+    before.properties || current.properties || after.properties
+      ? resolvedProperties(before.properties, current.properties, after.properties)
+      : undefined;
   return {
     ...(properties ? { properties } : {}),
     ...(customValues && Object.keys(customValues).length ? { customValues } : {}),

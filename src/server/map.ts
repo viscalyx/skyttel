@@ -482,7 +482,10 @@ export function householdMap(database: Database.Database, actorId: string, house
             !fields.length ||
             !value ||
             fields.some(
-              (field) => !sameConflictValue(field.saved, field.proposed) && !choices[field.key],
+              (field) =>
+                !sameConflictValue(field.saved, field.proposed) &&
+                !field.automatic &&
+                !choices[field.key],
             )
           )
             throw new MapError('resolution_choices_required', 400);
@@ -491,7 +494,8 @@ export function householdMap(database: Database.Database, actorId: string, house
           if (
             fields.every(
               (field) =>
-                sameConflictValue(field.saved, field.proposed) || choices[field.key] === 'saved',
+                sameConflictValue(field.saved, field.proposed) ||
+                (field.automatic ?? choices[field.key]) === 'saved',
             )
           ) {
             if (conflict.kind === 'object')

@@ -211,7 +211,9 @@ export function ConflictDialog({
     ? conflictRemovalProperties(comparison, conflict)
     : conflictProperties(comparison, conflict);
   const selected = choices[key] ?? {};
-  const differing = fields.filter((field) => !sameConflictValue(field.saved, field.proposed));
+  const differing = fields.filter(
+    (field) => !sameConflictValue(field.saved, field.proposed) && !field.automatic,
+  );
   const remaining = differing.filter((field) => !selected[field.key]).length;
   const value = combineConflictProperties(fields, selected);
   const invalid = removal
@@ -382,7 +384,8 @@ export function ConflictDialog({
       comparison,
       discard: fields.every(
         (field) =>
-          sameConflictValue(field.saved, field.proposed) || selected[field.key] === 'saved',
+          sameConflictValue(field.saved, field.proposed) ||
+          (field.automatic ?? selected[field.key]) === 'saved',
       ),
     });
   }
@@ -619,7 +622,7 @@ export function ConflictDialog({
                     <div className="cp-pick-fields">
                       {fields.map((field) => {
                         const same = sameConflictValue(field.saved, field.proposed);
-                        if (same)
+                        if (same || field.automatic)
                           return (
                             <div key={field.key} className="cp-field-same">
                               <span className="cp-field-name">
@@ -628,7 +631,11 @@ export function ConflictDialog({
                               <span className="cp-field-value">
                                 {propertyValue(field, field[side])}
                               </span>
-                              <span className="cp-tag">Samma värde · inget val behövs</span>
+                              <span className="cp-tag">
+                                {field.automatic && !same
+                                  ? 'Oberoende ändring · kombineras'
+                                  : 'Samma värde · inget val behövs'}
+                              </span>
                             </div>
                           );
                         const overlap =
@@ -683,6 +690,10 @@ export function ConflictDialog({
                             <span className="cp-field-value">
                               {propertyValue(field, field[side])}
                             </span>
+                            {(field.key.startsWith('properties.') ||
+                              field.key === 'propertiesOrder') && (
+                              <span>Tidigare: {propertyValue(field, field.before)}</span>
+                            )}
                           </button>
                         );
                       })}
@@ -713,11 +724,15 @@ export function ConflictDialog({
                         <div key={field.key}>
                           <dt>{conflictPropertyLabel(field, selected[field.key])}</dt>
                           <dd>
-                            {sameConflictValue(field.saved, field.proposed)
-                              ? propertyValue(field, field.saved)
-                              : selected[field.key]
-                                ? propertyValue(field, field[selected[field.key]])
-                                : 'Välj ett värde'}
+                            {value
+                              ? propertyValue(field, conflictPropertyValue(value, field.key))
+                              : field.automatic
+                                ? propertyValue(field, field[field.automatic])
+                                : sameConflictValue(field.saved, field.proposed)
+                                  ? propertyValue(field, field.saved)
+                                  : selected[field.key]
+                                    ? propertyValue(field, field[selected[field.key]])
+                                    : 'Välj ett värde'}
                             {!sameConflictValue(field.saved, field.proposed) &&
                               selected[field.key] && (
                                 <small> · {sideNames[selected[field.key]]}</small>
