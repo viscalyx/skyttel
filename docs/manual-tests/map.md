@@ -141,12 +141,13 @@ identified without changing its links”.
 2. Stäng textvyn, välj **Redigera Betalkonto** och kontrollera identiteten.
    Ändra den till
    **Ospecificerat objekt** och lägg ändringen i utkastet.
-3. Lägg till abonnemanget **Familjemusik** och sambandet
+3. Lägg till abonnemanget **Familjemusik** utan fria egenskaper och sambandet
    **Familjemusik → Betalas med → Betalkonto**. Spara hela utkastet.
 4. Ladda om sidan och välj **Redigera Betalkonto**. Kontrollera att det
    fortfarande
    är ospecificerat. Välj **Identifierat objekt**, ändra namnet till
-   **Hushållskontot** och beskrivningen till **Gemensamt bankkonto**.
+   **Hushållskontot** och lägg till den fria textegenskapen
+   **Beskrivning: Gemensamt bankkonto**.
    Lägg ändringen i utkastet och spara.
 5. Ladda om sidan, läs **Samband för Familjemusik**, stäng samband och
    välj **Redigera Hushållskontot**.
@@ -306,17 +307,21 @@ deleting a relationship”.
 
 1. Lägg till tjänstekontot **Musikkonto** och två separata objekt av typen
    **E-postadress**, båda med namnet `familj@example.test`. Ge dem
-   beskrivningarna **Första adressobjektet** och **Andra adressobjektet**.
+   de fria textegenskaperna **Beskrivning: Första adressobjektet** och
+   **Beskrivning: Andra adressobjektet**.
 2. Skapa **Musikkonto → Inloggningsadress** med det första adressobjektet
-   som mål. Använd beskrivningen och identiteten i väljaren för att skilja
+   som mål. Använd identiteten i väljaren för att skilja
    adresserna åt. Skapa **Musikkonto → Kontaktadress** till det andra
    adressobjektet. Spara hela utkastet.
 3. Öppna **Samband för Musikkonto → Nytt samband** och försök lägga samma
    inloggningssamband till det första adressobjektet i utkastet igen.
    Kontrollera statusen och antalet samband. Välj **Avbryt redigeringen**,
    bekräfta **Kasta ändringarna och fortsätt** och stäng samband.
-4. Öppna inloggningssambandet och kontrollera dess mål. Byt till det
-   andra adressobjektet och välj **Avbryt redigeringen** följt av
+4. Öppna inloggningssambandet och kontrollera dess mål. Under
+   **Till objekt: välj eller granska**, öppna **Granska** `familj@example.test`
+   med det andra objektets identitet. Läs **Andra adressobjektet (Text)**
+   under **Beskrivning** och välj **Välj** `familj@example.test` med samma
+   identitet. Välj **Avbryt redigeringen** följt av
    **Kasta ändringarna och fortsätt**. Stäng samband, öppna samma
    redigering igen och kontrollera målet.
 5. Byt åter till det andra adressobjektet, lägg sambandet i utkastet,
@@ -326,8 +331,9 @@ deleting a relationship”.
 
 **Förväntat resultat:**
 
-- Väljarna skiljer adresserna åt med beskrivning och identitet. Båda
-  adressobjekten finns kvar som separata objekt.
+- Väljarna visar separata objektidentiteter. **Granska** visar varje objekts
+  fria beskrivning innan **Välj** byter mål. Båda adressobjekten finns kvar
+  som separata objekt.
 - Dubblettförsöket visar **Sambandet finns redan**. Det finns fortfarande
   två samband och inget nytt sambandsförslag i utkastet.
 - Stängning utan att skicka behåller första adressobjektet som mål.

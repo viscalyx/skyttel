@@ -32,11 +32,11 @@ async function openMap(page: Page) {
   return { installation, read };
 }
 
-async function addObject(page: Page, name: string, type: string, description = '') {
+async function addObject(page: Page, name: string, type: string, description?: string) {
   await openNewObject(page);
   await page.getByLabel('Namn', { exact: true }).fill(name);
   await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: type });
-  await setProperty(page, 'Beskrivning', description);
+  if (description !== undefined) await setProperty(page, 'Beskrivning', description);
   await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
 }
 
@@ -47,12 +47,12 @@ async function addRelationship(page: Page, source: string, type: string, target:
   const id = target.includes('[')
     ? target.match(/\[([^\]]+)\]$/)?.[1]
     : await page
-        .getByLabel('Till objekt')
+        .getByLabel('Till objekt', { exact: true })
         .getByRole('option')
         .filter({ hasText: `${target.split(' (')[0]} ·` })
         .getAttribute('value');
   expect(id).toEqual(expect.any(String));
-  await page.getByLabel('Till objekt').selectOption(id ?? '');
+  await page.getByLabel('Till objekt', { exact: true }).selectOption(id ?? '');
   await stageRelationshipAndClose(page);
 }
 
@@ -377,14 +377,26 @@ test('KARTA-03: equal object names stay distinct when correcting and deleting a 
 
     const loginName = 'Musikkonto → Inloggningsadress → familj@example.test';
     let editor = await editObjectRelationship(page, 'Musikkonto', loginName);
-    await expect(editor.getByLabel('Till objekt')).toHaveValue(first ?? '');
+    await expect(editor.getByLabel('Till objekt', { exact: true })).toHaveValue(first ?? '');
     const secondOption = editor
-      .getByLabel('Till objekt')
+      .getByLabel('Till objekt', { exact: true })
       .getByRole('option')
-      .filter({ hasText: 'Andra adressobjektet' });
-    await expect(secondOption).toContainText('Andra adressobjektet');
+      .filter({ hasText: `[${second}]` });
+    await expect(secondOption).toHaveText(`familj@example.test · E-postadress [${second}]`);
     await expect(secondOption).toHaveAttribute('value', second ?? 'missing');
-    await editor.getByLabel('Till objekt').selectOption(second ?? '');
+    const candidates = editor.getByRole('region', {
+      name: 'Till objekt: välj eller granska',
+      exact: true,
+    });
+    const secondCandidate = candidates
+      .getByText(`Granska familj@example.test [${second}]`, { exact: true })
+      .locator('..');
+    await secondCandidate.locator('summary').click();
+    await expect(secondCandidate).toContainText('Beskrivning');
+    await expect(secondCandidate).toContainText('Andra adressobjektet (Text)');
+    await secondCandidate
+      .getByRole('button', { name: `Välj familj@example.test [${second}]`, exact: true })
+      .click();
     await editor.getByRole('button', { name: 'Avbryt redigeringen', exact: true }).click();
     await page
       .getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true })
@@ -393,13 +405,13 @@ test('KARTA-03: equal object names stay distinct when correcting and deleting a 
     expect((await read()).relationships).toEqual(saved.relationships);
     await editor.getByRole('button', { name: 'Stäng samband', exact: true }).click();
     editor = await editObjectRelationship(page, 'Musikkonto', loginName);
-    await expect(editor.getByLabel('Till objekt')).toHaveValue(first ?? '');
-    await editor.getByLabel('Till objekt').selectOption(second ?? '');
+    await expect(editor.getByLabel('Till objekt', { exact: true })).toHaveValue(first ?? '');
+    await editor.getByLabel('Till objekt', { exact: true }).selectOption(second ?? '');
     await stageRelationshipAndClose(page);
     await save(page);
     await page.reload();
     editor = await editObjectRelationship(page, 'Musikkonto', loginName);
-    await expect(editor.getByLabel('Till objekt')).toHaveValue(second ?? '');
+    await expect(editor.getByLabel('Till objekt', { exact: true })).toHaveValue(second ?? '');
     const corrected = await read();
     expect(corrected.objects).toEqual(saved.objects);
     expect(
@@ -473,7 +485,9 @@ test('KARTA-04: object deletion reviews incoming and outgoing links and can be d
     await relationshipForm.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     for (const field of ['Från objekt', 'Till objekt'])
       await expect(
-        relationshipForm.getByLabel(field).getByRole('option', { name: /Musikkonto/ }),
+        relationshipForm
+          .getByLabel(field, { exact: true })
+          .getByRole('option', { name: /Musikkonto/ }),
       ).toHaveCount(0);
     await relationshipForm
       .getByRole('button', { name: 'Avbryt redigeringen', exact: true })
