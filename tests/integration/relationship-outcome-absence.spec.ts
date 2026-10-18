@@ -159,7 +159,7 @@ test('SAMBAND-15: absent stale editing cannot overwrite or remove a later same-o
     await expect(object).not.toBeVisible();
     const current = await read();
     expect(current.draft.relationships?.[0].after?.knowledge).toBe('unresolved');
-    expect(current.draft.relationships?.[0].after?.targetId).toBeNull();
+    expect(current.draft.relationships?.[0].after?.targetId).toBe('bicycle');
     expect(current.draft.changes.some((change) => change.after?.name === 'Lo')).toBe(true);
     expect(current.draft.version).toBeGreaterThan(originalSubmission?.version as number);
     const checked = await page.request.get(
@@ -200,7 +200,7 @@ test('SAMBAND-15: absent stale editing cannot overwrite or remove a later same-o
     await expect(dialog.getByLabel('Uppgiftens säkerhet', { exact: true })).toHaveValue(
       'unresolved',
     );
-    await expect(dialog.getByLabel('Till objekt', { exact: true })).not.toBeVisible();
+    await expect(dialog.getByLabel('Till objekt', { exact: true })).toHaveValue('bicycle');
     await expect(
       dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }),
     ).toBeEnabled();

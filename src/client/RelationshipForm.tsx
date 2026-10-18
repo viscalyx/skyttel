@@ -107,9 +107,7 @@ export function RelationshipForm({
     return (labelCounts.get(label) ?? 0) > 1 ? `${label} [${object.id}]` : label;
   };
   const source = objects.get(value.sourceId)?.name ?? 'Välj frånobjekt';
-  const target = value.targetId
-    ? (objects.get(value.targetId)?.name ?? 'Välj tillobjekt')
-    : knowledgeLabels[value.knowledge];
+  const target = objects.get(value.targetId ?? '')?.name ?? 'Välj tillobjekt';
   const label = type?.forwardLabel || type?.name || 'välj sambandstyp';
   async function submit(remove = false) {
     if (lock.current || stale || (!remove && !validate())) return;
@@ -318,9 +316,7 @@ export function RelationshipForm({
                 setValue({
                   ...value,
                   knowledge,
-                  targetId: ['known', 'uncertain'].includes(knowledge)
-                    ? (value.targetId ?? '')
-                    : null,
+                  targetId: value.targetId ?? '',
                 });
               }}
             >
@@ -357,45 +353,41 @@ export function RelationshipForm({
           >
             Byt riktning
           </button>
-          {['known', 'uncertain'].includes(value.knowledge) && (
-            <>
-              <div className="relationship-form-wide">
-                {' '}
-                <label htmlFor={`${prefix}-search`}>Sök det andra objektet</label>
-                <input
-                  id={`${prefix}-search`}
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </div>
-              <div className="relationship-form-wide">
-                {' '}
-                <label htmlFor={`${prefix}-target`}>Till objekt</label>
-                <select
-                  id={`${prefix}-target`}
-                  required
-                  value={value.targetId ?? ''}
-                  onChange={(event) => setValue({ ...value, targetId: event.target.value })}
-                >
-                  <option value="">Välj objekt</option>
-                  {choices
-                    .filter(
-                      (object) =>
-                        object.id === value.targetId ||
-                        description(object)
-                          .toLocaleLowerCase('sv')
-                          .includes(query.toLocaleLowerCase('sv')),
-                    )
-                    .map((object) => (
-                      <option key={object.id} value={object.id}>
-                        {description(object)}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            </>
-          )}
+          <div className="relationship-form-wide">
+            {' '}
+            <label htmlFor={`${prefix}-search`}>Sök det andra objektet</label>
+            <input
+              id={`${prefix}-search`}
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
+          <div className="relationship-form-wide">
+            {' '}
+            <label htmlFor={`${prefix}-target`}>Till objekt</label>
+            <select
+              id={`${prefix}-target`}
+              required
+              value={value.targetId ?? ''}
+              onChange={(event) => setValue({ ...value, targetId: event.target.value })}
+            >
+              <option value="">Välj objekt</option>
+              {choices
+                .filter(
+                  (object) =>
+                    object.id === value.targetId ||
+                    description(object)
+                      .toLocaleLowerCase('sv')
+                      .includes(query.toLocaleLowerCase('sv')),
+                )
+                .map((object) => (
+                  <option key={object.id} value={object.id}>
+                    {description(object)}
+                  </option>
+                ))}
+            </select>
+          </div>
           <div className="relationship-form-wide">
             {' '}
             <CustomFieldsEditor

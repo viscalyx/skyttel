@@ -36,7 +36,7 @@ async function addRelationship(
   sourceName: string,
   sourceId: string,
   type: string,
-  targetId: string | null,
+  targetId: string,
   knowledge: Knowledge = 'known',
 ) {
   const dialog = await openObjectRelationships(page, sourceName);
@@ -100,7 +100,7 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
     }
     await page.goto(installation.origin);
     await openTable(page);
-    const relationships: [string, string, string | null, Knowledge][] = [
+    const relationships: [string, string, string, Knowledge][] = [
       ['home-rent', 'Gäller', 'home', 'known'],
       ['garage-rent', 'Gäller', 'garage', 'known'],
       ['electricity', 'Gäller', 'home', 'known'],
@@ -124,10 +124,8 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
       ['vehicle', 'Äger', 'kim', 'known'],
       ['lo', 'Använder', 'vehicle', 'uncertain'],
       ['kim', 'Betalar', 'installment', 'known'],
-      ['home', 'Används av', null, 'unknown'],
-      ['garage', 'Används av', null, 'none'],
       ['garage-rent', 'Betalas med', 'bank', 'known'],
-      ['home-rent', 'Betalas med', null, 'unresolved'],
+      ['home-rent', 'Betalas med', 'bank', 'unresolved'],
     ];
     for (const [sourceId, type, targetId, knowledge] of relationships) {
       const source = objects.find(([id]) => id === sourceId);
@@ -139,8 +137,6 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
 
     await openTable(page);
     const review = await openDraftReview(page);
-    await expect(review).toContainText('Björkbacken → Används av → Okänt');
-    await expect(review).toContainText('Garaget → Används av → Uttryckligen inget');
     await expect(review).toContainText('Lo → Använder → Blå bilen (osäkert uppgivet)');
     const bankProposal = await readDraftProposal(page, 'Betalkontot');
     await expect(bankProposal).toContainText('Ospecificerat objekt');
@@ -162,11 +158,7 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
     await page.reload();
 
     await openTable(page);
-    await editObjectRelationship(
-      page,
-      'Bostadshyra',
-      'Bostadshyra → Betalas med → Obesvarad identitetsfråga',
-    );
+    await editObjectRelationship(page, 'Bostadshyra', 'Bostadshyra → Betalas med → Betalkontot');
     await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('known');
     await page.getByLabel('Till objekt').selectOption('bank');
     await stageRelationshipAndClose(page);

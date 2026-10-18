@@ -6,10 +6,8 @@ import type { MapState } from '../../../src/shared/map.js';
 import { authenticatedHttpFetch } from '../../support/authenticated-http-fetch.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { prepareArchiveConflict } from '../../support/conflict-archive.js';
-import {
-  prepareConflictContinuity,
-  prepareConflictReferenceContinuity,
-} from '../../support/conflict-continuity.js';
+import { prepareConflictContinuity } from '../../support/conflict-continuity.js';
+import { conflictCollaborators } from '../../support/conflict-properties.js';
 import {
   prepareOwnRemovalConflict,
   prepareRelationshipSpecialConflict,
@@ -600,30 +598,55 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
     });
   }
 
-  test('invalid mixed relationship properties retain choices and block submission until knowledge agrees with the target', async () => {
-    const { dialog } = await preparedConflict(prepareConflictReferenceContinuity);
+  test('invalid mixed relationship endpoints retain choices until the duplicate is corrected', async () => {
+    const { dialog } = await preparedConflict(async (first, second) => {
+      const app = await conflictCollaborators(first, second);
+      const state = await app.read();
+      const value = {
+        typeId: state.relationshipTypes[0].id,
+        sourceId: 'lo',
+        targetId: 'service',
+        knowledge: 'known' as const,
+      };
+      await app.propose(first, 'relationship', 'edge', value);
+      await app.save(first, 'base-edge');
+      await app.propose(first, 'relationship', 'existing', {
+        ...value,
+        sourceId: 'service',
+        targetId: 'lo',
+      });
+      await app.propose(first, 'relationship', 'edge', {
+        ...value,
+        targetId: 'lo',
+        knowledge: 'uncertain',
+      });
+      await app.propose(second, 'relationship', 'edge', { ...value, sourceId: 'service' });
+      await app.save(second, 'concurrent');
+      return app;
+    });
     const before = await read();
     await userEvent.click(
-      dialog.getByRole('button', { name: 'Till objekt: Ditt förslag – Molnmusik' }),
+      dialog.getByRole('button', { name: 'Från objekt: Sparat i kartan nu – Molnmusik' }),
     );
     await userEvent.click(
-      dialog.getByRole('button', { name: 'Vad är känt?: Sparat i kartan nu – Uttryckligen inget' }),
+      dialog.getByRole('button', { name: 'Till objekt: Ditt förslag – Lo Exempel' }),
     );
-    expect(dialog.getByRole('alert').textContent).toContain(
-      'målobjektet fungerar inte tillsammans',
+    await userEvent.click(
+      dialog.getByRole('button', { name: 'Vad är känt?: Ditt förslag – Osäkert uppgivet' }),
     );
+    expect(dialog.getByRole('alert').textContent).toContain('finns redan i kartan');
     const apply = dialog.getByRole('button', {
       name: 'Lägg valen i utkastet',
     }) as HTMLButtonElement;
     expect(apply.disabled).toBe(true);
     expect(
       dialog
-        .getByRole('button', { name: 'Till objekt: Ditt förslag – Molnmusik' })
+        .getByRole('button', { name: 'Till objekt: Ditt förslag – Lo Exempel' })
         .getAttribute('aria-pressed'),
     ).toBe('true');
     expect(await read()).toEqual(before);
     await userEvent.click(
-      dialog.getByRole('button', { name: 'Vad är känt?: Ditt förslag – Osäkert uppgivet' }),
+      dialog.getByRole('button', { name: 'Från objekt: Ditt förslag – Lo Exempel' }),
     );
     expect(dialog.queryByRole('alert')).toBeNull();
     expect(apply.disabled).toBe(false);
@@ -631,8 +654,11 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
     await waitFor(() =>
       expect(dialog.getByRole('status').textContent).toContain('Valen finns i ditt utkast'),
     );
-    expect((await read()).draft.relationships?.[0].after).toMatchObject({
-      targetId: 'service',
+    expect(
+      (await read()).draft.relationships?.find(({ id }) => id === 'edge')?.after,
+    ).toMatchObject({
+      sourceId: 'lo',
+      targetId: 'lo',
       knowledge: 'uncertain',
     });
     expect((await read()).relationships).toEqual(before.relationships);

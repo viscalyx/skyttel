@@ -106,8 +106,8 @@ export async function prepareHouseholdReading(
         customValues: { note: 'Sparad dold sambandsuppgift' },
       },
     ],
-    ['bike-none', 'none', 'bike', null, 'none', {}],
-    ['bike-unknown', 'unknown', 'bike', null, 'unknown', {}],
+    ['bike-none', 'none', 'bike', 'bike', 'none', {}],
+    ['bike-unknown', 'unknown', 'bike', 'bike', 'unknown', {}],
   ] as const)
     await post('relationship', {
       id,

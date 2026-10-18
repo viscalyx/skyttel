@@ -47,12 +47,23 @@ export function relationships(database: Database.Database, householdId: string) 
     return [...proposedRelationships(read(), draft.relationships).values()];
   }
 
-  function endpoint(id: string, draft: MapDraft) {
-    const proposed = draft.changes.find((change) => change.id === id);
-    if (proposed) return proposed.after;
+  function savedEndpoint(id: string) {
     return database
       .prepare('SELECT identity FROM map_object WHERE householdId = ? AND id = ? AND deleted = 0')
       .get(householdId, id) as { identity?: string } | undefined;
+  }
+  function endpoint(id: string, draft: MapDraft) {
+    const proposed = draft.changes.find((change) => change.id === id);
+    if (proposed) {
+      if (!proposed.after) return null;
+      const saved = database
+        .prepare('SELECT householdId, deleted FROM map_object WHERE id = ?')
+        .get(id) as { householdId: string; deleted: number } | undefined;
+      if (proposed.before ? !saved || saved.deleted || saved.householdId !== householdId : saved)
+        return null;
+      return proposed.after;
+    }
+    return savedEndpoint(id);
   }
   function sameEndpoints(left: RelationshipValue, right: RelationshipValue) {
     return (
@@ -60,6 +71,20 @@ export function relationships(database: Database.Database, householdId: string) 
       left.sourceId === right.sourceId &&
       left.targetId === right.targetId
     );
+  }
+  function assertEndpoints(draft: MapDraft, value: RelationshipValue) {
+    if (
+      !value.sourceId ||
+      !value.targetId ||
+      !endpoint(value.sourceId, draft) ||
+      !endpoint(value.targetId, draft)
+    )
+      throw new MapError('invalid_endpoint', 400);
+  }
+  function assertValid(draft: MapDraft, value: RelationshipValue, id: string) {
+    assertEndpoints(draft, value);
+    if (effective(draft).some((other) => other.id !== id && sameEndpoints(other, value)))
+      throw new MapError('duplicate_relationship');
   }
   function objectNames(
     draft: MapDraft,
@@ -100,6 +125,7 @@ export function relationships(database: Database.Database, householdId: string) 
     read,
     types,
     reconcileObjectRemovals,
+    assertValid,
     removeObject(draft: MapDraft, id: string) {
       for (const value of effective(draft)) {
         if (value.sourceId !== id && value.targetId !== id) continue;
@@ -143,9 +169,7 @@ export function relationships(database: Database.Database, householdId: string) 
           typeof value.typeId !== 'string' ||
           typeof value.sourceId !== 'string' ||
           !['known', 'unknown', 'none', 'uncertain', 'unresolved'].includes(value.knowledge) ||
-          (['known', 'uncertain'].includes(value.knowledge)
-            ? typeof value.targetId !== 'string'
-            : value.targetId !== null)
+          typeof value.targetId !== 'string'
         )
           throw new MapError('invalid_request', 400);
         const lifecycle = readLifecycle(value.lifecycle);
@@ -161,11 +185,7 @@ export function relationships(database: Database.Database, householdId: string) 
           ...(lifecycle ? { lifecycle } : {}),
           ...(endDate ? { endDate } : {}),
         };
-        if (
-          !endpoint(after.sourceId, draft) ||
-          (after.targetId !== null && !endpoint(after.targetId, draft))
-        )
-          throw new MapError('invalid_endpoint', 400);
+        assertEndpoints(draft, after);
       }
       const type = definitions
         .effective(draft)
@@ -221,10 +241,10 @@ export function relationships(database: Database.Database, householdId: string) 
       const changes = [...(draft.relationships ?? [])];
       const final = effective({ ...draft, relationships: changes });
       for (const value of final) {
-        const source = endpoint(value.sourceId, draft);
-        const target = value.targetId === null ? null : endpoint(value.targetId, draft);
-        if (!source || (value.targetId !== null && !target))
-          throw new MapError('endpoint_conflict');
+        // Objects have already been written in this same atomic save transaction.
+        const source = savedEndpoint(value.sourceId);
+        const target = value.targetId ? savedEndpoint(value.targetId) : undefined;
+        if (!source || !target) throw new MapError('endpoint_conflict');
         if (
           value.knowledge === 'unresolved' ||
           source.identity === 'unresolved' ||

@@ -124,3 +124,10 @@ Läs också om [objekttyper och egna fält](object-types.md) och
 [hushållets abonnemang](family-subscription.md). Oanvända typer kan
 [tas bort](definition-removal.md);
 användande samband måste först hanteras och ändpunkterna kan finnas kvar.
+
+Ett samband kräver både ett frånobjekt och ett tillobjekt i hushållets
+karta eller ditt eget utkast. Välj båda objekten även när uppgiften är
+osäker. Saknas ett objekt, skapa det separat innan du lägger sambandet i
+utkastet. Ett objekt får finnas utan samband och ett samband får gå från
+ett objekt till samma objekt. Samma typ och riktning mellan samma objekt
+ger ett befintligt samband; redigera det för att ändra dess uppgifter.

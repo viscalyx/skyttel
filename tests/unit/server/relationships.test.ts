@@ -145,15 +145,15 @@ test.each<{
     name: 'a certainty choice retains its target when the other writer removes that target',
     initial: {},
     proposed: { knowledge: 'uncertain' },
-    saved: { targetId: null, knowledge: 'none', lifecycle: 'ended' },
+    saved: { targetId: 'b', knowledge: 'none', lifecycle: 'ended' },
     expected: { targetId: 'b', knowledge: 'uncertain', lifecycle: 'ended' },
   },
   {
-    name: 'an explicitly absent target stays absent when the other writer changes certainty',
+    name: 'a certainty proposal keeps its real target when the other writer changes certainty',
     initial: {},
-    proposed: { targetId: null, knowledge: 'none' },
+    proposed: { targetId: 'b', knowledge: 'none' },
     saved: { knowledge: 'uncertain', lifecycle: 'ended' },
-    expected: { targetId: null, knowledge: 'none', lifecycle: 'ended' },
+    expected: { targetId: 'b', knowledge: 'none', lifecycle: 'ended' },
   },
 ])('relationship resolution: $name', async ({ initial, proposed, saved, expected }) => {
   await object('a');
@@ -201,7 +201,7 @@ test('a status proposal preserves saved relationship meaning after an old endpoi
     (
       await edge(
         'edge',
-        { typeId: type.id, sourceId: 'b', targetId: null, knowledge: 'unknown' },
+        { typeId: type.id, sourceId: 'b', targetId: 'b', knowledge: 'unknown' },
         actor,
       )
     ).status,
@@ -225,7 +225,7 @@ test('a status proposal preserves saved relationship meaning after an old endpoi
     after: {
       typeId: type.id,
       sourceId: 'b',
-      targetId: null,
+      targetId: 'b',
       knowledge: 'unknown',
       lifecycle: 'ended',
     },
@@ -705,6 +705,144 @@ test('independent roles and shared endpoints survive edits, deletion and receipt
   expect((await read()).objects.map((value) => value.id)).toEqual(['b']);
 });
 
+test('every certainty requires two real endpoints without changing the draft on rejection', async () => {
+  await object('a');
+  await object('b');
+  const initial = await read();
+  for (const knowledge of ['known', 'unknown', 'none', 'uncertain', 'unresolved'] as const) {
+    for (const targetId of [null, '', 'invented', undefined]) {
+      expect((await edge('invalid', { knowledge, targetId })).status).toBe(400);
+      expect((await read()).draft).toEqual(initial.draft);
+    }
+  }
+  expect((await read()).objects).toEqual([]);
+});
+
+test('endpoint validation excludes foreign, deleted and another members private objects on creates and edits', async () => {
+  await object('a');
+  await object('b');
+  await object('deleted');
+  await edge();
+  expect((await save()).status).toBe(200);
+  await object('deleted', null);
+  expect((await save()).status).toBe(200);
+  const actor = await member();
+  await object('their-private-object', {}, actor);
+  // Installation setup creates one live household; add an isolated foreign
+  // household as fixture data, then exercise only the public write routes.
+  fixture.database
+    .prepare('INSERT INTO household (id, name, createdAt) VALUES (?, ?, ?)')
+    .run('foreign-household', 'Annat hushåll', new Date().toISOString());
+  fixture.database
+    .prepare('INSERT INTO object_type VALUES (?, ?, 1, ?, ?)')
+    .run('foreign-type', 'foreign-household', 'Sak', '');
+  fixture.database
+    .prepare(
+      'INSERT INTO map_object (id, householdId, typeId, revision, name, description) VALUES (?, ?, ?, 1, ?, ?)',
+    )
+    .run('foreign-object', 'foreign-household', 'foreign-type', 'Främmande', '');
+  const initial = await read();
+  for (const id of ['new-edge', 'edge']) {
+    for (const endpoint of ['sourceId', 'targetId']) {
+      for (const invalid of [
+        '',
+        null,
+        'invented',
+        'deleted',
+        'foreign-object',
+        'their-private-object',
+      ]) {
+        expect((await edge(id, { [endpoint]: invalid } as Partial<RelationshipValue>)).status).toBe(
+          400,
+        );
+        expect((await read()).draft).toEqual(initial.draft);
+        expect((await read()).relationships).toEqual(initial.relationships);
+      }
+    }
+  }
+  // A draft cannot make an existing foreign/deleted identity a valid own endpoint.
+  await object('foreign-object');
+  expect((await edge('new-edge', { targetId: 'foreign-object' })).status).toBe(400);
+  await object('deleted');
+  expect((await edge('new-edge', { targetId: 'deleted' })).status).toBe(400);
+});
+
+test('a stale object edit cannot provide an endpoint for a new relationship after concurrent deletion', async () => {
+  await object('a');
+  await object('b');
+  expect((await save()).status).toBe(200);
+  await object('b', { name: 'Mitt namn' });
+  const actor = await member();
+  await object('b', null, actor);
+  expect((await save(actor)).status).toBe(200);
+  const before = await read();
+  expect((await edge()).status).toBe(400);
+  expect((await read()).draft).toEqual(before.draft);
+  expect((await save()).status).toBe(409);
+  expect((await read()).relationships).toEqual([]);
+});
+
+test('simultaneous creates select one identity and cannot overwrite its saved content', async () => {
+  await object('a');
+  await object('b');
+  const state = await read();
+  const value = {
+    typeId: state.relationshipTypes[0].id,
+    sourceId: 'a',
+    targetId: 'b',
+    knowledge: 'uncertain',
+    lifecycle: 'ended',
+  };
+  const requests = ['first', 'second'].map((id) =>
+    client.json(`${path}/relationship`, {
+      version: state.draft.version,
+      id,
+      baseRevision: null,
+      value,
+    }),
+  );
+  const responses = await Promise.all(requests);
+  expect(responses.map((response) => response.status).sort()).toEqual([200, 409]);
+  const staged = await read();
+  const identity = staged.draft.relationships?.[0].id;
+  const retry = await (await edge(identity === 'first' ? 'second' : 'first')).json();
+  expect(retry.existingId).toBe(identity);
+  expect((await read()).draft).toEqual(staged.draft);
+  expect((await save()).status).toBe(200);
+  expect((await read()).relationships).toMatchObject([
+    { id: identity, knowledge: 'uncertain', lifecycle: 'ended' },
+  ]);
+  expect((await edge('self', { targetId: 'a' })).status).toBe(200);
+  await object('standalone');
+  expect((await save()).status).toBe(200);
+  expect((await read()).objects.map(({ id }) => id)).toContain('standalone');
+});
+
+test('concurrent edits to the same endpoint tuple cannot partly save or violate uniqueness', async () => {
+  for (const id of ['a', 'b', 'c', 'd']) await object(id);
+  await edge('first');
+  await edge('second', { targetId: 'c' });
+  expect((await save()).status).toBe(200);
+  const actor = await member();
+  expect((await edge('first', { targetId: 'd' })).status).toBe(200);
+  expect((await edge('second', { targetId: 'd' }, actor)).status).toBe(200);
+  await object('unrelated', {}, actor);
+  const proposed = await read(actor);
+  const responses = await Promise.all([save(), save(actor)]);
+  expect(responses.map((response) => response.status).sort()).toEqual([200, 409]);
+  const state = await read();
+  expect(state.relationships.filter(({ targetId }) => targetId === 'd')).toHaveLength(1);
+  expect(state.relationships).toHaveLength(2);
+  const actorState = await read(actor);
+  if (responses[1].status === 409) {
+    expect(actorState.draft).toEqual(proposed.draft);
+    expect(state.objects.some(({ id }) => id === 'unrelated')).toBe(false);
+  } else {
+    expect(state.objects.some(({ id }) => id === 'unrelated')).toBe(true);
+    expect(state.draft.relationships).toHaveLength(1);
+  }
+});
+
 test('unknown, none, uncertain and unspecified remain distinct, unresolved blocks the whole save', async () => {
   await object('a');
   await object('b', { identity: 'unresolved' });
@@ -715,11 +853,11 @@ test('unknown, none, uncertain and unspecified remain distinct, unresolved block
   expect((await save()).status).toBe(200);
   expect((await read()).objects.find((value) => value.id === 'b')?.identity).toBe('unspecified');
   for (const knowledge of ['unknown', 'none', 'unresolved'] as const) {
-    expect((await edge('edge', { knowledge, targetId: null })).status).toBe(200);
+    expect((await edge('edge', { knowledge, targetId: 'b' })).status).toBe(200);
     const saved = await save();
     expect(saved.status).toBe(knowledge === 'unresolved' ? 409 : 200);
     if (knowledge !== 'unresolved')
-      expect((await read()).relationships[0]).toMatchObject({ knowledge, targetId: null });
+      expect((await read()).relationships[0]).toMatchObject({ knowledge, targetId: 'b' });
   }
   await edge('edge', { knowledge: 'uncertain' });
   expect((await save()).status).toBe(200);
@@ -746,7 +884,7 @@ test('private concurrent additions cannot create duplicates or partly save unrel
   await client.json(`${path}/discard`, { version: (await read()).draft.version });
   await edge('edge', { knowledge: 'uncertain' });
   await actor.json(`${path}/discard`, { version: (await read(actor)).draft.version });
-  await edge('edge', { knowledge: 'none', targetId: null }, actor);
+  await edge('edge', { knowledge: 'none', targetId: 'b' }, actor);
   await save(actor);
   expect((await save()).status).toBe(409);
 });
@@ -758,7 +896,7 @@ test('relationship writes validate endpoints, types, knowledge and request acces
     { sourceId: 'foreign' },
     { targetId: 'foreign' },
     { typeId: 'foreign' },
-    { knowledge: 'none', targetId: 'b' },
+    { knowledge: 'none', targetId: null },
     { knowledge: 'known', targetId: null },
     { knowledge: 'invented' },
   ]) {

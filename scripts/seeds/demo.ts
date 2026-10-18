@@ -185,8 +185,6 @@ export function seedDemo(database: Database.Database, config: Config) {
     ['card', 'Kontokoppling', 'linked-bank'],
     ['card', 'Kortfakturan betalas från', 'bank'],
     ['service', 'Används av', 'lo', 'uncertain'],
-    ['second-account', 'Äger', '', 'unknown'],
-    ['association', 'Används av', '', 'none'],
     ['alex', 'Använder', 'bike'],
     ['bike', 'Förvaras i', 'garage'],
   ];
@@ -201,7 +199,7 @@ export function seedDemo(database: Database.Database, config: Config) {
             ? storageTypeId
             : initial.relationshipTypes.find((value) => value.name === type)?.id,
         sourceId: ids.get(source),
-        targetId: target ? ids.get(target) : null,
+        targetId: ids.get(target),
         knowledge: knowledge ?? 'known',
       },
     });

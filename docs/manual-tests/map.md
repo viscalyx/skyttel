@@ -249,7 +249,8 @@ unanswered identity question”.
 
 1. Välj **Tabell**, **Samband för Familjemusik** och **Nytt samband**.
    Välj typen **Betalas med** och **Obesvarad identitetsfråga** under
-   **Uppgiftens säkerhet**. Välj **Lägg i utkastet** och **Stäng samband**.
+   **Uppgiftens säkerhet**. Välj Betalkonto som **Till objekt**, sedan
+   **Lägg i utkastet** och **Stäng samband**.
    Ladda om sidan.
 2. Välj **Skriv till Skyttel** och **Visa utkastet**. Läs **Olöst identitet**
    och **Målet är oklart**. Kontrollera att **Spara hela utkastet** är inaktivt.
@@ -272,7 +273,7 @@ unanswered identity question”.
 - Det sparade sambandet visar Betalkonto och Osäkert uppgivet.
   Bankkontot behåller identiteten Ospecificerat objekt.
 - Efter respektive ändring visar sambandet Okänt och sedan Uttryckligen
-  inget i stället för ett målobjekt. Betydelserna blandas inte ihop.
+  inget som säkerhet, med Betalkonto kvar som målobjekt.
 
 ## Välja och ta bort samband
 

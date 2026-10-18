@@ -335,8 +335,8 @@ test('MCP rental, loan, credit and installment cases preserve dated uncertainty 
     ['unknown-landlord', 'Hyresvärd', 'home-rent', null, 'unknown'],
     ['no-payer', 'Betalar', 'garage-rent', null, 'none'],
     ['uncertain-collateral', 'Finansierar', 'loan', 'car', 'uncertain'],
-  ] as const)
-    review = await tool('propose_relationship', {
+  ] as const) {
+    const proposal = {
       ...version(review),
       id,
       baseRevision: null,
@@ -347,7 +347,13 @@ test('MCP rental, loan, credit and installment cases preserve dated uncertainty 
         targetId,
         knowledge,
       },
-    });
+    };
+    if (targetId === null) {
+      const response = await callAssistant(app.origin, token, 'propose_relationship', proposal);
+      expect((await response.json()).result.isError).toBe(true);
+      expect(await tool('read_my_draft')).toEqual(review);
+    } else review = await tool('propose_relationship', proposal);
+  }
   await save('extended-household');
   await app.restart();
   for (const [id, kind, name, financialFacts] of cases) {
@@ -376,9 +382,7 @@ test('MCP rental, loan, credit and installment cases preserve dated uncertainty 
   const saved = await tool('read_map');
   expect(saved.relationships.map((edge: { knowledge: string }) => edge.knowledge).sort()).toEqual([
     'known',
-    'none',
     'uncertain',
-    'unknown',
   ]);
 });
 

@@ -190,16 +190,16 @@ test('combined object and relationship values validate actual field kinds and ca
     conflictCombinationError(state, relationshipConflict, {
       ...edge,
       knowledge: 'unknown',
-      targetId: null,
+      targetId: 'bike',
     }),
   ).toBe('');
   for (const update of [
     { knowledge: 'known', targetId: null },
     { knowledge: 'uncertain', targetId: null },
-    { knowledge: 'none', targetId: 'bike' },
+    { knowledge: 'none', targetId: null },
   ])
     expect(conflictCombinationError(state, relationshipConflict, { ...edge, ...update })).toContain(
-      'målobjektet',
+      'tillobjekt',
     );
   expect(
     conflictCombinationError(state, relationshipConflict, { ...edge, sourceId: 'absent' }),

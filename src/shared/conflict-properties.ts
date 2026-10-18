@@ -2,7 +2,7 @@ import { conflictRemovalProperties } from './conflict-removal.js';
 import type { DraftConflict } from './draft-conflicts.js';
 import { financialFields } from './financial-facts.js';
 import type { MapState, ObjectType, ObjectValue, RelationshipValue } from './map.js';
-import { proposedObjectTypes, proposedRelationshipTypes } from './map.js';
+import { proposedObjectTypes, proposedRelationships, proposedRelationshipTypes } from './map.js';
 import { objectIconLabel } from './object-icons.js';
 import { objectProperties } from './object-properties.js';
 import { propertiesSchema, propertyValueText } from './properties.js';
@@ -303,12 +303,8 @@ export function conflictCombinationError(
   }
   if (conflict.kind === 'relationship') {
     const relationship = value as unknown as RelationshipValue;
-    if (
-      ['known', 'uncertain'].includes(relationship.knowledge)
-        ? typeof relationship.targetId !== 'string'
-        : relationship.targetId !== null
-    )
-      return 'Vad som är känt och målobjektet fungerar inte tillsammans. Välj båda uppgifterna så att de stämmer överens.';
+    if (!relationship.sourceId || !relationship.targetId)
+      return 'Välj både frånobjekt och tillobjekt för sambandet.';
     const objects = new Map(state.objects.map((object) => [object.id, object]));
     for (const change of state.draft.changes)
       if (change.after)
@@ -320,7 +316,7 @@ export function conflictCombinationError(
     )
       return 'Ett valt objekt finns inte i kartan eller ditt utkast.';
     if (
-      state.relationships.some(
+      [...proposedRelationships(state.relationships, state.draft.relationships).values()].some(
         (edge) =>
           edge.id !== conflict.id &&
           edge.typeId === relationship.typeId &&

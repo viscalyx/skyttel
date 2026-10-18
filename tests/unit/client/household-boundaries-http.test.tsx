@@ -497,7 +497,7 @@ for (const committed of [false, true]) {
     await fixture.post('relationship', {
       id: edge.id,
       baseRevision: edge.revision,
-      value: { ...edge, knowledge: 'unknown', targetId: null },
+      value: { ...edge, knowledge: 'unknown', targetId: edge.targetId },
     });
     const later = await fixture.read();
     await userEvent.click(

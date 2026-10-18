@@ -96,7 +96,7 @@ export async function prepareDraftReview(client: APIRequestContext, origin: stri
         sourceId:
           knowledge === 'unresolved' || knowledge === 'uncertain' ? 'draft-unspecified' : bike.id,
         targetId:
-          knowledge === 'known' ? 'draft-unspecified' : knowledge === 'uncertain' ? bike.id : null,
+          knowledge === 'known' || knowledge === 'unresolved' ? 'draft-unspecified' : bike.id,
         knowledge,
         customValues: { note: `Hela dolda uppgiften ${knowledge}` },
       },

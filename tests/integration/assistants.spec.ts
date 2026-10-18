@@ -456,7 +456,7 @@ test('AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifte
     for (const [id, type, sourceId, targetId, knowledge] of [
       ['ownership', 'Äger', 'car', 'kim', 'known'],
       ['usage', 'Använder', 'lo', 'car', 'uncertain'],
-      ['unknown-user', 'Används av', 'car', null, 'unknown'],
+      ['unknown-user', 'Används av', 'car', 'lo', 'unknown'],
       ['second-hop', 'Använder', 'kim', 'bike', 'known'],
     ])
       await post('relationship', {
@@ -498,7 +498,7 @@ test('AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifte
         'usage',
       ]);
       expect(map.relationships).toContainEqual(
-        expect.objectContaining({ id: 'unknown-user', targetId: null, knowledge: 'unknown' }),
+        expect.objectContaining({ id: 'unknown-user', targetId: 'lo', knowledge: 'unknown' }),
       );
       expect(map.relationships).toContainEqual(
         expect.objectContaining({ id: 'usage', knowledge: 'uncertain' }),

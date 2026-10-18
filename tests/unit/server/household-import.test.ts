@@ -921,7 +921,7 @@ test('custom definitions, ended facts, removed catalog entries and unsaved priva
     value: {
       typeId: 'installed',
       sourceId: 'machine',
-      targetId: null,
+      targetId: 'machine',
       knowledge: 'unknown',
       lifecycle: 'ended',
       endDate: { knowledge: 'known', value: '2026-01-01' },

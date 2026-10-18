@@ -500,14 +500,12 @@ test('SAMBAND-05: full relationship values survive canceled type loss and absent
     for (const knowledge of ['unknown', 'none', 'unresolved'] as const) {
       await dialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
       await dialog.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption(knowledge);
-      await expect(dialog.getByLabel('Till objekt', { exact: true })).toHaveCount(0);
-      await expect(
-        dialog.getByRole('button', { name: 'Byt riktning', exact: true }),
-      ).toBeDisabled();
+      await expect(dialog.getByLabel('Till objekt', { exact: true })).toHaveValue('alex');
+      await expect(dialog.getByRole('button', { name: 'Byt riktning', exact: true })).toBeEnabled();
       await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
       expect((await read()).draft.relationships?.[0].after).toMatchObject({
         knowledge,
-        targetId: null,
+        targetId: 'alex',
       });
     }
     expect((await read()).relationships).toEqual([]);
@@ -646,6 +644,17 @@ test('SAMBAND-02: invalid next input and canceled form loss retain previous comp
     await errors.getByRole('link', { name: /^Sambandstyp:/ }).click();
     await expect(dialog.getByLabel('Sambandstyp', { exact: true })).toBeFocused();
     await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Äger' });
+    for (const knowledge of ['known', 'unknown', 'none', 'uncertain', 'unresolved']) {
+      await dialog.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption(knowledge);
+      await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+      await expect(errors).toBeFocused();
+      await errors.getByRole('link', { name: /^Till objekt:/ }).click();
+      await expect(dialog.getByLabel('Till objekt', { exact: true })).toBeFocused();
+      expect((await read()).draft).toEqual(earlier);
+    }
+    await dialog.getByLabel('Till objekt', { exact: true }).selectOption('bicycle');
+    await dialog.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('uncertain');
+    await expect(dialog.getByLabel('Till objekt', { exact: true })).toHaveValue('bicycle');
     const search = dialog.getByLabel('Sök det andra objektet', { exact: true });
     await search.fill('Oskickad sökning');
     await page.keyboard.press('Escape');

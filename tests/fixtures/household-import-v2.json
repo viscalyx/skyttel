@@ -8,8 +8,8 @@
     "parts": [
       {
         "path": "content.json",
-        "bytes": 21481,
-        "sha256": "dbfd8b2e2a333e99db2d2229efc91ef6f531fa355f29e0c58dfeb39d1427a34d"
+        "bytes": 21860,
+        "sha256": "3314e5cf8da6dee4053d93669b7280f4c67f23b83e662f583e0678ed5634139a"
       },
       {
         "path": "images.bin",
@@ -327,7 +327,7 @@
         "typeId": "54ea962e05d50e0ee9cc1b7c95bc1c9f",
         "revision": 2,
         "sourceId": "first",
-        "targetId": null,
+        "targetId": "first",
         "knowledge": "unknown",
         "deleted": 0,
         "lifecycle": null,

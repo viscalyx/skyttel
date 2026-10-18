@@ -94,7 +94,7 @@ test('relationship type loss lists hidden values and explicit confirmation stage
   expect(after.draft.relationships?.find((change) => change.id === 'bike-garage')?.after).toEqual({
     typeId: 'uses',
     sourceId: 'bike',
-    targetId: null,
+    targetId: 'garage',
     knowledge: 'none',
     lifecycle: 'active',
   });

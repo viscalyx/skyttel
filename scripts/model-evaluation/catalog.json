@@ -1545,28 +1545,13 @@
           "text": "Jag vet inte vem som använder Norrsken Molnlagring.",
           "expected": {
             "objects": {},
-            "addRelationships": [
-              {
-                "source": "cloud",
-                "type": "Används av",
-                "target": null,
-                "knowledge": "unknown"
-              }
-            ],
-            "removeRelationships": [
-              {
-                "source": "cloud",
-                "type": "Används av",
-                "target": "alex",
-                "knowledge": "known"
-              }
-            ],
+            "addRelationships": [],
+            "removeRelationships": [],
             "objectTypes": [],
             "saveAttempts": 0,
             "saves": 0,
             "requirements": [
-              "Ge ett kort verifierat ändringsbesked om utkastet, utan obegärd uppräkning, sparfråga eller sparpåstående.",
-              "Om svaret beskriver användningen ska den vara okänd. Påstå inte att ingen använder tjänsten och peka inte ut en person. En allmän utkastbekräftelse räcker."
+              "Be användaren precisera ändpunkten eller vilken befintlig koppling som ska rättas. Behåll begäran i samtalet utan att skapa ett samband, objekt eller en ersättningsegenskap och utan att ändra kartan."
             ]
           }
         }
@@ -1583,28 +1568,13 @@
           "text": "Ingen använder Norrsken Molnlagring.",
           "expected": {
             "objects": {},
-            "addRelationships": [
-              {
-                "source": "cloud",
-                "type": "Används av",
-                "target": null,
-                "knowledge": "none"
-              }
-            ],
-            "removeRelationships": [
-              {
-                "source": "cloud",
-                "type": "Används av",
-                "target": "alex",
-                "knowledge": "known"
-              }
-            ],
+            "addRelationships": [],
+            "removeRelationships": [],
             "objectTypes": [],
             "saveAttempts": 0,
             "saves": 0,
             "requirements": [
-              "Ge ett kort verifierat ändringsbesked om utkastet, utan obegärd uppräkning, sparfråga eller sparpåstående.",
-              "Om svaret beskriver användningen ska det vara uttryckligen ingen användare. Påstå inte okänd användare och peka inte ut en person. En allmän utkastbekräftelse räcker."
+              "Be användaren precisera ändpunkten eller vilken befintlig koppling som ska rättas. Behåll begäran i samtalet utan att skapa ett samband, objekt eller en ersättningsegenskap och utan att ändra kartan."
             ]
           }
         }

@@ -61,7 +61,7 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
           value: {
             typeId: state.relationshipTypes[0].id,
             sourceId: 'second',
-            targetId: null,
+            targetId: 'second',
             knowledge: 'unknown',
           },
         })
@@ -363,7 +363,7 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
       expect.objectContaining({
         id: 'unknown-endpoint',
         sourceId: 'second',
-        targetId: null,
+        targetId: 'second',
         knowledge: 'unknown',
       }),
     ]);

@@ -141,6 +141,7 @@ export async function stageNewRemovalType(page: Page, kind: 'objectType' | 'rela
     await form.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await form.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Tillfällig typ' });
     await form.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('unknown');
+    await form.getByLabel('Till objekt', { exact: true }).selectOption('draft-bike');
     await stageRelationshipAndClose(page);
   }
   expect((await proposalReply).status()).toBe(200);

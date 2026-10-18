@@ -973,6 +973,7 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
   const type = screen.getByLabelText('Sambandstyp') as HTMLSelectElement;
   await userEvent.selectOptions(type, type.options[1].value);
   await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), 'unresolved');
+  await userEvent.selectOptions(screen.getByLabelText('Till objekt'), targetId);
   await stageRelationship();
   const draft = await openDraftReview();
   expect(
@@ -1022,7 +1023,7 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
     await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), knowledge);
     await stageRelationship();
     const staged = await (await client.request(path)).json();
-    expect(staged.draft.relationships[0].after).toMatchObject({ knowledge, targetId: null });
+    expect(staged.draft.relationships[0].after).toMatchObject({ knowledge, targetId });
     await save();
   }
   await editCurrent();
@@ -1237,7 +1238,7 @@ test.each(['changed', 'duplicate', 'endpoint', 'deletion'] as const)(
       await propose(client, 'relationship', 'link', { ...value, knowledge: 'uncertain' });
       await propose(other, 'relationship', 'link', {
         ...value,
-        targetId: null,
+        targetId: 'lo',
         knowledge: 'unknown',
       });
     } else if (scenario === 'duplicate') {

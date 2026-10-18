@@ -647,7 +647,12 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
               name: 'Tillfälligt föremål',
               description: 'Hela den tillfälliga berättelsen',
             }
-          : { typeId: type.id, sourceId: 'draft-bike', targetId: null, knowledge: 'unknown' },
+          : {
+              typeId: type.id,
+              sourceId: 'draft-bike',
+              targetId: 'draft-bike',
+              knowledge: 'unknown',
+            },
       );
       const history = await (await page.request.get(`${data.path}/history`)).json();
       await page.goto(`${installation.origin}/households/${data.household.id}`);

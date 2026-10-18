@@ -252,7 +252,7 @@ for (const { width, height } of [
       });
       await app.propose(other.request, 'relationship', 'edge', {
         ...edge,
-        targetId: null,
+        targetId: 'service',
         knowledge: 'unknown',
       });
       expect((await app.save(other.request, 'concurrent-values')).status()).toBe(200);
@@ -1264,7 +1264,7 @@ test('UTKAST-07: overlapping relationship proposals show meanings and can accept
     await app.propose(page.request, 'relationship', 'edge', { ...value, knowledge: 'uncertain' });
     await app.propose(other.request, 'relationship', 'edge', {
       ...value,
-      targetId: null,
+      targetId: 'service',
       knowledge: 'none',
     });
     expect((await app.save(other.request, 'other-edge')).status()).toBe(200);
@@ -1280,17 +1280,12 @@ test('UTKAST-07: overlapping relationship proposals show meanings and can accept
     await expect(draft).toContainText('Utkastet är tomt.');
     expect((await app.read()).relationships[0].knowledge).toBe('none');
     await closeTextView(page);
-    await expectSavedConflictRelationship(
-      page,
-      'Lo Exempel',
-      'Lo Exempel → Använder → Uttryckligen inget',
-      {
-        Typ: 'Använder',
-        'Från objekt': 'Lo Exempel',
-        'Till objekt': 'Uttryckligen inget',
-        'Uppgiftens säkerhet': 'Uttryckligen inget',
-      },
-    );
+    await expectSavedConflictRelationship(page, 'Lo Exempel', 'Lo Exempel → Använder → Molnmusik', {
+      Typ: 'Använder',
+      'Från objekt': 'Lo Exempel',
+      'Till objekt': 'Molnmusik',
+      'Uppgiftens säkerhet': 'Uttryckligen inget',
+    });
   } finally {
     await other.close();
     await app.installation.close();

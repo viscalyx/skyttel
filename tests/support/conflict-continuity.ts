@@ -86,7 +86,7 @@ export async function prepareConflictReferenceContinuity(
   await app.propose(first, 'relationship', 'edge', value);
   await app.propose(second, 'relationship', 'edge', {
     ...value,
-    targetId: null,
+    targetId: 'lo',
     knowledge: 'none',
   });
   expect((await app.save(second, 'edge-conflict')).status()).toBe(200);

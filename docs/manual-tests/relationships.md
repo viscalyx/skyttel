@@ -121,7 +121,10 @@ complete relationship proposals”.
 2. Välj **Nytt samband** igen. Lämna typ och mål tomma och försök lägga i
    utkastet. Kontrollera fokus på felsammanfattningen. Välj fellänken för
    sambandstyp och kontrollera att fältet får fokus.
-3. Välj typen **Äger** och skriv Oskickad sökning i objektets sökfält.
+3. Välj typen **Äger**. Prova varje säkerhetsval med tomt Till objekt.
+   Kontrollera felsammanfattning, fellänk och fokus på Till objekt varje gång.
+   Välj Blå cykeln, byt säkerhet och kontrollera att målet finns kvar.
+   Skriv Oskickad sökning i objektets sökfält.
    Tryck Escape. Kontrollera förlustvarningen med **Fortsätt redigera**
    förvalt. Tryck Escape igen och kontrollera återfokus och bevarad text.
 4. Välj **Stäng samband**, sedan **Kasta ändringarna och fortsätt**.
@@ -322,9 +325,9 @@ absent targets keep their distinct meanings”.
 
 - Typbyte kräver uttryckligt besked om synliga och dolda fältvärden. Avbrott
   bevarar typen och svaren. Riktningsbyte bevarar egna fält och datum.
-- Säkerhetsvalen utan identifierat mål har inget målobjekt och kan inte
-  byta riktning. Deras olika betydelser bevaras. Den obesvarade frågan kan
-  finnas i utkastet men måste lösas före gemensamt sparande.
+- Varje säkerhetsval behåller båda objektvalen och tillåter riktningsbyte.
+  Ett tomt objektval måste rättas innan något kan läggas i utkastet.
+  Den obesvarade frågan måste lösas före gemensamt sparande.
 
 ### SAMBAND-06: läskedjan bevarar ett oklart tillägg
 
@@ -1020,7 +1023,7 @@ fall, aldrig under kontrollen.
    finns kvar. Välj Stäng samband igen och bekräfta Kasta ändringarna och
    fortsätt. Öppna Samband för Alex och Redigera samband igen.
 5. Läs det aktuella formuläret: säkerheten är Obesvarad identitetsfråga och
-   ingen väljare för Till objekt visas. Skicka eller ta inte bort något.
+   Till objekt visar Blå cykeln. Skicka eller ta inte bort något.
 
 **Förväntat resultat:**
 
@@ -1029,7 +1032,8 @@ fall, aldrig under kontrollen.
   granskning och ger inga påhittade framgångsbesked.
 - Stängning skyddas av förlustvarningen. Avbruten förlust behåller de
   försökta värdena. Bekräftad stängning påverkar inte senare förslag.
-- Det befintliga sambandet är fortfarande Obesvarad identitetsfråga utan mål,
+- Det befintliga sambandet är fortfarande Obesvarad identitetsfråga med
+  Blå cykeln som mål,
   Lo och båda tidigare objektförslagen finns kvar och den gemensamma kartan
   är tom. Automatiseringen provar även den försenade gamla HTTP-begärans
   avvisning och oförändrat aktuellt utkast.

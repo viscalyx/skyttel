@@ -299,11 +299,10 @@ identities through a blocked save and correction”.
    från Bilförsäkringen till Blå bilen. Lägg Äger från Blå bilen till
    Kim, Betalar från Kim till Bilavbetalningen och Använder från Lo till
    Blå bilen med säkerheten Osäkert uppgivet.
-4. Lägg Används av från Björkbacken med Okänt och från Garaget med
-   Uttryckligen inget. Lägg Betalas med från Garagehyra till Betalkontot.
-   Lägg samma samband från Bostadshyra med Obesvarad identitetsfråga.
-5. Ladda om. Granska hela utkastet och kontrollera att osäkerhet,
-   uttryckligen inget, okänt och det ospecificerade bankkontot skiljs åt.
+4. Lägg Betalas med från Garagehyra till Betalkontot. Lägg samma samband
+   från Bostadshyra till Betalkontot med Obesvarad identitetsfråga.
+5. Ladda om. Granska hela utkastet och kontrollera osäkerheten, den
+   obesvarade frågan och det ospecificerade bankkontot.
    Kontrollera att Spara hela utkastet är spärrad och inget är gemensamt
    sparat. Det automatiska provet försöker dessutom spara genom HTTP och
    kontrollerar att hela sparandet avvisas utan ändrad karta eller historik.

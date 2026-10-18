@@ -213,6 +213,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await chooseRelationshipObject(page, 'Från objekt', 'Familjemusik');
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalas med' });
     await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('unresolved');
+    await chooseRelationshipObject(page, 'Till objekt', 'Betalkonto');
     await stageRelationshipAndClose(page);
     await page.reload();
     await openTable(page);
@@ -223,11 +224,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     );
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     await closeTextView(page);
-    await editObjectRelationship(
-      page,
-      'Familjemusik',
-      'Familjemusik → Betalas med → Obesvarad identitetsfråga',
-    );
+    await editObjectRelationship(page, 'Familjemusik', 'Familjemusik → Betalas med → Betalkonto');
     await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('uncertain');
     await chooseRelationshipObject(page, 'Till objekt', 'Betalkonto');
     await stageRelationshipAndClose(page);

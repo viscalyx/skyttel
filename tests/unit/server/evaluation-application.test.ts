@@ -269,7 +269,7 @@ test.each([
   { id: 'no-user', knowledge: 'none', target: null },
   { id: 'uncertain-user', knowledge: 'uncertain', target: 'mira' },
 ])(
-  'the $id fixture accepts the correct certainty with a short confirmation',
+  'the $id fixture preserves valid relationships and answers in context',
   {
     tags: ['technical'],
   },
@@ -279,6 +279,7 @@ test.each([
     const model = textModel(async (body) => {
       if (body.input.at(-1)?.type === 'function_call_output')
         return [modelMessage('Utkastet är uppdaterat.')];
+      if (target === null) return [modelMessage('Vilket objekt eller samband vill du rätta?')];
       const state = await environment.read();
       const type = state.relationshipTypes.find((item) => item.name === 'Används av');
       const edge = state.relationships.find(
@@ -316,14 +317,20 @@ test.each([
       const finished = await environment.get<TextAssistantView>(environment.path);
       const failures = await environment.check(step, finished, []);
       expect(failures).toEqual([]);
-      expect([finished.reply, finished.modelReply].join(' ')).toContain('Utkastet är uppdaterat.');
+      expect([finished.reply, finished.modelReply].join(' ')).toContain(
+        target === null ? 'Vilket objekt eller samband vill du rätta?' : 'Utkastet är uppdaterat.',
+      );
       const context = JSON.parse(environment.judgeContext(step, failures));
       expect(context.observedState.effective.relationships).toContainEqual({
         source: 'cloud',
         type: 'Används av',
-        target,
-        knowledge,
+        target: target ?? 'alex',
+        knowledge: target === null ? 'known' : knowledge,
       });
+      if (target === null) {
+        expect(finished.review.changes).toEqual(view.review.changes);
+        expect(finished.review.relationships ?? []).toEqual(view.review.relationships ?? []);
+      }
       expect(context.observedState.historyChanges).toBe(0);
     } finally {
       await environment.close();

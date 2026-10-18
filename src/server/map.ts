@@ -620,8 +620,10 @@ export function householdMap(database: Database.Database, actorId: string, house
           }
         }
         for (const change of current.relationships ?? [])
-          if (change.after && change.id === conflict.id)
+          if (change.after && change.id === conflict.id) {
             readCustomValues(change.after.customValues, change.type);
+            edges.assertValid(current, change.after, change.id);
+          }
         return writeDraft({ ...current, version: current.version + 1 });
       });
     },

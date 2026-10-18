@@ -45,7 +45,8 @@ export function validateImportReferences(
     if (!row.deleted)
       requireReference(
         liveObjects.has(row.sourceId) &&
-          (row.targetId === null || liveObjects.has(row.targetId)) &&
+          row.targetId !== null &&
+          liveObjects.has(row.targetId) &&
           row.knowledge !== 'unresolved' &&
           !removedTypes.has(`relationshipType:${row.typeId}`),
       );
@@ -225,11 +226,9 @@ export function validateImportReferences(
     if (value.targetId) identity('object', value.targetId);
     requireReference(types.has(value.typeId) && objects.has(value.sourceId));
     requireReference(value.targetId === null || objects.has(value.targetId));
-    requireReference(
-      value.knowledge === 'known' || value.knowledge === 'uncertain'
-        ? value.targetId !== null
-        : value.targetId === null,
-    );
+    // Historical snapshots can retain legacy absent endpoints. Current rows
+    // and effective drafts have stricter live-reference checks.
+    requireReference(value.targetId !== null || !['known', 'uncertain'].includes(value.knowledge));
     const type = types.get(value.typeId);
     requireReference(type);
     edgeDefinition(type);
@@ -367,7 +366,10 @@ export function validateImportReferences(
       ),
     ]);
     changes(draft.changes, types, edgeTypes);
-    for (const change of draft.relationships) edgeChange(change, edgeTypes);
+    for (const change of draft.relationships) {
+      if (change.after) requireReference(Boolean(change.after.sourceId && change.after.targetId));
+      edgeChange(change, edgeTypes);
+    }
   }
   const saves = new Map(content.saves.map((row) => [`${row.userId}:${row.operationId}`, row]));
   for (const row of content.saves) {

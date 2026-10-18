@@ -33,7 +33,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
             ? { name: 'Tillfälligt föremål', description: '', typeId: 'discard-type' }
             : {
                 sourceId: 'draft-bike',
-                targetId: null,
+                targetId: 'draft-bike',
                 typeId: 'discard-type',
                 knowledge: 'unknown',
               },
@@ -59,7 +59,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
           ? { name: 'Tillfälligt föremål', description: '', typeId: 'discard-type' }
           : {
               sourceId: 'draft-bike',
-              targetId: null,
+              targetId: 'draft-bike',
               typeId: 'discard-type',
               knowledge: 'unknown',
             },

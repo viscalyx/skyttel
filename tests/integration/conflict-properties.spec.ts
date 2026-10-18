@@ -269,30 +269,38 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
       knowledge: 'known' as const,
     };
     await app.propose(page.request, 'relationship', 'edge', edge);
+    await app.propose(page.request, 'relationship', 'existing', {
+      ...edge,
+      sourceId: 'service',
+      targetId: 'lo',
+    });
     await app.save(page.request, 'base-edge');
-    await app.propose(page.request, 'relationship', 'edge', { ...edge, knowledge: 'uncertain' });
+    await app.propose(page.request, 'relationship', 'edge', {
+      ...edge,
+      targetId: 'lo',
+      knowledge: 'uncertain',
+    });
     await app.propose(other.request, 'relationship', 'edge', {
       ...edge,
-      targetId: null,
-      knowledge: 'none',
+      sourceId: 'service',
     });
     await app.save(other.request, 'changed-edge');
     await page.goto(app.installation.origin);
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter' });
     await dialog
-      .getByRole('button', { name: 'Till objekt: Ditt förslag – Molnmusik', exact: true })
+      .getByRole('button', { name: 'Från objekt: Sparat i kartan nu – Molnmusik', exact: true })
       .click();
     await dialog
-      .getByRole('button', {
-        name: 'Vad är känt?: Sparat i kartan nu – Uttryckligen inget',
-        exact: true,
-      })
+      .getByRole('button', { name: 'Till objekt: Ditt förslag – Lo Exempel', exact: true })
       .click();
-    await expect(dialog.getByRole('alert')).toContainText('målobjektet fungerar inte tillsammans');
+    await dialog
+      .getByRole('button', { name: 'Vad är känt?: Ditt förslag – Osäkert uppgivet', exact: true })
+      .click();
+    await expect(dialog.getByRole('alert')).toContainText('finns redan i kartan');
     await expect(dialog.getByRole('button', { name: 'Lägg valen i utkastet' })).toBeDisabled();
     await expect(
-      dialog.getByRole('button', { name: 'Till objekt: Ditt förslag – Molnmusik' }),
+      dialog.getByRole('button', { name: 'Till objekt: Ditt förslag – Lo Exempel' }),
     ).toHaveAttribute('aria-pressed', 'true');
     state = await app.read();
     const conflict = draftConflicts(state)[0];
@@ -301,37 +309,38 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
       contentVersion: state.contentVersion,
       conflict,
       basis: conflictBasis(state, conflict),
-      choices: { targetId: 'proposed', knowledge: 'saved' },
+      choices: { sourceId: 'saved', targetId: 'proposed', knowledge: 'proposed' },
     });
     expect(invalid.status()).toBe(400);
     expect((await app.read()).draft).toEqual(state.draft);
     await dialog
-      .getByRole('button', { name: 'Vad är känt?: Ditt förslag – Osäkert uppgivet', exact: true })
+      .getByRole('button', { name: 'Från objekt: Ditt förslag – Lo Exempel', exact: true })
       .click();
     await expect(dialog.getByRole('alert')).toHaveCount(0);
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet' }).click();
     await expect(dialog.getByRole('status')).toContainText('Valen finns');
     expect((await app.read()).draft.relationships?.[0].after).toMatchObject({
-      targetId: 'service',
+      sourceId: 'lo',
+      targetId: 'lo',
       knowledge: 'uncertain',
     });
     await page.keyboard.press('Escape');
-    await expectConflictDraftValues(page, 'Lo Exempel → Använder → Molnmusik (osäkert uppgivet)', {
+    await expectConflictDraftValues(page, 'Lo Exempel → Använder → Lo Exempel (osäkert uppgivet)', {
       Från: 'Lo Exempel',
       Sambandstyp: 'Använder',
-      Till: 'Molnmusik',
+      Till: 'Lo Exempel',
       'Uppgiftens säkerhet': 'Osäkert uppgivet',
     });
     await closeTextView(page);
     await refreshConflictReader(member, app.installation.origin);
     await expectSavedConflictRelationship(
       member,
-      'Lo Exempel',
-      'Lo Exempel → Använder → Uttryckligen inget',
+      'Molnmusik',
+      'Molnmusik → Används av → Molnmusik',
       {
         Typ: 'Använder',
-        'Till objekt': 'Uttryckligen inget',
-        'Uppgiftens säkerhet': 'Uttryckligen inget',
+        'Till objekt': 'Molnmusik',
+        'Uppgiftens säkerhet': 'Känt',
       },
     );
   } finally {

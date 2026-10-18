@@ -594,7 +594,7 @@ UTKAST-42.
   "reference": "1280 × 844; komplett datorflöde",
   "outcomes": [
     "Avbrott bevarar hela utkastet. Bekräftelse tar bort objektet och endast dess tre beroende samband.",
-    "Cykelns ändring, Olöst fordon, sambandet med okänt mål och båda typförslagen behåller alla värden. Sparade uppgifter och historik består."
+    "Cykelns ändring, Olöst fordon, sambandet med vald ändpunkt och båda typförslagen behåller alla värden. Sparade uppgifter och historik består."
   ]
 }
 ```
@@ -617,7 +617,7 @@ UTKAST-42.
 
 - Avbrott bevarar hela utkastet. Bekräftelse tar bort objektet och endast dess
   tre beroende samband.
-- Cykelns ändring, Olöst fordon, sambandet med okänt mål och båda typförslagen
+- Cykelns ändring, Olöst fordon, sambandet med vald ändpunkt och båda typförslagen
   behåller alla värden. Sparade uppgifter och historik består.
 
 ### UTKAST-142: beroende borttagning på smal skärm
@@ -642,7 +642,7 @@ UTKAST-142.
   "reference": "320 × 844; samma fullständiga arbetsflöde; smal bekräftelse och återfokus",
   "outcomes": [
     "Avbrott bevarar hela utkastet. Bekräftelse tar bort objektet och endast dess tre beroende samband.",
-    "Cykelns ändring, Olöst fordon, sambandet med okänt mål och båda typförslagen behåller alla värden. Sparade uppgifter och historik består."
+    "Cykelns ändring, Olöst fordon, sambandet med vald ändpunkt och båda typförslagen behåller alla värden. Sparade uppgifter och historik består."
   ]
 }
 ```
@@ -659,7 +659,7 @@ UTKAST-142.
 
 - Avbrott bevarar hela utkastet. Bekräftelse tar bort objektet och endast dess
   tre beroende samband.
-- Cykelns ändring, Olöst fordon, sambandet med okänt mål och båda typförslagen
+- Cykelns ändring, Olöst fordon, sambandet med vald ändpunkt och båda typförslagen
   behåller alla värden. Sparade uppgifter och historik består.
 
 ### UTKAST-43: ta bort typförslag och behåll berörda förslag med feltext
@@ -729,7 +729,7 @@ server-sviten i Vitest. Formulär och borttagningsbekräftelse provas i UTKAST-4
 
 ### UTKAST-143: ta bort sambandstyp men behåll sambandsförslaget
 
-**Syfte:** Prova den separata sambandstypssamlingen och giltigt okänt mål.
+**Syfte:** Prova den separata sambandstypssamlingen och giltig ändpunkt.
 
 **Användare:** Alex Exempel i provinstallationen.
 
@@ -738,6 +738,7 @@ Inställningar → Typer och egna fält en ny sambandstyp Tillfällig typ,
 beskrivning Hela den tillfälliga typens betydelse, framåt granskar och bakåt
 granskas av. Lägg i utkastet. Gå tillbaka till Tabell och välj Samband för Alex
 blå cykel → Nytt samband. Välj Tillfällig typ och Uppgiftens säkerhet: Okänt.
+Välj cykeln som Till objekt.
 Lägg i utkastet med Enter och välj Stäng samband. Spara inte.
 
 **Integrationstest:**
@@ -1700,15 +1701,16 @@ UTKAST-28.
 
 ### UTKAST-29: ogiltiga sambandsval behålls tills kombinationen rättas
 
-**Syfte:** Validera målobjekt och vad som är känt tillsammans utan att
-Skyttel ändrar en annan egenskap automatiskt.
+**Syfte:** Avvisa en kombination av ändpunkter som blir en dubblett och
+bevara valen tills användaren rättar dem.
 
 **Användare:** Administratören och den inbjudna medlemmen.
 
-**Förutsättningar:** Samma testhushåll. Spara först ett känt samband
-Lo Exempel använder Molnmusik. Administratören föreslår Osäkert uppgivet.
-Medlemmen sparar Uttryckligen inget utan målobjekt. Ladda om
-administratörens sida.
+**Förutsättningar:** Spara Lo Exempel → Använder → Molnmusik samt
+Molnmusik → Använder → Lo Exempel. Administratören föreslår att det första
+sambandet går från Lo Exempel till Lo Exempel, med Osäkert uppgivet.
+Medlemmen sparar det första sambandet från Molnmusik till Molnmusik.
+Ladda om administratörens sida.
 
 **Integrationstest:**
 [conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
@@ -1722,11 +1724,11 @@ UTKAST-29.
     "spec": "tests/integration/conflict-properties.spec.ts",
     "caseId": "UTKAST-29"
   },
-  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; ogiltiga sambandsval behålls tills kombinationen rättas.",
+  "reference": "1280 × 720; Chromium och syntetiska testidentiteter; blandade ändpunktsval bildar ett redan befintligt samband.",
   "outcomes": [
-    "Den ogiltiga kombinationen förklaras och bekräftelsen är spärrad. Ingen annan egenskap ändras och valen finns kvar.",
-    "Den rättade kombinationen blir möjlig att bekräfta. Utifrån utkastet är målobjektet Molnmusik och uppgiften Osäkert uppgivet. Kartan behåller det som medlemmen sparar tills ett separat sparande genomförs.",
-    "Servern avvisar samma ogiltiga kombination även från en äldre klient."
+    "Dubbletten förklaras och bekräftelsen är spärrad. Alla val finns kvar.",
+    "Efter rättning gäller förslaget Lo Exempel till Lo Exempel med Osäkert uppgivet. Medlemmens sparade samband består före separat sparande.",
+    "Servern avvisar samma ogiltiga kombination från en äldre klient."
   ]
 }
 ```
@@ -1736,20 +1738,22 @@ UTKAST-29.
 **Steg:**
 
 1. Öppna **1 konflikt i ditt utkast**.
-2. Välj Molnmusik från **Ditt förslag** och Uttryckligen inget från
-   **Sparat i kartan nu**.
-3. Läs förklaringen och kontrollera att båda valmarkeringarna finns kvar.
-4. Byt bara vad som är känt till Osäkert uppgivet från ditt förslag.
-5. Bekräfta och granska utkastet samt den gemensamma kartan.
+2. Välj Molnmusik för **Från objekt** från **Sparat i kartan nu**.
+   Välj Lo Exempel för **Till objekt** och Osäkert uppgivet från
+   **Ditt förslag**.
+3. Läs beskedet att sambandet redan finns. Kontrollera spärrad bekräftelse
+   och bevarade valmarkeringar.
+4. Byt bara **Från objekt** till Lo Exempel från ditt förslag.
+5. Bekräfta och granska utkastet. Öppna den gemensamma kartans samband
+   för Molnmusik och läs det sparade sambandet till Molnmusik.
 
 **Förväntat resultat:**
 
-- Den ogiltiga kombinationen förklaras och bekräftelsen är spärrad.
-  Ingen annan egenskap ändras och valen finns kvar.
-- Den rättade kombinationen blir möjlig att bekräfta. Utifrån utkastet
-  är målobjektet Molnmusik och uppgiften Osäkert uppgivet. Kartan behåller
-  det som medlemmen sparar tills ett separat sparande genomförs.
-- Servern avvisar samma ogiltiga kombination även från en äldre klient.
+- Dubbletten förklaras och bekräftelsen är spärrad. Alla val finns kvar.
+- Ett självsamband från Lo Exempel till Lo Exempel med Osäkert uppgivet
+  går att lägga i utkastet efter rättningen.
+- Medlemmens sparade samband från Molnmusik till Molnmusik består före
+  separat sparande. Servern avvisar samma dubblett från en äldre klient.
 
 UTKAST-30 är pensionerat och får inte återanvändas.
 UTKAST-03 behåller markerat val vid avvisning, spärrad bekräftelse efter
@@ -2407,8 +2411,8 @@ UTKAST-07.
 
 1. Öppna **Samband för Lo Exempel** i Tabell som administratören och
    redigera sambandet. Lägg säkerheten **Osäkert uppgivet** i utkastet.
-2. Öppna samma samband som medlemmen, välj **Uttryckligen inget**, lägg
-   det i utkastet och spara separat.
+2. Öppna samma samband som medlemmen, välj **Uttryckligen inget**, behåll
+   Molnmusik som mål, lägg det i utkastet och spara separat.
 3. Ladda om administratörens sida. Försök spara hela utkastet, läs
    **Inget sparades** och stäng sparmodalen och textvyn. Välj
    **Hämta aktuellt underlag** och öppna konflikten.

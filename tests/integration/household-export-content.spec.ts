@@ -145,7 +145,7 @@ test('technical: a full archive preserves object identities and saved, historica
           value: {
             typeId: state.relationshipTypes[0].id,
             sourceId: 'second',
-            targetId: null,
+            targetId: 'second',
             knowledge: 'unknown',
           },
         })
@@ -244,7 +244,7 @@ test('technical: a full archive preserves object identities and saved, historica
       expect.objectContaining({
         id: 'unknown-endpoint',
         sourceId: 'second',
-        targetId: null,
+        targetId: 'second',
         knowledge: 'unknown',
       }),
     ]);

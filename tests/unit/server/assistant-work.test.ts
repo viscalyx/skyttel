@@ -1016,6 +1016,120 @@ test('current household definitions and independent custom fields work without a
   expect(review.current.objects[0].customValues.inspected).toBe(false);
 });
 
+test('real HTTP and MCP reject invalid endpoint requests atomically and serialize duplicate edits', async () => {
+  const token = await connect();
+  let state = await (await browser.get(path)).json();
+  for (const id of ['source', 'target', 'standalone']) {
+    await post('draft', {
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      id,
+      baseRevision: null,
+      value: { typeId: state.types[0].id, name: id, description: '' },
+    });
+    state = await (await browser.get(path)).json();
+  }
+  const value = {
+    typeId: state.relationshipTypes[0].id,
+    sourceId: 'source',
+    targetId: 'target',
+    knowledge: 'uncertain',
+  };
+  await tool(token, 'propose_relationship', {
+    version: state.draft.version,
+    contentVersion: state.contentVersion,
+    id: 'edge',
+    baseRevision: null,
+    value,
+  });
+  state = await (await browser.get(path)).json();
+  for (const id of ['invalid', 'edge']) {
+    for (const endpoint of ['sourceId', 'targetId']) {
+      for (const invalid of [null, '', 'invented', undefined]) {
+        const body = {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id,
+          baseRevision: null,
+          value: { ...value, [endpoint]: invalid },
+        };
+        const response = await browser.post(`${path}/relationship`, {
+          headers: { origin: app.origin },
+          data: body,
+        });
+        expect(response.status()).toBe(400);
+        const mcp = await callAssistant(app.origin, token, 'propose_relationship', body);
+        expect((await mcp.json()).result.isError).toBe(true);
+        expect(await (await browser.get(path)).json()).toEqual(state);
+      }
+    }
+  }
+  expect(
+    (
+      await tool(token, 'save_draft', {
+        version: state.draft.version,
+        contentVersion: state.contentVersion,
+        operationId: 'valid-endpoints',
+      })
+    ).error,
+  ).toBe(false);
+  state = await (await browser.get(path)).json();
+  expect(state.objects).toHaveLength(3);
+  expect(state.relationships).toMatchObject([{ sourceId: 'source', targetId: 'target' }]);
+  const duplicate = await tool(token, 'propose_relationship', {
+    version: state.draft.version,
+    contentVersion: state.contentVersion,
+    id: 'duplicate',
+    baseRevision: null,
+    value: { ...value, knowledge: 'known' },
+  });
+  expect(duplicate.value.existingId).toBe('edge');
+  expect(await (await browser.get(path)).json()).toEqual(state);
+  // Two requests at the same draft version cannot create two identities.
+  const responses = await Promise.all(
+    ['self-one', 'self-two'].map((id) =>
+      browser.post(`${path}/relationship`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id,
+          baseRevision: null,
+          value: { ...value, targetId: 'source' },
+        },
+      }),
+    ),
+  );
+  expect(responses.map((response) => response.status()).sort()).toEqual([200, 409]);
+  state = await (await browser.get(path)).json();
+  const selfId = state.draft.relationships[0].id;
+  expect(
+    (
+      await tool(token, 'propose_relationship', {
+        version: state.draft.version,
+        contentVersion: state.contentVersion,
+        id: 'edge',
+        baseRevision: 1,
+        value: { ...value, targetId: 'source' },
+      })
+    ).value.error,
+  ).toBe('duplicate_relationship');
+  expect(await (await browser.get(path)).json()).toEqual(state);
+  expect(
+    (
+      await tool(token, 'save_draft', {
+        version: state.draft.version,
+        contentVersion: state.contentVersion,
+        operationId: 'self-endpoint',
+      })
+    ).error,
+  ).toBe(false);
+  expect((await (await browser.get(path)).json()).relationships).toMatchObject([
+    { id: 'edge', targetId: 'target' },
+    { id: selfId, targetId: 'source' },
+  ]);
+});
+
 test('relationship meanings, duplicate selection and ordinary removal preserve the full review and saved data until approval', async () => {
   const token = await connect();
   const catalog = (await tool(token, 'read_type_catalog')).value;
@@ -1039,7 +1153,12 @@ test('relationship meanings, duplicate selection and ordinary removal preserve t
       })
     ).value;
   }
-  const edge = { typeId: edgeType.id, sourceId: 'lo', targetId: null, knowledge: 'unresolved' };
+  const edge = {
+    typeId: edgeType.id,
+    sourceId: 'lo',
+    targetId: 'service',
+    knowledge: 'unresolved',
+  };
   review = (
     await tool(token, 'propose_relationship', {
       version: review.version,
@@ -1057,7 +1176,7 @@ test('relationship meanings, duplicate selection and ordinary removal preserve t
         contentVersion: 1,
         id: 'uses',
         baseRevision: null,
-        value: { ...edge, knowledge, targetId: knowledge === 'uncertain' ? 'service' : null },
+        value: { ...edge, knowledge, targetId: 'service' },
       })
     ).value;
     expect(review.relationships[0].after.knowledge).toBe(knowledge);
@@ -1078,9 +1197,9 @@ test('relationship meanings, duplicate selection and ordinary removal preserve t
     contentVersion: 1,
     id: 'uses',
     baseRevision: null,
-    value: { ...edge, knowledge: 'known' },
+    value: { ...edge, knowledge: 'known', targetId: 'missing' },
   });
-  expect(invalid.value.error).toBe('invalid_request');
+  expect(invalid.value.error).toBe('invalid_endpoint');
   const saved = await tool(token, 'save_draft', {
     version: review.version,
     contentVersion: 1,
@@ -1191,6 +1310,21 @@ test('write clients keep drafts and operations private and membership removal st
     ).json();
     expect(spoof.result.isError).toBe(true);
     expect((await tool(otherToken, 'propose_object', proposal)).error).toBe(false);
+    const privateState = await tool(otherToken, 'read_my_draft');
+    const rejectedEndpoint = await tool(otherToken, 'propose_relationship', {
+      version: privateState.value.version,
+      contentVersion: state.contentVersion,
+      id: 'private-endpoint',
+      baseRevision: null,
+      value: {
+        typeId: state.relationshipTypes[0].id,
+        sourceId: 'robin-private',
+        targetId: 'alex-private',
+        knowledge: 'known',
+      },
+    });
+    expect(rejectedEndpoint.value.error).toBe('invalid_endpoint');
+    expect((await tool(otherToken, 'read_my_draft')).value).toEqual(privateState.value);
     expect(JSON.stringify((await tool(token, 'read_my_draft')).value)).not.toContain(
       'Robins privata',
     );
