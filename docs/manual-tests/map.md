@@ -252,8 +252,9 @@ unanswered identity question”.
    **Uppgiftens säkerhet**. Välj Betalkonto som **Till objekt**, sedan
    **Lägg i utkastet** och **Stäng samband**.
    Ladda om sidan.
-2. Välj **Skriv till Skyttel** och **Visa utkastet**. Läs **Olöst identitet**
-   och **Målet är oklart**. Kontrollera att **Spara hela utkastet** är inaktivt.
+2. Välj **Skriv till Skyttel** och **Visa utkastet**. Läs sambandet till
+   Betalkonto och **Målet är oklart**. Kontrollera att **Spara hela utkastet**
+   är inaktivt.
    Stäng textvyn och öppna samma samband från tabellen. Välj **Redigera
    samband**,
    **Osäkert uppgivet** och Betalkonto som **Till objekt**. Lägg hela sambandet

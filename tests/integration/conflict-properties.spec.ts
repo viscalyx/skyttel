@@ -333,16 +333,11 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
     });
     await closeTextView(page);
     await refreshConflictReader(member, app.installation.origin);
-    await expectSavedConflictRelationship(
-      member,
-      'Molnmusik',
-      'Molnmusik → Används av → Molnmusik',
-      {
-        Typ: 'Använder',
-        'Till objekt': 'Molnmusik',
-        'Uppgiftens säkerhet': 'Känt',
-      },
-    );
+    await expectSavedConflictRelationship(member, 'Molnmusik', 'Molnmusik → Använder → Molnmusik', {
+      Typ: 'Använder',
+      'Till objekt': 'Molnmusik',
+      'Uppgiftens säkerhet': 'Känt',
+    });
   } finally {
     await other.close();
     await app.installation.close();

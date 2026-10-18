@@ -218,7 +218,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await page.reload();
     await openTable(page);
     const unresolvedDraft = await openDraftReview(page);
-    await expect(unresolvedDraft).toContainText('Olöst identitet');
+    await expect(unresolvedDraft).toContainText('Familjemusik → Betalas med → Betalkonto');
     await expect(unresolvedDraft).toContainText(
       'Målet är oklart. Rätta sambandet i det ordinarie flödet.',
     );
