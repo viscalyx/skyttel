@@ -69,6 +69,30 @@ EGENSKAP-01. Provet använder riktiga formulär, HTTP och SQLite.
       "spec": "tests/unit/server/assistant-work.test.ts",
       "title": "MCP allocates property identities and edits, clears, removes and orders the returned identities",
       "purpose": "Verifierar samma ordning, separata identiteter, rättelse och tömning genom den gemensamma MCP-ingången."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/property-editor.test.tsx",
+      "title": "invalid number input retains raw text and blocks the parent form from staging accepted old values",
+      "purpose": "Chromium verifierar att redigerarens ogiltiga råtext blockerar hela objektformuläret, behåller övriga uppgifter och skyddas av varningen när formuläret lämnas. Styrd formulärbekräftelse ersätter inte SQLite-underlaget."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/property-editor.test.tsx",
+      "title": "keyboard ordering and separate clear/delete actions preserve identities, focus and announced positions at 320px",
+      "purpose": "Verifierar tangentbordets ordning, fokus, status, separat tömning och borttagning samt skillnaden mellan tomt, tom text, noll och Nej i den gemensamma redigeraren."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/property-editor.test.tsx",
+      "title": "new blank labels block staging and deleting the last row returns focus to add without altering existing form work",
+      "purpose": "Verifierar etikettfel och återfokus när sista egenskapen tas bort utan att objektets övriga formulärarbete påverkas."
     }
   ]
 }
@@ -155,3 +179,12 @@ Automatiska prov verifierar semantiska namn, tangentbordsordning,
 fokus, fel, status och formulärarbete i Chromium. Verklig uppläsning med
 skärmläsare, förstoring och fysisk mobilinmatning behöver fortfarande
 mänsklig observation; dessa prov fastställer inte fullständig överensstämmelse.
+
+**Tekniskt webbläsarunderlag:**
+[property-editor.test.tsx](../../tests/browser/property-editor.test.tsx)
+provar redigeraren i det verkliga objektformuläret med styrd
+formulärbekräftelse. Ogiltiga tal, datum, ja/nej, text utan datatyp och
+för lång text behåller råtexten och blockerar tillägg av gamla accepterade
+värden. Provet kontrollerar också fokus och status vid ordning, etikettfel,
+tömning och borttagning. Detta underlag använder ingen server;
+beständighet verifieras separat genom integrations- och HTTP-proven ovan.
