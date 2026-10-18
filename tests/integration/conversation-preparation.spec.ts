@@ -396,11 +396,11 @@ for (const seeded of [false, true]) {
       const form = await editTableObject(page, 'Lo Senaste');
       await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Lo Senaste');
       await expect(form.getByLabel('Objekttyp', { exact: true })).toHaveValue(person.id);
+      await form.getByLabel('Namn', { exact: true }).fill('Lo Registrerad');
       await openProperties(form);
       await expect(
         propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true }),
       ).toHaveValue('Påhittad uppgift');
-      await form.getByLabel('Namn', { exact: true }).fill('Lo Registrerad');
       await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await expect(form).not.toBeVisible();
       const proposal = await readDraftProposal(page, 'Lo Registrerad');
