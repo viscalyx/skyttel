@@ -265,22 +265,15 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
           .map(({ id, typeId, name }) => ({ id, typeId, name }));
         const typeIds = new Set([...objects, ...contextObjects].map((object) => object.typeId));
         const relationshipTypeIds = new Set(relationships.map((edge) => edge.typeId));
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                types: state.types.filter((type) => typeIds.has(type.id)),
-                objects,
-                contextObjects,
-                relationshipTypes: state.relationshipTypes.filter((type) =>
-                  relationshipTypeIds.has(type.id),
-                ),
-                relationships,
-              }),
-            },
-          ],
-        };
+        return assistantResult({
+          types: state.types.filter((type) => typeIds.has(type.id)),
+          objects,
+          contextObjects,
+          relationshipTypes: state.relationshipTypes.filter((type) =>
+            relationshipTypeIds.has(type.id),
+          ),
+          relationships,
+        });
       },
     );
     server.registerTool(

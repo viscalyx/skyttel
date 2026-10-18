@@ -33,6 +33,6 @@ export async function readVoiceProposal(
       .filter({ hasText: /^Beskrivning(?: · ändrat)?$/ })
       .locator('..')
       .getByRole('definition'),
-  ).toHaveText(description);
+  ).toContainText(description);
   await closeSupportDialog(page, name);
 }

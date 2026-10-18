@@ -366,7 +366,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   NOT-24 kräver hört besked. NOT-11 har
   en separat körbar mänsklig granskning av alla symbolformer och typfärger.
 - [Frågor och talade sparbesked](conversation-questions.md): identiteter,
-  konflikter, oberoende svar under väntande frågor, förnyad sparbegäran,
+  konflikter, datatyper, upprepade egenskapsetiketter och lika objektnamn,
+  oberoende svar under väntande frågor, förnyad sparbegäran,
   väntan med mikrofonen av, beständigt kvitto och fyra
   sekunders sparbesked efter ljud eller stopp. Talad och skriven ingång
   har skilda vanliga fall; uppläsning och faktiskt ljud har FRAGA-08/09.

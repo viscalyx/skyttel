@@ -1,7 +1,8 @@
+import { isDeepStrictEqual } from 'node:util';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { conflictBasis, conflictProperties } from '../shared/conflict-properties.js';
 import { draftConflicts } from '../shared/draft-conflicts.js';
-import { financialFields } from '../shared/financial-facts.js';
 import { proposedObjectTypes, proposedRelationshipTypes } from '../shared/map.js';
 import { isObjectIconId, searchObjectIcons } from '../shared/object-icons.js';
 import { propertyInputSchema } from '../shared/properties.js';
@@ -12,8 +13,58 @@ type HouseholdMap = ReturnType<typeof householdMap>;
 
 export { assistantWorkInstructions } from './assistant-instructions.js';
 
+// Temporary boundary while storage contracts to free properties. Identity-keyed
+// dictionaries are opaque: endpoint/property IDs may themselves be model words.
+const legacyPropertyKey =
+  /^(description|knowledge|endDate|financialFacts(?:\.|$)|customValues(?:\.|$)|fields(?:\.|$)|sections(?:\.|$)|builtins(?:\.|$)|propertyOrder$)/;
+function assistantContent(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(assistantContent);
+  if (!value || typeof value !== 'object') return value;
+  const record = value as Record<string, unknown>;
+  const individual =
+    typeof record.typeId === 'string' &&
+    (typeof record.name === 'string' || typeof record.sourceId === 'string');
+  const definition =
+    typeof record.name === 'string' &&
+    typeof record.description === 'string' &&
+    (typeof record.revision === 'number' || typeof record.forwardLabel === 'string');
+  return Object.fromEntries(
+    Object.entries(record).flatMap(([key, content]) => {
+      if (
+        individual &&
+        ['description', 'financialFacts', 'customValues', 'knowledge', 'endDate'].includes(key)
+      )
+        return [];
+      if (definition && ['fields', 'sections', 'builtins', 'propertyOrder'].includes(key))
+        return [];
+      if (['objectNames', 'orderLabels', 'labels'].includes(key)) return [[key, content]];
+      // A resolution basis contains conflict rows, not type-defined fields.
+      if (key === 'fields' && Array.isArray(content))
+        return [
+          [
+            key,
+            assistantContent(
+              content.filter(
+                (field) =>
+                  !field ||
+                  typeof field !== 'object' ||
+                  typeof field.key !== 'string' ||
+                  !legacyPropertyKey.test(field.key),
+              ),
+            ),
+          ],
+        ];
+      return [[key, assistantContent(content)]];
+    }),
+  );
+}
+
 export function assistantResult(value: unknown) {
-  return { content: [{ type: 'text' as const, text: JSON.stringify(value) }] };
+  return { content: [{ type: 'text' as const, text: JSON.stringify(assistantContent(value)) }] };
+}
+
+function exposed(value: unknown) {
+  return JSON.parse(JSON.stringify(assistantContent(value)));
 }
 
 export function assistantDraftReview(map: HouseholdMap) {
@@ -76,6 +127,13 @@ export function assistantDraftReview(map: HouseholdMap) {
       relationshipTypes: state.relationshipTypes.filter(({ id }) => relationshipTypeIds.has(id)),
     },
     conflicts,
+    resolutions: conflicts.map((conflict) => ({
+      conflict,
+      basis: conflictBasis(state, conflict),
+      properties: conflictProperties(state, conflict).filter(
+        ({ key }) => !legacyPropertyKey.test(key),
+      ),
+    })),
     blockedRelationships: conflicts
       .filter((conflict) => conflict.kind === 'relationship' && conflict.missingEndpoints?.length)
       .map(({ id, missingEndpoints }) => ({
@@ -112,16 +170,6 @@ const proposalFields = {
   baseRevision: z.number().int().positive().nullable(),
   typeRevision: z.number().int().positive().optional(),
 };
-const fact = z.union([
-  z
-    .object({
-      knowledge: z.enum(['known', 'uncertain']),
-      value: z.string(),
-      reportedOn: z.string().optional(),
-    })
-    .strict(),
-  z.object({ knowledge: z.enum(['unknown', 'none']), reportedOn: z.string().optional() }).strict(),
-]);
 const lifecycle = z.enum(['active', 'ended']).optional();
 const saveFields = z.object({ ...versionFields, operationId: id }).strict();
 
@@ -135,6 +183,8 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
       const messages: Record<string, string> = {
         invalid_properties:
           'Ogiltiga egenskaper. Behåll egenskapernas ID och ordning. Ange ett giltigt värde för datatypen eller töm värdet. Ditt övriga utkast finns kvar.',
+        invalid_endpoint:
+          'Ändpunkten saknas eller är ogiltig. Läs verkliga objekt och fråga vilken ändpunkt som avses före ett nytt förslag. Hitta inte på motpart eller ersättningsobjekt. Ditt övriga utkast finns kvar.',
         unresolved_identity:
           'Identiteten är olöst. Fråga vilken person eller sak som avses, eller låt användaren uttryckligen välja ospecificerat objekt. Inget sparades.',
         operation_pending:
@@ -200,7 +250,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'read_type_catalog',
     {
       description:
-        'Läs hushållets aktuella objekt- och sambandstyper, även i en tom karta. Egna typförslag i ditt utkast ingår. Använd deras stabila ID, revisioner, fält och riktning; anta aldrig en fast katalog.',
+        'Läs hushållets aktuella objekt- och sambandstyper, även i en tom karta. Egna typförslag i ditt utkast ingår. Använd deras stabila ID, revisioner och riktning; anta aldrig en fast katalog.',
       inputSchema: z.object({}).strict(),
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
@@ -221,7 +271,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'propose_object_type',
     {
       description:
-        'Föreslå en ny objekttyp eller ersätt hela definitionen, även en förifylld typ. value null föreslår borttagning. Ange alla fält som ska finnas kvar. sections anger namngivna avsnitt i visningsordning. Ange sectionId för varje fält: avsnittets ID eller tom sträng för dolt med bevarade värden. Fältordningen gäller inom avsnitten. Utelämnade sections bevarar befintlig placering; äldre definitioner visas i Egna fält. builtins placerar description och de ekonomiska uppgifternas stabila nycklar i avsnitt med visningsnamn; tomt sectionId döljer bara placeringen och befintliga gemensamma värden förblir åtkomliga. propertyOrder anger hela ordningen med field:<fält-ID> och builtin:<nyckel>. Utelämnade builtins och propertyOrder behåller befintlig presentation. Dessa referenser är aldrig customValues; ekonomiska fakta behåller säkerhet, textvärde och tillåtna datum. Fält får lämnas obesvarade; utelämnat ja/nej är inte false. Ett använt fälts värdeslag ersätts genom ett nytt fält, aldrig automatisk konvertering. Användning i aktuellt eller upphört innehåll och privata utkast skyddas även vid sparandet. Hela ditt utkast returneras.',
+        'Föreslå en ny objekttyp eller ersätt dess namn och gemensamma beskrivning, även förifyllda typer. value null föreslår borttagning. En typ ger inga egna fält: fria egenskaper hör till enskilda objekt och bevaras vid typbyte. Använd stabila typ-ID och aktuell revision. Använda typer skyddas vid sparandet. Hela ditt utkast returneras.',
       inputSchema: z
         .object({
           ...versionFields,
@@ -231,50 +281,6 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
             .object({
               name: z.string().min(1).max(200),
               description: z.string().max(2000),
-              sections: z
-                .array(z.object({ id, name: z.string().min(1).max(200) }).strict())
-                .max(100)
-                .optional(),
-              builtins: z
-                .array(
-                  z
-                    .object({
-                      key: z.enum([
-                        'description',
-                        'price',
-                        'currency',
-                        'paymentInterval',
-                        'startDate',
-                        'endDate',
-                        'terms',
-                        'debt',
-                        'creditLimit',
-                        'usedCredit',
-                      ]),
-                      name: z.string().min(1).max(200),
-                      sectionId: z.union([id, z.literal('')]),
-                    })
-                    .strict(),
-                )
-                .max(10)
-                .optional(),
-              propertyOrder: z
-                .array(z.string().regex(/^(field:[\w-]{1,128}|builtin:[a-zA-Z]+)$/))
-                .max(110)
-                .optional(),
-              fields: z
-                .array(
-                  z
-                    .object({
-                      id,
-                      name: z.string().min(1).max(200),
-                      description: z.string().max(2000),
-                      kind: z.enum(['text', 'number', 'date', 'boolean']),
-                      sectionId: z.union([id, z.literal('')]).optional(),
-                    })
-                    .strict(),
-                )
-                .max(100),
             })
             .strict()
             .nullable(),
@@ -284,7 +290,10 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     },
     async (body) =>
       run((domain) => {
-        domain.proposeObjectType(body);
+        domain.proposeObjectType({
+          ...body,
+          value: body.value ? { ...body.value, fields: [] } : null,
+        });
         return assistantDraftReview(domain);
       }),
   );
@@ -292,7 +301,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'propose_object',
     {
       description:
-        'Föreslå ett nytt objekt, ersätt hela dess förslagsvärde eller föreslå vanlig borttagning med value null. Behåll alla fakta som inte ska ändras. Använd aktuella typ-ID, typrevision och stabila objekt-ID. Bara eget utkast ändras; hela utkastet returneras. properties är hela den ordnade listan fria egenskaper: behåll returnerade egenskaps-ID vid rättelser, töm genom att utelämna value, ta bort genom att utesluta posten, ordna genom listans ordning. Utelämna id på nya egenskaper så tilldelas och returneras identiteten. Etiketter får upprepas och har ingen automatisk ekonomisk eller datumstyrd betydelse. Utelämnad properties behåller listan, [] tar bort alla. kind är text, number, date eller boolean; utelämnat kind tillåts bara utan value. 0, false och tom text är värden. Typbyte kräver giltigt eller tomt värde. iconId väljs från search_object_icons: ett ID sätter ikonen, null återgår till typens standardikon och utelämnat fält behåller valet. Bildbyte och typbyte behåller ikonen. Olöst identitet måste anges som unresolved; unspecified kräver användarens uttryckliga val.',
+        'Föreslå ett nytt objekt, ersätt hela dess förslagsvärde eller föreslå vanlig borttagning med value null. Behåll alla fakta som inte ska ändras. Använd aktuella typ-ID, typrevision och stabila objekt-ID. Bara eget utkast ändras; hela utkastet returneras. properties är hela den ordnade listan fria egenskaper: behåll returnerade egenskaps-ID vid rättelser, töm genom att utelämna value, ta bort genom att utesluta posten, ordna genom listans ordning. Utelämna id på nya egenskaper så tilldelas och returneras identiteten. Etiketter får upprepas och har ingen automatisk ekonomisk eller datumstyrd betydelse. Utelämnad properties behåller listan, [] tar bort alla. kind är text, number, date eller boolean; utelämnat kind tillåts bara utan value. 0, false och tom text är värden. Respektera uttrycklig datatyp. Härled bara entydig datatyp, exempelvis telefonnummer som text; fråga före tillägg vid oklar datatyp. Fråga före rättelse eller borttagning när samma etikett har flera möjliga identiteter. Typbyte kräver giltigt eller tomt värde. iconId väljs från search_object_icons: ett ID sätter ikonen, null återgår till typens standardikon och utelämnat fält behåller valet. Bildbyte och typbyte behåller ikonen. Olöst identitet måste anges som unresolved; unspecified kräver användarens uttryckliga val.',
       inputSchema: z
         .object({
           ...proposalFields,
@@ -300,18 +309,8 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
             .object({
               typeId: z.string(),
               name: z.string().min(1).max(200),
-              description: z.string().max(2000),
               identity: z.enum(['unspecified', 'unresolved']).optional(),
               properties: z.array(propertyInputSchema).optional(),
-              financialFacts: z
-                .object(
-                  Object.fromEntries(financialFields.map(({ key }) => [key, fact.optional()])),
-                )
-                .strict()
-                .optional(),
-              customValues: z
-                .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
-                .optional(),
               lifecycle,
               profileImageId: z.string().optional(),
               iconId: z.string().refine(isObjectIconId).nullable().optional(),
@@ -324,7 +323,10 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     },
     async (body) =>
       run((domain) => {
-        domain.propose(body);
+        domain.propose({
+          ...body,
+          value: body.value ? { ...body.value, description: '' } : null,
+        });
         return assistantDraftReview(domain);
       }),
   );
@@ -332,7 +334,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'propose_relationship_type',
     {
       description:
-        'Föreslå en ny eller ändrad sambandstyp med namn, beskrivning och benämning i båda riktningarna. Behåll stabila typ- och fält-ID. Valfria fields har text, number, date eller boolean; utelämnade fields behåller tidigare definition, [] tar bort oanvända fält. sections anger namngivna avsnitt i visningsordning. Ange sectionId för varje fält: avsnittets ID eller tom sträng för dolt med bevarade värden. Fältordningen gäller inom avsnitten. Utelämnade sections bevarar befintlig placering; äldre definitioner visas i Egna fält. value null föreslår borttagning endast när typen inte används av aktuella eller upphörda samband eller privata utkast; inga samband tas bort automatiskt. Hela ditt utkast returneras.',
+        'Föreslå en ny eller ändrad sambandstyp med namn, gemensam beskrivning och benämning i båda riktningarna. Behåll stabila typ-ID. Fria egenskaper hör till enskilda samband och bevaras vid typbyte. value null föreslår borttagning endast när typen inte används; inga samband tas bort automatiskt. Hela ditt utkast returneras.',
       inputSchema: z
         .object({
           ...versionFields,
@@ -344,24 +346,6 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
               description: z.string().max(2000),
               forwardLabel: z.string().min(1).max(200),
               reverseLabel: z.string().min(1).max(200),
-              sections: z
-                .array(z.object({ id, name: z.string().min(1).max(200) }).strict())
-                .max(100)
-                .optional(),
-              fields: z
-                .array(
-                  z
-                    .object({
-                      id,
-                      name: z.string().min(1).max(200),
-                      description: z.string().max(2000),
-                      kind: z.enum(['text', 'number', 'date', 'boolean']),
-                      sectionId: z.union([id, z.literal('')]).optional(),
-                    })
-                    .strict(),
-                )
-                .max(100)
-                .optional(),
             })
             .strict()
             .nullable(),
@@ -379,7 +363,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'propose_relationship',
     {
       description:
-        'Föreslå eller rätta ett riktat samband med aktuell typ, stabila ändpunkter och typrevision. value null föreslår vanlig borttagning. Både sourceId och targetId kräver verkliga objekt i samma hushåll eller det egna giltiga utkastet, oavsett säkerhet. Saknad ändpunkt måste rättas före skapande; hitta inte på någon motpart. Hela privata utkastet returneras. properties är hela den ordnade listan fria egenskaper: behåll returnerade egenskaps-ID vid rättelser, utelämna id på nya poster, töm genom att utelämna value, ta bort genom att utesluta posten och ordna genom listans ordning. Etiketter får upprepas och har ingen särskild verkan på datum, ekonomi eller status. Utelämnad properties behåller listan, [] tar bort alla. kind är text, number, date eller boolean; utelämnat kind tillåts bara utan value. 0, false och tom text är värden. Typbyte kräver giltigt eller tomt värde och bevarar fria egenskaper. Egna customValues valideras mot typen: utelämnat behåller samma typs värden, {} tömmer dem, saknad nyckel är obesvarat och skiljer sig från 0 och false. Typbyte kräver uttryckliga nya värden och får inte omtolka gamla fält. Ett upprepat tillägg anger befintligt samband i existingId.',
+        'Föreslå eller rätta ett riktat samband med aktuell typ, stabila ändpunkter och typrevision. value null föreslår vanlig borttagning. Både sourceId och targetId kräver verkliga objekt i samma hushåll eller det egna giltiga utkastet. Saknad ändpunkt måste rättas före skapande; hitta inte på någon motpart. Hela privata utkastet returneras. properties är hela den ordnade listan fria egenskaper: behåll returnerade egenskaps-ID vid rättelser, utelämna id på nya poster, töm genom att utelämna value, ta bort genom att utesluta posten och ordna genom listans ordning. Etiketter får upprepas och har ingen särskild verkan på datum, ekonomi eller status. Utelämnad properties behåller listan, [] tar bort alla. kind är text, number, date eller boolean; utelämnat kind tillåts bara utan value. 0, false och tom text är värden. Respektera uttrycklig datatyp; fråga före tillägg vid oklar datatyp och före rättelse eller borttagning vid flera möjliga egenskapsidentiteter. Typbyte kräver giltigt eller tomt värde och bevarar fria egenskaper. Ett upprepat tillägg anger befintligt samband i existingId.',
       inputSchema: z
         .object({
           ...proposalFields,
@@ -389,12 +373,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
               properties: z.array(propertyInputSchema).optional(),
               sourceId: id,
               targetId: id,
-              knowledge: z.enum(['known', 'uncertain', 'unknown', 'none', 'unresolved']),
               lifecycle,
-              endDate: fact.optional(),
-              customValues: z
-                .record(id, z.union([z.string().max(2000), z.number(), z.boolean()]))
-                .optional(),
             })
             .strict()
             .nullable(),
@@ -404,7 +383,10 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     },
     async (body) =>
       run((domain) => {
-        const result = domain.proposeRelationship(body);
+        const result = domain.proposeRelationship({
+          ...body,
+          value: body.value ? { ...body.value, knowledge: 'known' } : null,
+        });
         return {
           ...assistantDraftReview(domain),
           ...(result.existingId ? { existingId: result.existingId } : {}),
@@ -536,11 +518,13 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'resolve_conflict',
     {
       description:
-        'Lös en konflikt efter användarens val. Skicka exakt conflict från senaste hela utkastet och choice saved eller proposed. Samtidiga nya ändringar stoppar ett gammalt val. Svaret visar hela kvarvarande utkastet; spara först på ett aktuellt uttryckligt besked som omfattar det.',
+        'Lös en konflikt efter användarens val. Läs resolutions från senaste hela utkastet: conflict och basis ska återges exakt. choices väljer saved eller proposed per returnerad egenskapsnyckel; automatiska oberoende ändringar bevaras. Fråga om varje verklig konflikt före valet. choice saved eller proposed kan välja hela posten. Samtidiga nya ändringar stoppar ett gammalt val. Svaret visar hela kvarvarande utkastet; spara först på ett aktuellt uttryckligt besked som omfattar det.',
       inputSchema: z
         .object({
           ...versionFields,
-          choice: z.enum(['saved', 'proposed']),
+          choice: z.enum(['saved', 'proposed']).optional(),
+          choices: z.record(z.string(), z.enum(['saved', 'proposed'])).optional(),
+          basis: z.record(z.string(), z.unknown()).optional(),
           conflict: z.record(z.string(), z.unknown()),
         })
         .strict(),
@@ -548,7 +532,20 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     },
     async (body) =>
       run((domain) => {
-        domain.resolve(body);
+        const state = domain.read();
+        const conflict = draftConflicts(state).find((candidate) =>
+          isDeepStrictEqual(exposed(candidate), body.conflict),
+        );
+        // The client echoes the public snapshot; only the matching fresh server
+        // snapshot supplies transitional storage fields to the domain guard.
+        const basis = conflict && conflictBasis(state, conflict);
+        domain.resolve({
+          ...body,
+          conflict: conflict ?? body.conflict,
+          ...(body.basis && basis && isDeepStrictEqual(exposed(basis), body.basis)
+            ? { basis }
+            : {}),
+        });
         return assistantDraftReview(domain);
       }),
   );

@@ -61,6 +61,19 @@ vid en rättelse. Typbyte bevarar egenskaperna och ordningen. Etiketter
 som Pris och Slutdatum får ingen automatisk ekonomisk eller datumstyrd
 verkan; ange uttryckligen om objektet är aktuellt eller upphört.
 
+Ange datatyp när den inte framgår tydligt. Ett telefonnummer behandlas som
+text när avsikten är entydig, så att inledande nollor bevaras. Vid oklar
+datatyp eller flera möjliga egenskaper med samma etikett ska assistenten
+fråga före den berörda ändringen. **Töm värdet** behåller egenskapen och
+dess datatyp; **ta bort egenskapen** tar bort hela posten. En tom egenskap
+kan också sakna vald datatyp. Tomt är skilt från noll, Nej och tom text.
+
+Ett samband behöver två verkliga objekt. Om en ändpunkt saknas eller flera
+objekt har samma namn ska assistenten fråga vilket objekt du menar.
+Önskemålet finns kvar i samtalet medan du preciserar det. Annat giltigt
+utkastarbete bevaras. Assistenten ska inte hitta på en motpart eller en
+ersättningsegenskap för att kringgå frågan.
+
 ”Spara” gäller hela ditt aktuella utkast, även förslag från andra klienter.
 En tydlig rättelse och ”spara” i samma meddelande kan utföras utan ett
 extra ja bara för att rättelsen ger en ny utkastversion. ”Spara inte”
@@ -85,21 +98,18 @@ samtalet som hushållsinnehåll.
 
 ## Egna typer, historik och rättelser av identitet
 
-Du kan beskriva hyra, lån, kredit och avbetalning med samma frivilliga
-uppgifter som i formulären. Skuld, kreditutrymme och utnyttjad kredit är
-skilda uppgifter och kan ha varsitt datum. Saknade fakta fylls inte i.
+Du kan beskriva hyra, lån, kredit och avbetalning med fria egenskaper,
+exempelvis Skuld, Kreditutrymme och Datum för uppgiften. Saknade fakta
+fylls inte i.
 
 Be assistenten läsa hushållets aktuella typer, även när kartan är tom.
-Du kan föreslå egna typer, ändra förifyllda typer och ange fält för text,
-tal, datum och ja/nej. Obesvarat ja/nej är inte nej. Ett använt fälts
-värdeslag ändras genom ett nytt fält; tidigare värden finns kvar tills
-du hanterar dem. Egna samband har benämningar från båda hållen och en
-tydlig riktning. Sambandstyper kan ha valfria egna fält med text, tal,
-datum och ja/nej. Assistenten använder samma definitioner, värden och
-privata utkast som formulären. Obesvarat är skilt från noll och Nej.
+Du kan föreslå egna typer och ändra förifyllda typers namn och gemensamma
+beskrivning. Egna sambandstyper har benämningar från båda hållen och en
+tydlig riktning. Egenskaperna hör till enskilda objekt och samband,
+oberoende av deras typ. Assistenten använder samma definitioner, värden
+och privata utkast som formulären.
 
-Ett typbyte behåller objektets identitet och samband. Granska både gamla
-och nya fältvärden; lika fältnamn överför inte uppgifter automatiskt.
+Ett typbyte behåller objektets identitet, samband och fria egenskaper.
 En använd definition kan inte tas bort, även om innehållet är upphört
 eller bara används i ett beständigt privat utkast. Felet visar inte
 andra användares privata uppgifter.

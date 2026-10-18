@@ -975,7 +975,9 @@
     "bannerlägena",
     "bannerläget",
     "tolvmånadersgräns",
-    "sjudygnsgränsen"
+    "sjudygnsgränsen",
+    "skärmläsarobservationerna",
+    "rättningsbatchen"
   ],
   "overrides": [
     {

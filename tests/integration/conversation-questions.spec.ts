@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import type { VoiceAssistantView } from '../../src/shared/voice-assistant.js';
-import { closeSupportDialog, createHousehold, signIn } from '../support/client.js';
+import { closeSupportDialog, createHousehold, openTable, signIn } from '../support/client.js';
 import {
   closeConversationText,
   microphoneButton,
@@ -184,6 +184,183 @@ test('FRAGA-10: en väntande fråga bevarar oberoende svar och besked om nytt sp
     await readPrivateLo(page);
     expect((await (await page.request.get(path)).json()).objects).toEqual([]);
     expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([]);
+  } finally {
+    await app.close();
+  }
+});
+
+test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsamtal', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const questions = [
+    'Ska Kod 0012 vara text eller tal?',
+    'Vilken Notering ska tömmas: Hem eller Arbete?',
+    'Vilken Alex använder Molnmusik: personen i Lund eller personen i Umeå?',
+  ];
+  let call = 0;
+  let usesType = '';
+  const model = textModel((body) => {
+    const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    const lo = turn.draft.changes.find((change: { id: string }) => change.id === 'lo');
+    const { description: _description, ...value } = lo?.after ?? {};
+    const properties = value.properties;
+    if (call++ === 0)
+      return [
+        modelTool('submit_changes', {
+          version: turn.draft.version,
+          contentVersion: turn.draft.contentVersion,
+          completion: 'draft',
+          questions,
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'lo',
+                baseRevision: null,
+                value: {
+                  ...value,
+                  properties: [
+                    ...properties,
+                    { label: 'Telefon', kind: 'text', value: '0700123456' },
+                  ],
+                },
+              },
+            },
+          ],
+        }),
+      ];
+    if (call === 2)
+      return [
+        modelTool('submit_changes', {
+          version: turn.draft.version,
+          contentVersion: turn.draft.contentVersion,
+          completion: 'draft',
+          questions: [],
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'lo',
+                baseRevision: null,
+                value: {
+                  ...value,
+                  properties: [
+                    { ...properties[0], value: undefined },
+                    properties[1],
+                    properties[2],
+                    { label: 'Kod', kind: 'text', value: '0012' },
+                  ],
+                },
+              },
+            },
+            {
+              name: 'propose_relationship',
+              arguments: {
+                id: 'uses',
+                baseRevision: null,
+                value: { typeId: usesType, sourceId: 'alex-umea', targetId: 'service' },
+              },
+            },
+          ],
+        }),
+      ];
+    return [
+      modelTool('save_draft', {
+        version: turn.draft.version,
+        contentVersion: turn.draft.contentVersion,
+        operationId: 'clarified-conversation',
+      }),
+    ];
+  });
+  const { app, live, path } = await fixture(page, model);
+  try {
+    const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+    let state = await read();
+    usesType = state.relationshipTypes.find((type) => type.name === 'Använder')?.id ?? '';
+    for (const [id, name, properties] of [
+      [
+        'lo',
+        'Lo Exempel',
+        [
+          { id: 'home', label: 'Notering', kind: 'text', value: 'Hem' },
+          { id: 'work', label: 'Notering', kind: 'text', value: 'Arbete' },
+        ],
+      ],
+      ['alex-lund', 'Alex', [{ id: 'city', label: 'Ort', kind: 'text', value: 'Lund' }]],
+      ['alex-umea', 'Alex', [{ id: 'city', label: 'Ort', kind: 'text', value: 'Umeå' }]],
+      ['service', 'Molnmusik', []],
+    ]) {
+      expect(
+        (
+          await page.request.post(`${path}/draft`, {
+            headers: { origin: app.origin },
+            data: {
+              version: state.draft.version,
+              contentVersion: state.contentVersion,
+              id,
+              baseRevision: null,
+              value: { typeId: state.types[0].id, name, description: '', properties },
+            },
+          })
+        ).status(),
+      ).toBe(200);
+      state = await read();
+    }
+    await page.reload();
+    await startConversationWithVoice(page);
+    speak(
+      live,
+      'Lägg till telefon 0700123456 på Lo. Lägg till Kod 0012. Töm Notering. Alex använder Molnmusik. Spara hela utkastet.',
+    );
+    await waitForResponse(live);
+    await openConversationText(page);
+    const transcript = page.getByRole('log', { name: 'Samtalstext' });
+    for (const text of questions) await expect(transcript).toContainText(text);
+    await expect(transcript).toContainText('Din tidigare sparbegäran gäller inte längre.');
+    const waiting = await openConversationDraft(page);
+    await expect(waiting).toContainText('Lo Exempel');
+    await expect(waiting).toContainText('Molnmusik');
+    await waiting.getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true }).click();
+    const details = page.getByRole('dialog', { name: 'Lo Exempel', exact: true });
+    for (const text of ['Hem', 'Arbete', '0700123456']) await expect(details).toContainText(text);
+    await expect(details.getByText('Kod', { exact: true })).toHaveCount(0);
+    await closeSupportDialog(page, 'Lo Exempel');
+    await page.getByRole('button', { name: 'Dölj utkastet (4)', exact: true }).click();
+    await field(page).focus();
+    await page.keyboard.type('Kod ska vara text. Töm Hem. Det är Alex i Umeå. Spara inte.');
+    await page.getByRole('button', { name: 'Skicka', exact: true }).click();
+    await expect(transcript).toContainText('Utkastet är uppdaterat.');
+    const corrected = await openConversationDraft(page);
+    await corrected
+      .getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true })
+      .click();
+    for (const text of ['Notering', 'Tomt (Text)', 'Arbete', '0700123456', '0012'])
+      await expect(details).toContainText(text);
+    await closeSupportDialog(page, 'Lo Exempel');
+    await expect(corrected).toContainText('Alex');
+    await expect(corrected).toContainText('Molnmusik');
+    await page.getByRole('button', { name: 'Dölj utkastet (5)', exact: true }).click();
+    await send(page, 'Spara hela utkastet nu.');
+    await expect(transcript).toContainText('Sparat.');
+    await expect(await openConversationDraft(page)).toContainText('Utkastet är tomt.');
+    const saved = await readTableObject(page, 'Lo Exempel');
+    for (const text of ['Tomt (Text)', 'Arbete', '0700123456', '0012'])
+      await expect(saved).toContainText(text);
+    await openTable(page);
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    for (const [city, count] of [
+      ['Umeå', 1],
+      ['Lund', 0],
+    ] as const) {
+      await table.getByRole('searchbox').fill(`Ort ${city}`);
+      await expect(table.getByRole('rowheader')).toHaveCount(1);
+      await table.getByRole('button', { name: 'Samband för Alex', exact: true }).click();
+      const links = page.getByRole('dialog', { name: 'Samband för Alex', exact: true });
+      await expect(links.locator('.household-read-relationships > li')).toHaveCount(count);
+      if (count) await expect(links).toContainText('Molnmusik');
+      await page.keyboard.press('Escape');
+    }
   } finally {
     await app.close();
   }
