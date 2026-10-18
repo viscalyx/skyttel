@@ -17,6 +17,12 @@ import {
   turnMicrophoneOn,
 } from '../support/conversation-page.js';
 import { editTableObject } from '../support/domain-work.js';
+import {
+  openProperties,
+  propertyRow,
+  propertyValues,
+  setProperty,
+} from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 // Retain the populated workflow; its independently empty starting state is retired.
@@ -107,7 +113,7 @@ test('literal household preparation completes the family tools on seeded public 
     await page.goto(ready.origin);
     await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Bevarad cykel');
-    await page.getByLabel('Beskrivning', { exact: true }).fill('Oberoende sparat innehåll');
+    await setProperty(page, 'Beskrivning', 'Oberoende sparat innehåll');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openDraftReview(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
@@ -150,13 +156,19 @@ test('literal household preparation completes the family tools on seeded public 
     await member.goto(ready.origin);
     await openNewObject(member);
     await member.getByLabel('Namn', { exact: true }).fill('Robins notering');
-    await member.getByLabel('Beskrivning', { exact: true }).fill('Meningsfullt separat arbete');
+    await setProperty(member, 'Beskrivning', 'Meningsfullt separat arbete');
     await member.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const privateDraft = (await (await member.request.get(path)).json()).draft;
     expect(privateDraft.changes).toHaveLength(1);
     expect(privateDraft.changes[0].after).toMatchObject({
       name: 'Robins notering',
-      description: 'Meningsfullt separat arbete',
+      properties: expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Beskrivning',
+          kind: 'text',
+          value: 'Meningsfullt separat arbete',
+        }),
+      ]),
     });
     await expect(page.locator('canvas')).toBeVisible();
     await page.evaluate(graphics);
@@ -209,11 +221,11 @@ test('literal household preparation completes the family tools on seeded public 
     expect(proposed.draft.relationships).toHaveLength(1);
     await closeTextView(page);
     const form = await editTableObject(page, 'Familjens Molnmusik');
-    await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
-    await expect(form.getByLabel('Pris', { exact: true })).toHaveValue('179');
-    await form.getByLabel('Pris', { exact: true }).fill('189');
+    await openProperties(form);
+    await expect(propertyRow(form, 'Pris').getByLabel('Värde', { exact: true })).toHaveValue('179');
+    await setProperty(form, 'Pris', '189', 'text');
     await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
-    await form.getByLabel('Beskrivning', { exact: true }).fill('Rättad för hand');
+    await setProperty(form, 'Beskrivning', 'Rättad för hand');
     const correction = page.waitForResponse(`${path}/object-form`);
     const correctionDraft = correction.then(
       (response) => response.json() as Promise<MapState['draft']>,
@@ -232,8 +244,8 @@ test('literal household preparation completes the family tools on seeded public 
       const changed = draft.changes.find(({ id }) => id === replacements.SUB)?.after;
       return (
         refreshed.draft.version === draft.version &&
-        changed?.description === 'Rättad för hand' &&
-        changed.financialFacts?.price?.value === '189' &&
+        propertyValues(changed).description === 'Rättad för hand' &&
+        propertyValues(changed).price === '189' &&
         JSON.stringify(refreshed.draft.changes.find(({ id }) => id === replacements.SUB)?.after) ===
           JSON.stringify(changed)
       );
@@ -293,12 +305,22 @@ test('literal household preparation completes the family tools on seeded public 
     expect(saved.relationships).toHaveLength(before.relationships.length + 1);
     expect(saved.objects.find((object) => object.id === replacements.SUB)).toMatchObject({
       name: 'Familjens Molnmusik',
-      description: 'Rättad för hand',
-      financialFacts: {
-        price: { knowledge: 'known', value: '189' },
-        currency: { knowledge: 'known', value: 'SEK' },
-        paymentInterval: { knowledge: 'known', value: 'månad' },
-      },
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text' as const,
+          value: 'Rättad för hand',
+        },
+        { id: 'price', label: 'Pris', kind: 'text' as const, value: '189' },
+        { id: 'currency', label: 'Valuta', kind: 'text' as const, value: 'SEK' },
+        {
+          id: 'paymentInterval',
+          label: 'Betalningsintervall',
+          kind: 'text' as const,
+          value: 'månad',
+        },
+      ],
     });
     expect((await (await member.request.get(path)).json()).draft).toEqual(privateDraft);
     await microphoneButton(page).click();

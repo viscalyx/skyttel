@@ -526,12 +526,20 @@ test('UTKAST-78: next conflict preserves retained choices and focuses the next r
   const other = await createPreparedContext(browser);
   const app = await prepareConflictContinuity(page.request, other.request);
   try {
-    const service = { ...app.value, name: 'Min musiktjänst', description: 'Min tjänst' };
+    const service = {
+      ...app.value,
+      name: 'Min musiktjänst',
+      properties: [
+        { id: 'description', label: 'Beskrivning', kind: 'text' as const, value: 'Min tjänst' },
+      ],
+    };
     await app.propose(page.request, 'draft', 'service', service);
     await app.propose(other.request, 'draft', 'service', {
       ...service,
       name: 'Vår musiktjänst',
-      description: 'Robins tjänst',
+      properties: [
+        { id: 'description', label: 'Beskrivning', kind: 'text' as const, value: 'Robins tjänst' },
+      ],
     });
     expect((await app.save(other.request, 'second-conflict')).status()).toBe(200);
     const before = await app.read();

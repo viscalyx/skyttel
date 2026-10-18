@@ -35,7 +35,7 @@ async function arrange(page: Page, origin: string, count: number) {
             version: index,
             id: `still-${index}`,
             baseRevision: null,
-            value: { name: `Provobjekt ${index}`, description: '', typeId: state.types[0].id },
+            value: { name: `Provobjekt ${index}`, typeId: state.types[0].id },
           },
         })
       ).ok(),

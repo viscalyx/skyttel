@@ -71,7 +71,7 @@ async function arrangeMap(page: Page, origin: string, path: string, count: numbe
             version: version++,
             id: `ocean-${index}`,
             baseRevision: null,
-            value: { name: `Havsobjekt ${index}`, description: '', typeId: state.types[0].id },
+            value: { name: `Havsobjekt ${index}`, typeId: state.types[0].id },
           },
         })
       ).ok(),
@@ -89,7 +89,6 @@ async function arrangeMap(page: Page, origin: string, path: string, count: numbe
               typeId: state.relationshipTypes[0].id,
               sourceId: `ocean-${index}`,
               targetId: `ocean-${index + 1}`,
-              knowledge: 'known',
             },
           },
         })

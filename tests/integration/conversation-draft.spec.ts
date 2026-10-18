@@ -9,6 +9,7 @@ import {
 } from '../support/conversation-page.js';
 import { prepareConversationReview } from '../support/conversation-review-preparation.js';
 import { createInstallation, robin } from '../support/installation.js';
+import { propertyValues } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
 
@@ -54,11 +55,7 @@ async function installation(page: Page, proposals = true) {
             contentVersion: current.draft.contentVersion,
             id: 'lo',
             baseRevision: null,
-            value: {
-              typeId,
-              name: 'Lo Exempel',
-              description: '',
-            },
+            value: { typeId, name: 'Lo Exempel' },
           }),
         ];
       return [modelMessage(proposals ? 'Ett provsvar.' : 'Lo ligger i utkastet.')];
@@ -84,7 +81,7 @@ async function installation(page: Page, proposals = true) {
     await post('draft', {
       id: 'lo',
       baseRevision: null,
-      value: { typeId: state.types[0].id, name: 'Lo Exempel', description: '' },
+      value: { typeId: state.types[0].id, name: 'Lo Exempel' },
     });
   }
   await page.goto(`${app.origin}/households/${household.id}`);
@@ -130,7 +127,7 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
       await expect(
         table.getByRole('button', { name: `Visa förslaget: ${name}`, exact: true }),
       ).toBeVisible();
-    expect((await read()).objects.find((object) => object.id === 'card')?.customValues).toEqual({
+    expect(propertyValues((await read()).objects.find((object) => object.id === 'card'))).toEqual({
       'last-four': '1111',
     });
     expect((await read()).draft.relationships).toHaveLength(2);
@@ -230,9 +227,7 @@ test('SAMTALSUTKAST-02: valet följer användaren mellan hushåll och enheter', 
       page.getByRole('dialog', { name: 'Spara utkastet', exact: true }),
     ).not.toBeVisible();
     const saved = await read();
-    expect(saved.objects).toEqual([
-      expect.objectContaining({ id: 'lo', name: 'Lo Exempel', description: '' }),
-    ]);
+    expect(saved.objects).toEqual([expect.objectContaining({ id: 'lo', name: 'Lo Exempel' })]);
     expect(saved.draft).toEqual({ version: beforeSave.draft.version + 1, changes: [] });
     const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
     expect(operations).toEqual([
@@ -406,11 +401,11 @@ for (const seeded of [false, true])
         ).prepareConversationReview({ read, post });
       }, path);
       const state = await read();
-      expect(state.objects.find((object) => object.id === 'card')?.customValues).toEqual({
+      expect(propertyValues(state.objects.find((object) => object.id === 'card'))).toEqual({
         'last-four': '1111',
       });
       expect(
-        state.draft.changes.find((change) => change.id === 'card')?.after?.customValues,
+        propertyValues(state.draft.changes.find((change) => change.id === 'card')?.after),
       ).toEqual({ 'last-four': '2222' });
       expect(state.draft.changes).toHaveLength(4);
       expect(state.draft.relationships).toHaveLength(2);

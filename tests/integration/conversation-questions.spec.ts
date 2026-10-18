@@ -43,7 +43,6 @@ async function fixture(page: Page, model: ReturnType<typeof textModel>, unresolv
   const value = {
     typeId: state.types[0].id,
     name: 'Lo Exempel',
-    description: '',
     ...(unresolved ? { identity: 'unresolved' } : {}),
   };
   expect(
@@ -300,7 +299,7 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
               contentVersion: state.contentVersion,
               id,
               baseRevision: null,
-              value: { typeId: state.types[0].id, name, description: '', properties },
+              value: { typeId: state.types[0].id, name, properties },
             },
           })
         ).status(),
@@ -449,7 +448,13 @@ test('FRAGA-02: Skyttel frågar om en verklig konflikt i samtalet utan en genere
     await expect(
       savedLo.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
     ).toHaveText('Person');
-    await expect(savedLo.locator('.household-table-description')).toHaveText('Ej uppgivet');
+    await expect(
+      savedLo
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveCount(0);
   } finally {
     await other.close();
     await app.close();
@@ -614,7 +619,13 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
     await expect(
       savedLo.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
     ).toHaveText('Person');
-    await expect(savedLo.locator('.household-table-description')).toHaveText('Ej uppgivet');
+    await expect(
+      savedLo
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveCount(0);
   } finally {
     await app.close();
   }
@@ -674,7 +685,13 @@ test('FRAGA-05: stopp under det verifierade sparbeskedet startar de fyra sekunde
     await expect(
       savedLo.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
     ).toHaveText('Person');
-    await expect(savedLo.locator('.household-table-description')).toHaveText('Ej uppgivet');
+    await expect(
+      savedLo
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveCount(0);
   } finally {
     await app.close();
   }

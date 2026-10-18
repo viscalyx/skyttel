@@ -45,7 +45,13 @@ async function arrange(page: Page, fixtures: ReturnType<typeof providers>) {
   const { household } = await (await createHousehold(page.request, app.origin, 'Köprov')).json();
   const path = `${app.origin}/api/households/${household.id}/map`;
   const state = await (await page.request.get(path)).json();
-  const value = { typeId: state.types[0].id, name: 'Lo Exempel', description: 'Påhittad uppgift' };
+  const value = {
+    typeId: state.types[0].id,
+    name: 'Lo Exempel',
+    properties: [
+      { id: 'description', label: 'Beskrivning', kind: 'text' as const, value: 'Påhittad uppgift' },
+    ],
+  };
   await page.request.post(`${path}/draft`, {
     headers: { origin: app.origin },
     data: {

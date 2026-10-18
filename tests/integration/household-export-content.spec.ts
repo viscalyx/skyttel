@@ -130,7 +130,7 @@ test('technical: a full archive preserves object identities and saved, historica
             version: state.draft.version,
             id,
             baseRevision: null,
-            value: { typeId: state.types[0].id, name: 'Lo Exempel', description: '' },
+            value: { typeId: state.types[0].id, name: 'Lo Exempel' },
           })
         ).status(),
       ).toBe(200);
@@ -146,7 +146,14 @@ test('technical: a full archive preserves object identities and saved, historica
             typeId: state.relationshipTypes[0].id,
             sourceId: 'second',
             targetId: 'second',
-            knowledge: 'unknown',
+            properties: [
+              {
+                id: 'certainty',
+                label: 'Uppgiftens säkerhet',
+                kind: 'text' as const,
+                value: 'Okänt',
+              },
+            ],
           },
         })
       ).status(),
@@ -245,7 +252,9 @@ test('technical: a full archive preserves object identities and saved, historica
         id: 'unknown-endpoint',
         sourceId: 'second',
         targetId: 'second',
-        knowledge: 'unknown',
+        properties: [
+          { id: 'certainty', label: 'Uppgiftens säkerhet', kind: 'text' as const, value: 'Okänt' },
+        ],
       }),
     ]);
     expect(

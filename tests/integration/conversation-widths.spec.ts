@@ -57,7 +57,14 @@ async function arrange(page: Page, available = true) {
           value: {
             typeId: state.types[0].id,
             name: 'Lo Exempel',
-            description: 'Osparad breddprovuppgift',
+            properties: [
+              {
+                id: 'description',
+                label: 'Beskrivning',
+                kind: 'text' as const,
+                value: 'Osparad breddprovuppgift',
+              },
+            ],
           },
         },
       })
@@ -424,7 +431,7 @@ test('TEXTBREDD-05: hushållsarkiv i aktuellt format lämnar personliga samtalsv
     if (!file) throw new Error('The household archive was not downloaded');
     const parts = unzipSync(new Uint8Array(await readFile(file)));
     const manifest = JSON.parse(Buffer.from(parts['manifest.json']).toString());
-    expect(manifest.schemaVersion).toBe(36);
+    expect(manifest.schemaVersion).toBe(37);
     const encoded = Buffer.from(parts['content.json']).toString();
     for (const field of [
       'showDraftOnStart',

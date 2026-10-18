@@ -31,7 +31,14 @@ test('UTKAST-55: reopening discovers new saved data before stale choices can be 
     await app.propose(other.request, 'draft', 'lo', {
       ...app.value,
       name: 'Lo Ås',
-      description: 'Robins anteckning',
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text' as const,
+          value: 'Robins anteckning',
+        },
+      ],
     });
     expect((await app.save(other.request, 'saved-while-closed')).status()).toBe(200);
     const before = await app.read();
@@ -131,12 +138,20 @@ test('UTKAST-49: switching conflicts and reopening preserves choices and never c
   const other = await createPreparedContext(browser);
   const app = await prepareConflictContinuity(page.request, other.request);
   try {
-    const service = { ...app.value, name: 'Min musiktjänst', description: 'Min tjänst' };
+    const service = {
+      ...app.value,
+      name: 'Min musiktjänst',
+      properties: [
+        { id: 'description', label: 'Beskrivning', kind: 'text' as const, value: 'Min tjänst' },
+      ],
+    };
     await app.propose(page.request, 'draft', 'service', service);
     await app.propose(other.request, 'draft', 'service', {
       ...service,
       name: 'Vår musiktjänst',
-      description: 'Robins tjänst',
+      properties: [
+        { id: 'description', label: 'Beskrivning', kind: 'text' as const, value: 'Robins tjänst' },
+      ],
     });
     expect((await app.save(other.request, 'second-conflict')).status()).toBe(200);
     await page.goto(app.installation.origin);
@@ -173,7 +188,14 @@ test('UTKAST-49: switching conflicts and reopening preserves choices and never c
     await app.propose(other.request, 'draft', 'lo', {
       ...app.value,
       name: 'Lo Ås',
-      description: 'Robins anteckning',
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text' as const,
+          value: 'Robins anteckning',
+        },
+      ],
     });
     expect((await app.save(other.request, 'changed-lo')).status()).toBe(200);
     const before = await app.read();
@@ -220,7 +242,14 @@ test('UTKAST-50: refreshed conflict data clears only choices for properties that
     await app.propose(other.request, 'draft', 'lo', {
       ...value,
       name: 'Lo Ås',
-      description: 'Robins anteckning',
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text' as const,
+          value: 'Robins anteckning',
+        },
+      ],
     });
     expect((await app.save(other.request, 'newer-name')).status()).toBe(200);
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
@@ -245,7 +274,9 @@ test('UTKAST-50: refreshed conflict data clears only choices for properties that
     expect((await app.read()).draft.changes[0].after).toMatchObject(value);
     expect((await app.read()).objects.find(({ id }) => id === 'lo')).toMatchObject({
       name: 'Lo Ås',
-      description: 'Robins anteckning',
+      properties: expect.arrayContaining([
+        expect.objectContaining({ label: 'Beskrivning', kind: 'text', value: 'Robins anteckning' }),
+      ]),
     });
   } finally {
     await other.close();
@@ -535,7 +566,6 @@ test('UTKAST-127: a changed relationship reference refreshes its meaning without
     await app.propose(other.request, 'draft', 'service', {
       typeId: state.types[0].id,
       name: 'Ny musiktjänst',
-      description: '',
     });
     expect((await app.save(other.request, 'newer-reference')).status()).toBe(200);
     const before = await app.read();
@@ -697,7 +727,14 @@ test('UTKAST-131: a later save after a lost applied reply retains unchanged choi
     await app.propose(other.request, 'draft', 'lo', {
       ...app.value,
       name: 'Lo Ås',
-      description: 'Robins anteckning',
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text' as const,
+          value: 'Robins anteckning',
+        },
+      ],
     });
     expect((await app.save(other.request, 'newer-after-applied')).status()).toBe(200);
     const before = await app.read();

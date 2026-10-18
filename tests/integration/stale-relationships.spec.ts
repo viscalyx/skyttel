@@ -3,6 +3,7 @@ import {
   prepareRelationshipSpecialConflict,
   saveReviewedConflictDraft,
 } from '../support/conflict-special.js';
+import { propertyRow } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 for (const [id, kind, width] of [
@@ -39,9 +40,9 @@ for (const [id, kind, width] of [
       await expect(
         editor.getByRole('heading', { name: 'Rätta blockerat samband', exact: true }),
       ).toBeFocused();
-      await expect(editor.getByLabel('Uppgiftens säkerhet', { exact: true })).toHaveValue(
-        'uncertain',
-      );
+      await expect(
+        propertyRow(editor, 'Uppgiftens säkerhet').getByLabel('Värde', { exact: true }),
+      ).toHaveValue('Osäkert uppgivet');
       await editor.getByLabel('Till objekt', { exact: true }).selectOption('lo');
       await expect(editor).not.toContainText('Molnmusik ·');
       expect(await editor.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(

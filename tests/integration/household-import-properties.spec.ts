@@ -21,7 +21,6 @@ for (const [id, variant, width] of [
         typeId: initial.relationshipTypes[0].id,
         sourceId: 'lo',
         targetId: 'service',
-        knowledge: 'known' as const,
         properties: [
           { id: 'empty', label: 'Samma' },
           { id: 'date', label: 'Samma', kind: 'date' as const },

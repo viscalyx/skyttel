@@ -37,7 +37,7 @@ async function arrange(page: Page, origin: string) {
             version,
             id,
             baseRevision: null,
-            value: { name, description: '', typeId: state.types[0].id },
+            value: { name, typeId: state.types[0].id },
           },
         })
       ).ok(),
@@ -902,9 +902,13 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
     const retained = await readTableObject(page, 'Ny sak');
     await expect(retained).toContainText('Ny sak');
     await expect(retained).toContainText('Person');
-    await expect(retained.locator('.household-table-description')).toHaveText(
-      '◇ Ditt förslag: Ej uppgivet',
-    );
+    await expect(
+      retained
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toContainText('◇ Ditt förslag: Ej uppgivet');
     await closeTableObject(page, 'Ny sak');
     await openMap(page);
   } finally {

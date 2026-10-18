@@ -190,12 +190,7 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
     await stageRelationshipAndClose(page);
     expect(
       (await data.read()).draft.relationships?.find((change) => change.id === edge.id)?.after,
-    ).toMatchObject({
-      typeId: edge.typeId,
-      sourceId: edge.sourceId,
-      targetId: 'garage',
-      knowledge: edge.knowledge,
-    });
+    ).toMatchObject({ typeId: edge.typeId, sourceId: edge.sourceId, targetId: 'garage' });
     await readNativeContext(true);
     await data.post('relationship', {
       id: edge.id,
@@ -245,7 +240,6 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
       typeId: edge.typeId,
       sourceId: edge.sourceId,
       targetId: edge.targetId,
-      knowledge: edge.knowledge,
       lifecycle: 'ended',
     });
     const endedProposal = await readDraftProposal(page, 'Alex Exempel → Använder → Blå cykel');
@@ -371,7 +365,6 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
       typeId: ended.typeId,
       sourceId: ended.sourceId,
       targetId: 'garage',
-      knowledge: ended.knowledge,
       lifecycle: 'active',
     });
     await readNativeContext(false);

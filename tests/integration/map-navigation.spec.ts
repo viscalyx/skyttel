@@ -12,6 +12,7 @@ import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { openObjectRelationships, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { verifyRestoredPersonalMove } from '../support/personal-view-reading.js';
+import { propertyRow, propertyValues, setProperty } from '../support/property-controls.js';
 import { expect, test } from '../support/test.js';
 
 async function arrange(page: Page, origin: string, selection: 'pointer' | 'keyboard' = 'pointer') {
@@ -32,7 +33,7 @@ async function arrange(page: Page, origin: string, selection: 'pointer' | 'keybo
             version,
             id,
             baseRevision: null,
-            value: { name, description: '', typeId: state.types[0].id },
+            value: { name, typeId: state.types[0].id },
           },
         })
       ).ok(),
@@ -253,7 +254,6 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
               typeId: before.relationshipTypes.find((type) => type.name === 'Använder')?.id,
               sourceId: 'lo',
               targetId: 'kim',
-              knowledge: 'known',
             },
           },
         })
@@ -280,9 +280,7 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
     await item.getByRole('button', { name: 'Redigera samband', exact: true }).click();
     await expect(relationships.getByLabel('Från objekt', { exact: true })).toHaveValue('lo');
     await expect(relationships.getByLabel('Till objekt', { exact: true })).toHaveValue('kim');
-    await relationships
-      .getByLabel('Uppgiftens säkerhet', { exact: true })
-      .selectOption('uncertain');
+    await setProperty(relationships, 'Uppgiftens säkerhet', 'Osäkert uppgivet');
     await expect(
       relationships.getByRole('region', { name: 'Sambandet före inskickning' }),
     ).toHaveText('Lo Exempel använder Kim Exempel (Osäkert uppgivet)');
@@ -309,7 +307,18 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
     expect(after.draft.relationships).toHaveLength(1);
     expect(after.draft.relationships?.[0]).toMatchObject({
       id: 'uses',
-      after: { sourceId: 'lo', targetId: 'kim', knowledge: 'uncertain' },
+      after: {
+        sourceId: 'lo',
+        targetId: 'kim',
+        properties: [
+          {
+            id: 'certainty',
+            label: 'Uppgiftens säkerhet',
+            kind: 'text' as const,
+            value: 'Osäkert uppgivet',
+          },
+        ],
+      },
     });
   } finally {
     await installation.close();
@@ -459,7 +468,7 @@ for (const [configuration, [width, height]] of navigationConfigurations.entries(
         await panel.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).focus();
         await panel.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
         const form = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
-        const description = form.getByLabel('Beskrivning', { exact: true });
+        const description = propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true });
         const text = `Oskickad text medan jag navigerar ${width} ${navigationFirst}`;
         await description.fill(text);
         const unchanged = await read();
@@ -562,7 +571,8 @@ for (const [configuration, [width, height]] of navigationConfigurations.entries(
         await navigation.getByRole('button', { name: 'Zooma in', exact: true }).click();
         await expect(panel).toContainText(text);
         expect(
-          (await read()).draft.changes.find((change) => change.id === 'lo')?.after?.description,
+          propertyValues((await read()).draft.changes.find((change) => change.id === 'lo')?.after)
+            .description,
         ).toBe(text);
         expect((await read()).objects).toEqual(shared.objects);
         expect((await read()).relationships).toEqual(shared.relationships);
@@ -594,7 +604,13 @@ for (const [configuration, [width, height]] of navigationConfigurations.entries(
           await expect(
             kim.locator('dd').filter({ hasText: new RegExp(`^${shared.types[0].name}$`) }),
           ).toBeVisible();
-          await expect(kim.locator('.household-table-description')).toHaveText('Ej uppgivet');
+          await expect(
+            kim
+              .locator('dt')
+              .filter({ hasText: /^Beskrivning$/ })
+              .locator('..')
+              .locator('dd'),
+          ).toHaveCount(0);
           expect(shared.relationships).toEqual([]);
           for (const name of ['Lo Exempel', 'Kim Exempel']) {
             const relationships = await openObjectRelationships(page, name);

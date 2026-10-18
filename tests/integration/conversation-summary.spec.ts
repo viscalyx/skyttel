@@ -115,7 +115,18 @@ async function arrange(
       contentVersion: state.contentVersion,
       id: 'lo',
       baseRevision: null,
-      value: { typeId: state.types[0].id, name: 'Lo Exempel', description: 'Påhittad uppgift' },
+      value: {
+        typeId: state.types[0].id,
+        name: 'Lo Exempel',
+        properties: [
+          {
+            id: 'description',
+            label: 'Beskrivning',
+            kind: 'text' as const,
+            value: 'Påhittad uppgift',
+          },
+        ],
+      },
     },
   });
   await page.addInitScript({ content: liveBrowserFixtureSource });
@@ -382,9 +393,13 @@ test('KONTEXT-11: sammanfattning väntar på talat sparande och dess hörda kvit
     await expect(
       beforeAudioLo.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
     ).toHaveText('Person');
-    await expect(beforeAudioLo.locator('.household-table-description')).toHaveText(
-      'Påhittad uppgift',
-    );
+    await expect(
+      beforeAudioLo
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toContainText('Påhittad uppgift');
     // The matching provider transcript alone cannot prove heard/drained audio.
     await page.evaluate(() =>
       window.skyttelVoiceFixture.emit({
@@ -417,7 +432,13 @@ test('KONTEXT-11: sammanfattning väntar på talat sparande och dess hörda kvit
     await expect(
       savedLo.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
     ).toHaveText('Person');
-    await expect(savedLo.locator('.household-table-description')).toHaveText('Påhittad uppgift');
+    await expect(
+      savedLo
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toContainText('Påhittad uppgift');
     const history = await openSavedHistory(page);
     await expect(history.getByRole('article')).toHaveCount(1);
     await history.getByText('Visa ändringarna', { exact: true }).click();

@@ -11,12 +11,7 @@ test('UTKAST-154: undo object removals restores retained relationship proposals 
   const app = await collaborators(page.request, other.request);
   try {
     const initial = await app.read();
-    const value = {
-      typeId: initial.relationshipTypes[0].id,
-      sourceId: 'lo',
-      targetId: 'service',
-      knowledge: 'known' as const,
-    };
+    const value = { typeId: initial.relationshipTypes[0].id, sourceId: 'lo', targetId: 'service' };
     await app.propose(page.request, 'relationship', 'edited', value);
     await app.propose(page.request, 'relationship', 'explicit', {
       ...value,

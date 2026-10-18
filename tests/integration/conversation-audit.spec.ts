@@ -39,7 +39,7 @@ async function setup(page: Page, respond: Parameters<typeof textModel>[0] = () =
       contentVersion: current.contentVersion,
       id: 'lo',
       baseRevision: null,
-      value: { typeId: current.types[0].id, name: 'Lo Exempel', description: '' },
+      value: { typeId: current.types[0].id, name: 'Lo Exempel' },
     },
   });
   expect(proposed.ok()).toBe(true);
@@ -224,7 +224,13 @@ test('NOT-10: ett verkligt väntande sparförsök visar frågesymbol och kontrol
     await expect(await openDraftReview(page)).toContainText('Utkastet är tomt.');
     const saved = await readTableObject(page, 'Lo Exempel');
     await expect(saved).toContainText('Person');
-    await expect(saved.locator('.household-table-description')).toHaveText('Ej uppgivet');
+    await expect(
+      saved
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveCount(0);
     const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
     expect(operations).toHaveLength(1);
     expect(operations[0]).toMatchObject({
@@ -232,7 +238,7 @@ test('NOT-10: ett verkligt väntande sparförsök visar frågesymbol och kontrol
       status: 'succeeded',
     });
     expect((await (await page.request.get(path)).json()).objects).toMatchObject([
-      { id: 'lo', name: 'Lo Exempel', description: '', typeId: current.types[0].id },
+      { id: 'lo', name: 'Lo Exempel', typeId: current.types[0].id },
     ]);
   } finally {
     await app.close();

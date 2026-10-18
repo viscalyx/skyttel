@@ -17,6 +17,7 @@ import {
   readDraftProposal,
 } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { setProperty } from '../support/property-controls.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
@@ -59,7 +60,6 @@ test('HTTP family objects and directed relationships save together and keep thei
         value: {
           typeId: state.types.find((item: { name: string }) => item.name === type).id,
           name,
-          description: '',
         },
       });
       expect(response.status()).toBe(200);
@@ -68,7 +68,7 @@ test('HTTP family objects and directed relationships save together and keep thei
     const typeId = state.relationshipTypes.find(
       (item: { name: string }) => item.name === 'Gäller tjänstekontot',
     ).id;
-    const value = { typeId, sourceId: 'subscription', targetId: 'account', knowledge: 'known' };
+    const value = { typeId, sourceId: 'subscription', targetId: 'account' };
     let response = await post('relationship', {
       version: state.draft.version,
       id: 'subscription-account',
@@ -200,7 +200,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await openTable(page);
     for (const [name, type, identity] of [
       ['Familjemusik', 'Abonnemang', 'identified'],
-      ['Betalkonto', 'Bankkonto', 'unspecified'],
+      ['Betalkonto', 'Bankkonto', 'unresolved'],
     ]) {
       await openNewObject(page);
       await page.getByLabel('Namn', { exact: true }).fill(name);
@@ -212,20 +212,21 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await chooseRelationshipObject(page, 'Från objekt', 'Familjemusik');
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalas med' });
-    await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('unresolved');
+    await setProperty(page, 'Uppgiftens säkerhet', 'Obesvarad fråga');
     await chooseRelationshipObject(page, 'Till objekt', 'Betalkonto');
     await stageRelationshipAndClose(page);
     await page.reload();
     await openTable(page);
     const unresolvedDraft = await openDraftReview(page);
     await expect(unresolvedDraft).toContainText('Familjemusik → Betalas med → Betalkonto');
-    await expect(unresolvedDraft).toContainText(
-      'Målet är oklart. Rätta sambandet i det ordinarie flödet.',
-    );
+    await expect(unresolvedDraft).toContainText('Identiteten behöver redas ut');
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     await closeTextView(page);
+    const bank = await editTableObject(page, 'Betalkonto');
+    await bank.getByLabel('Identitet').selectOption('unspecified');
+    await bank.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await editObjectRelationship(page, 'Familjemusik', 'Familjemusik → Betalas med → Betalkonto');
-    await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('uncertain');
+    await setProperty(page, 'Uppgiftens säkerhet', 'Osäkert uppgivet');
     await chooseRelationshipObject(page, 'Till objekt', 'Betalkonto');
     await stageRelationshipAndClose(page);
     await saveReviewedConflictDraft(page);
@@ -242,10 +243,14 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
       .getByRole('button', { name: 'Avbryt', exact: true })
       .click();
     await openTable(page);
-    let relationshipName = 'Familjemusik → Betalas med → Betalkonto (Osäkert uppgivet)';
+    let relationshipName = 'Familjemusik → Betalas med → Betalkonto';
     for (const knowledge of ['unknown', 'none']) {
       await editObjectRelationship(page, 'Familjemusik', relationshipName);
-      await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption(knowledge);
+      await setProperty(
+        page,
+        'Uppgiftens säkerhet',
+        knowledge === 'unknown' ? 'Okänt' : 'Uttryckligen inget',
+      );
       await stageRelationshipAndClose(page);
       await saveReviewedConflictDraft(page);
       await closeTextView(page);

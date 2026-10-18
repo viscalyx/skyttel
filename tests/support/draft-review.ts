@@ -179,7 +179,15 @@ export async function prepareDraftReviewMeanings(client: APIRequestContext, orig
       ...bike,
       lifecycle: 'ended',
       properties: [
-        { id: 'endDate', label: 'Slutdatum', kind: 'text' as const, value: '2000-01-01' },
+        {
+          id: 'description',
+          label: 'Fordonets berättelse',
+          kind: 'text',
+          value: 'Hela den sparade beskrivningen',
+        },
+        { id: 'serial', label: 'Ramnummer', kind: 'text', value: 'SPARAT-17' },
+        { id: 'price', label: 'Avtalat pris', kind: 'number' },
+        { id: 'endDate', label: 'Sista giltighetsdag', kind: 'date', value: '2000-01-01' },
       ],
     },
   });
@@ -228,15 +236,18 @@ export async function prepareDraftReviewMeanings(client: APIRequestContext, orig
   const currentType = current.types.find(({ id }) => id === type.id);
   const edge = current.relationships.find(({ id }) => id === 'draft-expired-edge');
   if (!currentBike || !currentType || !edge) throw new Error('Missing saved meaning data');
-  await post('object-type', {
-    id: type.id,
-    baseRevision: currentType.revision,
-    value: { ...currentType },
-  });
   await post('draft', {
     id: bike.id,
     baseRevision: currentBike.revision,
-    value: { ...currentBike, lifecycle: 'active' },
+    value: {
+      ...currentBike,
+      lifecycle: 'active',
+      properties: currentBike.properties?.map((property) =>
+        property.id === 'description'
+          ? { id: property.id, label: 'Cykelns berättelse', kind: 'text' }
+          : property,
+      ),
+    },
   });
   await image('#bc321a');
   await post('relationship', {
@@ -255,11 +266,6 @@ export async function prepareDraftReviewWrapping(client: APIRequestContext, orig
   if (!type) throw new Error('Missing draft type');
   const customLabel = 'Ramnummer'.repeat(12);
   const builtinLabel = 'Berättelse'.repeat(12);
-  await fixture.post('object-type', {
-    id: type.id,
-    baseRevision: type.revision,
-    value: { ...type },
-  });
   const bike = (await fixture.read()).draft.changes.find((change) => change.id === 'draft-bike');
   if (!bike?.after || !bike.before) throw new Error('Missing draft bike');
   await fixture.post('draft', {

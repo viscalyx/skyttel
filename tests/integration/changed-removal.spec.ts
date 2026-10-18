@@ -95,7 +95,6 @@ test('UTKAST-156: a second new deletion consequence rejects the reviewed save un
         typeId: state.relationshipTypes[0].id,
         sourceId: 'service',
         targetId: 'lo',
-        knowledge: 'known',
       });
       expect((await app.save(other.request, 'later-consequence')).status()).toBe(200);
       await route.fulfill({ response: await route.fetch() });

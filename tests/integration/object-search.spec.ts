@@ -116,7 +116,10 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
       name: 'Enbart typförslag',
       description: '',
     });
-    expect(nativeType.draft.objectTypes?.[0]?.after?.fields ?? []).toEqual([]);
+    expect(nativeType.draft.objectTypes?.[0]?.after).toEqual({
+      name: 'Enbart typförslag',
+      description: '',
+    });
     expect(nativeType.draft.relationshipTypes ?? []).toEqual([]);
     expect(nativeType.draft.relationships ?? []).toEqual([]);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
@@ -139,7 +142,7 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     await post('object-type', {
       id: 'only-type',
       baseRevision: null,
-      value: { name: 'Enbart typförslag', description: '', fields: [] },
+      value: { name: 'Enbart typförslag', description: '' },
     });
     await page.reload();
     await focusMapSearch(page);

@@ -14,6 +14,7 @@ import {
   voiceBox,
 } from '../support/conversation-page.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
+import { propertyRow, propertyValues } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 for (const seeded of [false, true]) {
@@ -183,7 +184,14 @@ for (const seeded of [false, true]) {
               value: {
                 typeId: person.id,
                 name: 'Robin privata Lo',
-                description: 'Oberoende påhittad uppgift',
+                properties: [
+                  {
+                    id: 'description',
+                    label: 'Beskrivning',
+                    kind: 'text' as const,
+                    value: 'Oberoende påhittad uppgift',
+                  },
+                ],
               },
             },
           })
@@ -194,7 +202,14 @@ for (const seeded of [false, true]) {
       expect(privateDraft.changes[0].after).toMatchObject({
         typeId: person.id,
         name: 'Robin privata Lo',
-        description: 'Oberoende påhittad uppgift',
+        properties: [
+          {
+            id: 'description',
+            label: 'Beskrivning',
+            kind: 'text' as const,
+            value: 'Oberoende påhittad uppgift',
+          },
+        ],
       });
       expect(
         (
@@ -205,7 +220,18 @@ for (const seeded of [false, true]) {
               contentVersion: state.contentVersion,
               id: 'public-lo',
               baseRevision: null,
-              value: { typeId: person.id, name: 'Lo Exempel', description: 'Påhittad uppgift' },
+              value: {
+                typeId: person.id,
+                name: 'Lo Exempel',
+                properties: [
+                  {
+                    id: 'description',
+                    label: 'Beskrivning',
+                    kind: 'text' as const,
+                    value: 'Påhittad uppgift',
+                  },
+                ],
+              },
             },
           })
         ).status(),
@@ -237,8 +263,19 @@ for (const seeded of [false, true]) {
           // The seeded name conflict keeps Alex's explicit name change and
           // merges the independently saved description he never changed.
           const expected =
-            previous.before && previous.after.description === previous.before.description
-              ? { ...previous.after, description: current.description }
+            previous.before &&
+            JSON.stringify(previous.after.properties) === JSON.stringify(previous.before.properties)
+              ? {
+                  ...previous.after,
+                  properties: [
+                    {
+                      id: 'description',
+                      label: 'Beskrivning',
+                      kind: 'text' as const,
+                      value: propertyValues(current).description ?? '',
+                    },
+                  ],
+                }
               : previous.after;
           expect(values(next.after)).toEqual(values(expected));
         }
@@ -366,7 +403,9 @@ for (const seeded of [false, true]) {
       const form = await editTableObject(page, 'Lo Senaste');
       await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Lo Senaste');
       await expect(form.getByLabel('Objekttyp', { exact: true })).toHaveValue(person.id);
-      await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue('Påhittad uppgift');
+      await expect(
+        propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true }),
+      ).toHaveValue('Påhittad uppgift');
       await form.getByLabel('Namn', { exact: true }).fill('Lo Registrerad');
       await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await expect(form).not.toBeVisible();

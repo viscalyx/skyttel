@@ -27,6 +27,7 @@ import { readDraftProposal, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
+import { propertyRow, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import { modelMessage, textModel } from '../support/text-model.js';
 
@@ -86,7 +87,7 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
             version: state.draft.version,
             contentVersion: state.contentVersion,
             baseRevision: null,
-            value: { typeId: state.types[0].id, name, description: '' },
+            value: { typeId: state.types[0].id, name },
           })
         ).status(),
       ).toBe(200);
@@ -110,7 +111,17 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
           version: saved.draft.version,
           contentVersion: saved.contentVersion,
           baseRevision: chair?.revision,
-          value: { ...chair, description: 'Oberoende privat förslag' },
+          value: {
+            ...chair,
+            properties: [
+              {
+                id: 'description',
+                label: 'Beskrivning',
+                kind: 'text' as const,
+                value: 'Oberoende privat förslag',
+              },
+            ],
+          },
         })
       ).status(),
     ).toBe(200);
@@ -362,7 +373,7 @@ for (const [caseId, width] of [
       await openNewObject(page);
       const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
       await form.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
-      await form.getByLabel('Beskrivning', { exact: true }).fill('Behåll denna text');
+      await setProperty(form, 'Beskrivning', 'Behåll denna text');
       await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
       await expect(
         page.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
@@ -372,9 +383,9 @@ for (const [caseId, width] of [
         form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }),
       ).toBeFocused();
       await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad cykel');
-      await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-        'Behåll denna text',
-      );
+      await expect(
+        propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true }),
+      ).toHaveValue('Behåll denna text');
       expect((await (await page.request.get(path)).json()).draft.changes).toEqual([]);
       await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await openProfile(page);
@@ -403,15 +414,25 @@ for (const [caseId, width] of [
         ['Namn', 'Oskickad cykel'],
         ['Typ', 'Person'],
       ]);
-      await expect(reading.locator('.household-table-description')).toHaveText(
-        /^(?:◇ Ditt förslag: )?Behåll denna text$/,
-      );
+      await expect(
+        reading
+          .locator('dt')
+          .filter({ hasText: /^Beskrivning$/ })
+          .locator('..')
+          .locator('dd'),
+      ).toContainText(/^(?:◇ Ditt förslag: )?Behåll denna text$/);
       const state = await (await page.request.get(path)).json();
       expect(state.objects).toEqual([]);
       expect(state.draft.changes).toHaveLength(1);
       expect(state.draft.changes[0].after).toMatchObject({
         name: 'Oskickad cykel',
-        description: 'Behåll denna text',
+        properties: expect.arrayContaining([
+          expect.objectContaining({
+            label: 'Beskrivning',
+            kind: 'text',
+            value: 'Behåll denna text',
+          }),
+        ]),
       });
       expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([]);
     } finally {
@@ -702,8 +723,11 @@ test('ARBETE-06: selection and personal map view survive navigation and resizing
     await expect(
       page
         .getByRole('region', { name: 'Min cykel', exact: true })
-        .locator('.household-table-description'),
-    ).toHaveText('Ej uppgivet');
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toHaveCount(0);
     await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Min cykel', exact: true }),

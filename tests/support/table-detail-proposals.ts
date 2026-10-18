@@ -19,9 +19,11 @@ export async function prepareTableDetailProposals(client: APIRequestContext, ori
     value: {
       ...proposal.after,
       properties: [
-        ...(proposal.after.properties ?? []).filter(
-          (property) => !['frame', 'count', 'reserve'].includes(property.id),
-        ),
+        ...(proposal.after.properties ?? [])
+          .filter((property) => !['frame', 'count', 'reserve'].includes(property.id))
+          .map((property) =>
+            property.id === 'note' ? { ...property, label: 'Föreslagen anteckning' } : property,
+          ),
         { id: 'frame', label: 'Ramnummer', kind: 'text' as const, value: 'RAM-2026-42' },
         { id: 'count', label: 'Antal', kind: 'number' as const, value: 0 },
         { id: 'reserve', label: 'Reserv', kind: 'boolean' as const, value: false },

@@ -22,6 +22,7 @@ import {
 } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { includeEndedInMap } from '../support/object-search.js';
+import { propertyRow, setProperty } from '../support/property-controls.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 import { readRemovalProposals } from '../support/removal-reading.js';
 import { expect, test } from '../support/test.js';
@@ -45,11 +46,7 @@ async function arrange(client: APIRequestContext, origin: string) {
           version: (await read()).draft.version,
           id,
           baseRevision: null,
-          value: {
-            name,
-            typeId: state.types.find((item) => item.name === type)?.id,
-            description: '',
-          },
+          value: { name, typeId: state.types.find((item) => item.name === type)?.id },
         })
       ).ok(),
     ).toBe(true);
@@ -68,7 +65,6 @@ async function arrange(client: APIRequestContext, origin: string) {
             sourceId,
             targetId,
             typeId: state.relationshipTypes.find((item) => item.name === 'Använder')?.id,
-            knowledge: 'known',
           },
         })
       ).ok(),
@@ -94,7 +90,7 @@ async function stageIndependentLifecycleWork(page: Page) {
   const form = await openNewObject(page);
   await form.getByLabel('Namn', { exact: true }).fill('Privat livscykelanteckning');
   await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Person' });
-  await form.getByLabel('Beskrivning', { exact: true }).fill('Hela mitt oberoende privata arbete');
+  await setProperty(form, 'Beskrivning', 'Hela mitt oberoende privata arbete');
   await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
 }
 
@@ -364,8 +360,10 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
             baseRevision: edge.revision,
             value: {
               ...edge,
-              endDate: { knowledge: 'known', value: '2000-01-01' },
               lifecycle: edge.id === 'outgoing' ? 'active' : 'ended',
+              properties: [
+                { id: 'endDate', label: 'Slutdatum', kind: 'date' as const, value: '2000-01-01' },
+              ],
             },
           })
         ).ok(),
@@ -469,10 +467,11 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
           baseRevision: null,
           value: {
             name: 'Kim Exempel',
-            description: '',
             typeId: initial.types.find((type) => type.name === 'Person')?.id,
             lifecycle: 'active',
-            financialFacts: { endDate: { knowledge: 'known', value: '2000-01-01' } },
+            properties: [
+              { id: 'endDate', label: 'Slutdatum', kind: 'text' as const, value: '2000-01-01' },
+            ],
           },
         })
       ).ok(),
@@ -551,7 +550,9 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
           value: {
             ...incoming,
             lifecycle: 'ended',
-            endDate: { knowledge: 'known', value: '2000-01-01' },
+            properties: [
+              { id: 'endDate', label: 'Slutdatum', kind: 'date' as const, value: '2000-01-01' },
+            ],
           },
         })
       ).ok(),
@@ -566,9 +567,10 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
             sourceId: 'service',
             targetId: 'person',
             typeId: pays?.id,
-            knowledge: 'known',
             lifecycle: 'active',
-            endDate: { knowledge: 'known', value: '2000-01-01' },
+            properties: [
+              { id: 'endDate', label: 'Slutdatum', kind: 'date' as const, value: '2000-01-01' },
+            ],
           },
         })
       ).ok(),
@@ -580,7 +582,7 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
     await page.getByLabel('Från objekt', { exact: true }).selectOption('service');
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalar' });
     await page.getByLabel('Sambandets status', { exact: true }).selectOption('active');
-    await expect(page.getByLabel('Sambandets slutdatum', { exact: true })).toHaveValue(
+    await expect(propertyRow(page, 'Slutdatum').getByLabel('Värde', { exact: true })).toHaveValue(
       '2000-01-01',
     );
     const nativeReply = page.waitForResponse(
@@ -599,9 +601,10 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
       sourceId: 'service',
       targetId: 'subscription',
       typeId: pays?.id,
-      knowledge: 'known',
       lifecycle: 'active',
-      endDate: { knowledge: 'known', value: '2000-01-01' },
+      properties: [
+        { id: 'endDate', label: 'Slutdatum', kind: 'date' as const, value: '2000-01-01' },
+      ],
     });
     expect(privateProposal.relationships).toEqual(saved.relationships);
     await page.goto(installation.origin);

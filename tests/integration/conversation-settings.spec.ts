@@ -172,13 +172,13 @@ test('MEDGIVANDE-05: sidan Samtal med Skyttel visar medgivandet för alla medlem
       await expect(overview.locator(group('Hushållets karta')).getByRole('link'), role).toHaveText([
         /^Rymdkartan/,
         /^Samtal med Skyttel→?Ditt medgivande, utkastet och textvyns bredd\.$/,
-        /^Typer och egna fält/,
+        /^Typer/,
       ]);
       const menu = visitor.getByRole('navigation', { name: 'Inställningarnas sidor' });
       await expect(menu.locator(group('Hushållets karta')).getByRole('link'), role).toHaveText([
         'Rymdkartan',
         'Samtal med Skyttel',
-        'Typer och egna fält',
+        'Typer',
       ]);
       await expect(menu.locator(group('Administration')), role).toHaveCount(
         role === 'administratör' ? 1 : 0,
@@ -671,7 +671,18 @@ async function arrangeDraft(page: Page, path: string, origin: string) {
       contentVersion: state.contentVersion,
       id: 'lo',
       baseRevision: null,
-      value: { typeId: state.types[0].id, name: 'Lo Exempel', description: 'Påhittad uppgift' },
+      value: {
+        typeId: state.types[0].id,
+        name: 'Lo Exempel',
+        properties: [
+          {
+            id: 'description',
+            label: 'Beskrivning',
+            kind: 'text' as const,
+            value: 'Påhittad uppgift',
+          },
+        ],
+      },
     },
   });
   expect(proposed.ok(), await proposed.text()).toBe(true);
@@ -868,7 +879,13 @@ test('MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet', async (
     await expect(
       savedLo.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
     ).toHaveText('Person');
-    await expect(savedLo.locator('.household-table-description')).toHaveText('Påhittad uppgift');
+    await expect(
+      savedLo
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd'),
+    ).toContainText('Påhittad uppgift');
   } finally {
     release?.();
     await app.close();

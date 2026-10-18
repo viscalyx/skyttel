@@ -784,7 +784,7 @@ async function simpleMap(page: Page, app: Awaited<ReturnType<typeof createInstal
       contentVersion: 1,
       id: 'lo',
       baseRevision: null,
-      value: { ...value, description: '' },
+      value: { ...value },
     },
   });
   await page.addInitScript({ content: liveBrowserFixtureSource });

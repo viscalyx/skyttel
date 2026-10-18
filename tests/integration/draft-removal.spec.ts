@@ -233,7 +233,7 @@ test('UTKAST-48: authoritative discard rejects forged or unauthorized requests a
 });
 
 for (const kind of ['objectType', 'relationshipType'] as const) {
-  test(`${kind === 'objectType' ? 'UTKAST-47' : 'UTKAST-147'}: discarding an edited ${kind} retains incompatible values and displays the remaining type conflict`, async ({
+  test(`${kind === 'objectType' ? 'UTKAST-47' : 'UTKAST-147'}: discarding an edited ${kind} retains independent free properties without a type conflict`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -253,7 +253,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
         exact: true,
       });
       const affected = dialog.getByRole('list', { name: 'Förslag som blir kvar men påverkas' });
-      await expect(affected).toContainText('Typens uppgifter skiljer sig');
+      await expect(affected).toHaveCount(0);
       await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click();
       await expect(dialog).toHaveCount(0);
       const after = await data.read();
@@ -269,8 +269,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
           `#draft-read-${kind === 'objectType' ? 'object' : 'relationship'}-${data.proposalId}`,
         ),
       });
-      await expect(row).toContainText('Typens uppgifter skiljer sig');
-      await expect(row.locator('.draft-row-warning')).toBeVisible();
+      await expect(row.locator('.draft-row-warning')).toHaveCount(0);
       await row.getByRole('button', { name: /^Visa förslaget:/ }).click();
       const details = page.getByRole('dialog');
       await expect(details).toContainText('Ny uppgift');
@@ -585,7 +584,7 @@ test('UTKAST-45: a stale discard confirmation preserves newer proposals and refr
     await data.post('object-type', {
       id: 'newer-independent-type',
       baseRevision: null,
-      value: { name: 'Nyare oberoende typ', description: '', fields: [] },
+      value: { name: 'Nyare oberoende typ', description: '' },
     });
     const newer = await data.read();
     await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click();
@@ -632,7 +631,13 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
       if (!type) throw new Error('Missing native type proposal');
       expect(type.after).toMatchObject({
         name: 'Tillfällig typ',
-        description: 'Hela den tillfälliga typens betydelse',
+        properties: expect.arrayContaining([
+          expect.objectContaining({
+            label: 'Beskrivning',
+            kind: 'text',
+            value: 'Hela den tillfälliga typens betydelse',
+          }),
+        ]),
       });
       if (kind === 'relationshipType')
         expect(type.after).toMatchObject({ forwardLabel: 'granskar', reverseLabel: 'granskas av' });
@@ -645,13 +650,27 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
           ? {
               typeId: type.id,
               name: 'Tillfälligt föremål',
-              description: 'Hela den tillfälliga berättelsen',
+              properties: [
+                {
+                  id: 'description',
+                  label: 'Beskrivning',
+                  kind: 'text' as const,
+                  value: 'Hela den tillfälliga berättelsen',
+                },
+              ],
             }
           : {
               typeId: type.id,
               sourceId: 'draft-bike',
               targetId: 'draft-bike',
-              knowledge: 'unknown',
+              properties: [
+                {
+                  id: 'certainty',
+                  label: 'Uppgiftens säkerhet',
+                  kind: 'text' as const,
+                  value: 'Okänt',
+                },
+              ],
             },
       );
       const history = await (await page.request.get(`${data.path}/history`)).json();

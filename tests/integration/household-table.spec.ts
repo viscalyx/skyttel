@@ -38,7 +38,7 @@ for (const [caseId, action, title] of [
         await post('draft', {
           id: `focus-${name}`,
           baseRevision: null,
-          value: { typeId, name: `Fokus ${name}`, description: '' },
+          value: { typeId, name: `Fokus ${name}` },
         });
       await post('save', { operationId: `table-${action}-focus` });
       const saved = await read();
@@ -233,14 +233,10 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('button', { name: 'A 2', exact: true }).click();
-    await expect(table.getByText('Sparat: 299 SEK', { exact: true })).toBeVisible();
+    await expect(table.getByText('Sparat: 299 SEK (Text)', { exact: true })).toBeVisible();
     await expect(table.getByText('399 SEK', { exact: false })).toBeVisible();
-    await expect(table.getByText('Uttryckligen inget', { exact: true })).toBeVisible();
-    await expect(
-      table.getByText('100 000 SEK (Osäkert uppgivet) · datum för uppgiften: 2026-01-01', {
-        exact: true,
-      }),
-    ).toBeVisible();
+    await expect(table.getByText('Uttryckligen inget (Text)', { exact: true })).toBeVisible();
+    await expect(table.getByText('100 000 SEK (Text)', { exact: true })).toBeVisible();
     const inline = table.getByRole('region', { name: 'Uppgifter för A 2', exact: true });
     const details = inline.locator('.household-table-details');
     const field = (name: string) =>
@@ -266,7 +262,7 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
     await expect(field('Reserv')).toHaveText('ReservSparat: Ej uppgivet◇ Ditt förslag: Nej');
     await expect(field('Föreslagen anteckning')).toContainText('Sparat (Egen anteckning):');
     await expect(field('Föreslagen anteckning')).toContainText(
-      `Sparat (Egen anteckning): ${'Lång egen uppgift '.repeat(30).trim()}`,
+      `Sparat (Egen anteckning): ${'Lång egen uppgift '.repeat(30).trim()} (Text)`,
     );
     await expect(field('Föreslagen anteckning')).toContainText(
       `◇ Ditt förslag: ${'Lång egen uppgift '.repeat(30).trim()}`,

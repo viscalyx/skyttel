@@ -10,6 +10,7 @@ import {
 } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
+import { propertyRow, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 for (const width of [1280, 390, 320]) {
@@ -152,12 +153,12 @@ for (const role of ['administrator', 'member'] as const) {
         .getByRole('button', { name: 'Cykel i samma utkast', exact: true })
         .click();
       await openSettings(page);
-      await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+      await page.getByRole('link', { name: 'Typer', exact: true }).click();
       await page.getByRole('button', { name: 'Ny objekttyp', exact: true }).click();
       await page.getByLabel('Typens namn', { exact: true }).fill('Oskickad typ');
       await page.getByLabel('Typens beskrivning').fill('Behåll även definitionens text');
       await page.getByRole('link', { name: 'Översikt', exact: true }).click();
-      await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+      await page.getByRole('link', { name: 'Typer', exact: true }).click();
       await expect(page.getByLabel('Typens namn', { exact: true })).toHaveValue('Oskickad typ');
       await expect(page.getByLabel('Typens beskrivning')).toHaveValue(
         'Behåll även definitionens text',
@@ -180,8 +181,8 @@ for (const role of ['administrator', 'member'] as const) {
       );
       await page.reload();
       await openSettings(page);
-      await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
-      await page.getByText('Objekttyper och egna fält', { exact: true }).click();
+      await page.getByRole('link', { name: 'Typer', exact: true }).click();
+      await page.getByText('Objekttyper', { exact: true }).click();
       await expect(
         page.getByRole('button', { name: 'Ändra typ: Oskickad typ', exact: true }),
       ).toBeVisible();
@@ -209,7 +210,7 @@ test('INST-03: the separate profile protects native form input and groups person
     await openTable(page);
     await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Profilens cykel');
-    await page.getByLabel('Beskrivning', { exact: true }).fill('Fortsätt här');
+    await setProperty(page, 'Beskrivning', 'Fortsätt här');
     await verifyObjectDepartureAndDiscard(page, {
       Namn: 'Profilens cykel',
       Beskrivning: 'Fortsätt här',
@@ -227,7 +228,9 @@ test('INST-03: the separate profile protects native form input and groups person
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await openNewObject(page);
     await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('');
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
+    await expect(propertyRow(page, 'Beskrivning').getByLabel('Värde', { exact: true })).toHaveValue(
+      '',
+    );
     await page.keyboard.press('Escape');
     await openProfile(page);
     await profile.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
@@ -247,7 +250,9 @@ test('INST-03: the separate profile protects native form input and groups person
         .getByRole('region', { name: 'Hushållets tabell', exact: true })
         .getByRole('heading', { name: 'Hushållet Linden', exact: true }),
     ).toBeFocused();
-    await expect(page.getByLabel('Beskrivning', { exact: true })).not.toBeVisible();
+    await expect(
+      propertyRow(page, 'Beskrivning').getByLabel('Värde', { exact: true }),
+    ).not.toBeVisible();
   } finally {
     await installation.close();
   }

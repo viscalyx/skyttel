@@ -29,6 +29,12 @@ import {
 import { alex, createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
+import {
+  openProperties,
+  propertyRow,
+  propertyValues,
+  setProperty,
+} from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
 
@@ -80,9 +86,12 @@ async function tableValues(root: Locator, name: string, description: string, pri
         .locator('..')
         .locator('dd'),
     ).toHaveText(new RegExp(`^(?:◇ Ditt förslag: )?${value}$`));
-  await expect(root.locator('.household-table-description')).toHaveText(
-    new RegExp(`^(?:◇ Ditt förslag: )?${description || 'Ej uppgivet'}$`),
-  );
+  const descriptionRow = root
+    .locator('dt')
+    .filter({ hasText: /^Beskrivning$/ })
+    .locator('..');
+  if (description) await expect(descriptionRow).toContainText(description);
+  else await expect(descriptionRow).toHaveCount(0);
 }
 
 async function objectValues(page: Page, name: string, price?: string, description = '') {
@@ -91,18 +100,19 @@ async function objectValues(page: Page, name: string, price?: string, descriptio
   await expect(form.getByLabel('Objekttyp').locator('option:checked')).toHaveText(
     price ? 'Abonnemang' : 'Person',
   );
-  await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(description);
+  if (description)
+    await expect(propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true })).toHaveValue(
+      description,
+    );
+  else await expect(propertyRow(form, 'Beskrivning')).toHaveCount(0);
   if (price) {
-    await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await openProperties(form);
     for (const [label, value] of [
       ['Pris', price],
       ['Valuta', 'SEK'],
       ['Betalningsintervall', 'månad'],
     ]) {
       await expect(form.getByLabel(label, { exact: true })).toHaveValue(value);
-      await expect(form.getByLabel(`${label}: uppgiftens säkerhet`, { exact: true })).toHaveValue(
-        'known',
-      );
     }
   }
   await page.keyboard.press('Escape');
@@ -202,12 +212,16 @@ for (const mode of ['voice', 'text'] as const) {
               value: {
                 typeId: subscriptionType.id,
                 name: 'Familjens Molnmusik',
-                description: '',
-                financialFacts: {
-                  price: { knowledge: 'known', value: '179' },
-                  currency: { knowledge: 'known', value: 'SEK' },
-                  paymentInterval: { knowledge: 'known', value: 'månad' },
-                },
+                properties: [
+                  { id: 'price', label: 'Pris', kind: 'text' as const, value: '179' },
+                  { id: 'currency', label: 'Valuta', kind: 'text' as const, value: 'SEK' },
+                  {
+                    id: 'paymentInterval',
+                    label: 'Betalningsintervall',
+                    kind: 'text' as const,
+                    value: 'månad',
+                  },
+                ],
               },
             }),
           ];
@@ -225,7 +239,7 @@ for (const mode of ['voice', 'text'] as const) {
               id: randomUUID(),
               baseRevision: null,
               typeRevision: required(personType).revision,
-              value: { typeId: required(personType).id, name: 'Kim Exempel', description: '' },
+              value: { typeId: required(personType).id, name: 'Kim Exempel' },
             }),
           ];
         case 5:
@@ -241,7 +255,6 @@ for (const mode of ['voice', 'text'] as const) {
                 typeId: required(paymentType).id,
                 sourceId: personId,
                 targetId: subscriptionId,
-                knowledge: 'known',
               },
             }),
           ];
@@ -420,10 +433,10 @@ for (const mode of ['voice', 'text'] as const) {
       await paymentValues(page);
       await editTableObject(page, 'Familjens Molnmusik');
       const form = page.locator('dialog.object-dialog-C');
-      await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
-      await form.getByLabel('Pris', { exact: true }).fill('189');
+      await openProperties(form);
+      await setProperty(form, 'Pris', '189', 'text');
       await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
-      await form.getByLabel('Beskrivning', { exact: true }).fill('Rättad för hand');
+      await setProperty(form, 'Beskrivning', 'Rättad för hand');
       const correction = page.waitForResponse(`${path}/object-form`);
       const correctionDraft = correction.then(
         (response) => response.json() as Promise<MapState['draft']>,
@@ -445,8 +458,8 @@ for (const mode of ['voice', 'text'] as const) {
           const changed = draft.changes.find(({ id }) => id === subscriptionId)?.after;
           return (
             refreshed.draft.version === draft.version &&
-            changed?.description === 'Rättad för hand' &&
-            changed.financialFacts?.price?.value === '189' &&
+            propertyValues(changed).description === 'Rättad för hand' &&
+            propertyValues(changed).price === '189' &&
             JSON.stringify(
               refreshed.draft.changes.find(({ id }) => id === subscriptionId)?.after,
             ) === JSON.stringify(changed)
@@ -474,14 +487,16 @@ for (const mode of ['voice', 'text'] as const) {
       await tableValues(person, 'Kim Exempel', '');
       await closeTableObject(page, 'Kim Exempel');
       await editTableObject(page, 'Kim Exempel');
-      await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickat om Kim');
+      await setProperty(form, 'Beskrivning', 'Oskickat om Kim');
       await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
       const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
       await expect(
         loss.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
       ).toBeFocused();
       await page.keyboard.press('Escape');
-      await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickat om Kim');
+      await expect(
+        propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true }),
+      ).toHaveValue('Oskickat om Kim');
       await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
       await loss
         .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
@@ -496,19 +511,19 @@ for (const mode of ['voice', 'text'] as const) {
       await objectValues(page, 'Kim Exempel');
       await paymentValues(page);
       const corrected = await read();
-      const expectedFacts = {
-        price: { knowledge: 'known', value: '189' },
-        currency: { knowledge: 'known', value: 'SEK' },
-        paymentInterval: { knowledge: 'known', value: 'månad' },
-      };
       expect(corrected.draft.changes.find(({ id }) => id === subscriptionId)?.after).toMatchObject({
         name: 'Familjens Molnmusik',
-        description: 'Rättad för hand',
-        financialFacts: expectedFacts,
+        properties: expect.arrayContaining([
+          expect.objectContaining({ label: 'Beskrivning', kind: 'text', value: 'Rättad för hand' }),
+          expect.objectContaining({ label: 'Pris', kind: 'text', value: '189' }),
+          expect.objectContaining({ label: 'Valuta', kind: 'text', value: 'SEK' }),
+          expect.objectContaining({ label: 'Betalningsintervall', kind: 'text', value: 'månad' }),
+        ]),
       });
-      expect(corrected.draft.changes.find(({ id }) => id === personId)?.after?.description).toBe(
-        '',
-      );
+      expect(
+        propertyValues(corrected.draft.changes.find(({ id }) => id === personId)?.after)
+          .description,
+      ).toBe('');
 
       for (const name of [
         'Familjens Molnmusik',
@@ -700,7 +715,6 @@ for (const mode of ['voice', 'text'] as const) {
           typeId: required(paymentType).id,
           sourceId: personId,
           targetId: subscriptionId,
-          knowledge: 'known',
         },
       });
       expect(receipt.objectTypes ?? []).toEqual([]);
@@ -778,7 +792,7 @@ for (const mode of ['voice', 'text'] as const) {
       await objectValues(page, 'Kim Exempel');
       await paymentValues(page);
       await editTableObject(page, 'Familjens Molnmusik');
-      await form.getByLabel('Beskrivning', { exact: true }).fill('Alex privat efteråt');
+      await setProperty(form, 'Beskrivning', 'Alex privat efteråt');
       await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await member.reload();
       if (mode === 'text') await loseGraphics(member);
@@ -834,7 +848,9 @@ for (const mode of ['voice', 'text'] as const) {
       const alexState = await read();
       expect(alexState.objects).toEqual(saved.objects);
       expect(alexState.draft.changes).toHaveLength(1);
-      expect(alexState.draft.changes[0].after?.description).toBe('Alex privat efteråt');
+      expect(propertyValues(alexState.draft.changes[0].after).description).toBe(
+        'Alex privat efteråt',
+      );
       expect(JSON.stringify(alexState)).not.toContain('Robins notering');
       expect(await history()).toEqual([receipt]);
       expect((await (await member.request.get(`${path}/history`)).json()).history).toEqual([
