@@ -187,14 +187,15 @@ test('AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärend
       ['Valuta', 'SEK'],
       ['Betalningsintervall', 'månad'],
     ]) {
-      await expect(subscription.getByLabel(label, { exact: true })).toHaveValue(value);
-      await expect(
-        subscription.getByLabel(`${label}: uppgiftens säkerhet`, { exact: true }),
-      ).toHaveValue('known');
+      const row = propertyRow(subscription, label);
+      await expect(row.getByLabel('Värde', { exact: true })).toHaveValue(value);
+      await expect(row.getByLabel('Datatyp', { exact: true })).toHaveValue('text');
     }
+    await expect(subscription.locator('.property-editor-row')).toHaveCount(4);
     await page.keyboard.press('Escape');
     const loForm = await editTableObject(page, 'Lo Lind');
     await expect(loForm.getByLabel('Namn', { exact: true })).toHaveValue('Lo Lind');
+    await openProperties(loForm);
     await expect(
       propertyRow(loForm, 'Beskrivning').getByLabel('Värde', { exact: true }),
     ).toHaveValue('Spelar piano i musikföreningen.');
@@ -277,6 +278,7 @@ test('AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparan
     for (const name of ['Lo Exempel', 'Kim Exempel']) {
       const person = await editTableObject(page, name);
       await expect(person.getByLabel('Namn', { exact: true })).toHaveValue(name);
+      await openProperties(person);
       await expect(propertyRow(person, 'Beskrivning')).toHaveCount(0);
       await page.keyboard.press('Escape');
     }
@@ -303,7 +305,6 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     for (const [label, value] of [
       ['Namn', 'Lo Exempel'],
       ['Typ', 'Person'],
-      ['Beskrivning', 'Ej uppgivet'],
     ])
       await expect(
         proposal
@@ -312,6 +313,7 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
           .locator('..')
           .locator('dd'),
       ).toHaveText(value);
+    await expect(proposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
     await page.keyboard.press('Escape');
     const review = await tool(app.origin, token, 'read_my_draft');
     const attempt = {
@@ -361,6 +363,7 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
       'Person',
     );
     await expect(committedPerson.getByLabel('Namn', { exact: true })).toHaveValue('Lo Exempel');
+    await openProperties(committedPerson);
     await expect(propertyRow(committedPerson, 'Beskrivning')).toHaveCount(0);
     await page.keyboard.press('Escape');
     await app.restart();
@@ -401,6 +404,7 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     const person = await editTableObject(page, 'Lo Exempel');
     await expect(person.getByLabel('Objekttyp').locator('option:checked')).toHaveText('Person');
     await expect(person.getByLabel('Namn', { exact: true })).toHaveValue('Lo Exempel');
+    await openProperties(person);
     await expect(propertyRow(person, 'Beskrivning')).toHaveCount(0);
     await page.keyboard.press('Escape');
     const savedHistory = await openSavedHistory(page);
@@ -504,6 +508,7 @@ test('AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kasta
     const account = await editTableObject(page, 'Betalkonto');
     await expect(account.getByLabel('Identitet')).toHaveValue('unspecified');
     await expect(account.getByLabel('Namn', { exact: true })).toHaveValue('Betalkonto');
+    await openProperties(account);
     await expect(propertyRow(account, 'Beskrivning')).toHaveCount(0);
   } finally {
     await app.close();
