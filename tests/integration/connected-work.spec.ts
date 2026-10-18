@@ -32,6 +32,7 @@ import { liveProvider } from '../support/live-provider.js';
 import {
   openProperties,
   propertyRow,
+  propertyValue,
   propertyValues,
   setProperty,
 } from '../support/property-controls.js';
@@ -458,7 +459,7 @@ for (const mode of ['voice', 'text'] as const) {
           const changed = draft.changes.find(({ id }) => id === subscriptionId)?.after;
           return (
             refreshed.draft.version === draft.version &&
-            propertyValues(changed).description === 'Rättad för hand' &&
+            propertyValue(changed, 'Beskrivning') === 'Rättad för hand' &&
             propertyValues(changed).price === '189' &&
             JSON.stringify(
               refreshed.draft.changes.find(({ id }) => id === subscriptionId)?.after,
@@ -521,8 +522,10 @@ for (const mode of ['voice', 'text'] as const) {
         ]),
       });
       expect(
-        propertyValues(corrected.draft.changes.find(({ id }) => id === personId)?.after)
-          .description,
+        propertyValue(
+          corrected.draft.changes.find(({ id }) => id === personId)?.after,
+          'Beskrivning',
+        ),
       ).toBeUndefined();
 
       for (const name of [
@@ -848,7 +851,7 @@ for (const mode of ['voice', 'text'] as const) {
       const alexState = await read();
       expect(alexState.objects).toEqual(saved.objects);
       expect(alexState.draft.changes).toHaveLength(1);
-      expect(propertyValues(alexState.draft.changes[0].after).description).toBe(
+      expect(propertyValue(alexState.draft.changes[0].after, 'Beskrivning')).toBe(
         'Alex privat efteråt',
       );
       expect(JSON.stringify(alexState)).not.toContain('Robins notering');

@@ -11,7 +11,7 @@ import {
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
-import { propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyValue, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 async function expectSpatialPortrait(page: Page, imageId: string | null | undefined) {
@@ -97,7 +97,7 @@ test('BILD-01: profile image proposals preserve text, survive restart and expose
     await setProperty(details, 'Beskrivning', 'Oskickad text');
     await details.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await expect(details.getByLabel('Profilbild', { exact: true })).toBeEnabled();
-    expect(propertyValues((await read()).draft.changes[0].after).description).toBe(
+    expect(propertyValue((await read()).draft.changes[0].after, 'Beskrivning')).toBe(
       'Bevara beskrivningen',
     );
     await details.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
@@ -139,7 +139,7 @@ test('BILD-01: profile image proposals preserve text, survive restart and expose
     await expect(history.getByRole('article').first().getByRole('img').first()).toBeVisible();
     await expect(history.getByRole('article').first().getByRole('img').last()).toBeVisible();
     expect((await read()).objects[0].profileImageId).not.toBe(first);
-    expect(propertyValues((await read()).objects[0]).description).toBe('Oskickad text');
+    expect(propertyValue((await read()).objects[0], 'Beskrivning')).toBe('Oskickad text');
     await expect(history.getByRole('button', { name: 'Ångra sparandet' })).toHaveCount(0);
   } finally {
     await installation.close();

@@ -14,7 +14,7 @@ import {
   voiceBox,
 } from '../support/conversation-page.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
-import { propertyRow, propertyValues } from '../support/property-controls.js';
+import { propertyRow, propertyValue } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 for (const seeded of [false, true]) {
@@ -272,7 +272,7 @@ for (const seeded of [false, true]) {
                       id: 'description',
                       label: 'Beskrivning',
                       kind: 'text' as const,
-                      value: propertyValues(current).description ?? '',
+                      value: propertyValue(current, 'Beskrivning') ?? '',
                     },
                   ],
                 }

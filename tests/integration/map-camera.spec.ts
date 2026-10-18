@@ -3,7 +3,7 @@ import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, openMap, openTable, setAllLabels, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 import { mapFilters } from '../support/object-search.js';
-import { propertyRow, propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyRow, propertyValue, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 async function arrange(page: Page, origin: string) {
@@ -119,7 +119,7 @@ async function arrange(page: Page, origin: string) {
   expect(privateWork.changes).toHaveLength(4);
   expect(privateRelationships).toHaveLength(2);
   for (const change of privateWork.changes)
-    expect(propertyValues(change.after).description).toBe('Privat kameraförslag');
+    expect(propertyValue(change.after, 'Beskrivning')).toBe('Privat kameraförslag');
   for (const change of privateRelationships)
     expect(change.after?.properties).toEqual([
       { id: 'certainty', label: 'Uppgiftens säkerhet', kind: 'text', value: 'Osäkert uppgivet' },

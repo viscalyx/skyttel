@@ -5,7 +5,7 @@ import { createInstallation } from '../support/installation.js';
 import {
   openProperties,
   propertyRow,
-  propertyValues,
+  propertyValue,
   setProperty,
 } from '../support/property-controls.js';
 import { expect, test } from '../support/test.js';
@@ -57,7 +57,7 @@ for (const viewport of [
       await expect(editor.getByLabel('Identitet', { exact: true })).toHaveValue('identified');
       await expect(
         propertyRow(editor, 'Beskrivning').getByLabel('Värde', { exact: true }),
-      ).toHaveValue(String(propertyValues(current).description ?? ''));
+      ).toHaveValue(String(propertyValue(current, 'Beskrivning') ?? ''));
       await openProperties(editor);
       await expect(
         propertyRow(editor, 'Pris: uppgiftens säkerhet').getByLabel('Värde', { exact: true }),
@@ -99,16 +99,14 @@ for (const viewport of [
       const after = await app.read();
       expect(after.objects).toEqual(before.objects);
       expect(after.relationships).toEqual(before.relationships);
+      const prior = before.draft.changes.find((change) => change.id === 'bike')?.after;
       expect(after.draft.changes.find((change) => change.id === 'bike')?.after).toEqual({
-        ...before.draft.changes.find((change) => change.id === 'bike')?.after,
-        properties: [
-          {
-            id: 'description',
-            label: 'Beskrivning',
-            kind: 'text' as const,
-            value: 'Mitt privata läsförslag',
-          },
-        ],
+        ...prior,
+        properties: prior?.properties?.map((property) =>
+          property.label === 'Beskrivning'
+            ? { ...property, value: 'Mitt privata läsförslag' }
+            : property,
+        ),
       });
       await (await utilityButton(page, 'Karta')).click();
       await expect(status).toHaveCount(1);

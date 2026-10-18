@@ -19,7 +19,7 @@ import { editTableObject, readTableObject } from '../support/domain-work.js';
 import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
-import { propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyValue, setProperty } from '../support/property-controls.js';
 import { denyRecoveryStorage, restoreRecoveryStorage } from '../support/recovery-storage.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
@@ -684,7 +684,7 @@ test('RADERING-03: a changed scope requires a new review and confirmation before
     await expect(
       section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
     ).toBeVisible();
-    expect(propertyValues((await fixture.read()).draft.changes[0].after).description).toBe(
+    expect(propertyValue((await fixture.read()).draft.changes[0].after, 'Beskrivning')).toBe(
       'Senare privat förslag',
     );
     await readRemainingWork(page, fixture.administration, 'Senare privat förslag');
@@ -740,7 +740,7 @@ test('RADERING-04: pending cleanup survives application restart and completes on
       section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
     ).toBeVisible();
     expect((await fixture.read()).objects.map((object) => object.id)).toEqual(['chair']);
-    expect(propertyValues((await fixture.read()).draft.changes[0].after).description).toBe(
+    expect(propertyValue((await fixture.read()).draft.changes[0].after, 'Beskrivning')).toBe(
       'Oberoende privat förslag',
     );
     expect(

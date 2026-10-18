@@ -25,7 +25,7 @@ import { closeTableObject, editTableObject, readTableObject } from '../support/d
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
-import { propertyRow, propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyRow, propertyValue, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import { modelMessage, textModel } from '../support/text-model.js';
 
@@ -176,8 +176,10 @@ test('PANEL-05: pending object staging keeps the modal and returns to reading be
     await expect(proposal.getByText('Skickad beskrivning', { exact: true })).toBeVisible();
     await expect(proposal).toContainText('Cykeln');
     expect(
-      propertyValues(state.draft.changes.find((change) => change.after?.name === 'Cykeln')?.after)
-        .description,
+      propertyValue(
+        state.draft.changes.find((change) => change.after?.name === 'Cykeln')?.after,
+        'Beskrivning',
+      ),
     ).toBe('Skickad beskrivning');
   } finally {
     releaseResponse();

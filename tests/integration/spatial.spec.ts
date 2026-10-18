@@ -23,7 +23,7 @@ import { focusMapSearch, mapFilters } from '../support/object-search.js';
 import {
   openProperties,
   propertyRow,
-  propertyValues,
+  propertyValue,
   setProperty,
 } from '../support/property-controls.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
@@ -564,8 +564,10 @@ test('RYMD-04: touch menus, viewport changes and graphics recovery retain unsent
       'Oskickad mobiltext',
     );
     expect(
-      propertyValues((await read()).draft.changes.find((change) => change.id === 'music')?.after)
-        .description,
+      propertyValue(
+        (await read()).draft.changes.find((change) => change.id === 'music')?.after,
+        'Beskrivning',
+      ),
     ).toBe('');
     await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openMap(page);
@@ -577,7 +579,10 @@ test('RYMD-04: touch menus, viewport changes and graphics recovery retain unsent
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
     expect(
-      propertyValues((await read()).objects.find((object) => object.id === 'music')).description,
+      propertyValue(
+        (await read()).objects.find((object) => object.id === 'music'),
+        'Beskrivning',
+      ),
     ).toBe('Oskickad mobiltext');
   } finally {
     await context.close();

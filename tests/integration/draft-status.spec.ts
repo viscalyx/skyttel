@@ -26,7 +26,7 @@ import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
 import { focusMapSearch } from '../support/object-search.js';
-import { propertyRow, propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyRow, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
 
@@ -671,7 +671,7 @@ test('UTKAST-15: a necessary answer gates the native draft save until a fresh ex
     expect(
       saved.objects.map((object) => ({
         name: object.name,
-        description: propertyValues(object).description,
+        properties: object.properties,
       })),
     ).toEqual([
       {

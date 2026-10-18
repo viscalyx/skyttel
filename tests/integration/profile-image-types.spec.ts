@@ -11,7 +11,7 @@ import {
 import { openSavedHistory, readCommittedHistoryCard } from '../support/conversation-page.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
-import { propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyValue, setProperty } from '../support/property-controls.js';
 import { expect, test } from '../support/test.js';
 
 const typeName = 'Egen bildtyp';
@@ -185,7 +185,7 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
           await expect(side.filter({ hasText: `Objekttyp: ${typeName}.` })).toBeVisible();
           await expect(
             side.filter({
-              hasText: String(propertyValues(value).description ?? ''),
+              hasText: String(propertyValue(value, 'Beskrivning') ?? ''),
             }),
           ).toBeVisible();
           const identity = side.filter({

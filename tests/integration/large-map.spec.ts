@@ -11,7 +11,7 @@ import {
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
-import { propertyRow, propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyRow, propertyValue, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 test('STORKARTA-01: dense overview keeps readable labels and every object and relationship reachable', async ({
@@ -174,12 +174,15 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     const saved: MapState = await (await page.request.get(path)).json();
     expect(saved.objects).toHaveLength(500);
     expect(saved.relationships).toHaveLength(1500);
-    expect(propertyValues(saved.objects.find((item) => item.id === 'large-499')).description).toBe(
-      'Oskickad text i den täta kartan',
-    );
+    expect(
+      propertyValue(
+        saved.objects.find((item) => item.id === 'large-499'),
+        'Beskrivning',
+      ),
+    ).toBe('Oskickad text i den täta kartan');
     expect(await (await page.request.get(`${path}/view`)).json()).toEqual(personal);
     const { history } = await (await page.request.get(`${path}/history`)).json();
-    expect(propertyValues(history.at(-1).changes[0].after).description).toBe(
+    expect(propertyValue(history.at(-1).changes[0].after, 'Beskrivning')).toBe(
       'Oskickad text i den täta kartan',
     );
     await table

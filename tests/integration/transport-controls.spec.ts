@@ -13,7 +13,7 @@ import {
 import { openSavedHistory } from '../support/conversation-page.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
-import { propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyValue, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 test('SPAR-05: scoped transport holds real staging, rejects stale saves and recovers a lost committed receipt', async ({
@@ -258,9 +258,12 @@ test('SPAR-05: scoped transport holds real staging, rejects stale saves and reco
       historyBefore,
     );
     expect(historyBefore).toHaveLength(2);
-    expect(propertyValues(rejected.objects.find((object) => object.id === lo.id)).description).toBe(
-      'Robins sparade beskrivning',
-    );
+    expect(
+      propertyValue(
+        rejected.objects.find((object) => object.id === lo.id),
+        'Beskrivning',
+      ),
+    ).toBe('Robins sparade beskrivning');
     await fresh.keyboard.press('Escape');
     const privateProposal = await readDraftProposal(fresh, 'Lo Exempel');
     await expect(privateProposal).toContainText('Alex privata beskrivning');

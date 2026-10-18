@@ -1,7 +1,7 @@
 import { openDraftReview, openTable } from '../support/client.js';
 import { prepareHouseholdReading } from '../support/household-reading.js';
 import { createInstallation } from '../support/installation.js';
-import { propertyRow } from '../support/property-controls.js';
+import { openProperties, propertyRow } from '../support/property-controls.js';
 import { expect, test } from '../support/test.js';
 
 test('LISTA-07: text object actions preserve cancellation and stage only the chosen removal without map graphics', async ({
@@ -62,6 +62,7 @@ test('LISTA-07: text object actions preserve cancellation and stage only the cho
     await edit.focus();
     await page.keyboard.press('Enter');
     const editor = page.getByRole('dialog', { name: 'Redigera Cykel', exact: true });
+    await openProperties(editor);
     const description = propertyRow(editor, 'Beskrivning').getByLabel('Värde', { exact: true });
     await description.fill('Behåll mina oskickade uppgifter');
     await editor.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();

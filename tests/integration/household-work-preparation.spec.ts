@@ -20,6 +20,7 @@ import { editTableObject } from '../support/domain-work.js';
 import {
   openProperties,
   propertyRow,
+  propertyValue,
   propertyValues,
   setProperty,
 } from '../support/property-controls.js';
@@ -244,7 +245,7 @@ test('literal household preparation completes the family tools on seeded public 
       const changed = draft.changes.find(({ id }) => id === replacements.SUB)?.after;
       return (
         refreshed.draft.version === draft.version &&
-        propertyValues(changed).description === 'Rättad för hand' &&
+        propertyValue(changed, 'Beskrivning') === 'Rättad för hand' &&
         propertyValues(changed).price === '189' &&
         JSON.stringify(refreshed.draft.changes.find(({ id }) => id === replacements.SUB)?.after) ===
           JSON.stringify(changed)

@@ -12,7 +12,12 @@ import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { openObjectRelationships, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { verifyRestoredPersonalMove } from '../support/personal-view-reading.js';
-import { propertyRow, propertyValues, setProperty } from '../support/property-controls.js';
+import {
+  openProperties,
+  propertyRow,
+  propertyValue,
+  setProperty,
+} from '../support/property-controls.js';
 import { expect, test } from '../support/test.js';
 
 async function arrange(page: Page, origin: string, selection: 'pointer' | 'keyboard' = 'pointer') {
@@ -468,9 +473,10 @@ for (const [configuration, [width, height]] of navigationConfigurations.entries(
         await panel.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).focus();
         await panel.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
         const form = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
-        const description = propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true });
+        await openProperties(form);
         const text = `Oskickad text medan jag navigerar ${width} ${navigationFirst}`;
-        await description.fill(text);
+        await setProperty(form, 'Beskrivning', text);
+        const description = propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true });
         const unchanged = await read();
         await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
         const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
@@ -571,8 +577,10 @@ for (const [configuration, [width, height]] of navigationConfigurations.entries(
         await navigation.getByRole('button', { name: 'Zooma in', exact: true }).click();
         await expect(panel).toContainText(text);
         expect(
-          propertyValues((await read()).draft.changes.find((change) => change.id === 'lo')?.after)
-            .description,
+          propertyValue(
+            (await read()).draft.changes.find((change) => change.id === 'lo')?.after,
+            'Beskrivning',
+          ),
         ).toBe(text);
         expect((await read()).objects).toEqual(shared.objects);
         expect((await read()).relationships).toEqual(shared.relationships);

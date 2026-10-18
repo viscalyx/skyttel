@@ -13,7 +13,7 @@ import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { readDraftProposal } from '../support/domain-work.js';
 import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation } from '../support/installation.js';
-import { propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyValue, setProperty } from '../support/property-controls.js';
 import { expect, test } from '../support/test.js';
 
 test('IMPORT-06: replacement preserves image history and private work, rejects old save attempts and permits ordinary corrections after restart', async ({
@@ -411,9 +411,12 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
       historicalSave,
     );
     expect(history).toContainEqual(corrected);
-    expect(propertyValues(state.objects.find((object) => object.id === 'second')).description).toBe(
-      'Ny vanlig rättelse',
-    );
+    expect(
+      propertyValue(
+        state.objects.find((object) => object.id === 'second'),
+        'Beskrivning',
+      ),
+    ).toBe('Ny vanlig rättelse');
     await importer.reload();
     await openTable(importer);
     const restoredObject = importer.locator(

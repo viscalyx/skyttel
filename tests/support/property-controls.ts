@@ -11,6 +11,17 @@ export function propertyValues(value: { properties?: Property[] } | null | undef
   );
 }
 
+/** Read one unique fixture label when the form assigns its identity. */
+export function propertyValue(
+  value: { properties?: Property[] } | null | undefined,
+  label: string,
+) {
+  const matches = (value?.properties ?? []).filter((property) => property.label === label);
+  if (matches.length > 1) throw new Error(`Fixture property label is ambiguous: ${label}`);
+  const property = matches[0];
+  return property && 'value' in property ? property.value : undefined;
+}
+
 /** Find a uniquely labelled free property through the ordinary editor. */
 export function propertyRow(form: Locator | Page, label: string) {
   return form.locator('.property-editor-row').filter({

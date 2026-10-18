@@ -19,7 +19,7 @@ import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { holdBrowserExport, seedLargeExport } from '../support/export-browser-stream.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
-import { propertyRow, propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyRow, propertyValue, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 async function arrange(page: Page) {
@@ -517,7 +517,7 @@ test('EXPORT-06: browser image proposals, history and restart lead to a download
     }
     await saveReviewedConflictDraft(page);
     const first = (await read()).objects.find(
-      (object) => propertyValues(object).description === 'Första objektet',
+      (object) => propertyValue(object, 'Beskrivning') === 'Första objektet',
     );
     expect(first).toBeDefined();
     const editFirst = async (buffer: Buffer) => {

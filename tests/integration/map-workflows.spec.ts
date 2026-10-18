@@ -17,7 +17,7 @@ import {
   readTableObject,
 } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
-import { propertyRow, propertyValues, setProperty } from '../support/property-controls.js';
+import { propertyRow, propertyValue, setProperty } from '../support/property-controls.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 import { expect, test } from '../support/test.js';
 
@@ -340,10 +340,10 @@ test('KARTA-03: equal object names stay distinct when correcting and deleting a 
     await addObject(page, 'familj@example.test', 'E-postadress', 'Andra adressobjektet');
     const draft = await read();
     const first = draft.draft.changes.find(
-      (change) => propertyValues(change.after).description === 'Första adressobjektet',
+      (change) => propertyValue(change.after, 'Beskrivning') === 'Första adressobjektet',
     )?.id;
     const second = draft.draft.changes.find(
-      (change) => propertyValues(change.after).description === 'Andra adressobjektet',
+      (change) => propertyValue(change.after, 'Beskrivning') === 'Andra adressobjektet',
     )?.id;
     expect(first).toBeTruthy();
     expect(second).toBeTruthy();
