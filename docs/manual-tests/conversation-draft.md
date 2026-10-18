@@ -79,7 +79,8 @@ kartans symboler”.
    går att läsa utan bokstavskolumner. Inget sparas genom läsningen.
 4. Dölj utkastet, stäng och öppna textvyn och kontrollera att det fortfarande
    är hopfällt. Öppna det och välj **Nytt samtal**. Läs det hopfällda läget.
-5. Öppna samma baslinjesparande i Rapporter igen. Läs fortfarande
+5. Öppna samma baslinjesparande i Rapporter igen. Välj **Visa ändringarna**
+   om uppgifterna är hopfällda. Läs fortfarande
    **Sista fyra: 1111 (Text)**. Det föreslagna 2222 hör till utkastet, inte kvittot.
 
 **Förväntat resultat:**
