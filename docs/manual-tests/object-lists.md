@@ -846,7 +846,9 @@ samband till objektet med typen **Endast i sambandet**.
    Sök efter **ake**. Kontrollera noll träffar och att fokus stannar i
    sökfältet.
    Öppna **Filter**, välj **Återställ sökning och filter** och stäng dialogen.
-4. Sök efter **åke beskrivning**. Kontrollera en träff på Åke.
+4. Sök efter **åke beskrivning**. Kontrollera exakt två träffar: Åke och
+   Övrigt Élan. Även Övrigt Élan matchar eftersom egenskapens etikett är
+   Beskrivning och värdet **Åker äpple** innehåller delordet **åke**.
 
 **Förväntat resultat:**
 

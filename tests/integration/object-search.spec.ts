@@ -44,8 +44,13 @@ test('SÖK-01: own detail fields, every word and Swedish normalization find obje
     await page.keyboard.press('Escape');
     await expect(search).toHaveValue('');
     await search.fill('åke beskrivning');
-    await expect(table.getByRole('rowheader')).toHaveCount(1);
-    await expect(table.getByRole('button', { name: 'Åke', exact: true })).toBeVisible();
+    const matches = table.getByRole('rowheader').getByRole('button');
+    await expect(matches).toHaveText(['Åke', 'Övrigt Élan']);
+    expect(
+      await matches.evaluateAll((buttons) =>
+        buttons.map((button) => button.getAttribute('data-table-object')),
+      ),
+    ).toEqual(['table-3', 'unicode-object']);
     expect(await read()).toEqual(before);
   } finally {
     await installation.close();
@@ -57,7 +62,10 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
 }) => {
   const installation = await createInstallation();
   try {
-    const { post, read } = await prepareHouseholdTable(page.request, installation.origin);
+    const { household, post, read } = await prepareHouseholdTable(
+      page.request,
+      installation.origin,
+    );
     await page.goto(installation.origin);
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
     await focusMapSearch(page);
@@ -112,11 +120,12 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     expect(nativeType.objects).toEqual(nativeBefore.objects);
     expect(nativeType.draft.changes).toEqual([]);
     expect(nativeType.draft.objectTypes).toHaveLength(1);
-    expect(nativeType.draft.objectTypes?.[0]?.after).toMatchObject({
-      name: 'Enbart typförslag',
-      description: '',
-    });
-    expect(nativeType.draft.objectTypes?.[0]?.after).toEqual({
+    const nativeTypeChange = nativeType.draft.objectTypes?.[0];
+    expect(nativeTypeChange?.id).toMatch(/\S/);
+    expect(nativeTypeChange?.after).toEqual({
+      id: nativeTypeChange?.id,
+      householdId: household.id,
+      revision: 1,
       name: 'Enbart typförslag',
       description: '',
     });
