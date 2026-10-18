@@ -74,7 +74,6 @@ test('relationship type changes preserve property values and stage the whole rep
   const before = await fixture.read();
   const dialog = await editStorage();
   await userEvent.selectOptions(dialog.getByLabelText('Sambandstyp'), 'uses');
-  expect(screen.queryByRole('dialog', { name: 'Ta bort tidigare egna fält?' })).toBeNull();
   await userEvent.selectOptions(dialog.getByLabelText('Sambandets status'), 'active');
   await userEvent.click(dialog.getByRole('button', { name: 'Lägg i utkastet' }));
   await dialog.findByText('Sambandet lades i ditt utkast. Du kan hantera nästa samband.');

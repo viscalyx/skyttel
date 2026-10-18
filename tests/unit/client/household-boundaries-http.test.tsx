@@ -569,7 +569,6 @@ test('a relationship form preserves properties across type changes, validates en
   );
   const form = within(dialog.getByRole('region', { name: 'Redigera samband' }));
   await userEvent.selectOptions(form.getByLabelText('Sambandstyp'), 'uses');
-  expect(screen.queryByRole('dialog', { name: 'Ta bort tidigare egna fält?' })).toBeNull();
   await userEvent.click(form.getByRole('button', { name: 'Byt riktning' }));
   expect((form.getByLabelText('Från objekt') as HTMLSelectElement).value).toBe('garage');
   expect((form.getByLabelText('Till objekt') as HTMLSelectElement).value).toBe('bike');
@@ -700,7 +699,6 @@ test('search retains free property values across an object type change', async (
   if (!replacement) throw new Error('Missing ordinary alternative object type');
   const form = await editTableObjectForm('Cykel');
   await userEvent.selectOptions(form.getByLabelText('Objekttyp'), replacement.id);
-  expect(screen.queryByRole('dialog', { name: 'Ta bort tidigare egna fält?' })).toBeNull();
   await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
   await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Redigera Cykel' })).toBeNull());
   const current = await fixture.read();

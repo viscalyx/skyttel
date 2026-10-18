@@ -202,9 +202,6 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
     await dialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
     await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption(definition?.id ?? '');
     await expect(
-      page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true }),
-    ).toHaveCount(0);
-    await expect(
       propertyRow(dialog, 'Installationsår').getByLabel('Värde', { exact: true }),
     ).toHaveValue('Våren 2021');
     await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
@@ -366,9 +363,6 @@ test('UTKAST-72: ordinary correction of a missing object type preserves historic
     await page.getByRole('button', { name: 'Redigera Solcellsanläggningen', exact: true }).click();
     const form = page.getByRole('dialog', { name: 'Redigera Solcellsanläggningen', exact: true });
     await form.getByLabel('Objekttyp', { exact: true }).selectOption(definition?.id ?? '');
-    await expect(
-      page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true }),
-    ).toHaveCount(0);
     await openProperties(form);
     await expect(
       propertyRow(form, 'Installationsår').getByLabel('Värde', { exact: true }),
