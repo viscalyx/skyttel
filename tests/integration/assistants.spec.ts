@@ -12,7 +12,7 @@ import {
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
-import { propertyRow, setProperty } from '../support/property-controls.js';
+import { openProperties, propertyRow, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 test('browser replacement and logout deny old cookies while an independently consented MCP connection remains valid', {
@@ -235,6 +235,7 @@ test('AI-13: profile navigation focuses assistant connections and preserves unse
     await returnToMap.focus();
     await page.keyboard.press('Enter');
     const reopened = await editTableObject(page, 'Cykeln');
+    await openProperties(reopened);
     await expect(
       propertyRow(reopened, 'Beskrivning').getByLabel('Värde', { exact: true }),
     ).toHaveValue('Sparat om Cykeln');
@@ -781,16 +782,12 @@ test('AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klient
       privateProposal.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
     ).toHaveText('Person');
     await expect(privateProposal).not.toContainText('Alex privata förslag');
-    await expect(
-      privateProposal
-        .locator('dt')
-        .filter({ hasText: /^Beskrivning$/ })
-        .locator('..'),
-    ).toContainText('Ej uppgivet');
+    await expect(privateProposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(
+      0,
+    );
     for (const [label, value] of [
       ['Namn', 'Robins privata förslag'],
       ['Typ', 'Person'],
-      ['Beskrivning', 'Ej uppgivet'],
     ])
       await expect(
         privateProposal
