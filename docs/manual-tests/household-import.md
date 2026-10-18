@@ -196,8 +196,9 @@ kopiera inga inloggningsuppgifter.
    och flik. Invänta bekräftelse att båda är avvisade med bevarade uppgifter,
    före den nya rättelsen. Läs sedan karta och historik igen; inga äldre försök
    får ha återinfört senare innehåll.
-7. I profil B: kasta det återställda privata bildförslaget. Ändra beskrivningen
-   på det andra objektet till **Ny vanlig rättelse**, lägg förslaget i utkastet
+7. I profil B: kasta det återställda privata bildförslaget. Öppna det andra
+   objektet, lägg till **Beskrivning** under **Fria egenskaper** med datatyp
+   **Text** och värdet **Ny vanlig rättelse**, lägg förslaget i utkastet
    och spara. Starta om och kontrollera båda objektens bilder, samband,
    beskrivningar och personliga placeringar.
 8. Be driftansvarig rensa de två lokalt fångade begärandena enligt förberedelsen

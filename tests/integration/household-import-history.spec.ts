@@ -314,21 +314,24 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     await setProperty(importer, 'Beskrivning', 'Ny vanlig rättelse');
     const staging = importer.waitForResponse(`${path}/object-form`);
     await importer.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    expect((await staging).status()).toBe(200);
+    const stagedResponse = await staging;
+    expect(stagedResponse.status()).toBe(200);
+    const submittedProperties = stagedResponse.request().postDataJSON().value.properties;
+    expect(submittedProperties).toEqual([
+      {
+        id: expect.stringMatching(/^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i),
+        label: 'Beskrivning',
+        kind: 'text',
+        value: 'Ny vanlig rättelse',
+      },
+    ]);
     const staged = await read();
     const nativeCorrection = staged.draft.changes.find((change) => change.id === current.id);
     expect(nativeCorrection?.before).toEqual(current);
     const { id: _id, householdId: _householdId, revision: _revision, ...currentValue } = current;
     expect(nativeCorrection?.after).toEqual({
       ...currentValue,
-      properties: [
-        {
-          id: 'description',
-          label: 'Beskrivning',
-          kind: 'text' as const,
-          value: 'Ny vanlig rättelse',
-        },
-      ],
+      properties: submittedProperties,
     });
     const nativeReview = await openDraftReview(importer);
     await expect(nativeReview).toContainText('Ny vanlig rättelse');
@@ -364,14 +367,7 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
           baseRevision: current.revision,
           value: {
             ...current,
-            properties: [
-              {
-                id: 'description',
-                label: 'Beskrivning',
-                kind: 'text' as const,
-                value: 'Ny vanlig rättelse',
-              },
-            ],
+            properties: submittedProperties,
           },
         })
       ).status(),
@@ -386,6 +382,9 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     expect(state.objects.map((object) => object.id).sort()).toEqual(['first', 'second']);
     expect(state.objects.find((object) => object.id === 'second')?.profileImageId).toBe(
       originalImage,
+    );
+    expect(state.objects.find((object) => object.id === 'second')?.properties).toEqual(
+      submittedProperties,
     );
     expect(state.relationships).toEqual([
       expect.objectContaining({
