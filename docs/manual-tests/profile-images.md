@@ -392,11 +392,13 @@ och meddela **Samma avslag är släppt**. Återställ HTTPS-ingången före
 
 **Steg:**
 
-1. Redigera Garaget, skriv Separat förslag om Garaget och välj **Lägg i utkastet
-   och stäng**.
+1. Redigera Garaget. Öppna **Fria egenskaper**, ändra värdet i egenskapen
+   Beskrivning till Separat förslag om Garaget och välj **Lägg i utkastet och
+   stäng**.
 2. Redigera Cykeln. Öppna **Livscykel och utseende**, välj första bilden och
    lägg hela formuläret i utkastet. Upprepa med andra bilden.
-3. Redigera Cykeln igen. Skriv Oskickad bildtext i Grunduppgifter. Öppna
+3. Redigera Cykeln igen. Öppna **Fria egenskaper** och ändra värdet i
+   egenskapen Beskrivning till Oskickad bildtext. Öppna
    **Livscykel och utseende** och välj `fel.png`. Be operatören förbereda
    hållet svar enligt förberedelsen och invänta installationen. Välj **Lägg i
    utkastet och stäng**. Invänta operatörens bekräftelse att det verkliga
@@ -411,9 +413,11 @@ och meddela **Samma avslag är släppt**. Återställ HTTPS-ingången före
    och kontrollera att fokus återgår till samma knapp.
 6. Tryck Escape i varningen. Kontrollera text och fokus på Avbryt. Välj Avbryt
    igen och **Kasta ändringarna och fortsätt**.
-7. Redigera Cykeln igen. Kontrollera ursprunglig utkastbeskrivning och andra
-   giltiga bilden. Avbryt det oförändrade formuläret och öppna Garaget igen.
-   Kontrollera dess lagda förslag.
+7. Redigera Cykeln igen. Öppna **Fria egenskaper** och kontrollera ursprungligt
+   värde i egenskapen Beskrivning. Öppna **Livscykel och utseende** och
+   kontrollera den andra giltiga bilden. Avbryt det oförändrade formuläret och
+   öppna Garaget igen. Öppna **Fria egenskaper** och kontrollera dess lagda
+   förslag.
 
 **Förväntat resultat:**
 

@@ -3,7 +3,7 @@ import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, openNewObject, signIn } from '../support/client.js';
 import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
-import { propertyRow, setProperty } from '../support/property-controls.js';
+import { openProperties, propertyRow, setProperty } from '../support/property-controls.js';
 import { expect, test } from '../support/test.js';
 
 for (const [width, height, lightId, darkId] of [
@@ -124,7 +124,7 @@ for (const [width, height, lightId, darkId] of [
         releaseResponse();
         await expect(form.getByRole('alert')).toContainText('Profilbilden');
         await expect(file).toBeEnabled();
-        await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+        await openProperties(form);
         await expect(
           propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true }),
         ).toHaveValue('Oskickad bildtext');
@@ -172,6 +172,7 @@ for (const [width, height, lightId, darkId] of [
           .click();
         await expect(form).not.toBeVisible();
         await edit('Cykeln');
+        await openProperties(form);
         await expect(
           propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true }),
         ).toHaveValue('Skickad text om Cykeln');
@@ -182,6 +183,7 @@ for (const [width, height, lightId, darkId] of [
         );
         await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
         await edit('Garaget');
+        await openProperties(form);
         await expect(
           propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true }),
         ).toHaveValue('Separat förslag om Garaget');
@@ -301,7 +303,7 @@ for (const [width, caseId] of [
       await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await expect(form.getByRole('alert')).toContainText('Dina uppgifter finns kvar');
       await expect(form.getByRole('alert')).not.toContainText('Profilbilden');
-      await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+      await openProperties(form);
       await expect(
         propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true }),
       ).toHaveValue('Oskickat efter bildfelet');
