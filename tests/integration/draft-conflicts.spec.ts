@@ -641,7 +641,9 @@ for (const width of [1440, 390]) {
       await editor.getByLabel('Till objekt', { exact: true }).selectOption('garage');
       await editor.getByRole('button', { name: 'Lägg i utkastet', exact: true }).focus();
       await page.keyboard.press('Enter');
-      await expect(editor.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+      await expect(
+        editor.getByRole('status').filter({ hasText: 'Sambandet lades i ditt utkast' }),
+      ).toBeVisible();
       await editor.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
       await expect(editor).not.toBeVisible();
       await expect(conflict).toBeVisible();
