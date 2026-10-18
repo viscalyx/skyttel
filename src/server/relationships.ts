@@ -139,19 +139,19 @@ export function relationships(database: Database.Database, householdId: string) 
     after: RelationshipValue | null,
     previous: Record<string, string> = {},
   ) {
-    const names: Record<string, string> = {};
+    const names = new Map<string, string>();
     for (const id of [before?.sourceId, before?.targetId, after?.sourceId, after?.targetId]) {
       if (!id) continue;
       const saved = database
         .prepare('SELECT name FROM map_object WHERE householdId = ? AND id = ?')
         .get(householdId, id) as { name: string } | undefined;
       const name =
-        previous[id] ??
+        (Object.hasOwn(previous, id) ? previous[id] : undefined) ??
         saved?.name ??
         draft.changes.find((change) => change.id === id)?.after?.name;
-      if (name !== undefined) names[id] = name;
+      if (name !== undefined) names.set(id, name);
     }
-    return names;
+    return Object.fromEntries(names);
   }
   function reconcileObjectRemovals(draft: MapDraft) {
     const removedObjects = draft.changes.filter((change) => !change.after);
