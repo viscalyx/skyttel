@@ -724,7 +724,9 @@ test('historical preparation launcher preserves authority guards, applied and ab
         relationship ? prepared.map.draft.relationships : prepared.map.draft.changes
       ).find((change: { id: string }) => change.id === 'private-target');
       expect(propertyValues(target.after)).toEqual(
-        relationship ? { 'storage-year': 'Våren 2021' } : { year: 'Våren 2021' },
+        relationship
+          ? { 'storage-year': 'Våren 2021' }
+          : { description: 'Tidigare privat förslag', year: 'Våren 2021' },
       );
       expect(target.after.properties).toEqual(
         expect.arrayContaining([
