@@ -335,8 +335,8 @@ test('STY-02: forms show the same directed relationship from both objects and ed
     await openObjectRelationships(page, 'Alex blå cykel');
     await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await expect(page.getByLabel('Sambandstyp', { exact: true })).toHaveValue('');
-    await page.getByLabel('Från objekt').selectOption('bike');
-    await page.getByLabel('Till objekt').selectOption('garage');
+    await page.getByLabel('Från objekt', { exact: true }).selectOption('bike');
+    await page.getByLabel('Till objekt', { exact: true }).selectOption('garage');
     await page
       .getByRole('dialog', { name: /^Samband för / })
       .getByRole('button', { name: 'Lägg i utkastet', exact: true })
@@ -357,8 +357,8 @@ test('STY-02: forms show the same directed relationship from both objects and ed
     await closeTextView(page);
     await openObjectRelationships(page, 'Alex blå cykel');
     await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
-    await page.getByLabel('Från objekt').selectOption('bike');
-    await page.getByLabel('Till objekt').selectOption('garage');
+    await page.getByLabel('Från objekt', { exact: true }).selectOption('bike');
+    await page.getByLabel('Till objekt', { exact: true }).selectOption('garage');
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Förvaring' });
     const duplicate = page.getByRole('dialog', { name: /^Samband för / });
     await duplicate.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
@@ -388,8 +388,8 @@ test('STY-02: forms show the same directed relationship from both objects and ed
     await page.getByRole('button', { name: 'Samband för Garaget', exact: true }).click();
     await expect(relationships).toContainText('Garaget → innehåller → Alex blå cykel');
     await relationships.getByRole('button', { name: 'Redigera samband', exact: true }).click();
-    await expect(page.getByLabel('Från objekt')).toHaveValue('bike');
-    await expect(page.getByLabel('Till objekt')).toHaveValue('garage');
+    await expect(page.getByLabel('Från objekt', { exact: true })).toHaveValue('bike');
+    await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('garage');
     await relationships.getByRole('button', { name: 'Avbryt redigeringen', exact: true }).click();
     await closeSupportDialog(page, 'Samband för Garaget');
     await openTypeDefinitions(page);
