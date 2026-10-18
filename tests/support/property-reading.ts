@@ -46,7 +46,7 @@ export async function preparePropertyReading(client: APIRequestContext, origin: 
     await post('draft', {
       id,
       baseRevision: null,
-      value: { name, typeId: 'reading-object', description: '', properties: values },
+      value: { name, typeId: 'reading-object', properties: values },
     });
   await post('relationship', {
     id: 'edge',
@@ -55,7 +55,6 @@ export async function preparePropertyReading(client: APIRequestContext, origin: 
       sourceId: 'alex',
       targetId: 'one',
       typeId: state.relationshipTypes[0].id,
-      knowledge: 'known',
       properties: [
         { id: 'a', label: 'Avtal' },
         { id: 'b', label: 'Avtal', kind: 'boolean', value: false },

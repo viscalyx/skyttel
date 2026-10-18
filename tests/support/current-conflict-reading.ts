@@ -36,7 +36,9 @@ export async function expectSavedConflictObject(
 ) {
   const details = await readTableObject(page, name);
   await expectConflictReadValue(details, 'Namn', name);
-  await expect(details.locator('.household-table-description')).toHaveText(description);
+  if (description !== 'Ej uppgivet')
+    await expectConflictReadValue(details, 'Beskrivning', description);
+  else await expect(details.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
   return details;
 }
 
@@ -104,7 +106,7 @@ export async function expectSavedConflictDefinition(
 ) {
   await openTypeDefinitions(page);
   await page
-    .getByText(objectType ? 'Objekttyper och egna fält' : 'Sambandstyper och riktning', {
+    .getByText(objectType ? 'Objekttyper' : 'Sambandstyper och riktning', {
       exact: true,
     })
     .click();

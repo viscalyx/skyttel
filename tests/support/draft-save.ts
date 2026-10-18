@@ -17,7 +17,7 @@ export async function prepareDraftSave(client: APIRequestContext, origin: string
           version: initial.draft.version,
           id: 'bike',
           baseRevision: null,
-          value: { typeId: initial.types[0].id, name: 'Alex blå cykel', description: '' },
+          value: { typeId: initial.types[0].id, name: 'Alex blå cykel' },
         },
       })
     ).status(),
@@ -87,7 +87,6 @@ export async function preparePropertyDraftSave(client: APIRequestContext, origin
             typeId: state.relationshipTypes[0].id,
             sourceId: 'bike',
             targetId: 'bike',
-            knowledge: 'known',
             properties,
           },
         },

@@ -15,42 +15,25 @@ const meanings: Record<string, string> = {
 async function readValues(side: Locator, value: object) {
   const data = value as Record<string, unknown>;
   if ('typeId' in data && !data.lifecycle) await expect(side).toContainText('Gäller fortfarande');
-  if ('description' in data && !data.description) {
-    const description = side
-      .locator('dt')
-      .filter({ hasText: /^Beskrivning/ })
-      .locator('..');
-    await expect(description).toContainText('Ej uppgivet');
-  }
   for (const key of ['name', 'description', 'forwardLabel', 'reverseLabel']) {
     if (typeof data[key] === 'string' && data[key]) await expect(side).toContainText(data[key]);
   }
   for (const [key, raw] of Object.entries(data)) {
-    if (key === 'customValues' && raw && typeof raw === 'object') {
-      for (const answer of Object.values(raw))
-        await expect(side).toContainText(
-          answer === true ? 'Ja' : answer === false ? 'Nej' : String(answer),
-        );
-    }
-    if (key === 'fields' && Array.isArray(raw)) {
-      for (const field of raw) {
-        await expect(side).toContainText(field.name);
-        if (field.description) await expect(side).toContainText(field.description);
-        if (field.sectionId === '') await expect(side).toContainText('Dold');
+    if (key === 'properties' && Array.isArray(raw))
+      for (const property of raw) {
+        await expect(side).toContainText(property.label);
+        if ('value' in property)
+          await expect(side).toContainText(
+            property.value === true
+              ? 'Ja'
+              : property.value === false
+                ? 'Nej'
+                : String(property.value),
+          );
+        else await expect(side).toContainText('Tomt värde');
       }
-    }
-    if (key === 'knowledge' && typeof raw === 'string')
-      await expect(side).toContainText(raw === 'known' ? 'Bekräftat' : meanings[raw]);
     if (key === 'lifecycle' && typeof raw === 'string')
       await expect(side).toContainText(meanings[raw]);
-    if (key === 'endDate' || key === 'financialFacts') {
-      const facts = key === 'endDate' ? [raw] : Object.values(raw as object);
-      for (const fact of facts as { value?: string; knowledge: string; reportedOn?: string }[]) {
-        await expect(side).toContainText(fact.value ?? meanings[fact.knowledge]);
-        if (fact.knowledge === 'uncertain') await expect(side).toContainText('Osäkert uppgivet');
-        if (fact.reportedOn) await expect(side).toContainText(fact.reportedOn);
-      }
-    }
   }
 }
 

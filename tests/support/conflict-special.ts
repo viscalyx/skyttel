@@ -32,12 +32,13 @@ export async function prepareRemovedObjectConflict(
   await app.propose(first, 'draft', 'lo', {
     ...original,
     name: 'Lo Lind',
-    description: 'Mitt förslag',
+    properties: [
+      { id: 'description', label: 'Beskrivning', kind: 'text' as const, value: 'Mitt förslag' },
+    ],
   });
   await app.propose(first, 'draft', 'independent', {
     typeId: original.typeId,
     name: 'Oberoende förslag',
-    description: '',
   });
   await app.propose(second, 'draft', 'lo', null);
   expect((await app.save(second, 'removed-object')).status()).toBe(200);
@@ -51,21 +52,25 @@ export async function prepareRelationshipSpecialConflict(
 ) {
   const app = await conflictCollaborators(first, second);
   const state = await app.read();
-  const value = {
-    typeId: state.relationshipTypes[0].id,
-    sourceId: 'lo',
-    targetId: 'service',
-    knowledge: 'known' as const,
-  };
+  const value = { typeId: state.relationshipTypes[0].id, sourceId: 'lo', targetId: 'service' };
   if (kind === 'removed' || kind === 'edited-missing-endpoint') {
     await app.propose(first, 'relationship', 'mine', value);
     expect((await app.save(first, 'initial-edge')).status()).toBe(200);
   }
-  await app.propose(first, 'relationship', 'mine', { ...value, knowledge: 'uncertain' });
+  await app.propose(first, 'relationship', 'mine', {
+    ...value,
+    properties: [
+      {
+        id: 'certainty',
+        label: 'Uppgiftens säkerhet',
+        kind: 'text' as const,
+        value: 'Osäkert uppgivet',
+      },
+    ],
+  });
   await app.propose(first, 'draft', 'independent', {
     typeId: state.types[0].id,
     name: 'Oberoende förslag',
-    description: '',
   });
   if (kind === 'removed') await app.propose(second, 'relationship', 'mine', null);
   else if (kind === 'duplicate') await app.propose(second, 'relationship', 'theirs', value);
@@ -87,20 +92,25 @@ export async function prepareOwnRemovalConflict(
   await app.propose(first, 'draft', 'independent', {
     typeId: original.typeId,
     name: 'Oberoende förslag',
-    description: '',
   });
   if (scenario !== 'facts')
     await app.propose(second, 'relationship', 'new-edge', {
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'known',
     });
   if (scenario !== 'connections')
     await app.propose(second, 'draft', 'lo', {
       ...original,
       name: 'Lo Berg',
-      description: 'Nya sparade fakta',
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text' as const,
+          value: 'Nya sparade fakta',
+        },
+      ],
     });
   expect((await app.save(second, 'after-proposed-removal')).status()).toBe(200);
   return app;

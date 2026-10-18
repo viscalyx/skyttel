@@ -40,7 +40,7 @@ export async function readSavedHistoricalDefinition(
 ) {
   await openTypeDefinitions(page);
   await page
-    .getByText(relationship ? 'Sambandstyper och riktning' : 'Objekttyper och egna fält', {
+    .getByText(relationship ? 'Sambandstyper och riktning' : 'Objekttyper', {
       exact: true,
     })
     .click();

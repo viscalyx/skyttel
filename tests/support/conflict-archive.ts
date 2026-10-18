@@ -93,7 +93,6 @@ export async function prepareArchiveConflict(
     await app.propose(member, 'draft', 'independent', {
       typeId: (await app.read(member)).types[0].id,
       name: 'Oberoende förslag',
-      description: '',
     });
     baseline = await downloadConflictArchive(app, administrator);
   }
@@ -105,16 +104,8 @@ export async function prepareArchiveConflict(
         description: 'Förvaring',
         forwardLabel: 'förvaras i',
         reverseLabel: 'förvarar',
-        fields:
-          kind === 'missing-relationship-type' || kind === 'replaced-relationship-field'
-            ? [{ id: 'storage-year', name: 'Installationsår', description: '', kind: 'text' }]
-            : [],
       }
-    : {
-        name: 'Solcellsanläggning',
-        description: 'Anläggning',
-        fields: [{ id: 'year', name: 'Installationsår', description: '', kind: 'text' }],
-      };
+    : { name: 'Solcellsanläggning', description: 'Anläggning' };
   expect(
     (
       await app.post(administrator, definitionRoute, {
@@ -156,21 +147,38 @@ export async function prepareArchiveConflict(
             typeId,
             sourceId: 'lo',
             targetId: 'service',
-            knowledge: 'known',
-            customValues: { 'storage-year': 'Våren 2021' },
+            properties: [
+              {
+                id: 'storage-year',
+                label: 'Installationsår',
+                kind: 'text' as const,
+                value: 'Våren 2021',
+              },
+            ],
           }
         : {
             typeId,
             name: 'Solcellsanläggningen',
-            description: 'Tidigare privat förslag',
-            customValues: { year: 'Våren 2021' },
+            properties: [
+              {
+                id: 'description',
+                label: 'Beskrivning',
+                kind: 'text' as const,
+                value: 'Tidigare privat förslag',
+              },
+              {
+                id: 'year',
+                label: 'Installationsår',
+                kind: 'text' as const,
+                value: 'Våren 2021',
+              },
+            ],
           },
     );
   if (!baseline)
     await app.propose(member, 'draft', 'independent', {
       typeId: current.types[0].id,
       name: 'Oberoende förslag',
-      description: '',
     });
   if (options.administratorDefinitionProposal)
     expect(
@@ -196,22 +204,9 @@ export async function prepareArchiveConflict(
     ).toBe(200);
     const newer =
       kind === 'invalid-datatype'
-        ? {
-            ...definition,
-            fields: [{ id: 'year', name: 'Installationsår', description: '', kind: 'number' }],
-          }
+        ? { ...definition }
         : kind.startsWith('replaced-')
-          ? {
-              ...definition,
-              fields: [
-                {
-                  id: 'replacement-year',
-                  name: 'Installationsår',
-                  description: '',
-                  kind: 'number',
-                },
-              ],
-            }
+          ? { ...definition }
           : null;
     expect(
       (
