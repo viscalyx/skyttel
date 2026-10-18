@@ -394,7 +394,9 @@ test('object removal review retains ordered free facts including empty, zero and
       { id: 'insured', label: 'Försäkrad', kind: 'boolean', value: false },
     ],
   };
-  expect(conflictRemovalProperties(state, { kind: 'object', id: 'bike', current })[0]).toMatchObject({
+  expect(
+    conflictRemovalProperties(state, { kind: 'object', id: 'bike', current })[0],
+  ).toMatchObject({
     before: 'Cykeln · Beskrivning: Hela beskrivningen (Text)',
     saved:
       'Cykeln · Beskrivning: Nya sparade fakta (Text) · Anteckning: Tomt (Text) · Antal: 0 (Tal) · Försäkrad: Nej (Ja/nej)',

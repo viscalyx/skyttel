@@ -50,9 +50,7 @@ test('UTKAST-57: accepting a removed object discards only its proposal and prese
     await expect(proposed.getByText('Lo Lind', { exact: true }).locator('..')).toHaveClass(
       /cp-overlap/,
     );
-    const addedProperty = proposed
-      .getByText('Mitt förslag (Text)', { exact: true })
-      .locator('..');
+    const addedProperty = proposed.getByText('Mitt förslag (Text)', { exact: true }).locator('..');
     await expect(addedProperty).toHaveClass(/cp-change/);
     await expect(addedProperty).not.toHaveClass(/cp-overlap/);
     for (const width of [1280, 320]) {
