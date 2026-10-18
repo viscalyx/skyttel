@@ -44,7 +44,7 @@ test('relationship properties preserve ordered identities, empty values and type
     typeId: initial.relationshipTypes[0].id,
     sourceId: 'alex',
     targetId: 'bicycle',
-    knowledge: 'known',
+
     properties,
   };
   await post('relationship', { id: 'edge', baseRevision: null, value });
@@ -95,7 +95,7 @@ test('invalid relationship property edits preserve other draft work and omitted 
     typeId: initial.relationshipTypes[0].id,
     sourceId: 'alex',
     targetId: 'bicycle',
-    knowledge: 'known',
+
     properties: [{ label: 'Antal', kind: 'number', value: 0 }, { label: 'Antal' }],
   };
   await fixture.post('relationship', { id: 'edge', baseRevision: null, value });
@@ -134,7 +134,6 @@ test('invalid relationship property edits preserve other draft work and omitted 
       typeId: initial.relationshipTypes[1].id,
       sourceId: 'alex',
       targetId: 'bicycle',
-      knowledge: 'known',
     },
   });
   expect((await fixture.read()).draft.relationships?.[0].after?.properties).toEqual(properties);

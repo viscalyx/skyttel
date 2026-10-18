@@ -24,18 +24,17 @@ for (const saved of [false, true]) {
         typeId: initial.relationshipTypes[0].id,
         sourceId: 'lo',
         targetId: 'service',
-        knowledge: 'known' as const,
+
         properties,
       };
       if (saved) {
         await app.propose(first, 'relationship', 'mine', value);
         expect((await app.save(first, 'saved-edge')).status()).toBe(200);
       }
-      await app.propose(first, 'relationship', 'mine', { ...value, knowledge: 'uncertain' });
+      await app.propose(first, 'relationship', 'mine', { ...value });
       await app.propose(first, 'draft', 'independent', {
         typeId: initial.types[0].id,
         name: 'Mitt andra arbete',
-        description: '',
       });
       const proposal = (await app.read()).draft.relationships?.[0];
       expect(proposal?.after?.properties).toEqual(properties);
@@ -76,7 +75,7 @@ for (const saved of [false, true]) {
       expect(draftConflicts(corrected)).toEqual([]);
       expect(corrected.draft.relationships?.[0]).toMatchObject({
         id: 'mine',
-        after: { targetId: 'lo', knowledge: 'uncertain' },
+        after: { targetId: 'lo' },
       });
       expect(corrected.draft.relationships?.[0].after?.properties).toEqual(properties);
       const approved = {
@@ -97,9 +96,7 @@ for (const saved of [false, true]) {
       ]);
       expect(receipt.relationships[0].objectNames).not.toHaveProperty('service');
       const final = await app.read(first);
-      expect(final.relationships).toMatchObject([
-        { id: 'mine', targetId: 'lo', knowledge: 'uncertain' },
-      ]);
+      expect(final.relationships).toMatchObject([{ id: 'mine', targetId: 'lo' }]);
       expect(final.relationships[0].properties).toEqual(properties);
       expect(final.objects.map(({ id }) => id).sort()).toEqual(['independent', 'lo']);
       first = await restartWithSession(first, () => app.installation.restart());
@@ -145,12 +142,10 @@ test('MCP explains blocked proposals, rejects invalid correction, and discards o
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'uncertain',
     });
     await app.propose(first, 'draft', 'independent', {
       typeId: initial.types[0].id,
       name: 'Mitt arbete',
-      description: '',
     });
     await app.propose(second, 'draft', 'service', null);
     expect((await app.save(second, 'remove-endpoint')).status()).toBe(200);
@@ -219,11 +214,10 @@ test('endpoint correction authority cannot be supplied to restore an independent
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'known' as const,
     };
     await app.propose(first, 'relationship', 'mine', value);
     expect((await app.save(first, 'initial-edge')).status()).toBe(200);
-    await app.propose(first, 'relationship', 'mine', { ...value, knowledge: 'uncertain' });
+    await app.propose(first, 'relationship', 'mine', { ...value });
     await app.propose(second, 'relationship', 'mine', null);
     expect((await app.save(second, 'explicit-removal')).status()).toBe(200);
     const blocked = await app.read();

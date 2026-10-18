@@ -68,8 +68,11 @@ beforeEach(async () => {
         baseRevision: null,
         value: {
           name: 'Lo Exempel',
-          description: 'Bevara mitt förslag',
+
           typeId: state.types[0].id,
+          properties: [
+            { id: 'description', label: 'Beskrivning', kind: 'text', value: 'Bevara mitt förslag' },
+          ],
         },
       })
     ).status,
@@ -99,7 +102,9 @@ test('a real PNG becomes a bounded private image proposal and is fetched separat
   const current = await read();
   expect(current.objects).toEqual([]);
   expect(current.draft.changes[0].after).toMatchObject({
-    description: 'Bevara mitt förslag',
+    properties: [
+      { id: 'description', label: 'Beskrivning', kind: 'text', value: 'Bevara mitt förslag' },
+    ],
     profileImageId: expect.any(String),
   });
   const imageId = current.draft.changes[0].after?.profileImageId;
@@ -153,7 +158,13 @@ test('JPEG and WebP content are re-encoded, generic edits keep the image, and di
           version: state.draft.version,
           id: 'person',
           baseRevision: null,
-          value: { name: 'Lo Lind', description: 'Ändrad text', typeId: state.types[0].id },
+          value: {
+            name: 'Lo Lind',
+            typeId: state.types[0].id,
+            properties: [
+              { id: 'description', label: 'Beskrivning', kind: 'text', value: 'Ändrad text' },
+            ],
+          },
         })
       ).status,
     ).toBe(200);
@@ -393,7 +404,7 @@ test.each(['draft', 'save', 'access'] as const)(
 );
 
 test.each(['profileImageId', 'sourceImageId', 'copiedImageId'])(
-  'a custom field named %s cannot grant access to another member’s private image',
+  'a free property named %s cannot grant access to another member’s private image',
   async (fieldId) => {
     await upload(await sourceImage());
     const privateId = (await read()).draft.changes[0].after?.profileImageId;
@@ -408,7 +419,6 @@ test.each(['profileImageId', 'sourceImageId', 'copiedImageId'])(
           baseRevision: type.revision,
           value: {
             ...type,
-            fields: [{ id: fieldId, name: 'Vanlig text', description: '', kind: 'text' }],
           },
         })
       ).status,
@@ -422,8 +432,8 @@ test.each(['profileImageId', 'sourceImageId', 'copiedImageId'])(
           value: {
             typeId: type.id,
             name: 'Annat objekt',
-            description: '',
-            customValues: { [fieldId]: privateId },
+
+            properties: [{id:fieldId,label:fieldId,kind:'text',value:privateId}],
           },
         })
       ).status,

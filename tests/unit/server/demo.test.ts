@@ -19,7 +19,6 @@ test('the demo preserves free properties and valid links through restart', async
     expect(state.relationships).toHaveLength(21);
     expect(state.objects.every((object) => object.householdId === household.id)).toBe(true);
     expect(state.relationships.every((edge) => edge.householdId === household.id)).toBe(true);
-    expect(state.relationships.every((edge) => edge.knowledge === 'known')).toBe(true);
     const service = state.objects.find(({ name }) => name === 'Molnmusik');
     const usage = state.relationships.find((edge) => edge.sourceId === service?.id);
     expect(usage?.properties).toEqual([
@@ -48,15 +47,6 @@ test('the demo preserves free properties and valid links through restart', async
       { id: expect.any(String), label: 'Valuta', kind: 'text', value: 'SEK' },
       { id: expect.any(String), label: 'Startdatum', kind: 'date', value: '2026-04-03' },
     ]);
-    expect(state.types.every((type) => !type.fields?.length)).toBe(true);
-    expect(
-      state.objects.every(
-        (object) =>
-          !object.description &&
-          !Object.keys(object.customValues ?? {}).length &&
-          !object.financialFacts,
-      ),
-    ).toBe(true);
     const validateLinks = (objects: { id: string }[], relationships: RelationshipValue[]) => {
       const ids = new Set(objects.map(({ id }) => id));
       const identities = new Set<string>();

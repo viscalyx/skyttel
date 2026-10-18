@@ -25,7 +25,7 @@ test('controlled clarification preserves the request, independent work and prope
   const model = textModel((body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     const change = input.draft.changes.find((item: { id: string }) => item.id === 'lo');
-    const { description: _description, ...value } = change.after;
+    const value = change.after;
     const properties = value.properties;
     if (turn++ === 0) {
       expect(body.instructions).toContain('Hitta inte på datatyp');
@@ -162,7 +162,7 @@ test('controlled clarification preserves the request, independent work and prope
     await propose('draft', id as string, {
       typeId: initial.types[0].id,
       name,
-      description: '',
+
       properties,
     });
   for (const [id, name] of [

@@ -43,7 +43,7 @@ test('ordered independent properties survive draft, atomic receipt and SQLite re
       }),
     ),
   ];
-  const value = { typeId: state.types[0].id, name: 'Cykeln', description: '', properties };
+  const value = { typeId: state.types[0].id, name: 'Cykeln', properties };
   expect(
     (await post('draft', { version: 0, id: 'bike', baseRevision: null, value })).status(),
   ).toBe(200);
@@ -57,8 +57,6 @@ test('ordered independent properties survive draft, atomic receipt and SQLite re
   const saved = (await read()).objects[0];
   expect(saved.properties).toEqual(properties);
   expect(saved.lifecycle).toBeUndefined();
-  expect(saved.financialFacts).toBeUndefined();
-  expect(saved.description).toBe('');
   const changed = [...properties.slice(0, -2), { id: 'extra-104', label: 'Samma', kind: 'text' }];
   expect(
     (
@@ -89,7 +87,7 @@ test('invalid property edits leave all draft work intact and omitted properties 
   const value = {
     typeId: state.types[0].id,
     name: 'Anteckningar',
-    description: '',
+
     properties: [{ label: 'Antal', kind: 'number', value: 0 }, { label: 'Antal' }],
   };
   expect(
@@ -127,7 +125,7 @@ test('invalid property edits leave all draft work intact and omitted properties 
         version: draft.version,
         id: 'notes',
         baseRevision: null,
-        value: { typeId: state.types[1].id, name: 'Rättat namn', description: '' },
+        value: { typeId: state.types[1].id, name: 'Rättat namn' },
       })
     ).status(),
   ).toBe(200);

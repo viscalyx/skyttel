@@ -13,7 +13,7 @@ type ArchiveFixture = {
   content: Record<string, Record<string, unknown>[]> & { household: { id: string } };
   imagesBase64: string;
 };
-// Synthetic v2/schema35 export: two merged identities, three retained image
+// Synthetic v2/schema37 export: two merged identities, three retained image
 // versions, a private proposal, immutable receipts and personal positions.
 const golden = JSON.parse(
   readFileSync(new URL('../../fixtures/household-import-v2.json', import.meta.url), 'utf8'),
@@ -177,21 +177,7 @@ test('image bytes, image owner references and historical typed references are va
       value.content.objects[0].id = 'uneditable/object';
     },
     (value) => {
-      value.content.objectTypeFields.push({
-        typeId: value.content.objectTypes[0].id,
-        fields: [{ id: '__proto__', name: 'Fält', description: '', kind: 'text' }],
-      });
-    },
-    (value) => {
-      value.content.objectTypeFields.push({
-        typeId: value.content.objectTypes[0].id,
-        fields: Array.from({ length: 101 }, (_, index) => ({
-          id: `field-${index}`,
-          name: 'Fält',
-          description: '',
-          kind: 'text',
-        })),
-      });
+      value.content.objectTypeFields = [{ typeId: value.content.objectTypes[0].id, fields: [] }];
     },
     (value) => {
       const receipt = value.content.saves[0].receipt as {

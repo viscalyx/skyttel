@@ -41,7 +41,7 @@ test.each([false, true])(
     const path = `/api/households/${household.id}/map`;
     const map = await (await first.get(`${old.origin}${path}`)).json();
     const headers = { origin: old.origin };
-    const value = { typeId: map.types[0].id, name: 'Bevarat', description: '' };
+    const value = { typeId: map.types[0].id, name: 'Bevarat' };
     expect(
       (
         await first.post(`${old.origin}${path}/draft`, {

@@ -50,13 +50,7 @@ function version(review: { version: number; contentVersion: number }) {
 async function object(id: string, updates: Record<string, unknown>) {
   const state = await (await browser.get(path)).json();
   const saved = state.objects.find((item: { id: string }) => item.id === id);
-  const {
-    id: _id,
-    householdId: _household,
-    revision: _revision,
-    description: _description,
-    ...value
-  } = saved ?? {};
+  const { id: _id, householdId: _household, revision: _revision, ...value } = saved ?? {};
   return tool('propose_object', {
     ...version({ ...state.draft, contentVersion: state.contentVersion }),
     id,
@@ -171,7 +165,7 @@ test('advanced tools use actual SDK contracts, preserve old read grants and curr
             contentVersion: 1,
             id: 'forbidden',
             baseRevision: null,
-            value: { name: 'Ej tillåten', description: '', fields: [] },
+            value: { name: 'Ej tillåten', description: '' },
           },
         })
       ).isError,
@@ -190,7 +184,6 @@ test('advanced tools use actual SDK contracts, preserve old read grants and curr
               description: '',
               forwardLabel: 'framåt',
               reverseLabel: 'bakåt',
-              fields: [{ id: 'invalid', name: 'Fel', description: '', kind: 'money' }],
             },
           },
         })
@@ -452,7 +445,7 @@ test('MCP protects ended definitions, explains private-use blocks without leakin
           value: {
             typeId,
             name,
-            description: '',
+
             properties: [
               { id: 'note', label: 'Anteckning', kind: 'text', value: 'Privat hemlig anteckning' },
             ],

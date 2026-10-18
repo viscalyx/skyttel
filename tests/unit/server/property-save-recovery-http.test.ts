@@ -27,7 +27,7 @@ test('a lost mixed-property save reply replays the exact atomic history and rece
       { id: 'untyped', label: 'Väntar' },
       { id: 'blank', label: 'Anteckning', kind: 'text', value: '' },
     ];
-    const objectType = { name: 'Växt', description: 'Odling i hemmet', fields: [] };
+    const objectType = { name: 'Växt', description: 'Odling i hemmet' };
     const relationshipType = {
       name: 'Stödjer',
       description: 'Hjälp vid odling',
@@ -40,13 +40,13 @@ test('a lost mixed-property save reply replays the exact atomic history and rece
       baseRevision: null,
       value: relationshipType,
     });
-    const value = { typeId: 'plant', name: 'Rosen', description: '', properties };
+    const value = { typeId: 'plant', name: 'Rosen', properties };
     await fixture.post('draft', { id: 'rose', baseRevision: null, value });
     const edge = {
       typeId: 'support',
       sourceId: 'alex',
       targetId: 'rose',
-      knowledge: 'known',
+
       properties,
     };
     await fixture.post('relationship', { id: 'edge', baseRevision: null, value: edge });

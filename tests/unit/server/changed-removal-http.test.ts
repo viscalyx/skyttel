@@ -34,7 +34,7 @@ test('withdrawing an object removal restores newly reviewed connections while pr
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'known' as const,
+
       properties: [{ id: 'note', label: 'Anteckning', kind: 'text' as const, value: 'Bevara' }],
     };
     await app.propose(first, 'relationship', 'explicit', value);
@@ -44,7 +44,7 @@ test('withdrawing an object removal restores newly reviewed connections while pr
     await app.propose(first, 'draft', 'independent', {
       typeId: initial.types[0].id,
       name: 'Oberoende arbete',
-      description: '',
+
       properties: [{ id: 'empty', label: 'Tomt', kind: 'date' }],
     });
     await app.propose(second, 'relationship', 'incoming', {
@@ -146,7 +146,7 @@ for (const interfaceName of ['HTTP', 'MCP'] as const)
           typeId: initial.relationshipTypes[0].id,
           sourceId,
           targetId,
-          knowledge: 'known',
+
           properties: [{ id: `${id}-note`, label: 'Tomt', kind: 'text' }],
         });
         expect((await app.save(second, `added-${id}`)).status()).toBe(200);
@@ -156,7 +156,7 @@ for (const interfaceName of ['HTTP', 'MCP'] as const)
       await app.propose(first, 'draft', 'independent', {
         typeId: initial.types[0].id,
         name: 'Oberoende arbete',
-        description: '',
+
         properties: [{ id: 'zero', label: 'Antal', kind: 'number', value: 0 }],
       });
       const firstApproval = approve(await app.read(), 'old-approval');

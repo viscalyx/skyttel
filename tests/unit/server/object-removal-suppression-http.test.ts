@@ -16,7 +16,6 @@ test('object removal suppresses new and edited relationships until every cause i
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'known' as const,
     };
     await app.propose(first, 'relationship', 'edited', value);
     expect((await app.save(first, 'edge')).status()).toBe(200);
@@ -85,7 +84,6 @@ test('explicit relationship deletion survives undo while cascade save records on
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'known' as const,
     };
     await app.propose(first, 'relationship', 'explicit', value);
     await app.propose(first, 'relationship', 'incoming', {
@@ -153,12 +151,12 @@ test('undo restores a proposal that remains blocked by another member removal wi
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'known',
+
       properties: [{ id: 'retained', label: 'Text', kind: 'text', value: 'Bevarat' }],
     });
     expect((await app.save(first, 'saved-before-suppression')).status()).toBe(200);
     const saved = (await app.read()).relationships[0];
-    await app.propose(first, 'relationship', 'mine', { ...saved, knowledge: 'uncertain' });
+    await app.propose(first, 'relationship', 'mine', { ...saved });
     const original = (await app.read()).draft.relationships?.[0];
     await app.propose(first, 'draft', 'lo', null);
     await app.propose(second, 'draft', 'service', null);
@@ -180,7 +178,6 @@ test('undo restores a proposal that remains blocked by another member removal wi
     await app.propose(first, 'draft', 'independent', {
       typeId: initial.types[0].id,
       name: 'Oberoende arbete',
-      description: '',
     });
     const blocked = await app.read();
     expect((await app.save(first, 'blocked')).status()).toBe(409);
@@ -226,7 +223,7 @@ test('MCP object removal and undo retain suppressed contents and independently r
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'known',
+
       properties: [{ id: 'property', label: 'Tomt', kind: 'date' }],
     };
     await tool('propose_relationship', { id: 'new', baseRevision: null, value });
@@ -261,7 +258,6 @@ test('removing a saved endpoint suppresses an edit that moves away from it and u
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'known' as const,
     };
     await app.propose(first, 'relationship', 'edited', value);
     expect((await app.save(first, 'edge')).status()).toBe(200);
@@ -304,7 +300,7 @@ test('permanent erasure reviews and removes suppressed new relationship contents
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
-      knowledge: 'known',
+
       properties: [{ id: 'private', label: 'Anteckning', kind: 'text', value: 'ERASE-SUPPRESSED' }],
     });
     await app.propose(first, 'draft', 'lo', null);

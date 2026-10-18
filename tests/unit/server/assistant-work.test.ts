@@ -50,7 +50,7 @@ async function post(route: string, data: unknown) {
     headers: { origin: app.origin },
     data:
       route === 'draft' && (data as { value?: unknown }).value
-        ? { ...(data as object), value: { description: '', ...(data as { value: object }).value } }
+        ? { ...(data as object), value: { ...(data as { value: object }).value } }
         : data,
   });
   expect(response.status(), await response.text()).toBe(200);
@@ -684,7 +684,7 @@ test('a conflicting saved price blocks independent proposals and resolving to th
             baseRevision: 1,
             value: {
               ...value,
-              description: '',
+
               properties: [{ id: 'price', label: 'Pris', kind: 'text', value: '199' }],
             },
           },
@@ -735,7 +735,7 @@ test('a conflicting saved price blocks independent proposals and resolving to th
         baseRevision: 2,
         value: {
           ...value,
-          description: '',
+
           properties: [{ id: 'price', label: 'Pris', kind: 'text', value: '201' }],
         },
       },
@@ -1104,7 +1104,6 @@ test('current household definitions and independent properties work without a fi
     value: {
       name: 'Solcellsanläggning',
       description: 'Hushållets egen typ',
-      fields: [],
     },
   });
   const token = await connect();
@@ -1216,7 +1215,7 @@ test('real HTTP and MCP reject invalid endpoint requests atomically and serializ
           contentVersion: state.contentVersion,
           id,
           baseRevision: null,
-          value: { ...value, knowledge: 'known', [endpoint]: invalid },
+          value: { ...value, [endpoint]: invalid },
         };
         const response = await browser.post(`${path}/relationship`, {
           headers: { origin: app.origin },
@@ -1260,7 +1259,7 @@ test('real HTTP and MCP reject invalid endpoint requests atomically and serializ
           contentVersion: state.contentVersion,
           id,
           baseRevision: null,
-          value: { ...value, knowledge: 'known', targetId: 'source' },
+          value: { ...value, targetId: 'source' },
         },
       }),
     ),

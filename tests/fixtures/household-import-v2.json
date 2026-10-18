@@ -4,12 +4,12 @@
     "version": 2,
     "createdAt": "2026-09-24T22:29:21.826Z",
     "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
-    "schemaVersion": 36,
+    "schemaVersion": 37,
     "parts": [
       {
         "path": "content.json",
-        "bytes": 21860,
-        "sha256": "3314e5cf8da6dee4053d93669b7280f4c67f23b83e662f583e0678ed5634139a"
+        "bytes": 21252,
+        "sha256": "6136334df8935aaab8249a3fed7addb1d5d1a88c6949682a8346abbcea49a04e"
       },
       {
         "path": "images.bin",
@@ -159,7 +159,6 @@
         "description": ""
       }
     ],
-    "objectTypeFields": [],
     "relationshipTypes": [
       {
         "id": "03d526b33bacc9931171ec943af5da5f",
@@ -297,11 +296,8 @@
         "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
         "revision": 2,
         "name": "Lo Exempel",
-        "description": "",
         "deleted": 0,
         "identity": null,
-        "financialFacts": null,
-        "customValues": null,
         "lifecycle": null,
         "profileImageId": "0f430dbd-4918-4d39-8e65-6ff06efb17f5"
       },
@@ -311,11 +307,8 @@
         "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
         "revision": 3,
         "name": "Lo Exempel",
-        "description": "",
         "deleted": 1,
         "identity": null,
-        "financialFacts": null,
-        "customValues": null,
         "lifecycle": null,
         "profileImageId": "273203d2-c3bd-4588-a977-bcc48ab40ccd"
       }
@@ -328,10 +321,8 @@
         "revision": 2,
         "sourceId": "first",
         "targetId": "first",
-        "knowledge": "unknown",
         "deleted": 0,
-        "lifecycle": null,
-        "endDate": null
+        "lifecycle": null
       }
     ],
     "drafts": [
@@ -348,7 +339,6 @@
               "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
               "revision": 2,
               "name": "Lo Exempel",
-              "description": "",
               "profileImageId": "0f430dbd-4918-4d39-8e65-6ff06efb17f5"
             },
             "after": {
@@ -357,7 +347,6 @@
               "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
               "revision": 2,
               "name": "Lo Exempel",
-              "description": "",
               "profileImageId": "547dbc87-6d35-4c59-b7ab-45f0a11db095"
             },
             "type": {
@@ -396,8 +385,7 @@
                 "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
                 "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                 "revision": 1,
-                "name": "Lo Exempel",
-                "description": ""
+                "name": "Lo Exempel"
               },
               "type": {
                 "id": "caf98ebd-b953-4183-bdd6-94165840673c",
@@ -414,8 +402,7 @@
                 "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
                 "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                 "revision": 1,
-                "name": "Lo Exempel",
-                "description": ""
+                "name": "Lo Exempel"
               },
               "type": {
                 "id": "caf98ebd-b953-4183-bdd6-94165840673c",
@@ -433,8 +420,7 @@
               "after": {
                 "typeId": "54ea962e05d50e0ee9cc1b7c95bc1c9f",
                 "sourceId": "second",
-                "targetId": null,
-                "knowledge": "unknown",
+                "targetId": "second",
                 "id": "unknown-endpoint",
                 "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
                 "revision": 1
@@ -473,8 +459,7 @@
                 "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
                 "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                 "revision": 1,
-                "name": "Lo Exempel",
-                "description": ""
+                "name": "Lo Exempel"
               },
               "after": {
                 "id": "first",
@@ -482,7 +467,6 @@
                 "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                 "revision": 2,
                 "name": "Lo Exempel",
-                "description": "",
                 "profileImageId": "0f430dbd-4918-4d39-8e65-6ff06efb17f5"
               },
               "type": {
@@ -502,8 +486,7 @@
                     "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
                     "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                     "revision": 1,
-                    "name": "Lo Exempel",
-                    "description": ""
+                    "name": "Lo Exempel"
                   },
                   {
                     "id": "second",
@@ -511,7 +494,6 @@
                     "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                     "revision": 2,
                     "name": "Lo Exempel",
-                    "description": "",
                     "profileImageId": "273203d2-c3bd-4588-a977-bcc48ab40ccd"
                   }
                 ],
@@ -531,8 +513,7 @@
                     "typeId": "54ea962e05d50e0ee9cc1b7c95bc1c9f",
                     "revision": 1,
                     "sourceId": "second",
-                    "targetId": null,
-                    "knowledge": "unknown"
+                    "targetId": "second"
                   }
                 ],
                 "relationshipTypes": [
@@ -561,7 +542,6 @@
                 "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                 "revision": 2,
                 "name": "Lo Exempel",
-                "description": "",
                 "profileImageId": "273203d2-c3bd-4588-a977-bcc48ab40ccd"
               },
               "after": null,
@@ -583,14 +563,12 @@
                 "typeId": "54ea962e05d50e0ee9cc1b7c95bc1c9f",
                 "revision": 1,
                 "sourceId": "second",
-                "targetId": null,
-                "knowledge": "unknown"
+                "targetId": "second"
               },
               "after": {
                 "typeId": "54ea962e05d50e0ee9cc1b7c95bc1c9f",
                 "sourceId": "first",
-                "targetId": null,
-                "knowledge": "unknown",
+                "targetId": "first",
                 "id": "unknown-endpoint",
                 "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
                 "revision": 2
@@ -630,8 +608,7 @@
                 "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
                 "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                 "revision": 1,
-                "name": "Lo Exempel",
-                "description": ""
+                "name": "Lo Exempel"
               },
               "after": {
                 "id": "second",
@@ -639,7 +616,6 @@
                 "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                 "revision": 2,
                 "name": "Lo Exempel",
-                "description": "",
                 "profileImageId": "273203d2-c3bd-4588-a977-bcc48ab40ccd"
               },
               "type": {
@@ -669,8 +645,7 @@
               "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
               "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
               "revision": 1,
-              "name": "Lo Exempel",
-              "description": ""
+              "name": "Lo Exempel"
             },
             "type": {
               "id": "caf98ebd-b953-4183-bdd6-94165840673c",
@@ -687,8 +662,7 @@
               "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
               "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
               "revision": 1,
-              "name": "Lo Exempel",
-              "description": ""
+              "name": "Lo Exempel"
             },
             "type": {
               "id": "caf98ebd-b953-4183-bdd6-94165840673c",
@@ -713,8 +687,7 @@
               "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
               "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
               "revision": 1,
-              "name": "Lo Exempel",
-              "description": ""
+              "name": "Lo Exempel"
             },
             "after": {
               "id": "second",
@@ -722,7 +695,6 @@
               "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
               "revision": 2,
               "name": "Lo Exempel",
-              "description": "",
               "profileImageId": "273203d2-c3bd-4588-a977-bcc48ab40ccd"
             },
             "type": {
@@ -748,8 +720,7 @@
               "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
               "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
               "revision": 1,
-              "name": "Lo Exempel",
-              "description": ""
+              "name": "Lo Exempel"
             },
             "after": {
               "id": "first",
@@ -757,7 +728,6 @@
               "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
               "revision": 2,
               "name": "Lo Exempel",
-              "description": "",
               "profileImageId": "0f430dbd-4918-4d39-8e65-6ff06efb17f5"
             },
             "type": {
@@ -777,8 +747,7 @@
                   "householdId": "c43d6cef-491c-42e4-9d18-d864408bebf8",
                   "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                   "revision": 1,
-                  "name": "Lo Exempel",
-                  "description": ""
+                  "name": "Lo Exempel"
                 },
                 {
                   "id": "second",
@@ -786,7 +755,6 @@
                   "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
                   "revision": 2,
                   "name": "Lo Exempel",
-                  "description": "",
                   "profileImageId": "273203d2-c3bd-4588-a977-bcc48ab40ccd"
                 }
               ],
@@ -806,8 +774,7 @@
                   "typeId": "54ea962e05d50e0ee9cc1b7c95bc1c9f",
                   "revision": 1,
                   "sourceId": "second",
-                  "targetId": null,
-                  "knowledge": "unknown"
+                  "targetId": "second"
                 }
               ],
               "relationshipTypes": [
@@ -836,7 +803,6 @@
               "typeId": "caf98ebd-b953-4183-bdd6-94165840673c",
               "revision": 2,
               "name": "Lo Exempel",
-              "description": "",
               "profileImageId": "273203d2-c3bd-4588-a977-bcc48ab40ccd"
             },
             "after": null,

@@ -1,6 +1,3 @@
-import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { applicationFixture } from './fixture.js';
 
@@ -27,7 +24,13 @@ async function propose() {
     version: state.draft.version,
     id: 'synthetic-person',
     baseRevision: null,
-    value: { typeId: state.types[0].id, name: 'Lo Exempel', description: 'Påhittad person' },
+    value: {
+      typeId: state.types[0].id,
+      name: 'Lo Exempel',
+      properties: [
+        { id: 'description', label: 'Beskrivning', kind: 'text', value: 'Påhittad person' },
+      ],
+    },
   });
 }
 
@@ -167,95 +170,6 @@ test('a content generation retires attempts without deleting historical receipts
   ).toThrow('content_version_must_increase');
 });
 
-test('upgrading preserves discovery and exact retries of earlier durable receipts', async () => {
-  fixture.close();
-  const directory = mkdtempSync(join(tmpdir(), 'skyttel-legacy-operations-'));
-  try {
-    for (const name of [
-      '001_initial.sql',
-      '002_invitations.sql',
-      '003_login_link.sql',
-      '004_map.sql',
-      '005_relationships.sql',
-    ])
-      copyFileSync(join('migrations', name), join(directory, name));
-    fixture = await applicationFixture({ migrationsDirectory: directory });
-    client = fixture.client();
-    await client.signIn();
-    const { household } = await (await client.json('/api/households', { name: 'Linden' })).json();
-    const { user } = await (await client.request('/api/bootstrap')).json();
-    path = `/api/households/${household.id}/map`;
-    const type = fixture.database
-      .prepare('SELECT * FROM object_type WHERE householdId = ? LIMIT 1')
-      .get(household.id) as { id: string };
-    const object = {
-      id: 'legacy-person',
-      householdId: household.id,
-      typeId: type.id,
-      revision: 1,
-      name: 'Lo Exempel',
-      description: '',
-    };
-    const receipt = {
-      operationId: 'legacy-save',
-      householdId: household.id,
-      userId: user.id,
-      draftVersion: 1,
-      savedAt: '2026-01-01T00:00:00.000Z',
-      changes: [{ before: null, after: object, type }],
-    };
-    fixture.database
-      .prepare(
-        'INSERT INTO map_object (id, householdId, typeId, revision, name, description) VALUES (?, ?, ?, 1, ?, ?)',
-      )
-      .run(object.id, household.id, type.id, object.name, object.description);
-    fixture.database
-      .prepare('INSERT INTO map_draft (householdId, userId, version, changes) VALUES (?, ?, 2, ?)')
-      .run(household.id, user.id, '[]');
-    fixture.database
-      .prepare('INSERT INTO map_save VALUES (?, ?, ?, ?, ?)')
-      .run(
-        receipt.operationId,
-        household.id,
-        user.id,
-        receipt.draftVersion,
-        JSON.stringify(receipt),
-      );
-    fixture.database
-      .prepare(
-        'INSERT INTO map_history (householdId, userId, operationId, savedAt, changes) VALUES (?, ?, ?, ?, ?)',
-      )
-      .run(
-        household.id,
-        user.id,
-        receipt.operationId,
-        receipt.savedAt,
-        JSON.stringify(receipt.changes),
-      );
-    await fixture.upgradeLegacyLogin();
-    expect(await (await client.request('/api/bootstrap')).json()).toMatchObject({
-      status: 'anonymous',
-    });
-    await client.signIn();
-    const upgradedReceipt = { ...receipt, contentVersion: 1 };
-    const listing = await (await client.request(`${path}/operations`)).json();
-    expect(listing.operations).toHaveLength(1);
-    expect(listing.operations[0]).toMatchObject({ status: 'succeeded', receipt: upgradedReceipt });
-    const retry = await client.json(`${path}/save`, {
-      operationId: receipt.operationId,
-      version: 1,
-    });
-    expect(retry.status).toBe(200);
-    expect(await retry.json()).toEqual({ receipt: upgradedReceipt });
-    expect((await read()).objects).toEqual([object]);
-    expect(await (await client.request(`${path}/history`)).json()).toEqual({
-      history: [upgradedReceipt],
-    });
-  } finally {
-    rmSync(directory, { recursive: true, force: true });
-  }
-});
-
 test('operation registration rejects malformed identity and additional request content', async () => {
   await propose();
   const body = { operationId: 'exact-request', version: 1, contentVersion: 1 };
@@ -303,7 +217,7 @@ test('a failed durable write leaves a discoverable pending operation and an inta
           typeId: initial.relationshipTypes[0].id,
           sourceId: 'synthetic-person',
           targetId: 'synthetic-person',
-          knowledge: 'known',
+
           properties,
         },
       })

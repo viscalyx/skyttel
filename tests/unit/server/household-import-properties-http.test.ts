@@ -59,7 +59,7 @@ for (const suppressed of [false, true]) {
         typeId: initial.relationshipTypes[0].id,
         sourceId: 'lo',
         targetId: 'service',
-        knowledge: 'known' as const,
+
         properties,
       };
       await app.propose(first, 'relationship', 'retained', value);
@@ -176,7 +176,7 @@ for (const variant of ['blocked', 'corrected', 'suppressed'] as const) {
         typeId: initial.relationshipTypes[0].id,
         sourceId: 'lo',
         targetId: 'service',
-        knowledge: 'known' as const,
+
         properties,
       };
       await app.propose(first, 'relationship', 'retained', value);

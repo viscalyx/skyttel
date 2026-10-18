@@ -20,12 +20,11 @@ test('independent equal-label property edits and additions combine for objects a
       const id = kind === 'draft' ? 'lo' : 'edge';
       const value =
         kind === 'draft'
-          ? { typeId: initial.types[0].id, name: 'Lo Exempel', description: '' }
+          ? { typeId: initial.types[0].id, name: 'Lo Exempel' }
           : {
               typeId: initial.relationshipTypes[0].id,
               sourceId: 'lo',
               targetId: 'service',
-              knowledge: 'known' as const,
             };
       await app.propose(first, kind, id, { ...value, properties: original });
       expect((await app.save(first, `seed-${kind}`)).status()).toBe(200);
@@ -104,12 +103,11 @@ test('atomic property and delete-edit choices preserve independent work and requ
       const id = kind === 'draft' ? 'lo' : 'edge';
       const value =
         kind === 'draft'
-          ? { typeId: initial.types[0].id, name: 'Lo Exempel', description: '' }
+          ? { typeId: initial.types[0].id, name: 'Lo Exempel' }
           : {
               typeId: initial.relationshipTypes[0].id,
               sourceId: 'lo',
               targetId: 'service',
-              knowledge: 'known' as const,
             };
       const original: Property[] = [
         { id: 'a', label: 'Samma', kind: 'number', value: 1 },
@@ -205,12 +203,11 @@ test('contradictory property orders require a choice and preserve every selected
       const id = kind === 'draft' ? 'lo' : 'edge';
       const value =
         kind === 'draft'
-          ? { typeId: initial.types[0].id, name: 'Lo Exempel', description: '' }
+          ? { typeId: initial.types[0].id, name: 'Lo Exempel' }
           : {
               typeId: initial.relationshipTypes[0].id,
               sourceId: 'lo',
               targetId: 'service',
-              knowledge: 'known' as const,
             };
       const a: Property = { id: 'a', label: 'Samma', kind: 'number', value: 1 };
       const b: Property = { id: 'b', label: 'Samma', kind: 'text' };
@@ -272,7 +269,7 @@ test('concurrent insertion order is independent of the saving user and retains a
     const other = ['x', 'w', 'a', 'n', 'k', 'b', 'c'].map(entry);
     for (const [index, savingUser] of [second, first].entries()) {
       const id = `object-${index}`;
-      const value = { typeId: initial.types[0].id, name: 'Cykeln', description: '' };
+      const value = { typeId: initial.types[0].id, name: 'Cykeln' };
       await app.propose(first, 'draft', id, { ...value, properties: original });
       expect((await app.save(first, `seed-${index}`)).status()).toBe(200);
       await app.propose(first, 'draft', id, { ...value, properties: own });

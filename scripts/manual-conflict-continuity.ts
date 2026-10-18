@@ -65,12 +65,6 @@ const preparations = {
     prepareArchiveConflict(other.request, page.request, 'missing-object-type'),
   'new-missing-relationship-type': () =>
     prepareArchiveConflict(other.request, page.request, 'missing-relationship-type'),
-  'new-invalid-datatype': () =>
-    prepareArchiveConflict(other.request, page.request, 'invalid-datatype'),
-  'new-replaced-object-field': () =>
-    prepareArchiveConflict(other.request, page.request, 'replaced-object-field'),
-  'new-replaced-relationship-field': () =>
-    prepareArchiveConflict(other.request, page.request, 'replaced-relationship-field'),
   'new-multiple-blockers': () =>
     prepareArchiveConflict(other.request, page.request, 'missing-relationship-type', {
       missingEndpoint: true,
@@ -123,12 +117,20 @@ async function fresh(command: keyof typeof preparations) {
   previousDefinitionReview = undefined;
   if (command === 'new-two') {
     const state = await app.read();
-    const value = { typeId: state.types[0].id, name: 'Min musiktjänst', description: 'Min tjänst' };
+    const value = {
+      typeId: state.types[0].id,
+      name: 'Min musiktjänst',
+      properties: [
+        { id: 'description', label: 'Beskrivning', kind: 'text' as const, value: 'Min tjänst' },
+      ],
+    };
     await app.propose(page.request, 'draft', 'service', value);
     await app.propose(other.request, 'draft', 'service', {
       ...value,
       name: 'Vår musiktjänst',
-      description: 'Robins tjänst',
+      properties: [
+        { id: 'description', label: 'Beskrivning', kind: 'text', value: 'Robins tjänst' },
+      ],
     });
     await app.save(other.request, 'second-conflict');
   }
@@ -247,8 +249,6 @@ try {
           baseRevision: null,
           value: {
             name: 'Förfalskat återställningsförslag',
-            description: '',
-            fields: [],
             ...('forwardLabel' in historicalDefinition
               ? {
                   forwardLabel: historicalDefinition.forwardLabel,
@@ -342,7 +342,6 @@ try {
         value: {
           name: 'Ny gemensam typbenämning',
           description: type.description,
-          fields: type.fields ?? [],
         },
       });
       if (
@@ -367,7 +366,6 @@ try {
       await app.propose(page.request, 'draft', 'independent', {
         typeId: state.types[0].id,
         name: 'Privat stol',
-        description: '',
       });
     } else if (app && command === 'resolve-elsewhere' && kind === 'new-base') {
       await resolveConflictElsewhere(app, page.request);

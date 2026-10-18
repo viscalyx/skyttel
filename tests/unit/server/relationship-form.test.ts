@@ -22,7 +22,7 @@ beforeEach(async () => {
           contentVersion: state.contentVersion,
           id,
           baseRevision: null,
-          value: { name: id, description: '', typeId: state.types[0].id },
+          value: { name: id, typeId: state.types[0].id },
         })
       ).status,
     ).toBe(200);
@@ -39,7 +39,7 @@ beforeEach(async () => {
       typeId: state.relationshipTypes[0].id,
       sourceId: 'source',
       targetId: 'target',
-      knowledge: 'known',
+
       properties: [
         { id: 'memo', label: 'Beskrivning', kind: 'text', value: 'Sambandets egen anteckning' },
         { id: 'zero', label: 'Samma', kind: 'number', value: 0 },
@@ -116,7 +116,7 @@ test('immutable form evidence does not enter shared receipts or portable archive
     await (await client.request(`${path}/exports/${prepared.id}`)).arrayBuffer(),
   );
   const archive = unzipSync(bytes);
-  expect(JSON.parse(new TextDecoder().decode(archive['manifest.json'])).schemaVersion).toBe(36);
+  expect(JSON.parse(new TextDecoder().decode(archive['manifest.json'])).schemaVersion).toBe(37);
   const content = new TextDecoder().decode(archive['content.json']);
   expect(content).not.toContain(submission.stagingId);
   expect(content).not.toContain('relationship_form_attempt');

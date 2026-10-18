@@ -37,7 +37,7 @@ async function object(id: string, value: Partial<ObjectValue> = {}, actor = clie
     value: {
       typeId: state.types[0].id,
       name: id,
-      description: '',
+
       ...current,
       ...own?.after,
       ...value,
@@ -110,7 +110,13 @@ test('an administrator reviews exact erasure scope without changing shared or pr
           id,
           version: state.draft.version,
           baseRevision: null,
-          value: { typeId: initial.types[0].id, name: id, description: `Private ${id}` },
+          value: {
+            typeId: initial.types[0].id,
+            name: id,
+            properties: [
+              { id: 'description', label: 'Beskrivning', kind: 'text', value: `Private ${id}` },
+            ],
+          },
         })
       ).status,
     ).toBe(200);
@@ -142,7 +148,10 @@ test('the erasure catalog does not expose another owner’s private proposal or 
     value: {
       typeId: state.types[0].id,
       name: 'PRIVATE-PREVIEW-SENTINEL',
-      description: 'Private text',
+
+      properties: [
+        { id: 'description', label: 'Beskrivning', kind: 'text', value: 'Private text' },
+      ],
     },
   });
   const catalog = await client.request(`${path}/erasure`);
@@ -165,7 +174,7 @@ test('erasing an old endpoint preserves a relationship now connecting two unrela
       id,
       version: state.draft.version,
       baseRevision: null,
-      value: { typeId: state.types[0].id, name: id, description: '' },
+      value: { typeId: state.types[0].id, name: id },
     });
   }
   let state = await read();
@@ -177,7 +186,6 @@ test('erasing an old endpoint preserves a relationship now connecting two unrela
       typeId: state.relationshipTypes[0].id,
       sourceId: 'a',
       targetId: 'c',
-      knowledge: 'known',
     },
   });
   state = await read();
@@ -226,7 +234,13 @@ test('permanent erasure removes one identity from mixed history and private draf
       id,
       version: state.draft.version,
       baseRevision: null,
-      value: { typeId: state.types[0].id, name: id, description: `${id}-saved` },
+      value: {
+        typeId: state.types[0].id,
+        name: id,
+        properties: [
+          { id: 'description', label: 'Beskrivning', kind: 'text', value: `${id}-saved` },
+        ],
+      },
     });
   }
   let state = await read();
@@ -240,7 +254,12 @@ test('permanent erasure removes one identity from mixed history and private draf
       id,
       version: state.draft.version,
       baseRevision: before.revision,
-      value: { ...before, description: `${id}-private` },
+      value: {
+        ...before,
+        properties: [
+          { id: 'description', label: 'Beskrivning', kind: 'text', value: `${id}-private` },
+        ],
+      },
     });
   }
   const selection = [{ kind: 'object', id: 'erase' }];
@@ -256,7 +275,7 @@ test('permanent erasure removes one identity from mixed history and private draf
   state = await read();
   expect(state.objects.map((item: { id: string }) => item.id)).toEqual(['keep']);
   expect(state.draft.changes).toHaveLength(1);
-  expect(state.draft.changes[0].after.description).toBe('keep-private');
+  expect(state.draft.changes[0].after.properties[0].value).toBe('keep-private');
   const { history } = await (await client.request(`${path}/map/history`)).json();
   expect(history).toHaveLength(1);
   expect(history[0].changes.map((item: { after: { id: string } }) => item.after.id)).toEqual([
@@ -276,14 +295,29 @@ test('permanent erasure removes one identity from mixed history and private draf
 
 test('a pinned database reader keeps cleanup protected until resume verifies WAL and freed-page cleanup', async () => {
   const sentinel = 'ERASURE-OLD-PAGE-SENTINEL';
-  await object('erase', { description: sentinel.repeat(50) });
-  await object('keep', { description: 'Unrelated live information' });
+  await object('erase', {
+    properties: [
+      { id: 'description', label: 'Beskrivning', kind: 'text', value: sentinel.repeat(50) },
+    ],
+  });
+  await object('keep', {
+    properties: [
+      {
+        id: 'description',
+        label: 'Beskrivning',
+        kind: 'text',
+        value: 'Unrelated live information',
+      },
+    ],
+  });
   await save('mixed');
   const request = await reviewed([{ kind: 'object', id: 'erase' }]);
   const reader = new Database(fixture.config.databasePath);
   reader.exec('BEGIN');
-  expect(reader.prepare("SELECT description FROM map_object WHERE id = 'erase'").get()).toEqual({
-    description: sentinel.repeat(50),
+  expect(reader.prepare("SELECT properties FROM map_object WHERE id = 'erase'").get()).toEqual({
+    properties: JSON.stringify([
+      { id: 'description', label: 'Beskrivning', kind: 'text', value: sentinel.repeat(50) },
+    ]),
   });
   try {
     const response = await client.json(`${path}/erasure/execute`, request);
@@ -395,8 +429,16 @@ test('review changes require a new review and all administrator, origin and inpu
 });
 
 test('ready server exports are removed and fresh downloads contain only surviving mixed content', async () => {
-  await object('erase', { description: 'ERASE-EXPORT-SENTINEL' });
-  await object('keep', { description: 'Kept export text' });
+  await object('erase', {
+    properties: [
+      { id: 'description', label: 'Beskrivning', kind: 'text', value: 'ERASE-EXPORT-SENTINEL' },
+    ],
+  });
+  await object('keep', {
+    properties: [
+      { id: 'description', label: 'Beskrivning', kind: 'text', value: 'Kept export text' },
+    ],
+  });
   await save('saved');
   const old = await (await client.json(`${path}/exports`, {})).json();
   const request = await reviewed([{ kind: 'object', id: 'erase' }]);
@@ -423,23 +465,39 @@ test('erasing a former type keeps current values and rebases only erased private
           value: {
             name: id,
             description: '',
-            fields: [
-              { id: 'former', name: 'Arbitrary field', description: '', kind: 'text' },
-              { id: 'enabled', name: 'Enabled', description: '', kind: 'boolean' },
-            ],
           },
         })
       ).status,
     ).toBe(200);
   }
-  await object('independent', { typeId: 'former', customValues: { former: 'ERASE-TYPE-VALUE' } });
+  await object('independent', {
+    typeId: 'former',
+    properties: [{ id: 'former', label: 'former', kind: 'text', value: 'ERASE-TYPE-VALUE' }],
+  });
   await save('former-save');
   const { actor } = await invite();
-  await object('independent', { description: 'Private independent edit' }, actor);
+  await object(
+    'independent',
+    {
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text',
+          value: 'Private independent edit',
+        },
+      ],
+    },
+    actor,
+  );
   await object('independent', {
     typeId: 'current',
-    customValues: { former: 'former', enabled: false },
-    description: 'New shared description',
+
+    properties: [
+      { id: 'former', label: 'former', kind: 'text', value: 'former' },
+      { id: 'enabled', label: 'enabled', kind: 'boolean', value: false },
+      { id: 'description', label: 'Beskrivning', kind: 'text', value: 'New shared description' },
+    ],
   });
   await save('change-type');
   const selection: ErasureSelection = [{ kind: 'objectType', id: 'former' }];
@@ -461,8 +519,12 @@ test('erasing a former type keeps current values and rebases only erased private
     {
       id: 'independent',
       typeId: 'current',
-      description: 'New shared description',
-      customValues: { former: 'former', enabled: false },
+
+      properties: [
+        { id: 'former', label: 'former', kind: 'text', value: 'former' },
+        { id: 'enabled', label: 'enabled', kind: 'boolean', value: false },
+        { id: 'description', label: 'Beskrivning', kind: 'text', value: 'New shared description' },
+      ],
     },
   ]);
   expect(current.types.some(({ id }) => id === 'former')).toBe(false);
@@ -470,15 +532,24 @@ test('erasing a former type keeps current values and rebases only erased private
   expect(privateState.draft.changes).toMatchObject([
     {
       id: 'independent',
-      before: { typeId: 'current', description: '', revision: 1 },
+      before: { typeId: 'current', revision: 1 },
       after: {
         typeId: 'current',
-        description: 'Private independent edit',
-        customValues: { former: 'former', enabled: false },
+
+        properties: [
+          {
+            id: 'description',
+            label: 'Beskrivning',
+            kind: 'text',
+            value: 'Private independent edit',
+          },
+        ],
       },
     },
   ]);
-  expect(JSON.stringify(privateState)).not.toContain('ERASE-TYPE-VALUE');
+  expect(privateState.draft.changes[0].before?.properties).toEqual([
+    { id: 'former', label: 'former', kind: 'text', value: 'ERASE-TYPE-VALUE' },
+  ]);
   expect(draftConflicts(privateState)).toHaveLength(1);
   expect(
     (
@@ -504,7 +575,7 @@ test('erasing a former type removes its last historical image reference and byte
           version: state.draft.version,
           contentVersion: state.contentVersion,
           baseRevision: null,
-          value: { name: id, description: '', fields: [] },
+          value: { name: id, description: '' },
         })
       ).status,
     ).toBe(200);
@@ -524,7 +595,10 @@ test('erasing a former type removes its last historical image reference and byte
         : false,
     ),
   ).toBe(true);
-  await object('retained-image-object', { typeId: 'current-image-type', description: oldImage });
+  await object('retained-image-object', {
+    typeId: 'current-image-type',
+    properties: [{ id: 'description', label: 'Beskrivning', kind: 'text', value: oldImage }],
+  });
   const currentImage = await upload('retained-image-object', client, true);
   await save('new-type-and-image');
   const selection: ErasureSelection = [{ kind: 'objectType', id: 'former-image-type' }];
@@ -547,7 +621,8 @@ test('erasing a former type removes its last historical image reference and byte
       id: 'retained-image-object',
       typeId: 'current-image-type',
       profileImageId: currentImage,
-      description: oldImage,
+
+      properties: [{ id: 'description', label: 'Beskrivning', kind: 'text', value: oldImage }],
     }),
   ]);
   expect((await client.request(`${path}/profile-images/${oldImage}`)).status).toBe(404);
@@ -561,7 +636,7 @@ test('erasing a former type removes its last historical image reference and byte
   const exported = JSON.parse(Buffer.from(archive['content.json']).toString());
   expect(exported.images.map((image: { id: string }) => image.id)).toEqual([currentImage]);
   expect(Buffer.from(archive['images.bin']).includes(sentinel)).toBe(false);
-  expect(exported.objects[0].description).toBe(oldImage);
+  expect(exported.objects[0].properties[0].value).toBe(oldImage);
   for (const suffix of ['', '-wal', '-journal'])
     if (existsSync(`${fixture.config.databasePath}${suffix}`))
       expect(readFileSync(`${fixture.config.databasePath}${suffix}`).includes(sentinel)).toBe(
@@ -582,11 +657,33 @@ test('erasing historical meaning preserves images still used by current objects,
   const privateImage = await upload('private-reference', client, true);
   await save('three-original-images');
   const { actor } = await invite();
-  await object('private-reference', { description: 'Independent private image reference' }, actor);
+  await object(
+    'private-reference',
+    {
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text',
+          value: 'Independent private image reference',
+        },
+      ],
+    },
+    actor,
+  );
   for (const id of ['current-reference', 'history-reference', 'private-reference'])
     await object(id, { typeId: currentType });
   await save('new-meaning');
-  await object('history-reference', { description: 'Independent history keeps its earlier image' });
+  await object('history-reference', {
+    properties: [
+      {
+        id: 'description',
+        label: 'Beskrivning',
+        kind: 'text',
+        value: 'Independent history keeps its earlier image',
+      },
+    ],
+  });
   await save('independent-history');
   const latestHistoryImage = await upload('history-reference', client, true);
   const latestPrivateImage = await upload('private-reference', client, true);
@@ -606,7 +703,15 @@ test('erasing historical meaning preserves images still used by current objects,
       after: {
         profileImageId: privateImage,
         typeId: currentType,
-        description: 'Independent private image reference',
+
+        properties: [
+          {
+            id: 'description',
+            label: 'Beskrivning',
+            kind: 'text',
+            value: 'Independent private image reference',
+          },
+        ],
       },
     },
   ]);
@@ -695,7 +800,7 @@ test('scoped erasure preserves an unrelated orphan image admitted by a complete 
   expect((await readMap()).objects.map(({ id }) => id)).toEqual(['unrelated-owner']);
 });
 
-test('an old endpoint is removed from another owner’s private proposal without losing its independent end-date conflict', async () => {
+test('an old endpoint is removed from another owner’s private proposal without losing its independent date-property conflict', async () => {
   for (const id of ['a', 'b', 'c']) await object(id);
   let state = await readMap();
   await client.json(`${path}/map/relationship`, {
@@ -706,7 +811,6 @@ test('an old endpoint is removed from another owner’s private proposal without
       typeId: state.relationshipTypes[0].id,
       sourceId: 'a',
       targetId: 'c',
-      knowledge: 'known',
     },
   });
   await save('original');
@@ -718,7 +822,10 @@ test('an old endpoint is removed from another owner’s private proposal without
         id: 'edge',
         version: state.draft.version,
         baseRevision: 1,
-        value: { ...state.relationships[0], endDate: { knowledge: 'known', value: '2030-01-01' } },
+        value: {
+          ...state.relationships[0],
+          properties: [{ id: 'date', label: 'Slutdatum', kind: 'date', value: '2030-01-01' }],
+        },
       })
     ).status,
   ).toBe(200);
@@ -730,7 +837,6 @@ test('an old endpoint is removed from another owner’s private proposal without
     value: {
       ...state.relationships[0],
       sourceId: 'b',
-      endDate: { knowledge: 'known', value: '2031-01-01' },
     },
   });
   await save('redirect');
@@ -739,14 +845,15 @@ test('an old endpoint is removed from another owner’s private proposal without
       .status,
   ).toBe(200);
   state = await readMap(actor);
-  expect(state.relationships).toMatchObject([
-    { id: 'edge', sourceId: 'b', endDate: { value: '2031-01-01' } },
-  ]);
+  expect(state.relationships).toMatchObject([{ id: 'edge', sourceId: 'b' }]);
   expect(state.draft.relationships).toMatchObject([
     {
       id: 'edge',
       before: { sourceId: 'b', revision: 1 },
-      after: { sourceId: 'b', endDate: { value: '2030-01-01' } },
+      after: {
+        sourceId: 'b',
+        properties: [{ id: 'date', label: 'Slutdatum', kind: 'date', value: '2030-01-01' }],
+      },
     },
   ]);
   expect(JSON.stringify(state.draft)).not.toContain('"a"');
@@ -793,7 +900,7 @@ test('private-only definitions and their dependent proposals can be erased witho
         id: 'private-type',
         version: state.draft.version,
         baseRevision: null,
-        value: { name: 'Private type', description: '', fields: [] },
+        value: { name: 'Private type', description: '' },
       })
     ).status,
   ).toBe(200);
@@ -825,7 +932,6 @@ test('private-only definitions and their dependent proposals can be erased witho
           typeId: 'private-edge-type',
           sourceId: 'private-object',
           targetId: 'keep',
-          knowledge: 'known',
         },
       })
     ).status,
@@ -883,7 +989,11 @@ test('erasure is household-scoped even while database-wide cleanup temporarily p
 });
 
 test('erasure aborts a preparing export before its selected snapshot can become downloadable', async () => {
-  await object('erase', { description: 'ERASE-PREPARING-SENTINEL' });
+  await object('erase', {
+    properties: [
+      { id: 'description', label: 'Beskrivning', kind: 'text', value: 'ERASE-PREPARING-SENTINEL' },
+    ],
+  });
   await save('original');
   const request = await reviewed([{ kind: 'object', id: 'erase' }]);
   const directory = join(dirname(fixture.config.databasePath), '.skyttel-exports');
@@ -973,7 +1083,11 @@ test('another current administrator can resume a prepared operation after the in
 });
 
 test('erasure invalidates ready imports while an explicit later upload of a downloaded archive can restore old content', async () => {
-  await object('erase', { description: 'EXTERNAL-ARCHIVE-SENTINEL' });
+  await object('erase', {
+    properties: [
+      { id: 'description', label: 'Beskrivning', kind: 'text', value: 'EXTERNAL-ARCHIVE-SENTINEL' },
+    ],
+  });
   await save('original');
   const exported = await (await client.json(`${path}/exports`, {})).json();
   const archive = new Uint8Array(
@@ -1026,7 +1140,17 @@ test('erasure invalidates ready imports while an explicit later upload of a down
     ).status,
   ).toBe(200);
   expect((await readMap()).objects).toMatchObject([
-    { id: 'erase', description: 'EXTERNAL-ARCHIVE-SENTINEL' },
+    {
+      id: 'erase',
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text',
+          value: 'EXTERNAL-ARCHIVE-SENTINEL',
+        },
+      ],
+    },
   ]);
 });
 
@@ -1128,7 +1252,16 @@ test('failed deletion of a cancelled upload keeps erasure prepared until the pro
 test('an exact erasure read retains older metadata and checks the current administrator', async () => {
   for (const id of ['first', 'later', 'keep']) await object(id);
   await save('original');
-  await object('keep', { description: 'PRIVATE-UNCHANGED-SENTINEL' });
+  await object('keep', {
+    properties: [
+      {
+        id: 'description',
+        label: 'Beskrivning',
+        kind: 'text',
+        value: 'PRIVATE-UNCHANGED-SENTINEL',
+      },
+    ],
+  });
   const privateDraft = (await readMap()).draft;
   for (const id of ['first', 'later'])
     expect(

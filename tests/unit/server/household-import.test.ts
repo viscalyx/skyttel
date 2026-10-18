@@ -22,7 +22,7 @@ beforeEach(async () => {
     version: 0,
     id: 'lamp',
     baseRevision: null,
-    value: { name: 'Lampa', description: '', typeId: map.types[0].id },
+    value: { name: 'Lampa', typeId: map.types[0].id },
   });
   await client.json(`${path}/map/save`, { version: 1, operationId: 'lamp-save' });
   const prepared = await (await client.json(`${path}/exports`, {})).json();
@@ -41,7 +41,7 @@ test('household archives exclude personal conversation choices and import preser
     await (await client.request(`${path}/exports/${prepared.id}`)).arrayBuffer(),
   );
   const parts = unzipSync(bytes);
-  expect(JSON.parse(new TextDecoder().decode(parts['manifest.json'])).schemaVersion).toBe(36);
+  expect(JSON.parse(new TextDecoder().decode(parts['manifest.json'])).schemaVersion).toBe(37);
   const encoded = new TextDecoder().decode(parts['content.json']);
   for (const field of [
     'showDraftOnStart',
@@ -104,7 +104,13 @@ test('older archives are rejected before preview without changing map, private w
         version: state.draft.version,
         id: 'private-work',
         baseRevision: null,
-        value: { name: 'Privat lampa', description: 'Bevara förslaget', typeId: state.types[0].id },
+        value: {
+          name: 'Privat lampa',
+          typeId: state.types[0].id,
+          properties: [
+            { id: 'description', label: 'Beskrivning', kind: 'text', value: 'Bevara förslaget' },
+          ],
+        },
       })
     ).status,
   ).toBe(200);
@@ -854,15 +860,17 @@ test('custom definitions, ended facts, removed catalog entries and unsaved priva
     baseRevision: null,
     value: {
       name: 'Maskin',
-      description: '',
+
       typeId: 'equipment',
       identity: 'unspecified',
       lifecycle: 'ended',
-      customValues: { serial: 'SYNTH-1', count: 2, date: '2026-01-01', enabled: false },
-      financialFacts: {
-        price: { knowledge: 'known', value: '19' },
-        endDate: { knowledge: 'uncertain', value: '2026-01-01' },
-      },
+
+      properties: [
+        { id: 'serial', label: 'serial', kind: 'text', value: 'SYNTH-1' },
+        { id: 'count', label: 'count', kind: 'number', value: 2 },
+        { id: 'date', label: 'date', kind: 'text', value: '2026-01-01' },
+        { id: 'enabled', label: 'enabled', kind: 'boolean', value: false },
+      ],
     },
   });
   await post('relationship', {
@@ -872,16 +880,15 @@ test('custom definitions, ended facts, removed catalog entries and unsaved priva
       typeId: 'installed',
       sourceId: 'machine',
       targetId: 'lamp',
-      knowledge: 'uncertain',
+
       lifecycle: 'ended',
-      endDate: { knowledge: 'known', value: '2026-01-01' },
     },
   });
   await post('save', { operationId: 'definitions-and-facts' });
   await post('object-type', {
     id: 'unused',
     baseRevision: null,
-    value: { name: 'Tillfällig', description: '', fields: [] },
+    value: { name: 'Tillfällig', description: '' },
   });
   await post('relationship-type', {
     id: 'unused-edge',
@@ -922,9 +929,8 @@ test('custom definitions, ended facts, removed catalog entries and unsaved priva
       typeId: 'installed',
       sourceId: 'machine',
       targetId: 'machine',
-      knowledge: 'unknown',
+
       lifecycle: 'ended',
-      endDate: { knowledge: 'known', value: '2026-01-01' },
     },
   });
   const before = await read();
@@ -952,7 +958,13 @@ test('custom definitions, ended facts, removed catalog entries and unsaved priva
     expect.objectContaining({
       id: 'machine',
       name: 'Privat maskin',
-      customValues: { serial: 'SYNTH-1', count: 2, date: '2026-01-01', enabled: false },
+
+      properties: [
+        { id: 'serial', label: 'serial', kind: 'text', value: 'SYNTH-1' },
+        { id: 'count', label: 'count', kind: 'number', value: 2 },
+        { id: 'date', label: 'date', kind: 'text', value: '2026-01-01' },
+        { id: 'enabled', label: 'enabled', kind: 'boolean', value: false },
+      ],
     }),
   );
 });
