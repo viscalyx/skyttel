@@ -25,6 +25,18 @@ access. In a new installation, explicitly assign historical personal
 content to verified members before they use it. Later new personal views
 use enabled backgrounds.
 
+### New image security alerts after closure
+
+When the image security monitor finds a blocked or unknown status with no
+open alert, it creates a new alert. Closed alerts stay unchanged. Closing
+an alert does not suppress later alerts while the status remains blocked
+or unknown.
+
+After rollout, verify that the configured recipient receives assignments
+and mentions on new alerts. Follow the
+[notification delivery check](security-monitoring.md#configure-the-recipient-and-verify-delivery).
+Do not rely on a subscription to a closed alert for future notifications.
+
 ### Browser storage consent and policy contact
 
 Before rollout, select the installation's public policy email address.
