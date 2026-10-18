@@ -492,8 +492,8 @@ med Escape. Läs cykelns båda beskrivningar, **SPARAT-17** och
 **FÖRESLAGET-42**, skuld **Uttryckligen inget → Okänt**, osäkert
 kreditutrymme **500 SEK**, uppgiftsdatum **2026-01-01** och identiteterna
 **Ospecificerat objekt** och **Identiteten behöver redas ut**. Läs varje
-sambands riktning, säkerhet och hela **Hela dolda uppgiften …**. Läs båda
-typförslagens beskrivningar, fältens namn, beskrivningar, Dold och
+sambands riktning, fria säkerhetsuppgift och hela **Hela uppgiften …**. Läs båda
+typförslagens namn, förklaringar och
 **kontrolleras av**. I ett reducerat utkast läser du bara överlevande rader.
 
 När ett fall anger slutlig gemensam kontroll: stäng textvyn, välj

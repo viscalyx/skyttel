@@ -95,9 +95,10 @@ För LIVSCYKEL-05 kör sedan:
 ```js
 await lifecyclePost('draft', {
   id: `relationship-${lifecycleIncoming.id}`, baseRevision: null,
-  value: { name: 'Kim Exempel', description: '',
+  value: { name: 'Kim Exempel',
     typeId: lifecycleLo.typeId, lifecycle: 'active',
-    financialFacts: { endDate: { knowledge: 'known', value: '2000-01-01' } } }
+    properties: [{ id: 'endDate', label: 'Slutdatum',
+      kind: 'date', value: '2000-01-01' }] }
 });
 await lifecyclePost('relationship', {
   id: lifecycleIncoming.id, baseRevision: lifecycleIncoming.revision,
@@ -114,14 +115,16 @@ skapar det separata sambandet från Molnmusik till Lo; skapa det enbart här.
 await lifecyclePost('relationship', {
   id: lifecycleIncoming.id, baseRevision: lifecycleIncoming.revision,
   value: { ...lifecycleIncoming, lifecycle: 'ended',
-    endDate: { knowledge: 'known', value: '2000-01-01' } }
+    properties: [{ id: 'endDate', label: 'Slutdatum',
+      kind: 'date', value: '2000-01-01' }] }
 });
 await lifecyclePost('relationship', {
   id: `previous-${lifecycleIncoming.id}`, baseRevision: null,
   value: { sourceId: lifecycleService.id, targetId: lifecycleLo.id,
     typeId: lifecycleState.relationshipTypes.find(x => x.name === 'Betalar').id,
-    knowledge: 'known', lifecycle: 'active',
-    endDate: { knowledge: 'known', value: '2000-01-01' } }
+    lifecycle: 'active',
+    properties: [{ id: 'endDate', label: 'Slutdatum',
+      kind: 'date', value: '2000-01-01' }] }
 });
 ```
 

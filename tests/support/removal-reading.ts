@@ -1,13 +1,10 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
+import { type Property, propertyValueText } from '../../src/shared/properties.js';
 import { closeTextView, openTable, utilityButton } from './client.js';
 import { readTableObject } from './domain-work.js';
 
 const meanings: Record<string, string> = {
-  unknown: 'Okänt',
-  none: 'Uttryckligen inget',
-  uncertain: 'Osäkert uppgivet',
-  unresolved: 'Obesvarad fråga',
   ended: 'Manuellt upphört',
   active: 'Gäller fortfarande',
 };
@@ -20,17 +17,9 @@ async function readValues(side: Locator, value: object) {
   }
   for (const [key, raw] of Object.entries(data)) {
     if (key === 'properties' && Array.isArray(raw))
-      for (const property of raw) {
+      for (const property of raw as Property[]) {
         await expect(side).toContainText(property.label);
-        if ('value' in property)
-          await expect(side).toContainText(
-            property.value === true
-              ? 'Ja'
-              : property.value === false
-                ? 'Nej'
-                : String(property.value),
-          );
-        else await expect(side).toContainText('Tomt värde');
+        await expect(side).toContainText(propertyValueText(property));
       }
     if (key === 'lifecycle' && typeof raw === 'string')
       await expect(side).toContainText(meanings[raw]);

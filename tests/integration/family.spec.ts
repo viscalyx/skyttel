@@ -244,21 +244,15 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
       .click();
     await openTable(page);
     let relationshipName = 'Familjemusik → Betalas med → Betalkonto';
-    for (const knowledge of ['unknown', 'none']) {
+    for (const certainty of ['Okänt', 'Uttryckligen inget']) {
       await editObjectRelationship(page, 'Familjemusik', relationshipName);
-      await setProperty(
-        page,
-        'Uppgiftens säkerhet',
-        knowledge === 'unknown' ? 'Okänt' : 'Uttryckligen inget',
-      );
+      await setProperty(page, 'Uppgiftens säkerhet', certainty);
       await stageRelationshipAndClose(page);
       await saveReviewedConflictDraft(page);
       await closeTextView(page);
       await page.reload();
       const meanings = await openObjectRelationships(page, 'Familjemusik');
-      await expect(meanings).toContainText(
-        knowledge === 'unknown' ? 'Okänt' : 'Uttryckligen inget',
-      );
+      await expect(meanings).toContainText(certainty);
       relationshipName = await meanings.getByRole('heading', { level: 4 }).innerText();
       await closeSupportDialog(page, 'Samband för Familjemusik');
     }

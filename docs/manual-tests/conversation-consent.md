@@ -353,7 +353,7 @@ alla medlemmar”.
   },
   "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Dator och angivna emulerade pekbredder/teman skyddar fokus, medgivandets räckvidd och omflöde.",
   "outcomes": [
-    "**Samtal med Skyttel** står efter **Rymdkartan** och före **Typer och egna fält**, både på översikten och i menyn. Översikten beskriver sidan med **Ditt medgivande, utkastet och textvyns bredd.**",
+    "**Samtal med Skyttel** står efter **Rymdkartan** och före **Typer**, både på översikten och i menyn. Översikten beskriver sidan med **Ditt medgivande, utkastet och textvyns bredd.**",
     "Sidan öppnas med fokus på rubriken **Samtal med Skyttel**, och menyn markerar sidan.",
     "Under **Medgivande** står raden **Gäller dig i hushållet Medgivandeprov.**, medgivandetexten i tre stycken med samma ordalydelse som i medgivanderutan, meningen **Ett sparat medgivande gäller alla dina samtal i hushållet Medgivandeprov tills du återkallar det.**, statusraden **Inget medgivande är sparat.** och knappen **Spara medgivandet**.",
     "Robin ser samma samtalsinställningar som Alex, utan gruppen **Administration**."
@@ -373,7 +373,7 @@ alla medlemmar”.
 **Förväntat resultat:**
 
 - **Samtal med Skyttel** står efter **Rymdkartan** och före
-  **Typer och egna fält**, både på översikten och i menyn. Översikten
+  **Typer**, både på översikten och i menyn. Översikten
   beskriver sidan med **Ditt medgivande, utkastet och textvyns bredd.**
 - Sidan öppnas med fokus på rubriken **Samtal med Skyttel**, och menyn
   markerar sidan.

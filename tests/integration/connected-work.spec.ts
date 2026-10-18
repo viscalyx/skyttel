@@ -523,7 +523,7 @@ for (const mode of ['voice', 'text'] as const) {
       expect(
         propertyValues(corrected.draft.changes.find(({ id }) => id === personId)?.after)
           .description,
-      ).toBe('');
+      ).toBeUndefined();
 
       for (const name of [
         'Familjens Molnmusik',

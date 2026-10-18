@@ -102,14 +102,14 @@ export async function prepareHouseholdReading(
               : name.toLocaleLowerCase('sv'),
       },
     });
-  for (const [id, typeId, sourceId, targetId, knowledge, extra] of [
-    ['alex-bike', 'uses', 'alex', 'bike', 'known', {}],
+  for (const [id, typeId, sourceId, targetId, certainty, extra] of [
+    ['alex-bike', 'uses', 'alex', 'bike', 'Bekräftat', {}],
     [
       'bike-garage',
       'storage',
       'bike',
       'garage',
-      'uncertain',
+      'Osäkert uppgivet',
       {
         lifecycle: 'ended',
         properties: [
@@ -123,8 +123,8 @@ export async function prepareHouseholdReading(
         ],
       },
     ],
-    ['bike-none', 'none', 'bike', 'bike', 'none', {}],
-    ['bike-unknown', 'unknown', 'bike', 'bike', 'unknown', {}],
+    ['bike-none', 'none', 'bike', 'bike', 'Uttryckligen inget', {}],
+    ['bike-unknown', 'unknown', 'bike', 'bike', 'Okänt', {}],
   ] as const)
     await post('relationship', {
       id,
@@ -140,14 +140,7 @@ export async function prepareHouseholdReading(
             id: 'certainty',
             label: 'Uppgiftens säkerhet',
             kind: 'text' as const,
-            value:
-              knowledge === 'known'
-                ? 'Bekräftat'
-                : knowledge === 'uncertain'
-                  ? 'Osäkert uppgivet'
-                  : knowledge === 'none'
-                    ? 'Uttryckligen inget'
-                    : 'Okänt',
+            value: certainty,
           },
         ],
       },

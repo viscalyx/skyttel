@@ -101,7 +101,7 @@ and expose historical replacements”.
 1. Redigera Lo och öppna Livscykel och utseende. Välj en PNG-bild och
    kontrollera förhandsbilden. Välj Lägg i utkastet och stäng. Öppna kartan
    och kontrollera bilden i Lo Exempels runda symbol.
-2. Redigera Lo igen. Skriv Oskickad text som beskrivning i Grunduppgifter.
+2. Redigera Lo igen. Skriv Oskickad text som egenskapen Beskrivning under Fria egenskaper.
    Öppna Livscykel och utseende och kontrollera att bildvalet är nåbart.
    Lägg hela formuläret i utkastet och spara hela utkastet separat.
 3. Starta om servern och ladda om. Kontrollera bilden i redigeringen och
@@ -404,7 +404,8 @@ och meddela **Samma avslag är släppt**. Återställ HTTPS-ingången före
 4. Kontrollera spärrade fält och Avbryt. Tryck Escape och försök fokusera
    bakgrundens sökfält med Tab och Shift+Tab. Be operatören släppa samma avslag
    enligt förberedelsen och invänta bekräftelse.
-5. Läs bildfelet. Öppna Grunduppgifter och kontrollera beskrivningen. Välj
+5. Läs bildfelet. Öppna Fria egenskaper och kontrollera egenskapen
+   Beskrivning. Välj
    **Avbryt**. Kontrollera standardfokus, läsbarhet och synligt fokus på
    **Fortsätt redigera**, även med pekaren över knappen. Tryck Tab och Shift+Tab
    och kontrollera att fokus återgår till samma knapp.
@@ -483,7 +484,8 @@ genom senare redigering; återställ HTTPS-ingången före `quit`.
    efter bildfelet och en giltig bild, utan att lägga det i utkastet.
 5. Lägg ett oberoende objektförslag, Annat förslag, i utkastet från andra
    fliken. Försök lägga första flikens hela formulär i utkastet.
-6. Kontrollera felet, beskrivningen i Grunduppgifter och filvalet i Livscykel
+6. Kontrollera felet, egenskapen Beskrivning under Fria egenskaper och
+   filvalet i Livscykel
    och utseende. Granska det privata utkastet från andra fliken.
 
 **Förväntat resultat:**
@@ -521,9 +523,10 @@ och kvitto samt ta bort senaste bilden utan att få tillbaka en äldre.
 
 **Förutsättningar:** Ett nytt isolerat hushåll med tomt objektutkast.
 
-**Separat förberedelse:** Öppna **Inställningar → Typer och egna fält →
+**Separat förberedelse:** Öppna **Inställningar → Typer →
 Ny objekttyp**. Ange namnet **Egen bildtyp** och beskrivningen **Egen typ
-med profilbild**, utan egna fält. Lägg definitionen i utkastet utan att
+med profilbild**, utan ytterligare uppgifter. Lägg definitionen i utkastet
+utan att
 spara. Återgå till kartan. Definitionen ingår inte i objektförslagen som
 räknas i stegen. Ha två giltiga bilder och `fel.png` från förberedelsen.
 

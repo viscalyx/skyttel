@@ -223,7 +223,7 @@ PANEL-04.
    med tangentbord. Den aktiva modalen behåller fokus.
 2. Tryck Escape och välj **Fortsätt redigera**. Kontrollera Garaget.
    Välj **Stäng samband** och bekräfta **Kasta ändringarna och fortsätt**.
-3. Öppna **Inställningar**, **Typer och egna fält** och **Ny objekttyp**.
+3. Öppna **Inställningar**, **Typer** och **Ny objekttyp**.
    Skriv Oskickad typ. Välj **Tillbaka till kartan**, **Karta** och nå det
    sparade sambandet med tangentbord. Öppna typinställningarna igen.
 4. Kontrollera Oskickad typ och välj **Stäng typformuläret utan att skicka**.
@@ -273,7 +273,7 @@ PANEL-05.
 
 1. Sök efter Cykeln i tabellen. Välj **Redigera Cykeln** och skriv
    Skickad beskrivning. Välj **Lägg i utkastet och stäng**.
-2. Håll det verkliga svaret. Kontrollera att beskrivningsfältet och krysset
+2. Håll det verkliga svaret. Kontrollera att egenskapens värdekontroll och krysset
    är inaktiva. Tryck Escape och försök fokusera den bakomliggande sökningen.
 3. Släpp samma svar. Kontrollera att formuläret stängs och
    **Redigera Cykeln** får fokus. Sök efter Bilen och fortsätt skriva i

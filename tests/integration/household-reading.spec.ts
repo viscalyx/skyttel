@@ -289,7 +289,7 @@ test('LÄS-01: keyboard follows Alex to bicycle to garage and back without graph
     await expect(
       dialog.getByRole('heading', { name: 'Uppgifter för Cykel', exact: true }),
     ).toBeFocused();
-    await expect(dialog.getByText('Sparat: 2000 SEK', { exact: true })).toBeVisible();
+    await expect(dialog.getByText('Sparat: 2000 SEK (Text)', { exact: true })).toBeVisible();
     await expect(
       dialog
         .locator('dt')
@@ -297,7 +297,7 @@ test('LÄS-01: keyboard follows Alex to bicycle to garage and back without graph
         .locator('..'),
     ).toContainText('◇ Ditt förslag: 2500 SEK');
     await expect(
-      dialog.getByText('Ramens märkning är ett påhittat exempel', { exact: true }),
+      dialog.getByText('Ramens märkning är ett påhittat exempel (Text)', { exact: true }),
     ).toBeVisible();
     await dialog.getByRole('button', { name: 'Samband för Cykel', exact: true }).focus();
     await page.keyboard.press('Enter');

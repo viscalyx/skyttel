@@ -588,7 +588,7 @@ await (async () => {
     { id: 'blank', label: 'Anteckning', kind: 'text', value: '' },
   ];
   const objectType = {
-    name: 'Växt', description: 'Odling i hemmet', fields: [],
+    name: 'Växt', description: 'Odling i hemmet',
   };
   const edgeType = { name: 'Stödjer', description: 'Hjälp vid odling',
     forwardLabel: 'stödjer', reverseLabel: 'stöds av' };
@@ -598,17 +598,17 @@ await (async () => {
     id: 'supports', baseRevision: null, value: edgeType });
   for (const [id, name] of [['lo', 'Lo'], ['rose', 'Rosen']])
     await post('draft', { id, baseRevision: null,
-      value: { typeId: 'plant', name, description: '',
+      value: { typeId: 'plant', name,
         ...(id === 'rose' ? { properties } : {}) } });
   const edge = { typeId: 'supports', sourceId: 'lo', targetId: 'rose',
-    knowledge: 'known', properties };
+    properties };
   await post('relationship', { id: 'edge', baseRevision: null, value: edge });
   await post('save', { operationId: 'properties-created' });
   const after = [properties[1],
     { id: 'zero', label: 'Antal', kind: 'text', value: 'Noll' },
     properties[3], properties[2]];
   await post('draft', { id: 'rose', baseRevision: 1,
-    value: { typeId: 'plant', name: 'Rosen', description: '',
+    value: { typeId: 'plant', name: 'Rosen',
       properties: after } });
   await post('relationship', { id: 'edge', baseRevision: 1,
     value: { ...edge, properties: after } });
@@ -728,10 +728,16 @@ await (async () => {
     const before = (state.objects ?? []).find(item => item.id === 'subscription');
     await post('draft', { version: state.draft.version, id: 'subscription',
       baseRevision: before?.revision ?? null,
-      value: { typeId: initial.types[0].id, description: 'Hushållets musik',
-        ...before, name, financialFacts: { debt: {
-          knowledge: 'uncertain', value: '1 200 SEK', reportedOn: '2026-06-01'
-        } } } });
+      value: { typeId: initial.types[0].id, ...before, name, properties: [
+        { id: 'description', label: 'Beskrivning', kind: 'text',
+          value: 'Hushållets musik' },
+        { id: 'debt', label: 'Senast uppgiven skuld', kind: 'text',
+          value: '1 200 SEK' },
+        { id: 'certainty', label: 'Osäkert uppgivet', kind: 'boolean',
+          value: true },
+        { id: 'reportedOn', label: 'Datum för uppgiften', kind: 'date',
+          value: '2026-06-01' }
+      ] } });
     await post('save', { version: (await read()).draft.version, operationId });
   }
   console.log('Två historiska sparanden är förberedda');

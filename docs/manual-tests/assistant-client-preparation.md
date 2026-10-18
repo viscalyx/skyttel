@@ -7,8 +7,7 @@ Använd inga verkliga hushållsuppgifter och spara inte terminalutskrifter.
 
 ## Installation, medgivande och städning
 
-Följ [den kontrollerade
-klientguiden](assistant-advanced.md#controlled-mcp-client)
+Följ [den kontrollerade klientguiden](assistant-advanced.md#controlled-mcp-client)
 för ny databas, konfigurerad Google-/Microsoft-inloggning, lokal adress,
 portvidarebefordran och omstart med samma databas. Använd ny databas och
 nya anslutningar per fall. Vid slutet: återkalla anslutningen i Skyttel,
@@ -123,8 +122,9 @@ Skapa de fem objekten och fyra sambanden enligt AI-06 i webbläsaren och
 spara hela utkastet. Ge Blå bilen beskrivningen **Bilens sparade uppgifter**,
 Kim **Kims övriga detaljer**, Lo **Los övriga detaljer**, Cykeln två steg
 bort **Cykelns uppgifter** och Samlingen **Orelaterat objekt**. Privat samling
-har typbeskrivningen **Orelaterad typbeskrivning** och textfältet Anteckning
-med beskrivningen **Hemligt fält**. Kör `map Blå bilen` och kopiera bara
+har typbeskrivningen **Orelaterad typbeskrivning**. På objektet Samlingen
+kan en fri textegenskap Anteckning ha värdet **Hemligt fält**. Kör
+`map Blå bilen` och kopiera bara
 bilens faktiska `id` ur svaret till `objectId` i följande läsningar:
 
 ```text

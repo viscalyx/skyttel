@@ -26,18 +26,13 @@ async function addRelationship(
   sourceId: string,
   type: string,
   targetId: string,
-  certainty = 'known',
+  certainty = '',
 ) {
   const dialog = await openObjectRelationships(page, sourceName);
   await dialog.getByRole('button', { name: 'Nytt samband', exact: true }).click();
   await page.getByLabel('Från objekt').selectOption(sourceId);
   await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: type });
-  if (certainty !== 'known')
-    await setProperty(
-      page,
-      'Uppgiftens säkerhet',
-      certainty === 'uncertain' ? 'Osäkert uppgivet' : 'Obesvarad fråga',
-    );
+  if (certainty) await setProperty(page, 'Uppgiftens säkerhet', certainty);
   if (targetId) await page.getByLabel('Till objekt').selectOption(targetId);
   await stageRelationshipAndClose(page);
 }
@@ -94,36 +89,36 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
     await page.goto(installation.origin);
     await openTable(page);
     const relationships: [string, string, string, string][] = [
-      ['home-rent', 'Gäller', 'home', 'known'],
-      ['garage-rent', 'Gäller', 'garage', 'known'],
-      ['electricity', 'Gäller', 'home', 'known'],
-      ['home-rent', 'Hyresvärd', 'landlord', 'known'],
-      ['garage-rent', 'Hyresvärd', 'landlord', 'known'],
-      ['home-rent', 'Står på avtalet', 'alex', 'known'],
-      ['home-rent', 'Står på avtalet', 'landlord', 'known'],
-      ['garage-rent', 'Står på avtalet', 'kim', 'known'],
-      ['garage-rent', 'Står på avtalet', 'landlord', 'known'],
-      ['loan', 'Står på avtalet', 'alex', 'known'],
-      ['loan', 'Står på avtalet', 'lender', 'known'],
-      ['loan', 'Långivare', 'lender', 'known'],
-      ['loan', 'Gäller', 'home', 'known'],
-      ['credit', 'Står på avtalet', 'alex', 'known'],
-      ['credit', 'Står på avtalet', 'lender', 'known'],
-      ['credit', 'Långivare', 'lender', 'known'],
-      ['installment', 'Står på avtalet', 'alex', 'known'],
-      ['installment', 'Står på avtalet', 'lender', 'known'],
-      ['installment', 'Finansierar', 'vehicle', 'known'],
-      ['insurance', 'Försäkrar', 'vehicle', 'known'],
-      ['vehicle', 'Äger', 'kim', 'known'],
-      ['lo', 'Använder', 'vehicle', 'uncertain'],
-      ['kim', 'Betalar', 'installment', 'known'],
-      ['garage-rent', 'Betalas med', 'bank', 'known'],
-      ['home-rent', 'Betalas med', 'bank', 'unresolved'],
+      ['home-rent', 'Gäller', 'home', ''],
+      ['garage-rent', 'Gäller', 'garage', ''],
+      ['electricity', 'Gäller', 'home', ''],
+      ['home-rent', 'Hyresvärd', 'landlord', ''],
+      ['garage-rent', 'Hyresvärd', 'landlord', ''],
+      ['home-rent', 'Står på avtalet', 'alex', ''],
+      ['home-rent', 'Står på avtalet', 'landlord', ''],
+      ['garage-rent', 'Står på avtalet', 'kim', ''],
+      ['garage-rent', 'Står på avtalet', 'landlord', ''],
+      ['loan', 'Står på avtalet', 'alex', ''],
+      ['loan', 'Står på avtalet', 'lender', ''],
+      ['loan', 'Långivare', 'lender', ''],
+      ['loan', 'Gäller', 'home', ''],
+      ['credit', 'Står på avtalet', 'alex', ''],
+      ['credit', 'Står på avtalet', 'lender', ''],
+      ['credit', 'Långivare', 'lender', ''],
+      ['installment', 'Står på avtalet', 'alex', ''],
+      ['installment', 'Står på avtalet', 'lender', ''],
+      ['installment', 'Finansierar', 'vehicle', ''],
+      ['insurance', 'Försäkrar', 'vehicle', ''],
+      ['vehicle', 'Äger', 'kim', ''],
+      ['lo', 'Använder', 'vehicle', 'Osäkert uppgivet'],
+      ['kim', 'Betalar', 'installment', ''],
+      ['garage-rent', 'Betalas med', 'bank', ''],
+      ['home-rent', 'Betalas med', 'bank', 'Obesvarad fråga'],
     ];
-    for (const [sourceId, type, targetId, knowledge] of relationships) {
+    for (const [sourceId, type, targetId, certainty] of relationships) {
       const source = objects.find(([id]) => id === sourceId);
       if (!source) throw new Error(`Missing arranged source: ${sourceId}`);
-      await addRelationship(page, source[2], sourceId, type, targetId, knowledge);
+      await addRelationship(page, source[2], sourceId, type, targetId, certainty);
     }
 
     await page.reload();
@@ -169,7 +164,7 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
       expect(object?.properties ?? []).toEqual([]);
     }
     expect(saved.objects.find((object) => object.id === 'bank')?.identity).toBe('unspecified');
-    const expectedRelationships = relationships.map(([sourceId, type, targetId, _knowledge]) => ({
+    const expectedRelationships = relationships.map(([sourceId, type, targetId]) => ({
       sourceId,
       typeId: saved.relationshipTypes.find((item) => item.name === type)?.id,
       targetId,

@@ -256,10 +256,12 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
     await expect(rowEdit).toBeFocused();
     await expect(inline).toBeVisible();
     await expect(field('Ramnummer')).toHaveText(
-      'RamnummerSparat: Ej uppgivet◇ Ditt förslag: RAM-2026-42',
+      'RamnummerSparat: Ej uppgivet◇ Ditt förslag: RAM-2026-42 (Text)',
     );
-    await expect(field('Antal')).toHaveText('AntalSparat: Ej uppgivet◇ Ditt förslag: 0');
-    await expect(field('Reserv')).toHaveText('ReservSparat: Ej uppgivet◇ Ditt förslag: Nej');
+    await expect(field('Antal')).toHaveText('AntalSparat: Ej uppgivet◇ Ditt förslag: 0 (Tal)');
+    await expect(field('Reserv')).toHaveText(
+      'ReservSparat: Ej uppgivet◇ Ditt förslag: Nej (Ja/nej)',
+    );
     await expect(field('Föreslagen anteckning')).toContainText('Sparat (Egen anteckning):');
     await expect(field('Föreslagen anteckning')).toContainText(
       `Sparat (Egen anteckning): ${'Lång egen uppgift '.repeat(30).trim()} (Text)`,

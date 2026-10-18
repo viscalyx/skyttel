@@ -146,7 +146,7 @@ Stäng text med **Stäng textvyn** när ett fall behöver själva kartan.
 **Din profil** innehåller användar-ID, inbjudningar, **Inloggningssätt**,
 **Assistentanslutningar**, **Kakor och lagring** och **Logga ut**.
 **Inställningar** öppnar en egen
-sida med **Typer och egna fält**, **Administrera tillgång** för
+sida med **Typer**, **Administrera tillgång** för
 administratören och **Månadskostnad** för driftansvarig. Mobilnavigationen
 öppnas med **Välj inställning**. **Tillbaka till kartan** återger arbetet.
 
@@ -155,6 +155,23 @@ lämnas. **Fortsätt redigera** eller Escape avbryter förlusten; endast
 **Kasta ändringarna och fortsätt** kastar texten. Vid väntande eller oklart
 utfall följer du formulärets uttryckliga kontroll före nytt försök.
 Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
+
+## Fria egenskaper i formulären
+
+En beskrivning, ett pris och en notering på ett enskilt objekt eller samband
+är fria egenskaper. För objekt: öppna **Fria egenskaper**. För samband finns
+egenskaperna direkt i sambandsformuläret. Välj **Lägg till egenskap**, ange
+**Etikett**, välj **Datatyp** och ange **Värde**. Rätta en befintlig rad
+genom dess etikett och position. Använd **Flytta upp** och **Flytta ned**
+för ordningen. **Töm värdet** behåller raden; **Ta bort egenskapen** tar bort
+hela raden. Samma etikett kan finnas på flera skilda rader.
+
+När fallen nedan anger en individuell beskrivning används etiketten
+**Beskrivning** och datatypen **Text**. Egenskaperna följer med vid typbyte.
+Ett datum eller en fritt vald etikett ändrar aldrig status automatiskt;
+status väljs uttryckligen under **Livscykel och utseende** respektive
+**Sambandets status**. Typens egen beskrivning förklarar däremot typen
+i **Inställningar → Typer**.
 
 ## Områden
 
@@ -725,7 +742,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   med separat HTTP-underlag i Vitests serverprojekt för privata utkast,
   gamla konfliktval och återkallat medlemskap genom oberoende sessioner,
   separata Karta- och Tabellvägar för genomförda och uteblivna konfliktval,
-  historisk fältförlust, skilda objekt- och sambandstypsåterställningar och
+  bevarade historiska egenskaper, skilda typåterställningar och
   avvisad gammal behörighet med
   [separat historisk förberedelse](historical-definition-preparation.md),
   nyare jämförelser, andra klienters sparande och oberoende formulärarbete;
@@ -742,8 +759,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   att kasta endast den berörda postens förslag; hantera dubbletter och
   saknade ändpunkter, välja objektets och nya sambands borttagning oberoende,
   kontrollera flera privata borttagningar efter tappat svar och rätta
-  inkompatibla egna fält i den vanliga objektdialogen, rätta saknade typer
-  genom faktiska definitioner och läsa historiska fältnamn före typbytesförlust;
+  enskilda egenskapers datatyper i den vanliga objektdialogen, rätta saknade
+  typer genom faktiska definitioner och bevara historiska egenskaper vid typbyte;
   bevara oberoende
   utkast och sparad historik; behålla ett ändrat samband och öppna
   objektborttagningens verkliga beroende igen; granska borttagna
@@ -753,7 +770,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   återställning efter import och kontrollera dess fullständiga privata
   utfall utan dubblerad mutation; behålla ändrade fakta när nya samband
   försvinner, visa samtidiga typ- och ändpunktshinder, läsa historiska
-  fältnamn även när en aktuell definition saknar fältet, kasta ägda
+  egenskapsnamn även när den historiska typen saknas, kasta ägda
   definitionsförslag utan faktisk borttagningsrevision och kontrollera
   oklara fasta kastval från både Karta och Tabell samt gå till nästa verkliga
   konflikt från resultatet med bevarade val och rubrikfokus
@@ -771,7 +788,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   utkastet och öppna en namngiven konflikt från status med tangentbord.
   Följ alla fyra konfliktslag till rätt ändring och läs tidigare, föreslagna
   och aktuella
-  avsnitt, dolda värden och hela ekonomiska uppgifter. Rätta ett
+  ordnade egenskaper med hela värden och egna etiketter. Rätta ett
   konfliktobjekt med det oberoende förslaget och sparade uppgifter kvar
   före ett nytt uttryckligt sparande. Rätta ett sambands
   borttagna mål utan att återuppliva objektet eller spara i förtid.
@@ -789,33 +806,19 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   UTKAST-43 och UTKAST-143 har separat
   [tekniskt HTTP-underlag i server-sviten](../../tests/unit/server/draft-removal-http.test.ts)
   för publika typförslag, beroende värden och oförändrad karta och historik.
-- [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
-  definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
-  ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
-  gemensamma egenskaper med bevarad säkerhet och datum, tangentbord
-  och bevarat arbete på mobil, dator och korta fönster med synlig status.
-  Konfigurerad läsordning följer formuläret genom utkast och tabell,
-  med uttryckliga nollvärden och **Nej** bevarade.
-  Samtidiga
-  ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
-  som objektens innehåll. Upprepade typbyten granskar skilda gamla svar,
-  kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
-  bild, ikon och samband samt läser historiska värden.
-  TYP-09, TYP-10 och TYP-11 är kompletta referenser vid datorbredd;
-  TYP-13–22 skyddar angivna smala, korta och mörka browserflöden. Hela
-  sparande- och omstartskedjan upprepas inte i varje konfiguration.
-  TYP-23 kräver fysisk tangentbordsanvändning vid verklig förstoring.
-  TYP-07:s HTTP-underlag i Vitests serverprojekt bevarar felaktiga värden,
-  ändrade definitioner, gamla sparbesked och senare privata fält efter
-  faktisk omstart.
-  TYP-01 jämför hela privata förslag, beständigt kvitto, historik och
-  återspelning i formulärflödet;
-  typens och fältets formulärvalidering utförs genom riktiga kontroller.
-  Konfigurerad fältordning följer med till formulär, utkast och tabellens
-  fullständiga läsning, inklusive uttrycklig noll och Nej.
+- [Objekttyper](object-types.md): skapa och rätta gemensamma namn och
+  typförklaringar, bevara privata förslag och granska samtidiga ändringar.
+  Individens fria egenskaper har text, tal, datum eller ja/nej samt egna
+  stabila identiteter och läsordning, även vid noll, Nej och tomma värden.
+  Upprepade typbyten bevarar alla egenskaper, identitet, profilbild, ikon
+  och samband genom utkast, sparande, historik och omstart. TYP-10/11/15–22
+  har egna konfigurationer för breda, smala, korta och mörka fönster.
+  TYP-23 behåller fysisk tangentbordsobservation vid verklig förstoring.
+  TYP-08/09/13/14 är avvecklade typavsnittsfall och får inte återanvändas.
 - [Sambandsarbete](relationships.md): skapa objekt separat, koppla dem i den
   gemensamma dialogen och rätta objekt och samband oberoende. Fullständiga
-  egna värden, typbyte, riktning och säkerhet behåller sin betydelse.
+  egna värden, typbyte och riktning behåller sin betydelse. Osäkerhet kan
+  anges som en vanlig egenskap utan särskild sparverkan.
   Validering, dubbletter, borttagning, oklara utfall och förlustvarning
   bevarar tidigare förslag. Ett gammalt obekräftat försök efter en senare
   ändring kräver granskning av aktuellt underlag före nytt förslag.
@@ -823,16 +826,13 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   fallidentiteter. Faktisk skärmläsning och fysiskt skärmtangentbord har
   separata mänskliga observationsfall. Exakta dekorativa värden i
   SAMBAND-12 ingår inte i skyddet.
-- [Sambandstyper och riktning](relationship-types.md): benämningar från
-  båda objekten, redigerbara definitioner, fyra egna fältslag, obesvarat,
-  noll och Nej, uttrycklig hantering vid typbyte, privata förslag,
-  ordnade avsnitt och återvisade dolda svar efter omstart, dubbletter
-  och samtidiga sparanden utan delsparande. Typ- och fältformulär provas
-  genom native kontroller. Hela spara- och omstartskedjan har referensen
-  1440px; 390/320px behåller eget formulärarbete, teman och fokus.
-  STY-01 jämför hela privata förslag, historiska typdefinitioner, exakt
-  kvitto, historik och återspelning i samma formulärflöde.
-- [Borttagning av typer och fält](definition-removal.md): granskad
+- [Sambandstyper och riktning](relationship-types.md): redigerbara
+  namn, förklaringar och benämningar från båda verkliga ändpunkterna.
+  Sambandens fria egenskaper behåller etiketter, identiteter, datatyper
+  och ordning genom typbyte, omstart och samtidig granskning.
+  Dubbletter och samtidiga sparanden ger inget delsparande.
+  STY-08/10/11 är avvecklade typavsnittsfall och får inte återanvändas.
+- [Borttagning av typer](definition-removal.md): granskad
   katalogborttagning, användningsspärrar för upphört innehåll och privata
   utkast utan privat läckage, fullständig förslagsläsning och läsning av
   historiska definitioner som saknas i katalogen även efter omstart.

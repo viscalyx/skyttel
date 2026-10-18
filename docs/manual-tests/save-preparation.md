@@ -261,7 +261,7 @@ Vid textstegets hållna modellanrop skriver operatören i terminalen:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-tool REQUEST submit_changes {"version":VERSION,"contentVersion":CONTENT,"completion":"draft","operations":[{"name":"propose_object","arguments":{"id":"music","baseRevision":null,"value":{"typeId":"SERVICE","name":"Molnmusik","description":"Från text"}}}]}
+tool REQUEST submit_changes {"version":VERSION,"contentVersion":CONTENT,"completion":"draft","operations":[{"name":"propose_object","arguments":{"id":"music","baseRevision":null,"value":{"typeId":"SERVICE","name":"Molnmusik","properties":[{"id":"description","label":"Beskrivning","kind":"text","value":"Från text"}]}}}]}
 ```
 <!-- markdownlint-enable MD013 -->
 
@@ -270,7 +270,7 @@ Släpp det hållna anropet med följande och avsluta nästa anrop med `reply`:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-tool REQUEST submit_changes {"version":VERSION,"contentVersion":CONTENT,"completion":"draft","operations":[{"name":"propose_relationship","arguments":{"id":"uses","baseRevision":null,"value":{"typeId":"USES","sourceId":"PERSON","targetId":"music","knowledge":"known"}}}]}
+tool REQUEST submit_changes {"version":VERSION,"contentVersion":CONTENT,"completion":"draft","operations":[{"name":"propose_relationship","arguments":{"id":"uses","baseRevision":null,"value":{"typeId":"USES","sourceId":"PERSON","targetId":"music"}}}]}
 ```
 <!-- markdownlint-enable MD013 -->
 
