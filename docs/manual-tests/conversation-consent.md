@@ -30,7 +30,8 @@ angivet arbetssteg, tillsammans med UI-proceduren en gång.
 I MEDGIVANDE-15/16/18, när ett steg kräver kvarvarande eller rättat Lo-förslag:
 öppna
 **Utkast → Visa förslaget: Lo Exempel** (eller det rättade namnet).
-Läs Person, det aktuella namnet och **Påhittad uppgift** som beskrivning.
+Läs Person, det aktuella namnet och den fria egenskapen **Beskrivning** med
+värdet **Påhittad uppgift (Text)**.
 Stäng dialogen före nästa samtalssteg. När ett steg kräver sparad Lo:
 öppna **Tabell**, fäll ut objektets rad och läs samma fullständiga värden.
 Ett kvitto läses genom **Rapporter → Ändringshistorik → Visa ändringarna**.
@@ -67,8 +68,9 @@ npm run test:env -- node --import tsx scripts/manual-voice.ts
 
 Öppna den utskrivna adressen privat och logga in som Alex med Google.
 Skapa hushållet Medgivandeprov. Lägg till **Lo Exempel**, typ **Person**,
-beskrivning **Påhittad uppgift**, genom
-**Nytt objekt → Lägg i utkastet och stäng**. Spara inte;
+genom **Nytt objekt**. Öppna **Fria egenskaper** och lägg till **Beskrivning**
+med datatyp **Text** och värdet **Påhittad uppgift**. Välj
+**Lägg i utkastet och stäng**. Spara inte;
 utkastet ska innehålla exakt en ändring. Den kontrollerade mikrofonen
 använder tyst ljud och spelar inte in din riktiga mikrofon.
 
