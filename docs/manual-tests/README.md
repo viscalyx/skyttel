@@ -841,7 +841,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   en annan klient; protokollreplay redovisas separat.
   DEMO-01 och DEMO-02 provar färdigt TestHousehold med Google respektive
   Microsoft som konfigurerad administratör. Båda behåller den andra
-  leverantörens åtkomstgräns, fulla värden och privata förslag efter omstart.
+  leverantörens åtkomstgräns, fria egenskaper, giltiga samband och privata
+  förslag efter omstart. Den fristående musikföreningen behålls.
   Teknisk start, säker sådd och återställning redovisas separat.
 - [Ändringshistorik](history.md): Rapporter visar genomförda sparanden
   senaste först, fullständiga historiska värden, direktlänkar och återgång
