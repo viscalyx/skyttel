@@ -1,0 +1,211 @@
+import { request } from '@playwright/test';
+import { expect, test } from 'vitest';
+import { draftConflicts } from '../../../src/shared/draft-conflicts.js';
+import { beginAssistant, callAssistant } from '../../support/assistant.js';
+import { restartWithSession } from '../../support/client.js';
+import { collaborators } from '../../support/draft-conflict-http.js';
+
+for (const saved of [false, true]) {
+  test(`previously valid ${saved ? 'edited' : 'new'} relationship survives endpoint loss, restart and correction without partial saving`, async () => {
+    let first = await request.newContext();
+    const second = await request.newContext();
+    const app = await collaborators(first, second);
+    try {
+      const initial = await app.read();
+      const value = {
+        typeId: initial.relationshipTypes[0].id,
+        sourceId: 'lo',
+        targetId: 'service',
+        knowledge: 'known' as const,
+      };
+      if (saved) {
+        await app.propose(first, 'relationship', 'mine', value);
+        expect((await app.save(first, 'saved-edge')).status()).toBe(200);
+      }
+      await app.propose(first, 'relationship', 'mine', { ...value, knowledge: 'uncertain' });
+      await app.propose(first, 'draft', 'independent', {
+        typeId: initial.types[0].id,
+        name: 'Mitt andra arbete',
+        description: '',
+      });
+      const proposal = (await app.read()).draft.relationships?.[0];
+      await app.propose(second, 'draft', 'service', null);
+      expect((await app.save(second, 'remove-endpoint')).status()).toBe(200);
+      const blocked = await app.read();
+      expect(blocked.draft.relationships?.[0]).toEqual(proposal);
+      expect(draftConflicts(blocked)).toMatchObject([
+        { id: 'mine', missingEndpoints: ['service'] },
+      ]);
+      expect(blocked.relationships).toEqual([]);
+      const history = await (await first.get(`${app.path}/history`)).json();
+      expect((await app.save(first, 'blocked-save')).status()).toBe(409);
+      expect((await app.read()).draft).toEqual(blocked.draft);
+      expect(await (await first.get(`${app.path}/history`)).json()).toEqual(history);
+      expect(blocked.objects.some(({ id }) => id === 'independent')).toBe(false);
+      first = await restartWithSession(first, () => app.installation.restart());
+      const reloaded = await app.read(first);
+      expect(reloaded.draft).toEqual(blocked.draft);
+      expect(reloaded.relationships).toEqual([]);
+      const correction = {
+        version: reloaded.draft.version,
+        id: 'mine',
+        baseRevision: proposal?.before?.revision ?? null,
+        value: { ...proposal?.after, targetId: 'lo' },
+      };
+      expect(
+        (
+          await app.post(first, 'relationship', {
+            ...correction,
+            value: { ...correction.value, targetId: 'invented' },
+          })
+        ).status(),
+      ).toBe(400);
+      expect((await app.read(first)).draft).toEqual(blocked.draft);
+      expect((await app.post(first, 'relationship', correction)).status()).toBe(200);
+      const corrected = await app.read(first);
+      expect(draftConflicts(corrected)).toEqual([]);
+      expect(corrected.draft.relationships?.[0]).toMatchObject({
+        id: 'mine',
+        after: { targetId: 'lo', knowledge: 'uncertain' },
+      });
+      expect((await app.save(first, 'corrected-save')).status()).toBe(200);
+      const final = await app.read(first);
+      expect(final.relationships).toMatchObject([
+        { id: 'mine', targetId: 'lo', knowledge: 'uncertain' },
+      ]);
+      expect(final.objects.map(({ id }) => id).sort()).toEqual(['independent', 'lo']);
+    } finally {
+      await first.dispose();
+      await second.dispose();
+      await app.installation.close();
+    }
+  });
+}
+
+test('MCP explains blocked proposals, rejects invalid correction, and discards only that proposal', async () => {
+  const first = await request.newContext();
+  const second = await request.newContext();
+  const app = await collaborators(first, second);
+  try {
+    const initial = await app.read();
+    const householdId = initial.types[0].householdId;
+    const flow = await beginAssistant(
+      first,
+      app.installation.origin,
+      'skyttel:read skyttel:write offline_access',
+    );
+    const accepted = await flow.consent(householdId);
+    const exchanged = await flow.exchange((await accepted.json()).url);
+    const token = (await exchanged.json()).access_token;
+    async function tool(name: string, args = {}) {
+      const response = await callAssistant(app.installation.origin, token, name, args);
+      expect(response.status).toBe(200);
+      const result = (await response.json()).result;
+      return { error: result.isError === true, value: JSON.parse(result.content[0].text) };
+    }
+    await app.propose(first, 'relationship', 'mine', {
+      typeId: initial.relationshipTypes[0].id,
+      sourceId: 'lo',
+      targetId: 'service',
+      knowledge: 'uncertain',
+    });
+    await app.propose(first, 'draft', 'independent', {
+      typeId: initial.types[0].id,
+      name: 'Mitt arbete',
+      description: '',
+    });
+    await app.propose(second, 'draft', 'service', null);
+    expect((await app.save(second, 'remove-endpoint')).status()).toBe(200);
+    const blocked = await app.read();
+    const review = await tool('read_my_draft');
+    expect(review.value.readyToSave).toBe(false);
+    expect(review.value.blockedRelationships).toMatchObject([
+      {
+        id: 'mine',
+        missingEndpoints: ['service'],
+        reason: expect.stringContaining('blockerar hela utkastets sparande'),
+      },
+    ]);
+    expect((await tool('read_map')).value.relationships).toEqual([]);
+    expect(
+      (
+        await tool('save_draft', {
+          version: blocked.draft.version,
+          contentVersion: blocked.contentVersion,
+          operationId: 'blocked-mcp',
+        })
+      ).error,
+    ).toBe(true);
+    expect((await app.read()).draft).toEqual(blocked.draft);
+    const proposal = blocked.draft.relationships?.[0];
+    expect(
+      (
+        await tool('propose_relationship', {
+          version: blocked.draft.version,
+          contentVersion: blocked.contentVersion,
+          id: 'mine',
+          baseRevision: null,
+          value: { ...proposal?.after, targetId: 'invented' },
+        })
+      ).error,
+    ).toBe(true);
+    expect((await app.read()).draft).toEqual(blocked.draft);
+    expect(
+      (
+        await tool('discard_proposal', {
+          version: blocked.draft.version,
+          contentVersion: blocked.contentVersion,
+          kind: 'relationship',
+          id: 'mine',
+        })
+      ).error,
+    ).toBe(false);
+    const remaining = await app.read();
+    expect(remaining.draft.changes).toEqual(blocked.draft.changes);
+    expect(remaining.draft.relationships ?? []).toEqual([]);
+    expect((await tool('read_my_draft')).value.readyToSave).toBe(true);
+  } finally {
+    await first.dispose();
+    await second.dispose();
+    await app.installation.close();
+  }
+});
+
+test('endpoint correction authority cannot be supplied to restore an independently deleted relationship', async () => {
+  const first = await request.newContext();
+  const second = await request.newContext();
+  const app = await collaborators(first, second);
+  try {
+    const initial = await app.read();
+    const value = {
+      typeId: initial.relationshipTypes[0].id,
+      sourceId: 'lo',
+      targetId: 'service',
+      knowledge: 'known' as const,
+    };
+    await app.propose(first, 'relationship', 'mine', value);
+    expect((await app.save(first, 'initial-edge')).status()).toBe(200);
+    await app.propose(first, 'relationship', 'mine', { ...value, knowledge: 'uncertain' });
+    await app.propose(second, 'relationship', 'mine', null);
+    expect((await app.save(second, 'explicit-removal')).status()).toBe(200);
+    const blocked = await app.read();
+    expect(
+      (
+        await app.post(first, 'relationship', {
+          version: blocked.draft.version,
+          id: 'mine',
+          baseRevision: 1,
+          endpointRecovery: { removedRevision: 2 },
+          value: { ...value, targetId: 'lo' },
+        })
+      ).status(),
+    ).toBe(200);
+    expect((await app.read()).draft.relationships?.[0].endpointRecovery).toBeUndefined();
+    expect((await app.save(first, 'cannot-restore')).status()).toBe(409);
+    expect((await app.read()).relationships).toEqual([]);
+  } finally {
+    await first.dispose();
+    await second.dispose();
+    await app.installation.close();
+  }
+});

@@ -407,7 +407,8 @@ test('special conflicts distinguish saved and private duplicates, simultaneous m
     specialConflict(state, { ...conflict, duplicates: [], missingEndpoints: ['bike'] }),
   ).toMatchObject({
     reason: 'Ett objekt som sambandet pekar på saknas.',
-    afterDiscard: 'Om du vill lägga till ett nytt samband gör du det den vanliga vägen.',
+    afterDiscard:
+      'Övrigt utkastarbete finns kvar. Du kan också rätta ändpunkterna och behålla förslaget.',
   });
   expect(specialConflict(state, { ...conflict, duplicates: undefined, type: null })).toMatchObject({
     kind: 'outside-correction',

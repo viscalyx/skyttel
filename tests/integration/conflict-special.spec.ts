@@ -163,7 +163,7 @@ for (const [id, kind, title, reason, warning, action] of [
         await expect(preview).toContainText(
           kind === 'duplicate'
             ? 'Det redan sparade sambandet och dess uppgifter behålls.'
-            : 'Om du vill lägga till ett nytt samband gör du det den vanliga vägen.',
+            : 'Övrigt utkastarbete finns kvar. Du kan också rätta ändpunkterna och behålla förslaget.',
         );
       }
       await page.keyboard.press('Escape');

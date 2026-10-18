@@ -215,6 +215,8 @@ export interface RelationshipChange {
   objectNames?: Record<string, string>;
 }
 export interface DraftRelationshipChange extends RelationshipChange {
+  /** Server-issued authority to correct this retained proposal after endpoint loss. */
+  endpointRecovery?: { removedRevision: number };
   // Object deletions that require this generated relationship deletion.
   removedWithObjects?: string[];
 }
@@ -238,6 +240,21 @@ export function proposedRelationships(
     else result.delete(change.id);
   }
   return result;
+}
+
+/** Endpoint-blocked proposals stay in the draft, outside ordinary map readers. */
+export function effectiveRelationships(state: MapState) {
+  const ids = new Set(state.objects.map(({ id }) => id));
+  for (const change of state.draft.changes) {
+    if (change.after && (!change.before || ids.has(change.id))) ids.add(change.id);
+    else ids.delete(change.id);
+  }
+  const valid = (edge: RelationshipValue) =>
+    ids.has(edge.sourceId) && edge.targetId !== null && ids.has(edge.targetId);
+  return proposedRelationships(
+    state.relationships.filter(valid),
+    state.draft.relationships?.filter((change) => !change.after || valid(change.after)),
+  );
 }
 
 export function proposedObjectTypes(saved: ObjectType[], changes: ObjectTypeChange[] = []) {

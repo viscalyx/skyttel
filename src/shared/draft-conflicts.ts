@@ -263,7 +263,8 @@ export function draftConflicts(state: MapState): DraftConflict[] {
         })
       : [];
     if (
-      (current?.revision ?? null) !== (change.before?.revision ?? null) ||
+      ((current || !change.endpointRecovery) &&
+        (current?.revision ?? null) !== (change.before?.revision ?? null)) ||
       duplicates.length ||
       missingEndpoints.length ||
       changedType

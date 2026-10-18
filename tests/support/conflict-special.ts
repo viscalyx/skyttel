@@ -47,7 +47,7 @@ export async function prepareRemovedObjectConflict(
 export async function prepareRelationshipSpecialConflict(
   first: APIRequestContext,
   second: APIRequestContext,
-  kind: 'removed' | 'duplicate' | 'missing-endpoint',
+  kind: 'removed' | 'duplicate' | 'missing-endpoint' | 'edited-missing-endpoint',
 ) {
   const app = await conflictCollaborators(first, second);
   const state = await app.read();
@@ -57,7 +57,7 @@ export async function prepareRelationshipSpecialConflict(
     targetId: 'service',
     knowledge: 'known' as const,
   };
-  if (kind === 'removed') {
+  if (kind === 'removed' || kind === 'edited-missing-endpoint') {
     await app.propose(first, 'relationship', 'mine', value);
     expect((await app.save(first, 'initial-edge')).status()).toBe(200);
   }

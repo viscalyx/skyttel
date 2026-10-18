@@ -55,6 +55,7 @@ export function ConflictDialog({
   onRefresh,
   onStatus,
   onUnknownChange,
+  onCorrectRelationship,
 }: {
   state: MapState;
   open: boolean;
@@ -65,6 +66,7 @@ export function ConflictDialog({
   onRefresh: () => Promise<MapState>;
   onStatus?: (message: string) => void;
   onUnknownChange?: (unknown: boolean) => void;
+  onCorrectRelationship?: (id: string) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -564,6 +566,13 @@ export function ConflictDialog({
               disabled={pending || stale || unknown || disabled}
               pending={pending}
               onClose={onClose}
+              onCorrect={
+                conflict.kind === 'relationship' &&
+                conflict.missingEndpoints?.length &&
+                onCorrectRelationship
+                  ? () => onCorrectRelationship(conflict.id)
+                  : undefined
+              }
               onApply={() => {
                 caseHeading.current?.focus({ preventScroll: true });
                 void resolution.apply({

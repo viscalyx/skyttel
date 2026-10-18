@@ -55,6 +55,8 @@ const preparations = {
     prepareRelationshipSpecialConflict(page.request, other.request, 'duplicate'),
   'new-missing-endpoint': () =>
     prepareRelationshipSpecialConflict(page.request, other.request, 'missing-endpoint'),
+  'new-edited-missing-endpoint': () =>
+    prepareRelationshipSpecialConflict(page.request, other.request, 'edited-missing-endpoint'),
   'new-own-removal': () => prepareOwnRemovalConflict(page.request, other.request),
   'new-connections': () => prepareOwnRemovalConflict(page.request, other.request, 'connections'),
   'new-combined-removal': () =>

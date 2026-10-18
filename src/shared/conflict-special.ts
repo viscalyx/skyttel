@@ -52,7 +52,8 @@ export function specialConflict(state: MapState, conflict: DraftConflict): Speci
   if (
     (conflict.kind === 'object' || conflict.kind === 'relationship') &&
     change?.before &&
-    !conflict.current
+    !conflict.current &&
+    !(conflict.kind === 'relationship' && conflict.missingEndpoints?.length)
   ) {
     const object = conflict.kind === 'object';
     return {
@@ -106,7 +107,13 @@ export function specialConflict(state: MapState, conflict: DraftConflict): Speci
         ? savedDuplicate
           ? 'Det redan sparade sambandet och dess uppgifter behålls.'
           : 'Det andra förslaget i ditt utkast och dess uppgifter behålls.'
-        : 'Om du vill lägga till ett nytt samband gör du det den vanliga vägen.',
+        : 'Övrigt utkastarbete finns kvar. Du kan också rätta ändpunkterna och behålla förslaget.',
+      ...(!duplicate
+        ? {
+            instruction:
+              'Förslaget är blockerat och visas inte som ett aktuellt samband. Hela utkastet kan sparas först när du har rättat ändpunkterna eller kastat förslaget. Välj Rätta ändpunkter för att behålla förslagets uppgifter.',
+          }
+        : {}),
       ...(conflict.type === null ? { additionalBlockers: [missingRelationshipType] } : {}),
     };
   }

@@ -4418,7 +4418,7 @@ UTKAST-60.
   },
   "reference": "1280 × 720; Chromium och syntetiska testidentiteter; kasta ett sambandsförslag med saknat målobjekt.",
   "outcomes": [
-    "Förklaringen lyder **Ett objekt som sambandet pekar på saknas.** Varningen lyder **Sambandet kan inte läggas till eftersom ett objekt som det pekar på saknas.** Utfallet **Sambandet i ditt utkast: Tas bort ur ditt utkast** är förvalt och hela förslaget går att läsa. Ett nytt samband läggs till den vanliga vägen. Efter bekräftelsen visas **Borttaget ur ditt utkast**.",
+    "Förklaringen lyder **Ett objekt som sambandet pekar på saknas.** Varningen lyder **Sambandet kan inte läggas till eftersom ett objekt som det pekar på saknas.** Utfallet **Sambandet i ditt utkast: Tas bort ur ditt utkast** är förvalt och hela förslaget går att läsa. Rätta ändpunkter erbjuds som alternativ. Efter kastandet visas **Borttaget ur ditt utkast**.",
     "Stängning ändrar inget. Bekräftelsen kastar bara sambandsförslaget. Den sparade borttagningen, historiken och det oberoende utkastet består."
   ]
 }
@@ -4446,8 +4446,8 @@ historiken; de ingår inte i de vanliga UI-stegen.
   Varningen lyder **Sambandet kan inte läggas till eftersom ett objekt
   som det pekar på saknas.**
   Utfallet **Sambandet i ditt utkast: Tas bort ur ditt utkast** är förvalt
-  och hela förslaget går att läsa. Ett nytt samband läggs till den vanliga
-  vägen. Efter bekräftelsen visas **Borttaget ur ditt utkast**.
+  och hela förslaget går att läsa. **Rätta ändpunkter** erbjuds som
+  alternativ. Efter kastandet visas **Borttaget ur ditt utkast**.
 - Stängning ändrar inget. Bekräftelsen kastar bara sambandsförslaget.
   Den sparade borttagningen, historiken och det oberoende utkastet består.
 
@@ -8089,6 +8089,130 @@ UTKAST-137.
   sparresultaten och objektens fullständiga identiteter och värden för båda
   medlemmarna genom publika HTTP-svar. Dessa kontroller ingår i samma
   formulärflöde och kräver inga ytterligare manuella UI-steg.
+
+### UTKAST-138: rätta ett bevarat nytt samband efter borttagen ändpunkt
+
+**Syfte:** Behålla eget arbete och rätta ändpunkten före samlat sparande.
+
+**Användare:** Alex och Robin enligt områdets förberedelse.
+
+**Förutsättningar:** Ett nytt sambandsförslag från Lo Exempel till
+Molnmusik med osäkert uppgiven information och ett oberoende objektförslag.
+Robin tar bort Molnmusik i den gemensamma kartan.
+
+**Separat förberedelse:** Starta den
+[tillfälliga konfliktinstallationen](#bevarade-konfliktval-och-kontrollerat-utfall)
+och välj `new-missing-endpoint`. Behåll samma hushåll genom hela fallet.
+Avsluta med `quit` efter kontrollen och välj en ny installation inför omprov.
+
+**Automatiskt motsvarande test:**
+[stale-relationships.spec.ts](../../tests/integration/stale-relationships.spec.ts),
+UTKAST-138. HTTP/MCP-underlaget använder riktig server och SQLite;
+integrationstestet kontrollerar det synliga rättningsflödet.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/stale-relationships.spec.ts", "caseId": "UTKAST-138" },
+  "reference": "1280 × 900, ljust tema, Chromium, syntetiska användare. Nytt förslag efter annan användares sparade objektborttagning.",
+  "outcomes": ["Förslaget finns i konfliktlistan med bevarad osäkerhet. Hela utkastet väntar på rättning eller kastande.", "Rätta ändpunkter öppnar ett tangentbordstillgängligt formulär med rubrikfokus och befintliga objekt. Rättning till Lo Exempel behåller förslagets innehåll.", "Efter separat samlat sparande finns det rättade sambandet och det oberoende objektet. Molnmusik återställs inte."],
+  "evidence": [{ "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/stale-relationships-http.test.ts", "title": "previously valid new relationship survives endpoint loss, restart and correction without partial saving", "purpose": "Beständigt privat innehåll, samma sambandsidentitet, ogiltig rättning utan ändring, blockerat helt sparande och oförändrad historik före rättning." }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **1 konflikt i ditt utkast**. Läs orsaken och ditt bevarade
+   förslag med **Osäkert uppgivet**. Stäng med Escape.
+2. Öppna **Skriv till Skyttel → Visa utkastet**. Läs blockeringen och
+   det oberoende förslaget. Återvänd till konflikten.
+3. Nå **Rätta ändpunkter** med tangentbord och aktivera med Enter.
+   Kontrollera fokus på rubriken **Rätta blockerat samband** och läs
+   förklaringen om befintliga ändpunkter.
+4. Välj Lo Exempel i **Till objekt**. Kontrollera att borttagna Molnmusik
+   inte erbjuds. Behåll övriga uppgifter och välj **Lägg i utkastet** med
+   tangentbord. Läs bekräftelsen, stäng dialogen och granska utkastet.
+5. Välj **Spara hela utkastet**. Kontrollera sparbekräftelsen. Öppna
+   **Tabell** och **Samband för Lo Exempel** för att läsa det sparade
+   sambandet och det oberoende objektet.
+
+**Förväntat resultat:**
+
+- Konfliktlistan förklarar att ett objekt saknas och att hela sparandet
+  väntar. Sambandsförslaget finns kvar med sitt innehåll.
+- Rättningsformuläret fungerar utan dragning eller tal, med synligt fokus,
+  begripliga etiketter och utan vågrät rullning vid den valda bredden.
+- Det rättade sambandet behåller osäkerheten och visas efter sparandet.
+  Det oberoende objektet sparas samtidigt. Molnmusik återställs inte.
+
+**Kvarstående mänsklig observation:** Faktisk uppläsning, fysiskt
+mobilt tangentbord, förstoring och omflöde bedöms i områdets befintliga
+hjälpmedelsfall. Automatiken utgör inget mänskligt godkännande.
+
+### UTKAST-139: rätta ett bevarat ändrat samband efter borttagen ändpunkt
+
+**Syfte:** Behålla eget arbete och rätta ändpunkten före samlat sparande.
+
+**Användare:** Alex och Robin enligt områdets förberedelse.
+
+**Förutsättningar:** Ett ändrat sambandsförslag från Lo Exempel till
+Molnmusik med osäkert uppgiven information och ett oberoende objektförslag.
+Robin tar bort Molnmusik i den gemensamma kartan.
+
+**Separat förberedelse:** Starta den
+[tillfälliga konfliktinstallationen](#bevarade-konfliktval-och-kontrollerat-utfall)
+och välj `new-edited-missing-endpoint`. Behåll samma hushåll genom hela fallet.
+Avsluta med `quit` efter kontrollen och välj en ny installation inför omprov.
+
+**Automatiskt motsvarande test:**
+[stale-relationships.spec.ts](../../tests/integration/stale-relationships.spec.ts),
+UTKAST-139. HTTP/MCP-underlaget använder riktig server och SQLite;
+integrationstestet kontrollerar det synliga rättningsflödet.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/stale-relationships.spec.ts", "caseId": "UTKAST-139" },
+  "reference": "320 × 900, ljust tema, Chromium, syntetiska användare. Ändrat tidigare sparat samband efter annan användares sparade objektborttagning.",
+  "outcomes": ["Förslaget finns i konfliktlistan med bevarad osäkerhet. Hela utkastet väntar på rättning eller kastande.", "Rätta ändpunkter öppnar ett tangentbordstillgängligt formulär med rubrikfokus och befintliga objekt. Rättning till Lo Exempel behåller förslagets innehåll.", "Efter separat samlat sparande finns det rättade sambandet och det oberoende objektet. Molnmusik återställs inte."],
+  "evidence": [{ "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/stale-relationships-http.test.ts", "title": "previously valid edited relationship survives endpoint loss, restart and correction without partial saving", "purpose": "Beständigt privat innehåll, samma sambandsidentitet, ogiltig rättning utan ändring, blockerat helt sparande och oförändrad historik före rättning." }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **1 konflikt i ditt utkast**. Läs orsaken och ditt bevarade
+   förslag med **Osäkert uppgivet**. Stäng med Escape.
+2. Öppna **Skriv till Skyttel → Visa utkastet**. Läs blockeringen och
+   det oberoende förslaget. Återvänd till konflikten.
+3. Nå **Rätta ändpunkter** med tangentbord och aktivera med Enter.
+   Kontrollera fokus på rubriken **Rätta blockerat samband** och läs
+   förklaringen om befintliga ändpunkter.
+4. Välj Lo Exempel i **Till objekt**. Kontrollera att borttagna Molnmusik
+   inte erbjuds. Behåll övriga uppgifter och välj **Lägg i utkastet** med
+   tangentbord. Läs bekräftelsen, stäng dialogen och granska utkastet.
+5. Välj **Spara hela utkastet**. Kontrollera sparbekräftelsen. Öppna
+   **Tabell** och **Samband för Lo Exempel** för att läsa det sparade
+   sambandet och det oberoende objektet.
+
+**Förväntat resultat:**
+
+- Konfliktlistan förklarar att ett objekt saknas och att hela sparandet
+  väntar. Sambandsförslaget finns kvar med sitt innehåll.
+- Rättningsformuläret fungerar utan dragning eller tal, med synligt fokus,
+  begripliga etiketter och utan vågrät rullning vid den valda bredden.
+- Det rättade sambandet behåller osäkerheten och visas efter sparandet.
+  Det oberoende objektet sparas samtidigt. Molnmusik återställs inte.
+
+**Kvarstående mänsklig observation:** Faktisk uppläsning, fysiskt
+mobilt tangentbord, förstoring och omflöde bedöms i områdets befintliga
+hjälpmedelsfall. Automatiken utgör inget mänskligt godkännande.
 
 ## Avvecklat tekniskt underlag
 

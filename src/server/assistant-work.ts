@@ -76,6 +76,16 @@ export function assistantDraftReview(map: HouseholdMap) {
       relationshipTypes: state.relationshipTypes.filter(({ id }) => relationshipTypeIds.has(id)),
     },
     conflicts,
+    blockedRelationships: conflicts
+      .filter((conflict) => conflict.kind === 'relationship' && conflict.missingEndpoints?.length)
+      .map(({ id, missingEndpoints }) => ({
+        id,
+        missingEndpoints,
+        reason:
+          'Ett ändpunktsobjekt är borttaget. Förslaget finns kvar utanför den effektiva kartan och blockerar hela utkastets sparande.',
+        correction:
+          'Rätta förslaget med propose_relationship och samma ID, välj befintliga objekt i hushållet, eller kasta det med discard_proposal. Återskapa inte borttagna objekt.',
+      })),
     unresolvedIdentities,
     pendingOperations,
     readyToSave:

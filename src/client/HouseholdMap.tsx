@@ -14,6 +14,7 @@ import type {
   SaveOperation,
 } from '../shared/map.js';
 import {
+  effectiveRelationships,
   proposedObjectTypes,
   proposedRelationships,
   proposedRelationshipTypes,
@@ -843,10 +844,9 @@ export function HouseholdMap({
           revision: change.before?.revision ?? 0,
         });
     }
-    const displayedEdges = proposedRelationships(
-      state?.relationships ?? [],
-      state?.draft.relationships,
-    );
+    const displayedEdges = state
+      ? effectiveRelationships(state)
+      : new Map<string, MapRelationship>();
     const spatialEdges = new Map(displayedEdges);
     for (const change of state?.draft.relationships ?? []) {
       if (!change.after && change.before) spatialEdges.set(change.id, change.before);
@@ -1896,6 +1896,15 @@ export function HouseholdMap({
           initialKey={conflictDialogKey}
           disabled={pending || blocked || dirty}
           onClose={() => setConflictDialogOpen(false)}
+          onCorrectRelationship={(id) => {
+            setConflictDialogOpen(false);
+            setReadEntry({
+              kind: 'relationships',
+              id: `blocked-${id}`,
+              retainedRelationshipId: id,
+              restoreFocus: () => setConflictDialogOpen(true),
+            });
+          }}
           onStatus={setConflictResolutionStatus}
           onUnknownChange={setConflictRecovery}
           onRefresh={async () => {

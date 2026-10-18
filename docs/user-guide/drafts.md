@@ -163,9 +163,20 @@ posten. **Acceptera borttagningen och kasta ditt förslag** kastar bara
 förslaget för den posten. Andra förslag finns kvar och den gemensamma kartan
 ändras inte av bekräftelsen.
 
-Ett dubblerat samband eller ett samband med saknat objekt går att läsa men
-har inga valbara egenskaper. **Ta bort sambandet ur ditt utkast** tar bara
-bort det förslaget. När din egen objektborttagning möter nya sparade
+Om någon annan tar bort ett objekt som ditt tidigare giltiga
+sambandsförslag använder finns förslaget kvar i konfliktlistan med alla
+dina uppgifter. Det visas utanför kartans och tabellens aktuella samband.
+Hela utkastets sparande väntar tills du rättar eller kastar förslaget,
+även efter omladdning eller omstart. Välj **Rätta ändpunkter**, välj
+befintliga objekt i hushållet och **Lägg i utkastet**. Förslagets identitet
+och övriga innehåll behålls; borttagna objekt återställs inte. Det gäller
+både nya och ändrade sambandsförslag. Alternativt kastar **Ta bort
+sambandet ur ditt utkast** bara det berörda förslaget. Annat utkastarbete
+finns kvar. Granska och spara hela utkastet separat efter rättningen.
+
+Ett dubblerat samband går att läsa men har inga valbara egenskaper.
+**Ta bort sambandet ur ditt utkast** tar bara bort det förslaget.
+När din egen objektborttagning möter nya sparade
 uppgifter eller samband väljer du objektets och varje nytt sambands
 borttagning för sig. Objektet kan inte tas bort medan ett sådant samband
 behålls. Valen ändrar ditt utkast; spara hela utkastet separat när du har

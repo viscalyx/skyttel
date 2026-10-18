@@ -1,11 +1,13 @@
 import { isDeepStrictEqual } from 'node:util';
 import type Database from 'better-sqlite3';
 import type {
+  DraftRelationshipChange,
   MapDraft,
   MapRelationship,
   RelationshipType,
   RelationshipValue,
   SavedRelationshipChange,
+  SaveReceipt,
 } from '../shared/map.js';
 import { compatibleCustomFields, proposedRelationships } from '../shared/map.js';
 import { readCustomValues } from './custom-fields.js';
@@ -84,6 +86,48 @@ export function relationships(database: Database.Database, householdId: string) 
     )
       throw new MapError('invalid_endpoint', 400);
   }
+  function removedRevision(id: string) {
+    return (
+      database
+        .prepare(
+          'SELECT revision FROM map_relationship WHERE householdId = ? AND id = ? AND deleted = 1',
+        )
+        .get(householdId, id) as { revision: number } | undefined
+    )?.revision;
+  }
+  function endpointRecovery(draft: MapDraft, change: DraftRelationshipChange | undefined) {
+    if (!change?.before || !change.after || read().some(({ id }) => id === change.id)) return;
+    if (change.endpointRecovery?.removedRevision === removedRevision(change.id))
+      return change.endpointRecovery;
+    const missing = [change.after.sourceId, change.after.targetId].filter((id): id is string =>
+      Boolean(id && !endpoint(id, draft)),
+    );
+    if (!missing.length) return;
+    const history = database
+      .prepare(`SELECT s.receipt FROM map_history h
+      JOIN map_save s ON s.householdId = h.householdId AND s.userId = h.userId AND s.operationId = h.operationId
+      WHERE h.householdId = ? ORDER BY h.id DESC`)
+      .all(householdId) as { receipt: string }[];
+    for (const row of history) {
+      const receipt = JSON.parse(row.receipt) as SaveReceipt;
+      const removal = receipt.relationships?.find(({ id }) => id === change.id);
+      if (!removal) continue;
+      if (
+        !removal.after &&
+        removal.before &&
+        removal.before.revision + 1 === removedRevision(change.id) &&
+        receipt.changes.some(
+          ({ before, after }) =>
+            before &&
+            !after &&
+            missing.includes(before.id) &&
+            (removal.before?.sourceId === before.id || removal.before?.targetId === before.id),
+        )
+      )
+        return { removedRevision: removal.before.revision + 1 };
+      return;
+    }
+  }
   function assertValid(draft: MapDraft, value: RelationshipValue, id: string) {
     assertEndpoints(draft, value);
     if (effective(draft).some((other) => other.id !== id && sameEndpoints(other, value)))
@@ -159,6 +203,7 @@ export function relationships(database: Database.Database, householdId: string) 
       if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
         throw new MapError('invalid_request', 400);
       const existing = draft.relationships?.find((change) => change.id === body.id);
+      const recovery = endpointRecovery(draft, existing);
       const before = existing
         ? existing.before
         : (read().find((value) => value.id === body.id) ?? null);
@@ -232,6 +277,7 @@ export function relationships(database: Database.Database, householdId: string) 
       if (before || after)
         changes.push({
           proposedAt: new Date().toISOString(),
+          ...(recovery && after ? { endpointRecovery: recovery } : {}),
           id: body.id,
           before,
           after,
@@ -263,7 +309,12 @@ export function relationships(database: Database.Database, householdId: string) 
       }
       for (const change of changes) {
         const saved = current.find((value) => value.id === change.id) ?? null;
-        if (!isDeepStrictEqual(saved, change.before)) throw new MapError('relationship_conflict');
+        const recovery =
+          !saved &&
+          change.endpointRecovery &&
+          removedRevision(change.id) === change.endpointRecovery.removedRevision;
+        if (!recovery && !isDeepStrictEqual(saved, change.before))
+          throw new MapError('relationship_conflict');
         const removedType = !change.after
           ? draft.relationshipTypes?.find((item) => item.id === change.type.id && !item.after)
               ?.before
@@ -281,7 +332,7 @@ export function relationships(database: Database.Database, householdId: string) 
           readCustomValues(change.after.customValues, type);
           readProperties(change.after.properties);
         }
-        if (!saved) tombstones.assertCreation('relationship', change.id);
+        if (!saved && !recovery) tombstones.assertCreation('relationship', change.id);
       }
       // Temporarily remove changed edges so endpoint swaps do not violate the unique index.
       for (const change of changes)
@@ -294,7 +345,8 @@ export function relationships(database: Database.Database, householdId: string) 
               ...change.after,
               id: change.id,
               householdId,
-              revision: (change.before?.revision ?? 0) + 1,
+              revision:
+                (change.endpointRecovery?.removedRevision ?? change.before?.revision ?? 0) + 1,
             }
           : null;
         if (after)
