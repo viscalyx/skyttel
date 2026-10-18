@@ -13,7 +13,7 @@ import {
   expectHistoricalProposalAbsent,
   readIndependentHistoricalProposal,
 } from '../support/historical-conflict-reading.js';
-import { propertyRow, propertyValues } from '../support/property-controls.js';
+import { openProperties, propertyRow, propertyValues } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 async function readCorrectedProposal(
@@ -222,6 +222,13 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
         corrected.draft.relationships?.find((change) => change.id === 'private-target')?.after,
       ),
     ).toEqual({ 'storage-year': 'Våren 2021' });
+    expect(
+      corrected.draft.relationships?.find((change) => change.id === 'private-target')?.after
+        ?.properties,
+    ).toEqual(
+      before.draft.relationships?.find((change) => change.id === 'private-target')?.after
+        ?.properties,
+    );
     expect(corrected.draft.changes).toEqual(before.draft.changes);
     expect(corrected.relationships).toEqual(before.relationships);
     expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
@@ -362,6 +369,7 @@ test('UTKAST-72: ordinary correction of a missing object type preserves historic
     await expect(
       page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true }),
     ).toHaveCount(0);
+    await openProperties(form);
     await expect(
       propertyRow(form, 'Installationsår').getByLabel('Värde', { exact: true }),
     ).toHaveValue('Våren 2021');
@@ -376,15 +384,14 @@ test('UTKAST-72: ordinary correction of a missing object type preserves historic
         corrected.draft.changes.find((change) => change.id === 'private-target')?.after,
       ),
     ).toEqual({
-      properties: expect.arrayContaining([
-        expect.objectContaining({
-          label: 'Beskrivning',
-          kind: 'text',
-          value: 'Tidigare privat förslag',
-        }),
-      ]),
+      description: 'Tidigare privat förslag',
       year: 'Våren 2021',
     });
+    expect(
+      corrected.draft.changes.find((change) => change.id === 'private-target')?.after?.properties,
+    ).toEqual(
+      before.draft.changes.find((change) => change.id === 'private-target')?.after?.properties,
+    );
     expect(corrected.draft.changes.find((change) => change.id === 'independent')).toEqual(
       before.draft.changes.find((change) => change.id === 'independent'),
     );
