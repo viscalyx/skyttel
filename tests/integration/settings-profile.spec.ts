@@ -10,7 +10,7 @@ import {
 } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
-import { propertyRow, setProperty } from '../support/property-controls.js';
+import { openProperties, setProperty } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 for (const width of [1280, 390, 320]) {
@@ -226,11 +226,10 @@ test('INST-03: the separate profile protects native form input and groups person
     await expect(profile.getByRole('button', { name: 'Logga ut', exact: true })).toBeVisible();
     await expect(profile.getByRole('link', { name: 'Månadskostnad', exact: true })).toHaveCount(0);
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
-    await openNewObject(page);
+    const fresh = await openNewObject(page);
     await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('');
-    await expect(propertyRow(page, 'Beskrivning').getByLabel('Värde', { exact: true })).toHaveValue(
-      '',
-    );
+    await openProperties(fresh);
+    await expect(fresh.locator('.property-editor-row')).toHaveCount(0);
     await page.keyboard.press('Escape');
     await openProfile(page);
     await profile.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
@@ -251,7 +250,7 @@ test('INST-03: the separate profile protects native form input and groups person
         .getByRole('heading', { name: 'Hushållet Linden', exact: true }),
     ).toBeFocused();
     await expect(
-      propertyRow(page, 'Beskrivning').getByLabel('Värde', { exact: true }),
+      page.getByRole('dialog', { name: 'Nytt objekt', exact: true }),
     ).not.toBeVisible();
   } finally {
     await installation.close();

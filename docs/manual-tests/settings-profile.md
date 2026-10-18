@@ -217,13 +217,15 @@ INST-03.
 
 **Steg:**
 
-1. Öppna ett nytt objekt. Skriv ett namn och en oskickad beskrivning.
+1. Öppna ett nytt objekt. Skriv ett namn. Lägg till egenskapen Beskrivning
+   under **Fria egenskaper**, välj datatypen Text och skriv en oskickad text.
 2. Tryck Escape och välj **Fortsätt redigera**. Kontrollera båda texterna
    och fokus. Tryck Escape igen och välj **Kasta ändringarna och fortsätt**.
    Öppna **Din profil** i kartans verktyg. Kontrollera rubrikfokus,
    användar-ID, **Inloggningssätt**, **Assistentanslutningar** och **Logga ut**.
 3. Välj **Tillbaka till arbetet** och **Nytt objekt**. Kontrollera att
-   namnet är tomt och inga fria egenskaper är tillagda. Stäng det
+   namnet är tomt. Öppna **Fria egenskaper** och kontrollera att inga egenskaper
+   är tillagda. Stäng det
    oförändrade formuläret med Escape.
 4. Öppna profilen igen och välj **Inloggningssätt**. Gå tillbaka via
    **Din profil** i kontosidornas navigation, på mobil via **Välj inställning**.
