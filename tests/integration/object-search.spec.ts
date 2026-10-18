@@ -45,7 +45,9 @@ test('SÖK-01: own detail fields, every word and Swedish normalization find obje
     await expect(search).toHaveValue('');
     await search.fill('åke beskrivning');
     const matches = table.getByRole('rowheader').getByRole('button');
-    await expect(matches).toHaveText(['Åke', 'Övrigt Élan']);
+    await expect(matches).toHaveCount(2);
+    await expect(matches.nth(0)).toHaveAccessibleName('Åke');
+    await expect(matches.nth(1)).toHaveAccessibleName('Övrigt Élan');
     expect(
       await matches.evaluateAll((buttons) =>
         buttons.map((button) => button.getAttribute('data-table-object')),
