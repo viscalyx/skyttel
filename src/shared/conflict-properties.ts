@@ -101,6 +101,7 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
           ]
         : [
             ['name', 'Namn'],
+            ['description', 'Beskrivning'],
             ['forwardLabel', 'Framåtriktad benämning'],
             ['reverseLabel', 'Omvänd benämning'],
           ];
