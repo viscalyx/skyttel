@@ -251,7 +251,8 @@ Identitet.
 1. Öppna Samband för Familjemusik och Nytt samband. Välj Betalas med och
    Betalkonto som verkligt Till objekt. Lägg till Uppgiftens säkerhet (Text,
    Obesvarad fråga), lägg i utkastet och stäng sambandet. Ladda om.
-2. Öppna Visa utkastet. Läs Betalkontots obesvarade identitet och kontrollera
+2. Öppna Visa utkastet. Läs **Identiteten är olöst. Rätta objektet i det
+   ordinarie flödet.** för Betalkonto och kontrollera
    att hela sparandet är spärrat. Stäng textvyn, redigera Betalkonto och välj
    Ospecificerat objekt som Identitet. Lägg i utkastet.
 3. Redigera sambandet, rätta Uppgiftens säkerhet till Osäkert uppgivet och

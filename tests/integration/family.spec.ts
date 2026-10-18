@@ -219,7 +219,9 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await openTable(page);
     const unresolvedDraft = await openDraftReview(page);
     await expect(unresolvedDraft).toContainText('Familjemusik → Betalas med → Betalkonto');
-    await expect(unresolvedDraft).toContainText('Identiteten behöver redas ut');
+    await expect(unresolvedDraft).toContainText(
+      'Identiteten är olöst. Rätta objektet i det ordinarie flödet.',
+    );
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     await closeTextView(page);
     const bank = await editTableObject(page, 'Betalkonto');
@@ -368,13 +370,13 @@ test('KARTA-25: a concurrent duplicate refreshes the saved relationship and allo
     await openObjectRelationships(page, 'Kim Exempel');
     await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await page
-      .getByLabel('Från objekt')
+      .getByLabel('Från objekt', { exact: true })
       .selectOption(
         state.objects.find((object: { name: string }) => object.name === 'Kim Exempel').id,
       );
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Använder' });
     await page
-      .getByLabel('Till objekt')
+      .getByLabel('Till objekt', { exact: true })
       .selectOption(
         state.objects.find((object: { name: string }) => object.name === 'Molnmusik').id,
       );
