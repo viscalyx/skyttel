@@ -50,7 +50,7 @@ for (const [caseId, width] of [
       await closeTextView(page);
       await installation.restart();
       await page.reload();
-      const edit = await editObjectRelationship(page, 'Alex', 'Alex → använder → Blå cykeln');
+      const edit = await editObjectRelationship(page, 'Alex', 'Alex → Använder → Blå cykeln');
       for (const [label, value] of [
         ['Anteckning', 'Låst skåp'],
         ['Belopp', '0'],
@@ -101,7 +101,7 @@ test('STY-07: changing relationship type preserves every individual property imm
     });
     await post('save', { operationId: 'baseline' });
     await page.goto(installation.origin);
-    const form = await editObjectRelationship(page, 'Alex', 'Alex → använder → Blå cykeln');
+    const form = await editObjectRelationship(page, 'Alex', 'Alex → Använder → Blå cykeln');
     await form.getByLabel('Sambandstyp', { exact: true }).selectOption(next?.id ?? '');
     await expect(freeProperty(form, 'Anteckning').getByLabel('Värde', { exact: true })).toHaveValue(
       'Behåll uppgiften',
