@@ -23,7 +23,7 @@ test('UTKAST-55: reopening discovers new saved data before stale choices can be 
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
     await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
     const description = dialog.getByRole('button', {
-      name: 'Beskrivning: Ditt förslag – Min anteckning',
+      name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
       exact: true,
     });
     await description.click();
@@ -89,7 +89,7 @@ test('UTKAST-56: pending and unknown conflict outcomes have one accessible statu
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
     await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
     await dialog
-      .getByRole('button', { name: 'Beskrivning: Ditt förslag – Min anteckning', exact: true })
+      .getByRole('button', { name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)', exact: true })
       .click();
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
     await expect(dialog.getByRole('status')).toContainText('Lägger valen');
@@ -162,7 +162,7 @@ test('UTKAST-49: switching conflicts and reopening preserves choices and never c
     await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
     await dialog
       .getByRole('button', {
-        name: 'Beskrivning: Ditt förslag – Min anteckning',
+        name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
         exact: true,
       })
       .click();
@@ -174,7 +174,7 @@ test('UTKAST-49: switching conflicts and reopening preserves choices and never c
     await serviceName.click();
     await dialog
       .getByRole('button', {
-        name: 'Beskrivning: Ditt förslag – Min tjänst',
+        name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min tjänst (Text)',
         exact: true,
       })
       .click();
@@ -233,7 +233,7 @@ test('UTKAST-50: refreshed conflict data clears only choices for properties that
       exact: true,
     });
     const proposedDescription = dialog.getByRole('button', {
-      name: 'Beskrivning: Ditt förslag – Min anteckning',
+      name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
       exact: true,
     });
     await proposedName.click();
@@ -304,7 +304,7 @@ for (const width of [1280, 320])
         exact: true,
       });
       const description = dialog.getByRole('button', {
-        name: 'Beskrivning: Ditt förslag – Min anteckning',
+        name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
         exact: true,
       });
       await name.click();
@@ -385,8 +385,8 @@ for (const surface of ['Karta', 'Tabell'] as const)
             .getByRole('button', {
               name:
                 side === 'proposed'
-                  ? 'Beskrivning: Ditt förslag – Min anteckning'
-                  : 'Beskrivning: Sparat i kartan nu – Robins anteckning',
+                  ? 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)'
+                  : 'Beskrivning · egenskap 1: Sparat i kartan nu – Beskrivning: Robins anteckning (Text)',
               exact: true,
             })
             .click();
@@ -438,7 +438,7 @@ for (const surface of ['Karta', 'Tabell'] as const)
         }
       });
 
-test('UTKAST-51: a changed object type revalidates mixed values while unaffected choices remain', async ({
+test('UTKAST-51: a changed object type retains independent property kinds while unaffected choices remain', async ({
   page,
   browser,
 }) => {
@@ -450,8 +450,8 @@ test('UTKAST-51: a changed object type revalidates mixed values while unaffected
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
     for (const name of [
       'Namn: Ditt förslag – Lo Lind',
-      'Beskrivning: Ditt förslag – Min anteckning',
-      'Anteckning: Ditt förslag – Min text',
+      'Beskrivning · egenskap 2: Ditt förslag – Beskrivning: Min anteckning (Text)',
+      'Anteckning · egenskap 1: Ditt förslag – Anteckning: Min text (Text)',
     ])
       await dialog.getByRole('button', { name, exact: true }).click();
     await saveNewerConflictType(app, other.request);
@@ -461,12 +461,12 @@ test('UTKAST-51: a changed object type revalidates mixed values while unaffected
     await dialog.getByRole('button', { name: 'Visa aktuell jämförelse', exact: true }).click();
     await expect(
       dialog.getByRole('button', {
-        name: 'Beskrivning: Ditt förslag – Min anteckning',
+        name: 'Beskrivning · egenskap 2: Ditt förslag – Beskrivning: Min anteckning (Text)',
         exact: true,
       }),
     ).toHaveAttribute('aria-pressed', 'true');
     const note = dialog.getByRole('button', {
-      name: 'Anteckning: Ditt förslag – Min text',
+      name: 'Anteckning · egenskap 1: Ditt förslag – Anteckning: Min text (Text)',
       exact: true,
     });
     await expect(note).toHaveAttribute('aria-pressed', 'false');
@@ -474,11 +474,14 @@ test('UTKAST-51: a changed object type revalidates mixed values while unaffected
     await dialog
       .getByRole('button', { name: 'Objekttyp: Sparat i kartan nu – Mätobjekt', exact: true })
       .click();
-    await expect(dialog.getByRole('alert')).toContainText('passar inte den valda typens egna fält');
+    await expect(dialog.getByRole('alert')).toHaveCount(0);
     await expect(
       dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
-    ).toBeDisabled();
+    ).toBeEnabled();
     await expect(note).toHaveAttribute('aria-pressed', 'true');
+    await expect(dialog.getByRole('region', { name: 'Resultat av valen', exact: true })).toContainText(
+      'Min text (Text)',
+    );
     expect((await app.read()).draft).toEqual(before.draft);
     await dialog
       .getByRole('button', { name: 'Objekttyp: Ditt förslag – Anteckningsobjekt', exact: true })
@@ -506,7 +509,7 @@ test('UTKAST-52: a known version rejection retains choices and retries only afte
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
     for (const name of [
       'Namn: Ditt förslag – Lo Lind',
-      'Beskrivning: Ditt förslag – Min anteckning',
+      'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
     ])
       await dialog.getByRole('button', { name, exact: true }).click();
     await app.propose(page.request, 'draft', 'independent', { ...app.value, name: 'Privat stol' });
@@ -524,7 +527,7 @@ test('UTKAST-52: a known version rejection retains choices and retries only afte
     await dialog.getByRole('button', { name: 'Visa aktuell jämförelse', exact: true }).click();
     for (const name of [
       'Namn: Ditt förslag – Lo Lind',
-      'Beskrivning: Ditt förslag – Min anteckning',
+      'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
     ])
       await expect(dialog.getByRole('button', { name, exact: true })).toHaveAttribute(
         'aria-pressed',
@@ -560,7 +563,7 @@ test('UTKAST-127: a changed relationship reference refreshes its meaning without
       .getByRole('button', { name: 'Till objekt: Ditt förslag – Molnmusik', exact: true })
       .click();
     await dialog
-      .getByRole('button', { name: 'Vad är känt?: Ditt förslag – Osäkert uppgivet', exact: true })
+      .getByRole('button', { name: 'Uppgiftens säkerhet · egenskap 1: Ditt förslag – Uppgiftens säkerhet: Osäkert uppgivet (Text)', exact: true })
       .click();
     const state = await app.read();
     await app.propose(other.request, 'draft', 'service', {
@@ -580,7 +583,7 @@ test('UTKAST-127: a changed relationship reference refreshes its meaning without
     ).toHaveAttribute('aria-pressed', 'true');
     await expect(
       dialog.getByRole('button', {
-        name: 'Vad är känt?: Ditt förslag – Osäkert uppgivet',
+        name: 'Uppgiftens säkerhet · egenskap 1: Ditt förslag – Uppgiftens säkerhet: Osäkert uppgivet (Text)',
         exact: true,
       }),
     ).toHaveAttribute('aria-pressed', 'true');
@@ -608,7 +611,7 @@ test('UTKAST-128: a conflict resolved by another client becomes read-only after 
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
     await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
     await dialog
-      .getByRole('button', { name: 'Beskrivning: Ditt förslag – Min anteckning', exact: true })
+      .getByRole('button', { name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)', exact: true })
       .click();
     await page.keyboard.press('Escape');
     await resolveConflictElsewhere(app, page.request);
@@ -664,8 +667,8 @@ for (const side of ['saved', 'proposed'] as const)
         .getByRole('button', {
           name:
             side === 'proposed'
-              ? 'Beskrivning: Ditt förslag – Min anteckning'
-              : 'Beskrivning: Sparat i kartan nu – Robins anteckning',
+              ? 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)'
+              : 'Beskrivning · egenskap 1: Sparat i kartan nu – Beskrivning: Robins anteckning (Text)',
           exact: true,
         })
         .click();
@@ -716,7 +719,7 @@ test('UTKAST-131: a later save after a lost applied reply retains unchanged choi
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
     const name = dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true });
     const description = dialog.getByRole('button', {
-      name: 'Beskrivning: Ditt förslag – Min anteckning',
+      name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
       exact: true,
     });
     await name.click();

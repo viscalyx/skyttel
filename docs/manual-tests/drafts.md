@@ -3867,8 +3867,8 @@ och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 ### UTKAST-51: pröva kombinationen igen efter ändrad typ eller referens
 
-**Syfte:** Behålla opåverkade val utan att bekräfta en inaktuell eller ogiltig
-kombination.
+**Syfte:** Behålla opåverkade val vid ändrad typ och ompröva en ändrad fri
+egenskap utan att bekräfta ett inaktuellt underlag.
 
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
@@ -3886,10 +3886,10 @@ UTKAST-51.
     "spec": "tests/integration/conflict-continuity.spec.ts",
     "caseId": "UTKAST-51"
   },
-  "reference": "Objekttyp; omprövning mot ändrad typdefinition.",
+  "reference": "Objekttyp; omprövning mot ändrad typförklaring och fri egenskap.",
   "outcomes": [
-    "Ändrad typ kräver aktuell jämförelse. Texten passar inte Mätobjekts numeriska fält; orsaken förklaras och bekräftelsen spärras utan automatisk ändring av val.",
-    "En giltig typkombination kan läggas i utkastet. Kartans sparade typ och värden består."
+    "Ändrad typ kräver aktuell jämförelse. Beskrivningsvalet behålls medan valet för Anteckning återställs när den sparade egenskapens datatyp ändras från text till tal.",
+    "Alex text kan väljas tillsammans med både Mätobjekt och Anteckningsobjekt utan att textens datatyp ändras. Efter val av Anteckningsobjekt läggs Alex exakta egenskaper i utkastet. Kartans sparade typ och värden består."
   ]
 }
 ```
@@ -3899,7 +3899,8 @@ UTKAST-51.
 **Separat operatörsförberedelse:**
 
 Vid UI-steg 2: kör `newer-type`. Robin sparar Mätobjekt och en ny förklaring
-för Anteckningsobjekt. Meddela **Robins nyare typ och förklaring är sparade**
+för Anteckningsobjekt samt ändrar den fria egenskapen Anteckning till talet
+42. Meddela **Robins nyare typ och förklaring är sparade**
 före den gamla bekräftelsen. Följ
 [styrd konfliktleverans](current-conflict-preparation.md) och den befintliga
 konfliktinstallationen för fallet. Behåll samma sessioner och databas under
@@ -3913,17 +3914,20 @@ fallen och avsluta enligt förberedelsens städning.
 2. Be operatören spara Robins nyare typ och förklaring enligt förberedelsen.
    Invänta bekräftelse. Försök lägga valen i utkastet och visa aktuell
    jämförelse.
-3. Beskrivningens val är kvar. Välj Min text igen och den sparade typen
-   **Mätobjekt**.
-4. Läs felet. Välj Alex **Anteckningsobjekt** och lägg kombinationen i utkastet.
+3. Beskrivningens val är kvar medan valet för Anteckning har återställts.
+   Välj **Min text (Text)** igen och den sparade typen **Mätobjekt**.
+   Kontrollera att textens datatyp består i resultatet, inget fel visas
+   och bekräftelsen är tillgänglig.
+4. Välj Alex **Anteckningsobjekt** och lägg kombinationen i utkastet.
+   Kontrollera Alex exakta egenskaper i det privata utkastet.
 
 **Förväntat resultat:**
 
-- Ändrad typ kräver aktuell jämförelse. Texten passar inte Mätobjekts numeriska
-  fält; orsaken förklaras och bekräftelsen spärras utan automatisk ändring av
-  val.
-- En giltig typkombination kan läggas i utkastet. Kartans sparade typ och värden
-  består.
+- Ändrad typ kräver aktuell jämförelse. Beskrivningsvalet behålls medan
+  valet för Anteckning återställs när den sparade egenskapens datatyp ändras.
+- Alex text kan kombineras med båda typerna utan att textens datatyp ändras.
+  Alex valda typ och exakta egenskaper läggs i det privata utkastet.
+  Kartans sparade typ och värden består.
 
 ### UTKAST-52: behåll val vid känd avvisning och återförsök efter kontroll
 
