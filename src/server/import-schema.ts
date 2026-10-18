@@ -138,6 +138,7 @@ const draftRelationship = z
   .object({
     ...relationshipChangeShape,
     proposedAt: z.iso.datetime().optional(),
+    endpointRecovery: z.object({ removedRevision: positive }).strict().optional(),
     removedWithObjects: z.array(id).optional(),
     suppressed: z
       .object({

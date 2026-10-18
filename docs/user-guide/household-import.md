@@ -7,6 +7,13 @@ fullständig Skyttel-export. Importen ersätter karta, bilder, historik,
 alla privata utkast och personliga vyer. Den slår inte ihop två kartor.
 Nuvarande medlemmar, administratörer, inbjudningar och inloggningar behålls.
 
+Fria egenskaper behåller sin ordning, datatyp och sina tomma värden, även
+när flera har samma etikett. Blockerade sambandsförslag och förslag som
+följer en objektborttagning finns kvar i utkastet med sina orsaker.
+Efter återimport kan du rätta saknade ändpunkter eller ångra din
+objektborttagning och fortsätta med det bevarade arbetet. Ett blockerat
+förslag behöver fortfarande rättas eller kastas före sparande.
+
 1. Hämta först en [egen export](household-export.md) om du behöver behålla
    det nuvarande innehållet. Be användarna avsluta pågående ändringar.
 2. Öppna **Inställningar → Återimportera hushållet**.

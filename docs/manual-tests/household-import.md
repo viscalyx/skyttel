@@ -1636,6 +1636,116 @@ i båda temana. Minskad rörelse gör bilderna stilla utan att ändra sparvärde
 - Omstart ändrar inte det återställda resultatet. Separata serverprov
   verifierar avvisning av äldre arkiv och felaktiga värden före ersättning.
 
+## Fria egenskaper och bevarade sambandsförslag
+
+### IMPORT-27: återimportera och återställ ett undertryckt sambandsförslag
+
+**Syfte:** Fortsätt samma arbete efter återimport utan att tappa tomma
+egenskaper, upprepade etiketter eller ändrad ordning.
+
+**Användare:** Alex som administratör i ett eget provhushåll.
+
+**Förutsättningar:** Skapa och spara objekten **Lo Exempel** och
+**Molnmusik** och ett samband mellan dem. På sambandet lägger du fyra
+egenskaper med etiketten **Samma**, i denna ordning: utan datatyp och
+värde, tomt datum, talet 0 och Ja/nej-värdet Nej. Spara hela utkastet.
+Ändra sambandsförslaget till omvänd egenskapsordning utan att spara.
+Ta bort Lo Exempel i tabellen så att förslaget följer objektborttagningen.
+Använd 320×900 CSS-pixlar. Ordna tillgång till en omstart av provservern
+med samma databas efter återimporten.
+
+**Automatiskt motsvarande test:**
+[household-import-properties.spec.ts](../../tests/integration/household-import-properties.spec.ts),
+IMPORT-27. Riktig applikation och isolerad SQLite-installation används.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/household-import-properties.spec.ts", "caseId": "IMPORT-27" },
+  "reference": "320×900 CSS-pixlar, verifierad administratör, riktig SQLite och serveromstart. Inga verkliga leverantörsanrop.",
+  "outcomes": ["Återimport bevarar undertryckt sambandsarbete och dess orsak.", "Ångrad objektborttagning återställer förslaget som går att spara med alla egenskaper."],
+  "evidence": [{ "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/household-import-properties-http.test.ts", "title": "full property archive preserves suppressed retained proposals and permits correction after process restart", "purpose": "Offentliga HTTP-gränser och riktig SQLite verifierar exakta identiteter, egenskapsordning, återställningsorsaker, avvisade felaktiga arkiv och aktuell åtkomst." }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **Inställningar → Fullständig export**, förbered exporten och
+   hämta ZIP-filen.
+2. Öppna **Återimportera hushållet**, välj filen och **Kontrollera
+   importfil**. Kontrollera att ersättning kräver bekräftelse. Markera
+   **Jag vill ersätta allt hushållsinnehåll** och välj **Ersätt hushållets
+   innehåll**. Invänta beskedet att innehållet är ersatt.
+3. Efter den förberedda serveromstarten läser du in hushållet igen.
+   Öppna **Skriv till Skyttel** och visa **Utkastet**. Läs orsaken
+   **Följer objektborttagning:
+   Lo Exempel.** och öppna sambandsförslagets uppgifter.
+4. Kontrollera att **Bevarat sambandsförslag** visar Nej, 0 och det tomma
+   datumet. Stäng uppgifterna med Escape. Fokusera knappen för att ångra
+   Lo Exempels objektborttagning och tryck Enter.
+5. Kontrollera att orsaken försvinner. Spara hela utkastet. Öppna tabellen
+   och **Samband för Lo Exempel**. Läs alla fyra egenskaperna.
+
+**Förväntat resultat:**
+
+- Samma förslag och dess borttagningsorsak finns kvar efter omstart.
+- Ångrad objektborttagning återställer sambandsförslaget. Sparandet
+  lyckas och egenskaperna behåller sina upprepade etiketter, värden,
+  tomma datatyper och den omvända ordningen.
+- Sambandsuppgifterna går att läsa utan rullning i sidled. Automationens
+  CSS-vy ersätter inte mänsklig zoom- eller skärmläsarverifiering.
+
+### IMPORT-28: rätta ett blockerat samband efter återimport
+
+**Syfte:** Ett arkiv bevarar ett inaktuellt sambandsförslag utan att
+återuppliva det borttagna objektet eller spara ett ofullständigt samband.
+
+**Användare:** Alex som administratör och Robin i en egen profil.
+
+**Förutsättningar:** Använd samma sparade objekt och egenskaper som i
+IMPORT-27. Alex föreslår den omvända egenskapsordningen. Robin tar bort
+Molnmusik och sparar hela sitt utkast. Alex förslag ska nu vara blockerat.
+Använd 1280×900 CSS-pixlar. Ordna omstart som i IMPORT-27.
+
+**Automatiskt motsvarande test:**
+[household-import-properties.spec.ts](../../tests/integration/household-import-properties.spec.ts),
+IMPORT-28.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/household-import-properties.spec.ts", "caseId": "IMPORT-28" },
+  "reference": "1280×900 CSS-pixlar, två verifierade användare, riktig SQLite och serveromstart. Inga verkliga leverantörsanrop.",
+  "outcomes": ["Blockerat förslag finns kvar efter export, återimport och omstart.", "Rättade ändpunkter går att spara med samma egenskaper utan att återuppliva det borttagna objektet."],
+  "evidence": [{ "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/household-import-properties-http.test.ts", "title": "full property archive preserves corrected retained proposals and permits correction after process restart", "purpose": "Riktig SQLite verifierar att redan rättade förslag behåller serverns styrkta återställningsorsak och kan sparas efter återimport och omstart." }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Alex utför export, filkontroll och bekräftad ersättning enligt
+   IMPORT-27 steg 1–2. Efter den förberedda serveromstarten läser Alex in
+   hushållet igen, öppnar **Skriv till Skyttel** och visar **Utkastet**.
+2. Läs **Blockerat samband: ett objekt saknas.** Stäng med Escape och
+   öppna **1 konflikt i ditt utkast**. Välj **Rätta ändpunkter**.
+3. Välj Lo Exempel i **Till objekt** och lägg sambandet i utkastet.
+   Läs statusbeskedet, stäng dialogen och konfliktgranskningen.
+4. Spara hela utkastet. Öppna tabellen och **Samband för Lo Exempel**.
+   Läs de fyra egenskaperna.
+
+**Förväntat resultat:**
+
+- Det blockerade förslaget finns kvar efter återimport och omstart.
+- Rättelsen använder ett befintligt objekt och sparandet lyckas.
+  Egenskapernas ordning, upprepade etiketter, Nej, 0 och tomma värden
+  bevaras. Molnmusik återupplivas inte.
+
 ## Identiteter och automatiskt underlag
 
 IMPORT-15 behåller 1280×900. De övriga upptäckta breddvarianterna har

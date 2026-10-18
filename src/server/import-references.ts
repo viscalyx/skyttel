@@ -299,6 +299,67 @@ export function validateImportReferences(
       edgeChange(change.suppressed, types);
     }
   }
+  function recovery(change: DraftRelationshipChange) {
+    if (!change.endpointRecovery) return;
+    const tombstone = content.relationships.find((row) => row.id === change.id);
+    const latest = [...content.history]
+      .sort((left, right) => right.id - left.id)
+      .map(
+        (history) =>
+          content.saves.find(
+            (save) => save.userId === history.userId && save.operationId === history.operationId,
+          )?.receipt,
+      )
+      .find((receipt) => receipt?.relationships?.some(({ id }) => id === change.id));
+    const removal = latest?.relationships?.find(({ id }) => id === change.id);
+    requireReference(
+      change.before &&
+        (change.after || change.suppressed) &&
+        tombstone?.deleted === 1 &&
+        tombstone.revision === change.endpointRecovery.removedRevision &&
+        removal?.before &&
+        !removal.after &&
+        removal.before.revision + 1 === tombstone.revision &&
+        removal.before.typeId === tombstone.typeId &&
+        removal.before.sourceId === tombstone.sourceId &&
+        removal.before.targetId === tombstone.targetId &&
+        latest?.changes.some(
+          ({ before, after }) =>
+            before &&
+            !after &&
+            (removal.before?.sourceId === before.id || removal.before?.targetId === before.id),
+        ),
+    );
+  }
+  function suppression(change: DraftRelationshipChange, draft: ImportContent['drafts'][number]) {
+    recovery(change);
+    if (change.suppressed) recovery(change.suppressed);
+    const causes = change.removedWithObjects;
+    requireReference(!change.suppressed || causes?.length);
+    if (!causes) {
+      requireReference(change.before || change.after);
+      return;
+    }
+    unique(causes, (id) => id);
+    requireReference(causes.length && !change.after);
+    const saved = content.relationships.find((row) => row.id === change.id && !row.deleted);
+    const endpoints = new Set(
+      [saved, change.before, change.suppressed?.after].flatMap((value) =>
+        value ? [value.sourceId, value.targetId] : [],
+      ),
+    );
+    const expected = draft.changes
+      .filter(({ before, after, id }) => before && !after && endpoints.has(id))
+      .map(({ id }) => id);
+    requireReference(
+      causes.length === expected.length && causes.every((id) => expected.includes(id)),
+    );
+    if (change.suppressed)
+      requireReference(
+        change.suppressed.after && isDeepStrictEqual(change.before, change.suppressed.before),
+      );
+    else requireReference(change.before);
+  }
   for (const row of content.objects) {
     const {
       customValues,
@@ -376,9 +437,11 @@ export function validateImportReferences(
       ),
     ]);
     changes(draft.changes, types, edgeTypes);
+    unique(draft.relationships, ({ id }) => id);
     for (const change of draft.relationships) {
       if (change.after) requireReference(Boolean(change.after.sourceId && change.after.targetId));
       edgeChange(change, edgeTypes);
+      suppression(change, draft);
     }
   }
   const saves = new Map(content.saves.map((row) => [`${row.userId}:${row.operationId}`, row]));

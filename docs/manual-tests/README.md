@@ -506,6 +506,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   bevarat oskickat arbete före innehållsbyte, uttrycklig ersättning,
   bevarad åtkomst, privata uppgifter, bildhistorik, äldre fältbetydelser,
   personliga bakgrundsval och rörelsevärden genom export och återimport,
+  fria egenskaper samt fortsatt rättelse av blockerade och undertryckta
+  sambandsförslag efter återimport och omstart,
   lokalt prov med tappat sparbesked, avvisade gamla sparbegäranden,
   ny förberedelse efter omstart, samma importförsök i en annan
   administratörs webbläsare, tappat förberedelsesvar, väntande rensning
