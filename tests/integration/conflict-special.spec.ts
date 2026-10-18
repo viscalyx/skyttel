@@ -47,9 +47,14 @@ test('UTKAST-57: accepting a removed object discards only its proposal and prese
     ).toBeVisible();
     await expect(dialog.locator('.cp-warning [aria-hidden="true"]')).toHaveText('⚠');
     await expect(saved.locator('.cp-default')).toHaveClass(/cp-overlap/);
-    await expect(proposed.getByText('Mitt förslag', { exact: true }).locator('..')).toHaveClass(
+    await expect(proposed.getByText('Lo Lind', { exact: true }).locator('..')).toHaveClass(
       /cp-overlap/,
     );
+    const addedProperty = proposed
+      .getByText('Mitt förslag (Text)', { exact: true })
+      .locator('..');
+    await expect(addedProperty).toHaveClass(/cp-change/);
+    await expect(addedProperty).not.toHaveClass(/cp-overlap/);
     for (const width of [1280, 320]) {
       await page.setViewportSize({ width, height: 900 });
       expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
@@ -125,7 +130,7 @@ for (const [id, kind, title, reason, warning, action] of [
       const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
       const proposal = before.draft.relationships?.find((change) => change.id === 'mine');
       if (!proposal) throw new Error('Missing relationship fixture proposal');
-      const retainedName = `Lo Exempel → ${proposal.type.forwardLabel ?? proposal.type.name} → Molnmusik (Osäkert uppgivet)`;
+      const retainedName = `Lo Exempel → ${proposal.type.forwardLabel ?? proposal.type.name} → Molnmusik`;
       await expect(dialog.getByRole('heading', { name: retainedName, exact: true })).toBeVisible();
       await expect(
         dialog
@@ -135,7 +140,10 @@ for (const [id, kind, title, reason, warning, action] of [
       await expect(dialog.getByText(reason, { exact: true })).toBeVisible();
       await expect(dialog.getByText(warning, { exact: true })).toBeVisible();
       await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
-        'Osäkert uppgivet',
+        'Uppgiftens säkerhet',
+      );
+      await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
+        'Osäkert uppgivet (Text)',
       );
       if (kind === 'missing-endpoint') {
         await expect(
@@ -554,7 +562,7 @@ test('UTKAST-78: next conflict preserves retained choices and focuses the next r
       exact: true,
     });
     const serviceDescription = dialog.getByRole('button', {
-      name: 'Beskrivning: Ditt förslag – Min tjänst',
+      name: 'Beskrivning: Ditt förslag – Beskrivning: Min tjänst (Text)',
       exact: true,
     });
     await serviceName.click();
@@ -562,7 +570,10 @@ test('UTKAST-78: next conflict preserves retained choices and focuses the next r
     await list.getByRole('button', { name: 'Objekt Lo Lind', exact: true }).click();
     await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
     await dialog
-      .getByRole('button', { name: 'Beskrivning: Ditt förslag – Min anteckning', exact: true })
+      .getByRole('button', {
+        name: 'Beskrivning: Ditt förslag – Beskrivning: Min anteckning (Text)',
+        exact: true,
+      })
       .click();
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
     await expect(

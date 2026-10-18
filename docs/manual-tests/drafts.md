@@ -4250,7 +4250,9 @@ ny installation mellan fallen och avsluta enligt förberedelsens städning.
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
 **Förutsättningar:** Kör `new-removed-object`. Alex föreslår **Lo Lind** och
-**Mitt förslag** samt ett oberoende nytt objekt. Robin tar bort det sparade
+en ny fri textegenskap **Beskrivning: Mitt förslag** samt ett oberoende nytt
+objekt. Egenskapen fanns inte tidigare; den var inte ett uttryckligen tomt
+värde. Robin tar bort det sparade
 objektet. Kör `result` för att läsa utgångsläget.
 
 **Integrationstest:**
@@ -4268,7 +4270,7 @@ UTKAST-57.
   "reference": "1280 och 320 × 900 i samma körning; läsbara skillnader och omflöde.",
   "outcomes": [
     "Läsning, öppning och stängning ändrar inget. Förklaringen lyder **Objektet togs bort från den gemensamma kartan medan du redigerade det.** Varningen lyder **Objektet är borttaget. Ditt ändringsförslag kan inte återställa det.**",
-    "Bekräftelsen kastar endast Lo Linds förslag. Det oberoende förslaget består.",
+    "Namnändringen överlappar borttagningen. Den nya fria textegenskapen visar **Mitt förslag (Text)** som en föreslagen ändring; den fanns inte tidigare. Bekräftelsen kastar endast Lo Linds förslag. Det oberoende förslaget består.",
     "Objektet förblir borttaget och historiken får ingen ny gemensam ändring. Beskedet säger att förslaget tas bort ur utkastet. Namnet och typen står kvar i konfliktlistan med en bock och tillgänglig lösningsstatus."
   ]
 }
@@ -4281,7 +4283,9 @@ UTKAST-57.
 1. Öppna **1 konflikt i ditt utkast**. Läs förklaringen om den genomförda
    borttagningen och varningen att förslaget inte kan återställa objektet.
 2. Läs **Borttaget** och **✓ Förvalt** på den sparade sidan och hela ditt
-   förslag på den andra.
+   förslag på den andra. Namnändringen markeras som överlappande med
+   borttagningen. Den tillagda fria egenskapen visar **Mitt förslag (Text)**
+   som en föreslagen ändring.
    Under **Resultat av valen** anges **Objekt: Borttaget**.
 3. Stäng med Escape. Öppna konflikten igen.
 4. Välj **Acceptera borttagningen och kasta ditt förslag**. Läs statusen och
@@ -4308,9 +4312,9 @@ och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
-**Förutsättningar:** Kör `new-removed-relationship`. Alex ändrar den fria
-säkerhetsegenskapen
-för ett sparat samband från Lo till Molnmusik. Robin tar bort sambandet.
+**Förutsättningar:** Kör `new-removed-relationship`. Alex lägger till den fria
+textegenskapen **Uppgiftens säkerhet: Osäkert uppgivet** för ett sparat
+samband från Lo till Molnmusik. Robin tar bort sambandet.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
@@ -4327,7 +4331,7 @@ UTKAST-58.
   "reference": "1280 × 720; Chromium och syntetiska testidentiteter; acceptera ett redan borttaget samband.",
   "outcomes": [
     "Förklaringen lyder **Sambandet togs bort från den gemensamma kartan medan du redigerade det.** Varningen lyder **Ett ändringsförslag kan inte återställa ett borttaget samband.**",
-    "Öppning och stängning ändrar inget. Bara det bekräftade förslaget kastas; oberoende förslag består. Säkerheten **Osäkert uppgivet** går att läsa.",
+    "Öppning och stängning ändrar inget. Bara det bekräftade förslaget kastas; oberoende förslag består. Den fria textegenskapen **Uppgiftens säkerhet** visar **Osäkert uppgivet (Text)**.",
     "Sambandet förblir borttaget, kartan och historiken ändras inte och den lösta postens namn och typ finns kvar med lösningsmarkering."
   ]
 }
@@ -4339,6 +4343,8 @@ UTKAST-58.
 
 1. Öppna konflikten och läs förklaringen om det borttagna sambandet.
 2. Läs **Borttaget**, **✓ Förvalt** och hela det egna förslaget i läsläge.
+   Sambandets rubrik anger ändpunkterna och riktningen. Den fria egenskapen
+   **Uppgiftens säkerhet** visar **Osäkert uppgivet (Text)** i förslaget.
    Under **Resultat av valen** anges **Samband: Borttaget**.
 3. Stäng med Escape och öppna igen.
 4. Välj **Acceptera borttagningen och kasta ditt förslag**.
@@ -4353,7 +4359,8 @@ och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
   du redigerade det.** Varningen lyder **Ett ändringsförslag kan inte
   återställa ett borttaget samband.**
 - Öppning och stängning ändrar inget. Bara det bekräftade förslaget kastas;
-  oberoende förslag består. Säkerheten **Osäkert uppgivet** går att läsa.
+  oberoende förslag består. Den fria textegenskapen **Uppgiftens säkerhet**
+  visar **Osäkert uppgivet (Text)**.
 - Sambandet förblir borttaget, kartan och historiken ändras inte och den
   lösta postens namn och typ finns kvar med lösningsmarkering.
 
@@ -4363,7 +4370,8 @@ och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
-**Förutsättningar:** Kör `new-duplicate`. Alex föreslår ett osäkert samband;
+**Förutsättningar:** Kör `new-duplicate`. Alex föreslår ett samband med
+textegenskapen **Uppgiftens säkerhet: Osäkert uppgivet**;
 Robin sparar ett annat samband med samma typ, riktning och objekt.
 
 **Integrationstest:**
@@ -4419,7 +4427,8 @@ och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
 **Förutsättningar:** Kör `new-missing-endpoint`. Robin tar bort målobjektet
-Molnmusik efter att Alex föreslår ett samband till det.
+Molnmusik efter att Alex föreslår ett samband till det med den fria
+textegenskapen **Uppgiftens säkerhet: Osäkert uppgivet**.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
@@ -4477,7 +4486,8 @@ underlag.
 **Användare:** Alex och Robin enligt förberedelsen ovan.
 
 **Förutsättningar:** Kör `new-own-removal`. Alex föreslår att Lo tas bort;
-Robin sparar **Lo Berg** och **Nya sparade fakta** innan Alex hinner spara.
+Robin sparar **Lo Berg** och den fria textegenskapen
+**Beskrivning: Nya sparade fakta** innan Alex hinner spara.
 
 **Integrationstest:**
 [conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
@@ -5369,8 +5379,10 @@ UTKAST-78.
 **Steg:**
 
 1. Öppna **2 konflikter i ditt utkast**. Välj musiktjänsten och dess
-   föreslagna namn **Min musiktjänst** och beskrivning **Min tjänst**.
-2. Välj Lo i listan och välj dess föreslagna namn och beskrivning.
+   föreslagna namn **Min musiktjänst** och fria textegenskap
+   **Beskrivning: Min tjänst**.
+2. Välj Lo i listan och välj dess föreslagna namn och fria textegenskap
+   **Beskrivning: Min anteckning**.
    Välj **Lägg valen i utkastet**. Läs resultatet.
 3. Välj **Nästa konflikt** från resultatet. Kontrollera fokus på rubriken
    **Min musiktjänst** och att båda tidigare valen fortfarande är markerade.
