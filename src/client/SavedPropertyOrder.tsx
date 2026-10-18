@@ -10,7 +10,7 @@ export function SavedPropertyOrder({
 }) {
   if (
     !before?.length ||
-    before.map(({ id }) => id).join(',') === after.map(({ id }) => id).join(',')
+    (before.length === after.length && before.every(({ id }, index) => id === after[index].id))
   )
     return null;
   return (

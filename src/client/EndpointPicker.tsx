@@ -32,7 +32,7 @@ export function EndpointPicker({
       object,
       type: change?.type ?? state.types.find((type) => type.id === object.typeId),
       before: change?.before,
-      beforeType: change?.beforeType,
+      beforeType: change?.beforeType ?? change?.type,
       proposal: change ? (change.before ? ('Ändrat' as const) : ('Nytt' as const)) : undefined,
       removed: false,
     };
