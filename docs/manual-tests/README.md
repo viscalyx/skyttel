@@ -611,13 +611,13 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   tillämpat och uteblivet tillägg; KARTA-20 och KARTA-22 har skilda
   ordnings- och fokusreferenser, med fullständigt sparande och omstart vid
   1440px.
+  KARTA-07 använder verkliga familjeformulär med separat HTTP-underlag;
+  KARTA-25 skyddar den samtidiga dubblettdialogen. KARTA-08 har en komplett
+  1280px/ljus referens och fem egna native konfigurationsfall.
 - [Fria egenskaper](free-properties.md): upprepade etiketter, datatypbyte,
   bevarad felaktig inmatning, separat tömning och borttagning samt
   tangentbordsstyrd ordning genom utkast, sparande och omstart på dator
   och mobil.
-  KARTA-07 använder verkliga familjeformulär med separat HTTP-underlag;
-  KARTA-25 skyddar den samtidiga dubblettdialogen. KARTA-08 har en komplett
-  1280px/ljus referens och fem egna native konfigurationsfall.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon, flera flyttbara uppgiftsfönster och
   högerklickets sju ikoner och uppgiftsfönstrens fem åtgärdsikoner.

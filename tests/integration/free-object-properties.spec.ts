@@ -128,6 +128,20 @@ for (const width of [1440, 320]) {
       ]);
       expect(changed.id).toBe(staged.id);
       expect((await read()).objects[0].properties).toEqual(staged.after?.properties);
+      await page.getByRole('button', { name: 'Redigera Egenskapscykeln', exact: true }).click();
+      await expect(edit.getByLabel('Objekttyp', { exact: true })).toHaveValue(nextType.id);
+      await edit.getByRole('button', { name: 'Fria egenskaper', exact: true }).click();
+      await expect(savedFirst.getByLabel('Etikett', { exact: true })).toHaveValue('Pris');
+      await expect(savedFirst.getByLabel('Datatyp', { exact: true })).toHaveValue('boolean');
+      await expect(savedFirst.getByLabel('Värde', { exact: true })).toHaveValue('');
+      await expect(edit.getByRole('group', { name: 'Egenskap 6', exact: true })).toHaveCount(0);
+      const remainingSecond = edit.getByRole('group', { name: 'Egenskap 2', exact: true });
+      await expect(remainingSecond.getByLabel('Etikett', { exact: true })).toHaveValue(
+        'Beskrivning',
+      );
+      await expect(remainingSecond.getByLabel('Värde', { exact: true })).toHaveValue(
+        'Egen anteckning',
+      );
     } finally {
       await installation.close();
     }
