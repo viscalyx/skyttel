@@ -32,7 +32,16 @@ export function relationshipTypes(database: Database.Database, householdId: stri
     if (
       !type ||
       Object.keys(type).some(
-        (key) => !['name', 'description', 'forwardLabel', 'reverseLabel'].includes(key),
+        (key) =>
+          ![
+            'id',
+            'householdId',
+            'revision',
+            'name',
+            'description',
+            'forwardLabel',
+            'reverseLabel',
+          ].includes(key),
       ) ||
       typeof type.name !== 'string' ||
       !type.name.trim() ||

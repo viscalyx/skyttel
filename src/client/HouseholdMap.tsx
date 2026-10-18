@@ -688,12 +688,10 @@ export function HouseholdMap({
         failure instanceof MapRequestError &&
         [
           'duplicate_relationship',
-          'invalid_custom_value',
+          'invalid_properties',
           'invalid_type_definition',
           'invalid_relationship_type',
-          'field_kind_in_use',
           'definition_in_use',
-          'field_in_use',
         ].includes(failure.code)
       ) {
         setError(rejectionMessage(failure.code));

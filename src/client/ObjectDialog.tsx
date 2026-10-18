@@ -128,7 +128,6 @@ export function ObjectDialog({
   }
   const [error, setError] = useState('');
   const [section, setSection] = useState('Grunduppgifter');
-  const type = types.find((type) => type.id === editor.value.typeId);
   const [errors, setErrors] = useState<
     { id: string; label: string; message: string; section: string }[]
   >([]);

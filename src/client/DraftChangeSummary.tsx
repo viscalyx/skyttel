@@ -64,7 +64,10 @@ export function typeDifferences(
   before: ObjectType & RelationshipType,
   after: ObjectType & RelationshipType,
 ) {
-  const changes = [...difference('Namn', before.name, after.name)];
+  const changes = [
+    ...difference('Namn', before.name, after.name),
+    ...difference('Beskrivning', valueText(before.description), valueText(after.description)),
+  ];
   for (const key of ['forwardLabel', 'reverseLabel'] as const)
     changes.push(
       ...difference(

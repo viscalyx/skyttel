@@ -139,13 +139,9 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
           'Hushållets innehåll har ersatts. Läs om underlaget. Gamla försök och godkännanden gäller inte det nya innehållet.',
         forbidden: 'Åtkomsten är återkallad. Anslut på nytt i Skyttel.',
         invalid_request:
-          'Ogiltiga uppgifter. Rätta förslaget enligt verktygets och typens definitioner.',
+          'Ogiltiga uppgifter. Rätta förslaget enligt verktygets egenskaps- och typdefinitioner.',
         definition_in_use:
           'Definitionen används av aktuellt eller upphört innehåll eller beständiga utkast. Ta bort användande objekt eller samband, eller byt deras typ först. Andras privata förslag visas inte. Inget innehåll tas bort automatiskt.',
-        field_in_use:
-          'Fältet har fältvärden i aktuellt eller upphört innehåll eller beständiga utkast. Hantera värdena uttryckligen innan fältet tas bort. Andras privata förslag visas inte.',
-        field_kind_in_use:
-          'Fältets värdeslag används. Skapa ett nytt fält med önskat värdeslag och bevara tidigare fältvärden tills de hanteras uttryckligen. Ingen automatisk konvertering görs.',
         result_unknown:
           'Utfallet är okänt. Kontrollera sparförsöket före nya ändringar eller återförsök. Påstå inte att något sparades eller återställdes.',
       };

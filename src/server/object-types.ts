@@ -22,7 +22,9 @@ export function objectTypes(database: Database.Database, householdId: string, us
     const type = value as Partial<ObjectType> | null;
     if (
       !type ||
-      Object.keys(type).some((key) => !['name', 'description'].includes(key)) ||
+      Object.keys(type).some(
+        (key) => !['id', 'householdId', 'revision', 'name', 'description'].includes(key),
+      ) ||
       typeof type.name !== 'string' ||
       !type.name.trim() ||
       type.name.length > 200 ||
