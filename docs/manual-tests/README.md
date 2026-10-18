@@ -666,11 +666,13 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   och mörkt Under världshavet som personliga temaval, återläsning utan
   ändrad karta, sandbotten, vattenyta och sex ljusformer genom vanlig
   kameranavigering. [Respons och stabilitet](background-performance.md)
-  prövar alla sju utföranden med hela varv, zoomens ytterlägen,
-  rörelsestyrkor, lageravstånd, objektflyttning och upprepade byten.
-- [Bakgrundens tillgänglighet](background-accessibility.md): sambandens
-  färdiga kontrast, sju motiv i gles och tät karta, textalternativ,
-  tangentbord, pekemulering, omflöde och sparstatus. Fysisk pekskärm,
+  prövar alla sju utföranden med kort navigering, objektflyttning och
+  bakgrundsbyten. Hela varv och zoomens ytterlägen har separat tekniskt
+  underlag i webbläsarsviten.
+- [Bakgrundens tillgänglighet](background-accessibility.md): läsa objekt
+  och använda tabellen i ljust och mörkt tema, tangentbord, pekemulering,
+  omflöde och sparstatus. Separat tekniskt underlag mäter kontrast för
+  sju motiv i gles och tät karta. Fysisk pekskärm,
   verklig förstoring och längre bruk har en separat mänsklig observation.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,

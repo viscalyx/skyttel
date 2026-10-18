@@ -75,8 +75,8 @@ Välj **Karta** så att rymdkartan visas. Börja med systemets minskade rörelse
 
 ### BAKGRUND-05: Alla bakgrunder behåller navigering och stabilitet
 
-**Syfte:** Upptäcka tappade bildrutor, felaktigt återanvända bakgrundsbilder,
-oavsiktlig animation och förlorad orientering efter upprepade val.
+**Syfte:** Upptäcka felaktigt återanvända bakgrundsbilder, oavsiktlig
+animation och förlorad orientering eller placering vid bakgrundsbyten.
 
 **Användare:** Provhushållets Skyttel-användare.
 
@@ -86,10 +86,16 @@ oavsiktlig animation och förlorad orientering efter upprepade val.
 [background-stability.spec.ts](../../tests/integration/background-stability.spec.ts),
 BAKGRUND-05. Provet använder den riktiga applikationen och tillfällig
 SQLite. Jämförelsen använder endast bakgrundspixlar som är fria från
-DOM-överlägg i båda bilderna; vanliga helsidesbilder av
-zoomens ytterlägen behålls också. Bildigenkänning av motiven och fysisk
-pekrespons bedöms separat.
+DOM-överlägg i båda bilderna. Varje motiv får en kort kontroll av rotation,
+panorering, zoom, återställning och av/på. Objektflyttning provas en gång
+före bytena; den sparade placeringen kontrolleras för alla motiv.
+Nollstyrkor, lageravstånd och vanlig navigering provas en gång i
+[PLACERING-14](personal-view.md#placering-14-rörelseinställningar-och-vanlig-navigering).
+Hela varv och zoomens ytterlägen provas separat som tekniskt underlag i
+[spatial-scene.test.tsx](../../tests/browser/spatial-scene.test.tsx).
+Bildigenkänning av motiven och fysisk pekrespons bedöms separat.
 
+<!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
@@ -99,40 +105,39 @@ pekrespons bedöms separat.
     "spec": "tests/integration/background-stability.spec.ts",
     "caseId": "BAKGRUND-05"
   },
-  "reference": "16 objekt, datorvy, sju bakgrunder och rörelsens ytterlägen.",
+  "reference": "16 objekt, datorvy, en objektflyttning och en kort navigerings- och byteskontroll per bakgrund.",
   "outcomes": [
     "Bakgrunden är stilla utan kamerahandlingar och återställning ger samma vy.",
-    "Nollstyrkor stoppar panoreringens och zoomens bakgrundsrespons.",
     "Objektflyttning lämnar bakgrunden stilla.",
-    "Upprepade bakgrundsval bevarar kamera och personliga placeringar."
+    "Bakgrundsbyten och av/på bevarar kamera och personliga placeringar."
   ]
 }
 ```
 -->
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Välj varje bakgrund genom **Inställningar → Rymdkartan** och dess tema.
-   Återgå till kartan och öppna **Navigera**. Välj **Återställ vy** vid behov.
-2. Kontrollera att bakgrunden står stilla utan navigering. Rotera ett helt
-   varv och tillbaka. Panorera upprepade gånger, zooma till båda ytterlägena
-   och välj **Återställ vy**.
-3. Växla **Visa bakgrund** av och på tre gånger för samma bakgrund.
-   Kontrollera att objektens lägen och kamerans orientering behålls.
-4. Sätt **Panoreringsstyrka** och **Zoomstyrka** till noll. Panorera och
-   zooma kartan. Kontrollera att bakgrunden står stilla. Återställ vyn och
-   sätt sedan styrkorna till 100 procent. Prova **Lageravstånd** 0,5 och 2,0
-   med samma panorering och zoom efter återställd vy. Kontrollera synlig
-   rörelse och skillnad mellan lageravstånden.
-5. Återställ vyn och välj **Återställ rörelse**. Markera ett objekt,
-   öppna **Ordna min vy** och flytta objektet uppåt med knappen.
+1. Välj **Pärlemor** i ljust tema. Markera **Provobjekt 00**, öppna
+   **Navigera → Ordna min vy** och flytta objektet uppåt med knappen.
    Kontrollera att bakgrunden står stilla och placeringen sparas.
+   Avmarkera objektet med Enter på dess markör.
+2. Välj varje bakgrund genom **Inställningar → Rymdkartan** och dess tema.
+   Återgå till kartan och öppna **Navigera**. Välj **Återställ vy** vid behov.
+3. Kontrollera att bakgrunden står stilla utan navigering. Tryck två gånger
+   på **Rotera vänster**, två gånger på **Panorera höger** och två gånger
+   på **Zooma in**. Kontrollera synlig bakgrundsrespons efter varje reglage.
+   Välj **Återställ vy** och jämför med ursprungsbilden.
+4. Växla **Visa bakgrund** av och på en gång för samma bakgrund.
+   Kontrollera att objektens lägen, den sparade placeringen och kamerans
+   orientering behålls. Upprepa steg 2–4 för alla sju bakgrunder.
 
 **Förväntat resultat:**
 
-- Navigering fungerar även över hela varv och zoomens ytterlägen.
+- Varje bakgrund följer rotation, panorering och zoom; återställning ger
+  samma bild som före kamerahandlingarna.
 - Ingen självständig animation, skarv, tom bakgrund eller tappad karta uppstår.
-- Nollstyrkor, upprepade val och återställning ger resultaten ovan.
+- Bakgrundsbyten och av/på bevarar den personliga placeringen.
 
 Den visuella jämförelsen av sand, yta och de sex djurformerna hör till
 [bakgrundsfallen](background.md). Täta kartors överlappningar bedöms
