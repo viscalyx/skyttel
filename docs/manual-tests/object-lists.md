@@ -1516,6 +1516,8 @@ SÖK-08.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Förbered utforskning utan extra flagga.
+Sambandet Alex → Använder → Blå cykel har inga fria egenskaper. Det innebär
+inte ett tomt värde eller en förvald säkerhetsuppgift.
 
 **Integrationstest:**
 [map-exploration.spec.ts](../../tests/integration/map-exploration.spec.ts),
@@ -1529,7 +1531,9 @@ endpoints without expanding their chains”.
 2. Öppna kartan, sök **Alex** och tryck Escape i sökfältet. Läs tidigare och
    föreslagen koppling. Kontrollera att Bostaden inte visas.
 3. Kasta förslaget. Markera det ursprungliga sambandet som upphört
-   och spara. Föreslå sedan målobjekt Garaget och status Aktuellt.
+   och granska dess status före och efter ändringen. Ingen säkerhetsuppgift
+   ska läggas till vid läsningen. Spara. Föreslå sedan målobjekt Garaget och
+   status Aktuellt.
 4. Sök **Alex** i kartan igen. Kontrollera att tidigare upphört samband
    och cykeln döljs. Välj upplysningens **Ta med upphörda**.
 

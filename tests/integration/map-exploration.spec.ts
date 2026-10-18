@@ -254,7 +254,6 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
         ['Från', 'Alex Exempel'],
         ['Sambandstyp', 'Använder'],
         ['Till', 'Blå cykel'],
-        ['Uppgiftens säkerhet', 'Bekräftat'],
         ['Status', status],
         ['Gäller', applies],
       ])
@@ -265,6 +264,9 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
             .locator('..')
             .locator('dd'),
         ).toHaveText(value);
+      await expect(
+        side.locator('dt').filter({ hasText: /^Uppgiftens säkerhet(?: · ändrat)?$/ }),
+      ).toHaveCount(0);
     }
     await closeSupportDialog(page, 'Alex Exempel → Använder → Blå cykel');
     await closeTextView(page);
