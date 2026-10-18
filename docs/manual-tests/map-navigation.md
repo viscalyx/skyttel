@@ -273,9 +273,11 @@ NAVIGATION-04.
    kontrollera fokus på rubriken **Uppgifter för Kim Exempel**.
 4. Välj **Tillbaka**. Välj **Redigera samband** vid samma samband och
    kontrollera Lo som **Från objekt** och Kim som **Till objekt**.
-5. Välj **Osäkert uppgivet** som uppgiftens säkerhet. Läs meningen
-   **Lo Exempel använder Kim Exempel (Osäkert uppgivet)** och välj
-   **Lägg i utkastet**. Sambandsdialogen ska finnas kvar i läsläge.
+5. Lägg till den fria egenskapen **Uppgiftens säkerhet** med datatyp **Text**
+   och värdet **Osäkert uppgivet**. Läs meningen
+   **Lo Exempel använder Kim Exempel** och välj **Lägg i utkastet**.
+   Sambandsdialogen ska finnas kvar i läsläge. Under samma samband visar
+   egenskapen **Osäkert uppgivet (Text)**.
 
 **Förväntat resultat:**
 

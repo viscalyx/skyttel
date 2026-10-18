@@ -288,7 +288,7 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
     await setProperty(relationships, 'Uppgiftens säkerhet', 'Osäkert uppgivet');
     await expect(
       relationships.getByRole('region', { name: 'Sambandet före inskickning' }),
-    ).toHaveText('Lo Exempel använder Kim Exempel (Osäkert uppgivet)');
+    ).toHaveText('Lo Exempel använder Kim Exempel');
     const response = page.waitForResponse(
       (response) =>
         response.url() === `${path}/relationship-form` && response.request().method() === 'POST',
@@ -298,14 +298,8 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
     await expect(
       relationships.getByRole('heading', { name: 'Redigera samband', exact: true }),
     ).toHaveCount(0);
-    await expect(
-      relationships
-        .getByRole('heading', {
-          name: 'Lo Exempel → Använder → Kim Exempel (Osäkert uppgivet)',
-          exact: true,
-        })
-        .locator('..'),
-    ).toContainText('Osäkert uppgivet');
+    await expect(item).toContainText('Osäkert uppgivet (Text)');
+    await expect(item).toContainText('Uppgiftens säkerhet');
     const after = await read();
     expect(after.objects).toEqual(before.objects);
     expect(after.relationships).toEqual(before.relationships);
@@ -317,7 +311,7 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
         targetId: 'kim',
         properties: [
           {
-            id: 'certainty',
+            id: expect.any(String),
             label: 'Uppgiftens säkerhet',
             kind: 'text' as const,
             value: 'Osäkert uppgivet',
