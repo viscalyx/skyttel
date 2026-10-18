@@ -562,7 +562,7 @@ test('UTKAST-78: next conflict preserves retained choices and focuses the next r
       exact: true,
     });
     const serviceDescription = dialog.getByRole('button', {
-      name: 'Beskrivning: Ditt förslag – Beskrivning: Min tjänst (Text)',
+      name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min tjänst (Text)',
       exact: true,
     });
     await serviceName.click();
@@ -571,7 +571,7 @@ test('UTKAST-78: next conflict preserves retained choices and focuses the next r
     await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
     await dialog
       .getByRole('button', {
-        name: 'Beskrivning: Ditt förslag – Beskrivning: Min anteckning (Text)',
+        name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
         exact: true,
       })
       .click();
