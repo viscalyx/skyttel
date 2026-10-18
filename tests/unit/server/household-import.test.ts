@@ -97,6 +97,17 @@ function changedContent(change: (content: Record<string, unknown>) => void) {
 }
 
 test('older archives are rejected before preview without changing map, private work, access or personal views', async () => {
+  const state = await (await client.request(`${path}/map`)).json();
+  expect(
+    (
+      await client.json(`${path}/map/draft`, {
+        version: state.draft.version,
+        id: 'private-work',
+        baseRevision: null,
+        value: { name: 'Privat lampa', description: 'Bevara förslaget', typeId: state.types[0].id },
+      })
+    ).status,
+  ).toBe(200);
   const routes = [`${path}/map`, `${path}/map/history`, `${path}/map/view`, '/api/bootstrap'];
   const before = await Promise.all(
     routes.map(async (route) => (await client.request(route)).json()),
