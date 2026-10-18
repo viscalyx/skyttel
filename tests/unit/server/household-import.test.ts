@@ -834,16 +834,10 @@ test('custom definitions, ended facts, removed catalog entries and unsaved priva
     });
     expect(response.status, await response.text()).toBe(200);
   };
-  const fields = [
-    { id: 'serial', name: 'Serienummer', description: '', kind: 'text' },
-    { id: 'count', name: 'Antal', description: '', kind: 'number' },
-    { id: 'date', name: 'Datum', description: '', kind: 'date' },
-    { id: 'enabled', name: 'Aktiv', description: '', kind: 'boolean' },
-  ];
   await post('object-type', {
     id: 'equipment',
     baseRevision: null,
-    value: { name: 'Utrustning', description: 'Egna fält', fields },
+    value: { name: 'Utrustning', description: 'Hushållets utrustning' },
   });
   await post('relationship-type', {
     id: 'installed',
@@ -868,7 +862,7 @@ test('custom definitions, ended facts, removed catalog entries and unsaved priva
       properties: [
         { id: 'serial', label: 'serial', kind: 'text', value: 'SYNTH-1' },
         { id: 'count', label: 'count', kind: 'number', value: 2 },
-        { id: 'date', label: 'date', kind: 'text', value: '2026-01-01' },
+        { id: 'date', label: 'Kontrolldatum', kind: 'date', value: '2026-01-01' },
         { id: 'enabled', label: 'enabled', kind: 'boolean', value: false },
       ],
     },
@@ -902,7 +896,7 @@ test('custom definitions, ended facts, removed catalog entries and unsaved priva
   await post('object-type', {
     id: 'equipment',
     baseRevision: 1,
-    value: { name: 'Privat utrustning', description: 'Privat förslag', fields },
+    value: { name: 'Privat utrustning', description: 'Privat förslag' },
   });
   await post('relationship-type', {
     id: 'installed',
@@ -962,7 +956,7 @@ test('custom definitions, ended facts, removed catalog entries and unsaved priva
       properties: [
         { id: 'serial', label: 'serial', kind: 'text', value: 'SYNTH-1' },
         { id: 'count', label: 'count', kind: 'number', value: 2 },
-        { id: 'date', label: 'date', kind: 'text', value: '2026-01-01' },
+        { id: 'date', label: 'Kontrolldatum', kind: 'date', value: '2026-01-01' },
         { id: 'enabled', label: 'enabled', kind: 'boolean', value: false },
       ],
     }),

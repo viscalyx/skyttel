@@ -264,10 +264,6 @@
 .household-table-details {
   max-width: 1100px;
 }
-.household-table-description {
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-}
 .household-table-details dl {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
