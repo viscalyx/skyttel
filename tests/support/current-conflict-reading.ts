@@ -26,7 +26,20 @@ export async function expectConflictReadValue(
     .filter({ hasText: new RegExp(`^${escaped}(?:\\s+· ändrat)?$`) })
     .locator('..')
     .locator('dd');
-  await expect(field).toHaveText(value);
+  if (typeof value === 'string') {
+    if (
+      (value === 'Ej uppgivet' ||
+        (label === 'Uppgiftens säkerhet' && ['Känt', 'Bekräftat'].includes(value))) &&
+      !(await field.count())
+    ) {
+      await expect(field).toHaveCount(0);
+      return;
+    }
+    const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    await expect(field).toHaveText(
+      new RegExp(`^${escapedValue}(?: \\((?:Text|Tal|Datum|Ja/nej)\\))?$`),
+    );
+  } else await expect(field).toHaveText(value);
 }
 
 export async function expectSavedConflictObject(

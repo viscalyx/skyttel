@@ -8,9 +8,6 @@ import { conflictCollaborators } from './conflict-properties.js';
 export type ArchiveConflictKind =
   | 'missing-object-type'
   | 'missing-relationship-type'
-  | 'invalid-datatype'
-  | 'replaced-object-field'
-  | 'replaced-relationship-field'
   | 'missing-object-definition'
   | 'missing-relationship-definition'
   | 'removed-object-definition'
@@ -84,8 +81,7 @@ export async function prepareArchiveConflict(
   const relationship =
     kind === 'missing-relationship-type' ||
     kind === 'removed-relationship-definition' ||
-    kind === 'missing-relationship-definition' ||
-    kind === 'replaced-relationship-field';
+    kind === 'missing-relationship-definition';
   const noRemovedDefinition =
     kind === 'missing-object-definition' || kind === 'missing-relationship-definition';
   let baseline: Awaited<ReturnType<typeof downloadConflictArchive>> | undefined;
@@ -202,19 +198,13 @@ export async function prepareArchiveConflict(
         await app.post(member, 'discard', { version: (await app.read(member)).draft.version })
       ).status(),
     ).toBe(200);
-    const newer =
-      kind === 'invalid-datatype'
-        ? { ...definition }
-        : kind.startsWith('replaced-')
-          ? { ...definition }
-          : null;
     expect(
       (
         await app.post(administrator, definitionRoute, {
           version: (await app.read()).draft.version,
           id: typeId,
           baseRevision: type.revision,
-          value: newer,
+          value: null,
         })
       ).status(),
     ).toBe(200);

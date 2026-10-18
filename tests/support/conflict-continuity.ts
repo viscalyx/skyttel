@@ -38,9 +38,9 @@ export async function prepareConflictTypeContinuity(
   second: APIRequestContext,
 ) {
   const app = await conflictCollaborators(first, second);
-  for (const [id, name, kind] of [
-    ['notes', 'Anteckningsobjekt', 'text'],
-    ['numbers', 'Mätobjekt', 'number'],
+  for (const [id, name] of [
+    ['notes', 'Anteckningsobjekt'],
+    ['numbers', 'Mätobjekt'],
   ]) {
     expect(
       (

@@ -4,7 +4,7 @@ import { closeTextView, openDraftReview, openNewObject, signIn } from './client.
 import { openObjectRelationships, openTypeDefinitions } from './domain-work.js';
 import { prepareDraftReview } from './draft-review.js';
 import { alex, type createInstallation, robin } from './installation.js';
-import { propertyRow, setProperty } from './property-controls.js';
+import { setProperty } from './property-controls.js';
 import { stageRelationshipAndClose } from './relationship-dialog.js';
 import { readRemovalProposals } from './removal-reading.js';
 import { createPreparedContext } from './test.js';

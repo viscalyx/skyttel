@@ -123,17 +123,12 @@ export async function prepareDraftReview(client: APIRequestContext, origin: stri
     'Obesvarad fråga',
   ].entries())
     await post('relationship', {
-      id: `draft-edge-${index}`,
+      id: `draft-edge-${['known', 'unknown', 'none', 'uncertain', 'unresolved'][index]}`,
       baseRevision: null,
       value: {
-        typeId: relationshipType.id,
+        typeId: index === 2 ? saved.relationshipTypes[0].id : relationshipType.id,
         sourceId: index > 2 ? 'draft-unspecified' : bike.id,
-        targetId:
-          index === 0 || index === 4
-            ? 'draft-unspecified'
-            : index === 2
-              ? 'draft-unresolved'
-              : bike.id,
+        targetId: index === 0 || index === 4 ? 'draft-unspecified' : bike.id,
         properties: [
           {
             id: 'note',

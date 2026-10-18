@@ -18,6 +18,12 @@ export function propertyRow(form: Locator | Page, label: string) {
   });
 }
 
+export async function openProperties(form: Locator | Page) {
+  const section = form.getByRole('button', { name: 'Fria egenskaper', exact: true });
+  if ((await section.count()) && (await section.getAttribute('aria-expanded')) !== 'true')
+    await section.click();
+}
+
 /** Add or correct one property without changing any other row. */
 export async function setProperty(
   form: Locator | Page,
@@ -25,9 +31,7 @@ export async function setProperty(
   value: string,
   kind: PropertyKind = 'text',
 ) {
-  const section = form.getByRole('button', { name: 'Fria egenskaper', exact: true });
-  if ((await section.count()) && (await section.getAttribute('aria-expanded')) !== 'true')
-    await section.click();
+  await openProperties(form);
   let row = propertyRow(form, label);
   if (!(await row.count())) {
     await form.getByRole('button', { name: 'Lägg till egenskap', exact: true }).click();
