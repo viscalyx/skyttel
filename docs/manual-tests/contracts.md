@@ -217,7 +217,7 @@ typen Avtal, Bostadslånet med typen Låneavtal, Reservkrediten med typen
 Kreditavtal, Bilavbetalningen med typen Avbetalningsavtal och
 Bilförsäkringen med typen Försäkringsavtal. Skapa personerna Alex, Kim och
 Lo, företaget Björkhem AB, föreningen Låneföreningen och bankkontot
-Betalkontot. Välj uttryckligen Ospecificerat objekt för Betalkontot.
+Betalkontot. Välj **Identiteten behöver redas ut** för Betalkontot.
 Lämna ekonomiska uppgifter tomma och lägg alla objekten i samma utkast.
 
 **Integrationstest:**
@@ -238,16 +238,18 @@ identities through a blocked save and correction”.
 3. Lägg Finansierar från Bilavbetalningen till Blå bilen och Försäkrar
    från Bilförsäkringen till Blå bilen. Lägg Äger från Blå bilen till
    Kim, Betalar från Kim till Bilavbetalningen och Använder från Lo till
-   Blå bilen med säkerheten Osäkert uppgivet.
+   Blå bilen. Lägg den fria textegenskapen **Uppgiftens säkerhet** med
+   värdet **Osäkert uppgivet** på användningssambandet.
 4. Lägg Betalas med från Garagehyra till Betalkontot. Lägg samma samband
-   från Bostadshyra till Betalkontot med Obesvarad identitetsfråga.
+   från Bostadshyra till Betalkontot med den fria textegenskapen
+   **Uppgiftens säkerhet** och värdet **Obesvarad fråga**.
 5. Ladda om. Granska hela utkastet och kontrollera osäkerheten, den
-   obesvarade frågan och det ospecificerade bankkontot.
+   obesvarade frågan och bankkontots identitet som behöver redas ut.
    Kontrollera att Spara hela utkastet är spärrad och inget är gemensamt
    sparat. Det automatiska provet försöker dessutom spara genom HTTP och
    kontrollerar att hela sparandet avvisas utan ändrad karta eller historik.
-6. Rätta Bostadshyras betalningssamband till Känt och välj Betalkontot
-   uttryckligen. Spara hela utkastet. Starta om provappen, ladda om och
+6. Öppna Betalkontots objektformulär och välj **Ospecificerat objekt**.
+   Lägg rättelsen i utkastet och spara hela utkastet. Starta om provappen, ladda om och
    kontrollera att alla objekt och samband finns kvar utan ifyllda
    ekonomiska uppgifter.
 7. Sök efter Bostadshyra och rätta namnet till Hyran på Björkbacken.
@@ -265,8 +267,9 @@ identities through a blocked save and correction”.
   gälla samma bostad. Hyresavtalen behåller typen Hyresavtal.
 - Avtalsparter, betalare, ägare och användare är separata samband mellan
   självständiga objekt. Bilens identitet ändras inte vid rättelse av ägare.
-- En obesvarad identitetsfråga hindrar hela sparandet. Ett uttryckligen
+- Bankkontots olösta identitet hindrar hela sparandet. Ett uttryckligen
   valt ospecificerat bankkonto går att spara och identifiera senare.
+  De fria egenskapernas texter ändrar inte identitet eller sparbarhet.
 - Tomma ekonomiska uppgifter hindrar inte sparandet. Inga belopp eller
   andra roller härleds från de angivna sambanden.
 - Rättelsen bevarar tidigare objektvärden och samband i historiken med
