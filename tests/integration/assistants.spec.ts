@@ -782,9 +782,7 @@ test('AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klient
       privateProposal.locator('dt').filter({ hasText: /^Typ$/ }).locator('..').locator('dd'),
     ).toHaveText('Person');
     await expect(privateProposal).not.toContainText('Alex privata förslag');
-    await expect(privateProposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(
-      0,
-    );
+    await expect(privateProposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
     for (const [label, value] of [
       ['Namn', 'Robins privata förslag'],
       ['Typ', 'Person'],

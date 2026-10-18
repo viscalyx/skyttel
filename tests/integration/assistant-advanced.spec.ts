@@ -546,9 +546,7 @@ test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ pag
       .click();
     privateProposal = await readDraftProposal(otherPage, 'Senare privat användning');
     await expect(privateProposal).toContainText('Samtidig typ');
-    await expect(privateProposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(
-      0,
-    );
+    await expect(privateProposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
     await otherPage.keyboard.press('Escape');
     const nativeRace = (await otherMcp.tool('read_my_draft')).changes.find(
       (change: { after: { name: string } }) => change.after.name === 'Senare privat användning',

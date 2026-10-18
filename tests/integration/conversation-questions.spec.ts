@@ -585,9 +585,7 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
       history.locator('.history-changes').getByText('Objekttyp: Person.', { exact: true }),
     ).toBeVisible();
     await expect(
-      history
-        .locator('.history-changes')
-        .getByText('Inga egenskaper.', { exact: true }),
+      history.locator('.history-changes').getByText('Inga egenskaper.', { exact: true }),
     ).toBeVisible();
     await expect(
       history.locator('.history-changes').getByText('Namn: Lo Exempel.', { exact: true }),
@@ -655,9 +653,7 @@ test('FRAGA-05: stopp under det verifierade sparbeskedet startar de fyra sekunde
       history.locator('.history-changes').getByText('Objekttyp: Person.', { exact: true }),
     ).toBeVisible();
     await expect(
-      history
-        .locator('.history-changes')
-        .getByText('Inga egenskaper.', { exact: true }),
+      history.locator('.history-changes').getByText('Inga egenskaper.', { exact: true }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     const savedLo = await readTableObject(page, 'Lo Exempel');

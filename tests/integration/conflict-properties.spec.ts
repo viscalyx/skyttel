@@ -335,9 +335,9 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
     await dialog
       .getByRole('button', { name: 'Till objekt: Ditt förslag – Lo Exempel', exact: true })
       .click();
-    await expect(
-      dialog.getByRole('region', { name: 'Ditt förslag', exact: true }),
-    ).toContainText('Uppgiftens säkerhet: Osäkert uppgivet (Text)');
+    await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
+      'Uppgiftens säkerhet: Osäkert uppgivet (Text)',
+    );
     await expect(
       dialog.getByRole('button', { name: /^Uppgiftens säkerhet · egenskap 1:/ }),
     ).toHaveCount(0);

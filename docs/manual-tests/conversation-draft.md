@@ -137,9 +137,9 @@ enheter”.
    Markera **Visa utkastet när ett samtal börjar**. Läs återkopplingen.
 2. Återgå till kartan och starta med text. Dölj utkastet och välj
    **Nytt samtal**. Öppna **Visa förslaget: Lo Exempel**, läs Person och
-   kontrollera att ingen egenskap Beskrivning finns. Stäng dialogen. Välj **Spara hela
-   utkastet** i utkastet. Vänta tills sparandet är klart, återgå till
-   textvyn och välj **Nytt samtal**. Öppna det tomma utkastet.
+   kontrollera att ingen egenskap Beskrivning finns. Stäng dialogen.
+   Välj **Spara hela utkastet** i utkastet. Vänta tills sparandet är klart,
+   återgå till textvyn och välj **Nytt samtal**. Öppna det tomma utkastet.
 3. Logga in som Alex i den andra webbläsarprofilen. Öppna den utskrivna
    adressen följd av `/households/draft-other-household`. Öppna samma
    inställning. Avmarkera den där, ladda om Alex första sida och läs valet.

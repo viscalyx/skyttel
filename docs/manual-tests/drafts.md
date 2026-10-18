@@ -2018,7 +2018,8 @@ UTKAST-35.
 
 **Steg:**
 
-1. Robin lägger namnet Eget namn och textegenskapen Anteckningar med Egen text i sitt utkast.
+1. Robin lägger namnet Eget namn och textegenskapen Anteckningar med Egen
+   text i sitt utkast.
 2. Lo ändrar enbart objektets namn till Lo Berg och sparar.
 3. Alex ändrar enbart Anteckningar till Alex text och sparar senare.
 4. Robin öppnar **Granska konflikter** och läser den sparade sidans

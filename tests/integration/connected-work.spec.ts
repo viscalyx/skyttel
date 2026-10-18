@@ -113,9 +113,9 @@ async function objectValues(page: Page, name: string, price?: string, descriptio
     await expect(propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true })).toHaveValue(
       description,
     );
-    await expect(propertyRow(form, 'Beskrivning').getByLabel('Datatyp', { exact: true })).toHaveValue(
-      'text',
-    );
+    await expect(
+      propertyRow(form, 'Beskrivning').getByLabel('Datatyp', { exact: true }),
+    ).toHaveValue('text');
   } else await expect(propertyRow(form, 'Beskrivning')).toHaveCount(0);
   if (price) {
     for (const [label, value] of [

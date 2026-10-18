@@ -89,7 +89,10 @@ test('UTKAST-56: pending and unknown conflict outcomes have one accessible statu
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
     await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
     await dialog
-      .getByRole('button', { name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)', exact: true })
+      .getByRole('button', {
+        name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
+        exact: true,
+      })
       .click();
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
     await expect(dialog.getByRole('status')).toContainText('Lägger valen');
@@ -479,9 +482,9 @@ test('UTKAST-51: a changed object type retains independent property kinds while 
       dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
     ).toBeEnabled();
     await expect(note).toHaveAttribute('aria-pressed', 'true');
-    await expect(dialog.getByRole('region', { name: 'Resultat av valen', exact: true })).toContainText(
-      'Min text (Text)',
-    );
+    await expect(
+      dialog.getByRole('region', { name: 'Resultat av valen', exact: true }),
+    ).toContainText('Min text (Text)');
     expect((await app.read()).draft).toEqual(before.draft);
     await dialog
       .getByRole('button', { name: 'Objekttyp: Ditt förslag – Anteckningsobjekt', exact: true })
@@ -563,7 +566,10 @@ test('UTKAST-127: a changed relationship reference refreshes its meaning without
       .getByRole('button', { name: 'Till objekt: Ditt förslag – Molnmusik', exact: true })
       .click();
     await dialog
-      .getByRole('button', { name: 'Uppgiftens säkerhet · egenskap 1: Ditt förslag – Uppgiftens säkerhet: Osäkert uppgivet (Text)', exact: true })
+      .getByRole('button', {
+        name: 'Uppgiftens säkerhet · egenskap 1: Ditt förslag – Uppgiftens säkerhet: Osäkert uppgivet (Text)',
+        exact: true,
+      })
       .click();
     const state = await app.read();
     await app.propose(other.request, 'draft', 'service', {
@@ -611,7 +617,10 @@ test('UTKAST-128: a conflict resolved by another client becomes read-only after 
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
     await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
     await dialog
-      .getByRole('button', { name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)', exact: true })
+      .getByRole('button', {
+        name: 'Beskrivning · egenskap 1: Ditt förslag – Beskrivning: Min anteckning (Text)',
+        exact: true,
+      })
       .click();
     await page.keyboard.press('Escape');
     await resolveConflictElsewhere(app, page.request);

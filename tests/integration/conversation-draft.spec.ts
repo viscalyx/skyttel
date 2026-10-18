@@ -177,7 +177,11 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     expect((await read()).draft.changes).toHaveLength(4);
     expect(await read()).toEqual(beforeReview);
     const savedAfter = await openSavedHistory(page);
-    if (!(await savedAfter.locator('.history-changes').evaluate((element) => element.hasAttribute('open'))))
+    if (
+      !(await savedAfter
+        .locator('.history-changes')
+        .evaluate((element) => element.hasAttribute('open')))
+    )
       await savedAfter.getByText('Visa ändringarna', { exact: true }).click();
     await expect(
       savedAfter.locator('.history-changes').getByText('Sista fyra: 1111 (Text)', { exact: true }),

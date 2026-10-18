@@ -749,8 +749,8 @@ med isolerad, nåbar HTTPS-installation, verklig inloggning och påhittade
 uppgifter. Loopback-adressen från launchern når inte en fysisk telefon.
 Verkliga leverantörsanrop kräver separat godkännande innan körning.
 Skapa Lo Exempel som Person med Påhittad uppgift när fallet behöver utkast;
-lägg inte till någon egenskap Beskrivning för FRAGA. Återställ utkast och samtal mellan fallen,
-och ta bort provhushållet när granskningen är klar.
+lägg inte till någon egenskap Beskrivning för FRAGA. Återställ utkast och
+samtal mellan fallen, och ta bort provhushållet när granskningen är klar.
 
 **Kräver mänsklig observation:** Frågan hörs, kan besvaras med tal eller text,
 och väntan består med mikrofon av. Hela Sparat och dess ljud måste avslutas
