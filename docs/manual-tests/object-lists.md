@@ -152,7 +152,8 @@ ingen och Okänd koppling.
    samband, inklusive föreslagen borttagning.
 2. Läs Har ingen och dess fria uppgift Uttryckligen inget samt Okänd koppling
    med Okänt. Båda har Cykel som verklig från- och tilländpunkt och erbjuder
-   Redigera samband.
+   Redigera samband. Följ Cykel-knappen på vartdera sambandet och kontrollera
+   rubrikfokus på Uppgifter för Cykel. Välj Tillbaka till sambandslistan.
 3. Läs Förvaras i-sambandet till Garage: den fria uppgiften Osäkert uppgivet,
    datumegenskapen 2024-12-31 och uttrycklig status Manuellt upphört. Läs hela
    den fria sambandsanteckningen.

@@ -372,15 +372,31 @@ test('LÄS-02: mobile full relationship reading separates explicit endpoints, or
     const links = dialog.locator('.household-read-relationships > li');
     await expect(links).toHaveCount(4);
     const none = links.filter({ has: page.getByRole('heading', { name: /Har ingen|har ingen/ }) });
-    await expect(none.locator('.household-read-link')).toHaveCount(2);
     await expect(none.getByRole('button', { name: 'Redigera samband', exact: true })).toBeVisible();
     await expect(none).toContainText('Uttryckligen inget');
     const unknown = links.filter({ has: page.getByRole('heading', { name: /okänd koppling/ }) });
-    await expect(unknown.locator('.household-read-link')).toHaveCount(2);
     await expect(
       unknown.getByRole('button', { name: 'Redigera samband', exact: true }),
     ).toBeVisible();
     await expect(unknown).toContainText('Okänt');
+    for (const selfLink of [none, unknown]) {
+      await expect(selfLink.locator('.household-read-link')).toHaveText('Cykel');
+      for (const label of ['Från objekt', 'Till objekt'])
+        await expect(
+          selfLink
+            .locator('dt')
+            .filter({ hasText: new RegExp(`^${label}$`) })
+            .locator('..')
+            .locator('dd'),
+        ).toHaveText('Cykel');
+      await selfLink.getByRole('button', { name: 'Cykel', exact: true }).click();
+      const object = page.getByRole('dialog', { name: 'Uppgifter för Cykel', exact: true });
+      await expect(
+        object.getByRole('heading', { name: 'Uppgifter för Cykel', exact: true }),
+      ).toBeFocused();
+      await object.getByRole('button', { name: 'Tillbaka', exact: true }).click();
+      await expect(dialog).toBeVisible();
+    }
     const storage = links.filter({
       has: page.getByRole('button', { name: 'Garage', exact: true }),
     });
