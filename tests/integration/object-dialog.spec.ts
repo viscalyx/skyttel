@@ -120,7 +120,9 @@ test('KARTA-17: pending staging blocks duplicate sends and known rejection keeps
     await expect(
       form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }),
     ).toBeDisabled();
-    await expect(form.getByRole('status')).toContainText('Lägger');
+    await expect(
+      form.getByRole('status', { name: 'Tillägg till utkastet', exact: true }),
+    ).toContainText('Lägger');
     await page.keyboard.press('Escape');
     await expect(form).toBeVisible();
     expect(sends).toBe(1);
@@ -399,10 +401,11 @@ test('KARTA-11: closed-section errors preserve all fields and focus the linked c
     const summary = dialog.getByRole('alert', { name: 'Formuläret innehåller fel' });
     await expect(summary).toBeFocused();
     expect((await read()).draft).toEqual(before.draft);
-    await summary.getByRole('link', { name: /Fria egenskaper/ }).click();
+    await summary.getByRole('link', { name: /Värde/ }).click();
     await expect(
       dialog.getByRole('button', { name: 'Fria egenskaper', exact: true }),
     ).toHaveAttribute('aria-expanded', 'true');
+    await expect(row.getByLabel('Värde', { exact: true })).toBeFocused();
     await row.getByLabel('Värde', { exact: true }).fill('399');
     await dialog.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     expect((await read()).draft.changes[0].after).toMatchObject({
@@ -414,7 +417,7 @@ test('KARTA-11: closed-section errors preserve all fields and focus the linked c
   }
 });
 
-test('KARTA-12: identity, custom fields, lifecycle and icon stay together when staging and editing', async ({
+test('KARTA-12: identity, free properties, lifecycle and icon stay together when staging and editing', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -442,9 +445,9 @@ test('KARTA-12: identity, custom fields, lifecycle and icon stay together when s
     const dialog = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
     await expect(dialog.getByLabel('Identitet', { exact: true })).toBeVisible({ timeout: 1000 });
     await dialog.getByLabel('Namn', { exact: true }).fill('Pendlarcykeln');
-    await setProperty(dialog, 'Beskrivning', 'Hela cykelns beskrivning.');
     await dialog.getByLabel('Objekttyp', { exact: true }).selectOption('bicycle');
     await dialog.getByLabel('Identitet', { exact: true }).selectOption('unspecified');
+    await setProperty(dialog, 'Beskrivning', 'Hela cykelns beskrivning.');
     await setProperty(dialog, 'Tillverkare', 'Exempelcykel');
     await setProperty(dialog, 'Antal växlar', '8', 'number');
     await setProperty(dialog, 'Inköpsdatum', '2026-04-03', 'date');
@@ -596,9 +599,6 @@ test('KARTA-13: changing type preserves all individual property identities and v
     const dialog = page.getByRole('dialog', { name: 'Redigera Cykeln', exact: true });
     await dialog.getByLabel('Objekttyp', { exact: true }).focus();
     await dialog.getByLabel('Objekttyp', { exact: true }).selectOption(nextType.id);
-    await expect(
-      page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true }),
-    ).toHaveCount(0);
     await expect(dialog.getByLabel('Objekttyp', { exact: true })).toHaveValue(nextType.id);
     await dialog.getByRole('button', { name: 'Fria egenskaper', exact: true }).click();
     await expect(propertyRow(dialog, 'Ramnummer').getByLabel('Värde', { exact: true })).toHaveValue(

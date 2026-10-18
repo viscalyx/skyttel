@@ -726,9 +726,9 @@ lägga ett delvis förslag i utkastet.
 1. Öppna Nytt objekt och ange Hela cykeln. Lägg till Pris under Fria
    egenskaper, välj Tal och ange inte ett tal.
 2. Öppna Grunduppgifter och försök lägga i utkastet. Kontrollera fokus på
-   felsammanfattningen och följ länken för felet under Fria egenskaper.
-3. Kontrollera att Fria egenskaper öppnas. Rätta värdet till 399 och välj Lägg
-   i utkastet och stäng.
+   felsammanfattningen och följ länken **Värde** för felet under Fria egenskaper.
+3. Kontrollera att Fria egenskaper öppnas och att värdefältet får fokus.
+   Rätta värdet till 399 och välj Lägg i utkastet och stäng.
 
 **Förväntat resultat:**
 
