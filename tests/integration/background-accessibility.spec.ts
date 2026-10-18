@@ -5,6 +5,7 @@ import type { PersonalView } from '../../src/shared/personal-view.js';
 import { contrast, measureContrast } from '../support/accessibility.js';
 import { createHousehold, openMap, openSettings, openTable, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+import { waitForMapScene } from '../support/map-scene.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 const space = (page: Page) => page.getByRole('region', { name: 'Rymdkarta', exact: true });
@@ -20,7 +21,7 @@ async function settings(page: Page) {
 
 async function back(page: Page) {
   await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-  await expect(space(page)).toBeVisible();
+  await waitForMapScene(page);
 }
 
 async function arrange(page: Page, origin: string, path: string, count: number) {

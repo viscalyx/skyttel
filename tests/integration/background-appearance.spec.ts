@@ -4,6 +4,7 @@ import type { PersonalView } from '../../src/shared/personal-view.js';
 import { createBackgroundMapFixture } from '../support/background-map.js';
 import { openMap, openSettings, setAllLabels, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+import { waitForMapScene } from '../support/map-scene.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 test.use({ actionTimeout: 10_000 });
@@ -18,7 +19,7 @@ async function settings(page: Page) {
 }
 async function back(page: Page) {
   await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-  await expect(space(page)).toBeVisible();
+  await waitForMapScene(page);
 }
 
 async function arrange(page: Page, origin: string, count: number) {
