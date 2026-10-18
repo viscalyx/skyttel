@@ -64,6 +64,14 @@ test('UTKAST-154: undo object removals restores retained relationship proposals 
     await draft.locator('#draft-remove-object-lo').focus();
     await page.keyboard.press('Enter');
     await expect(draft).toContainText('Följer objektborttagning: Molnmusik.');
+    const selfRow = draft.locator('#draft-read-relationship-self').locator('xpath=ancestor::tr');
+    await expect(selfRow).toContainText('Läggs till');
+    await expect(selfRow).not.toContainText('Följer objektborttagning:');
+    for (const id of ['edited', 'new']) {
+      await expect(
+        draft.locator(`#draft-read-relationship-${id}`).locator('xpath=ancestor::tr'),
+      ).toContainText('Följer objektborttagning: Molnmusik.');
+    }
     await draft.locator('#draft-remove-object-service').focus();
     await page.keyboard.press('Enter');
     await expect(draft).not.toContainText('Följer objektborttagning:');
