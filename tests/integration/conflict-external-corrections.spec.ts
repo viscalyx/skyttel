@@ -205,7 +205,9 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
       propertyRow(dialog, 'Installationsår').getByLabel('Värde', { exact: true }),
     ).toHaveValue('Våren 2021');
     await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
-    await expect(dialog.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+    await expect(
+      dialog.getByRole('status').filter({ hasText: 'Sambandet lades i ditt utkast' }),
+    ).toBeVisible();
     await dialog.getByRole('button', { name: 'Stäng samband', exact: true }).click();
     await expect(
       page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }),
