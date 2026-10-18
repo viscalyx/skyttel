@@ -115,6 +115,7 @@ export function HouseholdReadDialog({
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const body = useRef<HTMLDivElement>(null);
+  const openerFocus = useRef(returnFocus());
   const restoreFocus = useRef<(() => void) | null>(null);
   const prefix = useId();
   const { requestLeave } = useFormLeave();
@@ -142,13 +143,20 @@ export function HouseholdReadDialog({
         : `Uppgifter för ${row.object.name}`
       : 'Objektet finns inte längre';
   useLayoutEffect(() => {
-    const modal = dialog.current;
-    restoreFocus.current = entry.restoreFocus ?? returnFocus();
-    return () => {
-      modal?.close();
-      restoreFocus.current?.();
-    };
+    restoreFocus.current = entry.restoreFocus ?? openerFocus.current;
   }, [entry.restoreFocus]);
+  useLayoutEffect(() => {
+    const modal = dialog.current;
+    return () => {
+      const restore = restoreFocus.current;
+      modal?.close();
+      // Layout cleanup precedes DOM removal. StrictMode replays it while the
+      // dialog stays mounted; only a genuine removal should navigate back.
+      queueMicrotask(() => {
+        if (modal && !modal.isConnected) restore?.();
+      });
+    };
+  }, []);
   useLayoutEffect(() => {
     if (active) {
       if (!dialog.current?.open) {
