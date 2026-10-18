@@ -6,6 +6,51 @@ import { collaborators } from '../../support/draft-conflict-http.js';
 import { alex, createInstallation, robin } from '../../support/installation.js';
 import { typeChangeHousehold } from '../../support/type-change-http.js';
 
+test('relationship conflict resolution preserves independent properties alongside another saved status change', async () => {
+  const first = await request.newContext();
+  const second = await request.newContext();
+  const app = await collaborators(first, second);
+  try {
+    const initial = await app.read();
+    const value = {
+      typeId: initial.relationshipTypes[0].id,
+      sourceId: 'lo',
+      targetId: 'service',
+      knowledge: 'known' as const,
+      properties: [{ id: 'memo', label: 'Anteckning', kind: 'text' as const, value: 'Första' }],
+    };
+    await app.propose(first, 'relationship', 'edge', value);
+    expect((await app.save(first, 'first-edge')).status()).toBe(200);
+    await app.propose(first, 'relationship', 'edge', {
+      ...value,
+      properties: [{ ...value.properties[0], value: 'Eget förslag' }],
+    });
+    await app.propose(second, 'relationship', 'edge', { ...value, lifecycle: 'ended' });
+    expect((await app.save(second, 'status')).status()).toBe(200);
+    const stale = await app.read();
+    const conflict = draftConflicts(stale).find((item) => item.kind === 'relationship');
+    expect(conflict).toBeDefined();
+    expect(
+      (
+        await app.post(first, 'resolve', {
+          version: stale.draft.version,
+          conflict,
+          choice: 'proposed',
+        })
+      ).status(),
+    ).toBe(200);
+    expect((await app.save(first, 'resolved-properties')).status()).toBe(200);
+    expect((await app.read()).relationships[0]).toMatchObject({
+      lifecycle: 'ended',
+      properties: [{ id: 'memo', label: 'Anteckning', kind: 'text', value: 'Eget förslag' }],
+    });
+  } finally {
+    await second.dispose();
+    await first.dispose();
+    await app.installation.close();
+  }
+});
+
 test('invalid values and concurrent definitions block whole saves until fresh choices and preserve later private fields', async () => {
   const installation = await createInstallation();
   let client = await request.newContext();

@@ -11,6 +11,7 @@ import { LifecycleEditor, RelationshipEndDate } from './Lifecycle.js';
 import { MapRequestError } from './map-request.js';
 import { ObjectTypeLossDialog } from './ObjectDialog.js';
 import { CustomFieldsEditor } from './ObjectTypes.js';
+import { PropertyEditor } from './PropertyEditor.js';
 
 export type RelationshipFormValue = {
   id: string;
@@ -54,6 +55,7 @@ export function RelationshipForm({
 }) {
   const prefix = useId();
   const [value, setValue] = useState(initial.value);
+  const [invalidProperties, setInvalidProperties] = useState(false);
   const [typeRevisions] = useState(
     () => new Map(state.relationshipTypes.map((type) => [type.id, type.revision])),
   );
@@ -71,7 +73,7 @@ export function RelationshipForm({
   const summary = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<{ id: string; label: string; message: string }[]>([]);
   const { requestLeave } = useFormLeave();
-  const dirty = !sameConflictValue(value, initial.value) || Boolean(query);
+  const dirty = invalidProperties || !sameConflictValue(value, initial.value) || Boolean(query);
   useLayoutEffect(() => {
     onDirty?.(dirty || busy);
     return () => onDirty?.(false);
@@ -390,6 +392,11 @@ export function RelationshipForm({
           </div>
           <div className="relationship-form-wide">
             {' '}
+            <PropertyEditor
+              value={value.properties ?? []}
+              onChange={(properties) => setValue({ ...value, properties })}
+              onInvalidChange={setInvalidProperties}
+            />
             <CustomFieldsEditor
               type={type}
               values={value.customValues}

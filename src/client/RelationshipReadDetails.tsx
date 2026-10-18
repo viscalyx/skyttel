@@ -1,4 +1,5 @@
 import type { MapObject, RelationshipType, RelationshipValue } from '../shared/map.js';
+import { propertyValueText } from '../shared/properties.js';
 import { knowledgeLabels } from '../shared/relationship-label.js';
 import { factText } from './ObjectReadDetails.js';
 import { customReadFields, lifecycleText } from './read-field-values.js';
@@ -46,6 +47,11 @@ export function relationshipPropertyValues(
   ]);
   for (const [key, field] of customReadFields(type?.fields, value.customValues))
     fields.set(key, field);
+  for (const property of value.properties ?? [])
+    fields.set(`property:${property.id}`, {
+      label: property.label,
+      value: propertyValueText(property),
+    });
   return fields;
 }
 

@@ -8,6 +8,7 @@ import type {
   RelationshipValue,
 } from '../shared/map.js';
 import { objectProperties } from '../shared/object-properties.js';
+import { propertyValueText } from '../shared/properties.js';
 import {
   draftProposalDescriptors,
   proposedRelationshipNames,
@@ -84,6 +85,9 @@ function relationship(
     property('lifecycle', 'Status', lifecycleText(value.lifecycle)),
     ...(value.endDate ? [property('endDate', 'Slutdatum', factText(value.endDate))] : []),
     ...custom(type, value.customValues),
+    ...(value.properties ?? []).map((entry) =>
+      property(`property:${entry.id}`, entry.label, propertyValueText(entry)),
+    ),
   ];
 }
 export function definitionPropertyValues(

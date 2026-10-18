@@ -217,6 +217,86 @@ test('MCP allocates property identities and edits, clears, removes and orders th
   );
 });
 
+test('MCP allocates relationship property identities and preserves precise edits, empty values and ordering', async () => {
+  const token = await connect();
+  const state = await (await browser.get(path)).json();
+  for (const [version, id] of ['source', 'target'].entries())
+    await post('draft', {
+      version,
+      id,
+      baseRevision: null,
+      value: { typeId: state.types[0].id, name: id, description: '' },
+    });
+  const value = {
+    typeId: state.relationshipTypes[0].id,
+    sourceId: 'source',
+    targetId: 'target',
+    knowledge: 'known',
+    properties: [
+      { label: 'Samma', kind: 'text', value: 'Första' },
+      { label: 'Samma', kind: 'number', value: 0 },
+      { label: 'Nej', kind: 'boolean', value: false },
+      { label: 'Datum', kind: 'date', value: '2026-01-01' },
+      { label: 'Tomt' },
+      ...Array.from({ length: 101 }, (_, index) => ({
+        label: 'Extra',
+        kind: 'text',
+        value: String(index).repeat(200),
+      })),
+    ],
+  };
+  const proposed = await tool(token, 'propose_relationship', {
+    version: 2,
+    contentVersion: 1,
+    id: 'properties',
+    baseRevision: null,
+    value,
+  });
+  expect(proposed.error).toBe(false);
+  const properties = proposed.value.relationships[0].after.properties;
+  expect(properties).toHaveLength(106);
+  expect(new Set(properties.map((property: { id: string }) => property.id)).size).toBe(106);
+  expect(properties[1]).toMatchObject({ label: 'Samma', kind: 'number', value: 0 });
+  const changed = [
+    properties[2],
+    { ...properties[1], value: undefined },
+    { ...properties[0], label: 'Rättad', value: 'Bevarad identitet' },
+    ...properties.slice(4),
+  ];
+  const corrected = await tool(token, 'propose_relationship', {
+    version: 3,
+    contentVersion: 1,
+    id: 'properties',
+    baseRevision: null,
+    value: { ...value, properties: changed },
+  });
+  expect(corrected.error).toBe(false);
+  expect(corrected.value.relationships[0].after.properties).toEqual(
+    JSON.parse(JSON.stringify(changed)),
+  );
+  const before = await (await browser.get(path)).json();
+  const rejected = await callAssistant(app.origin, token, 'propose_relationship', {
+    version: 4,
+    contentVersion: 1,
+    id: 'properties',
+    baseRevision: null,
+    value: { ...value, properties: [{ ...properties[0], kind: 'date', value: 'invalid' }] },
+  });
+  const rejectedBody = await rejected.json();
+  expect(rejectedBody.result?.isError || rejectedBody.error).toBeTruthy();
+  expect(await (await browser.get(path)).json()).toEqual(before);
+  const saved = await tool(token, 'save_draft', {
+    version: 4,
+    contentVersion: 1,
+    operationId: 'save-properties',
+  });
+  expect(saved.error).toBe(false);
+  browser = await restartWithSession(browser, () => app.restart());
+  expect((await (await browser.get(path)).json()).relationships[0].properties).toEqual(
+    JSON.parse(JSON.stringify(changed)),
+  );
+});
+
 test('explicit write consent permits proposals while an earlier read grant stays read-only', async () => {
   const readToken = await connect(false);
   const state = await (await browser.get(path)).json();

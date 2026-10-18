@@ -216,6 +216,7 @@ export function validateImportReferences(
       knowledge: string;
       endDate?: unknown;
       customValues?: CustomValues;
+      properties?: unknown;
     },
     types: Map<string, RelationshipType>,
     deleted = false,
@@ -323,7 +324,12 @@ export function validateImportReferences(
   }
   for (const row of content.relationships)
     relationship(
-      { ...row, endDate: row.endDate ?? undefined, customValues: row.customValues ?? undefined },
+      {
+        ...row,
+        endDate: row.endDate ?? undefined,
+        customValues: row.customValues ?? undefined,
+        properties: row.properties ?? undefined,
+      },
       relationshipTypes,
       Boolean(row.deleted),
     );

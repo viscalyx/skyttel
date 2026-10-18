@@ -424,7 +424,7 @@ test('TEXTBREDD-05: hushållsarkiv i aktuellt format lämnar personliga samtalsv
     if (!file) throw new Error('The household archive was not downloaded');
     const parts = unzipSync(new Uint8Array(await readFile(file)));
     const manifest = JSON.parse(Buffer.from(parts['manifest.json']).toString());
-    expect(manifest.schemaVersion).toBe(35);
+    expect(manifest.schemaVersion).toBe(36);
     const encoded = Buffer.from(parts['content.json']).toString();
     for (const field of [
       'showDraftOnStart',

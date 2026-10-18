@@ -100,6 +100,7 @@ const objectValue = z
 const object = objectValue.extend({ id, ...scope, revision: positive });
 const relationshipValue = z
   .object({
+    properties: propertiesSchema.optional(),
     typeId: id,
     sourceId: id,
     targetId: id.nullable(),
@@ -252,6 +253,7 @@ export const importContentSchema = z
     relationships: z.array(
       z
         .object({
+          properties: propertiesSchema.nullable().optional(),
           id,
           ...scope,
           typeId: id,
@@ -358,7 +360,7 @@ export const importManifestSchema = z
     version: z.literal(2),
     createdAt: text,
     householdId: id,
-    schemaVersion: z.literal(35),
+    schemaVersion: z.literal(36),
     parts: z
       .array(
         z

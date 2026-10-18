@@ -125,7 +125,7 @@ const collections = [
   [
     'relationships',
     'SELECT * FROM map_relationship WHERE householdId = ? ORDER BY id',
-    ['endDate', 'customValues'],
+    ['endDate', 'customValues', 'properties'],
   ],
   [
     'drafts',

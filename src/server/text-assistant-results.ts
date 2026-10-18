@@ -266,6 +266,7 @@ function details(
         ? `${beforeDescription} → ${afterDescription}`
         : afterDescription;
     const fields: string[] = [];
+    fields.push(...propertyDifferences(change.before?.properties, change.after?.properties));
     for (const field of new Map(
       [...(beforeType?.fields ?? []), ...(change.type.fields ?? [])].map((field) => [
         field.id,

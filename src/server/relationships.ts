@@ -13,6 +13,7 @@ import { readFinancialFacts } from './financial-facts.js';
 import { readLifecycle } from './lifecycle.js';
 import { MapError } from './map-error.js';
 import { mapTombstones } from './map-tombstones.js';
+import { readProperties } from './properties.js';
 import { relationshipTypes } from './relationship-types.js';
 
 // All operations run inside the map's authorized, immediate transaction.
@@ -22,21 +23,23 @@ export function relationships(database: Database.Database, householdId: string) 
   function read(): MapRelationship[] {
     return database
       .prepare(
-        'SELECT id, householdId, typeId, revision, sourceId, targetId, knowledge, lifecycle, endDate, customValues FROM map_relationship WHERE householdId = ? AND deleted = 0 ORDER BY id',
+        'SELECT id, householdId, typeId, revision, sourceId, targetId, knowledge, lifecycle, endDate, customValues, properties FROM map_relationship WHERE householdId = ? AND deleted = 0 ORDER BY id',
       )
       .all(householdId)
       .map((row) => {
-        const { lifecycle, endDate, customValues, ...value } = row as Omit<
+        const { lifecycle, endDate, customValues, properties, ...value } = row as Omit<
           MapRelationship,
-          'lifecycle' | 'endDate' | 'customValues'
+          'lifecycle' | 'endDate' | 'customValues' | 'properties'
         > & {
           lifecycle: MapRelationship['lifecycle'] | null;
           endDate: string | null;
           customValues: string | null;
+          properties: string | null;
         };
         return {
           ...value,
           ...(customValues ? { customValues: JSON.parse(customValues) } : {}),
+          ...(properties ? { properties: JSON.parse(properties) } : {}),
           ...(lifecycle ? { lifecycle } : {}),
           ...(endDate ? { endDate: JSON.parse(endDate) } : {}),
         };
@@ -194,6 +197,8 @@ export function relationships(database: Database.Database, householdId: string) 
       if (after) {
         const value = body.value as RelationshipValue;
         const previous = existing?.after ?? before;
+        const properties = readProperties(value.properties, previous?.properties);
+        if (properties) after.properties = properties;
         if (
           value.customValues === undefined &&
           previous?.typeId !== after.typeId &&
@@ -274,6 +279,7 @@ export function relationships(database: Database.Database, householdId: string) 
           if (!type || !compatibleCustomFields(change.after.customValues, change.type, type))
             throw new MapError('type_conflict');
           readCustomValues(change.after.customValues, type);
+          readProperties(change.after.properties);
         }
         if (!saved) tombstones.assertCreation('relationship', change.id);
       }
@@ -293,8 +299,8 @@ export function relationships(database: Database.Database, householdId: string) 
           : null;
         if (after)
           database
-            .prepare(`INSERT INTO map_relationship (id, householdId, typeId, revision, sourceId, targetId, knowledge, lifecycle, endDate, customValues) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, sourceId = excluded.sourceId, targetId = excluded.targetId, knowledge = excluded.knowledge, lifecycle = excluded.lifecycle, endDate = excluded.endDate, customValues = excluded.customValues, deleted = 0`)
+            .prepare(`INSERT INTO map_relationship (id, householdId, typeId, revision, sourceId, targetId, knowledge, lifecycle, endDate, customValues, properties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, sourceId = excluded.sourceId, targetId = excluded.targetId, knowledge = excluded.knowledge, lifecycle = excluded.lifecycle, endDate = excluded.endDate, customValues = excluded.customValues, properties = excluded.properties, deleted = 0`)
             .run(
               after.id,
               householdId,
@@ -306,6 +312,7 @@ export function relationships(database: Database.Database, householdId: string) 
               after.lifecycle ?? null,
               after.endDate ? JSON.stringify(after.endDate) : null,
               after.customValues ? JSON.stringify(after.customValues) : null,
+              after.properties ? JSON.stringify(after.properties) : null,
             );
         else
           database

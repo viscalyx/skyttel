@@ -41,7 +41,7 @@ test('household archives exclude personal conversation choices and import preser
     await (await client.request(`${path}/exports/${prepared.id}`)).arrayBuffer(),
   );
   const parts = unzipSync(bytes);
-  expect(JSON.parse(new TextDecoder().decode(parts['manifest.json'])).schemaVersion).toBe(35);
+  expect(JSON.parse(new TextDecoder().decode(parts['manifest.json'])).schemaVersion).toBe(36);
   const encoded = new TextDecoder().decode(parts['content.json']);
   for (const field of [
     'showDraftOnStart',
@@ -112,7 +112,7 @@ test('older archives are rejected before preview without changing map, private w
   const before = await Promise.all(
     routes.map(async (route) => (await client.request(route)).json()),
   );
-  for (const schemaVersion of [14, 23, 33, 34]) {
+  for (const schemaVersion of [14, 23, 33, 34, 35]) {
     const bytes = altered((parts) => {
       const manifest = JSON.parse(new TextDecoder().decode(parts['manifest.json']));
       manifest.version = 1;

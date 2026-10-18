@@ -149,7 +149,12 @@ export function resolvedRelationshipValue(
     : resolvedValues(before.customValues, after.customValues, current.customValues);
   const lifecycle = after.lifecycle === before.lifecycle ? current.lifecycle : after.lifecycle;
   const endDate = sameFact(after.endDate, before.endDate) ? current.endDate : after.endDate;
+  const properties =
+    JSON.stringify(after.properties) === JSON.stringify(before.properties)
+      ? current.properties
+      : after.properties;
   return {
+    ...(properties ? { properties } : {}),
     ...(customValues && Object.keys(customValues).length ? { customValues } : {}),
     typeId: value.typeId,
     sourceId: value.sourceId,

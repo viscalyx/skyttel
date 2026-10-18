@@ -617,7 +617,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Fria egenskaper](free-properties.md): upprepade etiketter, datatypbyte,
   bevarad felaktig inmatning, separat tömning och borttagning samt
   tangentbordsstyrd ordning genom utkast, sparande och omstart på dator
-  och mobil.
+  och mobil för objekt och samband.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon, flera flyttbara uppgiftsfönster och
   högerklickets sju ikoner och uppgiftsfönstrens fem åtgärdsikoner.

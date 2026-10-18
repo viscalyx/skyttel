@@ -88,6 +88,7 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
         ]
       : conflict.kind === 'relationship'
         ? [
+            ['properties', 'Fria egenskaper'],
             ['typeId', 'Sambandstyp'],
             ['sourceId', 'Från objekt'],
             ['targetId', 'Till objekt'],

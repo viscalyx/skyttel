@@ -1,7 +1,8 @@
 # Manuella testfall för fria egenskaper
 
-Fallen gäller objektets fria egenskaper genom redigering, ditt utkast och
-samlat sparande. Anteckna commit, webbläsare och resultat vid körning.
+Fallen gäller objektets och sambandets fria egenskaper genom redigering,
+ditt utkast och samlat sparande. Anteckna commit, webbläsare och resultat
+vid körning.
 
 ## Konfigurerade användare
 
@@ -188,3 +189,177 @@ för lång text behåller råtexten och blockerar tillägg av gamla accepterade
 värden. Provet kontrollerar också fokus och status vid ordning, etikettfel,
 tömning och borttagning. Detta underlag använder ingen server;
 beständighet verifieras separat genom integrations- och HTTP-proven ovan.
+
+## Sambandets fria egenskaper
+
+### EGENSKAP-03: redigera sambandets egenskaper vid 1440 bildpunkter
+
+**Syfte:** Bevara sambandets upprepade etiketter, ordning och ändpunkter
+vid typbyte, felrättelse, tömning, borttagning och samlat sparande.
+
+**Användare:** Den inloggade Skyttel-användaren.
+
+**Förutsättningar:** Fönsterbredd 1440 bildpunkter. Skapa objekten Alex
+och Blå cykeln i ett nytt hushåll och lägg dem i ditt utkast. Behåll samma
+databas vid omstart.
+
+**Automatiskt motsvarande test:**
+[free-relationship-properties.spec.ts](../../tests/integration/free-relationship-properties.spec.ts),
+EGENSKAP-03. Provet använder formulär, HTTP och riktig SQLite.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/free-relationship-properties.spec.ts",
+    "caseId": "EGENSKAP-03"
+  },
+  "reference": "Chromium, 1440 × 900. Ogiltigt tal efter datatypbyte skyddar råtext och övrigt utkast. Upprepade etiketter skyddar självständig redigering.",
+  "outcomes": [
+    "Fel fokuserar sammanfattningen, bevarar råtext och lämnar utkastet orört.",
+    "Ordning, noll och Nej bevaras efter byte av sambandstyp, samlat sparande och omstart.",
+    "Tömning behåller etikett och datatyp, borttagning tar bara avsedd post och ändpunkterna bevaras."
+  ],
+  "evidence": [
+    {
+      "kind": "technical", "runner": "vitest", "suite": "server",
+      "spec": "tests/unit/server/relationship-properties-http.test.ts",
+      "title": "relationship properties preserve ordered identities, empty values and type independence through atomic save, history and restart",
+      "purpose": "Publik HTTP verifierar fler än 100 egenskaper, fyra datatyper, tomma tillstånd, stabila identiteter och historik utan etikettstyrd status."
+    },
+    {
+      "kind": "technical", "runner": "vitest", "suite": "server",
+      "spec": "tests/unit/server/assistant-work.test.ts",
+      "title": "MCP allocates relationship property identities and preserves precise edits, empty values and ordering",
+      "purpose": "Gemensam MCP-ingång verifierar identiteter, ordning, rättelse och tömning med bevarat övrigt utkast."
+    },
+    {
+      "kind": "technical", "runner": "vitest", "suite": "browser",
+      "spec": "tests/browser/relationship-properties.test.tsx",
+      "title": "relationship invalid property input blocks staging, preserves dirty work and survives type changes at 320px",
+      "purpose": "Chromium med styrd formulärbekräftelse verifierar fel, varning när formuläret lämnas, tangentbord, fokus och omflöde. Beständighet verifieras separat mot server."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **Tabell → Samband för Alex → Nytt samband**. Välj sambandstyp,
+   Alex som **Från objekt** och Blå cykeln som **Till objekt**.
+2. Välj **Lägg till egenskap**. Kontrollera fokus på **Etikett**. Ange
+   Pris, välj Text och skriv Gratis idag. Byt till Tal och välj
+   **Lägg i utkastet**. Kontrollera fokuserad felsammanfattning och
+   bevarad text. Rätta värdet till 0.
+3. Lägg till en andra egenskap med etiketten Pris, datatyp Ja/nej och
+   värdet Nej. Fokusera **Flytta upp** och tryck Enter. Kontrollera
+   meddelandet om position 1 och fokus på den flyttade etiketten.
+4. Byt sambandstyp. Lägg i utkastet, stäng sambandet och spara hela
+   utkastet. Starta om installationen och öppna **Samband för Alex**.
+   Kontrollera att Nej och 0 visas. Öppna **Redigera samband** och
+   kontrollera den valda typen och egenskapernas ordning.
+5. Välj **Töm värdet** på första egenskapen. Kontrollera att etiketten
+   och datatypen finns kvar. Ta bort andra egenskapen med
+   **Ta bort egenskapen**. Lägg i utkastet, stäng och spara hela utkastet.
+6. Läs sambandet igen. Kontrollera Tomt (Ja/nej), öppna redigering och
+   kontrollera att endast första egenskapen finns kvar och båda
+   ändpunkterna är oförändrade. Kontrollera att sidan inte kräver
+   horisontell rullning.
+
+**Förväntat resultat:**
+
+- Felaktig inmatning finns kvar och hindrar att formuläret läggs i utkastet.
+- Typbyte behåller uppgifter och ändpunkter. Ordning, noll och Nej består
+  efter samlat sparande och omstart.
+- Tömning och borttagning ger skilda, beständiga resultat.
+
+### EGENSKAP-04: redigera sambandets egenskaper vid 320 bildpunkter
+
+**Syfte:** Bevara sambandets upprepade etiketter, ordning och ändpunkter
+vid typbyte, felrättelse, tömning, borttagning och samlat sparande.
+
+**Användare:** Den inloggade Skyttel-användaren.
+
+**Förutsättningar:** Fönsterbredd 320 bildpunkter. Skapa objekten Alex
+och Blå cykeln i ett nytt hushåll och lägg dem i ditt utkast. Behåll samma
+databas vid omstart.
+
+**Automatiskt motsvarande test:**
+[free-relationship-properties.spec.ts](../../tests/integration/free-relationship-properties.spec.ts),
+EGENSKAP-04. Provet använder formulär, HTTP och riktig SQLite.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/free-relationship-properties.spec.ts",
+    "caseId": "EGENSKAP-04"
+  },
+  "reference": "Chromium, 320 × 900. Ogiltigt tal efter datatypbyte skyddar råtext och övrigt utkast. Upprepade etiketter skyddar självständig redigering.",
+  "outcomes": [
+    "Fel fokuserar sammanfattningen, bevarar råtext och lämnar utkastet orört.",
+    "Ordning, noll och Nej bevaras efter byte av sambandstyp, samlat sparande och omstart.",
+    "Tömning behåller etikett och datatyp, borttagning tar bara avsedd post och ändpunkterna bevaras."
+  ],
+  "evidence": [
+    {
+      "kind": "technical", "runner": "vitest", "suite": "server",
+      "spec": "tests/unit/server/relationship-properties-http.test.ts",
+      "title": "relationship properties preserve ordered identities, empty values and type independence through atomic save, history and restart",
+      "purpose": "Publik HTTP verifierar fler än 100 egenskaper, fyra datatyper, tomma tillstånd, stabila identiteter och historik utan etikettstyrd status."
+    },
+    {
+      "kind": "technical", "runner": "vitest", "suite": "server",
+      "spec": "tests/unit/server/assistant-work.test.ts",
+      "title": "MCP allocates relationship property identities and preserves precise edits, empty values and ordering",
+      "purpose": "Gemensam MCP-ingång verifierar identiteter, ordning, rättelse och tömning med bevarat övrigt utkast."
+    },
+    {
+      "kind": "technical", "runner": "vitest", "suite": "browser",
+      "spec": "tests/browser/relationship-properties.test.tsx",
+      "title": "relationship invalid property input blocks staging, preserves dirty work and survives type changes at 320px",
+      "purpose": "Chromium med styrd formulärbekräftelse verifierar fel, varning när formuläret lämnas, tangentbord, fokus och omflöde. Beständighet verifieras separat mot server."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **Tabell → Samband för Alex → Nytt samband**. Välj sambandstyp,
+   Alex som **Från objekt** och Blå cykeln som **Till objekt**.
+2. Välj **Lägg till egenskap**. Kontrollera fokus på **Etikett**. Ange
+   Pris, välj Text och skriv Gratis idag. Byt till Tal och välj
+   **Lägg i utkastet**. Kontrollera fokuserad felsammanfattning och
+   bevarad text. Rätta värdet till 0.
+3. Lägg till en andra egenskap med etiketten Pris, datatyp Ja/nej och
+   värdet Nej. Fokusera **Flytta upp** och tryck Enter. Kontrollera
+   meddelandet om position 1 och fokus på den flyttade etiketten.
+4. Byt sambandstyp. Lägg i utkastet, stäng sambandet och spara hela
+   utkastet. Starta om installationen och öppna **Samband för Alex**.
+   Kontrollera att Nej och 0 visas. Öppna **Redigera samband** och
+   kontrollera den valda typen och egenskapernas ordning.
+5. Välj **Töm värdet** på första egenskapen. Kontrollera att etiketten
+   och datatypen finns kvar. Ta bort andra egenskapen med
+   **Ta bort egenskapen**. Lägg i utkastet, stäng och spara hela utkastet.
+6. Läs sambandet igen. Kontrollera Tomt (Ja/nej), öppna redigering och
+   kontrollera att endast första egenskapen finns kvar och båda
+   ändpunkterna är oförändrade. Kontrollera att sidan inte kräver
+   horisontell rullning.
+
+**Förväntat resultat:**
+
+- Felaktig inmatning finns kvar och hindrar att formuläret läggs i utkastet.
+- Typbyte behåller uppgifter och ändpunkter. Ordning, noll och Nej består
+  efter samlat sparande och omstart.
+- Tömning och borttagning ger skilda, beständiga resultat.

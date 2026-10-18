@@ -45,13 +45,15 @@ export function erasureContent(database: Database.Database, householdId: string,
   const relationships: MapRelationship[] = (
     database
       .prepare('SELECT * FROM map_relationship WHERE householdId = ? ORDER BY id')
-      .all(householdId) as (Omit<MapRelationship, 'endDate' | 'customValues'> & {
+      .all(householdId) as (Omit<MapRelationship, 'endDate' | 'customValues' | 'properties'> & {
       endDate: string;
       customValues: string | null;
+      properties: string | null;
     })[]
   ).map((row) => ({
     ...row,
     endDate: row.endDate ? JSON.parse(row.endDate) : undefined,
+    properties: row.properties ? JSON.parse(row.properties) : undefined,
     customValues: row.customValues ? JSON.parse(row.customValues) : undefined,
   }));
   const objectTypes = database
