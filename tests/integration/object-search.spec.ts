@@ -64,10 +64,7 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
 }) => {
   const installation = await createInstallation();
   try {
-    const { household, post, read } = await prepareHouseholdTable(
-      page.request,
-      installation.origin,
-    );
+    const { post, read } = await prepareHouseholdTable(page.request, installation.origin);
     await page.goto(installation.origin);
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
     await focusMapSearch(page);
@@ -126,7 +123,7 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     expect(nativeTypeChange?.id).toMatch(/\S/);
     expect(nativeTypeChange?.after).toEqual({
       id: nativeTypeChange?.id,
-      householdId: household.id,
+      householdId: nativeBefore.types[0].householdId,
       revision: 1,
       name: 'Enbart typförslag',
       description: '',
