@@ -644,7 +644,7 @@ test('the draft table exposes every change, object facts, type edits and uncerta
     revision: 1,
     name: 'Fordon',
     description: 'Hushållets fordon',
-    fields: [{ id: 'colour', name: 'Färg', description: 'Lackens färg', kind: 'text' }],
+    
   };
   const edgeType: RelationshipType = {
     id: 'uses',
@@ -661,16 +661,16 @@ test('the draft table exposes every change, object facts, type edits and uncerta
     revision: 1,
     typeId: type.id,
     name: 'Gammal cykel',
-    description: 'Före rättning',
-    customValues: { colour: 'Blå' },
-    financialFacts: { price: { knowledge: 'known', value: '100' } },
-  };
+    
+    
+    
+  properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Före rättning'},{id:"colour",label:"colour",kind:"text",value:'Blå'}]};
   const duplicate: MapObject = {
     ...old,
     id: 'duplicate',
     name: 'Dubblett',
-    description: 'Det andra objektet',
-  };
+    
+  properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Det andra objektet'}]};
   const edge = {
     id: 'edge',
     householdId: 'linden',
@@ -678,7 +678,7 @@ test('the draft table exposes every change, object facts, type edits and uncerta
     typeId: edgeType.id,
     sourceId: 'alex',
     targetId: 'bike',
-    knowledge: 'known' as const,
+    
   };
   const current = session();
   current.review = {
@@ -693,11 +693,11 @@ test('the draft table exposes every change, object facts, type edits and uncerta
         after: {
           ...old,
           name: 'Rättad cykel',
-          description: 'Efter rättning',
-          customValues: { colour: 'Röd' },
-          financialFacts: { price: { knowledge: 'known', value: '150' } },
+          
+          
+          
           lifecycle: 'ended',
-        },
+        properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Efter rättning'},{id:"colour",label:"colour",kind:"text",value:'Röd'}]},
       },
       { id: 'duplicate', type, before: duplicate, after: null },
       {
@@ -718,26 +718,26 @@ test('the draft table exposes every change, object facts, type edits and uncerta
         id: 'edge',
         type: edgeType,
         before: edge,
-        after: { ...edge, knowledge: 'uncertain' },
+        after: { ...edge,  },
         objectNames: { alex: 'Alex', bike: 'Rättad cykel' },
       },
       {
         id: 'none',
         type: edgeType,
         before: null,
-        after: { ...edge, targetId: null, knowledge: 'none' },
+        after: { ...edge, targetId: null,  },
       },
       {
         id: 'unknown',
         type: edgeType,
         before: null,
-        after: { ...edge, targetId: null, knowledge: 'unknown' },
+        after: { ...edge, targetId: null,  },
       },
       {
         id: 'unresolved',
         type: edgeType,
         before: null,
-        after: { ...edge, targetId: null, knowledge: 'unresolved' },
+        after: { ...edge, targetId: null,  },
       },
       { id: 'removed', type: edgeType, before: { ...edge, sourceId: 'robin' }, after: null },
     ],
@@ -776,15 +776,15 @@ test('the draft table exposes every change, object facts, type edits and uncerta
       {
         kind: 'relationship',
         id: 'edge',
-        current: { ...edge, knowledge: 'uncertain' },
+        current: { ...edge,  },
         duplicates: [edge],
       },
       { kind: 'relationship', id: 'removed', current: null, missingEndpoints: ['robin'] },
-      { kind: 'relationship', id: 'none', current: { ...edge, targetId: null, knowledge: 'none' } },
+      { kind: 'relationship', id: 'none', current: { ...edge, targetId: null,  } },
       {
         kind: 'relationship',
         id: 'unknown',
-        current: { ...edge, typeId: 'removed-type', targetId: null, knowledge: 'unknown' },
+        current: { ...edge, typeId: 'removed-type', targetId: null,  },
       },
     ],
     unresolvedIdentities: [{ kind: 'object', id: 'unknown-bike' }],

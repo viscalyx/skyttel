@@ -25,8 +25,8 @@ const state: MapState = {
     revision: 1,
     typeId: 'person',
     name,
-    description: `${name}s påhittade uppgifter`,
-  })),
+    
+  properties:[{id:'description',label:'Beskrivning',kind:'text',value:`${name}s påhittade uppgifter`}]})),
   relationships: [
     {
       id: 'edge',
@@ -35,7 +35,7 @@ const state: MapState = {
       sourceId: 'lo',
       targetId: 'kim',
       typeId: 'uses',
-      knowledge: 'known',
+      
     },
   ],
   draft: { version: 0, changes: [] },
@@ -383,8 +383,8 @@ test.each([
       ...state,
       objects: state.objects.map((object) => ({
         ...object,
-        description: 'Påhittade uppgifter om hushållets objekt. '.repeat(40),
-      })),
+        
+      properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Påhittade uppgifter om hushållets objekt. '.repeat(40)}]})),
     });
     await app.show({ kind: 'object', id: 'lo' });
     await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);

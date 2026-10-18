@@ -11,12 +11,7 @@ const type: ObjectType = {
   revision: 1,
   name: 'Konto',
   description: '',
-  fields: [
-    { id: 'insured', name: 'Försäkrat', kind: 'boolean', description: '' },
-    { id: 'amount', name: 'Belopp', kind: 'number', description: '' },
-    { id: 'date', name: 'Uppgivet datum', kind: 'date', description: '' },
-    { id: 'note', name: 'Anteckning', kind: 'text', description: '' },
-  ],
+  
 };
 
 test('the draft shows checked before-and-after facts, uncertainty, custom values and identity without hiding removals', () => {
@@ -26,10 +21,7 @@ test('the draft shows checked before-and-after facts, uncertainty, custom values
     beforeType: {
       ...type,
       name: 'Äldre kontotyp',
-      fields: [
-        ...(type.fields ?? []),
-        { id: 'removed', name: 'Borttaget fält', kind: 'text', description: '' },
-      ],
+      
     },
     before: {
       id: 'account-1',
@@ -37,32 +29,23 @@ test('the draft shows checked before-and-after facts, uncertainty, custom values
       revision: 1,
       typeId: type.id,
       name: 'Gamla kontot',
-      description: '',
+      
       identity: 'unspecified',
       lifecycle: 'ended',
       profileImageId: 'old-image',
-      customValues: { insured: false, amount: 0, note: '', removed: 'Gammalt' },
-      financialFacts: {
-        price: { knowledge: 'unknown' },
-        currency: { knowledge: 'none' },
-        debt: { knowledge: 'known', value: '100', reportedOn: '2026-01-01' },
-      },
-    },
+      
+      
+    properties:[{id:"insured",label:"insured",kind:"boolean",value:false},{id:"amount",label:"amount",kind:"number",value:0},{id:"note",label:"note",kind:"text",value:''},{id:"removed",label:"removed",kind:"text",value:'Gammalt'}]},
     after: {
       typeId: type.id,
       name: 'Nya kontot',
-      description: 'Kontot rättas',
+      
       identity: 'unresolved',
       lifecycle: 'active',
       profileImageId: 'new-image',
-      customValues: { insured: true, amount: 24, date: '2026-10-03', note: 'Ny uppgift' },
-      financialFacts: {
-        price: { knowledge: 'known', value: '120' },
-        currency: { knowledge: 'known', value: 'SEK' },
-        debt: { knowledge: 'uncertain', value: '90', reportedOn: '2026-10-03' },
-        usedCredit: { knowledge: 'none' },
-      },
-    },
+      
+      
+    properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Kontot rättas'},{id:"insured",label:"insured",kind:"boolean",value:true},{id:"amount",label:"amount",kind:"number",value:24},{id:"date",label:"date",kind:"text",value:'2026-10-03'},{id:"note",label:"note",kind:"text",value:'Ny uppgift'}]},
   };
   render(<ConversationDraft draft={{ version: 1, changes: [change] }} />);
   const row = within(screen.getByRole('table', { name: 'Osparade ändringar' })).getByRole('row', {
@@ -95,11 +78,11 @@ test('the whole draft names additions, removals and changed relationship and typ
     ...type,
     name: 'Betalkonto',
     description: 'Ny typbeskrivning',
-    fields: [{ id: 'new', name: 'Stängt', kind: 'boolean', description: 'Kontot är stängt' }],
+    
   };
   const oldType: ObjectType = {
     ...type,
-    fields: [{ id: 'old', name: 'Gammalt fält', kind: 'text', description: 'Tidigare uppgift' }],
+    
   };
   const relationshipType = {
     id: 'uses',
@@ -109,7 +92,7 @@ test('the whole draft names additions, removals and changed relationship and typ
     description: '',
     forwardLabel: 'använder',
     reverseLabel: 'används av',
-    fields: [{ id: 'shared', name: 'Delat', kind: 'boolean' as const, description: '' }],
+    
   };
   const review: MapDraft = {
     version: 2,
@@ -117,7 +100,7 @@ test('the whole draft names additions, removals and changed relationship and typ
       {
         id: 'added',
         before: null,
-        after: { typeId: type.id, name: 'Nytt konto', description: '' },
+        after: { typeId: type.id, name: 'Nytt konto',  },
         type,
       },
       {
@@ -128,7 +111,7 @@ test('the whole draft names additions, removals and changed relationship and typ
           revision: 1,
           typeId: type.id,
           name: 'Borttaget konto',
-          description: '',
+          
         },
         after: null,
         type,
@@ -140,7 +123,7 @@ test('the whole draft names additions, removals and changed relationship and typ
         type: relationshipType,
         beforeType: {
           ...relationshipType,
-          fields: [{ id: 'old', name: 'Gammal uppgift', kind: 'text', description: '' }],
+          
         },
         objectNames: { alex: 'Alex', bike: 'Cykeln' },
         before: {
@@ -150,25 +133,25 @@ test('the whole draft names additions, removals and changed relationship and typ
           sourceId: 'alex',
           typeId: 'uses',
           targetId: null,
-          knowledge: 'unknown',
+          
           lifecycle: 'active',
-          customValues: { old: 'Tas bort', shared: false },
-        },
+          
+        properties:[{id:"old",label:"old",kind:"text",value:'Tas bort'},{id:"shared",label:"shared",kind:"boolean",value:false}]},
         after: {
           sourceId: 'alex',
           typeId: 'uses',
           targetId: 'bike',
-          knowledge: 'uncertain',
+          
           lifecycle: 'ended',
-          customValues: { shared: true },
-          endDate: { knowledge: 'known', value: '2026-10-03' },
-        },
+          
+          
+        properties:[{id:"shared",label:"shared",kind:"boolean",value:true}]},
       },
       {
         id: 'new-relation',
         type: relationshipType,
         before: null,
-        after: { sourceId: 'alex', typeId: 'uses', targetId: null, knowledge: 'none' },
+        after: { sourceId: 'alex', typeId: 'uses', targetId: null,  },
         objectNames: { alex: 'Alex' },
       },
       {
@@ -181,7 +164,7 @@ test('the whole draft names additions, removals and changed relationship and typ
           sourceId: 'alex',
           typeId: 'uses',
           targetId: null,
-          knowledge: 'unresolved',
+          
         },
         after: null,
         objectNames: { alex: 'Alex' },
@@ -259,20 +242,20 @@ test('review retains image removal, lifecycle correction and newly defined optio
     revision: 1,
     typeId: plainType.id,
     name: 'Alex',
-    description: '',
+    
     profileImageId: 'image',
   };
   const imageRemoved: DraftChange = {
     id: 'alex',
     type: plainType,
     before,
-    after: { typeId: plainType.id, name: 'Alex', description: '', lifecycle: 'ended' },
+    after: { typeId: plainType.id, name: 'Alex',  lifecycle: 'ended' },
   };
   const imageAdded: DraftChange = {
     id: 'robin',
     type: plainType,
     before: { ...before, id: 'robin', name: 'Robin', profileImageId: undefined },
-    after: { typeId: plainType.id, name: 'Robin', description: '', profileImageId: 'new-image' },
+    after: { typeId: plainType.id, name: 'Robin',  profileImageId: 'new-image' },
   };
   const draft: MapDraft = {
     version: 2,
@@ -289,14 +272,14 @@ test('review retains image removal, lifecycle correction and newly defined optio
           typeId: relationshipType.id,
           sourceId: 'alex',
           targetId: 'robin',
-          knowledge: 'known',
+          
           lifecycle: 'ended',
         },
         after: {
           typeId: relationshipType.id,
           sourceId: 'alex',
           targetId: 'robin',
-          knowledge: 'known',
+          
           lifecycle: 'active',
         },
       },
@@ -310,9 +293,7 @@ test('review retains image removal, lifecycle correction and newly defined optio
           revision: 2,
           name: 'Person',
           description: '',
-          fields: [
-            { id: 'birthday', name: 'Födelsedag', kind: 'date', description: 'Uppgivet datum' },
-          ],
+          
         },
       },
     ],
@@ -321,7 +302,7 @@ test('review retains image removal, lifecycle correction and newly defined optio
         id: relationshipType.id,
         before: {
           ...relationshipType,
-          fields: [{ id: 'old', name: 'Gammal uppgift', kind: 'text', description: 'Tas bort' }],
+          
         },
         after: { ...relationshipType, revision: 2, name: 'känner', description: '' },
       },

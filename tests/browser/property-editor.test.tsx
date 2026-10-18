@@ -21,7 +21,7 @@ async function open(properties: Property[], width = 1280) {
     contentVersion: 1,
     baseRevision: 1,
     typeRevision: 1,
-    value: { typeId: 'cycle', name: 'Cykeln', description: 'Annat formulärarbete', properties },
+    value: { typeId: 'cycle', name: 'Cykeln',  properties },
   };
   render(
     <main className="household-map workspace-shell" data-theme="light">

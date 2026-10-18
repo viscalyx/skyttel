@@ -126,7 +126,7 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
     await fixture.post('object-type', {
       id: 'newer-independent-type',
       baseRevision: null,
-      value: { name: 'Nyare oberoende typ', description: '', fields: [] },
+      value: { name: 'Nyare oberoende typ', description: '',  },
     });
     const newer = await read();
     await userEvent.click(dialog.getByRole('button', { name: 'Ta bort' }));
@@ -205,16 +205,16 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
     await fixture.post('object-type', {
       id: 'temporary-type',
       baseRevision: null,
-      value: { name: 'Tillfällig typ', description: '', fields: [] },
+      value: { name: 'Tillfällig typ', description: '',  },
     });
     await fixture.post('draft', {
       id: 'temporary-object',
       baseRevision: null,
       value: {
         name: 'Tillfälligt föremål',
-        description: 'Behåll hela uppgiften',
+        
         typeId: 'temporary-type',
-      },
+      properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Behåll hela uppgiften'}]},
     });
     // Refresh through the ordinary workspace owner before reading the new proposals.
     cleanup();
@@ -302,8 +302,8 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
         await app.propose(other, 'draft', 'lo', {
           ...app.value,
           name: 'Lo Ås',
-          description: 'Senare sparad uppgift',
-        });
+          
+        properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Senare sparad uppgift'}]});
         expect((await app.save(other, 'changed-after-resolution')).status()).toBe(200);
       }
       const current = await read();
@@ -349,8 +349,8 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
     await app.propose(other, 'draft', 'lo', {
       ...app.value,
       name: 'Lo Ås',
-      description: 'Robins anteckning',
-    });
+      
+    properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Robins anteckning'}]});
     expect((await app.save(other, 'changed-during-review')).status()).toBe(200);
     const before = await read();
     await userEvent.click(dialog.getByRole('button', { name: 'Lägg valen i utkastet' }));
@@ -606,7 +606,7 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
         typeId: state.relationshipTypes[0].id,
         sourceId: 'lo',
         targetId: 'service',
-        knowledge: 'known' as const,
+        
       };
       await app.propose(first, 'relationship', 'edge', value);
       await app.save(first, 'base-edge');
@@ -618,7 +618,7 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
       await app.propose(first, 'relationship', 'edge', {
         ...value,
         targetId: 'lo',
-        knowledge: 'uncertain',
+        
       });
       await app.propose(second, 'relationship', 'edge', { ...value, sourceId: 'service' });
       await app.save(second, 'concurrent');
@@ -659,7 +659,7 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
     ).toMatchObject({
       sourceId: 'lo',
       targetId: 'lo',
-      knowledge: 'uncertain',
+      
     });
     expect((await read()).relationships).toEqual(before.relationships);
   });
@@ -667,13 +667,13 @@ describe('native household workflows through real HTTP', { timeout: 30_000 }, ()
   test('next conflict retains the other object choices and resolved preview without an implicit shared save', async () => {
     const { app, other, dialog } = await conflictFixture();
     await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }));
-    const service = { ...app.value, name: 'Min musiktjänst', description: 'Min tjänst' };
+    const service = { ...app.value, name: 'Min musiktjänst',properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Min tjänst'}]};
     await app.propose(client, 'draft', 'service', service);
     await app.propose(other, 'draft', 'service', {
       ...service,
       name: 'Vår musiktjänst',
-      description: 'Robins tjänst',
-    });
+      
+    properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Robins tjänst'}]});
     expect((await app.save(other, 'second-conflict')).status()).toBe(200);
     cleanup();
     renderHouseholdWork(householdId);

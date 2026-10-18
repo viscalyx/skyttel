@@ -26,7 +26,7 @@ function cameraWork() {
     householdId: 'home',
     revision: 1,
     typeId: person.id,
-    description: '',
+    
   }));
   const relationships = [
     ['lo-kim', 'lo', 'kim'],
@@ -38,7 +38,7 @@ function cameraWork() {
     householdId: 'home',
     revision: 1,
     typeId: relationshipType.id,
-    knowledge: 'known' as const,
+    
   }));
   const state: MapState = {
     userId: 'alex',
@@ -52,13 +52,13 @@ function cameraWork() {
       changes: objects.map((object) => ({
         id: object.id,
         before: object,
-        after: { ...object, description: 'Privat kameraförslag' },
+        after: { ...object,properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Privat kameraförslag'}]},
         type: person,
       })),
       relationships: relationships.map((relationship) => ({
         id: relationship.id,
         before: relationship,
-        after: { ...relationship, knowledge: 'uncertain' },
+        after: { ...relationship,  },
         type: relationshipType,
       })),
     },

@@ -299,10 +299,10 @@ test('configured type fields preserve explicit order, visibility and four answer
     value: {
       name: 'Provfält',
       description: '',
-      fields: [],
-      sections: [],
-      builtins: [],
-      propertyOrder: [],
+      
+      
+      
+      
     },
   });
   await fixture.post('save', { operationId: 'configured-type' });
@@ -497,7 +497,7 @@ for (const committed of [false, true]) {
     await fixture.post('relationship', {
       id: edge.id,
       baseRevision: edge.revision,
-      value: { ...edge, knowledge: 'unknown', targetId: edge.targetId },
+      value: { ...edge,  targetId: edge.targetId },
     });
     const later = await fixture.read();
     await userEvent.click(
@@ -636,7 +636,7 @@ test('a relationship form confirms field loss explicitly, validates all values a
     sourceId: 'garage',
     targetId: 'alex',
     typeId: 'uses',
-    knowledge: 'uncertain',
+    
     lifecycle: 'ended',
   });
   expect(
@@ -665,7 +665,7 @@ for (const kind of ['object', 'relationship'] as const) {
               forwardLabel: 'forwardLabel' in definition ? definition.forwardLabel : '',
               reverseLabel: 'reverseLabel' in definition ? definition.reverseLabel : '',
               fields: definition.fields,
-              sections: definition.sections,
+              
             },
     });
     cleanup();
@@ -695,7 +695,7 @@ for (const kind of ['object', 'relationship'] as const) {
     await fixture.post('draft', {
       id: alex.id,
       baseRevision: alex.revision,
-      value: { ...alex, description: 'En senare oberoende uppgift' },
+      value: { ...alex,properties:[{id:'description',label:'Beskrivning',kind:'text',value:'En senare oberoende uppgift'}]},
     });
     const later = await fixture.read();
     await userEvent.click(
@@ -765,7 +765,7 @@ test('a type-only draft keeps proposal filters active until confirmed discard re
   await fixture.post('object-type', {
     id: 'only-type',
     baseRevision: null,
-    value: { name: 'Tillfällig provtyp', description: '', fields: [] },
+    value: { name: 'Tillfällig provtyp', description: '',  },
   });
   const before = await fixture.read();
   renderHouseholdWork(fixture.householdId);

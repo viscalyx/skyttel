@@ -34,7 +34,7 @@ const state: MapState = {
       householdId: 'home',
       revision: 1,
       name: 'Lo Exempel',
-      description: '',
+      
     },
     {
       id: 'music',
@@ -42,7 +42,7 @@ const state: MapState = {
       householdId: 'home',
       revision: 1,
       name: 'Musikspelaren',
-      description: '',
+      
     },
     {
       id: 'kim',
@@ -50,7 +50,7 @@ const state: MapState = {
       householdId: 'home',
       revision: 1,
       name: 'Kim Exempel',
-      description: '',
+      
     },
   ],
   relationships: [
@@ -61,7 +61,7 @@ const state: MapState = {
       typeId: 'uses',
       sourceId: 'lo',
       targetId: 'music',
-      knowledge: 'known',
+      
     },
     {
       id: 'unknown',
@@ -70,7 +70,7 @@ const state: MapState = {
       typeId: 'uses',
       sourceId: 'kim',
       targetId: null,
-      knowledge: 'unknown',
+      
     },
   ],
   draft: { version: 0, changes: [] },
@@ -635,7 +635,7 @@ test('changing a relationship retains its prior route while the current route re
 
 test.each([
   { name: 'type', update: { typeId: 'other' } },
-  { name: 'knowledge', update: { knowledge: 'uncertain' as const } },
+  { name: 'knowledge', update: {  } },
 ])(
   'a same-endpoint $name edit uses one amber solid connection and a default pen label',
   async ({ update }) => {
@@ -1471,7 +1471,7 @@ test.each(['added', 'removed', 'changed'] as const)(
             relationships: edges.map((edge) => ({
               id: edge.id,
               before: kind === 'added' ? null : edge,
-              after: kind === 'removed' ? null : { ...edge, knowledge: 'uncertain' as const },
+              after: kind === 'removed' ? null : { ...edge,  },
               type: state.relationshipTypes[0],
               objectNames: {},
             })),
@@ -1680,7 +1680,7 @@ test('direction rendering retains selectable self references and explicitly abse
     <MapView
       relationships={[
         { ...state.relationships[0], id: 'self', targetId: 'lo' },
-        { ...state.relationships[1], id: 'none', knowledge: 'none' },
+        { ...state.relationships[1], id: 'none',  },
       ]}
     />,
   );

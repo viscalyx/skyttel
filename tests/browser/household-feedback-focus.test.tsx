@@ -25,8 +25,8 @@ async function open(withDraft = true) {
     revision: 1,
     typeId: 'person',
     name: 'Lo Exempel',
-    description: 'Sparad beskrivning',
-  };
+    
+  properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Sparad beskrivning'}]};
   const person = {
     id: 'person',
     householdId: 'home',
@@ -48,7 +48,7 @@ async function open(withDraft = true) {
             {
               id: 'lo',
               before: lo,
-              after: { ...lo, description: 'Privat förslag' },
+              after: { ...lo,properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Privat förslag'}]},
               type: person,
               beforeType: person,
             },

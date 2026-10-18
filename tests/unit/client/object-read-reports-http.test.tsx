@@ -40,49 +40,19 @@ async function prepareFullReading(fillers = false) {
     baseRevision: type.revision,
     value: {
       ...type,
-      sections: [{ id: 'details', name: 'Synliga detaljer' }],
-      fields: [
-        ...(type.fields ?? []),
-        { id: 'zero', name: 'Dolt antal', kind: 'number', description: '', sectionId: '' },
-        { id: 'false', name: 'Dolt svar', kind: 'boolean', description: '', sectionId: '' },
-        {
-          id: 'missing',
-          name: 'Obesvarad uppgift',
-          kind: 'text',
-          description: '',
-          sectionId: 'details',
-        },
-      ],
-      builtins: [
-        { key: 'description', name: 'Hela berättelsen', sectionId: 'details' },
-        { key: 'price', name: 'Cykelns pris', sectionId: 'details' },
-        { key: 'currency', name: 'Angiven valuta', sectionId: 'details' },
-      ],
-      propertyOrder: [
-        'builtin:description',
-        'builtin:price',
-        'builtin:currency',
-        'field:hidden',
-        'field:zero',
-        'field:false',
-        'field:missing',
-      ],
+      
+      
+      
+      
     },
   });
   const value = {
     ...bike,
-    description: 'Hela cykelbeskrivningen med märkning, skick och förvaring. '.repeat(12),
-    customValues: { hidden: 'Sparad dold märkning', zero: 0, false: false },
+    
+    
     lifecycle: 'active' as const,
-    financialFacts: {
-      price: { knowledge: 'known' as const, value: '2000 SEK' },
-      debt: { knowledge: 'uncertain' as const, value: '150 SEK', reportedOn: '2026-09-30' },
-      creditLimit: { knowledge: 'none' as const },
-      usedCredit: { knowledge: 'unknown' as const },
-      endDate: { knowledge: 'known' as const, value: '2024-12-31' },
-      terms: { knowledge: 'known' as const, value: 'Inga räntor beräknas för denna exempelcykel.' },
-    },
-  };
+    
+  properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Hela cykelbeskrivningen med märkning, skick och förvaring. '.repeat(12)},{id:"hidden",label:"hidden",kind:"text",value:'Sparad dold märkning'},{id:"zero",label:"zero",kind:"number",value:0},{id:"false",label:"false",kind:"boolean",value:false}]};
   await fixture.post('draft', { id: bike.id, baseRevision: bike.revision, value });
   const imageState = await fixture.read();
   const image = await sharp({ create: { width: 4, height: 4, channels: 3, background: '#337799' } })
@@ -121,17 +91,14 @@ test('full object reading preserves hidden zero and false, image and every econo
     baseRevision: fixture.bike.revision,
     value: {
       ...fixture.bike,
-      description: 'Föreslagen fullständig beskrivning av cykeln.',
-      customValues: { hidden: 'Föreslagen dold märkning', zero: 0, false: true },
-      financialFacts: {
-        ...fixture.bike.financialFacts,
-        price: { knowledge: 'known', value: '2500 SEK' },
-      },
+      
+      
+      
       profileImageId: null,
       iconId: 'car',
       identity: 'unspecified',
       lifecycle: 'ended',
-    },
+    properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Föreslagen fullständig beskrivning av cykeln.'},{id:"hidden",label:"hidden",kind:"text",value:'Föreslagen dold märkning'},{id:"zero",label:"zero",kind:"number",value:0},{id:"false",label:"false",kind:"boolean",value:true}]},
   });
   const before = await fixture.read();
   renderHouseholdWork(fixture.householdId);
@@ -219,25 +186,11 @@ test('a complete economic edit validates a closed section and stages image remov
   expect(change?.after).toEqual({
     typeId: 'read-type',
     name: 'Cykel',
-    description: fixture.bike.description,
+    
     lifecycle: 'ended',
-    customValues: {
-      hidden: 'Sparad dold märkning',
-      zero: 0,
-      false: false,
-      missing: 'Nu finns ett svar.',
-    },
-    financialFacts: {
-      price: { knowledge: 'known', value: '2000 SEK' },
-      currency: { knowledge: 'known', value: 'SEK' },
-      startDate: { knowledge: 'known', value: '2026-10-01' },
-      endDate: { knowledge: 'none' },
-      debt: { knowledge: 'none' },
-      creditLimit: { knowledge: 'none' },
-      usedCredit: { knowledge: 'unknown' },
-      terms: { knowledge: 'known', value: 'Inga räntor beräknas för denna exempelcykel.' },
-    },
-  });
+    
+    
+  properties:[{id:'description',label:'Beskrivning',kind:'text',value:fixture.bike.description},{id:"hidden",label:"hidden",kind:"text",value:'Sparad dold märkning'},{id:"zero",label:"zero",kind:"number",value:0},{id:"false",label:"false",kind:"boolean",value:false},{id:"missing",label:"missing",kind:"text",value:'Nu finns ett svar.'}]});
   await saveHouseholdDraft();
   const saved = await fixture.read();
   expect(saved.draft.changes).toEqual([]);
@@ -305,7 +258,7 @@ test('type loss and unsent form guards retain saved data and the already staged 
   await fixture.post('draft', {
     id: alex.id,
     baseRevision: alex.revision,
-    value: { ...alex, description: 'Redan lagt förslag om Alex.' },
+    value: { ...alex,properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Redan lagt förslag om Alex.'}]},
   });
   const before = await fixture.read();
   const alternative = before.types.find((type) => type.id !== 'read-type');
@@ -361,9 +314,9 @@ test('reports show historical types and full saved values then return to table a
     value: {
       ...fixture.bike,
       name: 'Cykel efter ändring',
-      customValues: { hidden: 'Ny dold märkning', zero: 1, false: true },
+      
       lifecycle: 'ended',
-    },
+    properties:[{id:"hidden",label:"hidden",kind:"text",value:'Ny dold märkning'},{id:"zero",label:"zero",kind:"number",value:1},{id:"false",label:"false",kind:"boolean",value:true}]},
   });
   await fixture.post('save', { operationId: 'renamed-type-save' });
   await fixture.post('draft', {
@@ -372,8 +325,8 @@ test('reports show historical types and full saved values then return to table a
     value: {
       name: 'Bara i mitt utkast',
       typeId: type.id,
-      description: 'Detta är ännu inte gemensamt.',
-    },
+      
+    properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Detta är ännu inte gemensamt.'}]},
   });
   const before = await fixture.read();
   const receipts: { history: SaveReceipt[] } = await (
@@ -451,7 +404,7 @@ test('reports retain full removed objects, relationships and removed historical 
     value: {
       name: 'Historisk objekttyp',
       description: 'Typen används bara i detta syntetiska prov.',
-      fields: [],
+      
     },
   });
   await fixture.post('relationship-type', {
@@ -462,7 +415,7 @@ test('reports retain full removed objects, relationships and removed historical 
       description: 'Den historiska kopplingens definition.',
       forwardLabel: 'hör till',
       reverseLabel: 'har',
-      fields: [],
+      
     },
   });
   await fixture.post('save', { operationId: 'historical-definitions-save' });

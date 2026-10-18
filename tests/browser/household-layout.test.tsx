@@ -33,7 +33,7 @@ const state: MapState = {
       typeId: 'person',
       revision: 1,
       name: 'Alex',
-      description: '',
+      
     },
     {
       id: 'music',
@@ -41,7 +41,7 @@ const state: MapState = {
       typeId: 'service',
       revision: 1,
       name: 'Tonmoln',
-      description: '',
+      
     },
   ],
   draft: { version: 0, changes: [] },
@@ -165,7 +165,7 @@ test('relationship details open saved and proposed routes with pointer and keybo
     typeId: type.id,
     sourceId: 'alex',
     targetId: 'music',
-    knowledge: 'known' as const,
+    
   };
   const after = { ...before, sourceId: 'kim' };
   await open(1440, {
@@ -214,7 +214,7 @@ test('camera focus includes previous direct neighbors and preserves work through
     typeId: type.id,
     sourceId: 'alex',
     targetId: 'music',
-    knowledge: 'known' as const,
+    
   };
   mapState.relationshipTypes = [type];
   mapState.objects.push({ ...state.objects[1], id: 'far', name: 'Långt borta' });
@@ -226,7 +226,7 @@ test('camera focus includes previous direct neighbors and preserves work through
     {
       id: edge.id,
       before: edge,
-      after: { ...edge, targetId: null, knowledge: 'unknown' },
+      after: { ...edge, targetId: null,  },
       type,
     },
   ];
@@ -680,7 +680,7 @@ test('native relationship loss is guarded and map relationship selection preserv
         sourceId: 'alex',
         targetId: 'music',
         typeId: 'uses',
-        knowledge: 'known',
+        
       },
     ],
   });

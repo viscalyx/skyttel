@@ -145,8 +145,8 @@ test('a real callback completing before cancellation reports the verified link a
           value: {
             typeId: initial.types[0].id,
             name: 'Bevarat privat arbete',
-            description: 'Min privata beskrivning',
-          },
+            
+          properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Min privata beskrivning'}]},
         })
       ).status,
     ).toBe(200);
@@ -288,8 +288,8 @@ test('a real cancellation before a stale add click refreshes absent state withou
           value: {
             typeId: initial.types[0].id,
             name: 'Bevarat efter avbruten verifiering',
-            description: 'Privat förslag utan ny koppling',
-          },
+            
+          properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Privat förslag utan ny koppling'}]},
         })
       ).status,
     ).toBe(200);

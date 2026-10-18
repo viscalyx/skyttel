@@ -13,7 +13,7 @@ const rows: HouseholdTableRow[] = ['Cykel', 'Garage'].map((name) => ({
     revision: 1,
     typeId: 'thing',
     name,
-    description: '',
+    
   },
   removed: false,
 }));

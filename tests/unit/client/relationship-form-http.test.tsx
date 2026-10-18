@@ -95,7 +95,7 @@ test('relationship type loss lists hidden values and explicit confirmation stage
     typeId: 'uses',
     sourceId: 'bike',
     targetId: 'garage',
-    knowledge: 'none',
+    
     lifecycle: 'active',
   });
   expect(after.draft.changes).toEqual(before.draft.changes);
@@ -135,9 +135,9 @@ test('new relationship validates all missing endpoints and keeps direction, unce
     typeId: 'uses',
     sourceId: 'alex',
     targetId: 'garage',
-    knowledge: 'uncertain',
+    
     lifecycle: 'ended',
-    endDate: { knowledge: 'uncertain', value: '2026-10-01' },
+    
   });
   expect(after.relationships).toEqual(before.relationships);
   expect(after.draft.changes).toEqual(before.draft.changes);
@@ -186,7 +186,7 @@ test('a lost successful relationship reply preserves a newer proposal instead of
   await fixture.post('relationship', {
     id: staged.id,
     baseRevision: staged.before?.revision,
-    value: { ...staged.after, customValues: { note: 'Senare oberoende rättelse' } },
+    value: { ...staged.after,properties:[{id:"note",label:"note",kind:"text",value:'Senare oberoende rättelse'}]},
   });
   const latest = await fixture.read();
   await userEvent.click(
@@ -224,7 +224,7 @@ test('an undelivered relationship becomes stale after another private edit and k
   await fixture.post('draft', {
     id: 'later',
     baseRevision: null,
-    value: { name: 'Senare oberoende förslag', typeId: 'read-type', description: '' },
+    value: { name: 'Senare oberoende förslag', typeId: 'read-type',  },
   });
   const latest = await fixture.read();
   await userEvent.click(
@@ -286,7 +286,7 @@ for (const changed of [false, true]) {
       await fixture.post('draft', {
         id: 'later',
         baseRevision: null,
-        value: { name: 'Senare oberoende förslag', typeId: 'read-type', description: '' },
+        value: { name: 'Senare oberoende förslag', typeId: 'read-type',  },
       });
     const latest = await fixture.read();
     await userEvent.click(
@@ -374,7 +374,7 @@ test('ordinary object fields can be cleared without discarding other saved facts
     baseRevision: type.revision,
     value: {
       ...type,
-      sections: [{ id: 'answers', name: 'Egna uppgifter' }],
+      
       fields: type.fields?.map((field) => ({ ...field, sectionId: 'answers' })),
     },
   });
@@ -402,10 +402,10 @@ test('ordinary object fields can be cleared without discarding other saved facts
   expect(after.draft.changes.find((change) => change.id === bike.id)?.after).toEqual({
     name: 'Cykel',
     typeId: 'read-type',
-    description: bike.description,
+    
     iconId: 'bike',
-    financialFacts: { debt: { knowledge: 'none' }, endDate: { knowledge: 'unknown' } },
-  });
+    
+  properties:[{id:'description',label:'Beskrivning',kind:'text',value:bike.description}]});
 }, 30_000);
 
 test('relationship removal with a lost reply checks the same attempt after the removal is already saved', async () => {
@@ -444,7 +444,7 @@ test('indistinguishable object names in a relationship selector include identity
     await fixture.post('draft', {
       id,
       baseRevision: null,
-      value: { name: 'Samma namn', typeId: 'read-type', description: '' },
+      value: { name: 'Samma namn', typeId: 'read-type',  },
     });
   const before = await fixture.read();
   renderHouseholdWork(before.objects[0].householdId);

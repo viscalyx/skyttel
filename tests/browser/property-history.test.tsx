@@ -42,7 +42,7 @@ test('historical merge review preserves object and relationship properties and t
               revision: 1,
               typeId: 'plant',
               name: 'Rosen',
-              description: '',
+              
               properties,
             },
           ],
@@ -55,7 +55,7 @@ test('historical merge review preserves object and relationship properties and t
               typeId: 'supports',
               sourceId: 'lo',
               targetId: 'rose',
-              knowledge: 'known',
+              
               properties,
             },
           ],
@@ -125,7 +125,7 @@ test('UTKAST-157: read ordered historical property identities and meanings with 
     revision: 1,
     typeId: 'plant',
     name: 'Rosen',
-    description: '',
+    
     properties,
   };
   const edgeType = {
@@ -172,7 +172,7 @@ test('UTKAST-157: read ordered historical property identities and meanings with 
           typeId: 'supports',
           sourceId: 'lo',
           targetId: 'rose',
-          knowledge: 'known',
+          
           properties,
         },
         after: {
@@ -182,7 +182,7 @@ test('UTKAST-157: read ordered historical property identities and meanings with 
           typeId: 'supports',
           sourceId: 'lo',
           targetId: 'rose',
-          knowledge: 'known',
+          
           properties: after,
         },
       },

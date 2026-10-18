@@ -55,9 +55,9 @@ beforeEach(async () => {
     value: {
       typeId: state.types[0].id,
       name: 'Lo Exempel',
-      description: 'Befintlig text',
+      
       iconId: 'bike',
-    },
+    properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Befintlig text'}]},
   });
   failure = 0;
   objectFormRequests = [];
@@ -230,7 +230,7 @@ test('a stale complete image proposal keeps text and local image without overwri
         version: before.draft.version,
         contentVersion: before.contentVersion,
         baseRevision: null,
-        value: { typeId: before.types[0].id, name: 'Annat förslag', description: '' },
+        value: { typeId: before.types[0].id, name: 'Annat förslag',  },
       })
     ).status,
   ).toBe(200);

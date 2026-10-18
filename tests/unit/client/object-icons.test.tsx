@@ -27,7 +27,7 @@ beforeEach(async () => {
     id: 'person',
     version: 0,
     baseRevision: null,
-    value: { typeId: state.types[0].id, name: 'Lo Exempel', description: 'Befintlig text' },
+    value: { typeId: state.types[0].id, name: 'Lo Exempel',properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Befintlig text'}]},
   });
   failure = 0;
   vi.stubGlobal('fetch', (url: string, init?: RequestInit) => {

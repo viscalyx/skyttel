@@ -29,7 +29,7 @@ test('relationship invalid property input blocks staging, preserves dirty work a
         typeId: 'person',
         revision: 1,
         name: 'Alex',
-        description: '',
+        
       },
       {
         id: 'bike',
@@ -37,7 +37,7 @@ test('relationship invalid property input blocks staging, preserves dirty work a
         typeId: 'cycle',
         revision: 1,
         name: 'Cykeln',
-        description: '',
+        
       },
     ],
     relationshipTypes: ['uses', 'owns'].map((id) => ({
@@ -56,7 +56,7 @@ test('relationship invalid property input blocks staging, preserves dirty work a
     typeId: 'uses',
     sourceId: 'alex',
     targetId: 'bike',
-    knowledge: 'known',
+    
     properties: [
       { id: 'one', label: 'Pris', kind: 'text', value: 'Gratis idag' },
       { id: 'two', label: 'Pris', kind: 'boolean', value: false },
@@ -132,7 +132,7 @@ test('relationship invalid property input blocks staging, preserves dirty work a
   expect(staged[0].value).toEqual({
     ...value,
     typeId: 'owns',
-    customValues: {},
+    
     properties: [{ id: 'two', label: 'Pris', kind: 'boolean' }],
   });
   expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(innerWidth);

@@ -12,7 +12,7 @@ import '../../src/client/workspace.css';
 
 const type = { id: 'thing', householdId: 'home', revision: 1, name: 'Sak', description: '' };
 const edgeType = { ...type, id: 'uses', name: 'Använder' };
-const object = { ...type, typeId: 'thing', id: 'lo', name: 'Lo Exempel', description: '' };
+const object = { ...type, typeId: 'thing', id: 'lo', name: 'Lo Exempel',  };
 const state: MapState = {
   userId: 'alex',
   contentVersion: 1,
@@ -32,7 +32,7 @@ const state: MapState = {
           typeId: 'uses',
           sourceId: 'gone',
           targetId: 'lo',
-          knowledge: 'uncertain',
+          
           lifecycle: 'ended',
         },
         objectNames: { gone: 'Borttagen cykel', lo: 'Lo Exempel' },
@@ -53,7 +53,7 @@ test('blocked endpoint move leaves the saved relationship ordinary in graph pres
     typeId: 'uses',
     sourceId: 'lo',
     targetId: 'lo',
-    knowledge: 'known' as const,
+    
   };
   render(
     <MapLegend
@@ -186,7 +186,7 @@ for (const width of [1280, 320]) {
       {
         id: 'mine',
         baseRevision: null,
-        value: { sourceId: 'lo', targetId: 'lo', knowledge: 'uncertain', lifecycle: 'ended' },
+        value: { sourceId: 'lo', targetId: 'lo',  lifecycle: 'ended' },
       },
     ]);
     const element = await editor.element();

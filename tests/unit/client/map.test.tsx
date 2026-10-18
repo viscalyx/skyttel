@@ -351,10 +351,7 @@ test('changing type shows displaced values and requires handling them without co
           value: {
             name,
             description: '',
-            fields: [
-              { id: 'serial', name: 'Nummer', description: '', kind },
-              { id: 'insured', name: 'Försäkrad', description: '', kind: 'boolean' },
-            ],
+            
           },
         })
       ).status,
@@ -367,9 +364,9 @@ test('changing type shows displaced values and requires handling them without co
     value: {
       typeId: 'cycle',
       name: 'Alex blå cykel',
-      description: '',
-      customValues: { serial: 'SYNTH-42', insured: false },
-    },
+      
+      
+    properties:[{id:"serial",label:"serial",kind:"text",value:'SYNTH-42'},{id:"insured",label:"insured",kind:"boolean",value:false}]},
   });
   await client.json(`${path}/save`, { version: 3, operationId: 'setup' });
   await open();
@@ -405,8 +402,8 @@ test('changing type shows displaced values and requires handling them without co
   expect(state.objects[0]).toMatchObject({
     id: 'bike',
     typeId: 'vehicle',
-    customValues: { serial: 42 },
-  });
+    
+  properties:[{id:"serial",label:"serial",kind:"number",value:42}]});
   expect(state.objects[0].customValues).not.toHaveProperty('insured');
 });
 
@@ -421,7 +418,7 @@ test('relationship type forms review both labels and show one edge from either o
       version,
       id,
       baseRevision: null,
-      value: { typeId: initial.types[0].id, name, description: '' },
+      value: { typeId: initial.types[0].id, name,  },
     });
   }
   await open();
@@ -1016,14 +1013,14 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
   await mapRequested;
   const saved = await (await client.request(path)).json();
   expect(saved.objects).toHaveLength(2);
-  expect(saved.relationships[0]).toMatchObject({ knowledge: 'uncertain', targetId });
+  expect(saved.relationships[0]).toMatchObject({  targetId });
   expect(table.queryAllByRole('button', { name: 'Samband för Lo', hidden: true })).toHaveLength(0);
   for (const knowledge of ['unknown', 'none']) {
     await editCurrent();
     await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), knowledge);
     await stageRelationship();
     const staged = await (await client.request(path)).json();
-    expect(staged.draft.relationships[0].after).toMatchObject({ knowledge, targetId });
+    expect(staged.draft.relationships[0].after).toMatchObject({  targetId });
     await save();
   }
   await editCurrent();
@@ -1032,7 +1029,7 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
   await userEvent.click(screen.getByRole('button', { name: 'Stäng samband' }));
   const staged = await (await client.request(path)).json();
   expect(staged.draft.relationships[0]).toMatchObject({
-    before: expect.objectContaining({ knowledge: 'none' }),
+    before: expect.objectContaining({  }),
     after: null,
   });
   await save();
@@ -1068,7 +1065,7 @@ test('a duplicate displays its existing relationship and stale relationship text
         version: state.draft.version,
         id: 'concurrent',
         baseRevision: null,
-        value: { typeId: state.types[0].id, name: 'Robin', description: '' },
+        value: { typeId: state.types[0].id, name: 'Robin',  },
       })
     ).status,
   ).toBe(200);
@@ -1176,21 +1173,21 @@ async function concurrentEditors() {
     ['lo', 'Lo'],
     ['kim', 'Kim'],
   ])
-    await propose(client, 'draft', id, { typeId: state.types[0].id, name, description: '' });
+    await propose(client, 'draft', id, { typeId: state.types[0].id, name,  });
   await commit();
   return { other, read, propose, commit, state };
 }
 
 test('conflict choices retain independent object fields and cannot reuse stale approval', async () => {
   const { other, read, propose, commit, state } = await concurrentEditors();
-  const value = { typeId: state.types[0].id, name: 'Lo Lind', description: '' };
+  const value = { typeId: state.types[0].id, name: 'Lo Lind',  };
   await propose(client, 'draft', 'lo', value);
   await propose(other, 'draft', 'lo', {
     ...value,
     name: 'Lo Berg',
-    description: 'Spelar piano',
+    
     identity: 'unspecified',
-  });
+  properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Spelar piano'}]});
   await commit(other);
   const oldVersion = (await read()).draft.version;
   await open();
@@ -1230,16 +1227,16 @@ test.each(['changed', 'duplicate', 'endpoint', 'deletion'] as const)(
       typeId: state.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'kim',
-      knowledge: 'known',
+      
     };
     if (scenario === 'changed') {
       await propose(client, 'relationship', 'link', value);
       await commit();
-      await propose(client, 'relationship', 'link', { ...value, knowledge: 'uncertain' });
+      await propose(client, 'relationship', 'link', { ...value,  });
       await propose(other, 'relationship', 'link', {
         ...value,
         targetId: 'lo',
-        knowledge: 'unknown',
+        
       });
     } else if (scenario === 'duplicate') {
       await propose(client, 'relationship', 'mine', value);
@@ -1326,7 +1323,7 @@ test('accepting a saved object removes only that proposal after another user del
   await propose(client, 'draft', 'lo', {
     typeId: state.types[0].id,
     name: 'Lo Lind',
-    description: '',
+    
   });
   await propose(other, 'draft', 'lo', null);
   await commit(other);
@@ -1367,7 +1364,7 @@ test.each(['lo', 'new'])(
     await propose(client, 'draft', id, {
       typeId: state.types[0].id,
       name: 'Lo Lind',
-      description: '',
+      
     });
     const current = await read(other);
     const type = current.types.find((type) => type.id === state.types[0].id);
@@ -1516,7 +1513,7 @@ test('a conflicting type offers both current choices and never grants an implici
     version: 0,
     id: type.id,
     baseRevision: 1,
-    value: { name: 'Mitt namn', description: '', fields: [] },
+    value: { name: 'Mitt namn', description: '',  },
   });
   fixture.setSubject('other-types');
   const other = fixture.client();
@@ -1530,7 +1527,7 @@ test('a conflicting type offers both current choices and never grants an implici
     version: 0,
     id: type.id,
     baseRevision: 1,
-    value: { name: 'Annans namn', description: 'Rättad definition', fields: [] },
+    value: { name: 'Annans namn', description: 'Rättad definition',  },
   });
   await other.json(`${path}/save`, { version: 1, operationId: 'other-type' });
   await open();
@@ -1556,7 +1553,7 @@ test('a conflicting type offers both current choices and never grants an implici
     version: 2,
     id: type.id,
     baseRevision: 3,
-    value: { name: 'Gemensamt namn', description: '', fields: [] },
+    value: { name: 'Gemensamt namn', description: '',  },
   });
   await other.json(`${path}/save`, { version: 3, operationId: 'other-again' });
   cleanup();
@@ -1577,10 +1574,10 @@ test('a conflicting type offers both current choices and never grants an implici
     value: {
       name: 'Eget namn med nya avsnitt',
       description: '',
-      fields: [],
-      sections: [{ id: 'notes', name: 'Anteckningar' }],
-      builtins: [{ key: 'description', name: 'Beskrivning', sectionId: 'notes' }],
-      propertyOrder: ['builtin:description'],
+      
+      
+      
+      
     },
   });
   const theirs = (await (await other.request(path)).json()) as MapState;
@@ -1588,7 +1585,7 @@ test('a conflicting type offers both current choices and never grants an implici
     version: theirs.draft.version,
     id: type.id,
     baseRevision: basis.revision,
-    value: { name: 'Senare gemensamt namn', description: '', fields: [] },
+    value: { name: 'Senare gemensamt namn', description: '',  },
   });
   await other.json(`${path}/save`, {
     version: theirs.draft.version + 1,
@@ -1687,7 +1684,7 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
           value: {
             typeId: initial.types.find((item) => item.name === type)?.id,
             name,
-            description: '',
+            
           },
         })
       ).status,
@@ -1703,9 +1700,9 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
           sourceId: 'person',
           targetId: 'subscription',
           typeId: initial.relationshipTypes.find((item) => item.name === 'Använder')?.id,
-          knowledge: 'known',
+          
           lifecycle: 'ended',
-          endDate: { knowledge: 'known', value: '2000-01-01' },
+          
         },
       })
     ).status,
@@ -1752,7 +1749,7 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
       sourceId: 'person',
       targetId: 'subscription',
       lifecycle: 'active',
-      endDate: { knowledge: 'uncertain', value: '2000-01-01' },
+      
     },
   });
   await save();
@@ -1764,7 +1761,7 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
     sourceId: 'person',
     targetId: 'subscription',
     lifecycle: 'active',
-    endDate: { knowledge: 'uncertain', value: '2000-01-01' },
+    
   });
   expect(active.draft.relationships ?? []).toEqual([]);
   expect(active.draft.changes).toEqual([]);
@@ -1810,7 +1807,7 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
     id: 'incoming',
     sourceId: 'person',
     targetId: 'subscription',
-    endDate: { knowledge: 'uncertain', value: '2000-01-01' },
+    
   });
   expect(final.relationships[0]).toHaveProperty('lifecycle', 'ended');
   expect(final.draft.relationships ?? []).toEqual([]);

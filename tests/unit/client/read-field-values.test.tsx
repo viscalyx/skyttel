@@ -9,10 +9,7 @@ const type: ObjectType & RelationshipType = {
   revision: 1,
   name: 'Exempel',
   description: '',
-  fields: [
-    { id: 'yes', name: 'Ja-fält', description: '', kind: 'boolean' },
-    { id: 'missing', name: 'Saknad uppgift', description: '', kind: 'text' },
-  ],
+  
 };
 
 describe.each([undefined, 'active', 'ended'] as const)('read lifecycle %s', (lifecycle) => {
@@ -20,7 +17,7 @@ describe.each([undefined, 'active', 'ended'] as const)('read lifecycle %s', (lif
     const customValues = { yes: true, unlisted: false, amount: 42, note: 'Text' };
     const readers = [
       objectPropertyValues(
-        { name: 'Objekt', typeId: type.id, description: '', customValues, lifecycle },
+        { name: 'Objekt', typeId: type.id,   lifecycle },
         type,
       ),
       relationshipPropertyValues(
@@ -28,8 +25,8 @@ describe.each([undefined, 'active', 'ended'] as const)('read lifecycle %s', (lif
           typeId: type.id,
           sourceId: 'source',
           targetId: null,
-          knowledge: 'unknown',
-          customValues,
+          
+          
           lifecycle,
         },
         type,
