@@ -126,6 +126,11 @@ export function conflictRemovalPlan(
     if (choices[`relationship:${edge.id}`] !== 'proposed') continue;
     const type = state.relationshipTypes.find((type) => type.id === edge.typeId);
     if (!type) return null;
+    const removedWithObjects = draft.changes
+      .filter(
+        (change) => !change.after && (edge.sourceId === change.id || edge.targetId === change.id),
+      )
+      .map(({ id }) => id);
     draft.relationships = [
       ...(draft.relationships ?? []).filter((change) => change.id !== edge.id),
       {
@@ -136,6 +141,7 @@ export function conflictRemovalPlan(
         beforeType: type,
         proposedAt: new Date().toISOString(),
         objectNames: Object.fromEntries(state.objects.map((object) => [object.id, object.name])),
+        ...(removedWithObjects.length ? { removedWithObjects } : {}),
       },
     ];
     effects.push({

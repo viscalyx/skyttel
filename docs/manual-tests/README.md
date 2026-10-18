@@ -694,7 +694,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
   samt samtidiga fria egenskapsändringar med separata egenskaps- och
   ordningsval, objektborttagning med bevarade sambandsförslag, flera orsaker och
-  återtagning som behåller separata sambandsborttagningar,
+  återtagning som behåller separata sambandsborttagningar, ny granskning och
+  nytt sparbesked när ytterligare borttagningsföljder tillkommer,
   samt rättning eller kastande av bevarade sambandsförslag efter någon
   annans ändpunktsborttagning, med blockering av hela sparandet,
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,

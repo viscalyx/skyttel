@@ -8349,6 +8349,116 @@ ett aktuellt uttryckligt sparbesked behövs för att ändra kartan.
 fysiskt mobilt tangentbord, kontrast och förstoring bedöms i områdets
 hjälpmedelsfall. Automatiken utgör inget mänskligt godkännande.
 
+### UTKAST-155: återta objektborttagning efter granskning av nya följder
+
+**Syfte:** Behålla ett nytt sparat samband när dess objektborttagning återtas.
+
+**Användare:** Alex och Robin i samma syntetiska hushåll.
+
+**Förutsättningar:** Alex har föreslagit att ta bort Lo Exempel och lagt
+till Oberoende förslag i sitt utkast. Robin sparar därefter ett samband
+från Lo Exempel till Molnmusik. Använd 320 × 900 och ljust tema.
+
+**Separat förberedelse:** Starta den
+[tillfälliga konfliktinstallationen](#bevarade-konfliktval-och-kontrollerat-utfall)
+och välj `new-connections`. Behåll samma hushåll genom fallet. Avsluta
+med `quit` och välj en ny installation inför omprov.
+
+**Automatiskt motsvarande test:**
+[changed-removal.spec.ts](../../tests/integration/changed-removal.spec.ts),
+UTKAST-155. Protokollunderlaget använder riktig server och SQLite med två
+autentiserade användare och verifierar separat begärda sambandsborttagningar.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/changed-removal.spec.ts", "caseId": "UTKAST-155" },
+  "reference": "320 × 900, Chromium, ljust tema. Nytt sparat samband efter förslag om objektborttagning. Återtagning efter uttrycklig granskning av följderna.",
+  "outcomes": ["Objektets och det nya sambandets borttagning kräver egna val i konfliktfönstret med rubrikfokus och tangentbord.", "Det granskade sambandet anges som en följd av objektborttagningen. När objektborttagningen återtas försvinner även den följden ur utkastet; oberoende arbete finns kvar.", "Efter separat sparande finns Lo Exempel, det nya sambandet till Molnmusik och det oberoende objektet kvar."],
+  "evidence": [{ "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/changed-removal-http.test.ts", "title": "withdrawing an object removal restores newly reviewed connections while preserving independent deletions and work", "purpose": "Inkommande samband, självsamband, tomma egenskaper och separat sambandsborttagning med verkligt beständigt samlat sparande." }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **1 konflikt i ditt utkast**. Kontrollera fokus på rubriken
+   **Granska konflikter** och läs det nya sambandet.
+2. Nå objektets **Föreslagen borttagning** med Tab och välj med Enter.
+   Nå sambandets **Föreslagen borttagning av sambandet** och välj med
+   mellanslag. Välj **Lägg valen i utkastet** och läs bekräftelsen.
+3. Stäng med Escape och öppna **Skriv till Skyttel → Visa utkastet**.
+   Läs **Följer objektborttagning: Lo Exempel.** på sambandsraden.
+4. Återta Lo Exempels borttagningsförslag med radens ta bort-knapp och
+   Enter. Kontrollera att även sambandets borttagning försvinner ur
+   utkastet, medan **Oberoende förslag** finns kvar.
+5. Välj **Spara hela utkastet**. Läs sparbekräftelsen och öppna **Tabell**.
+   Kontrollera Lo Exempel och Oberoende förslag. Öppna **Samband för Lo
+   Exempel** och läs sambandet till Molnmusik.
+
+**Förväntat resultat:** Återtagningen återger det sparade sambandet efter
+granskade följder. Det oberoende arbetet sparas separat. Ingen dragning
+eller tal krävs.
+
+### UTKAST-156: granska ytterligare borttagningsföljder före nytt sparande
+
+**Syfte:** Ett godkännande får inte omfatta samband som tillkommer senare.
+
+**Användare och förutsättningar:** Alex och Robin i samma hushåll. Förbered
+Lo Exempel, Molnmusik och Alex utkast som i UTKAST-155. Robin har sparat
+det utgående sambandet. Behåll Robin inloggad i en separat webbläsare.
+
+**Automatiskt motsvarande test:**
+[changed-removal.spec.ts](../../tests/integration/changed-removal.spec.ts),
+UTKAST-156, förlägger Robins andra sparande mellan Alex sparbesked och
+serverns slutkontroll. HTTP/MCP-underlaget verifierar också en tredje
+förändring med självsamband, gamla försök, oförändrat utkast och historik.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/changed-removal.spec.ts", "caseId": "UTKAST-156" },
+  "reference": "Chromium, ljust tema, syntetiska medlemmar i separata sessioner. Ett utgående samband granskas; ett inkommande samband tillkommer före slutkontrollen.",
+  "outcomes": ["Det gamla sparbeskedet avvisas med ett begripligt besked om att inget sparas. Övrigt arbete finns kvar.", "Aktuellt underlag visar den ytterligare följden och kräver nytt uttryckligt val. Båda sambandsborttagningarna och oberoende arbete visas före det nya sparandet.", "Ett separat nytt sparbesked genomför den samlade borttagningen. Lo Exempel och båda sambanden är borta, medan det oberoende objektet finns kvar."],
+  "evidence": [
+    { "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/changed-removal-http.test.ts", "title": "HTTP rejects each expanded removal approval until current review and a fresh atomic save", "purpose": "Flera samtidiga autentiserade klienter, gamla godkännanden, gammalt konfliktval, inkommande/utgående/självsamband, atomiskt kvitto och oförändrad historik vid avvisning." },
+    { "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/changed-removal-http.test.ts", "title": "MCP rejects each expanded removal approval until current review and a fresh atomic save", "purpose": "Samma skydd och helt bevarat utkast via ansluten MCP-klient med verklig åtkomst, versioner och nytt operations-ID." }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Alex öppnar konflikten, väljer objektets och det utgående sambandets
+   föreslagna borttagning och **Lägg valen i utkastet**. Läs bekräftelsen
+   och öppna hela utkastet.
+2. Robin sparar ett inkommande samband från Molnmusik till Lo Exempel.
+   Alex väljer **Spara hela utkastet** från det tidigare granskade utkastet.
+   Läs **Utkastet kunde inte sparas.** och **Inget sparades av detta
+   försök.** Stäng med Escape.
+3. Stäng textvyn och välj **Hämta aktuellt underlag**. Öppna konflikten
+   igen och välj **Visa aktuell jämförelse**. Läs och välj det nya
+   sambandets borttagning tillsammans med objektets. Välj **Lägg valen i
+   utkastet**.
+4. Läs hela utkastet: båda sambandsborttagningarna och Oberoende förslag
+   ska finnas med. Välj **Spara hela utkastet** igen och läs bekräftelsen.
+5. Öppna **Tabell**. Lo Exempel ska vara borta och Oberoende förslag ska
+   finnas kvar. Öppna **Samband för Molnmusik** och kontrollera att inga
+   samband finns kvar.
+
+**Förväntat resultat:** Ett gammalt sparbesked utökar aldrig borttagningen.
+Ny aktuell granskning följs av ett separat sparbesked. Avvisningen behåller
+hela arbetet; det nya godkända sparandet genomför alla följder tillsammans.
+
+**Kvarstående mänsklig observation för UTKAST-155/156:** Faktisk uppläsning,
+fysiskt tangentbord, förstoring och omflöde bedöms i områdets befintliga
+hjälpmedelsfall. Automatiken utgör inget mänskligt godkännande.
+
 ## Avvecklat tekniskt underlag
 
 I [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts)

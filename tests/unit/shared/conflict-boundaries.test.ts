@@ -567,6 +567,7 @@ test('removal choices reject incomplete, invented and stale combinations while r
       beforeType: edgeType,
       proposedAt: expect.any(String),
       objectNames: { alex: 'Alex', bike: 'Cykeln' },
+      removedWithObjects: ['bike'],
     },
   ]);
   expect(remove?.effects).toHaveLength(2);

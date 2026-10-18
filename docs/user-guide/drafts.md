@@ -210,6 +210,11 @@ uppgifter eller samband väljer du objektets och varje nytt sambands
 borttagning för sig. Objektet kan inte tas bort medan ett sådant samband
 behålls. Valen ändrar ditt utkast; spara hela utkastet separat när du har
 granskat resultatet.
+Om ytterligare samband tillkommer före sparandet stoppas hela försöket.
+Granska de nya följderna och lämna ett nytt sparbesked; ett tidigare besked
+omfattar inte nya borttagningar. Ditt övriga arbete finns kvar. Du kan också
+återta objektborttagningen. Då behålls samband som du bara har valt att ta
+bort som följd av den, medan separata sambandsborttagningar ligger kvar.
 
 En saknad objekttyp eller ett eget fält med ändrad datatyp behöver rättas
 utanför konfliktfönstret. Följ den visade instruktionen till
