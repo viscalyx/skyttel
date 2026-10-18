@@ -608,7 +608,7 @@ test('a mutation followed by a historical failure request retains only its verif
   expect(after.draft.changes[0]).toEqual(before.draft.changes[0]);
   expect(after.draft.changes[1]).toMatchObject({
     id: 'new-object',
-    after: { name: 'Nytt förslag', description: '' },
+    after: { name: 'Nytt förslag', properties: [] },
   });
   expect(after.draft.version).toBe(before.draft.version + 1);
   expect((await (await client.get(`${path}/map/history`)).json()).history).toEqual([]);

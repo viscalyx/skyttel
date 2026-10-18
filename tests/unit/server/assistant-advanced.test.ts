@@ -184,6 +184,7 @@ test('advanced tools use actual SDK contracts, preserve old read grants and curr
               description: '',
               forwardLabel: 'framåt',
               reverseLabel: 'bakåt',
+              fields: [],
             },
           },
         })
