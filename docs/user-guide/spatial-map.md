@@ -389,10 +389,10 @@ sparandet. Om en annan klient hinner ändra vyn avvisas det äldre valet och
 de bekräftade inställningarna visas. Granska dem innan du försöker igen.
 
 En ny personlig vy har bakgrunden på med Pärlemor och Atmosfär. Vid
-uppgradering behåller en befintlig vy sitt tidigare val: av, även när du
-inte har sparat något stjärnval, förblir av. På blir Pärlemor och Dis och
-ljuspunkter. Systemets minskade rörelse ändrar inte det sparade önskemålet
-eller vilka bakgrundslager som visas.
+uppgradering ger ett avslaget eller osparat stjärnval bakgrunden av med
+**Pärlemor** och **Atmosfär**. Ett påslaget stjärnval ger **Visa bakgrund**
+med **Pärlemor** och **Dis och ljuspunkter**. Systemets minskade rörelse
+ändrar inte det sparade önskemålet eller vilka bakgrundslager som visas.
 
 I täta utsnitt kan du välja ett objekt genom dess namnetikett eller markör.
 Etiketterna får egna träffytor och linjer till objektens verkliga lägen.

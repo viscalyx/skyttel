@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { availableParallelism, cpus, loadavg, platform, release, totalmem } from 'node:os';
-import { dirname } from 'node:path';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { availableParallelism, cpus, loadavg, platform, release, tmpdir, totalmem } from 'node:os';
+import { dirname, join } from 'node:path';
 import { type CDPSession, chromium, expect, type Page } from '@playwright/test';
 import type { PersonalView } from '../src/shared/personal-view.js';
 import { createBackgroundMapFixture } from '../tests/support/background-map.js';
@@ -199,7 +199,9 @@ export async function profileBackgrounds() {
   }[] = [];
   const actions = Number(process.env.MAP_FRAME_SAMPLES ?? 12);
   const rounds = Number(process.env.MAP_RUNS ?? 2);
-  const output = process.env.MAP_REPORT ?? '/tmp/skyttel-background-report.json';
+  const output =
+    process.env.MAP_REPORT ??
+    join(await mkdtemp(join(tmpdir(), 'skyttel-background-measurement-')), 'report.json');
   const budget: { response: Summary; presentedFrames: Summary } | null =
     process.env.MAP_CALIBRATE === '1'
       ? null
