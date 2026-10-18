@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { PropertyKind } from '../../src/shared/properties.js';
-import { openSettings } from './client.js';
+import { openTypeDefinitions } from './domain-work.js';
 
 /** Use the same public ordered property controls on objects and relationships. */
 export async function addFreeProperty(
@@ -40,10 +40,5 @@ export async function openFreeProperties(form: Locator) {
 }
 
 export async function openTypes(page: Page) {
-  await openSettings(page);
-  const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
-  const link = navigation.getByRole('link', { name: 'Typer', exact: true });
-  if (!(await link.isVisible()))
-    await navigation.getByText('Välj inställning', { exact: true }).click();
-  await link.click();
+  await openTypeDefinitions(page);
 }
