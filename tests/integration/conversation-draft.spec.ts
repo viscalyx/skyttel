@@ -25,9 +25,7 @@ async function readLoProposal(page: Page) {
   const proposal = page.getByRole('dialog', { name: 'Lo Exempel', exact: true });
   await expect(proposal).toBeVisible();
   await expect(proposal).toContainText('Person');
-  await expect(
-    proposal.getByText('Beskrivning', { exact: true }).locator('..').getByRole('definition'),
-  ).toHaveText('Ej uppgivet');
+  await expect(proposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
   await closeSupportDialog(page, 'Lo Exempel');
 }
 async function settings(page: Page) {
@@ -98,7 +96,9 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     await page.reload();
     const savedBefore = await openSavedHistory(page);
     await savedBefore.getByText('Visa ändringarna', { exact: true }).click();
-    await expect(savedBefore.locator('.history-changes')).toContainText('Sista fyra: 1111');
+    await expect(
+      savedBefore.locator('.history-changes').getByText('Sista fyra: 1111 (Text)', { exact: true }),
+    ).toBeVisible();
     await expect(savedBefore.locator('.history-changes')).not.toContainText('2222');
     await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await startConversationWithText(page);
@@ -121,7 +121,10 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     expect(
       await table.locator('tbody td:first-child > span[aria-hidden]').allTextContents(),
     ).toEqual(['✎', '×', '+', '✎', '✎', '+', '+', '+']);
-    for (const line of ['Sista fyra: 1111 → 2222', 'Lo Rättad → Betalar → Kortet'])
+    for (const line of [
+      'Sista fyra: 1111 (Text) → Sista fyra: 2222 (Text)',
+      'Lo Rättad → Betalar → Kortet',
+    ])
       await expect(table.getByText(line, { exact: false })).toBeVisible();
     for (const name of ['Provtyp', 'Förvaras'])
       await expect(
@@ -175,7 +178,9 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     expect(await read()).toEqual(beforeReview);
     const savedAfter = await openSavedHistory(page);
     await savedAfter.getByText('Visa ändringarna', { exact: true }).click();
-    await expect(savedAfter.locator('.history-changes')).toContainText('Sista fyra: 1111');
+    await expect(
+      savedAfter.locator('.history-changes').getByText('Sista fyra: 1111 (Text)', { exact: true }),
+    ).toBeVisible();
     await expect(savedAfter.locator('.history-changes')).not.toContainText('2222');
     expect(await read()).toEqual(beforeReview);
   } finally {
