@@ -862,26 +862,36 @@ async function readFamily(page: Page) {
         'Hushållets betalkonto',
       ],
     ],
+    [
+      'Föreningens musikkonto',
+      ['Tillhör tjänsten', 'Molnmusik', 'Kontaktadress', 'familjen@example.test'],
+    ],
   ] as const) {
     const relationships = await openObjectRelationships(page, name);
     for (const value of values) await expect(relationships).toContainText(value);
+    if (name === 'Föreningens musikkonto')
+      await expect(relationships.locator('.household-read-relationships > li')).toHaveCount(2);
     const expected = {
       'Familjens musikkonto': [
-        ['Inloggningsadress', 'Familjens musikkonto', 'musik@example.test', 'Känt'],
-        ['Kontaktadress', 'Familjens musikkonto', 'familjen@example.test', 'Känt'],
+        ['Inloggningsadress', 'Familjens musikkonto', 'musik@example.test'],
+        ['Kontaktadress', 'Familjens musikkonto', 'familjen@example.test'],
       ],
       'Familjens Molnmusik': [
-        ['Står på avtalet', 'Familjens Molnmusik', 'Alex Exempel', 'Känt'],
-        ['Betalar', 'Kim Exempel', 'Familjens Molnmusik', 'Känt'],
-        ['Betalas med', 'Familjens Molnmusik', 'Familjens musikkort', 'Känt'],
+        ['Står på avtalet', 'Familjens Molnmusik', 'Alex Exempel'],
+        ['Betalar', 'Kim Exempel', 'Familjens Molnmusik'],
+        ['Betalas med', 'Familjens Molnmusik', 'Familjens musikkort'],
       ],
       Molnmusik: [
-        ['Använder', 'Lo Lind', 'Molnmusik', 'Känt'],
-        ['Används av', 'Molnmusik', 'Lo Lind', 'Osäkert uppgivet'],
+        ['Använder', 'Lo Lind', 'Molnmusik'],
+        ['Används av', 'Molnmusik', 'Lo Lind'],
       ],
       'Familjens musikkort': [
-        ['Kontokoppling', 'Familjens musikkort', 'Kortets kontokoppling', 'Känt'],
-        ['Kortfakturan betalas från', 'Familjens musikkort', 'Hushållets betalkonto', 'Känt'],
+        ['Kontokoppling', 'Familjens musikkort', 'Kortets kontokoppling'],
+        ['Kortfakturan betalas från', 'Familjens musikkort', 'Hushållets betalkonto'],
+      ],
+      'Föreningens musikkonto': [
+        ['Tillhör tjänsten', 'Föreningens musikkonto', 'Molnmusik'],
+        ['Kontaktadress', 'Föreningens musikkonto', 'familjen@example.test'],
       ],
     }[name];
     for (const [direction, source, target] of expected ?? []) {
@@ -919,11 +929,9 @@ async function readFamily(page: Page) {
     }
     await page.keyboard.press('Escape');
   }
-  for (const name of ['Föreningens musikkonto', 'Lindens musikförening']) {
-    const relationships = await openObjectRelationships(page, name);
-    await expect(relationships.locator('.household-read-relationships > li')).toHaveCount(0);
-    await page.keyboard.press('Escape');
-  }
+  const standalone = await openObjectRelationships(page, 'Lindens musikförening');
+  await expect(standalone.locator('.household-read-relationships > li')).toHaveCount(0);
+  await page.keyboard.press('Escape');
 }
 
 test('TAL-02: negativa besked och förlorad anslutning stoppar sena röständringar', async ({

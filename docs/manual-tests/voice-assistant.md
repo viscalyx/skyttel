@@ -123,8 +123,10 @@ städning.
    inloggningsadress, kontaktadress, avtalspart, betalare och betalningsmedel.
    Läs egenskapen **Osäkert uppgivet: Ja** på användningssambandet och
    kontokopplingens ospecificerade bankkonto. Öppna **Föreningens
-   musikkonto** och **Lindens musikförening**: båda saknar samband och
-   finns kvar som fristående objekt.
+   musikkonto** och läs dess två samband: **Tillhör tjänsten** till Molnmusik
+   och **Kontaktadress** till `familjen@example.test`. Öppna **Lindens
+   musikförening**: föreningen saknar samband och finns kvar som fristående
+   objekt.
 7. Slå av mikrofonen och välj Nytt samtal. Ingen ny medgivanderuta visas. Läs
    familjens kvitto igen; inget extra sparande tillkommer. Logga ut och avsluta
    provmiljön enligt tidslinjen.
