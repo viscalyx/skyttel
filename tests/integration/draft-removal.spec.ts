@@ -253,7 +253,13 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
         exact: true,
       });
       const affected = dialog.getByRole('list', { name: 'Förslag som blir kvar men påverkas' });
-      await expect(affected).toHaveCount(0);
+      const dependents = (
+        kind === 'objectType' ? before.draft.changes : before.draft.relationships
+      )?.filter(({ after }) => after?.typeId === data.type.id);
+      await expect(affected.getByRole('listitem')).toHaveCount(dependents?.length ?? 0);
+      await expect(affected).toContainText(
+        'Förslaget använder den sparade typen i stället för typförslaget.',
+      );
       await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click();
       await expect(dialog).toHaveCount(0);
       const after = await data.read();
@@ -489,9 +495,14 @@ for (const width of [1280, 320]) {
       ).toBeFocused();
       const after = await data.read();
       expect(after.draft.changes.map(({ id }) => id)).toEqual(['draft-bike', 'draft-unresolved']);
-      expect(after.draft.relationships?.map(({ id }) => id)).toEqual(['draft-edge-unknown']);
+      expect(after.draft.relationships?.map(({ id }) => id)).toEqual([
+        'draft-edge-unknown',
+        'draft-edge-none',
+      ]);
       expect(after.draft.relationships).toEqual(
-        before.draft.relationships?.filter(({ id }) => id === 'draft-edge-unknown'),
+        before.draft.relationships?.filter(({ id }) =>
+          ['draft-edge-unknown', 'draft-edge-none'].includes(id),
+        ),
       );
       expect(after.draft.objectTypes).toEqual(before.draft.objectTypes);
       expect(after.draft.relationshipTypes).toEqual(before.draft.relationshipTypes);
@@ -631,13 +642,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
       if (!type) throw new Error('Missing native type proposal');
       expect(type.after).toMatchObject({
         name: 'Tillfällig typ',
-        properties: expect.arrayContaining([
-          expect.objectContaining({
-            label: 'Beskrivning',
-            kind: 'text',
-            value: 'Hela den tillfälliga typens betydelse',
-          }),
-        ]),
+        description: 'Hela den tillfälliga typens betydelse',
       });
       if (kind === 'relationshipType')
         expect(type.after).toMatchObject({ forwardLabel: 'granskar', reverseLabel: 'granskas av' });
@@ -652,7 +657,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
               name: 'Tillfälligt föremål',
               properties: [
                 {
-                  id: 'description',
+                  id: expect.any(String),
                   label: 'Beskrivning',
                   kind: 'text' as const,
                   value: 'Hela den tillfälliga berättelsen',
@@ -665,7 +670,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
               targetId: 'draft-bike',
               properties: [
                 {
-                  id: 'certainty',
+                  id: expect.any(String),
                   label: 'Uppgiftens säkerhet',
                   kind: 'text' as const,
                   value: 'Okänt',
@@ -708,6 +713,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
       const after = await data.read();
       const changes = kind === 'objectType' ? after.draft.changes : after.draft.relationships;
       expect(changes?.find(({ id }) => id === proposal.id)?.after?.typeId).toBe(type.id);
+      expect(changes?.find(({ id }) => id === proposal.id)).toEqual(proposal);
       expect(after.objects).toEqual(before.objects);
       expect(after.relationships).toEqual(before.relationships);
       await expect(draft).toContainText(

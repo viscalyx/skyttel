@@ -610,7 +610,7 @@ UTKAST-42.
   "reference": "1280 × 844; komplett datorflöde",
   "outcomes": [
     "Avbrott bevarar hela utkastet. Bekräftelse tar bort objektet och endast dess tre beroende samband.",
-    "Cykelns ändring, Olöst fordon, sambandet med vald ändpunkt och båda typförslagen behåller alla värden. Sparade uppgifter och historik består."
+    "Cykelns ändring, Olöst fordon, de två oberoende sambanden med verkliga ändpunkter och båda typförslagen behåller alla värden. Sparade uppgifter och historik består."
   ]
 }
 ```
@@ -633,9 +633,10 @@ UTKAST-42.
 
 - Avbrott bevarar hela utkastet. Bekräftelse tar bort objektet och endast dess
   tre beroende samband.
-- Cykelns ändring, Olöst fordon, sambandet med vald ändpunkt och båda
-  typförslagen
-  behåller alla värden. Sparade uppgifter och historik består.
+- Cykelns ändring, Olöst fordon, de två oberoende sambanden med verkliga
+  ändpunkter och båda typförslagen behåller alla värden. De fria
+  säkerhetsuppgifterna **Okänt** och **Uttryckligen inget** ändrar inte
+  sambandens ändpunkter eller beroenden. Sparade uppgifter och historik består.
 
 ### UTKAST-142: beroende borttagning på smal skärm
 
@@ -659,7 +660,7 @@ UTKAST-142.
   "reference": "320 × 844; samma fullständiga arbetsflöde; smal bekräftelse och återfokus",
   "outcomes": [
     "Avbrott bevarar hela utkastet. Bekräftelse tar bort objektet och endast dess tre beroende samband.",
-    "Cykelns ändring, Olöst fordon, sambandet med vald ändpunkt och båda typförslagen behåller alla värden. Sparade uppgifter och historik består."
+    "Cykelns ändring, Olöst fordon, de två oberoende sambanden med verkliga ändpunkter och båda typförslagen behåller alla värden. Sparade uppgifter och historik består."
   ]
 }
 ```
@@ -676,9 +677,9 @@ UTKAST-142.
 
 - Avbrott bevarar hela utkastet. Bekräftelse tar bort objektet och endast dess
   tre beroende samband.
-- Cykelns ändring, Olöst fordon, sambandet med vald ändpunkt och båda
-  typförslagen
-  behåller alla värden. Sparade uppgifter och historik består.
+- Cykelns ändring, Olöst fordon, de två oberoende sambanden med verkliga
+  ändpunkter och båda typförslagen behåller alla värden. Sparade uppgifter
+  och historik består.
 
 ### UTKAST-43: ta bort typförslag och behåll berörda förslag med feltext
 
@@ -1134,6 +1135,9 @@ egenskaper med hela värden utan typkonflikt.
 
 **Förutsättningar:** Starta områdets provkommando och välj
 `new-object-meaning`. Behåll samma databas och användare genom fallet.
+Förberedelsen lägger först den fria egenskapen **Ny uppgift** i objektets
+förslag mot den sparade typens betydelse. Därefter föreslår den en oberoende
+ändring av typens beskrivning, utan att lägga om objektförslagets underlag.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -1159,8 +1163,8 @@ egenskaper med hela värden utan typkonflikt.
 
 1. Öppna Utkast och läs samtliga hela förslag enligt områdets förberedelse.
 2. Välj Ta bort förslaget: Utkastfordon. Läs borttagningsbekräftelsen. Det
-   individuella egenskapsförslaget ska kunna finnas kvar utan påverkat
-   typunderlag.
+   individuella egenskapsförslaget finns med bland berörda förslag med beskedet
+   **Förslaget använder den sparade typen i stället för typförslaget.**
 3. Välj Ta bort. Öppna det kvarvarande objektets eller sambandets hela förslag
    och läs Ny uppgift och Behåll hela mitt värde. Det ska inte ha någon
    typkonflikt.
@@ -1182,6 +1186,9 @@ egenskaper med hela värden utan typkonflikt.
 
 **Förutsättningar:** Starta områdets provkommando och välj
 `new-relationship-meaning`. Behåll samma databas och användare genom fallet.
+Förberedelsen lägger först den fria egenskapen **Ny uppgift** i sambandets
+förslag mot den sparade typens betydelse. Därefter föreslår den en oberoende
+ändring av typens riktning, utan att lägga om sambandsförslagets underlag.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -1207,8 +1214,8 @@ egenskaper med hela värden utan typkonflikt.
 
 1. Öppna Utkast och läs samtliga hela förslag enligt områdets förberedelse.
 2. Välj Ta bort förslaget: Granskar. Läs borttagningsbekräftelsen. Det
-   individuella egenskapsförslaget ska kunna finnas kvar utan påverkat
-   typunderlag.
+   individuella egenskapsförslaget finns med bland berörda förslag med beskedet
+   **Förslaget använder den sparade typen i stället för typförslaget.**
 3. Välj Ta bort. Öppna det kvarvarande objektets eller sambandets hela förslag
    och läs Ny uppgift och Behåll hela mitt värde. Det ska inte ha någon
    typkonflikt.

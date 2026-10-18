@@ -61,7 +61,7 @@ export async function prepareRemovalMember(
       typeId: initial.types.find(({ name }) => name === 'Person')?.id,
       properties: [
         {
-          id: 'description',
+          id: expect.any(String),
           label: 'Beskrivning',
           kind: 'text' as const,
           value: 'Hela Robins oberoende arbete före och efter borttagningen',
@@ -78,6 +78,7 @@ export async function prepareRemovalMember(
     const assertPrivate = async (alex: Page, state: MapState) => {
       for (const secret of [
         before.draft.changes[0].id,
+        ...(before.draft.changes[0].after?.properties ?? []).map(({ id }) => id),
         'Robins privata anteckning',
         'Hela Robins oberoende arbete före och efter borttagningen',
       ])
@@ -188,17 +189,13 @@ export async function prepareDraftRemovalMeaning(
     ({ id }) => id === (kind === 'objectType' ? 'draft-vehicle' : 'draft-uses'),
   );
   if (!type) throw new Error('Missing saved removal type');
-  await fixture.post(kind === 'objectType' ? 'object-type' : 'relationship-type', {
-    id: type.id,
-    baseRevision: type.revision,
-    value: {
-      name: type.name,
-      description: type.description,
-      ...(kind === 'relationshipType'
-        ? { forwardLabel: 'granskar', reverseLabel: 'granskas av' }
-        : {}),
-    },
-  });
+  const definition = (
+    kind === 'objectType' ? state.draft.objectTypes : state.draft.relationshipTypes
+  )?.find(({ id }) => id === type.id)?.after;
+  if (!definition) throw new Error('Missing independent type proposal');
+  // Capture individual facts against the saved meaning, then propose the
+  // independent type edit. Discarding it must not manufacture a newer basis.
+  await fixture.post('discard-change', { kind, id: type.id });
   const proposal =
     kind === 'objectType'
       ? state.draft.changes.find(({ id }) => id === 'draft-bike')
@@ -221,6 +218,11 @@ export async function prepareDraftRemovalMeaning(
         },
       ],
     },
+  });
+  await fixture.post(kind === 'objectType' ? 'object-type' : 'relationship-type', {
+    id: type.id,
+    baseRevision: type.revision,
+    value: definition,
   });
   return { ...fixture, type, proposalId: proposal.id };
 }
