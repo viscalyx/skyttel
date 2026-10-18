@@ -174,6 +174,42 @@ test('the mist background follows pan, rotation and zoom but stays fixed during 
   expect([...pixels().slice(0, 4)]).toEqual([16, 27, 41, 255]);
 });
 
+test('background camera round trips and zoom extremes restore identical pixels', {
+  tags: ['technical'],
+  timeout: 60_000,
+}, async () => {
+  const { scene, canvas } = openScene();
+  await expect.poll(() => canvas.width).toBe(960);
+  scene.update(['home']);
+  scene.configure({ ...defaultViewSettings, background: true }, 'light');
+  const context = canvas.getContext('webgl2') as WebGL2RenderingContext;
+  const pixels = () => {
+    const data = new Uint8Array(canvas.width * canvas.height * 4);
+    context.readPixels(
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+      context.RGBA,
+      context.UNSIGNED_BYTE,
+      data,
+    );
+    return data;
+  };
+  const original = pixels();
+  for (let index = 0; index < 42; index++) scene.navigate('rotate-left');
+  for (let index = 0; index < 42; index++) scene.navigate('rotate-right');
+  expect(pixels()).toEqual(original);
+  for (let index = 0; index < 30; index++) scene.navigate('right');
+  for (let index = 0; index < 30; index++) scene.navigate('in');
+  const near = pixels();
+  expect(near).not.toEqual(original);
+  for (let index = 0; index < 60; index++) scene.navigate('out');
+  expect(pixels()).not.toEqual(near);
+  scene.reset();
+  expect(pixels()).toEqual(original);
+});
+
 test('restarting with reordered household content retains spacious three-dimensional defaults', () => {
   const ids = ['alex', 'kim', 'lo', 'music', 'family', 'account', 'card', 'bank', 'email'];
   const relationships = [

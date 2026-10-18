@@ -27,10 +27,10 @@ påhittade uppgifter och lokal provinloggning enligt
 
 ## Läsbarhet och alternativa vägar
 
-### BAKGRUND-06: Samband och fullständiga uppgifter över alla bakgrunder
+### BAKGRUND-06: Läsa objekt och använda tabellen med bakgrund
 
-**Syfte:** Kontrollera samband, objekt, etiketter, markering och paneler
-över alla sju bakgrunder samt en läsväg som fungerar vid tät överlappning.
+**Syfte:** Läsa ett objekts hela uppgifter och använda tabellens sökning
+även när kartans objekt och etiketter överlappar.
 
 **Användare:** Alex Exempel.
 
@@ -39,19 +39,21 @@ påhittade uppgifter och lokal provinloggning enligt
 **Automatiskt motsvarande test (integration):**
 [background-accessibility.spec.ts](../../tests/integration/background-accessibility.spec.ts),
 BAKGRUND-06. Provet använder riktig app, scenrendering och isolerad SQLite.
-Det mäter samband i den färdiga skärmbilden, inklusive genomskinlighet,
-och sparar bilder med öppna uppgifter. Symbolernas färg och fasta yta
-beräknas med eventuell gruppgenomskinlighet över provtagna motivfärger.
-Öppna fönster dokumenterar täckningen; navigeringen stängs med sin
-ordinarie knapp innan de fria kartbildpunkternas kontrast mäts.
-Översikten visar trängseln. Kontrastprovet använder därefter **Fokusera
-markering** för Läsobjekt 00 och dess direkta granne. Det skiljer fria
-linjesegment från markörer och pilspetsar utan att ändra placeringarna.
-Det bevisar inte fri pekyta i översikten.
-Ogenomskinlig etikettbakgrund och textkontrast kontrolleras separat.
-Linjer och symboler ska nå minst 3:1 och vanlig text minst 4,5:1.
-Bildprov och semantik ersätter inte
-hjälpmedelsprov eller en fullständig kontrastbedömning av varje bildpunkt.
+Det följer läsflödet med Gryningsdis i ljust tema och Universum i mörkt
+tema, med båda kartstorlekarna och bredderna. Öppna fönster dokumenterar
+täckningen. **Fokusera markering** visar Läsobjekt 00 och dess direkta
+granne utan att ändra placeringarna. Det bevisar inte fri pekyta i
+översikten. Tabellens sökning ger en separat väg till hela uppgifterna.
+
+**Tekniskt underlag:**
+[background-contrast.test.tsx](../../tests/browser/background-contrast.test.tsx)
+mäter den färdiga skärmbildens samband och symboler över alla sju motiv.
+De 28 kombinationerna av bakgrund, kartstorlek och bredd har en fokuserad
+kontrastvy var. Linjer och symboler ska nå minst 3:1 och vanlig text minst
+4,5:1. Provet använder riktiga komponenter, stilar och scenrendering utan
+HTTP-lagring. Det är ett tekniskt webbläsarprov, skilt från läsflödet.
+Bildprov och semantik ersätter inte hjälpmedelsprov eller en fullständig
+kontrastbedömning från alla kamerariktningar.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -63,9 +65,9 @@ hjälpmedelsprov eller en fullständig kontrastbedömning av varje bildpunkt.
     "spec": "tests/integration/background-accessibility.spec.ts",
     "caseId": "BAKGRUND-06"
   },
-  "reference": "Sju bakgrunder, 16/80 objekt, 1440/390 px, rotation, lutningar och paneler.",
+  "reference": "Gryningsdis och Universum, 16/80 objekt, 1440/390 px; uppgifter, överlappande paneler, fokuserad markering och tabellsökning.",
   "outcomes": [
-    "Samband har läsbara linjer över de dekorativa motiven.",
+    "Fokuserad markering visar objektet och dess samband.",
     "Objekt går att markera och deras hela uppgifter går att öppna.",
     "Tabellens sökning ger fullständiga uppgifter även när kartans etiketter trängs."
   ]
@@ -76,10 +78,8 @@ hjälpmedelsprov eller en fullständig kontrastbedömning av varje bildpunkt.
 
 **Steg:**
 
-1. Välj respektive bakgrund under **Inställningar → Rymdkartan**:
-   **Pärlemor**, **Gryningsdis**, **Under världshavet** i ljust tema;
-   **Atmosfär**, **Dis och ljuspunkter**, **Universum** och
-   **Under världshavet** i mörkt tema. Återgå till kartan efter varje val.
+1. Välj **Gryningsdis** i ljust tema under **Inställningar → Rymdkartan**.
+   Återgå till kartan. Upprepa läsflödet med **Universum** i mörkt tema.
 2. Fokusera Läsobjekt 00, tryck Enter och kontrollera markeringen.
    Tryck Skift+F10 och välj **Visa uppgifter för Läsobjekt 00**. Läs hela
    beskrivningen. Tabba till **Navigera** och öppna det med Enter, även om
@@ -87,11 +87,9 @@ hjälpmedelsprov eller en fullständig kontrastbedömning av varje bildpunkt.
    det främre navigeringsfönstret med dess stängknapp och stäng sedan
    uppgifterna med deras stängknapp. Fokus ska återgå till kartans kontroller.
 3. Fokusera Läsobjekt 00, tryck Skift+F10 och välj **Fokusera markering**.
-   Öppna **Navigera**. Jämför samband och kontroller i mellanläget, efter
-   fyra **Rotera vänster**, sex **Luta uppåt** och tolv **Luta nedåt**.
-   Stäng navigeringen för att granska den fria kartan efter varje riktning
-   och öppna den igen för nästa förflyttning. Återställ vyn efter sista
-   riktningen. Upprepa för varje bakgrund, kartstorlek och bredd.
+   Låt navigeringen vara stängd och jämför samband, symboler och etiketter
+   i denna enda fokuserade vy. Återställ vyn efter jämförelsen. Upprepa för
+   båda bakgrunderna, kartstorlekarna och bredderna.
 4. Öppna **Tabell** och sök det sista objektets namn i **Sök objekt i
    tabellen**. Fokusera dess namn och tryck Enter. Läs hela beskrivningen.
 

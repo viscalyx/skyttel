@@ -247,7 +247,7 @@ blockeringen efter försöket.
 påverkar bara rörelsevärdena. Inaktivering, fel och konflikt bevarar
 bekräftade val och tydlig återkoppling.
 
-### PLACERING-14: synlig respons vid noll, full styrka och ytterlägen
+### PLACERING-14: rörelseinställningar och vanlig navigering
 
 **Syfte:** Granska bakgrundens oberoende respons genom den riktiga kartan.
 
@@ -261,6 +261,9 @@ Pärlemor, påslagen bakgrund och ingen minskad rörelse. Prova vid
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
 PLACERING-14. Automationen jämför skärmbilder av fria bakgrundsytor;
 den verifierar inte fysisk hårdvaruprestanda.
+Det separata tekniska webbläsarprovet
+[spatial-scene.test.tsx](../../tests/browser/spatial-scene.test.tsx)
+kontrollerar kamerans hela varv och zoomens ytterlägen direkt mot scenen.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -272,11 +275,11 @@ den verifierar inte fysisk hårdvaruprestanda.
     "spec": "tests/integration/personal-view.spec.ts",
     "caseId": "PLACERING-14"
   },
-  "reference": "Chromium, Pärlemor i ljust tema, två sparade objekt; noll, 70 och 100 procent, lageravstånd 0,5 och 2,0, rotation, upprepad panorering och zoomens ytterlägen.",
+  "reference": "Chromium, Pärlemor i ljust tema, två sparade objekt; noll, 70 och 100 procent, lageravstånd 0,5 och 2,0 samt vanlig rotation, panorering och zoom.",
   "outcomes": [
     "Noll stoppar respektive respons medan rotation finns kvar; 70 och 100 procent ger synlig respons.",
     "Lageravståndets ytterlägen påverkar bakgrundens djuprespons.",
-    "Rotation över hela varv, upprepade kamerahandlingar och återställning ger en sammanhängande vy.",
+    "Rotation, panorering, zoom och återställning ger en sammanhängande vy.",
     "Bakgrunden står stilla utan kamerahandlingar och vid personlig objektflyttning."
   ]
 }
@@ -300,10 +303,10 @@ den verifierar inte fysisk hårdvaruprestanda.
 4. Sätt båda styrkorna till 70 procent. Prova lageravstånd 0,5 och 2,0.
    Återställ före varje variant och panorera höger fem gånger.
    Djupresponsen skiljer sig mellan varianterna.
-5. Återställ vy. Rotera vänster 42 gånger och höger lika många gånger.
-   Ingen skarv ska synas genom varvet och utgångsvyn återkommer.
-   Panorera höger 30 gånger, zooma in 30 gånger och ut 60 gånger.
-   Bakgrunden ska täcka kartan utan tomma kanter. Återställ vy;
+5. Återställ vy. Tryck två gånger på **Rotera vänster** och två gånger på
+   **Rotera höger**; utgångsvyn återkommer. Tryck tre gånger på
+   **Panorera höger**, tre gånger på **Zooma in** och tre gånger på
+   **Zooma ut**. Bakgrunden ska följa kameran. Återställ vy;
    utgångsvyn återkommer.
 6. Låt kartan stå stilla. Ingen egen rörelse ska synas. Markera Lampan
    och flytta den uppåt med Navigera: bakgrunden står fortfarande stilla.
