@@ -19,7 +19,9 @@ export async function addFreeProperty(
     if (kind === 'boolean') await control.selectOption(value);
     else await control.fill(value);
   }
-  return row;
+  const labelId = await row.getByLabel('Etikett', { exact: true }).getAttribute('id');
+  if (!labelId) throw new Error('A property label must have a stable input identity');
+  return form.locator(`.property-editor-row:has(input[id=${JSON.stringify(labelId)}])`);
 }
 
 export function freeProperty(form: Locator, label: string) {
