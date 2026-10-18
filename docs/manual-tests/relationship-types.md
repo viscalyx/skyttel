@@ -178,14 +178,15 @@ Spara först Gemensamt objekt.
 **Steg:**
 
 1. Robin öppnar Typer, Sambandstyper och riktning och ändrar hushållets första
-   sambandstyp. Ange Medlemmens förklaring som beskrivning och lägg
-typförslaget i
-   utkastet.
+   sambandstyp, Använder. Ange Medlemmens förklaring som beskrivning och
+   **används av** i det obligatoriska fältet **Benämning från målobjektet**.
+   Behåll namnet och benämningen från startobjektet. Lägg typförslaget i
+   utkastet och kontrollera att förslaget finns i Robins utkast.
 2. Alex kontrollerar att Robins förslag inte finns i Alex utkast och att den
    sparade
    typen fortfarande har sin gamla beskrivning.
 3. Robin sparar hela utkastet. Alex laddar om, öppnar samma typ och läser
-   beskrivningen.
+   beskrivningen och benämningen **används av** från målobjektet.
 
 **Förväntat resultat:**
 

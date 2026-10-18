@@ -105,7 +105,28 @@ test('STY-03: members edit shared relationship definitions while private type pr
       .getByRole('button', { name: `Ändra sambandstyp: ${type.name}`, exact: true })
       .click();
     await member.getByLabel('Sambandstypens beskrivning').fill('Medlemmens förklaring');
+    await member
+      .getByLabel('Benämning från målobjektet', { exact: true })
+      .fill('används av');
+    const staged = member.waitForResponse(
+      (response) =>
+        response.url() === `${app.path}/relationship-type` &&
+        response.request().method() === 'POST',
+    );
     await member.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }).click();
+    expect((await staged).status()).toBe(200);
+    const privateTypes = (await app.read(other.request)).draft.relationshipTypes;
+    expect(privateTypes).toHaveLength(1);
+    expect(privateTypes?.[0]).toMatchObject({
+      id: type.id,
+      before: type,
+      after: {
+        name: type.name,
+        description: 'Medlemmens förklaring',
+        forwardLabel: type.forwardLabel ?? type.name,
+        reverseLabel: 'används av',
+      },
+    });
     expect((await app.read()).draft.relationshipTypes ?? []).toEqual([]);
     expect(
       (await app.read()).relationshipTypes.find((item) => item.id === type.id)?.description,
@@ -120,6 +141,9 @@ test('STY-03: members edit shared relationship definitions while private type pr
       .click();
     await expect(page.getByLabel('Sambandstypens beskrivning')).toHaveValue(
       'Medlemmens förklaring',
+    );
+    await expect(page.getByLabel('Benämning från målobjektet', { exact: true })).toHaveValue(
+      'används av',
     );
   } finally {
     await other.close();
