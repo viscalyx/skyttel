@@ -419,14 +419,16 @@ draft symbols”.
 
 **Steg:**
 
-1. Öppna **Tabell** och **Redigera Molnmusik**. Ange känt
-   slutdatum 2000-01-01 under **Ekonomiska uppgifter**, välj
+1. Öppna **Tabell** och **Redigera Molnmusik**. Lägg till den fria
+   textegenskapen Slutdatum med värdet 2000-01-01 under **Fria egenskaper**,
+   välj
    **Upphört** under **Livscykel och utseende** och lägg i utkastet.
-2. Öppna **Redigera Lo Exempel**. Ange känt slutdatum 2000-01-01 under
-   **Ekonomiska uppgifter**, välj Gäller fortfarande och
+2. Öppna **Redigera Lo Exempel**. Lägg till den fria textegenskapen Slutdatum
+   med värdet 2000-01-01 under **Fria egenskaper**, välj Gäller fortfarande
+   och
    lägg i utkastet.
-3. Öppna **Samband för Lo Exempel** och **Redigera samband**. Ange ett
-   känt slutdatum 2000-01-01,
+3. Öppna **Samband för Lo Exempel** och **Redigera samband**. Lägg till den
+   fria textegenskapen Slutdatum med värdet 2000-01-01,
    behåll Gäller fortfarande och lägg sambandet i utkastet.
 4. Öppna rymdkartan och välj Alla etiketter. Klicka i kartans sökfält,
    öppna Filter, markera **Ta med upphörda** och stäng filterdialogen.
