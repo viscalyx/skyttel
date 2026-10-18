@@ -366,7 +366,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
       .getByRole('region', { name: 'Valt samband', exact: true })
       .getByRole('button', { name: 'Redigera valt samband', exact: true })
       .click();
-    await expect(page.getByLabel('Till objekt')).toHaveValue('music');
+    await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('music');
   } finally {
     await installation.close();
   }
@@ -568,7 +568,7 @@ test('RYMD-04: touch menus, viewport changes and graphics recovery retain unsent
         (await read()).draft.changes.find((change) => change.id === 'music')?.after,
         'Beskrivning',
       ),
-    ).toBe('');
+    ).toBeUndefined();
     await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openMap(page);
     await expect
@@ -796,6 +796,7 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
       if (await source.evaluate((element) => element === document.activeElement)) break;
     }
     await expect(source).toBeFocused();
+    const beforeRelationshipEdit = (await read()).draft;
     await setProperty(relationshipDialog, 'Slutdatum', '2026-12-31', 'date');
     await relationshipDialog.getByRole('button', { name: 'Molnmusik', exact: true }).click();
     await page.setViewportSize({ width: 900, height: 600 });
@@ -808,7 +809,7 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     await expect(
       propertyRow(relationshipDialog, 'Slutdatum').getByLabel('Värde', { exact: true }),
     ).toHaveValue('2026-12-31');
-    expect((await read()).draft.relationships?.[0].after).not.toHaveProperty('endDate');
+    expect((await read()).draft).toEqual(beforeRelationshipEdit);
     await stageRelationshipAndClose(page);
     await saveReviewedConflictDraft(page);
     await closeTextView(page);
@@ -969,6 +970,7 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
       'Lo Exempel → Använder → Molnmusik',
     );
     await setProperty(nativeRelationship, 'Slutdatum', '2000-01-01', 'date');
+    await nativeRelationship.getByLabel('Sambandets status', { exact: true }).selectOption('ended');
     await stageRelationshipAndClose(page);
     expect(
       (await read()).draft.relationships?.find((change) => change.after?.sourceId === 'lo')?.after,
@@ -976,6 +978,7 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
       typeId: state.relationshipTypes.find((item) => item.name === 'Använder')?.id,
       sourceId: 'lo',
       targetId: 'music',
+      lifecycle: 'ended',
       properties: [
         expect.objectContaining({ label: 'Slutdatum', kind: 'date', value: '2000-01-01' }),
       ],
@@ -990,6 +993,7 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
             typeId: state.relationshipTypes.find((item) => item.name === 'Använder')?.id,
             sourceId: 'lo',
             targetId: 'music',
+            lifecycle: 'ended',
             properties: [
               { id: 'endDate', label: 'Slutdatum', kind: 'date' as const, value: '2000-01-01' },
             ],
@@ -1157,7 +1161,7 @@ test('RYMD-08: focus retains old and proposed relationship endpoints and opens t
       .getByRole('region', { name: 'Valt samband', exact: true })
       .getByRole('button', { name: 'Redigera valt samband', exact: true })
       .click();
-    await expect(page.getByLabel('Från objekt')).toHaveValue('kim');
+    await expect(page.getByLabel('Från objekt', { exact: true })).toHaveValue('kim');
     expect((await read()).draft.version).toBe(state.draft.version + 1);
   } finally {
     await installation.close();

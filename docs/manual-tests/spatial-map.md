@@ -256,7 +256,8 @@ unsent editing”.
    på Molnmusik tills de sju ikonerna visas.
    Släpp och kontrollera att ikonerna finns kvar och inget formulär öppnas.
    Välj pennan, **Redigera objekt**.
-2. Skriv Oskickad mobiltext i beskrivningen. Ändra den emulerade vyn
+2. Lägg till en fri textegenskap Beskrivning med värdet Oskickad mobiltext.
+   Ändra den emulerade vyn
    till 844 × 390 och kontrollera texten i det öppna formuläret.
 3. Behåll formuläret öppet medan den separat förberedda grafiken
    avbryts och återställs. Läs **Grafiken är tillfälligt avbruten.
@@ -270,7 +271,8 @@ unsent editing”.
   Kartan ryms i tillgänglig
   webbyta i båda orienteringarna och tabellen kan nås.
 - Avbrottsbeskedet förklarar att utkastet finns kvar. Detaljerna behåller
-  oskickad text. Texten är inte sparad förrän utkastet sparas med kvitto.
+  oskickad text. Egenskapen saknas fortfarande i utkastet innan formuläret
+  skickas. Texten är inte sparad förrän utkastet sparas med kvitto.
 
 ### RYMD-05: etiketter och tangentbord behåller sambandets formulär
 
@@ -320,7 +322,8 @@ changes”.
    välj **Avbryt** utan ändring.
 5. Öppna **Samband för Lo Exempel** med Enter och sedan **Redigera samband**.
    Kontrollera att redigeringsknappen behåller fokus. Använd Tab för att
-   nå **Från objekt** i formuläret och ange känt slutdatum 2026-12-31.
+   nå **Från objekt** i formuläret. Lägg till en fri egenskap Slutdatum med
+   datatyp Datum och värdet 2026-12-31.
    Välj **Molnmusik** i den läsbara vänsterspalten och ändra fönsterstorlek.
    Kontrollera rubrikfokus i **Uppgifter för Molnmusik**.
 6. Välj **Tillbaka** och kontrollera det oskickade datumet. Lägg hela
@@ -428,8 +431,8 @@ draft symbols”.
    och
    lägg i utkastet.
 3. Öppna **Samband för Lo Exempel** och **Redigera samband**. Lägg till den
-   fria textegenskapen Slutdatum med värdet 2000-01-01,
-   behåll Gäller fortfarande och lägg sambandet i utkastet.
+   fria egenskapen Slutdatum med datatyp Datum och värdet 2000-01-01,
+   välj **Upphört** som sambandets status och lägg sambandet i utkastet.
 4. Öppna rymdkartan och välj Alla etiketter. Klicka i kartans sökfält,
    öppna Filter, markera **Ta med upphörda** och stäng filterdialogen.
    Kontrollera sedan
