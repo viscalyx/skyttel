@@ -217,7 +217,20 @@ for (const interfaceName of ['HTTP', 'MCP'] as const)
       expect(final.relationships).toEqual([]);
       expect(final.draft.changes).toEqual([]);
       expect(final.draft.relationships ?? []).toEqual([]);
-      expect(await history()).toEqual([saved.value.receipt, ...racedHistory]);
+      const finalHistory = await history();
+      expect(finalHistory.slice(1)).toEqual(racedHistory);
+      if (interfaceName === 'HTTP') expect(finalHistory[0]).toEqual(saved.value.receipt);
+      else {
+        expect(finalHistory[0]).toMatchObject(saved.value.receipt);
+        const response = await callAssistant(app.installation.origin, token, 'read_history', {
+          operationId: saved.value.receipt.operationId,
+          userId: saved.value.receipt.userId,
+        });
+        expect(response.status).toBe(200);
+        const result = (await response.json()).result;
+        expect(result.isError).not.toBe(true);
+        expect(JSON.parse(result.content[0].text).receipt).toEqual(saved.value.receipt);
+      }
     } finally {
       await first.dispose();
       await second.dispose();

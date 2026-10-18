@@ -175,7 +175,7 @@ test('MCP explains blocked proposals, rejects invalid correction, and discards o
       ).error,
     ).toBe(true);
     expect((await app.read()).draft).toEqual(blocked.draft);
-    const proposal = blocked.draft.relationships?.[0];
+    const proposal = review.value.relationships?.[0];
     expect(
       (
         await tool('propose_relationship', {
