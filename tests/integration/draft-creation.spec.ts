@@ -89,11 +89,11 @@ for (const width of [1280, 390, 320]) {
         await expect(form.getByLabel('Namn', { exact: true })).toBeFocused();
         expect((await read()).draft.changes).toEqual([]);
         await form.getByLabel('Namn', { exact: true }).fill('Paneler på taket');
-        await setProperty(form, 'Beskrivning', 'Beskrivning till den nya typen');
         await form
           .getByLabel('Objekttyp', { exact: true })
           .selectOption({ label: 'Solutrustning' });
         await expect(form.getByLabel('Identitet')).toHaveValue('identified');
+        await setProperty(form, 'Beskrivning', 'Beskrivning till den nya typen');
         await setProperty(form, 'Placering', 'Södertak');
         await setProperty(form, 'Reserv', 'false', 'boolean');
         await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
@@ -126,7 +126,7 @@ for (const width of [1280, 390, 320]) {
         await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
         const relationship = page.getByRole('group', { name: 'Sambandets detaljer', exact: true });
         await relationship
-          .getByLabel('Från objekt')
+          .getByLabel('Från objekt', { exact: true })
           .selectOption(
             (await read()).draft.changes.find((change) => change.after?.name === 'Paneler på taket')
               ?.id ?? '',
@@ -134,13 +134,13 @@ for (const width of [1280, 390, 320]) {
         await relationship
           .getByLabel('Sambandstyp', { exact: true })
           .selectOption({ label: 'Komplettering' });
-        await setProperty(relationship, 'Uppgiftens säkerhet', 'Osäkert uppgivet');
         await relationship
-          .getByLabel('Till objekt')
+          .getByLabel('Till objekt', { exact: true })
           .selectOption(
             (await read()).draft.changes.find((change) => change.after?.name === 'Batteriet')?.id ??
               '',
           );
+        await setProperty(relationship, 'Uppgiftens säkerhet', 'Osäkert uppgivet');
         await stageRelationshipAndClose(page);
         const proposed = await read();
         expect(proposed.objects).toEqual([]);
@@ -274,9 +274,10 @@ for (const width of [1280, 390, 320]) {
           expect.objectContaining({ id: edge?.id, ...edge?.after }),
         ]);
         expect(saved.draft.changes).toEqual([]);
-        await expect(await openObjectRelationships(page, 'Paneler på taket')).toContainText(
-          'Paneler på taket → kompletteras av → Batteriet (Osäkert uppgivet)',
-        );
+        const relationships = await openObjectRelationships(page, 'Paneler på taket');
+        await expect(relationships).toContainText('Paneler på taket → kompletteras av → Batteriet');
+        await expect(relationships).toContainText('Uppgiftens säkerhet');
+        await expect(relationships).toContainText('Osäkert uppgivet (Text)');
         await closeSupportDialog(page, 'Samband för Paneler på taket');
         const completePanels = await readTableObject(page, 'Paneler på taket');
         await expectSolarObject(completePanels, 'Paneler på taket', true);
@@ -300,7 +301,7 @@ for (const width of [1280, 390, 320]) {
             .locator('dt')
             .filter({ hasText: /^Reserv$/ })
             .locator('..'),
-        ).toContainText('Ej uppgivet');
+        ).toHaveCount(0);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );
