@@ -14,7 +14,7 @@ import {
   voiceBox,
 } from '../support/conversation-page.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
-import { propertyRow, propertyValue } from '../support/property-controls.js';
+import { openProperties, propertyRow } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 for (const seeded of [false, true]) {
@@ -267,14 +267,7 @@ for (const seeded of [false, true]) {
             JSON.stringify(previous.after.properties) === JSON.stringify(previous.before.properties)
               ? {
                   ...previous.after,
-                  properties: [
-                    {
-                      id: 'description',
-                      label: 'Beskrivning',
-                      kind: 'text' as const,
-                      value: propertyValue(current, 'Beskrivning') ?? '',
-                    },
-                  ],
+                  properties: current.properties,
                 }
               : previous.after;
           expect(values(next.after)).toEqual(values(expected));
@@ -403,6 +396,7 @@ for (const seeded of [false, true]) {
       const form = await editTableObject(page, 'Lo Senaste');
       await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Lo Senaste');
       await expect(form.getByLabel('Objekttyp', { exact: true })).toHaveValue(person.id);
+      await openProperties(form);
       await expect(
         propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true }),
       ).toHaveValue('Påhittad uppgift');
@@ -416,7 +410,7 @@ for (const seeded of [false, true]) {
       for (const [label, expected] of [
         ['Namn', 'Lo Registrerad'],
         ['Typ', 'Person'],
-        ['Beskrivning', 'Påhittad uppgift'],
+        ['Beskrivning', 'Påhittad uppgift (Text)'],
       ])
         await expect(
           proposedValues
