@@ -69,8 +69,9 @@ PANEL-01.
    Skriv namnet, välj krysset och **Fortsätt redigera**. Kontrollera namnet.
    Välj **Lägg i utkastet och stäng** och spara sedan hela utkastet.
 2. Läs varje objekt via tabellen. Kontrollera rubriken, fäll ihop raden
-   och välj radens **Redigera**. Skriv Lagt i utkastet om följt av namnet i
-   **Beskrivning**. Lägg hela förslaget i utkastet och stäng.
+   och välj radens **Redigera**. Öppna **Fria egenskaper** och lägg till
+   textegenskapen **Beskrivning** med värdet Lagt i utkastet om följt av namnet.
+   Lägg hela förslaget i utkastet och stäng.
 3. Starta textsamtalet och skriv Bevarat meddelande utan att skicka.
    Stäng textvyn. Läs Cykeln två gånger och fäll ihop raden mellan öppningarna.
    Kontrollera beskrivningen, rubriken och en enda detaljvy för objektet.
@@ -166,14 +167,17 @@ PANEL-03.
 
 **Steg:**
 
-1. Öppna **Redigera Cykeln** i första klienten och skriv Min oskickade text.
+1. Öppna **Redigera Cykeln** i första klienten. Öppna **Fria egenskaper**
+   och lägg till textegenskapen **Beskrivning** med värdet Min oskickade text.
 2. Lägg ett nyare förslag för samma objekt i den andra klientens utkast:
-   beskrivningen Nyare förslag från samma användares andra klient.
+   lägg till textegenskapen **Beskrivning** med värdet Nyare förslag från
+   samma användares andra klient under **Fria egenskaper**.
 3. Välj **Lägg i utkastet och stäng** i första klienten.
    Kontrollera avvisningen och att både namnet och Min oskickade text finns
    kvar.
 4. Välj krysset och **Kasta ändringarna och fortsätt**. Ladda om och öppna
-   Cykeln för vanlig redigering igen och läs den andra klientens beskrivning.
+   Cykeln för vanlig redigering igen. Öppna **Fria egenskaper** och läs den
+   andra klientens beskrivning.
    Stäng det oförändrade formuläret. Öppna **Rapporter → Ändringshistorik**,
    fäll ut **Visa ändringarna** och läs det ursprungliga sparandet.
    Den nyare privata beskrivningen ska inte finnas i det sparade innehållet.

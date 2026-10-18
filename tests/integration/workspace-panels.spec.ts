@@ -25,7 +25,12 @@ import { closeTableObject, editTableObject, readTableObject } from '../support/d
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
-import { propertyRow, propertyValue, setProperty } from '../support/property-controls.js';
+import {
+  openProperties,
+  propertyRow,
+  propertyValue,
+  setProperty,
+} from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import { modelMessage, textModel } from '../support/text-model.js';
 
@@ -173,7 +178,7 @@ test('PANEL-05: pending object staging keeps the modal and returns to reading be
     const draft = await openDraftReview(page);
     await draft.getByRole('button', { name: 'Visa förslaget: Cykeln', exact: true }).click();
     const proposal = page.getByRole('dialog', { name: 'Cykeln', exact: true });
-    await expect(proposal.getByText('Skickad beskrivning', { exact: true })).toBeVisible();
+    await expect(proposal.getByText('Skickad beskrivning (Text)', { exact: true })).toBeVisible();
     await expect(proposal).toContainText('Cykeln');
     expect(
       propertyValue(
@@ -243,7 +248,9 @@ test('PANEL-01: complete object dialogs stage separate proposals and native read
     await page.reload();
     for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
       const reader = await readTableObject(page, name);
-      await expect(reader.getByText(`Lagt i utkastet om ${name}`, { exact: true })).toBeVisible();
+      await expect(
+        reader.getByText(`Lagt i utkastet om ${name} (Text)`, { exact: true }),
+      ).toBeVisible();
       await closeTableObject(page, name);
     }
     const state: MapState = await (await page.request.get(path)).json();
@@ -257,7 +264,7 @@ test('PANEL-01: complete object dialogs stage separate proposals and native read
     await newest.getByText('Visa ändringarna', { exact: true }).click();
     for (const name of ['Cykeln', 'Bilen', 'Garaget'])
       await expect(
-        newest.getByText(`Beskrivning: Lagt i utkastet om ${name}`, { exact: true }),
+        newest.getByText(`Beskrivning: Lagt i utkastet om ${name} (Text)`, { exact: true }),
       ).toBeVisible();
     await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
   } finally {
@@ -351,7 +358,7 @@ test('PANEL-03: an intervening proposal preserves local text and rejects stale c
         typeId: source.typeId,
         properties: [
           {
-            id: 'description',
+            id: expect.any(String),
             label: 'Beskrivning',
             kind: 'text' as const,
             value: 'Nyare förslag från samma användares andra klient',
@@ -362,6 +369,10 @@ test('PANEL-03: an intervening proposal preserves local text and rejects stale c
       await other.close();
     }
     const native: MapState = await (await page.request.get(path)).json();
+    const nativeProposal = native.draft.changes.find((change) => change.id === source.id);
+    if (!nativeProposal?.after)
+      throw new Error('The second client must stage its complete proposal');
+    const nativeProperties = nativeProposal.after.properties;
     const response = await page.request.post(`${path}/draft`, {
       headers: { origin: installation.origin },
       data: {
@@ -369,21 +380,17 @@ test('PANEL-03: an intervening proposal preserves local text and rejects stale c
         baseRevision: source.revision,
         version: native.draft.version,
         contentVersion: state.contentVersion,
-        value: {
-          ...source,
-          properties: [
-            {
-              id: 'description',
-              label: 'Beskrivning',
-              kind: 'text' as const,
-              value: 'Nyare förslag från samma användares andra klient',
-            },
-          ],
-        },
+        value: nativeProposal.after,
       },
     });
     expect(response.status()).toBe(200);
     const newer: MapState = await (await page.request.get(path)).json();
+    expect(newer.draft.changes.find((change) => change.id === source.id)?.after).toEqual(
+      nativeProposal.after,
+    );
+    expect(
+      newer.draft.changes.find((change) => change.id === source.id)?.after?.properties,
+    ).toEqual(nativeProperties);
     await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(form.getByRole('alert')).toContainText('Dina uppgifter finns kvar.');
     await expect(propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true })).toHaveValue(
@@ -395,9 +402,11 @@ test('PANEL-03: an intervening proposal preserves local text and rejects stale c
     await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
     await page.reload();
     await editTableObject(page, 'Cykeln');
+    await openProperties(form);
     await expect(propertyRow(form, 'Beskrivning').getByLabel('Värde', { exact: true })).toHaveValue(
       'Nyare förslag från samma användares andra klient',
     );
+    expect(await (await page.request.get(path)).json()).toEqual(newer);
     expect((await (await page.request.get(`${path}/history`)).json()).history).toHaveLength(1);
     await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
     await (await utilityButton(page, 'Rapporter')).click();
