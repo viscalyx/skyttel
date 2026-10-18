@@ -177,7 +177,7 @@ export async function prepareDraftRemovalFocus(client: APIRequestContext, origin
   return fixture;
 }
 
-/** The new field belongs to the proposed type; discarding it must retain the value. */
+/** Free facts remain intact when discarding a changed type requires fresh review. */
 export async function prepareDraftRemovalMeaning(
   client: APIRequestContext,
   origin: string,
@@ -192,10 +192,7 @@ export async function prepareDraftRemovalMeaning(
   const definition = (
     kind === 'objectType' ? state.draft.objectTypes : state.draft.relationshipTypes
   )?.find(({ id }) => id === type.id)?.after;
-  if (!definition) throw new Error('Missing independent type proposal');
-  // Capture individual facts against the saved meaning, then propose the
-  // independent type edit. Discarding it must not manufacture a newer basis.
-  await fixture.post('discard-change', { kind, id: type.id });
+  if (!definition) throw new Error('Missing changed type proposal');
   const proposal =
     kind === 'objectType'
       ? state.draft.changes.find(({ id }) => id === 'draft-bike')
@@ -218,11 +215,6 @@ export async function prepareDraftRemovalMeaning(
         },
       ],
     },
-  });
-  await fixture.post(kind === 'objectType' ? 'object-type' : 'relationship-type', {
-    id: type.id,
-    baseRevision: type.revision,
-    value: definition,
   });
   return { ...fixture, type, proposalId: proposal.id };
 }

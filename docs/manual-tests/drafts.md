@@ -1126,18 +1126,19 @@ Avsluta med `quit` och kontrollera borttagen provinstallation.
 - Det sena svaret lämnar användbart fokus på den senare Tabell-kontrollen.
 - Det enda historiska sparandet och cykelns gemensamma värden består.
 
-### UTKAST-47: Kastat typförslag bevarar oberoende fria egenskaper
+### UTKAST-47: Kastat typförslag kräver granskning utan att förlora egenskaper
 
-**Syfte:** Kastning av typens ändringsförslag behåller oberoende fria
-egenskaper med hela värden utan typkonflikt.
+**Syfte:** Behålla fria egenskaper när kastad typbetydelse kräver ny
+granskning av objektförslaget mot den sparade typen.
 
 **Användare:** Alex, och Robin när två profiler anges.
 
 **Förutsättningar:** Starta områdets provkommando och välj
 `new-object-meaning`. Behåll samma databas och användare genom fallet.
-Förberedelsen lägger först den fria egenskapen **Ny uppgift** i objektets
-förslag mot den sparade typens betydelse. Därefter föreslår den en oberoende
-ändring av typens beskrivning, utan att lägga om objektförslagets underlag.
+Förberedelsen ändrar typens beskrivning och lägger den fria egenskapen
+**Ny uppgift** i objektets förslag. Förslaget använder den föreslagna
+typbetydelsen. När typförslaget kastas finns hela värdet kvar, men
+objektförslaget behöver granskas mot den sparade typen.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -1151,7 +1152,7 @@ förslag mot den sparade typens betydelse. Därefter föreslår den en oberoende
   },
   "reference": "Chromium, riktig lokal server och SQLite; konfiguration enligt förutsättningarna.",
   "outcomes": [
-    "Kastning av typens ändringsförslag behåller oberoende fria egenskaper med hela värden utan typkonflikt.",
+    "Kastning av typens ändringsförslag behåller hela egenskaperna och varnar om ändrad typbetydelse. Först uttrycklig granskning i objektformuläret tar bort just det förslagets typkonflikt.",
     "Gemensamma objekt, verkliga samband, typkataloger och historik är oförändrade."
   ]
 }
@@ -1164,31 +1165,39 @@ förslag mot den sparade typens betydelse. Därefter föreslår den en oberoende
 1. Öppna Utkast och läs samtliga hela förslag enligt områdets förberedelse.
 2. Välj Ta bort förslaget: Utkastfordon. Läs borttagningsbekräftelsen. Det
    individuella egenskapsförslaget finns med bland berörda förslag med beskedet
-   **Förslaget använder den sparade typen i stället för typförslaget.**
+   **Typens uppgifter skiljer sig från förslagets underlag. Rätta förslaget
+   i det ordinarie flödet.**
 3. Välj Ta bort. Öppna det kvarvarande objektets eller sambandets hela förslag
-   och läs Ny uppgift och Behåll hela mitt värde. Det ska inte ha någon
-   typkonflikt.
-4. Läs alla kvarvarande förslag och den tidigare historiken enligt den
+   och läs Ny uppgift och Behåll hela mitt värde. Typvarningen finns kvar.
+4. Stäng textvyn och öppna **Tabell → Redigera Alex blå cykel**.
+   Kontrollera den sparade typen Utkastfordon och läs **Ny uppgift** under
+   **Fria egenskaper**. Behåll samtliga värden och välj
+   **Lägg i utkastet och stäng**. Öppna Utkast igen. Just cykelförslagets
+   typvarning ska nu vara borta; övriga berörda förslag väntar på egen
+   granskning.
+5. Läs alla kvarvarande förslag och den tidigare historiken enligt den
    gemensamma förberedelsen. Spara inte hela utkastet.
 
 **Förväntat resultat:**
 
-- Kastning av typens ändringsförslag behåller oberoende fria egenskaper med
-  hela värden utan typkonflikt.
+- Kastning behåller egenskapernas identiteter, ordning, datatyper och hela
+  värden. Förslaget behåller sin typvarning tills det uttryckligen läggs i
+  utkastet på nytt efter granskning mot den sparade typen.
 - Gemensamma objekt, verkliga samband, typkataloger och historik är oförändrade.
 
-### UTKAST-147: Kastat typförslag bevarar oberoende fria egenskaper
+### UTKAST-147: Kastat typförslag kräver granskning utan att förlora egenskaper
 
-**Syfte:** Kastning av typens ändringsförslag behåller oberoende fria
-egenskaper med hela värden utan typkonflikt.
+**Syfte:** Behålla fria egenskaper när kastad typbetydelse kräver ny
+granskning av sambandsförslaget mot den sparade typen.
 
 **Användare:** Alex, och Robin när två profiler anges.
 
 **Förutsättningar:** Starta områdets provkommando och välj
 `new-relationship-meaning`. Behåll samma databas och användare genom fallet.
-Förberedelsen lägger först den fria egenskapen **Ny uppgift** i sambandets
-förslag mot den sparade typens betydelse. Därefter föreslår den en oberoende
-ändring av typens riktning, utan att lägga om sambandsförslagets underlag.
+Förberedelsen ändrar typens omvända riktning och lägger den fria egenskapen
+**Ny uppgift** i sambandets förslag. Förslaget använder den föreslagna
+typbetydelsen. När typförslaget kastas finns hela värdet kvar, men
+sambandsförslaget behöver granskas mot den sparade typen.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -1202,7 +1211,7 @@ förslag mot den sparade typens betydelse. Därefter föreslår den en oberoende
   },
   "reference": "Chromium, riktig lokal server och SQLite; konfiguration enligt förutsättningarna.",
   "outcomes": [
-    "Kastning av typens ändringsförslag behåller oberoende fria egenskaper med hela värden utan typkonflikt.",
+    "Kastning av typens ändringsförslag behåller hela egenskaperna och varnar om ändrad typbetydelse. Först uttrycklig granskning i sambandsformuläret tar bort just det förslagets typkonflikt.",
     "Gemensamma objekt, verkliga samband, typkataloger och historik är oförändrade."
   ]
 }
@@ -1215,17 +1224,25 @@ förslag mot den sparade typens betydelse. Därefter föreslår den en oberoende
 1. Öppna Utkast och läs samtliga hela förslag enligt områdets förberedelse.
 2. Välj Ta bort förslaget: Granskar. Läs borttagningsbekräftelsen. Det
    individuella egenskapsförslaget finns med bland berörda förslag med beskedet
-   **Förslaget använder den sparade typen i stället för typförslaget.**
+   **Typens uppgifter skiljer sig från förslagets underlag. Rätta förslaget
+   i det ordinarie flödet.**
 3. Välj Ta bort. Öppna det kvarvarande objektets eller sambandets hela förslag
-   och läs Ny uppgift och Behåll hela mitt värde. Det ska inte ha någon
-   typkonflikt.
-4. Läs alla kvarvarande förslag och den tidigare historiken enligt den
+   och läs Ny uppgift och Behåll hela mitt värde. Typvarningen finns kvar.
+4. Stäng textvyn och öppna **Tabell → Samband för Alex blå cykel**.
+   Läs sambandet med **Ny uppgift: Behåll hela mitt värde** och välj dess
+   **Redigera samband**. Kontrollera den sparade typen Granskar, båda
+   ändpunkterna och alla egenskaper. Behåll samtliga värden och välj
+   **Lägg i utkastet** och **Stäng samband**. Öppna Utkast igen. Just det
+   granskade sambandets typvarning ska nu vara borta; övriga berörda
+   förslag väntar på egen granskning.
+5. Läs alla kvarvarande förslag och den tidigare historiken enligt den
    gemensamma förberedelsen. Spara inte hela utkastet.
 
 **Förväntat resultat:**
 
-- Kastning av typens ändringsförslag behåller oberoende fria egenskaper med
-  hela värden utan typkonflikt.
+- Kastning behåller egenskapernas identiteter, ordning, datatyper och hela
+  värden. Förslaget behåller sin typvarning tills det uttryckligen läggs i
+  utkastet på nytt efter granskning mot den sparade typen.
 - Gemensamma objekt, verkliga samband, typkataloger och historik är oförändrade.
 
 ### UTKAST-48: kontrollera en genomförd borttagning efter tappat svar
