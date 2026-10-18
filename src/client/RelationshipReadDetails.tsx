@@ -88,7 +88,8 @@ export function RelationshipReadDetails({
               <dd>
                 {changed && (
                   <div className="household-table-before">
-                    Sparat: {previous?.value ?? 'Ej uppgivet'}
+                    Sparat: {previous && previous.label !== current?.label && `${previous.label}: `}
+                    {previous?.value ?? 'Ej uppgivet'}
                   </div>
                 )}
                 {changed && <span className="household-table-proposed">◇ Ditt förslag: </span>}

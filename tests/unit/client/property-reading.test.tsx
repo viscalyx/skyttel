@@ -112,3 +112,22 @@ test('search keeps a saved property label discoverable beside its renamed propos
   await userEvent.type(screen.getByRole('searchbox'), 'registrering');
   expect(screen.getByRole('button', { name: 'Cykel' })).toBeTruthy();
 });
+
+test('relationship reading distinguishes the saved label from a label-only proposal', () => {
+  const before = {
+    sourceId: 'a',
+    targetId: 'b',
+    typeId: 'edge',
+    knowledge: 'known' as const,
+    properties: [{ id: 'reference', label: 'Avtal', kind: 'text' as const, value: 'A-12' }],
+  };
+  render(
+    <RelationshipReadDetails
+      before={before}
+      value={{ ...before, properties: [{ ...before.properties[0], label: 'Referens' }] }}
+      objects={new Map()}
+    />,
+  );
+  expect(screen.getByText('Referens', { selector: 'dt' })).toBeTruthy();
+  expect(screen.getByText('Sparat: Avtal: A-12 (Text)')).toBeTruthy();
+});
