@@ -17,7 +17,7 @@ import {
 import { readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
-import { liveProvider } from '../support/live-provider.js';
+import { liveProvider, voiceAnswerParts } from '../support/live-provider.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
 import { readVoiceProposal } from '../support/voice-work-reading.js';
@@ -283,7 +283,22 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
       live,
       'Lägg till telefon 0700123456 på Lo. Lägg till Kod 0012. Töm Notering. Alex använder Molnmusik. Spara hela utkastet.',
     );
-    await waitForResponse(live);
+    await expect
+      .poll(
+        () =>
+          live.sent.filter(
+            ({ event }) =>
+              event.type === 'session.instructions.append' &&
+              event.content.startsWith('Återge svar '),
+          ).length,
+      )
+      .toBe(1);
+    const voiceAnswer = voiceAnswerParts(live.sent).join('');
+    for (const text of [
+      ...questions,
+      'Din tidigare sparbegäran gäller inte längre. Be om sparande igen när frågorna är lösta.',
+    ])
+      expect(voiceAnswer).toContain(text);
     await openConversationText(page);
     const transcript = page.getByRole('log', { name: 'Samtalstext' });
     for (const text of questions) await expect(transcript).toContainText(text);
