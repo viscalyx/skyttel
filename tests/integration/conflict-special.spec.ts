@@ -138,6 +138,9 @@ for (const [id, kind, title, reason, warning, action] of [
         'Osäkert uppgivet',
       );
       if (kind === 'missing-endpoint') {
+        await expect(
+          dialog.getByRole('button', { name: 'Rätta ändpunkter', exact: true }),
+        ).toBeVisible();
         const missing = dialog.getByRole('region', { name: 'Sparat i kartan nu', exact: true });
         await expect(missing).toContainText('Till objekt');
         await expect(missing).toContainText('Borttaget');

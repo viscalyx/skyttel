@@ -4,6 +4,7 @@ import { afterEach, expect, test } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { ConflictDialog } from '../../src/client/ConflictDialog.js';
 import { HouseholdReadDialog } from '../../src/client/HouseholdReadDialog.js';
+import { MapLegend } from '../../src/client/MapLegend.js';
 import type { RelationshipFormSubmission } from '../../src/client/RelationshipForm.js';
 import type { MapState } from '../../src/shared/map.js';
 import '../../src/client/styles.css';
@@ -41,6 +42,40 @@ const state: MapState = {
 };
 
 afterEach(() => cleanup());
+
+test('blocked endpoint move leaves the saved relationship ordinary in graph presentation', {
+  tags: ['technical'],
+}, async () => {
+  const saved = {
+    id: 'mine',
+    householdId: 'home',
+    revision: 1,
+    typeId: 'uses',
+    sourceId: 'lo',
+    targetId: 'lo',
+    knowledge: 'known' as const,
+  };
+  render(
+    <MapLegend
+      draft={{
+        version: 1,
+        changes: [],
+        relationships: [
+          { id: 'mine', before: saved, after: { ...saved, targetId: 'gone' }, type: edgeType },
+        ],
+      }}
+      objects={new Map([['lo', object]])}
+      relationships={new Map([['mine', saved]])}
+      selectedIds={[]}
+    />,
+  );
+  const legend = page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true });
+  await expect.element(legend).toBeVisible();
+  expect(legend.element().textContent).toContain('Punkter: etikettens koppling');
+  expect(legend.element().textContent).not.toContain('föreslås läggas till');
+  expect(legend.element().textContent).not.toContain('borttaget eller tidigare samband');
+  expect(legend.element().textContent).not.toContain('föreslås ändras');
+});
 
 test('ordinary relationship reader excludes endpoint-blocked proposals', {
   tags: ['technical'],
@@ -101,7 +136,9 @@ for (const width of [1280, 320]) {
                     draft: {
                       ...state.draft,
                       version: 2,
-                      relationships: [{ ...state.draft.relationships![0], after: editor.value }],
+                      relationships: state.draft.relationships?.map((change) =>
+                        change.id === editor.id ? { ...change, after: editor.value } : change,
+                      ),
                     },
                   },
                   outcome: {
