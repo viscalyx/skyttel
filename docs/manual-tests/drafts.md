@@ -1726,7 +1726,8 @@ bevara valen tills användaren rättar dem.
 
 **Förutsättningar:** Spara Lo Exempel → Använder → Molnmusik samt
 Molnmusik → Använder → Lo Exempel. Administratören föreslår att det första
-sambandet går från Lo Exempel till Lo Exempel, med Osäkert uppgivet.
+sambandet går från Lo Exempel till Lo Exempel, med textegenskapen
+**Uppgiftens säkerhet: Osäkert uppgivet**.
 Medlemmen sparar det första sambandet från Molnmusik till Molnmusik.
 Ladda om administratörens sida.
 
@@ -1757,8 +1758,9 @@ UTKAST-29.
 
 1. Öppna **1 konflikt i ditt utkast**.
 2. Välj Molnmusik för **Från objekt** från **Sparat i kartan nu**.
-   Välj Lo Exempel för **Till objekt** och Osäkert uppgivet från
-   **Ditt förslag**.
+   Välj Lo Exempel för **Till objekt** från **Ditt förslag**. Läs
+   **Uppgiftens säkerhet: Osäkert uppgivet (Text)**, som behålls automatiskt
+   eftersom bara ditt förslag har lagt till egenskapen.
 3. Läs beskedet att sambandet redan finns. Kontrollera spärrad bekräftelse
    och bevarade valmarkeringar.
 4. Byt bara **Från objekt** till Lo Exempel från ditt förslag.
@@ -1980,7 +1982,7 @@ egenskaper.
 **Användare:** Alex, Lo och Robin i tre skilda webbläsarprofiler med egna
 konfigurerade inloggningar och tillgång till samma hushåll.
 
-**Förutsättningar:** Ett nytt hushåll med Lo Exempel utan beskrivning.
+**Förutsättningar:** Ett nytt hushåll med Lo Exempel utan fria egenskaper.
 De tre användarna är aktuella medlemmar; demodatans historiska Robin är
 inte en inloggning. Använd faktiska förnamn om profilerna har andra namn.
 
@@ -1999,7 +2001,7 @@ UTKAST-35.
   "reference": "1280 × 720; Chromium och syntetiska testidentiteter; ange den verkliga spararen för varje ändrad egenskap.",
   "outcomes": [
     "Namnraden anger Lo som sparare, även efter Alex senare sparande.",
-    "Beskrivningsraden anger Alex. Författarnamn hör till den ändrade egenskapen och ersätts inte av hela objektets senaste sparare.",
+    "Raden Anteckningar anger Alex. Författarnamn hör till den ändrade egenskapen och ersätts inte av hela objektets senaste sparare.",
     "Efter Robins senare ändring anges samma verkliga sparare, utan att hävda att deras tidigare sparanden sker efter det nya förslaget."
   ]
 }
@@ -2009,11 +2011,11 @@ UTKAST-35.
 
 **Steg:**
 
-1. Robin lägger namnet Eget namn och beskrivningen Egen text i sitt utkast.
+1. Robin lägger namnet Eget namn och textegenskapen Anteckningar med Egen text i sitt utkast.
 2. Lo ändrar enbart objektets namn till Lo Berg och sparar.
-3. Alex ändrar enbart beskrivningen till Alex text och sparar senare.
+3. Alex ändrar enbart Anteckningar till Alex text och sparar senare.
 4. Robin öppnar **Granska konflikter** och läser den sparade sidans
-   namnrad och beskrivningsrad.
+   namnrad och raden Anteckningar.
 5. Robin stänger dialogen och ändrar sitt föreslagna namn till
    **Eget senare namn** utan att spara i den gemensamma kartan.
 6. Robin laddar om, öppnar **Granska konflikter** igen och läser uppgifterna om
@@ -2022,7 +2024,7 @@ UTKAST-35.
 **Förväntat resultat:**
 
 - Namnraden anger Lo som sparare, även efter Alex senare sparande.
-- Beskrivningsraden anger Alex. Författarnamn hör till den ändrade
+- Raden Anteckningar anger Alex. Författarnamn hör till den ändrade
   egenskapen och ersätts inte av hela objektets senaste sparare.
 - Efter Robins senare ändring anges samma verkliga sparare, utan att
   hävda att deras tidigare sparanden sker efter det nya förslaget.

@@ -5,10 +5,9 @@ import { conflictCollaborators } from '../support/conflict-properties.js';
 import {
   expectConflictDraftValues,
   expectConflictReadValue,
-  expectSavedConflictRelationship,
   refreshConflictReader,
 } from '../support/current-conflict-reading.js';
-import { readTableObject } from '../support/domain-work.js';
+import { openObjectRelationships, readTableObject } from '../support/domain-work.js';
 import { alex, robin } from '../support/installation.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
@@ -93,7 +92,7 @@ for (const width of [1440, 390])
       ).toBeDisabled();
       await dialog
         .getByRole('button', {
-          name: 'Beskrivning: Sparat i kartan nu – Robins anteckning',
+          name: 'Beskrivning · egenskap 1: Sparat i kartan nu – Beskrivning: Robins anteckning (Text)',
           exact: true,
         })
         .click();
@@ -241,7 +240,7 @@ for (const width of [1440, 390])
         }
         for (const name of [
           'Namn: Ditt förslag – Lo Lind',
-          'Beskrivning: Sparat i kartan nu – Robins anteckning',
+          'Beskrivning · egenskap 1: Sparat i kartan nu – Beskrivning: Robins anteckning (Text)',
           'Identifiering: Sparat i kartan nu – Identifierat objekt',
           'Giltighet: Ditt förslag – Gäller fortfarande',
         ]) {
@@ -340,9 +339,12 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
     await dialog
       .getByRole('button', { name: 'Till objekt: Ditt förslag – Lo Exempel', exact: true })
       .click();
-    await dialog
-      .getByRole('button', { name: 'Vad är känt?: Ditt förslag – Osäkert uppgivet', exact: true })
-      .click();
+    await expect(
+      dialog.getByRole('region', { name: 'Ditt förslag', exact: true }),
+    ).toContainText('Uppgiftens säkerhet: Osäkert uppgivet (Text)');
+    await expect(
+      dialog.getByRole('button', { name: /^Uppgiftens säkerhet · egenskap 1:/ }),
+    ).toHaveCount(0);
     await expect(dialog.getByRole('alert')).toContainText('finns redan i kartan');
     await expect(dialog.getByRole('button', { name: 'Lägg valen i utkastet' })).toBeDisabled();
     await expect(
@@ -358,17 +360,10 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
       choices: {
         sourceId: 'saved',
         targetId: 'proposed',
-        properties: [
-          {
-            id: 'certainty',
-            label: 'Uppgiftens säkerhet',
-            kind: 'text' as const,
-            value: 'proposed',
-          },
-        ],
       },
     });
     expect(invalid.status()).toBe(400);
+    expect(await invalid.json()).toEqual({ error: 'invalid_resolution' });
     expect((await app.read()).draft).toEqual(state.draft);
     await dialog
       .getByRole('button', { name: 'Från objekt: Ditt förslag – Lo Exempel', exact: true })
@@ -389,7 +384,7 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
       ],
     });
     await page.keyboard.press('Escape');
-    await expectConflictDraftValues(page, 'Lo Exempel → Använder → Lo Exempel (osäkert uppgivet)', {
+    await expectConflictDraftValues(page, 'Lo Exempel → Använder → Lo Exempel', {
       Från: 'Lo Exempel',
       Sambandstyp: 'Använder',
       Till: 'Lo Exempel',
@@ -397,11 +392,16 @@ test('UTKAST-29: invalid relationship property combinations keep every choice un
     });
     await closeTextView(page);
     await refreshConflictReader(member, app.installation.origin);
-    await expectSavedConflictRelationship(member, 'Molnmusik', 'Molnmusik → Använder → Molnmusik', {
-      Typ: 'Använder',
-      'Till objekt': 'Molnmusik',
-      'Uppgiftens säkerhet': 'Känt',
-    });
+    const savedRelationships = await openObjectRelationships(member, 'Molnmusik');
+    const savedRelationship = savedRelationships
+      .getByRole('heading', { name: 'Molnmusik → Använder → Molnmusik', exact: true })
+      .locator('..');
+    await expectConflictReadValue(savedRelationship, 'Typ', 'Använder');
+    await expectConflictReadValue(savedRelationship, 'Till objekt', 'Molnmusik');
+    await expect(
+      savedRelationship.locator('dt').filter({ hasText: /^Uppgiftens säkerhet$/ }),
+    ).toHaveCount(0);
+    await member.keyboard.press('Escape');
   } finally {
     await other.close();
     await app.installation.close();
@@ -556,10 +556,16 @@ test('UTKAST-34: individual free property labels remain unchanged on both confli
       await expect(panel.getByRole('button', { name: /^Beskrivning:|^Pris:/ })).toHaveCount(0);
     }
     await dialog
-      .getByRole('button', { name: /^Anteckningar · egenskap \d+: Ditt förslag – Egen anteckning/ })
+      .getByRole('button', {
+        name: 'Anteckningar · egenskap 1: Ditt förslag – Anteckningar: Egen anteckning (Text)',
+        exact: true,
+      })
       .click();
     await dialog
-      .getByRole('button', { name: /^Avtalat pris · egenskap \d+: Sparat i kartan nu – 240/ })
+      .getByRole('button', {
+        name: 'Avtalat pris · egenskap 2: Sparat i kartan nu – Avtalat pris: 240 (Text)',
+        exact: true,
+      })
       .click();
     const preview = dialog.getByRole('region', { name: 'Resultat av valen' });
     await expect(
@@ -659,7 +665,7 @@ test('UTKAST-35: saved property attribution identifies each actual saver after i
     await expect(name).toContainText('efter att du började ändra den här uppgiften');
     await expect(
       saved.getByRole('button', {
-        name: 'Beskrivning: Sparat i kartan nu – Alex text',
+        name: 'Anteckningar · egenskap 1: Sparat i kartan nu – Anteckningar: Alex text (Text)',
         exact: true,
       }),
     ).toContainText('Alex sparade ett nytt värde');
