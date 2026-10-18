@@ -301,29 +301,33 @@ export function validateImportReferences(
   }
   function recovery(change: DraftRelationshipChange) {
     if (!change.endpointRecovery) return;
-    const tombstone = content.relationships.find((row) => row.id === change.id);
-    const latest = [...content.history]
-      .sort((left, right) => right.id - left.id)
-      .map(
-        (history) =>
-          content.saves.find(
-            (save) => save.userId === history.userId && save.operationId === history.operationId,
-          )?.receipt,
-      )
-      .find((receipt) => receipt?.relationships?.some(({ id }) => id === change.id));
-    const removal = latest?.relationships?.find(({ id }) => id === change.id);
+    const { removedRevision } = change.endpointRecovery;
+    const current = content.relationships.find((row) => row.id === change.id);
+    const receipt = content.saves.find(({ receipt }) =>
+      receipt.relationships?.some(
+        (removal) =>
+          removal.id === change.id &&
+          removal.before &&
+          !removal.after &&
+          removal.before.revision + 1 === removedRevision,
+      ),
+    )?.receipt;
+    const removal = receipt?.relationships?.find(({ id }) => id === change.id);
+    // A later correction can make this marker stale. Keep its historical proof;
+    // ordinary save conflict checks decide whether it still grants recovery.
     requireReference(
       change.before &&
         (change.after || change.suppressed) &&
-        tombstone?.deleted === 1 &&
-        tombstone.revision === change.endpointRecovery.removedRevision &&
+        current &&
+        current.revision >= removedRevision &&
         removal?.before &&
         !removal.after &&
-        removal.before.revision + 1 === tombstone.revision &&
-        removal.before.typeId === tombstone.typeId &&
-        removal.before.sourceId === tombstone.sourceId &&
-        removal.before.targetId === tombstone.targetId &&
-        latest?.changes.some(
+        (current.revision > removedRevision ||
+          (current.deleted === 1 &&
+            removal.before.typeId === current.typeId &&
+            removal.before.sourceId === current.sourceId &&
+            removal.before.targetId === current.targetId)) &&
+        receipt?.changes.some(
           ({ before, after }) =>
             before &&
             !after &&

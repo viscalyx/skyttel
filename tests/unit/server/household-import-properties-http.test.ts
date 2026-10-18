@@ -5,7 +5,7 @@ import { expect, test } from 'vitest';
 import type { ImportContent } from '../../../src/server/import-schema.js';
 import type { MapState } from '../../../src/shared/map.js';
 import type { Property } from '../../../src/shared/properties.js';
-import { restartWithSession } from '../../support/client.js';
+import { restartWithSession, signIn } from '../../support/client.js';
 import { collaborators } from '../../support/draft-conflict-http.js';
 import { applicationFixture } from './fixture.js';
 
@@ -25,6 +25,128 @@ function retainedDraft(content: ImportContent) {
   );
   if (!draft) throw new Error('Missing retained draft');
   return draft;
+}
+
+for (const suppressed of [false, true]) {
+  test(`historically proven recovery survives another member saving first${suppressed ? ' while suppressed' : ''} without granting stale save authority`, async () => {
+    let first = await request.newContext();
+    const second = await request.newContext();
+    const third = await request.newContext();
+    const app = await collaborators(first, second);
+    const householdPath = app.path.slice(0, -4);
+    const headers = { origin: app.installation.origin };
+    try {
+      app.installation.setIdentity({
+        subject: 'third-user',
+        name: 'Kim Exempel',
+        email: 'kim@example.test',
+      });
+      await signIn(third, app.installation.origin);
+      const { user } = await (await third.get(`${app.installation.origin}/api/bootstrap`)).json();
+      const { code } = await (
+        await first.post(`${householdPath}/invitations`, { headers, data: { userId: user.id } })
+      ).json();
+      expect(
+        (
+          await third.post(`${app.installation.origin}/api/invitations/accept`, {
+            headers,
+            data: { code },
+          })
+        ).status(),
+      ).toBe(200);
+      const initial = await app.read();
+      const value = {
+        typeId: initial.relationshipTypes[0].id,
+        sourceId: 'lo',
+        targetId: 'service',
+        knowledge: 'known' as const,
+        properties,
+      };
+      await app.propose(first, 'relationship', 'retained', value);
+      expect((await app.save(first, 'shared-edge')).status()).toBe(200);
+      for (const actor of [first, second])
+        await app.propose(actor, 'relationship', 'retained', {
+          ...value,
+          properties: [...properties].reverse(),
+        });
+      await app.propose(third, 'draft', 'service', null);
+      expect((await app.save(third, 'third-removal')).status()).toBe(200);
+      for (const actor of [first, second]) {
+        const state = await app.read(actor);
+        expect(
+          (
+            await app.post(actor, 'relationship', {
+              version: state.draft.version,
+              id: 'retained',
+              baseRevision: 1,
+              value: { ...value, targetId: 'lo', properties: [...properties].reverse() },
+            })
+          ).status(),
+        ).toBe(200);
+        expect((await app.read(actor)).draft.relationships?.[0].endpointRecovery).toEqual({
+          removedRevision: 2,
+        });
+      }
+      expect((await app.save(second, 'first-correction')).status()).toBe(200);
+      if (suppressed) await app.propose(first, 'draft', 'lo', null);
+      const archived = await app.read();
+      expect(archived.relationships[0].revision).toBe(3);
+      const prepared = await (
+        await first.post(`${householdPath}/exports`, { headers, data: {} })
+      ).json();
+      const bytes = await (await first.get(`${householdPath}/exports/${prepared.id}`)).body();
+      const uploaded = await first.post(`${householdPath}/imports`, {
+        headers: {
+          ...headers,
+          'content-type': 'application/zip',
+          'X-Skyttel-Content-Version': String(archived.contentVersion),
+        },
+        data: bytes,
+      });
+      expect(uploaded.status(), await uploaded.text()).toBe(201);
+      const ready = await uploaded.json();
+      expect(
+        (
+          await first.post(`${householdPath}/imports/${ready.id}/confirm`, {
+            headers,
+            data: { confirmed: true, contentVersion: ready.contentVersion },
+          })
+        ).status(),
+      ).toBe(200);
+      first = await restartWithSession(first, () => app.installation.restart());
+      const restored = await app.read(first);
+      expect(restored.draft).toEqual(archived.draft);
+      expect(restored.relationships).toEqual(archived.relationships);
+      if (suppressed)
+        expect(
+          (
+            await app.post(first, 'discard-change', {
+              version: restored.draft.version,
+              contentVersion: restored.contentVersion,
+              kind: 'object',
+              id: 'lo',
+            })
+          ).status(),
+        ).toBe(200);
+      const beforeSave = await app.read(first);
+      expect(
+        (
+          await app.post(first, 'save', {
+            version: beforeSave.draft.version,
+            contentVersion: beforeSave.contentVersion,
+            operationId: 'stale-correction',
+          })
+        ).status(),
+      ).toBe(409);
+      expect((await app.read(first)).relationships).toEqual(archived.relationships);
+      expect((await app.read(first)).draft).toEqual(beforeSave.draft);
+    } finally {
+      await first.dispose();
+      await second.dispose();
+      await third.dispose();
+      await app.installation.close();
+    }
+  });
 }
 
 function mutateArchive(bytes: Uint8Array, change: (content: ImportContent) => void) {
