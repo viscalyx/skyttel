@@ -168,7 +168,6 @@ export function draftConflicts(state: MapState): DraftConflict[] {
       : [];
     const missingEndpoints = after
       ? [after.sourceId, after.targetId].filter((id): id is string => {
-          if (id === null) return false;
           const proposal = state.draft.changes.find((item) => item.id === id);
           return proposal ? !proposal.after : !state.objects.some((item) => item.id === id);
         })

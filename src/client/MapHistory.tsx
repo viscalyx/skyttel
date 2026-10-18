@@ -164,8 +164,7 @@ function EdgeDetails({
       <details>
         <summary>Sambandets objektidentiteter</summary>
         <p>
-          Från objekt {value.sourceId}
-          {value.targetId !== null && ` till objekt ${value.targetId}`}.
+          Från objekt {value.sourceId} till objekt {value.targetId}.
         </p>
       </details>
       <HistoricalProperties properties={value.properties} />

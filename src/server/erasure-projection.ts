@@ -212,7 +212,7 @@ export function erasurePredicates(scope: ErasureScope) {
   const relationshipTypes = new Set(scope.relationshipTypes);
   const objectValue = (value: { typeId: string; id?: string } | null) =>
     Boolean(value && ((value.id && objects.has(value.id)) || objectTypes.has(value.typeId)));
-  const edgeValue = (value: { typeId: string; sourceId: string; targetId: string | null } | null) =>
+  const edgeValue = (value: { typeId: string; sourceId: string; targetId: string } | null) =>
     Boolean(
       value &&
         (relationshipTypes.has(value.typeId) ||

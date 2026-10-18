@@ -41,7 +41,6 @@ export function validateImportReferences(
     if (!row.deleted)
       requireReference(
         liveObjects.has(row.sourceId) &&
-          row.targetId !== null &&
           liveObjects.has(row.targetId) &&
           !removedTypes.has(`relationshipType:${row.typeId}`),
       );
@@ -150,7 +149,7 @@ export function validateImportReferences(
     identity('object', value.sourceId);
     if (value.targetId) identity('object', value.targetId);
     requireReference(types.has(value.typeId) && objects.has(value.sourceId));
-    requireReference(value.targetId === null || objects.has(value.targetId));
+    requireReference(objects.has(value.targetId));
     const type = types.get(value.typeId);
     requireReference(type);
     edgeDefinition(type);

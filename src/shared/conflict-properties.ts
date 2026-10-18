@@ -281,7 +281,7 @@ export function conflictCombinationError(
       else objects.delete(change.id);
     if (
       !objects.has(relationship.sourceId) ||
-      (relationship.targetId !== null && !objects.has(relationship.targetId))
+      !objects.has(relationship.targetId)
     )
       return 'Ett valt objekt finns inte i kartan eller ditt utkast.';
     if (

@@ -1487,7 +1487,7 @@ export function SpatialMap({
                 {
                   left: x,
                   top: y,
-                  '--label-scale': textScale(edge.sourceId, edge.targetId ?? undefined),
+                  '--label-scale': textScale(edge.sourceId, edge.targetId),
                 } as CSSProperties
               }
               onClick={() => onSelectRelationship(edge, previous)}

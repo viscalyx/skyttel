@@ -52,8 +52,7 @@ export function HistoricalMergeDetails({
               {type?.reverseLabel || 'Visar den ursprungliga riktningen'}
             </p>
             <p>
-              Identitet: {edge.id}. Från {edge.sourceId} till{' '}
-              {edge.targetId ?? 'okänd eller ingen ändpunkt'}.
+              Identitet: {edge.id}. Från {edge.sourceId} till {edge.targetId}.
             </p>
             <HistoricalProperties properties={edge.properties} />
             <LifecycleDetails value={edge} />

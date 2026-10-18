@@ -253,12 +253,12 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
         );
         const ids = new Set(objects.map((object) => object.id));
         const relationships = state.relationships.filter(
-          (edge) => ids.has(edge.sourceId) || (edge.targetId !== null && ids.has(edge.targetId)),
+          (edge) => ids.has(edge.sourceId) || ids.has(edge.targetId),
         );
         const endpointIds = new Set<string>();
         for (const edge of relationships) {
           endpointIds.add(edge.sourceId);
-          if (edge.targetId !== null) endpointIds.add(edge.targetId);
+          endpointIds.add(edge.targetId);
         }
         const contextObjects = state.objects
           .filter((object) => !ids.has(object.id) && endpointIds.has(object.id))

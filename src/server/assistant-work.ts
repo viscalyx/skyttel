@@ -39,7 +39,7 @@ export function assistantDraftReview(map: HouseholdMap) {
     (edge) =>
       draft.relationships?.some((change) => change.id === edge.id) ||
       changedObjectIds.has(edge.sourceId) ||
-      (edge.targetId !== null && changedObjectIds.has(edge.targetId)),
+      changedObjectIds.has(edge.targetId),
   );
   for (const edge of relationships) {
     objectIds.add(edge.sourceId);
