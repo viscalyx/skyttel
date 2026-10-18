@@ -126,9 +126,10 @@ for (const [width, caseId] of [
       await expect(card.getByText('Namn: Musik för familjen.', { exact: true })).toBeVisible();
       for (const side of ['Före sparandet', 'Efter sparandet']) {
         await expect(
-          card.locator(`xpath=.//p[preceding-sibling::h5[1][text()="${side}"]]`).filter({
-            hasText: 'Beskrivning: Hushållets musik',
-          }),
+          card
+            .getByRole('heading', { name: side, exact: true })
+            .locator('xpath=following-sibling::ol[1]')
+            .getByText('Beskrivning: Hushållets musik (Text)', { exact: true }),
         ).toBeVisible();
       }
       await expect(card).toContainText('1 200');
