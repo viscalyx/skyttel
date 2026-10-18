@@ -673,9 +673,17 @@ that unsent text or an interrupted save was stored.
 
 ## Updating an existing installation
 
-Keep the existing service, persistent disk, and authentication secret.
+First check the database format against the target release. This release
+rejects older household databases before changing them. Preserve the
+existing installation and recovery copies; agree a separate replacement
+procedure and new database location before a production transition.
+The login appendix below cannot convert that database.
 
-For the first transition from legacy logins, use the
+For a database already in the supported format, keep the existing service,
+persistent disk and authentication secret during ordinary updates.
+
+For login maintenance on a supported database without installation authority,
+use the
 [one-time login upgrade appendix](#appendix-one-time-login-upgrade-on-render)
 instead of the ordinary update sequence below. It must hold automatic
 deployment before the merge that publishes the new login model.
@@ -847,11 +855,12 @@ separate from household export. An app-code rollback does not restore data.
 
 ## Appendix: one-time login upgrade on Render
 
-**Version scope:** From `v0.1.1-preview.41` or earlier to the new login model,
-starting with `v0.2.0-preview.42`. The same transition is required if an
-existing installation skips that version and upgrades directly to a later
-release with the new login model. Use the target image only after its
-release checks and publication succeed.
+**Compatibility scope:** This procedure requires the target release to
+accept the existing household database format. The current release rejects
+older formats before any change; this appendix cannot upgrade such a
+database. Preserve it and its recovery copies for the separately approved
+replacement procedure. Do not change a format marker to bypass rejection.
+Use a target image only after its release checks and publication succeed.
 
 Run this transition once for the original database. An installation that
 already has an installation authority record uses normal updates. New

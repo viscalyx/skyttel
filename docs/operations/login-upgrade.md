@@ -1,7 +1,12 @@
 # Controlled upgrade of the login model
 
-Use this procedure for an existing installation that has no installation
-authority generation. This is an offline, one-time transition. It ends all
+Use this procedure only for a database in the supported household format
+that has no installation authority generation. It cannot convert an older
+household database: the command rejects that format before any change.
+Preserve older installations and recovery copies for a separately approved
+replacement procedure; do not change a format marker to bypass rejection.
+
+This is an offline, one-time login transition. It ends all
 old login sessions, pending login and linking attempts, OAuth credentials,
 assistant grants and signing keys. Users and linked identity associations,
 household information, stored drafts, registered save attempts and save

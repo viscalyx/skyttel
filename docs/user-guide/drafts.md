@@ -59,7 +59,7 @@ Mikrofonläge och samtalsproblem visas i röstrutan och
    motsvarande knapp för typen av förslag. Text som fortfarande bara
    finns i formuläret ingår inte i sparandet.
 2. Öppna **Utkast** och välj förslagets rad för att läsa hela förslaget,
-   inklusive samband, typer, bilder, dolda egna fält och borttagningar.
+   inklusive samband, typer, bilder, alla egenskaper och borttagningar.
    Läsdialogen skiljer sparade värden från föreslagna värden.
    Stäng med krysset eller Escape för att återgå till raden.
 3. Utkastets läsdialog erbjuder ingen redigering eller konfliktjämförelse.
@@ -134,7 +134,7 @@ och **Ditt förslag**. Motstridiga ändringar behöver ett aktivt val.
 Rader med ram går att välja. Klicka på raden på den sida du vill
 använda, eller välj den med Tab och Enter. Valda värden har starkare ramar.
 Du kan kombinera egenskaper från båda sidorna. Identiska värden visas som
-vanlig text och behöver inget val. Egna fältnamn visas som sina vanliga etiketter.
+vanlig text och behöver inget val. Egenskaper visas med sina egna etiketter.
 
 Ändringar av olika fria egenskaper kombineras, även om etiketterna är lika.
 De visas som **Oberoende ändring · kombineras** och ingår i resultatet utan
@@ -153,9 +153,9 @@ innan du bekräftar.
 **Efter dina val** visar den exakta kombinationen och vilken sida varje
 valt värde kommer från. **Lägg valen i utkastet**
 blir tillgänglig först när alla nödvändiga val är gjorda och kombinationen
-är giltig. Om exempelvis **Uttryckligen inget** kombineras med ett
-målobjekt för ett samband förklaras felet och dina val finns kvar. Välj en
-giltig kombination; Skyttel ändrar inte andra egenskaper åt dig.
+är giltig. Om en vald ändpunkt inte längre finns förklaras felet och
+dina val finns kvar. Rätta sambandet med befintliga ändpunkter;
+Skyttel ändrar inte andra egenskaper åt dig.
 
 Bekräftelsen ändrar enbart ditt utkast. Postens namn och typ finns kvar i
 konfliktlistan med en bock. Granska hela utkastet och spara kartan separat.
@@ -216,9 +216,9 @@ omfattar inte nya borttagningar. Ditt övriga arbete finns kvar. Du kan också
 återta objektborttagningen. Då behålls samband som du bara har valt att ta
 bort som följd av den, medan separata sambandsborttagningar ligger kvar.
 
-En saknad objekttyp eller ett eget fält med ändrad datatyp behöver rättas
-utanför konfliktfönstret. Följ den visade instruktionen till
-**Inställningar → Typer och egna fält** eller den vanliga objektdialogen.
+En saknad objekttyp behöver rättas utanför konfliktfönstret.
+Följ den visade instruktionen till
+**Inställningar → Typer** eller den vanliga objektdialogen.
 Ditt förslag finns kvar medan du rättar det. Lägg rättelsen i utkastet så
 bedöms det på nytt mot aktuellt underlag. Ett objekt med saknad typ kan
 också tas bort ur utkastet med den uttryckliga åtgärden i jämförelsen.

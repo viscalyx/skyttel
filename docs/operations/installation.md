@@ -69,10 +69,11 @@ installation's unique generation stable across ordinary restarts.
 Both providers must be configured. Invalid or incomplete configuration stops
 startup before the application accepts traffic.
 
-An existing installation with legacy logins needs the
-[one-time login upgrade](login-upgrade.md). For the running Render service,
-follow the [Render appendix](render.md#appendix-one-time-login-upgrade-on-render)
-before allowing the first deployment with the new login model.
+An older household database cannot be upgraded by this release. Preserve
+the installation and recovery copies, and agree a separate replacement
+procedure before a production transition. The
+[one-time login maintenance procedure](login-upgrade.md) applies only to
+the supported database format; it cannot bypass format rejection.
 
 For whole database or disk recovery, follow the
 [controlled restore procedure](database-restore.md). Its independent restore
@@ -243,9 +244,12 @@ adding `--volumes` deletes it and its household data.
 
 Before updating, read the [operator upgrade notes](operator-upgrade-notes.md),
 download a [complete household export](../user-guide/household-export.md), and
-retain its identity for investigation. Build the new image and follow the
-[controlled login upgrade](login-upgrade.md) before its first start against
-an existing installation. Keep the same volume and secret. Do not run old
+retain its identity for investigation. Check database and archive format
+compatibility before choosing the destination. For an older database, use
+the separately approved replacement procedure and a new database location.
+For a supported database, keep the same volume and secret across ordinary
+updates; any required login maintenance follows the
+[controlled login procedure](login-upgrade.md). Do not run old
 and new application versions against the same SQLite volume at the same
 time. This transition supports roll forward only. Keep access closed and
 install a corrected newer image if checks fail. An export restores

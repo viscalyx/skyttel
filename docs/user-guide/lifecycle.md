@@ -10,7 +10,7 @@ osparade ändringar.
 
 Du kan nå kartans samband med tangentbordet. Markeringen **Upphört** ingår
 även i kontrollens beskrivning för hjälpmedel. Dubbelklicka sambandet eller
-tryck Alt+Enter på dess etikett för att läsa status och slutdatum.
+tryck Alt+Enter på dess etikett för att läsa status och egenskaper.
 I **Tabell** finns samma uppgifter i objektets och sambandets läsdialoger.
 
 ## Ange och rätta status
@@ -24,7 +24,7 @@ abonnemang ändrar ingen annan status: tjänsten, tjänstekontot, personer,
 kort och deras samband finns kvar.
 
 Status väljs uttryckligen. En egenskap med etiketten **Slutdatum** är
-vanliga uppgifter och ändrar inte status när datumet passerar.
+en vanlig uppgift och ändrar inte status när datumet passerar.
 Välj **Gäller fortfarande** för att rätta ett upphört objekt eller samband.
 Rättelsen är ett nytt förslag som sparas med resten av utkastet.
 Tidigare värden finns kvar i historiken.

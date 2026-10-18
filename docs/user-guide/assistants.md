@@ -50,12 +50,13 @@ be assistenten kasta ett förslag eller hela utkastet; det ångrar inte
 tidigare sparanden. Vanlig borttagning är också ett utkastförslag.
 
 Använd aktuella typer och tydliga identiteter. Om flera personer kan avses
-ska assistenten fråga. En olöst identitet stoppar hela sparandet. Du kan
-uttryckligen välja ett ospecificerat objekt när det är det du menar.
-Okänt, uttryckligen inget och osäkert uppgivet behåller olika betydelser.
+ska assistenten fråga före det berörda förslaget. Du kan uttryckligen
+välja ett ospecificerat verkligt objekt när det är det du menar.
+Uppgifter om osäkerhet eller att något saknas kan beskrivas med fria
+egenskaper. Inga ersättningsobjekt eller egenskaper skapas automatiskt.
 
 Du kan be assistenten lägga till, rätta, tömma, ta bort och ordna objektets
-[fria egenskaper](map.md#beskriv-ett-objekt-med-fria-egenskaper).
+[fria egenskaper](map.md#beskriv-objekt-och-samband-med-fria-egenskaper).
 Upprepade etiketter är separata egenskaper. Beskriv vilken post du menar
 vid en rättelse. Typbyte bevarar egenskaperna och ordningen. Etiketter
 som Pris och Slutdatum får ingen automatisk ekonomisk eller datumstyrd

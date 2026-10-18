@@ -10,6 +10,12 @@ installation. A current administrator restores a complete Skyttel ZIP through
 the application. The new installation needs its own disk, configuration and
 verified logins. You do not need the source database, disk or login session.
 
+This release accepts only the new household archive format. Older archives
+are rejected before replacement. Preserve them and use a compatible release
+to read them; do not edit the format version or convert their contents.
+A transition from an older database requires a separately approved
+replacement procedure, not the import or login maintenance steps below.
+
 An export includes all unique household content: current and removed objects,
 relationships, type definitions, history, saved operation evidence, image
 versions, all private drafts, and personal views. Treat the complete file as
@@ -157,7 +163,7 @@ Reconnect assistants through fresh consent at the destination.
 
 ## Verify and open the destination
 
-Check current objects and relationships, custom types and fields, removed
+Check current objects and relationships, types and ordered properties, removed
 content and history, retained image versions, each assigned private draft,
 and personal positions and settings. Confirm that unmapped private content
 is not visible as an ordinary member's draft. Download a fresh complete

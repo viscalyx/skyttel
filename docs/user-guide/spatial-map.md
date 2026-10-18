@@ -68,9 +68,9 @@ väljer ett objekt visas
 även etiketterna för dess sparade samband. **Alla etiketter** visar även de
 andra sambandsnamnen.
 Klicka på ett sambands etikett för att läsa dess uppgifter. Välj sedan
-**Redigera valt samband** för att ändra riktning, säkerhet och status.
-Pilen går från det första objektet till det andra. Okänt och uttryckligen
-inget är uppgifter om ett samband, inte nya objekt.
+**Redigera valt samband** för att ändra riktning, egenskaper och status.
+Pilen går från det första objektet till det andra. Sambandets fria
+egenskaper läses i detaljerna; etiketten visar sambandstyp och status.
 
 I **Tabell** öppnar objektets namn uppgifter och samband i samma rad.
 **Visa [objektets namn] i kartan** markerar objektet och fokuserar kameran

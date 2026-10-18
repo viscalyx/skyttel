@@ -11,3 +11,11 @@ uttryckligen, så att en gammal export inte återaktiverar borttagna
 användare.
 Administratörens insyn i andras utkast genom exporten ska framgå, och
 serverhemligheter, sessioner och aktiva OAuth-token ingår inte i formatet.
+
+Den fria egenskapsmodellen använder ett identifierbart nytt databas- och
+arkivformat. Äldre format avvisas före innehållsändring, eftersom en
+automatisk tolkning av typfält eller mållösa samband skulle kunna ändra
+hushållets avsikt; befintliga data kräver en separat beslutad
+ersättningsprocedur. Nyformatsarkiv bevarar egenskapsidentiteter, ordning,
+tomma värden och legitima blockerade eller undertryckta utkastförslag,
+men bevarad historisk härkomst ger ingen ny spar- eller åtkomstbehörighet.
