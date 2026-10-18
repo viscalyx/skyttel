@@ -536,16 +536,18 @@ BILD-06.
 
 **Steg:**
 
-1. Välj **Nytt objekt**. Fyll **Bild för Egen bildtyp** och
-   **Text i samma förslag** som namn och beskrivning och välj typen
-   **Egen bildtyp**. Öppna **Livscykel och utseende**. Sök cykel under
+1. Välj **Nytt objekt**. Fyll **Bild för Egen bildtyp** som namn och välj typen
+   **Egen bildtyp**. Lägg till egenskapen **Beskrivning** under **Fria
+   egenskaper**, välj datatypen Text och ange **Text i samma förslag** som
+   värde. Öppna **Livscykel och utseende**. Sök cykel under
    **Ikon**, välj
    **Cykel** och välj den första giltiga bilden. Kontrollera förhandsbilden.
    Inget objektförslag ska ännu finnas i utkastet.
 2. Välj **Lägg i utkastet och stäng**. Granska hela objektförslaget med text,
    ikon och bild. Spara hela utkastet och läs kvittot.
-3. Redigera objektet igen. Skriv **Ny text före bildbytet** i Grunduppgifter,
-   öppna Livscykel och utseende och välj den andra giltiga bilden.
+3. Redigera objektet igen. Öppna **Fria egenskaper** och ändra värdet i samma
+   Beskrivning-egenskap till **Ny text före bildbytet**. Öppna Livscykel och
+   utseende och välj den andra giltiga bilden.
    Välj **Lägg i utkastet och stäng** utan att spara gemensamt.
 4. Redigera igen och öppna Livscykel och utseende. Avbryt filväljaren utan
    fil. Välj sedan `fel.png` och **Lägg i utkastet och stäng**. Läs felet:

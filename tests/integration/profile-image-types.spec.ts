@@ -82,15 +82,22 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
     expect(proposed.objects).toEqual([]);
     expect(proposed.draft.changes).toHaveLength(1);
     const first = proposed.draft.changes[0];
+    const initialProperties = first.after?.properties;
+    expect(initialProperties).toEqual([
+      {
+        id: expect.any(String),
+        label: 'Beskrivning',
+        kind: 'text',
+        value: 'Text i samma förslag',
+      },
+    ]);
+    const correctedProperties = initialProperties?.map((property) => ({
+      ...property,
+      value: 'Ny text före bildbytet',
+    }));
     expect(first.after).toMatchObject({
       name,
-      properties: expect.arrayContaining([
-        expect.objectContaining({
-          label: 'Beskrivning',
-          kind: 'text',
-          value: 'Text i samma förslag',
-        }),
-      ]),
+      properties: initialProperties,
       iconId: 'bike',
       profileImageId: expect.any(String),
     });
@@ -131,7 +138,7 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
         for (const [label, value] of [
           ['Namn', name],
           ['Typ', typeName],
-          ['Beskrivning', description],
+          ['Beskrivning', `${description} (Text)`],
           ['Ikon', 'Cykel'],
           ['Gäller', 'Aktuellt'],
           ['Status', 'Gäller fortfarande'],
@@ -244,14 +251,7 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
       name,
       typeId: first.after?.typeId,
       iconId: 'bike',
-      properties: [
-        {
-          id: 'description',
-          label: 'Beskrivning',
-          kind: 'text' as const,
-          value: 'Ny text före bildbytet',
-        },
-      ],
+      properties: correctedProperties,
     });
     await edit();
     await appearance();
@@ -286,14 +286,7 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
       name,
       typeId: first.after?.typeId,
       iconId: 'bike',
-      properties: [
-        {
-          id: 'description',
-          label: 'Beskrivning',
-          kind: 'text' as const,
-          value: 'Ny text före bildbytet',
-        },
-      ],
+      properties: correctedProperties,
     });
     expect(removed.draft.changes[0].after).not.toHaveProperty('profileImageId');
     await readProposal(true);
@@ -303,27 +296,14 @@ test(`BILD-06: ${typeName} shares text, icon and image in one proposal and remov
     expect(removedReceipt.changes[0].before).toMatchObject({
       profileImageId: first.after?.profileImageId,
       iconId: 'bike',
-      properties: expect.arrayContaining([
-        expect.objectContaining({
-          label: 'Beskrivning',
-          kind: 'text',
-          value: 'Text i samma förslag',
-        }),
-      ]),
+      properties: initialProperties,
     });
     expect(removedReceipt.changes[0].after).toMatchObject({
       id: first.id,
       name,
       typeId: first.after?.typeId,
       iconId: 'bike',
-      properties: [
-        {
-          id: 'description',
-          label: 'Beskrivning',
-          kind: 'text' as const,
-          value: 'Ny text före bildbytet',
-        },
-      ],
+      properties: correctedProperties,
     });
     expect(removedReceipt.changes[0].after).not.toHaveProperty('profileImageId');
     const final = await read();
