@@ -182,7 +182,8 @@ test('invalid content and processing failures leave every existing proposal inta
   const atLimit = await read();
   expect((await upload(Buffer.alloc(10_000_001))).status).toBe(413);
   expect(await read()).toEqual(atLimit);
-  expect((await client.json(`${path}/draft`, { text: 'x'.repeat(17000) })).status).toBe(413);
+  expect((await client.json(`${path}/object-type`, { text: 'x'.repeat(17000) })).status).toBe(413);
+  expect((await client.json(`${path}/draft`, { text: 'x'.repeat(2_000_001) })).status).toBe(413);
   // The original pending version becomes unreachable after a valid replacement.
   expect((await client.request(`${images}/${image}`)).status).toBe(404);
 });
