@@ -1117,6 +1117,14 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
           .getByRole('definition')
           .filter({ hasText: 'Lo Exempel' }),
       ).toBeVisible();
+      const description = page
+        .getByRole('region', { name: 'Lo Exempel', exact: true })
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..')
+        .locator('dd');
+      await expect(description).toHaveText('◇ Ditt förslag: Påhittad uppgift (Text)');
+      await description.scrollIntoViewIfNeeded();
       await expect
         .poll(() =>
           page.getByRole('region', { name: 'Lo Exempel', exact: true }).evaluate((element) => {

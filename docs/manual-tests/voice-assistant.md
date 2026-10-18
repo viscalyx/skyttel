@@ -249,8 +249,10 @@ till TAL-17/23/24.
 1. Låt det kontrollerade markeringsuppdraget visa Lo Exempel. Läs vald Lo och
    dess uppgifter. Vid 640 × 500 och 320 × 250, fokusera Lo med tangentbordet
    och Shift+F10 → Fokusera markering. Panorera genom Navigera och stäng med
-   Stäng navigering. Lo ska förbli synlig och vald. Läs även **Påhittad
-   uppgift** i uppgiftsfönstret efter att hela svaret visas ovanför kartan.
+   Stäng navigering. Lo ska förbli synlig och vald. Rulla i uppgiftsfönstret
+   till egenskapen **Beskrivning** och läs **Påhittad uppgift (Text)** efter
+   att hela svaret visas ovanför kartan. Textens första rad ska rymmas i
+   fönstret och vara fri från överlappande kontroller.
 2. Återgå till 390 × 844. Förbered den blockerade kontrollen och det väntande
    sparförsöket enligt tidslinjen. Läs Skyttel kunde inte kontrollera om
    utkastet sparades. Mikrofonen är av.
