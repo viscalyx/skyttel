@@ -30,7 +30,7 @@ Objekt redigeras från **Tabell** med radens **Redigera [namn]**.
 Samband öppnas från Tabell med **Samband för [namn]** och **Redigera
 samband** eller **Nytt samband**. Välj **Lägg i utkastet** och
 **Stäng samband** före fortsatt arbete. Läsande översikter stängs med
-krysset. Definitioner öppnas i **Inställningar → Typer och egna fält**;
+krysset. Definitioner öppnas i **Inställningar → Typer**;
 välj **Tillbaka till kartan** före granskning.
 
 Granska genom **Skriv till Skyttel → Visa utkastet**. Välj radens
@@ -677,7 +677,7 @@ UTKAST-142.
 **Användare:** Alex Exempel i provinstallationen.
 
 **Förutsättningar:** Förbered provkommandot ovan och välj `new-base`. Skapa via
-Inställningar → Typer och egna fält en ny objekttyp Tillfällig typ med
+Inställningar → Typer en ny objekttyp Tillfällig typ med
 beskrivningen Hela den tillfälliga typens betydelse. Lägg typförslaget i
 utkastet. Gå tillbaka till kartan och skapa Tillfälligt föremål med denna typ
 och beskrivningen Hela den tillfälliga berättelsen. Lägg i utkastet och stäng.
@@ -742,7 +742,7 @@ server-sviten i Vitest. Formulär och borttagningsbekräftelse provas i UTKAST-4
 **Användare:** Alex Exempel i provinstallationen.
 
 **Förutsättningar:** Förbered provkommandot ovan och välj `new-base`. Skapa i
-Inställningar → Typer och egna fält en ny sambandstyp Tillfällig typ,
+Inställningar → Typer en ny sambandstyp Tillfällig typ,
 beskrivning Hela den tillfälliga typens betydelse, framåt granskar och bakåt
 granskas av. Lägg i utkastet. Gå tillbaka till Tabell och välj Samband för Alex
 blå cykel → Nytt samband. Välj Tillfällig typ och Uppgiftens säkerhet: Okänt.
@@ -1919,7 +1919,7 @@ UTKAST-33.
 **Användare:** Alex och Lo med tillgång till samma hushåll.
 
 **Förutsättningar:** Ett nytt hushåll med Lo Exempel. Redigera dess objekttyp
-via **Objekttyper och egna fält**. Skapa avsnittet Uppgifter och lägg till
+via **Objekttyper**. Skapa avsnittet Uppgifter och lägg till
 Beskrivning och Pris med **Lägg till gemensam egenskap**. Ändra **Fältets namn**
 till Anteckningar respektive Avtalat pris och välj avsnittet Uppgifter.
 Lägg definitionen i utkastet och spara.
@@ -3418,8 +3418,8 @@ UTKAST-21.
    sparmodalen och textvyn och välj **Hämta aktuellt underlag**.
 2. Öppna **1 konflikt i ditt utkast**. Läs Min typ, Annans typ och
    Oberoende typförklaring. Stäng med Escape.
-3. Öppna Inställningar → **Typer och egna fält**. På mobil, öppna
-   **Välj inställning** först. Visa **Objekttyper och egna fält** och välj
+3. Öppna Inställningar → **Typer**. På mobil, öppna
+   **Välj inställning** först. Visa **Objekttyper** och välj
    **Ändra typ: Min typ**. Kontrollera det befintliga formulärets namn.
 4. Ändra till Rättad typ och lägg typförslaget i utkastet.
 5. Välj Tillbaka till kartan och öppna konflikten igen. Välj det egna
@@ -4681,60 +4681,6 @@ läsbara.
 - Escape ändrar inget. Bekräftelsen kastar bara det valda privata
 objektförslaget; oberoende arbete, sparade objekt och historik består.
 
-### UTKAST-65: rätta det äldre textsvaret till ett tal i objektdialogen
-
-**Syfte:** Stängning bevarar det äldre förslaget tills den vanliga dialogen
-rättar det.
-
-**Användare:** Robin; Alex utför separat teknisk förberedelse.
-
-**Förutsättningar:** Följ [historisk
-förberedelse](historical-definition-preparation.md) och välj
-`new-invalid-datatype`. Börja i en ny installation och behåll samma databas
-vid omstart inom fallet.
-
-**Integrationstest:**
-[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
-UTKAST-65.
-
-<!-- markdownlint-disable MD013 -->
-<!--
-```manual-mapping
-{
-  "counterpart": {
-    "spec": "tests/integration/conflict-external-corrections.spec.ts",
-    "caseId": "UTKAST-65"
-  },
-  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
-  "outcomes": [
-    "Stängning bevarar det äldre förslaget tills den vanliga dialogen rättar det.",
-    "Den nya bedömningen godtar talet utan att ändra gemensamma fakta eller oberoende arbete före separat sparande.",
-    "Det sparade talvärdet och övriga giltiga förslag finns kvar efter omstart."
-  ]
-}
-```
--->
-<!-- markdownlint-enable MD013 -->
-
-**Steg:**
-
-1. Öppna konflikten, läs **Våren 2021**, att uppgiften måste vara ett tal och
-hänvisningen till den vanliga objektdialogen. Välj **Stäng konfliktfönstret**.
-2. Välj **Tabell → Redigera Solcellsanläggningen → Egna fält**. Fyll
-**Installationsår** med `2021` och välj **Lägg i utkastet och stäng**.
-3. Kontrollera att konflikten försvinner. Öppna hela utkastläsningen och läs
-objektets namn, beskrivning, typ och **Installationsår: 2021** samt det
-oberoende förslaget.
-4. Spara hela utkastet separat. Starta om med samma databas, ladda om och läs
-samma objektuppgifter och det oberoende objektet i Tabell.
-
-**Förväntat resultat:**
-
-- Stängning bevarar det äldre förslaget tills den vanliga dialogen rättar det.
-- Den nya bedömningen godtar talet utan att ändra gemensamma fakta eller
-oberoende arbete före separat sparande.
-- Det sparade talvärdet och övriga giltiga förslag finns kvar efter omstart.
-
 ### UTKAST-66: rätta saknad sambandstyp efter uttrycklig fältförlust
 
 **Syfte:** Historiska namn och svar består fram till ett uttryckligt bekräftat
@@ -4774,7 +4720,7 @@ UTKAST-66.
 
 1. Öppna konflikten och läs sambandet **Lo Exempel → Förvaras i → Molnmusik**
 med **Installationsår: Våren 2021** och rättelsevägen. Stäng med Escape.
-2. Öppna **Inställningar → Typer och egna fält → Ny sambandstyp**. Ange
+2. Öppna **Inställningar → Typer → Ny sambandstyp**. Ange
 **Förvaras i**, beskrivningen **Ny faktisk definition**, riktningarna
 **förvaras i** och **förvarar**. Lägg till talfältet **Installationsår**, lägg
 typen i utkastet och återgå till kartan. Konflikten består trots samma namn.
@@ -5071,7 +5017,7 @@ UTKAST-71.
 Typdefinition. Bekräfta och läs **Typdefinitionen förblir borttagen**. Stäng
 och läs det oberoende förslaget; definitionsförslaget saknar förslagsrad.
 2. Invänta förberedarens separata försök med förfalskad
-återställningsbehörighet. Öppna **Inställningar → Typer och egna fält → Ny
+återställningsbehörighet. Öppna **Inställningar → Typer → Ny
 objekttyp**.
 3. Ange **Solcellsanläggning**, **Ny vanlig definition**, utan egna fält. Lägg
 typförslaget i utkastet, återgå till kartan och läs den fullständiga nya
@@ -5125,7 +5071,7 @@ UTKAST-72.
 
 **Steg:**
 
-1. Öppna **Inställningar → Typer och egna fält → Ny objekttyp**. Ange
+1. Öppna **Inställningar → Typer → Ny objekttyp**. Ange
 **Solcellsanläggning**, **Ny faktisk definition** och ett talfält
 **Installationsår**. Lägg typen i utkastet och återgå till kartan; konflikten
 består trots samma namn.
@@ -5217,62 +5163,6 @@ och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 - Granskningen lägger objektets val mot det faktiska aktuella underlaget
   i utkastet. Det oberoende förslaget, sparade objekt och historik består.
 - Först separat sparande tar bort Lo ur den gemensamma kartan.
-
-### UTKAST-74: läs historiskt objektfält när aktuell fältbetydelse ersätts
-
-**Syfte:** Det äldre ägda svaret är läsbart även när den aktuella typen
-innehåller ett annat fält med samma namn.
-
-**Användare:** Robin; Alex utför separat teknisk förberedelse.
-
-**Förutsättningar:** Följ [historisk
-förberedelse](historical-definition-preparation.md) och välj
-`new-replaced-object-field`. Börja i en ny installation och behåll samma
-databas vid omstart inom fallet.
-
-**Integrationstest:**
-[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
-UTKAST-74.
-
-<!-- markdownlint-disable MD013 -->
-<!--
-```manual-mapping
-{
-  "counterpart": {
-    "spec": "tests/integration/conflict-external-corrections.spec.ts",
-    "caseId": "UTKAST-74"
-  },
-  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
-  "outcomes": [
-    "Det äldre ägda svaret är läsbart även när den aktuella typen innehåller ett annat fält med samma namn.",
-    "Escape ändrar inget; ett uttryckligt typbyte tar bort det gamla svaret utan att kopiera det.",
-    "Gemensamma fakta och oberoende arbete bevaras; rättningen består efter separat sparande och omstart."
-  ]
-}
-```
--->
-<!-- markdownlint-enable MD013 -->
-
-**Steg:**
-
-1. Öppna konflikten och läs **Installationsår: Våren 2021**. Stäng med Escape.
-2. Välj **Tabell → Redigera Solcellsanläggningen**. Byt till den första
-vanliga typen, **Person**. Läs det historiska fältnamnet och svaret i **Ta
-bort tidigare egna fält?**. Tryck Escape och välj Person igen.
-3. Bekräfta **Ta bort fältvärdena och byt typ** och lägg ändringen i utkastet.
-Läs hela objektförslaget med namn, beskrivning och Person samt det oberoende
-förslaget.
-4. Spara separat, starta om och läs objektet som Person och det oberoende
-objektet genom Tabell.
-
-**Förväntat resultat:**
-
-- Det äldre ägda svaret är läsbart även när den aktuella typen innehåller ett
-annat fält med samma namn.
-- Escape ändrar inget; ett uttryckligt typbyte tar bort det gamla svaret utan
-att kopiera det.
-- Gemensamma fakta och oberoende arbete bevaras; rättningen består efter
-separat sparande och omstart.
 
 ### UTKAST-75: visa saknad ändpunkt och sambandstyp samtidigt
 
@@ -7845,62 +7735,6 @@ ord, skärmläsarversion, webbläsare och resultat som tidigare.
 - Beskeden hörs begripligt en gång vid sina tillståndsövergångar.
 - Senare fokus består. Anteckna faktiskt hörda ord och eventuella fel.
 
-### UTKAST-138: läs historiskt sambandsfält när aktuell fältbetydelse ersätts
-
-**Syfte:** Sambandsdialogen använder den ägda historiska fältbetydelsen, även
-när den aktuella definitionen ersätter fältet.
-
-**Användare:** Robin; Alex utför separat teknisk förberedelse.
-
-**Förutsättningar:** Följ [historisk
-förberedelse](historical-definition-preparation.md) och välj
-`new-replaced-relationship-field`. Börja i en ny installation och behåll samma
-databas vid omstart inom fallet.
-
-**Integrationstest:**
-[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
-UTKAST-138.
-
-<!-- markdownlint-disable MD013 -->
-<!--
-```manual-mapping
-{
-  "counterpart": {
-    "spec": "tests/integration/conflict-external-corrections.spec.ts",
-    "caseId": "UTKAST-138"
-  },
-  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
-  "outcomes": [
-    "Sambandsdialogen använder den ägda historiska fältbetydelsen, även när den aktuella definitionen ersätter fältet.",
-    "Avbrutet typbyte bevarar alla förslag; bekräftat byte tar bara bort de gamla svaren.",
-    "Separat sparande och omstart bevarar rättningen utan att sammanblanda objekt- och sambandsflöden."
-  ]
-}
-```
--->
-<!-- markdownlint-enable MD013 -->
-
-**Steg:**
-
-1. Öppna konflikten, läs **Installationsår: Våren 2021** och stäng med Escape.
-2. Välj **Tabell → Samband för Lo Exempel → Redigera samband**. Byt till den
-första vanliga sambandstypen, **Använder**. Läs det historiska fältnamnet och
-svaret i fältförlustbekräftelsen, tryck Escape och byt igen.
-3. Bekräfta fältförlusten, välj **Lägg i utkastet** och stäng samband. Läs
-hela förslaget med Lo Exempel, Molnmusik, Använder och bekräftad säkerhet samt
-det oberoende förslaget.
-4. Spara separat, starta om och läs samma samband och det oberoende objektet
-genom Tabell.
-
-**Förväntat resultat:**
-
-- Sambandsdialogen använder den ägda historiska fältbetydelsen, även när den
-aktuella definitionen ersätter fältet.
-- Avbrutet typbyte bevarar alla förslag; bekräftat byte tar bara bort de gamla
-svaren.
-- Separat sparande och omstart bevarar rättningen utan att sammanblanda
-objekt- och sambandsflöden.
-
 ### UTKAST-139: kasta sambandstypsförslag utan faktisk borttagningsrevision
 
 **Syfte:** Sambandstypens hela historiska betydelse är läsbar trots spärrad
@@ -8488,3 +8322,12 @@ medlemskap består. Riktiga externa HTTP-anrop, sessioner och SQLite behålls.
 Oanvända webbläsarfixturer tas bort; ingen assertion eller funktionell
 fallidentitet avvecklas och ingen konfiguration förloras. Flytten eliminerar
 inte protokollflödet och innebär inget löfte om snabbare körning.
+
+## Avvecklade fall för typstyrda fält
+
+UTKAST-65, UTKAST-74 och UTKAST-138 är avvecklade och får inte
+återanvändas. Deras typstyrda datatyper, ersättningsfält och bekräftade
+fältförlust saknar motsvarighet i den fria egenskapsmodellen.
+Typrättning med bevarade egenskaper verifieras i UTKAST-66 och UTKAST-72;
+egenskapernas egna datatyper och typbyten verifieras i fallen för
+[fria egenskaper](free-properties.md).
