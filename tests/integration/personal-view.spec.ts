@@ -903,12 +903,8 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
     await expect(retained).toContainText('Ny sak');
     await expect(retained).toContainText('Person');
     await expect(
-      retained
-        .locator('dt')
-        .filter({ hasText: /^Beskrivning$/ })
-        .locator('..')
-        .locator('dd'),
-    ).toContainText('◇ Ditt förslag: Ej uppgivet');
+      retained.locator('dt').filter({ hasText: /^Beskrivning$/ }),
+    ).toHaveCount(0);
     await closeTableObject(page, 'Ny sak');
     await openMap(page);
   } finally {
