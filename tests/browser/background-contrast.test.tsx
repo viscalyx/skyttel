@@ -42,8 +42,16 @@ function fixture(count: number): MapState {
       revision: 1,
       typeId: 'person',
       name: `Läsobjekt ${String(index).padStart(2, '0')}`,
-      
-    properties:[{id:'description',label:'Beskrivning',kind:'text',value:'Hela beskrivningen går att läsa i tabellen.'}]})),
+
+      properties: [
+        {
+          id: 'description',
+          label: 'Beskrivning',
+          kind: 'text',
+          value: 'Hela beskrivningen går att läsa i tabellen.',
+        },
+      ],
+    })),
     relationships: Array.from({ length: count - 1 }, (_, index) => ({
       id: `edge-${index}`,
       householdId: 'home',
@@ -51,7 +59,6 @@ function fixture(count: number): MapState {
       typeId: 'uses',
       sourceId: `readable-${index}`,
       targetId: `readable-${index + 1}`,
-      
     })),
     draft: { version: 0, changes: [] },
   };

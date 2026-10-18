@@ -433,7 +433,7 @@ test.each(['profileImageId', 'sourceImageId', 'copiedImageId'])(
             typeId: type.id,
             name: 'Annat objekt',
 
-            properties: [{id:fieldId,label:fieldId,kind:'text',value:privateId}],
+            properties: [{ id: fieldId, label: fieldId, kind: 'text', value: privateId }],
           },
         })
       ).status,

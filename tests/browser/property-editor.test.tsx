@@ -21,7 +21,7 @@ async function open(properties: Property[], width = 1280) {
     contentVersion: 1,
     baseRevision: 1,
     typeRevision: 1,
-    value: { typeId: 'cycle', name: 'Cykeln',  properties },
+    value: { typeId: 'cycle', name: 'Cykeln', identity: 'unspecified', properties },
   };
   render(
     <main className="household-map workspace-shell" data-theme="light">
@@ -142,7 +142,7 @@ for (const scenario of [
     expect(staged).toHaveLength(1);
     expect(staged[0].value).toMatchObject({
       name: 'Cykeln',
-      description: 'Annat formulärarbete',
+      identity: 'unspecified',
       properties: [{ id: 'memo', label: 'Anteckning', ...scenario.expected }],
     });
     if (scenario.corrected === null)
@@ -223,5 +223,5 @@ test('new blank labels block staging and deleting the last row returns focus to 
   expect(staged[0].value.properties).toEqual([
     { id: expect.any(String), label: 'Beskrivning', kind: 'text', value: 'Nytt eget värde' },
   ]);
-  expect(staged[0].value.description).toBe('Annat formulärarbete');
+  expect(staged[0].value.identity).toBe('unspecified');
 });

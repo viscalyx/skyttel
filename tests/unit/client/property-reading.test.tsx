@@ -20,7 +20,7 @@ test('table search finds a free property label and reads repeated empty and fals
             revision: 1,
             name: 'Cykel',
             typeId: 'cycle',
-            
+
             properties: [
               { id: 'empty', label: 'Märkning' },
               { id: 'false', label: 'Märkning', kind: 'boolean', value: false },
@@ -49,7 +49,7 @@ test('table search finds a free property label and reads repeated empty and fals
 
 test('elapsed date fields and Slutdatum properties never end content without an explicit status', () => {
   const value = {
-    
+    lifecycle: undefined,
     properties: [{ id: 'date', label: 'Slutdatum', kind: 'date', value: '2000-01-01' }],
   };
   const view = render(<LifecycleStatus value={value} />);
@@ -60,10 +60,11 @@ test('elapsed date fields and Slutdatum properties never end content without an 
 
 test('relationship reading retains the complete saved order beside a reordered proposal', async () => {
   const value = {
+    lifecycle: undefined,
     sourceId: 'a',
     targetId: 'b',
     typeId: 'edge',
-    
+
     properties: [
       { id: 'second', label: 'Avtal', kind: 'boolean' as const, value: false },
       { id: 'first', label: 'Avtal' },
@@ -90,7 +91,7 @@ test('search keeps a saved property label discoverable beside its renamed propos
     revision: 1,
     typeId: 'cycle',
     name: 'Cykel',
-    
+
     properties: [{ id: 'mark', label: 'Registrering' }],
   };
   render(
@@ -118,7 +119,7 @@ test('relationship reading distinguishes the saved label from a label-only propo
     sourceId: 'a',
     targetId: 'b',
     typeId: 'edge',
-    
+
     properties: [{ id: 'reference', label: 'Avtal', kind: 'text' as const, value: 'A-12' }],
   };
   render(

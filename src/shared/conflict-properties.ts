@@ -279,10 +279,7 @@ export function conflictCombinationError(
       if (change.after)
         objects.set(change.id, { ...change.after, id: change.id, householdId: '', revision: 0 });
       else objects.delete(change.id);
-    if (
-      !objects.has(relationship.sourceId) ||
-      !objects.has(relationship.targetId)
-    )
+    if (!objects.has(relationship.sourceId) || !objects.has(relationship.targetId))
       return 'Ett valt objekt finns inte i kartan eller ditt utkast.';
     if (
       [...proposedRelationships(state.relationships, state.draft.relationships).values()].some(

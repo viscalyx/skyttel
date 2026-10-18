@@ -14,7 +14,6 @@ const object = {
   revision: 1,
   typeId: 'person',
   name: 'Lo Exempel',
-  
 };
 const state: MapState = {
   userId: 'alex',

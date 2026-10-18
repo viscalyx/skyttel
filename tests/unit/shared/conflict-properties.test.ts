@@ -146,14 +146,31 @@ test('a changed relationship removal requires an explicit choice and retains the
   });
 });
 
-
-test('type explanation choices retain each complete saved and proposed meaning',()=>{
-  const before={id:'type',householdId:'home',revision:1,name:'Fordon',description:'Ursprunglig förklaring'};
-  const saved={...before,revision:2,description:'Gemensam förklaring'};
-  const proposed={...before,description:'Min förklaring'};
-  const comparison:MapState={...state,types:[saved],draft:{version:1,changes:[],objectTypes:[{id:'type',before,after:proposed}]}};
-  const fields=conflictProperties(comparison,{kind:'objectType',id:'type',current:saved});
-  expect(fields.find(({key})=>key==='description')).toMatchObject({label:'Beskrivning',saved:'Gemensam förklaring',proposed:'Min förklaring'});
-  expect(combineConflictProperties(fields,{description:'saved'})).toMatchObject({description:'Gemensam förklaring'});
-  expect(combineConflictProperties(fields,{description:'proposed'})).toMatchObject({description:'Min förklaring'});
+test('type explanation choices retain each complete saved and proposed meaning', () => {
+  const before = {
+    id: 'type',
+    householdId: 'home',
+    revision: 1,
+    name: 'Fordon',
+    description: 'Ursprunglig förklaring',
+  };
+  const saved = { ...before, revision: 2, description: 'Gemensam förklaring' };
+  const proposed = { ...before, description: 'Min förklaring' };
+  const comparison: MapState = {
+    ...state,
+    types: [saved],
+    draft: { version: 1, changes: [], objectTypes: [{ id: 'type', before, after: proposed }] },
+  };
+  const fields = conflictProperties(comparison, { kind: 'objectType', id: 'type', current: saved });
+  expect(fields.find(({ key }) => key === 'description')).toMatchObject({
+    label: 'Beskrivning',
+    saved: 'Gemensam förklaring',
+    proposed: 'Min förklaring',
+  });
+  expect(combineConflictProperties(fields, { description: 'saved' })).toMatchObject({
+    description: 'Gemensam förklaring',
+  });
+  expect(combineConflictProperties(fields, { description: 'proposed' })).toMatchObject({
+    description: 'Min förklaring',
+  });
 });

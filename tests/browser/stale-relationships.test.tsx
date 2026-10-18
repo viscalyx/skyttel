@@ -12,7 +12,7 @@ import '../../src/client/workspace.css';
 
 const type = { id: 'thing', householdId: 'home', revision: 1, name: 'Sak', description: '' };
 const edgeType = { ...type, id: 'uses', name: 'Använder' };
-const object = { ...type, typeId: 'thing', id: 'lo', name: 'Lo Exempel',  };
+const object = { ...type, typeId: 'thing', id: 'lo', name: 'Lo Exempel' };
 const state: MapState = {
   userId: 'alex',
   contentVersion: 1,
@@ -32,8 +32,11 @@ const state: MapState = {
           typeId: 'uses',
           sourceId: 'gone',
           targetId: 'lo',
-          
+
           lifecycle: 'ended',
+          properties: [
+            { id: 'certainty', label: 'Osäkert uppgivet', kind: 'boolean', value: true },
+          ],
         },
         objectNames: { gone: 'Borttagen cykel', lo: 'Lo Exempel' },
       },
@@ -53,7 +56,6 @@ test('blocked endpoint move leaves the saved relationship ordinary in graph pres
     typeId: 'uses',
     sourceId: 'lo',
     targetId: 'lo',
-    
   };
   render(
     <MapLegend
@@ -175,8 +177,12 @@ for (const width of [1280, 320]) {
       .element(editor.getByRole('heading', { name: 'Rätta blockerat samband', exact: true }))
       .toHaveFocus();
     await expect
-      .element(editor.getByLabelText('Uppgiftens säkerhet', { exact: true }))
-      .toHaveValue('uncertain');
+      .element(
+        editor
+          .getByRole('group', { name: 'Egenskap 1', exact: true })
+          .getByLabelText('Värde', { exact: true }),
+      )
+      .toHaveValue('true');
     await editor.getByLabelText('Från objekt', { exact: true }).selectOptions('lo');
     await editor.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
     await expect
@@ -186,7 +192,7 @@ for (const width of [1280, 320]) {
       {
         id: 'mine',
         baseRevision: null,
-        value: { sourceId: 'lo', targetId: 'lo',  lifecycle: 'ended' },
+        value: { sourceId: 'lo', targetId: 'lo', lifecycle: 'ended' },
       },
     ]);
     const element = await editor.element();

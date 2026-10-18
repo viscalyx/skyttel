@@ -24,7 +24,7 @@ test('endpoint inspection searches property labels and values without choosing a
       revision: 1,
       name: 'Cykel',
       typeId: 'cycle',
-      
+
       properties: [
         {
           id: 'mark',
@@ -58,7 +58,7 @@ test('endpoint inspection searches property labels and values without choosing a
             version: 0,
             contentVersion: 1,
             baseRevision: null,
-            value: { sourceId: 'one', targetId: '', typeId: 'uses',  },
+            value: { sourceId: 'one', targetId: '', typeId: 'uses' },
           }}
           state={state}
           objects={new Map(state.objects.map((object) => [object.id, object]))}

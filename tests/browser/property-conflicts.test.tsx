@@ -13,7 +13,7 @@ const before = {
   revision: 1,
   typeId: type.id,
   name: 'Cykeln',
-  
+
   properties: [
     { id: 'a', label: 'Samma', kind: 'number' as const, value: 1 },
     { id: 'b', label: 'Samma', kind: 'text' as const, value: 'Tidigare' },

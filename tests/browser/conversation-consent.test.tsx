@@ -21,7 +21,6 @@ const state: MapState = {
       typeId: 'person',
       revision: 1,
       name: 'Alex',
-      
     },
   ],
   draft: { version: 0, changes: [] },

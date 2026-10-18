@@ -17,7 +17,6 @@ const state: MapState = {
       typeId: 'person',
       revision: 1,
       name: 'Lo Exempel',
-      
     },
     {
       id: 'kim',
@@ -25,7 +24,6 @@ const state: MapState = {
       typeId: 'person',
       revision: 1,
       name: 'Kim Exempel',
-      
     },
   ],
   draft: { version: 0, changes: [] },

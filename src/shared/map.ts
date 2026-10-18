@@ -197,8 +197,7 @@ export function effectiveRelationships(state: MapState) {
     if (change.after && (!change.before || ids.has(change.id))) ids.add(change.id);
     else ids.delete(change.id);
   }
-  const valid = (edge: RelationshipValue) =>
-    ids.has(edge.sourceId) && ids.has(edge.targetId);
+  const valid = (edge: RelationshipValue) => ids.has(edge.sourceId) && ids.has(edge.targetId);
   return proposedRelationships(
     state.relationships.filter(valid),
     state.draft.relationships?.filter((change) => !change.after || valid(change.after)),
