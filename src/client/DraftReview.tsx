@@ -31,9 +31,6 @@ export function draftWarnings(state: MapState) {
       warnings[`object-${change.id}`] = 'Objekttypen saknas. Rätta objektet eller typen.';
   }
   for (const change of state.draft.relationships ?? []) {
-    if (change.after?.knowledge === 'unresolved')
-      warnings[`relationship-${change.id}`] =
-        'Målet är oklart. Rätta sambandet i det ordinarie flödet.';
     if (change.after && !relationshipTypes.some((type) => type.id === change.after?.typeId))
       warnings[`relationship-${change.id}`] = 'Sambandstypen saknas. Rätta sambandet eller typen.';
   }

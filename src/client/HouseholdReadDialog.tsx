@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { hasEnded } from '../shared/lifecycle.js';
 import type { MapRelationship, MapState, RelationshipType } from '../shared/map.js';
 import { effectiveRelationships } from '../shared/map.js';
-import { knowledgeLabels, relationshipLabel } from '../shared/relationship-label.js';
+import { relationshipLabel } from '../shared/relationship-label.js';
 import { useFormLeave } from './FormLeave.js';
 import type { HouseholdTableRow } from './HouseholdTable.js';
 import { trapDialogTab, usableFocusTarget } from './modal-focus.js';
@@ -200,8 +200,7 @@ export function HouseholdReadDialog({
       version: state.draft.version,
       contentVersion: state.contentVersion,
       baseRevision: proposal ? (proposal.before?.revision ?? null) : (value?.revision ?? null),
-      value: proposal?.after ??
-        value ?? { typeId: '', sourceId: current.id, targetId: '', knowledge: 'known' },
+      value: proposal?.after ?? value ?? { typeId: '', sourceId: current.id, targetId: '' },
     });
   }
   // biome-ignore lint/correctness/useExhaustiveDependencies: An ordinary edit entry initializes once; later server state never replaces unsent form values.
@@ -345,11 +344,7 @@ export function HouseholdReadDialog({
                             {other.object.name}
                           </button>
                         ) : (
-                          <p>
-                            {otherId
-                              ? 'Objektet finns inte längre'
-                              : knowledgeLabels[value.knowledge]}
-                          </p>
+                          <p>Objektet finns inte längre</p>
                         )}
                         <RelationshipReadDetails
                           value={value}

@@ -2,8 +2,6 @@ import type { SaveReceipt } from '../shared/map.js';
 import { relationshipLabel } from '../shared/relationship-label.js';
 import { HistoricalProperties } from './HistoricalProperties.js';
 import { LifecycleDetails } from './Lifecycle.js';
-import { ObjectPropertiesDetails } from './ObjectProperties.js';
-import { CustomFieldsDetails } from './ObjectTypes.js';
 import { ProfileImage } from './ProfileImage.js';
 
 export function HistoricalMergeDetails({
@@ -30,7 +28,6 @@ export function HistoricalMergeDetails({
               value={object}
               typeName={type?.name}
             />
-            <ObjectPropertiesDetails showHidden type={type} value={object} />
             <HistoricalProperties properties={object.properties} />
             <LifecycleDetails value={object} />
           </div>
@@ -58,7 +55,6 @@ export function HistoricalMergeDetails({
               Identitet: {edge.id}. Från {edge.sourceId} till{' '}
               {edge.targetId ?? 'okänd eller ingen ändpunkt'}.
             </p>
-            <CustomFieldsDetails type={type} values={edge.customValues} showHidden />
             <HistoricalProperties properties={edge.properties} />
             <LifecycleDetails value={edge} />
           </div>

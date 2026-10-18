@@ -1,4 +1,3 @@
-import { type FinancialFact, financialFields } from '../shared/financial-facts.js';
 import { hasEnded, type LifecycleValue } from '../shared/lifecycle.js';
 import type {
   DraftChange,
@@ -8,7 +7,6 @@ import type {
   RelationshipType,
 } from '../shared/map.js';
 import { objectIconLabel } from '../shared/object-icons.js';
-import { builtinPresentationChanges } from '../shared/object-properties.js';
 import { propertyDifferences } from '../shared/properties.js';
 import { lifecycleText } from './read-field-values.js';
 import { relationshipDetails, relationshipTarget } from './relationship-description.js';
@@ -21,16 +19,6 @@ function valueText(value: string | number | boolean | undefined) {
       : value === false
         ? 'Nej'
         : String(value);
-}
-function factText(fact: FinancialFact | undefined) {
-  if (!fact) return 'Ej uppgivet';
-  const text =
-    fact.knowledge === 'unknown'
-      ? 'Okänt'
-      : fact.knowledge === 'none'
-        ? 'Uttryckligen inget'
-        : `${fact.value}${fact.knowledge === 'uncertain' ? ' (osäkert uppgivet)' : ''}`;
-  return `${text}${fact.reportedOn ? ` (${fact.reportedOn})` : ''}`;
 }
 function difference(label: string, before: string, after: string) {
   return before === after ? [] : [`${label}: ${before} → ${after}`];
@@ -47,12 +35,6 @@ function lifecycleDifferences(before: LifecycleValue, after: LifecycleValue) {
 }
 export function objectDifferences({ before, after, type, beforeType }: DraftChange) {
   if (!before || !after) return [];
-  const fields = new Map(
-    [...((beforeType ?? type).fields ?? []), ...(type.fields ?? [])].map((field) => [
-      field.id,
-      field,
-    ]),
-  );
   return [
     ...difference('Namn', before.name, after.name),
     ...propertyDifferences(before.properties, after.properties),
@@ -61,22 +43,7 @@ export function objectDifferences({ before, after, type, beforeType }: DraftChan
       objectIconLabel(before.iconId, (beforeType ?? type).name),
       objectIconLabel(after.iconId, type.name),
     ),
-    ...difference('Beskrivning', valueText(before.description), valueText(after.description)),
     ...difference('Objekttyp', (beforeType ?? type).name, type.name),
-    ...financialFields.flatMap(({ key, label }) =>
-      difference(
-        label,
-        factText(before.financialFacts?.[key]),
-        factText(after.financialFacts?.[key]),
-      ),
-    ),
-    ...[...fields.values()].flatMap((field) =>
-      difference(
-        field.name,
-        valueText(before.customValues?.[field.id]),
-        valueText(after.customValues?.[field.id]),
-      ),
-    ),
     ...lifecycleDifferences(before, after),
     ...difference('Identitet', identity(before.identity), identity(after.identity)),
     ...(before.profileImageId !== after.profileImageId
@@ -97,31 +64,7 @@ export function typeDifferences(
   before: ObjectType & RelationshipType,
   after: ObjectType & RelationshipType,
 ) {
-  const changes = [
-    ...difference('Namn', before.name, after.name),
-    ...builtinPresentationChanges(before, after),
-    ...difference('Beskrivning', valueText(before.description), valueText(after.description)),
-  ];
-  if ('fields' in before || 'fields' in after) {
-    const oldFields = before.fields ?? [];
-    const newFields = after.fields ?? [];
-    const kinds = { text: 'text', number: 'tal', date: 'datum', boolean: 'ja/nej' };
-    for (const id of new Set([...oldFields, ...newFields].map((field) => field.id))) {
-      const oldField = oldFields.find((field) => field.id === id);
-      const newField = newFields.find((field) => field.id === id);
-      changes.push(
-        ...difference(
-          'Eget fält',
-          oldField
-            ? `${oldField.name} (${kinds[oldField.kind]}): ${oldField.description}`
-            : 'Inget',
-          newField
-            ? `${newField.name} (${kinds[newField.kind]}): ${newField.description}`
-            : 'Borttaget',
-        ),
-      );
-    }
-  }
+  const changes = [...difference('Namn', before.name, after.name)];
   for (const key of ['forwardLabel', 'reverseLabel'] as const)
     changes.push(
       ...difference(
@@ -146,8 +89,7 @@ export function relationshipDifferences(change: DraftRelationshipChange) {
     ];
   if (!change.before || !change.after) return [];
   const names = change.objectNames ?? {};
-  const target = (value: NonNullable<typeof change.after>) =>
-    `${relationshipTarget(value, names)}${value.knowledge === 'uncertain' ? ' (osäkert uppgivet)' : ''}`;
+  const target = (value: NonNullable<typeof change.after>) => relationshipTarget(value, names);
   return [
     ...difference(
       'Från',
@@ -156,22 +98,8 @@ export function relationshipDifferences(change: DraftRelationshipChange) {
     ),
     ...difference('Sambandstyp', (change.beforeType ?? change.type).name, change.type.name),
     ...difference('Till', target(change.before), target(change.after)),
-    ...[
-      ...new Map(
-        [...(change.beforeType?.fields ?? []), ...(change.type.fields ?? [])].map((field) => [
-          field.id,
-          field,
-        ]),
-      ).values(),
-    ].flatMap((field) =>
-      difference(
-        field.name,
-        valueText(change.before?.customValues?.[field.id]),
-        valueText(change.after?.customValues?.[field.id]),
-      ),
-    ),
+    ...propertyDifferences(change.before.properties, change.after.properties),
     ...lifecycleDifferences(change.before, change.after),
-    ...difference('Slutdatum', factText(change.before.endDate), factText(change.after.endDate)),
   ];
 }
 function lines(values: string[]) {
@@ -206,29 +134,7 @@ export function DraftChangeSummary({ review }: { review: MapDraft }) {
                 : change.before
                   ? describe(change.before)
                   : ''}
-            {change.before &&
-              change.after &&
-              lines([
-                ...[
-                  ...new Map(
-                    [...(change.beforeType?.fields ?? []), ...(change.type.fields ?? [])].map(
-                      (field) => [field.id, field],
-                    ),
-                  ).values(),
-                ].flatMap((field) =>
-                  difference(
-                    field.name,
-                    valueText(change.before?.customValues?.[field.id]),
-                    valueText(change.after?.customValues?.[field.id]),
-                  ),
-                ),
-                ...lifecycleDifferences(change.before, change.after),
-                ...difference(
-                  'Slutdatum',
-                  factText(change.before.endDate),
-                  factText(change.after.endDate),
-                ),
-              ])}
+            {lines(relationshipDifferences(change))}
           </li>
         );
       })}

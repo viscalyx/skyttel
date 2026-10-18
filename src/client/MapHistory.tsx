@@ -12,8 +12,7 @@ import { HistoricalMergeDetails } from './HistoricalMergeDetails.js';
 import { HistoricalProperties } from './HistoricalProperties.js';
 import { LifecycleDetails } from './Lifecycle.js';
 import { MapRequestError, request } from './map-request.js';
-import { ObjectPropertiesDetails } from './ObjectProperties.js';
-import { CustomFieldsDetails, ObjectTypeDetails } from './ObjectTypes.js';
+import { ObjectTypeDetails } from './ObjectTypes.js';
 import { ProfileImage } from './ProfileImage.js';
 import { RelationshipTypeDetails } from './RelationshipTypes.js';
 import './map-history.css';
@@ -131,7 +130,6 @@ function ObjectDetails({
           {value.identity === 'unspecified' ? 'Ospecificerat objekt' : 'Obesvarad identitetsfråga'}
         </p>
       )}
-      <ObjectPropertiesDetails type={type} value={value} showHidden />
       <HistoricalProperties properties={value.properties} />
       <LifecycleDetails value={value} />
     </>
@@ -170,7 +168,6 @@ function EdgeDetails({
           {value.targetId !== null && ` till objekt ${value.targetId}`}.
         </p>
       </details>
-      <CustomFieldsDetails type={type} values={value.customValues} showHidden />
       <HistoricalProperties properties={value.properties} />
       <LifecycleDetails value={value} />
     </>

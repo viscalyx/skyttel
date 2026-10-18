@@ -1,4 +1,3 @@
-import { isDeepStrictEqual } from 'node:util';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { conflictBasis, conflictProperties } from '../shared/conflict-properties.js';
@@ -13,58 +12,8 @@ type HouseholdMap = ReturnType<typeof householdMap>;
 
 export { assistantWorkInstructions } from './assistant-instructions.js';
 
-// Temporary boundary while storage contracts to free properties. Identity-keyed
-// dictionaries are opaque: endpoint/property IDs may themselves be model words.
-const legacyPropertyKey =
-  /^(description|knowledge|endDate|financialFacts(?:\.|$)|customValues(?:\.|$)|fields(?:\.|$)|sections(?:\.|$)|builtins(?:\.|$)|propertyOrder$)/;
-function assistantContent(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(assistantContent);
-  if (!value || typeof value !== 'object') return value;
-  const record = value as Record<string, unknown>;
-  const individual =
-    typeof record.typeId === 'string' &&
-    (typeof record.name === 'string' || typeof record.sourceId === 'string');
-  const definition =
-    typeof record.name === 'string' &&
-    typeof record.description === 'string' &&
-    (typeof record.revision === 'number' || typeof record.forwardLabel === 'string');
-  return Object.fromEntries(
-    Object.entries(record).flatMap(([key, content]) => {
-      if (
-        individual &&
-        ['description', 'financialFacts', 'customValues', 'knowledge', 'endDate'].includes(key)
-      )
-        return [];
-      if (definition && ['fields', 'sections', 'builtins', 'propertyOrder'].includes(key))
-        return [];
-      if (['objectNames', 'orderLabels', 'labels'].includes(key)) return [[key, content]];
-      // A resolution basis contains conflict rows, not type-defined fields.
-      if (key === 'fields' && Array.isArray(content))
-        return [
-          [
-            key,
-            assistantContent(
-              content.filter(
-                (field) =>
-                  !field ||
-                  typeof field !== 'object' ||
-                  typeof field.key !== 'string' ||
-                  !legacyPropertyKey.test(field.key),
-              ),
-            ),
-          ],
-        ];
-      return [[key, assistantContent(content)]];
-    }),
-  );
-}
-
 export function assistantResult(value: unknown) {
-  return { content: [{ type: 'text' as const, text: JSON.stringify(assistantContent(value)) }] };
-}
-
-function exposed(value: unknown) {
-  return JSON.parse(JSON.stringify(assistantContent(value)));
+  return { content: [{ type: 'text' as const, text: JSON.stringify(value) }] };
 }
 
 export function assistantDraftReview(map: HouseholdMap) {
@@ -75,9 +24,6 @@ export function assistantDraftReview(map: HouseholdMap) {
     ...draft.changes
       .filter((change) => change.after?.identity === 'unresolved')
       .map(({ id }) => ({ kind: 'object', id })),
-    ...(draft.relationships ?? [])
-      .filter((change) => change.after?.knowledge === 'unresolved')
-      .map(({ id }) => ({ kind: 'relationship', id })),
   ];
   const changedObjectIds = new Set(draft.changes.map(({ id }) => id));
   const objectIds = new Set(changedObjectIds);
@@ -130,9 +76,7 @@ export function assistantDraftReview(map: HouseholdMap) {
     resolutions: conflicts.map((conflict) => ({
       conflict,
       basis: conflictBasis(state, conflict),
-      properties: conflictProperties(state, conflict).filter(
-        ({ key }) => !legacyPropertyKey.test(key),
-      ),
+      properties: conflictProperties(state, conflict),
     })),
     blockedRelationships: conflicts
       .filter((conflict) => conflict.kind === 'relationship' && conflict.missingEndpoints?.length)
@@ -292,7 +236,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
       run((domain) => {
         domain.proposeObjectType({
           ...body,
-          value: body.value ? { ...body.value, fields: [] } : null,
+          value: body.value,
         });
         return assistantDraftReview(domain);
       }),
@@ -325,7 +269,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
       run((domain) => {
         domain.propose({
           ...body,
-          value: body.value ? { ...body.value, description: '' } : null,
+          value: body.value,
         });
         return assistantDraftReview(domain);
       }),
@@ -385,7 +329,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
       run((domain) => {
         const result = domain.proposeRelationship({
           ...body,
-          value: body.value ? { ...body.value, knowledge: 'known' } : null,
+          value: body.value,
         });
         return {
           ...assistantDraftReview(domain),
@@ -532,20 +476,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     },
     async (body) =>
       run((domain) => {
-        const state = domain.read();
-        const conflict = draftConflicts(state).find((candidate) =>
-          isDeepStrictEqual(exposed(candidate), body.conflict),
-        );
-        // The client echoes the public snapshot; only the matching fresh server
-        // snapshot supplies transitional storage fields to the domain guard.
-        const basis = conflict && conflictBasis(state, conflict);
-        domain.resolve({
-          ...body,
-          conflict: conflict ?? body.conflict,
-          ...(body.basis && basis && isDeepStrictEqual(exposed(basis), body.basis)
-            ? { basis }
-            : {}),
-        });
+        domain.resolve(body);
         return assistantDraftReview(domain);
       }),
   );

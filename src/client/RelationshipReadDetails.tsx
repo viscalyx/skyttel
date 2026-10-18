@@ -1,8 +1,6 @@
 import type { MapObject, RelationshipType, RelationshipValue } from '../shared/map.js';
 import { propertyValueText } from '../shared/properties.js';
-import { knowledgeLabels } from '../shared/relationship-label.js';
-import { factText } from './ObjectReadDetails.js';
-import { customReadFields, lifecycleText } from './read-field-values.js';
+import { lifecycleText } from './read-field-values.js';
 import { SavedPropertyOrder } from './SavedPropertyOrder.js';
 
 export function relationshipPropertyValues(
@@ -29,14 +27,12 @@ export function relationshipPropertyValues(
       'target',
       {
         label: 'Till objekt',
-        value: value.targetId
-          ? (objects.get(value.targetId)?.name ??
-            objectNames?.[value.targetId] ??
-            'Objektet finns inte längre')
-          : knowledgeLabels[value.knowledge],
+        value:
+          objects.get(value.targetId)?.name ??
+          objectNames?.[value.targetId] ??
+          'Objektet finns inte längre',
       },
     ],
-    ['knowledge', { label: 'Uppgiftens säkerhet', value: knowledgeLabels[value.knowledge] }],
     [
       'lifecycle',
       {
@@ -44,10 +40,7 @@ export function relationshipPropertyValues(
         value: lifecycleText(value.lifecycle),
       },
     ],
-    ['endDate', { label: 'Slutdatum', value: factText(value.endDate) }],
   ]);
-  for (const [key, field] of customReadFields(type?.fields, value.customValues))
-    fields.set(key, field);
   for (const property of value.properties ?? [])
     fields.set(`property:${property.id}`, {
       label: property.label,

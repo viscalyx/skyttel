@@ -766,8 +766,7 @@ export function HouseholdMap({
       version: state.draft.version,
       contentVersion: state.contentVersion,
       baseRevision: proposal ? (proposal.before?.revision ?? null) : (object?.revision ?? null),
-      value: proposal?.after ??
-        object ?? { typeId: effectiveTypes[0]?.id ?? '', name: '', description: '' },
+      value: proposal?.after ?? object ?? { typeId: effectiveTypes[0]?.id ?? '', name: '' },
     };
   }
   function edit(object?: MapObject, editing = true, restoreFocus?: () => void) {
@@ -1006,9 +1005,7 @@ export function HouseholdMap({
   useEffect(() => {
     if (saveProgress?.status === 'succeeded') setSaveDialogOpen(false);
   }, [saveProgress]);
-  const unresolved =
-    state?.draft.changes.some((change) => change.after?.identity === 'unresolved') ||
-    state?.draft.relationships?.some((change) => change.after?.knowledge === 'unresolved');
+  const unresolved = state?.draft.changes.some((change) => change.after?.identity === 'unresolved');
   function editRelationship(edge?: MapRelationship, previous = false) {
     if (!state) return;
     if (previous) return;
@@ -2152,7 +2149,7 @@ export function HouseholdMap({
         createPortal(
           <div className="shared-type-settings">
             <details>
-              <summary>Objekttyper och egna fält</summary>
+              <summary>Objekttyper</summary>
               <p>
                 Alla medlemmar kan föreslå ändringar, även i förifyllda typer. Egna fält är inte
                 till för hemliga uppgifter.

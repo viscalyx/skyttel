@@ -75,7 +75,6 @@ export function seedDemo(database: Database.Database, config: Config) {
       value: {
         typeId: initial.types.find((value) => value.name === type)?.id,
         name,
-        description: '',
         lifecycle: 'active',
         properties: [
           { id: randomUUID(), label: 'Beskrivning', kind: 'text', value: description },
@@ -156,7 +155,6 @@ export function seedDemo(database: Database.Database, config: Config) {
             : initial.relationshipTypes.find((value) => value.name === type)?.id,
         sourceId: ids.get(source),
         targetId: ids.get(target),
-        knowledge: 'known',
         lifecycle: 'active',
         ...(propertyLabel
           ? {

@@ -41,14 +41,11 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
   }
   const objectMeaning = (value: MapObject) => ({
     typeId: value.typeId,
-    customValues: value.customValues,
   });
   const edgeMeaning = (value: MapRelationship) => ({
     typeId: value.typeId,
     sourceId: value.sourceId,
     targetId: value.targetId,
-    knowledge: value.knowledge,
-    customValues: value.customValues,
   });
   const facts = (value: object) =>
     Object.fromEntries(

@@ -1,19 +1,17 @@
 import { hasEnded } from '../shared/lifecycle.js';
 import type {
-  CustomValues,
   MapDraft,
   ObjectType,
   ObjectValue,
   RelationshipType,
   RelationshipValue,
 } from '../shared/map.js';
-import { objectProperties } from '../shared/object-properties.js';
 import { propertyValueText } from '../shared/properties.js';
 import {
   draftProposalDescriptors,
   proposedRelationshipNames,
 } from './draft-proposal-descriptors.js';
-import { factText, objectPropertyValues } from './ObjectReadDetails.js';
+import { objectPropertyValues } from './ObjectReadDetails.js';
 import { ProfileImage } from './ProfileImage.js';
 import { lifecycleText } from './read-field-values.js';
 
@@ -39,16 +37,6 @@ function text(value: string | number | boolean | undefined) {
 function property(key: string, label: string, value: string): Property {
   return { key, label, value };
 }
-function custom(type: ObjectType | RelationshipType, values?: CustomValues) {
-  return [
-    ...(type.fields ?? []).map((field) =>
-      property(`field:${field.id}`, field.name, text(values?.[field.id])),
-    ),
-    ...Object.entries(values ?? {})
-      .filter(([id]) => !type.fields?.some((field) => field.id === id))
-      .map(([id, value]) => property(`field:${id}`, `Eget fält (${id})`, text(value))),
-  ];
-}
 function object(value: ObjectValue | null, type: ObjectType): Property[] | null {
   if (!value) return null;
   return [
@@ -60,13 +48,6 @@ function object(value: ObjectValue | null, type: ObjectType): Property[] | null 
     ]),
   ];
 }
-const knowledge = {
-  known: 'Bekräftat',
-  unknown: 'Okänt',
-  none: 'Uttryckligen inget',
-  uncertain: 'Osäkert uppgivet',
-  unresolved: 'Obesvarad fråga',
-};
 function relationship(
   value: RelationshipValue | null,
   type: RelationshipType,
@@ -76,16 +57,9 @@ function relationship(
   return [
     property('source', 'Från', names[value.sourceId] ?? value.sourceId),
     property('type', 'Sambandstyp', type.name),
-    property(
-      'target',
-      'Till',
-      value.targetId ? (names[value.targetId] ?? value.targetId) : knowledge[value.knowledge],
-    ),
-    property('knowledge', 'Uppgiftens säkerhet', knowledge[value.knowledge]),
+    property('target', 'Till', names[value.targetId] ?? value.targetId),
     property('applies', 'Gäller', hasEnded(value) ? 'Upphört' : 'Aktuellt'),
     property('lifecycle', 'Status', lifecycleText(value.lifecycle)),
-    ...(value.endDate ? [property('endDate', 'Slutdatum', factText(value.endDate))] : []),
-    ...custom(type, value.customValues),
     ...(value.properties ?? []).map((entry) =>
       property(`property:${entry.id}`, entry.label, propertyValueText(entry)),
     ),
@@ -95,12 +69,6 @@ export function definitionPropertyValues(
   value: (ObjectType & RelationshipType) | null,
 ): Property[] | null {
   if (!value) return null;
-  const kinds = { text: 'Text', number: 'Tal', date: 'Datum', boolean: 'Ja/nej' };
-  const section = (id?: string) =>
-    id === ''
-      ? 'Dold'
-      : (value.sections?.find((item) => item.id === id)?.name ??
-        (id === undefined ? 'Egna fält' : 'Utanför avsnitt'));
   return [
     property('name', 'Namn', value.name),
     property('description', 'Beskrivning', text(value.description)),
@@ -109,37 +77,6 @@ export function definitionPropertyValues(
       : []),
     ...(value.reverseLabel !== undefined
       ? [property('reverse', 'Omvänd riktning', text(value.reverseLabel))]
-      : []),
-    property(
-      'sections',
-      'Avsnitt',
-      value.sections?.map((item) => item.name).join(', ') ||
-        (value.sections === undefined ? 'Egna fält' : 'Inga avsnitt'),
-    ),
-    ...(value.fields ?? []).map((field) =>
-      property(
-        `field:${field.id}`,
-        `Eget fält: ${field.name}`,
-        `${kinds[field.kind]} · ${section(field.sectionId)}${field.description ? ` · ${field.description}` : ''}`,
-      ),
-    ),
-    ...(value.builtins ?? []).map((field) =>
-      property(
-        `builtin:${field.key}`,
-        `Gemensam egenskap: ${field.name}`,
-        section(field.sectionId),
-      ),
-    ),
-    ...(value.propertyOrder
-      ? [
-          property(
-            'order',
-            'Egenskapernas ordning',
-            objectProperties(value)
-              .map((item) => item.name)
-              .join(', '),
-          ),
-        ]
       : []),
   ];
 }

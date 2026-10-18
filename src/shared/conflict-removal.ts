@@ -24,9 +24,8 @@ export function conflictRemovalProperties(
   }
   if (conflict.kind !== 'object' || !conflict.current) return [];
   const change = state.draft.changes.find((change) => change.id === conflict.id);
-  const record = (
-    value: Pick<NonNullable<typeof conflict.current>, 'name' | 'description'> | null,
-  ) => (value ? `${value.name}${value.description ? ` · ${value.description}` : ''}` : 'Borttaget');
+  const record = (value: Pick<NonNullable<typeof conflict.current>, 'name'> | null) =>
+    value ? value.name : 'Borttaget';
   return [
     {
       key: 'object',

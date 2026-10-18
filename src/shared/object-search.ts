@@ -20,7 +20,6 @@ export function objectMatchesQuery(
   const fields = [
     { label: 'Namn', value: object.name },
     { label: 'Typ', value: type?.name ?? '' },
-    { label: 'Beskrivning', value: object.description },
     ...(object.properties ?? []).map((property) => ({
       label: property.label,
       value: propertyValueText(property),

@@ -3,15 +3,12 @@ import { sameConflictValue } from '../shared/conflict-properties.js';
 import type { MapObject, MapState, RelationshipValue } from '../shared/map.js';
 import { proposedRelationships } from '../shared/map.js';
 import type { RelationshipFormResult } from '../shared/relationship-form.js';
-import { knowledgeLabels } from '../shared/relationship-label.js';
 import { EndpointPicker } from './EndpointPicker.js';
 import { useFormLeave } from './FormLeave.js';
 import { FormLossGuard } from './FormLossGuard.js';
 import { validateFormControls } from './form-validation.js';
-import { LifecycleEditor, RelationshipEndDate } from './Lifecycle.js';
+import { LifecycleEditor } from './Lifecycle.js';
 import { MapRequestError } from './map-request.js';
-import { ObjectTypeLossDialog } from './ObjectDialog.js';
-import { CustomFieldsEditor } from './ObjectTypes.js';
 import { PropertyEditor } from './PropertyEditor.js';
 
 export type RelationshipFormValue = {
@@ -60,7 +57,6 @@ export function RelationshipForm({
   const [typeRevisions] = useState(
     () => new Map(state.relationshipTypes.map((type) => [type.id, type.revision])),
   );
-  const [nextType, setNextType] = useState<string>();
   const [sourceQuery, setSourceQuery] = useState('');
   const [targetQuery, setTargetQuery] = useState('');
   const [pending, setPending] = useState(false);
@@ -96,9 +92,6 @@ export function RelationshipForm({
     return !problems.length;
   }
   const type = state.relationshipTypes.find((type) => type.id === value.typeId);
-  const historicalType = state.draft.relationships?.find(
-    (change) => change.id === initial.id && change.type.id === value.typeId,
-  )?.type;
   const choices = [...objects.values()].filter(
     (object) => !state.draft.changes.some((change) => change.id === object.id && !change.after),
   );
@@ -288,37 +281,12 @@ export function RelationshipForm({
               id={`${prefix}-type`}
               required
               value={value.typeId}
-              onChange={(event) => {
-                if (Object.keys(value.customValues ?? {}).length) setNextType(event.target.value);
-                else setValue({ ...value, typeId: event.target.value, customValues: {} });
-              }}
+              onChange={(event) => setValue({ ...value, typeId: event.target.value })}
             >
               <option value="">Välj sambandstyp</option>
               {state.relationshipTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="">
-            {' '}
-            <label htmlFor={`${prefix}-knowledge`}>Uppgiftens säkerhet</label>
-            <select
-              id={`${prefix}-knowledge`}
-              value={value.knowledge}
-              onChange={(event) => {
-                const knowledge = event.target.value as RelationshipValue['knowledge'];
-                setValue({
-                  ...value,
-                  knowledge,
-                  targetId: value.targetId ?? '',
-                });
-              }}
-            >
-              {Object.entries(knowledgeLabels).map(([key, name]) => (
-                <option key={key} value={key}>
-                  {name}
                 </option>
               ))}
             </select>
@@ -363,19 +331,10 @@ export function RelationshipForm({
               onChange={(properties) => setValue({ ...value, properties })}
               onInvalidChange={setInvalidProperties}
             />
-            <CustomFieldsEditor
-              type={type}
-              values={value.customValues}
-              onChange={(customValues) => setValue({ ...value, customValues })}
-            />
             <LifecycleEditor
               kind="relationship"
               value={value.lifecycle}
               onChange={(lifecycle) => setValue({ ...value, lifecycle })}
-            />
-            <RelationshipEndDate
-              value={value.endDate}
-              onChange={(endDate) => setValue({ ...value, endDate })}
             />
           </div>{' '}
           <section
@@ -383,7 +342,6 @@ export function RelationshipForm({
             className="relationship-sentence relationship-form-wide"
           >
             {source} {label[0].toLocaleLowerCase('sv') + label.slice(1)} {target}
-            {value.knowledge === 'uncertain' ? ' (Osäkert uppgivet)' : ''}
           </section>
           <div className="relationship-form-actions relationship-form-wide">
             <button type="submit" className="primary" disabled={stale}>
@@ -405,22 +363,6 @@ export function RelationshipForm({
           </div>
         </fieldset>
       </form>
-      {nextType !== undefined && (
-        <ObjectTypeLossDialog
-          fields={Object.entries(value.customValues ?? {}).map(([id, answer]) => ({
-            name:
-              type?.fields?.find((field) => field.id === id)?.name ??
-              historicalType?.fields?.find((field) => field.id === id)?.name ??
-              id,
-            value: answer,
-          }))}
-          onCancel={() => setNextType(undefined)}
-          onConfirm={() => {
-            setValue({ ...value, typeId: nextType, customValues: {} });
-            setNextType(undefined);
-          }}
-        />
-      )}
       <FormLossGuard
         dirty={dirty}
         busy={busy}
