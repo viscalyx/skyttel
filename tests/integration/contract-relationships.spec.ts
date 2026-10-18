@@ -30,10 +30,10 @@ async function addRelationship(
 ) {
   const dialog = await openObjectRelationships(page, sourceName);
   await dialog.getByRole('button', { name: 'Nytt samband', exact: true }).click();
-  await page.getByLabel('Från objekt').selectOption(sourceId);
+  await page.getByLabel('Från objekt', { exact: true }).selectOption(sourceId);
   await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: type });
   if (certainty) await setProperty(page, 'Uppgiftens säkerhet', certainty);
-  if (targetId) await page.getByLabel('Till objekt').selectOption(targetId);
+  if (targetId) await page.getByLabel('Till objekt', { exact: true }).selectOption(targetId);
   await stageRelationshipAndClose(page);
 }
 
@@ -206,7 +206,7 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
     await page.getByLabel('Namn', { exact: true }).fill('Hushållets bankkonto');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await editObjectRelationship(page, 'Blå bilen', 'Blå bilen → Äger → Kim');
-    await page.getByLabel('Till objekt').selectOption('alex');
+    await page.getByLabel('Till objekt', { exact: true }).selectOption('alex');
     await stageRelationshipAndClose(page);
     const ownership = await readDraftProposal(page, 'Blå bilen → Äger → Alex');
     await expect(
