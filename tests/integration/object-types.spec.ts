@@ -169,6 +169,7 @@ test('TYP-03: ordinary members share saved type edits while individual property 
     const member = await other.newPage();
     await member.goto(app.installation.origin);
     await openTypes(member);
+    await member.getByText('Objekttyper', { exact: true }).click();
     await member.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }).click();
     await member.getByLabel('Typens namn').fill('Människa');
     await member.getByLabel('Typens beskrivning').fill('En person i kartan');

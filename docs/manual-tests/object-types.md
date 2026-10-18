@@ -175,7 +175,8 @@ varsin profil.
 1. Alex skapar Privat objekt med hushållets första objekttyp och Anteckning
    (Text,
    Privat värde). Lägg i utkastet utan att spara.
-2. Robin öppnar Typer och ändrar samma sparade typ till Människa med
+2. Robin öppnar Typer, fäller ut Objekttyper och ändrar samma sparade typ till
+   Människa med
    beskrivningen En
    person i kartan. Lägg typförslaget i utkastet. Kontrollera att Privat
 objekt inte
