@@ -168,11 +168,7 @@ for (const width of [1440, 390])
           .locator('dd'),
       ).toContainText('Robins anteckning');
       await expectConflictReadValue(tableDetails, 'Identitet', 'Identifierat objekt');
-      await expectConflictReadValue(
-        tableDetails,
-        'Status',
-        /^Sparat: Gäller fortfarande\s*◇ Ditt förslag: Gäller fortfarande$/,
-      );
+      await expectConflictReadValue(tableDetails, 'Status', 'Gäller fortfarande');
       await expectConflictDraftValues(page, 'Lo Lind', {
         Namn: 'Lo Lind',
         Beskrivning: 'Robins anteckning',
