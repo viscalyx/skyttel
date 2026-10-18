@@ -260,37 +260,16 @@ test('KAMERA-09: mouse drags, wheel bursts and touch pinch create complete previ
       clickCount: 1,
     });
   };
-  const inputs: unknown[] = [];
-  const record = (event: Event) => {
-    const pointer = event as PointerEvent & WheelEvent;
-    inputs.push({
-      type: event.type,
-      time: performance.now(),
-      x: pointer.clientX,
-      y: pointer.clientY,
-      button: pointer.button,
-      delta: pointer.deltaY,
-    });
-  };
-  for (const name of ['pointerdown', 'pointermove', 'pointerup', 'wheel'])
-    document.addEventListener(name, record);
-  onTestFinished(() => {
-    for (const name of ['pointerdown', 'pointermove', 'pointerup', 'wheel'])
-      document.removeEventListener(name, record);
-  });
   await act(() => drag('left'));
   await expect.poll(() => projection(map)).not.toEqual(initial);
   const rotated = projection(map);
   await act(() => drag('right'));
   await expect.poll(() => projection(map)).not.toEqual(rotated);
   const panned = projection(map);
-  console.log('CAMERA panned', JSON.stringify({ rotated, panned, inputs }));
   const point = emptyPoint(map);
   await ctrlWheel(session, point, 3, 5);
   await expect.poll(() => projection(map)).not.toEqual(panned);
-  console.log('CAMERA zoomed', JSON.stringify({ zoomed: projection(map), inputs }));
   await previous.click();
-  console.log('CAMERA restored', JSON.stringify({ restored: projection(map), inputs }));
   await expectProjection(map, panned);
   await previous.click();
   await expectProjection(map, rotated);

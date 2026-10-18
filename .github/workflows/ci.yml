@@ -78,10 +78,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Diagnose camera history with CI fonts
-        run: |
-          mkdir -p logs/tests
-          npm run test:unit:ci -- tests/browser/household-camera-history.test.tsx 2>&1 | tee logs/tests/camera-history.log
       - name: Unit coverage with CI fonts
         run: |
           mkdir -p logs/tests
