@@ -97,12 +97,8 @@ for (const width of [1280, 390, 320]) {
       await expect(proposal).toContainText('Oskickad cykel');
       await expect(proposal).toContainText('Person');
       await expect(
-        proposal
-          .locator('dt')
-          .filter({ hasText: /^Beskrivning$/ })
-          .locator('..')
-          .locator('dd'),
-      ).toHaveText('Ej uppgivet');
+        proposal.locator('dt').filter({ hasText: /^Beskrivning$/ }),
+      ).toHaveCount(0);
     } finally {
       await installation.close();
     }
