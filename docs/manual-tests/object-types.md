@@ -438,7 +438,7 @@ medlem.
    länk tillbaka till Värde. Kontrollera fokus och rätta till 2026-09-01.
 4. Nå Lägg i utkastet och stäng med tangentbordet, tryck Enter och spara hela
    utkastet.
-   Starta om och läs objektet i tabellen. Redigera det, byt typ till Annat och
+   Starta om och läs objektet i tabellen. Redigera det, byt typ till Avtal och
    kontrollera att Skuld fortfarande är 12300.
 
 **Förväntat resultat:**
@@ -492,7 +492,7 @@ medlem.
    länk tillbaka till Värde. Kontrollera fokus och rätta till 2026-09-01.
 4. Nå Lägg i utkastet och stäng med tangentbordet, tryck Enter och spara hela
    utkastet.
-   Starta om och läs objektet i tabellen. Redigera det, byt typ till Annat och
+   Starta om och läs objektet i tabellen. Redigera det, byt typ till Avtal och
    kontrollera att Skuld fortfarande är 12300.
 
 **Förväntat resultat:**
@@ -546,7 +546,7 @@ medlem.
    länk tillbaka till Värde. Kontrollera fokus och rätta till 2026-09-01.
 4. Nå Lägg i utkastet och stäng med tangentbordet, tryck Enter och spara hela
    utkastet.
-   Starta om och läs objektet i tabellen. Redigera det, byt typ till Annat och
+   Starta om och läs objektet i tabellen. Redigera det, byt typ till Avtal och
    kontrollera att Skuld fortfarande är 12300.
 
 **Förväntat resultat:**
@@ -600,7 +600,7 @@ medlem.
    länk tillbaka till Värde. Kontrollera fokus och rätta till 2026-09-01.
 4. Nå Lägg i utkastet och stäng med tangentbordet, tryck Enter och spara hela
    utkastet.
-   Starta om och läs objektet i tabellen. Redigera det, byt typ till Annat och
+   Starta om och läs objektet i tabellen. Redigera det, byt typ till Avtal och
    kontrollera att Skuld fortfarande är 12300.
 
 **Förväntat resultat:**

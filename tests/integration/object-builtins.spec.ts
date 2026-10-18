@@ -63,7 +63,7 @@ for (const [caseId, width, height] of [
       for (const value of ['Gemensam avtalstext', '12300', '2026-09-01', 'Ja'])
         await expect(details).toContainText(value);
       const edit = await editTableObject(page, 'Husets lån');
-      await edit.getByLabel('Objekttyp', { exact: true }).selectOption('other');
+      await edit.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Avtal' });
       await openFreeProperties(edit);
       await expect(freeProperty(edit, 'Skuld').getByLabel('Värde', { exact: true })).toHaveValue(
         '12300',
