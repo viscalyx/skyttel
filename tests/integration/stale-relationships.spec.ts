@@ -6,8 +6,8 @@ import {
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 for (const [id, kind, width] of [
-  ['138', 'missing-endpoint', 1280],
-  ['139', 'edited-missing-endpoint', 320],
+  ['151', 'missing-endpoint', 1280],
+  ['152', 'edited-missing-endpoint', 320],
 ] as const) {
   test(`UTKAST-${id}: correct a retained ${kind === 'missing-endpoint' ? 'new' : 'edited'} relationship after another member removes its endpoint`, async ({
     page,

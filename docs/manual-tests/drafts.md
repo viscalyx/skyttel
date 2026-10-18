@@ -8090,7 +8090,7 @@ UTKAST-137.
   medlemmarna genom publika HTTP-svar. Dessa kontroller ingår i samma
   formulärflöde och kräver inga ytterligare manuella UI-steg.
 
-### UTKAST-138: rätta ett bevarat nytt samband efter borttagen ändpunkt
+### UTKAST-151: rätta ett bevarat nytt samband efter borttagen ändpunkt
 
 **Syfte:** Behålla eget arbete och rätta ändpunkten före samlat sparande.
 
@@ -8107,14 +8107,14 @@ Avsluta med `quit` efter kontrollen och välj en ny installation inför omprov.
 
 **Automatiskt motsvarande test:**
 [stale-relationships.spec.ts](../../tests/integration/stale-relationships.spec.ts),
-UTKAST-138. HTTP/MCP-underlaget använder riktig server och SQLite;
+UTKAST-151. HTTP/MCP-underlaget använder riktig server och SQLite;
 integrationstestet kontrollerar det synliga rättningsflödet.
 
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
-  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/stale-relationships.spec.ts", "caseId": "UTKAST-138" },
+  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/stale-relationships.spec.ts", "caseId": "UTKAST-151" },
   "reference": "1280 × 900, ljust tema, Chromium, syntetiska användare. Nytt förslag efter annan användares sparade objektborttagning.",
   "outcomes": ["Förslaget finns i konfliktlistan med bevarad osäkerhet. Hela utkastet väntar på rättning eller kastande.", "Rätta ändpunkter öppnar ett tangentbordstillgängligt formulär med rubrikfokus och befintliga objekt. Rättning till Lo Exempel behåller förslagets innehåll.", "Efter separat samlat sparande finns det rättade sambandet och det oberoende objektet. Molnmusik återställs inte."],
   "evidence": [{ "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/stale-relationships-http.test.ts", "title": "previously valid new relationship survives endpoint loss, restart and correction without partial saving", "purpose": "Beständigt privat innehåll, samma sambandsidentitet, ogiltig rättning utan ändring, blockerat helt sparande och oförändrad historik före rättning." }]
@@ -8152,7 +8152,7 @@ integrationstestet kontrollerar det synliga rättningsflödet.
 mobilt tangentbord, förstoring och omflöde bedöms i områdets befintliga
 hjälpmedelsfall. Automatiken utgör inget mänskligt godkännande.
 
-### UTKAST-139: rätta ett bevarat ändrat samband efter borttagen ändpunkt
+### UTKAST-152: rätta ett bevarat ändrat samband efter borttagen ändpunkt
 
 **Syfte:** Behålla eget arbete och rätta ändpunkten före samlat sparande.
 
@@ -8169,14 +8169,14 @@ Avsluta med `quit` efter kontrollen och välj en ny installation inför omprov.
 
 **Automatiskt motsvarande test:**
 [stale-relationships.spec.ts](../../tests/integration/stale-relationships.spec.ts),
-UTKAST-139. HTTP/MCP-underlaget använder riktig server och SQLite;
+UTKAST-152. HTTP/MCP-underlaget använder riktig server och SQLite;
 integrationstestet kontrollerar det synliga rättningsflödet.
 
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
-  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/stale-relationships.spec.ts", "caseId": "UTKAST-139" },
+  "counterpart": { "runner": "playwright", "suite": "integration", "spec": "tests/integration/stale-relationships.spec.ts", "caseId": "UTKAST-152" },
   "reference": "320 × 900, ljust tema, Chromium, syntetiska användare. Ändrat tidigare sparat samband efter annan användares sparade objektborttagning.",
   "outcomes": ["Förslaget finns i konfliktlistan med bevarad osäkerhet. Hela utkastet väntar på rättning eller kastande.", "Rätta ändpunkter öppnar ett tangentbordstillgängligt formulär med rubrikfokus och befintliga objekt. Rättning till Lo Exempel behåller förslagets innehåll.", "Efter separat samlat sparande finns det rättade sambandet och det oberoende objektet. Molnmusik återställs inte."],
   "evidence": [{ "kind": "technical", "runner": "vitest", "suite": "server", "spec": "tests/unit/server/stale-relationships-http.test.ts", "title": "previously valid edited relationship survives endpoint loss, restart and correction without partial saving", "purpose": "Beständigt privat innehåll, samma sambandsidentitet, ogiltig rättning utan ändring, blockerat helt sparande och oförändrad historik före rättning." }]

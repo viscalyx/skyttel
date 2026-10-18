@@ -57,7 +57,9 @@ test('ordinary relationship reader excludes endpoint-blocked proposals', {
     />,
   );
   const dialog = page.getByRole('dialog', { name: 'Samband för Lo Exempel', exact: true });
-  await expect.element(dialog).toHaveTextContent(/Inga samband finns för objektet\./);
+  await expect
+    .element(dialog.getByText('Inga samband finns för objektet.', { exact: true }))
+    .toBeVisible();
   await expect
     .element(dialog.getByText('Osäkert uppgivet', { exact: true }))
     .not.toBeInTheDocument();
@@ -94,7 +96,14 @@ for (const width of [1280, 320]) {
               onStageRelationship={async (editor, stagingId) => {
                 staged.push(editor);
                 return {
-                  state,
+                  state: {
+                    ...state,
+                    draft: {
+                      ...state.draft,
+                      version: 2,
+                      relationships: [{ ...state.draft.relationships![0], after: editor.value }],
+                    },
+                  },
                   outcome: {
                     stagingId,
                     relationshipId: 'mine',
@@ -112,8 +121,16 @@ for (const width of [1280, 320]) {
     }
     render(<Workflow />);
     const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
-    await expect.element(conflict).toHaveTextContent(/Hela utkastet kan sparas först/);
+    await expect
+      .element(
+        conflict.getByText(
+          'Förslaget är blockerat och visas inte som ett aktuellt samband. Hela utkastet kan sparas först när du har rättat ändpunkterna eller kastat förslaget. Välj Rätta ändpunkter för att behålla förslagets uppgifter.',
+          { exact: true },
+        ),
+      )
+      .toBeVisible();
     const correct = conflict.getByRole('button', { name: 'Rätta ändpunkter', exact: true });
+    await expect.element(correct).toBeEnabled();
     (correct.element() as HTMLElement).focus();
     await userEvent.keyboard('{Enter}');
     const editor = page.getByRole('dialog', { name: 'Rätta blockerat samband', exact: true });
@@ -127,7 +144,7 @@ for (const width of [1280, 320]) {
     await editor.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
     await expect
       .element(editor.getByRole('status'))
-      .toHaveTextContent(/Sambandet lades i ditt utkast/);
+      .toHaveTextContent('Sambandet lades i ditt utkast. Du kan hantera nästa samband.');
     expect(staged).toMatchObject([
       {
         id: 'mine',
