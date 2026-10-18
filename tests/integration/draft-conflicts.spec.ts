@@ -30,7 +30,6 @@ import {
 } from '../support/current-conflict-reading.js';
 import {
   closeTableObject,
-  editObjectRelationship,
   editTableObject,
   openObjectRelationships,
   openTypeDefinitions,
@@ -622,15 +621,13 @@ for (const width of [1440, 390]) {
       await expect(
         conflict.getByRole('region', { name: 'Ditt förslag' }).getByRole('button'),
       ).toHaveCount(0);
-      await page.keyboard.press('Escape');
-      const editor = await editObjectRelationship(
-        page,
-        'Lo Exempel',
-        'Lo Exempel → Använder → Molnmusik',
-      );
+      await conflict.getByRole('button', { name: 'Rätta ändpunkter', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      const editor = page.getByRole('dialog', { name: 'Rätta blockerat samband', exact: true });
       await expect(
-        editor.getByRole('heading', { name: 'Redigera samband', exact: true }),
-      ).toBeVisible();
+        editor.getByRole('heading', { name: 'Rätta blockerat samband', exact: true }),
+      ).toBeFocused();
+      await expectFocusedTargetUncovered(page);
       await expect(editor.getByLabel('Från objekt', { exact: true })).toHaveValue('lo');
       await expect(editor.getByLabel('Sambandstyp', { exact: true })).toHaveValue(edge.typeId);
       await expect(
@@ -642,12 +639,20 @@ for (const width of [1440, 390]) {
           .getByRole('option', { name: /Molnmusik/ }),
       ).toHaveCount(0);
       await editor.getByLabel('Till objekt', { exact: true }).selectOption('garage');
-      await stageRelationshipAndClose(page);
+      await editor.getByRole('button', { name: 'Lägg i utkastet', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      await expect(editor.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+      await editor.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
+      await expect(editor).not.toBeVisible();
+      await expect(conflict).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(conflict).not.toBeVisible();
       const review = await openDraftReview(page);
       await expect(review).toContainText('Lo Exempel → Använder → Garaget');
       await expect(review).toContainText('Privat stol');
       const corrected = await app.read();
       expect(corrected.objects).toEqual(saved.objects);
+      expect(corrected.draft.changes).toEqual(saved.draft.changes);
       expect(corrected.relationships).toEqual([]);
       expect(corrected.draft.relationships?.[0]).toMatchObject({
         id: 'pending-edge',

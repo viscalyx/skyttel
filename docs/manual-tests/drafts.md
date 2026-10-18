@@ -3340,9 +3340,9 @@ UTKAST-20.
     "spec": "tests/integration/draft-conflicts.spec.ts",
     "caseId": "UTKAST-20"
   },
-  "reference": "1440 × 900; sambandets vanliga rättelseformulär.",
+  "reference": "1440 × 900; bevarat sambandsförslag genom konfliktens Rätta ändpunkter.",
   "outcomes": [
-    "Försöket med borttaget mål sparar varken sambandet eller Privat stol. Tabellens ordinarie formulär för samband öppnar samma privata förslag.",
+    "Försöket med borttaget mål sparar varken sambandet eller Privat stol. Konfliktens Rätta ändpunkter öppnar samma privata förslag med rubrikfokus.",
     "Rättelsen behåller samma samband, riktning och osäkra uppgift. Konflikten försvinner när målet är giltigt. Privat stol finns kvar i utkastet.",
     "Rättelsen skapar inget kvitto och ändrar inget i den gemensamma kartan. Först ett nytt uttryckligt sparande delar sambandet och stolen.",
     "Molnmusik förblir borttaget. Det nya sambandet går från Lo till Garaget."
@@ -3358,12 +3358,14 @@ UTKAST-20.
    sparmodalen och textvyn och välj **Hämta aktuellt underlag**.
 2. Öppna **1 konflikt i ditt utkast**. Läs borttaget mål och förslaget.
    Jämförelsen är läsbar, men förslaget kan inte väljas som egenskapsvärde.
-3. Stäng med Escape. Öppna Tabell → **Samband för Lo Exempel** och välj
-   **Redigera samband** vid det befintliga privata sambandsförslaget.
+3. Nå **Rätta ändpunkter** med tangentbord och aktivera med Enter.
+   Kontrollera synligt fokus på rubriken **Rätta blockerat samband**.
 4. Kontrollera Från objekt, Till objekt, Sambandstyp och den fria egenskapen
    **Uppgiftens säkerhet** med datatyp **Text** och värdet **Osäkert uppgivet**.
    Välj Garaget som Till objekt; Molnmusik ska inte kunna väljas.
-5. Välj **Lägg i utkastet** och **Stäng samband**. Läs hela utkastet:
+5. Nå **Lägg i utkastet** med tangentbord och aktivera med Enter.
+   Läs bekräftelsen, välj krysset **Stäng dialogen** och stäng den
+   återöppnade konfliktjämförelsen med Escape. Läs hela utkastet:
    det rättade sambandet och Privat stol finns kvar.
 6. Kontrollera Robins karta före Alex sparande. Spara därefter hela
    Alex utkast och ladda om Robins karta.
@@ -3371,7 +3373,8 @@ UTKAST-20.
 **Förväntat resultat:**
 
 - Försöket med borttaget mål sparar varken sambandet eller Privat stol.
-  Tabellens ordinarie formulär för samband öppnar samma privata förslag.
+  Konfliktens **Rätta ändpunkter** öppnar samma privata förslag med
+  rubrikfokus.
 - Rättelsen behåller samma samband, riktning och osäkra uppgift. Konflikten
   försvinner när målet är giltigt. Privat stol finns kvar i utkastet.
 - Rättelsen skapar inget kvitto och ändrar inget i den gemensamma kartan.
@@ -6494,7 +6497,7 @@ UTKAST-110.
 
 ### UTKAST-111: egen referens för UTKAST-20
 
-**Syfte:** 390 × 900; rätta borttaget mål genom vanligt sambandsformulär.
+**Syfte:** 390 × 900; rätta borttaget mål genom konfliktens Rätta ändpunkter.
 
 **Användare:** Alex och Robin i skilda sessioner enligt grundfallet.
 
@@ -6511,7 +6514,7 @@ UTKAST-111.
 <!--
 ```manual-mapping
 {
-  "reference": "390 × 900; rätta borttaget mål genom vanligt sambandsformulär.",
+  "reference": "390 × 900; rätta borttaget mål genom konfliktens Rätta ändpunkter.",
   "outcomes": [
     "Sambandets identitet, riktning och osäkerhet samt Privat stol bevaras.",
     "Nytt sparande delar rättelsen; Molnmusik återkommer inte."
