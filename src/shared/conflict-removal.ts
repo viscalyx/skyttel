@@ -1,7 +1,8 @@
 import type { PrivateConflictEffect } from './conflict-effects.js';
 import type { ConflictChoices, ConflictProperty } from './conflict-properties.js';
 import type { DraftConflict } from './draft-conflicts.js';
-import type { MapDraft, MapState } from './map.js';
+import type { MapDraft, MapState, ObjectValue } from './map.js';
+import { propertyValueText } from './properties.js';
 
 export const removalCombinationMessage =
   'Objektet kan inte tas bort medan sambandet till det finns kvar. Välj att ta bort sambandet eller behåll objektet.';
@@ -24,8 +25,15 @@ export function conflictRemovalProperties(
   }
   if (conflict.kind !== 'object' || !conflict.current) return [];
   const change = state.draft.changes.find((change) => change.id === conflict.id);
-  const record = (value: Pick<NonNullable<typeof conflict.current>, 'name'> | null) =>
-    value ? value.name : 'Borttaget';
+  const record = (value: Pick<ObjectValue, 'name' | 'properties'> | null) =>
+    value
+      ? [
+          value.name,
+          ...(value.properties ?? []).map(
+            (property) => `${property.label}: ${propertyValueText(property)}`,
+          ),
+        ].join(' · ')
+      : 'Borttaget';
   return [
     {
       key: 'object',

@@ -379,7 +379,27 @@ test('own removal explains actual actor or new incident edges and keeps unnamed 
       id: 'bike',
       current: { ...bike },
     })[0].saved,
-  ).toBe('Cykeln');
+  ).toBe('Cykeln · Beskrivning: Hela beskrivningen (Text)');
+});
+
+test('object removal review retains ordered free facts including empty, zero and false values', () => {
+  const state = household();
+  state.draft.changes = [{ id: 'bike', before: bike, after: null, type: objectType }];
+  const current: MapObject = {
+    ...bike,
+    properties: [
+      { id: 'description', label: 'Beskrivning', kind: 'text', value: 'Nya sparade fakta' },
+      { id: 'empty', label: 'Anteckning', kind: 'text' },
+      { id: 'count', label: 'Antal', kind: 'number', value: 0 },
+      { id: 'insured', label: 'Försäkrad', kind: 'boolean', value: false },
+    ],
+  };
+  expect(conflictRemovalProperties(state, { kind: 'object', id: 'bike', current })[0]).toMatchObject({
+    before: 'Cykeln · Beskrivning: Hela beskrivningen (Text)',
+    saved:
+      'Cykeln · Beskrivning: Nya sparade fakta (Text) · Anteckning: Tomt (Text) · Antal: 0 (Tal) · Försäkrad: Nej (Ja/nej)',
+    proposed: 'Föreslagen borttagning',
+  });
 });
 
 test('removal choices reject incomplete, invented and stale combinations while retaining independent proposals', () => {
