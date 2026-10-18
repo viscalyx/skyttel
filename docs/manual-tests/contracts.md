@@ -217,7 +217,7 @@ typen Avtal, Bostadslånet med typen Låneavtal, Reservkrediten med typen
 Kreditavtal, Bilavbetalningen med typen Avbetalningsavtal och
 Bilförsäkringen med typen Försäkringsavtal. Skapa personerna Alex, Kim och
 Lo, företaget Björkhem AB, föreningen Låneföreningen och bankkontot
-Betalkontot. Välj **Identiteten behöver redas ut** för Betalkontot.
+Betalkontot. Välj **Obesvarad identitetsfråga** för Betalkontot.
 Lämna ekonomiska uppgifter tomma och lägg alla objekten i samma utkast.
 
 **Integrationstest:**
@@ -249,7 +249,8 @@ identities through a blocked save and correction”.
    sparat. Det automatiska provet försöker dessutom spara genom HTTP och
    kontrollerar att hela sparandet avvisas utan ändrad karta eller historik.
 6. Öppna Betalkontots objektformulär och välj **Ospecificerat objekt**.
-   Lägg rättelsen i utkastet och spara hela utkastet. Starta om provappen, ladda om och
+   Lägg rättelsen i utkastet och spara hela utkastet. Starta om provappen,
+   ladda om och
    kontrollera att alla objekt och samband finns kvar utan ifyllda
    ekonomiska uppgifter.
 7. Sök efter Bostadshyra och rätta namnet till Hyran på Björkbacken.
