@@ -2,8 +2,10 @@ import type { Browser, Page } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import type { PersonalView } from '../../src/shared/personal-view.js';
+import { backgroundDifference, captureBackground } from '../support/background-pixels.js';
 import { createHousehold, openMap, openSettings, setAllLabels, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+import { waitForMapScene } from '../support/map-scene.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 const space = (page: Page) => page.getByRole('region', { name: 'Rymdkarta', exact: true });
@@ -16,7 +18,7 @@ async function settings(page: Page) {
 }
 async function back(page: Page) {
   await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-  await expect(space(page)).toBeVisible();
+  await waitForMapScene(page);
 }
 async function tint(page: Page) {
   const pixels = await sharp(await space(page).locator('canvas').screenshot())
@@ -106,15 +108,28 @@ async function arrangeMap(page: Page, origin: string, path: string, count: numbe
 // Capture actual pixels and UI-controlled directions. Shape recognition and
 // dense-map label overlap are assessed from these images, not shader internals.
 async function captureDarkViews(page: Page, reference: string) {
-  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  const navigate = page.getByRole('button', { name: 'Navigera', exact: true });
+  const close = page.getByRole('button', { name: 'Stäng navigering', exact: true });
+  await navigate.click();
   const canvas = space(page).locator('canvas');
-  const still = await canvas.screenshot();
-  const image = await sharp(still).stats();
+  const image = await sharp(await canvas.screenshot()).stats();
   // This image includes the ordinary map and open panel over the dark water.
   expect(image.channels[0].mean).toBeLessThan(35);
   expect(image.channels[1].max).toBeGreaterThan(40);
-  expect((await canvas.screenshot()).equals(still)).toBe(true);
   await page.screenshot({ path: test.info().outputPath(`${reference}-water.png`) });
+  // Panel edges, axes and transient feedback can change over a still motif.
+  // Keep their ordinary screenshots, then measure the unobscured background.
+  await expect(page.locator('.personal-view-toast:popover-open')).toHaveCount(0);
+  await close.click();
+  let captureIndex = 0;
+  const pixels = () =>
+    captureBackground(
+      page,
+      test.info().outputPath(`${reference}-background-${captureIndex++}.png`),
+    );
+  const still = await pixels();
+  expect(backgroundDifference(still, await pixels())).toBe(0);
+  await navigate.click();
   for (const [direction, inverse] of [
     ['Rotera vänster', 'Rotera höger'],
     ['Rotera höger', 'Rotera vänster'],
@@ -126,7 +141,9 @@ async function captureDarkViews(page: Page, reference: string) {
     await page.screenshot({
       path: test.info().outputPath(`${reference}-${direction.replaceAll(' ', '-')}.png`),
     });
-    expect((await canvas.screenshot()).equals(still)).toBe(false);
+    await close.click();
+    expect(backgroundDifference(still, await pixels())).toBeGreaterThan(0);
+    await navigate.click();
     for (let index = 0; index < 4; index++)
       await page.getByRole('button', { name: inverse, exact: true }).click();
   }

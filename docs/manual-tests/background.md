@@ -274,6 +274,11 @@ av djurformer, objekt, samband, etiketter och kontroller. Automatiken
 identifierar inte djurens former och bevisar inte fri pekyta eller
 läsbarhet för alla etiketter i täta vyer. Fysisk grafikhårdvara och
 fullständig tillgänglighet behöver bedömas separat.
+Bildjämförelsen använder bakgrundspixlar som är fria från kartans överlägg
+i båda bilderna. Sparbeskedet får försvinna och navigeringen stängs med
+sin vanliga knapp före jämförelsen. Navigeringen öppnas igen för nästa
+kamerahandling. Helsidesbilder med öppet fönster finns kvar för granskning
+av paneler och etiketter.
 
 <!--
 ```manual-mapping
@@ -284,7 +289,7 @@ fullständig tillgänglighet behöver bedömas separat.
     "spec": "tests/integration/background-ocean.spec.ts",
     "caseId": "BAKGRUND-04"
   },
-  "reference": "Mörkt hav, 16/80 objekt, dator/smal, riktningar och två klienter.",
+  "reference": "Mörkt hav, 16/80 objekt, 1440/390 px, fri bakgrund, två klienter.",
   "outcomes": [
     "Mörkt hav återkommer efter omladdning, omstart och i en annan webbläsare.",
     "Motivet står still utan kamerarörelse och följer vanlig navigering.",
@@ -301,13 +306,16 @@ fullständig tillgänglighet behöver bedömas separat.
    **Bakgrund i mörkt tema** med tangentbordet. Kontrollera sparbesked,
    bevarat fokus och att det ljusa bakgrundsvalet finns kvar.
 2. Återgå till kartan. Kontrollera oförändrat utsnitt, markering och
-   objektplaceringar. Låt kameran stå still och kontrollera att motivet
-   inte simmar, pulserar, blinkar eller fortsätter röra sig.
+   objektplaceringar. Stäng **Navigera** om fönstret är öppet och vänta
+   tills sparbeskedet har försvunnit. Låt kameran stå still och kontrollera
+   att motivet inte simmar, pulserar, blinkar eller fortsätter röra sig.
 3. Öppna **Navigera**. Prova rotation åt båda hållen, lutning uppåt och
    nedåt, panorering och zoom. Jämför hela motivet: kronmanet, sifonofor,
    lanternfish, vampyrbläckfisk, musselkräftors ljusspår och
    djuphavsmarulk med lysande lockbete. Formerna ingår tillsammans;
-   kamerans riktning avgör vilka delar som syns i utsnittet.
+   kamerans riktning avgör vilka delar som syns i utsnittet. Stäng
+   navigeringen för att granska den fria bakgrunden efter varje riktning
+   och öppna den igen för nästa kamerahandling.
 4. Välj ett objekt och öppna dess uppgifter. Använd vid tät överlappning
    tangentbordets **Skift+F10 → Visa uppgifter**. Granska objekt,
    samband, etiketter, markering och kontroller i flera riktningar.

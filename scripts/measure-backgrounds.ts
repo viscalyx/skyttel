@@ -8,6 +8,7 @@ import type { PersonalView } from '../src/shared/personal-view.js';
 import { createBackgroundMapFixture } from '../tests/support/background-map.js';
 import { openMap, openProfile, openSettings } from '../tests/support/client.js';
 import { createInstallation } from '../tests/support/installation.js';
+import { waitForMapScene } from '../tests/support/map-scene.js';
 import { createPreparedContext } from '../tests/support/test.js';
 
 export const backgrounds = [
@@ -58,8 +59,7 @@ export async function chooseBackground(page: Page, theme: 'light' | 'dark', appe
       .selectOption(appearance);
   }
   await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-  const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
-  await expect(space.locator('canvas')).toBeVisible();
+  await waitForMapScene(page);
   const navigation = page.getByRole('button', { name: 'Navigera', exact: true });
   if ((await navigation.getAttribute('aria-expanded')) !== 'true') await navigation.click();
   await page.getByRole('button', { name: 'Rotera vänster', exact: true }).focus();
