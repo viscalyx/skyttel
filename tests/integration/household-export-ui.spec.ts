@@ -19,7 +19,12 @@ import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { holdBrowserExport, seedLargeExport } from '../support/export-browser-stream.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
-import { propertyRow, propertyValue, setProperty } from '../support/property-controls.js';
+import {
+  openProperties,
+  propertyRow,
+  propertyValue,
+  setProperty,
+} from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
 async function arrange(page: Page) {
@@ -532,6 +537,7 @@ test('EXPORT-06: browser image proposals, history and restart lead to a download
       await expect(row).toBeVisible();
       await row.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
+      await openProperties(dialog);
       await expect(
         propertyRow(dialog, 'Beskrivning').getByLabel('Värde', { exact: true }),
       ).toHaveValue('Första objektet');

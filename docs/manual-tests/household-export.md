@@ -340,13 +340,15 @@ EXPORT-06.
 
 **Steg:**
 
-1. Öppna Tabell. Skapa två objekt som heter **Lo Exempel**, med
-   beskrivningarna **Första objektet** och **Andra objektet**.
+1. Öppna Tabell. Skapa två objekt som heter **Lo Exempel**. Lägg på vardera
+   objektet till **Beskrivning** under **Fria egenskaper**, med datatyp
+   **Text** och värdena **Första objektet** respektive **Andra objektet**.
    Välj den första provbilden på det andra objektet under
    **Livscykel och utseende → Profilbild**. Lägg båda i utkastet och
    välj **Spara hela utkastet**. Vänta på sparbekräftelsen.
-2. Redigera det första objektet. Kontrollera dess beskrivning så att samma
-   namn inte blandar ihop objekten. Välj samma provbild, lägg i utkastet
+2. Redigera det första objektet. Öppna **Fria egenskaper** och kontrollera
+   Beskrivning så att samma namn inte blandar ihop objekten.
+   Välj samma provbild, lägg i utkastet
    och spara hela utkastet. Öppna **Rapporter**, fäll ut det senaste
    sparandets **Visa ändringarna** och kontrollera objektets namn och bild.
 3. Stäng Rapporter. Redigera det första objektet och välj den andra bilden.
