@@ -229,7 +229,7 @@ gånger.
 
 **Användare:** Alex Exempel i provinstallationen för UTKAST-36.
 
-**Förutsättningar:** Välj `new-draft` och `lost-response` i terminalen.
+**Förutsättningar:** Välj `new-property-draft` och `lost-response` i terminalen.
 Operatören använder den separat körbara
 [hållningen av kontrollsvaret](save-preparation.md#vanligt-sparande)
 med `hold-check` före steg 4 och `release-check` när vänteläget har lästs.
@@ -246,11 +246,12 @@ UTKAST-38.
     "spec": "tests/integration/draft-save.spec.ts",
     "caseId": "UTKAST-38"
   },
-  "reference": "Tabell; tappat svar efter genomförd transaktion.",
+  "reference": "Tabell; tappat svar efter genomförd transaktion. Cykel och självsamband har upprepade etiketter, noll, Nej, tomt datum, tomt utan datatyp och tom text.",
   "outcomes": [
     "Okänt utfall behåller förslagen och gör inget påstående om framgång. Kastande verifieras även tillsammans med dess fullständiga flöde.",
     "Kontrollen visar **Kontrollerar sparandet…**. Fokus flyttas till krysset medan kontrollknappen saknas, och till tabellens rubrik när bekräftelsen tar bort uppföljningsknappen.",
-    "Automationen kontrollerar separat samma beständiga försöks-ID, ett sparanrop, ett genomfört försök och en historikpost. Ingen AI eller samtalsstart krävs."
+    "Automationen kontrollerar separat samma beständiga försöks-ID, ett sparanrop, ett genomfört försök och en historikpost. Ingen AI eller samtalsstart krävs.",
+    "Historiken visar cykelns och självsambandets hela egenskapslistor i sparad ordning med identiteter, datatyper och skilda tomma värden."
   ]
 }
 ```
@@ -269,6 +270,11 @@ UTKAST-38.
    Kontrollknappen ska försvinna och fokus återgå till krysset.
    Låt operatören släppa kontrollsvaret och läs bekräftelsen. Fokus ska
    återgå till tabellens rubrik när uppföljningsknappen försvinner.
+5. Öppna **Rapporter → Ändringshistorik → Visa ändringarna**. Läs cykelns
+   och självsambandets egenskaper: **Samma: 0 (Tal)**, **Samma: Nej
+   (Ja/nej)**, **Väntar: Tomt (Datum)**, **Väntar: Tomt (ingen datatyp)**
+   och **Anteckning: Tom text (Text)**. Kontrollera ordningen och att varje
+   rad visar sin identitet.
 
 **Separat tekniskt underlag:** Integrationstestet kontrollerar att servern
 redan har genomfört sparandet trots klientens okända utfall. Det jämför
@@ -287,6 +293,8 @@ jämförelserna ingår inte i UI-stegen.
 - Automationen kontrollerar separat samma beständiga försöks-ID, ett
   sparanrop, ett genomfört försök och en historikpost. Ingen AI eller
   samtalsstart krävs.
+- Historiken visar båda egenskapslistorna i samma ordning, med identiteter
+  och de fem skilda värdena från steg 5.
 
 ### UTKAST-39: återuppta ett registrerat sparförsök efter omladdning
 

@@ -392,10 +392,13 @@ export function relationships(database: Database.Database, householdId: string) 
               'UPDATE map_relationship SET revision = revision + 1 WHERE householdId = ? AND id = ?',
             )
             .run(householdId, change.id);
-        const beforeType = previousTypes.find((type) => type.id === change.before?.typeId);
+        // A retained proposal can refer to an edge already removed by another
+        // save. History describes the actual map state, not that draft baseline.
+        const before = current.find((value) => value.id === change.id) ?? null;
+        const beforeType = previousTypes.find((type) => type.id === before?.typeId);
         return {
           id: change.id,
-          before: change.before,
+          before,
           after,
           type: change.type,
           ...(beforeType &&
@@ -403,7 +406,7 @@ export function relationships(database: Database.Database, householdId: string) 
             ? { beforeType }
             : {}),
           // Build shared snapshots from saved objects, never cached private draft names.
-          objectNames: objectNames(draft, change.before, after),
+          objectNames: objectNames(draft, before, after),
         };
       });
     },

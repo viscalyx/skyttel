@@ -18,6 +18,9 @@ Utan `--chrome` används installerad Chromium. Fjärrmiljöer behöver ett
 tillgängligt grafiskt skrivbord. Provinstallationen öppnas inloggad som
 Alex med **Alex blå cykel** i utkastet och utan AI. `new-empty` ger i stället
 ett tomt hushåll. `new-draft` skapar en ny installation med cykelförslaget.
+`new-property-draft` skapar i stället cykelförslaget och ett självsamband
+med ordnade egenskaper: noll, Nej, ett tomt datum, en tom egenskap utan
+datatyp och tom text. Etiketterna **Samma** och **Väntar** upprepas.
 De kommandona raderar föregående provinstallation; använd dem mellan fall,
 inte för att återhämta ett okänt sparande.
 
@@ -33,7 +36,8 @@ inte för att återhämta ett okänt sparande.
   igen**. Vänta på `Save lookup completed` med verklig status och håll
   svaret medan du läser **Kontrollerar sparandet…** och provar fokus.
   `release-check` levererar samma svar och stänger av kontrollens hållning.
-  `new-draft`, `new-empty`, `quit` och Ctrl+C släpper också ett hållet
+  `new-draft`, `new-property-draft`, `new-empty`, `quit` och Ctrl+C släpper
+  också ett hållet
   kontrollsvar före återställning eller avstängning.
 - `pending-attempt` registrerar ett riktigt väntande försök och laddar om
   medan den automatiska kontrollen blockeras. `network-ok` tar bort fel;

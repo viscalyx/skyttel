@@ -276,7 +276,45 @@ test('operation registration rejects malformed identity and additional request c
 
 test('a failed durable write leaves a discoverable pending operation and an intact draft', async () => {
   await propose();
-  const body = { operationId: 'write-interrupted', version: 1, contentVersion: 1 };
+  const initial = await read();
+  const properties = [
+    { id: 'empty', label: 'Samma' },
+    { id: 'typed', label: 'Samma', kind: 'date' },
+    { id: 'zero', label: 'Samma', kind: 'number', value: 0 },
+    { id: 'false', label: 'Samma', kind: 'boolean', value: false },
+  ];
+  expect(
+    (
+      await client.json(`${path}/draft`, {
+        version: initial.draft.version,
+        id: 'synthetic-person',
+        baseRevision: null,
+        value: { ...initial.draft.changes[0].after, properties },
+      })
+    ).status,
+  ).toBe(200);
+  expect(
+    (
+      await client.json(`${path}/relationship`, {
+        version: (await read()).draft.version,
+        id: 'self',
+        baseRevision: null,
+        value: {
+          typeId: initial.relationshipTypes[0].id,
+          sourceId: 'synthetic-person',
+          targetId: 'synthetic-person',
+          knowledge: 'known',
+          properties,
+        },
+      })
+    ).status,
+  ).toBe(200);
+  const before = await read();
+  const body = {
+    operationId: 'write-interrupted',
+    version: before.draft.version,
+    contentVersion: 1,
+  };
   fixture.database.exec(
     "CREATE TRIGGER interrupt_receipt BEFORE INSERT ON map_save BEGIN SELECT RAISE(ABORT, 'synthetic interruption'); END",
   );
@@ -286,11 +324,24 @@ test('a failed durable write leaves a discoverable pending operation and an inta
   expect((await (await second.request(`${path}/operations`)).json()).operations).toMatchObject([
     { operationId: body.operationId, status: 'pending' },
   ]);
-  expect(await read(second)).toMatchObject({ objects: [], draft: { version: 1 } });
+  expect(await read(second)).toEqual(before);
+  expect(before.objects).toEqual([]);
+  expect(before.relationships).toEqual([]);
   expect(await (await second.request(`${path}/history`)).json()).toEqual({ history: [] });
   fixture.database.exec('DROP TRIGGER interrupt_receipt');
-  expect((await second.json(`${path}/save`, body)).status).toBe(200);
-  expect((await read(second)).objects).toHaveLength(1);
+  await fixture.restart();
+  const saved = await second.json(`${path}/save`, body);
+  expect(saved.status).toBe(200);
+  const { receipt } = await saved.json();
+  const after = await read(second);
+  expect(after.objects).toEqual([receipt.changes[0].after]);
+  expect(after.objects[0].properties).toEqual(properties);
+  expect(after.relationships).toEqual([receipt.relationships[0].after]);
+  expect(after.relationships[0].properties).toEqual(properties);
+  expect(after.draft).toEqual({ version: before.draft.version + 1, changes: [] });
+  expect(await (await second.request(`${path}/history`)).json()).toEqual({ history: [receipt] });
+  expect(await (await second.json(`${path}/save`, body)).json()).toEqual({ receipt });
+  expect(await read(second)).toEqual(after);
 });
 
 test('a changed draft snapshot under the same version is rejected durably without consuming it', async () => {

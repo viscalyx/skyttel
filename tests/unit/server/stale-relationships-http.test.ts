@@ -79,13 +79,39 @@ for (const saved of [false, true]) {
         after: { targetId: 'lo', knowledge: 'uncertain' },
       });
       expect(corrected.draft.relationships?.[0].after?.properties).toEqual(properties);
-      expect((await app.save(first, 'corrected-save')).status()).toBe(200);
+      const approved = {
+        operationId: 'corrected-save',
+        version: corrected.draft.version,
+        contentVersion: corrected.contentVersion,
+      };
+      const savedResponse = await app.post(first, 'save', approved);
+      expect(savedResponse.status()).toBe(200);
+      const { receipt } = await savedResponse.json();
+      expect(receipt.relationships).toMatchObject([
+        {
+          id: 'mine',
+          before: null,
+          after: { sourceId: 'lo', targetId: 'lo', revision: saved ? 3 : 1, properties },
+          objectNames: { lo: 'Lo Exempel' },
+        },
+      ]);
+      expect(receipt.relationships[0].objectNames).not.toHaveProperty('service');
       const final = await app.read(first);
       expect(final.relationships).toMatchObject([
         { id: 'mine', targetId: 'lo', knowledge: 'uncertain' },
       ]);
       expect(final.relationships[0].properties).toEqual(properties);
       expect(final.objects.map(({ id }) => id).sort()).toEqual(['independent', 'lo']);
+      first = await restartWithSession(first, () => app.installation.restart());
+      expect(await (await app.post(first, 'save', approved)).json()).toEqual({ receipt });
+      expect(await app.read(first)).toEqual(final);
+      const finalHistory = (await (await first.get(`${app.path}/history`)).json()).history;
+      expect(
+        finalHistory.filter(
+          (item: { operationId: string }) => item.operationId === 'corrected-save',
+        ),
+      ).toEqual([receipt]);
+      expect(finalHistory.slice(1)).toEqual(history.history);
     } finally {
       await first.dispose();
       await second.dispose();

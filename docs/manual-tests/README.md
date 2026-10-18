@@ -851,6 +851,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   till bevarat arbete. Omfattar tangentbord, smala skärmar, återförsök
   och fokus under fördröjd hämtning, sparlänkar med bevarad oskickad text
   samt HISTORIK-14–17:s smala varianter och separat verklig zoom.
+  UTKAST-157 läser fria egenskapers identiteter, ordning och datatyper på
+  båda sidor tillsammans med dåvarande typförklaringar och riktning.
   HISTORIK-13 är avvecklat: ikontext före/efter bredvid oförändrad
   profilbild saknar sin specifika integrationskontroll.
 - [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
