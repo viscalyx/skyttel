@@ -14,8 +14,8 @@ for the supplied scenario.
 ## Specific Instructions
 
 - Require a concrete manual user journey before generating an integration test.
-- Use [maintain-manual-tests](../maintain-manual-tests/SKILL.md) to choose the
-  suite and synchronize the journey with its manual case.
+- Call the Skill tool with "maintain-manual-tests" to choose the suite and
+  synchronize the journey with its manual case.
 - Do not emit test code before finishing the prescribed Playwright MCP workflow.
 - Run the workflow step by step with the Playwright MCP tools.
 - After all steps complete, emit a Playwright TypeScript test using
