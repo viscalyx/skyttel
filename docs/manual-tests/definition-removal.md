@@ -72,7 +72,9 @@ typ. Använder är oanvänd.
    borttagningsförslagens tidigare definitioner. Välj Kasta hela utkastet och
    bekräfta Ta bort hela utkastet. Kontrollera att katalogens tidigare
    definitioner består.
-4. Upprepa samma ändring och typborttagningar. Spara hela utkastet. Starta om,
+4. Upprepa samma ändring och typborttagningar. Öppna Objekttyper och
+   Sambandstyper och riktning om respektive lista är stängd.
+   Spara hela utkastet. Starta om,
    ladda om och läs Rättad gemensam betydelse i Person-definitionen. De två
    valda typerna ska saknas, övriga finnas kvar.
 5. Öppna Rapporter och Visa ändringarna för det senaste sparandet. Läs de båda

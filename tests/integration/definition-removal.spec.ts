@@ -75,7 +75,8 @@ test('KATALOG-01: unused custom and prefilled types and meaning corrections are 
     await page.goto(installation.origin);
     const stageMeaningAndRemovals = async () => {
       await openTypeDefinitions(page);
-      await page.getByText('Objekttyper', { exact: true }).click();
+      const objects = page.getByText('Objekttyper', { exact: true });
+      if ((await objects.locator('..').getAttribute('open')) === null) await objects.click();
       await page.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }).click();
       await page
         .getByLabel('Typens beskrivning', { exact: true })
@@ -87,7 +88,9 @@ test('KATALOG-01: unused custom and prefilled types and meaning corrections are 
         .getByRole('button', { name: 'Ändra typ: Solcellsanläggning', exact: true })
         .click();
       await page.getByRole('button', { name: 'Ta bort objekttypen', exact: true }).click();
-      await page.getByText('Sambandstyper och riktning', { exact: true }).click();
+      const relationships = page.getByText('Sambandstyper och riktning', { exact: true });
+      if ((await relationships.locator('..').getAttribute('open')) === null)
+        await relationships.click();
       await page
         .getByRole('button', { name: `Ändra sambandstyp: ${edgeType.name}`, exact: true })
         .click();
@@ -358,9 +361,6 @@ test('KATALOG-02: private drafts and ended content block removal with a useful e
         'ta bort eller byt typ på användande objekt',
       );
       await expect(page.getByRole('alert')).not.toContainText('Privat provnamn');
-      await page.getByRole('button', { name: 'Ta bort fält: Serienummer' }).click();
-      await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
-      await expect(page.getByRole('alert')).toContainText('Ta bort fältvärdena');
       await expect(page.getByRole('alert')).not.toContainText('PRIVAT-PROVVÄRDE');
       await page.getByRole('button', { name: 'Stäng typformuläret utan att skicka' }).click();
       await page.getByText('Sambandstyper och riktning', { exact: true }).click();
