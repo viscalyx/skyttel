@@ -1,6 +1,7 @@
 import { request } from '@playwright/test';
 import { expect, test } from 'vitest';
 import { draftConflicts } from '../../../src/shared/draft-conflicts.js';
+import type { Property } from '../../../src/shared/properties.js';
 import { beginAssistant, callAssistant } from '../../support/assistant.js';
 import { restartWithSession } from '../../support/client.js';
 import { collaborators } from '../../support/draft-conflict-http.js';
@@ -12,11 +13,19 @@ for (const saved of [false, true]) {
     const app = await collaborators(first, second);
     try {
       const initial = await app.read();
+      const properties: Property[] = [
+        { id: 'empty-text', label: 'Samma', kind: 'text', value: '' },
+        { id: 'untyped', label: 'Tomt' },
+        { id: 'typed', label: 'Tomt', kind: 'date' },
+        { id: 'zero', label: 'Samma', kind: 'number', value: 0 },
+        { id: 'false', label: 'Samma', kind: 'boolean', value: false },
+      ];
       const value = {
         typeId: initial.relationshipTypes[0].id,
         sourceId: 'lo',
         targetId: 'service',
         knowledge: 'known' as const,
+        properties,
       };
       if (saved) {
         await app.propose(first, 'relationship', 'mine', value);
@@ -29,6 +38,7 @@ for (const saved of [false, true]) {
         description: '',
       });
       const proposal = (await app.read()).draft.relationships?.[0];
+      expect(proposal?.after?.properties).toEqual(properties);
       await app.propose(second, 'draft', 'service', null);
       expect((await app.save(second, 'remove-endpoint')).status()).toBe(200);
       const blocked = await app.read();
@@ -68,11 +78,13 @@ for (const saved of [false, true]) {
         id: 'mine',
         after: { targetId: 'lo', knowledge: 'uncertain' },
       });
+      expect(corrected.draft.relationships?.[0].after?.properties).toEqual(properties);
       expect((await app.save(first, 'corrected-save')).status()).toBe(200);
       const final = await app.read(first);
       expect(final.relationships).toMatchObject([
         { id: 'mine', targetId: 'lo', knowledge: 'uncertain' },
       ]);
+      expect(final.relationships[0].properties).toEqual(properties);
       expect(final.objects.map(({ id }) => id).sort()).toEqual(['independent', 'lo']);
     } finally {
       await first.dispose();
