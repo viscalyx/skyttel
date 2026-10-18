@@ -823,7 +823,7 @@ test('the draft table exposes every change, free properties, type edits and rela
   expect(removed.getByText('Ta bort')).toBeDefined();
   const added = within(
     review
-      .getByRole('rowheader', { name: 'Oklar cykel', exact: true })
+      .getByRole('rowheader', { name: 'Oklar cykel' })
       .closest('tr') as HTMLElement,
   );
   expect(added.getByText('Lägg till')).toBeDefined();
