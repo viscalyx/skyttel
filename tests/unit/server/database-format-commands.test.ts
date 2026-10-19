@@ -1,5 +1,14 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  closeSync,
+  fstatSync,
+  mkdtempSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
@@ -10,6 +19,15 @@ let directory: string;
 afterEach(() => {
   if (directory) rmSync(directory, { recursive: true, force: true });
 });
+
+function readDatabaseFile(path: string) {
+  const descriptor = openSync(path, 'r');
+  try {
+    return { bytes: readFileSync(descriptor), mode: fstatSync(descriptor).mode };
+  } finally {
+    closeSync(descriptor);
+  }
+}
 
 test.each([
   ['src/server/index.ts'],
@@ -24,8 +42,7 @@ test.each([
   database.close();
   const envFile = join(directory, '.env');
   writeFileSync(envFile, '');
-  const before = readFileSync(path);
-  const mode = statSync(path).mode;
+  const before = readDatabaseFile(path);
   const files = readdirSync(directory);
   const result = spawnSync(process.execPath, ['--import', 'tsx', ...command], {
     env: {
@@ -39,7 +56,8 @@ test.each([
   });
   expect(result.status, result.stderr).toBe(1);
   expect(result.stderr).toContain('unsupported_database_format');
-  expect(readFileSync(path)).toEqual(before);
-  expect(statSync(path).mode).toBe(mode);
+  const after = readDatabaseFile(path);
+  expect(after.bytes).toEqual(before.bytes);
+  expect(after.mode).toBe(before.mode);
   expect(readdirSync(directory)).toEqual(files);
 });
