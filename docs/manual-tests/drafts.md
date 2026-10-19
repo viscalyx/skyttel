@@ -7493,8 +7493,10 @@ UTKAST-131.
    stäng efter det oklara utfallet.
 2. Operatören kör `newer-name`. Öppna igen och kontrollera om valet
    lades i utkastet. Bekräftelsen är spärrad och ingen lösningsbock visas.
-3. Visa aktuell jämförelse. Beskrivningen är markerad men namnet
-   kräver nytt val. Välj Lo Lind igen.
+3. Visa aktuell jämförelse och invänta beskedet att den visas. Min
+   anteckning finns kvar i resultatet. Beskrivningen visas som en oberoende
+   ändring som kombineras utan nytt val; namnet kräver nytt val. Välj
+   Lo Lind igen.
 4. Operatören kör `network-ok`. Lägg valen i utkastet utan att spara kartan.
 
 **Förväntat resultat:**

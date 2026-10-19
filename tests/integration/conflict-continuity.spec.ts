@@ -718,8 +718,9 @@ test('UTKAST-131: a later save after a lost applied reply retains unchanged choi
   const other = await createPreparedContext(browser);
   const app = await prepareConflictContinuity(page.request, other.request);
   try {
+    let appliedStatus: number | undefined;
     await page.route('**/map/resolve', async (route) => {
-      await route.fetch();
+      appliedStatus = (await route.fetch()).status();
       await route.abort();
     });
     await page.goto(app.installation.origin);
@@ -735,6 +736,11 @@ test('UTKAST-131: a later save after a lost applied reply retains unchanged choi
     await description.click();
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
     await expect(dialog.getByRole('status')).toContainText('Det är oklart');
+    expect(appliedStatus).toBe(200);
+    const applied = await app.read();
+    expect(applied.draft.changes).toHaveLength(1);
+    expect(applied.draft.changes[0].before).toEqual(applied.objects.find(({ id }) => id === 'lo'));
+    expect(applied.draft.changes[0].after).toEqual(app.value);
     await page.keyboard.press('Escape');
     await app.propose(other.request, 'draft', 'lo', {
       ...app.value,
@@ -750,6 +756,7 @@ test('UTKAST-131: a later save after a lost applied reply retains unchanged choi
     });
     expect((await app.save(other.request, 'newer-after-applied')).status()).toBe(200);
     const before = await app.read();
+    expect(before.draft).toEqual(applied.draft);
     await opener.click();
     await dialog
       .getByRole('button', { name: 'Kontrollera om valet lades i utkastet', exact: true })
@@ -759,7 +766,26 @@ test('UTKAST-131: a later save after a lost applied reply retains unchanged choi
       dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
     ).toBeDisabled();
     await dialog.getByRole('button', { name: 'Visa aktuell jämförelse', exact: true }).click();
-    await expect(description).toHaveAttribute('aria-pressed', 'true');
+    await expect(dialog.getByRole('status')).toHaveText(
+      'Aktuell jämförelse visas. Opåverkade val finns kvar.',
+    );
+    const retainedDescription = dialog
+      .getByRole('region', { name: 'Ditt förslag', exact: true })
+      .getByText('Beskrivning · egenskap 1', { exact: true })
+      .locator('..');
+    await expect(
+      retainedDescription.getByText('Beskrivning: Min anteckning (Text)', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      retainedDescription.getByText('Oberoende ändring · kombineras', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      dialog
+        .getByRole('region', { name: 'Resultat av valen', exact: true })
+        .getByText('Beskrivning · egenskap 1', { exact: true })
+        .locator('..')
+        .getByRole('definition'),
+    ).toHaveText('Beskrivning: Min anteckning (Text) · Ditt förslag');
     await expect(name).toHaveAttribute('aria-pressed', 'false');
     expect((await app.read()).draft).toEqual(before.draft);
     await name.click();
