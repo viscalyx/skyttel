@@ -636,8 +636,7 @@ En driftansvarig ska kunna starta om testinstallationen.
 
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
-testfallet “EXPORT-10: the downloaded current-format archive restores shared,
-private and historical content after restart”.
+EXPORT-10.
 
 <!-- markdownlint-disable MD013 -->
 <!--

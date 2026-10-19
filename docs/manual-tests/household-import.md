@@ -1593,15 +1593,7 @@ i båda temana. Minskad rörelse gör bilderna stilla utan att ändra sparvärde
   "outcomes": [
     "Bekräftad återimport återställer de båda användarnas egna bakgrundsval och rörelsevärden utan sammanblandning.",
     "Bakgrundens utseende, avläge och personliga placeringar bevaras, även efter omstart."
-  ],
-  "evidence": [{
-    "kind": "technical",
-    "runner": "vitest",
-    "suite": "server",
-    "spec": "tests/unit/server/household-import.test.ts",
-    "title": "older archives are rejected before preview without changing map, private work, access or personal views",
-    "purpose": "Verklig temporär databas visar att äldre arkiv avvisas före granskning och bevarar karta, utkast, åtkomst och personliga vyer."
-  }]
+  ]
 }
 ```
 -->
@@ -1646,8 +1638,7 @@ i båda temana. Minskad rörelse gör bilderna stilla utan att ändra sparvärde
   Avläget behåller sina val och visar den enfärgade kartbakgrunden.
 - Båda användarna får tillbaka sina egna värden. Alex placering, övriga
   kartinställningar och medlemmarnas aktuella åtkomst bevaras.
-- Omstart ändrar inte det återställda resultatet. Separata serverprov
-  verifierar avvisning av äldre arkiv och felaktiga värden före ersättning.
+- Omstart ändrar inte det återställda resultatet.
 
 ## Fria egenskaper och bevarade sambandsförslag
 

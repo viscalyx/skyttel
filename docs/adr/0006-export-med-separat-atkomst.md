@@ -12,9 +12,6 @@ användare.
 Administratörens insyn i andras utkast genom exporten ska framgå, och
 serverhemligheter, sessioner och aktiva OAuth-token ingår inte i formatet.
 
-Den fria egenskapsmodellen använder ett identifierbart nytt databas- och
-arkivformat. Automatisk tolkning av äldre typfält eller mållösa samband
-ingår inte, eftersom den skulle kunna ändra hushållets avsikt.
-Nyformatsarkiv bevarar egenskapsidentiteter, ordning, tomma värden och
+Arkivet bevarar egenskapsidentiteter, ordning, tomma värden och
 legitima blockerade eller undertryckta utkastförslag, men bevarad historisk
 härkomst ger ingen ny spar- eller åtkomstbehörighet.

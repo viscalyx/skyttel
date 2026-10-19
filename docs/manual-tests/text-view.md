@@ -785,25 +785,23 @@ referensen smal dator. Pekare har egna fall nedan.
 - Visning på dessa skärmar skriver inte över de sparade datorbredderna.
   Automationen provar emulerade pekare; fysisk enhet provas separat.
 
-### TEXTBREDD-05: hushållsarkiv i aktuellt format lämnar personliga samtalsval kvar
+### TEXTBREDD-05: hushållsarkiv lämnar personliga samtalsval kvar
 
-**Syfte:** Läsa ett arkiv i aktuellt format utan att återställa personliga
+**Syfte:** Läsa ett hushållsarkiv utan att återställa personliga
 bredder, utkastets startval eller medgivande från hushållsfilen.
 
 **Användare:** Alex, administratör i Textprov.
 
 **Förutsättningar:** Samma isolerade röstinstallation och Lo-förslag.
 Inga verkliga privata uppgifter används. Använd den fullständiga exporten
-från den aktuella provinstallationen utan att ändra filens format.
+från provinstallationen.
 
 **Integrationstest:**
 [conversation-widths.spec.ts](../../tests/integration/conversation-widths.spec.ts),
-testfallet “TEXTBREDD-05: hushållsarkiv i aktuellt format lämnar personliga
-samtalsval kvar”.
-Aktuell export och återimport täcks även av
+TEXTBREDD-05.
+Export och återimport täcks även av
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
-testfallet “EXPORT-10: the downloaded current-format archive restores
-shared, private and historical content after restart”.
+EXPORT-10.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -813,16 +811,16 @@ shared, private and historical content after restart”.
     "spec": "tests/integration/conversation-widths.spec.ts",
     "caseId": "TEXTBREDD-05"
   },
-  "reference": "1600 × 900; faktisk browserdownload, aktuellt arkivformat och native läsning av personliga val/private Lo.",
+  "reference": "1600 × 900; faktisk browserdownload och native läsning av personliga val/private Lo.",
   "outcomes": [
-    "Läsa ett arkiv i aktuellt format utan att återställa personliga bredder, utkastets startval eller medgivande från hushållsfilen."
+    "Läsa ett hushållsarkiv utan att återställa personliga bredder, utkastets startval eller medgivande från hushållsfilen."
   ],
   "evidence": [
     {
       "kind": "overlap",
       "spec": "tests/integration/household-export-ui.spec.ts",
       "caseId": "EXPORT-10",
-      "purpose": "Aktuellt arkivformat och fullständig återläsning; detta är extra underlag, inte ett andra counterpart."
+      "purpose": "Fullständig återläsning; detta är extra underlag, inte ett andra counterpart."
     }
   ]
 }
@@ -849,9 +847,9 @@ shared, private and historical content after restart”.
 
 **Förväntat resultat:**
 
-- Exporten använder det nya formatets version 2. Personliga samtalsval och
-  medgivande ingår inte i hushållsfilen; automationen granskar detta.
-- Ett giltigt arkiv i aktuellt format går att kontrollera och återimportera
+- Personliga samtalsval och medgivande ingår inte i hushållsfilen;
+  automationen granskar detta.
+- Ett giltigt hushållsarkiv går att kontrollera och återimportera
   genom gränssnittet. Lo-förslaget bevaras.
 - Grundbredderna, det markerade startvalet och det sparade medgivandet
   finns kvar efter import. Hushållsimport skriver inte över personliga val.

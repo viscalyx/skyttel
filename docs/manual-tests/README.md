@@ -443,8 +443,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   med mus och piltangenter, personliga bredder mellan hushåll och enheter,
   visningsbegränsning utan ändrat sparat val samt återställning även utan
   tillgängligt samtal. Mobil enhet och smal skärm behåller sina bredder.
-  Aktuella och kompatibla äldre hushållsarkiv bevarar personliga samtalsval
-  och håller dem och medgivandet utanför hushållsfilen. TEXTBREDD-05 har
+  Återimport av hushållsarkiv lämnar personliga samtalsval och medgivande
+  kvar; de ingår inte i hushållsfilen. TEXTBREDD-05 har
   en egen vanlig importmotsvarighet; EXPORT-10 är överlappande underlag.
   Faktisk skärmläsning, mikrofonljud och fysisk inmatning har separata
   observationsfall. De tre godkända mobilkonfigurationerna är borttagna.
@@ -521,7 +521,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 
 - [Fullständig återimport](household-import.md): egna inställningssidor,
   bevarat oskickat arbete före innehållsbyte, uttrycklig ersättning,
-  bevarad åtkomst, privata uppgifter, bildhistorik, äldre fältbetydelser,
+  bevarad åtkomst, privata uppgifter, bildhistorik,
   personliga bakgrundsval och rörelsevärden genom export och återimport,
   fria egenskaper samt fortsatt rättelse av blockerade och undertryckta
   sambandsförslag efter återimport och omstart,
@@ -703,8 +703,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   verklig förstoring och längre bruk har en separat mänsklig observation.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
-  validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
-  kommando förbereder äldre provdata för uppgraderingen. AVTAL-07 provar
+  validering, konflikter, historik och bevarade utkast. AVTAL-07 provar
   saknat känt skuldbelopp i formuläret och AVTAL-08 riktiga konfliktval;
   HTTP-validering, kvitton och historik körs som separat tekniskt underlag
   i Vitests serverprojekt med oberoende autentiserade klienter, verklig
