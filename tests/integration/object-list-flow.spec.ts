@@ -11,6 +11,18 @@ import { createInstallation } from '../support/installation.js';
 import { focusMapSearch } from '../support/object-search.js';
 import { expect, test } from '../support/test.js';
 
+// The 500-object map repeats tens of megabytes of SVG occlusion markup per DOM
+// snapshot. Omit DOM snapshots (and Playwright's coupled browser network-tab
+// capture), retaining action/API events, ARIA/screen snapshots, screenshots,
+// pending/error diagnostics and geometry attachments within the existing budget.
+test.use({
+  trace: {
+    mode: 'retain-on-failure',
+    snapshots: { dom: false, aria: true, screen: true },
+    screenshots: true,
+  },
+});
+
 test('LISTA-05: short-screen table returns preserve the visible result and keyboard focus', async ({
   page,
 }) => {
