@@ -65,58 +65,7 @@ export async function prepareHouseholdTable(client: APIRequestContext, origin: s
       value: {
         name,
         typeId: index % 2 ? 'table-type-10' : 'table-type-2',
-        ...(index === 0
-          ? {
-              iconId: 'bike',
-              properties: [
-                {
-                  id: 'note',
-                  label: 'Egen anteckning',
-                  kind: 'text' as const,
-                  value: 'Lång egen uppgift '.repeat(30),
-                },
-                { id: 'price', label: 'Pris', kind: 'text' as const },
-                {
-                  id: 'price-certainty',
-                  label: 'Pris: uppgiftens säkerhet',
-                  kind: 'text' as const,
-                  value: 'Okänt',
-                },
-                { id: 'currency', label: 'Valuta', kind: 'text' as const },
-                {
-                  id: 'currency-certainty',
-                  label: 'Valuta: uppgiftens säkerhet',
-                  kind: 'text' as const,
-                  value: 'Okänt',
-                },
-                { id: 'debt', label: 'Senast uppgiven skuld', kind: 'text' as const },
-                {
-                  id: 'debt-certainty',
-                  label: 'Senast uppgiven skuld: uppgiftens säkerhet',
-                  kind: 'text' as const,
-                  value: 'Uttryckligen inget',
-                },
-                {
-                  id: 'creditLimit',
-                  label: 'Beviljat kreditutrymme',
-                  kind: 'text' as const,
-                  value: '100 000 SEK',
-                },
-                {
-                  id: 'creditLimit-certainty',
-                  label: 'Beviljat kreditutrymme: uppgiftens säkerhet',
-                  kind: 'text' as const,
-                  value: 'Osäkert uppgivet',
-                },
-                {
-                  id: 'creditLimit-reportedOn',
-                  label: 'Beviljat kreditutrymme: datum för uppgiften',
-                  kind: 'date' as const,
-                  value: '2026-01-01',
-                },
-              ],
-            }
-          : {}),
+        ...(index === 0 ? { iconId: 'bike' } : {}),
         properties: [
           ...(index === 0
             ? [
