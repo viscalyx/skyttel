@@ -21,6 +21,7 @@ import { createAuth, verifyAuthSchema } from '../../../src/server/auth.js';
 import { readConfig } from '../../../src/server/config.js';
 import { openDatabase } from '../../../src/server/database.js';
 import { householdMap } from '../../../src/server/map.js';
+import { effectiveRelationships } from '../../../src/shared/map.js';
 import { configurationEnvironment } from './fixture.js';
 
 const generation = '11111111-1111-4111-8111-111111111111';
@@ -495,7 +496,6 @@ test('runtime startup automatically upgrades the preview, retains browser access
 }, 15000);
 
 test.each([
-  ['scripts/setup-database.ts'],
   ['scripts/migrate-development-database.ts'],
   ['src/server/upgrade-legacy-login.ts', '--confirm-legacy-upgrade', '--confirm-service-stopped'],
 ])('maintenance command %s never performs the automatic runtime content reset', (...command) => {
@@ -516,3 +516,105 @@ test.each([
   expect(result.stderr).toContain('unsupported_database_format');
   expect(readFileSync(path)).toEqual(before);
 });
+
+test('db:setup upgrades the previous development preview and can repeatedly seed the new model', () => {
+  const envFile = join(directory, '.env');
+  writeFileSync(envFile, '');
+  let previousHousehold = 'home';
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = spawnSync('npm', ['run', 'db:setup'], {
+      env: {
+        PATH: process.env.PATH,
+        ...configurationEnvironment(path),
+        NODE_ENV: 'development',
+        SKYTTEL_DEV_ENV_FILE: envFile,
+      },
+      encoding: 'utf8',
+      timeout: 10000,
+    });
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain('Development database reset and seeded with TestHousehold.');
+    database = openDatabase(path);
+    const administrator = database
+      .prepare(`SELECT m.userId, m.householdId, m.role FROM membership m
+        JOIN account a ON a.userId = m.userId WHERE a.providerId = 'google' AND a.accountId = ?`)
+      .get(configurationEnvironment(path).SKYTTEL_FIRST_ADMIN_SUBJECT) as {
+      userId: string;
+      householdId: string;
+      role: string;
+    };
+    expect(administrator.role).toBe('administrator');
+    expect(administrator.householdId).not.toBe(previousHousehold);
+    const map = householdMap(database, administrator.userId, administrator.householdId);
+    const state = map.read();
+    expect(state.objects).toHaveLength(16);
+    expect(state.relationships).toHaveLength(21);
+    expect(state.objects.find(({ name }) => name === 'Alex blå cykel')?.properties).toEqual(
+      expect.arrayContaining([
+        { id: expect.any(String), label: 'Extrahjul', kind: 'number', value: 0 },
+        { id: expect.any(String), label: 'Elcykel', kind: 'boolean', value: false },
+        { id: expect.any(String), label: 'Kontrolldatum', kind: 'date', value: '2026-04-03' },
+        { id: expect.any(String), label: 'Ramfärg', kind: 'text', value: 'Blå' },
+      ]),
+    );
+    const service = state.objects.find(({ name }) => name === 'Molnmusik');
+    expect(
+      state.relationships.find(({ sourceId }) => sourceId === service?.id)?.properties,
+    ).toEqual([
+      { id: expect.any(String), label: 'Osäkert uppgivet', kind: 'boolean', value: true },
+    ]);
+    const ids = new Set(state.objects.map(({ id }) => id));
+    const effective = [...effectiveRelationships(state).values()];
+    expect(effective).toHaveLength(21);
+    for (const relationship of [...state.relationships, ...effective]) {
+      expect(ids.has(relationship.sourceId)).toBe(true);
+      expect(ids.has(relationship.targetId)).toBe(true);
+    }
+    expect(state.draft.changes).toMatchObject([{ after: { name: 'Lo Lind' } }]);
+    expect(state.draft.relationships).toHaveLength(1);
+    expect(state.draft.relationships?.[0].after?.targetId).toBe(
+      state.objects.find(({ name }) => name === 'musik@example.test')?.id,
+    );
+    expect(map.history().history.map(({ actorName }) => actorName)).toEqual([
+      'Robin Demo',
+      'Development administrator',
+    ]);
+    expect(database.prepare('SELECT COUNT(*) AS count FROM household').get()).toEqual({ count: 1 });
+    previousHousehold = administrator.householdId;
+    database.close();
+    database = undefined;
+  }
+}, 15000);
+
+test.each(['production', 'declared restore'])(
+  'db:setup refuses a %s preview without resetting its database',
+  (mode) => {
+    const envFile = join(directory, '.env');
+    writeFileSync(envFile, '');
+    const before = readFileSync(path);
+    const result = spawnSync('npm', ['run', 'db:setup'], {
+      env: {
+        PATH: process.env.PATH,
+        ...configurationEnvironment(path),
+        NODE_ENV: mode === 'production' ? 'production' : 'development',
+        SKYTTEL_DEV_ENV_FILE: envFile,
+        ...(mode === 'declared restore'
+          ? {
+              SKYTTEL_RESTORE_FROM_GENERATION: 'legacy',
+              SKYTTEL_RESTORE_CONFIRMED_AT: '2026-01-01T00:00:00.000Z',
+              SKYTTEL_RESTORE_ERASURE_REVIEWED: 'true',
+            }
+          : {}),
+      },
+      encoding: 'utf8',
+      timeout: 10000,
+    });
+    expect(result.status, result.stderr).toBe(1);
+    expect(result.stderr).toContain(
+      mode === 'production'
+        ? 'db:setup is for development and cannot run with NODE_ENV=production.'
+        : 'unsupported_database_format',
+    );
+    expect(readFileSync(path)).toEqual(before);
+  },
+);
