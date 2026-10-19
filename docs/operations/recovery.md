@@ -10,11 +10,6 @@ installation. A current administrator restores a complete Skyttel ZIP through
 the application. The new installation needs its own disk, configuration and
 verified logins. You do not need the source database, disk or login session.
 
-This release accepts only the new household archive format. Older archives
-are rejected before replacement. Do not edit the format version or convert
-their contents. See the [operator upgrade notes](operator-upgrade-notes.md)
-for supported production transitions and their data-loss consequences.
-
 An export includes all unique household content: current and removed objects,
 relationships, type definitions, history, saved operation evidence, image
 versions, all private drafts, and personal views. Treat the complete file as
@@ -33,10 +28,9 @@ lost data or reverse a database migration.
    application version. Do not modify individual archive entries or combine
    files from different exports. For a planned move, use the final-export
    procedure below before importing.
-2. Select a verified release that accepts the export format. Start with the
-   same release as the source when available, or read the destination's
-   [upgrade notes](operator-upgrade-notes.md) for compatibility. If validation
-   rejects the archive, preserve it and resolve compatibility before retrying.
+2. Select a verified release and read its
+   [upgrade notes](operator-upgrade-notes.md). If validation rejects the
+   archive, preserve it and diagnose the failure before retrying.
 3. Create a new, empty persistent disk and one application instance. Keep it
    separate from any retained source disk. On Render, follow the
    [service and disk setup](render.md#3-create-the-render-web-service-and-disk).

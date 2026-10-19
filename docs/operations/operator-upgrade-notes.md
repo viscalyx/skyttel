@@ -6,10 +6,10 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
-### New household database and archive format
+### One-time household content reset
 
-On first startup, this release automatically upgrades the recognized current
-production preview in the same database. It permanently clears old objects,
+On first startup, this release automatically upgrades the production
+installation in the same database. It permanently clears existing objects,
 relationships, images, drafts, history, saved operation contents and obsolete
 type fields. The installation, household, user access, compatible type names
 and settings remain. Inform users before merging and pause map work until
@@ -21,13 +21,11 @@ installation authority. The transition validates the source and commits the
 content reset and schema upgrade together. After deployment, verify health,
 the release identity, existing users' access to the same empty household and
 retained settings. Newly saved content must survive restarts and later
-releases: the completed migration never resets a database in the new format.
+releases: the completed migration never repeats the reset.
 
 This transition is forward only. If verification fails, diagnose the failure
-and repair forward while preserving any new household work. Other older or
-unknown databases, older archives and an old database under a restore
-declaration remain unsupported. Production maintenance commands cannot perform this
-transition. Conversion that preserves old map content is not available.
+and repair forward while preserving any new household work. Do not combine
+this transition with a database restore.
 
 ### Personal map backgrounds
 
@@ -68,8 +66,6 @@ ingress, including lost replies and result checks after a new login.
 Keep unresolved action references. Reset must preserve household data,
 account settings and suppressed login offers. Activation results use
 the 24-hour recovery window; this is not a general consent history.
-New household exports require an upgraded importer. Older exports are
-rejected before replacement.
 
 ### Development configuration examples
 
@@ -82,11 +78,9 @@ across ordinary restarts.
 
 ### Controlled login transition and roll forward
 
-The login maintenance procedure accepts only the supported database format.
-It cannot upgrade an older household database. The current preview uses the
-automatic transition above and does not need another login upgrade.
+The production installation does not need another login upgrade.
 
-For login maintenance within the supported format, close public access and
+For login maintenance, close public access and
 stop application processes. Use an independently stored installation
 generation and the controlled maintenance procedure. Affected devices must
 sign in again and make a new remembered-login choice. Stored household work
@@ -190,14 +184,11 @@ their owner for 24 hours. Include these records in restricted database
 backup handling; they stay outside household files.
 
 Session choice records are part of the installation database and its
-restricted backups. They stay outside full household files. Use the
-compatible reader for new household files. Older formats are rejected
-before replacement. Do not return to an older application after this upgrade.
+restricted backups. They stay outside full household files.
 
 ### Account theme and household files
 
-Use the compatible application to read new full household files. Older
-formats are rejected before replacement. Account theme choices stay outside household
+Account theme choices stay outside household
 files and remain unchanged when household content is imported. Use the
 database backup to recover account choices with the installation.
 
@@ -236,16 +227,13 @@ spending after rollout. GPT-Live 1 continues to handle speech.
 
 New text model usage uses Sol prices. Earlier measurements keep their saved
 prices. The cost page combines text model usage and shows the model for each
-price table. The model change does not replace provider credentials; the
-new database format requires the separate transition described above.
+price table. The model change does not replace provider credentials.
 
 ### Private type restoration
 
 Full household files can contain private proposals to restore removed type
-definitions. Use the compatible application to read these files. Older
-formats are rejected before replacement. Keep restricted database recovery
-copies; recovery
-requires the current or a corrected newer application.
+definitions. Keep restricted database recovery copies; recovery requires
+the current or a corrected newer application.
 
 Import retains these proposals but requires a new explicit review against
 current content before saving. Import does not transfer earlier restoration
@@ -262,8 +250,7 @@ with a corrected newer version. This evidence is scoped
 to its household and owner; recovery reads current content alongside the earlier
 outcome and does not restore an earlier draft over later work.
 
-Full household files omit this temporary recovery evidence. New exports require
-a compatible reader; older formats are rejected before replacement.
+Full household files omit this temporary recovery evidence.
 Import, content replacement, permanent erasure and owner removal invalidate
 the corresponding evidence. After those operations, preserve unsent text and
 review current content before starting another attempt.
@@ -276,17 +263,13 @@ tools. Update external clients that call those actions before upgrade.
 History remains available for reading. Ordinary drafts and atomic saves
 continue to use durable save receipts.
 
-Object merge proposals are not part of the supported model. This release
-does not convert older content. The automatic preview transition above
-discards that content once.
+Object merge proposals are not part of the supported model.
 Reading supported saved history does not restore those actions.
 
-### Database compatibility and rollout
+### Database operation and rollout
 
-This release requires the new database format described above. The recognized
-production preview upgrades automatically once, with the stated content loss.
-For an installation already using the supported format, preserve its
-persistent database and installation authority across normal restarts.
+Preserve the persistent database and installation authority across normal
+restarts.
 Repair application failures with a corrected newer application. A separate
 controlled data restoration must
 invalidate old authority and review permanent erasure before reopening.
@@ -307,19 +290,15 @@ removal does not permanently erase retained information. Follow the
 
 ### Complete object forms and recovery
 
-New household archives can contain a private identifier for each complete
-object-form addition to a draft. Use the upgraded application to read these
-archives. Current archives and drafts remain readable without this
-identifier. Shared history contains saved values and save attribution; it
+Household archives can contain a private identifier for each complete
+object-form addition to a draft. Shared history contains saved values and save attribution; it
 does not contain private form-attempt identifiers.
 
-### Object icon and archive compatibility
+### Object icons in household archives
 
 This release stores each object's selected icon with its other content.
 Objects without a selection use their type's default icon. Full household
-archives from this release need an upgraded reader. The upgraded application
-uses default icons in current archives where no
-selection exists. Use the controlled database recovery procedure above
+archives preserve the selected icons. Use the controlled database recovery procedure above
 for controlled recovery with the current or a corrected newer application;
 changing the image alone does not remove icon storage.
 
@@ -383,9 +362,6 @@ survive disk replacement. Follow the controlled database recovery
 procedure above for controlled data recovery with the current or a newer
 application. Older application versions are unsupported.
 
-New household archives need an upgraded reader. The upgraded application
-rejects older archives before replacement.
-
 To enable the optional assistants, configure the AI provider key in the server's
 private environment and restart. Keep the key out of browser settings, public
 build variables and logs. Without it, ordinary map editing remains available.
@@ -420,8 +396,7 @@ contain it, and import does not transfer or change it. After a move to
 another installation, each user gives consent again. When a user loses access
 to a household, that user's saved consent is removed.
 
-New household archives require an upgraded reader. Older archives are
-rejected before replacement. After rollout, each user must give consent
+After rollout, each user must give consent
 before the first text or voice conversation, and can save it for the
 household.
 
@@ -443,8 +418,8 @@ or permit automatic model work.
 Verify that only current administrators can prepare and download a full
 household archive after rollout. Archives include every user's private drafts,
 personal views, history and retained images. Restrict access to downloaded
-archives. Archive readers must support version 2 of the full archive format and
-ZIP64 when needed. No automatic backup is added; keep usable recovery copies
+archives. Archive readers must support ZIP64 when needed.
+No automatic backup is added; keep usable recovery copies
 outside the running disk.
 
 Allow free persistent disk space for an export snapshot and its ZIP archive,

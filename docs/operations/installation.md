@@ -70,10 +70,7 @@ Both providers must be configured. Invalid or incomplete configuration stops
 startup before the application accepts traffic.
 
 Read the [operator upgrade notes](operator-upgrade-notes.md) before updating
-an existing installation. They describe supported source versions and any
-one-time data changes. Unknown household database formats are rejected. The
-[one-time login maintenance procedure](login-upgrade.md) applies only to
-the supported database format; it cannot bypass format rejection.
+an existing installation. They describe required preparation and data changes.
 
 For whole database or disk recovery, follow the
 [controlled restore procedure](database-restore.md). Its independent restore
@@ -211,12 +208,9 @@ linked provider then reaches the same user and household. See the
 ## Build, start, and restart
 
 For a new installation, use an empty database location. Ordinary startup
-applies supported schema migrations automatically. Check the
+applies schema migrations automatically. Check the
 [operator upgrade notes](operator-upgrade-notes.md) before an update for
-source-version limits and data changes. Unsupported databases are rejected
-with `unsupported_database_format` before their contents change. Database
-maintenance commands require the supported format; login upgrade and restore
-declarations do not bypass format checks.
+required preparation and data changes.
 
 For the local Compose workflow, after filling every required value:
 
@@ -243,8 +237,7 @@ container restarts and replacements. `docker compose down` keeps that volume;
 adding `--volumes` deletes it and its household data.
 
 Before updating, read the [operator upgrade notes](operator-upgrade-notes.md)
-and check database and archive format compatibility. Follow any
-release-specific retention requirements in those notes. For ordinary updates
+and follow any release-specific retention requirements. For ordinary updates
 that retain existing map content, download a
 [complete household export](../user-guide/household-export.md) and retain its
 identity for investigation. Keep the same volume and secret across ordinary

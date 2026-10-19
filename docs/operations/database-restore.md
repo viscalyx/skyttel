@@ -6,12 +6,6 @@ service closed until every step passes. A household ZIP import uses the
 credentials. [Permanent erasure](permanent-erasure.md) has separate recovery
 rules. This procedure does not add a backup service.
 
-Only a database with the current format can be restored into this release.
-Older databases are rejected before their contents change, even with a
-restore declaration. These steps do not convert an older database. See the
-[operator upgrade notes](operator-upgrade-notes.md) for supported production
-transitions and their data-loss consequences.
-
 ## Establish trusted inputs before changing the disk
 
 1. Stop all application processes and prevent the host from starting another

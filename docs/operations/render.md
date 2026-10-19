@@ -674,15 +674,15 @@ that unsent text or an interrupted save was stored.
 ## Updating an existing installation
 
 Read the [operator upgrade notes](operator-upgrade-notes.md) before merging.
-They describe supported source versions and any one-time data changes.
-Ordinary startup applies supported schema migrations automatically.
+They describe required preparation and any one-time data changes.
+Ordinary startup applies schema migrations automatically.
 
-For a database already in the supported format, keep the existing service,
+Keep the existing service,
 persistent disk and authentication secret during ordinary updates.
 
-For login maintenance on a supported database without installation authority,
+For login maintenance on an installation without installation authority,
 use the [controlled login procedure](login-upgrade.md) instead of the
-ordinary update sequence below. The current production preview already has
+ordinary update sequence below. The production installation already has
 installation authority and does not need that login transition.
 
 1. Read the [operator upgrade notes](operator-upgrade-notes.md) and complete
@@ -776,7 +776,7 @@ older job uses its original script.
 | Sign-in fails | Compare the actual public origin and both registered callback URLs. Check credentials and follow [production sign-in troubleshooting](authentication.md#troubleshoot-sign-in). |
 | `unsafe_service_configuration` | Check one image web service, one instance, no autoscaling, disk at `/data`, `/healthz`, and empty command overrides. Ask a maintainer to inspect the Render API if a setting is not visible in the dashboard. |
 | `database_not_on_persistent_disk` | Explicitly set `SKYTTEL_DATABASE_PATH` to `/data/skyttel.sqlite` and confirm the `/data` disk is attached. |
-| `database_initialization_failed` with `unsupported_database_format` | Check the supported source versions in the [operator upgrade notes](operator-upgrade-notes.md). Diagnose a refusal with a maintainer; do not edit format markers. |
+| `database_initialization_failed` with `unsupported_database_format` | Diagnose the database validation failure with a maintainer; do not edit format markers. |
 | `database_initialization_failed` | Inspect the safe reason in private logs. Check free disk space and write permission for UID/GID 1000; ask a maintainer to repair permissions if needed. Preserve the existing database. |
 | A migration or deployment is still running | Wait. A GitHub timeout does not cancel Render. Do not cancel the migration or start a competing deployment. |
 | `previous_deployment_requires_diagnosis` or an image mismatch | Reconcile the failed or canceled deployment, saved image, running image, and database state in an attended maintenance window before retrying. |
