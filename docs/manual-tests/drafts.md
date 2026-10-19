@@ -8076,14 +8076,14 @@ integrationstestet kontrollerar det synliga rättningsflödet.
 1. Öppna **1 konflikt i ditt utkast**. Läs orsaken och ditt bevarade
    förslag med **Osäkert uppgivet**. Stäng med Escape.
 2. Öppna **Skriv till Skyttel → Visa utkastet**. Läs blockeringen och
-   det oberoende förslaget. Återvänd till konflikten.
+   det oberoende förslaget. Välj **Stäng textvyn** och återvänd till konflikten.
 3. Nå **Rätta ändpunkter** med tangentbord och aktivera med Enter.
    Kontrollera fokus på rubriken **Rätta blockerat samband** och läs
    förklaringen om befintliga ändpunkter.
 4. Välj Lo Exempel i **Till objekt**. Kontrollera att borttagna Molnmusik
    inte erbjuds. Behåll övriga uppgifter och välj **Lägg i utkastet** med
    tangentbord. Läs bekräftelsen, stäng dialogen och granska utkastet.
-5. Välj **Spara hela utkastet**. Kontrollera sparbekräftelsen. Öppna
+5. Välj **Spara hela utkastet**. Kontrollera sparbekräftelsen. Stäng textvyn. Öppna
    **Tabell** och **Samband för Lo Exempel** för att läsa det sparade
    sambandet och det oberoende objektet.
 
@@ -8139,14 +8139,14 @@ integrationstestet kontrollerar det synliga rättningsflödet.
 1. Öppna **1 konflikt i ditt utkast**. Läs orsaken och ditt bevarade
    förslag med **Osäkert uppgivet**. Stäng med Escape.
 2. Öppna **Skriv till Skyttel → Visa utkastet**. Läs blockeringen och
-   det oberoende förslaget. Återvänd till konflikten.
+   det oberoende förslaget. Välj **Stäng textvyn** och återvänd till konflikten.
 3. Nå **Rätta ändpunkter** med tangentbord och aktivera med Enter.
    Kontrollera fokus på rubriken **Rätta blockerat samband** och läs
    förklaringen om befintliga ändpunkter.
 4. Välj Lo Exempel i **Till objekt**. Kontrollera att borttagna Molnmusik
    inte erbjuds. Behåll övriga uppgifter och välj **Lägg i utkastet** med
    tangentbord. Läs bekräftelsen, stäng dialogen och granska utkastet.
-5. Välj **Spara hela utkastet**. Kontrollera sparbekräftelsen. Öppna
+5. Välj **Spara hela utkastet**. Kontrollera sparbekräftelsen. Stäng textvyn. Öppna
    **Tabell** och **Samband för Lo Exempel** för att läsa det sparade
    sambandet och det oberoende objektet.
 

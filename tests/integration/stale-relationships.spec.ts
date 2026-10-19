@@ -1,4 +1,4 @@
-import { openDraftReview } from '../support/client.js';
+import { closeTextView, openDraftReview, openTable } from '../support/client.js';
 import {
   prepareRelationshipSpecialConflict,
   saveReviewedConflictDraft,
@@ -31,7 +31,7 @@ for (const [id, kind, width] of [
       const draft = await openDraftReview(page);
       await expect(draft).toContainText('Blockerat samband: ett objekt saknas.');
       await expect(draft).toContainText('Oberoende förslag');
-      await page.keyboard.press('Escape');
+      await closeTextView(page);
       await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
       const correct = conflict.getByRole('button', { name: 'Rätta ändpunkter', exact: true });
       await correct.focus();
@@ -54,9 +54,11 @@ for (const [id, kind, width] of [
       await editor.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
       await page.keyboard.press('Escape');
       await saveReviewedConflictDraft(page);
-      await page.getByRole('button', { name: 'Tabell', exact: true }).click();
-      await expect(page.getByText('Oberoende förslag', { exact: true })).toBeVisible();
-      await expect(page.getByText('Molnmusik', { exact: true })).toHaveCount(0);
+      await closeTextView(page);
+      await openTable(page);
+      const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+      await expect(table.getByRole('button', { name: 'Oberoende förslag', exact: true })).toBeVisible();
+      await expect(table.getByRole('button', { name: 'Molnmusik', exact: true })).toHaveCount(0);
       await page.getByRole('button', { name: 'Samband för Lo Exempel', exact: true }).click();
       const relationships = page.getByRole('dialog', {
         name: 'Samband för Lo Exempel',
