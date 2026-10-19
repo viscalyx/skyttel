@@ -86,7 +86,9 @@ for (const [id, variant, width] of [
         const editor = page.getByRole('dialog', { name: 'Rätta blockerat samband', exact: true });
         await editor.getByLabel('Till objekt', { exact: true }).selectOption('lo');
         await editor.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
-        await expect(editor.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+        await expect(
+          editor.getByRole('status').filter({ hasText: 'Sambandet lades i ditt utkast' }),
+        ).toBeVisible();
         await editor.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
         await page.keyboard.press('Escape');
       }

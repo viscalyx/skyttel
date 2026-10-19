@@ -87,7 +87,9 @@ test('SAMBAND-14: an absent old-version attempt unlocks retained input and requi
     await dialog.getByLabel('Till objekt', { exact: true }).selectOption('bicycle');
     await setProperty(dialog, 'Uppgiftens säkerhet', 'Osäkert uppgivet');
     await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
-    await expect(dialog.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+    await expect(
+      dialog.getByRole('status').filter({ hasText: 'Sambandet lades i ditt utkast' }),
+    ).toBeVisible();
     const staged = await read();
     expect(staged.draft.changes).toEqual(independent.draft.changes);
     expect(staged.draft.relationships).toHaveLength(1);
@@ -157,7 +159,9 @@ test('SAMBAND-15: absent stale editing cannot overwrite or remove a later same-o
     await laterDialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
     await setProperty(laterDialog, 'Uppgiftens säkerhet', 'Obesvarad fråga');
     await laterDialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
-    await expect(laterDialog.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+    await expect(
+      laterDialog.getByRole('status').filter({ hasText: 'Sambandet lades i ditt utkast' }),
+    ).toBeVisible();
     await laterDialog.getByRole('button', { name: 'Stäng samband', exact: true }).click();
     await other.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     const object = other.getByRole('dialog', { name: 'Nytt objekt', exact: true });

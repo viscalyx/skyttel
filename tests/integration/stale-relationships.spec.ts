@@ -50,7 +50,9 @@ for (const [id, kind, width] of [
       );
       await editor.getByRole('button', { name: 'Lägg i utkastet', exact: true }).focus();
       await page.keyboard.press('Enter');
-      await expect(editor.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+      await expect(
+        editor.getByRole('status').filter({ hasText: 'Sambandet lades i ditt utkast' }),
+      ).toBeVisible();
       await editor.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
       await page.keyboard.press('Escape');
       await saveReviewedConflictDraft(page);
