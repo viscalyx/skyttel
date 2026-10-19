@@ -9,9 +9,7 @@ import { attachTaskDelivery } from './task-delivery-transport.js';
 async function main() {
   const config = readConfig();
   const database = openDatabase(config.databasePath, {
-    ...(config.resetPreviewContent
-      ? { previewContentReset: { authorityGeneration: config.authorityFence.generation } }
-      : {}),
+    authorityFence: config.authorityFence,
   });
   try {
     const auth = createAuth(config, database);

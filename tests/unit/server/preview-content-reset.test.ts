@@ -24,7 +24,7 @@ import { householdMap } from '../../../src/server/map.js';
 import { configurationEnvironment } from './fixture.js';
 
 const generation = '11111111-1111-4111-8111-111111111111';
-const previewContentReset = { authorityGeneration: generation };
+const authorityFence = { generation };
 let directory: string;
 let path: string;
 let database: Database.Database | undefined;
@@ -101,7 +101,7 @@ afterEach(() => {
   rmSync(directory, { recursive: true, force: true });
 });
 
-test('explicit preview reset keeps the household and its administrator while discarding old content', async () => {
+test('automatic preview migration keeps the household and its administrator while discarding old content', async () => {
   const retainedTables = [
     'user',
     'membership',
@@ -128,7 +128,7 @@ test('explicit preview reset keeps the household and its administrator while dis
   expect(() => openDatabase(path)).toThrow(
     expect.objectContaining({ reason: 'unsupported_database_format' }),
   );
-  database = openDatabase(path, { previewContentReset });
+  database = openDatabase(path, { authorityFence });
   expect(database.prepare('SELECT * FROM installation').get()).toEqual({
     id: 1,
     householdId: 'home',
@@ -176,7 +176,7 @@ test('explicit preview reset keeps the household and its administrator while dis
 });
 
 test('old save requests cannot replay even when they claim the new content version', () => {
-  database = openDatabase(path, { previewContentReset });
+  database = openDatabase(path, { authorityFence });
   const map = householdMap(database, 'alex', 'home');
   expect(map.history()).toEqual({ history: [] });
   expect(map.operations()).toEqual({ operations: [] });
@@ -191,8 +191,8 @@ test('old save requests cannot replay even when they claim the new content versi
   );
 });
 
-test('leaving the opt-in configured never clears new content on later restarts', () => {
-  database = openDatabase(path, { previewContentReset });
+test('later restarts and releases preserve new content after the one-time preview migration', () => {
+  database = openDatabase(path, { authorityFence });
   const map = householdMap(database, 'alex', 'home');
   const draft = map.propose({
     version: 0,
@@ -207,11 +207,28 @@ test('leaving the opt-in configured never clears new content on later restarts',
   });
   map.save({ operationId: 'new-save', version: draft.version, contentVersion: 2 });
   database.close();
-  database = openDatabase(path, { previewContentReset });
+  database = openDatabase(path, { authorityFence });
   const retained = householdMap(database, 'alex', 'home');
   expect(retained.read().objects).toMatchObject([{ id: 'new-bike', name: 'Ny cykel' }]);
   expect(retained.read().contentVersion).toBe(2);
   expect(retained.operation('new-save')).toMatchObject({ operation: { status: 'succeeded' } });
+  const retainedMap = retained.read();
+  const retainedHistory = retained.history();
+  const migrationsDirectory = join(directory, 'later-release');
+  cpSync(resolve('migrations'), migrationsDirectory, { recursive: true });
+  writeFileSync(
+    join(migrationsDirectory, '038_next_release.sql'),
+    'CREATE TABLE next_release_setting (name TEXT PRIMARY KEY);',
+  );
+  database.close();
+  database = openDatabase(path, { authorityFence, migrationsDirectory });
+  const upgraded = householdMap(database, 'alex', 'home');
+  expect(database.prepare('SELECT MAX(version) AS version FROM schema_migration').get()).toEqual({
+    version: 38,
+  });
+  expect(upgraded.read()).toEqual(retainedMap);
+  expect(upgraded.history()).toEqual(retainedHistory);
+  expect(upgraded.operation('new-save')).toMatchObject({ operation: { status: 'succeeded' } });
 });
 
 test.each([
@@ -240,24 +257,75 @@ test.each([
   previous.close();
   const before = readFileSync(path);
   const files = readdirSync(directory);
-  expect(() => openDatabase(path, { previewContentReset })).toThrow();
+  expect(() => openDatabase(path, { authorityFence })).toThrow();
   expect(readFileSync(path)).toEqual(before);
   expect(readdirSync(directory)).toEqual(files);
 });
 
-test('a malformed direct reset request and unavailable source history cannot authorize deletion', () => {
+test('invalid installation authority and unavailable source history cannot authorize deletion', () => {
   const before = readFileSync(path);
-  expect(() =>
-    openDatabase(path, { previewContentReset: { authorityGeneration: 'invalid' } }),
-  ).toThrow(expect.objectContaining({ reason: 'unsupported_database_format' }));
+  expect(() => openDatabase(path, { authorityFence: { generation: 'invalid' } })).toThrow(
+    expect.objectContaining({ reason: 'unsupported_database_format' }),
+  );
   const migrationsDirectory = join(directory, 'incomplete-migrations');
   cpSync(resolve('migrations'), migrationsDirectory, { recursive: true });
   for (const name of readdirSync(migrationsDirectory).slice(33))
     rmSync(join(migrationsDirectory, name));
-  expect(() => openDatabase(path, { migrationsDirectory, previewContentReset })).toThrow(
+  expect(() => openDatabase(path, { migrationsDirectory, authorityFence })).toThrow(
     expect.objectContaining({ reason: 'unsupported_database_format' }),
   );
   expect(readFileSync(path)).toEqual(before);
+});
+
+test.each(['legacy', generation])(
+  'a declared restore from %s refuses the old preview without changing its content',
+  (fromGeneration) => {
+    const before = readFileSync(path);
+    const restoreFence = {
+      generation: fromGeneration === 'legacy' ? generation : '22222222-2222-4222-8222-222222222222',
+      restore: { fromGeneration, confirmedAt: Date.now(), erasureReviewed: true as const },
+    };
+    expect(() => openDatabase(path, { authorityFence: restoreFence })).toThrow(
+      expect.objectContaining({ reason: 'unsupported_database_format' }),
+    );
+    expect(readFileSync(path)).toEqual(before);
+  },
+);
+
+test('a declared restore of the new format retains household content and applies normal authority fencing', async () => {
+  database = openDatabase(path, { authorityFence });
+  const map = householdMap(database, 'alex', 'home');
+  const draft = map.propose({
+    version: 0,
+    contentVersion: 2,
+    id: 'retained-bike',
+    baseRevision: null,
+    value: { typeId: 'type', name: 'Bevarad cykel', properties: [] },
+  });
+  map.save({ operationId: 'retained-save', version: draft.version, contentVersion: 2 });
+  const content = map.read();
+  const history = map.history();
+  database.close();
+  const config = readConfig({
+    ...configurationEnvironment(path),
+    SKYTTEL_AUTHORITY_GENERATION: '22222222-2222-4222-8222-222222222222',
+    SKYTTEL_RESTORE_FROM_GENERATION: generation,
+    SKYTTEL_RESTORE_CONFIRMED_AT: '2026-01-01T00:00:00.000Z',
+    SKYTTEL_RESTORE_ERASURE_REVIEWED: 'true',
+  });
+  database = openDatabase(path, { authorityFence: config.authorityFence });
+  await verifyAuthSchema(createAuth(config, database));
+  const restored = householdMap(database, 'alex', 'home');
+  expect(restored.read()).toEqual(content);
+  expect(restored.history()).toEqual(history);
+  expect(restored.operation('retained-save')).toMatchObject({ operation: { status: 'succeeded' } });
+  expect(database.prepare('SELECT * FROM session').all()).toEqual([]);
+  expect(database.prepare('SELECT * FROM installation_authority').get()).toEqual({
+    id: 1,
+    generation: config.authorityFence.generation,
+    restoredFrom: generation,
+    restoredAt: Date.parse('2026-01-01T00:00:00.000Z'),
+  });
 });
 
 test.each([34, 35, 36, 'renamed'] as const)(
@@ -274,7 +342,7 @@ test.each([34, 35, 36, 'renamed'] as const)(
       for (const name of readdirSync(migrationsDirectory).sort().slice(target))
         rmSync(join(migrationsDirectory, name));
     const before = readFileSync(path);
-    expect(() => openDatabase(path, { migrationsDirectory, previewContentReset })).toThrow(
+    expect(() => openDatabase(path, { migrationsDirectory, authorityFence })).toThrow(
       expect.objectContaining({ reason: 'unsupported_database_format' }),
     );
     expect(readFileSync(path)).toEqual(before);
@@ -285,7 +353,7 @@ test('an exhausted content version refuses the reset without removing existing c
   const previous = new Database(path);
   previous.exec('UPDATE household SET contentVersion = 9007199254740991');
   previous.close();
-  expect(() => openDatabase(path, { previewContentReset })).toThrow(
+  expect(() => openDatabase(path, { authorityFence })).toThrow(
     expect.objectContaining({ reason: 'migration_failed' }),
   );
   const unchanged = new Database(path, { readonly: true });
@@ -294,9 +362,9 @@ test('an exhausted content version refuses the reset without removing existing c
   unchanged.close();
 });
 
-test('a new installation is initialized normally when the preview opt-in remains configured', () => {
+test('ordinary startup initializes a new installation normally', () => {
   rmSync(path);
-  database = openDatabase(path, { previewContentReset });
+  database = openDatabase(path, { authorityFence });
   expect(database.pragma('user_version', { simple: true })).toBe(2);
   expect(database.prepare('SELECT * FROM household').all()).toEqual([]);
 });
@@ -313,7 +381,7 @@ test.each([
     const previous = new Database(path, { readonly: true });
     const before = previous.serialize();
     previous.close();
-    expect(() => openDatabase(path, { migrationsDirectory, previewContentReset })).toThrow(
+    expect(() => openDatabase(path, { migrationsDirectory, authorityFence })).toThrow(
       expect.objectContaining({ reason: 'migration_failed' }),
     );
     const unchanged = new Database(path, { readonly: true });
@@ -339,7 +407,7 @@ test.each([
   },
 );
 
-test('runtime startup applies the opt-in, retains browser access, and clears old archive files before readiness', async () => {
+test('runtime startup automatically upgrades the preview, retains browser access, and clears old archive files before readiness', async () => {
   const listener = createServer();
   listener.listen(0, '127.0.0.1');
   await once(listener, 'listening');
@@ -372,7 +440,6 @@ test('runtime startup applies the opt-in, retains browser access, and clears old
       ...environment,
       PORT: String(port),
       HOST: '127.0.0.1',
-      SKYTTEL_RESET_PREVIEW_CONTENT: 'true',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -431,7 +498,7 @@ test.each([
   ['scripts/setup-database.ts'],
   ['scripts/migrate-development-database.ts'],
   ['src/server/upgrade-legacy-login.ts', '--confirm-legacy-upgrade', '--confirm-service-stopped'],
-])('maintenance command %s never consumes the runtime reset opt-in', (...command) => {
+])('maintenance command %s never performs the automatic runtime content reset', (...command) => {
   const envFile = join(directory, '.env');
   writeFileSync(envFile, '');
   const before = readFileSync(path);
@@ -441,7 +508,6 @@ test.each([
       ...configurationEnvironment(path),
       NODE_ENV: 'development',
       SKYTTEL_DEV_ENV_FILE: envFile,
-      SKYTTEL_RESET_PREVIEW_CONTENT: 'true',
     },
     encoding: 'utf8',
     timeout: 10000,

@@ -29,7 +29,6 @@ export interface Config {
   firstAdmin: { provider: Provider; subject: string };
   authSecret: string;
   authorityFence: AuthorityFence;
-  resetPreviewContent?: true;
   google: { clientId: string; clientSecret: string };
   microsoft: { clientId: string; clientSecret: string };
   port: number;
@@ -78,15 +77,6 @@ export function readConfig(environment: NodeJS.ProcessEnv = process.env): Config
   if (!authorityGenerationPattern.test(generation))
     throw new ConfigurationError('SKYTTEL_AUTHORITY_GENERATION');
   const authorityFence: AuthorityFence = { generation };
-  const resetPreviewContent = environment.SKYTTEL_RESET_PREVIEW_CONTENT;
-  if (
-    resetPreviewContent !== undefined &&
-    (resetPreviewContent !== 'true' ||
-      environment.SKYTTEL_RESTORE_FROM_GENERATION !== undefined ||
-      environment.SKYTTEL_RESTORE_CONFIRMED_AT !== undefined ||
-      environment.SKYTTEL_RESTORE_ERASURE_REVIEWED !== undefined)
-  )
-    throw new ConfigurationError('SKYTTEL_RESET_PREVIEW_CONTENT');
   if (
     environment.SKYTTEL_RESTORE_FROM_GENERATION !== undefined ||
     environment.SKYTTEL_RESTORE_CONFIRMED_AT !== undefined ||
@@ -113,7 +103,6 @@ export function readConfig(environment: NodeJS.ProcessEnv = process.env): Config
     firstAdmin: { provider, subject: required('SKYTTEL_FIRST_ADMIN_SUBJECT') },
     authSecret,
     authorityFence,
-    ...(resetPreviewContent === 'true' ? { resetPreviewContent: true } : {}),
     google: {
       clientId: required('GOOGLE_CLIENT_ID'),
       clientSecret: required('GOOGLE_CLIENT_SECRET'),

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import Database from 'better-sqlite3';
-import { authorityGenerationPattern } from './config.js';
+import { type AuthorityFence, validAuthorityFence } from './config.js';
 
 interface MigrationRecord {
   version: number;
@@ -11,7 +11,6 @@ interface MigrationRecord {
 }
 
 type Migration = MigrationRecord & { sql: string };
-type PreviewContentReset = { authorityGeneration: string };
 
 type DatabaseFailure =
   | 'database_unavailable'
@@ -27,7 +26,7 @@ export class DatabaseInitializationError extends Error {
   }
 }
 
-// Older household models require the explicit, narrowly bounded preview reset.
+// Ordinary startup upgrades only the recognized previous preview once.
 const applicationId = 0x534b5954;
 const formatVersion = 2;
 const previousPreviewVersion = 34;
@@ -41,15 +40,15 @@ const migrationTable = `CREATE TABLE IF NOT EXISTS schema_migration (
 function checkFormat(
   database: Database.Database,
   directory: string,
-  previewContentReset?: PreviewContentReset,
+  authorityFence?: AuthorityFence,
 ) {
   const application = database.pragma('application_id', { simple: true });
   const version = database.pragma('user_version', { simple: true });
   if (application === applicationId && version === formatVersion) return false;
   const empty = !database.prepare('SELECT 1 FROM sqlite_schema LIMIT 1').get();
   if (application === 0 && version === 0 && empty) return false;
-  if (application === 0 && version === 0 && previewContentReset) {
-    verifyPreviousPreview(database, readMigrations(directory), previewContentReset);
+  if (application === 0 && version === 0 && authorityFence) {
+    verifyPreviousPreview(database, readMigrations(directory), authorityFence);
     return true;
   }
   throw new DatabaseInitializationError('unsupported_database_format');
@@ -59,8 +58,8 @@ export function openDatabase(
   path: string,
   {
     migrationsDirectory = resolve('migrations'),
-    previewContentReset,
-  }: { migrationsDirectory?: string; previewContentReset?: PreviewContentReset } = {},
+    authorityFence,
+  }: { migrationsDirectory?: string; authorityFence?: AuthorityFence } = {},
 ): Database.Database {
   let database: Database.Database | undefined;
   let reason: DatabaseFailure = 'database_unavailable';
@@ -69,14 +68,14 @@ export function openDatabase(
       // Inspect before opening a writer, changing permissions or journal mode.
       const reader = new Database(path, { readonly: true, fileMustExist: true });
       try {
-        checkFormat(reader, migrationsDirectory, previewContentReset);
+        checkFormat(reader, migrationsDirectory, authorityFence);
       } finally {
         reader.close();
       }
     }
     if (path !== ':memory:') mkdirSync(dirname(resolve(path)), { recursive: true, mode: 0o700 });
     database = new Database(path);
-    checkFormat(database, migrationsDirectory, previewContentReset);
+    checkFormat(database, migrationsDirectory, authorityFence);
     if (path !== ':memory:') chmodSync(path, 0o600);
     database.pragma('foreign_keys = ON');
     database.pragma('busy_timeout = 5000');
@@ -84,7 +83,7 @@ export function openDatabase(
     if (path !== ':memory:' && journalMode !== 'wal') throw new DatabaseInitializationError(reason);
     database.pragma('synchronous = FULL');
     reason = 'migration_failed';
-    migrate(database, migrationsDirectory, previewContentReset);
+    migrate(database, migrationsDirectory, authorityFence);
     return database;
   } catch (error) {
     database?.close();
@@ -119,10 +118,10 @@ function schema(database: Database.Database) {
 function verifyPreviousPreview(
   database: Database.Database,
   migrations: Migration[],
-  reset: PreviewContentReset,
+  authorityFence: AuthorityFence,
 ) {
   const unsupported = () => new DatabaseInitializationError('unsupported_database_format');
-  if (!authorityGenerationPattern.test(reset.authorityGeneration)) throw unsupported();
+  if (!validAuthorityFence(authorityFence) || authorityFence.restore) throw unsupported();
   try {
     const applied = database
       .prepare('SELECT version, name, checksum FROM schema_migration ORDER BY version')
@@ -158,7 +157,7 @@ function verifyPreviousPreview(
       | { generation: string; restoredFrom: string | null; restoredAt: number | null }
       | undefined;
     if (
-      authority?.generation !== reset.authorityGeneration ||
+      authority?.generation !== authorityFence.generation ||
       authority.restoredFrom !== null ||
       authority.restoredAt !== null
     )
@@ -219,7 +218,7 @@ function verifyMigrationHistory(applied: MigrationRecord[], migrations: Migratio
   }
 }
 
-function migrate(database: Database.Database, directory: string, reset?: PreviewContentReset) {
+function migrate(database: Database.Database, directory: string, authorityFence?: AuthorityFence) {
   const migrations = readMigrations(directory);
   // SQLite table replacement requires foreign keys disabled before BEGIN.
   // Check the entire resulting graph before committing any schema or data.
@@ -228,7 +227,7 @@ function migrate(database: Database.Database, directory: string, reset?: Preview
     database
       .transaction(() => {
         // Recheck under the write lock before any destructive statement.
-        const resetContent = checkFormat(database, directory, reset);
+        const resetContent = checkFormat(database, directory, authorityFence);
         database.exec(migrationTable);
         const applied = database
           .prepare('SELECT version, name, checksum FROM schema_migration ORDER BY version')
