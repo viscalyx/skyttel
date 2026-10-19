@@ -295,7 +295,7 @@ test('object reading distinguishes a removed field, a renamed false value and an
     'Sparat (Bekräftat): Nej (Ja/nej)◇ Ditt förslag: Nej (Ja/nej)',
   );
   expect(value('Tidigare anteckning')?.textContent).toBe(
-    'Sparat: Sparat (Text)◇ Ditt förslag: Ej uppgivet',
+    'Sparat (Tidigare anteckning): Sparat (Text)◇ Ditt förslag: Ej uppgivet',
   );
   expect(value('Anteckning')?.textContent).toBe('Sparat: Ej uppgivet◇ Ditt förslag: Tomt (Text)');
   expect(screen.getByRole('img', { name: 'Profilbild för Lo' }).getAttribute('src')).toBe(

@@ -642,7 +642,12 @@ test.each(['old-meaning', 'kept-meaning'] as const)(
             id,
             version: state.draft.version,
             baseRevision: null,
-            value: { name: id, description: `Betydelsen ${id}` },
+            value: {
+              name: id,
+              description: `Betydelsen ${id}`,
+              forwardLabel: 'använder',
+              reverseLabel: 'används av',
+            },
           })
         ).status,
       ).toBe(200);
