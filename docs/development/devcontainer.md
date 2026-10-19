@@ -199,11 +199,12 @@ Use the [access guide](../user-guide/access.md) when testing another identity.
 
 ## Reset demo data
 
-The current database format must use a new database location. Startup,
-`db:setup` and `db:migrate` reject older databases before changing their
-contents. Keep old databases intact. Select a separate disposable path for
-the new development database; these commands do not convert or replace an
-older format.
+Use a separate disposable database location for demo data. `db:setup` resets
+and seeds the selected database, including the recognized previous preview.
+Unknown formats remain unsupported. `db:migrate` requires the current format.
+For application upgrades, read the
+[operator upgrade notes](../operations/operator-upgrade-notes.md)
+before starting the server against existing data.
 
 After configuring provider credentials and a verified administrator subject,
 container creation and rebuilding reset the database to the demo household.
@@ -218,8 +219,11 @@ npm run dev:all
 `SKYTTEL_DATABASE_PATH` and creates `TestHousehold` with your configured
 administrator. Check the selected path and back up anything you want to
 keep before running it or rebuilding the container. Sign in again after the
-reset. `db:migrate`, normal application startup, and container stop/start
-preserve the data.
+reset. The demo uses free properties on objects and relationships, valid
+relationship endpoints, saved history and an administrator draft. Running
+`db:setup` again recreates that demo rather than adding duplicate records.
+After upgrading to the current format, `db:migrate`, normal application
+startup and container stop/start preserve the data.
 
 ## Disposable local database
 

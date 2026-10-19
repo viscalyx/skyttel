@@ -8,25 +8,26 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ### New household database and archive format
 
-This release requires the new household database and archive formats.
-Ordinary startup and database maintenance commands reject older databases.
-Older archives remain unsupported. Conversion of old map content is not
-available.
+On first startup, this release automatically upgrades the recognized current
+production preview in the same database. It permanently clears old objects,
+relationships, images, drafts, history, saved operation contents and obsolete
+type fields. The installation, household, user access, compatible type names
+and settings remain. Inform users before merging and pause map work until
+deployment verification is complete. No special deployment setting, manual
+deletion, new database, backup or login upgrade is required.
 
-For the current production preview, follow the
-[Render content-reset procedure](render.md#appendix-one-time-preview-content-reset-on-render)
-before merging. Explicitly enable the one-time migration to discard old
-objects, relationships, images, drafts, history and type-field definitions
-in the existing database. The installation, household, user access,
-compatible type names and settings remain. No old database backup, new
-household or secret rotation is required. Remove the opt-in after verifying
-the deployed release and retained access.
+Keep the existing persistent disk, database path, authentication secret and
+installation authority. The transition validates the source and commits the
+content reset and schema upgrade together. After deployment, verify health,
+the release identity, existing users' access to the same empty household and
+retained settings. Newly saved content must survive restarts and later
+releases: the completed migration never resets a database in the new format.
 
-This transition is forward only. The migration validates the recognized
-source and commits the content reset and schema upgrade together. It never
-resets a database in the new format. If verification fails after the reset,
-repair forward and preserve new household work. Do not return to an older
-application or import an old archive.
+This transition is forward only. If verification fails, diagnose the failure
+and repair forward while preserving any new household work. Other older or
+unknown databases, older archives and an old database under a restore
+declaration remain unsupported. Production maintenance commands cannot perform this
+transition. Conversion that preserves old map content is not available.
 
 ### Personal map backgrounds
 
@@ -83,7 +84,7 @@ across ordinary restarts.
 
 The login maintenance procedure accepts only the supported database format.
 It cannot upgrade an older household database. The current preview uses the
-content-reset transition above and does not need another login upgrade.
+automatic transition above and does not need another login upgrade.
 
 For login maintenance within the supported format, close public access and
 stop application processes. Use an independently stored installation
@@ -276,18 +277,18 @@ History remains available for reading. Ordinary drafts and atomic saves
 continue to use durable save receipts.
 
 Object merge proposals are not part of the supported model. This release
-does not convert older content. Use the content-reset transition above when
-discarding the old preview's content is intended.
+does not convert older content. The automatic preview transition above
+discards that content once.
 Reading supported saved history does not restore those actions.
 
 ### Database compatibility and rollout
 
-This release requires the new database format described above. Complete the
-content-reset preparation before merging the preview transition. Without the
-explicit opt-in, the new image refuses the old database. For an installation
-already using the supported format, preserve its persistent database and
-installation authority across normal restarts. Repair application failures
-with a corrected newer application. A separate controlled data restoration must
+This release requires the new database format described above. The recognized
+production preview upgrades automatically once, with the stated content loss.
+For an installation already using the supported format, preserve its
+persistent database and installation authority across normal restarts.
+Repair application failures with a corrected newer application. A separate
+controlled data restoration must
 invalidate old authority and review permanent erasure before reopening.
 Changes after the backup will not be present after restoration.
 

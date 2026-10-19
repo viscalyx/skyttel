@@ -69,12 +69,9 @@ installation's unique generation stable across ordinary restarts.
 Both providers must be configured. Invalid or incomplete configuration stops
 startup before the application accepts traffic.
 
-Ordinary startup rejects older household databases. For the current Render
-preview, follow the
-[one-time content-reset procedure](render.md#appendix-one-time-preview-content-reset-on-render)
-before merging. Its explicit opt-in clears old map content and upgrades the
-same database while retaining the installation, household and user access.
-Conversion that preserves old map content is not available. The
+Read the [operator upgrade notes](operator-upgrade-notes.md) before updating
+an existing installation. They describe supported source versions and any
+one-time data changes. Unknown household database formats are rejected. The
 [one-time login maintenance procedure](login-upgrade.md) applies only to
 the supported database format; it cannot bypass format rejection.
 
@@ -214,18 +211,12 @@ linked provider then reaches the same user and household. See the
 ## Build, start, and restart
 
 For a new installation, use an empty database location. Ordinary startup
-and database tools reject older databases with `unsupported_database_format`
-before changing their contents. The explicit preview content-reset option
-is the only exception: it validates the recognized source, clears old map
-content and upgrades the same database atomically. It is available to normal
-application startup, not to maintenance commands.
-
-Set `SKYTTEL_RESET_PREVIEW_CONTENT=true` only for that planned transition.
-Omit it during normal operation; values other than `true` are invalid.
-It cannot be combined with a restore declaration. A database in the new
-format is never reset by this setting, even when the setting remains on a
-later restart. Login upgrade and restore declarations do not bypass format
-checks. If old map content must survive, stop: conversion is not available.
+applies supported schema migrations automatically. Check the
+[operator upgrade notes](operator-upgrade-notes.md) before an update for
+source-version limits and data changes. Unsupported databases are rejected
+with `unsupported_database_format` before their contents change. Database
+maintenance commands require the supported format; login upgrade and restore
+declarations do not bypass format checks.
 
 For the local Compose workflow, after filling every required value:
 
@@ -252,10 +243,9 @@ container restarts and replacements. `docker compose down` keeps that volume;
 adding `--volumes` deletes it and its household data.
 
 Before updating, read the [operator upgrade notes](operator-upgrade-notes.md)
-and check database and archive format compatibility. For the Render preview
-reset, follow the content-reset procedure above; it uses the existing
-database and requires no backup or export of its old content. For a supported
-database, download a
+and check database and archive format compatibility. Follow any
+release-specific retention requirements in those notes. For ordinary updates
+that retain existing map content, download a
 [complete household export](../user-guide/household-export.md) and retain its
 identity for investigation. Keep the same volume and secret across ordinary
 updates; any required login maintenance follows the

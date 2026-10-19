@@ -12,12 +12,8 @@ verified logins. You do not need the source database, disk or login session.
 
 This release accepts only the new household archive format. Older archives
 are rejected before replacement. Do not edit the format version or convert
-their contents. For the current preview, use the
-[Render content-reset transition](render.md#appendix-one-time-preview-content-reset-on-render).
-It clears old map content in the same database while keeping the household
-and its user access. It needs no backup and does not use the import or login
-maintenance steps below. Conversion that preserves old map content is not
-supported by this release.
+their contents. See the [operator upgrade notes](operator-upgrade-notes.md)
+for supported production transitions and their data-loss consequences.
 
 An export includes all unique household content: current and removed objects,
 relationships, type definitions, history, saved operation evidence, image

@@ -673,13 +673,9 @@ that unsent text or an interrupted save was stored.
 
 ## Updating an existing installation
 
-First check the database format against the target release. This release
-rejects older household databases by default. For the current
-preview, prepare the
-[one-time preview content reset](#appendix-one-time-preview-content-reset-on-render)
-before merging. It clears the old map content in the same database and keeps
-the installation and user access. Conversion of old map content is not
-available; ordinary startup still rejects older databases without the opt-in.
+Read the [operator upgrade notes](operator-upgrade-notes.md) before merging.
+They describe supported source versions and any one-time data changes.
+Ordinary startup applies supported schema migrations automatically.
 
 For a database already in the supported format, keep the existing service,
 persistent disk and authentication secret during ordinary updates.
@@ -780,7 +776,7 @@ older job uses its original script.
 | Sign-in fails | Compare the actual public origin and both registered callback URLs. Check credentials and follow [production sign-in troubleshooting](authentication.md#troubleshoot-sign-in). |
 | `unsafe_service_configuration` | Check one image web service, one instance, no autoscaling, disk at `/data`, `/healthz`, and empty command overrides. Ask a maintainer to inspect the Render API if a setting is not visible in the dashboard. |
 | `database_not_on_persistent_disk` | Explicitly set `SKYTTEL_DATABASE_PATH` to `/data/skyttel.sqlite` and confirm the `/data` disk is attached. |
-| `database_initialization_failed` with `unsupported_database_format` | Use the [one-time preview content reset](#appendix-one-time-preview-content-reset-on-render) for its recognized source only when discarding old map content is intended. Diagnose a refusal with a maintainer; do not edit format markers. |
+| `database_initialization_failed` with `unsupported_database_format` | Check the supported source versions in the [operator upgrade notes](operator-upgrade-notes.md). Diagnose a refusal with a maintainer; do not edit format markers. |
 | `database_initialization_failed` | Inspect the safe reason in private logs. Check free disk space and write permission for UID/GID 1000; ask a maintainer to repair permissions if needed. Preserve the existing database. |
 | A migration or deployment is still running | Wait. A GitHub timeout does not cancel Render. Do not cancel the migration or start a competing deployment. |
 | `previous_deployment_requires_diagnosis` or an image mismatch | Reconcile the failed or canceled deployment, saved image, running image, and database state in an attended maintenance window before retrying. |
@@ -804,8 +800,7 @@ screenshots, cookies, credentials, raw provider responses, or full logs.
 
 Keep user access closed while diagnosing an unsuccessful update. Confirm
 the database format and deployment state before choosing a corrected image.
-The content reset in the appendix applies only to the recognized old preview;
-it is not a repair step for a new-format household that already contains work.
+Preserve existing household work; resetting its content is not a repair step.
 
 Use a corrected newer image for application failures. Verify
 its release evidence, wait for active deployments to finish, and set the
@@ -852,126 +847,3 @@ Keep your own private exports outside the running disk. Data since the last
 usable export can be lost in a major failure, and recovery can require
 several days. Server secrets, memberships and new login associations remain
 separate from household export. An app-code rollback does not restore data.
-
-## Appendix: one-time preview content reset on Render
-
-Use this procedure to upgrade the current preview in the same database.
-The operator explicitly chooses to discard the old map content. The
-production installation already uses the current login model and needs
-no login upgrade. This transition is forward only, with no backup or
-retained copy of the old database.
-
-The reset removes objects, relationships, images, drafts, history, saved
-operation payloads and obsolete type-field definitions. It keeps the
-installation, household, users, memberships, linked provider accounts and
-authentication authority. Compatible type names, descriptions, directional
-labels, preferences and installation settings remain. You do not need to
-delete objects manually, create a new
-household, invite existing users again or rotate secrets.
-
-The reset and schema upgrade run in one database transaction. The opt-in
-applies only to the recognized old preview. A database in the new format
-is never reset by this setting, including after new work is saved. Older
-household ZIP archives remain unsupported.
-
-Complete preparation **before merging**. The deployment then performs the
-reset automatically. Keep normal user work paused until verification is
-complete, including the time needed for release checks and image publication.
-
-### A. Check the existing installation
-
-1. Open the production `/healthz` and `/api/version`. Require health status
-   `ok`, database status `ready` and `database.schemaVersion` equal to `34`.
-   Record the current release identity for diagnosis. If the schema version
-   differs, stop: this procedure does not cover that source version.
-1. Confirm that existing users can sign in and reach the expected household.
-   Tell them that all map content, drafts and history will be cleared, while
-   their access and compatible settings remain. Ask everyone to stop map
-   work and assistant sessions until the new release is verified.
-1. Wait for active GitHub production jobs and Render deployments to finish.
-   Freeze unrelated production merges and dashboard deployments until the
-   transition is complete. Finish any ongoing import or permanent-erasure
-   operation before proceeding.
-1. Confirm that `SKYTTEL_DATABASE_PATH` remains `/data/skyttel.sqlite`, with
-   the existing persistent disk attached. Keep `BETTER_AUTH_SECRET`,
-   `SKYTTEL_AUTHORITY_GENERATION`, the first-administrator configuration,
-   provider credentials and public origin unchanged.
-1. Require all three restore variables to be absent:
-   `SKYTTEL_RESTORE_FROM_GENERATION`, `SKYTTEL_RESTORE_CONFIRMED_AT` and
-   `SKYTTEL_RESTORE_ERASURE_REVIEWED`. Check linked environment groups too.
-   If a restore declaration is active, stop and have a maintainer assess it;
-   do not remove a declaration required by that installation to force the
-   reset. The content-reset option cannot be combined with a restore.
-
-The migration also validates the source schema, migration history and
-installation authority. A matching schema version alone does not bypass
-those checks. Do not manually change database format markers.
-
-### B. Enable the one-time reset before merge
-
-1. In the Render service, open **Environment**. Add
-   `SKYTTEL_RESET_PREVIEW_CONTENT` with the exact value `true`.
-   This setting explicitly permits loss of the old map content. Leave all
-   other application settings unchanged.
-1. Choose **Save only**. Render saves the setting for the next deployment
-   without changing the running instance. Confirm that no deployment starts.
-   Do not suspend the service or enable Maintenance Mode: the deployment
-   controller must verify the current application's public health first.
-   Keep users informed that normal work is paused.
-1. Keep the ordinary deployment settings: one instance, disk at `/data`,
-   health path `/healthz`, and empty **Docker Command** and
-   **Pre-Deploy Command**. No temporary database, Shell command or manual
-   file deletion is needed.
-
-See [Render's environment save options](https://render.com/docs/configure-environment-variables).
-
-### C. Merge and let deployment perform the migration
-
-1. Merge the prepared release to `main`. Open **Actions → Container release**
-   for that merge commit and wait for its checks, publication and deploy job.
-1. The deploy job verifies the current application, then deploys the verified
-   new image using the staged setting. Startup validates the old database,
-   clears the old content, applies the new schema and records the new format
-   in one transaction. It advances the household content version so that
-   stale work cannot be submitted against the empty map.
-1. Wait for the GitHub deploy job to succeed. Compare its deployment report,
-   Render's live image digest and `/api/version` with the merged release.
-   Require health status `ok`, database status `ready` and schema version `37`.
-
-If checks or publication fail before deployment, the reset has not run.
-Repair the failure and continue forward. A failure inside the database
-transaction leaves the old content, schema and format identity intact.
-A later failure can occur after the reset commits; inspect the evidence
-before taking action. Never assume that a failed deployment means the
-reset did not happen.
-
-### D. Verify retained access and new content
-
-1. Reload the application and sign in with an existing linked provider
-   account. Confirm access to the same household with an empty map. Confirm
-   that the expected members, compatible types and installation settings
-   remain. Do not create another household or import an old ZIP archive.
-1. Confirm that old drafts and map history are unavailable. Check access
-   with another existing member when one is configured. Reconnect assistants
-   to refresh their tool descriptions before using the new property model.
-1. Create and save an object, then prepare a draft. Complete the persistence
-   check in [step 10](#10-check-persistence-through-a-normal-restart).
-   The saved object and draft must survive even while the opt-in is still
-   configured. This verifies that the reset does not repeat on restart.
-1. In Render **Environment**, remove `SKYTTEL_RESET_PREVIEW_CONTENT` and
-   choose **Save only**. Its removal takes effect on the next deployment.
-   The current new-format database is safe from repeated resets even before
-   that deployment. Keep its path, secret and authority generation unchanged.
-1. Complete the applicable [production security checks](security-checks.md),
-   record the release and observed results, and reopen normal work. Resume
-   ordinary releases. Do not repeat this transition for later updates.
-
-If validation refuses the old database, diagnose the reported reason with a
-maintainer. Do not weaken the checks or delete files to force startup.
-For failures after the reset, preserve new household work and repair the
-configuration or deploy a corrected newer image. Do not roll back the image,
-restore old content or reset the new household to clear an error.
-
-Rehearse this procedure on a disposable installation with synthetic data.
-Automated migration checks do not establish real Render or provider behavior;
-the production observations above remain operator checks.
