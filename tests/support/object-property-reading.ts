@@ -71,4 +71,3 @@ export async function exposedTextLines(node: Locator, alignment: 'center' | 'sta
     )
     .toEqual([]);
 }
-

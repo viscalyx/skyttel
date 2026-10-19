@@ -549,9 +549,7 @@ for (const [configuration, [width, height]] of navigationConfigurations.entries(
           await separate(notice, navigation);
           await panel.getByRole('heading', { name: 'Lo Exempel', exact: true }).focus();
           const lastValue = panel.locator('dd').last();
-          await expect(lastValue).toHaveText(
-            `Sparat: Ej uppgivet◇ Ditt förslag: ${text} (Text)`,
-          );
+          await expect(lastValue).toHaveText(`Sparat: Ej uppgivet◇ Ditt förslag: ${text} (Text)`);
           await lastValue.scrollIntoViewIfNeeded();
           await exposedTextLines(lastValue);
           await expect(panel).toContainText(text);

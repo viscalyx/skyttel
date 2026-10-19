@@ -105,9 +105,7 @@ test('STY-03: members edit shared relationship definitions while private type pr
       .getByRole('button', { name: `Ändra sambandstyp: ${type.name}`, exact: true })
       .click();
     await member.getByLabel('Sambandstypens beskrivning').fill('Medlemmens förklaring');
-    await member
-      .getByLabel('Benämning från målobjektet', { exact: true })
-      .fill('används av');
+    await member.getByLabel('Benämning från målobjektet', { exact: true }).fill('används av');
     const staged = member.waitForResponse(
       (response) =>
         response.url() === `${app.path}/relationship-type` &&

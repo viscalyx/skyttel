@@ -57,7 +57,9 @@ for (const [id, kind, width] of [
       await closeTextView(page);
       await openTable(page);
       const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
-      await expect(table.getByRole('button', { name: 'Oberoende förslag', exact: true })).toBeVisible();
+      await expect(
+        table.getByRole('button', { name: 'Oberoende förslag', exact: true }),
+      ).toBeVisible();
       await expect(table.getByRole('button', { name: 'Molnmusik', exact: true })).toHaveCount(0);
       await page.getByRole('button', { name: 'Samband för Lo Exempel', exact: true }).click();
       const relationships = page.getByRole('dialog', {

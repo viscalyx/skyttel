@@ -96,9 +96,7 @@ for (const width of [1280, 390, 320]) {
       const proposal = page.getByRole('dialog', { name: 'Oskickad cykel', exact: true });
       await expect(proposal).toContainText('Oskickad cykel');
       await expect(proposal).toContainText('Person');
-      await expect(
-        proposal.locator('dt').filter({ hasText: /^Beskrivning$/ }),
-      ).toHaveCount(0);
+      await expect(proposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
     } finally {
       await installation.close();
     }
@@ -245,9 +243,7 @@ test('INST-03: the separate profile protects native form input and groups person
         .getByRole('region', { name: 'Hushållets tabell', exact: true })
         .getByRole('heading', { name: 'Hushållet Linden', exact: true }),
     ).toBeFocused();
-    await expect(
-      page.getByRole('dialog', { name: 'Nytt objekt', exact: true }),
-    ).not.toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Nytt objekt', exact: true })).not.toBeVisible();
   } finally {
     await installation.close();
   }

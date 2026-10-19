@@ -902,9 +902,7 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
     const retained = await readTableObject(page, 'Ny sak');
     await expect(retained).toContainText('Ny sak');
     await expect(retained).toContainText('Person');
-    await expect(
-      retained.locator('dt').filter({ hasText: /^Beskrivning$/ }),
-    ).toHaveCount(0);
+    await expect(retained.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
     await closeTableObject(page, 'Ny sak');
     await openMap(page);
   } finally {
