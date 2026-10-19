@@ -14,12 +14,18 @@ their contents. Imports reject older archives before replacement. There is
 no automatic migration, conversion, deletion or replacement of older data.
 These limits also apply to the login upgrade and restore procedures below.
 
-Keep the existing installation and its recovery copies intact. Before a
-production transition, agree and approve a separate replacement procedure,
-including the data to retain, recovery evidence and a new database location.
-Do not delete the existing database or change its format marker to force
-startup. Use a compatible release to read an older copy. Normal restarts
-of a database created by this release preserve its format identity.
+For the current production preview, use the
+[Render fresh-start procedure](render.md#appendix-fresh-preview-transition-on-render)
+before merging. It deliberately discards the existing household and login
+state without retaining the old database. Prepare an empty destination and
+stage the new configuration so that the merged release creates its database
+automatically. Create the household and invite its users after deployment.
+
+This transition is forward only. Do not restore the old database, import an
+old archive, or return to an older application. If verification fails, repair
+forward and preserve any work created in the new household. A transition that
+must preserve old content requires conversion tooling that is not available
+in this release. Normal restarts preserve the new database's format identity.
 
 ### Personal map backgrounds
 
@@ -75,9 +81,8 @@ across ordinary restarts.
 ### Controlled login transition and roll forward
 
 The login maintenance procedure accepts only the supported database format.
-It cannot upgrade an older household database. Use the separately approved
-replacement procedure for that transition and keep the existing installation
-and its recovery copies intact.
+It cannot upgrade an older household database. The current preview uses the
+fresh-start transition above and does not need another login upgrade.
 
 For login maintenance within the supported format, close public access and
 stop application processes. Use an independently stored installation
@@ -270,16 +275,15 @@ History remains available for reading. Ordinary drafts and atomic saves
 continue to use durable save receipts.
 
 Object merge proposals are not part of the supported model. This release
-cannot import or upgrade older content to remove them. Keep older data and
-its recovery copies intact for the separately approved replacement procedure.
+cannot import or upgrade older content to remove them. Use the fresh-start
+transition above when discarding the old preview's content is intended.
 Reading supported saved history does not restore those actions.
 
 ### Database compatibility and rollout
 
-This release requires the new database format described above. Preserve the
-existing database and its recovery copies. Use the separately approved new
-database location for a transition from an older format; changing the image
-on the existing database is not a supported upgrade. For an installation
+This release requires the new database format described above. Complete the
+fresh-start preparation before merging the preview transition; changing the
+image on the old database is not a supported upgrade. For an installation
 already using the supported format, preserve its persistent database and
 installation authority across normal restarts. Repair application failures
 with a corrected newer application. A separate controlled data restoration must

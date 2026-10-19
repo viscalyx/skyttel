@@ -8,9 +8,11 @@ rules. This procedure does not add a backup service.
 
 Only a database with the current format can be restored into this release.
 Older databases are rejected before their contents change, even with a
-restore declaration. Keep the copy intact and use its compatible release
-for recovery. A new installation needs a separately approved replacement
-procedure; these steps do not convert an older database.
+restore declaration. These steps do not convert an older database. The
+current preview instead uses the
+[Render fresh-start transition](render.md#appendix-fresh-preview-transition-on-render),
+which discards the old database without retaining a copy. If old content
+must survive, stop: this release provides no data-preserving conversion.
 
 ## Establish trusted inputs before changing the disk
 

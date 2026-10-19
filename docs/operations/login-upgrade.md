@@ -3,8 +3,10 @@
 Use this procedure only for a database in the supported household format
 that has no installation authority generation. It cannot convert an older
 household database: the command rejects that format before any change.
-Preserve older installations and recovery copies for a separately approved
-replacement procedure; do not change a format marker to bypass rejection.
+For the current Render preview, use the
+[fresh-start transition](render.md#appendix-fresh-preview-transition-on-render)
+instead. It discards the old database and requires no login upgrade. Do not
+change a format marker to bypass rejection.
 
 This is an offline, one-time login transition. It ends all
 old login sessions, pending login and linking attempts, OAuth credentials,
@@ -35,11 +37,6 @@ receipts remain. Unsaved conversation work does not resume.
    using their existing results after login, without submitting new saves.
 
 ## Stop, adopt and start one instance
-
-For the existing Render service, use the
-[step-by-step Render appendix](render.md#appendix-one-time-login-upgrade-on-render).
-It covers the public maintenance gate, a temporary maintenance process on
-the attached disk, and restoration of the normal deployment settings.
 
 Close public ingress, disable automatic deployments and stop every old
 application process. Verify at the host that no old process can access the

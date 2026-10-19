@@ -69,9 +69,11 @@ installation's unique generation stable across ordinary restarts.
 Both providers must be configured. Invalid or incomplete configuration stops
 startup before the application accepts traffic.
 
-An older household database cannot be upgraded by this release. Preserve
-the installation and recovery copies, and agree a separate replacement
-procedure before a production transition. The
+An older household database cannot be upgraded by this release. For the
+current Render preview, follow the
+[fresh-start procedure](render.md#appendix-fresh-preview-transition-on-render)
+before merging. It discards the old database without retaining a copy and
+starts an empty household. Data-preserving conversion is not available. The
 [one-time login maintenance procedure](login-upgrade.md) applies only to
 the supported database format; it cannot bypass format rejection.
 
@@ -210,12 +212,13 @@ linked provider then reaches the same user and household. See the
 
 ## Build, start, and restart
 
-Use a new database location for this format. Startup and database tools
+Use an empty database location for this format. Startup and database tools
 reject older databases with `unsupported_database_format` before changing
 their contents. There is no automatic conversion, deletion or replacement.
-Keep old data intact and agree a separate, explicit replacement procedure
-before a production transition. Login upgrade and restore declarations do
-not bypass this format check. Use a compatible release to read old copies.
+The Render preview transition explicitly deletes the old database before
+deployment; follow its preparation steps before merging. For installations
+that must retain old content, stop: no data-preserving conversion is available.
+Login upgrade and restore declarations do not bypass the format check.
 A database created by this release keeps its format identity on restart.
 
 For the local Compose workflow, after filling every required value:
@@ -242,12 +245,12 @@ The named volume retains household records, identities, and sessions across
 container restarts and replacements. `docker compose down` keeps that volume;
 adding `--volumes` deletes it and its household data.
 
-Before updating, read the [operator upgrade notes](operator-upgrade-notes.md),
-download a [complete household export](../user-guide/household-export.md), and
-retain its identity for investigation. Check database and archive format
-compatibility before choosing the destination. For an older database, use
-the separately approved replacement procedure and a new database location.
-For a supported database, keep the same volume and secret across ordinary
+Before updating, read the [operator upgrade notes](operator-upgrade-notes.md)
+and check database and archive format compatibility. For the Render preview
+reset, follow the fresh-start procedure above; no old database or export is
+required. For a supported database, download a
+[complete household export](../user-guide/household-export.md) and retain its
+identity for investigation. Keep the same volume and secret across ordinary
 updates; any required login maintenance follows the
 [controlled login procedure](login-upgrade.md). Do not run old
 and new application versions against the same SQLite volume at the same
