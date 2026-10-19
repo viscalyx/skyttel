@@ -7,7 +7,7 @@ import sharp from 'sharp';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { draftConflicts } from '../../../src/shared/draft-conflicts.js';
 import type { ErasureSelection } from '../../../src/shared/household-erasure.js';
-import type { MapState, ObjectValue } from '../../../src/shared/map.js';
+import type { MapState, ObjectValue, SaveReceipt } from '../../../src/shared/map.js';
 import { applicationFixture } from './fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -564,6 +564,181 @@ test('erasing a former type keeps current values and rebases only erased private
     'ERASE-TYPE-VALUE',
   );
 });
+
+test('erasing a privately selected former type removes a type-only proposal and preserves independent free facts on the current type', async () => {
+  for (const id of ['old-meaning', 'kept-meaning']) {
+    const state = await readMap();
+    expect(
+      (
+        await client.json(`${path}/map/object-type`, {
+          id,
+          version: state.draft.version,
+          baseRevision: null,
+          value: { name: id, description: `Betydelsen ${id}` },
+        })
+      ).status,
+    ).toBe(200);
+  }
+  const facts = [
+    { id: 'reference', label: 'typeId', kind: 'text' as const, value: 'old-meaning' },
+    { id: 'amount', label: 'Samma', kind: 'number' as const, value: 0 },
+    { id: 'flag', label: 'Samma', kind: 'boolean' as const, value: false },
+  ];
+  for (const id of ['type-only', 'independent'])
+    await object(id, { typeId: 'kept-meaning', properties: facts });
+  await save('kept-objects');
+  const { actor } = await invite();
+  await object('type-only', { typeId: 'old-meaning' }, actor);
+  const privateFacts = [...facts, { id: 'empty', label: 'Samma', kind: 'date' as const }];
+  await object('independent', { typeId: 'old-meaning', properties: privateFacts }, actor);
+  const sharedBefore = await readMap();
+  const privateBefore = await readMap(actor);
+  const historyBefore: { history: SaveReceipt[] } = await (
+    await client.request(`${path}/map/history`)
+  ).json();
+  expect(privateBefore.draft.changes).toHaveLength(2);
+  expect(
+    (
+      await client.json(
+        `${path}/erasure/execute`,
+        await reviewed([{ kind: 'objectType', id: 'old-meaning' }]),
+      )
+    ).status,
+  ).toBe(200);
+  const sharedAfter = await readMap();
+  expect(sharedAfter.objects).toEqual(sharedBefore.objects);
+  expect(sharedAfter.types.some(({ id }) => id === 'old-meaning')).toBe(false);
+  const privateAfter = await readMap(actor);
+  expect(privateAfter.draft.changes).toHaveLength(1);
+  expect(privateAfter.draft.changes[0]).toMatchObject({
+    id: 'independent',
+    before: privateBefore.draft.changes.find(({ id }) => id === 'independent')?.before,
+    after: { name: 'independent', typeId: 'kept-meaning', properties: privateFacts },
+    type: privateAfter.types.find(({ id }) => id === 'kept-meaning'),
+  });
+  expect(privateAfter.draft.changes[0].after?.properties).toEqual(privateFacts);
+  expect(draftConflicts(privateAfter)).toEqual([]);
+  const historyAfter: { history: SaveReceipt[] } = await (
+    await client.request(`${path}/map/history`)
+  ).json();
+  expect(historyAfter.history[0].changes).toEqual(historyBefore.history[0].changes);
+  expect(historyAfter.history[0].objectTypes).toEqual(
+    historyBefore.history[0].objectTypes?.filter(({ id }) => id !== 'old-meaning'),
+  );
+  await save('explicit-independent-save', actor);
+  expect((await readMap()).objects.find(({ id }) => id === 'independent')?.properties).toEqual(
+    privateFacts,
+  );
+});
+
+test.each(['old-meaning', 'kept-meaning'] as const)(
+  'erasing a former type preserves only permitted suppressed proposals when endpoint removal is undone (%s)',
+  async (privateType) => {
+    for (const id of ['old-meaning', 'kept-meaning']) {
+      const state = await readMap();
+      expect(
+        (
+          await client.json(`${path}/map/relationship-type`, {
+            id,
+            version: state.draft.version,
+            baseRevision: null,
+            value: { name: id, description: `Betydelsen ${id}` },
+          })
+        ).status,
+      ).toBe(200);
+    }
+    for (const id of ['source', 'target']) await object(id);
+    const edge = { typeId: 'kept-meaning', sourceId: 'source', targetId: 'target' };
+    let state = await readMap();
+    expect(
+      (
+        await client.json(`${path}/map/relationship`, {
+          id: 'edited',
+          version: state.draft.version,
+          baseRevision: null,
+          value: edge,
+        })
+      ).status,
+    ).toBe(200);
+    await save('shared-edge');
+    const { actor } = await invite();
+    const properties = [
+      { id: 'zero', label: 'Samma', kind: 'number' as const, value: 0 },
+      { id: 'false', label: 'Samma', kind: 'boolean' as const, value: false },
+    ];
+    for (const [id, typeId, targetId, baseRevision] of [
+      ['edited', privateType, 'target', 1],
+      ['new', 'kept-meaning', 'source', null],
+    ] as const) {
+      state = await readMap(actor);
+      expect(
+        (
+          await actor.json(`${path}/map/relationship`, {
+            id,
+            version: state.draft.version,
+            baseRevision,
+            value: { typeId, sourceId: 'source', targetId, properties },
+          })
+        ).status,
+      ).toBe(200);
+    }
+    const original = await readMap(actor);
+    const source = original.objects.find(({ id }) => id === 'source');
+    expect(
+      (
+        await actor.json(`${path}/map/draft`, {
+          id: 'source',
+          version: original.draft.version,
+          baseRevision: source?.revision,
+          value: null,
+        })
+      ).status,
+    ).toBe(200);
+    const suppressed = await readMap(actor);
+    expect(suppressed.draft.relationships?.every(({ suppressed }) => suppressed?.after)).toBe(true);
+    expect(
+      (
+        await client.json(
+          `${path}/erasure/execute`,
+          await reviewed([{ kind: 'relationshipType', id: 'old-meaning' }]),
+        )
+      ).status,
+    ).toBe(200);
+    const erased = await readMap(actor);
+    expect(erased.objects).toEqual(original.objects);
+    expect(erased.relationships).toEqual(original.relationships);
+    expect(erased.draft.changes).toEqual(suppressed.draft.changes);
+    const edited = erased.draft.relationships?.find(({ id }) => id === 'edited');
+    if (privateType === 'old-meaning') expect(edited?.suppressed).toBeUndefined();
+    else
+      expect(edited?.suppressed).toEqual(
+        original.draft.relationships?.find(({ id }) => id === 'edited'),
+      );
+    expect(erased.draft.relationships?.find(({ id }) => id === 'new')?.suppressed).toEqual(
+      original.draft.relationships?.find(({ id }) => id === 'new'),
+    );
+    expect(
+      (
+        await actor.json(`${path}/map/discard-change`, {
+          version: erased.draft.version,
+          contentVersion: erased.contentVersion,
+          kind: 'object',
+          id: 'source',
+        })
+      ).status,
+    ).toBe(200);
+    const restored = await readMap(actor);
+    expect(restored.draft.relationships).toEqual(
+      original.draft.relationships?.filter(
+        ({ id }) => privateType === 'kept-meaning' || id === 'new',
+      ),
+    );
+    expect(restored.relationships).toEqual(original.relationships);
+    expect(restored.draft.relationships?.find(({ id }) => id === 'new')?.after?.properties).toEqual(
+      properties,
+    );
+  },
+);
 
 test('erasing a former type removes its last historical image reference and bytes but preserves the current image', async () => {
   for (const id of ['former-image-type', 'current-image-type']) {

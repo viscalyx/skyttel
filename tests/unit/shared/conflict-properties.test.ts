@@ -9,6 +9,7 @@ import {
 import { conflictRemovalPlan } from '../../../src/shared/conflict-removal.js';
 import { specialConflict } from '../../../src/shared/conflict-special.js';
 import type { MapState } from '../../../src/shared/map.js';
+import type { Property } from '../../../src/shared/properties.js';
 
 const state: MapState = {
   userId: 'alex',
@@ -78,6 +79,114 @@ test('concurrent free property labels remain attached to their stable identities
     properties: proposed.properties,
   });
 });
+
+test('a concurrent creation distinguishes an explicit typed empty property from no property on the saved object', () => {
+  const type = {
+    id: 'person',
+    householdId: 'household',
+    revision: 1,
+    name: 'Person',
+    description: '',
+  };
+  const current = {
+    id: 'same-id',
+    householdId: 'household',
+    revision: 1,
+    typeId: type.id,
+    name: 'Sparat namn',
+  };
+  const properties: Property[] = [{ id: 'empty', label: 'Datum', kind: 'date' }];
+  const comparison: MapState = {
+    ...state,
+    types: [type],
+    objects: [current],
+    draft: {
+      version: 2,
+      changes: [
+        {
+          id: current.id,
+          before: null,
+          after: { typeId: type.id, name: 'Mitt namn', properties },
+          type,
+        },
+      ],
+    },
+  };
+  const before = structuredClone(comparison);
+  const fields = conflictProperties(comparison, { kind: 'object', id: current.id, current });
+  expect(combineConflictProperties(fields, {})).toBeNull();
+  expect(combineConflictProperties(fields, { name: 'saved' })).toEqual({
+    name: 'Sparat namn',
+    typeId: type.id,
+    properties,
+  });
+  expect(comparison).toEqual(before);
+});
+
+test.each([
+  { proposed: ['a', 'd', 'b', 'c'], expected: ['b', 'c', 'a', 'd'] },
+  { proposed: ['a', 'd', 'c', 'b'], expected: ['c', 'a', 'd', 'b'] },
+])(
+  'restoring an edited property into the selected saved order preserves every complete value: $expected',
+  ({ proposed, expected }) => {
+    const type = {
+      id: 'person',
+      householdId: 'household',
+      revision: 1,
+      name: 'Person',
+      description: '',
+    };
+    const properties: Property[] = [
+      { id: 'a', label: 'Samma', kind: 'boolean', value: false },
+      { id: 'b', label: 'Samma', kind: 'number', value: 10 },
+      { id: 'c', label: 'Samma', kind: 'text', value: '' },
+      { id: 'd', label: 'Samma' },
+    ];
+    const previous = {
+      id: 'lo',
+      householdId: 'household',
+      revision: 1,
+      typeId: type.id,
+      name: 'Lo',
+      properties,
+    };
+    const byId = new Map(properties.map((property) => [property.id, property]));
+    const edited: Property = { id: 'b', label: 'Korrigerad uppgift', kind: 'number', value: 0 };
+    function order(ids: string[], edit = false) {
+      return ids.map((id) => {
+        const value = edit && id === 'b' ? edited : byId.get(id);
+        if (!value) throw new Error(`Missing arranged property ${id}`);
+        return value;
+      });
+    }
+    const current = { ...previous, revision: 2, properties: order(['c', 'a', 'd']) };
+    const comparison: MapState = {
+      ...state,
+      types: [type],
+      objects: [current],
+      draft: {
+        version: 3,
+        changes: [
+          {
+            id: previous.id,
+            before: previous,
+            after: { ...previous, properties: order(proposed, true) },
+            type,
+          },
+        ],
+      },
+    };
+    const snapshot = structuredClone(comparison);
+    const fields = conflictProperties(comparison, { kind: 'object', id: previous.id, current });
+    expect(combineConflictProperties(fields, { propertiesOrder: 'saved' })).toBeNull();
+    const combined = combineConflictProperties(fields, {
+      propertiesOrder: 'saved',
+      'properties.b': 'proposed',
+    });
+    expect(combined).toEqual({ name: 'Lo', typeId: type.id, properties: order(expected, true) });
+    expect(comparison).toEqual(snapshot);
+  },
+);
 
 test('a changed relationship removal requires an explicit choice and retains the actual saved definition', () => {
   const originalType = {

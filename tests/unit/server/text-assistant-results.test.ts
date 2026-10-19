@@ -206,3 +206,93 @@ test('an empty draft and missing history explicitly describe the available resul
     'Det finns inget tidigare sparande i hushållets historik.',
   );
 });
+
+test('pending and saved object corrections explain identity, active override and removed images without implying a save', () => {
+  const before = card({
+    identity: 'unresolved',
+    lifecycle: 'ended',
+    profileImageId: 'old-image',
+    properties: [{ id: 'memo', label: 'Anteckning', kind: 'text', value: '' }],
+  });
+  const after = card({ lifecycle: 'active' });
+  const change = { id: before.id, before, after, type: cardType };
+  const pending = draftResult({ version: 4, changes: [change] });
+  const saved = historyResult(receipt({ changes: [change] }));
+  for (const result of [pending, saved]) {
+    expect(result.message).toContain('Identitet: olöst identitet → identifierat');
+    expect(result.message).toContain('Gäller: upphört → aktuellt');
+    expect(result.message).toContain('Profilbild: bild finns → ingen bild');
+    expect(result.message).toContain('Anteckning: Tom text (Text) → Saknas');
+  }
+  expect(pending.message).toMatch(/^Utkast: Ändra Hushållskortet/);
+  expect(saved.message).toMatch(/^Sparandet: Ändrade Hushållskortet/);
+});
+
+test('type additions and removals report complete explanations and direction labels with the correct operation tense', () => {
+  const created = { ...usageType, id: 'new-usage', description: 'Tjänstens användare' };
+  const removed = { ...usageType, reverseLabel: 'använder' };
+  const draft = {
+    version: 5,
+    changes: [],
+    objectTypes: [
+      { id: cardType.id, before: null, after: cardType },
+      { id: 'removed-card', before: { ...cardType, id: 'removed-card' }, after: null },
+    ],
+    relationshipTypes: [
+      { id: created.id, before: null, after: created },
+      { id: removed.id, before: removed, after: null },
+    ],
+  };
+  const pending = draftResult(draft);
+  const saved = historyResult(receipt(draft));
+  expect(pending.message).toContain('Lägg till objekttypen Kort');
+  expect(pending.message).toContain('Ta bort objekttypen Kort');
+  expect(saved.message).toContain('Lade till objekttypen Kort');
+  expect(saved.message).toContain('Tog bort objekttypen Kort');
+  for (const result of [pending, saved]) {
+    expect(result.message).toContain('beskrivning: ej angivet → Tjänstens användare');
+    expect(result.message).toContain('Framåtriktning: ej angivet → används av');
+    expect(result.message).toContain('Framåtriktning: används av → ej angivet');
+    expect(result.message).toContain('Omvänd riktning: använder → ej angivet');
+  }
+});
+
+test('pending relationship additions and removals use real identifiers when no endpoint name was captured', () => {
+  const value = usage({ lifecycle: 'active' });
+  const draft = {
+    version: 2,
+    changes: [],
+    relationships: [
+      {
+        id: 'new-edge',
+        before: null,
+        after: value,
+        type: { ...usageType, forwardLabel: undefined },
+      },
+      { id: 'old-edge', before: value, after: null, type: usageType },
+    ],
+  };
+  const pending = draftResult(draft);
+  expect(pending.message).toContain('Lägg till sambandet subscription Användning alex');
+  expect(pending.message).toContain('Ta bort sambandet subscription används av alex');
+  expect(pending.message).toContain('Gäller: ej angivet → aktuellt');
+  expect(pending.message).toContain('Gäller: aktuellt → ej angivet');
+});
+
+test('unchanged records remain readable and a type switch names the historical catalogue supplied with the review', () => {
+  const before = card();
+  const afterType = { ...cardType, id: 'account', name: 'Konto' };
+  const unchanged = draftResult({
+    version: 1,
+    changes: [{ id: before.id, before, after: before, type: cardType }],
+  });
+  expect(unchanged.message).toBe('Utkast: Ändra Hushållskortet.');
+  const switched = draftResult({
+    version: 2,
+    current: { types: [cardType, afterType], relationshipTypes: [usageType] },
+    changes: [
+      { id: before.id, before, after: { ...before, typeId: afterType.id }, type: afterType },
+    ],
+  });
+  expect(switched.message).toContain('objekttyp: Kort → Konto');
+});
