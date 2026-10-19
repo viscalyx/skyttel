@@ -479,15 +479,17 @@ test.each([
     expectSelectionAndHeader();
     description.scrollIntoView({ block: 'end' });
     await expect.poll(() => scroller.scrollTop).toBeGreaterThan(0);
-    const lastLine = [...lines.getClientRects()].at(-1);
-    if (!lastLine) throw new Error('The description must contain readable text');
-    // Align the text fragment with clearance after scrollTop rounds to pixels.
-    scroller.scrollTop += lastLine.bottom - (scroller.getBoundingClientRect().bottom - 1);
     expectReadable(description, [...lines.getClientRects()].at(-1));
     expectSelectionAndHeader();
     const lastDetail = body.querySelector('dl > div:last-child dd') as HTMLElement;
     lastDetail.scrollIntoView({ block: 'center' });
-    expectReadable(lastDetail);
+    const detailText = document.createRange();
+    detailText.selectNodeContents(lastDetail);
+    // At maximum scroll, fractional line-box leading can extend past the port.
+    // Measure every actual text fragment, as for the description above.
+    const detailFragments = [...detailText.getClientRects()];
+    expect(detailFragments.length).toBeGreaterThan(0);
+    for (const fragment of detailFragments) expectReadable(lastDetail, fragment);
     expectSelectionAndHeader();
     expect(inspector.querySelector('form')).toBeNull();
     const edit = objectPanel.getByRole('button', { name: 'Redigera Lo', exact: true });
