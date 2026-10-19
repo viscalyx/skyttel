@@ -26,8 +26,10 @@ innehåll kopplas avsiktligt till Robin efter uttrycklig granskning.
 3. Förbered ytterligare en tom Chrome-profil C. Samma temporära katalog
    används för omstarter; återskapa inte databaserna mitt i fallet.
 
-Alla prov använder samma aktuella databas- och arkivformat. Äldre format
-avvisas utan konvertering eller ersättning av befintligt innehåll.
+Alla prov använder samma aktuella databas- och arkivformat. Äldre arkiv
+avvisas vid återimport utan att befintligt innehåll ersätts. För uppgradering
+av en befintlig installation gäller
+[uppgraderingsinformationen](../operations/operator-upgrade-notes.md).
 Återimport återskapar innehåll och historik, medan verifierad aktuell
 inloggning och nuvarande åtkomst styr vem som får använda målinstallationen.
 
