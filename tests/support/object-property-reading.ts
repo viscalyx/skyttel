@@ -34,9 +34,10 @@ export async function exposedTextLines(node: Locator, alignment: 'center' | 'sta
             innerHeight,
             port.top + scrollport.clientTop + scrollport.clientHeight,
           );
+          // Keep the fragment inside the header boundary after scrollTop rounds.
           scrollport.scrollTop +=
             alignment === 'start'
-              ? before.top - top
+              ? before.top - (top + 1)
               : before.top + before.height / 2 - (top + bottom) / 2;
           const line = lines()[index];
           const inset = Math.min(2, line.width / 4, line.height / 4);
