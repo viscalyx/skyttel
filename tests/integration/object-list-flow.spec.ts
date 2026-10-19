@@ -12,13 +12,13 @@ import { focusMapSearch } from '../support/object-search.js';
 import { expect, test } from '../support/test.js';
 
 // The 500-object map repeats tens of megabytes of SVG occlusion markup per DOM
-// snapshot. Omit DOM snapshots (and Playwright's coupled browser network-tab
-// capture), retaining action/API events, ARIA/screen snapshots, screenshots,
-// pending/error diagnostics and geometry attachments within the existing budget.
+// snapshot. Omit snapshots and the coupled browser network-tab capture; retain
+// action/API events, screencast screenshots, pending/error diagnostics and geometry
+// attachments without consuming the navigation test's budget on snapshot capture.
 test.use({
   trace: {
     mode: 'retain-on-failure',
-    snapshots: { dom: false, aria: true, screen: true },
+    snapshots: false,
     screenshots: true,
   },
 });
