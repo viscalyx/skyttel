@@ -432,11 +432,6 @@ Copy only that ID, never cookies or provider tokens. Stop the server before
 running the helper. It refuses an ordinary development database and requires
 an identity established by the actual provider login.
 
-The helper supports only the current database format. Create a fresh
-installation for this preparation. Older databases and archives are rejected
-without conversion; keep their contents and format markers intact and use a
-compatible release to inspect them.
-
 Stop the server, then prepare the second household in the same terminal:
 
 ```sh

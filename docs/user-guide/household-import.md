@@ -29,8 +29,7 @@ förslag behöver fortfarande rättas eller kastas före sparande.
    med sparandenas historiska värden och benämningar.
 
 Om någon ändrar innehållet under förberedelsen måste filen förberedas igen.
-En trasig, ofullständig eller okänd export avvisas före ersättning. Stöd
-finns för det nya formatets version 2. Äldre filer avvisas utan ändring.
+En trasig, ofullständig eller okänd export avvisas före ersättning.
 Gränserna är cirka
 1,1 GB för ZIP-filen, 32 MiB för innehållsfilen och 1 GiB för bilddelen.
 Förberedda kopior rensas efter tio minuter eller vid serverns nästa start.
