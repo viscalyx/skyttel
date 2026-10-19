@@ -31,6 +31,7 @@ import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider, voiceAnswerParts } from '../support/live-provider.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
+import { exposedTextLines } from '../support/object-property-reading.js';
 import { expect, test } from '../support/test.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
 import { readVoiceProposal } from '../support/voice-work-reading.js';
@@ -1124,35 +1125,7 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
         .locator('..')
         .locator('dd');
       await expect(description).toHaveText('◇ Ditt förslag: Påhittad uppgift (Text)');
-      await description.scrollIntoViewIfNeeded();
-      await expect
-        .poll(() =>
-          page.getByRole('region', { name: 'Lo Exempel', exact: true }).evaluate((element) => {
-            const description = Array.from(element.querySelectorAll('dt')).find(
-              (label) => label.textContent === 'Beskrivning',
-            )?.nextElementSibling;
-            const body = element.querySelector('.object-property-body');
-            if (!description || !body) return false;
-            const box = description.getBoundingClientRect();
-            const clip = body.getBoundingClientRect();
-            const panel = element.getBoundingClientRect();
-            const line = Math.min(
-              box.height,
-              Number.parseFloat(getComputedStyle(description).lineHeight),
-            );
-            return (
-              line > 0 &&
-              box.top >= clip.top &&
-              box.top + line <= clip.bottom &&
-              box.top >= panel.top &&
-              box.top + line <= panel.bottom &&
-              description.contains(
-                document.elementFromPoint(box.x + box.width / 2, box.top + line / 2),
-              )
-            );
-          }),
-        )
-        .toBe(true);
+      await exposedTextLines(description, 'start');
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await openConversationText(page);

@@ -251,8 +251,9 @@ till TAL-17/23/24.
    och Shift+F10 → Fokusera markering. Panorera genom Navigera och stäng med
    Stäng navigering. Lo ska förbli synlig och vald. Rulla i uppgiftsfönstret
    till egenskapen **Beskrivning** och läs **Påhittad uppgift (Text)** efter
-   att hela svaret visas ovanför kartan. Textens första rad ska rymmas i
-   fönstret och vara fri från överlappande kontroller.
+   att hela svaret visas ovanför kartan. Kontrollera hela värdet rad för rad
+   med röstrutan kvar. Varje textrad, inklusive den första, ska rymmas i
+   fönstrets läsyta och vara fri från överlappande kontroller.
 2. Återgå till 390 × 844. Förbered den blockerade kontrollen och det väntande
    sparförsöket enligt tidslinjen. Läs Skyttel kunde inte kontrollera om
    utkastet sparades. Mikrofonen är av.

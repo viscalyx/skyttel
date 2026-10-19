@@ -11,6 +11,7 @@ import {
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { openObjectRelationships, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { exposedTextLines } from '../support/object-property-reading.js';
 import { verifyRestoredPersonalMove } from '../support/personal-view-reading.js';
 import {
   openProperties,
@@ -139,64 +140,6 @@ async function exposed(node: Locator, context = 'The native target must be expos
     console.error('Native target exposure:', context, JSON.stringify(observation, null, 2));
     throw error;
   }
-}
-
-async function exposedTextLines(node: Locator) {
-  await expect
-    .poll(() =>
-      node.evaluate((element) => {
-        const body = element.closest<HTMLElement>('.object-property-body');
-        const panel = element.closest<HTMLElement>('.map-selection-details');
-        if (!body || !panel) throw new Error('Text must belong to an object reader');
-        const scrollport = getComputedStyle(body).overflowY === 'visible' ? panel : body;
-        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-        const ranges: Range[] = [];
-        while (walker.nextNode()) {
-          if (!walker.currentNode.textContent?.trim()) continue;
-          const range = document.createRange();
-          range.selectNodeContents(walker.currentNode);
-          ranges.push(range);
-        }
-        const lines = () => ranges.flatMap((range) => [...range.getClientRects()]);
-        const failures = [];
-        for (let index = 0; index < lines().length; index++) {
-          const before = lines()[index];
-          const port = scrollport.getBoundingClientRect();
-          const header = panel.querySelector<HTMLElement>('.object-property-header');
-          const top = Math.max(
-            0,
-            port.top + scrollport.clientTop,
-            scrollport === panel && header && getComputedStyle(header).position === 'sticky'
-              ? header.getBoundingClientRect().bottom
-              : 0,
-          );
-          const bottom = Math.min(
-            innerHeight,
-            port.top + scrollport.clientTop + scrollport.clientHeight,
-          );
-          scrollport.scrollTop += before.top + before.height / 2 - (top + bottom) / 2;
-          const line = lines()[index];
-          const inset = Math.min(2, line.width / 4, line.height / 4);
-          const points = [
-            [line.left + inset, line.top + inset],
-            [line.right - inset, line.top + inset],
-            [line.left + inset, line.bottom - inset],
-            [line.right - inset, line.bottom - inset],
-            [line.left + line.width / 2, line.top + line.height / 2],
-          ];
-          if (
-            line.top < top ||
-            line.bottom > bottom ||
-            line.left < Math.max(0, port.left) ||
-            line.right > Math.min(innerWidth, port.right) ||
-            !points.every(([x, y]) => element.contains(document.elementFromPoint(x, y)))
-          )
-            failures.push({ index, bounds: line.toJSON(), top, bottom });
-        }
-        return lines().length ? failures : ['The value must contain readable text'];
-      }),
-    )
-    .toEqual([]);
 }
 
 async function separate(first: Locator, second: Locator) {
