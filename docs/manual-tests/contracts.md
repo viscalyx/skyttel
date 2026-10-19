@@ -378,10 +378,16 @@ medlem.
 
 ## Avvecklade identiteter och täckning
 
-AVTAL-06 är avvecklat och får inte återanvändas. Automatisk konvertering
-av äldre databasformat ingår inte i produkten. Den tidigare automatiska
-uppgraderingskedjan har godkänd täckningsförlust; äldre format avvisas
-utan innehållsändring enligt format- och arkivproven.
+AVTAL-06 är avvecklat och får inte återanvändas. Den automatiska
+uppgraderingskedjan som bevarar äldre avtalsinnehåll har godkänd
+täckningsförlust. Den stödda förhandsversionen uppgraderas automatiskt
+en gång genom att gammalt innehåll raderas medan installationen,
+hushållet och åtkomsten behålls enligt
+[uppgraderingsinformationen](../operations/operator-upgrade-notes.md).
+Övergången raderar inte innehåll i databaser i det nya formatet.
+Andra äldre databasformat och äldre arkiv avvisas utan innehållsändring
+enligt format- och arkivproven. Övergångens tekniska verifiering ersätter
+inte den avvecklade användarresan AVTAL-06.
 
 AVTAL-01, AVTAL-02, AVTAL-04, AVTAL-07 och AVTAL-08 behåller sina
 identiteter med individuella fria egenskaper. Tidigare fasta val för
