@@ -4,9 +4,10 @@ Use this procedure only for a database in the supported household format
 that has no installation authority generation. It cannot convert an older
 household database: the command rejects that format before any change.
 For the current Render preview, use the
-[fresh-start transition](render.md#appendix-fresh-preview-transition-on-render)
-instead. It discards the old database and requires no login upgrade. Do not
-change a format marker to bypass rejection.
+[content-reset transition](render.md#appendix-one-time-preview-content-reset-on-render)
+instead. It upgrades the same database, clears old map content and retains
+user access. No login upgrade is needed. Do not change a format marker to
+bypass rejection.
 
 This is an offline, one-time login transition. It ends all
 old login sessions, pending login and linking attempts, OAuth credentials,

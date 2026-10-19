@@ -10,9 +10,10 @@ Only a database with the current format can be restored into this release.
 Older databases are rejected before their contents change, even with a
 restore declaration. These steps do not convert an older database. The
 current preview instead uses the
-[Render fresh-start transition](render.md#appendix-fresh-preview-transition-on-render),
-which discards the old database without retaining a copy. If old content
-must survive, stop: this release provides no data-preserving conversion.
+[Render content-reset transition](render.md#appendix-one-time-preview-content-reset-on-render),
+which clears old map content in the existing database and preserves user
+access. It cannot run with a restore declaration. If old map content must
+survive, stop: this release provides no data-preserving conversion.
 
 ## Establish trusted inputs before changing the disk
 
