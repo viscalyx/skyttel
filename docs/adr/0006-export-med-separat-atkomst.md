@@ -13,14 +13,8 @@ Administratörens insyn i andras utkast genom exporten ska framgå, och
 serverhemligheter, sessioner och aktiva OAuth-token ingår inte i formatet.
 
 Den fria egenskapsmodellen använder ett identifierbart nytt databas- och
-arkivformat. Äldre arkiv och databaser utanför den uttryckligen stödda
-förhandsversionen avvisas före innehållsändring. Automatisk tolkning av
-typfält eller mållösa samband skulle kunna ändra hushållets avsikt.
-Den stödda förhandsversionen uppgraderas automatiskt en gång genom att
-gammalt innehåll raderas medan installationen, hushållet och åtkomsten
-behålls enligt [uppgraderingsinformationen](../operations/operator-upgrade-notes.md).
-Detta undantag konverterar inte gammalt innehåll och upprepas inte för
-databaser i det nya formatet. Nyformatsarkiv bevarar
-egenskapsidentiteter, ordning, tomma värden och legitima blockerade eller
-undertryckta utkastförslag, men bevarad historisk härkomst ger ingen ny
-spar- eller åtkomstbehörighet.
+arkivformat. Automatisk tolkning av äldre typfält eller mållösa samband
+ingår inte, eftersom den skulle kunna ändra hushållets avsikt.
+Nyformatsarkiv bevarar egenskapsidentiteter, ordning, tomma värden och
+legitima blockerade eller undertryckta utkastförslag, men bevarad historisk
+härkomst ger ingen ny spar- eller åtkomstbehörighet.
