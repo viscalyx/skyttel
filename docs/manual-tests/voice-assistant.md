@@ -254,6 +254,8 @@ till TAL-17/23/24.
    att hela svaret visas ovanför kartan. Kontrollera hela värdet rad för rad
    med röstrutan kvar. Varje textrad, inklusive den första, ska rymmas i
    fönstrets läsyta och vara fri från överlappande kontroller.
+   I det kortaste fönstret kan titelraden rulla med uppgifterna när röstrutan
+   behöver utrymmet. Stängkrysset finns i början av läsytan.
 2. Återgå till 390 × 844. Förbered den blockerade kontrollen och det väntande
    sparförsöket enligt tidslinjen. Läs Skyttel kunde inte kontrollera om
    utkastet sparades. Mikrofonen är av.
