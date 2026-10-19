@@ -5,6 +5,29 @@ import { configurationEnvironment } from './fixture.js';
 afterEach(() => vi.unstubAllEnvs());
 
 describe('installation configuration', () => {
+  test('requires an exact preview reset opt-in and forbids combining it with a restore', () => {
+    expect(readConfig(configurationEnvironment()).resetPreviewContent).toBeUndefined();
+    expect(
+      readConfig({ ...configurationEnvironment(), SKYTTEL_RESET_PREVIEW_CONTENT: 'true' })
+        .resetPreviewContent,
+    ).toBe(true);
+    for (const value of ['', 'false', 'TRUE', ' true', '1'])
+      expect(() =>
+        readConfig({ ...configurationEnvironment(), SKYTTEL_RESET_PREVIEW_CONTENT: value }),
+      ).toThrow(new ConfigurationError('SKYTTEL_RESET_PREVIEW_CONTENT'));
+    for (const key of [
+      'SKYTTEL_RESTORE_FROM_GENERATION',
+      'SKYTTEL_RESTORE_CONFIRMED_AT',
+      'SKYTTEL_RESTORE_ERASURE_REVIEWED',
+    ])
+      expect(() =>
+        readConfig({
+          ...configurationEnvironment(),
+          SKYTTEL_RESET_PREVIEW_CONTENT: 'true',
+          [key]: 'anything',
+        }),
+      ).toThrow(new ConfigurationError('SKYTTEL_RESET_PREVIEW_CONTENT'));
+  });
   test('requires a separately managed authority generation and rejects incomplete restore declarations', () => {
     expect(() =>
       readConfig({ ...configurationEnvironment(), SKYTTEL_AUTHORITY_GENERATION: undefined }),
