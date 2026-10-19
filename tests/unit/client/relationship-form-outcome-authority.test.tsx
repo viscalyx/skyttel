@@ -116,10 +116,7 @@ test.each(['another-owner', 'replaced-content', 'another-attempt', 'missing-proo
         .getAllByLabelText('Värde', { exact: true })
         .map((control) => (control as HTMLInputElement).value),
     ).toEqual(['', 'false']);
-    expect(screen.getByRole('button', { name: 'Lägg i utkastet' })).toHaveProperty(
-      'disabled',
-      true,
-    );
+    expect(screen.getByRole('button', { name: 'Lägg i utkastet' }).matches(':disabled')).toBe(true);
     expect(original?.editor.value).toEqual(value);
     await userEvent.click(check);
     await waitFor(() => expect(completed).toHaveBeenCalledOnce());
