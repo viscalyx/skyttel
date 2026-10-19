@@ -232,23 +232,16 @@
 @media (max-width: 700px) {
   .household-map.workspace-shell:is([data-work-layout="compact"], [data-work-layout="minimal"])
     .object-property-window {
+    /* Scroll the title with the facts: beside persistent voice controls,
+       a pinned title can leave less room than one complete line of text. */
     display: block;
     overflow-y: auto;
-    scroll-padding-top: 56px;
-    scroll-padding-bottom: 8px;
+    scroll-padding: 8px;
     width: calc(60vw - 12px);
     max-height: min(
       180px,
       calc(var(--work-height, 100dvh) - var(--map-search-bottom, 56px) - 16px)
     );
-  }
-  .household-map.workspace-shell:is([data-work-layout="compact"], [data-work-layout="minimal"])
-    .object-property-window
-    .object-property-header {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--space-surface);
   }
   .household-map.workspace-shell:is([data-work-layout="compact"], [data-work-layout="minimal"])
     .object-property-window
