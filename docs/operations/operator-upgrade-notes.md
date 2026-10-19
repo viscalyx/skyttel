@@ -291,14 +291,16 @@ removal does not permanently erase retained information. Follow the
 ### Complete object forms and recovery
 
 Household archives can contain a private identifier for each complete
-object-form addition to a draft. Shared history contains saved values and save attribution; it
+object-form addition to a draft. Shared history contains saved values and
+save attribution; it
 does not contain private form-attempt identifiers.
 
 ### Object icons in household archives
 
 This release stores each object's selected icon with its other content.
 Objects without a selection use their type's default icon. Full household
-archives preserve the selected icons. Use the controlled database recovery procedure above
+archives preserve the selected icons. Use the controlled database recovery
+procedure above
 for controlled recovery with the current or a corrected newer application;
 changing the image alone does not remove icon storage.
 
