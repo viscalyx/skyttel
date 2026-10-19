@@ -870,6 +870,8 @@ release and creates its database without another reset command. First login,
 household creation and acceptance checks still require section E afterward.
 Keep the same Render service, disk, public address and provider registrations.
 There is no rollback step: diagnose failures and repair forward.
+Preparation makes the old household unavailable. Allow time for the merge's
+release checks and image publication before the new household can be set up.
 
 The deployment controller requires a healthy application before deploying.
 During preparation, the current release therefore runs on an empty temporary
@@ -1040,8 +1042,8 @@ transition and must not be restored.
 1. Disable Render Maintenance Mode. Check only public `/healthz` and
    `/api/version`: require status `ok`, database status `ready`, and the
    current release identity. Do not perform step 6's login or setup yet.
-   Keep users out: this brief
-   public interval lets the deployment controller verify the application;
+   Keep users out: this public interval lets the deployment controller
+   verify the application;
    any login activity here is temporary and will be discarded.
 1. Restore the recorded real `RENDER_SERVICE_ID` in the GitHub `production`
    environment. Merge the prepared release to `main`. Keep unrelated
