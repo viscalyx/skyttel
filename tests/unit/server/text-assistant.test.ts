@@ -1,5 +1,6 @@
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, expect, test, vi } from 'vitest';
+import { conversationCompletion } from '../../../src/client/conversation-completion.js';
 import type { TextModelAttempt, TextModelUsage } from '../../../src/server/text-assistant-model.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
@@ -865,6 +866,71 @@ test.each(['draft', 'save'])(
   },
 );
 
+test('beginMessage retains unanswered questions through a queued draft update and conversation completion', async () => {
+  const question = 'Vem använder cykeln?';
+  const complete = conversationCompletion();
+  let release!: (output: unknown[]) => void;
+  const model = textModel(
+    () =>
+      new Promise<unknown[]>((resolve) => {
+        release = resolve;
+      }),
+  );
+  await setup(model.provider);
+  const value = await webProposal('Hjälmen');
+  const session = await start();
+  const send = (revision: number, requestId: string, text: string) =>
+    browser.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data: { revision, ...displayedVersion(session), requestId, text },
+    });
+  expect(
+    (await send(session.revision, 'question', 'Koppla cykeln till användaren.')).status(),
+  ).toBe(202);
+  await expect.poll(() => model.requests.length).toBe(1);
+  expect((await send(session.revision + 1, 'update', 'Lägg till Väskan.')).status()).toBe(202);
+  release([modelTool('ask_questions', { questions: [question] })]);
+  await expect.poll(() => model.requests.length).toBe(2);
+
+  const working = await (await browser.get(`${path}/${session.id}`)).json();
+  expect(working).toMatchObject({ phase: 'working', questionPending: true, questions: [question] });
+  expect(working.completedReplies).toMatchObject([{ questions: [question] }]);
+  expect(complete(working)).toBeUndefined();
+  const input = model.requests[1].input.findLast((item) => item.role === 'user');
+  expect(JSON.parse(String(input?.content)).pendingQuestions).toEqual([question]);
+
+  release([
+    modelTool('submit_changes', {
+      version: session.review.version,
+      contentVersion: session.review.contentVersion,
+      completion: 'draft',
+      operations: [
+        {
+          name: 'propose_object',
+          arguments: {
+            id: 'bag',
+            baseRevision: null,
+            value: { typeId: value.typeId, name: 'Väskan' },
+          },
+        },
+      ],
+    }),
+  ]);
+  let final = working;
+  await expect
+    .poll(async () => {
+      final = await (await browser.get(`${path}/${session.id}`)).json();
+      return final.phase;
+    })
+    .toBe('ready');
+  expect(final).toMatchObject({ questionPending: true, questions: [question] });
+  expect(final.completedReplies).toHaveLength(2);
+  expect(complete(final)?.text).toBe(`Väskan lades till. ${question}`);
+  expect(complete(final)).toBeUndefined();
+  // The final poll alone also reconstructs the same completion.
+  expect(conversationCompletion()(final)?.text).toBe(`Väskan lades till. ${question}`);
+});
+
 test.each(['submit_changes', 'ask_questions'])(
   'pending questions from %s preserve independent details and answers without allowing a save',
   { tags: ['technical'] },
@@ -917,7 +983,7 @@ test.each(['submit_changes', 'ask_questions'])(
     expect(status.receipt).toBeUndefined();
     expect(status.operations).toEqual([]);
     const next = await message(status, 'Var finns hjälmen?');
-    expect(next.questions).toBeUndefined();
+    expect(next.questions).toEqual([question]);
     expect(next.requiredNotice).toBeUndefined();
     expect(next.receipt).toBeUndefined();
   },

@@ -143,6 +143,7 @@ test('independent facts survive when a later queued instruction resolves the que
       ...view,
       revision: 2,
       completedReplies: [first, updated(2, 'Johan', 'lades till som användare för Spotify')],
+      questionPending: false,
     })?.text,
   ).toBe('Johan lades till som användare för Spotify. Lo är en person.');
 });
@@ -155,4 +156,28 @@ test('conversation alone is not evidence of a draft update', () => {
       completedReplies: [{ id: 'model', revision: 1, text: 'Allt är ordnat!' }],
     }),
   ).toBeUndefined();
+});
+
+test('questions survive completed reply and final view changes until explicitly resolved', () => {
+  const complete = conversationCompletion();
+  const question = 'Vem använder cykeln?';
+  const asked: ConversationReply = {
+    id: 'question',
+    revision: 1,
+    text: question,
+    questionPending: true,
+    questions: [question],
+  };
+  expect(complete({ ...view, phase: 'working', completedReplies: [asked] })).toBeUndefined();
+  const final = { ...view, revision: 2, completedReplies: [updated(2, 'Väskan')] };
+  expect(complete(final)?.text).toBe(`Väskan lades till. ${question}`);
+  expect(complete(final)).toBeUndefined();
+  expect(
+    complete({
+      ...view,
+      revision: 3,
+      completedReplies: [updated(3, 'Hjälmen')],
+      questionPending: false,
+    })?.text,
+  ).toBe('Hjälmen lades till.');
 });

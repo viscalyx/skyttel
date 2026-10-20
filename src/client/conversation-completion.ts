@@ -10,6 +10,7 @@ export function conversationCompletion() {
   let context = '';
   const seen = new Set<string>();
   let pending: ConversationReply[] = [];
+  let questions: string[] = [];
   let sequence = 0;
   return (view: TextAssistantView): TranscriptRow | undefined => {
     const nextContext = `${view.id}-${view.contextRevision ?? 0}`;
@@ -17,6 +18,7 @@ export function conversationCompletion() {
       context = nextContext;
       seen.clear();
       pending = [];
+      questions = [];
     }
     const busy =
       view.phase === 'working' ||
@@ -42,7 +44,13 @@ export function conversationCompletion() {
       if (seen.has(key)) continue;
       seen.add(key);
       pending.push(reply);
+      if (reply.questions) questions = reply.questions;
+      else if (reply.questionPending === false) questions = [];
     }
+    if (view.questions) questions = view.questions;
+    else if (view.questionPending === false) questions = [];
+    else if (view.questionPending && !questions.length && view.modelReply)
+      questions = [view.modelReply];
     if (busy || !pending.length) return;
     const finished = pending;
     pending = [];
@@ -63,11 +71,6 @@ export function conversationCompletion() {
           .filter((text): text is string => Boolean(text)),
       ),
     ];
-    const questions = view.questions?.length
-      ? view.questions
-      : view.questionPending && view.modelReply
-        ? [view.modelReply]
-        : [];
     const answers = finished.flatMap((reply) => {
       if (!reply.questionPending || !reply.questions?.length) return [];
       const answer = reply.questions

@@ -893,6 +893,7 @@ export function textAssistantRoutes({
     expected: { version: number; contentVersion: number },
   ) {
     const serial = session.inputSerial ?? 0;
+    const answerableQuestions = new Set(session.questions ?? []);
     let originalSaveIntent = Boolean(session.saveIntent);
     const guard = () => {
       if (task.signal.aborted || session.revision !== revision || !sessions.has(session.id))
@@ -931,6 +932,7 @@ export function textAssistantRoutes({
         role: 'user',
         content: JSON.stringify({
           message: text,
+          pendingQuestions: session.questions ?? [],
           draft: review,
           saveOperations: session.operations.map(
             ({ operationId, status, draftVersion, contentVersion }) => ({
@@ -1051,14 +1053,17 @@ export function textAssistantRoutes({
           type: 'function',
           name: 'ask_questions',
           description:
-            'Ställ nödvändiga riktade frågor i samtalet och invänta svar. Använd även utan ändringsoperationer, till exempel för obesvarade identiteter eller konflikter. Beskriv de berörda namnen och konkreta valen från aktuellt underlag; gissa inga svar. Sätt continueResponse true när oberoende beställda delar återstår. Frågorna behålls; detta ändrar eller sparar ingenting.',
+            'Ställ nödvändiga riktade frågor i samtalet och invänta svar. Använd även utan ändringsoperationer, till exempel för obesvarade identiteter eller konflikter. Beskriv de berörda namnen och konkreta valen från aktuellt underlag; gissa inga svar. Ange i answeredQuestions endast exakta frågor från pendingQuestions som användarens svar och aktuellt underlag löser. Behåll övriga frågor, även vid en annan uppgift. questions kan vara tom när frågor besvaras. Sätt continueResponse true när beställda delar återstår. Detta ändrar eller sparar ingenting.',
           parameters: {
             type: 'object',
             properties: {
               questions: {
                 type: 'array',
-                minItems: 1,
                 maxItems: 3,
+                items: { type: 'string', maxLength: 240 },
+              },
+              answeredQuestions: {
+                type: 'array',
                 items: { type: 'string', maxLength: 240 },
               },
               continueResponse: { type: 'boolean' },
@@ -1205,20 +1210,38 @@ export function textAssistantRoutes({
             if (calls.length !== 1) throw new MapError('invalid_request', 400);
             const value = z
               .object({
-                questions: z.array(z.string().trim().min(1).max(240)).min(1).max(3),
+                questions: z.array(z.string().trim().min(1).max(240)).max(3),
+                answeredQuestions: z.array(z.string().min(1).max(240)).default([]),
                 continueResponse: z.boolean().default(false),
               })
               .strict()
               .parse(args);
+            if (
+              (!value.questions.length && !value.answeredQuestions.length) ||
+              value.answeredQuestions.some(
+                (question) =>
+                  !answerableQuestions.has(question) || !session.questions?.includes(question),
+              )
+            )
+              throw new MapError('invalid_request', 400);
+            const remaining = session.questions?.filter(
+              (question) => !value.answeredQuestions.includes(question),
+            );
+            session.questions = remaining?.length ? remaining : undefined;
             rememberQuestions(session, value.questions);
+            session.modelReply = session.questions?.join(' ');
             session.reply = verifiedReply(session);
             session.phase = 'ready';
             session.input.push({
               type: 'function_call_output',
               call_id: action.call_id,
-              output: JSON.stringify({ questionPending: true }),
+              output: JSON.stringify({
+                questionPending: Boolean(session.questions?.length),
+                questions: session.questions ?? [],
+              }),
             });
-            session.conversation.push({ role: 'assistant', text: value.questions.join(' ') });
+            if (value.questions.length)
+              session.conversation.push({ role: 'assistant', text: value.questions.join(' ') });
             if (value.continueResponse) {
               session.phase = 'working';
               break;
@@ -1496,7 +1519,6 @@ export function textAssistantRoutes({
       session.conversation.push({ role: 'assistant', text: session.previousFailure });
       session.reply = session.previousFailure;
       session.modelReply = undefined;
-      session.questions = undefined;
       session.requiredNotice = undefined;
       if (error instanceof MapError && error.code === 'assistant_task_expired') return;
       try {
@@ -1646,7 +1668,6 @@ export function textAssistantRoutes({
     session.error = undefined;
     session.reply = undefined;
     session.modelReply = undefined;
-    session.questions = undefined;
     session.requiredNotice = undefined;
     session.receipt = undefined;
     session.saveCheck = undefined;
