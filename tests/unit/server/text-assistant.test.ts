@@ -102,6 +102,135 @@ async function start() {
   return response.json();
 }
 
+test('a conversation reuses identical MCP reads across messages and refreshes changed data', async () => {
+  let step = 0;
+  const counts = new Map<string, number>();
+  const model = textModel(() => {
+    const turn = step++ % 4;
+    if (turn === 0 || turn === 1) return [modelTool('read_map', { query: 'Lina' })];
+    if (turn === 2) return [modelTool('read_type_catalog', {})];
+    return [modelMessage('Jag har läst uppgifterna.')];
+  });
+  await setup(model.provider, undefined, async (request, dispatch) => {
+    if (request.method === 'POST' && new URL(request.url).pathname === '/mcp') {
+      const rpc = await request.clone().json();
+      if (rpc.method === 'tools/call')
+        counts.set(rpc.params.name, (counts.get(rpc.params.name) ?? 0) + 1);
+    }
+    return dispatch(request);
+  });
+  let session = await start();
+  session = await message(session, 'Läs uppgifterna om Lina.');
+  session = await message(session, 'Vad vet du om Lina?');
+  expect(counts.get('read_map')).toBe(1);
+  expect(counts.get('read_type_catalog')).toBe(1);
+  expect(counts.get('read_my_draft')).toBe(1);
+  expect(counts.get('read_my_save_operations')).toBe(1);
+
+  // A form in another client changes the draft; the saved map is still current.
+  await webProposal('Lina');
+  const refreshed = await (await browser.get(`${path}/${session.id}`)).json();
+  session = await message(refreshed, 'Läs uppgifterna igen.');
+  expect(counts.get('read_my_draft')).toBe(2);
+  expect(counts.get('read_map')).toBe(1);
+  expect(counts.get('read_type_catalog')).toBe(2);
+
+  const mapPath = path.replace('/text-assistant', '/map');
+  const state = await (await browser.get(mapPath)).json();
+  const saved = await browser.post(`${mapPath}/save`, {
+    headers: { origin: app.origin },
+    data: {
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      operationId: 'external-save',
+    },
+  });
+  expect(saved.status(), await saved.text()).toBe(200);
+  session = await (await browser.get(`${path}/${session.id}`)).json();
+  session = await message(session, 'Läs de sparade uppgifterna.');
+  expect(counts.get('read_map')).toBe(2);
+  expect(JSON.stringify(model.requests.at(-1)?.input)).toContain('Lina');
+  expect(
+    model.requests.some((request) =>
+      request.input.some(
+        (item) =>
+          typeof item.content === 'string' &&
+          item.content.includes('"outdatedReads"') &&
+          item.content.includes('"name":"read_map"'),
+      ),
+    ),
+  ).toBe(true);
+
+  const reset = await browser.post(`${path}/${session.id}/new`, {
+    headers: { origin: app.origin },
+    data: { revision: session.revision },
+  });
+  expect(reset.status(), await reset.text()).toBe(200);
+  await message(await reset.json(), 'Läs uppgifterna i det nya samtalet.');
+  expect(counts.get('read_map')).toBe(3);
+});
+
+test('public activity follows the model and actual MCP work without exposing tool arguments', async () => {
+  let releaseModel: (value: unknown[]) => void = () => {};
+  let releaseTool: () => void = () => {};
+  let toolStarted = false;
+  const heldTool = new Promise<void>((resolve) => {
+    releaseTool = resolve;
+  });
+  const model = textModel(
+    () =>
+      new Promise<unknown[]>((resolve) => {
+        releaseModel = resolve;
+      }),
+  );
+  await setup(model.provider, undefined, async (request, dispatch) => {
+    const rpc =
+      request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+        ? await request.clone().json()
+        : null;
+    if (rpc?.params?.name === 'read_map') {
+      toolStarted = true;
+      await heldTool;
+    }
+    return dispatch(request);
+  });
+  const session = await start();
+  try {
+    const sent = await browser.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data: {
+        revision: session.revision,
+        ...displayedVersion(session),
+        requestId: crypto.randomUUID(),
+        text: 'Läs kartan.',
+      },
+    });
+    expect(sent.status()).toBe(202);
+    const status = async () => (await browser.get(`${path}/${session.id}`)).json();
+    await expect.poll(async () => (await status()).activity).toBe('Bearbetar uppgiften');
+    releaseModel([modelTool('read_map', { query: 'private-query-value' })]);
+    await expect.poll(() => toolStarted).toBe(true);
+    const reading = await status();
+    expect(reading.activity).toBe('Läser kartan via MCP');
+    expect(reading.activitySteps).toEqual([
+      { id: expect.any(String), text: 'Läser kartan via MCP' },
+    ]);
+    expect(JSON.stringify([reading.activity, reading.activitySteps])).not.toContain(
+      'private-query-value',
+    );
+    releaseTool();
+    await expect.poll(() => model.requests.length).toBe(2);
+    await expect.poll(async () => (await status()).activity).toBe('Bearbetar uppgiften');
+    releaseModel([modelMessage('Kartläsningen är klar.')]);
+    await expect.poll(async () => (await status()).phase).toBe('ready');
+    expect((await status()).activity).toBeUndefined();
+    expect((await status()).activitySteps).toEqual(reading.activitySteps);
+  } finally {
+    releaseTool();
+    releaseModel([modelMessage('Klart.')]);
+  }
+});
+
 test.each([
   'Klart. Ändringarna är nu lagrade i hushållets karta.',
   'Saved successfully. The object is selected.',

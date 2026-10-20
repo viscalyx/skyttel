@@ -22,6 +22,8 @@ export function ConversationTranscript({
   computer = false,
   announce = true,
   announceWorking = true,
+  activity,
+  activitySteps = [],
 }: {
   rows: TranscriptRow[];
   /** Skyttel is working on a spoken or a written task. */
@@ -29,6 +31,8 @@ export function ConversationTranscript({
   computer?: boolean;
   announce?: boolean;
   announceWorking?: boolean;
+  activity?: string;
+  activitySteps?: { id: string; text: string }[];
 }) {
   // Opening the text view is not a new reply. Remember its initial history,
   // and consume rows while hidden without announcing them on reopening.
@@ -70,10 +74,27 @@ export function ConversationTranscript({
         {working && (
           <li className="conversation-row working">
             Skyttel arbetar…
+            <span
+              className="conversation-activity"
+              aria-live={announce ? 'polite' : 'off'}
+              aria-atomic="true"
+            >
+              {activity ? ` ${activity}.` : ''}
+            </span>
             {computer && ' Tryck på Escape för att avbryta.'}
           </li>
         )}
       </ol>
+      {activitySteps.length > 0 && (
+        <details className="conversation-activity-details">
+          <summary>Visa arbetssteg</summary>
+          <ul aria-label="Senaste arbetsstegen">
+            {activitySteps.map((step) => (
+              <li key={step.id}>{step.text}</li>
+            ))}
+          </ul>
+        </details>
+      )}
     </>
   );
 }

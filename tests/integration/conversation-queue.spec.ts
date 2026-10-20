@@ -107,7 +107,9 @@ test('KÖ-01: datorn besvarar serverns kö i ordning och Escape avbryter bara i 
     await expect.poll(() => fixtures.held.length).toBe(1);
     await send(page, 'Andra uppdraget.');
     await send(page, 'Tredje uppdraget.');
-    await expect(log(page)).toContainText('Skyttel arbetar… Tryck på Escape för att avbryta.');
+    await expect(log(page)).toContainText(
+      'Skyttel arbetar… Bearbetar uppgiften. Tryck på Escape för att avbryta.',
+    );
     expect(fixtures.held.map((item) => item.message)).toEqual(['Första uppdraget.']);
     fixtures.held[0].release([modelMessage('Första svaret.')]);
     await expect.poll(() => fixtures.held.length).toBe(2);

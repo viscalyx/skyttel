@@ -5,6 +5,7 @@ import { Hono } from 'hono';
 import { toResponseInputItems } from 'openai/lib/responses/ResponseInputItems';
 import type { ResponseInputItem } from 'openai/resources/responses/responses';
 import { z } from 'zod';
+import { assistantToolActivity } from '../shared/assistant-activity.js';
 import { conversationCommand } from '../shared/conversation-command.js';
 import {
   conversationConsentRequired,
@@ -19,6 +20,7 @@ import type {
 import { assistantFailureMessage, newConversationMessage } from './assistant-feedback.js';
 import { textAssistantInstructions } from './assistant-instructions.js';
 import type { ObserveAssistant } from './assistant-observation.js';
+import { assistantReadCache } from './assistant-read-cache.js';
 import type { Auth } from './auth.js';
 import { sessionDeadline } from './browser-binding.js';
 import type { Config } from './config.js';
@@ -67,6 +69,7 @@ type Session = TextAssistantView & {
   householdId: string;
   owner: string;
   mcp: Mcp;
+  reads: ReturnType<typeof assistantReadCache>;
   timer: NodeJS.Timeout;
   task?: AbortController;
   activeMessage?: Message;
@@ -207,6 +210,7 @@ export function textAssistantRoutes({
     onStop?.(session.id);
     session.displayed?.(false);
     session.input = [];
+    session.reads.clear();
     session.conversation = [];
     session.contextOffset = 0;
     session.reply = undefined;
@@ -322,6 +326,8 @@ export function textAssistantRoutes({
           ).operation?.status === 'pending',
       ),
       phase,
+      activity: phase === 'working' ? session.activity : undefined,
+      activitySteps: session.canceled ? undefined : session.activitySteps,
       review,
       reply,
       modelReply,
@@ -468,38 +474,55 @@ export function textAssistantRoutes({
     guard?: () => void,
   ) {
     guard?.();
-    const at = now();
-    observe?.({
-      at,
-      sessionId: session.id,
-      taskId: session.taskId,
-      revision: session.revision,
-      kind: 'mcp_started',
-      data: { name, args },
-    });
+    checkViewAccess(session);
     const work = textWork.getStore();
-    const result = await session.mcp.call(name, args, guard, work?.session === session);
-    guard?.();
     if (work?.session === session) work.guard();
-    observe?.({
-      at: now(),
-      sessionId: session.id,
-      taskId: session.taskId,
-      revision: session.revision,
-      kind: 'mcp_completed',
-      data: { name, result, startedAt: at },
+    const value = await session.reads.read(name, args, async () => {
+      const at = now();
+      if (work?.session === session && session.phase === 'working') {
+        session.activity = assistantToolActivity(name);
+        const steps = session.activitySteps ?? [];
+        if (steps.at(-1)?.text !== session.activity)
+          session.activitySteps = [...steps, { id: randomUUID(), text: session.activity }].slice(
+            -8,
+          );
+      }
+      observe?.({
+        at,
+        sessionId: session.id,
+        taskId: session.taskId,
+        revision: session.revision,
+        kind: 'mcp_started',
+        data: { name, args },
+      });
+      const result = await session.mcp.call(name, args, guard, work?.session === session);
+      guard?.();
+      if (work?.session === session) work.guard();
+      observe?.({
+        at: now(),
+        sessionId: session.id,
+        taskId: session.taskId,
+        revision: session.revision,
+        kind: 'mcp_completed',
+        data: { name, result, startedAt: at },
+      });
+      if (!Array.isArray(result.content)) throw new Error('invalid_tool_result');
+      const text = result.content.find((item) => item.type === 'text');
+      if (!text || typeof text.text !== 'string') throw new Error('invalid_tool_result');
+      const value = JSON.parse(text.text);
+      if (result.isError)
+        throw new MapError(
+          typeof value.error === 'string' ? value.error : 'assistant_tool_failed',
+          409,
+        );
+      return value;
     });
-    if (!Array.isArray(result.content)) throw new Error('invalid_tool_result');
-    const text = result.content.find((item) => item.type === 'text');
-    if (!text || typeof text.text !== 'string') throw new Error('invalid_tool_result');
-    const value = JSON.parse(text.text);
-    if (result.isError)
-      throw new MapError(
-        typeof value.error === 'string' ? value.error : 'assistant_tool_failed',
-        409,
-      );
+    guard?.();
+    checkViewAccess(session);
+    if (work?.session === session) work.guard();
     return value;
   }
+
   // This deliberately narrow command check is not general language
   // verification. Ambiguous, quoted, negative and hypothetical requests need
   // a new clear instruction; a model-supplied approval flag has no authority.
@@ -811,6 +834,9 @@ export function textAssistantRoutes({
     session.summaryOffset = undefined;
     session.contextSummaryState = undefined;
     session.contextSummaries = [];
+    session.reads.clear();
+    session.activity = undefined;
+    session.activitySteps = [];
     session.contextGeneration = 0;
     session.queue = [];
     for (const accepted of session.accepted.values()) accepted.delivery?.stop();
@@ -906,6 +932,15 @@ export function textAssistantRoutes({
         content: JSON.stringify({
           message: text,
           draft: review,
+          saveOperations: session.operations.map(
+            ({ operationId, status, draftVersion, contentVersion }) => ({
+              operationId,
+              status,
+              draftVersion,
+              contentVersion,
+            }),
+          ),
+          outdatedReads: session.reads.outdated(),
           voiceContext: dialogue.length ? JSON.stringify(dialogue) : undefined,
           previousFailure: session.previousFailure
             ? { message: session.previousFailure, historical: true }
@@ -1051,6 +1086,10 @@ export function textAssistantRoutes({
           },
           strict: false,
         });
+        session.activity = 'Bearbetar uppgiften';
+        const outdatedReads = session.reads.outdated();
+        if (outdatedReads.length)
+          session.input.push({ role: 'developer', content: JSON.stringify({ outdatedReads }) });
         const response = await respond(
           `${session.mcp.instructions}\n\n${textAssistantInstructions}`,
           session.input,
@@ -1600,6 +1639,8 @@ export function textAssistantRoutes({
     }
     session.revision++;
     session.phase = 'working';
+    session.activity = 'Förbereder uppgiften';
+    session.activitySteps = [];
     session.resetSource = undefined;
     session.canceled = undefined;
     session.error = undefined;
@@ -1834,18 +1875,23 @@ export function textAssistantRoutes({
     }).catch(() => null);
     if (!mcp) return context.json({ error: 'assistant_connection_failed' }, 503);
     try {
-      const result = await mcp.call('read_my_draft', {});
-      if (result.isError || !Array.isArray(result.content)) throw new Error('draft_unavailable');
-      const text = result.content.find((item) => item.type === 'text');
-      if (!text || typeof text.text !== 'string') throw new Error('draft_unavailable');
-      const review = JSON.parse(text.text) as TextAssistantReview;
+      const owner = contentOwner(database, householdId, actorId);
+      const reads = assistantReadCache(database, householdId, owner);
+      const review = await reads.read('read_my_draft', {}, async () => {
+        const result = await mcp.call('read_my_draft', {});
+        if (result.isError || !Array.isArray(result.content)) throw new Error('draft_unavailable');
+        const text = result.content.find((item) => item.type === 'text');
+        if (!text || typeof text.text !== 'string') throw new Error('draft_unavailable');
+        return JSON.parse(text.text) as TextAssistantReview;
+      });
       contentVersion = review.contentVersion;
       const session: Session = {
         id: randomUUID(),
         actorId,
         browserSessionId,
         householdId,
-        owner: contentOwner(database, householdId, actorId),
+        owner,
+        reads,
         revision: 0,
         phase: 'ready',
         mcp,

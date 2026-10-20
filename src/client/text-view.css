@@ -189,6 +189,19 @@
   max-width: none;
   color: var(--space-muted);
 }
+.conversation-activity-details {
+  color: var(--space-muted);
+  font-size: 14px;
+}
+.conversation-activity-details summary {
+  cursor: pointer;
+  min-height: 24px;
+  padding-block: 4px;
+}
+.conversation-activity-details ul {
+  margin-block: 4px;
+  padding-inline-start: 20px;
+}
 .conversation-row.working::before {
   content: "";
   display: inline-block;

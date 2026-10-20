@@ -77,6 +77,9 @@ export interface TextAssistantView {
   /** An explicitly authorized immutable save is durably registered and unfinished. */
   saving?: boolean;
   phase: 'ready' | 'working' | 'error' | 'recovery';
+  /** Current public executor stage and recent actual MCP steps in this task. */
+  activity?: string;
+  activitySteps?: { id: string; text: string }[];
   review: TextAssistantReview;
   reply?: string;
   /** Provider conversation is never evidence of a saved or displayed result. */

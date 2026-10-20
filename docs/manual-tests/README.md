@@ -431,7 +431,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Textvyn](text-view.md): **Skriv till Skyttel** öppnar och stänger
   textvyn utan att samtalet avslutas, samtalstexten visar vem som skriver
   och raden Skyttel arbetar sist med en roterande ring som följer valet
-  för minskad rörelse. **Nytt samtal** behåller utkast, mikrofon
+  för minskad rörelse. Aktuellt arbetssteg och utfällbara MCP-steg visar
+  vad som händer. **Nytt samtal** behåller utkast, mikrofon
   och oskickad text även vid dubbelklick under fördröjd omstart, och textvyn
   går att använda på pekskärm och smal skärm. Textknappens överlagrade
   markeringar visar skrivet arbete, olästa svar och väntande frågor med

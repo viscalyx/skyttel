@@ -175,10 +175,10 @@ test('TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar s
     await send.click();
     await expect(messageField(page)).toBeFocused();
     await expect(messageField(page)).toHaveValue('');
-    const rows = conversationText(page).getByRole('listitem');
+    const rows = conversationText(page).locator(':scope > li');
     await expect(rows).toHaveText([
       'Du: Vem betalar musiken?',
-      'Skyttel arbetar… Tryck på Escape för att avbryta.',
+      'Skyttel arbetar… Bearbetar uppgiften. Tryck på Escape för att avbryta.',
     ]);
     const working = rows.last();
     const animation = () =>
@@ -195,8 +195,17 @@ test('TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar s
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await expect.poll(animation).toBe('assistant-work-turn');
     await expect(messageField(page)).toBeFocused();
+    await release([modelTool('read_map', { query: 'musik' })]);
+    await expect(working).toContainText('Bearbetar uppgiften.');
+    await textView(page).getByText('Visa arbetssteg', { exact: true }).click();
+    await expect(textView(page).getByRole('list', { name: 'Senaste arbetsstegen' })).toContainText(
+      'Läser kartan via MCP',
+    );
     await release([modelMessage('Kim betalar musiken.')]);
     await expect(rows).toHaveText(['Du: Vem betalar musiken?', 'Skyttel: Kim betalar musiken.']);
+    await expect(textView(page).getByRole('list', { name: 'Senaste arbetsstegen' })).toContainText(
+      'Läser kartan via MCP',
+    );
 
     // The user's text stands in a tinted box to the right; Skyttel's text has its own style.
     await expect(rows.first()).toHaveClass('conversation-row user');
@@ -225,7 +234,9 @@ test('TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar s
     await messageField(page).pressSequentially('rad två');
     await page.keyboard.press('Enter');
     await expect(rows.nth(2)).toHaveText('Du: Rad ett\nrad två');
-    await expect(rows.last()).toHaveText('Skyttel arbetar… Tryck på Escape för att avbryta.');
+    await expect(rows.last()).toHaveText(
+      'Skyttel arbetar… Bearbetar uppgiften. Tryck på Escape för att avbryta.',
+    );
     await expect(messageField(page)).toBeFocused();
     await release([modelMessage('Klart.')]);
     await expect(rows.last()).toHaveText('Skyttel: Klart.');
@@ -256,7 +267,7 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
     await textView(page).getByRole('button', { name: 'Skicka', exact: true }).click();
     await expect.poll(() => held).toBe(true);
     await expect(conversationText(page).getByRole('listitem').last()).toHaveText(
-      'Skyttel arbetar… Tryck på Escape för att avbryta.',
+      'Skyttel arbetar… Bearbetar uppgiften. Tryck på Escape för att avbryta.',
     );
     await messageField(page).fill('Oskickat');
 

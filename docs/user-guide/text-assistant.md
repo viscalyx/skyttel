@@ -127,7 +127,12 @@ samtalstexten och meddelandefältet **Meddelande till Skyttel**.
   Skyttel svarar utan ruta. Det du och Skyttel säger med rösten står där
   också. Raden **Skyttel arbetar…** står sist medan Skyttel arbetar.
   En roterande ring visar arbetet. Ringen är stilla när du har valt
-  minskad rörelse i systemet.
+  minskad rörelse i systemet. Arbetsraden beskriver aktuellt steg, till
+  exempel **Bearbetar uppgiften** eller **Läser kartan via MCP**.
+  **Visa arbetssteg** visar de senaste stegen i uppdraget, även snabba
+  anrop. Stegen finns kvar efter svaret tills nästa uppdrag börjar.
+  MCP är anslutningen som Skyttel använder för att läsa och ändra
+  hushållets uppgifter.
 - **Stäng textvyn** eller **Skriv till Skyttel** stänger textvyn. Samtalet,
   mikrofonen och din oskickade text finns kvar tills du öppnar den igen.
 - **Nytt samtal** börjar ett samtal om inget finns. I ett pågående samtal
@@ -190,6 +195,10 @@ beständiga kvitton, oberoende av om textvyn är öppen. Vid ett oklart
 pågående sparande öppnar **Visa sparandet** dess aktuella status.
 
 ## Samtalets kontext
+
+Skyttel återanvänder hämtade uppgifter mellan meddelanden i samma samtal.
+När underlaget ändras, även från en annan klient, hämtas berörda uppgifter
+på nytt vid behov. **Nytt samtal** börjar med ny samtalskontext.
 
 Under rubriken i textvyn visar **Kontext** hur många procent av samtalets
 kontext som är fylld. Beskrivningen är **Så mycket av samtalets kontext

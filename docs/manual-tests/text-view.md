@@ -99,7 +99,8 @@ avsluta samtalet”.
 
 ### TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar sist
 
-**Syfte:** Skilja din text från Skyttels text och se när Skyttel arbetar.
+**Syfte:** Skilja din text från Skyttels text och följa pågående arbete
+och MCP-steg.
 
 **Användare:** Alex.
 
@@ -122,9 +123,9 @@ Skyttel arbetar sist”.
     "spec": "tests/integration/text-view.spec.ts",
     "caseId": "TEXTVY-02"
   },
-  "reference": "Dator; två hållna svar, klick och Enter samt Shift+Enter. Normal och minskad rörelse.",
+  "reference": "Dator; tre hållna modellsvar med en kartläsning via MCP, klick och Enter samt Shift+Enter. Normal och minskad rörelse.",
   "outcomes": [
-    "Skilja din text från Skyttels text och se när Skyttel arbetar. Arbetsraden visar en roterande ring som är stilla vid minskad rörelse."
+    "Skilja din text från Skyttels text och se när Skyttel arbetar. Arbetsraden visar aktuellt steg och en roterande ring som är stilla vid minskad rörelse. Visa arbetssteg visar kartläsningen via MCP."
   ]
 }
 ```
@@ -139,9 +140,12 @@ Skyttel arbetar sist”.
    bredvid **Skyttel arbetar…** roterar. Aktivera minskad rörelse i
    systemet och kontrollera att ringen är stilla. Återställ normal rörelse
    och kontrollera att den roterar igen. Fältet har kvar fokus.
-3. Låt operatören leverera **Kim betalar musiken.** Läs dina och Skyttels
+3. Låt operatören köra `tool <id> read_map {"query":"musik"}` med det
+   hållna svarets ID i terminalen. Vänta på nästa hållna svar. Välj
+   **Visa arbetssteg** och läs **Läser kartan via MCP**.
+4. Låt operatören leverera **Kim betalar musiken.** Läs dina och Skyttels
    olika rader med respektive talarnamn.
-4. Skriv **Rad ett**, Skift+Retur, **rad två**, Retur. Läs samma meddelandes
+5. Skriv **Rad ett**, Skift+Retur, **rad två**, Retur. Läs samma meddelandes
    två rader och arbetsraden sist. Släpp **Klart.** och läs slutraden.
 
 **Förväntat resultat:**
@@ -151,6 +155,9 @@ Skyttel arbetar sist”.
 - Fältet behåller fokus efter klicket på **Skicka** och efter Retur.
 - Raden **Skyttel arbetar…** står sist medan Skyttel arbetar.
   En roterande ring visar arbetet och är stilla vid minskad rörelse.
+  **Bearbetar uppgiften** visas medan modellsvar inväntas.
+  **Visa arbetssteg** visar **Läser kartan via MCP** efter kartläsningen.
+  Steget finns kvar efter svaret tills nästa uppdrag börjar.
   På dator visar raden även **Tryck på Escape för att avbryta.**
 - Din text och Skyttels text går att skilja åt genom radens utseende.
   Skift+Retur ger en ny rad i samma meddelande.
