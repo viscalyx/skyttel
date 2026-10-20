@@ -388,11 +388,11 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   väntan med mikrofonen av, beständigt kvitto och fyra
   sekunders sparbesked efter ljud eller stopp. Talad och skriven ingång
   har skilda vanliga fall; uppläsning och faktiskt ljud har FRAGA-08/09.
-- [Hela svarstexten](conversation-delivery.md): fullständig tillfällig
-  textreserv, ljudnotis, leverans vid utgång och rensning vid ny inloggning.
-  Korta statusbesked bevarar fokus och upprepas inte vid kvittens.
-  Långa svar rullas med tangentbord i en avgränsad ruta som lämnar plats
-  för kartans verktyg, Inställningar och kartans återkoppling.
+- [Hela svarstexten](conversation-delivery.md): kort notis med Läs mer
+  och stängknapp, fullständig tillfällig svarstext, ljudnotis, leverans vid
+  utgång och rensning vid ny inloggning.
+  Ett kort statusbesked per svar bevarar fokus.
+  Långa svar rullas med tangentbord i den utfällda svarsrutan.
   Saknad leveranskanal lämnar texten oskickad och hindrar röststart
   tills användaren uttryckligen försöker igen.
   Förlust före första uppgiftsnotisen ger tydligt leveransfel; lagrat
@@ -486,7 +486,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   TEXT-04 återfinner den verkliga sparidentifieraren efter genomfört
   sparande med tappat svar och omstart. Varje TEXT-08-storlek har eget ID.
   På smal skärm provas även tangentbordsåtkomst till kartans sammanhang
-  efter ett nytt urval medan hela svaret finns kvar ovanför arbetsytan.
+  efter ett nytt urval medan svaret finns kvar i textvyn.
   [Operatörsförberedelsen](text-conversation-preparation.md) skiljer
   leveransfel och rått protokoll från vanliga UI-steg. Kontrollerade lokala
   leverantörssvar och verklig modellförståelse redovisas separat.
@@ -913,8 +913,8 @@ kontrollerade svar för kontots temaval och samtalstext för 390 px mörkt
 systemtema respektive 1280 px ljust systemtema.
 TEXTBRICKA-04/08 behåller hela serverflödet vid 390 px ljust respektive
 1280 px mörkt; medgivande och HTTP-flöde körs inte separat i de andra två
-kombinationerna. TEXTBRICKA-01/04/08 kontrollerar också att hela svaret har
-eget utrymme ovanför kartan, med fasta knappmått och oförändrad inbördes
-verktygsplacering inom den återstående arbetsytan.
+kombinationerna. TEXTBRICKA-01/04/08 kontrollerar också att svaret visas i
+textvyn, med oförändrad kartstorlek, fasta knappmått och oförändrad
+verktygsplacering.
 HJALP-11/12, TEXTBRICKA-09/10 och YTA-14/15 beskriver faktiskt hjälpmedel,
 fysisk inmatning eller zoom; syntetisk Chromium etablerar dem inte.

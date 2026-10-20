@@ -9,10 +9,11 @@ import {
 } from '../shared/conversation-consent.js';
 import type { SaveOperation, SaveReceipt } from '../shared/map.js';
 import type { SaveCheck } from '../shared/save-check.js';
+import { deliveryFailureNotice } from '../shared/task-delivery.js';
 import type { MapSelection, TextAssistantView } from '../shared/text-assistant.js';
 import type { TranscriptRow } from './ConversationTranscript.js';
 import { MapRequestError, request } from './map-request.js';
-import { TaskDeliveryContext } from './task-delivery.js';
+import { TaskDeliveryContext, TaskDeliveryResultsContext } from './task-delivery.js';
 import { useVoice, type Voice } from './use-voice.js';
 
 const deliveryUnavailableMessage =
@@ -63,6 +64,7 @@ export type Conversation = {
   /** A command is waiting for the server's answer. */
   pending: boolean;
   error: string;
+  deliveryError?: string;
   /** The outcome of a save is unknown and must be checked before new work. */
   unknown: boolean;
   saveChecking?: boolean;
@@ -151,6 +153,7 @@ export function useConversation({
   const household = `/api/households/${encodeURIComponent(householdId)}`;
   const path = `${household}/text-assistant`;
   const delivery = useContext(TaskDeliveryContext);
+  const deliveryResults = useContext(TaskDeliveryResultsContext);
   const consentPath = `${household}/conversation-consent`;
   const [available, setAvailable] = useState<boolean | null>(null);
   const [connected, setConnected] = useState(navigator.onLine);
@@ -1102,6 +1105,9 @@ export function useConversation({
     return () => abort.abort();
   }, [selectionKey, pending, command]);
   const working = session?.phase === 'working';
+  const deliveryFailed = deliveryResults.some(
+    (item) => item.state === 'failed' && session?.tasks?.some((task) => task.id === item.taskId),
+  );
   return {
     available,
     disconnected,
@@ -1126,6 +1132,7 @@ export function useConversation({
     text,
     pending,
     error,
+    deliveryError: deliveryFailed ? deliveryFailureNotice : undefined,
     unknown,
     saveChecking: Boolean(saveChecking && !saveCheckFailed),
     saveCheckFailed,
