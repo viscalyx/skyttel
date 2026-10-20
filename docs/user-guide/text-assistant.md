@@ -126,6 +126,8 @@ samtalstexten och meddelandefältet **Meddelande till Skyttel**.
 - I samtalstexten står det du skriver i en tonad ruta till höger och det
   Skyttel svarar utan ruta. Det du och Skyttel säger med rösten står där
   också. Raden **Skyttel arbetar…** står sist medan Skyttel arbetar.
+  En roterande ring visar arbetet. Ringen är stilla när du har valt
+  minskad rörelse i systemet.
 - **Stäng textvyn** eller **Skriv till Skyttel** stänger textvyn. Samtalet,
   mikrofonen och din oskickade text finns kvar tills du öppnar den igen.
 - **Nytt samtal** börjar ett samtal om inget finns. I ett pågående samtal
@@ -361,10 +363,13 @@ du vill behålla vid en konflikt. Slå på mikrofonen för att svara med rösten
 eller välj **Skriv till Skyttel** för att läsa frågan och skriva ett svar.
 Textvyn öppnas inte automatiskt och frågan visas inte i en separat ruta.
 
-Skyttel ger korta resultatbesked, exempelvis **Utkastet är uppdaterat**
-eller **Sparat**, utan att läsa upp ändringarna efter varje steg.
+I röstläge ger Skyttel korta resultatbesked, exempelvis **Utkastet är
+uppdaterat** eller **Sparat**, utan att läsa upp ändringarna efter varje steg.
 Be om detaljer när du vill höra dem. Nödvändiga följdfrågor och felbesked
 ges även när vanliga bekräftelser är korta.
+
+I textvyn läser du svar, följdfrågor och sparbesked. Välj **Visa utkastet**
+för att läsa föreslagna ändringar.
 
 I samtalstexten visas både dina ord och Skyttels svar löpande. Tidigare
 rader finns kvar under samtalet. Korta pauser kan fortsätta samma rad.
@@ -445,7 +450,14 @@ genom att en sådan visningsbegäran kan nekas.
 
 Ett nytt meddelande avbryter inte pågående arbete. På dator kan du fortsätta
 med **Skicka**: meddelandena väntar på servern och besvaras i ordning.
-Raden **Skyttel arbetar…** visar hur många som väntar. Tryck Escape när
+Raden **Skyttel arbetar…** visas under arbetet. När alla väntande
+meddelanden har behandlats kommer ett kort slutsvar i vanlig svenska,
+till exempel **Lina och Kajsa lades till. Lina och Kajsa använder Spotify.**
+Svaret beskriver de bekräftade utkaständringarna. Om någon del återstår
+säger Skyttel vad som hindrade den eller ställer en riktad fråga.
+Öppna **Visa utkastet** för att granska förslagen före sparande.
+
+Tryck Escape när
 fokus är i textvyn för att avbryta arbete och allt som väntar. Escape gör
 ingenting när Skyttel bara talar eller fokus är utanför textvyn.
 

@@ -293,7 +293,7 @@ for (const seeded of [false, true]) {
       const value = { ...lo.after, name: 'Lo Senaste' } as Record<string, unknown>;
       for (const key of ['id', 'householdId', 'revision']) delete value[key];
       command(render(batch, item, { LO: lo.id, VALUE: JSON.stringify(value) }));
-      await expect(log).toContainText('Utkastet är uppdaterat.');
+      await expect(log.locator('.working')).toHaveCount(0);
       await expect
         .poll(
           async () =>

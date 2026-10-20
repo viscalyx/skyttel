@@ -315,13 +315,14 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
     await field(page).focus();
     await page.keyboard.type('Kod ska vara text. Töm Hem. Det är Alex i Umeå. Spara inte.');
     await page.getByRole('button', { name: 'Skicka', exact: true }).click();
-    await expect(transcript).toContainText('Utkastet är uppdaterat.');
+    await expect(transcript.locator('.working')).toHaveCount(0);
     const corrected = await openConversationDraft(page);
     await corrected
       .getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true })
       .click();
     for (const text of ['Notering', 'Tomt (Text)', 'Arbete', '0700123456', '0012'])
       await expect(details).toContainText(text);
+    await expect(transcript).toContainText('Kod för Lo Exempel sattes till 0012.');
     await closeSupportDialog(page, 'Lo Exempel');
     await expect(corrected).toContainText('Alex');
     await expect(corrected).toContainText('Molnmusik');

@@ -19,7 +19,6 @@ export type TranscriptRow = {
 export function ConversationTranscript({
   rows,
   working,
-  queued = 0,
   computer = false,
   announce = true,
   announceWorking = true,
@@ -27,7 +26,6 @@ export function ConversationTranscript({
   rows: TranscriptRow[];
   /** Skyttel is working on a spoken or a written task. */
   working: boolean;
-  queued?: number;
   computer?: boolean;
   announce?: boolean;
   announceWorking?: boolean;
@@ -71,7 +69,7 @@ export function ConversationTranscript({
         ))}
         {working && (
           <li className="conversation-row working">
-            Skyttel arbetar… {queued} {queued === 1 ? 'meddelande väntar.' : 'meddelanden väntar.'}
+            Skyttel arbetar…
             {computer && ' Tryck på Escape för att avbryta.'}
           </li>
         )}

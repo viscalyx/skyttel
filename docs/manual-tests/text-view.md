@@ -122,9 +122,9 @@ Skyttel arbetar sist”.
     "spec": "tests/integration/text-view.spec.ts",
     "caseId": "TEXTVY-02"
   },
-  "reference": "Dator; två hållna svar, klick och Enter samt Shift+Enter.",
+  "reference": "Dator; två hållna svar, klick och Enter samt Shift+Enter. Normal och minskad rörelse.",
   "outcomes": [
-    "Skilja din text från Skyttels text och se när Skyttel arbetar."
+    "Skilja din text från Skyttels text och se när Skyttel arbetar. Arbetsraden visar en roterande ring som är stilla vid minskad rörelse."
   ]
 }
 ```
@@ -135,7 +135,10 @@ Skyttel arbetar sist”.
 
 1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn och läs tom samtalstext.
 2. Skriv **Vem betalar musiken?**, klicka Skicka och läs den sista
-   arbetsraden medan operatören håller svaret. Fältet har kvar fokus.
+   arbetsraden medan operatören håller svaret. Kontrollera att ringen
+   bredvid **Skyttel arbetar…** roterar. Aktivera minskad rörelse i
+   systemet och kontrollera att ringen är stilla. Återställ normal rörelse
+   och kontrollera att den roterar igen. Fältet har kvar fokus.
 3. Låt operatören leverera **Kim betalar musiken.** Läs dina och Skyttels
    olika rader med respektive talarnamn.
 4. Skriv **Rad ett**, Skift+Retur, **rad två**, Retur. Läs samma meddelandes
@@ -147,8 +150,8 @@ Skyttel arbetar sist”.
   **Här visas det du och Skyttel säger och skriver.**
 - Fältet behåller fokus efter klicket på **Skicka** och efter Retur.
 - Raden **Skyttel arbetar…** står sist medan Skyttel arbetar.
-  Raden visar **0 meddelanden väntar. Tryck på Escape
-  för att avbryta.** på dator.
+  En roterande ring visar arbetet och är stilla vid minskad rörelse.
+  På dator visar raden även **Tryck på Escape för att avbryta.**
 - Din text och Skyttels text går att skilja åt genom radens utseende.
   Skift+Retur ger en ny rad i samma meddelande.
 - De semantiska talarnamnen finns. Faktiskt hörda talare har separat

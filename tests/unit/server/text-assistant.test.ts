@@ -708,7 +708,14 @@ test.each(['draft', 'save'])(
     expect(model.requests).toHaveLength(1);
     const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
     if (completion === 'draft') {
-      expect(status.result).toEqual({ kind: 'draft', message: 'Utkastet är uppdaterat.' });
+      expect(status.result).toMatchObject({
+        kind: 'draft',
+        message: 'Utkastet är uppdaterat.',
+        changes: [
+          { subject: 'bike', action: 'lades till' },
+          { subject: 'helmet', action: 'lades till' },
+        ],
+      });
       expect(status.modelReply).toBe('Vem använder cykeln?');
       expect(map.draft.changes.map(({ id }: { id: string }) => id)).toEqual([
         'web-object',

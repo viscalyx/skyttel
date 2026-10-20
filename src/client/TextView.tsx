@@ -269,7 +269,6 @@ export function TextView({
             <ConversationTranscript
               rows={transcript}
               working={working}
-              queued={session?.queuedMessages ?? 0}
               computer={computer}
               announce={!hidden}
               announceWorking={false}

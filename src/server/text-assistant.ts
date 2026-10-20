@@ -30,6 +30,7 @@ import {
   historicalSummary,
   summarizeConversation,
 } from './conversation-summary.js';
+import { draftUpdateDetails } from './draft-completion.js';
 import { householdAccess } from './households.js';
 import { householdMap, MapError } from './map.js';
 import { checkSaves } from './save-check.js';
@@ -1401,6 +1402,10 @@ export function textAssistantRoutes({
               session.result = {
                 kind,
                 message: kind === 'restored' ? 'Återställt i utkastet.' : 'Utkastet är uppdaterat.',
+                changes: [
+                  ...(session.result?.changes ?? []),
+                  ...draftUpdateDetails(before, session.review),
+                ],
               };
             }
           }
@@ -1727,14 +1732,17 @@ export function textAssistantRoutes({
         )
           session.completedReplies?.push({
             id: message.id,
+            request: message.text,
             text: session.modelReply ?? '',
             revision,
             source: message.voice ? 'voice' : 'text',
             reply: session.reply,
             requiredNotice: session.requiredNotice,
             questionPending: view(session).questionPending,
+            questions: session.questions,
             receipt: session.receipt,
             result: session.result,
+            failed: Boolean(session.error),
           });
         session.task = undefined;
         session.activeMessage = undefined;

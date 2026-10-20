@@ -430,7 +430,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 
 - [Textvyn](text-view.md): **Skriv till Skyttel** öppnar och stänger
   textvyn utan att samtalet avslutas, samtalstexten visar vem som skriver
-  och raden Skyttel arbetar sist, **Nytt samtal** behåller utkast, mikrofon
+  och raden Skyttel arbetar sist med en roterande ring som följer valet
+  för minskad rörelse. **Nytt samtal** behåller utkast, mikrofon
   och oskickad text även vid dubbelklick under fördröjd omstart, och textvyn
   går att använda på pekskärm och smal skärm. Textknappens överlagrade
   markeringar visar skrivet arbete, olästa svar och väntande frågor med
@@ -451,7 +452,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Samtalets kö och avbrott](conversation-queue.md): serverns kö på dator,
   fokusstyrd Escape, stopp på mobil och smal skärm, talade och skrivna
   uppdrag samt kvarvarande utkast, oskickad text och återkoppling.
-  KÖ-05 avser verklig utrustning.
+  KÖ-05 avser verklig utrustning. KÖ-06 provar ett samlat slutbesked
+  med utkaständringar, misslyckade uppdrag och kvarstående frågor.
 - [Röst och text i samma samtal](conversation-voice-text.md): skrivna svar
   med röst när mikrofonen är på, text när den är av, ordnad överlämning av
   långa svar, kvarvarande samtalstext och artig uppläsning bara av nya

@@ -37,6 +37,10 @@ Ett svar på en följdfråga gäller den väntande delen; behåll redan utförda
 Kontrollera begärda värden och samband samt att tidigare förslag finns kvar.
 Utkastdelen är klar när verktygsresultatet visar de
 entydiga beställda ändringarna och återstående oklarheter har riktade frågor.
+När ett uppdrag avslutas: återge kvarstående obesvarade frågor från samtalet,
+även när det senaste meddelandet gäller en annan uppgift. Ta bort en fråga
+först när användarens svar och verktygsresultaten löser den berörda uppgiften.
+Beskriv konkret vilka beställda delar som inte kunde göras och varför.
 
 ### Egenskaper och datatyper
 Respektera användarens uttryckliga datatyp. Härled bara en datatyp när värde,
