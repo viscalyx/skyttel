@@ -206,6 +206,7 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
           contentVersion: turn.draft.contentVersion,
           completion: 'draft',
           questions: [],
+          continueResponse: true,
           operations: [
             {
               name: 'propose_object',
@@ -234,6 +235,8 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
           ],
         }),
       ];
+    if (call === 3)
+      return [modelTool('ask_questions', { questions: [], answeredQuestions: questions })];
     return [
       modelTool('save_draft', {
         version: turn.draft.version,
