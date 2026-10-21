@@ -565,8 +565,8 @@ mikrofonen stängs. Skyttel skickar eller startar ingenting automatiskt
 när kontakten kommer tillbaka.
 
 Om instruktionen redan är mottagen men anslutningen sedan bryts får du
-ett leveransfel. Redan lagrat utkast och sparresultat finns kvar; kontrollera dem
-innan du ber om samma arbete igen.
+ett leveransfel. Redan lagrat utkast och sparresultat finns kvar; kontrollera
+dem innan du ber om samma arbete igen.
 
 Under samtalet visas svaren i textvyn **Skriv till Skyttel**. Långa svar
 rullas i textvyn.
