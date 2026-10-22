@@ -6,6 +6,18 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Deployment after a failed update
+
+New releases from main deploy after the release checks pass even if the
+previous deployment fails or the old application is unavailable. The job
+waits for active deployments to finish. You do not need to deploy an image
+manually to unblock a corrected release. Keep the existing disk and database.
+
+Rerunning a failed release job can deploy the same image again. Review the
+failure before retrying. The replacement must pass health, release identity,
+database readiness and smoke checks before the job reports success. Verify
+household access before reopening the service after recovery.
+
 ### Authentication client-address configuration
 
 Before upgrade, choose an explicit client-address source in the host's

@@ -819,7 +819,9 @@ older job uses its original script.
 | `database_initialization_failed` with `unsupported_database_format` | Diagnose the database validation failure with a maintainer; do not edit format markers. |
 | `database_initialization_failed` | Inspect the safe reason in private logs. Check free disk space and write permission for UID/GID 1000; ask a maintainer to repair permissions if needed. Preserve the existing database. |
 | A migration or deployment is still running | Wait. A GitHub timeout does not cancel Render. Do not cancel the migration or start a competing deployment. |
-| `previous_deployment_requires_diagnosis` or an image mismatch | Reconcile the failed or canceled deployment, saved image, running image, and database state in an attended maintenance window before retrying. |
+| `previous_deployment_status_unknown` | Inspect the latest deployment in Render. The job must recognize that it has finished before starting a replacement. |
+| `previous_deployment_requires_diagnosis` in an older release job | Use a release from main with the current deployment controller. Rerunning the older job uses its original controller and can block on the same failed deployment. |
+| An image mismatch after deployment | Compare the saved image, running image and release evidence. Resolve the mismatch before reopening access. |
 | `superseded` | Use the latest main release run whose push changes production inputs. The older candidate is intentionally skipped. |
 | `main_comparison_incomplete` | A maintainer must inspect the source comparison. Missing or potentially truncated evidence cannot authorize an older release. Use the latest eligible release when production inputs differ. |
 <!-- markdownlint-enable MD013 -->
@@ -838,18 +840,23 @@ screenshots, cookies, credentials, raw provider responses, or full logs.
 
 ### Repair forward after a failed update
 
-Keep user access closed while diagnosing an unsuccessful update. Confirm
-the database format and deployment state before choosing a corrected image.
-Preserve existing household work; resetting its content is not a repair step.
+Merge the correction to main. After the release checks and publication pass,
+the deployment job waits for any active deployment to finish, then deploys
+the new image even if the previous deployment fails or is canceled. The old
+application does not need to respond or report a ready database. A failed
+deployment does not require a manual deployment to unblock the next release.
 
-Use a corrected newer image for application failures. Verify
-its release evidence, wait for active deployments to finish, and set the
-saved image reference to that digest. Deploy the saved reference and
-verify its live digest, database readiness, anonymous page and household
-access before reopening. Retry the release job only after the service
-and database are reconciled. Older application versions and image
-rollback are unsupported. Restoring data is a separate controlled
-operation and must never restore old authentication authority.
+Rerunning an eligible release job also starts a deployment if the previous
+attempt fails, even when the requested image is the same. If that image is
+already live and matches the saved reference, the job verifies it without
+restarting it. Unknown deployment states stop the job for investigation.
+
+The replacement must pass image identity, health, database readiness and
+smoke checks before the job reports success. Keep user access closed during
+recovery and verify household access before reopening. Preserve the existing
+disk and household work. Older application versions and image rollback are
+unsupported. Restoring data is a separate controlled operation and must
+never restore old authentication authority.
 
 ## What automated checks cover
 
