@@ -67,7 +67,8 @@ For each completed sub-issue:
 2. Cherry-pick its returned commits onto the integration branch in dependency
    order. Resolve conflicts without discarding accepted work already
    integrated.
-3. Run the checks affected by the combined result.
+3. Run the checks affected by the combined result. Call the Skill tool with
+   "select-integration-tests" to determine integration coverage and verification status.
 4. After the work and checks pass, comment on both the sub-issue and the **Spec**
    with the summary, verification results, and integrated commit reference.
 5. Close the sub-issue.
@@ -82,18 +83,20 @@ passed verification.
 
 ### 5. Review the integrated result
 
-- Run the repository's full required checks on the integration branch.
+- Verify the combined result through step 4's checks.
 - Call the Skill tool with "code-review" with the recorded starting commit as the fixed point
   and the **Spec** as the spec source.
 - For each actionable finding, dispatch a repair agent in a fresh worktree on a
   new base commit. Give it the finding and relevant issue context, require it to
   call the Skill tool with "implement", then integrate and verify its commit.
-- Repeat the full checks and call the Skill tool with "code-review" after each
-  repair wave until both the Standards and Spec axes have no unresolved findings.
+- Verify each repair wave through step 4's checks, and call the Skill tool
+  with "code-review" until both the Standards and Spec axes have no
+  unresolved findings.
 - Count a finding as resolved only when it is fixed or shown not to violate the
   cited **Spec** or repository standard.
 - Record repair summaries and commit references on the **Spec** and any affected
   sub-issue.
 
-Completion criterion: the full checks pass, both review axes have no unresolved
-findings, all sub-issues remain closed, and the **Spec** remains open.
+Completion criterion: required checks have valid passing evidence, both review
+axes have no unresolved findings, all sub-issues remain closed, and the **Spec**
+remains open.
