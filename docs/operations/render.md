@@ -408,6 +408,9 @@ and update the GitHub `production` environment's `SKYTTEL_ORIGIN` as well.
 
 ## 5. Enter the application configuration in Render
 
+Complete the client-address trust review below before enabling header
+trust. Save these settings together with the rest of the configuration.
+
 1. On the Render service page, open **Environment**.
 1. Under **Environment Variables**, choose **Add Environment Variable** for
    each row below. Edit any existing entry instead of creating a duplicate.
@@ -428,6 +431,9 @@ and update the GitHub `production` environment's `SKYTTEL_ORIGIN` as well.
    | `MICROSOFT_CLIENT_SECRET` | The Microsoft application's client secret value. |
    | `HOST` | `0.0.0.0` |
    | `PORT` | `3000` |
+   | `SKYTTEL_CLIENT_ADDRESS_MODE` | `header`, after the origin-protection review below. |
+   | `SKYTTEL_CLIENT_ADDRESS_HEADER` | `CF-Connecting-IP`, verified on every supported ingress route. |
+   | `SKYTTEL_CLIENT_ADDRESS_TRUST` | `protected-origin`, only when every other origin-access path is blocked or explicitly trusted. |
    <!-- markdownlint-enable MD013 -->
 
 1. Choose **Save and deploy** to apply the configuration. If you choose
@@ -452,6 +458,40 @@ step 7; it is not an application environment variable.
 > create its first household. Complete the production administrator lookup
 > in step 6, replace the subject, and use **Save and deploy** again. Do not
 > substitute an email address or select an arbitrary signed-in account.
+
+### Client-address trust on Render
+
+Use the single-address `CF-Connecting-IP` source only after verifying that
+ingress owns it on every supported public route, including custom and
+platform-provided hostnames. Check that caller input is overwritten or
+rejected. Multi-hop forwarding can preserve caller-supplied leading entries
+and vary in length; neither the leftmost address nor a fixed hop count is
+a safe client source. Do not build a peer allowlist from sampled addresses.
+
+Public ingress protection and private-network reachability are separate.
+Render services in the same workspace and region can communicate privately.
+Inventory those callers and their owners in private operator records.
+With `protected-origin`, every caller able to reach the origin privately
+is inside the trusted administrative boundary and can supply the header.
+Block untrusted callers with enforceable controls before enabling this
+mode. A successful public probe does not prove private-network isolation.
+
+Cross-environment network blocking requires an eligible plan and still
+permits traffic within an environment. A protected environment controls
+administrative actions; it does not establish network isolation. An
+unavailable subscription control proves nothing about isolation. Review
+[Render private networking](https://render.com/docs/private-network) and
+[environment network controls](https://render.com/docs/projects#blocking-cross-environment-traffic).
+This procedure does not require or authorize a plan purchase.
+
+Review the boundary again before adding services, changing ownership or
+exposing another origin route. Leave `SKYTTEL_CLIENT_ADDRESS_PEERS` unset
+in this mode. Follow the
+[verification and diagnosis procedure](installation.md#verify-and-diagnose-the-boundary)
+with private records and temporary probes. After deployment, verify login
+through each supported route. A missing or invalid selected address causes
+HTTP 503 and an address-free diagnostic; it never falls back to another
+header. Do not use `direct` behind Render ingress to bypass this failure.
 
 ## 6. Verify the first live application
 
