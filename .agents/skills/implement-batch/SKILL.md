@@ -67,9 +67,13 @@ For each completed sub-issue:
 2. Cherry-pick its returned commits onto the integration branch in dependency
    order. Resolve conflicts without discarding accepted work already
    integrated.
-3. Run the checks affected by the combined result. Call the Skill tool with
-   "select-integration-tests" to determine integration coverage and verification status.
-4. After the work and checks pass, comment on both the sub-issue and the **Spec**
+3. Call the Skill tool with "select-integration-tests" for the combined
+   result before running checks. Execute its required integration scenarios
+   alongside other affected checks, then call the Skill tool with
+   "select-integration-tests" again with the results to assess verification
+   status.
+4. After the work and checks pass and integration verification is complete,
+   comment on both the sub-issue and the **Spec**
    with the summary, verification results, and integrated commit reference.
 5. Close the sub-issue.
 
