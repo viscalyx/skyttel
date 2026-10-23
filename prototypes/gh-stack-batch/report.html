@@ -107,6 +107,11 @@ resultatcommits och målgrenens innehåll. Fem squashcommits kan motsvara en
 atomisk operation. Grenar, worktrees och lägesanteckningar bevaras tills
 utfallet är säkrat. Ett nätverksfel eller en utgången statuslänk räcker inte
 som bevis för att inget införs.</p>
+<p><a href="after-merge.py">Efterkontrollen</a> läser PR-status, jämför
+resultatets Git-träd med det verifierade trädet och kontrollerar att
+resultatet är nåbart från målgrenen. Den skickar ingen mergebegäran och
+tar inte bort något. Före merge visar provet korrekt att ingen PR är införd,
+även när API:t redan ger preliminära merge_commit_sha-värden.</p>
 <h2>Körning och underlag</h2>
 <p>Alla fixturkontroller körs genom repositoryts npm-skript och gemensamma
 processlås. Inga billbara modell- eller röstanrop ingår. Den klickbara
