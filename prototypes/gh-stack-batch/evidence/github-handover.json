@@ -1,0 +1,154 @@
+{
+  "repository": "johlju/DebugApps",
+  "observed_at": "2026-10-23T20:11:38.498579+00:00",
+  "stack": 86,
+  "target": {
+    "ref": "wf528-main",
+    "sha": "683fdd6bfdfcbdb6783bebaf4fa08b400c9a6468"
+  },
+  "pull_requests": [
+    {
+      "number": 83,
+      "title": "Prototyp A: första parallella delresultatet",
+      "html_url": "https://github.com/johlju/DebugApps/pull/83",
+      "state": "open",
+      "draft": false,
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "stack": {
+        "base": {
+          "ref": "wf528-main",
+          "sha": "683fdd6bfdfcbdb6783bebaf4fa08b400c9a6468"
+        },
+        "id": 2549568,
+        "number": 86,
+        "position": 1,
+        "size": 5
+      },
+      "head": {
+        "ref": "wf528-A",
+        "sha": "1fc1e6887f5e4e3b5aa3499d9b3ad3cb2d1301ea"
+      },
+      "base": {
+        "ref": "wf528-main",
+        "sha": "683fdd6bfdfcbdb6783bebaf4fa08b400c9a6468"
+      },
+      "check_runs": []
+    },
+    {
+      "number": 84,
+      "title": "Prototyp B: andra parallella delresultatet",
+      "html_url": "https://github.com/johlju/DebugApps/pull/84",
+      "state": "open",
+      "draft": false,
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "stack": {
+        "base": {
+          "ref": "wf528-main",
+          "sha": "683fdd6bfdfcbdb6783bebaf4fa08b400c9a6468"
+        },
+        "id": 2549568,
+        "number": 86,
+        "position": 2,
+        "size": 5
+      },
+      "head": {
+        "ref": "wf528-B",
+        "sha": "541ec967241bda174909231d79965161b00a29af"
+      },
+      "base": {
+        "ref": "wf528-A",
+        "sha": "1fc1e6887f5e4e3b5aa3499d9b3ad3cb2d1301ea"
+      },
+      "check_runs": []
+    },
+    {
+      "number": 85,
+      "title": "Prototyp D: arbete som endast behöver A",
+      "html_url": "https://github.com/johlju/DebugApps/pull/85",
+      "state": "open",
+      "draft": false,
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "stack": {
+        "base": {
+          "ref": "wf528-main",
+          "sha": "683fdd6bfdfcbdb6783bebaf4fa08b400c9a6468"
+        },
+        "id": 2549568,
+        "number": 86,
+        "position": 3,
+        "size": 5
+      },
+      "head": {
+        "ref": "wf528-D",
+        "sha": "f98c62cc242ba9be6e189c2522faca68c0cd0173"
+      },
+      "base": {
+        "ref": "wf528-B",
+        "sha": "541ec967241bda174909231d79965161b00a29af"
+      },
+      "check_runs": []
+    },
+    {
+      "number": 87,
+      "title": "Prototyp R: nytt reparationslager efter granskning",
+      "html_url": "https://github.com/johlju/DebugApps/pull/87",
+      "state": "open",
+      "draft": false,
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "stack": {
+        "base": {
+          "ref": "wf528-main",
+          "sha": "683fdd6bfdfcbdb6783bebaf4fa08b400c9a6468"
+        },
+        "id": 2549568,
+        "number": 86,
+        "position": 4,
+        "size": 5
+      },
+      "head": {
+        "ref": "wf528-R",
+        "sha": "7c6543ce6a2109c19b61b0b3d4cd1fbd246bde88"
+      },
+      "base": {
+        "ref": "wf528-D",
+        "sha": "f98c62cc242ba9be6e189c2522faca68c0cd0173"
+      },
+      "check_runs": []
+    },
+    {
+      "number": 88,
+      "title": "Prototyp C: gemensamt efterföljande steg",
+      "html_url": "https://github.com/johlju/DebugApps/pull/88",
+      "state": "open",
+      "draft": false,
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "stack": {
+        "base": {
+          "ref": "wf528-main",
+          "sha": "683fdd6bfdfcbdb6783bebaf4fa08b400c9a6468"
+        },
+        "id": 2549568,
+        "number": 86,
+        "position": 5,
+        "size": 5
+      },
+      "head": {
+        "ref": "wf528-C",
+        "sha": "689ec7dd3a9ee961a93d739ae72c6bb879ab59fe"
+      },
+      "base": {
+        "ref": "wf528-R",
+        "sha": "7c6543ce6a2109c19b61b0b3d4cd1fbd246bde88"
+      },
+      "check_runs": []
+    }
+  ],
+  "verified_tree": "b307fece4def0bf0b60215e7f1a701adc88aac59",
+  "verification": "npm run test:env -- npm --prefix /tmp/wayfinder-528-remote run verify: PASS",
+  "merge_requested": false
+}

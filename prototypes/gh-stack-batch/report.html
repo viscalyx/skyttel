@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="sv"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kastbart försök: gh-stack och parallella delärenden</title>
+<style>body{font:17px/1.6 system-ui;max-width:1000px;margin:3rem auto;padding:0 1rem;color:#17233b}h1,h2{line-height:1.2}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:.65rem;border:1px solid #b7c1cf;vertical-align:top}code,pre{background:#edf1f6}pre{padding:1rem;overflow:auto}a{color:#1458a9}.note{border-left:4px solid #1458a9;padding-left:1rem}</style>
+<h1>Kastbart försök: gh-stack och parallella delärenden</h1>
+<p>Underlag för bedömning, 23 oktober 2026. Ingen ändring av implement-batch.
+<a href="demo.html">Öppna den klickbara modellen</a>.</p>
+<p class="note"><strong>Resultat hittills:</strong> båda lokala flödena ger samma
+innehåll och kräver samma konflikträttning i detta exempel. Gh-stack hanterar
+ombasering mellan överlämnade worktrees och en verklig växande PR-stack.
+En nettominskning av orkestratorns arbete är ännu inte visad.
+Användarens merge och bedömning återstår.</p>
+<h2>Vad som faktiskt körs</h2>
+<p>Två nyskapade lokala Git-repositoryn får samma scenario. A och B börjar på
+varsin fast bas. A ändrar a till 1, B ändrar b till 2 på samma rad i en
+JSON-fil. D behöver bara A och lämnas med ocommittat arbete när B integreras.
+C behöver A+B och lämnas aktiv när D och reparation R integreras.
+Ordningen för accepterade lager blir A, B, D, R, C.</p>
+<p>Aktiva agenter representeras av separata worktrees, fasta grentoppar och
+pågående filändringar. Ingen separat agentsession eller samtidig skrivande
+process körs. Handoff är ett explicit steg i försöket, inte något verktyget
+kan härleda från ett rent worktree.</p>
+<p>Baslinjen cherry-pickar till en integrationsgren. Kandidaten registrerar
+överlämnade grenar i en växande stack och kör ombasering utan målgrenshämtning.
+Båda använder rerere. Den körda Linux-binären är gh-stack 0.2.0 med SHA-256
+<code>577065033b49d4505730ea0ad43ab1b0374b0d9b1308e9765647a6aa8eba3cb7</code>.</p>
+<table><thead><tr><th>Observation</th><th>Cherry-pick</th><th>Gh-stack</th></tr></thead><tbody>
+<tr><td>Samlat slutresultat</td><td colspan="2">Identiskt Git-träd: <code>b217f58547cc3f2bb70fee5623e49429c70b94f5</code></td></tr>
+<tr><td>Konflikter</td><td>En vid B</td><td>En vid B</td></tr>
+<tr><td>Underkänd integrerad kontroll</td><td colspan="2">En avsiktligt ofullständig konflikträttning tappar A. Kontrollen fångar det; ny tilldelning väntar tills rättningen är verifierad.</td></tr>
+<tr><td>Senare granskningsfynd</td><td colspan="2">D har avsiktligt fel värde 999. R rättar till 10 i ett nytt lager. C:s pågående arbete förblir orört.</td></tr>
+<tr><td>Fasta baser</td><td colspan="2">B, D och C behåller både grentopp och pågående filinnehåll under andra integrationer.</td></tr>
+<tr><td>Integrationskommandon i detta försök</td><td>5 cherry-pick + 1 continue</td><td>1 init + 4 add + 4 rebase + 1 continue</td></tr>
+<tr><td>Återupptagning</td><td>Git-markör i integrationsworktreet samt lägesanteckning</td><td>Delad gh-stack-journal samt lägesanteckning; continue från A återupptar B i dess ägarworktree</td></tr>
+<tr><td>Verifieringar</td><td colspan="2">5 godkända integrerade steg och 1 avsiktligt underkänd kontroll per flöde</td></tr>
+<tr><td>Införande före slutgranskning</td><td colspan="2">Inget. main ligger kvar på starten medan delärenden markeras klara i modellen.</td></tr>
+</tbody></table>
+<p>Kommandoräkningen avser bara de namngivna integrationskommandona, inte alla
+Git-anrop, handoffs, kontroller, PR-anrop eller förfluten tid. Exemplet är litet
+och avsiktligt konstruerat; det är ingen tids- eller resursbenchmark.</p>
+<h2>Avbrott, kontroll och spårbarhet</h2>
+<p>Konflikten avbryter Git-kommandot. En lägesanteckning sparar operation,
+ägare, ursprungliga grentoppar och senast verifierade commit. Nya processer
+läser anteckningen och Git-tillståndet före continue. Försöket dödar inte en
+process mitt under en skrivning och bevisar inte återhämtning från ett sådant
+avbrott. Ursprungliga grentoppar bevaras under refs/prototype/original.</p>
+<p>En lyckad ombasering följs av en avsiktligt underkänd innehållskontroll.
+Det visar varför kommandoresultat inte räcker som bevis för godkänd integration.
+D:s senare fel är avsiktligt missat av en otillräcklig första kontroll och
+upptäcks vid specifikationsgranskning. Inga verkliga trackerärenden stängs
+av försöket; deras tillstånd finns i händelseloggen.</p>
+<p>En lokal illustration skapar nya squashcommits med samma slutträd men utan
+att den ursprungliga stackspetsen är anfader. Det visar behovet av
+innehållskontroll efter squash, men säger inget om GitHubs faktiska mergeutfall.</p>
+<h2>Verkligt publiceringsprov i DebugApps</h2>
+<p>En separat syntetisk fixtur publiceras i användarens testrepository. Dess
+commits byggs redan i lagerordning; detta är inte en fortsättning av de lokala
+konfliktrepositoryna. Helhetskontrollen passerar för <code>a=1, b=2, d=10, c=3</code>.</p>
+<ul>
+<li><a href="https://github.com/johlju/DebugApps/pull/83">Prototyp A: första parallella delresultatet</a></li>
+<li><a href="https://github.com/johlju/DebugApps/pull/84">Prototyp B: andra parallella delresultatet</a></li>
+<li><a href="https://github.com/johlju/DebugApps/pull/85">Prototyp D: arbete som endast behöver A</a></li>
+<li><a href="https://github.com/johlju/DebugApps/pull/87">Prototyp R: nytt reparationslager efter granskning</a></li>
+<li><a href="https://github.com/johlju/DebugApps/pull/88">Prototyp C: gemensamt efterföljande steg</a></li>
+</ul>
+<p>Fem vanliga draft-PR:er skapas med explicita baser och body-filer.
+Gh-stack submit registrerar först A+B+D som en inbyggd stack. R ansluts sedan
+med add och submit, följt av C. Samma serverstack växer från tre till fyra
+och fem PR:er. Ett avslutande submit --auto --open gör samtliga redo för
+granskning. API:t bekräftar ordning, basgrenar och positioner.</p>
+<p>Detta verifierar registrering och utökning av befintliga PR:er. Gh-stacks
+egen automatiska skapelse av nya PR:er är inte prövad. Stacken har fem
+separata diffar och reparationslagret är synligt utan att skriva om D.
+Baslinjen kräver inga PR:er per delärende; en vanlig gemensam PR är en
+annan möjlighet. Om de fem granskningsytorna är värda arbetet behöver
+användaren bedöma.</p>
+<p>Inga Actions-körningar eller check runs observeras för försöket. Det är
+inte ett mått på Skyttels CI-kostnad: fixturen saknar dess arbetsflöden och
+grenregler. DebugApps befintliga Reviewable-integration tillför automatiskt
+en länk i varje PR-beskrivning. Inga repositoryinställningar ändras.</p>
+<h2>Överlämning och kvarstående lucka</h2>
+<p>Målgren: <code>wf528-main</code>, granskad målcommit
+<code>683fdd6bfdfcbdb6783bebaf4fa08b400c9a6468</code>.
+Verifierad stackspets: <code>689ec7dd3a9ee961a93d739ae72c6bb879ab59fe</code>.
+Verifierat slutträd: <code>b307fece4def0bf0b60215e7f1a701adc88aac59</code>.</p>
+<p><a href="evidence/github-handover.json">Överlämningsfilen</a> innehåller
+alla PR:er, exakta grentoppar och baser, stackmedlemskap och kontrollresultat.
+<a href="preflight.py">Den skrivskyddade förkontrollen</a> jämför dem med
+GitHub och passerar vid avläsningen. Den skickar ingen mergebegäran.</p>
+<p>I det lokala försöket stoppar motsvarande jämförelse när målgrenen eller
+en lägre grentopp ändras. En lägre grentopp kan ändras medan översta grenens
+SHA är oförändrad. Detta visar vad en kontroll av bara toppen missar lokalt;
+det bevisar inte hur GitHubs server hanterar en sådan avvikelse.</p>
+<p><a href="https://github.com/github/gh-stack/blob/v0.2.0/docs/src/content/docs/reference/merge-api.md">Versionslåst API-dokumentation</a>
+beskriver atomisk asynkron merge och ett villkor för PR:ns huvudcommit.
+Den dokumenterar inget motsvarande villkor för en förväntad målcommit.
+Gh-stack 0.2.0:s mergekommando skickar inte huvudcommitvillkoret.
+Ett läsprov före merge är därför inte ett verifierat skydd för exakt granskat
+resultat under hela tidsintervallet. Val av ett sådant skydd återstår.</p>
+<p>Slutlig merge utförs av användaren enligt det valda kandidatflödet.
+Välj hela stacken och squash; målet ska vara wf528-main. Den verkliga
+servermergen och dess efterkontroll är ännu inte körda. Okänt mergeutfall,
+pending och delvis infört resultat finns endast som märkta scenarier i
+HTML-modellen. Inget sådant fel har framkallats hos GitHub.</p>
+<p>Efter användarens merge behöver orkestratorn läsa samtliga PR:ers status,
+resultatcommits och målgrenens innehåll. Fem squashcommits kan motsvara en
+atomisk operation. Grenar, worktrees och lägesanteckningar bevaras tills
+utfallet är säkrat. Ett nätverksfel eller en utgången statuslänk räcker inte
+som bevis för att inget införs.</p>
+<h2>Körning och underlag</h2>
+<p>Alla fixturkontroller körs genom repositoryts npm-skript och gemensamma
+processlås. Inga billbara modell- eller röstanrop ingår. Den klickbara
+modellens sex guidade förlopp kontrolleras i webbläsare; det är inte en
+verifiering av fullständig tillgänglighetsöverensstämmelse.</p>
+<pre>npm run test:env -- python3 prototypes/gh-stack-batch/run.py /absolut/sökväg/gh-stack /tmp/ny-resultatkatalog
+python3 prototypes/gh-stack-batch/preflight.py prototypes/gh-stack-batch/evidence/github-handover.json</pre>
+<p>run.py skapar nya lokala repositoryn och skriver inte till GitHub.
+prepare-remote.py dokumenterar den utförda engångsförberedelsen; dess
+försöksnamn är nu upptagna och ska inte återanvändas för en ny körning.
+Prototypgrenen ska inte slås samman med Skyttels main.</p>
+<ul><li><a href="evidence/commands.txt">Faktiska lokala kommandon, filändringar och exitkoder</a></li>
+<li><a href="evidence/result.json">Lokala resultat och exakta commits</a></li>
+<li><a href="evidence/gh-stack-conflict-journal.json">Gh-stacks journal vid konflikten</a></li>
+<li><a href="evidence/candidate-resume.json">Orkestratorns lägesanteckning</a></li>
+<li><a href="evidence/github-handover.json">GitHub-snapshot inför användarens bedömning och merge</a></li></ul>
+</html>

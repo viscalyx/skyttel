@@ -1,0 +1,1241 @@
+
+$ cd /tmp/gh-stack-prototype-s_0m7417 && git init -b main /tmp/gh-stack-prototype-s_0m7417/baseline
+Initialized empty Git repository in /tmp/gh-stack-prototype-s_0m7417/baseline/.git/
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git config rerere.enabled true
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline/values.json
+{"a":0,"b":0}
+
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline/package.json
+{"private":true,"scripts":{"verify":"node verify.cjs"}}
+
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline/verify.cjs
+const fs = require('node:fs');
+const values = JSON.parse(fs.readFileSync('values.json'));
+for (const argument of process.argv.slice(2)) {
+  const [key, expected] = argument.split('=');
+  const actual = key in values ? values[key] : JSON.parse(fs.readFileSync(key + '.json'));
+  if (actual !== Number(expected)) {
+    console.error(`${key}: expected ${expected}, observed ${actual}`);
+    process.exit(1);
+  }
+}
+console.log('Verified: ' + process.argv.slice(2).join(', '));
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git commit -m 'seed fixture'
+[main (root-commit) 16546c3] seed fixture
+ 3 files changed, 13 insertions(+)
+ create mode 100644 package.json
+ create mode 100644 values.json
+ create mode 100644 verify.cjs
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse HEAD
+16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git switch -c integration
+Switched to a new branch 'integration'
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git worktree add -b A /tmp/gh-stack-prototype-s_0m7417/baseline-A 16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+Preparing worktree (new branch 'A')
+HEAD is now at 16546c3 seed fixture
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git worktree add -b B /tmp/gh-stack-prototype-s_0m7417/baseline-B 16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+Preparing worktree (new branch 'B')
+HEAD is now at 16546c3 seed fixture
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline-A/values.json
+{"a":1,"b":0}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-A && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-A && git commit -m 'A: set a to 1'
+[A affd9c7] A: set a to 1
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-A && git rev-parse HEAD
+affd9c7c660970383e019f229b6b17131d595f74
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline-B/values.json
+{"a":0,"b":2}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-B && git rev-parse HEAD
+16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-A && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-A && git rev-parse HEAD
+affd9c7c660970383e019f229b6b17131d595f74
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git update-ref refs/prototype/original/A affd9c7c660970383e019f229b6b17131d595f74
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git cherry-pick affd9c7c660970383e019f229b6b17131d595f74
+[integration affd9c7] A: set a to 1
+ Date: Fri Oct 23 20:09:33 2026 +0000
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && npm run verify -- a=1 b=0
+npm notice run verify
+npm notice run node verify.cjs a=1 b=0
+Verified: a=1, b=0
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse HEAD
+affd9c7c660970383e019f229b6b17131d595f74
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse main
+16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-B && git rev-parse HEAD
+16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git worktree add -b D /tmp/gh-stack-prototype-s_0m7417/baseline-D affd9c7c660970383e019f229b6b17131d595f74
+Preparing worktree (new branch 'D')
+HEAD is now at affd9c7 A: set a to 1
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline-D/d.json
+999
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-D && git rev-parse HEAD
+affd9c7c660970383e019f229b6b17131d595f74
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-B && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-B && git commit -m 'B: set b to 2'
+[B 404e9fa] B: set b to 2
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-B && git rev-parse HEAD
+404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-B && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-B && git rev-parse HEAD
+404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git update-ref refs/prototype/original/B 404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git cherry-pick 404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab
+Auto-merging values.json
+CONFLICT (content): Merge conflict in values.json
+error: could not apply 404e9fa... B: set b to 2
+hint: After resolving the conflicts, mark them with
+hint: "git add/rm <pathspec>", then run
+hint: "git cherry-pick --continue".
+hint: You can instead skip this commit with "git cherry-pick --skip".
+hint: To abort and get back to the state before "git cherry-pick",
+hint: run "git cherry-pick --abort".
+hint: Disable this message with "git config set advice.mergeConflict false"
+Recorded preimage for 'values.json'
+[exit 1]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse --path-format=absolute --git-common-dir
+/tmp/gh-stack-prototype-s_0m7417/baseline/.git
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse A
+affd9c7c660970383e019f229b6b17131d595f74
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse B
+404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse D
+affd9c7c660970383e019f229b6b17131d595f74
+[exit 0]
+
+WRITE /tmp/wayfinder-528-artifact/prototypes/gh-stack-batch/evidence/baseline-resume.json
+{"operation":"integrate B","last_verified":"affd9c7c660970383e019f229b6b17131d595f74","delivered":{"A":"affd9c7c660970383e019f229b6b17131d595f74","B":"404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab"},"branches":{"A":"affd9c7c660970383e019f229b6b17131d595f74","B":"404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab","D":"affd9c7c660970383e019f229b6b17131d595f74"},"owners":{"A":"orchestrator","B":"orchestrator","D":"agent"},"conflict_owner":"/tmp/gh-stack-prototype-s_0m7417/baseline","main":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80"}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git status --porcelain
+UU values.json
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline/values.json
+{"a":0,"b":2}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git add values.json
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git cherry-pick --continue
+Recorded resolution for 'values.json'.
+[integration 9795b8f] B: set b to 2
+ Date: Fri Oct 23 20:09:33 2026 +0000
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && npm run verify -- a=1 b=2
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2
+a: expected 1, observed 0
+[exit 1]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline/values.json
+{"a":1,"b":2}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git commit -m 'Correct incomplete conflict resolution before accepting B'
+[integration eaddb80] Correct incomplete conflict resolution before accepting B
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse HEAD
+eaddb805255106cd200890e91d6fe5637d44535b
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && npm run verify -- a=1 b=2
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2
+Verified: a=1, b=2
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse HEAD
+eaddb805255106cd200890e91d6fe5637d44535b
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse main
+16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-D && git rev-parse HEAD
+affd9c7c660970383e019f229b6b17131d595f74
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git worktree add -b C /tmp/gh-stack-prototype-s_0m7417/baseline-C eaddb805255106cd200890e91d6fe5637d44535b
+Preparing worktree (new branch 'C')
+HEAD is now at eaddb80 Correct incomplete conflict resolution before accepting B
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline-C/c.json
+3
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-C && git rev-parse HEAD
+eaddb805255106cd200890e91d6fe5637d44535b
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-D && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-D && git commit -m 'D: produce derived value'
+[D 4c321dc] D: produce derived value
+ 1 file changed, 1 insertion(+)
+ create mode 100644 d.json
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-D && git rev-parse HEAD
+4c321dcd5b115eaf885cac16013b574ed3e9bc84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-D && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-D && git rev-parse HEAD
+4c321dcd5b115eaf885cac16013b574ed3e9bc84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git update-ref refs/prototype/original/D 4c321dcd5b115eaf885cac16013b574ed3e9bc84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git cherry-pick 4c321dcd5b115eaf885cac16013b574ed3e9bc84
+[integration be9cfb3] D: produce derived value
+ Date: Fri Oct 23 20:09:34 2026 +0000
+ 1 file changed, 1 insertion(+)
+ create mode 100644 d.json
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && npm run verify -- a=1 b=2 d=999
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2 d=999
+Verified: a=1, b=2, d=999
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse HEAD
+be9cfb3f73c4313fe67ed5026f951ebd3c49b82f
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse main
+16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git worktree add -b R /tmp/gh-stack-prototype-s_0m7417/baseline-R be9cfb3f73c4313fe67ed5026f951ebd3c49b82f
+Preparing worktree (new branch 'R')
+HEAD is now at be9cfb3 D: produce derived value
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/baseline-R/d.json
+10
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-R && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-R && git commit -m 'R: repair D according to the specification'
+[R 97b2ebf] R: repair D according to the specification
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-R && git rev-parse HEAD
+97b2ebf50d6da6dc039a3c72a1d2c34cd9bcaf18
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-R && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-R && git rev-parse HEAD
+97b2ebf50d6da6dc039a3c72a1d2c34cd9bcaf18
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git update-ref refs/prototype/original/R 97b2ebf50d6da6dc039a3c72a1d2c34cd9bcaf18
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git cherry-pick 97b2ebf50d6da6dc039a3c72a1d2c34cd9bcaf18
+[integration 97b2ebf] R: repair D according to the specification
+ Date: Fri Oct 23 20:09:34 2026 +0000
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && npm run verify -- a=1 b=2 d=10
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2 d=10
+Verified: a=1, b=2, d=10
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse HEAD
+97b2ebf50d6da6dc039a3c72a1d2c34cd9bcaf18
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse main
+16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-C && git rev-parse HEAD
+eaddb805255106cd200890e91d6fe5637d44535b
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-C && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-C && git commit -m 'C: combine A and B'
+[C ace0091] C: combine A and B
+ 1 file changed, 1 insertion(+)
+ create mode 100644 c.json
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-C && git rev-parse HEAD
+ace009109bbf23c395d2c3318b1f8fcc174a5960
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-C && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline-C && git rev-parse HEAD
+ace009109bbf23c395d2c3318b1f8fcc174a5960
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git update-ref refs/prototype/original/C ace009109bbf23c395d2c3318b1f8fcc174a5960
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git cherry-pick ace009109bbf23c395d2c3318b1f8fcc174a5960
+[integration 5f9c61b] C: combine A and B
+ Date: Fri Oct 23 20:09:34 2026 +0000
+ 1 file changed, 1 insertion(+)
+ create mode 100644 c.json
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && npm run verify -- a=1 b=2 d=10 c=3
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2 d=10 c=3
+Verified: a=1, b=2, d=10, c=3
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse HEAD
+5f9c61be48d63d38b1cd6f36d3b90829c3402b44
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse main
+16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse 'HEAD^{tree}'
+b217f58547cc3f2bb70fee5623e49429c70b94f5
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git log --all --oneline --graph --decorate
+* ace0091 (C) C: combine A and B
+| * 4c321dc (D) D: produce derived value
+| | * 5f9c61b (HEAD -> integration) C: combine A and B
+| | * 97b2ebf (R) R: repair D according to the specification
+| | * be9cfb3 D: produce derived value
+| |/
+|/|
+* | eaddb80 Correct incomplete conflict resolution before accepting B
+* | 9795b8f B: set b to 2
+|/
+* affd9c7 (A) A: set a to 1
+| * 404e9fa (B) B: set b to 2
+|/
+* 16546c3 (main) seed fixture
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git diff 16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80 5f9c61be48d63d38b1cd6f36d3b90829c3402b44 --stat
+ c.json      | 1 +
+ d.json      | 1 +
+ values.json | 2 +-
+ 3 files changed, 3 insertions(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse main
+16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse A
+affd9c7c660970383e019f229b6b17131d595f74
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse B
+404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse D
+4c321dcd5b115eaf885cac16013b574ed3e9bc84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse C
+ace009109bbf23c395d2c3318b1f8fcc174a5960
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/baseline && git rev-parse R
+97b2ebf50d6da6dc039a3c72a1d2c34cd9bcaf18
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417 && git init -b main /tmp/gh-stack-prototype-s_0m7417/candidate
+Initialized empty Git repository in /tmp/gh-stack-prototype-s_0m7417/candidate/.git/
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git config rerere.enabled true
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate/values.json
+{"a":0,"b":0}
+
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate/package.json
+{"private":true,"scripts":{"verify":"node verify.cjs"}}
+
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate/verify.cjs
+const fs = require('node:fs');
+const values = JSON.parse(fs.readFileSync('values.json'));
+for (const argument of process.argv.slice(2)) {
+  const [key, expected] = argument.split('=');
+  const actual = key in values ? values[key] : JSON.parse(fs.readFileSync(key + '.json'));
+  if (actual !== Number(expected)) {
+    console.error(`${key}: expected ${expected}, observed ${actual}`);
+    process.exit(1);
+  }
+}
+console.log('Verified: ' + process.argv.slice(2).join(', '));
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git commit -m 'seed fixture'
+[main (root-commit) fcf8189] seed fixture
+ 3 files changed, 13 insertions(+)
+ create mode 100644 package.json
+ create mode 100644 values.json
+ create mode 100644 verify.cjs
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse HEAD
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git worktree add -b A /tmp/gh-stack-prototype-s_0m7417/candidate-A fcf8189810b0b1824177fe4116e52691c6398438
+Preparing worktree (new branch 'A')
+HEAD is now at fcf8189 seed fixture
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git worktree add -b B /tmp/gh-stack-prototype-s_0m7417/candidate-B fcf8189810b0b1824177fe4116e52691c6398438
+Preparing worktree (new branch 'B')
+HEAD is now at fcf8189 seed fixture
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate-A/values.json
+{"a":1,"b":0}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && git commit -m 'A: set a to 1'
+[A af6e0da] A: set a to 1
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && git rev-parse HEAD
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate-B/values.json
+{"a":0,"b":2}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git rev-parse HEAD
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && git rev-parse HEAD
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git update-ref refs/prototype/original/A af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && /tmp/wayfinder-528-lab/bin/gh-stack init --base main A
+✓ Adopted 1 branch: main ← A
+  You're on A (top of stack).
+
+What's next:
+  • see the full stack:                          gh stack view
+  • move between branches:                       gh stack switch
+  • link these PRs into a Stack on GitHub:       gh stack submit
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && npm run verify -- a=1 b=0
+npm notice run verify
+npm notice run node verify.cjs a=1 b=0
+Verified: a=1, b=0
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && git rev-parse HEAD
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git rev-parse HEAD
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git worktree add -b D /tmp/gh-stack-prototype-s_0m7417/candidate-D af6e0daf7ea71096afa2a647d699cbaba34a2f46
+Preparing worktree (new branch 'D')
+HEAD is now at af6e0da A: set a to 1
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate-D/d.json
+999
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && git rev-parse HEAD
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git commit -m 'B: set b to 2'
+[B 33e3d17] B: set b to 2
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git rev-parse HEAD
+33e3d173b2700a7f59499db42b5d2900be1de7a7
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git rev-parse HEAD
+33e3d173b2700a7f59499db42b5d2900be1de7a7
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git update-ref refs/prototype/original/B 33e3d173b2700a7f59499db42b5d2900be1de7a7
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && /tmp/wayfinder-528-lab/bin/gh-stack add B
+✓ Adopted existing branch "B" into the stack
+ℹ Branch "B" is already checked out in another worktree.
+  Your current checkout is unchanged.
+
+To work on this branch, run:
+  cd /tmp/gh-stack-prototype-s_0m7417/candidate-B
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git rev-parse HEAD
+33e3d173b2700a7f59499db42b5d2900be1de7a7
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && /tmp/wayfinder-528-lab/bin/gh-stack rebase --no-trunk
+Stack detected: (main) <- A <- B
+Rebasing branches in order, starting from B to B
+⚠ Rebasing B onto A — conflict
+Conflict worktree: /tmp/gh-stack-prototype-s_0m7417/candidate-B
+Resolve and stage files in that worktree; continuation may be run from any worktree.
+
+Conflicted files:
+  C values.json (lines 1–5)
+
+To resolve:
+  1. Open each conflicted file and look for conflict markers:
+     <<<<<<< HEAD  (incoming changes from A)
+     =======
+     >>>>>>>  (changes being rebased)
+  2. Edit the file to keep the desired changes and remove the markers
+  3. Stage resolved files: `git add <file>`
+  4. Continue:  `gh stack rebase --continue`
+
+Resolve conflicts on B, then run `gh stack rebase --continue`
+Or abort this operation with `gh stack rebase --abort`
+[exit 3]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse --path-format=absolute --git-common-dir
+/tmp/gh-stack-prototype-s_0m7417/candidate/.git
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse A
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse B
+33e3d173b2700a7f59499db42b5d2900be1de7a7
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse D
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+WRITE /tmp/wayfinder-528-artifact/prototypes/gh-stack-batch/evidence/candidate-resume.json
+{"operation":"integrate B","last_verified":"af6e0daf7ea71096afa2a647d699cbaba34a2f46","delivered":{"A":"af6e0daf7ea71096afa2a647d699cbaba34a2f46","B":"33e3d173b2700a7f59499db42b5d2900be1de7a7"},"branches":{"A":"af6e0daf7ea71096afa2a647d699cbaba34a2f46","B":"33e3d173b2700a7f59499db42b5d2900be1de7a7","D":"af6e0daf7ea71096afa2a647d699cbaba34a2f46"},"owners":{"A":"orchestrator","B":"orchestrator","D":"agent"},"conflict_owner":"/tmp/gh-stack-prototype-s_0m7417/candidate-B","main":"fcf8189810b0b1824177fe4116e52691c6398438"}
+
+
+WRITE /tmp/wayfinder-528-artifact/prototypes/gh-stack-batch/evidence/gh-stack-conflict-journal.json
+{
+  "phase": "conflict",
+  "worktrees": {
+    "origin": {
+      "path": "/tmp/gh-stack-prototype-s_0m7417/candidate-A",
+      "id": "worktrees/candidate-A"
+    },
+    "owners": {
+      "A": {
+        "path": "/tmp/gh-stack-prototype-s_0m7417/candidate-A"
+      },
+      "B": {
+        "path": "/tmp/gh-stack-prototype-s_0m7417/candidate-B",
+        "id": "worktrees/candidate-B"
+      },
+      "D": {
+        "path": "/tmp/gh-stack-prototype-s_0m7417/candidate-D"
+      },
+      "main": {
+        "path": "/tmp/gh-stack-prototype-s_0m7417/candidate"
+      }
+    },
+    "pending": "B",
+    "pendingBefore": "33e3d173b2700a7f59499db42b5d2900be1de7a7"
+  },
+  "stackTrunk": "main",
+  "stackBranches": [
+    "A",
+    "B"
+  ],
+  "originalStack": {
+    "trunk": {
+      "branch": "main",
+      "head": "fcf8189810b0b1824177fe4116e52691c6398438"
+    },
+    "branches": [
+      {
+        "branch": "A",
+        "base": "fcf8189810b0b1824177fe4116e52691c6398438"
+      },
+      {
+        "branch": "B",
+        "base": "fcf8189810b0b1824177fe4116e52691c6398438"
+      }
+    ]
+  },
+  "rebaseBase": "A",
+  "rebaseOldBase": "fcf8189810b0b1824177fe4116e52691c6398438",
+  "rebaseOnto": true,
+  "currentBranchIndex": 1,
+  "conflictBranch": "B",
+  "remainingBranches": null,
+  "originalBranch": "A",
+  "originalRefs": {
+    "A": "af6e0daf7ea71096afa2a647d699cbaba34a2f46",
+    "B": "33e3d173b2700a7f59499db42b5d2900be1de7a7"
+  },
+  "ontoOldBase": "33e3d173b2700a7f59499db42b5d2900be1de7a7",
+  "noTrunk": true,
+  "startIndex": 1,
+  "endIndex": 2
+}
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git status --porcelain
+UU values.json
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate-B/values.json
+{"a":0,"b":2}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git add values.json
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-A && /tmp/wayfinder-528-lab/bin/gh-stack rebase --continue
+✓ Rebased B
+✓ All branches in stack rebased locally
+To push your changes, run `gh stack push`
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && npm run verify -- a=1 b=2
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2
+a: expected 1, observed 0
+[exit 1]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate-B/values.json
+{"a":1,"b":2}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git commit -m 'Correct incomplete conflict resolution before accepting B'
+[B 2bf066e] Correct incomplete conflict resolution before accepting B
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git rev-parse HEAD
+2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && npm run verify -- a=1 b=2
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2
+Verified: a=1, b=2
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && git rev-parse HEAD
+2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && git rev-parse HEAD
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git worktree add -b C /tmp/gh-stack-prototype-s_0m7417/candidate-C 2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+Preparing worktree (new branch 'C')
+HEAD is now at 2bf066e Correct incomplete conflict resolution before accepting B
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate-C/c.json
+3
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git rev-parse HEAD
+2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && git commit -m 'D: produce derived value'
+[D d8511b5] D: produce derived value
+ 1 file changed, 1 insertion(+)
+ create mode 100644 d.json
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && git rev-parse HEAD
+d8511b5d67517ba824812d838254aba1511ade92
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && git rev-parse HEAD
+d8511b5d67517ba824812d838254aba1511ade92
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git update-ref refs/prototype/original/D d8511b5d67517ba824812d838254aba1511ade92
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && /tmp/wayfinder-528-lab/bin/gh-stack add D
+✓ Adopted existing branch "D" into the stack
+ℹ Branch "D" is already checked out in another worktree.
+  Your current checkout is unchanged.
+
+To work on this branch, run:
+  cd /tmp/gh-stack-prototype-s_0m7417/candidate-D
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && git rev-parse HEAD
+d8511b5d67517ba824812d838254aba1511ade92
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-B && /tmp/wayfinder-528-lab/bin/gh-stack rebase --no-trunk
+Stack detected: (main) <- A <- B <- D
+Rebasing branches in order, starting from B to D
+✓ Rebased B onto A
+✓ Rebased D onto B
+All branches in stack rebased locally (without trunk)
+To push up your changes, run `gh stack push`
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && npm run verify -- a=1 b=2 d=999
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2 d=999
+Verified: a=1, b=2, d=999
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && git rev-parse HEAD
+2d944d5bdf8858398a62102eab49f3ae62c53ce9
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git worktree add -b R /tmp/gh-stack-prototype-s_0m7417/candidate-R 2d944d5bdf8858398a62102eab49f3ae62c53ce9
+Preparing worktree (new branch 'R')
+HEAD is now at 2d944d5 D: produce derived value
+[exit 0]
+
+WRITE /tmp/gh-stack-prototype-s_0m7417/candidate-R/d.json
+10
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && git commit -m 'R: repair D according to the specification'
+[R 20517ff] R: repair D according to the specification
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && git rev-parse HEAD
+20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && git rev-parse HEAD
+20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git update-ref refs/prototype/original/R 20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && /tmp/wayfinder-528-lab/bin/gh-stack add R
+✓ Adopted existing branch "R" into the stack
+ℹ Branch "R" is already checked out in another worktree.
+  Your current checkout is unchanged.
+
+To work on this branch, run:
+  cd /tmp/gh-stack-prototype-s_0m7417/candidate-R
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && git rev-parse HEAD
+20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-D && /tmp/wayfinder-528-lab/bin/gh-stack rebase --no-trunk
+Stack detected: (main) <- A <- B <- D <- R
+Rebasing branches in order, starting from B to R
+✓ Rebased B onto A
+✓ Rebased D onto B
+✓ Rebased R onto D
+All branches in stack rebased locally (without trunk)
+To push up your changes, run `gh stack push`
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && npm run verify -- a=1 b=2 d=10
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2 d=10
+Verified: a=1, b=2, d=10
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && git rev-parse HEAD
+20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git rev-parse HEAD
+2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git add .
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git commit -m 'C: combine A and B'
+[C a90b196] C: combine A and B
+ 1 file changed, 1 insertion(+)
+ create mode 100644 c.json
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git rev-parse HEAD
+a90b19650197e5e3512bed032f58584176e69ef5
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git status --porcelain
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git rev-parse HEAD
+a90b19650197e5e3512bed032f58584176e69ef5
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git update-ref refs/prototype/original/C a90b19650197e5e3512bed032f58584176e69ef5
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && /tmp/wayfinder-528-lab/bin/gh-stack add C
+✓ Adopted existing branch "C" into the stack
+ℹ Branch "C" is already checked out in another worktree.
+  Your current checkout is unchanged.
+
+To work on this branch, run:
+  cd /tmp/gh-stack-prototype-s_0m7417/candidate-C
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git rev-parse HEAD
+a90b19650197e5e3512bed032f58584176e69ef5
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-R && /tmp/wayfinder-528-lab/bin/gh-stack rebase --no-trunk
+Stack detected: (main) <- A <- B <- D <- R <- C
+Rebasing branches in order, starting from B to C
+✓ Rebased B onto A
+✓ Rebased D onto B
+✓ Rebased R onto D
+✓ Rebased C onto R
+All branches in stack rebased locally (without trunk)
+To push up your changes, run `gh stack push`
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && npm run verify -- a=1 b=2 d=10 c=3
+npm notice run verify
+npm notice run node verify.cjs a=1 b=2 d=10 c=3
+Verified: a=1, b=2, d=10, c=3
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git rev-parse HEAD
+7462f1f2b1e09c657d5a8b7b89a7c892a385886f
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && git rev-parse 'HEAD^{tree}'
+b217f58547cc3f2bb70fee5623e49429c70b94f5
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git log --all --oneline --graph --decorate
+* 7462f1f (C) C: combine A and B
+* 20517ff (R) R: repair D according to the specification
+* 2d944d5 (D) D: produce derived value
+| * a90b196 C: combine A and B
+|/
+* 2bf066e (B) Correct incomplete conflict resolution before accepting B
+* c95c273 B: set b to 2
+| * d8511b5 D: produce derived value
+|/
+* af6e0da (A) A: set a to 1
+| * 33e3d17 B: set b to 2
+|/
+* fcf8189 (HEAD -> main) seed fixture
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git diff fcf8189810b0b1824177fe4116e52691c6398438 7462f1f2b1e09c657d5a8b7b89a7c892a385886f --stat
+ c.json      | 1 +
+ d.json      | 1 +
+ values.json | 2 +-
+ 3 files changed, 3 insertions(+), 1 deletion(-)
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate-C && /tmp/wayfinder-528-lab/bin/gh-stack view --json
+{
+  "trunk": "main",
+  "currentBranch": "C",
+  "branches": [
+    {
+      "name": "A",
+      "head": "af6e0daf7ea71096afa2a647d699cbaba34a2f46",
+      "base": "fcf8189810b0b1824177fe4116e52691c6398438",
+      "isCurrent": false,
+      "isMerged": false,
+      "isQueued": false,
+      "needsRebase": false
+    },
+    {
+      "name": "B",
+      "head": "2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c",
+      "base": "af6e0daf7ea71096afa2a647d699cbaba34a2f46",
+      "isCurrent": false,
+      "isMerged": false,
+      "isQueued": false,
+      "needsRebase": false
+    },
+    {
+      "name": "D",
+      "head": "2d944d5bdf8858398a62102eab49f3ae62c53ce9",
+      "base": "2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c",
+      "isCurrent": false,
+      "isMerged": false,
+      "isQueued": false,
+      "needsRebase": false
+    },
+    {
+      "name": "R",
+      "head": "20517ff8415e771eea9f58b445e136bb9ec29a84",
+      "base": "2d944d5bdf8858398a62102eab49f3ae62c53ce9",
+      "isCurrent": false,
+      "isMerged": false,
+      "isQueued": false,
+      "needsRebase": false
+    },
+    {
+      "name": "C",
+      "head": "7462f1f2b1e09c657d5a8b7b89a7c892a385886f",
+      "base": "20517ff8415e771eea9f58b445e136bb9ec29a84",
+      "isCurrent": true,
+      "isMerged": false,
+      "isQueued": false,
+      "needsRebase": false
+    }
+  ]
+}
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse A
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse B
+2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse D
+2d944d5bdf8858398a62102eab49f3ae62c53ce9
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse C
+7462f1f2b1e09c657d5a8b7b89a7c892a385886f
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse R
+20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse A
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse B
+2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse D
+2d944d5bdf8858398a62102eab49f3ae62c53ce9
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse R
+20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse C
+7462f1f2b1e09c657d5a8b7b89a7c892a385886f
+[exit 0]
+
+WRITE /tmp/wayfinder-528-artifact/prototypes/gh-stack-batch/evidence/reviewed-handover.json
+{"refs":{"main":"fcf8189810b0b1824177fe4116e52691c6398438","A":"af6e0daf7ea71096afa2a647d699cbaba34a2f46","B":"2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c","D":"2d944d5bdf8858398a62102eab49f3ae62c53ce9","R":"20517ff8415e771eea9f58b445e136bb9ec29a84","C":"7462f1f2b1e09c657d5a8b7b89a7c892a385886f"},"tree":"b217f58547cc3f2bb70fee5623e49429c70b94f5","fixed_start":"fcf8189810b0b1824177fe4116e52691c6398438","verification":"a=1 b=2 d=10 c=3","pr_mapping":"not published; A<-main, B<-A, D<-B, R<-D, C<-R"}
+
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse A
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse B
+2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse D
+2d944d5bdf8858398a62102eab49f3ae62c53ce9
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse R
+20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse C
+7462f1f2b1e09c657d5a8b7b89a7c892a385886f
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git commit-tree 'fcf8189810b0b1824177fe4116e52691c6398438^{tree}' -p fcf8189810b0b1824177fe4116e52691c6398438 -m 'Unrelated target advance after review'
+fb4e0b003b4738a550deba60aa309eea309a9052
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git update-ref refs/heads/main fb4e0b003b4738a550deba60aa309eea309a9052 fcf8189810b0b1824177fe4116e52691c6398438
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fb4e0b003b4738a550deba60aa309eea309a9052
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse A
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse B
+2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse D
+2d944d5bdf8858398a62102eab49f3ae62c53ce9
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse R
+20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse C
+7462f1f2b1e09c657d5a8b7b89a7c892a385886f
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git commit-tree 'R^{tree}' -p 20517ff8415e771eea9f58b445e136bb9ec29a84 -m 'Lower-layer head advance after review'
+b3285dfbed7ebb0fd047bcae7927dd8301fc9917
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git update-ref refs/heads/R b3285dfbed7ebb0fd047bcae7927dd8301fc9917 20517ff8415e771eea9f58b445e136bb9ec29a84
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse main
+fb4e0b003b4738a550deba60aa309eea309a9052
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse A
+af6e0daf7ea71096afa2a647d699cbaba34a2f46
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse B
+2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse D
+2d944d5bdf8858398a62102eab49f3ae62c53ce9
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse R
+b3285dfbed7ebb0fd047bcae7927dd8301fc9917
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse C
+7462f1f2b1e09c657d5a8b7b89a7c892a385886f
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse C
+7462f1f2b1e09c657d5a8b7b89a7c892a385886f
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse R
+b3285dfbed7ebb0fd047bcae7927dd8301fc9917
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git commit-tree 'af6e0daf7ea71096afa2a647d699cbaba34a2f46^{tree}' -p fcf8189810b0b1824177fe4116e52691c6398438 -m 'Illustrated squash for A'
+de58fd2c5ce8491a4cab52dd49a008aca1bdcabc
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git commit-tree '2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c^{tree}' -p de58fd2c5ce8491a4cab52dd49a008aca1bdcabc -m 'Illustrated squash for B'
+3534ac1032ccfcb979cbe0f6879b764e3210d7e5
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git commit-tree '2d944d5bdf8858398a62102eab49f3ae62c53ce9^{tree}' -p 3534ac1032ccfcb979cbe0f6879b764e3210d7e5 -m 'Illustrated squash for D'
+474ebd8071391c802e0b1384f067eaa6293f98fc
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git commit-tree '20517ff8415e771eea9f58b445e136bb9ec29a84^{tree}' -p 474ebd8071391c802e0b1384f067eaa6293f98fc -m 'Illustrated squash for R'
+190a78bc687a9c5a5936b613d765963642d3e726
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git commit-tree '7462f1f2b1e09c657d5a8b7b89a7c892a385886f^{tree}' -p 190a78bc687a9c5a5936b613d765963642d3e726 -m 'Illustrated squash for C'
+6b5ef747eeb1a0435a90850bbc10f64f2726b497
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git update-ref refs/prototype/illustrated-squash 6b5ef747eeb1a0435a90850bbc10f64f2726b497
+[exit 0]
+
+$ cd /tmp/gh-stack-prototype-s_0m7417/candidate && git rev-parse '6b5ef747eeb1a0435a90850bbc10f64f2726b497^{tree}'
+b217f58547cc3f2bb70fee5623e49429c70b94f5
+[exit 0]
+
+WRITE /tmp/wayfinder-528-artifact/prototypes/gh-stack-batch/evidence/result.json
+{"binary_sha256":"577065033b49d4505730ea0ad43ab1b0374b0d9b1308e9765647a6aa8eba3cb7","results":{"baseline":{"repo":"/tmp/gh-stack-prototype-s_0m7417/baseline","tip":"/tmp/gh-stack-prototype-s_0m7417/baseline","start":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80","final":"5f9c61be48d63d38b1cd6f36d3b90829c3402b44","tree":"b217f58547cc3f2bb70fee5623e49429c70b94f5"},"candidate":{"repo":"/tmp/gh-stack-prototype-s_0m7417/candidate","tip":"/tmp/gh-stack-prototype-s_0m7417/candidate-C","start":"fcf8189810b0b1824177fe4116e52691c6398438","final":"7462f1f2b1e09c657d5a8b7b89a7c892a385886f","tree":"b217f58547cc3f2bb70fee5623e49429c70b94f5"}},"events":[{"mode":"baseline","event":"dispatch","branch":"A","base":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80"},{"mode":"baseline","event":"dispatch","branch":"B","base":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80"},{"mode":"baseline","event":"handoff","branch":"A","sha":"affd9c7c660970383e019f229b6b17131d595f74","owner":"orchestrator"},{"mode":"baseline","event":"verified-and-closed-in-model","branch":"A","sha":"affd9c7c660970383e019f229b6b17131d595f74","checks":["a=1","b=0"],"main":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80"},{"mode":"baseline","event":"active-B-preserved","unchanged":true},{"mode":"baseline","event":"dispatch","branch":"D","base":"affd9c7c660970383e019f229b6b17131d595f74"},{"mode":"baseline","event":"handoff","branch":"B","sha":"404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab","owner":"orchestrator"},{"mode":"baseline","event":"resume-from-conflict","last_verified":"affd9c7c660970383e019f229b6b17131d595f74"},{"mode":"baseline","event":"failed-integrated-verification","still_verified":"affd9c7c660970383e019f229b6b17131d595f74","new_dispatch_allowed":false},{"mode":"baseline","event":"verified-and-closed-in-model","branch":"B","sha":"eaddb805255106cd200890e91d6fe5637d44535b","checks":["a=1","b=2"],"main":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80"},{"mode":"baseline","event":"active-D-preserved","unchanged":true},{"mode":"baseline","event":"dispatch","branch":"C","base":"eaddb805255106cd200890e91d6fe5637d44535b"},{"mode":"baseline","event":"handoff","branch":"D","sha":"4c321dcd5b115eaf885cac16013b574ed3e9bc84","owner":"orchestrator"},{"mode":"baseline","event":"verified-and-closed-in-model","branch":"D","sha":"be9cfb3f73c4313fe67ed5026f951ebd3c49b82f","checks":["a=1","b=2","d=999"],"main":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80"},{"mode":"baseline","event":"review-finding","requirement":"D must equal a * 10","actual":999},{"mode":"baseline","event":"dispatch","branch":"R","base":"be9cfb3f73c4313fe67ed5026f951ebd3c49b82f"},{"mode":"baseline","event":"handoff","branch":"R","sha":"97b2ebf50d6da6dc039a3c72a1d2c34cd9bcaf18","owner":"orchestrator"},{"mode":"baseline","event":"verified-and-closed-in-model","branch":"R","sha":"97b2ebf50d6da6dc039a3c72a1d2c34cd9bcaf18","checks":["a=1","b=2","d=10"],"main":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80"},{"mode":"baseline","event":"active-C-preserved","unchanged":true},{"mode":"baseline","event":"handoff","branch":"C","sha":"ace009109bbf23c395d2c3318b1f8fcc174a5960","owner":"orchestrator"},{"mode":"baseline","event":"verified-and-closed-in-model","branch":"C","sha":"5f9c61be48d63d38b1cd6f36d3b90829c3402b44","checks":["a=1","b=2","d=10","c=3"],"main":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80"},{"mode":"baseline","event":"handover","fixed_start":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80","reviewed_target":"16546c3b5d9ff069cb5d7bb0aa9cb8768281cf80","heads":{"A":"affd9c7c660970383e019f229b6b17131d595f74","B":"404e9fa1d0ffa4e4daf60e2aa4a0bf7837c2d1ab","D":"4c321dcd5b115eaf885cac16013b574ed3e9bc84","C":"ace009109bbf23c395d2c3318b1f8fcc174a5960","R":"97b2ebf50d6da6dc039a3c72a1d2c34cd9bcaf18"},"tip":"5f9c61be48d63d38b1cd6f36d3b90829c3402b44","tree":"b217f58547cc3f2bb70fee5623e49429c70b94f5","closed_in_model":["A","B","D","R","C"],"merged":false},{"mode":"candidate","event":"dispatch","branch":"A","base":"fcf8189810b0b1824177fe4116e52691c6398438"},{"mode":"candidate","event":"dispatch","branch":"B","base":"fcf8189810b0b1824177fe4116e52691c6398438"},{"mode":"candidate","event":"handoff","branch":"A","sha":"af6e0daf7ea71096afa2a647d699cbaba34a2f46","owner":"orchestrator"},{"mode":"candidate","event":"verified-and-closed-in-model","branch":"A","sha":"af6e0daf7ea71096afa2a647d699cbaba34a2f46","checks":["a=1","b=0"],"main":"fcf8189810b0b1824177fe4116e52691c6398438"},{"mode":"candidate","event":"active-B-preserved","unchanged":true},{"mode":"candidate","event":"dispatch","branch":"D","base":"af6e0daf7ea71096afa2a647d699cbaba34a2f46"},{"mode":"candidate","event":"handoff","branch":"B","sha":"33e3d173b2700a7f59499db42b5d2900be1de7a7","owner":"orchestrator"},{"mode":"candidate","event":"adopted-not-yet-integrated","branch":"B","head":"33e3d173b2700a7f59499db42b5d2900be1de7a7"},{"mode":"candidate","event":"resume-from-conflict","last_verified":"af6e0daf7ea71096afa2a647d699cbaba34a2f46"},{"mode":"candidate","event":"failed-integrated-verification","still_verified":"af6e0daf7ea71096afa2a647d699cbaba34a2f46","new_dispatch_allowed":false},{"mode":"candidate","event":"verified-and-closed-in-model","branch":"B","sha":"2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c","checks":["a=1","b=2"],"main":"fcf8189810b0b1824177fe4116e52691c6398438"},{"mode":"candidate","event":"active-D-preserved","unchanged":true},{"mode":"candidate","event":"dispatch","branch":"C","base":"2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c"},{"mode":"candidate","event":"handoff","branch":"D","sha":"d8511b5d67517ba824812d838254aba1511ade92","owner":"orchestrator"},{"mode":"candidate","event":"adopted-not-yet-integrated","branch":"D","head":"d8511b5d67517ba824812d838254aba1511ade92"},{"mode":"candidate","event":"verified-and-closed-in-model","branch":"D","sha":"2d944d5bdf8858398a62102eab49f3ae62c53ce9","checks":["a=1","b=2","d=999"],"main":"fcf8189810b0b1824177fe4116e52691c6398438"},{"mode":"candidate","event":"review-finding","requirement":"D must equal a * 10","actual":999},{"mode":"candidate","event":"dispatch","branch":"R","base":"2d944d5bdf8858398a62102eab49f3ae62c53ce9"},{"mode":"candidate","event":"handoff","branch":"R","sha":"20517ff8415e771eea9f58b445e136bb9ec29a84","owner":"orchestrator"},{"mode":"candidate","event":"adopted-not-yet-integrated","branch":"R","head":"20517ff8415e771eea9f58b445e136bb9ec29a84"},{"mode":"candidate","event":"verified-and-closed-in-model","branch":"R","sha":"20517ff8415e771eea9f58b445e136bb9ec29a84","checks":["a=1","b=2","d=10"],"main":"fcf8189810b0b1824177fe4116e52691c6398438"},{"mode":"candidate","event":"active-C-preserved","unchanged":true},{"mode":"candidate","event":"handoff","branch":"C","sha":"a90b19650197e5e3512bed032f58584176e69ef5","owner":"orchestrator"},{"mode":"candidate","event":"adopted-not-yet-integrated","branch":"C","head":"a90b19650197e5e3512bed032f58584176e69ef5"},{"mode":"candidate","event":"verified-and-closed-in-model","branch":"C","sha":"7462f1f2b1e09c657d5a8b7b89a7c892a385886f","checks":["a=1","b=2","d=10","c=3"],"main":"fcf8189810b0b1824177fe4116e52691c6398438"},{"mode":"candidate","event":"handover","fixed_start":"fcf8189810b0b1824177fe4116e52691c6398438","reviewed_target":"fcf8189810b0b1824177fe4116e52691c6398438","heads":{"A":"af6e0daf7ea71096afa2a647d699cbaba34a2f46","B":"2bf066ea0fd67eb1bdec117ec5a1686aa6caa95c","D":"2d944d5bdf8858398a62102eab49f3ae62c53ce9","C":"7462f1f2b1e09c657d5a8b7b89a7c892a385886f","R":"20517ff8415e771eea9f58b445e136bb9ec29a84"},"tip":"7462f1f2b1e09c657d5a8b7b89a7c892a385886f","tree":"b217f58547cc3f2bb70fee5623e49429c70b94f5","closed_in_model":["A","B","D","R","C"],"merged":false},{"mode":"comparison","event":"identical-final-trees","equal":true},{"mode":"handover","event":"local-ref-preflight","accepted":true,"changed":[]},{"mode":"handover","event":"local-ref-preflight","accepted":false,"changed":["main"]},{"mode":"handover","event":"local-ref-preflight","accepted":false,"changed":["main","R"]},{"mode":"handover","event":"top-only-check-misses-lower-head","top_unchanged":true,"lower_changed":true},{"mode":"handover","event":"local-squash-illustration","original_reachable":false,"same_tree":true,"github_merge_tested":false}]}

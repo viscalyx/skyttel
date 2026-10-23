@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="sv">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototyp: en växande batch</title>
+<style>
+body{font:17px/1.55 system-ui,sans-serif;max-width:1050px;margin:3rem auto;padding:0 1.2rem;background:#f5f7fa;color:#152139}h1{line-height:1.2}h2{font-size:1.25rem}section{background:white;border:1px solid #c7d1df;border-radius:10px;padding:1.2rem;margin:1rem 0}button{font:inherit;border:1px solid #68768b;background:white;color:#152139;border-radius:6px;padding:.6rem .9rem;margin:.25rem;cursor:pointer}button:hover,button[aria-selected=true]{background:#e2edff}button:focus-visible{outline:3px solid #185ac4;outline-offset:3px}dl{display:grid;grid-template-columns:minmax(140px,1fr) 3fr;gap:.5rem}dt{font-weight:650}dd{margin:0;overflow-wrap:anywhere}.note{border-left:4px solid #185ac4;padding-left:1rem}.muted{color:#4d5b71}#message{min-height:3em}li{margin:.3rem 0}@media(max-width:550px){dl{display:block}dd{margin-bottom:.7rem}}
+</style>
+<h1>En växande batch</h1>
+<p><a href="report.html">Läs resultaten från de faktiska Git- och GitHub-försöken</a>.</p>
+<p>Kan färdiga resultat samlas utan att störa aktiva agenter, och kan
+överlämningen stoppa ett införande när granskningsunderlaget har ändrats?</p>
+<p class="note"><strong>Kastbar modell, inte GitHub.</strong> Knapparna illustrerar
+de beslutade samordningsreglerna. De kör inga Git-kommandon, skapar inga PR:er
+och bevisar ingen servergaranti. Faktiska lokala kommandon finns i försöksloggen.
+Modellen visar även den lucka som en kontroll före merge lämnar.</p>
+<section><h2>Aktuellt läge</h2><dl id="state"></dl><p id="message" role="status" aria-live="polite"></p></section>
+<section><h2>Prova fritt</h2><div id="actions"></div></section>
+<section><h2>Guidade förlopp</h2><div id="tabs" role="tablist" aria-label="Förlopp"></div><div id="walkthrough" role="tabpanel"></div></section>
+<section><h2>Vad modellen kan och inte kan avgöra</h2>
+<p>Ett stängt delärende betyder här att resultatet finns i den verifierade
+batchen. Det kan låsa upp nytt arbete medan <code>main</code> ligger kvar.
+Ärenden och PR-status är separata tillstånd.</p>
+<p>En jämförelse av målcommit och samtliga grentoppar upptäcker ändringar
+som redan har skett. Den låser inte GitHub mellan kontrollen och en
+asynkron merge. Modellens spärr är därför en föreslagen förkontroll,
+inte ett verifierat skydd av exakt granskat resultat.</p></section>
+<script>
+// Pure, throwaway state model. No DOM or remote access in this block.
+function initial(){return {active:['A','B'],returned:[],layers:[],closed:[],verified:[],
+  target:0,content:0,conflict:false,finding:false,review:null,preflight:false,
+  outcome:'inte begärt',message:'A och B arbetar från samma fasta startcommit.'};}
+function transition(old,action){
+ const s=structuredClone(old);s.message='';
+ const deny=message=>({...s,message});
+ if(action==='reset')return initial();
+ if(action.startsWith('return:')){
+  const n=action.split(':')[1];if(!s.active.includes(n))return deny(n+' arbetar inte.');
+  s.active=s.active.filter(x=>x!==n);s.returned.push(n);s.message=n+' lämnar över ett rent worktree och stoppar sitt arbete.';
+ }else if(action.startsWith('integrate:')){
+  const n=action.split(':')[1];if(s.conflict)return deny('Pågående integrationsstopp måste lösas först.');
+  if(!s.returned.includes(n))return deny('Kräver överlämning från '+n+'. Rent worktree räcker inte.');
+  if(n==='B'&&!s.layers.includes('B')){s.conflict=true;s.message='B får konflikt med A. D får fortsätta från sin fasta bas. Ny integration och ordinarie tilldelning pausas.';}
+  else {s.layers.push(n);s.returned=s.returned.filter(x=>x!==n);s.content++;s.review=null;s.preflight=false;s.message=n+' är integrerat men ännu inte verifierat.';}
+ }else if(action==='resolve'){
+  if(!s.conflict)return deny('Ingen konflikt att återuppta.');
+  s.conflict=false;s.layers.push('B');s.returned=s.returned.filter(x=>x!=='B');s.content++;s.review=null;s.preflight=false;
+  s.message='Återupptagningsanteckningen och faktiskt Git-tillstånd stäms av. B förenas med A; verifiering återstår.';
+ }else if(action==='verify'){
+  if(s.conflict)return deny('Lös konflikten före verifiering.');
+  s.verified=[...s.layers];s.closed=[...new Set([...s.closed,...s.layers])];
+  if(s.layers.includes('R'))s.finding=false;
+  s.message='Integrerat resultat verifierat. Delärendena kan stängas; inget införs i main.';
+ }else if(action==='start:D'||action==='start:C'||action==='start:R'){
+  const n=action.split(':')[1], deps=n==='D'?['A']:n==='C'?['A','B']:[];
+  if(s.conflict)return deny('Integrationsstopp: ny ordinarie tilldelning väntar.');
+  if(deps.some(x=>!s.closed.includes(x)))return deny('Beroenden saknar verifierade resultat.');
+  if(n==='R'&&!s.finding)return deny('Ingen registrerad avvikelse.');
+  if([...s.active,...s.returned,...s.layers].includes(n))return deny(n+' är redan tilldelat.');
+  s.active.push(n);s.message=n+' startar från senast verifierade stackspets. Aktiva grenars baser ändras inte.';
+ }else if(action==='finding'){
+  if(!s.closed.includes('D'))return deny('Integrera och verifiera D före detta sena granskningsfynd.');
+  s.finding=true;s.review=null;s.preflight=false;s.message='D har en avvikelse. D förblir stängt; ny reparation krävs. Aktiva oberoende agenter fortsätter.';
+ }else if(action==='review'){
+  if(s.active.length||s.returned.length||s.conflict||s.finding||!['A','B','C','D'].every(x=>s.closed.includes(x))||s.layers.join()!==s.verified.join())return deny('Hela batchen måste vara klar, verifierad och fri från olösta fynd.');
+  s.review={target:s.target,content:s.content,heads:s.layers.map(n=>n+'@'+s.content)};s.preflight=false;
+  s.message='Helhetsgranskning registrerad. Överlämningen innehåller målcommit, samtliga grentoppar och verifieringsbevis.';
+ }else if(action==='target'){
+  s.target++;s.message='main ändras. Ny bedömning mot målgrenen krävs, även om ändringen ser oberoende ut.';
+ }else if(action==='head'){
+  s.content++;s.message='En grentopp ändras efter granskning. Underlaget måste bedömas på nytt.';
+ }else if(action==='preflight'){
+  s.preflight=false;
+  if(!s.review||s.review.target!==s.target||s.review.content!==s.content)return deny('STOPP: saknat eller inaktuellt granskningsunderlag.');
+  s.preflight=true;s.message='Förkontrollen passerar just nu. Den är ingen serverlåsning; en ändring kan fortfarande ske före merge.';
+ }else if(action==='submit'){
+  if(!s.preflight)return deny('Användaren behöver en godkänd förkontroll.');
+  if(s.review.target!==s.target||s.review.content!==s.content){s.outcome='oskyddad tidslucka';s.message='En ändring sker efter förkontrollen. Modellen saknar en verifierad servermekanism som säkrar målcommit och hela stacken. Beslut behövs.';}
+  else{s.outcome='okänt efter nätverksavbrott';s.message='Simulerat borttappat svar. Återförsök och städning väntar på avstämning av faktisk serverstatus.';}
+ }else if(action==='pending'){
+  if(!s.outcome.includes('okänt')&&!s.outcome.includes('väntar'))return deny('Begär först en merge i modellen.');
+  s.outcome='väntar på slutstatus';s.message='Simulerad status pending: avvakta och läs status igen. Ingen städning.';
+ }else if(action==='partial'){
+  if(!s.outcome.includes('okänt')&&!s.outcome.includes('väntar'))return deny('Begär först en merge i modellen.');
+  s.outcome='avvikelse: endast en del verkar införd';s.message='Stopp. Utred PR-status och innehåll. Separata delmerger är ingen reservväg.';
+ }else if(action==='cleanup'){
+  if(!s.outcome.startsWith('simulerat: alla'))return deny('Städning spärrad tills alla avsedda PR:er och infört innehåll är avstämda.');
+  s.message='Modell: städning kan planeras för stoppade agenter och säkrat arbete. Inga verkliga grenar tas bort.';
+ }else if(action==='reconcile'){
+  if(!s.outcome.includes('okänt')&&!s.outcome.includes('väntar'))return deny('Detta scenario behöver ett okänt mergeutfall.');
+  s.outcome='simulerat: alla PR:er införda, innehåll kontrollerat';s.message='Illustration: PR-status och resultatets innehåll stäms av. Squash kräver inte att ursprungscommittarna finns kvar. Ingen verklig GitHub-merge är provad.';
+ }
+ return s;
+}
+const actions=[['return:A','A lämnar över'],['integrate:A','Integrera A'],['verify','Verifiera samlat resultat'],['start:D','Starta D (behöver A)'],['return:B','B lämnar över'],['integrate:B','Integrera B'],['resolve','Återuppta och lös konflikt'],['start:C','Starta C (behöver A+B)'],['return:D','D lämnar över'],['integrate:D','Integrera D'],['finding','Upptäck senare fel i D'],['start:R','Starta reparation R'],['return:R','R lämnar över'],['integrate:R','Integrera R'],['return:C','C lämnar över'],['integrate:C','Integrera C'],['review','Granska hela batchen'],['target','Ändra main'],['head','Ändra en grentopp'],['preflight','Kontrollera överlämningen'],['submit','Användaren begär merge (modell)'],['pending','Läs väntande status (modell)'],['partial','Läs delvis infört (modell)'],['reconcile','Stäm av fullständigt införande (modell)'],['cleanup','Försök städa (modell)'],['reset','Börja om']];
+const normal=['return:A','integrate:A','verify','start:D','return:B','integrate:B','resolve','verify','start:C','return:D','integrate:D','verify','return:C','integrate:C','verify','review'];
+const scenarios=[
+ {title:'Parallellt arbete',text:'D startar efter A medan B arbetar. B:s konflikt stoppar nya tilldelningar men rör inte D.',steps:normal.slice(0,9)},
+ {title:'Sen reparation',text:'Ett senare fynd i D ger ett nytt lager R medan C arbetar. D förblir stängt.',steps:[...normal.slice(0,12),'finding','start:R','return:R','integrate:R','verify',...normal.slice(12)]},
+ {title:'Ändrat underlag',text:'En ändring i main efter granskningen upptäcks av förkontrollen.',steps:[...normal,'target','preflight']},
+ {title:'Luckan före merge',text:'Förkontrollen passerar. Sedan ändras main. Här behövs ett val av verkligt skydd; modellen kan inte avgöra serverns beteende.',steps:[...normal,'preflight','target','submit']},
+ {title:'Okänt mergeutfall',text:'Simulerat nätverksfel betyder inte att merge misslyckas. Läsning och innehållskontroll föregår städning.',steps:[...normal,'preflight','submit','cleanup','pending','cleanup','reconcile','cleanup']},
+ {title:'Delvis infört',text:'En uppgift om delvis infört resultat är en avvikelse som behöver utredas.',steps:[...normal,'preflight','submit','partial','cleanup']}
+];
+</script>
+<script>
+let state=initial(), selected=0, step=0;
+const label=id=>actions.find(a=>a[0]===id)[1];
+function button(text,fn){const b=document.createElement('button');b.textContent=text;b.onclick=fn;return b;}
+function render(){
+ const fields=[['Aktiva agenter',state.active.join(', ')||'Inga'],['Överlämnat',state.returned.join(', ')||'Inget'],['Stackens lager',state.layers.join(' → ')||'Tom'],['Verifierade lager',state.verified.join(' → ')||'Inga'],['Stängda delärenden (modell)',state.closed.join(', ')||'Inga'],['Målgrenens version','main@'+state.target],['Batchens version',state.content],['Integrationsstopp',state.conflict?'Ja':'Nej'],['Olöst granskningsfynd',state.finding?'Ja':'Nej'],['Granskning',state.review?'main@'+state.review.target+', batch@'+state.review.content:'Saknas'],['Mergeutfall',state.outcome]];
+ const panel=document.querySelector('#state');panel.replaceChildren();
+ for(const [key,value] of fields){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key;dd.textContent=value;panel.append(dt,dd);}
+ document.querySelector('#message').textContent=state.message;
+ const walk=document.querySelector('#walkthrough');walk.replaceChildren();
+ const p=document.createElement('p');p.textContent=scenarios[selected].text;walk.append(p);
+ scenarios[selected].steps.forEach((id,i)=>{const b=button((i+1)+'. '+label(id),()=>{state=transition(state,id);step=i+1;render();});b.disabled=i!==step;walk.append(b);});
+ document.querySelectorAll('[role=tab]').forEach((b,i)=>b.setAttribute('aria-selected',i===selected?'true':'false'));
+}
+actions.forEach(([id,text])=>document.querySelector('#actions').append(button(text,()=>{state=transition(state,id);render();})));
+scenarios.forEach((s,i)=>{const b=button(s.title,()=>{selected=i;step=0;state=initial();document.querySelector('#walkthrough').setAttribute('aria-labelledby','tab-'+i);render();});b.setAttribute('role','tab');b.id='tab-'+i;b.setAttribute('aria-controls','walkthrough');b.onkeydown=e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();const j=e.key==='Home'?0:e.key==='End'?scenarios.length-1:(i+(e.key==='ArrowRight'?1:-1)+scenarios.length)%scenarios.length;const next=document.querySelector('#tab-'+j);next.click();next.focus();};document.querySelector('#tabs').append(b);});
+render();
+</script>
+</html>

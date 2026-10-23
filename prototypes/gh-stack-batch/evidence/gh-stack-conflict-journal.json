@@ -1,0 +1,62 @@
+{
+  "phase": "conflict",
+  "worktrees": {
+    "origin": {
+      "path": "/tmp/gh-stack-prototype-s_0m7417/candidate-A",
+      "id": "worktrees/candidate-A"
+    },
+    "owners": {
+      "A": {
+        "path": "/tmp/gh-stack-prototype-s_0m7417/candidate-A"
+      },
+      "B": {
+        "path": "/tmp/gh-stack-prototype-s_0m7417/candidate-B",
+        "id": "worktrees/candidate-B"
+      },
+      "D": {
+        "path": "/tmp/gh-stack-prototype-s_0m7417/candidate-D"
+      },
+      "main": {
+        "path": "/tmp/gh-stack-prototype-s_0m7417/candidate"
+      }
+    },
+    "pending": "B",
+    "pendingBefore": "33e3d173b2700a7f59499db42b5d2900be1de7a7"
+  },
+  "stackTrunk": "main",
+  "stackBranches": [
+    "A",
+    "B"
+  ],
+  "originalStack": {
+    "trunk": {
+      "branch": "main",
+      "head": "fcf8189810b0b1824177fe4116e52691c6398438"
+    },
+    "branches": [
+      {
+        "branch": "A",
+        "base": "fcf8189810b0b1824177fe4116e52691c6398438"
+      },
+      {
+        "branch": "B",
+        "base": "fcf8189810b0b1824177fe4116e52691c6398438"
+      }
+    ]
+  },
+  "rebaseBase": "A",
+  "rebaseOldBase": "fcf8189810b0b1824177fe4116e52691c6398438",
+  "rebaseOnto": true,
+  "currentBranchIndex": 1,
+  "conflictBranch": "B",
+  "remainingBranches": null,
+  "originalBranch": "A",
+  "originalRefs": {
+    "A": "af6e0daf7ea71096afa2a647d699cbaba34a2f46",
+    "B": "33e3d173b2700a7f59499db42b5d2900be1de7a7"
+  },
+  "ontoOldBase": "33e3d173b2700a7f59499db42b5d2900be1de7a7",
+  "noTrunk": true,
+  "startIndex": 1,
+  "endIndex": 2
+}
