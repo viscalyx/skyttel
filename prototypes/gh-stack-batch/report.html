@@ -9,7 +9,8 @@
 innehåll och kräver samma konflikträttning i detta exempel. Gh-stack hanterar
 ombasering mellan överlämnade worktrees och en verklig växande PR-stack.
 En nettominskning av orkestratorns arbete är ännu inte visad.
-Användarens merge och bedömning återstår.</p>
+Användarens merge är genomförd och efterkontrollen passerar.
+Användarens bedömning av nyttan återstår.</p>
 <h2>Vad som faktiskt körs</h2>
 <p>Två nyskapade lokala Git-repositoryn får samma scenario. A och B börjar på
 varsin fast bas. A ändrar a till 1, B ändrar b till 2 på samma rad i en
@@ -97,15 +98,19 @@ Den dokumenterar inget motsvarande villkor för en förväntad målcommit.
 Gh-stack 0.2.0:s mergekommando skickar inte huvudcommitvillkoret.
 Ett läsprov före merge är därför inte ett verifierat skydd för exakt granskat
 resultat under hela tidsintervallet. Val av ett sådant skydd återstår.</p>
-<p>Slutlig merge utförs av användaren enligt det valda kandidatflödet.
-Välj hela stacken och squash; målet ska vara wf528-main. Den verkliga
-servermergen och dess efterkontroll är ännu inte körda. Okänt mergeutfall,
-pending och delvis infört resultat finns endast som märkta scenarier i
-HTML-modellen. Inget sådant fel har framkallats hos GitHub.</p>
-<p>Efter användarens merge behöver orkestratorn läsa samtliga PR:ers status,
-resultatcommits och målgrenens innehåll. Fem squashcommits kan motsvara en
-atomisk operation. Grenar, worktrees och lägesanteckningar bevaras tills
-utfallet är säkrat. Ett nätverksfel eller en utgången statuslänk räcker inte
+<p>Användaren bekräftar sammanslagning av stacken. Efterkontrollen visar
+att alla fem PR:er är stängda och sammanslagna. Målgrenen wf528-main pekar på
+<code>6b37495adfd70c119e5c039605313c9e19cea0bf</code>. Mellan den granskade
+målcommitten och resultatet finns fem nya commits, en för varje lager,
+med PR-hänvisningar. Resultatets träd är exakt det verifierade trädet
+<code>b307fece4def0bf0b60215e7f1a701adc88aac59</code>.</p>
+<p>Detta verifierar lyckat införande och oförändrat slutligt innehåll i det
+körda fallet. Statusarnas tidsstämplar skiljer några sekunder; efterkontrollen
+mäter inte synliga mellanlägen i målgrenen och bevisar inte ensam atomisk
+synlighet. Okänt mergeutfall, pending och delvis infört resultat finns endast
+som märkta scenarier i HTML-modellen. Inget sådant fel framkallas hos GitHub.</p>
+<p>Grentoppar och lägesanteckningar finns kvar som underlag för användarens
+bedömning. Ett nätverksfel eller en utgången statuslänk räcker fortsatt inte
 som bevis för att inget införs.</p>
 <p><a href="after-merge.py">Efterkontrollen</a> läser PR-status, jämför
 resultatets Git-träd med det verifierade trädet och kontrollerar att
@@ -128,4 +133,5 @@ Prototypgrenen ska inte slås samman med Skyttels main.</p>
 <li><a href="evidence/gh-stack-conflict-journal.json">Gh-stacks journal vid konflikten</a></li>
 <li><a href="evidence/candidate-resume.json">Orkestratorns lägesanteckning</a></li>
 <li><a href="evidence/github-handover.json">GitHub-snapshot inför användarens bedömning och merge</a></li></ul>
+<p><a href="evidence/github-after-merge.json">Verifierat GitHub-utfall efter användarens merge</a>.</p>
 </html>

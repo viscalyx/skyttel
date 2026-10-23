@@ -1,0 +1,63 @@
+{
+  "repository": "johlju/DebugApps",
+  "all_merged": true,
+  "merged_count": 5,
+  "pull_requests": [
+    {
+      "number": 83,
+      "title": "Prototyp A: första parallella delresultatet",
+      "state": "closed",
+      "merged": true,
+      "merged_at": "2026-10-23T20:24:17Z",
+      "merge_commit_sha": "257afd7c5fbecc260db074973d899d74f6883f1a"
+    },
+    {
+      "number": 84,
+      "title": "Prototyp B: andra parallella delresultatet",
+      "state": "closed",
+      "merged": true,
+      "merged_at": "2026-10-23T20:24:18Z",
+      "merge_commit_sha": "2011cebbb58b21f60d90bd800c878620a322d3d3"
+    },
+    {
+      "number": 85,
+      "title": "Prototyp D: arbete som endast behöver A",
+      "state": "closed",
+      "merged": true,
+      "merged_at": "2026-10-23T20:24:19Z",
+      "merge_commit_sha": "f2987c50ef97a6e47b6685d281ed86d755331ef1"
+    },
+    {
+      "number": 87,
+      "title": "Prototyp R: nytt reparationslager efter granskning",
+      "state": "closed",
+      "merged": true,
+      "merged_at": "2026-10-23T20:24:19Z",
+      "merge_commit_sha": "12f089f41e9d9255b7b509b3b530d089ca424ce7"
+    },
+    {
+      "number": 88,
+      "title": "Prototyp C: gemensamt efterföljande steg",
+      "state": "closed",
+      "merged": true,
+      "merged_at": "2026-10-23T20:24:20Z",
+      "merge_commit_sha": "6b37495adfd70c119e5c039605313c9e19cea0bf"
+    }
+  ],
+  "cleanup_performed": false,
+  "merge_requested": false,
+  "merged_tree": "b307fece4def0bf0b60215e7f1a701adc88aac59",
+  "expected_tree": "b307fece4def0bf0b60215e7f1a701adc88aac59",
+  "same_tree": true,
+  "target": "6b37495adfd70c119e5c039605313c9e19cea0bf",
+  "merge_reachable_from_target": true,
+  "commits_since_reviewed_target": 5,
+  "commit_messages": [
+    "A: set a to 1 (#83)\n\nCo-authored-by: Prototype <prototype@example.invalid>",
+    "B: set b to 2 (#84)\n\nCo-authored-by: Prototype <prototype@example.invalid>",
+    "D: initial derived value, before review repair (#85)\n\nCo-authored-by: Prototype <prototype@example.invalid>",
+    "R: correct D after specification review (#87)\n\nCo-authored-by: Prototype <prototype@example.invalid>",
+    "C: combine A and B (#88)\n\nCo-authored-by: Prototype <prototype@example.invalid>"
+  ],
+  "ready_for_cleanup_review": true
+}
