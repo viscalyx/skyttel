@@ -1,0 +1,47 @@
+{
+  "run_id": "skyttel-2026-10-23-1",
+  "repo": "viscalyx/skyttel",
+  "target": "/Users/johlju/source/skyttel",
+  "source_ref": {
+    "commit": "e79b5b97cfe73563dc7b028852176cd9521deb70",
+    "worktree_dirty": true,
+    "dirty_paths_at_start": [
+      ".codex/config.toml",
+      "docs/research/codex-agent-routing.md",
+      ".agents/skills/security-audit/"
+    ]
+  },
+  "profile": "standard",
+  "scope_paths": ["."],
+  "budget": null,
+  "pre_wave_estimate": {
+    "seeded_units": 32,
+    "planned_hunter_assignments": 14,
+    "mandatory_critics": 4,
+    "verifier_reserve": "at least one per surviving candidate in Phase 3 and one fresh review per retained confirmed or needs-validation record in Phase 5",
+    "budget_covers_plan": true
+  },
+  "execution_policy": "sandboxed-source-and-local-only",
+  "selected_companion_files": [
+    "WEB-PROTOCOL-AND-AUTH.md",
+    "CLIENT-SIDE.md",
+    "DATA-ISOLATION-AND-LIFECYCLE.md",
+    "AI-AND-LLM.md",
+    "PROTOCOLS-RPC-AND-MESSAGING.md",
+    "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md",
+    "CLOUD-AND-DEPLOYMENT.md",
+    "SUPPLY-CHAIN-AND-RELEASE.md"
+  ],
+  "prior_run_paths": [],
+  "shared_file_owners": {
+    "run-metadata.json": "parent",
+    "architecture.md": "parent",
+    "coverage-ledger.json": "parent",
+    "findings.json": "parent",
+    "REPORT.md": "parent",
+    "FINDINGS-DETAIL.md": "parent",
+    "NEEDS-VALIDATION.md": "parent"
+  },
+  "run_status": "complete",
+  "completed_at_utc": "2026-10-23 17:56:17 UTC"
+}

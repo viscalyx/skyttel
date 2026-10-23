@@ -1,0 +1,28 @@
+{
+  "proposed_verdict": "needs_validation",
+  "fingerprint": "map.definition-removal.private-draft-type-oracle",
+  "title": "Type-removal responses reveal another member's private draft use",
+  "description": "An authenticated household member can try to remove a shared object or relationship type that has no saved use. A definition_in_use response reveals that another private draft references or edits the selected type; a successful proposal indicates that blocker is absent. This is a type-specific private-draft predicate without exposing names or values.",
+  "claimed_root_cause": "The deletion guard uses other members' private draft records to choose an externally visible success or definition_in_use response.",
+  "trace": [
+    {"kind": "entrypoint", "file": "src/server/map-routes.ts", "line": 108, "scope": "Type proposal routes", "description": "An authenticated member proposes deletion of a known shared type."},
+    {"kind": "propagation", "file": "src/server/map.ts", "line": 617, "scope": "householdMap.proposeObjectType", "description": "The member's draft and content version are checked before evaluating the type proposal."},
+    {"kind": "propagation", "file": "src/server/object-types.ts", "line": 104, "scope": "objectTypes.propose", "description": "Deletion invokes assertUnused; relationship type proposal applies the same guard."},
+    {"kind": "propagation", "file": "src/server/definition-usage.ts", "line": 6, "scope": "definitionUsage.otherDrafts", "description": "The guard reads other owners' drafts and checks references and edits to the selected type."},
+    {"kind": "sink", "file": "src/server/app.ts", "line": 163, "scope": "Global error handler", "description": "Caller receives distinguishable definition_in_use if another draft uses the type."}
+  ],
+  "evidence": [
+    {"file": "src/server/definition-usage.ts", "line": 10, "description": "Query selects household drafts whose userId differs from caller."},
+    {"file": "src/server/definition-usage.ts", "line": 45, "description": "Object-type branch tests other drafts and throws definition_in_use; relationship branch mirrors this."},
+    {"file": "src/server/map.ts", "line": 79, "description": "Ordinary map reads select only caller's draft, establishing separate private boundary."},
+    {"file": "tests/unit/server/definition-removal.test.ts", "line": 333, "description": "A test asserts another member's pending type edit produces definition_in_use."},
+    {"file": "tests/integration/definition-removal.spec.ts", "line": 363, "description": "Integration test checks private names and values are absent while type-specific rejection remains visible."}
+  ],
+  "blockers": [
+    "The intended privacy contract does not specify whether another member's use of a shared type in a private draft is confidential metadata.",
+    "The required OS sandbox lacks verified total scratch disk limits and race-safe artifact promotion, so a bounded two-member check was not run."
+  ],
+  "validation_plan": {
+    "local": "With the required sandbox, create a dummy household with two members and an otherwise unused shared type. Compare one member's deletion response before and after the other stages a private object or type edit using it; stop at the response-code difference. Have the product owner decide whether this metadata is intended to be public."
+  }
+}

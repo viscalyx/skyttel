@@ -1,0 +1,64 @@
+{
+  "parent": {
+    "number": 534,
+    "url": "https://github.com/viscalyx/skyttel/issues/534"
+  },
+  "children": [
+    {
+      "index": 1,
+      "number": 535,
+      "url": "https://github.com/viscalyx/skyttel/issues/535",
+      "title": "Validate membership revocation after restoring an older database",
+      "id": 6003427273,
+      "linked": true
+    },
+    {
+      "index": 2,
+      "number": 536,
+      "url": "https://github.com/viscalyx/skyttel/issues/536",
+      "title": "Validate availability impact of full save-history parsing",
+      "id": 6003427789,
+      "linked": true
+    },
+    {
+      "index": 3,
+      "number": 537,
+      "url": "https://github.com/viscalyx/skyttel/issues/537",
+      "title": "Decide privacy policy for cross-member type-use responses",
+      "id": 6003428403,
+      "linked": true
+    },
+    {
+      "index": 4,
+      "number": 538,
+      "url": "https://github.com/viscalyx/skyttel/issues/538",
+      "title": "Validate storage growth from duplicate relationship-form attempts",
+      "id": 6003430583,
+      "linked": true
+    },
+    {
+      "index": 5,
+      "number": 539,
+      "url": "https://github.com/viscalyx/skyttel/issues/539",
+      "title": "Validate memory growth from completed assistant snapshots",
+      "id": 6003431178,
+      "linked": true
+    },
+    {
+      "index": 6,
+      "number": 540,
+      "url": "https://github.com/viscalyx/skyttel/issues/540",
+      "title": "Validate shared-map prompt injection into another member's private draft",
+      "id": 6003436032,
+      "linked": true
+    },
+    {
+      "index": 7,
+      "number": 541,
+      "url": "https://github.com/viscalyx/skyttel/issues/541",
+      "title": "Complete blocked OAuth provider source review",
+      "id": 6003438498,
+      "linked": true
+    }
+  ]
+}

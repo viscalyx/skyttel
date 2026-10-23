@@ -1,0 +1,30 @@
+{
+  "proposed_verdict": "needs_validation",
+  "fingerprint": "map-read.full-history-materialization",
+  "title": "Ordinary map reads materialize all retained save receipts",
+  "description": "A household member can accumulate saved receipts through authorized edits. Once a household has a deleted object, an ordinary map read loads and parses every retained receipt, including unrelated ones. Conflict reads add another full-history pass, and the explicit history endpoint returns every receipt. Shared-process impact needs bounded local measurement and deployment context.",
+  "claimed_root_cause": "The map state reader derives deleted-object type metadata by scanning and parsing the entire household save history without pagination, targeted lookup, or a persisted derived value.",
+  "trace": [
+    {"kind": "entrypoint", "file": "src/server/map-routes.ts", "line": 76, "scope": "GET /households/:id/map", "description": "An authenticated household member invokes an ordinary map read."},
+    {"kind": "propagation", "file": "src/server/map.ts", "line": 55, "scope": "householdMap", "description": "The map binds actor to membership before read."},
+    {"kind": "propagation", "file": "src/server/map.ts", "line": 202, "scope": "readState", "description": "A deleted object enables receipt-history work on every map read."},
+    {"kind": "sink", "file": "src/server/map.ts", "line": 208, "scope": "readState metadata", "description": "Query materializes all receipt strings and loop parses each, without count or age limit."}
+  ],
+  "evidence": [
+    {"file": "src/server/map.ts", "line": 939, "description": "Every successful nonempty save inserts map_history and a full receipt in map_save."},
+    {"file": "src/server/map.ts", "line": 265, "description": "Conflict readState performs a second full-history parse."},
+    {"file": "src/server/map.ts", "line": 365, "description": "Explicit history endpoint loads and parses all household receipts."},
+    {"file": "src/server/app.ts", "line": 146, "description": "Request body limit bounds individual uploads, not accumulated history or GET work."},
+    {"file": "src/server/map-operations.ts", "line": 141, "description": "The 20-result cap applies to completed operation listing, not persisted receipts."},
+    {"file": "migrations/004_map.sql", "line": 35, "description": "map_history has no household index or retention constraint in original schema."},
+    {"file": "migrations/006_save_operations.sql", "line": 34, "description": "History cleanup follows contentVersion change, not routine saves."}
+  ],
+  "blockers": [
+    "The required sandbox disk quota and artifact promotion controls were not verified, so a bounded dummy-database growth check cannot run.",
+    "The repository does not establish deployed receipt counts, concurrency, memory headroom, or ingress limits needed to determine shared availability impact."
+  ],
+  "validation_plan": {
+    "local": "In the required sandbox, create a small dummy household with one deleted object and increasing counts of valid small receipts. Measure GET /map latency and peak memory at bounded sizes, compare a household without deleted objects, and inspect the SQLite query plan. Stop at minimum observable growth.",
+    "deployment": "Have the installation owner review receipt counts, memory limits, request concurrency, and ingress timeouts from private operational records to determine whether measured growth can affect other members."
+  }
+}

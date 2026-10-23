@@ -1,0 +1,29 @@
+{
+  "proposed_verdict": "needs_validation",
+  "fingerprint": "relationship-form-unbounded-attempt-retention",
+  "title": "Repeated duplicate relationship forms retain unbounded submissions",
+  "description": "A household member can submit successive valid relationship forms with new staging IDs that select an existing relationship. Each request leaves the draft unchanged yet stores the full submitted JSON in shared SQLite. A request is capped at 2 MB, but source-visible code provides no aggregate attempt count, storage quota, or ordinary expiry. Sustained submissions could exhaust installation storage; effective deployed limits and recovery remain unobserved.",
+  "claimed_root_cause": "The duplicate-outcome path records every full request as immutable recovery evidence without an aggregate retention bound; ignored top-level JSON fields are retained.",
+  "trace": [
+    {"kind": "entrypoint", "file": "src/server/map-routes.ts", "line": 158, "scope": "relationship-form POST", "description": "An authenticated household member submits a relationship form with a fresh stagingId and id."},
+    {"kind": "propagation", "file": "src/server/relationships.ts", "line": 262, "scope": "relationships.propose", "description": "A matching existing relationship returns existingId without another draft change."},
+    {"kind": "propagation", "file": "src/server/map.ts", "line": 660, "scope": "proposeRelationshipForm", "description": "The duplicate outcome still calls attempts.record."},
+    {"kind": "sink", "file": "src/server/relationship-form-attempts.ts", "line": 39, "scope": "record", "description": "The complete submission and outcome are inserted into SQLite under each new stagingId."}
+  ],
+  "evidence": [
+    {"file": "src/server/app.ts", "line": 155, "description": "The form route has a per-request body cap."},
+    {"file": "src/server/properties.ts", "line": 6, "description": "propertyWriteLimit is 2,000,000 bytes."},
+    {"file": "src/server/map.ts", "line": 654, "description": "Only an already recorded stagingId returns early; new IDs continue to proposal and recording."},
+    {"file": "src/server/map.ts", "line": 677, "description": "Both staged and duplicate outcomes are recorded."},
+    {"file": "src/server/relationship-form-attempts.ts", "line": 46, "description": "record serializes the entire submission rather than only validated form fields."},
+    {"file": "migrations/025_relationship_form_attempts.sql", "line": 3, "description": "The attempt table has no aggregate count, byte, or age constraint; cleanup requires a contentVersion change."}
+  ],
+  "blockers": [
+    "The required OS sandbox controls, including total scratch disk quota and race-safe artifact promotion, were not verified; no local target fixture may run.",
+    "The repository does not establish deployed ingress rate limits, persistent-volume quota, or service recovery after storage exhaustion."
+  ],
+  "validation_plan": {
+    "local": "In the required sandbox, use a small dummy household and SQLite fixture to submit several valid duplicate forms with fresh stagingIds and ignored top-level padding. Verify that draft version stays constant while attempt count and stored bytes rise, then check whether an ordinary save reclaims rows. Enforce strict resource limits.",
+    "deployment": "Have the installation owner inspect ingress request limits, persistent-volume quota, and the documented or observed response and recovery when SQLite reaches that quota. Do not load-test a live installation."
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "proposed_verdict": "needs_validation",
+  "fingerprint": "text-assistant/shared-map-to-private-draft-action-binding",
+  "title": "Shared map content may drive unrequested changes to another member's private draft",
+  "description": "A household member can save text in the shared map that another member's assistant later reads. If that text induces a proposal tool call unrelated to the consuming member's request, the assistant can change the consuming member's private draft. Source enforces identity, membership, schema, and current versions, but does not bind proposal arguments to the member's requested action. Saving has a separate explicit intent gate.",
+  "claimed_root_cause": "Model-produced proposal actions are authorized by the consuming member's grant and current draft version without a deterministic check that the member requested the particular mutation.",
+  "trace": [
+    {
+      "kind": "entrypoint",
+      "file": "src/server/map-routes.ts",
+      "line": 217,
+      "scope": "Household map save route",
+      "description": "A household member can submit a saved map change."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/map.ts",
+      "line": 905,
+      "scope": "Saved object write",
+      "description": "Object properties supplied through the map change become shared saved content."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/assistant-routes.ts",
+      "line": 243,
+      "scope": "read_map tool",
+      "description": "The consuming member's assistant can receive saved object values through the MCP read result."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/text-assistant.ts",
+      "line": 1098,
+      "scope": "Model request",
+      "description": "MCP results accumulated in the assistant input are sent to the model with proposal tools available."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/text-assistant.ts",
+      "line": 1413,
+      "scope": "Model tool dispatch",
+      "description": "A model-produced proposal call passes current authority and version checks before dispatch."
+    },
+    {
+      "kind": "sink",
+      "file": "src/server/assistant-work.ts",
+      "line": 266,
+      "scope": "propose_object",
+      "description": "The proposal handler writes to the consuming user's private draft through the household map domain."
+    }
+  ],
+  "evidence": [
+    {
+      "file": "src/server/map.ts",
+      "line": 104,
+      "description": "Draft writes are keyed by household and content owner, making another member's private draft a distinct resource."
+    },
+    {
+      "file": "src/server/text-assistant.ts",
+      "line": 1369,
+      "description": "The dispatcher chooses a tool by the model-produced action name."
+    },
+    {
+      "file": "src/server/text-assistant.ts",
+      "line": 1385,
+      "description": "Non-read-only actions are checked against current draft and content versions, without checking the user's requested target or action."
+    },
+    {
+      "file": "src/server/text-assistant.ts",
+      "line": 1377,
+      "description": "The explicit save-intent check applies to save tools, limiting the hypothesized effect to draft changes."
+    }
+  ],
+  "blockers": [
+    "No model response demonstrating that attacker-controlled saved map text induces the unrequested proposal was observed.",
+    "The required OS-enforced sandbox, including a bounded scratch disk and race-safe artifact promotion, was not verified, so target code was not executed."
+  ],
+  "validation_plan": {
+    "local": "In a fully isolated resource-limited fixture with dummy household members, have one member save instruction-like object text. Have the other member request only a read or summary of that object. Capture the exact model tool call and compare the second member's private draft before and after the minimum response. Stop at one unexpected draft mutation; do not save the draft or call a billable provider without explicit authorization."
+  }
+}

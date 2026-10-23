@@ -1,0 +1,73 @@
+{
+  "proposed_verdict": "needs_validation",
+  "fingerprint": "text-assistant-completed-result-quadratic-retention",
+  "title": "Completed assistant turns retain quadratic session snapshots",
+  "description": "An authenticated member can submit serial assistant messages in one conversation. The pending-work cap does not limit completed messages. Each completion retains a snapshot containing all accepted tasks and a copy of all completed replies. Source indicates quadratic retained entries; a bounded local check is needed to determine an effect on the shared server process.",
+  "claimed_root_cause": "Completed accepted-message records are not evicted during a conversation, and each accepted result embeds arrays that grow with prior completed messages.",
+  "trace": [
+    {
+      "kind": "entrypoint",
+      "file": "src/server/text-assistant.ts",
+      "line": 2015,
+      "scope": "POST assistant message",
+      "description": "An authenticated household member submits a message to an existing conversation."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/text-assistant.ts",
+      "line": 2081,
+      "scope": "admission limit",
+      "description": "The 200-item limit counts queued and working messages, allowing serial completed turns."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/text-assistant.ts",
+      "line": 2104,
+      "scope": "accepted-message retention",
+      "description": "Each distinct request ID is retained in the session's accepted map."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/text-assistant.ts",
+      "line": 1795,
+      "scope": "completed reply history",
+      "description": "Each completed turn appends another reply to session history."
+    },
+    {
+      "kind": "sink",
+      "file": "src/server/text-assistant.ts",
+      "line": 1813,
+      "scope": "retained result snapshot",
+      "description": "An accepted entry keeps a view of the growing task list and a copy of all completed replies."
+    }
+  ],
+  "evidence": [
+    {
+      "file": "src/server/text-assistant.ts",
+      "line": 314,
+      "description": "A session view enumerates every accepted task."
+    },
+    {
+      "file": "src/server/text-assistant.ts",
+      "line": 1815,
+      "description": "Each accepted result stores a fresh copy of completed replies."
+    },
+    {
+      "file": "src/server/text-assistant.ts",
+      "line": 843,
+      "description": "Reset clears accepted entries and replies; no per-completion eviction is visible."
+    },
+    {
+      "file": "src/server/text-assistant-mcp.ts",
+      "line": 159,
+      "description": "A connected assistant's nominal lifetime is limited to 30 minutes."
+    }
+  ],
+  "blockers": [
+    "No bounded fake-provider memory fixture was run because the required OS sandbox controls were not verified.",
+    "The source alone does not establish a concrete effect on another user under the supported process memory limit."
+  ],
+  "validation_plan": {
+    "local": "In the required offline OS sandbox, use dummy household data and a mocked model provider to complete a small sequence of serial messages. Compare retained session memory or snapshot entry counts at bounded turn counts, then check one second dummy user's request under the same low memory limit. Stop at the minimum shared-process effect."
+  }
+}

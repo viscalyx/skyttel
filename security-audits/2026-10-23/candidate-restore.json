@@ -1,0 +1,69 @@
+{
+  "proposed_verdict": "needs_validation",
+  "fingerprint": "installation.restore.reinstates-revoked-membership",
+  "title": "Restoring an older database may reinstate revoked household membership",
+  "description": "A restored copy may contain a membership row deleted after the copy was made. Authority rotation invalidates old sessions and tokens but retains that restored membership and provider identity link. After a new sign-in, the former member may regain access unless the later revocation is independently reapplied before ingress opens.",
+  "claimed_root_cause": "The restore authority transition invalidates authentication artifacts but does not reconcile membership removals or role downgrades made after the restored snapshot.",
+  "trace": [
+    {
+      "kind": "entrypoint",
+      "file": "src/server/index.ts",
+      "line": 12,
+      "scope": "database startup",
+      "description": "Startup opens the restored database under the configured authority fence."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/auth.ts",
+      "line": 24,
+      "scope": "authentication initialization",
+      "description": "Authentication initialization prepares the installation authority."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/installation-authority.ts",
+      "line": 106,
+      "scope": "restore generation transition",
+      "description": "Generation change invalidates authentication artifacts but retains restored membership rows."
+    },
+    {
+      "kind": "propagation",
+      "file": "src/server/households.ts",
+      "line": 16,
+      "scope": "householdAccess",
+      "description": "The authorization query accepts a restored membership for the newly signed-in user."
+    },
+    {
+      "kind": "sink",
+      "file": "src/server/map.ts",
+      "line": 59,
+      "scope": "householdMap",
+      "description": "Map access relies on householdAccess and could permit a formerly revoked member to read household content."
+    }
+  ],
+  "evidence": [
+    {
+      "file": "src/server/administration.ts",
+      "line": 165,
+      "description": "Membership revocation deletes the membership row."
+    },
+    {
+      "file": "src/server/installation-authority.ts",
+      "line": 34,
+      "description": "The invalidation list clears sessions and tokens but does not include membership or account."
+    },
+    {
+      "file": "docs/operations/database-restore.md",
+      "line": 75,
+      "description": "The runbook requires authorization checks before ingress opens but does not specify reconciliation of post-copy membership changes."
+    }
+  ],
+  "blockers": [
+    "No dummy-account restore check was run because the required OS sandbox controls were not verified.",
+    "The repository does not establish whether operators retain and replay post-copy membership revocations and role downgrades before reopening ingress."
+  ],
+  "validation_plan": {
+    "local": "In an isolated sandbox using dummy identities, snapshot one household database, revoke one member, restore the snapshot under a new authority generation, sign in again as that dummy member, and observe only whether a household read succeeds.",
+    "deployment": "Have the installation owner inspect the restore procedure and independent records for a required reconciliation of post-copy membership and role changes before ingress opens."
+  }
+}
