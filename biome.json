@@ -24,7 +24,32 @@
   },
   "linter": {
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "correctness": {
+        "usePlaywrightValidDescribeCallback": "off"
+      }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["tests/integration/**/*.spec.ts", "tests/real-*/**/*.spec.ts"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "usePlaywrightValidDescribeCallback": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/unit/**", "tests/browser/**", "tests/support/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noComponentHookFactories": "off"
+          }
+        }
+      }
+    }
+  ]
 }
