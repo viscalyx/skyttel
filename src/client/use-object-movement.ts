@@ -20,6 +20,7 @@ type Gesture = {
   currentY: number;
   height: boolean;
   moved: boolean;
+  referenceHeld: boolean;
   second?: { id: number; x: number; y: number };
 };
 type MovementResult = { id: string; position: Position; axes: (keyof Position)[] };
@@ -31,11 +32,15 @@ export function useObjectMovement(
     active,
     onMove,
     cancelHold,
+    referenceAlwaysVisible,
+    referenceOnMovement,
   }: {
     enabled: boolean;
     active: boolean;
     onMove: (id: string, position: Position) => unknown;
     cancelHold: () => void;
+    referenceAlwaysVisible: boolean;
+    referenceOnMovement: boolean;
   },
 ) {
   const gesture = useRef<Gesture | null>(null);
@@ -49,6 +54,30 @@ export function useObjectMovement(
     source: 'drag' | 'buttons';
   } | null>(null);
   const [heightActive, setHeightActive] = useState(false);
+  const [temporaryReference, setTemporaryReference] = useState(false);
+  const referenceDelay = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const referenceHoldTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const cancelReferenceHold = useCallback(() => clearTimeout(referenceHoldTimer.current), []);
+  const clearReference = useCallback(() => {
+    clearTimeout(referenceDelay.current);
+    cancelReferenceHold();
+    setTemporaryReference(false);
+  }, [cancelReferenceHold]);
+  function showReference() {
+    clearTimeout(referenceDelay.current);
+    setTemporaryReference(true);
+  }
+  function releaseReference() {
+    clearTimeout(referenceDelay.current);
+    referenceDelay.current = setTimeout(() => setTemporaryReference(false), 1000);
+  }
+  useEffect(
+    () => () => {
+      clearTimeout(referenceDelay.current);
+      cancelReferenceHold();
+    },
+    [cancelReferenceHold],
+  );
   const [announcement, setAnnouncement] = useState<MovementResult | null>(null);
   const latestAnnouncement = useRef<MovementResult | null>(null);
   const announcementTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -89,18 +118,20 @@ export function useObjectMovement(
       suppressed.current = true;
       setGuide(null);
       if (current.moved) clearAnnouncement();
+      clearReference();
     }
     gesture.current = null;
     touches.current.clear();
     waiting.current = false;
     setHeightActive(false);
     cancelHold();
-  }, [scene, cancelHold, clearAnnouncement]);
+  }, [scene, cancelHold, clearAnnouncement, clearReference]);
+  const interrupt = useCallback(() => {
+    cancel();
+    clearAnnouncement();
+    clearReference();
+  }, [cancel, clearAnnouncement, clearReference]);
   useEffect(() => {
-    const interrupt = () => {
-      cancel();
-      clearAnnouncement();
-    };
     if (!active || !enabled) interrupt();
     window.addEventListener('blur', interrupt);
     const visibility = () => {
@@ -111,7 +142,7 @@ export function useObjectMovement(
       window.removeEventListener('blur', interrupt);
       document.removeEventListener('visibilitychange', visibility);
     };
-  }, [active, enabled, cancel, clearAnnouncement]);
+  }, [active, enabled, interrupt]);
   function rebase(current: Gesture, height: boolean) {
     current.segment = scene.current?.position(current.id) ?? current.segment;
     current.x = current.currentX;
@@ -122,10 +153,16 @@ export function useObjectMovement(
     guide,
     heightActive,
     announcement,
+    referenceVisible:
+      active && (referenceAlwaysVisible || (referenceOnMovement && temporaryReference)),
     clearStaleAnnouncement,
     movingObjectId,
     cancel,
+    interrupt,
     recordMove(id: string, start: Position, end: Position, height: boolean) {
+      if ((['x', 'y', 'z'] as const).every((axis) => start[axis] === end[axis])) return;
+      showReference();
+      if (!gesture.current?.moved && !gesture.current?.referenceHeld) releaseReference();
       announce(id, start, end);
       setGuide((previous) =>
         height
@@ -167,7 +204,27 @@ export function useObjectMovement(
         currentY: event.clientY,
         height: event.shiftKey,
         moved: false,
+        referenceHeld: false,
       };
+      if (event.pointerType === 'mouse') {
+        const current = gesture.current;
+        referenceHoldTimer.current = setTimeout(() => {
+          if (gesture.current !== current) return;
+          current.referenceHeld = true;
+          showReference();
+        }, 1500);
+      }
+    },
+    leave() {
+      cancelReferenceHold();
+    },
+    lostCapture(event: ReactPointerEvent) {
+      const current = gesture.current;
+      if (
+        current &&
+        (event.pointerId === current.primary || event.pointerId === current.second?.id)
+      )
+        cancel();
     },
     down(event: ReactPointerEvent) {
       if (event.pointerType === 'touch')
@@ -175,6 +232,7 @@ export function useObjectMovement(
       const current = gesture.current;
       if (!current || event.pointerId === current.primary) return;
       cancelHold();
+      cancelReferenceHold();
       event.stopPropagation();
       if (current.second) return;
       if (event.pointerType !== 'touch') {
@@ -204,6 +262,7 @@ export function useObjectMovement(
           setGuide(null);
           setHeightActive(false);
           clearAnnouncement();
+          clearReference();
           scene.current?.beginCameraGesture(touches.current);
         }
         return;
@@ -212,6 +271,8 @@ export function useObjectMovement(
       if (!current.moved && Math.hypot(event.clientX - current.x, event.clientY - current.y) < 8)
         return;
       current.moved = true;
+      cancelReferenceHold();
+      showReference();
       suppressed.current = true;
       cancelHold();
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -245,7 +306,9 @@ export function useObjectMovement(
       gesture.current = null;
       setHeightActive(false);
       cancelHold();
+      cancelReferenceHold();
       const position = scene.current?.position(current.id);
+      if (current.moved || current.referenceHeld) releaseReference();
       if (current.moved && position) void onMove(current.id, position);
     },
   };
