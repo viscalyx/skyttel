@@ -2,10 +2,10 @@ import './zero-planes.prototype.css';
 import type { Position } from '../shared/personal-view.js';
 import {
   type PlaneComparison,
-  prototypeOvalScale,
   prototypePlaneExtent,
   prototypePlanePoint,
   prototypePlanes,
+  prototypeRoundScale,
 } from './zero-planes.prototype.js';
 
 export function ZeroPlanesPrototypeControls({
@@ -29,6 +29,7 @@ export function ZeroPlanesPrototypeControls({
           >
             <option value="square">Kvadrat</option>
             <option value="oval">Oval</option>
+            <option value="circle">Cirkel</option>
           </select>
         </label>
         <label>
@@ -46,14 +47,19 @@ export function ZeroPlanesPrototypeControls({
         </label>
       </div>
       <p role="status">
-        {value.shape === 'square' ? 'Kvadrat' : 'Oval'} ·{' '}
+        {{ square: 'Kvadrat', oval: 'Oval', circle: 'Cirkel' }[value.shape]} ·{' '}
         {{ subtle: 'Diskret', original: 'Ursprunglig', prominent: 'Framträdande' }[value.weight]} ·
         alla tre plan
       </p>
       <p>XZ: heldragen · YZ: streckad · XY: prickad.</p>
       <p>
-        Provisorisk utbredning: ±18 vysteg (oval: ±27 × ±18,9). Fast centrum (0, 0, 0); följer inte
-        kameran. Valen sparas inte.
+        Provisorisk utbredning:{' '}
+        {
+          { square: '±18 × ±18 vysteg', oval: '±27 × ±18,9 vysteg', circle: 'radie 27 vysteg' }[
+            value.shape
+          ]
+        }
+        . Fast centrum (0, 0, 0); följer inte kameran. Valen sparas inte.
       </p>
     </details>
   );
@@ -69,7 +75,7 @@ export function ZeroPlanesPrototypeLabels({
   value: PlaneComparison;
 }) {
   const origin = project({ x: 0, y: 0, z: 0 });
-  const extent = prototypePlaneExtent * (value.shape === 'oval' ? prototypeOvalScale : 1);
+  const extent = prototypePlaneExtent * (value.shape === 'square' ? 1 : prototypeRoundScale);
   return (
     <g
       className="zero-planes-prototype-labels"

@@ -1,4 +1,4 @@
-// Throwaway comparison: three full world-coordinate planes, two patch shapes,
+// Throwaway comparison: three full world-coordinate planes, three patch shapes,
 // three weights. Extent, oval aspect ratio and clipping are provisional.
 import {
   BufferGeometry,
@@ -15,11 +15,11 @@ import {
 } from 'three';
 
 export type PlaneComparison = {
-  shape: 'square' | 'oval';
+  shape: 'square' | 'oval' | 'circle';
   weight: 'subtle' | 'original' | 'prominent';
 };
 export const prototypePlaneExtent = 18;
-export const prototypeOvalScale = 1.5;
+export const prototypeRoundScale = 1.5;
 export const prototypePlanes = [
   { name: 'XZ · y = 0', dark: '#79d9e8', light: '#176374', pattern: 'heldragen' },
   { name: 'YZ · x = 0', dark: '#ddaff8', light: '#743f91', pattern: 'streckad' },
@@ -37,7 +37,7 @@ export function prototypePlanePoint(plane: number, u: number, v: number) {
 export function zeroPlanesPrototype(value: PlaneComparison, theme: 'light' | 'dark') {
   const group = new Group();
   const disposables: { dispose(): void }[] = [];
-  const r = prototypePlaneExtent * (value.shape === 'oval' ? prototypeOvalScale : 1);
+  const r = prototypePlaneExtent * (value.shape === 'square' ? 1 : prototypeRoundScale);
   const minor = value.shape === 'oval' ? r * 0.7 : r;
   const weight = {
     subtle: { fill: 0.035, edge: 0.52, grid: 0.09, divisions: 2 },
@@ -54,7 +54,7 @@ export function zeroPlanesPrototype(value: PlaneComparison, theme: 'light' | 'da
       patch.rotation.y = Math.PI / 2;
     }
     const shape = new Shape();
-    if (value.shape === 'oval') shape.absellipse(0, 0, r, minor, 0, Math.PI * 2, false, 0);
+    if (value.shape !== 'square') shape.absellipse(0, 0, r, minor, 0, Math.PI * 2, false, 0);
     else {
       shape.moveTo(-r, -r);
       shape.lineTo(r, -r);
@@ -96,7 +96,7 @@ export function zeroPlanesPrototype(value: PlaneComparison, theme: 'light' | 'da
       // Shared intersection axes are drawn once below.
       if (step === 0) continue;
       const fraction = step / weight.divisions;
-      const clip = value.shape === 'oval' ? Math.sqrt(1 - fraction ** 2) : 1;
+      const clip = value.shape === 'square' ? 1 : Math.sqrt(1 - fraction ** 2);
       line(
         [new Vector3(r * fraction, -minor * clip, 0), new Vector3(r * fraction, minor * clip, 0)],
         weight.grid,

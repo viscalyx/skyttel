@@ -48,7 +48,7 @@ export async function captureZeroPlanesPrototype(
       });
       await page.goto(url);
       await surface.waitFor();
-      for (const shape of ['square', 'oval']) {
+      for (const shape of ['square', 'oval', 'circle']) {
         for (const weight of ['subtle', 'original', 'prominent']) {
           await surface.getByRole('combobox', { name: 'Form', exact: true }).selectOption(shape);
           await surface

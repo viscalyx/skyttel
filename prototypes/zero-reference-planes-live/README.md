@@ -44,10 +44,10 @@ The comparison is disabled in production builds.
 
 The bottom panel has independent native selects:
 
-- Shape: square or oval. Square is a provisional starting shape.
+- Shape: square, oval or circle. Square is a provisional starting shape.
 - Weight: subtle, original or prominent. Subtle is the starting weight.
 
-All six combinations retain three mutually perpendicular planes centered at
+All nine combinations retain three mutually perpendicular planes centered at
 the shared coordinate origin. Switching either select preserves the camera,
 objects and relationships. Collapse the panel to see content beneath it.
 Tab and the native select keys operate the controls; there are no global
@@ -73,6 +73,10 @@ vertically to compare the independent local movement guide.
   comparison. This adjustment responds to live feedback asking for more
   width, height and depth. These are experiment dimensions, not agreed
   extents or physical measurements. The oval aspect ratio remains unchanged.
+- Circles have radius 27 in both in-plane directions, matching the enlarged
+  oval's major radius. Each circle belongs to its world-coordinate plane;
+  camera perspective can make it appear elliptical on screen. The radius is
+  a trial comparison size, not an accepted final extent.
 - Plane geometry clips normally at the camera/viewport boundary. There is
   no camera-following extent, edge indicator or adaptive plane hiding.
 - Household glyphs and connections render above the translucent planes in
@@ -96,8 +100,9 @@ vertically to compare the independent local movement guide.
 
 The committed screenshot sets show the initial oval semiaxes 18 and 12.6.
 They remain baseline evidence; use the running prototype to review the
-enlarged ovals. Rerunning the capture commands replaces those screenshots
-with the current dimensions.
+enlarged ovals and the additional circle variant. Rerunning the capture
+commands replaces those screenshots with the current dimensions and adds
+circle captures for each visual weight in both themes.
 
 The capture command uses an isolated Chromium context and synthetic identity:
 
