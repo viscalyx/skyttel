@@ -233,6 +233,12 @@ värdet. Om inmatningen då är ogiltig ska synlig text och återkoppling för
 skärmläsare förklara problemet och vilket värde som återställs.
 Övriga axlar förblir användbara. Giltiga värden flyttar fortfarande direkt.
 
+Tillåt koordinater från −10 000 till +10 000, inklusive gränserna.
+Acceptera både decimalkomma och decimalpunkt. Halva hundradelar avrundas
+från noll: `1.005` blir `1.01` och `-1.005` blir `-1.01`.
+`-0.001` blir `0.00`; visa inte negativ nolla. Att visa en befintlig
+position med två decimaler ändrar inte dess lagrade precision.
+
 ### Konkret prototypbeteende att bevara som granskningsunderlag
 
 Följande beskriver experimentet. Kraven ovan gäller där beteendet också
@@ -279,8 +285,23 @@ Visa tydligt **Positionen är inte sparad** och erbjud **Försök igen** samt
 **Läs in sparad position**. Det osparade tillståndet och återkopplingen ska
 vara tillgängliga för hjälpmedel. Kasta inte senare redigeringar när ett
 äldre anrop avslutas. Strategin för anropens ordning är ett tekniskt ansvar;
-användarens val vid samtidiga ändringar från andra enheter återstår att
-besluta, liksom hantering av osparad position när användaren lämnar vyn.
+den får inte kräva att användaren godkänner varje sparförsök.
+
+Om samma objekt får en ny sparad position från en annan enhet ska den
+aktuella lokala flytten skriva över den automatiskt. Visa ingen valruta
+för att jämföra eller välja position. Spara den senaste lokala positionens
+hela X/Y/Z-värde; sammanfoga inte enskilda axlar från olika enheter.
+Detta gäller positionskonflikter inom samma personliga vy, inte ändringar
+av hushållets gemensamma uppgifter. Övriga objekt påverkas inte.
+Vanliga sparfel behåller återkopplingen och åtgärderna ovan.
+
+Bevara osparade positioner när användaren byter markerat objekt, växlar
+mellan normal- och miniläge eller stänger navigeringsfönstret.
+Varna före byte från hushållet om positioner fortfarande är osparade.
+Erbjud att stanna eller lämna och kasta de osparade ändringarna.
+Vid omladdning eller stängning av sidan används webbläsarens varning om
+förlust av ändringar. Detta inför inte återställning av lokala positioner
+efter en genomförd omladdning.
 
 ## Tillgänglighet och kvarstående frågor
 
@@ -301,10 +322,11 @@ Följande är öppet och får inte fyllas i med prototypens tillfälliga val:
 
 1. Exakt placering och fokusflöde för åtkomst till sambandens ändpunkter
    och deras positioner.
-2. Slutliga visuella och icke färgbaserade signaler, kontrast, fokus,
-   omflöde och små skärmar i båda navigeringslägena.
-3. Återstående inmatningsdetaljer samt användarens val vid samtidiga
-   förändringar och när en osparad position riskerar att lämnas.
+2. Om de namngivna koordinatfälten och åtkomsten via sambandens ändpunkter
+   ska vara textalternativet när nollreferensen inte syns eller saknar ton.
+   Förslaget innebär ingen ytterligare upprepad positionsvisning.
+3. Återstående granskning av inmatning och visuella signaler, kontrast,
+   fokus, omflöde och små skärmar i båda navigeringslägena.
 4. Verifiering av hela vägen Tabell → objektval → Karta → Navigera,
    även med automatiskt placerade objekt och när nollreferensen inte syns.
 5. Samlad kontroll och användarens godkännande av den färdiga designen.
@@ -321,6 +343,9 @@ verifierade beteenden i den arkiverade prototypen.
 Tillgång till automatiska positioner, återkoppling för ogiltig inmatning
 och bevarande av osparade positioner vid fel är också leveranskrav som
 den arkiverade prototypen inte demonstrerar.
+Automatisk överskrivning vid positionskonflikt, varning innan osparade
+positioner lämnas och stöd för båda decimaltecknen behöver verifieras
+i implementationen.
 
 Kurvade samband, pilspetsar, klippning och överlappande toning behöver
 produktionsgranskning. Ett byte från bildfilter till vektorbaserad toning
