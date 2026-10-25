@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { PersonalPosition, Position, ViewSettings } from '../shared/personal-view.js';
 import { spaceBackground } from './space-background.js';
 import { cameraGestures } from './spatial-navigation.js';
+import { projectDepthPatches } from './zero-plane-depth.prototype.js';
 import { type PlaneComparison, zeroPlanesPrototype } from './zero-planes.prototype.js';
 
 export type ProjectedPoint = {
@@ -288,6 +289,7 @@ export function spatialScene(
       prototypePlanes = zeroPlanesPrototype(value, theme);
       prototypeScene.add(prototypePlanes.group);
       painted = false;
+      projectionRevision++;
       draw();
     },
     projectPrototype(point: Position) {
@@ -301,6 +303,18 @@ export function spatialScene(
           Math.abs(projected.x) < 0.95 &&
           Math.abs(projected.y) < 0.95,
       };
+    },
+    prototypeDepthPatches(value: PlaneComparison, theme: 'light' | 'dark') {
+      return prototypePlanes
+        ? projectDepthPatches(
+            prototypePlanes,
+            value,
+            theme,
+            camera,
+            canvas.clientWidth,
+            canvas.clientHeight,
+          )
+        : [];
     },
     update(
       ids: string[],

@@ -53,3 +53,11 @@
   outline: 3px solid #ffdf80;
   outline-offset: 2px;
 }
+.zero-planes-prototype input[type="range"] {
+  width: 100%;
+  min-height: 44px;
+}
+.zero-planes-prototype fieldset {
+  margin-top: 10px;
+  min-width: 0;
+}

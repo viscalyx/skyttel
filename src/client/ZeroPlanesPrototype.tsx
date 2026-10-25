@@ -10,9 +10,11 @@ import {
 export function ZeroPlanesPrototypeControls({
   value,
   onChange,
+  probe,
 }: {
   value: PlaneComparison;
   onChange: (value: PlaneComparison) => void;
+  probe?: { position: Position; move: (position: Position) => void };
 }) {
   return (
     <details className="zero-planes-prototype" open>
@@ -45,11 +47,28 @@ export function ZeroPlanesPrototypeControls({
             <option value="prominent">Framträdande</option>
           </select>
         </label>
+        <label>
+          Djupvisning
+          <select
+            value={value.depth ?? 'overlay'}
+            onChange={(event) =>
+              onChange({ ...value, depth: event.target.value as PlaneComparison['depth'] })
+            }
+          >
+            <option value="overlay">A · Alltid framför</option>
+            <option value="tint">B · Ton bakom plan</option>
+          </select>
+        </label>
       </div>
       <p role="status">
         {{ square: 'Kvadrat', oval: 'Oval', circle: 'Cirkel', lines: 'Linjer' }[value.shape]} ·{' '}
         {{ subtle: 'Diskret', original: 'Ursprunglig', prominent: 'Framträdande' }[value.weight]} ·
-        {value.shape === 'lines' ? 'tre axlar, sex riktningar' : 'alla tre plan'}
+        {value.shape === 'lines' ? 'tre axlar, sex riktningar' : 'alla tre plan'} ·{' '}
+        {value.depth === 'tint' ? 'B · Ton bakom plan' : 'A · Alltid framför'}
+      </p>
+      <p>
+        B färgar de delar av objektsymboler och samband som ligger bakom en planyta. Namn och texter
+        påverkas inte. Linjer saknar planytor och får ingen ton.
       </p>
       <p>
         {value.shape === 'lines'
@@ -68,6 +87,28 @@ export function ZeroPlanesPrototypeControls({
         }
         . Fast centrum (0, 0, 0); följer inte kameran. Valen sparas inte.
       </p>
+      {probe && (
+        <fieldset>
+          <legend>Flytta Provobjekt 00 genom planen</legend>
+          <p>Endast i denna visning. Ladda om för att återställa.</p>
+          {(['x', 'y', 'z'] as const).map((axis) => (
+            <label key={axis}>
+              {axis.toUpperCase()}: {probe.position[axis].toFixed(1)}
+              <input
+                type="range"
+                aria-label={`Provobjekt 00 ${axis.toUpperCase()}`}
+                min="-12"
+                max="12"
+                step="0.25"
+                value={probe.position[axis]}
+                onChange={(event) =>
+                  probe.move({ ...probe.position, [axis]: Number(event.target.value) })
+                }
+              />
+            </label>
+          ))}
+        </fieldset>
+      )}
     </details>
   );
 }

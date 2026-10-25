@@ -1,8 +1,9 @@
 # Three zero planes: real application comparison
 
 Throwaway design experiment for live review. Keep this branch separate from
-production. The question is which patch shapes and visual weights should
-remain, and which defaults the user wants after trying them in the map.
+production. The current question is whether a plane tint makes the depth of
+objects and connections clear while text labels remain readable. All four
+reference variants and all three visual weights remain available.
 
 ## Run
 
@@ -44,20 +45,63 @@ The comparison is disabled in production builds.
 
 The bottom panel has independent native selects:
 
-- Shape: square, oval, circle or lines. Square is a provisional starting shape.
+- Shape: square, oval, circle or lines. Circle is the starting shape.
 - Weight: subtle, original or prominent. Subtle is the starting weight.
+- Depth: A keeps content above planes; B tints parts behind plane surfaces.
+  The printed URL starts with B. The `plane-depth=overlay` and
+  `plane-depth=tint` query values select the comparison on reload.
 
 The three patch shapes retain three mutually perpendicular planes centered
 at the shared coordinate origin. The additional lines variant shows only
 the X, Y and Z axes through that origin, extending in both directions.
 It has no plane fills, boundaries or grids; six signed axis labels identify
 the directions. All four variants support the three visual weights.
-Switching either select preserves the camera,
+Switching a select preserves the camera,
 objects and relationships. Collapse the panel to see content beneath it.
 Tab and the native select keys operate the controls; there are no global
 arrow-key overrides to compete with navigation. Reopening a settings page
 can expand the temporary panel again. Reloading resets comparison choices;
 reopen the original comparison URL if navigation removes its query.
+
+## Review depth
+
+The prototype panel includes X, Y and Z sliders for the synthetic
+**Provobjekt 00**. Move it through zero on each axis, then compare A and B
+without moving the camera. The sliders change only the current display;
+reload to restore the sample positions. Ordinary map drag actions still
+use the application's personal-view behavior in the disposable database.
+
+In B, only the parts of object symbols and connections behind a finite
+plane patch receive its color. Text labels, focus outlines and proposal
+badges remain readable. A circle or oval does not tint content beyond its
+boundary. The Lines variant has no surfaces and therefore adds no tint.
+Rotate the camera to compare the opposite side and zoom close to the planes.
+
+The tint uses trial opacity values of 18%, 26% and 34% per covering plane
+for Subtle, Original and Prominent. These are stronger than the surface
+fills to make the comparison visible on symbols. Multiple tints combine.
+They are experiment values, not accepted final styling. This cue depends
+on color and does not establish an accessible equivalent or exact signed
+coordinates. Plane grids and borders do not yet overlay content.
+
+The experiment clips patches at the camera and uses camera depth for
+symbols and straight connections. Tint on curved, removed connections uses
+an approximation; exact treatment of those curves and arrowheads needs
+further work if this rendering is selected. No production decision follows
+from running the comparison.
+
+Capture the focused comparison in an isolated browser:
+
+```sh
+npm run prototype:planes -- --capture-depth
+```
+
+The `evidence-depth` directory contains A/B pairs in both themes, all shapes,
+movement through each coordinate plane, camera movement and small-screen
+controls. Its report records browser errors and whether the comparison and
+probe sliders leave saved household and personal-view data unchanged.
+The optional zoom-size setting and label collision policy are design
+requirements; this depth experiment does not implement them.
 
 The XZ boundary is solid, YZ is dashed and XY is dotted. Plane names and
 coordinate equations supplement their different colors. Labels disappear
@@ -88,10 +132,9 @@ vertically to compare the independent local movement guide.
   boundaries that help compare positions against each zero plane.
 - Plane geometry clips normally at the camera/viewport boundary. There is
   no camera-following extent, edge indicator or adaptive plane hiding.
-- Household glyphs and connections render above the translucent planes in
-  the existing renderer. This protects readability but does not establish
-  whether an object is in front of or behind a plane. Signed-position
-  interpretation needs human review; no object-to-plane projections are added.
+- In A, household glyphs and connections render above the planes. B adds
+  the depth tint described above. Position interpretation needs human
+  review; no object-to-plane projections are added.
 - Plane text does not participate in household label collision avoidance.
   Labels may overlap, disappear near edges, or be hidden under controls.
 - Transparent plane intersections use ordinary blending. Edge-on planes

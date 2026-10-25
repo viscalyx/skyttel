@@ -17,6 +17,7 @@ import {
 export type PlaneComparison = {
   shape: 'square' | 'oval' | 'circle' | 'lines';
   weight: 'subtle' | 'original' | 'prominent';
+  depth?: 'overlay' | 'tint';
 };
 export const prototypePlaneExtent = 27;
 export const prototypePlanes = [
