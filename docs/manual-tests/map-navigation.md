@@ -127,7 +127,10 @@ hjälp i normal- och miniläge på en smal skärm.
 
 **Förutsättningar och separat förberedelse:** Följ NAVIGATION-20:s
 förberedelse. Använd 320 × 1000 CSS-pixlar och systemets mörka tema.
-Det korta delläget använder 320 × 250 CSS-pixlar med öppna objektuppgifter.
+De korta dellägena använder 320 × 250 samt 701 × 500, 800 × 500 och
+1000 × 500 CSS-pixlar med öppna objektuppgifter. Det första skyddar smala
+fält bredvid uppgifterna; de övriga skyddar läsningen i liggande läge vid
+dess gränsbredder och en mellanbredd.
 
 **Automatiskt motsvarande integrationstest:**
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts),
@@ -142,7 +145,7 @@ NAVIGATION-21.
     "spec": "tests/integration/map-navigation.spec.ts",
     "caseId": "NAVIGATION-21"
   },
-  "reference": "Mörkt, 320 × 1000 och 320 × 250 med öppna uppgifter.",
+  "reference": "Mörkt: 320 × 1000/250, 701/800/1000 × 500. Uppgifter öppna.",
   "outcomes": [
     "Hela koordinater och namngivna kontroller är tillgängliga i normal- och miniläge.",
     "Val, fokus och öppen hjälp består vid läsning av båda ändpunkternas objekt."
@@ -156,7 +159,10 @@ Efter steg 4: ändra till 320 × 250. Fokusera Lo i kartan, tryck Skift+F10
 och välj **Visa uppgifter för Lo Exempel**. Behåll uppgifterna öppna och
 fokusera **Sidled (X)** i både normal- och miniläge. Läs hela värdet
 **-10000.00** vid normal textstorlek. Rulla navigationens innehåll vid behov.
-Kontrollera tre lodräta fält i miniläget. Återgå till 320 × 1000,
+Kontrollera tre lodräta fält i miniläget. Ändra till 701 × 500,
+800 × 500 och 1000 × 500 med uppgifterna kvar. Upprepa läsningen i
+normal- och miniläge vid varje bredd.
+Återgå till normal navigering och 320 × 1000,
 **Stäng uppgifterna** och återgå till normal navigering före steg 5.
 
 **Förväntat resultat:** Samma läsning, val och hjälp som NAVIGATION-20

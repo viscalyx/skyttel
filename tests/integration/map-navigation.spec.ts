@@ -169,33 +169,45 @@ for (const [caseId, width, theme] of [
         const reader = page.getByRole('region', { name: 'Lo Exempel', exact: true });
         await expect(reader).toBeVisible();
         const field = coordinates.getByRole('textbox', { name: 'Sidled (X)' });
-        for (const mode of ['normal', 'mini']) {
-          if (mode === 'mini')
-            await navigation.getByRole('button', { name: 'Visa mininavigering' }).click();
-          await field.focus();
-          await expect(field).toBeFocused();
-          await expect
-            .poll(() =>
-              field.evaluate((element: HTMLInputElement) => {
-                const style = getComputedStyle(element);
-                const context = document.createElement('canvas').getContext('2d');
-                if (!context) throw new Error('Text measurement requires the browser canvas.');
-                context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-                const available =
-                  element.clientWidth -
-                  Number.parseFloat(style.paddingLeft) -
-                  Number.parseFloat(style.paddingRight);
-                return {
-                  complete: context.measureText(element.value).width <= available,
-                  normalText: Number.parseFloat(style.fontSize) >= 16,
-                };
-              }),
-            )
-            .toEqual({ complete: true, normalText: true });
+        for (const viewport of [
+          { width: 320, height: 250 },
+          { width: 701, height: 500 },
+          { width: 800, height: 500 },
+          { width: 1000, height: 500 },
+        ]) {
+          await page.setViewportSize(viewport);
+          await expect(reader).toBeVisible();
+          for (const mode of ['normal', 'mini']) {
+            if (mode === 'mini')
+              await navigation.getByRole('button', { name: 'Visa mininavigering' }).click();
+            if (mode === 'normal')
+              await expect(navigation.getByText('Ange position', { exact: true })).toBeVisible();
+            else await expect(navigation.getByText('Ange position', { exact: true })).toBeHidden();
+            await field.focus();
+            await expect(field).toBeFocused();
+            await expect
+              .poll(() =>
+                field.evaluate((element: HTMLInputElement) => {
+                  const style = getComputedStyle(element);
+                  const context = document.createElement('canvas').getContext('2d');
+                  if (!context) throw new Error('Text measurement requires the browser canvas.');
+                  context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+                  const available =
+                    element.clientWidth -
+                    Number.parseFloat(style.paddingLeft) -
+                    Number.parseFloat(style.paddingRight);
+                  return {
+                    complete: context.measureText(element.value).width <= available,
+                    normalText: Number.parseFloat(style.fontSize) >= 16,
+                  };
+                }),
+              )
+              .toEqual({ complete: true, normalText: true });
+          }
+          await navigation.getByRole('button', { name: 'Visa normal navigering' }).click();
         }
         await page.setViewportSize({ width, height: 1000 });
         await reader.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
-        await navigation.getByRole('button', { name: 'Visa normal navigering' }).click();
       }
       await navigation.getByRole('button', { name: 'Stäng navigering' }).click();
       await expect(trigger).toBeFocused();
