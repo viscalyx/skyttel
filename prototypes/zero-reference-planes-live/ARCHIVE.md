@@ -5,7 +5,7 @@ prototyperna inför implementation. Omfattningen är nollreferenserna och
 den tillhörande navigeringen, inte projektets andra prototyparbeten.
 
 Börja med [implementationsunderlaget](../../docs/design/nollreferenser-och-navigering.md).
-Det innehåller beslutade krav och öppna frågor. Experimentens tillfälliga
+Det innehåller godkända krav och verifieringskrav. Experimentens tillfälliga
 förval och äldre bilder får inte ersätta de senaste besluten.
 
 ## Fasta versioner för varje steg
@@ -93,6 +93,8 @@ Avrundning, infoikon, ingen dubbel positionstext och ingen rotationsmening.
 [Källversion och tillgångar](https://github.com/viscalyx/skyttel/tree/ee7a31709c158deb774c483379aa96de7d72e482/prototypes/zero-reference-planes-live).
 
 Rubrik, infoikon och öppen hjälp döljs i miniläge; koordinaterna finns kvar.
+Denna källversion har fälten i en rad. Implementationsunderlaget kräver
+i stället en kolumn med tre rader i miniläget.
 
 ## Bilder och rapporter i den aktuella grenen
 
@@ -118,11 +120,13 @@ stegen. Konceptbilder visar inte kamera, klippning eller tillgänglighet.
 
 - [Normal navigering med infoikon](evidence-position/navigation-precision.png).
 - [Koordinatförklaringen](evidence-position/navigation-precision-help.png).
-- [Minivy med enbart koordinatraden](evidence-position/navigation-mini-fields.png).
+- [Arkiverad minivy med koordinatraden](evidence-position/navigation-mini-fields.png).
 
 Dessa tre bilder ska läsas tillsammans. Normalvyns rubrik och infoikon
 ska inte tas med till minivyn. Den synliga minivyn får inte användas som
 skäl att ta bort tillgängliga namn från fälten.
+Minibilden visar den arkiverade radlayouten. Den beslutade minivyn staplar
+X, Y och Z i tre rader för mer läsbara värden; bilden visar inte det kravet.
 
 Övriga positionsbilder är historiska experiment:
 
@@ -159,5 +163,5 @@ Rapporterna beskriver en viss provkarta och miljö. En låg bildkostnad,
 etiketter som syns på en bild eller en godkänd kodkontroll betyder inte att
 alla kartor, bakgrunder, hjälpmedel och enheter fungerar. Prototypen för
 positioner använder bara minne. Inställningslagring, slutlig automatisk
-visning, zoomrespons och återstående tillgänglighetsfrågor ska hanteras
+visning, zoomrespons och tillgänglighetskrav ska hanteras
 utifrån implementationsunderlaget, inte antas vara klara i experimentet.

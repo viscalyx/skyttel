@@ -35,7 +35,10 @@ To select without visual map navigation, open **Tabell**, select an object
 by its name, then return through **Karta** and open **Navigera**. Object
 details have their ordinary contents, with no added position controls.
 
-Both Navigation modes retain the coordinate row. Mini mode hides the
+Both Navigation modes in this archived experiment retain the coordinate row.
+The delivery design instead stacks X, Y and Z in three rows in mini mode;
+normal mode keeps one row. See the implementation handoff for requirements.
+Mini mode hides the
 **Ange position** heading, info button and explanation. Normal mode shows
 the heading and info button again, preserving the help's expanded state.
 In mini mode the fields
@@ -68,13 +71,14 @@ leaving the field pads the value to two decimal places. Invalid unfinished
 input returns to the last valid position on blur. Formatting existing
 positions does not itself change their map coordinates.
 
-Final movement announcements, automatic-layout coordinates and relationship
-position descriptions remain open design work.
+The implementation handoff specifies final movement announcements,
+automatic-layout coordinates and access to relationship endpoint positions.
+This archived experiment does not demonstrate those requirements.
 Objects without seeded personal coordinates show an unavailable message.
 The synthetic household provides coordinates for all nine objects.
 
-Immediate movement is a user requirement. Wording and polite movement
-announcements remain trial choices.
+Immediate movement is a user requirement. The experiment's wording and
+movement announcements do not replace the handoff's agreed feedback policy.
 The agreed silent automatic-reference visibility policy remains unchanged.
 This prototype does not implement that automatic-visibility behavior.
 

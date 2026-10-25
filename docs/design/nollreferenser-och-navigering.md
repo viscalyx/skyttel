@@ -2,12 +2,12 @@
 
 Det här underlaget är för den som ska implementera eller granska
 nollreferenserna och ändringarna i navigeringsfönstret. Det samlar beslutade
-krav, den aktuella prototypens beteende och återstående frågor. Det ska gå
+krav, den aktuella prototypens beteende och verifieringskrav. Det ska gå
 att förstå kraven utan att läsa en chatt eller följa en ärendediskussion.
 
-**Status: besluten nedan gäller, men hela designen är inte slutgodkänd.**
-Navigerings- och tillgänglighetsbesluten är samlat bekräftade av användaren.
-Den kvarstående granskningen måste behandlas före den samlade designens avslut.
+**Status: hela designen är godkänd av användaren och klar för implementation.**
+Godkännandet omfattar nollreferenser, navigering och tillgänglighetskrav,
+inklusive tre lodräta koordinatfält i miniläget. Inga produktbeslut återstår.
 Prototypkod och skärmbilder är underlag, inte färdig produktionskod eller
 bevis på fullständig tillgänglighet.
 
@@ -188,8 +188,10 @@ nollplan ett objekt ligger på.
 
 ### Beslutat gränssnitt
 
-- Lägg tre fält, **X**, **Y** och **Z**, i en rad ovanför knapparna som
-  flyttar det markerade objektet. Behåll de befintliga flyttknapparna.
+- Lägg tre fält, **X**, **Y** och **Z**, ovanför knapparna som flyttar det
+  markerade objektet. I normalläget ligger fälten i en rad med tre kolumner.
+  I miniläget ligger de i en kolumn med tre rader: X, Y och Z uppifrån.
+  Behåll de befintliga flyttknapparna under fälten.
 - Lägg inte positionsdelen i objektets egenskaper, detaljfönster eller
   expanderade tabellrad. Den lösningen är uttryckligen bortvald.
 - Varje giltig ändring ska flytta objektet direkt på den ändrade axeln.
@@ -199,8 +201,11 @@ nollplan ett objekt ligger på.
   vid flytten, inte bara en avrundad presentation av ett annat nytt värde.
 - I normalläget finns **Ange position** med en liten infoikon direkt till
   höger. Ikonen öppnar koordinatförklaringen.
-- I miniläget döljs rubriken och infoikonen. Koordinatfälten och de
-  befintliga flyttknapparna finns kvar på sina platser.
+- I miniläget döljs rubriken och infoikonen. Den lodräta fältgruppen ger
+  varje koordinat mer bredd inom det smala fönstret, men tar mer höjd.
+  Hela formaterade värden, även `-10000.00`, ska kunna läsas vid normal
+  textstorlek. Behåll läsbara etiketter och ordningen X, Y, Z även för
+  tangentbord och skärmläsare.
 - Ta bort den dubbla texten **Aktuell position**. Ha inte meningen
   ”Nollpunkten ligger kvar när du roterar vyn.” i koordinatförklaringen.
 
@@ -255,6 +260,8 @@ position med två decimaler ändrar inte dess lagrade precision.
 Följande beskriver experimentet. Kraven ovan gäller där beteendet också
 är beslutat; övriga detaljer ska inte antas godkända bara för att de finns
 i kod. Prototypen saknar den beslutade återkopplingen för ogiltig inmatning.
+Den arkiverade minivyn visar fortfarande tre fält bredvid varandra;
+den beslutade minivyn har i stället tre rader enligt kraven ovan.
 
 - Varje axel valideras för sig. Tomt fält, ensamt minus, ofullständigt tal,
   icke ändligt tal eller ett värde utanför befintliga gränser lämnar axeln
@@ -314,7 +321,7 @@ Vid omladdning eller stängning av sidan används webbläsarens varning om
 förlust av ändringar. Detta inför inte återställning av lokala positioner
 efter en genomförd omladdning.
 
-## Tillgänglighet och kvarstående granskning
+## Tillgänglighet och verifiering vid implementation
 
 Skärmläsarens flyttmeddelande ska ange senaste flyttresultatet efter
 500 millisekunder utan ytterligare flytt, i stället för varje mellanläge.
@@ -329,19 +336,20 @@ till dragning. Kontrollera även objekt och samband när referensen eller
 toningen är på. Prototypbilder och automatiserade kontroller bevisar inte
 överensstämmelse för hela flödet.
 
-De konkreta frågorna om zoomnamn, tonreglage, koordinatinmatning,
-flyttåterkoppling, åtkomst och sparbeteende är besvarade. Följande återstår;
-granskningen får inte ersättas med antaganden från prototypens tillfälliga val:
+Den samlade designen är godkänd. Följande är verifieringskrav vid
+implementation; granskningen får inte ersättas med antaganden från
+prototypens tillfälliga val:
 
 1. Granskning av inmatning och visuella signaler, kontrast,
-   fokus, omflöde och små skärmar i båda navigeringslägena.
+   fokus, omflöde och små skärmar i båda navigeringslägena. Kontrollera
+   minilägets tre lodräta fält med hela värden som `-10000.00`.
 2. Verifiering av hela vägen Tabell → objektval → Karta → Navigera,
    även med automatiskt placerade objekt och när nollreferensen inte syns.
    Sambandens ändpunkter ska gå att identifiera och deras objekt välja
    utan de bortvalda genvägarna.
-3. Samlad kontroll och användarens godkännande av hela nollreferensdesignen
-   före implementation. Nya problem som granskningen visar behöver lösas
-   uttryckligen; detta dokument påstår inte verifierad tillgänglighet.
+
+Nya problem som implementationens granskning visar behöver lösas
+uttryckligen; detta dokument påstår inte verifierad tillgänglighet.
 
 ## Skillnader mellan experiment och leverans
 
@@ -365,6 +373,6 @@ minskar den uppmätta merkostnaden i ett litet huvudlöst exempel; det bevisar
 inte jämn kamerarörelse på användarens enhet eller i en stor karta.
 
 Implementera mot besluten ovan, jämför med de namngivna prototypversionerna
-och behandla öppna frågor uttryckligen. Kopiera inte prototypgrenen som om
+och verifiera kraven i den färdiga funktionen. Kopiera inte prototypgrenen som om
 den vore en leveransklar implementation. Bevara arkivets äldre steg så att
 ett bortvalt alternativ eller ett gammalt förval inte återkommer av misstag.
