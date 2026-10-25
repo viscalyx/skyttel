@@ -1862,7 +1862,10 @@ export function SpatialMap({
               );
               const tint =
                 bend && tangentX === 0
-                  ? verticalCurveTints(depthPatches, start, tip, bend)
+                  ? verticalCurveTints(depthPatches, start, tip, bend).map((region) => ({
+                      ...region,
+                      geometry,
+                    }))
                   : depthTintRegions(depthPatches, tintBounds, (point) => {
                       const fraction =
                         bend && tangentX !== 0
@@ -1873,7 +1876,7 @@ export function SpatialMap({
                         1 / start.depth +
                         (1 / tip.depth - 1 / start.depth) * Math.max(0, Math.min(1, fraction))
                       );
-                    }).map((region) => ({ ...region, geometry }));
+                    }).map((region) => ({ ...region, geometry, mask: undefined }));
               const arrowTint = depthTintRegions(depthPatches, tintBounds, () => 1 / tip.depth);
               const unitX = tangentX / tangentLength;
               const unitY = tangentY / tangentLength;
@@ -1943,11 +1946,55 @@ export function SpatialMap({
                       key={region.name}
                       className="zero-reference-connection-tint"
                       clipPath={`url(#${maskId}-tint-${index})`}
+                      mask={region.mask ? `url(#${maskId}-tint-depth-${index})` : undefined}
                     >
                       <defs>
                         <clipPath id={`${maskId}-tint-${index}`}>
                           <path d={region.path} />
                         </clipPath>
+                        {region.mask && (
+                          <>
+                            {region.mask.foreground.map((interval, part) => (
+                              <clipPath
+                                key={interval.geometry}
+                                id={`${maskId}-tint-front-${index}-${part}`}
+                              >
+                                <rect
+                                  x={tintBounds.x}
+                                  y={interval.minimum}
+                                  width={tintBounds.width}
+                                  height={interval.maximum - interval.minimum}
+                                />
+                              </clipPath>
+                            ))}
+                            <mask
+                              id={`${maskId}-tint-depth-${index}`}
+                              maskUnits="userSpaceOnUse"
+                              {...tintBounds}
+                            >
+                              {region.mask.behind.map((interval) => (
+                                <rect
+                                  key={`${interval.minimum}:${interval.maximum}`}
+                                  x={tintBounds.x}
+                                  y={interval.minimum}
+                                  width={tintBounds.width}
+                                  height={interval.maximum - interval.minimum}
+                                  fill="white"
+                                />
+                              ))}
+                              {region.mask.foreground.map((interval, part) => (
+                                <path
+                                  key={interval.geometry}
+                                  clipPath={`url(#${maskId}-tint-front-${index}-${part})`}
+                                  d={interval.geometry}
+                                  className={`connection ${kind}${selected ? ' selected' : ''}`}
+                                  style={{ stroke: 'black', strokeDashoffset: interval.dashOffset }}
+                                  fill="none"
+                                />
+                              ))}
+                            </mask>
+                          </>
+                        )}
                       </defs>
                       <path
                         d={region.geometry}

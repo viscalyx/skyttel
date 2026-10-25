@@ -106,9 +106,9 @@ export function depthTintRegions(
   });
 }
 
-/** Vertical decorative curves can revisit one pixel at different depths.
- * Split their parameter intervals at depth crossings before clipping to the
- * finite patch, so the farther branch cannot tint the nearer branch. */
+/** Mask the complete original stroke, retaining its dash origin. A returning
+ * foreground branch then excludes only its visible dashes, not the gaps through
+ * which a farther branch can still be seen. */
 export function verticalCurveTints(
   patches: DepthPatch[],
   start: { x: number; y: number; depth: number },
@@ -117,6 +117,19 @@ export function verticalCurveTints(
 ) {
   const dy = tip.y - start.y;
   const y = (t: number) => start.y + (dy + 2 * bend) * t - 2 * bend * t * t;
+  const turning = (dy + 2 * bend) / (4 * bend);
+  function heightRange(from: number, to: number) {
+    const heights = [y(from), y(to)];
+    if (turning > from && turning < to) heights.push(y(turning));
+    return { minimum: Math.min(...heights), maximum: Math.max(...heights) };
+  }
+  function lengthBefore(t: number) {
+    // X is constant, so arc length is exactly total Y variation, including
+    // both sides of a turn. Continue the original stroke's dash phase.
+    return turning > 0 && turning < t
+      ? Math.abs(y(turning) - start.y) + Math.abs(y(t) - y(turning))
+      : Math.abs(y(t) - start.y);
+  }
   return patches.flatMap((patch) => {
     const origin = patch.polygon[0];
     let determinant = 0;
@@ -150,23 +163,34 @@ export function verticalCurveTints(
       }
     }
     const stops = [0, ...roots.filter((t) => t > 0 && t < 1), 1].sort((a, b) => a - b);
-    const geometry = stops
-      .slice(1)
-      .flatMap((to, index) => {
-        const from = stops[index];
-        const middle = (from + to) / 2;
-        if (a * middle * middle + b * middle + c <= 0) return [];
+    const behind: ReturnType<typeof heightRange>[] = [];
+    const foreground: (ReturnType<typeof heightRange> & {
+      geometry: string;
+      dashOffset: number;
+    })[] = [];
+    for (let index = 1; index < stops.length; index++) {
+      const from = stops[index - 1];
+      const to = stops[index];
+      if (to <= from) continue;
+      const middle = (from + to) / 2;
+      const range = heightRange(from, to);
+      if (a * middle * middle + b * middle + c > 0) behind.push(range);
+      else {
         const control = y(from) + ((to - from) / 2) * (dy + 2 * bend - 4 * bend * from);
-        return [`M ${start.x} ${y(from)} Q ${start.x} ${control} ${start.x} ${y(to)}`];
-      })
-      .join(' ');
-    if (!geometry) return [];
+        foreground.push({
+          ...range,
+          geometry: `M ${start.x} ${y(from)} Q ${start.x} ${control} ${start.x} ${y(to)}`,
+          dashOffset: lengthBefore(from),
+        });
+      }
+    }
+    if (!behind.length) return [];
     return [
       {
         name: patch.name,
         color: patch.color,
         path: `${patch.polygon.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ')} Z`,
-        geometry,
+        mask: { behind, foreground },
       },
     ];
   });
