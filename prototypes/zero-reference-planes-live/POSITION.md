@@ -1,5 +1,10 @@
 # Personal position: coordinate entry in Navigation
 
+For the complete delivery requirements, use the
+[implementation handoff](../../docs/design/nollreferenser-och-navigering.md).
+The [prototype archive](ARCHIVE.md) identifies every earlier experiment and
+distinguishes retained behavior from rejected layouts and temporary choices.
+
 Throwaway UI experiment for design review. Three coordinate fields form one
 row above the selected object's existing movement buttons in Navigation.
 Object properties contain no position editor. The fields supplement the

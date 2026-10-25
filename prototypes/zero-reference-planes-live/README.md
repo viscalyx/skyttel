@@ -1,5 +1,11 @@
 # Three zero planes: real application comparison
 
+For implementation, start with the
+[agreed requirements and open questions](../../docs/design/nollreferenser-och-navigering.md)
+and the [complete prototype archive](ARCHIVE.md). This guide describes the
+experiment: its visible references and trial tint defaults are not the
+product defaults. The archive also preserves all coordinate-entry revisions.
+
 Throwaway design experiment for live review. Keep this branch separate from
 production. The current question is whether a plane tint makes the depth of
 objects and connections clear while text labels remain readable. All four

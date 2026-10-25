@@ -273,8 +273,17 @@ Bakgrunden är skild från hushållets information.
 **Bakgrundsval**:
 Skyttel-användarens val av bakgrund för ljust respektive mörkt tema.
 
+**Nollreferens**:
+En visuell referens vid den fasta koordinatnollpunkten i
+Skyttel-användarens personliga vy av hushållets rymdkarta.
+Den beskriver vyn, inte hushållets uppgifter eller verkliga mått.
+
 **Panoreringsstyrka**:
 Hur mycket bakgrunden förflyttas när Skyttel-användaren panorerar kartan.
+
+**Tonstyrka**:
+Hur starkt nollreferensens planytor färgar de delar av objektsymboler och
+samband som ligger bakom dem i den aktuella vyn.
 
 **Zoomstyrka**:
 Hur mycket bakgrundens skala ändras när Skyttel-användaren zoomar kartan.

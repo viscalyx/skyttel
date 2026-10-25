@@ -1,0 +1,736 @@
+{
+  "scope": "Nollreferenser och tillhörande navigering",
+  "source_commit": "ee7a31709c158deb774c483379aa96de7d72e482",
+  "checkpoints": [
+    {
+      "title": "Konceptbilder",
+      "commit": "00198e0aacc3238c7bf300946e0c9a48fc251e4e",
+      "path": "prototypes/zero-reference-planes",
+      "note": "Tre visuella styrkor; visar riktning, inte verklig geometri eller slutlig funktion."
+    },
+    {
+      "title": "Första jämförelsen i appen",
+      "commit": "96b402a176e674b7d8af55b54eb564611c2b9d46",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Kvadrat/oval och tre styrkor; mindre provmått än de slutligt valda."
+    },
+    {
+      "title": "Större ovaler",
+      "commit": "a3546e36cac46b3ae26d21b3876c4f719ec43e9a",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Halvaxlarna 27 och 18,9."
+    },
+    {
+      "title": "Cirkelvarianten",
+      "commit": "3168fb0a6b612611cf150fc497d966968798fd29",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Cirkel med radie 27 tillkommer."
+    },
+    {
+      "title": "Kvadrat och cirkel får jämförbara mått",
+      "commit": "c7674dfcd9b100a167fc600650695c1991fc0ef2",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Kvadratens sida motsvarar cirkelns diameter."
+    },
+    {
+      "title": "Linjer och alla tolv kombinationer",
+      "commit": "0167f510df5c091e0879eabea7617ae278a2685e",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Fyra varianter med tre styrkor; Cirkel och Diskret är förval."
+    },
+    {
+      "title": "Första jämförelsen av toning",
+      "commit": "26ca4ee3cd1c57698cab0181dbc15a96e3672ab3",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Svag ton jämförs med innehåll framför planen; fasta tonvärden är provvärden."
+    },
+    {
+      "title": "Stark ton och kamerakostnad",
+      "commit": "4ba7e02f7d429a6047e81ca545ebdf0847621ee5",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Starkare ton, reglage och vektorbaserad toning; 60 procent är inte produktförval."
+    },
+    {
+      "title": "Positionsdel i egenskaperna",
+      "commit": "ffe2ff25fd2953e164017a6465b22af36d76c893",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Tre alternativ finns som underlag. Placeringen i egenskaperna är bortvald."
+    },
+    {
+      "title": "Koordinater i navigeringsfönstret",
+      "commit": "d80e5587afb713d1137b13bd94b731a986b61222",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Tre fält i rad ovanför objektflyttknapparna. Verkställningsknappen är bortvald."
+    },
+    {
+      "title": "Direkt flytt vid giltigt värde",
+      "commit": "120ffd87326b26c2b6a2505f8c79672b2e6a86c6",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Ingen verkställningsknapp; axlarna valideras oberoende."
+    },
+    {
+      "title": "Två decimaler och infoikon",
+      "commit": "7981112afab2cfdac72df639bc5a132926a31b82",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Avrundning, infoikon, ingen dubbel positionstext och ingen rotationsmening."
+    },
+    {
+      "title": "Slutlig minivy i denna granskning",
+      "commit": "ee7a31709c158deb774c483379aa96de7d72e482",
+      "path": "prototypes/zero-reference-planes-live",
+      "note": "Rubrik, infoikon och öppen hjälp döljs i miniläge; koordinaterna finns kvar."
+    }
+  ],
+  "files": [
+    {
+      "path": ".codex/artifacts/planes-first.png",
+      "bytes": 103281,
+      "sha256": "48c35f4e8e8b17b337d43e8336b3f12475ab13369927e3825cad27dd83fc953e"
+    },
+    {
+      "path": ".codex/artifacts/planes-oval.png",
+      "bytes": 168527,
+      "sha256": "f3d3e5cdc7f7c9642f8f7b0a57e06191a8a80239b1590f4a2c7ec1577a634746"
+    },
+    {
+      "path": ".codex/artifacts/zero-reference-planes/concept-prominent.png",
+      "bytes": 1954749,
+      "sha256": "ae0765fbc1e52838d54c22756bfe334cdd72247504a9b879c37ceeb590ea9cb9"
+    },
+    {
+      "path": ".codex/artifacts/zero-reference-planes/concept-subtle.png",
+      "bytes": 1875426,
+      "sha256": "94019e0bcc5592cd97fa15676a9eb6a73014a7ad86266ff3bda9ac23628841c0"
+    },
+    {
+      "path": ".codex/artifacts/zero-reference-planes/concept-v1.png",
+      "bytes": 1975929,
+      "sha256": "6026450075683c7e2d1e0353baabf231a5317cd033b809991a23ae6b5b050e79"
+    },
+    {
+      "path": ".codex/artifacts/zero-reference-planes/prompt-prominent.txt",
+      "bytes": 1316,
+      "sha256": "60c67ad3288dc3431699e5d7c781e96ff02d39dc92b7bf199a8d843886b2032c"
+    },
+    {
+      "path": ".codex/artifacts/zero-reference-planes/prompt-subtle.txt",
+      "bytes": 1250,
+      "sha256": "d3c916bf25dc17d73b2902c549b7b4db9aa0125b30239fe2d7b46b8739d0cac3"
+    },
+    {
+      "path": ".codex/artifacts/zero-reference-planes/prompt.txt",
+      "bytes": 2746,
+      "sha256": "53b030eb22a1fb74ecabfc5803487ad0db856a2c1f6c678adf5d733bac448bce"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-atmosphere.png",
+      "bytes": 457685,
+      "sha256": "8835c61eca4e9124da8b98f3b0ec8a3c8d01590c93b50249bd4ecbbf672d1fbb"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-mist.png",
+      "bytes": 631757,
+      "sha256": "16549d6ba39975eddc3343d93bca84003711cc5a7077a69c60bc5139730e4e3a"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-ocean.png",
+      "bytes": 489124,
+      "sha256": "f4415ba865ef3954029985a41c4b665b6c1bf104311d127eace00ea936a9ab2b"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-oval-original.png",
+      "bytes": 446967,
+      "sha256": "b810fcaaadee2c35e441d4aca7ab5b2ad3063c265aca3976ea6c703a1208c7a6"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-oval-prominent.png",
+      "bytes": 458162,
+      "sha256": "d54c8a2b6fccf5e3e2914794baefa0e27ea3ad4b26db673feb176e99c998cbf8"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-oval-subtle.png",
+      "bytes": 430864,
+      "sha256": "ea0cf7ce36dcadc271c6bad605ce73ec698e64175ca6b8dea1a9e1aca9ef26de"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-plain.png",
+      "bytes": 423462,
+      "sha256": "55565e247775a638995df57e02caa96fe45777bb055b90eff8bcb01034b36f13"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-square-original.png",
+      "bytes": 458074,
+      "sha256": "e6a60e4bdab93f633626199c110264eca16ec1d53ba0478f106842e46b7c7419"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-square-prominent.png",
+      "bytes": 475574,
+      "sha256": "0a27ae16864d3bd27bd6c4b3c05d3c35b0069ef82e6a4d5c6c3b13d13e1114f5"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-square-subtle.png",
+      "bytes": 436165,
+      "sha256": "9767700b79a267bb67724e0566698937bd2521fcc0c6c9db1b2b7a6dd3d0d5e2"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/dark-universe.png",
+      "bytes": 524507,
+      "sha256": "08dc0a935b0234058070376dd12813ec6e8e59a174742b6db5b54a62510815cf"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-dawn.png",
+      "bytes": 599757,
+      "sha256": "ae432580264433c7a201fa8e883af310872f9e538c179ede356b51d45c922914"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-ocean.png",
+      "bytes": 1094238,
+      "sha256": "859f71aca87e2645b38fc97790ed09d90841961a30dc29956a0ed3746d0ca1b7"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-oval-original.png",
+      "bytes": 440953,
+      "sha256": "6126032faec8c6a13881d179dee0be58c46931b7ca3a88b16f9b10680780b8e0"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-oval-prominent.png",
+      "bytes": 451671,
+      "sha256": "f6ea7e3229ba3ff71ffeefcf8037d84a814947c203df9e464923a27a94ad16a8"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-oval-subtle.png",
+      "bytes": 427721,
+      "sha256": "ea994ce66b9c16d6b2e82975bb034581515d74862186ee59b6be7d9f38400cae"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-pearl.png",
+      "bytes": 451118,
+      "sha256": "5272b9b778aaeb7ce8ce446710a1c477035ce23cc179ecb55f2e686011a86e05"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-plain.png",
+      "bytes": 409285,
+      "sha256": "508ea8d2272444e73fd26c3230127948e1e18610baae76dda47f7303754f3bfe"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-square-original.png",
+      "bytes": 453097,
+      "sha256": "c402174b8e137d75b9ce2c31457656e4b67ff713c7f4e27cdc0686fc10a62bbf"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-square-prominent.png",
+      "bytes": 468643,
+      "sha256": "f265a6fc1dfc1a0801398b639258c360de6c7fa297bb13859dab9affdfff875d"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/light-square-subtle.png",
+      "bytes": 433072,
+      "sha256": "5563405fdacd59c9e32ca7bacfb0cab13aedfd718df00dce2179c9ab9e321f95"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/mobile-keyboard.png",
+      "bytes": 79975,
+      "sha256": "6d62b168f9619621c7c85ef8e49e1fc672e245bc8c6ae7f5ca9f3110b9cc79d7"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/observations.json",
+      "bytes": 1769,
+      "sha256": "9fa0bced36174b87060c1fa37d88f1151439ff61c3dc8c58cf790eb5b4a64419"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/off-screen-origin.png",
+      "bytes": 177130,
+      "sha256": "afd5edb58c9633a3fdfef744a72ac01940c5010b3d6386befadb8b43d298dec3"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/rotated.png",
+      "bytes": 506605,
+      "sha256": "5b2b2c62ffb190e1dc3b85a3f7e74c157bf5681de397c6edcbe03f49a735138b"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-80/zoomed.png",
+      "bytes": 596859,
+      "sha256": "fb7485eca48780b84dc2117b0ac40761b791b6f30d7b6ca6616d6c62c50ca3e2"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-atmosphere.png",
+      "bytes": 230046,
+      "sha256": "b9f4563fdd14a19707e4d10988a1c4961a35d62b978699765af4e7a8450b61c1"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-mist.png",
+      "bytes": 429223,
+      "sha256": "68d77a69e6215319c20b348ee85818b9a1e06e0ae70f70a98e454b743e1483bf"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-ocean.png",
+      "bytes": 257161,
+      "sha256": "ada7adb2741fff3a41c319f09b83511eb7aa9d11d40121d5f76f7ab4c47d6c39"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-oval-original.png",
+      "bytes": 213066,
+      "sha256": "6f2f5f94a408bd9da970556ceb8b0d0aaeb87b7afa37cf8975564571feee3923"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-oval-prominent.png",
+      "bytes": 230048,
+      "sha256": "7676d34aefe1fcc63bb22643a8a3b3e1f7837059a636833ce02539a75be60cd4"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-oval-subtle.png",
+      "bytes": 194907,
+      "sha256": "4e2cea59dda66cce8f9aa8d639907f460fc82f109d811e4d72a35cc1141cc7c1"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-plain.png",
+      "bytes": 188356,
+      "sha256": "7323240348b8d287f889932e3873e83db5e0575ff817955805d1fad73429c3d0"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-square-original.png",
+      "bytes": 220482,
+      "sha256": "6a7143d32c4033a4420fc613248f7fc132f3030cca429a842377754325d7ce93"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-square-prominent.png",
+      "bytes": 246813,
+      "sha256": "d8f188e2ef9fd93bce93cd214864b51a0e023b7ac7de107947c2e93d155b529c"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-square-subtle.png",
+      "bytes": 195262,
+      "sha256": "9224e968e7998236a0762e961ff00beafd71468d125819c4f2f6881f805b8268"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/dark-universe.png",
+      "bytes": 289872,
+      "sha256": "1dd2b6c5944af5ff50b6a8bdd0a3d990ac2440fd0c231fc88377e0cca2b26c19"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-dawn.png",
+      "bytes": 401295,
+      "sha256": "ab3df6897aa33476049ee6b025397c1e4041f3386470e1c78156528748366d4a"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-ocean.png",
+      "bytes": 1004036,
+      "sha256": "19c25bc985e165652484d5fa691fbe0fea5183c004f2fb99152f0df730f9aa96"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-oval-original.png",
+      "bytes": 218851,
+      "sha256": "6f86c4e3e2bfad31a0eb0defbf9b60b08d0234b114627166260914c4be8ce9c2"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-oval-prominent.png",
+      "bytes": 234652,
+      "sha256": "7f7728d9d1a76f708f88bf01e07139ffb31a36af672d55955c1ce2f72524970c"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-oval-subtle.png",
+      "bytes": 200950,
+      "sha256": "ef0fa5d874aaa29d1d87a625c4e707f3854b038409532206e49a1c43d4079588"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-pearl.png",
+      "bytes": 234654,
+      "sha256": "6f07d398b6c71718abaccc362f3a04f45cb17215bcc73360d72269df6b7f80e5"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-plain.png",
+      "bytes": 185885,
+      "sha256": "c803ec196ae55586b68a9abfce8410396c324d79832408092fd137409fab469f"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-square-original.png",
+      "bytes": 226483,
+      "sha256": "6493c4db30c9d8d4b2fcee64a6eb45f34954eb7dca62343c59ea971ca828867f"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-square-prominent.png",
+      "bytes": 249927,
+      "sha256": "380c00bf1f36b4475cd046dd850927165c862cde940681aa28efb8204839f8c9"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/light-square-subtle.png",
+      "bytes": 200599,
+      "sha256": "dcfa544806764266feaf0f116793ab8fbf3bf5ac24578603e3871da6c6a48e80"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/local-guide-drag.png",
+      "bytes": 272137,
+      "sha256": "0abf773c988e6d7560dbec223fe668186b15d9724d7ff305af011010a85dc7b5"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/local-guide-preview.png",
+      "bytes": 271328,
+      "sha256": "582b9b1eb15c6b0a720d927f79fea8aa59f2ce741cdc4d118c58bcef25c97b2d"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/mobile-keyboard.png",
+      "bytes": 71019,
+      "sha256": "ec2fee7b60e0870bae6d46214b937c83c81019e53b9b5a3dc5972a6df64b8722"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/observations.json",
+      "bytes": 1768,
+      "sha256": "535c851978161041d057fe39a63c5b72d317c6cae77b0b0905d61806531903f9"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/off-screen-origin.png",
+      "bytes": 149865,
+      "sha256": "7f27e504d8dad189a774441deb58b875cc001b83f3ecce0ef5f076af84e3b9a6"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/rotated.png",
+      "bytes": 273350,
+      "sha256": "0ed285913b4d2daf40061e551020b5c0fc36241d4e818e98ba5ffa18ab6ad482"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-9/zoomed.png",
+      "bytes": 305710,
+      "sha256": "602cf76dcb5cf932230ae4423901a094968c65bd9189bae0caf27bdc85ea9908"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/cross-X-minus.png",
+      "bytes": 205500,
+      "sha256": "1bcde374feb49deb6d2612b50fd44af78d817937ce01f22c8735dd28d8c97236"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/cross-X-plus.png",
+      "bytes": 213493,
+      "sha256": "d265baf7aed063bec1f65491410474f5d9fb65e0e409ea32049147279bf9c5c3"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/cross-Y-minus.png",
+      "bytes": 220296,
+      "sha256": "233ee1fb820c10e4291e0a988ebb6f88573ddcdda0e6129dfcc7a7687ecfc5ca"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/cross-Y-plus.png",
+      "bytes": 220329,
+      "sha256": "c62424692045b0a54b19687ba0df200c50821fc9c3375471a61a08ea312bf489"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/cross-Z-minus.png",
+      "bytes": 218643,
+      "sha256": "b264f267511a8f59403fa48192efdb569c41a885f7e9b48b31d944230f40d226"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/cross-Z-plus.png",
+      "bytes": 212332,
+      "sha256": "36f683900aa132777f274e307324996eb793b2467f47d564925a89ebeaeaf537"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/dark-circle-strong.png",
+      "bytes": 208510,
+      "sha256": "09a1fbd5cec59242833e37da2a003c8095c1cd5881957f0bd1d65766e387e0b1"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/dark-lines-strong.png",
+      "bytes": 174204,
+      "sha256": "8b284bf68725f0d3020c22b05d4ba55f94ee2a8df722cfa141ca6560fd9207c2"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/dark-oval-strong.png",
+      "bytes": 211944,
+      "sha256": "f3cf0ceebfce425145aeb9e00ca1b19cf85d4e4f9dcc9c77ac11ab3d594d48ef"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/dark-overlay.png",
+      "bytes": 206302,
+      "sha256": "b5779316665348a635ec4e928bc1a86939b7499f0cfdd0d110f921c8308fed0d"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/dark-square-strong.png",
+      "bytes": 205713,
+      "sha256": "11cbce0a8be254aa349955a9b988fe284bd43f54b350a7b23002081781517b13"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/dark-strong.png",
+      "bytes": 208510,
+      "sha256": "09a1fbd5cec59242833e37da2a003c8095c1cd5881957f0bd1d65766e387e0b1"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/dark-tint.png",
+      "bytes": 209180,
+      "sha256": "8df67b5283ca4eb7f65567a50dfa296b3f98fc40f739d60ac7e9612bf9596fe4"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/light-overlay.png",
+      "bytes": 209949,
+      "sha256": "126f2626231da153cdd08cc69aebd00fddce301bd81078b2fb0cc66289189531"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/light-strong.png",
+      "bytes": 213394,
+      "sha256": "4750c32fe2853c2ef9af33ed787d25c52f0e37f5da9b5d663b43b4a59deea886"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/light-tint.png",
+      "bytes": 214010,
+      "sha256": "424e1cd99002d0c6d1cff6e5c51638eae1ec1561a1e21152431506bed7e328fa"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/mobile-controls.png",
+      "bytes": 54877,
+      "sha256": "59c29263b4f0317f775db61660db343b0a6cd79e6021a2026e4e788a74071417"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/near-camera-tint.png",
+      "bytes": 198714,
+      "sha256": "3884901db6d87fde99978c1003c425b7eac8a4d0ea35ee28b64ab46b14483cc3"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/observations.json",
+      "bytes": 1992,
+      "sha256": "400d2800c50e671e89df70a121fb4f09b2d2ea55be7b04f510b178916fbd905a"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth-strong/rotated-tint.png",
+      "bytes": 211216,
+      "sha256": "680ca018e52a65c5d37ff2d9f8c6be4820c67f333acffed5ef2b123fe2077231"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/cross-X-minus.png",
+      "bytes": 207007,
+      "sha256": "7694f9871ac93c3840fa51479c22938808f243c31483d9e107bb44861242720f"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/cross-X-plus.png",
+      "bytes": 214087,
+      "sha256": "da8663aa4cf3bcbc64e3312bf4cf9663b5e3b0ed6d935d34c6e24ca24663d37d"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/cross-Y-minus.png",
+      "bytes": 221793,
+      "sha256": "9fedf48bab7ef75acb6a657c7a14925b47cc2a34ee64adfd4e0d7d09ca66fae0"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/cross-Y-plus.png",
+      "bytes": 222021,
+      "sha256": "2bdb561ce518041361e169ce9907a68e6cf589411a670f561cdc6e17f36a8fe1"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/cross-Z-minus.png",
+      "bytes": 221239,
+      "sha256": "837670576ef6bc94646208161f1ee5e22e406e027be111703ea89d596a9c4f69"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/cross-Z-plus.png",
+      "bytes": 213714,
+      "sha256": "3788527d05806e69330ed4eeb8ea6f41c3a57b4242cf8eac3815971cefa40fa0"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/dark-circle-tint.png",
+      "bytes": 209155,
+      "sha256": "49b6ce594b293ce8d7ff4dea9fa568a394fb730cd18668573905fda6d5aaea56"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/dark-lines-tint.png",
+      "bytes": 174199,
+      "sha256": "0689cd4c0841f88139de9278457672cf5bd16200f1a04c9fe07729528abc9fe1"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/dark-oval-tint.png",
+      "bytes": 212589,
+      "sha256": "a37a7c008eea64dfad47da50e20970de608288bfbdc8650fe544050d57d470ed"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/dark-overlay.png",
+      "bytes": 206302,
+      "sha256": "b5779316665348a635ec4e928bc1a86939b7499f0cfdd0d110f921c8308fed0d"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/dark-square-tint.png",
+      "bytes": 206075,
+      "sha256": "d4cdf0fcc4763aaa2ae2f7fb2892d006912b52b34674bb654705413741f86b6b"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/dark-tint.png",
+      "bytes": 209153,
+      "sha256": "87e37ac34f4a66c9183034b557bf7541abfb37db9b44f7a458ab69a03f44a0d3"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/light-overlay.png",
+      "bytes": 209949,
+      "sha256": "126f2626231da153cdd08cc69aebd00fddce301bd81078b2fb0cc66289189531"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/light-tint.png",
+      "bytes": 211498,
+      "sha256": "7c80179fd0fb47d5be7c5b06cf92fc7f093f821d231f049a5a4bc9205fbdaa3f"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/mobile-controls.png",
+      "bytes": 62181,
+      "sha256": "615e268b2935f42b92e87b1461da5b6dc36e707ffc649f4108bfece63e14aa97"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/near-camera-tint.png",
+      "bytes": 199616,
+      "sha256": "61d79d0815546cb40f32692b6bd59c9f0fbac54a7fe06257e4d4dfb76ca628d8"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/observations.json",
+      "bytes": 1789,
+      "sha256": "7c2dfb38342cbbdf64a7ad543000172c03a32471ec41eb543f5a474cb26476fe"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-depth/rotated-tint.png",
+      "bytes": 210538,
+      "sha256": "f21218c0cc286ec1295e672a853511b3d8ef3394f73ba07f37635a177d2a0ceb"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-motion/after.json",
+      "bytes": 683,
+      "sha256": "32f4bb1328fb5f4ea74855bd9c7c246aaadcb34b4ab15c185b34f6e0caabadf8"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-motion/before.json",
+      "bytes": 513,
+      "sha256": "b3c2c6bbb62540b8c1947d11f0b6b17c3301d67598777a30fb2f9dd4a35bec61"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/a-desktop.png",
+      "bytes": 123978,
+      "sha256": "cea125f85db24d155f06aebd223db662d933e17a0b01a13aee50c308a1100555"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/a-mobile.png",
+      "bytes": 43599,
+      "sha256": "93eed73e65e622daaa55228e7bb20a8265f1d13f0199625ddd32ed142aa6cb3e"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/b-desktop.png",
+      "bytes": 123421,
+      "sha256": "dc1e2aca95a6ee93fd0a2629cf578003eec850d84cb0634ae110ebdf2da3c90d"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/b-mobile.png",
+      "bytes": 49134,
+      "sha256": "e8230ef719dca9b719df58e76517b2cb2afa67b7e0ea9534ac2e63b01d5616f4"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/c-desktop.png",
+      "bytes": 124283,
+      "sha256": "ad30620245165120f58da9a896fca24aad7a67d89d7969230ee4402cb425c970"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/c-mobile.png",
+      "bytes": 40643,
+      "sha256": "be4ca8405e3ae4ce0567ee80f39851385aaf41e7fda4730513d3b444b2fad602"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/navigation-immediate.png",
+      "bytes": 245417,
+      "sha256": "bf7a26362b5390bd8b07de069118e6d75abd662769fa90e3aed014a7edf5c7bb"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/navigation-mini-fields.png",
+      "bytes": 233410,
+      "sha256": "7e317e626fbe045e85d5eb8dffb538db2d9613630fb74ec8eb2bfd63a4c8174d"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/navigation-mini.png",
+      "bytes": 233624,
+      "sha256": "39fdf7e0fc32fe4c414b278560aa251d46a4b79127b327c9fb47899fe55d9a43"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/navigation-mobile.png",
+      "bytes": 72800,
+      "sha256": "5bb991ac84e0c512e75cf65365d39ffba42721f1da6237eee23dd8f836350791"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/navigation-normal.png",
+      "bytes": 242527,
+      "sha256": "65efa5f09e4e2543ea40121b585f8e30119b6eeba33b00bb121144257417871a"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/navigation-precision-help.png",
+      "bytes": 255455,
+      "sha256": "2f474935c90fa0191ce3b10e8816188bf59894d26e01c6141b7346d5176dcae5"
+    },
+    {
+      "path": "prototypes/zero-reference-planes-live/evidence-position/navigation-precision.png",
+      "bytes": 246035,
+      "sha256": "3dcb2f101dc4ab5e96b4e10cdd41eecf40986ca5fb4dea861575e2db9db2d5ac"
+    },
+    {
+      "path": "scripts/capture-zero-plane-depth.prototype.ts",
+      "bytes": 4681,
+      "sha256": "1da9f7f00dced32b73fd1f25b9bdf7d2fa0921a9a4d4fe2738e0f435433abe8f"
+    },
+    {
+      "path": "scripts/capture-zero-planes.prototype.ts",
+      "bytes": 8874,
+      "sha256": "390df8759fad763717fd0b72ce54101e10a84312487ce4a450b30e9d2c769844"
+    },
+    {
+      "path": "scripts/measure-zero-plane-depth.prototype.ts",
+      "bytes": 3008,
+      "sha256": "cb9686cf9b19a4c41258205bc7e544ab10820bb5a9ace4b954f8d0be176af581"
+    },
+    {
+      "path": "scripts/prototype-zero-planes.ts",
+      "bytes": 3436,
+      "sha256": "105ab9f570c6f3ba6947fcc91ae6a37729fe29f3f4fbdc1418afcbce30f356c8"
+    },
+    {
+      "path": "src/client/HouseholdMap.tsx",
+      "bytes": 88219,
+      "sha256": "d344ece2b9baab183e09221d9ff64d76c914b0bd711a61438ce20b7f1a8a6484"
+    },
+    {
+      "path": "src/client/MapNavigation.tsx",
+      "bytes": 17039,
+      "sha256": "38d53c530175b612d29d3fcd35544a4150e898d0d35c2886e9f89503ceee0548"
+    },
+    {
+      "path": "src/client/ObjectReadDetails.tsx",
+      "bytes": 4327,
+      "sha256": "beca5a3adefb765ebffd72dbe3625693c1f999f6da2ef71a6451cc9a90258207"
+    },
+    {
+      "path": "src/client/PositionPrototype.tsx",
+      "bytes": 6855,
+      "sha256": "b5ea23159d420fa23ab50d6c92e66bd40b19be31105b9c8d2475b8951db5a16c"
+    },
+    {
+      "path": "src/client/SpatialMap.tsx",
+      "bytes": 75525,
+      "sha256": "9b9ab82d07dcc7ac9b40738fcf02306861a0bf60f27802cfc45d38f79da04d85"
+    },
+    {
+      "path": "src/client/ZeroPlanesPrototype.tsx",
+      "bytes": 6758,
+      "sha256": "0c51eb077ab3eb8ce86b627b9cc3556f48ef85fbda1980f4ce999b0d2639a95f"
+    },
+    {
+      "path": "src/client/position.prototype.css",
+      "bytes": 1945,
+      "sha256": "6821f4418f59e516f0f28931267ed8c83e5e09ba2bcb69b81bc5b712b15a6772"
+    },
+    {
+      "path": "src/client/spatial-scene.ts",
+      "bytes": 22363,
+      "sha256": "3062eb31061484bcc7892e47b52710ad9b336a8df64a7b5048e3f07eb2a35e08"
+    },
+    {
+      "path": "src/client/zero-plane-depth.prototype.ts",
+      "bytes": 3769,
+      "sha256": "7fd506d72bb7c709f537637e5a11f667a9bde91b4678b5f630de9086f5a99e7b"
+    },
+    {
+      "path": "src/client/zero-planes.prototype.css",
+      "bytes": 1468,
+      "sha256": "16e232b550173d307110a9937752f72c7401709cc49789a5b846d781af948b1f"
+    },
+    {
+      "path": "src/client/zero-planes.prototype.ts",
+      "bytes": 4648,
+      "sha256": "f225f65c19ca868e7fc215aa32b430776e5de73c7b7b55bac51ec756c6ecebb7"
+    }
+  ]
+}
