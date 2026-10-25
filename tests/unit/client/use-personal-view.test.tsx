@@ -289,6 +289,70 @@ test('a successful position save does not erase a settings-conflict refusal', as
   expect(hook.result.current.toast).toBeUndefined();
 });
 
+test.each([false, true])(
+  'an unsaved object keeps its failure feedback until recovery while settings refresh failure is %s',
+  async (refreshFails) => {
+    const hook = await openView();
+    hook.write(async () => Response.json({ error: 'view_settings_conflict' }, { status: 409 }));
+    if (refreshFails)
+      hook.read(async () => Response.json({ error: 'internal_error' }, { status: 500 }));
+    await act(async () => {
+      await hook.result.current.configure({ ...defaultViewSettings, allLabels: true });
+    });
+    const settingsWarning = hook.result.current.message;
+    expect(settingsWarning).toContain(
+      refreshFails ? 'Din vy kunde inte sparas' : 'Din äldre ändring sparades inte',
+    );
+
+    const replies = new Map<string, (response: Response) => void>();
+    hook.write(
+      (body) =>
+        new Promise<Response>((resolve) => {
+          replies.set(body.id as string, resolve);
+        }),
+    );
+    let lamp: Promise<void> | undefined;
+    let bike: Promise<void> | undefined;
+    act(() => {
+      lamp = hook.result.current.move('lamp', { x: 1, y: 2, z: 3 });
+      bike = hook.result.current.move('bike', { x: 20, y: 30, z: 40 });
+    });
+    await act(async () => {
+      replies.get('lamp')?.(Response.json({ error: 'internal_error' }, { status: 500 }));
+      await lamp;
+    });
+    expect(hook.result.current.message).toBe('Positionen är inte sparad');
+    await act(async () => {
+      replies.get('bike')?.(Response.json({ id: 'bike', x: 20, y: 30, z: 40, version: 1 }));
+      await bike;
+    });
+    expect(hook.result.current.pending).toBe(false);
+    expect(hook.result.current.message).toBe('Positionen är inte sparad');
+    expect(hook.result.current.toast).toBeUndefined();
+    expect(hook.result.current.view?.positions).toEqual(
+      expect.arrayContaining([
+        { id: 'lamp', x: 1, y: 2, z: 3, version: 0 },
+        { id: 'bike', x: 20, y: 30, z: 40, version: 1 },
+      ]),
+    );
+
+    hook.write(async (body) =>
+      Response.json({ id: body.id, ...(body.position as object), version: 1 }),
+    );
+    await act(async () => {
+      await hook.result.current.move('lamp', { x: 7, y: 8, z: 9 });
+    });
+    expect(hook.result.current.view?.positions).toEqual(
+      expect.arrayContaining([
+        { id: 'lamp', x: 7, y: 8, z: 9, version: 1 },
+        { id: 'bike', x: 20, y: 30, z: 40, version: 1 },
+      ]),
+    );
+    expect(hook.result.current.message).toBe(settingsWarning);
+    expect(hook.result.current.toast).toBeUndefined();
+  },
+);
+
 test.each([
   ['pending', 'refresh'],
   ['later', 'settings'],

@@ -116,12 +116,9 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     }
   }
   function saveFeedback() {
-    if (settingsFailureMessage.current) {
-      setMessage(settingsFailureMessage.current);
-      return;
-    }
     if (localPositions.current.size && !positionSaves.current.size)
       setMessage('Positionen är inte sparad');
+    else if (settingsFailureMessage.current) setMessage(settingsFailureMessage.current);
     else if (!localPositions.current.size && !settingsSaving.current)
       setMessage('Din personliga vy är sparad.', true);
   }
