@@ -372,7 +372,7 @@ export function SpatialMap({
     return () => window.removeEventListener('blur', cancel);
   }, [active]);
   const movement = useObjectMovement(scene, {
-    enabled: Boolean(personal?.view) && !personal?.pending && !contextLost,
+    enabled: Boolean(personal?.view) && !contextLost,
     active,
     cancelHold,
     onMove: (id, position) => personal?.move(id, position),
@@ -1054,9 +1054,7 @@ export function SpatialMap({
       onNavigate={(command) => scene.current?.navigate(command)}
       object={selectedIds.length === 1 ? objects.get(selectedIds[0]) : undefined}
       disabled={!personalReady || unavailable || contextLost}
-      movementDisabled={
-        !personal?.view || personal.pending || disabled || unavailable || contextLost
-      }
+      movementDisabled={!personal?.view || disabled || unavailable || contextLost}
       onMove={(id, axis, step) => {
         const position = scene.current?.position(id);
         if (!position) return;
