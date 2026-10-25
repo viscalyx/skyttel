@@ -2,6 +2,7 @@ import type { ObjectType, ObjectValue } from '../shared/map.js';
 import { objectIconLabel } from '../shared/object-icons.js';
 import { propertyValueText } from '../shared/properties.js';
 import type { HouseholdTableRow } from './HouseholdTable.js';
+import { PositionPrototype } from './PositionPrototype.js';
 import { ProfileImage } from './ProfileImage.js';
 import { lifecycleText } from './read-field-values.js';
 import { SavedPropertyOrder } from './SavedPropertyOrder.js';
@@ -110,6 +111,7 @@ export function ObjectReadDetails({
           })}
       </dl>
       <SavedPropertyOrder before={row.before?.properties} after={row.object.properties} />
+      <PositionPrototype id={row.object.id} name={row.object.name} />
     </div>
   );
 }

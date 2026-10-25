@@ -62,6 +62,7 @@ import {
 } from './ObjectSearch.js';
 import { ObjectTypeEditor } from './ObjectTypes.js';
 import type { ObjectEditor } from './object-editor.js';
+import { PositionPrototypeContext, usePositionPrototype } from './PositionPrototype.js';
 import { RelationshipTypeEditor } from './RelationshipTypes.js';
 import { Reports } from './Reports.js';
 import { rejectionMessage } from './SaveOperations.js';
@@ -143,7 +144,7 @@ export function HouseholdMap({
     loseAccess,
     conversation,
     conversationPreferences,
-    personal,
+    personal: savedPersonal,
     browsing,
     setBrowsing,
     selection,
@@ -182,6 +183,8 @@ export function HouseholdMap({
     },
     onSelectItem: (target, signal) => revealAssistantItem(target, signal),
   });
+  const positionPrototype = usePositionPrototype(savedPersonal);
+  const personal = positionPrototype.personal;
   const [draftRemovalStatus, setDraftRemovalStatus] = useState('');
   const [objectActions, setObjectActions] = useState<ObjectActionsEntry | null>(null);
   const [objectDialog, setObjectDialog] = useState<ObjectEditor | null>(null);
@@ -1246,7 +1249,7 @@ export function HouseholdMap({
     </p>
   );
 
-  return (
+  const prototypeContent = (
     <section
       ref={workspace}
       tabIndex={-1}
@@ -2284,6 +2287,12 @@ export function HouseholdMap({
           </div>,
           typeHost,
         )}
+      {active && positionPrototype.switcher}
     </section>
+  );
+  return (
+    <PositionPrototypeContext.Provider value={positionPrototype.context}>
+      {prototypeContent}
+    </PositionPrototypeContext.Provider>
   );
 }

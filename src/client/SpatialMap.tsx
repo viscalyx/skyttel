@@ -1181,6 +1181,8 @@ export function SpatialMap({
                     position: scene.current.position('background-0') as Position,
                     move: (position) => {
                       scene.current?.place('background-0', position);
+                      if (new URLSearchParams(window.location.search).has('prototype-position'))
+                        void personal?.move('background-0', position);
                     },
                   }
                 : undefined
