@@ -7,6 +7,9 @@ import type {
 } from '../shared/personal-view.js';
 import { MapRequestError, request } from './map-request.js';
 
+const viewFailureMessage =
+  'Din vy kunde inte sparas. Läs in aktuella placeringar innan du fortsätter.';
+
 export function usePersonalView(path: string, onAccessLost: () => void) {
   const [view, setView] = useState<PersonalView | null>(null);
   const [notice, setNotice] = useState({ message: '', id: 0, toast: false });
@@ -29,7 +32,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
   const alive = useRef(true);
   const generation = useRef(0);
   const settingsSaving = useRef(false);
-  const settingsFailure = useRef(false);
+  const settingsFailureMessage = useRef('');
   const publish = useCallback((next: PersonalView | null) => {
     current.current = next;
     setView(next);
@@ -38,7 +41,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     localPositions.current.clear();
     positionSaves.current.clear();
     settingsSaving.current = false;
-    settingsFailure.current = false;
+    settingsFailureMessage.current = '';
     publish(null);
     setPending(false);
   }, [publish]);
@@ -70,8 +73,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
         generation.current++;
         reset();
         onAccessLost();
-      } else
-        setMessage('Din vy kunde inte sparas. Läs in aktuella placeringar innan du fortsätter.');
+      } else setMessage(viewFailureMessage);
     },
     [onAccessLost, reset, setMessage],
   );
@@ -102,7 +104,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
       if (session !== generation.current) return;
       if (current.current && latest.contentVersion !== current.current.contentVersion)
         invalidate('');
-      settingsFailure.current = false;
+      settingsFailureMessage.current = '';
       mergeLocal(latest);
       setMessage(
         localPositions.current.size
@@ -114,7 +116,10 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     }
   }
   function saveFeedback() {
-    if (settingsFailure.current) return;
+    if (settingsFailureMessage.current) {
+      setMessage(settingsFailureMessage.current);
+      return;
+    }
     if (localPositions.current.size && !positionSaves.current.size)
       setMessage('Positionen är inte sparad');
     else if (!localPositions.current.size && !settingsSaving.current)
@@ -124,7 +129,6 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     const session = generation.current;
     const contentVersion = current.current?.contentVersion;
     let completed = false;
-    settingsFailure.current = false;
     setPending(true);
     setMessage('Din personliga vy sparas…');
     try {
@@ -208,7 +212,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
   async function updateSettings(body: unknown) {
     const session = generation.current;
     settingsSaving.current = true;
-    settingsFailure.current = false;
+    settingsFailureMessage.current = '';
     setMessage('Din personliga vy sparas…');
     setPending(true);
     try {
@@ -217,6 +221,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
         publish({ ...current.current, settings });
     } catch (error) {
       if (session !== generation.current) return;
+      settingsFailureMessage.current = viewFailureMessage;
       try {
         const latest = await request<PersonalView>(`${path}/view`);
         if (session === generation.current) {
@@ -225,13 +230,12 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
             return;
           }
           mergeLocal(latest);
-          settingsFailure.current = true;
-          setMessage(
+          settingsFailureMessage.current =
             error instanceof MapRequestError &&
-              ['view_settings_conflict', 'content_conflict'].includes(error.code)
+            ['view_settings_conflict', 'content_conflict'].includes(error.code)
               ? 'En annan klient har ändrat din vy. Din äldre ändring sparades inte. Aktuella placeringar och inställningar visas.'
-              : 'Ändringen kunde inte bekräftas. Aktuella placeringar och inställningar visas.',
-          );
+              : 'Ändringen kunde inte bekräftas. Aktuella placeringar och inställningar visas.';
+          setMessage(settingsFailureMessage.current);
         }
       } catch (readError) {
         if (session === generation.current) report(readError);

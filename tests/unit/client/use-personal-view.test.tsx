@@ -289,6 +289,79 @@ test('a successful position save does not erase a settings-conflict refusal', as
   expect(hook.result.current.toast).toBeUndefined();
 });
 
+test.each([
+  ['pending', 'refresh'],
+  ['later', 'settings'],
+])(
+  'a %s position cannot confirm settings after a failed conflict refresh until %s succeeds',
+  async (order, recovery) => {
+    const hook = await openView();
+    let releaseSettings!: (response: Response) => void;
+    let releasePosition!: (response: Response) => void;
+    hook.write(
+      (body) =>
+        new Promise<Response>((resolve) => {
+          if (body.settings) releaseSettings = resolve;
+          else releasePosition = resolve;
+        }),
+    );
+    hook.read(async () => Response.json({ error: 'internal_error' }, { status: 500 }));
+    let settings: Promise<void> | undefined;
+    let position: Promise<void> | undefined;
+    act(() => {
+      settings = hook.result.current.configure({ ...defaultViewSettings, allLabels: true });
+      if (order === 'pending') position = hook.result.current.move('lamp', { x: 7, y: 8, z: 9 });
+    });
+    await act(async () => {
+      releaseSettings(Response.json({ error: 'view_settings_conflict' }, { status: 409 }));
+      await settings;
+    });
+    expect(hook.result.current.message).toBe(
+      'Din vy kunde inte sparas. Läs in aktuella placeringar innan du fortsätter.',
+    );
+    expect(hook.result.current.pending).toBe(order === 'pending');
+    if (order === 'later')
+      act(() => {
+        position = hook.result.current.move('lamp', { x: 7, y: 8, z: 9 });
+      });
+    await act(async () => {
+      releasePosition(Response.json({ id: 'lamp', x: 7, y: 8, z: 9, version: 1 }));
+      await position;
+    });
+    expect(hook.result.current.view?.positions).toEqual([
+      { id: 'lamp', x: 7, y: 8, z: 9, version: 1 },
+    ]);
+    expect(hook.result.current.pending).toBe(false);
+    expect(hook.result.current.message).toBe(
+      'Din vy kunde inte sparas. Läs in aktuella placeringar innan du fortsätter.',
+    );
+    expect(hook.result.current.toast).toBeUndefined();
+    const recovered: PersonalView = {
+      contentVersion: 1,
+      positions: [{ id: 'lamp', x: 7, y: 8, z: 9, version: 1 }],
+      settings: { ...defaultViewSettings, version: 2 },
+    };
+    hook.read(async () => Response.json(recovered));
+    hook.write(async (body) =>
+      Response.json(
+        body.settings
+          ? { ...body.settings, version: 2 }
+          : { id: body.id, ...(body.position as object), version: 2 },
+      ),
+    );
+    await act(async () => {
+      if (recovery === 'refresh') await hook.result.current.refresh();
+      else await hook.result.current.configure(defaultViewSettings);
+    });
+    expect(hook.result.current.view?.settings).toEqual(recovered.settings);
+    await act(async () => {
+      await hook.result.current.move('lamp', { x: 10, y: 20, z: 30 });
+    });
+    expect(hook.result.current.message).toBe('Din personliga vy är sparad.');
+    expect(hook.result.current.toast).toBe(true);
+  },
+);
+
 test('a delayed position-conflict read preserves settings confirmed after the read began', async () => {
   const hook = await openView();
   let releaseSettings!: (response: Response) => void;
@@ -379,6 +452,121 @@ test.each(['success', 'failure'])(
     expect(hook.result.current.message).toBe('');
     expect(hook.result.current.pending).toBe(false);
     expect(hook.onAccessLost).not.toHaveBeenCalled();
+  },
+);
+
+test.each([
+  ['write', 'success'],
+  ['write', 'failure'],
+  ['read', 'success'],
+  ['read', 'failure'],
+])(
+  'a late settings %s with %s cannot affect the current household or its pending position',
+  async (phase, outcome) => {
+    const hook = await openView();
+    let releaseSettings!: (response: Response) => void;
+    const delayed = () =>
+      new Promise<Response>((resolve) => {
+        releaseSettings = resolve;
+      });
+    hook.write(async () =>
+      phase === 'write'
+        ? delayed()
+        : Response.json({ error: 'view_settings_conflict' }, { status: 409 }),
+    );
+    if (phase === 'read') hook.read(delayed);
+    let settings: Promise<void> | undefined;
+    await act(async () => {
+      settings = hook.result.current.configure({ ...defaultViewSettings, allLabels: true });
+    });
+    const next: PersonalView = {
+      contentVersion: 4,
+      positions: [],
+      settings: { ...defaultViewSettings, version: 2 },
+    };
+    hook.read(async () => Response.json(next));
+    await act(async () => {
+      hook.rerender({ path: '/another-household/map' });
+    });
+    let releasePosition!: (response: Response) => void;
+    hook.write(
+      () =>
+        new Promise<Response>((resolve) => {
+          releasePosition = resolve;
+        }),
+    );
+    let position: Promise<void> | undefined;
+    act(() => {
+      position = hook.result.current.move('bike', { x: 20, y: 30, z: 40 });
+    });
+    await act(async () => {
+      releaseSettings(
+        outcome === 'failure'
+          ? Response.json({ error: 'forbidden' }, { status: 403 })
+          : Response.json(
+              phase === 'write'
+                ? { ...defaultViewSettings, allLabels: true, version: 1 }
+                : {
+                    contentVersion: 1,
+                    positions: [],
+                    settings: { ...defaultViewSettings, allLabels: true, version: 1 },
+                  },
+            ),
+      );
+      await settings;
+    });
+    expect(hook.result.current.view).toEqual({
+      ...next,
+      positions: [{ id: 'bike', x: 20, y: 30, z: 40, version: 0 }],
+    });
+    expect(hook.result.current.pending).toBe(true);
+    expect(hook.result.current.message).toBe('Din personliga vy sparas…');
+    expect(hook.onAccessLost).not.toHaveBeenCalled();
+    await act(async () => {
+      releasePosition(Response.json({ id: 'bike', x: 20, y: 30, z: 40, version: 1 }));
+      await position;
+    });
+    expect(hook.result.current.pending).toBe(false);
+    expect(hook.result.current.message).toBe('Din personliga vy är sparad.');
+  },
+);
+
+test('a settings conflict with replacement content stops pending personal work', async () => {
+  const hook = await openView();
+  hook.saved({
+    contentVersion: 2,
+    positions: [],
+    settings: { ...defaultViewSettings, version: 0 },
+  });
+  hook.write(async () => Response.json({ error: 'content_conflict' }, { status: 409 }));
+  await act(async () => {
+    await hook.result.current.configure({ ...defaultViewSettings, allLabels: true });
+  });
+  expect(hook.result.current.view).toBeNull();
+  expect(hook.result.current.pending).toBe(false);
+  expect(hook.result.current.message).toBe(
+    'Hushållets innehåll har ersatts. Läs in kartan innan du fortsätter.',
+  );
+  const write = vi.fn();
+  hook.write(write);
+  act(() => {
+    void hook.result.current.configure(defaultViewSettings);
+  });
+  expect(write).not.toHaveBeenCalled();
+});
+
+test.each([401, 403])(
+  'a %s denial while refreshing a settings conflict clears the view and reports access loss',
+  async (status) => {
+    const hook = await openView();
+    hook.write(async () => Response.json({ error: 'view_settings_conflict' }, { status: 409 }));
+    hook.read(async () => Response.json({ error: 'forbidden' }, { status }));
+    await act(async () => {
+      await hook.result.current.configure({ ...defaultViewSettings, allLabels: true });
+    });
+    expect(hook.result.current.view).toBeNull();
+    expect(hook.result.current.pending).toBe(false);
+    expect(hook.onAccessLost).toHaveBeenCalledOnce();
   },
 );
 
