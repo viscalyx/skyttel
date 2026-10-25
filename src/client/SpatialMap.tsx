@@ -1136,9 +1136,12 @@ export function SpatialMap({
   return (
     <section className="spatial-map" aria-label="Rymdkarta">
       <h2>Rymdkarta</h2>
-      {active && planeComparison && (
-        <ZeroPlanesPrototypeControls value={planeComparison} onChange={setPlaneComparison} />
-      )}
+      {active &&
+        planeComparison &&
+        createPortal(
+          <ZeroPlanesPrototypeControls value={planeComparison} onChange={setPlaneComparison} />,
+          document.body,
+        )}
       {settingsMount &&
         createPortal(
           <div className="map-settings">
