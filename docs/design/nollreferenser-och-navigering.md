@@ -210,10 +210,34 @@ Förklaringen i den aktuella prototypen lyder:
 >
 > Värden mellan −10 000 och +10 000. Nya värden avrundas till två decimaler.
 
+### Positioner, åtkomst och ogiltig inmatning
+
+Visa det markerade objektets aktuella position även när den kommer från
+automatisk placering. Att läsa koordinaterna ska inte spara eller fixera
+positionen. Första ändringen sparar den resulterande positionen med alla
+tre koordinater; de två axlar som inte ändras behåller sina värden.
+
+Behåll vägen **Tabell → välj ett objekt → Karta → Navigera** för åtkomst
+utan visuell markering i kartan. Objektet förblir markerat vid vybytet.
+Fokus och reglagens namn ska göra hela vägen användbar med tangentbord och
+skärmläsare. Positionsreglage ska inte återkomma i objektets egenskaper.
+
+Sambandens rumsliga information utgår från de två ändpunkternas objekt
+och deras positioner. Ett samband följer objekten och har ingen egen
+oberoende X/Y/Z-position. Båda objekten ska kunna identifieras och deras
+positioner nås. Den exakta placeringen av denna åtkomst återstår att besluta.
+
+Behåll ofullständig eller ogiltig text medan användaren redigerar, utan
+att flytta den axeln. När fokus lämnar fältet återställs senaste giltiga
+värdet. Om inmatningen då är ogiltig ska synlig text och återkoppling för
+skärmläsare förklara problemet och vilket värde som återställs.
+Övriga axlar förblir användbara. Giltiga värden flyttar fortfarande direkt.
+
 ### Konkret prototypbeteende att bevara som granskningsunderlag
 
-Följande är genomförda detaljer i experimentet, inte ytterligare beslut
-som ska antas godkända bara för att de finns i kod:
+Följande beskriver experimentet. Kraven ovan gäller där beteendet också
+är beslutat; övriga detaljer ska inte antas godkända bara för att de finns
+i kod. Prototypen saknar den beslutade återkopplingen för ogiltig inmatning.
 
 - Varje axel valideras för sig. Tomt fält, ensamt minus, ofullständigt tal,
   icke ändligt tal eller ett värde utanför befintliga gränser lämnar axeln
@@ -248,7 +272,15 @@ Det är en avgränsning för granskning, inte ett beslut att produktens
 personliga positioner ska sluta sparas. Produktionsarbetet måste ansluta
 direktinmatningen till hanteringen av personlig vy, åtkomst och sparresultat.
 Snabba giltiga inmatningar får inte tappas för att ett tidigare nätanrop
-pågår. Strategi för ordning, fel och samtidiga ändringar behöver preciseras.
+pågår. Koordinatfälten ska fortsätta ta emot giltig inmatning under sparande.
+
+Om sparandet misslyckas behåller objektet sin senaste lokala position.
+Visa tydligt **Positionen är inte sparad** och erbjud **Försök igen** samt
+**Läs in sparad position**. Det osparade tillståndet och återkopplingen ska
+vara tillgängliga för hjälpmedel. Kasta inte senare redigeringar när ett
+äldre anrop avslutas. Strategin för anropens ordning är ett tekniskt ansvar;
+användarens val vid samtidiga ändringar från andra enheter återstår att
+besluta, liksom hantering av osparad position när användaren lämnar vyn.
 
 ## Tillgänglighet och kvarstående frågor
 
@@ -267,18 +299,15 @@ toningen är på. Prototypbilder och automatiserade kontroller bevisar inte
 
 Följande är öppet och får inte fyllas i med prototypens tillfälliga val:
 
-1. Åtkomst till koordinater från automatisk placering, inte enbart de
-   sparade positioner som experimentets nio provobjekt har.
-2. Sammanhängande åtkomst utan visuell kartnavigering efter att positionsdelen
-   i egenskaperna väljs bort. Vägen Tabell → objektval → Karta → Navigera
-   finns i experimentet, men hela upplevelsen behöver fortsatt granskning.
-3. Positionsinformation för samband och användning när nollpunkt, plan eller
-   axlar är utanför vyn, kantställda eller saknar tonade ytor.
-4. Slutliga visuella och icke färgbaserade signaler, kontrast, fokus,
+1. Exakt placering och fokusflöde för åtkomst till sambandens ändpunkter
+   och deras positioner.
+2. Slutliga visuella och icke färgbaserade signaler, kontrast, fokus,
    omflöde och små skärmar i båda navigeringslägena.
-5. Granskning av prototypens inmatningsdetaljer och anslutningen till sparande,
-   inklusive fel, tillgänglig återkoppling och samtidiga förändringar.
-6. Samlad kontroll och användarens godkännande av den färdiga designen.
+3. Återstående inmatningsdetaljer samt användarens val vid samtidiga
+   förändringar och när en osparad position riskerar att lämnas.
+4. Verifiering av hela vägen Tabell → objektval → Karta → Navigera,
+   även med automatiskt placerade objekt och när nollreferensen inte syns.
+5. Samlad kontroll och användarens godkännande av den färdiga designen.
 
 ## Skillnader mellan experiment och leverans
 
@@ -289,6 +318,9 @@ synlighet, zoomstorlek och etikettkollisioner är inte fullständigt byggda.
 Skjutreglage tillsammans med sifferfält för Tonstyrka och flyttmeddelandets
 fördröjning på 500 millisekunder är krav inför implementation, inte
 verifierade beteenden i den arkiverade prototypen.
+Tillgång till automatiska positioner, återkoppling för ogiltig inmatning
+och bevarande av osparade positioner vid fel är också leveranskrav som
+den arkiverade prototypen inte demonstrerar.
 
 Kurvade samband, pilspetsar, klippning och överlappande toning behöver
 produktionsgranskning. Ett byte från bildfilter till vektorbaserad toning
