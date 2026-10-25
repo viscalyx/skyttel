@@ -67,10 +67,10 @@ export function useObjectMovement(
     clearTimeout(referenceDelay.current);
     setTemporaryReference(true);
   }
-  function releaseReference() {
+  const releaseReference = useCallback(() => {
     clearTimeout(referenceDelay.current);
     referenceDelay.current = setTimeout(() => setTemporaryReference(false), 1000);
-  }
+  }, []);
   useEffect(
     () => () => {
       clearTimeout(referenceDelay.current);
@@ -126,6 +126,43 @@ export function useObjectMovement(
     setHeightActive(false);
     cancelHold();
   }, [scene, cancelHold, clearAnnouncement, clearReference]);
+  const end = useCallback(
+    (event: Pick<PointerEvent, 'pointerId'>) => {
+      touches.current.delete(event.pointerId);
+      if (!touches.current.size) waiting.current = false;
+      const current = gesture.current;
+      if (!current) return;
+      if (event.pointerId !== current.primary && event.pointerId !== current.second?.id) return;
+      if (current.second) waiting.current = touches.current.size > 0;
+      gesture.current = null;
+      setHeightActive(false);
+      cancelHold();
+      cancelReferenceHold();
+      const position = scene.current?.position(current.id);
+      if (current.moved || current.referenceHeld) releaseReference();
+      if (current.moved && position) void onMove(current.id, position);
+    },
+    [scene, cancelHold, cancelReferenceHold, releaseReference, onMove],
+  );
+  const lostCapture = useCallback(
+    (event: Pick<PointerEvent, 'pointerId'>) => {
+      const current = gesture.current;
+      if (
+        current &&
+        (event.pointerId === current.primary || event.pointerId === current.second?.id)
+      )
+        cancel();
+    },
+    [cancel],
+  );
+  useEffect(() => {
+    window.addEventListener('pointerup', end, true);
+    window.addEventListener('pointercancel', lostCapture, true);
+    return () => {
+      window.removeEventListener('pointerup', end, true);
+      window.removeEventListener('pointercancel', lostCapture, true);
+    };
+  }, [end, lostCapture]);
   const interrupt = useCallback(() => {
     cancel();
     clearAnnouncement();
@@ -218,14 +255,7 @@ export function useObjectMovement(
     leave() {
       cancelReferenceHold();
     },
-    lostCapture(event: ReactPointerEvent) {
-      const current = gesture.current;
-      if (
-        current &&
-        (event.pointerId === current.primary || event.pointerId === current.second?.id)
-      )
-        cancel();
-    },
+    lostCapture,
     down(event: ReactPointerEvent) {
       if (event.pointerType === 'touch')
         touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -296,20 +326,6 @@ export function useObjectMovement(
       event.preventDefault();
       event.stopPropagation();
     },
-    end(event: ReactPointerEvent) {
-      touches.current.delete(event.pointerId);
-      if (!touches.current.size) waiting.current = false;
-      const current = gesture.current;
-      if (!current) return;
-      if (event.pointerId !== current.primary && event.pointerId !== current.second?.id) return;
-      if (current.second) waiting.current = touches.current.size > 0;
-      gesture.current = null;
-      setHeightActive(false);
-      cancelHold();
-      cancelReferenceHold();
-      const position = scene.current?.position(current.id);
-      if (current.moved || current.referenceHeld) releaseReference();
-      if (current.moved && position) void onMove(current.id, position);
-    },
+    end,
   };
 }

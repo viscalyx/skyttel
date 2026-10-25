@@ -104,6 +104,68 @@ test('stationary primary mouse holds reveal at 1.5 seconds and continue through 
   }
 });
 
+test('a held reference hides one second after mouse release outside the map', () => {
+  const map = openMovement();
+  const outside = document.createElement('button');
+  outside.addEventListener('pointerup', (event) => event.stopPropagation());
+  document.body.append(outside);
+  try {
+    map.run((movement) => movement.start('bike', map.pointer()));
+    map.wait(1500);
+    expect(map.result.current.referenceVisible).toBe(true);
+    map.run((movement) => movement.leave());
+    outside.focus();
+    act(() =>
+      outside.dispatchEvent(
+        Object.assign(new Event('pointerup', { bubbles: true }), { pointerId: 1 }),
+      ),
+    );
+    map.wait(999);
+    expect(map.result.current.referenceVisible).toBe(true);
+    map.wait(1);
+    expect(map.result.current.referenceVisible).toBe(false);
+    expect(document.activeElement).toBe(outside);
+    expect(map.options.onMove).not.toHaveBeenCalled();
+    expect(map.result.current.announcement).toBeNull();
+  } finally {
+    outside.remove();
+    map.close();
+  }
+});
+
+test('outside cancellation clears only the active hold and leaves no callback for the next gesture', () => {
+  const map = openMovement();
+  try {
+    const outsidePointer = (type: string, pointerId: number) =>
+      act(() =>
+        document.body.dispatchEvent(
+          Object.assign(new Event(type, { bubbles: true }), { pointerId }),
+        ),
+      );
+    map.run((movement) => movement.start('bike', map.pointer()));
+    map.wait(1500);
+    expect(map.result.current.referenceVisible).toBe(true);
+    outsidePointer('pointercancel', 2);
+    expect(map.result.current.referenceVisible).toBe(true);
+    outsidePointer('pointercancel', 1);
+    expect(map.result.current.referenceVisible).toBe(false);
+    map.run((movement) => movement.start('bike', map.pointer({ pointerId: 3 })));
+    map.wait(1499);
+    expect(map.result.current.referenceVisible).toBe(false);
+    map.wait(1);
+    expect(map.result.current.referenceVisible).toBe(true);
+    outsidePointer('pointerup', 1);
+    map.wait(2000);
+    expect(map.result.current.referenceVisible).toBe(true);
+    outsidePointer('pointerup', 3);
+    map.wait(1000);
+    expect(map.result.current.referenceVisible).toBe(false);
+    expect(map.options.onMove).not.toHaveBeenCalled();
+  } finally {
+    map.close();
+  }
+});
+
 test('successive actual button or coordinate moves restart the delay while no-op edits do not', () => {
   const map = openMovement();
   try {
