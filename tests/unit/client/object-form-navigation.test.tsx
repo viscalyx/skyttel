@@ -125,3 +125,50 @@ test('actual logout is deferred until unsent form loss is confirmed and keeps st
   await home.client.signIn();
   expect((await home.read()).draft).toEqual(before.draft);
 });
+
+test('cancelling a later position warning retains the actual object editor before logout', async () => {
+  const home = await open();
+  const actualFetch = globalThis.fetch;
+  vi.stubGlobal('fetch', (url: string, init?: RequestInit) =>
+    url.endsWith('/view/position')
+      ? Promise.resolve(Response.json({ error: 'unavailable' }, { status: 503 }))
+      : actualFetch(url, init),
+  );
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Hushållets tabell' })).getByRole('button', {
+      name: 'Tidigare förslag',
+    }),
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Karta' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Navigera' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Flytta Tidigare förslag: uppåt' }));
+  await screen.findByRole('region', { name: 'Osparade personliga positioner' });
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng navigering' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Tabell' }));
+  const form = await createUnsent();
+  fireEvent.click(screen.getByRole('button', { name: 'Visa verktygens namn' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Din profil' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Logga ut' }));
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Kasta ändringarna och fortsätt' }),
+  );
+  const loss = within(await screen.findByRole('dialog', { name: 'Lämna osparade positioner?' }));
+  await userEvent.click(loss.getByRole('button', { name: 'Stanna kvar' }));
+  expect(home.signOuts()).toBe(0);
+  const name = within(form).getByLabelText('Namn', { exact: true });
+  expect(name).toHaveProperty('value', 'Oskickad cykel');
+  expect(name).toBe(document.activeElement);
+  expect(screen.getByRole('region', { name: 'Osparade personliga positioner' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Din profil' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Logga ut' }));
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Kasta ändringarna och fortsätt' }),
+  );
+  await userEvent.click(
+    within(await screen.findByRole('dialog', { name: 'Lämna osparade positioner?' })).getByRole(
+      'button',
+      { name: 'Lämna och kasta positionerna' },
+    ),
+  );
+  await waitFor(() => expect(home.signOuts()).toBe(1));
+});
