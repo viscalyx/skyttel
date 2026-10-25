@@ -73,6 +73,28 @@ test('retry saves the latest failed whole position and keeps another failed obje
   expect(hook.result.current.message).toBe('Positionen är inte sparad');
 });
 
+test('retrying a removed object preserves the changed-object warning and another failed position', async () => {
+  const hook = await openView();
+  hook.write(async () => Response.json({ error: 'unavailable' }, { status: 503 }));
+  await act(async () => {
+    await hook.result.current.move('lamp', { x: 1, y: 2, z: 3 });
+    await hook.result.current.move('bike', { x: 4, y: 5, z: 6 });
+  });
+  hook.write(async () => Response.json({ error: 'object_unavailable' }, { status: 400 }));
+  await act(async () => {
+    await hook.result.current.retryPosition('lamp');
+  });
+  expect(hook.result.current.message).toBe(
+    'Objektet eller hushållets innehåll har ändrats. Läs in kartan innan du fortsätter.',
+  );
+  expect(hook.result.current.positionRecovery).toBeUndefined();
+  expect(hook.result.current.unsavedPositions.map(({ id }) => id)).toEqual(['bike']);
+  expect(hook.result.current.view?.positions).toEqual([
+    { id: 'bike', x: 4, y: 5, z: 6, version: 0 },
+  ]);
+  expect(hook.result.current.pending).toBe(false);
+});
+
 test('loading one saved position leaves other unsaved positions intact and ignores its older write', async () => {
   const hook = await openView();
   hook.write(async () => Response.json({ error: 'unavailable' }, { status: 503 }));

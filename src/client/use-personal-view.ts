@@ -41,7 +41,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     message: string;
     error?: boolean;
   }>();
-  const positionSaves = useRef(new Map<string, Promise<void>>());
+  const positionSaves = useRef(new Map<string, Promise<'saved' | undefined>>());
   const alive = useRef(true);
   const generation = useRef(0);
   const settingsSaving = useRef(false);
@@ -223,6 +223,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
         }
       }
       completed = true;
+      return 'saved' as const;
     } catch (error) {
       if (isCurrent()) {
         if (error instanceof MapRequestError && [401, 403].includes(error.status)) report(error);
@@ -293,9 +294,10 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     if (!current.current || !localPositions.current.has(id)) return;
     const session = generation.current;
     const epoch = positionEpochs.current.get(id);
-    await startPositionSave(id);
+    const outcome = await startPositionSave(id);
     if (session !== generation.current || epoch !== positionEpochs.current.get(id)) return;
     const failed = localPositions.current.has(id);
+    if (!failed && outcome !== 'saved') return;
     setPositionRecovery({
       id,
       message: failed
@@ -418,7 +420,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
         ],
       };
       publish(current.current);
-      return startPositionSave(id);
+      return startPositionSave(id)?.then(() => {});
     },
     configure(settings: ViewSettings) {
       if (!current.current || positionSaves.current.size || settingsSaving.current) return;

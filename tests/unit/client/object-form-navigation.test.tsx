@@ -126,7 +126,7 @@ test('actual logout is deferred until unsent form loss is confirmed and keeps st
   expect((await home.read()).draft).toEqual(before.draft);
 });
 
-test('cancelling a later position warning retains the actual object editor before logout', async () => {
+test('cancelling a later position warning retains the actual object editor during router departure', async () => {
   const home = await open();
   const actualFetch = globalThis.fetch;
   vi.stubGlobal('fetch', (url: string, init?: RequestInit) =>
@@ -146,21 +146,25 @@ test('cancelling a later position warning retains the actual object editor befor
   await userEvent.click(screen.getByRole('button', { name: 'Stäng navigering' }));
   await userEvent.click(screen.getByRole('button', { name: 'Tabell' }));
   const form = await createUnsent();
-  fireEvent.click(screen.getByRole('button', { name: 'Visa verktygens namn' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Din profil' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Logga ut' }));
+  const before = await home.read();
+  // Browser Back can request departure while the native object editor is modal.
+  // Its inert background does not permit clicking profile or logout controls.
+  await act(async () => {
+    void home.router.navigate('/cookies');
+  });
   await userEvent.click(
     await screen.findByRole('button', { name: 'Kasta ändringarna och fortsätt' }),
   );
   const loss = within(await screen.findByRole('dialog', { name: 'Lämna osparade positioner?' }));
   await userEvent.click(loss.getByRole('button', { name: 'Stanna kvar' }));
-  expect(home.signOuts()).toBe(0);
+  expect(home.router.state.location.pathname).toBe(`/households/${home.household.id}`);
   const name = within(form).getByLabelText('Namn', { exact: true });
   expect(name).toHaveProperty('value', 'Oskickad cykel');
   expect(name).toBe(document.activeElement);
   expect(screen.getByRole('region', { name: 'Osparade personliga positioner' })).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Din profil' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Logga ut' }));
+  await act(async () => {
+    void home.router.navigate('/cookies');
+  });
   await userEvent.click(
     await screen.findByRole('button', { name: 'Kasta ändringarna och fortsätt' }),
   );
@@ -170,5 +174,6 @@ test('cancelling a later position warning retains the actual object editor befor
       { name: 'Lämna och kasta positionerna' },
     ),
   );
-  await waitFor(() => expect(home.signOuts()).toBe(1));
+  await waitFor(() => expect(home.router.state.location.pathname).toBe('/cookies'));
+  expect(await home.read()).toEqual(before);
 });
