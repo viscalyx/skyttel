@@ -58,7 +58,7 @@ console.log('After sign-in, reopen the comparison URL above if the query is lost
 console.log('Comparison starts with circle + subtle; A/B depth choice is in the URL.');
 console.log('Ctrl+C stops the prototype and deletes its disposable database.');
 console.log(
-  `Position comparison: ${app.origin}/households/${household.id}?prototype-planes&prototype-position&variant=A&plane-depth=overlay`,
+  `Position prototype: ${app.origin}/households/${household.id}?prototype-planes&prototype-position&plane-depth=overlay`,
 );
 let stopping = false;
 async function stop() {

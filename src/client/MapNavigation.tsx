@@ -18,6 +18,7 @@ import {
   measureFloatingArea,
   moveWindow,
 } from './floating-windows.js';
+import { PositionPrototype } from './PositionPrototype.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './map-navigation.css';
 
@@ -425,6 +426,12 @@ export function MapNavigation({
               Flytta bara det markerade objektet i din personliga vy. Hushållets uppgifter ändras
               inte.
             </p>
+            <PositionPrototype
+              key={object.id}
+              id={object.id}
+              name={object.name}
+              disabled={movementDisabled}
+            />
             <div className="map-navigation-grid">
               {directions.map(([label, icon, axis, step]) => (
                 <button
