@@ -3,6 +3,7 @@ import { createContext, useContext, useId, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { Position } from '../shared/personal-view.js';
 import type { usePersonalView } from './use-personal-view.js';
+import { WorkspaceIcon } from './WorkspaceTools.js';
 import './position.prototype.css';
 
 type Personal = ReturnType<typeof usePersonalView>;
@@ -13,6 +14,18 @@ const axes = [
   ['y', 'Höjd (Y)'],
   ['z', 'Djup (Z)'],
 ] as const;
+const coordinateFormat = new Intl.NumberFormat('en-US', {
+  useGrouping: false,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+function roundedCoordinate(value: number) {
+  const rounded = Number(coordinateFormat.format(value));
+  return rounded === 0 ? 0 : rounded;
+}
+function coordinateText(value: number) {
+  return coordinateFormat.format(roundedCoordinate(value));
+}
 function number(value: number) {
   return value.toLocaleString('sv-SE', { maximumFractionDigits: 2, signDisplay: 'exceptZero' });
 }
@@ -78,35 +91,49 @@ export function PositionPrototype({
 }) {
   const context = useContext(PositionPrototypeContext);
   const heading = useId();
+  const [helpOpen, setHelpOpen] = useState(false);
   if (!context) return null;
   const position = context.personal.view?.positions.find((item) => item.id === id);
   return (
     <section className="position-prototype" aria-labelledby={heading}>
-      <h4 id={heading}>Ange position</h4>
+      <div className="position-prototype-heading">
+        <h4 id={heading}>Ange position</h4>
+        <button
+          type="button"
+          className="position-prototype-info"
+          aria-label="Om koordinaterna"
+          title="Om koordinaterna"
+          aria-expanded={helpOpen}
+          aria-controls={`${heading}-help`}
+          onClick={() => setHelpOpen(!helpOpen)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape' && helpOpen) {
+              event.preventDefault();
+              event.stopPropagation();
+              setHelpOpen(false);
+            }
+          }}
+        >
+          <WorkspaceIcon name="info" />
+        </button>
+      </div>
+      <div id={`${heading}-help`} className="position-prototype-help" hidden={!helpOpen}>
+        <p>
+          X är sidled, Y är höjd och Z är djup i kartans fasta axlar. Värdena är inte verkliga mått.
+        </p>
+        <p>Värden mellan −10 000 och +10 000. Nya värden avrundas till två decimaler.</p>
+      </div>
       {!position ? (
         <p>Ingen position finns att visa för detta objekt.</p>
       ) : (
-        <>
-          <fieldset disabled={disabled} className="position-prototype-fields">
-            <legend className="visually-hidden">Koordinater för {name}</legend>
-            <CoordinateEntry
-              key={id}
-              position={position}
-              onMove={(next) => void context.personal.move(id, next)}
-            />
-          </fieldset>
-          <details className="position-prototype-help">
-            <summary>Om koordinaterna</summary>
-            <p>
-              X är sidled, Y är höjd och Z är djup i kartans fasta axlar. Nollpunkten ligger kvar
-              när du roterar vyn. Värdena är inte verkliga mått.
-            </p>
-            <p className="position-prototype-summary" data-position-object={id}>
-              Aktuell position (avrundad): {describe(position)}
-            </p>
-            <p>Värden mellan −10 000 och +10 000. Prototypens ändringar sparas inte.</p>
-          </details>
-        </>
+        <fieldset disabled={disabled} className="position-prototype-fields">
+          <legend className="visually-hidden">Koordinater för {name}</legend>
+          <CoordinateEntry
+            key={id}
+            position={position}
+            onMove={(next) => void context.personal.move(id, next)}
+          />
+        </fieldset>
       )}
     </section>
   );
@@ -120,7 +147,7 @@ function CoordinateEntry({ position, onMove }: EditorProps) {
   const values = Object.fromEntries(
     axes.map(([axis]) => [
       axis,
-      edits[axis]?.position === position[axis] ? edits[axis].text : String(position[axis]),
+      edits[axis]?.position === position[axis] ? edits[axis].text : coordinateText(position[axis]),
     ]),
   ) as Record<keyof Position, string>;
   return (
@@ -140,12 +167,20 @@ function CoordinateEntry({ position, onMove }: EditorProps) {
                 const input = event.currentTarget;
                 const value = input.valueAsNumber;
                 const valid = input.value !== '' && input.validity.valid && Number.isFinite(value);
+                const rounded = valid ? roundedCoordinate(value) : position[axis];
+                // Keep partial typing (for example "1.") usable. Excess decimals
+                // normalize immediately; leaving the field pads to two decimals.
+                const text =
+                  valid && (value !== rounded || /\.\d{3,}|[eE]/.test(input.value))
+                    ? coordinateText(rounded)
+                    : input.value;
                 setEdits((previous) => ({
                   ...previous,
-                  [axis]: { text: input.value, position: valid ? value : position[axis] },
+                  [axis]: { text, position: rounded },
                 }));
-                if (valid && value !== position[axis]) onMove({ ...position, [axis]: value });
+                if (valid && rounded !== position[axis]) onMove({ ...position, [axis]: rounded });
               }}
+              onBlur={() => setEdits((previous) => ({ ...previous, [axis]: undefined }))}
             />
           </label>
         ))}

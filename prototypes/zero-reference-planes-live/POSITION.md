@@ -20,8 +20,11 @@ its query is lost. If a stale browser binding prevents sign-in, use
 Select an object and open **Navigera**. X, Y and Z appear in one row above
 the object's movement buttons. Each valid edit moves that axis immediately;
 there is no apply button and no need to leave the field. The existing
-movement buttons remain available. **Om koordinaterna**
-explains the fixed axes and the distinction from physical measurements.
+movement buttons remain available. The small info button to the right of
+**Ange position** opens **Om koordinaterna**. It explains the axes, value
+bounds and rounding, without camera-rotation text or a duplicate position
+readout. The button works with keyboard and touch; Escape closes its help
+while focus remains on the button.
 
 To select without visual map navigation, open **Tabell**, select an object
 by its name, then return through **Karta** and open **Navigera**. Object
@@ -49,9 +52,16 @@ position. An invalid X field does not block valid Y or Z edits. Typing a
 multi-digit value can therefore move through several valid intermediate
 positions. Existing movement buttons refresh the affected coordinate field.
 
-Fields show coordinate values; the optional summary rounds to two decimals.
-Exact near-zero descriptions, final movement announcements, automatic-layout
-coordinates and relationship position descriptions remain open design work.
+Fields display two decimal places. Each valid input moves its axis to the
+value rounded to two decimals immediately. Halfway values round away from
+zero, and negative zero displays as 0.00. Extra decimals normalize as soon as
+they are entered. Short intermediate forms such as `2.` remain editable;
+leaving the field pads the value to two decimal places. Invalid unfinished
+input returns to the last valid position on blur. Formatting existing
+positions does not itself change their map coordinates.
+
+Final movement announcements, automatic-layout coordinates and relationship
+position descriptions remain open design work.
 Objects without seeded personal coordinates show an unavailable message.
 The synthetic household provides coordinates for all nine objects.
 
@@ -62,8 +72,10 @@ This prototype does not implement that automatic-visibility behavior.
 
 ## Evidence
 
-The `evidence-position/navigation-immediate.png` image shows the current
-coordinate row without an apply button. Other Navigation images document
+The `evidence-position/navigation-precision.png` image shows the current
+coordinate row with two-decimal values and its info icon. The
+`navigation-precision-help.png` image shows the explanation. The
+`navigation-immediate.png` image shows the preceding immediate-edit layout. Other Navigation images document
 the preceding apply-button experiment; A/B/C images document the separate
 object-details experiment. They are historical evidence.
 
@@ -73,6 +85,11 @@ focus, unchanged X during empty input, a lone minus sign and out-of-range
 then changes X to -1.5 and refreshes its field. The server still retains the
 seeded (10, -8, 0), version 1. The preceding layout review covers the row in
 normal/mini Navigation and at 320 pixels without document-level overflow.
+
+Precision review checks initial values 10.00/-8.00/0.00, pasted values
+1.005 → 1.01 and -1.005 → -1.01, near-zero input -0.001 → 0.00, and typing
+2.345 one character at a time → 2.35. The info button opens the explanation,
+and Escape closes it without closing Navigation or moving focus.
 
 Typecheck, lint and documentation checks accompany this change. No test
 suite or billable provider call runs. Actual screen-reader output, complete
