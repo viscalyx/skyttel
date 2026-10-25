@@ -17,6 +17,10 @@
   gap: 6px;
   margin-bottom: 8px;
 }
+.map-navigation[data-mini="true"] .position-prototype-heading,
+.map-navigation[data-mini="true"] .position-prototype-help {
+  display: none;
+}
 .map-navigation .position-prototype-fields {
   border: 0;
   padding: 0;

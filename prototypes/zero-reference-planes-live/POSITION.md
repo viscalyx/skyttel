@@ -30,7 +30,10 @@ To select without visual map navigation, open **Tabell**, select an object
 by its name, then return through **Karta** and open **Navigera**. Object
 details have their ordinary contents, with no added position controls.
 
-Both Navigation modes retain the coordinate row. In mini mode the fields
+Both Navigation modes retain the coordinate row. Mini mode hides the
+**Ange position** heading, info button and explanation. Normal mode shows
+the heading and info button again, preserving the help's expanded state.
+In mini mode the fields
 are narrow; long values scroll within an input. Try keyboard editing and a
 small viewport when reviewing this layout. Focus stays in the edited field.
 
