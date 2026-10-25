@@ -1528,7 +1528,11 @@ export function SpatialMap({
         onPointerMoveCapture={movement.move}
         onPointerUpCapture={movement.end}
         onPointerCancelCapture={movement.interrupt}
-        onLostPointerCapture={movement.lostCapture}
+        onLostPointerCapture={(event) => {
+          // An object's implicit touch capture is lost when the surface takes
+          // over its drag. That bubbled event does not end the active gesture.
+          if (!event.currentTarget.hasPointerCapture(event.pointerId)) movement.lostCapture(event);
+        }}
         onClickCapture={(event) => {
           if (movement.suppressClick()) {
             event.preventDefault();
