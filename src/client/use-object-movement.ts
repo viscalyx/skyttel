@@ -48,6 +48,25 @@ export function useObjectMovement(
     source: 'drag' | 'buttons';
   } | null>(null);
   const [heightActive, setHeightActive] = useState(false);
+  const [announcement, setAnnouncement] = useState<{
+    id: string;
+    position: Position;
+    axes: (keyof Position)[];
+  } | null>(null);
+  const announcementTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const clearAnnouncement = useCallback(() => {
+    clearTimeout(announcementTimer.current);
+    setAnnouncement(null);
+  }, []);
+  useEffect(() => () => clearTimeout(announcementTimer.current), []);
+  function announce(id: string, start: Position, end: Position) {
+    const axes = (['x', 'y', 'z'] as const).filter((axis) => start[axis] !== end[axis]);
+    if (!axes.length) return;
+    clearAnnouncement();
+    announcementTimer.current = setTimeout(() => {
+      setAnnouncement({ id, position: end, axes });
+    }, 500);
+  }
   const movingObjectId = useCallback(
     () => (gesture.current?.moved ? gesture.current.id : undefined),
     [],
@@ -63,8 +82,9 @@ export function useObjectMovement(
     touches.current.clear();
     waiting.current = false;
     setHeightActive(false);
+    clearAnnouncement();
     cancelHold();
-  }, [scene, cancelHold]);
+  }, [scene, cancelHold, clearAnnouncement]);
   useEffect(() => {
     if (!active || !enabled) cancel();
     window.addEventListener('blur', cancel);
@@ -86,9 +106,11 @@ export function useObjectMovement(
   return {
     guide,
     heightActive,
+    announcement,
     movingObjectId,
     cancel,
     recordMove(id: string, start: Position, end: Position, height: boolean) {
+      announce(id, start, end);
       setGuide((previous) =>
         height
           ? {
@@ -165,6 +187,7 @@ export function useObjectMovement(
           suppressed.current = true;
           setGuide(null);
           setHeightActive(false);
+          clearAnnouncement();
           scene.current?.beginCameraGesture(touches.current);
         }
         return;
@@ -187,7 +210,9 @@ export function useObjectMovement(
         height,
       );
       if (position) {
+        const previous = scene.current?.position(current.id);
         const end = scene.current?.place(current.id, position) ?? position;
+        if (previous) announce(current.id, previous, end);
         setGuide(height ? { id: current.id, start: current.segment, end, source: 'drag' } : null);
         setHeightActive(height);
       }
