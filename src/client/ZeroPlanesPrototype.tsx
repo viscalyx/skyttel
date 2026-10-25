@@ -16,7 +16,7 @@ export function ZeroPlanesPrototypeControls({
 }) {
   return (
     <details className="zero-planes-prototype" open>
-      <summary>Prototyp · tre nollplan</summary>
+      <summary>Prototyp · nollreferenser</summary>
       <div className="zero-planes-prototype-choices">
         <label>
           Form
@@ -29,6 +29,7 @@ export function ZeroPlanesPrototypeControls({
             <option value="square">Kvadrat</option>
             <option value="oval">Oval</option>
             <option value="circle">Cirkel</option>
+            <option value="lines">Linjer</option>
           </select>
         </label>
         <label>
@@ -46,17 +47,24 @@ export function ZeroPlanesPrototypeControls({
         </label>
       </div>
       <p role="status">
-        {{ square: 'Kvadrat', oval: 'Oval', circle: 'Cirkel' }[value.shape]} ·{' '}
+        {{ square: 'Kvadrat', oval: 'Oval', circle: 'Cirkel', lines: 'Linjer' }[value.shape]} ·{' '}
         {{ subtle: 'Diskret', original: 'Ursprunglig', prominent: 'Framträdande' }[value.weight]} ·
-        alla tre plan
+        {value.shape === 'lines' ? 'tre axlar, sex riktningar' : 'alla tre plan'}
       </p>
-      <p>XZ: heldragen · YZ: streckad · XY: prickad.</p>
+      <p>
+        {value.shape === 'lines'
+          ? 'X: bredd · Y: höjd · Z: djup. Inga planytor eller rutnät.'
+          : 'XZ: heldragen · YZ: streckad · XY: prickad.'}
+      </p>
       <p>
         Provisorisk utbredning:{' '}
         {
-          { square: '±27 × ±27 vysteg', oval: '±27 × ±18,9 vysteg', circle: 'radie 27 vysteg' }[
-            value.shape
-          ]
+          {
+            square: '±27 × ±27 vysteg',
+            oval: '±27 × ±18,9 vysteg',
+            circle: 'radie 27 vysteg',
+            lines: '±27 vysteg längs varje axel',
+          }[value.shape]
         }
         . Fast centrum (0, 0, 0); följer inte kameran. Valen sparas inte.
       </p>
@@ -85,22 +93,45 @@ export function ZeroPlanesPrototypeLabels({
       paintOrder="stroke"
       strokeLinejoin="round"
     >
-      {prototypePlanes.map((plane, index) => {
-        const position = project(
-          prototypePlanePoint(
-            index,
-            extent * 0.76,
-            (value.shape === 'oval' ? 0.25 : 0.62) * extent,
-          ),
-        );
-        return (
-          position?.visible && (
-            <text key={plane.name} x={position.x} y={position.y} fill={plane[theme]}>
-              {plane.name}
-            </text>
+      {value.shape === 'lines'
+        ? ['X', 'Y', 'Z'].flatMap((name, index) =>
+            [-1, 1].map((sign) => {
+              const point = project({
+                x: index === 0 ? sign * extent * 0.92 : 0,
+                y: index === 1 ? sign * extent * 0.92 : 0,
+                z: index === 2 ? sign * extent * 0.92 : 0,
+              });
+              return (
+                point?.visible && (
+                  <text
+                    key={`${name}${sign}`}
+                    x={point.x + 6}
+                    y={point.y - 6}
+                    fill={theme === 'dark' ? '#c3d4df' : '#405664'}
+                  >
+                    {sign < 0 ? '−' : '+'}
+                    {name}
+                  </text>
+                )
+              );
+            }),
           )
-        );
-      })}
+        : prototypePlanes.map((plane, index) => {
+            const position = project(
+              prototypePlanePoint(
+                index,
+                extent * 0.76,
+                (value.shape === 'oval' ? 0.25 : 0.62) * extent,
+              ),
+            );
+            return (
+              position?.visible && (
+                <text key={plane.name} x={position.x} y={position.y} fill={plane[theme]}>
+                  {plane.name}
+                </text>
+              )
+            );
+          })}
       {origin?.visible && (
         <g fill={theme === 'dark' ? '#f0f6fa' : '#183344'}>
           <circle cx={origin.x} cy={origin.y} r="3" />

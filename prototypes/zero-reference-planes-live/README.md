@@ -44,11 +44,15 @@ The comparison is disabled in production builds.
 
 The bottom panel has independent native selects:
 
-- Shape: square, oval or circle. Square is a provisional starting shape.
+- Shape: square, oval, circle or lines. Square is a provisional starting shape.
 - Weight: subtle, original or prominent. Subtle is the starting weight.
 
-All nine combinations retain three mutually perpendicular planes centered at
-the shared coordinate origin. Switching either select preserves the camera,
+The three patch shapes retain three mutually perpendicular planes centered
+at the shared coordinate origin. The additional lines variant shows only
+the X, Y and Z axes through that origin, extending in both directions.
+It has no plane fills, boundaries or grids; six signed axis labels identify
+the directions. All four variants support the three visual weights.
+Switching either select preserves the camera,
 objects and relationships. Collapse the panel to see content beneath it.
 Tab and the native select keys operate the controls; there are no global
 arrow-key overrides to compete with navigation. Reopening a settings page
@@ -78,6 +82,10 @@ vertically to compare the independent local movement guide.
   oval's major radius. Each circle belongs to its world-coordinate plane;
   camera perspective can make it appear elliptical on screen. The radius is
   a trial comparison size, not an accepted final extent.
+- The lines variant spans −27 to +27 on each axis. It is an explicitly
+  requested comparison, not a decision to replace the three-plane design.
+  It reduces visual coverage but also removes the plane surfaces and
+  boundaries that help compare positions against each zero plane.
 - Plane geometry clips normally at the camera/viewport boundary. There is
   no camera-following extent, edge indicator or adaptive plane hiding.
 - Household glyphs and connections render above the translucent planes in
@@ -102,9 +110,10 @@ vertically to compare the independent local movement guide.
 The committed screenshot sets show the initial square half-extents 18 and
 oval semiaxes 18 and 12.6.
 They remain baseline evidence; use the running prototype to review the
-enlarged squares and ovals and the additional circle variant. Rerunning the
-capture commands replaces those screenshots with the current dimensions and adds
-circle captures for each visual weight in both themes.
+enlarged squares and ovals and the additional circle and lines variants.
+Rerunning the capture commands replaces those screenshots with the current
+dimensions and adds
+circle and lines captures for each visual weight in both themes.
 
 The capture command uses an isolated Chromium context and synthetic identity:
 

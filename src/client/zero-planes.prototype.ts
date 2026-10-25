@@ -1,4 +1,4 @@
-// Throwaway comparison: three full world-coordinate planes, three patch shapes,
+// Throwaway comparison: three full world-coordinate planes or just their axes,
 // three weights. Extent, oval aspect ratio and clipping are provisional.
 import {
   BufferGeometry,
@@ -15,7 +15,7 @@ import {
 } from 'three';
 
 export type PlaneComparison = {
-  shape: 'square' | 'oval' | 'circle';
+  shape: 'square' | 'oval' | 'circle' | 'lines';
   weight: 'subtle' | 'original' | 'prominent';
 };
 export const prototypePlaneExtent = 27;
@@ -45,6 +45,7 @@ export function zeroPlanesPrototype(value: PlaneComparison, theme: 'light' | 'da
   }[value.weight];
 
   prototypePlanes.forEach((plane, index) => {
+    if (value.shape === 'lines') return;
     const patch = new Group();
     // Geometry starts in XY; rotate it into XZ, YZ or leave it in XY.
     if (index === 0) patch.rotation.x = Math.PI / 2;
@@ -108,7 +109,7 @@ export function zeroPlanesPrototype(value: PlaneComparison, theme: 'light' | 'da
     group.add(patch);
   });
 
-  // Common axes only span the region shared by the relevant patches.
+  // Common axes, or the entire reference in the user-requested lines variant.
   for (const axis of [new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1)]) {
     const geometry = new BufferGeometry().setFromPoints([
       axis.clone().multiplyScalar(-minor),
