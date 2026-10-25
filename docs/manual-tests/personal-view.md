@@ -918,6 +918,18 @@ sparning utan att avbryta pågående läsning.
 **Kräver mänsklig observation:** NVDA eller VoiceOver läser bekräftelsen en gång
 per personlig sparning utan att avbryta pågående läsning.
 
+**Separat förberedelse inför steg 4:**
+
+Gör detta efter steg 3, när återhämtningen är klar och inget formulär har
+oskickade ändringar:
+
+1. Öppna **Din profil** i kartans verktyg och välj **Kakor och lagring**.
+   Vänta tills sidan med samma rubrik visas.
+2. Välj sidans **Tillbaka till kartan**. Hushållet är nu den senaste posten
+   i samma fliks navigeringshistorik, med **Kakor och lagring** precis före.
+   Öppna inga andra sidor och ladda inte om fliken före steg 4. Webbläsarens
+   Bakåt ska begära återgång till den förberedda sidan utanför hushållet.
+
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
@@ -959,12 +971,15 @@ per personlig sparning utan att avbryta pågående läsning.
    är sparat, återhämtningsknapparnas namn och resultatet efter varje val.
    Byt urval och stäng Navigera innan återhämtningen. Flyttbesked och
    sparresultat ska kunna skiljas åt.
-4. Förbered ett nytt placeringsfel enligt PLACERING-17. Öppna även ett
-   objektformulär och skriv en oskickad ändring. Försök logga ut. Bekräfta
+4. Utför förberedelsen ovan. Förbered sedan ett nytt placeringsfel enligt
+   PLACERING-17. Öppna ett objektformulär och skriv en oskickad ändring.
+   Använd webbläsarens **Bakåt** medan formuläret är öppet. Bekräfta
    formulärfrågan men välj **Stanna kvar** i **Lämna osparade positioner?**.
-   Både formulärtext och den osparade positionen finns kvar. Prova igen och
-   bekräfta båda frågorna. Kontrollera uppläsning, fokus och att utloggningen
-   slutförs först efter båda besluten.
+   Formulärtexten och den osparade positionen finns kvar i hushållet, med
+   användbart fokus i objektformuläret. Använd **Bakåt** igen och bekräfta
+   båda frågorna. **Kakor och lagring** öppnas först efter båda besluten.
+   Kontrollera uppläsning och fokus genom hela förloppet. Ta bort
+   nätverksblockeringen efter provet.
 
 **Förväntat resultat:**
 
