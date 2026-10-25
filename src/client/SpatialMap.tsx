@@ -418,10 +418,20 @@ export function SpatialMap({
   useEffect(() => {
     // The first scene update frames the layout, including saved personal positions.
     if (!activated || !personalReady) return;
-    scene.current?.update([...objects.keys()], personal?.view?.positions, [
-      ...relationships.values(),
-    ]);
-  }, [objects, relationships, activated, personal?.view?.positions, personalReady]);
+    scene.current?.update(
+      [...objects.keys()],
+      personal?.view?.positions,
+      [...relationships.values()],
+      movement.movingObjectId(),
+    );
+  }, [
+    objects,
+    relationships,
+    activated,
+    personal?.view?.positions,
+    personalReady,
+    movement.movingObjectId,
+  ]);
   useEffect(() => {
     if (!activated) return;
     scene.current?.select(selectedIds);

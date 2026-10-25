@@ -34,13 +34,17 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     current.current = next;
     setView(next);
   }, []);
-  function invalidate(message: string) {
-    generation.current++;
+  const reset = useCallback(() => {
     localPositions.current.clear();
     positionSaves.current.clear();
     settingsSaving.current = false;
+    settingsFailure.current = false;
     publish(null);
     setPending(false);
+  }, [publish]);
+  function invalidate(message: string) {
+    generation.current++;
+    reset();
     setMessage(message);
   }
   function mergeLocal(latest: PersonalView) {
@@ -63,27 +67,18 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     (error: unknown) => {
       if (!alive.current) return;
       if (error instanceof MapRequestError && [401, 403].includes(error.status)) {
-        localPositions.current.clear();
-        positionSaves.current.clear();
-        settingsSaving.current = false;
-        setPending(false);
-        publish(null);
         generation.current++;
+        reset();
         onAccessLost();
       } else
         setMessage('Din vy kunde inte sparas. Läs in aktuella placeringar innan du fortsätter.');
     },
-    [onAccessLost, publish, setMessage],
+    [onAccessLost, reset, setMessage],
   );
   useEffect(() => {
     alive.current = true;
     const session = ++generation.current;
-    localPositions.current.clear();
-    positionSaves.current.clear();
-    settingsSaving.current = false;
-    settingsFailure.current = false;
-    publish(null);
-    setPending(false);
+    reset();
     setMessage('');
     const abort = new AbortController();
     void request<PersonalView>(`${path}/view`, undefined, abort.signal)
@@ -99,7 +94,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
       abort.abort();
       clearTimeout(noticeTimer.current);
     };
-  }, [path, report, publish, setMessage]);
+  }, [path, report, publish, reset, setMessage]);
   async function refresh() {
     const session = generation.current;
     try {

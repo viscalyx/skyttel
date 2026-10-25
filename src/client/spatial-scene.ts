@@ -276,6 +276,7 @@ export function spatialScene(
       ids: string[],
       saved: PersonalPosition[] = [],
       relationships: { sourceId: string; targetId: string }[] = [],
+      movingObjectId?: string,
     ) {
       projectionRevision++;
       const first = locations.size === 0;
@@ -292,15 +293,22 @@ export function spatialScene(
       }
       // Saved personal placements are anchors, including when a related object
       // is currently filtered out. Existing locations never enter the layout.
-      // A save confirmation can arrive during another drag. Only changed
-      // coordinates replace scene positions; version-only replies leave that
-      // gesture and unrelated objects in place.
+      // A conflict refresh can change other objects' saved coordinates during
+      // a drag. Keep that gesture local until release, and keep its previous
+      // cache entry so a later refresh can still apply after cancellation.
       const nextPersonal = new Map(saved.map((position) => [position.id, position]));
+      if (movingObjectId) {
+        const previous = personalPositions.get(movingObjectId);
+        if (previous) nextPersonal.set(movingObjectId, previous);
+        else nextPersonal.delete(movingObjectId);
+      }
       for (const id of personalPositions.keys()) {
         const fallback = defaults.get(id);
-        if (!nextPersonal.has(id) && fallback) locations.set(id, fallback.clone());
+        if (id !== movingObjectId && !nextPersonal.has(id) && fallback)
+          locations.set(id, fallback.clone());
       }
       for (const position of saved) {
+        if (position.id === movingObjectId) continue;
         const previous = personalPositions.get(position.id);
         if (
           previous &&
