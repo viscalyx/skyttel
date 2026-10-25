@@ -26,9 +26,6 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
-.position-prototype-entry > button {
-  margin-top: 10px;
-}
 .position-prototype-help summary {
   min-height: 44px;
   align-content: center;

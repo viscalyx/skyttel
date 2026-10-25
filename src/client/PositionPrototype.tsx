@@ -114,16 +114,15 @@ export function PositionPrototype({
 type EditorProps = { position: Position; onMove: (position: Position) => void };
 
 function CoordinateEntry({ position, onMove }: EditorProps) {
-  const [edits, setEdits] = useState<Partial<Record<keyof Position, string>>>({});
+  const [edits, setEdits] = useState<
+    Partial<Record<keyof Position, { text: string; position: number }>>
+  >({});
   const values = Object.fromEntries(
-    axes.map(([axis]) => [axis, edits[axis] ?? String(position[axis])]),
+    axes.map(([axis]) => [
+      axis,
+      edits[axis]?.position === position[axis] ? edits[axis].text : String(position[axis]),
+    ]),
   ) as Record<keyof Position, string>;
-  const valid = axes.every(
-    ([axis]) =>
-      values[axis].trim() !== '' &&
-      Number.isFinite(Number(values[axis])) &&
-      Math.abs(Number(values[axis])) <= 10000,
-  );
   return (
     <div className="position-prototype-entry">
       <div className="position-prototype-inputs">
@@ -137,23 +136,20 @@ function CoordinateEntry({ position, onMove }: EditorProps) {
               min="-10000"
               max="10000"
               value={values[axis]}
-              onChange={(event) =>
-                setEdits((previous) => ({ ...previous, [axis]: event.target.value }))
-              }
+              onChange={(event) => {
+                const input = event.currentTarget;
+                const value = input.valueAsNumber;
+                const valid = input.value !== '' && input.validity.valid && Number.isFinite(value);
+                setEdits((previous) => ({
+                  ...previous,
+                  [axis]: { text: input.value, position: valid ? value : position[axis] },
+                }));
+                if (valid && value !== position[axis]) onMove({ ...position, [axis]: value });
+              }}
             />
           </label>
         ))}
       </div>
-      <button
-        type="button"
-        disabled={!valid}
-        onClick={() => {
-          onMove({ x: Number(values.x), y: Number(values.y), z: Number(values.z) });
-          setEdits({});
-        }}
-      >
-        Flytta till position
-      </button>
     </div>
   );
 }
