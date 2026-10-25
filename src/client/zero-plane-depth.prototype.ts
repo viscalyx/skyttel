@@ -84,13 +84,12 @@ export function projectDepthPatches(
   });
 }
 
-export function depthTintImage(
+export function depthTintRegions(
   patches: DepthPatch[],
   bounds: DepthBounds,
   reciprocalDepth: (point: { x: number; y: number }) => number,
-  opacity: number,
 ) {
-  const paths = patches.flatMap((patch) => {
+  return patches.flatMap((patch) => {
     let polygon = clip(patch.polygon, (p) => p.z - reciprocalDepth(p) - 1e-7);
     polygon = clip(polygon, (p) => p.x - bounds.x);
     polygon = clip(polygon, (p) => bounds.x + bounds.width - p.x);
@@ -98,10 +97,11 @@ export function depthTintImage(
     polygon = clip(polygon, (p) => bounds.y + bounds.height - p.y);
     if (polygon.length < 3) return [];
     return [
-      `<polygon points="${polygon.map((p) => `${p.x},${p.y}`).join(' ')}" fill="${patch.color}" fill-opacity="${opacity}"/>`,
+      {
+        name: patch.name,
+        color: patch.color,
+        path: `${polygon.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')} Z`,
+      },
     ];
   });
-  if (!paths.length) return undefined;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}">${paths.join('')}</svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }

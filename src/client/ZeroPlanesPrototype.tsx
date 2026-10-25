@@ -57,18 +57,39 @@ export function ZeroPlanesPrototypeControls({
           >
             <option value="overlay">A · Alltid framför</option>
             <option value="tint">B · Ton bakom plan</option>
+            <option value="strong">C · Stark ton bakom plan</option>
           </select>
         </label>
       </div>
+      {value.depth === 'strong' && (
+        <label>
+          Tonstyrka: {Math.round((value.depthStrength ?? 0.6) * 100)} %
+          <input
+            type="range"
+            aria-label="Tonstyrka"
+            min="0"
+            max="0.85"
+            step="0.05"
+            value={value.depthStrength ?? 0.6}
+            onChange={(event) => onChange({ ...value, depthStrength: Number(event.target.value) })}
+          />
+        </label>
+      )}
       <p role="status">
         {{ square: 'Kvadrat', oval: 'Oval', circle: 'Cirkel', lines: 'Linjer' }[value.shape]} ·{' '}
         {{ subtle: 'Diskret', original: 'Ursprunglig', prominent: 'Framträdande' }[value.weight]} ·
         {value.shape === 'lines' ? 'tre axlar, sex riktningar' : 'alla tre plan'} ·{' '}
-        {value.depth === 'tint' ? 'B · Ton bakom plan' : 'A · Alltid framför'}
+        {
+          {
+            overlay: 'A · Alltid framför',
+            tint: 'B · Ton bakom plan',
+            strong: 'C · Stark ton bakom plan',
+          }[value.depth ?? 'overlay']
+        }
       </p>
       <p>
-        B färgar de delar av objektsymboler och samband som ligger bakom en planyta. Namn och texter
-        påverkas inte. Linjer saknar planytor och får ingen ton.
+        B och C färgar de delar av objektsymboler och samband som ligger bakom en planyta. Namn och
+        texter påverkas inte. Linjer saknar planytor och får ingen ton.
       </p>
       <p>
         {value.shape === 'lines'

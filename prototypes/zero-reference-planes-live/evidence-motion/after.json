@@ -1,0 +1,30 @@
+{
+  "results": [
+    {
+      "mode": "overlay",
+      "frames": 62,
+      "medianMs": 33.30000000000018,
+      "p95Ms": 83.30000000000018,
+      "over50ms": 14,
+      "maxMs": 83.40000000000009
+    },
+    {
+      "mode": "tint",
+      "frames": 58,
+      "medianMs": 33.399999999999636,
+      "p95Ms": 100,
+      "over50ms": 11,
+      "maxMs": 100.09999999999991
+    },
+    {
+      "mode": "strong",
+      "frames": 57,
+      "medianMs": 33.40000000000009,
+      "p95Ms": 100,
+      "over50ms": 10,
+      "maxMs": 100.10000000000036
+    }
+  ],
+  "errors": [],
+  "note": "Headless Chromium on nine synthetic objects. Frame timings depend on the host; human review is still needed."
+}

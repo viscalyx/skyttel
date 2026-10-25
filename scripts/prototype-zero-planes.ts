@@ -51,7 +51,7 @@ for (let index = 0; index < count; index++) {
 }
 await client.dispose();
 console.log(
-  `\nPlane comparison (${count} objects): ${app.origin}/households/${household.id}?prototype-planes&plane-depth=tint`,
+  `\nPlane comparison (${count} objects): ${app.origin}/households/${household.id}?prototype-planes&plane-depth=strong`,
 );
 console.log('Use the Google sign-in buttons: this launcher substitutes a synthetic identity.');
 console.log('After sign-in, reopen the comparison URL above if the query is lost.');

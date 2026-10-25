@@ -47,9 +47,11 @@ The bottom panel has independent native selects:
 
 - Shape: square, oval, circle or lines. Circle is the starting shape.
 - Weight: subtle, original or prominent. Subtle is the starting weight.
-- Depth: A keeps content above planes; B tints parts behind plane surfaces.
-  The printed URL starts with B. The `plane-depth=overlay` and
-  `plane-depth=tint` query values select the comparison on reload.
+- Depth: A keeps content above planes; B adds the initial tint; C adds a
+  stronger tint. The printed URL starts with C. Use `plane-depth=overlay`,
+  `plane-depth=tint` or `plane-depth=strong` to choose on reload.
+- In C, **Tonstyrka** adjusts the tint from 0% to 85%, initially 60% per
+  covering plane. This trial strength is independent of visual weight.
 
 The three patch shapes retain three mutually perpendicular planes centered
 at the shared coordinate origin. The additional lines variant shows only
@@ -66,27 +68,30 @@ reopen the original comparison URL if navigation removes its query.
 ## Review depth
 
 The prototype panel includes X, Y and Z sliders for the synthetic
-**Provobjekt 00**. Move it through zero on each axis, then compare A and B
+**Provobjekt 00**. Move it through zero on each axis, then compare A, B and C
 without moving the camera. The sliders change only the current display;
 reload to restore the sample positions. Ordinary map drag actions still
 use the application's personal-view behavior in the disposable database.
 
-In B, only the parts of object symbols and connections behind a finite
+In B and C, only the parts of object symbols and connections behind a finite
 plane patch receive its color. Text labels, focus outlines and proposal
 badges remain readable. A circle or oval does not tint content beyond its
 boundary. The Lines variant has no surfaces and therefore adds no tint.
 Rotate the camera to compare the opposite side and zoom close to the planes.
 
-The tint uses trial opacity values of 18%, 26% and 34% per covering plane
+In B, tint uses trial opacity values of 18%, 26% and 34% per covering plane
 for Subtle, Original and Prominent. These are stronger than the surface
 fills to make the comparison visible on symbols. Multiple tints combine.
-They are experiment values, not accepted final styling. This cue depends
+Live review finds B too weak to make the depth clear. C starts at 60% so
+the effect can be judged and adjusted. Strong overlapping tints can make
+symbols harder to read; text labels remain clear. These are experiment
+values, not accepted final styling. This cue depends
 on color and does not establish an accessible equivalent or exact signed
 coordinates. Plane grids and borders do not yet overlay content.
 
 The experiment clips patches at the camera and uses camera depth for
 symbols and straight connections. Tint on curved, removed connections uses
-an approximation; exact treatment of those curves and arrowheads needs
+an approximation; exact treatment of those curves needs
 further work if this rendering is selected. No production decision follows
 from running the comparison.
 
@@ -96,12 +101,33 @@ Capture the focused comparison in an isolated browser:
 npm run prototype:planes -- --capture-depth
 ```
 
-The `evidence-depth` directory contains A/B pairs in both themes, all shapes,
+The `evidence-depth` directory preserves the initial A/B comparison.
+The `evidence-depth-strong` directory contains A/B/C in both themes, all shapes,
 movement through each coordinate plane, camera movement and small-screen
 controls. Its report records browser errors and whether the comparison and
 probe sliders leave saved household and personal-view data unchanged.
 The optional zoom-size setting and label collision policy are design
 requirements; this depth experiment does not implement them.
+
+## Camera performance
+
+Tint uses ordinary vector overlays and clipping. It does not generate or
+decode new image filters during camera movement. Connection tint covers the
+line and arrowhead; the existing selection surround remains unchanged.
+
+For browser profiling against an already-running disposable prototype:
+
+```sh
+npm exec -- tsx scripts/measure-zero-plane-depth.prototype.ts '<printed URL>'
+```
+
+The profiler uses its own browser session and moves only its camera.
+`evidence-motion/before.json` and `after.json` contain frame timings for the
+same pan gesture on nine synthetic objects in headless Chromium. Median
+frame time for B changes from about 50 ms to 33 ms, close to A's 33 ms.
+Long frames remain in all variants; these host-dependent measurements do
+not establish smooth movement on a user's device. Check rotation and zoom
+in the running app as well.
 
 The XZ boundary is solid, YZ is dashed and XY is dotted. Plane names and
 coordinate equations supplement their different colors. Labels disappear

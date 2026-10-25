@@ -1,0 +1,98 @@
+{
+  "observations": [
+    {
+      "name": "light-overlay",
+      "tintedObjects": 0,
+      "tintedConnections": 0
+    },
+    {
+      "name": "light-tint",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "light-strong",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "dark-overlay",
+      "tintedObjects": 0,
+      "tintedConnections": 0
+    },
+    {
+      "name": "dark-tint",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "dark-strong",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "dark-square-strong",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "dark-oval-strong",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "dark-circle-strong",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "dark-lines-strong",
+      "tintedObjects": 0,
+      "tintedConnections": 0
+    },
+    {
+      "name": "cross-X-minus",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "cross-X-plus",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "cross-Y-minus",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "cross-Y-plus",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "cross-Z-minus",
+      "tintedObjects": 7,
+      "tintedConnections": 7
+    },
+    {
+      "name": "cross-Z-plus",
+      "tintedObjects": 6,
+      "tintedConnections": 7
+    },
+    {
+      "name": "rotated-tint",
+      "tintedObjects": 7,
+      "tintedConnections": 8
+    },
+    {
+      "name": "near-camera-tint",
+      "tintedObjects": 2,
+      "tintedConnections": 8
+    }
+  ],
+  "savedViewUnchanged": true,
+  "savedMapUnchanged": true,
+  "errors": [],
+  "note": "Browser capture only. Depth readability and the tint treatment require live human review."
+}

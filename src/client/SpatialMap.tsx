@@ -29,9 +29,8 @@ import { type ProjectedPoint, spatialScene } from './spatial-scene.js';
 import { useObjectMovement } from './use-object-movement.js';
 import type { usePersonalView } from './use-personal-view.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
-import { ZeroPlanesDepthFilter } from './ZeroPlanesDepthFilter.prototype.js';
 import { ZeroPlanesPrototypeControls, ZeroPlanesPrototypeLabels } from './ZeroPlanesPrototype.js';
-import { depthTintImage } from './zero-plane-depth.prototype.js';
+import { depthTintRegions } from './zero-plane-depth.prototype.js';
 import type { PlaneComparison } from './zero-planes.prototype.js';
 
 type LabelBox = { x: number; y: number; width: number; height: number };
@@ -291,7 +290,9 @@ export function SpatialMap({
           depth:
             new URLSearchParams(window.location.search).get('plane-depth') === 'tint'
               ? 'tint'
-              : 'overlay',
+              : new URLSearchParams(window.location.search).get('plane-depth') === 'strong'
+                ? 'strong'
+                : 'overlay',
         }
       : null,
   );
@@ -718,16 +719,17 @@ export function SpatialMap({
   const surfaceWidth = canvas.current?.clientWidth ?? 0;
   const surfaceHeight = canvas.current?.clientHeight ?? 0;
   const depthPatches =
-    planeComparison?.depth === 'tint'
+    planeComparison && (planeComparison.depth === 'tint' || planeComparison.depth === 'strong')
       ? (scene.current?.prototypeDepthPatches(planeComparison, theme) ?? [])
       : [];
-  const tintOpacity = { subtle: 0.18, original: 0.26, prominent: 0.34 }[
-    planeComparison?.weight ?? 'subtle'
-  ];
+  const tintOpacity =
+    planeComparison?.depth === 'strong'
+      ? (planeComparison.depthStrength ?? 0.6)
+      : { subtle: 0.18, original: 0.26, prominent: 0.34 }[planeComparison?.weight ?? 'subtle'];
   const markerTints = new Map(
     [...locations.values()].flatMap((point) => {
       const radius = 17 * point.scale;
-      const image = depthTintImage(
+      const regions = depthTintRegions(
         depthPatches,
         {
           x: point.x - radius,
@@ -736,9 +738,8 @@ export function SpatialMap({
           height: radius * 2,
         },
         () => 1 / point.depth,
-        tintOpacity,
       );
-      return image ? [[point.id, image] as const] : [];
+      return regions.length ? [[point.id, regions] as const] : [];
     }),
   );
   function labelSize(id: string, fallback: { width: number; height: number }) {
@@ -1458,9 +1459,6 @@ export function SpatialMap({
         />
         <svg className="spatial-lines" aria-hidden="true">
           <defs>
-            {[...markerTints].map(([id, image]) => (
-              <ZeroPlanesDepthFilter key={id} id={`${occlusionPrefix}-tint-${id}`} image={image} />
-            ))}
             {/* WebKit ignores context-stroke, so each kind colours its own arrowhead. */}
             {connectionKinds.map((kind) => (
               <marker
@@ -1672,9 +1670,6 @@ export function SpatialMap({
                     style={
                       {
                         '--symbol-scale': point.scale,
-                        filter: markerTints.has(point.id)
-                          ? `url(#${occlusionPrefix}-tint-${point.id})`
-                          : undefined,
                       } as CSSProperties
                     }
                   >
@@ -1686,6 +1681,24 @@ export function SpatialMap({
                       iconId={object.iconId}
                     />
                   </span>
+                  {markerTints.has(point.id) && (
+                    <svg
+                      className="zero-plane-marker-tint"
+                      aria-hidden="true"
+                      width={34 * point.scale}
+                      height={34 * point.scale}
+                      viewBox={`${point.x - 17 * point.scale} ${point.y - 17 * point.scale} ${34 * point.scale} ${34 * point.scale}`}
+                    >
+                      {markerTints.get(point.id)?.map((region) => (
+                        <path
+                          key={region.name}
+                          d={region.path}
+                          fill={region.color}
+                          fillOpacity={tintOpacity}
+                        />
+                      ))}
+                    </svg>
+                  )}
                   <ProposalSymbol
                     change={state.draft.changes.find((change) => change.id === object.id)}
                   />
@@ -1743,36 +1756,24 @@ export function SpatialMap({
                 Math.max(start.x, tip.x) + 18,
                 Math.max(start.y, tip.y, controlY) + 18,
               );
-              const tint = depthTintImage(
-                depthPatches,
-                tintBounds,
-                (point) => {
-                  const fraction =
-                    bend && tangentX !== 0
-                      ? (point.x - start.x) / tangentX
-                      : ((point.x - start.x) * tangentX + (point.y - start.y) * tangentY) /
-                        (tangentX ** 2 + tangentY ** 2 || 1);
-                  return (
-                    1 / start.depth +
-                    (1 / tip.depth - 1 / start.depth) * Math.max(0, Math.min(1, fraction))
-                  );
-                },
-                tintOpacity,
-              );
+              const tint = depthTintRegions(depthPatches, tintBounds, (point) => {
+                const fraction =
+                  bend && tangentX !== 0
+                    ? (point.x - start.x) / tangentX
+                    : ((point.x - start.x) * tangentX + (point.y - start.y) * tangentY) /
+                      (tangentX ** 2 + tangentY ** 2 || 1);
+                return (
+                  1 / start.depth +
+                  (1 / tip.depth - 1 / start.depth) * Math.max(0, Math.min(1, fraction))
+                );
+              });
+              const arrowTint = depthTintRegions(depthPatches, tintBounds, () => 1 / tip.depth);
+              const unitX = tangentX / tangentLength;
+              const unitY = tangentY / tangentLength;
+              const arrowShape = `M ${tip.x} ${tip.y} L ${tip.x - 12 * unitX + 6 * unitY} ${tip.y - 12 * unitY - 6 * unitX} L ${tip.x - 12 * unitX - 6 * unitY} ${tip.y - 12 * unitY + 6 * unitX} Z`;
               return (
-                <g
-                  key={key}
-                  className={`spatial-connection ${kind}${selected ? ' selected' : ''}`}
-                  filter={tint ? `url(#${maskId}-tint)` : undefined}
-                >
+                <g key={key} className={`spatial-connection ${kind}${selected ? ' selected' : ''}`}>
                   <defs>
-                    {tint && (
-                      <ZeroPlanesDepthFilter
-                        id={`${maskId}-tint`}
-                        image={tint}
-                        bounds={tintBounds}
-                      />
-                    )}
                     {masks.map((mask) => (
                       <g key={mask.id}>
                         {mask.points.map((point) => (
@@ -1830,6 +1831,46 @@ export function SpatialMap({
                     markerEnd={`url(#spatial-arrow-${kind})`}
                     className={`connection-arrow-shaft ${kind}${selected ? ' selected' : ''}`}
                   />
+                  {tint.map((region, index) => (
+                    <g
+                      key={region.name}
+                      className="zero-plane-connection-tint"
+                      clipPath={`url(#${maskId}-tint-${index})`}
+                    >
+                      <defs>
+                        <clipPath id={`${maskId}-tint-${index}`}>
+                          <path d={region.path} />
+                        </clipPath>
+                      </defs>
+                      <path
+                        d={geometry}
+                        className={`connection ${kind}${previous ? ' previous' : ''}${selected ? ' selected' : ''}`}
+                        style={{ stroke: region.color }}
+                        opacity={tintOpacity}
+                        fill="none"
+                        mask={occluders.length ? `url(#${maskId})` : undefined}
+                      />
+                    </g>
+                  ))}
+                  {arrowTint.map((region, index) => (
+                    <g
+                      key={region.name}
+                      className="zero-plane-connection-tint"
+                      clipPath={`url(#${maskId}-arrow-tint-${index})`}
+                    >
+                      <defs>
+                        <clipPath id={`${maskId}-arrow-tint-${index}`}>
+                          <path d={region.path} />
+                        </clipPath>
+                      </defs>
+                      <path
+                        d={arrowShape}
+                        fill={region.color}
+                        opacity={tintOpacity}
+                        mask={arrowOccluders.length ? `url(#${maskId}-arrow)` : undefined}
+                      />
+                    </g>
+                  ))}
                 </g>
               );
             })}

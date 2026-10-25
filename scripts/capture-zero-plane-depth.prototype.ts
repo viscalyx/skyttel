@@ -4,7 +4,7 @@ import { chromium } from '@playwright/test';
 import { signIn } from '../tests/support/client.js';
 
 export async function captureZeroPlaneDepth(origin: string, householdId: string) {
-  const directory = 'prototypes/zero-reference-planes-live/evidence-depth';
+  const directory = 'prototypes/zero-reference-planes-live/evidence-depth-strong';
   await mkdir(directory, { recursive: true });
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -13,7 +13,7 @@ export async function captureZeroPlaneDepth(origin: string, householdId: string)
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text());
   });
-  const url = `${origin}/households/${householdId}?prototype-planes&plane-depth=tint`;
+  const url = `${origin}/households/${householdId}?prototype-planes&plane-depth=strong`;
   const path = `${origin}/api/households/${householdId}/map`;
   const panel = page.locator('.zero-planes-prototype');
   const observations: unknown[] = [];
@@ -23,8 +23,10 @@ export async function captureZeroPlaneDepth(origin: string, householdId: string)
     await page.screenshot({ path: `${directory}/${name}.png` });
     observations.push({
       name,
-      tintedObjects: await page.locator('.spatial-orb[style*="filter:"]').count(),
-      tintedConnections: await page.locator('.spatial-connection[filter]').count(),
+      tintedObjects: await page.locator('.zero-plane-marker-tint').count(),
+      tintedConnections: await page
+        .locator('.spatial-connection:has(.zero-plane-connection-tint)')
+        .count(),
     });
     if (open) await panel.locator('summary').click();
   }
@@ -41,14 +43,14 @@ export async function captureZeroPlaneDepth(origin: string, householdId: string)
         data: { mode: theme },
       });
       await page.goto(url);
-      for (const depth of ['overlay', 'tint']) {
+      for (const depth of ['overlay', 'tint', 'strong']) {
         await panel.getByRole('combobox', { name: 'Djupvisning', exact: true }).selectOption(depth);
         await capture(`${theme}-${depth}`);
       }
     }
     for (const shape of ['square', 'oval', 'circle', 'lines']) {
       await panel.getByRole('combobox', { name: 'Form', exact: true }).selectOption(shape);
-      await capture(`dark-${shape}-tint`);
+      await capture(`dark-${shape}-strong`);
     }
     await panel.getByRole('combobox', { name: 'Form', exact: true }).selectOption('circle');
     for (const axis of ['X', 'Y', 'Z']) {
