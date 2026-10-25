@@ -68,7 +68,8 @@ vertically to compare the independent local movement guide.
 
 ## Provisional choices and limits
 
-- Squares span ±18 view units in each in-plane direction. Ovals have
+- Squares span ±27 view units in each in-plane direction, matching the
+  circles' diameter of 54 along both axes. Ovals have
   semiaxes 27 and 18.9: 50% larger in both directions than the initial
   comparison. This adjustment responds to live feedback asking for more
   width, height and depth. These are experiment dimensions, not agreed
@@ -98,10 +99,11 @@ vertically to compare the independent local movement guide.
 
 ## Evidence
 
-The committed screenshot sets show the initial oval semiaxes 18 and 12.6.
+The committed screenshot sets show the initial square half-extents 18 and
+oval semiaxes 18 and 12.6.
 They remain baseline evidence; use the running prototype to review the
-enlarged ovals and the additional circle variant. Rerunning the capture
-commands replaces those screenshots with the current dimensions and adds
+enlarged squares and ovals and the additional circle variant. Rerunning the
+capture commands replaces those screenshots with the current dimensions and adds
 circle captures for each visual weight in both themes.
 
 The capture command uses an isolated Chromium context and synthetic identity:

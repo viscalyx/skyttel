@@ -5,7 +5,6 @@ import {
   prototypePlaneExtent,
   prototypePlanePoint,
   prototypePlanes,
-  prototypeRoundScale,
 } from './zero-planes.prototype.js';
 
 export function ZeroPlanesPrototypeControls({
@@ -55,7 +54,7 @@ export function ZeroPlanesPrototypeControls({
       <p>
         Provisorisk utbredning:{' '}
         {
-          { square: '±18 × ±18 vysteg', oval: '±27 × ±18,9 vysteg', circle: 'radie 27 vysteg' }[
+          { square: '±27 × ±27 vysteg', oval: '±27 × ±18,9 vysteg', circle: 'radie 27 vysteg' }[
             value.shape
           ]
         }
@@ -75,7 +74,7 @@ export function ZeroPlanesPrototypeLabels({
   value: PlaneComparison;
 }) {
   const origin = project({ x: 0, y: 0, z: 0 });
-  const extent = prototypePlaneExtent * (value.shape === 'square' ? 1 : prototypeRoundScale);
+  const extent = prototypePlaneExtent;
   return (
     <g
       className="zero-planes-prototype-labels"
