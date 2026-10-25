@@ -19,6 +19,7 @@ export type PlaneComparison = {
   weight: 'subtle' | 'original' | 'prominent';
 };
 export const prototypePlaneExtent = 18;
+export const prototypeOvalScale = 1.5;
 export const prototypePlanes = [
   { name: 'XZ · y = 0', dark: '#79d9e8', light: '#176374', pattern: 'heldragen' },
   { name: 'YZ · x = 0', dark: '#ddaff8', light: '#743f91', pattern: 'streckad' },
@@ -36,7 +37,7 @@ export function prototypePlanePoint(plane: number, u: number, v: number) {
 export function zeroPlanesPrototype(value: PlaneComparison, theme: 'light' | 'dark') {
   const group = new Group();
   const disposables: { dispose(): void }[] = [];
-  const r = prototypePlaneExtent;
+  const r = prototypePlaneExtent * (value.shape === 'oval' ? prototypeOvalScale : 1);
   const minor = value.shape === 'oval' ? r * 0.7 : r;
   const weight = {
     subtle: { fill: 0.035, edge: 0.52, grid: 0.09, divisions: 2 },

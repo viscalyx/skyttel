@@ -69,9 +69,10 @@ vertically to compare the independent local movement guide.
 ## Provisional choices and limits
 
 - Squares span ±18 view units in each in-plane direction. Ovals have
-  semiaxes 18 and 12.6. These are experiment dimensions, not agreed extents
-  or physical measurements. Ovals remove the square corners and have less
-  filled area; that difference is part of the comparison.
+  semiaxes 27 and 18.9: 50% larger in both directions than the initial
+  comparison. This adjustment responds to live feedback asking for more
+  width, height and depth. These are experiment dimensions, not agreed
+  extents or physical measurements. The oval aspect ratio remains unchanged.
 - Plane geometry clips normally at the camera/viewport boundary. There is
   no camera-following extent, edge indicator or adaptive plane hiding.
 - Household glyphs and connections render above the translucent planes in
@@ -92,6 +93,11 @@ vertically to compare the independent local movement guide.
   This is not a WCAG conformance claim.
 
 ## Evidence
+
+The committed screenshot sets show the initial oval semiaxes 18 and 12.6.
+They remain baseline evidence; use the running prototype to review the
+enlarged ovals. Rerunning the capture commands replaces those screenshots
+with the current dimensions.
 
 The capture command uses an isolated Chromium context and synthetic identity:
 

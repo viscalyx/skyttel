@@ -2,6 +2,7 @@ import './zero-planes.prototype.css';
 import type { Position } from '../shared/personal-view.js';
 import {
   type PlaneComparison,
+  prototypeOvalScale,
   prototypePlaneExtent,
   prototypePlanePoint,
   prototypePlanes,
@@ -51,7 +52,7 @@ export function ZeroPlanesPrototypeControls({
       </p>
       <p>XZ: heldragen · YZ: streckad · XY: prickad.</p>
       <p>
-        Provisorisk utbredning: ±18 vysteg (oval: ±18 × ±12,6). Fast centrum (0, 0, 0); följer inte
+        Provisorisk utbredning: ±18 vysteg (oval: ±27 × ±18,9). Fast centrum (0, 0, 0); följer inte
         kameran. Valen sparas inte.
       </p>
     </details>
@@ -68,6 +69,7 @@ export function ZeroPlanesPrototypeLabels({
   value: PlaneComparison;
 }) {
   const origin = project({ x: 0, y: 0, z: 0 });
+  const extent = prototypePlaneExtent * (value.shape === 'oval' ? prototypeOvalScale : 1);
   return (
     <g
       className="zero-planes-prototype-labels"
@@ -82,8 +84,8 @@ export function ZeroPlanesPrototypeLabels({
         const position = project(
           prototypePlanePoint(
             index,
-            prototypePlaneExtent * 0.76,
-            (value.shape === 'oval' ? 0.25 : 0.62) * prototypePlaneExtent,
+            extent * 0.76,
+            (value.shape === 'oval' ? 0.25 : 0.62) * extent,
           ),
         );
         return (
