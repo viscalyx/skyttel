@@ -29,9 +29,24 @@ a floor or ceiling meaning. The local movement guide is outside this image.
 - Object depth relative to each plane is ambiguous in a static generated
   image. The image does not verify signed coordinates or geometric accuracy.
 
-The next proposed visual experiment is subtler fills and fewer grid lines,
-retaining all three full planes, their outlines, labels, and shared origin.
-This is a proposal for the user's judgment, not an accepted simplification.
+The user requests all three levels of plane emphasis as concept images:
+
+- `concept-subtle.png`: subtler fills and fewer grid lines.
+- `concept-v1.png`: the original, middle visual weight.
+- `concept-prominent.png`: stronger fills, borders, grids, and origin emphasis.
+
+All variants retain the three full planes, their outlines, labels, and shared
+origin. The two variants use the original image as an edit reference with the
+built-in imagegen tool. Their exact prompts are in `prompt-subtle.txt` and
+`prompt-prominent.txt`. Image editing can introduce incidental differences;
+these are qualitative sketches, not calibrated rendering comparisons.
+
+The subtle variant reduces competition from grid lines. The prominent variant
+makes the border patterns clearer but competes more with household content;
+its white origin label loses contrast in the light scenes. These observations
+are material for review, not a verdict on the user's preference.
+
+Exploring these options does not approve a visual direction or a reduction.
 
 ## What this image can inform
 
