@@ -6,7 +6,7 @@ krav, den aktuella prototypens beteende och återstående frågor. Det ska gå
 att förstå kraven utan att läsa en chatt eller följa en ärendediskussion.
 
 **Status: besluten nedan gäller, men hela designen är inte slutgodkänd.**
-Avsnittet om öppna frågor måste behandlas före den samlade designens avslut.
+Den kvarstående granskningen måste behandlas före den samlade designens avslut.
 Prototypkod och skärmbilder är underlag, inte färdig produktionskod eller
 bevis på fullständig tillgänglighet.
 
@@ -225,7 +225,17 @@ skärmläsare. Positionsreglage ska inte återkomma i objektets egenskaper.
 Sambandens rumsliga information utgår från de två ändpunkternas objekt
 och deras positioner. Ett samband följer objekten och har ingen egen
 oberoende X/Y/Z-position. Båda objekten ska kunna identifieras och deras
-positioner nås. Den exakta placeringen av denna åtkomst återstår att besluta.
+positioner nås via den vanliga vägen för objektval och navigering.
+Inför inga nya genvägar **Visa position för …** vid sambandens ändpunkter.
+Den föreslagna genvägen från sambandsvyerna är uttryckligen bortvald.
+
+De namngivna X/Y/Z-fälten med negativa och positiva värden är
+textalternativet till den visuella positionsreferensen. De ska gå att läsa
+och ändra även när nollreferensen är avstängd, utanför vyn, kantställd
+eller utan tonade ytor. De beskriver kartans fasta axlar oberoende av
+kamerariktning. Behåll den befintliga koordinatförklaringen bakom
+infoikonen i normalläget. Lägg inte till en extra positionspanel eller
+upprepad positionsvisning.
 
 Behåll ofullständig eller ogiltig text medan användaren redigerar, utan
 att flytta den axeln. När fokus lämnar fältet återställs senaste giltiga
@@ -303,7 +313,7 @@ Vid omladdning eller stängning av sidan används webbläsarens varning om
 förlust av ändringar. Detta inför inte återställning av lokala positioner
 efter en genomförd omladdning.
 
-## Tillgänglighet och kvarstående frågor
+## Tillgänglighet och kvarstående granskning
 
 Skärmläsarens flyttmeddelande ska ange senaste flyttresultatet efter
 500 millisekunder utan ytterligare flytt, i stället för varje mellanläge.
@@ -318,18 +328,20 @@ till dragning. Kontrollera även objekt och samband när referensen eller
 toningen är på. Prototypbilder och automatiserade kontroller bevisar inte
 överensstämmelse för hela flödet.
 
-Följande är öppet och får inte fyllas i med prototypens tillfälliga val:
+De konkreta frågorna om zoomnamn, tonreglage, koordinatinmatning,
+flyttåterkoppling, åtkomst och sparbeteende är besvarade. Följande återstår;
+granskningen får inte ersättas med antaganden från prototypens tillfälliga val:
 
-1. Exakt placering och fokusflöde för åtkomst till sambandens ändpunkter
-   och deras positioner.
-2. Om de namngivna koordinatfälten och åtkomsten via sambandens ändpunkter
-   ska vara textalternativet när nollreferensen inte syns eller saknar ton.
-   Förslaget innebär ingen ytterligare upprepad positionsvisning.
-3. Återstående granskning av inmatning och visuella signaler, kontrast,
+1. Samlad bekräftelse av navigerings- och tillgänglighetsbesluten.
+2. Granskning av inmatning och visuella signaler, kontrast,
    fokus, omflöde och små skärmar i båda navigeringslägena.
-4. Verifiering av hela vägen Tabell → objektval → Karta → Navigera,
+3. Verifiering av hela vägen Tabell → objektval → Karta → Navigera,
    även med automatiskt placerade objekt och när nollreferensen inte syns.
-5. Samlad kontroll och användarens godkännande av den färdiga designen.
+   Sambandens ändpunkter ska gå att identifiera och deras objekt välja
+   utan de bortvalda genvägarna.
+4. Samlad kontroll och användarens godkännande av hela nollreferensdesignen
+   före implementation. Nya problem som granskningen visar behöver lösas
+   uttryckligen; detta dokument påstår inte verifierad tillgänglighet.
 
 ## Skillnader mellan experiment och leverans
 
