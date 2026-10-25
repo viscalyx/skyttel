@@ -451,6 +451,7 @@ export function SpatialMap({
       [...relationships.values()],
       movement.movingObjectId(),
     );
+    movement.clearStaleAnnouncement();
   }, [
     objects,
     relationships,
@@ -458,6 +459,7 @@ export function SpatialMap({
     personal?.view?.positions,
     personalReady,
     movement.movingObjectId,
+    movement.clearStaleAnnouncement,
   ]);
   useEffect(() => {
     if (!activated) return;

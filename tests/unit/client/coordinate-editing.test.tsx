@@ -43,9 +43,10 @@ async function openMap(positions: PersonalPosition[] = []) {
   };
   type Write = { id: string; position: Position; version: number; contentVersion: number };
   const writes: Write[] = [];
+  let read: (() => Promise<Response>) | undefined;
   let write: ((body: Write) => Promise<Response>) | undefined;
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
-    if (url.endsWith('/view')) return Response.json(saved);
+    if (url.endsWith('/view')) return read ? read() : Response.json(saved);
     const body = JSON.parse(init?.body as string) as Write;
     writes.push(body);
     if (write) return write(body);
@@ -59,19 +60,19 @@ async function openMap(positions: PersonalPosition[] = []) {
   const objects = new Map(state.objects.map((object) => [object.id, object]));
   const relationships = new Map();
   const onAccessLost = () => {};
-  function PersonalMap({ id }: { id: string }) {
+  function PersonalMap({ id, active = true }: { id: string; active?: boolean }) {
     const personal = usePersonalView('/map', onAccessLost);
     const selection = useMemo(() => ({ kind: 'object' as const, id }), [id]);
     return (
       <>
         <SpatialMap
           state={state}
-          active
+          active={active}
           objects={objects}
           relationships={relationships}
           selection={selection}
           disabled={false}
-          onSelect={() => {}}
+          onSelect={(object) => view.rerender(<PersonalMap id={object.id} />)}
           onSelectRelationship={() => {}}
           onFocus={() => {}}
           onClear={() => {}}
@@ -98,8 +99,14 @@ async function openMap(positions: PersonalPosition[] = []) {
     saved(next: PersonalView) {
       saved = next;
     },
+    read(operation: () => Promise<Response>) {
+      read = operation;
+    },
     write(operation: (body: Write) => Promise<Response>) {
       write = operation;
+    },
+    close() {
+      view.rerender(<PersonalMap id="lamp" active={false} />);
     },
   };
 }
@@ -276,6 +283,133 @@ test('movement feedback announces only the latest result after a quiet half seco
   fireEvent.click(screen.getByRole('button', { name: 'Stäng navigering' }));
   expect(feedback.textContent).toBe('Lampan: Höjd (Y) -3.01.');
 });
+
+test.each([100, 600])(
+  'reloading after %sms discards feedback for the replaced local move',
+  async (delay) => {
+    const map = await openMap([{ id: 'lamp', x: 1, y: 2, z: 3, version: 0 }]);
+    map.write(async () => Response.json({ error: 'unavailable' }, { status: 503 }));
+    vi.useFakeTimers();
+    await act(async () => {
+      fireEvent.change(screen.getByRole('textbox', { name: 'Sidled (X)' }), {
+        target: { value: '7.005' },
+      });
+    });
+    await act(async () => vi.advanceTimersByTime(delay));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Läs in sparad position' }));
+    });
+    expect(screen.getByRole('textbox', { name: 'Sidled (X)' })).toHaveProperty('value', '1.00');
+    await act(async () => vi.advanceTimersByTime(500));
+    expect(screen.getByRole('status', { name: 'Flyttresultat' }).textContent).toBe('');
+  },
+);
+
+test('reloading another object preserves the latest local movement result', async () => {
+  const map = await openMap([
+    { id: 'lamp', x: 1, y: 2, z: 3, version: 0 },
+    { id: 'bike', x: 4, y: 5, z: 6, version: 0 },
+  ]);
+  map.write(async () => Response.json({ error: 'unavailable' }, { status: 503 }));
+  vi.useFakeTimers();
+  await act(async () => {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Sidled (X)' }), {
+      target: { value: '7.005' },
+    });
+  });
+  map.select('bike');
+  await act(async () => {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Djup (Z)' }), {
+      target: { value: '8.005' },
+    });
+  });
+  await act(async () => {
+    fireEvent.click(
+      within(screen.getByRole('group', { name: 'Position för Lampan' })).getByRole('button', {
+        name: 'Läs in sparad position',
+      }),
+    );
+  });
+  await act(async () => vi.advanceTimersByTime(500));
+  expect(screen.getByRole('textbox', { name: 'Djup (Z)' })).toHaveProperty('value', '8.005');
+  expect(screen.getByRole('status', { name: 'Flyttresultat' }).textContent).toBe(
+    'Cykeln: Djup (Z) 8.01.',
+  );
+});
+
+test('a delayed reload cannot clear feedback for a newer local move', async () => {
+  const map = await openMap([{ id: 'lamp', x: 1, y: 2, z: 3, version: 0 }]);
+  map.write(async () => Response.json({ error: 'unavailable' }, { status: 503 }));
+  vi.useFakeTimers();
+  await act(async () => {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Sidled (X)' }), {
+      target: { value: '7.005' },
+    });
+  });
+  let release!: (response: Response) => void;
+  map.read(
+    () =>
+      new Promise<Response>((resolve) => {
+        release = resolve;
+      }),
+  );
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Läs in sparad position' }));
+  });
+  await act(async () => {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Sidled (X)' }), {
+      target: { value: '9.005' },
+    });
+  });
+  await act(async () =>
+    release(
+      Response.json({
+        contentVersion: 1,
+        positions: [{ id: 'lamp', x: 1, y: 2, z: 3, version: 0 }],
+        settings: { ...defaultViewSettings, background: false, version: 0 },
+      }),
+    ),
+  );
+  await act(async () => vi.advanceTimersByTime(500));
+  expect(screen.getByRole('textbox', { name: 'Sidled (X)' })).toHaveProperty('value', '9.005');
+  expect(screen.getByRole('status', { name: 'Flyttresultat' }).textContent).toBe(
+    'Lampan: Sidled (X) 9.01.',
+  );
+});
+
+test('leaving the map clears pending feedback for a completed move', async () => {
+  const map = await openMap([{ id: 'lamp', x: 1, y: 2, z: 3, version: 0 }]);
+  vi.useFakeTimers();
+  await act(async () => {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Sidled (X)' }), {
+      target: { value: '7.005' },
+    });
+  });
+  map.close();
+  await act(async () => vi.advanceTimersByTime(500));
+  expect(screen.getByRole('status', { name: 'Flyttresultat', hidden: true }).textContent).toBe('');
+});
+
+test.each(['context menu', 'control selection'])(
+  'a completed move keeps its feedback through ordinary %s',
+  async (transition) => {
+    await openMap([{ id: 'lamp', x: 1, y: 2, z: 3, version: 0 }]);
+    vi.useFakeTimers();
+    await act(async () => {
+      fireEvent.change(screen.getByRole('textbox', { name: 'Sidled (X)' }), {
+        target: { value: '7.005' },
+      });
+    });
+    await act(async () => vi.advanceTimersByTime(100));
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Välj objekt: Cykeln' }), {
+      ctrlKey: transition === 'control selection',
+    });
+    await act(async () => vi.advanceTimersByTime(400));
+    expect(screen.getByRole('status', { name: 'Flyttresultat' }).textContent).toBe(
+      'Lampan: Sidled (X) 7.01.',
+    );
+  },
+);
 
 test('incomplete input does not postpone the result of an actual movement button', async () => {
   await openMap([{ id: 'lamp', x: 0, y: 0, z: 0, version: 0 }]);

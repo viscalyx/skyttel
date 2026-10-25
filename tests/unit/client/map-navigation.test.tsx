@@ -1,28 +1,35 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useState } from 'react';
+import { type ComponentProps, useState } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { MapNavigation } from '../../../src/client/MapNavigation.js';
 import { SpatialMap } from '../../../src/client/SpatialMap.js';
 import type { MapState } from '../../../src/shared/map.js';
-import { defaultViewSettings } from '../../../src/shared/personal-view.js';
+import { defaultViewSettings, type Position } from '../../../src/shared/personal-view.js';
 
 afterEach(cleanup);
 
-test('a decimal coordinate edit applies immediately using halfway-away rounding', () => {
-  const edit = vi.fn();
-  render(
+function openCoordinates(
+  position: Position,
+  onEditPosition: ComponentProps<typeof MapNavigation>['onEditPosition'],
+) {
+  return render(
     <MapNavigation
       open
       onClose={() => {}}
       onNavigate={() => {}}
       object={{ id: 'lo', name: 'Lo Exempel' }}
-      objectPosition={{ x: 0, y: 1.23456789, z: -0.001 }}
+      objectPosition={position}
       onMove={() => {}}
-      onEditPosition={edit}
+      onEditPosition={onEditPosition}
       disabled={false}
       movementDisabled={false}
     />,
   );
+}
+
+test('a decimal coordinate edit applies immediately using halfway-away rounding', () => {
+  const edit = vi.fn();
+  openCoordinates({ x: 0, y: 1.23456789, z: -0.001 }, edit);
   const x = screen.getByRole('textbox', { name: 'Sidled (X)' });
   x.focus();
   fireEvent.change(x, { target: { value: '1,005' } });
@@ -101,19 +108,7 @@ test.each([
   ['+0002.345', 2.35],
 ])('coordinate %s applies the bounded rounded value %s', (text, expected) => {
   const edit = vi.fn();
-  render(
-    <MapNavigation
-      open
-      onClose={() => {}}
-      onNavigate={() => {}}
-      object={{ id: 'lo', name: 'Lo Exempel' }}
-      objectPosition={{ x: 123, y: 0, z: 0 }}
-      onMove={() => {}}
-      onEditPosition={edit}
-      disabled={false}
-      movementDisabled={false}
-    />,
-  );
+  openCoordinates({ x: 123, y: 0, z: 0 }, edit);
   fireEvent.change(screen.getByRole('textbox', { name: 'Sidled (X)' }), {
     target: { value: text },
   });
@@ -134,19 +129,7 @@ test.each([
   '2,3.4',
 ])('incomplete or invalid coordinate %j does not move and is explained on blur', (text) => {
   const edit = vi.fn();
-  render(
-    <MapNavigation
-      open
-      onClose={() => {}}
-      onNavigate={() => {}}
-      object={{ id: 'lo', name: 'Lo Exempel' }}
-      objectPosition={{ x: 1.234567, y: 0, z: 0 }}
-      onMove={() => {}}
-      onEditPosition={edit}
-      disabled={false}
-      movementDisabled={false}
-    />,
-  );
+  openCoordinates({ x: 1.234567, y: 0, z: 0 }, edit);
   const field = screen.getByRole('textbox', { name: 'Sidled (X)' });
   fireEvent.change(field, { target: { value: text } });
   expect(field).toHaveProperty('value', text);
