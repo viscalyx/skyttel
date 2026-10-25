@@ -115,9 +115,13 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
       if (session === generation.current) report(error);
     }
   }
+  function hasFailedPosition(startingId?: string) {
+    return [...localPositions.current.keys()].some(
+      (id) => id !== startingId && !positionSaves.current.has(id),
+    );
+  }
   function saveFeedback() {
-    if (localPositions.current.size && !positionSaves.current.size)
-      setMessage('Positionen är inte sparad');
+    if (hasFailedPosition()) setMessage('Positionen är inte sparad');
     else if (settingsFailureMessage.current) setMessage(settingsFailureMessage.current);
     else if (!localPositions.current.size && !settingsSaving.current)
       setMessage('Din personliga vy är sparad.', true);
@@ -127,7 +131,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
     const contentVersion = current.current?.contentVersion;
     let completed = false;
     setPending(true);
-    setMessage('Din personliga vy sparas…');
+    setMessage(hasFailedPosition(id) ? 'Positionen är inte sparad' : 'Din personliga vy sparas…');
     try {
       while (session === generation.current && current.current && localPositions.current.has(id)) {
         const local = localPositions.current.get(id);

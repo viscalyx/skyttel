@@ -290,7 +290,7 @@ test('a successful position save does not erase a settings-conflict refusal', as
 });
 
 test.each([false, true])(
-  'an unsaved object keeps its failure feedback until recovery while settings refresh failure is %s',
+  'an unsaved object keeps its failure feedback during overlapping saves while settings refresh failure is %s',
   async (refreshFails) => {
     const hook = await openView();
     hook.write(async () => Response.json({ error: 'view_settings_conflict' }, { status: 409 }));
@@ -313,9 +313,11 @@ test.each([false, true])(
     );
     let lamp: Promise<void> | undefined;
     let bike: Promise<void> | undefined;
+    let chair: Promise<void> | undefined;
     act(() => {
       lamp = hook.result.current.move('lamp', { x: 1, y: 2, z: 3 });
       bike = hook.result.current.move('bike', { x: 20, y: 30, z: 40 });
+      chair = hook.result.current.move('chair', { x: 50, y: 60, z: 70 });
     });
     await act(async () => {
       replies.get('lamp')?.(Response.json({ error: 'internal_error' }, { status: 500 }));
@@ -326,15 +328,29 @@ test.each([false, true])(
       replies.get('bike')?.(Response.json({ id: 'bike', x: 20, y: 30, z: 40, version: 1 }));
       await bike;
     });
-    expect(hook.result.current.pending).toBe(false);
+    expect(hook.result.current.pending).toBe(true);
     expect(hook.result.current.message).toBe('Positionen är inte sparad');
     expect(hook.result.current.toast).toBeUndefined();
     expect(hook.result.current.view?.positions).toEqual(
       expect.arrayContaining([
         { id: 'lamp', x: 1, y: 2, z: 3, version: 0 },
         { id: 'bike', x: 20, y: 30, z: 40, version: 1 },
+        { id: 'chair', x: 50, y: 60, z: 70, version: 0 },
       ]),
     );
+    let desk: Promise<void> | undefined;
+    act(() => {
+      desk = hook.result.current.move('desk', { x: 80, y: 90, z: 100 });
+    });
+    expect(hook.result.current.message).toBe('Positionen är inte sparad');
+    expect(hook.result.current.pending).toBe(true);
+    await act(async () => {
+      replies.get('desk')?.(Response.json({ id: 'desk', x: 80, y: 90, z: 100, version: 1 }));
+      await desk;
+    });
+    expect(hook.result.current.message).toBe('Positionen är inte sparad');
+    expect(hook.result.current.pending).toBe(true);
+    expect(hook.result.current.toast).toBeUndefined();
 
     hook.write(async (body) =>
       Response.json({ id: body.id, ...(body.position as object), version: 1 }),
@@ -348,6 +364,14 @@ test.each([false, true])(
         { id: 'bike', x: 20, y: 30, z: 40, version: 1 },
       ]),
     );
+    expect(hook.result.current.message).toBe(settingsWarning);
+    expect(hook.result.current.toast).toBeUndefined();
+    expect(hook.result.current.pending).toBe(true);
+    await act(async () => {
+      replies.get('chair')?.(Response.json({ id: 'chair', x: 50, y: 60, z: 70, version: 1 }));
+      await chair;
+    });
+    expect(hook.result.current.pending).toBe(false);
     expect(hook.result.current.message).toBe(settingsWarning);
     expect(hook.result.current.toast).toBeUndefined();
   },
