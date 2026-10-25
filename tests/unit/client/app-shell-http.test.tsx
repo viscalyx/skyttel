@@ -55,7 +55,7 @@ test('household Settings links and administrator choices follow the requested ho
   const { user } = await (await client.get(`${installation.origin}/api/bootstrap`)).json();
   installation.seedMembership(user.id, 'other-settings-household', 'Eken', 'member');
   mount('/households/other-settings-household/settings');
-  const overview = await screen.findByRole('heading', { name: 'Inställningar' });
+  const overview = await screen.findByRole('heading', { name: 'Inställningar', level: 1 });
   expect(overview).toBeDefined();
   const card = await within(overview.closest('section') as HTMLElement).findByRole('link', {
     name: /^Rymdkartan/,
@@ -69,7 +69,7 @@ test('household Settings links and administrator choices follow the requested ho
     '/households/other-settings-household',
   );
   await userEvent.click(card);
-  expect((await screen.findByRole('heading', { name: 'Rymdkartan' })).textContent).toBe(
+  expect((await screen.findByRole('heading', { name: 'Rymdkartan', level: 1 })).textContent).toBe(
     'Rymdkartan',
   );
   expect(window.location.pathname).toBe('/households/other-settings-household/settings/map');
