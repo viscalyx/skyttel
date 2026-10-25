@@ -1,0 +1,87 @@
+{
+  "count": 80,
+  "variants": [
+    {
+      "theme": "light",
+      "shape": "square",
+      "weight": "subtle",
+      "sameProjection": true
+    },
+    {
+      "theme": "light",
+      "shape": "square",
+      "weight": "original",
+      "sameProjection": true
+    },
+    {
+      "theme": "light",
+      "shape": "square",
+      "weight": "prominent",
+      "sameProjection": true
+    },
+    {
+      "theme": "light",
+      "shape": "oval",
+      "weight": "subtle",
+      "sameProjection": true
+    },
+    {
+      "theme": "light",
+      "shape": "oval",
+      "weight": "original",
+      "sameProjection": true
+    },
+    {
+      "theme": "light",
+      "shape": "oval",
+      "weight": "prominent",
+      "sameProjection": true
+    },
+    {
+      "theme": "dark",
+      "shape": "square",
+      "weight": "subtle",
+      "sameProjection": true
+    },
+    {
+      "theme": "dark",
+      "shape": "square",
+      "weight": "original",
+      "sameProjection": true
+    },
+    {
+      "theme": "dark",
+      "shape": "square",
+      "weight": "prominent",
+      "sameProjection": true
+    },
+    {
+      "theme": "dark",
+      "shape": "oval",
+      "weight": "subtle",
+      "sameProjection": true
+    },
+    {
+      "theme": "dark",
+      "shape": "oval",
+      "weight": "original",
+      "sameProjection": true
+    },
+    {
+      "theme": "dark",
+      "shape": "oval",
+      "weight": "prominent",
+      "sameProjection": true
+    }
+  ],
+  "planeChoicesPreservePersonalView": true,
+  "planeChoicesPreserveHousehold": true,
+  "mobile": {
+    "width": 296,
+    "viewport": 320,
+    "focused": "SELECT"
+  },
+  "localGuideReferenceStable": null,
+  "errors": [],
+  "note": "Agent capture only; retained options, accessibility and camera policy require human review."
+}

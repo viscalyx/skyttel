@@ -1,0 +1,55 @@
+.zero-planes-prototype {
+  position: fixed;
+  z-index: 15;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(430px, calc(100vw - 24px));
+  max-height: 45dvh;
+  overflow: auto;
+  scroll-padding-block: 44px 10px;
+  padding: 10px 14px;
+  border: 2px solid #adc9df;
+  border-radius: 12px;
+  background: #162736;
+  color: #f0f6fa;
+  box-shadow: 0 4px 18px #0008;
+  font-size: 13px;
+}
+.zero-planes-prototype summary {
+  position: sticky;
+  top: -10px;
+  z-index: 1;
+  background: #162736;
+  cursor: pointer;
+  min-height: 44px;
+  align-content: center;
+  font-weight: 700;
+}
+.zero-planes-prototype-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.zero-planes-prototype label {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.zero-planes-prototype select {
+  min-height: 44px;
+  width: 100%;
+  background: #162736;
+  color: #f0f6fa;
+  border: 1px solid #adc9df;
+}
+.zero-planes-prototype p {
+  margin: 6px 0 0;
+  color: #f0f6fa;
+  line-height: 1.4;
+}
+.zero-planes-prototype :focus-visible {
+  outline: 3px solid #ffdf80;
+  outline-offset: 2px;
+}

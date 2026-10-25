@@ -29,6 +29,8 @@ import { type ProjectedPoint, spatialScene } from './spatial-scene.js';
 import { useObjectMovement } from './use-object-movement.js';
 import type { usePersonalView } from './use-personal-view.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
+import { ZeroPlanesPrototypeControls, ZeroPlanesPrototypeLabels } from './ZeroPlanesPrototype.js';
+import type { PlaneComparison } from './zero-planes.prototype.js';
 
 type LabelBox = { x: number; y: number; width: number; height: number };
 
@@ -279,6 +281,11 @@ export function SpatialMap({
     };
   }, [activated]);
   const scene = useRef<ReturnType<typeof spatialScene> | null>(null);
+  const [planeComparison, setPlaneComparison] = useState<PlaneComparison | null>(() =>
+    import.meta.env.DEV && new URLSearchParams(window.location.search).has('prototype-planes')
+      ? { shape: 'square', weight: 'subtle' }
+      : null,
+  );
   const [orientation, setOrientation] = useState<Position[]>([]);
   const [moving, setMoving] = useState(false);
   const motionTimer = useRef<number>(0);
@@ -415,6 +422,9 @@ export function SpatialMap({
     };
   }, [activated, motion, movement.cancel]);
   const personalReady = !personal || Boolean(personal.view);
+  useEffect(() => {
+    if (activated && planeComparison) scene.current?.compareZeroPlanes(planeComparison, theme);
+  }, [activated, planeComparison, theme]);
   useEffect(() => {
     // The first scene update frames the layout, including saved personal positions.
     if (!activated || !personalReady) return;
@@ -1126,6 +1136,9 @@ export function SpatialMap({
   return (
     <section className="spatial-map" aria-label="Rymdkarta">
       <h2>Rymdkarta</h2>
+      {active && planeComparison && (
+        <ZeroPlanesPrototypeControls value={planeComparison} onChange={setPlaneComparison} />
+      )}
       {settingsMount &&
         createPortal(
           <div className="map-settings">
@@ -1409,6 +1422,13 @@ export function SpatialMap({
               </marker>
             ))}
           </defs>
+          {planeComparison && (
+            <ZeroPlanesPrototypeLabels
+              value={planeComparison}
+              theme={theme}
+              project={(point) => scene.current?.projectPrototype(point)}
+            />
+          )}
           {heightGuide && (
             <SpatialHeightGuide
               start={heightGuide.start}

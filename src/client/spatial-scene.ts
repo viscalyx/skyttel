@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { PersonalPosition, Position, ViewSettings } from '../shared/personal-view.js';
 import { spaceBackground } from './space-background.js';
 import { cameraGestures } from './spatial-navigation.js';
+import { type PlaneComparison, zeroPlanesPrototype } from './zero-planes.prototype.js';
 
 export type ProjectedPoint = {
   id: string;
@@ -29,6 +30,8 @@ export function spatialScene(
   const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   const sky = new Scene();
+  const prototypeScene = new Scene();
+  let prototypePlanes: ReturnType<typeof zeroPlanesPrototype> | undefined;
   sky.background = new Color('#132e25');
   const skyCamera = new PerspectiveCamera(45, 1, 0.1, 1000);
   const camera = new PerspectiveCamera(45, 1, 0.1, 500000);
@@ -173,6 +176,9 @@ export function spatialScene(
     const decorativeCamera = background.update(skyCamera);
     if (
       !painted ||
+      (prototypePlanes &&
+        (!projectedWorld.equals(camera.matrixWorld) ||
+          !projectedProjection.equals(camera.projectionMatrix))) ||
       paintedKey !== backgroundKey ||
       (backgroundVisible &&
         (!paintedWorld.equals(decorativeCamera.matrixWorld) ||
@@ -180,6 +186,10 @@ export function spatialScene(
     ) {
       renderer.clear();
       renderer.render(sky, decorativeCamera);
+      if (prototypePlanes) {
+        renderer.clearDepth();
+        renderer.render(prototypeScene, camera);
+      }
       paintedWorld.copy(decorativeCamera.matrixWorld);
       paintedProjection.copy(decorativeCamera.projectionMatrix);
       paintedKey = backgroundKey;
@@ -271,6 +281,27 @@ export function spatialScene(
   resize.observe(canvas);
   reset();
   return {
+    // DEV-only caller; no saved settings or camera changes in this experiment.
+    compareZeroPlanes(value: PlaneComparison, theme: 'light' | 'dark') {
+      prototypePlanes?.dispose();
+      prototypeScene.clear();
+      prototypePlanes = zeroPlanesPrototype(value, theme);
+      prototypeScene.add(prototypePlanes.group);
+      painted = false;
+      draw();
+    },
+    projectPrototype(point: Position) {
+      const projected = new Vector3(point.x, point.y, point.z).project(camera);
+      return {
+        x: ((projected.x + 1) * canvas.clientWidth) / 2,
+        y: ((1 - projected.y) * canvas.clientHeight) / 2,
+        visible:
+          projected.z > -1 &&
+          projected.z < 1 &&
+          Math.abs(projected.x) < 0.95 &&
+          Math.abs(projected.y) < 0.95,
+      };
+    },
     update(
       ids: string[],
       saved: PersonalPosition[] = [],
@@ -533,6 +564,7 @@ export function spatialScene(
       controls.dispose();
       gestures.dispose();
       background.dispose();
+      prototypePlanes?.dispose();
       renderer.dispose();
     },
   };
