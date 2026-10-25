@@ -19,6 +19,11 @@ Läs tillsammans med:
 - [Körning av planprototypen](../../prototypes/zero-reference-planes-live/README.md).
 - [Körning av navigeringsprototypen](../../prototypes/zero-reference-planes-live/POSITION.md).
 
+Vid implementation ska definitionerna **Nollreferens** och **Tonstyrka**
+från prototypgrenens [ordlista](../../GLOSSARY.md) föras in i produktens
+`GLOSSARY.md`. De ingår i den godkända designen. Bevara övriga begrepp och
+använd samma betydelser i gränssnitt och användardokumentation.
+
 ## Omfattning och betydelse
 
 Nollreferensen beskriver den personliga vyn av hushållets karta. Den är
