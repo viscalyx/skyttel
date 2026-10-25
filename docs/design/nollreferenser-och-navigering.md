@@ -67,7 +67,11 @@ när den dekorativa bakgrunden är avstängd.
 | Alltid synlig | Av; visar hela den valda referensen när kartan är öppen. |
 | Synlig vid dragning | Av; tillfällig visning enligt reglerna nedan. |
 | Tonstyrka | 0 %, valbart från 0 till 85 %. |
-| Storlek vid zoom | Av; slutlig benämning återstår. |
+| Behåll storlek vid zoom | Av; ungefär samma storlek på skärmen vid zoom. |
+
+Tonstyrka har både skjutreglage och sifferfält, med samma värde från 0 till
+85 % och steg om en procentenhet. Vid Linjer är båda inaktiva; det sparade
+värdet behålls när användaren väljer en planvariant igen.
 
 Navigeringsfönstret visar samma inställning som **Alltid synlig**, med
 etiketten **Nollreferens**. Etiketten ska synas i både normal- och miniläge,
@@ -100,6 +104,9 @@ Följande gäller när Alltid synlig är av och Synlig vid dragning är på:
   fördröjning vid nästa avslut.
 - Navigeringens objektflyttknappar, även aktivering med tangentbord, visar
   referensen. Dölj en sekund efter senaste flyttåtgärden.
+- Giltig koordinatinmatning som flyttar objektet visar referensen på samma
+  sätt. Dölj en sekund efter senaste giltiga flytt. Ofullständig eller
+  ogiltig inmatning startar eller förlänger inte visningen.
 - Ett stilla tryck med primär musknapp över ett objekt visar referensen
   efter 1,5 sekunder. Behåll den till släpp och dölj en sekund senare.
   Övergång till dragning fortsätter enligt dragreglerna.
@@ -118,17 +125,18 @@ annonseras av skärmläsare. Den korta döljfördröjningen får inte ta bort
 reglage eller åtkomst till positionsinformation. Reglagens markerade och
 inaktiva tillstånd ska fortfarande förmedlas.
 
-Direkt koordinatinmatning är ett nytt sätt att flytta objekt. Dess exakta
-koppling till automatisk referensvisning är en öppen fråga, inte en
-underförstådd utvidgning av reglerna för flyttknapparna.
-
 ## Storlek, kamera och etiketter
 
 Fast storlek är grundläget. Fler objekt, avlägsna objekt och rörelse ska
 inte ändra referensens storlek. Ett objekt kan ligga utanför en planbit
 eller en axels ändpunkt.
 
-Det valfria zoomläget ska ge ungefär samma storlek på skärmen:
+Det valfria zoomläget heter **Behåll storlek vid zoom** och har hjälptexten:
+
+> Nollreferensen behåller ungefär samma storlek på skärmen när du zoomar.
+> Objektens positioner ändras inte.
+
+Det ska ge ungefär samma storlek på skärmen:
 
 - Vid öppning av kartan eller aktivering av valet används måtten ovan.
 - Utzoomning förstorar referensen i kartkoordinater; inzoomning minskar den.
@@ -244,6 +252,13 @@ pågår. Strategi för ordning, fel och samtidiga ändringar behöver preciseras
 
 ## Tillgänglighet och kvarstående frågor
 
+Skärmläsarens flyttmeddelande ska ange senaste flyttresultatet efter
+500 millisekunder utan ytterligare flytt, i stället för varje mellanläge.
+Meddelandet anger objektets namn och de ändrade axlarnas värden med två
+decimaler. Fokus stannar på reglaget. Automatisk visning och döljning av
+nollreferensen förblir tyst. Flyttresultat är inte ett kvitto på sparande;
+fel och sparresultat behöver egen tillgänglig återkoppling.
+
 Utgå från projektets krav på WCAG 2.2 AA, tangentbord, pekskärm, skärmläsare,
 synligt fokus, kontrast i båda teman, förstoring och tillgängliga alternativ
 till dragning. Kontrollera även objekt och samband när referensen eller
@@ -252,26 +267,18 @@ toningen är på. Prototypbilder och automatiserade kontroller bevisar inte
 
 Följande är öppet och får inte fyllas i med prototypens tillfälliga val:
 
-1. Slutligt namn och hjälptext för zoomstorlek. Förslaget
-   **Behåll storlek vid zoom** är ännu inte beslutat.
-2. Om Tonstyrka ska ha ett separat sifferfält och steg om en procentenhet.
-   Intervallet 0–85 %, förvalet 0 % och bevarat inaktivt värde är beslutade.
-3. Slutlig annonsering av flyttresultat, inklusive snabb inmatning.
-   Prototypens artiga statusmeddelande är ett provbeteende. Automatisk
-   referensvisning ska däremot vara tyst enligt beslutet ovan.
-4. Referensens automatiska visning vid direkt koordinatinmatning.
-5. Åtkomst till koordinater från automatisk placering, inte enbart de
+1. Åtkomst till koordinater från automatisk placering, inte enbart de
    sparade positioner som experimentets nio provobjekt har.
-6. Sammanhängande åtkomst utan visuell kartnavigering efter att positionsdelen
+2. Sammanhängande åtkomst utan visuell kartnavigering efter att positionsdelen
    i egenskaperna väljs bort. Vägen Tabell → objektval → Karta → Navigera
    finns i experimentet, men hela upplevelsen behöver fortsatt granskning.
-7. Positionsinformation för samband och användning när nollpunkt, plan eller
+3. Positionsinformation för samband och användning när nollpunkt, plan eller
    axlar är utanför vyn, kantställda eller saknar tonade ytor.
-8. Slutliga visuella och icke färgbaserade signaler, kontrast, fokus,
+4. Slutliga visuella och icke färgbaserade signaler, kontrast, fokus,
    omflöde och små skärmar i båda navigeringslägena.
-9. Granskning av prototypens inmatningsdetaljer och anslutningen till sparande,
+5. Granskning av prototypens inmatningsdetaljer och anslutningen till sparande,
    inklusive fel, tillgänglig återkoppling och samtidiga förändringar.
-10. Samlad kontroll och användarens godkännande av den färdiga designen.
+6. Samlad kontroll och användarens godkännande av den färdiga designen.
 
 ## Skillnader mellan experiment och leverans
 
@@ -279,6 +286,9 @@ Den körbara prototypen innehåller inte hela kravbilden. Den öppnar referensen
 direkt, har jämförelsepaneler och bevarar provvärden som inte är förval för
 produkten. Slutliga inställningar, lagring av referensval, automatisk
 synlighet, zoomstorlek och etikettkollisioner är inte fullständigt byggda.
+Skjutreglage tillsammans med sifferfält för Tonstyrka och flyttmeddelandets
+fördröjning på 500 millisekunder är krav inför implementation, inte
+verifierade beteenden i den arkiverade prototypen.
 
 Kurvade samband, pilspetsar, klippning och överlappande toning behöver
 produktionsgranskning. Ett byte från bildfilter till vektorbaserad toning
