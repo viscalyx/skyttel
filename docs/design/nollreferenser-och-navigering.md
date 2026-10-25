@@ -6,6 +6,7 @@ krav, den aktuella prototypens beteende och återstående frågor. Det ska gå
 att förstå kraven utan att läsa en chatt eller följa en ärendediskussion.
 
 **Status: besluten nedan gäller, men hela designen är inte slutgodkänd.**
+Navigerings- och tillgänglighetsbesluten är samlat bekräftade av användaren.
 Den kvarstående granskningen måste behandlas före den samlade designens avslut.
 Prototypkod och skärmbilder är underlag, inte färdig produktionskod eller
 bevis på fullständig tillgänglighet.
@@ -332,14 +333,13 @@ De konkreta frågorna om zoomnamn, tonreglage, koordinatinmatning,
 flyttåterkoppling, åtkomst och sparbeteende är besvarade. Följande återstår;
 granskningen får inte ersättas med antaganden från prototypens tillfälliga val:
 
-1. Samlad bekräftelse av navigerings- och tillgänglighetsbesluten.
-2. Granskning av inmatning och visuella signaler, kontrast,
+1. Granskning av inmatning och visuella signaler, kontrast,
    fokus, omflöde och små skärmar i båda navigeringslägena.
-3. Verifiering av hela vägen Tabell → objektval → Karta → Navigera,
+2. Verifiering av hela vägen Tabell → objektval → Karta → Navigera,
    även med automatiskt placerade objekt och när nollreferensen inte syns.
    Sambandens ändpunkter ska gå att identifiera och deras objekt välja
    utan de bortvalda genvägarna.
-4. Samlad kontroll och användarens godkännande av hela nollreferensdesignen
+3. Samlad kontroll och användarens godkännande av hela nollreferensdesignen
    före implementation. Nya problem som granskningen visar behöver lösas
    uttryckligen; detta dokument påstår inte verifierad tillgänglighet.
 
