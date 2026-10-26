@@ -111,11 +111,13 @@ would add pushes and generated PR text; `sync` also reconciles remote state.
    gh api repos/<owner>/<repo>/stacks/<stack-number>
    ```
 
-5. Wait for required CI on every published head. Route failures through
+5. Use [CI monitoring](ci-monitoring.md) to wait for required CI on every
+   published head. Route failures through
    [Repair a failing layer](state-and-recovery.md#repair-a-failing-layer).
    Once all evidence is valid, mark each PR ready with
    `gh pr ready <pr> --repo <owner/repo>`. Read back the complete stack again
-   and account for required checks triggered by readiness. Report outstanding
+   and start the watcher's ready phase with the applicable readiness-triggered
+   checks. Require successful current evidence from that phase. Report outstanding
    human approvals separately from required CI.
 
 Completion: exact intended PRs, order, heads, and bases are confirmed;
