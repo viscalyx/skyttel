@@ -38,6 +38,7 @@ export function executionContext(config: FullConfig) {
       run: process.env.GITHUB_RUN_ID ?? null,
       attempt: process.env.GITHUB_RUN_ATTEMPT ?? null,
       job: process.env.GITHUB_JOB ?? null,
+      group: /^\d+\/\d+$/.test(process.env.SKYTTEL_INTEGRATION_GROUP ?? '') ? process.env.SKYTTEL_INTEGRATION_GROUP : null,
     },
     command: {
       runner: 'playwright test',

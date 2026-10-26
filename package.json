@@ -49,7 +49,8 @@
     "check": "npm run typecheck && npm run lint && npm run lint:docs && npm run test:gates && npm run test:manual-mapping && npm run build && npm run test:unit:coverage",
     "purge:install": "node scripts/purge-install.mjs",
     "test:unit:ci": "npm run test:env -- --ci-fonts vitest run",
-    "test:integration:ci": "npm run test:env -- --ci-fonts playwright test"
+    "test:integration:ci": "npm run test:env -- --ci-fonts playwright test",
+    "test:integration:group": "npm run test:env -- --ci-fonts node scripts/testing/integration-groups.mjs"
   },
   "dependencies": {
     "@better-auth/oauth-provider": "^1.7.12",
