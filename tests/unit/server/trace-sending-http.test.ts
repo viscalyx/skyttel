@@ -1,3 +1,4 @@
+import { unzipSync } from 'fflate';
 import { afterEach, expect, test } from 'vitest';
 import type { TraceSending } from '../../../src/server/trace-sending.js';
 import { applicationFixture } from './fixture.js';
@@ -160,5 +161,72 @@ test('a failed suspension write still fences new uploads and stops active delive
   expect(await (await operator.request(path)).json()).toMatchObject({
     state: 'suspended',
     suspension: 'quota',
+  });
+});
+
+test('household archive roundtrip preserves local opt-out and suspension without diagnostic payloads', async () => {
+  let sending!: TraceSending;
+  fixture = await applicationFixture({
+    traceDelivery: (control) => {
+      sending = control;
+      return { start() {}, stop() {} };
+    },
+  });
+  const operator = fixture.client();
+  await operator.signIn();
+  const { household } = await (
+    await operator.json('/api/households', { name: 'Kontrollhushåll' })
+  ).json();
+  const householdPath = `/api/households/${household.id}`;
+  sending.delivered();
+  sending.dropped('oversized', 7);
+  const prepared = await (await operator.json(`${householdPath}/exports`, {})).json();
+  const archive = new Uint8Array(
+    await (await operator.request(`${householdPath}/exports/${prepared.id}`)).arrayBuffer(),
+  );
+  const parts = unzipSync(archive);
+  expect(JSON.parse(Buffer.from(parts['manifest.json']).toString()).schemaVersion).toBe(38);
+  const encoded = Buffer.from(parts['content.json']).toString();
+  for (const field of [
+    'trace_sending',
+    'traceSending',
+    'suspension',
+    'droppedEvents',
+    'lastSuccessfulDelivery',
+    'lastError',
+  ])
+    expect(encoded).not.toContain(field);
+  sending.suspend('quota');
+  expect((await operator.json(path, { action: 'disable' })).status).toBe(200);
+  const uploaded = await operator.request(`${householdPath}/imports`, {
+    method: 'POST',
+    headers: {
+      origin: fixture.config.origin,
+      'content-type': 'application/zip',
+      'x-skyttel-content-version': '1',
+    },
+    body: archive,
+  });
+  expect(uploaded.status).toBe(201);
+  const ready = await uploaded.json();
+  expect(
+    (
+      await operator.json(`${householdPath}/imports/${ready.id}/confirm`, {
+        confirmed: true,
+        contentVersion: 1,
+      })
+    ).status,
+  ).toBe(200);
+  expect(await (await operator.request(path)).json()).toMatchObject({
+    enabled: false,
+    suspension: 'quota',
+    droppedEvents: 7,
+  });
+  await fixture.restart();
+  expect(await (await operator.request(path)).json()).toMatchObject({
+    enabled: false,
+    suspension: 'quota',
+    droppedEvents: 0,
+    lastSuccessfulDelivery: null,
   });
 });
