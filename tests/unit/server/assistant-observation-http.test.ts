@@ -22,9 +22,17 @@ afterEach(async () => {
   await app?.close();
 });
 
-async function setup(observe?: ObserveAssistant, modelFetch?: typeof fetch) {
+async function setup(
+  observe?: ObserveAssistant,
+  modelFetch?: typeof fetch,
+  options: Pick<
+    NonNullable<Parameters<typeof createInstallation>[1]>,
+    'assistantDispatch' | 'now' | 'liveFetch' | 'liveSideband'
+  > = {},
+) {
   let turn = 0;
   app = await createInstallation(undefined, {
+    ...options,
     modelFetch:
       modelFetch ??
       textModel(() =>
@@ -186,6 +194,132 @@ test('a failed model task has a failed observed ending without its provider erro
   ]);
   expect(JSON.stringify(events)).not.toContain('synthetic-provider-secret');
 });
+
+test.each([
+  { source: 'text', status: 'failed' },
+  { source: 'text', status: 'canceled' },
+  { source: 'text', status: 'incomplete' },
+  { source: 'voice', status: 'canceled' },
+])(
+  'MCP transport work keeps its $status ending under the accepted $source task without exposing transport errors',
+  async ({ source, status }) => {
+    const events: AssistantObservation[] = [];
+    const live = liveProvider();
+    let clock = Date.now();
+    let armed = false;
+    let reached = false;
+    let release!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { path, session } = await setup((event) => events.push(event), undefined, {
+      now: () => clock,
+      liveFetch: live.provider,
+      liveSideband: live.attach,
+      assistantDispatch: async (incoming, dispatch) => {
+        const message = await incoming
+          .clone()
+          .json()
+          .catch(() => undefined);
+        if (armed && message?.params?.name === 'read_map' && reached === false) {
+          reached = true;
+          await waiting;
+          if (status === 'failed')
+            return new Response('synthetic-tool-transport-secret', { status: 503 });
+        }
+        return dispatch(incoming);
+      },
+    });
+    const before = await (await client.get(`${path}/map`)).json();
+    if (source === 'voice') {
+      const started = await client.post(`${path}/text-assistant/${session.id}/voice`, {
+        headers: { origin: app.origin },
+        data: { sdp: 'synthetic-offer', revision: 0, draftVersion: 0, contentVersion: 1 },
+      });
+      expect(started.status(), await started.text()).toBe(201);
+    }
+    armed = true;
+    try {
+      if (source === 'voice') {
+        const providerId = [...live.channels.keys()][0];
+        live.emit(providerId, {
+          type: 'session.input_transcript.delta',
+          event_id: 'blocked-tool-request',
+          delta: 'Läs bara Lina.',
+          start_ms: 0,
+          end_ms: 1,
+        });
+        clock += 2000;
+        live.emit(providerId, {
+          type: 'session.delegation.created',
+          event_id: 'blocked-tool-delegation',
+          offset_ms: 1,
+          delegation: { id: 'blocked-tool', target: 'client', type: 'delegation' },
+        });
+      } else await submit(path, session);
+      await expect.poll(() => reached).toBe(true);
+      if (status === 'canceled') {
+        const stopped = await client.post(`${path}/text-assistant/${session.id}/cancel`, {
+          headers: { origin: app.origin },
+          data: { all: true },
+        });
+        expect(stopped.status()).toBe(200);
+      } else if (status === 'incomplete') clock += 30 * 60_000;
+    } finally {
+      release();
+    }
+    await expect
+      .poll(() => events.filter((event) => event.kind === 'task_completed').length)
+      .toBe(1);
+    const task = events.find((event) => event.kind === 'task_started');
+    expect(task).toMatchObject({ data: { source } });
+    const tool = events.find(
+      (event) =>
+        event.kind === 'mcp_started' &&
+        event.taskId === task?.taskId &&
+        (event.data as { name?: string }).name === 'read_map',
+    );
+    expect(tool).toMatchObject({
+      status: 'incomplete',
+      context: {
+        owner: 'backend',
+        traceId: task?.context?.traceId,
+        parentSpanId: task?.context?.spanId,
+      },
+    });
+    expect(
+      events.filter(
+        (event) => event.kind === 'mcp_failed' && event.context?.spanId === tool?.context?.spanId,
+      ),
+    ).toMatchObject([
+      {
+        status,
+        context: tool?.context,
+        data: {
+          name: 'read_map',
+          error:
+            status === 'failed'
+              ? 'tool_failed'
+              : status === 'canceled'
+                ? 'tool_canceled'
+                : 'tool_incomplete',
+        },
+      },
+    ]);
+    expect(
+      events.filter(
+        (event) =>
+          event.kind === 'mcp_completed' && event.context?.spanId === tool?.context?.spanId,
+      ),
+    ).toEqual([]);
+    expect(events.find((event) => event.kind === 'task_completed')).toMatchObject({
+      status,
+      context: task?.context,
+    });
+    expect(await (await client.get(`${path}/map`)).json()).toEqual(before);
+    expect(JSON.stringify(events)).not.toContain('synthetic-tool-transport-secret');
+  },
+);
 
 test('canceled work keeps its original incomplete start and never turns a late provider result into success', async () => {
   const events: AssistantObservation[] = [];

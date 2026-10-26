@@ -192,6 +192,7 @@ export function textAssistantRoutes({
     session: Session;
     context: AssistantObservationContext;
     revision: number;
+    deadline: number;
     providerCallId?: string;
   }>();
   // The conversations that a revoked consent has ended, until the time they
@@ -599,8 +600,23 @@ export function textAssistantRoutes({
         guard?.();
         if (work?.session === session) work.guard();
       } catch (error) {
-        const canceled = error instanceof MapError && error.code === 'assistant_canceled';
-        const expired = error instanceof MapError && error.code === 'assistant_task_expired';
+        // The MCP transport can wrap a task guard's error. Use the caller's
+        // current authority for the observed ending, while preserving the
+        // original exception and application failure handling below.
+        let observedError = error;
+        try {
+          guard?.();
+          if (work?.session === session) work.guard();
+        } catch (reason) {
+          observedError = reason;
+        }
+        const canceled =
+          observedError instanceof MapError && observedError.code === 'assistant_canceled';
+        // Expiry can also abort work; the original deadline takes precedence
+        // over that signal, as it does for the task's observed ending.
+        const expired =
+          (observed?.session === session && now() >= observed.deadline) ||
+          (observedError instanceof MapError && observedError.code === 'assistant_task_expired');
         observe?.({
           at: now(),
           ...identity,
@@ -1997,7 +2013,7 @@ export function textAssistantRoutes({
     };
     let observationStatus: ObservationStatus = 'incomplete';
     const executing = observationWork.run(
-      { session, context: observationContext, revision },
+      { session, context: observationContext, revision, deadline: message.deadline },
       async () => {
         try {
           await (message.voice ? execute() : textWork.run({ session, guard }, execute));
