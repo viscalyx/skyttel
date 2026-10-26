@@ -128,8 +128,9 @@ remains open.
   and verify one ready PR per nonempty layer in a native GitHub stack.
 - Record the ordered PR links, starting commit, reviewed target and layer commits,
   verification, review results, and journal location on the **Spec**.
-- Release the local writer claim; retain the journal, worktrees, and recovery
-  refs for follow-up. Leave the **Spec** open for the separate merge workflow.
+- Follow [retention and manual cleanup](references/journal-lifecycle.md#retention-and-manual-cleanup)
+  when releasing the writer claim and reporting the journal location.
+  Leave the **Spec** open for the separate merge workflow.
 - Prepare the development handoff from the final verified head, including
   repair layers. Inspect `git worktree list --porcelain`, the selected directory's
   HEAD and working-tree status. Prefer running in its existing worktree; any

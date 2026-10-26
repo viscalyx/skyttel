@@ -2,12 +2,17 @@
 
 ## Journal and ownership
 
-- Store the journal under `<git-common-dir>/implement-stack/<spec-number>/`
-  and put its location on the Spec. Keep runtime state out of commits.
+- Resolve the shared state root and any legacy state through
+  [journal discovery](journal-lifecycle.md#discovery) before claiming or
+  resuming work.
+- Store the journal, logs and catalog copies under `<state-root>/<spec-number>/`
+  and put the resolved location on the Spec. Keep runtime state out of commits.
 - Claim a single writer through atomic directory creation at
-  `<git-common-dir>/implement-stack/writer.lock`; record session and Spec.
+  `<state-root>/writer.lock`; record session and Spec.
   Check the existing owner before resuming or taking over. Tracker assignment
   to the same user does not prove that another session has relinquished work.
+  Recheck the legacy location after acquiring the claim; if state appears,
+  release only this session's claim and follow the legacy handoff.
 - The orchestrator owns stack mutations, publication, and tracker writes.
   gh-stack's mutation lock does not coordinate workers' Git commands; require
   explicit ownership handoff before changing their branches.
@@ -72,7 +77,8 @@ the preceding layers remain valid.
 
 ## Resume and partial publication
 
-- Re-establish ownership; compare the journal with worktrees, agents, refs,
+- Repeat journal discovery and re-establish ownership; compare the existing
+  journal with worktrees, agents, refs,
   gh-stack state, remote stack/PRs, and target before another mutation.
 - Complete or safely abort a paused operation using its recorded worktree
   and tool version. Native Git and gh-stack rebases have different recovery
