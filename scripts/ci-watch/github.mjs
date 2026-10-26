@@ -418,14 +418,15 @@ export async function observe(input, api, now = Date.now) {
         );
         evidence.push(found);
         if (found.retryAt) {
+          const partialState = found.state === 'successful' ? 'unknown' : found.state;
           return {
             ...result,
-            state: found.state === 'successful' ? 'unknown' : found.state,
+            state: partialState,
             retryAt: found.retryAt,
             blockers: ['Diagnostics rate limited; remaining evidence not refreshed'],
             prs: [
               ...result.prs,
-              { number: pr.number, head: pr.head, state: found.state, checks: evidence },
+              { number: pr.number, head: pr.head, state: partialState, checks: evidence },
             ],
           };
         }

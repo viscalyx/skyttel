@@ -536,6 +536,7 @@ test('CLI never exits successfully when diagnostics rate limiting interrupts rem
   const result = h.execute({ base, args: ['--once'] });
   assert.equal(result.status, 3);
   assert.equal(result.events[0].snapshot.state, 'unknown');
+  assert.equal(result.events[0].snapshot.prs[0].state, 'unknown');
 });
 
 test('CLI rejects a conflicting current producer of the required context in another workflow', (t) => {
