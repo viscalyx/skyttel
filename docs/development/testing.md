@@ -249,6 +249,138 @@ screenshots under `.vitest/attachments/` are included. Logs include
 fixture-server output; no live provider or household data belongs in these
 ordinary checks.
 
+### Intermittent failures
+
+Treat execution outcome and cause disposition separately. An unchanged retry
+that passes verifies that execution; it does not explain the original failure
+or establish a repair. Keep the original failure, inconclusive experiments
+and later passes together until evidence supports a cause and resolution.
+
+The Playwright diagnostics reporter writes `executions.jsonl` beside the
+runner log. Each version 1 record contains:
+
+- `test`: stable `key`, runner, project, file, full title, optional case ID
+  and source digest. Case IDs remain stable across moves; other tests use
+  project, path and title. Record an explicit mapping when those change.
+- `execution`: unique ID, commit and dirty state, CI run/job/attempt when
+  available, start time, retry/repeat, worker, start sequence and previous
+  test on that worker. It includes runner/configuration/selection, runtime,
+  font profile, tool versions and dependency-lock digest. `seed: null`
+  means unavailable or not applicable, not a default seed.
+- `outcome`, `expectedStatus`, duration and error count, plus `artifacts`
+  referencing retained logs, resource samples and test attachments.
+
+Raw command arguments and environment variables are not collected. Record the
+exact safe command in each experiment; redact secrets before retention.
+The runner records its effective filter and configuration, while each entry
+identifies an executed case. `SKYTTEL_TEST_EXPERIMENT` optionally supplies a
+short label using letters, digits, dots, underscores or hyphens. Unavailable
+context is `null`; do not infer versions, fonts or random seeds from a pass.
+Use the same record format for Vitest, browser-unit or Node tests, filling
+the context from their existing results and logs and marking missing fields
+explicitly. This does not require another test runner or reporter.
+
+Before another invocation replaces `test-results`, copy the relevant
+diagnostic directory and attachments into a uniquely named investigation
+directory outside runner output. Retain the original artifact locations,
+CI run/attempt URL, expiry, exact assertion and a short safe observation in
+the investigation. Paths in execution records are relative to the original
+working directory; record the copied location in the assessment. Retained
+files contain synthetic data only. Keep headers, cookies, tokens, transcripts,
+audio payloads and household contents out of new diagnostic records.
+
+Start one durable record per stable test key, then append later executions:
+
+```sh
+npm run test:investigate -- --record tmp/investigations/case.json \
+  --append retained/first/diagnostics/executions.jsonl --test <test-key>
+npm run test:investigate -- --record tmp/investigations/case.json \
+  --append retained/reproduction/diagnostics/executions.jsonl --test <test-key>
+```
+
+The first entry must be a failure. Existing execution IDs are immutable;
+re-importing identical evidence is harmless. Later passes leave the cause
+unresolved. This command records evidence only; it never executes or retries
+tests. Keep record files outside runner-cleaned output and copy their safe
+summary into the investigation's durable handoff before temporary artifacts
+expire. An existing sibling `.lock` means another writer owns the record;
+verify that writer has stopped before removing a stale claim.
+
+Investigate in bounded experiments:
+
+1. Preserve the original failure and separate facts from hypotheses. Identify
+   the specific missing observation that would distinguish the hypotheses.
+2. Select the smallest relevant cases and runtime profile. Define the
+   hypothesis, safe command, selection/order, finite attempt budget, stop
+   condition and expected distinguishing observation before running. For
+   example, compare one isolated case and one run with its suspected
+   predecessor, then stop and assess both results. Use repository npm scripts.
+3. Reuse unaffected passing evidence. Match CI fonts and runtime when relevant;
+   compare lockfile/tool versions and cgroup resource evidence before changing
+   timing. Expand selection only when a documented hypothesis requires it.
+4. At the budget limit, stop reproductions and record an unresolved next step
+   with the evidence needed, its owner and the condition for another attempt.
+   A full local suite needs explicit authorization. Real-model and real-voice
+   calls additionally require explicit authorization for billable calls;
+   credentials and opt-in flags are configuration only.
+
+Follow the evidence into these branches:
+
+- **Clocks and readiness:** identify browser Date/performance, runner
+  monotonic, real AudioContext and any injected server clocks. Advancing one
+  does not complete work on another. Observe readiness, completion and pending
+  work before asserting a timed contract. Keep real audio/network boundaries
+  where mocks would hide the behavior. Preserve the original timing assertion.
+- **Cleanup and order:** compare isolated and predecessor-inclusive runs;
+  record worker/repeat/seed and retained resources. Check pending requests,
+  subscriptions, media tracks, contexts and fixture-server shutdown. Repair
+  ownership or cleanup at the responsible helper when evidence establishes it.
+- **Environment:** correlate OOM/throttling counter changes, memory, renderer
+  stalls, fonts, browser/tool versions and dependency setup. Host totals alone
+  do not establish container capacity or a product defect.
+- **Product races:** preserve the observable failing transition and escalate
+  to the product boundary. A test-only repair workflow reports the required
+  production change rather than weakening its assertion.
+
+The shared media fixture exposes a bounded timeline through
+`skyttelVoiceFixture.diagnostics()`. Browser failure attachments include it:
+browser Date/performance may be simulated; AudioContext time remains real.
+Events identify held/released microphone requests, audio-context state,
+requested sound changes and cleanup, with pending microphone work and active
+resource counts. The last 128 events and a dropped-event count bound collection.
+Runner elapsed time uses its own monotonic clock. These observations support
+correlation; a requested sound change does not prove rendered playback.
+For focused successful reproductions, explicitly attach the same safe
+timeline to a file using `testInfo.outputPath` and `testInfo.attach`.
+
+Write the assessment separately and apply it with:
+
+```sh
+npm run test:investigate -- --record tmp/investigations/case.json \
+  --disposition assessment.json
+```
+
+An assessment has `cause` (`unresolved` or `confirmed`), `resolution` (`open`
+or `fixed`), `classification` (`unknown`, `environment`,
+`test-synchronization`, `test-isolation` or `product-race`), `facts`,
+`hypotheses`, `experiments` and `nextStep`. Each fact names an existing
+`execution` ID and an `observation`; preserve the assertion and safe artifact
+summary here. Each experiment includes `hypothesis`, `command`, `selection`,
+positive integer `maxAttempts`, `stop` and a `results` array of execution IDs.
+Record exceeded budgets explicitly; do not discard their evidence.
+
+A confirmed cause also needs an `explanation` tied to failure evidence.
+A fixed resolution additionally needs a `repair` reference and passing
+`regressions` execution IDs. These are investigator judgments: schema
+validation cannot prove causation. Require a controlled trigger, an explanation
+of the defect and focused regression evidence for the repair. A later failure
+reopens the investigation and preserves prior assessments. Open records need
+a specific next step; retain them even when publication gates subsequently pass.
+Never substitute longer arbitrary sleeps, skipped tests, lower thresholds or
+unreported retries for a cause investigation.
+
+### Interactive reruns
+
 For interactive reruns in a host browser, start Playwright's UI on the same
 forwarded port after stopping any report server:
 

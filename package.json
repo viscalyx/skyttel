@@ -33,6 +33,7 @@
     "test:env": "python3 scripts/testing/run-with-test-environment.py",
     "deps:prepare": "python3 scripts/testing/run-with-test-environment.py --prepare",
     "ci:watch": "node scripts/watch-ci.mjs",
+    "test:investigate": "node scripts/testing/investigation.mjs",
     "test:unit": "npm run test:env -- vitest run",
     "test:unit:coverage": "npm run test:env -- vitest run --coverage",
     "test:gates": "npm run test:env -- node --test --test-concurrency=1 scripts/__tests__/*.test.mjs scripts/release/__tests__/*.test.mjs scripts/security/__tests__/*.test.mjs",

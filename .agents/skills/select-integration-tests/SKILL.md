@@ -48,6 +48,11 @@ workflow to local verification; preserve CI's configured test scope.
 - Track scenarios, commands, runtime variants, results and the code and
   configuration tested. Preserve completed results from partial runs;
   record interrupted and unexecuted scenarios separately.
+- For intermittent failures, preserve the original and later executions using
+  [the investigation record](../../../docs/development/testing.md#intermittent-failures).
+  Reuse valid passing verification without treating it as a confirmed cause
+  or repair. Select reproductions from a bounded hypothesis-driven experiment;
+  retain unresolved cause follow-up independently of verification status.
 - After every change, invalidate earlier passes for every affected scenario.
   Include implementation, test, helper, dependency and runtime configuration
   changes. Expected behavior preservation is not evidence of a valid pass;
@@ -83,3 +88,6 @@ workflow to local verification; preserve CI's configured test scope.
 - Return commands, reused results and untested scope for the calling
   workflow's final report. Describe only the scope actually verified.
   Require another run only for missing or invalidated passing evidence.
+- Report unresolved intermittent investigations alongside verification results,
+  including their evidence record and next step. A later pass neither erases
+  their failure evidence nor requires unrelated passing scenarios to rerun.

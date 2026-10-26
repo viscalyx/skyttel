@@ -39,11 +39,16 @@ description: >-
    scenarios by spec file into phases; execute its required runs to collect
    failures.
 2. Pick one failing spec file.
-3. Inspect its existing failure evidence; reproduce only when needed for diagnosis.
+3. Inspect existing failure evidence. For an intermittent failure, follow
+   [intermittent investigation](../../../docs/development/testing.md#intermittent-failures)
+   before another run replaces artifacts: preserve the original execution,
+   separate facts from hypotheses, and set a bounded reproduction plan.
 4. Inspect Playwright output, traces, screenshots, console errors, app-server
    logs, and available memory diagnostics.
-5. Fix the smallest test defect that explains the failure. Repair a shared
-   helper once instead of copying a corrected implementation into a spec.
+5. Fix the smallest established test defect. Repair a shared helper once
+   instead of copying a corrected implementation into a spec. If the cause
+   remains unknown at the experiment limit, retain an unresolved record with
+   the attempted experiments and specific next step; continue other phases.
 6. Call the Skill tool with "select-integration-tests" after the fix;
    execute its required runs.
 7. Repeat steps 3-6 for each failing spec file.
@@ -61,6 +66,10 @@ description: >-
 - Use Playwright locator, navigation, and state waits instead of fixed
   timeouts.
 - Treat env-only failures as setup issues before changing spec code.
+- Report execution verification separately from cause disposition. An unchanged
+  pass preserves the original intermittent failure and unresolved follow-up.
+- Keep billable provider calls subject to explicit user authorization;
+  credentials and opt-in configuration do not authorize execution.
 - Do not edit production code, including application, component, hook, runtime
   library, translation, config, migration, or seed files.
 - If a production change is required, report
