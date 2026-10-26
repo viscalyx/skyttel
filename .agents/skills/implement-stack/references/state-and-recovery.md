@@ -7,8 +7,11 @@
   resuming work.
 - Store the journal, logs and catalog copies under `<state-root>/<spec-number>/`
   and put the resolved location on the Spec. Keep runtime state out of commits.
+- After discovery and legacy checks pass, create `<state-root>/<spec-number>/`
+  and any missing parent directories. Preserve existing contents.
 - Claim one writer per Spec through atomic directory creation at
-  `<state-root>/<spec-number>/writer.lock`; record session and Spec.
+  `<state-root>/<spec-number>/writer.lock` without recursive or exist-ok
+  options; an existing claim must fail acquisition. Record session and Spec.
   Different Specs may run concurrently with separate branches and worktrees;
   a second session for the same Spec must obtain the existing owner's handoff.
   Check the existing owner before resuming or taking over. Tracker assignment
