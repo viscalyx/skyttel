@@ -11,8 +11,10 @@ description: >-
 
 ## Scope
 
-- Apply [test placement](../maintain-manual-tests/references/cases.md#test-placement)
-  when changing coverage or moving technical checks between suites.
+- Call the Skill tool with "maintain-manual-tests" when changing coverage or
+  moving technical checks between suites. Keep integration scenarios as user
+  journeys; place standalone technical checks in the appropriate unit,
+  browser or tooling suite.
 - Edit failing specs and the shared helpers they use under `tests/support/`.
   Keep helper changes limited to test setup, assertions or measurements.
   Preserve production contracts and assertions.
@@ -23,24 +25,24 @@ description: >-
 
 ## Project Setup
 
-- Read `package.json`, the Playwright configuration, and the project's testing
-  guide to identify available suites, setup steps, and commands for running a
-  suite or a single spec. Use the project's scripts and supported arguments.
+- Read `package.json`, the Playwright configuration and test-environment scripts
+  to identify suites, preparation and commands for a suite or selected case.
+  Run builds and tests through repository npm scripts and supported arguments.
 - Chunks: only when project scripts, runner configuration, or testing docs
   define integration-test chunks, read [CHUNKS.md](CHUNKS.md) before building
   the phase list. Otherwise, use the suite and spec workflow below.
-- Complete the documented test setup before running tests.
+- Complete dependency and browser preparation required by those scripts before
+  running tests. Preserve existing data and configuration.
 
 ## Workflow
 
-1. Call the Skill tool with "select-integration-tests"
-   ([SKILL.md](../select-integration-tests/SKILL.md)), supplying user-provided
+1. Call the Skill tool with "select-integration-tests", supplying user-provided
    paths, reported failures and the current change. Group its selected
    scenarios by spec file into phases; execute its required runs to collect
    failures.
 2. Pick one failing spec file.
 3. Inspect existing failure evidence. For an intermittent failure, follow
-   [intermittent investigation](../../../docs/development/testing.md#intermittent-failures)
+   [intermittent investigation](references/intermittent-failures.md)
    before another run replaces artifacts: preserve the original execution,
    separate facts from hypotheses, and set a bounded reproduction plan.
 4. Inspect Playwright output, traces, screenshots, console errors, app-server
