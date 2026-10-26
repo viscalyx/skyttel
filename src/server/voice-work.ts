@@ -404,8 +404,7 @@ export function voiceWork({
     }
     events.add(event.event_id);
     observe?.('voice_event', {
-      type:
-        role === 'user' ? 'session.input_transcript.delta' : 'session.output_transcript.delta',
+      type: role === 'user' ? 'session.input_transcript.delta' : 'session.output_transcript.delta',
       role,
       event_id: event.event_id,
       delta: event.delta,
