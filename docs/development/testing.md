@@ -235,19 +235,101 @@ transition. Background scenarios wait up to 30 seconds for the canvas after
 returning from settings; functional test deadlines remain separate from
 the background profiler's response and frame budgets.
 
-CI runs unit coverage and the complete integration suite in separate,
-independent jobs. Workflow gates, lint, type checks, build validation and
-container checks remain in the `application` job. That required check
-also verifies that both test jobs succeeded.
+### CI groups and reruns
 
-On a failed CI job, download its `unit-test-diagnostics-<attempt>`,
-`integration-test-diagnostics-<attempt>` or
-`application-test-diagnostics-<attempt>` artifact from that workflow run.
-These retain failure artifacts and test command logs for seven days. Unit
-and container logs live separately from Playwright output. Vitest failure
-screenshots under `.vitest/attachments/` are included. Logs include
-fixture-server output; no live provider or household data belongs in these
-ordinary checks.
+CI starts unit coverage, static/build/container checks, and four integration
+groups independently. The small required `application` job checks every result;
+`security-gate` also requires security scanners and, on pull requests,
+devcontainer checks. Failed, missing, cancelled or unexpectedly skipped jobs
+fail these gates.
+
+Each integration group runs on its own runner with one Playwright worker.
+The grouping command discovers the complete configured suite and assigns
+whole files using observed durations. It preserves describe hooks, serial
+ordering and every discovered runtime identity. New tests join the partition
+automatically; the timing data is a balancing estimate, never a coverage list.
+Separate named jobs make each group's result explicit to the final gate.
+A collapsed matrix result is insufficient evidence that every group passed.
+
+Inspect the partition without running scenarios:
+
+```bash
+npm run test:integration:group -- --plan
+```
+
+This CI partition does not expand local verification scope. Continue selecting
+affected scenarios for local runs. Each group stops after its first failure
+and uploads diagnostics while unrelated groups continue. A failed group's
+remaining cases are unexecuted, not passing; retrying it runs the whole group.
+A successful aggregate requires all groups to succeed.
+
+Download a completed group's artifact while other jobs are still running:
+
+```bash
+gh run view RUN_ID --repo viscalyx/skyttel --json jobs
+gh run download RUN_ID --repo viscalyx/skyttel \
+  --name integration-test-diagnostics-group-GROUP-ATTEMPT \
+  --dir tmp/ci/RUN_ID/GROUP-ATTEMPT
+```
+
+Artifacts include the partition and coverage digest under `logs/tests/`,
+command output, execution records, and failure traces/screenshots under
+`test-results/`. They remain available for seven days, including successful
+group manifests. Preserve needed evidence before expiry. Unit and independent
+check failures retain `unit-test-diagnostics-<attempt>` and
+`checks-test-diagnostics-<attempt>`. Logs include fixture-server output;
+ordinary checks contain no live provider or household data.
+
+After preserving the failure evidence and investigating its cause, rerun only
+the failed group and its dependent gates:
+
+```bash
+gh run view RUN_ID --repo viscalyx/skyttel --json jobs \
+  --jq '.jobs[] | {name, databaseId}'
+gh run rerun RUN_ID --repo viscalyx/skyttel --job JOB_DATABASE_ID
+```
+
+Use the API `databaseId`, not a number copied from a browser URL. GitHub retains
+unrelated successful jobs in the same workflow run and uses the original
+commit/configuration for the rerun. Match run, commit, group, attempt and
+coverage digest when collecting evidence; successful groups may have earlier
+attempt numbers. Changed code, dependencies, configuration, fixtures or timing
+assignments require a new run for affected evidence. A retry of an old run
+cannot validate a newer head. A passing retry does not resolve an intermittent
+failure's cause.
+
+### CI timing baseline and partition tradeoffs
+
+The clean baseline
+[run 40360546138](https://github.com/viscalyx/skyttel/actions/runs/40360546138)
+uses commit `dcd7b30c`. Queue/start delay is about three seconds, integration
+setup is 49 seconds, integration execution is 68m47s, and the integration job
+takes 69m38s. Unit coverage takes 19m37s. Independent checks start only after
+integration and take 6m17s. The final required security gate finishes 76m13s
+after run creation.
+
+In the failing baseline
+[run 40320869902, attempt 1](https://github.com/viscalyx/skyttel/actions/runs/40320869902/attempts/1),
+the first assertion failure is at 12:40:24 UTC and artifact upload finishes at
+13:25:16 UTC: 44m52s later. The first actual client download time is unavailable.
+The integration job takes 71m52s and the final gate finishes 86m16s after run
+creation. The unchanged retry's integration job costs another 69m29s; unrelated
+successful jobs retain their first-attempt results.
+
+The timing file records per-file measurements from that successful retry.
+Greedy whole-file partitioning estimates about 34m14s per group with two
+runners, 22m49s with three, 17m07s with four, and 11m25s with six. Four groups
+put integration below the clean baseline's unit critical path. Six add setup
+and runner concurrency without improving that modeled critical path. Whole
+files avoid splitting shared fixture order; duration weighting avoids treating
+very different files as equal work.
+
+These estimates exclude new queue delays and are not measured speedups.
+Four groups add three installations/builds (about 49 seconds each at the
+baseline setup rate) while retaining roughly the same scenario runner time.
+A failed-group rerun repeats only that group's setup and scenarios, plus the
+small dependent gates. Hosted group timings, first diagnostic retrieval and
+partial-rerun results must be measured before claiming the projected savings.
 
 ### Intermittent failures
 
