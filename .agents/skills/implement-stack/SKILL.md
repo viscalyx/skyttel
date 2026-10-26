@@ -138,7 +138,7 @@ remains open.
   Account for local changes before describing the directory as the verified
   result. Locate it independently of the journal's storage location.
 - Derive required preparation and launch commands from that revision's
-  `package.json`, development scripts and `docs/development/devcontainer.md`.
+  `package.json`, development scripts and environment configuration.
   Check dependencies and available private configuration without exposing
   secrets. When ignored configuration is absent from the selected worktree,
   locate the existing file and export its absolute path through

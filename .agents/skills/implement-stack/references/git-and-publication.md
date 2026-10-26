@@ -9,12 +9,12 @@
   the version that started it.
 - All PR branches must be in the target repository. Resolve both the push
   remote and `gh repo view --json nameWithOwner`; gh-stack's `--remote` does
-  not override its API context. The fork-based `push-pr` skill does not fit
-  this publication path.
+  not override its API context.
 - Check `gh api 'repos/<owner>/<repo>/stacks?per_page=1'` for native stack
   availability. Read access alone does not establish publication permission.
-- Preserve other stacks and ongoing operations in the shared gh-stack catalog.
-  Use unique batch branches. `init --base <target>` leaves an existing local
+- Apply [catalog coordination](state-and-recovery.md#catalog-coordination)
+  around shared gh-stack operations. Use Spec-qualified branch, worktree and
+  recovery-ref names. `init --base <target>` leaves an existing local
   target alone, but can fetch and create it if absent; recheck the captured
   target after initialization.
 
