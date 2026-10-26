@@ -309,9 +309,10 @@ failure's cause.
 
 The clean baseline
 [run 40360546138](https://github.com/viscalyx/skyttel/actions/runs/40360546138)
-uses commit `dcd7b30c`. Queue/start delay is about three seconds, integration
-setup is 49 seconds, integration execution is 68m47s, and the integration job
-takes 69m38s. Unit coverage takes 19m37s. Independent checks start only after
+uses PR head `dcd7b30c` and tested merge checkout `23d31bb4`. Queue/start
+delay is about three seconds, integration setup is 49 seconds, integration
+execution is 68m47s, and the integration job
+takes 69m38s. The unit job takes 19m37s. Independent checks start only after
 integration and take 6m17s. The final required security gate finishes 76m13s
 after run creation.
 
@@ -320,10 +321,12 @@ In the failing baseline
 the first assertion failure is at 12:40:24 UTC and artifact upload finishes at
 13:25:16 UTC: 44m52s later. The first actual client download time is unavailable.
 The integration job takes 71m52s and the final gate finishes 86m16s after run
-creation. The unchanged retry's integration job costs another 69m29s; unrelated
-successful jobs retain their first-attempt results.
+creation. The unchanged retry uses PR head `5a748df8` and tested merge checkout
+`81f74844`. Its integration job costs another 69m29s; unrelated successful jobs
+retain their first-attempt results.
 
-The timing file records per-file measurements from that successful retry.
+The timing file records per-file measurements from that successful retry;
+its `baseline.commit` identifies the PR head.
 Greedy whole-file partitioning estimates about 34m14s per group with two
 runners, 22m49s with three, 17m07s with four, and 11m25s with six. Four groups
 put integration below the clean baseline's unit critical path. Six add setup
@@ -335,13 +338,52 @@ These estimates exclude new queue delays and are not measured speedups.
 Four groups add three installations/builds (about 49 seconds each at the
 baseline setup rate) while retaining roughly the same scenario runner time.
 A failed-group rerun repeats only that group's setup and scenarios, plus the
-small dependent gates. Hosted group timings, first diagnostic retrieval and
-partial-rerun results must be measured before claiming the projected savings.
+small dependent gates.
+
+The clean grouped comparison is
+[run 40384951504](https://github.com/viscalyx/skyttel/actions/runs/40384951504),
+PR head `8360c38b`, tested merge checkout `16480d74`. All required checks
+succeed. The application source, integration scenarios, dependency lock and
+Playwright configuration match the clean baseline. Both runs use Ubuntu
+runners, CI fonts and one worker per test job; the grouped run also includes
+the newer execution diagnostics. This is one observed comparison, not a
+guaranteed duration for future runs.
+
+| Measurement | Single integration job | Four integration groups |
+| --- | --- | --- |
+| Integration queue/start delay | 3s | 4–16s |
+| Integration setup per job | 49s | 39–56s |
+| Integration test execution | 68m47s | 18m19s / 12m52s / 18m00s / 18m03s |
+| Integration job duration | 69m38s | 19m15s / 13m35s / 19m00s / 18m54s |
+| Last integration job finishes after run creation | 69m41s | 19m31s |
+| Independent checks start after run creation | 69m44s | 4s |
+| Independent check job duration | 6m17s | 6m48s |
+| Unit job duration | 19m37s | 29m48s |
+| Final application gate duration | Included in independent checks | 8s |
+| Final security gate duration | 9s | 9s |
+| All required checks finish after run creation | 76m13s | 30m16s |
+| Sum of workflow job time | 103.73 runner-minutes | 116.75 runner-minutes |
+
+Grouped values follow group order 1–4. Retained execution records contain
+199, 192, 230 and 223 passing identities. Their unique union exactly matches
+all 844 identities discovered for this run, with one coverage digest and
+checkout across all manifests. The suite size is an observation, not a fixed
+future requirement.
+
+The observed full-check latency drops by 45m57s. Unit coverage becomes the
+critical path. Integration job time totals 70m44s versus 69m38s: 1m06s more
+runner time despite the much shorter elapsed wait. The whole-workflow total
+also includes a 10m11s longer unit job and variation in other jobs; it does
+not isolate partition overhead. Runner-minutes sum actual job durations,
+excluding queue delays, separate workflows, superseded development runs and
+billing rounding. Preserve this distinction when tuning concurrency from
+later measurements.
 
 Hosted failure/retry semantics are measured separately with a temporary,
 isolated fixture in
 [run 40383384614](https://github.com/viscalyx/skyttel/actions/runs/40383384614),
-commit `60f85efc`, on Ubuntu runners with one worker per group. One group
+PR head `60f85efc` and tested merge checkout `381c581a`, on Ubuntu runners
+with one worker per group. One group
 holds a bounded three-minute workload; the other fails deliberately on its
 first attempt and passes both of its cases on retry. This checks the actual
 artifact and partial-rerun platform behavior without changing application
