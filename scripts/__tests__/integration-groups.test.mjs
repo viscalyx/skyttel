@@ -147,3 +147,52 @@ test('group execution preserves file order, stops on failure and retains diagnos
     ['passed', 'passed', 'passed'],
   );
 });
+
+test('executing separate groups covers every configured project and escapes file patterns', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'integration-group-coverage-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const config = join(directory, 'playwright.config.mjs');
+  const output = join(directory, 'artifacts');
+  writeFileSync(
+    config,
+    `export default { testDir: ${JSON.stringify(directory)}, outputDir: ${JSON.stringify(output)}, workers: 1, projects: [{ name: 'desktop' }, { name: 'mobile' }] };`,
+  );
+  for (const name of ['[dynamic].spec.mjs', 'other.spec.mjs']) {
+    writeFileSync(
+      join(directory, name),
+      `import { test } from ${JSON.stringify(resolve('node_modules/@playwright/test/index.mjs'))}; test('journey', () => {});`,
+    );
+  }
+  const executions = [];
+  for (const group of ['1', '2']) {
+    const result = spawnSync(
+      process.execPath,
+      [
+        'scripts/testing/integration-groups.mjs',
+        '--group',
+        group,
+        '--groups',
+        '2',
+        '--config',
+        config,
+      ],
+      { encoding: 'utf8', timeout: 30_000 },
+    );
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const records = readFileSync(join(output, 'diagnostics', 'executions.jsonl'), 'utf8')
+      .trim()
+      .split('\n')
+      .map(JSON.parse);
+    assert.equal(records.length, 2);
+    assert.ok(records.every((record) => record.outcome === 'passed'));
+    executions.push(
+      ...records.map((record) => `${record.test.file.split('/').at(-1)}:${record.test.project}`),
+    );
+  }
+  assert.deepEqual(executions.sort(), [
+    '[dynamic].spec.mjs:desktop',
+    '[dynamic].spec.mjs:mobile',
+    'other.spec.mjs:desktop',
+    'other.spec.mjs:mobile',
+  ]);
+});

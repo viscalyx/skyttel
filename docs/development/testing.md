@@ -257,6 +257,13 @@ Inspect the partition without running scenarios:
 npm run test:integration:group -- --plan
 ```
 
+When durations drift, refresh `scripts/testing/integration-durations.json`
+from a complete successful run's sequential test timestamps. Record the
+source commit, run, attempt and job, plus elapsed seconds and discovered test
+counts per file. Compare the new plan's identity union and estimated loads.
+Changing the group count also requires updating the explicit workflow calls
+and aggregate prerequisites; the workflow tests check that they agree.
+
 This CI partition does not expand local verification scope. Continue selecting
 affected scenarios for local runs. Each group stops after its first failure
 and uploads diagnostics while unrelated groups continue. A failed group's
@@ -330,6 +337,30 @@ baseline setup rate) while retaining roughly the same scenario runner time.
 A failed-group rerun repeats only that group's setup and scenarios, plus the
 small dependent gates. Hosted group timings, first diagnostic retrieval and
 partial-rerun results must be measured before claiming the projected savings.
+
+Hosted failure/retry semantics are measured separately with a temporary,
+isolated fixture in
+[run 40383384614](https://github.com/viscalyx/skyttel/actions/runs/40383384614),
+commit `60f85efc`, on Ubuntu runners with one worker per group. One group
+holds a bounded three-minute workload; the other fails deliberately on its
+first attempt and passes both of its cases on retry. This checks the actual
+artifact and partial-rerun platform behavior without changing application
+assertions or claiming application performance from synthetic work.
+
+The failure is reported at 19:04:44.884 UTC, its artifact upload completes at
+19:04:46, and the first successful download completes at 19:04:53.937: 9.1
+seconds after the failure. The independent group is still running then and
+finishes at 19:07:44. Initial queue delays are three/four seconds and group
+setup takes 26/28 seconds. Group job durations are 3m31s and 34s; the failed
+aggregate takes seven seconds and finishes 3m44s after workflow creation.
+Total first-attempt job time is 4.20 runner-minutes, excluding queue time.
+
+Rerunning only the failed group's job at the same commit executes that group
+in 28 seconds and the dependent aggregate in nine seconds: 0.62 additional
+runner-minutes. The successful group's original 19:04:13–19:07:44 execution
+is retained. The final aggregate succeeds only after both cases in the
+retried group pass. These controlled costs establish the reuse behavior;
+they are not estimates of application-group rerun durations.
 
 ### Intermittent failures
 
