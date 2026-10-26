@@ -28,9 +28,18 @@ export function resume(input, state, acknowledgement) {
   if (
     state.version !== 1 ||
     state.watchId !== newState(input).watchId ||
-    !Array.isArray(state.pending)
+    !Array.isArray(state.pending) ||
+    !Number.isSafeInteger(state.sequence) ||
+    state.sequence < 0 ||
+    !Number.isFinite(state.nextPollAt) ||
+    state.nextPollAt < 0 ||
+    !Number.isFinite(state.lastHeartbeat) ||
+    state.lastHeartbeat < 0 ||
+    !Number.isFinite(state.interval) ||
+    state.interval < INITIAL_INTERVAL ||
+    state.interval > MAX_INTERVAL
   ) {
-    throw new Error('State belongs to another watch; preserve it and use a new state path');
+    throw new Error('Invalid state or another watch; preserve it and use a new state path');
   }
   if (acknowledgement) {
     const index = state.pending.findIndex((event) => event.id === acknowledgement);

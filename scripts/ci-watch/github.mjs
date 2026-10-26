@@ -211,16 +211,51 @@ async function requiredPolicy(input, api, root) {
   if (rules.some((rule) => rule.type === 'workflows'))
     throw new EvidenceError('Required workflow rules need an explicit policy adapter');
   if (info.protection.enabled) {
-    const protection = await api.get(
-      `${root}/branches/${branch}/protection/required_status_checks`,
-    );
-    if (!Array.isArray(protection.checks))
+    const protection = await api.get(`${root}/branches/${branch}/protection`);
+    const statusChecks = protection.required_status_checks;
+    if (statusChecks != null && !Array.isArray(statusChecks.checks))
       throw new EvidenceError('Required checks evidence missing');
     requirements.push(
-      ...protection.checks.map((check) => ({ context: check.context, appId: check.app_id })),
+      ...(statusChecks?.checks ?? []).map((check) => ({
+        context: check.context,
+        appId: check.app_id,
+      })),
     );
   }
   return requirements;
+}
+
+function boundCheck(job, appId, head, checks) {
+  return checks.find(
+    (item) =>
+      item.id === Number(job.check_run_url?.split('/').at(-1)) &&
+      item.app?.id === appId &&
+      item.name === job.name &&
+      item.head_sha === head,
+  );
+}
+
+function ambiguousProducer(check, pr, runs, checks, matchingJobs) {
+  const knownIds = new Set(matchingJobs.map((job) => Number(job.check_run_url?.split('/').at(-1))));
+  const producerKey = (run) => JSON.stringify([run.path, run.event, run.head_branch]);
+  const latest = new Map();
+  for (const run of [...runs].sort(
+    (a, b) => Date.parse(b.created_at) - Date.parse(a.created_at) || b.id - a.id,
+  )) {
+    if (!latest.has(producerKey(run))) latest.set(producerKey(run), run.id);
+  }
+  return checks.some((item) => {
+    if (
+      item.app?.id !== check.appId ||
+      item.name !== check.context ||
+      item.head_sha !== pr.head ||
+      knownIds.has(item.id)
+    )
+      return false;
+    const producer = runs.find((run) => run.check_suite_id === item.check_suite?.id);
+    // An unbound check or a second current producer cannot satisfy one unambiguous policy context.
+    return !producer || latest.get(producerKey(producer)) === producer.id;
+  });
 }
 
 async function checkEvidence(check, input, pr, runs, checks, api, root) {
@@ -229,6 +264,7 @@ async function checkEvidence(check, input, pr, runs, checks, api, root) {
     appId: check.appId,
     workflow: check.workflow,
     event: check.event,
+    ...(check.readyAfter ? { readyAfter: check.readyAfter } : {}),
   };
   const candidates = runs.filter(
     (run) =>
@@ -270,13 +306,7 @@ async function checkEvidence(check, input, pr, runs, checks, api, root) {
         job.run_attempt === run.run_attempt &&
         job.status === 'completed' &&
         failedConclusions.has(job.conclusion) &&
-        checks.some(
-          (item) =>
-            item.id === Number(job.check_run_url?.split('/').at(-1)) &&
-            item.app?.id === check.appId &&
-            item.name === job.name &&
-            item.head_sha === pr.head,
-        ),
+        boundCheck(job, check.appId, pr.head, checks),
     )
     .map((job) => ({
       job: job.id,
@@ -304,20 +334,15 @@ async function checkEvidence(check, input, pr, runs, checks, api, root) {
     };
   if (matching.filter((other) => other.run_attempt === job.run_attempt).length !== 1)
     return { ...current, state: 'unknown', reason: 'Ambiguous job identity' };
-  const checkId = Number(job.check_run_url?.split('/').at(-1));
-  const bound = checks.find(
-    (item) =>
-      item.id === checkId &&
-      item.app?.id === check.appId &&
-      item.name === check.context &&
-      item.head_sha === pr.head,
-  );
+  const bound = boundCheck(job, check.appId, pr.head, checks);
   if (!bound)
     return {
       ...current,
       state: 'unknown',
       reason: 'Job/check application identity not established',
     };
+  if (ambiguousProducer(check, pr, runs, checks, matching))
+    return { ...current, state: 'unknown', reason: 'Ambiguous required-check producer' };
   current.job = job.id;
   current.jobAttempt = job.run_attempt;
   current.url = job.html_url;
@@ -395,7 +420,7 @@ export async function observe(input, api, now = Date.now) {
         if (found.retryAt) {
           return {
             ...result,
-            state: found.state,
+            state: found.state === 'successful' ? 'unknown' : found.state,
             retryAt: found.retryAt,
             blockers: ['Diagnostics rate limited; remaining evidence not refreshed'],
             prs: [

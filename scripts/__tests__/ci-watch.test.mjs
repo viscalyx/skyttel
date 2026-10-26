@@ -32,6 +32,7 @@ const run = {
   id: 100,
   run_attempt: 1,
   run_number: 10,
+  check_suite_id: 500,
   head_sha: head,
   head_branch: 'feature',
   path: check.workflow,
@@ -88,7 +89,17 @@ function responses({ conclusion, attempt = 1, jobs, artifacts = [] } = {}) {
       },
     },
     [paths.checks]: {
-      body: { check_runs: [{ id: 200, name: 'application', head_sha: head, app: { id: 15368 } }] },
+      body: {
+        check_runs: [
+          {
+            id: 200,
+            name: 'application',
+            head_sha: head,
+            app: { id: 15368 },
+            check_suite: { id: 500 },
+          },
+        ],
+      },
     },
     [paths.jobs]: {
       body: {
@@ -468,8 +479,8 @@ test('CLI follows pagination and legacy required-check policy', (t) => {
   };
   base[paths.checks.replace('&page=1', '&page=2')] = { body: { check_runs: bound } };
   base[paths.branch] = { body: { protection: { enabled: true } } };
-  base[`${root}/branches/main/protection/required_status_checks`] = {
-    body: { checks: [{ context: 'application', app_id: 15368 }] },
+  base[`${root}/branches/main/protection`] = {
+    body: { required_status_checks: { checks: [{ context: 'application', app_id: 15368 }] } },
   };
   const result = harness(t).execute({ base, args: ['--once'] });
   assert.equal(result.status, 0, result.stderr);
@@ -494,4 +505,107 @@ test('CLI reports dependency failures while the required aggregate job is still 
     result.events[0].snapshot.prs[0].checks[0].workflowFailures.map((failure) => failure.name),
     ['unit'],
   );
+});
+
+test('CLI never exits successfully when diagnostics rate limiting interrupts remaining gates', (t) => {
+  const h = harness(t, {
+    ...input,
+    prs: [{ ...input.prs[0], checks: [check, { ...check, context: 'security-gate' }] }],
+  });
+  const base = responses({
+    conclusion: 'success',
+    jobs: [
+      { ...job, status: 'completed', conclusion: 'success' },
+      {
+        ...job,
+        id: 201,
+        name: 'unit',
+        status: 'completed',
+        conclusion: 'failure',
+        check_run_url: 'https://api.github.com/check-runs/201',
+      },
+    ],
+  });
+  base[paths.checks].body.check_runs.push({
+    id: 201,
+    name: 'unit',
+    head_sha: head,
+    app: { id: 15368 },
+  });
+  base[paths.artifacts] = { status: 429, body: {}, headers: { 'retry-after': '600' } };
+  const result = h.execute({ base, args: ['--once'] });
+  assert.equal(result.status, 3);
+  assert.equal(result.events[0].snapshot.state, 'unknown');
+});
+
+test('CLI rejects a conflicting current producer of the required context in another workflow', (t) => {
+  const base = responses({ conclusion: 'success' });
+  base[paths.runs].body.workflow_runs.push({
+    ...run,
+    id: 101,
+    check_suite_id: 501,
+    path: '.github/workflows/other.yml',
+    status: 'completed',
+    conclusion: 'failure',
+  });
+  base[paths.checks].body.check_runs.push({
+    id: 201,
+    name: 'application',
+    head_sha: head,
+    app: { id: 15368 },
+    check_suite: { id: 501 },
+    conclusion: 'failure',
+  });
+  const result = harness(t).execute({ base, args: ['--once'] });
+  assert.equal(result.status, 3);
+  assert.match(result.events[0].snapshot.prs[0].checks[0].reason, /producer/);
+});
+
+test('CLI accepts explicit review-only legacy protection with no legacy status checks', (t) => {
+  const base = responses({ conclusion: 'success' });
+  base[paths.branch] = { body: { protection: { enabled: true } } };
+  base[`${root}/branches/main/protection`] = {
+    body: { required_pull_request_reviews: { required_approving_review_count: 1 } },
+  };
+  const result = harness(t).execute({ base, args: ['--once'] });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('CLI treats corrupt resume scheduling as invalid and preserves the state file', (t) => {
+  const h = harness(t);
+  h.execute({ args: ['--once'] });
+  const state = h.state();
+  state.interval = 0;
+  const damaged = JSON.stringify(state);
+  writeFileSync(h.file('state.json'), damaged);
+  const result = h.execute({ args: ['--once'] });
+  assert.equal(result.status, 64);
+  assert.equal(readFileSync(h.file('state.json'), 'utf8'), damaged);
+});
+
+test('CLI separates a superseded failed attempt from its successful retry with the same name', (t) => {
+  const base = responses({
+    conclusion: 'success',
+    attempt: 2,
+    jobs: [
+      { ...job, run_attempt: 2, status: 'completed', conclusion: 'success' },
+      {
+        ...job,
+        id: 199,
+        status: 'completed',
+        conclusion: 'failure',
+        check_run_url: 'https://api.github.com/check-runs/199',
+      },
+    ],
+  });
+  base[paths.checks].body.check_runs.push({
+    ...base[paths.checks].body.check_runs[0],
+    id: 199,
+    conclusion: 'failure',
+  });
+  const result = harness(t).execute({ base, args: ['--once'] });
+  assert.equal(result.status, 0, result.stderr);
+  const evidence = result.events[0].snapshot.prs[0].checks[0];
+  assert.deepEqual(evidence.workflowFailures, []);
+  assert.deepEqual(evidence.history, [{ run: 100, attempt: 1, job: 199, conclusion: 'failure' }]);
 });
