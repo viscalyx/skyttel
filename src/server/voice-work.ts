@@ -403,7 +403,15 @@ export function voiceWork({
       return;
     }
     events.add(event.event_id);
-    observe?.('voice_event', { role, ...event });
+    observe?.('voice_event', {
+      type:
+        role === 'user' ? 'session.input_transcript.delta' : 'session.output_transcript.delta',
+      role,
+      event_id: event.event_id,
+      delta: event.delta,
+      start_ms: event.start_ms,
+      end_ms: event.end_ms,
+    });
     transcript?.(role, event.delta);
     if (role === 'user') {
       inputVersion++;

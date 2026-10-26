@@ -265,6 +265,7 @@ test.each([
     live.emit(providerId, {
       type: 'session.input_transcript.delta',
       event_id: 'fragment-1',
+      role: 'assistant',
       delta: 'Min blå cykel.',
       start_ms: 0,
       end_ms: 1,
@@ -291,6 +292,27 @@ test.each([
       voiceSessionId: voice.id,
       traceId: voice.id,
       spanId: voice.id,
+    });
+    live.emit(providerId, {
+      type: 'session.output_transcript.delta',
+      event_id: 'output-fragment-1',
+      role: 'user',
+      delta: 'Jag lyssnar.',
+      start_ms: 0,
+      end_ms: 1,
+    });
+    const output = events.find(
+      (event) =>
+        event.kind === 'voice_event' &&
+        (event.data as { event_id?: string }).event_id === 'output-fragment-1',
+    );
+    expect(output?.data).toEqual({
+      type: 'session.output_transcript.delta',
+      role: 'assistant',
+      event_id: 'output-fragment-1',
+      delta: 'Jag lyssnar.',
+      start_ms: 0,
+      end_ms: 1,
     });
     live.emit(providerId, {
       type: 'session.delegation.created',
