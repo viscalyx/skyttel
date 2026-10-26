@@ -25,18 +25,26 @@ export function TraceSending() {
   const [error, setError] = useState(false);
   const [message, setMessage] = useState('');
   const heading = useRef<HTMLHeadingElement>(null);
+  const requestVersion = useRef(0);
   useEffect(() => {
     heading.current?.focus();
     const controller = new AbortController();
+    const version = ++requestVersion.current;
     void request<TraceSendingStatus>('/api/operator/tracing', undefined, controller.signal)
-      .then(setValue)
+      .then((next) => {
+        if (requestVersion.current === version) setValue(next);
+      })
       .catch(() => {
-        if (!controller.signal.aborted) setError(true);
+        if (!controller.signal.aborted && requestVersion.current === version) setError(true);
       });
-    return () => controller.abort();
+    return () => {
+      requestVersion.current++;
+      controller.abort();
+    };
   }, []);
   async function update(action?: 'enable' | 'disable' | 'restart') {
     if (busy) return;
+    const version = ++requestVersion.current;
     setBusy(true);
     setError(false);
     setMessage('');
@@ -45,12 +53,13 @@ export function TraceSending() {
         '/api/operator/tracing',
         action ? { action } : undefined,
       );
+      if (requestVersion.current !== version) return;
       setValue(next);
       setMessage(action ? 'Sändningsvalet är sparat.' : 'Leveransstatusen är uppdaterad.');
     } catch {
-      setError(true);
+      if (requestVersion.current === version) setError(true);
     } finally {
-      setBusy(false);
+      if (requestVersion.current === version) setBusy(false);
     }
   }
   return (

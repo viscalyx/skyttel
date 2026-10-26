@@ -11,16 +11,19 @@ och är hushållsadministratör utan installationsansvar.
 
 ## Allmän förberedelse
 
-1. Bygg med `npm run build`. Starta en separat tillfällig installation:
+1. Bygg med `npm run build`. För SPARNING-01, starta utan leveransadapter:
+   `npm run test:env -- tsx scripts/manual-tracing.ts --disconnected`.
+   För övriga fall, starta med kontrollerad adapter:
    `npm run test:env -- tsx scripts/manual-tracing.ts`.
    Ingen modellnyckel, inget verkligt LangSmith-konto och inga uppladdningar
    används. Vid fjärrkörning, vidarebefordra den utskrivna porten privat.
 2. Öppna utskriven adress. Välj nödvändig lagring och logga in som Alex.
    Öppna `/costs` på samma adress. Öppna **Välj inställning** vid behov
    och välj **Diagnostik med LangSmith** under **Drift**.
-3. Terminalkommandona nedan styr den kontrollerade adaptern. För att prova
-   **Inte ansluten**, använd i stället ordinarie utvecklingsmiljö utan
-   ansluten leverans. Håll de två konfigurationerna åtskilda.
+3. Båda lägena använder kontrollerade identiteter och en egen tillfällig
+   databas. `restart` startar om samma installation med samma databas och
+   samma valda adapterläge. I anslutet läge styr övriga terminalkommandon
+   den kontrollerade adaptern. Det frånkopplade läget saknar dessa kommandon.
 4. Starta en ny tillfällig installation mellan fallen. Avsluta med `quit`
    och kontrollera att den utskrivna tillfälliga katalogen tas bort.
    Det raderar bara testinstallationens data och inloggningar.
@@ -48,7 +51,8 @@ och är hushållsadministratör utan installationsansvar.
 
 **Syfte:** Styra installationens val utan att förväxla det med leverans.
 
-**Användare:** Alex. **Förutsättning:** Ingen ansluten leverans.
+**Användare:** Alex. **Förutsättning:** Starta den tillfälliga
+installationen med `--disconnected` enligt förberedelsen.
 
 **Steg:**
 
@@ -57,8 +61,9 @@ och är hushållsadministratör utan installationsansvar.
 2. Fokusera **Stäng av sändning** med tangentbordet och tryck Enter.
 3. Kontrollera sparbesked och **Sändning avstängd**. Kontrollera att
    fokus är kvar på knappen, som nu heter **Aktivera sändning**.
-4. Starta om samma utvecklingsinstallation utan att återställa data.
-   Ladda om sidan. Kontrollera **Sändning avstängd**.
+4. Skriv `restart` i startterminalen. Kontrollera att adress och
+   tillfällig katalog är oförändrade. Ladda om sidan och kontrollera
+   **Sändning avstängd**.
 5. Välj **Aktivera sändning**. Läs **Inte ansluten**, skillnaden mot
    samtalsmedgivande och att skickade förfrågningar inte kan återkallas.
 

@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { TraceSending } from '../../src/client/TraceSending.js';
@@ -9,6 +9,41 @@ import '../../src/client/settings.css';
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+test('a delayed initial status cannot replace a newer confirmed sending choice', {
+  tags: ['technical'],
+}, async () => {
+  let resolveInitial: (response: Response) => void = () => {};
+  const initial = new Promise<Response>((resolve) => {
+    resolveInitial = resolve;
+  });
+  const disabled = {
+    connected: true,
+    enabled: false,
+    state: 'disabled',
+    suspension: null,
+    lastSuccessfulDelivery: null,
+    droppedEvents: 0,
+    lastError: null,
+  };
+  let requests = 0;
+  vi.stubGlobal('fetch', async (_url: string, options?: RequestInit) => {
+    if (requests++ === 0) return initial;
+    return Response.json(
+      options?.method === 'POST' ? { ...disabled, enabled: true, state: 'sending' } : disabled,
+    );
+  });
+  render(<TraceSending />);
+  await page.getByRole('button', { name: 'Uppdatera leveransstatus' }).click();
+  await expect.element(page.getByRole('button', { name: 'Aktivera sändning' })).toBeVisible();
+  await page.getByRole('button', { name: 'Aktivera sändning' }).click();
+  await expect.element(page.getByText('Sändning aktiverad', { exact: true })).toBeVisible();
+  await act(async () => {
+    resolveInitial(Response.json(disabled));
+  });
+  await expect.element(page.getByText('Sändning aktiverad', { exact: true })).toBeVisible();
+  await expect.element(page.getByRole('button', { name: 'Stäng av sändning' })).toBeVisible();
 });
 
 for (const theme of ['light', 'dark']) {
@@ -39,8 +74,9 @@ for (const theme of ['light', 'dark']) {
       </div>,
     );
     await expect.element(page.getByRole('button', { name: 'Stäng av sändning' })).toBeVisible();
-    const panel = page.getByRole('heading', { name: 'Diagnostik med LangSmith' }).element()
-      .parentElement;
+    const panel = page
+      .getByRole('heading', { name: 'Diagnostik med LangSmith' })
+      .element().parentElement;
     if (!panel) throw new Error('Missing diagnostic panel');
     for (const element of panel.querySelectorAll('p, dt, dd, button')) {
       if (!element.textContent?.trim()) continue;
