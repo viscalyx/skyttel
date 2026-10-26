@@ -117,8 +117,10 @@ would add pushes and generated PR text; `sync` also reconciles remote state.
    Once all evidence is valid, mark each PR ready with
    `gh pr ready <pr> --repo <owner/repo>`. Read back the complete stack again
    and start the watcher's ready phase with the applicable readiness-triggered
-   checks. Require successful current evidence from that phase. Report outstanding
-   human approvals separately from required CI.
+   checks. Require fresh successful evidence after each readiness-triggered
+   check's `readyAfter` boundary. Checks without `readyAfter` may reuse
+   successful evidence from the same head. Report outstanding human approvals
+   separately from required CI.
 
 Completion: exact intended PRs, order, heads, and bases are confirmed;
 every PR is non-draft with valid required checks. For later changes, restore

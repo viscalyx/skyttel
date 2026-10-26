@@ -46,6 +46,10 @@
   continued or safely aborted. Other Specs can keep working independently
   while their catalog mutations wait.
 - After interruption, obtain the catalog owner's handoff before recovery.
+  The handoff must transfer ownership of the retained
+  `<state-root>/catalog.lock` to the recovery process, or safely abort the
+  paused operation and release the lock so other Specs can resume catalog
+  mutations.
   Reconcile current state with the saved copy and restore only this Spec's
   records; a whole-catalog rollback can discard another Spec's later work.
 
