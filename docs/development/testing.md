@@ -1,8 +1,9 @@
 # Run Skyttel tests
 
 Prepare dependencies and Chromium with the
-[development environment guide](devcontainer.md). Run these commands from
-the repository root. Automated tests create temporary databases and
+[worktree preparation guide](devcontainer.md#prepare-an-additional-worktree).
+Run these commands from the repository root. Automated tests create temporary
+databases and
 synthetic identities; they need no provider credentials or running
 `npm run dev:all` process.
 
@@ -12,12 +13,21 @@ and runs its graphics, server and client projects one after another. Node
 workflow gate tests run one file at a time. This reduces resource contention
 at the cost of longer test runs.
 
-Builds and test commands also share an operating-system lock across the
-user's worktrees. A second command exits with status 75 and identifies the
+Dependency preparation, builds and verification commands share an
+operating-system lock across the user's worktrees. A second command exits
+with status 75 and identifies the
 active command; rerun it after that command finishes. The lock is released
 when the process exits, including after interruption. Use the npm scripts
 instead of launching test runners directly. These commands require Python 3
 on Linux or macOS; Python is included in the devcontainer.
+
+Before execution, verification checks the checkout's dependency setup.
+Exit status 78 and `Skyttel dependency setup failed` identify an environment
+failure: follow the diagnostic and rerun the selected command after preparing
+that checkout. The expensive child command has not started. Verification
+never repairs dependencies automatically. Test assertions and coverage failures
+keep their child exit status; interrupted or incomplete runs are not passes,
+and partial coverage is not evidence of a coverage regression.
 
 ## Model evaluation history
 
