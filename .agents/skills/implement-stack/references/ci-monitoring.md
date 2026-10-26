@@ -1,7 +1,18 @@
 # CI monitoring
 
-Use `npm run ci:watch -- --input <manifest.json> --state <state.json>` for
-each publication wait. Keep these files in the Spec's journal directory.
+Use the [bundled watcher](../scripts/watch-ci.mjs) for each publication wait.
+Resolve the skill directory from this skill's location and invoke its absolute
+path with Node.js 24 or newer:
+
+```sh
+node '<skill-directory>/scripts/watch-ci.mjs' \
+  --input '<manifest.json>' --state '<state.json>'
+```
+
+The watcher uses Node built-ins and GitHub authentication through `GH_TOKEN`,
+`GITHUB_TOKEN` or `gh auth`. It requires no repository npm script, dependency
+installation or particular working directory. Keep its manifest and state files
+in the Spec's journal directory.
 Use separate state files for published and ready phases. Run the watcher
 as a background process with JSON lines redirected to a journal file;
 consume its events instead of issuing independent CI polling commands.
@@ -88,8 +99,8 @@ For a user status request, run the same command with `--status`. It immediately
 returns cached evidence, observation age, next observation time and `stale`;
 describe it as evidence from that time. `--once` refreshes when polling is due,
 otherwise it preserves the scheduled delay. Neither option bypasses a server
-retry limit. `--help` lists invocation options and exit statuses. Use npm's
-`--silent` option when capturing stdout as JSON lines.
+retry limit. `--help` lists invocation options and exit statuses. The Node
+command writes JSON lines directly to stdout.
 
 Polling starts at 15 seconds, doubles after unchanged observations, and caps
 at five minutes. Changes reset the interval. Server retry delays can extend
@@ -104,10 +115,10 @@ Heartbeat output is status evidence, not an instruction to send chat messages.
 Ctrl-C or termination stops observation without changing CI or publication
 state. Resume with the same manifest and state path; changed manifests
 require new state files. An atomic sibling lock prevents concurrent state
-writers. After an unclean termination, verify the process in `owner.json`
-has stopped before removing its lock directory. Preserve state and event
-files. The command only reads GitHub; readiness, repairs, approvals and
-publication remain the orchestrator's responsibility.
+writers. On restart, the watcher reclaims a lock only when the PID in
+`owner.json` is confirmed gone; live or unverifiable owners block acquisition.
+Preserve state and event files. The command only reads GitHub; readiness,
+repairs, approvals and publication remain the orchestrator's responsibility.
 
 ## Runtime instruction handoff
 

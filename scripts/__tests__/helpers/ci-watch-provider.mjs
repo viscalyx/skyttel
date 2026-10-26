@@ -1,4 +1,4 @@
-// Substitute only the CLI's external network and wall-clock boundaries.
+// Substitute the CLI's external network, wall-clock and process-probe boundaries.
 import { appendFileSync, readFileSync } from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import timers from 'node:timers/promises';
@@ -8,9 +8,18 @@ let clock = fixture.start;
 Date.now = () => clock;
 timers.setTimeout = async (ms) => {
   clock += ms;
-  if (clock >= fixture.stopAt) process.emit('SIGINT');
+  if (clock >= fixture.stopAt) process.emit(fixture.signal ?? 'SIGINT');
 };
 syncBuiltinESMExports();
+
+if (fixture.probeError) {
+  const kill = process.kill.bind(process);
+  process.kill = (pid, signal) => {
+    if (signal === 0)
+      throw Object.assign(new Error('Process probe denied'), { code: fixture.probeError });
+    return kill(pid, signal);
+  };
+}
 
 globalThis.fetch = async (url, options) => {
   const path = String(url).replace('https://api.github.com/', '');

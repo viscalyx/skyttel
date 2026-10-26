@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, rmdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { parseArgs } from 'node:util';
 import { githubClient, observe, validateInput } from './ci-watch/github.mjs';
 import { newState, resume, status, watch } from './ci-watch/watch.mjs';
 
-const help = `Usage: npm run ci:watch -- --input <manifest.json> --state <state.json>
+const help = `Usage: node <skill-directory>/scripts/watch-ci.mjs --input <manifest.json> --state <state.json>
   --once             Observe once when polling is due; respect server retry delays
   --status           Immediately print cached status, observation age and staleness
   --ack <event-id>    Acknowledge pending events through this ID when resuming
@@ -22,6 +22,49 @@ Read-only GitHub Actions observation; authentication: GH_TOKEN, GITHUB_TOKEN or 
 Exit: 0 successful, 1 failed, 2 pending, 3 unknown, 4 inaccessible, 5 diverged,
 64 invalid invocation/state, 130 interrupted. Failed checks remain watched for diagnostics/retries.
 `;
+
+async function requireGoneOwner(lock) {
+  let owner;
+  try {
+    owner = JSON.parse(await readFile(`${lock}/owner.json`, 'utf8'));
+    if (!Number.isSafeInteger(owner?.pid) || owner.pid <= 0 || owner.pid > 2_147_483_647)
+      throw new Error('invalid PID');
+  } catch (error) {
+    throw new Error(`Lock ${lock} has an unverifiable owner in owner.json: ${error.message}`);
+  }
+  try {
+    process.kill(owner.pid, 0);
+  } catch (error) {
+    if (error.code === 'ESRCH') return owner.pid;
+    throw new Error(`Lock ${lock} owner PID ${owner.pid} is unverifiable: ${error.message}`);
+  }
+  throw new Error(`Lock ${lock} is held by live owner PID ${owner.pid}`);
+}
+
+async function acquireLock(lock) {
+  try {
+    await mkdir(lock);
+    return;
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+  }
+  const pid = await requireGoneOwner(lock);
+  // Serialize recovery so competing resumptions cannot remove a replacement lock.
+  const recovery = `${lock}.reclaim`;
+  try {
+    await mkdir(recovery);
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    throw new Error(`Lock ${lock} owner PID ${pid} has an unresolved recovery at ${recovery}`);
+  }
+  try {
+    await requireGoneOwner(lock);
+    await rm(lock, { recursive: true });
+    await mkdir(lock);
+  } finally {
+    await rmdir(recovery);
+  }
+}
 
 async function main() {
   const { values } = parseArgs({
@@ -65,11 +108,12 @@ async function main() {
   }
   await mkdir(dirname(path), { recursive: true });
   const lock = `${path}.lock`;
-  await mkdir(lock); // Atomic: an existing writer must fail acquisition.
+  await acquireLock(lock);
   const controller = new AbortController();
   const interrupt = () => controller.abort();
   process.on('SIGINT', interrupt);
   process.on('SIGTERM', interrupt);
+  process.on('SIGHUP', interrupt);
   try {
     await writeFile(
       `${lock}/owner.json`,
@@ -112,6 +156,7 @@ async function main() {
   } finally {
     process.off('SIGINT', interrupt);
     process.off('SIGTERM', interrupt);
+    process.off('SIGHUP', interrupt);
     await rm(lock, { recursive: true });
   }
 }

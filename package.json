@@ -32,7 +32,7 @@
     "test": "npm run build && npm run test:unit && npm run test:integration",
     "test:env": "python3 scripts/testing/run-with-test-environment.py",
     "deps:prepare": "python3 scripts/testing/run-with-test-environment.py --prepare",
-    "ci:watch": "node scripts/watch-ci.mjs",
+    "ci:watch": "node .agents/skills/implement-stack/scripts/watch-ci.mjs",
     "test:investigate": "node scripts/testing/investigation.mjs",
     "test:unit": "npm run test:env -- vitest run",
     "test:unit:coverage": "npm run test:env -- vitest run --coverage",

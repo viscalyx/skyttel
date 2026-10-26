@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -127,12 +127,16 @@ function harness(t, manifest = input) {
     stopAfter = 1000,
     at = start,
     args = [],
+    signal,
+    probeError,
   } = {}) {
     writeFileSync(
       file('fixture.json'),
       JSON.stringify({
         start: at,
         stopAt: at + stopAfter,
+        signal,
+        probeError,
         responses: base,
         steps: [{ at: 0, responses: {} }, ...steps],
       }),
@@ -142,7 +146,7 @@ function harness(t, manifest = input) {
       [
         '--import',
         './scripts/__tests__/helpers/ci-watch-provider.mjs',
-        'scripts/watch-ci.mjs',
+        '.agents/skills/implement-stack/scripts/watch-ci.mjs',
         '--input',
         file('input.json'),
         '--state',
@@ -242,6 +246,73 @@ test('CLI preserves acknowledged notifications and unfinished work across interr
   assert.equal(completed.events.length, 1);
   assert.equal(completed.events[0].snapshot.state, 'successful');
 });
+
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  test(`CLI releases its writer lock and preserves resumable state on ${signal}`, (t) => {
+    const h = harness(t);
+    const interrupted = h.execute({ signal });
+    assert.equal(interrupted.status, 130, interrupted.stderr);
+    assert.equal(existsSync(h.file('state.json.lock')), false);
+    assert.equal(h.state().snapshot.state, 'pending');
+    const resumed = h.execute({ at: start + 15_000, base: responses({ conclusion: 'success' }) });
+    assert.equal(resumed.status, 0, resumed.stderr);
+  });
+}
+
+test('CLI serializes stale-lock recovery and resumes preserved evidence', (t) => {
+  const h = harness(t);
+  const first = h.execute({ args: ['--once'] });
+  const exited = spawnSync(process.execPath, ['-e', 'console.log(process.pid)'], {
+    encoding: 'utf8',
+  });
+  assert.equal(exited.status, 0);
+  const pid = Number(exited.stdout.trim());
+  assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
+  mkdirSync(h.file('state.json.lock'));
+  const owner = JSON.stringify({ pid });
+  writeFileSync(h.file('state.json.lock/owner.json'), owner);
+  mkdirSync(h.file('state.json.lock.reclaim'));
+  const blocked = h.execute({ args: ['--once'] });
+  assert.equal(blocked.status, 64);
+  assert.ok(blocked.stderr.includes(`owner PID ${pid} has an unresolved recovery`));
+  assert.equal(readFileSync(h.file('state.json.lock/owner.json'), 'utf8'), owner);
+  rmSync(h.file('state.json.lock.reclaim'), { recursive: true });
+  const resumed = h.execute({ args: ['--once'] });
+  assert.equal(resumed.status, 2, resumed.stderr);
+  assert.equal(resumed.events[0].id, first.events[0].id);
+  assert.equal(existsSync(h.file('state.json.lock')), false);
+  assert.equal(existsSync(h.file('state.json.lock.reclaim')), false);
+});
+
+for (const [name, owner, probeError, message] of [
+  ['live', JSON.stringify({ pid: process.pid }), undefined, `live owner PID ${process.pid}`],
+  ['missing', undefined, undefined, 'unverifiable owner in owner.json'],
+  ['malformed', '{', undefined, 'unverifiable owner in owner.json'],
+  ['invalid PID', JSON.stringify({ pid: 0 }), undefined, 'unverifiable owner in owner.json'],
+  [
+    'permission denied',
+    JSON.stringify({ pid: process.pid }),
+    'EPERM',
+    `owner PID ${process.pid} is unverifiable`,
+  ],
+]) {
+  test(`CLI preserves a lock and state when its owner is ${name}`, (t) => {
+    const h = harness(t);
+    h.execute({ args: ['--once'] });
+    const saved = readFileSync(h.file('state.json'), 'utf8');
+    mkdirSync(h.file('state.json.lock'));
+    if (owner !== undefined) writeFileSync(h.file('state.json.lock/owner.json'), owner);
+    const blocked = h.execute({ probeError });
+    assert.equal(blocked.status, 64);
+    assert.ok(blocked.stderr.includes(h.file('state.json.lock')), blocked.stderr);
+    assert.ok(blocked.stderr.includes(message), blocked.stderr);
+    assert.deepEqual(blocked.events, []);
+    assert.equal(readFileSync(h.file('state.json'), 'utf8'), saved);
+    assert.equal(existsSync(h.file('state.json.lock')), true);
+    if (owner !== undefined)
+      assert.equal(readFileSync(h.file('state.json.lock/owner.json'), 'utf8'), owner);
+  });
+}
 
 test('CLI keeps a known failure visible when diagnostics are inaccessible', (t) => {
   const h = harness(t);
@@ -383,6 +454,15 @@ test('CLI waits for readiness-triggered checks after the recorded readiness boun
     result.events.map((event) => event.snapshot.state),
     ['pending', 'successful'],
   );
+});
+
+test('CLI reuses successful same-head evidence in the ready phase without readyAfter', (t) => {
+  const h = harness(t, { ...input, phase: 'ready' });
+  const base = responses({ conclusion: 'success' });
+  base[paths.pr] = { body: { ...pr, draft: false } };
+  const result = h.execute({ base, args: ['--once'], at: start + 60_000 });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.events[0].snapshot.state, 'successful');
 });
 
 test('CLI detects native stack membership divergence without retargeting', (t) => {
