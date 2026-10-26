@@ -1,13 +1,32 @@
 #!/usr/bin/env node
-import { mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  closeSync,
+  mkdirSync,
+  openSync,
+  readSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 const failed = new Set(['failed', 'timedOut', 'interrupted']);
 function read(path) {
-  if (statSync(path).size > 8 * 1024 * 1024)
+  const descriptor = openSync(path, 'r');
+  try {
+    // Read one extra byte to detect overflow without trusting a size snapshot.
+    const buffer = Buffer.alloc(8 * 1024 * 1024 + 1);
+    let bytes = 0;
+    while (bytes < buffer.length) {
+      const count = readSync(descriptor, buffer, bytes, buffer.length - bytes, null);
+      if (count === 0) return buffer.subarray(0, bytes).toString('utf8');
+      bytes += count;
+    }
     throw new Error('Evidence exceeds 8 MiB; select the relevant records first');
-  return readFileSync(path, 'utf8');
+  } finally {
+    closeSync(descriptor);
+  }
 }
 function evidence(entry) {
   if (

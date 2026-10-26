@@ -9,16 +9,16 @@ function harness(t) {
   const directory = mkdtempSync(join(tmpdir(), 'skyttel-investigation-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const record = join(directory, 'record.json');
-  const execute = (option, value) => {
-    const input = join(directory, 'input.json');
+  const input = join(directory, 'input.json');
+  const execute = (option, value, { nodeArgs = [], env = {} } = {}) => {
     writeFileSync(input, JSON.stringify(value));
     return spawnSync(
       process.execPath,
-      ['scripts/testing/investigation.mjs', '--record', record, option, input],
-      { encoding: 'utf8' },
+      [...nodeArgs, 'scripts/testing/investigation.mjs', '--record', record, option, input],
+      { encoding: 'utf8', env: { ...process.env, ...env } },
     );
   };
-  return { execute, read: () => JSON.parse(readFileSync(record, 'utf8')) };
+  return { execute, input, read: () => JSON.parse(readFileSync(record, 'utf8')) };
 }
 
 const evidence = (id, outcome) => ({
@@ -62,6 +62,19 @@ test('an unchanged passing retry preserves the original failure and unresolved c
   assert.equal(record.disposition.resolution, 'open');
   assert.equal(h.execute('--append', evidence('second', 'passed')).status, 0);
   assert.equal(h.read().executions.length, 2);
+});
+
+test('evidence that grows when opened cannot bypass the byte limit or replace the record', (t) => {
+  const h = harness(t);
+  assert.equal(h.execute('--append', evidence('original', 'failed')).status, 0);
+  const before = h.read();
+  const result = h.execute('--append', evidence('later', 'passed'), {
+    nodeArgs: ['--import', './scripts/__tests__/helpers/growing-evidence.mjs'],
+    env: { FS_RACE_INPUT: h.input },
+  });
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /Evidence exceeds 8 MiB/);
+  assert.deepEqual(h.read(), before);
 });
 
 test('a pass alone cannot close a cause investigation and conflicting imports preserve evidence', (t) => {
