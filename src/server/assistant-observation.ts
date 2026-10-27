@@ -147,6 +147,20 @@ function backendResult(value: unknown, project: ProjectArray) {
   for (const name of ['questions', 'newQuestions'])
     if (Array.isArray(source?.[name]) && source[name].every((item) => typeof item === 'string'))
       admitted[name] = source[name];
+  if (Array.isArray(source?.pendingParts))
+    admitted.pendingParts = project(source.pendingParts, (part) =>
+      fields(part, [
+        'id',
+        'revision',
+        'kind',
+        'request',
+        'question',
+        'dependsOnDraft',
+        'messageId',
+        'status',
+        'answer',
+      ]),
+    );
   if (source?.error) admitted.error = 'backend_failed';
   if (source?.result) {
     admitted.result = fields(source.result, ['kind', 'message']);
@@ -198,14 +212,94 @@ function errorFields(value: unknown, names: readonly string[]) {
   return admitted;
 }
 
+/** Explicit Responses field list. Output metadata, transport data, audio and
+ * unknown item kinds never cross this boundary. Lists are charged item by item
+ * before detachment, including nested content and tool definitions. */
+function modelExchange(value: unknown, project: ProjectArray, input: boolean) {
+  const source = value as Record<string, unknown> | undefined;
+  const admitted = fields(
+    value,
+    input
+      ? [
+          'model',
+          'instructions',
+          'store',
+          'parallel_tool_calls',
+          'service_tier',
+          'max_output_tokens',
+        ]
+      : ['id', 'status', 'model', 'service_tier'],
+  );
+  if (input && source?.reasoning) admitted.reasoning = fields(source.reasoning, ['effort']);
+  const items = source?.[input ? 'input' : 'output'];
+  if (Array.isArray(items))
+    admitted[input ? 'input' : 'output'] = project(items, (item) => {
+      const part = item as Record<string, unknown> | null;
+      if (!part || typeof part !== 'object') return undefined;
+      if (part.type === 'function_call')
+        return fields(part, ['type', 'id', 'call_id', 'name', 'arguments', 'status']);
+      if (part.type === 'function_call_output')
+        return fields(part, ['type', 'id', 'call_id', 'output', 'status']);
+      if (part.type === 'message' || (input && part.type === undefined && part.role)) {
+        const message = fields(part, ['type', 'id', 'role', 'status', 'content']);
+        if (Array.isArray(part.content))
+          message.content = project(part.content, (content) => {
+            const type = (content as { type?: unknown })?.type;
+            return ['input_text', 'output_text', 'refusal'].includes(String(type))
+              ? fields(content, ['type', 'text', 'refusal'])
+              : undefined;
+          });
+        return message;
+      }
+      if (part.type === 'reasoning') {
+        const reasoning = fields(part, ['type', 'id', 'status']);
+        for (const name of ['summary', 'content'])
+          if (Array.isArray(part[name]))
+            reasoning[name] = project(part[name], (text) =>
+              ['summary_text', 'reasoning_text'].includes(
+                String((text as { type?: unknown })?.type),
+              )
+                ? fields(text, ['type', 'text'])
+                : undefined,
+            );
+        return reasoning;
+      }
+      return undefined;
+    });
+  if (input && Array.isArray(source?.tools))
+    admitted.tools = project(source.tools, (tool) => {
+      const definition = tool as { type?: unknown; parameters?: unknown };
+      if (definition?.type !== 'function') return undefined;
+      return {
+        ...fields(tool, ['type', 'name', 'description', 'strict']),
+        // The application owns this JSON schema; property names and definitions
+        // are relevant tool input, not arbitrary provider response metadata.
+        parameters: definition.parameters,
+      };
+    });
+  return admitted;
+}
+
 /** The only content admitted from an MCP envelope is its text result and error
  * flag. Tool arguments already cross the application's tool schema boundary.
  * Neither provider metadata nor additional MCP content types are trace data. */
 function data(event: AssistantObservation, project: ProjectArray) {
   switch (event.kind) {
     case 'task_started':
-    case 'task_completed':
-      return errorFields(event.data, ['source', 'startedAt', 'endedAt']);
+      return {
+        ...errorFields(event.data, ['source', 'startedAt']),
+        request: fields((event.data as { request?: unknown })?.request, [
+          'text',
+          'draftVersion',
+          'contentVersion',
+        ]),
+      };
+    case 'task_completed': {
+      const admitted = errorFields(event.data, ['source', 'startedAt', 'endedAt']);
+      const view = (event.data as { view?: unknown })?.view;
+      if (view) admitted.view = backendResult(view, project);
+      return admitted;
+    }
     case 'mcp_started':
       return { ...fields(event.data, ['name']), args: (event.data as { args?: unknown })?.args };
     case 'mcp_completed': {
@@ -247,6 +341,16 @@ function data(event: AssistantObservation, project: ProjectArray) {
           'output',
           'reasoning',
         ]),
+        ...((event.data as { input?: unknown })?.input
+          ? {
+              input: modelExchange((event.data as { input: unknown }).input, project, true),
+            }
+          : {}),
+        ...((event.data as { output?: unknown })?.output
+          ? {
+              output: modelExchange((event.data as { output: unknown }).output, project, false),
+            }
+          : {}),
       };
     case 'voice_started':
     case 'voice_completed':

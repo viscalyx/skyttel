@@ -357,7 +357,7 @@ export function langSmithDelivery(options: LangSmithDeliveryOptions): ConnectTra
             creating = data.outcome === 'started';
             name = 'Skyttel model attempt';
             type = 'llm';
-            content = data;
+            content = ((creating ? data.input : data.output) as Record<string, unknown>) ?? data;
             break;
           default:
             // Complete model action/output capture and voice traces are separate
@@ -377,10 +377,22 @@ export function langSmithDelivery(options: LangSmithDeliveryOptions): ConnectTra
         const metadata = {
           owner: 'backend',
           conversation_id: event.sessionId,
+          consent_text_version: event.consentTextVersion,
           request_id: context.requestId,
           task_id: event.taskId,
           provider_call_id: context.providerCallId,
           tool_execution_id: context.toolExecutionId,
+          ...(event.kind === 'model_attempt'
+            ? {
+                model: data.model,
+                resolved_model: data.resolvedModel,
+                outcome: data.outcome,
+                completeness: data.completeness,
+                usage: data.usage,
+                provider_request_id: data.providerRequestId,
+                response_id: data.responseId,
+              }
+            : {}),
           status,
           evidence_gap: event.evidenceGap,
         };
