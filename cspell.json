@@ -4,6 +4,10 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "langsmith",
+    "getpass",
+    "urlopen",
+    "molnkonto",
     "anonymization",
     "unretained",
     "faktureringsmetadata",

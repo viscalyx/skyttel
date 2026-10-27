@@ -106,12 +106,11 @@ async function setup(
     modelFetch: textModel(() =>
       turn++ === 0 ? [modelTool('read_map', { query: 'Lina' })] : [modelMessage('Lina är läst.')],
     ).provider,
-    traceDelivery: langSmithDelivery({
+    langSmith: {
       endpoint: endpoint.url,
       project: 'synthetic-diagnostics',
       apiKey: 'synthetic-trace-secret',
-      now: options.now,
-    }),
+    },
     ...options,
   });
   client = await request.newContext();
@@ -2395,6 +2394,12 @@ test('overlapping devices keep separate task evidence and a canceled late model 
 
 test('an authenticated task reaches ingestion through the real SDK with one backend owner and honest lifecycle', async () => {
   const { path, session } = await setup();
+  expect(await (await client.get(`${app.origin}/api/operator/tracing`)).json()).toMatchObject({
+    connected: true,
+    enabled: true,
+    state: 'sending',
+    lastSuccessfulDelivery: null,
+  });
   const before = await (await client.get(`${path}/map`)).json();
   expect(await send(path, session)).toMatchObject({ phase: 'ready', modelReply: 'Lina är läst.' });
   await expect
@@ -2616,23 +2621,69 @@ test.each([
   { endpoint: '' },
   { endpoint: "'   '" },
   { endpoint: '\'""\'' },
+  { endpoint: 'not-a-url' },
+  { endpoint: 'http://diagnostics.example.test' },
+  { endpoint: 'https://user:secret@example.test' },
+  { endpoint: 'https://example.test/api/v1' },
 ])(
   'invalid explicit sending configuration %j cannot fall back to SDK defaults',
   async (invalid) => {
     vi.stubEnv('LANGSMITH_API_KEY', 'synthetic-ambient-key');
     vi.stubEnv('LANGSMITH_PROJECT', 'synthetic-ambient-project');
     const { path, session } = await setup({
-      traceDelivery: (sending) =>
-        langSmithDelivery({
-          endpoint: endpoint.url,
-          project: 'synthetic-diagnostics',
-          apiKey: 'synthetic-trace-secret',
-          ...invalid,
-        })(sending),
+      langSmith: {
+        endpoint: 'http://127.0.0.1:9',
+        project: 'synthetic-diagnostics',
+        apiKey: 'synthetic-trace-secret',
+        ...invalid,
+      },
     });
     expect(await send(path, session)).toMatchObject({ phase: 'ready' });
     const health = await (await client.get(`${app.origin}/api/operator/tracing`)).json();
     expect(health).toMatchObject({ connected: false, state: 'not_connected', lastError: 'export' });
+    expect(endpoint.received).toEqual([]);
+  },
+);
+
+test.each([
+  { mode: 'missing', langSmith: undefined, lastError: null },
+  {
+    mode: 'partial',
+    langSmith: { endpoint: '', project: '', apiKey: 'synthetic-config-key' },
+    lastError: 'export',
+  },
+])(
+  '$mode explicit diagnostic configuration leaves text and voice usable despite ambient SDK credentials',
+  async ({ langSmith, lastError }) => {
+    vi.stubEnv('LANGSMITH_API_KEY', 'synthetic-ambient-key');
+    vi.stubEnv('LANGSMITH_ENDPOINT', 'http://127.0.0.1:9');
+    vi.stubEnv('SKYTTEL_LANGSMITH_API_KEY', 'synthetic-process-key');
+    const live = liveProvider();
+    const { path, session } = await setup({
+      langSmith,
+      liveFetch: live.provider,
+      liveSideband: live.attach,
+    });
+    const current = await send(path, session);
+    const connected = await client.post(`${path}/text-assistant/${session.id}/voice`, {
+      headers: { origin: app.origin },
+      data: {
+        sdp: 'synthetic-offer',
+        revision: current.revision,
+        draftVersion: current.review.version,
+        contentVersion: current.review.contentVersion,
+      },
+    });
+    expect(connected.status(), await connected.text()).toBe(201);
+    expect(live.requests).toHaveLength(1);
+    await restart();
+    expect((await client.get(`${app.origin}/healthz`)).status()).toBe(200);
+    expect(await (await client.get(`${app.origin}/api/operator/tracing`)).json()).toMatchObject({
+      connected: false,
+      state: 'not_connected',
+      lastError,
+      lastSuccessfulDelivery: null,
+    });
     expect(endpoint.received).toEqual([]);
   },
 );
