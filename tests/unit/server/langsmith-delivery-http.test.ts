@@ -29,7 +29,10 @@ type Ingestion = Awaited<ReturnType<typeof ingestion>>;
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let client: APIRequestContext;
 let endpoint: Ingestion;
+let releaseVoiceSave: (() => void) | undefined;
 afterEach(async () => {
+  releaseVoiceSave?.();
+  releaseVoiceSave = undefined;
   vi.useRealTimers();
   await client?.dispose();
   await app?.close();
@@ -1088,6 +1091,20 @@ test.each(['healthy', 'disabled', 'failing'])(
     const live = liveProvider();
     let typeId = '';
     let turn = 0;
+    let releaseSaveModel = () => {};
+    const saveModelReady = new Promise<void>((resolve) => {
+      releaseSaveModel = resolve;
+    });
+    let saveModelHeld = false;
+    let racedSnapshot = false;
+    let saveAnnounced = () => {};
+    const saveAnnouncement = new Promise<void>((resolve) => {
+      saveAnnounced = resolve;
+    });
+    releaseVoiceSave = () => {
+      releaseSaveModel();
+      saveAnnounced();
+    };
     const model = textModel((body) => {
       const input = JSON.parse(
         String(body.input.findLast((item) => item.role === 'user')?.content),
@@ -1128,7 +1145,41 @@ test.each(['healthy', 'disabled', 'failing'])(
       ];
     });
     const { path, session } = await setup(
-      { modelFetch: model.provider, liveFetch: live.provider, liveSideband: live.attach },
+      {
+        modelFetch: async (...args) => {
+          const response = await model.provider(...args);
+          if (delivery === 'disabled' && model.requests.length === 2) {
+            saveModelHeld = true;
+            await saveModelReady;
+          }
+          return response;
+        },
+        liveFetch: live.provider,
+        liveSideband: live.attach,
+        observe: (event) => {
+          if (
+            event.kind === 'voice_commentary' &&
+            (event.data as { delegationId?: string }).delegationId === 'voice-save'
+          )
+            saveAnnounced();
+        },
+        deliverResponse: async (incoming, response) => {
+          if (
+            saveModelHeld &&
+            incoming.method === 'GET' &&
+            /\/text-assistant\/[^/]+$/.test(new URL(incoming.url).pathname)
+          ) {
+            saveModelHeld = false;
+            // The client can read a working snapshot just before the save
+            // completes, then receive its new draft version from the poll.
+            expect((await response.clone().json()).phase).toBe('working');
+            racedSnapshot = true;
+            releaseSaveModel();
+            await saveAnnouncement;
+          }
+          return response;
+        },
+      },
       (_request, response) => response.writeHead(delivery === 'failing' ? 503 : 204).end(),
     );
     typeId = (await (await client.get(`${path}/map`)).json()).types[0].id;
@@ -1191,6 +1242,20 @@ test.each(['healthy', 'disabled', 'failing'])(
           { timeout: 8000 },
         )
         .toMatchObject({ progressed: true, phase: 'listening' });
+      // Render the received result before the next synthetic utterance. The
+      // completing poll may carry older draft versions than its response.
+      const rendered = await client.post(
+        `${path}/text-assistant/${session.id}/voice/${voice.id}/poll`,
+        {
+          headers: { origin: app.origin },
+          data: {
+            revision: result.assistant.revision,
+            draftVersion: result.assistant.review.version,
+            contentVersion: result.assistant.review.contentVersion,
+          },
+        },
+      );
+      expect(rendered.status(), await rendered.text()).toBe(200);
       return result.assistant;
     };
     const draft = await spoken('Lägg till Talad blå cykel och hitta hjälmen.', 'voice-propose', 0);
@@ -1211,6 +1276,7 @@ test.each(['healthy', 'disabled', 'failing'])(
     expect(after.objects).toMatchObject([{ id: 'voice-bike', name: 'Talad blå cykel' }]);
     expect(after.draft.changes).toEqual([]);
     const denied = await spoken('Berätta vad som finns kvar.', 'voice-no-save', saved.revision);
+    if (delivery === 'disabled') expect(racedSnapshot).toBe(true);
     expect(denied).toMatchObject({ phase: 'error', error: 'assistant_save_not_requested' });
     expect(denied.receipt).toBeUndefined();
     expect((await (await client.get(`${path}/map/history`)).json()).history).toHaveLength(1);
