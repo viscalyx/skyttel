@@ -329,164 +329,280 @@ test('the direct voice session warning reaches ingestion once without extending 
   });
 });
 
-test('a raced voice recovery links its accepted no-op without taking ownership of concurrent text work', async () => {
+test('an invalidated standalone summary records known cancellation without replacing newer context', async () => {
   const live = liveProvider();
-  let releaseRecovery!: () => void;
-  let releaseModel!: () => void;
-  let recoveryReached = false;
-  let modelReached = false;
-  let lost = false;
-  const heldRecovery = new Promise<void>((resolve) => {
-    releaseRecovery = resolve;
+  let release!: () => void;
+  let entered = false;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
   });
-  const heldModel = new Promise<void>((resolve) => {
-    releaseModel = resolve;
-  });
-  const model = textModel(async (body) => {
-    const text = JSON.parse(
-      String(body.input.findLast((item) => item.role === 'user')?.content),
-    ).message;
-    if (text === 'Ett annat textuppdrag.') {
-      modelReached = true;
-      await heldModel;
-    }
-    return [modelMessage('Ett kontrollerat svar.')];
+  const model = textModel(async () => {
+    entered = true;
+    await held;
+    return [modelMessage('Obsolete summary.')];
   });
   const { path, session } = await setup({
     modelFetch: model.provider,
     liveFetch: live.provider,
     liveSideband: live.attach,
-    assistantDispatch: async (request, dispatch) => {
-      const url = new URL(request.url);
-      const rpc =
-        request.method === 'POST' && url.pathname === '/mcp' ? await request.clone().json() : null;
-      if (!lost && rpc?.params?.name === 'save_draft') {
-        lost = true;
-        throw new TypeError('synthetic-held-save');
-      }
-      if (url.pathname.endsWith('/recover') && !recoveryReached) {
-        recoveryReached = true;
-        await heldRecovery;
-      }
-      return dispatch(request);
+  });
+  const connected = await client.post(`${path}/text-assistant/${session.id}/voice`, {
+    headers: { origin: app.origin },
+    data: {
+      sdp: 'synthetic-offer',
+      revision: session.revision,
+      draftVersion: session.review.version,
+      contentVersion: session.review.contentVersion,
     },
   });
+  expect(connected.status(), await connected.text()).toBe(201);
+  const { voice } = await connected.json();
+  live.emit([...live.channels.keys()][0], {
+    type: 'session.usage.updated',
+    usage: { seconds: 2 },
+    context_window: { usage_ratio: 0.95 },
+  });
+  const summarizing = client.post(`${path}/text-assistant/${session.id}/summarize`, {
+    headers: { origin: app.origin },
+    data: {},
+  });
+  let revision = session.revision;
   try {
-    const map = await (await client.get(`${path}/map`)).json();
-    await client.post(`${path}/map/draft`, {
-      headers: { origin: app.origin },
-      data: {
-        version: map.draft.version,
-        contentVersion: map.contentVersion,
-        id: 'raced-bike',
-        baseRevision: null,
-        value: { typeId: map.types[0].id, name: 'Bevarad cykel' },
-      },
-    });
-    const current = await (await client.get(`${path}/text-assistant/${session.id}`)).json();
-    const pending = await send(path, current, 'raced-save', 'Spara hela utkastet.');
-    expect(pending.phase).toBe('recovery');
-    const connected = await client.post(`${path}/text-assistant/${session.id}/voice`, {
-      headers: { origin: app.origin },
-      data: {
-        sdp: 'synthetic-offer',
-        revision: pending.revision,
-        draftVersion: pending.review.version,
-        contentVersion: pending.review.contentVersion,
-      },
-    });
-    const { voice } = await connected.json();
-    const providerId = [...live.channels.keys()][0];
-    live.emit(providerId, {
-      type: 'session.input_transcript.delta',
-      event_id: 'raced-recover-input',
-      delta: 'Kontrollera sparförsöket.',
-      start_ms: 0,
-      end_ms: 1,
-    });
-    live.emit(providerId, {
-      type: 'session.delegation.created',
-      delegation: { id: 'raced-recovery', target: 'client' },
-      offset_ms: 1,
-    });
-    await expect.poll(() => recoveryReached, { timeout: 8000 }).toBe(true);
-    const recovered = await (
-      await client.post(`${path}/text-assistant/${session.id}/recover`, {
-        headers: { origin: app.origin },
-        data: {},
-      })
-    ).json();
-    const accepted = await client.post(`${path}/text-assistant/${session.id}/messages`, {
-      headers: { origin: app.origin },
-      data: {
-        requestId: 'raced-external-text',
-        revision: recovered.revision,
-        draftVersion: recovered.review.version,
-        contentVersion: recovered.review.contentVersion,
-        text: 'Ett annat textuppdrag.',
-      },
-    });
-    expect(accepted.status(), await accepted.text()).toBe(202);
-    await expect.poll(() => modelReached).toBe(true);
-    const count = model.requests.length;
-    releaseRecovery();
-    await expect
-      .poll(() =>
-        endpoint.received.some(
-          (item) => (item.body.outputs as { noOp?: string })?.noOp === 'already_working',
-        ),
-      )
-      .toBe(true);
-    const ended = endpoint.received.find(
-      (item) => (item.body.outputs as { noOp?: string })?.noOp === 'already_working',
-    )!.body;
-    const root = endpoint.received.find(
-      (item) => item.method === 'POST' && item.body.id === ended.trace_id,
-    )!.body;
-    expect(root).toMatchObject({
-      extra: { metadata: { owner: 'backend', links: [{ traceId: voice.id, spanId: voice.id }] } },
-    });
-    expect(
-      endpoint.received.some(
-        (item) => item.method === 'POST' && item.body.parent_run_id === root.id,
-      ),
-    ).toBe(false);
-    expect(model.requests).toHaveLength(count);
-    const delegated = endpoint.received.find(
-      (item) => item.method === 'POST' && item.body.name === 'Skyttel voice delegation',
-    )!.body;
-    expect((delegated.extra as { metadata: { links: unknown } }).metadata.links).toEqual([
-      { traceId: root.id, spanId: root.id },
-    ]);
-    const external = endpoint.received.find(
-      (item) =>
-        item.method === 'POST' &&
-        (item.body.extra as { metadata: { request_id?: string } }).metadata.request_id ===
-          'raced-external-text' &&
-        item.body.parent_run_id === undefined,
-    )!.body;
-    expect((external.extra as { metadata: { links?: unknown } }).metadata.links).toBeUndefined();
-    releaseModel();
-    await expect
-      .poll(
-        async () =>
-          (
-            await (
-              await client.get(`${path}/text-assistant/${session.id}/messages/raced-external-text`)
-            ).json()
-          ).taskStatus,
-      )
-      .toBe('completed');
-    expect((await (await client.get(`${path}/map/history`)).json()).history).toHaveLength(1);
-    await client.post(`${path}/text-assistant/${session.id}/voice/${voice.id}/stop`, {
+    await expect.poll(() => entered).toBe(true);
+    const recovered = await client.post(`${path}/text-assistant/${session.id}/recover`, {
       headers: { origin: app.origin },
       data: {},
     });
+    expect(recovered.status(), await recovered.text()).toBe(200);
+    revision = (await recovered.json()).revision;
+    expect(revision).toBeGreaterThan(session.revision);
   } finally {
-    releaseRecovery();
-    releaseModel();
+    release();
   }
-}, 15000);
+  expect((await summarizing).status()).toBe(200);
+  await expect
+    .poll(() => {
+      const root = endpoint.received.find(
+        (item) =>
+          item.method === 'POST' && (item.body.inputs as { source?: string })?.source === 'summary',
+      )?.body;
+      return endpoint.received.find((item) => item.path === `/runs/${root?.id}`)?.body;
+    })
+    .toMatchObject({ error: 'observed_canceled', extra: { metadata: { status: 'canceled' } } });
+  const current = await (await client.get(`${path}/text-assistant/${session.id}`)).json();
+  expect(current).toMatchObject({ revision, contextSummaryState: 'needed' });
+  expect(current.contextGeneration ?? 0).toBe(0);
+  expect(JSON.stringify(current)).not.toContain('Obsolete summary.');
+  const summary = endpoint.received.find(
+    (item) =>
+      item.method === 'POST' && (item.body.inputs as { source?: string })?.source === 'summary',
+  )!.body;
+  expect((summary.extra as { metadata: { links?: unknown } }).metadata.links).toBeUndefined();
+  expect(summary.trace_id).not.toBe(voice.id);
+});
+
+test.each(['concurrent text', 'voice stopped'])(
+  'a raced voice recovery retains its own outcome with %s',
+  async (ending) => {
+    const live = liveProvider();
+    let releaseRecovery!: () => void;
+    let releaseModel!: () => void;
+    let recoveryReached = false;
+    let modelReached = false;
+    let lost = false;
+    const heldRecovery = new Promise<void>((resolve) => {
+      releaseRecovery = resolve;
+    });
+    const heldModel = new Promise<void>((resolve) => {
+      releaseModel = resolve;
+    });
+    const model = textModel(async (body) => {
+      const text = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      ).message;
+      if (text === 'Ett annat textuppdrag.') {
+        modelReached = true;
+        await heldModel;
+      }
+      return [modelMessage('Ett kontrollerat svar.')];
+    });
+    const { path, session } = await setup({
+      modelFetch: model.provider,
+      liveFetch: live.provider,
+      liveSideband: live.attach,
+      assistantDispatch: async (request, dispatch) => {
+        const url = new URL(request.url);
+        const rpc =
+          request.method === 'POST' && url.pathname === '/mcp'
+            ? await request.clone().json()
+            : null;
+        if (!lost && rpc?.params?.name === 'save_draft') {
+          lost = true;
+          throw new TypeError('synthetic-held-save');
+        }
+        if (url.pathname.endsWith('/recover') && !recoveryReached) {
+          recoveryReached = true;
+          await heldRecovery;
+        }
+        return dispatch(request);
+      },
+    });
+    try {
+      const map = await (await client.get(`${path}/map`)).json();
+      await client.post(`${path}/map/draft`, {
+        headers: { origin: app.origin },
+        data: {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          id: 'raced-bike',
+          baseRevision: null,
+          value: { typeId: map.types[0].id, name: 'Bevarad cykel' },
+        },
+      });
+      const current = await (await client.get(`${path}/text-assistant/${session.id}`)).json();
+      const pending = await send(path, current, 'raced-save', 'Spara hela utkastet.');
+      expect(pending.phase).toBe('recovery');
+      const connected = await client.post(`${path}/text-assistant/${session.id}/voice`, {
+        headers: { origin: app.origin },
+        data: {
+          sdp: 'synthetic-offer',
+          revision: pending.revision,
+          draftVersion: pending.review.version,
+          contentVersion: pending.review.contentVersion,
+        },
+      });
+      const { voice } = await connected.json();
+      const providerId = [...live.channels.keys()][0];
+      live.emit(providerId, {
+        type: 'session.input_transcript.delta',
+        event_id: 'raced-recover-input',
+        delta: 'Kontrollera sparförsöket.',
+        start_ms: 0,
+        end_ms: 1,
+      });
+      live.emit(providerId, {
+        type: 'session.delegation.created',
+        delegation: { id: 'raced-recovery', target: 'client' },
+        offset_ms: 1,
+      });
+      await expect.poll(() => recoveryReached, { timeout: 8000 }).toBe(true);
+      if (ending === 'voice stopped') {
+        expect(
+          (
+            await client.post(`${path}/text-assistant/${session.id}/voice/${voice.id}/stop`, {
+              headers: { origin: app.origin },
+              data: {},
+            })
+          ).status(),
+        ).toBe(200);
+        const sent = live.sent.length;
+        const modelCount = model.requests.length;
+        releaseRecovery();
+        await expect
+          .poll(() => {
+            const delegated = endpoint.received.find(
+              (item) => item.method === 'POST' && item.body.name === 'Skyttel voice delegation',
+            )?.body;
+            return endpoint.received.find((item) => item.path === `/runs/${delegated?.id}`)?.body;
+          })
+          .toMatchObject({
+            error: 'observed_canceled',
+            extra: { metadata: { status: 'canceled' } },
+          });
+        const backend = endpoint.received.find(
+          (item) =>
+            item.method === 'POST' &&
+            (item.body.inputs as { source?: string })?.source === 'recover',
+        )!.body;
+        expect(
+          endpoint.received.find((item) => item.path === `/runs/${backend.id}`)?.body,
+        ).toMatchObject({ extra: { metadata: { status: 'completed' } } });
+        expect(live.sent).toHaveLength(sent);
+        expect(model.requests).toHaveLength(modelCount);
+        expect((await (await client.get(`${path}/map/history`)).json()).history).toHaveLength(1);
+        return;
+      }
+      const recovered = await (
+        await client.post(`${path}/text-assistant/${session.id}/recover`, {
+          headers: { origin: app.origin },
+          data: {},
+        })
+      ).json();
+      const accepted = await client.post(`${path}/text-assistant/${session.id}/messages`, {
+        headers: { origin: app.origin },
+        data: {
+          requestId: 'raced-external-text',
+          revision: recovered.revision,
+          draftVersion: recovered.review.version,
+          contentVersion: recovered.review.contentVersion,
+          text: 'Ett annat textuppdrag.',
+        },
+      });
+      expect(accepted.status(), await accepted.text()).toBe(202);
+      await expect.poll(() => modelReached).toBe(true);
+      const count = model.requests.length;
+      releaseRecovery();
+      await expect
+        .poll(() =>
+          endpoint.received.some(
+            (item) => (item.body.outputs as { noOp?: string })?.noOp === 'already_working',
+          ),
+        )
+        .toBe(true);
+      const ended = endpoint.received.find(
+        (item) => (item.body.outputs as { noOp?: string })?.noOp === 'already_working',
+      )!.body;
+      const root = endpoint.received.find(
+        (item) => item.method === 'POST' && item.body.id === ended.trace_id,
+      )!.body;
+      expect(root).toMatchObject({
+        extra: { metadata: { owner: 'backend', links: [{ traceId: voice.id, spanId: voice.id }] } },
+      });
+      expect(
+        endpoint.received.some(
+          (item) => item.method === 'POST' && item.body.parent_run_id === root.id,
+        ),
+      ).toBe(false);
+      expect(model.requests).toHaveLength(count);
+      const delegated = endpoint.received.find(
+        (item) => item.method === 'POST' && item.body.name === 'Skyttel voice delegation',
+      )!.body;
+      expect((delegated.extra as { metadata: { links: unknown } }).metadata.links).toEqual([
+        { traceId: root.id, spanId: root.id },
+      ]);
+      const external = endpoint.received.find(
+        (item) =>
+          item.method === 'POST' &&
+          (item.body.extra as { metadata: { request_id?: string } }).metadata.request_id ===
+            'raced-external-text' &&
+          item.body.parent_run_id === undefined,
+      )!.body;
+      expect((external.extra as { metadata: { links?: unknown } }).metadata.links).toBeUndefined();
+      releaseModel();
+      await expect
+        .poll(
+          async () =>
+            (
+              await (
+                await client.get(
+                  `${path}/text-assistant/${session.id}/messages/raced-external-text`,
+                )
+              ).json()
+            ).taskStatus,
+        )
+        .toBe('completed');
+      expect((await (await client.get(`${path}/map/history`)).json()).history).toHaveLength(1);
+      await client.post(`${path}/text-assistant/${session.id}/voice/${voice.id}/stop`, {
+        headers: { origin: app.origin },
+        data: {},
+      });
+    } finally {
+      releaseRecovery();
+      releaseModel();
+    }
+  },
+  15000,
+);
 
 test('concurrent voice sessions keep overlapping delegation and late results under their own roots', async () => {
   const live = liveProvider();

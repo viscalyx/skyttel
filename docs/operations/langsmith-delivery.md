@@ -34,8 +34,8 @@ an accepted no-op can have a backend root with no model or MCP children.
 Use the exact UUID in the `trace_id` filter to find a linked trace. The link
 metadata contains the trace and span identities; the sender does not query the
 cloud to resolve them. Local ingestion checks do not verify cloud rendering.
-It excludes raw audio, authentication, headers, environment values and unrelated
-provider metadata.
+Evidence excludes raw audio, authentication, headers, environment values and
+unrelated provider metadata.
 
 Delivery runs independently of household work. The sender drops whole events
 when they exceed a limit or cannot be serialized. It never shortens content or

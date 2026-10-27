@@ -630,7 +630,8 @@ export function textAssistantRoutes({
       session.capacity.reset();
     } catch (error) {
       if (task.signal.aborted) return 'canceled' as const;
-      if (session.revision !== revision || !sessions.has(session.id)) return 'incomplete' as const;
+      if (session.revision !== revision || sessions.get(session.id) !== session)
+        return 'canceled' as const;
       if (authorityLost(error)) {
         if (stopExpiredVoice(session)) return 'canceled' as const;
         await stop(session);

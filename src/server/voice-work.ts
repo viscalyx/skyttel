@@ -258,7 +258,12 @@ export function voiceWork({
       let observedView: TextAssistantView | undefined;
       try {
         observedView = await request(operation, body, signal, { requestId: recoveryRequestId });
-        status = observedView.error ? 'failed' : 'completed';
+        status =
+          stopped || generation !== task || signal?.aborted
+            ? 'canceled'
+            : observedView.error
+              ? 'failed'
+              : 'completed';
         return observedView;
       } catch (error) {
         status = stopped || generation !== task || signal?.aborted ? 'canceled' : 'failed';
