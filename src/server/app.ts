@@ -60,7 +60,7 @@ export function createApp({
   liveProfile,
   observe: observationSink,
   traceDelivery,
-  now = () => Date.now(),
+  now: suppliedNow,
 }: {
   config: Config;
   database: Database.Database;
@@ -81,6 +81,7 @@ export function createApp({
   /** Installation time in milliseconds since the Unix epoch. */
   now?: () => number;
 }) {
+  const now = suppliedNow ?? (() => Date.now());
   const app = new Hono();
   // Historical test installations can intentionally stop before this migration.
   const hasBindings = !!database
@@ -101,9 +102,10 @@ export function createApp({
     : originalAuth;
   const costs = installationCosts(database);
   const sending = traceSending(database, now);
+  // Preserve the sender's monotonic lifetime clock unless time is explicitly controlled.
   const connectDelivery =
     traceDelivery ??
-    (config.langSmith ? langSmithDelivery({ ...config.langSmith, now }) : undefined);
+    (config.langSmith ? langSmithDelivery({ ...config.langSmith, now: suppliedNow }) : undefined);
   if (connectDelivery) sending.connect(connectDelivery);
   const callerObservation = assistantObservationBoundary(observationSink);
   const deliveryObservation = connectDelivery

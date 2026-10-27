@@ -65,7 +65,8 @@ workspace ID. A tracing-only runtime key cannot perform this read.
 
 ```sh
 python3 - <<'PY'
-import getpass, json, urllib.parse, urllib.request
+import getpass, json, sys, urllib.parse, urllib.request
+sys.stdin = open('/dev/tty')  # Prompts must not read the script's heredoc.
 base = input('Verified regional API endpoint: ').strip()
 workspace = input('Workspace UUID: ').strip()
 agent = urllib.parse.quote(input('Agent ID: ').strip(), safe='')
@@ -82,10 +83,48 @@ for environment in result['environments']:
 PY
 ```
 
-For an older project-based workspace, open **Tracing → Projects**, create or
-select the dedicated Skyttel tracing project and record its exact name and
-UUID. Pre-create the destination with setup access: the runtime key is not
-a setup credential. This integration uses explicit project-name addressing;
+For an older project-based workspace, use the metadata-only setup request
+below with a separate PAT that can read projects and, for creation, create
+projects. Choose `read` for an existing dedicated project, or `create` only
+when a new project is authorized. The pinned SDK's project setup uses these
+`/sessions` requests in the regional [tracing API](https://api.smith.langchain.com/redoc).
+Record the returned exact name and UUID, then inspect retention in that
+project's tracing page. This does not submit a trace or invoke a model.
+
+```sh
+python3 - <<'PY'
+import getpass, json, sys, urllib.parse, urllib.request
+sys.stdin = open('/dev/tty')
+base = input('Verified regional API endpoint: ').strip()
+workspace = input('Workspace UUID: ').strip()
+action = input('Project action (read/create): ').strip()
+if action not in ('read', 'create'):
+    raise SystemExit('Choose read or create; no request sent.')
+name = input('Exact project name: ').strip()
+token = getpass.getpass('Setup PAT (read/create projects): ')
+path = '/sessions'
+data = None
+if action == 'read':
+    path += '?' + urllib.parse.urlencode({'name': name})
+else:
+    data = json.dumps({'name': name, 'extra': {}, 'description': None}).encode()
+request = urllib.request.Request(base + path, data=data, headers={
+    'x-api-key': token, 'x-tenant-id': workspace,
+    'Content-Type': 'application/json',
+})
+with urllib.request.urlopen(request, timeout=30) as response:
+    result = json.load(response)
+project = (
+    next(p for p in result if p['name'] == name)
+    if action == 'read' else result
+)
+print('Destination:', project['name'])
+print('Project UUID:', project['id'])
+PY
+```
+
+Pre-create the destination with setup access: the runtime key is not a setup
+credential. This integration uses explicit project-name addressing;
 agent environments support it through `tracer_session_name`. Do not configure
 both address schemes. See
 [destination compatibility](https://docs.langchain.com/langsmith/log-traces-to-agent)
