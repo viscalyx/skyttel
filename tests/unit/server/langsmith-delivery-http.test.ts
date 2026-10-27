@@ -3545,6 +3545,59 @@ test('sixty-second expiry discards pending and active old evidence before admitt
   expect(endpoint.received.filter((item) => item.body.trace_id === oldRoot)).toHaveLength(1);
 });
 
+test('normal configured sending expires old evidence by monotonic time when the wall clock moves backward', async () => {
+  const wallNow = Date.now.bind(Date);
+  const elapsedNow = performance.now.bind(performance);
+  let wallOffset = 0;
+  let elapsedOffset = 0;
+  vi.spyOn(Date, 'now').mockImplementation(() => wallNow() + wallOffset);
+  vi.spyOn(performance, 'now').mockImplementation(() => elapsedNow() + elapsedOffset);
+  let release!: () => void;
+  const waiting = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const held: ServerResponse[] = [];
+  let blocked = true;
+  const { path, session } = await setup(
+    {
+      modelFetch: textModel(async () => {
+        await waiting;
+        return [modelMessage('Svaret är klart.')];
+      }).provider,
+    },
+    (_request, response) => {
+      if (blocked) held.push(response);
+      else response.writeHead(204).end();
+    },
+  );
+  const work = send(path, session, 'wall-clock-rollback');
+  try {
+    await expect.poll(() => endpoint.received.length).toBe(1);
+    const oldRoot = endpoint.received[0].body.id;
+    wallOffset = -60001;
+    elapsedOffset = 60001;
+    release();
+    // A real later model observation crosses the public export boundary.
+    // Clock rollback must not keep the old active request or its queued create.
+    await expect.poll(() => endpoint.received[0].closed).toBe(true);
+    wallOffset = 0;
+    expect(await work).toMatchObject({ phase: 'ready', modelReply: 'Svaret är klart.' });
+    const health = await (await client.get(`${app.origin}/api/operator/tracing`)).json();
+    expect(health.lastError).toBe('expired');
+    expect(health.droppedEvents).toBeGreaterThanOrEqual(2);
+    blocked = false;
+    for (const response of held) if (!response.destroyed) response.writeHead(204).end();
+    await app.restart();
+    expect(
+      endpoint.received.filter((item) => item.method === 'POST' && item.body.trace_id === oldRoot),
+    ).toHaveLength(1);
+  } finally {
+    wallOffset = 0;
+    release();
+    await work;
+  }
+});
+
 test.each([
   { status: 401, reason: 'credentials' },
   { status: 403, reason: 'credentials' },

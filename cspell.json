@@ -7,6 +7,8 @@
     "langsmith",
     "getpass",
     "urlopen",
+    "urlencode",
+    "unconfigured",
     "molnkonto",
     "anonymization",
     "unretained",
