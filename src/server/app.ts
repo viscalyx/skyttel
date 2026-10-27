@@ -26,6 +26,7 @@ import { householdExportRoutes } from './household-export-routes.js';
 import { householdImportRoutes } from './household-import-routes.js';
 import { createHousehold, householdAccess, isFirstAdmin, isInitialized } from './households.js';
 import { installationAuthority } from './installation-authority.js';
+import { langSmithDelivery } from './langsmith-delivery.js';
 import type { LiveModelProfile, LiveSidebandFactory, LiveUsage } from './live-provider.js';
 import { createLoginMethods } from './login-methods.js';
 import { MapError } from './map.js';
@@ -100,9 +101,12 @@ export function createApp({
     : originalAuth;
   const costs = installationCosts(database);
   const sending = traceSending(database, now);
-  if (traceDelivery) sending.connect(traceDelivery);
+  const connectDelivery =
+    traceDelivery ??
+    (config.langSmith ? langSmithDelivery({ ...config.langSmith, now }) : undefined);
+  if (connectDelivery) sending.connect(connectDelivery);
   const callerObservation = assistantObservationBoundary(observationSink);
-  const deliveryObservation = traceDelivery
+  const deliveryObservation = connectDelivery
     ? assistantObservationBoundary((event) => sending.observe(event), {
         maxBytes: traceEventByteLimit,
         failed: (category) => sending.dropped(category),
