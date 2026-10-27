@@ -360,8 +360,8 @@ export function langSmithDelivery(options: LangSmithDeliveryOptions): ConnectTra
             content = ((creating ? data.input : data.output) as Record<string, unknown>) ?? data;
             break;
           default:
-            // Complete model action/output capture and voice traces are separate
-            // extensions. Never overwrite one model action with another here.
+            // Complete actions belong to model-attempt output. Voice traces are
+            // separate; never replace a model response with one action here.
             return;
         }
         if (shuttingDown) {
