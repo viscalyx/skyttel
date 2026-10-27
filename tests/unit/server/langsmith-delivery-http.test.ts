@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -384,6 +384,8 @@ test.each([
   { apiKey: "'   '" },
   { project: '' },
   { endpoint: '' },
+  { endpoint: "'   '" },
+  { endpoint: '\'""\'' },
 ])(
   'invalid explicit sending configuration %j cannot fall back to SDK defaults',
   async (invalid) => {
@@ -402,6 +404,54 @@ test.each([
     const health = await (await client.get(`${app.origin}/api/operator/tracing`)).json();
     expect(health).toMatchObject({ connected: false, state: 'not_connected', lastError: 'export' });
     expect(endpoint.received).toEqual([]);
+  },
+);
+
+test.each(['\'""\'', '\'"   "\''])(
+  'nested quoted-empty key %j cannot activate a CLI profile credential',
+  async (apiKey) => {
+    const directory = await mkdtemp(join(tmpdir(), 'synthetic-sdk-profile-'));
+    const profile = join(directory, 'config.json');
+    const contents = JSON.stringify({
+      current_profile: 'default',
+      profiles: {
+        default: {
+          api_url: 'http://127.0.0.1:9',
+          api_key: 'synthetic-cli-profile-key',
+        },
+      },
+    });
+    await writeFile(profile, contents);
+    vi.stubEnv('LANGSMITH_CONFIG_FILE', profile);
+    vi.stubEnv('LANGSMITH_API_KEY', '');
+    vi.stubEnv('LANGCHAIN_API_KEY', '');
+    const requestedKeys: unknown[] = [];
+    try {
+      const { path, session } = await setup(
+        {
+          traceDelivery: (sending) =>
+            langSmithDelivery({ endpoint: endpoint.url, project: 'synthetic-diagnostics', apiKey })(
+              sending,
+            ),
+        },
+        (request, response) => {
+          requestedKeys.push(request.headers['x-api-key']);
+          response.writeHead(204).end();
+        },
+      );
+      expect(await send(path, session)).toMatchObject({ phase: 'ready' });
+      expect(requestedKeys).not.toContain('synthetic-cli-profile-key');
+      expect(await (await client.get(`${app.origin}/api/operator/tracing`)).json()).toMatchObject({
+        connected: false,
+        state: 'not_connected',
+        lastError: 'export',
+      });
+      expect(endpoint.received).toEqual([]);
+      expect(await readFile(profile, 'utf8')).toBe(contents);
+      expect(await readdir(directory)).toEqual(['config.json']);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   },
 );
 

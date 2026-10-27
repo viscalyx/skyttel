@@ -55,8 +55,9 @@ export interface LangSmithDeliveryOptions {
  * Reinspect matching published source and wire tests before upgrading. */
 export function langSmithDelivery(options: LangSmithDeliveryOptions): ConnectTraceDelivery {
   return (sending) => {
-    // Match the pinned SDK's quote handling before it can choose CLI profile
-    // authentication for an explicitly empty key.
+    // The pinned SDK applies the same quote handling to the supplied values.
+    // Validate that final interpretation too: nested quotes must not become
+    // an empty key inside its constructor and select CLI profile authentication.
     const unquote = (value: string) =>
       value
         .trim()
@@ -64,7 +65,7 @@ export function langSmithDelivery(options: LangSmithDeliveryOptions): ConnectTra
         .replace(/^'(.*)'$/, '$1');
     const apiKey = unquote(options.apiKey);
     const endpoint = unquote(options.endpoint);
-    if (!apiKey.trim() || !endpoint || !options.project.trim())
+    if (!unquote(apiKey).trim() || !unquote(endpoint).trim() || !options.project.trim())
       throw new Error('invalid_trace_configuration');
     // The pinned SDK warns about ambient agent addressing before honoring the
     // explicit project. Those warnings can contain the raw environment value.
