@@ -2087,7 +2087,7 @@ export function textAssistantRoutes({
               ? {
                   view: {
                     ...session,
-                    pendingParts: session.parts.read(),
+                    pendingParts: session.parts.values(),
                     questionPending: Boolean(session.questions?.length),
                     saveBlocked: session.parts.blocked(),
                   },

@@ -86,7 +86,7 @@ export type AssistantObservation = {
 export type ObserveAssistant = (event: AssistantObservation) => void;
 
 type ProjectArray = <T>(
-  source: readonly unknown[],
+  source: Iterable<unknown>,
   project: (value: unknown) => T | undefined,
 ) => T[];
 
@@ -147,8 +147,9 @@ function backendResult(value: unknown, project: ProjectArray) {
   for (const name of ['questions', 'newQuestions'])
     if (Array.isArray(source?.[name]) && source[name].every((item) => typeof item === 'string'))
       admitted[name] = source[name];
-  if (Array.isArray(source?.pendingParts))
-    admitted.pendingParts = project(source.pendingParts, (part) =>
+  const pending = source?.pendingParts as Iterable<unknown> | undefined;
+  if (pending && typeof pending[Symbol.iterator] === 'function')
+    admitted.pendingParts = project(pending, (part) =>
       fields(part, [
         'id',
         'revision',

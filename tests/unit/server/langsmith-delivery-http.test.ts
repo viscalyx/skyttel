@@ -320,6 +320,7 @@ test.each(['healthy', 'disabled', 'failing'])(
   async (delivery) => {
     let typeId = '';
     let turn = 0;
+    const callerPending: unknown[] = [];
     const model = textModel((request) => {
       const input = JSON.parse(
         String(request.input.findLast((item) => item.role === 'user')?.content),
@@ -359,8 +360,23 @@ test.each(['healthy', 'disabled', 'failing'])(
         }),
       ];
     });
-    const { path, session } = await setup({ modelFetch: model.provider }, (_request, response) =>
-      response.writeHead(delivery === 'failing' ? 503 : 204).end(),
+    const { path, session } = await setup(
+      {
+        modelFetch: model.provider,
+        observe: (event) => {
+          const content = event.data as {
+            input?: { instructions?: string };
+            view?: { pendingParts?: unknown[] };
+          };
+          if (content.input)
+            content.input.instructions = 'caller mutation cannot change provider input';
+          if (event.kind === 'task_completed' && content.view?.pendingParts) {
+            callerPending.push(structuredClone(content.view.pendingParts));
+            content.view.pendingParts.splice(0);
+          }
+        },
+      },
+      (_request, response) => response.writeHead(delivery === 'failing' ? 503 : 204).end(),
     );
     if (delivery === 'disabled')
       await client.post(`${app.origin}/api/operator/tracing`, {
@@ -381,6 +397,10 @@ test.each(['healthy', 'disabled', 'failing'])(
     expect(draft.pendingParts).toMatchObject([
       { kind: 'information', status: 'waiting', question: 'Vilken hjälm?' },
     ]);
+    expect(callerPending[0]).toMatchObject([
+      { kind: 'information', status: 'waiting', question: 'Vilken hjälm?' },
+    ]);
+    expect(model.requests[0].instructions).not.toContain('caller mutation');
     expect(draft.receipt).toBeUndefined();
     expect((await (await client.get(`${path}/map`)).json()).objects).toEqual([]);
     const saved = await send(path, draft, 'save-once', 'Spara hela utkastet.');
