@@ -180,6 +180,7 @@ the destination setting determines routing. Check the worksheet when copying.
 A runtime tracing key submits traces and updates. It cannot inspect stored
 traces, register an agent or perform cleanup. Use your login and, when needed,
 a separate personal access token (PAT) for setup/read/delete operations.
+Follow [create a setup PAT](#create-a-setup-pat) when a lookup requires one.
 Never install that setup token in Skyttel. See
 [tracing-key permissions](https://docs.langchain.com/langsmith/create-account-api-key#tracing-keys).
 
@@ -417,13 +418,41 @@ There is no recurring assessment service or automatic shutdown.
 
 ## Setup reference
 
+### Create a setup PAT
+
+A personal access token (PAT) lets the setup scripts read workspace and
+destination identities using your account's permissions. You can create it
+before you know the workspace UUID: the dialog selects a workspace by name.
+Reuse an existing setup PAT if it has the necessary access.
+
+1. Open **Settings → API Keys**, then select **API Key** to open the
+   **Create an API Key** dialog.
+2. In **Description**, enter a recognizable label such as `Management PAT`
+   or `Skyttel setup PAT`.
+3. Under **Key Type**, select **Personal Access Token**. The **Tracing Only**
+   keys used by Skyttel cannot perform these setup lookups.
+4. Under **Default Workspace**, select your existing workspace by name,
+   for example **Workspace 1**. No workspace UUID is needed in this dialog.
+   This sets the default for requests without a workspace header; it does
+   not restrict the PAT's permissions to that workspace.
+5. Under **Expiration Date**, choose a duration that covers setup, such as
+   **30d**, or use **Custom** for a shorter period.
+6. Select **Create API Key**. Copy the secret into your password manager
+   before closing the dialog; LangSmith displays it only once.
+7. Use it at the hidden **Setup PAT** prompt in the lookup scripts below.
+   Keep it outside Skyttel's environment files and Render settings, and
+   revoke it when the setup work is complete.
+
+Use the same setup PAT for the workspace lookup and subsequent agent or
+project setup. The two application runtime keys remain separate tracing-only
+keys created in step 4. See
+[PAT permissions and creation](https://docs.langchain.com/langsmith/create-account-api-key).
+
 ### Look up your workspace ID
 
-Use this when Settings does not display a Workspace ID. Open **API Keys**
-in the settings sidebar and create a personal access token (PAT), or use
-your existing setup PAT. It uses your account's permissions to read workspace
-identities. A tracing-only key cannot perform this lookup. Keep the PAT in
-your password manager, outside Skyttel's environment files and Render.
+Use this when Settings does not display a Workspace ID. First
+[create a setup PAT](#create-a-setup-pat), or use your existing setup PAT.
+A tracing-only key cannot perform this lookup.
 
 Copy the whole block into a devcontainer terminal, including the final `PY`.
 Enter the regional API endpoint from step 2, the ID copied beside
@@ -466,10 +495,9 @@ workspace ID.
 ### Look up agent destination values
 
 Use this only for Path A. First create both agent records in step 3.
-Open LangSmith's API-key settings and create a separate **personal access
-token (PAT)** using your account's access to read the agents. Keep it in your
-password manager, outside Skyttel's environment files and Render settings.
-A tracing-only runtime key cannot perform this lookup.
+Reuse the setup PAT from the workspace lookup, or
+[create a setup PAT](#create-a-setup-pat) with your account's access to read
+the agents. A tracing-only runtime key cannot perform this lookup.
 
 Open a terminal inside the devcontainer. Copy the whole block below, including
 the final `PY` line. It uses the installed Python 3; no extra package is
@@ -511,8 +539,9 @@ Do not try the runtime key or guess the destination name.
 
 ### Create or read project-based destinations
 
-Use this only for Path B. Create a separate setup PAT with permission to read
-projects and, when creating them, to create projects. Do not put it in Skyttel.
+Use this only for Path B. Reuse your setup PAT, or
+[create a setup PAT](#create-a-setup-pat) with permission to read projects
+and, when creating them, to create projects. Do not put it in Skyttel.
 The pinned SDK uses the regional tracing API's `/sessions` endpoint for
 projects. See the [tracing API reference](https://api.smith.langchain.com/redoc).
 
