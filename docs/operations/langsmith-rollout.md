@@ -62,15 +62,17 @@ obtain it where it is absent.
 4. Open **Settings** in LangSmith. For the default US region, you can open
    [Settings directly](https://smith.langchain.com/settings). If you use
    another region, stay on that region's LangSmith website.
-5. Select **General** and look for **Workspace ID**. If Settings shows
-   organization settings instead, select **Workspaces**, click your existing
-   workspace, then open its **General** settings. The default US region also
-   has a [direct workspace-settings link](https://smith.langchain.com/settings/workspaces).
-6. Copy the value labelled **Workspace ID**. It is a UUID with a shape like
-   `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`. Record it privately for both
-   installations. If you only see **Organization ID**, return to
-   **Workspaces** and select the workspace; that is a different identifier.
-   See the [documented Workspace ID location](https://docs.langchain.com/langsmith/create-account-api-key#configure-the-sdk).
+5. If your interface has **General** with a field labelled **Workspace ID**,
+   copy that value. LangSmith's
+   [SDK instructions](https://docs.langchain.com/langsmith/create-account-api-key#configure-the-sdk)
+   describe this layout, but the new personal-workspace interface can omit it.
+   In that layout, **Configuration → Workspace** only shows the experience
+   switch. Do not switch experiences to search for an ID.
+6. If no Workspace ID is displayed, copy **ID** beside **Organization** above
+   the **Personal** selector. This is the organization ID. Use it in the
+   [workspace lookup below](#look-up-your-workspace-id) to retrieve the
+   separate workspace ID. Record the returned workspace UUID for both
+   installations; do not put the organization ID in the workspace setting.
 7. Confirm that your login can inspect traces and request deletion.
    Protect account recovery and keep access available for later cleanup.
 
@@ -414,6 +416,52 @@ case ten or an inconclusive finding does not automatically stop sending.
 There is no recurring assessment service or automatic shutdown.
 
 ## Setup reference
+
+### Look up your workspace ID
+
+Use this when Settings does not display a Workspace ID. Open **API Keys**
+in the settings sidebar and create a personal access token (PAT), or use
+your existing setup PAT. It uses your account's permissions to read workspace
+identities. A tracing-only key cannot perform this lookup. Keep the PAT in
+your password manager, outside Skyttel's environment files and Render.
+
+Copy the whole block into a devcontainer terminal, including the final `PY`.
+Enter the regional API endpoint from step 2, the ID copied beside
+**Organization**, and your setup PAT when prompted. The PAT input is hidden.
+This sends one read-only request to list workspaces; it does not create a
+workspace, upload traces or invoke a model.
+
+```sh
+python3 - <<'PY'
+import getpass, json, sys, urllib.error, urllib.request
+sys.stdin = open('/dev/tty')
+base = input('Regional API endpoint: ').strip().rstrip('/')
+organization = input('Organization ID copied from Settings: ').strip()
+token = getpass.getpass('Setup PAT (hidden): ')
+request = urllib.request.Request(base + '/api/v1/workspaces', headers={
+    'X-API-Key': token, 'X-Organization-Id': organization,
+})
+try:
+    with urllib.request.urlopen(request, timeout=30) as response:
+        workspaces = json.load(response)
+except urllib.error.HTTPError as error:
+    raise SystemExit(f'HTTP {error.code}; check region, organization and PAT.')
+if not workspaces:
+    raise SystemExit('No visible workspaces; check account access and region.')
+for workspace in workspaces:
+    print('Workspace:', workspace['display_name'])
+    print('SKYTTEL_LANGSMITH_WORKSPACE_ID:', workspace['id'])
+PY
+```
+
+For the single-workspace personal account, use the returned workspace ID
+for both development and production. If several workspaces are listed,
+match the intended workspace by name. Return to step 2 and continue setup;
+you can reuse this PAT for the destination lookup, then revoke it when done.
+The [organization API guide](https://docs.langchain.com/langsmith/manage-organization-by-api)
+and [List Workspaces API](https://api.smith.langchain.com/redoc#tag/workspaces/operation/list_workspaces_api_v1_workspaces_get)
+document the request. It needs an organization ID, not an already known
+workspace ID.
 
 ### Look up agent destination values
 
