@@ -151,7 +151,13 @@ record before reusing it. You do not need to build or deploy an agent inside
 LangSmith. See [agent creation](https://docs.langchain.com/langsmith/create-an-agent)
 and [environments](https://docs.langchain.com/langsmith/agent-environments).
 
-Skyttel's destination setting uses the returned `tracer_session_name`.
+`tracer_session_name` is the name of a field in LangSmith's API response.
+The lookup script reads that field and prints its value after the label
+`SKYTTEL_LANGSMITH_PROJECT:`. It does not print a separate line labelled
+`tracer_session_name`. Copy the value after the colon into Skyttel's
+destination setting; do not enter the literal text `tracer_session_name`.
+See the [output example](#read-the-agent-lookup-output) below.
+
 Do not substitute the agent name, agent ID or project UUID. The two returned
 names can look different from `skyttel-dev` and `skyttel-prod`; copy them
 exactly. The environment's `tracer_session_id` is the project UUID used for
@@ -191,7 +197,7 @@ Keep this worksheet privately. It contains identities, not API-key secrets.
 | Region and API endpoint | From step 2 | Same region and endpoint |
 | Workspace UUID | From step 2 | Same workspace UUID |
 | Agent/environment, if applicable | `skyttel-dev` / Development | `skyttel-prod` / Production |
-| Destination name | Development `tracer_session_name`, or `skyttel-dev` for Path B | Production `tracer_session_name`, or `skyttel-prod` for Path B |
+| Destination name | Value after `SKYTTEL_LANGSMITH_PROJECT:` under `skyttel-dev DEVELOPMENT`, or `skyttel-dev` for Path B | Value after `SKYTTEL_LANGSMITH_PROJECT:` under `skyttel-prod PRODUCTION`, or `skyttel-prod` for Path B |
 | Project UUID for inspection/deletion | Returned development UUID | Returned production UUID |
 <!-- markdownlint-enable MD013 -->
 
@@ -278,8 +284,10 @@ The application reads these four settings:
 | `SKYTTEL_LANGSMITH_WORKSPACE_ID` | Workspace UUID from step 2 |
 <!-- markdownlint-enable MD013 -->
 
-For Path B, the project value is `skyttel-dev`. For Path A, use the returned
-Development environment's `tracer_session_name`, not the agent ID.
+For Path B, the project value is `skyttel-dev`. For Path A, copy the value
+after `SKYTTEL_LANGSMITH_PROJECT:` in the script's `skyttel-dev DEVELOPMENT`
+output. That value comes from the API field named `tracer_session_name`.
+See the [output example](#read-the-agent-lookup-output).
 
 Skyttel uses these application-specific variables. Do not copy the generic
 `LANGSMITH_TRACING` or `LANGSMITH_PROJECT` examples from LangSmith into
@@ -571,7 +579,33 @@ for agent, target in [('skyttel-dev', 'DEVELOPMENT'),
 PY
 ```
 
-Copy the two different names and UUIDs into the worksheet. Keep the project
+### Read the agent lookup output
+
+For example, the development part of the script's output might be:
+
+```text
+skyttel-dev DEVELOPMENT
+SKYTTEL_LANGSMITH_PROJECT: skyttel-dev-development
+Project UUID for cleanup: <development-project-uuid>
+```
+
+Here, `skyttel-dev-development` is the value of LangSmith's
+`tracer_session_name` field. The script labels it with Skyttel's setting
+name so you know where to use it. For this output, put the following in
+your private development environment file:
+
+```dotenv
+SKYTTEL_LANGSMITH_PROJECT=skyttel-dev-development
+```
+
+Copy only the value after the colon. Do not include the colon, the output
+label or the literal text `tracer_session_name` in the value. Use the value
+your own lookup returns; this example is not a naming rule. For production,
+use the value after `SKYTTEL_LANGSMITH_PROJECT:` in the separate
+`skyttel-prod PRODUCTION` part of the output.
+
+Copy the two different destination values and UUIDs into the worksheet.
+Keep the project
 UUIDs for cleanup; neither is the workspace UUID. You can revoke the temporary
 setup PAT after lookup if it is not needed for other authorized setup work.
 If lookup fails, check the region, workspace, exact agent IDs and PAT access.

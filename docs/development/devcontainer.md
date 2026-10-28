@@ -112,8 +112,11 @@ Use the development destination and development key for this container.
    ```
 
    For a project-based workspace, the destination name is `skyttel-dev`.
-   For an agent-based workspace, copy the Development environment's returned
-   `tracer_session_name` exactly. Remove any `LANGSMITH_AGENT_ID` and
+   For an agent-based workspace, copy the value after
+   `SKYTTEL_LANGSMITH_PROJECT:` under `skyttel-dev DEVELOPMENT` in the
+   [lookup output](../operations/langsmith-rollout.md#read-the-agent-lookup-output).
+   The script reads this value from the API field `tracer_session_name`;
+   do not enter that field name as the value. Remove any `LANGSMITH_AGENT_ID` and
    `LANGSMITH_AGENT_ENVIRONMENT` entries from the private file; this
    integration uses the four application settings above.
 3. In the terminal that will start Skyttel, run the following from the
