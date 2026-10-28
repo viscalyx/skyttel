@@ -59,10 +59,19 @@ obtain it where it is absent.
    no payment method, remaining trace allowance and reset date. The documented
    limit for a personal organization without a card is 5,000 traces per
    month. Check the actual account before enabling either destination.
-4. Select the existing workspace. In its settings or connection details,
-   find and copy the **Workspace ID**. This is a UUID, not the workspace name
-   or organization ID. Record it privately for both installations.
-5. Confirm that your login can inspect traces and request deletion.
+4. Open **Settings** in LangSmith. For the default US region, you can open
+   [Settings directly](https://smith.langchain.com/settings). If you use
+   another region, stay on that region's LangSmith website.
+5. Select **General** and look for **Workspace ID**. If Settings shows
+   organization settings instead, select **Workspaces**, click your existing
+   workspace, then open its **General** settings. The default US region also
+   has a [direct workspace-settings link](https://smith.langchain.com/settings/workspaces).
+6. Copy the value labelled **Workspace ID**. It is a UUID with a shape like
+   `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`. Record it privately for both
+   installations. If you only see **Organization ID**, return to
+   **Workspaces** and select the workspace; that is a different identifier.
+   See the [documented Workspace ID location](https://docs.langchain.com/langsmith/create-account-api-key#configure-the-sdk).
+7. Confirm that your login can inspect traces and request deletion.
    Protect account recovery and keep access available for later cleanup.
 
 If the account requires payment or additional access, resolve that before
