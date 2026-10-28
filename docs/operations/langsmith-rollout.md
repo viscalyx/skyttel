@@ -73,8 +73,30 @@ obtain it where it is absent.
    [workspace lookup below](#look-up-your-workspace-id) to retrieve the
    separate workspace ID. Record the returned workspace UUID for both
    installations; do not put the organization ID in the workspace setting.
-7. Confirm that your login can inspect traces and request deletion.
-   Protect account recovery and keep access available for later cleanup.
+7. Confirm you are using your own **Personal** organization on the
+   **Developer** plan. For this single-workspace account, LangSmith assigns
+   your login the Organization Admin role, which includes Workspace Admin.
+   That role permits reading traces and requesting deletion. No role change,
+   extra member or plan upgrade is needed for this setup. See
+   [default roles](https://docs.langchain.com/langsmith/set-up-hierarchy#organization-roles)
+   and [trace permissions](https://docs.langchain.com/langsmith/organization-workspace-operations#runs).
+8. Record how you sign in and which account you use in your password manager,
+   for example Google plus your account email, or GitHub plus your username.
+   Check that you can still access that sign-in account's recovery method.
+   Keep any recovery codes securely. This concerns the account you use to
+   sign in; there is no additional LangSmith recovery switch in this guide.
+9. Keep access to that login for later cleanup. Your setup PAT can expire or
+   be revoked after setup: you can create another PAT from the same admin
+   account when cleanup is needed. Skyttel's tracing-only runtime keys cannot
+   read or delete stored traces.
+
+There may be no traces yet. Continue to step 3; there is nothing to inspect
+or delete at this point. Step 8 checks that you can open the first permitted
+development trace. Step 11 describes requesting deletion when cleanup is
+needed. The role check above establishes expected permissions, not a
+completed live read or deletion check. If using a shared organization
+instead, have its administrator confirm Workspace Admin access for the
+selected workspace before continuing.
 
 If the account requires payment or additional access, resolve that before
 activation. Development activity uses the same allowance as production.
@@ -97,7 +119,7 @@ not migrate data. See [regions](https://docs.langchain.com/langsmith/regions-faq
 and the [regional endpoint reference](https://support.langchain.com/articles/6271700631-pointing-the-langsmith-sdk-and-cli-at-a-non-us-regional-endpoint).
 
 **Check before continuing:** you have the region, API endpoint, workspace
-UUID, free capacity and access to inspect and delete traces.
+UUID, free capacity, an admin login and a way to recover that login.
 
 ## 3. Create skyttel-dev and skyttel-prod
 
