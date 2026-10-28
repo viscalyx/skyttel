@@ -123,20 +123,27 @@ UUID, free capacity, an admin login and a way to recover that login.
 
 ## 3. Create skyttel-dev and skyttel-prod
 
-Choose the path that matches your LangSmith interface. Do only one path.
+Choose the path that matches your LangSmith interface. Do only one path,
+using it for both development and production. If you see **All agents**
+and **+ Agent**, use Path A and skip Path B.
 
-### Path A: the top-left control names your workspace
+### Path A: All agents and the new agent experience
 
-This is an agent-based workspace.
+This is an agent-based workspace. Skyttel runs in your devcontainer or on
+Render; this flow registers where its traces will appear in LangSmith.
 
-1. Open **New Agent → Observability** or **Trace existing agent**.
-2. Enter `skyttel-dev` in both **Agent name** and **Agent ID**, then create
-   the record. Use Observability: Skyttel already runs outside LangSmith.
-3. Repeat with `skyttel-prod` as both name and ID.
-4. Select `skyttel-dev` and choose **Development** in the environment
+1. Select **All agents** in the left sidebar.
+2. Click **+ Agent**. Under **CONNECT**, choose **Trace an existing agent**.
+   Some UI versions call this option **Observability** in a **New Agent**
+   panel.
+3. Enter `skyttel-dev` in both **Agent name** and **Agent ID**, then create
+   the record.
+4. Return to **All agents** and repeat with `skyttel-prod` as both name
+   and ID.
+5. Select `skyttel-dev` and choose **Development** in the environment
    selector. For `skyttel-prod`, choose **Production**. These environment
    names are fixed; `skyttel-dev` and `skyttel-prod` are agent names.
-5. Obtain the destination name and project UUID for each selected environment
+6. Obtain the destination name and project UUID for each selected environment
    using [the lookup below](#look-up-agent-destination-values).
 
 If an ID already exists, open it and verify that it is the intended Skyttel
@@ -151,9 +158,20 @@ exactly. The environment's `tracer_session_id` is the project UUID used for
 lookup and cleanup. This is LangSmith's
 [compatibility configuration](https://docs.langchain.com/langsmith/create-an-agent#configure-integrations-that-require-a-project-name).
 
-### Path B: the top-left control shows the LangSmith logo
+### Path B: classic project-based workspaces only
 
-This is a project-based workspace. Create two tracing projects named exactly
+Keep this path for an existing project-based Cloud workspace using the
+classic experience. LangSmith also uses project-based workspaces for
+self-hosted installations; this guide's account and region steps target
+LangSmith Cloud. See [workspace types](https://docs.langchain.com/langsmith/log-traces-to-agent#prerequisites).
+
+The documented indicator for a project-based workspace is the LangSmith logo
+in the top-left control, rather than a named workspace switcher. If you have
+the **All agents → + Agent → Trace an existing agent** flow, follow Path A.
+Skyttel's `SKYTTEL_LANGSMITH_PROJECT` setting works with Path A through the
+compatibility value above; its name does not mean you need Path B.
+
+For Path B, create two tracing projects named exactly
 `skyttel-dev` and `skyttel-prod`, using
 [the project setup below](#create-or-read-project-based-destinations).
 It works without relying on a particular version of the project's UI.
