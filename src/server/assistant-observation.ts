@@ -239,6 +239,7 @@ const safeErrors = new Set([
   'task_canceled',
   'task_incomplete',
   'voice_failed',
+  'voice_canceled',
   'voice_disconnected',
   'backend_failed',
 ]);

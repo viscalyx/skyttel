@@ -184,12 +184,14 @@ test.each(['aborted', 'late'])(
   'a revoked %s Live startup remains canceled without restoring its authority',
   async (ending) => {
     const live = liveProvider();
+    const observe = vi.fn<ObserveAssistant>();
     let signal: AbortSignal | null | undefined;
     let release!: () => void;
     const held = new Promise<void>((resolve) => {
       release = resolve;
     });
     const { path, session } = await setup({
+      observe,
       liveSideband: live.attach,
       liveFetch: async (input, init) => {
         signal = init?.signal;
@@ -223,6 +225,16 @@ test.each(['aborted', 'late'])(
       release();
     }
     expect([401, 403]).toContain((await connecting).status());
+    const observations = observe.mock.calls.map(([event]) => event);
+    expect(observations.find((event) => event.kind === 'voice_completed')).toMatchObject({
+      status: 'canceled',
+      data: { error: 'voice_canceled' },
+    });
+    const attempt = observations.findLast((event) => event.kind === 'voice_attempt');
+    expect(attempt).toMatchObject({
+      status: 'canceled',
+      data: { outcome: 'aborted', error: 'voice_canceled' },
+    });
     await expect
       .poll(
         () => {
