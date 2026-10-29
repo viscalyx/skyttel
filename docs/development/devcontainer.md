@@ -93,7 +93,9 @@ pending migrations and preserves application data.
 
 Use the [LangSmith setup guide](../operations/langsmith-rollout.md) to create
 the `skyttel-dev` and `skyttel-prod` destinations and their runtime keys.
-Complete its preparation steps through step 5 before adding credentials.
+Complete its required preparation through step 5 before adding credentials.
+That step also offers an optional wait before sending; skip that option
+if you want sending to start when the configuration is loaded.
 Use the development destination and development key for this container.
 
 1. Stop the running development command with Ctrl+C. Work from the checkout
@@ -137,10 +139,13 @@ Use the development destination and development key for this container.
    supplies older values. Keep the container's existing database path,
    normally `/data/skyttel.sqlite`.
 4. Open [Skyttel](http://localhost:5173), sign in and confirm the same
-   household data is present. Confirm sending remains disabled in
-   **Inställningar → Drift → Diagnostik med LangSmith**, then follow
+   household data is present. Check the sending state in
+   **Inställningar → Drift → Diagnostik med LangSmith**. Valid configuration
+   enables sending by default. If you chose the optional wait, or have a
+   saved opt-out or suspension, it will not start sending automatically.
+   Follow
    [activation and verification](../operations/langsmith-rollout.md#8-activate-and-verify-one-installation-at-a-time)
-   to enable development uploads and inspect the correct destination.
+   to enable sending if needed and inspect the correct destination.
 
 After changing tracing settings, stop and restart the development command
 using step 3. Source hot reload does not reload this environment file.
