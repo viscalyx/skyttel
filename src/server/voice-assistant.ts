@@ -75,6 +75,7 @@ export function voiceAssistantRoutes({
   prepareVoiceContext,
   voiceInput,
   observe,
+  observationResetGeneration,
   liveProfile = voiceConversationModel,
   now = () => Date.now(),
   voiceAccess,
@@ -106,6 +107,7 @@ export function voiceAssistantRoutes({
   ) => Promise<TextAssistantView | undefined>;
   voiceInput?: (sessionId: string, pending: boolean, text?: string) => void;
   observe?: ObserveAssistant;
+  observationResetGeneration: (sessionId: string) => number | undefined;
   liveProfile?: LiveModelProfile;
 }) {
   if (
@@ -546,6 +548,8 @@ export function voiceAssistantRoutes({
         voice.finish?.();
       });
       const deliveryConnectionId = body.deliveryConnectionId;
+      // Keep the old generation for delayed results after this voice is retired.
+      const resetGeneration = observationResetGeneration(sessionId);
       voice.work = voiceWork({
         now,
         allowed: () => {
@@ -561,9 +565,10 @@ export function voiceAssistantRoutes({
           const identifiers = data as { delegationId?: string | null; requestId?: string };
           const requestId =
             typeof identifiers.requestId === 'string' ? identifiers.requestId : undefined;
-          const backend = requestId
-            ? backendTaskObservationContext(voice.assistant.id, requestId)
-            : undefined;
+          const backend =
+            requestId && resetGeneration !== undefined
+              ? backendTaskObservationContext(voice.assistant.id, requestId, resetGeneration)
+              : undefined;
           observe?.({
             at: now(),
             sessionId: voice.assistant.id,
