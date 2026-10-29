@@ -95,6 +95,8 @@ type Session = TextAssistantView & {
   /** Version reached by this FIFO, unaffected by view reads of external edits. */
   workVersion?: number;
   accepted: Map<string, AcceptedMessage>;
+  /** Request IDs may be reused only after an explicit conversation reset. */
+  resetGeneration: number;
   capacity: ConversationCapacity;
   summary?: string;
   summaryOffset?: number;
@@ -1004,6 +1006,7 @@ export function textAssistantRoutes({
     for (const accepted of session.accepted.values()) accepted.delivery?.stop();
     session.accepted.clear();
     session.taskId = undefined;
+    session.resetGeneration++;
     syncWork();
     session.taskSource = undefined;
     session.canceled = undefined;
@@ -1903,7 +1906,11 @@ export function textAssistantRoutes({
     if (!message.voice) session.conversation.push({ role: 'user', text: message.text });
     const revision = session.revision;
     const startedAt = now();
-    const observationContext = backendTaskObservationContext(session.id, message.id);
+    const observationContext = backendTaskObservationContext(
+      session.id,
+      message.id,
+      session.resetGeneration,
+    );
     observe?.({
       at: startedAt,
       sessionId: session.id,
@@ -2240,6 +2247,7 @@ export function textAssistantRoutes({
         queue: [],
         boundaryRevision: 0,
         accepted: new Map(),
+        resetGeneration: 0,
         completedReplies: [],
         timer: setTimeout(
           () => expireConversation(session),
@@ -2834,6 +2842,7 @@ export function textAssistantRoutes({
     },
     /** Private ephemeral context shared by text and every voice connection.
      * Never expose it in status responses or write it to the household. */
+    observationResetGeneration: (sessionId: string) => sessions.get(sessionId)?.resetGeneration,
     conversation: (sessionId: string) => {
       const session = sessions.get(sessionId);
       return session ? providerConversation(session) : [];
