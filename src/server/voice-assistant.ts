@@ -350,7 +350,11 @@ export function voiceAssistantRoutes({
         },
         kind: 'voice_completed',
         status,
-        data: { model: liveProfile.model, endedAt: now(), error: 'voice_failed' },
+        data: {
+          model: liveProfile.model,
+          endedAt: now(),
+          error: status === 'canceled' ? 'voice_canceled' : 'voice_failed',
+        },
       });
     };
     const providerObservation = (
@@ -386,7 +390,9 @@ export function voiceAssistantRoutes({
           startedAt: usage.startedAt,
           ...(outcome !== 'started' ? { endedAt: now() } : {}),
           ...content,
-          ...(['failed', 'aborted'].includes(outcome) ? { error: 'voice_failed' } : {}),
+          ...(['failed', 'aborted'].includes(outcome)
+            ? { error: outcome === 'aborted' ? 'voice_canceled' : 'voice_failed' }
+            : {}),
         },
       });
     };
