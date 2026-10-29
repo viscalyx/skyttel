@@ -38,9 +38,6 @@ Before starting, have:
   to authenticate to LangSmith; do not paste it into chat or commit it.
 - Access to Skyttel's installation settings in development and production.
 - Access to the private development environment file and Render service.
-- A Skyttel revision that includes the diagnostic-sending control and
-  configuration described here. A guide in a worktree does not update the
-  application running from another checkout.
 
 Account setup, activation and production deployment are separate actions.
 For an agent carrying out this guide, credentials and passing implementation
@@ -249,9 +246,8 @@ configure. See
 
 ## 5. Prepare each Skyttel installation before adding credentials
 
-This guide assumes the running release supports the LangSmith settings and
-sending control. Do this first in development, then independently in
-production. The steps below keep sending disabled while you configure and
+Do this first in development, then independently in production.
+The steps below keep sending disabled while you configure and
 verify the connection, then enable it in step 8. This staged activation is
 a rollout choice: with valid settings and no stored opt-out or suspension,
 sending defaults to enabled.
@@ -270,8 +266,7 @@ sending defaults to enabled.
    Preserve household work. Accepting newer information does not make an
    older conversation eligible; start new conversations after activation.
 
-Continue to step 6 for development or step 7 for production. No preliminary
-deployment without LangSmith settings is required.
+Continue to step 6 for development or step 7 for production.
 
 ## 6. Connect development to skyttel-dev
 
