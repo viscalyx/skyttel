@@ -566,6 +566,13 @@ python3 - <<'PY'
 import getpass, json, sys, urllib.error, urllib.request
 sys.stdin = open('/dev/tty')
 base = input('Regional API endpoint: ').strip().rstrip('/')
+if base not in {
+    'https://api.smith.langchain.com',
+    'https://eu.api.smith.langchain.com',
+    'https://apac.api.smith.langchain.com',
+    'https://aws.api.smith.langchain.com',
+}:
+    raise SystemExit('Use an HTTPS API endpoint from the region table in step 2.')
 organization = input('Organization ID copied from Settings: ').strip()
 token = getpass.getpass('Setup PAT (hidden): ')
 request = urllib.request.Request(base + '/api/v1/workspaces', headers={
@@ -611,6 +618,13 @@ python3 - <<'PY'
 import getpass, json, sys, urllib.error, urllib.request
 sys.stdin = open('/dev/tty')
 base = input('Regional API endpoint from step 2: ').strip().rstrip('/')
+if base not in {
+    'https://api.smith.langchain.com',
+    'https://eu.api.smith.langchain.com',
+    'https://apac.api.smith.langchain.com',
+    'https://aws.api.smith.langchain.com',
+}:
+    raise SystemExit('Use an HTTPS API endpoint from the region table in step 2.')
 workspace = input('Workspace UUID from step 2: ').strip()
 token = getpass.getpass('Setup PAT (read agents; hidden): ')
 for agent, target in [('skyttel-dev', 'DEVELOPMENT'),
@@ -682,6 +696,13 @@ python3 - <<'PY'
 import getpass, json, sys, urllib.error, urllib.parse, urllib.request
 sys.stdin = open('/dev/tty')
 base = input('Regional API endpoint from step 2: ').strip().rstrip('/')
+if base not in {
+    'https://api.smith.langchain.com',
+    'https://eu.api.smith.langchain.com',
+    'https://apac.api.smith.langchain.com',
+    'https://aws.api.smith.langchain.com',
+}:
+    raise SystemExit('Use an HTTPS API endpoint from the region table in step 2.')
 workspace = input('Workspace UUID from step 2: ').strip()
 token = getpass.getpass('Setup PAT (read/create projects; hidden): ')
 for name in ['skyttel-dev', 'skyttel-prod']:
