@@ -37,15 +37,18 @@ export type AssistantObservationContext = {
 };
 
 /** Explicit protocol mapping shared by the backend and its voice caller. The
- * conversation/request pair identifies exactly one accepted task. Its SHA-256
+ * session/reset-generation/request tuple identifies one accepted task. Its SHA-256
  * UUID (version 8) lets a voice link name a backend root before delivery, without
  * creating that span, guessing an observed outcome or keeping a payload store. */
 export function backendTaskObservationContext(
   sessionId: string,
   requestId: string,
+  resetGeneration: number,
 ): AssistantObservationContext {
   const bytes = createHash('sha256')
-    .update(JSON.stringify(['skyttel-backend-task-v1', sessionId, requestId]))
+    .update(
+      JSON.stringify(['skyttel-backend-task-v2', sessionId, String(resetGeneration), requestId]),
+    )
     .digest()
     .subarray(0, 16);
   bytes[6] = (bytes[6] & 0x0f) | 0x80;
