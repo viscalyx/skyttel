@@ -249,30 +249,29 @@ configure. See
 
 ## 5. Prepare each Skyttel installation before adding credentials
 
-Do this first in development, then independently in production. Sending is
-enabled by default when valid configuration is present and no stored opt-out
-or suspension exists. Establish the disabled state before adding credentials.
+This guide assumes the running release supports the LangSmith settings and
+sending control. Do this first in development, then independently in
+production. The steps below keep sending disabled while you configure and
+verify the connection, then enable it in step 8. This staged activation is
+a rollout choice: with valid settings and no stored opt-out or suspension,
+sending defaults to enabled.
 
-1. Start or deploy the tracing-capable Skyttel revision with all four
-   `SKYTTEL_LANGSMITH_*` settings absent. If the current release lacks the
-   control or current conversation information, use this unconfigured first
-   startup/deployment. For Render, remove the settings from both the service
-   and linked environment groups before approving that release.
-2. Verify application health, login and household access. As
+1. Verify application health, login and household access. As
    installationsansvarig, open **Inställningar → Drift → Diagnostik med
-   LangSmith**. With no configuration, expect **Inte ansluten**.
-3. Select **Stäng av sändning** and confirm the disabled state. Keep the same
-   database: this setting survives application restarts.
-4. Inform users about the current conversation information, version 3. It
+   LangSmith**. If no LangSmith settings are configured, expect
+   **Inte ansluten**; there are no settings to remove.
+2. Select **Stäng av sändning** if sending is enabled, and confirm the
+   disabled state. Keep the same database: this setting survives application
+   restarts. Existing LangSmith settings can remain in place.
+3. Inform users about the current conversation information, version 3. It
    names OpenAI and LangSmith and describes exact text, relevant household
    tool content, excluded raw audio, installation control and deletion limits.
-5. End active conversations and pause new ones during configuration.
+4. End active conversations and pause new ones during configuration.
    Preserve household work. Accepting newer information does not make an
    older conversation eligible; start new conversations after activation.
 
-An unconfigured first deployment permits the new control to become available
-without enabling uploads. Do not assume intermediate development releases
-are already deployed. Complete this step before configuring either target.
+Continue to step 6 for development or step 7 for production. No preliminary
+deployment without LangSmith settings is required.
 
 ## 6. Connect development to skyttel-dev
 
@@ -395,7 +394,7 @@ ingress, physical microphone/audio behavior or human accessibility.
 <!-- markdownlint-disable MD013 -->
 | What you see | What to check |
 | :-- | :-- |
-| `Inte ansluten` | Start the tracing-capable revision; supply the endpoint, exact destination name and runtime key in the active environment. |
+| `Inte ansluten` | Check that the endpoint, exact destination name and runtime key are configured in the active environment. |
 | Disabled after restart | The opt-out is stored in that installation's database. Enable it only when ready. |
 | Configuration/export failure | Check all four values, regional API URL, copied destination name and conflicting exported agent variables. |
 | Credential suspension / HTTP 401 or 403 | Check key expiration, workspace access and matching region; do not substitute the setup PAT. |
