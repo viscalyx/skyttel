@@ -360,6 +360,111 @@ test('canceled work keeps its original incomplete start and never turns a late p
   expect(JSON.stringify(result)).not.toContain('Ett för sent svar.');
 });
 
+test('reset permits a reused request ID without merging tasks or their delayed endings', async () => {
+  const events: AssistantObservation[] = [];
+  let release!: () => void;
+  const waiting = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let calls = 0;
+  const provider = textModel(async () => {
+    if (calls++ === 0) {
+      await waiting;
+      return [modelMessage('Ett för sent svar.')];
+    }
+    return [modelMessage('Det nya svaret.')];
+  });
+  const { path, session } = await setup((event) => events.push(event), provider.provider);
+  const endpoint = `${path}/text-assistant/${session.id}`;
+  try {
+    await submit(path, session);
+    await expect.poll(() => calls).toBe(1);
+    const reset = await client.post(`${endpoint}/new`, {
+      headers: { origin: app.origin },
+      data: { discard: false },
+    });
+    expect(reset.status()).toBe(200);
+    const current = await reset.json();
+    expect(current.id).toBe(session.id);
+    expect(await send(path, current)).toMatchObject({ modelReply: 'Det nya svaret.' });
+    const starts = events.filter((event) => event.kind === 'task_started');
+    expect(starts).toHaveLength(2);
+    expect(starts.map((event) => event.context?.requestId)).toEqual(['read-lina', 'read-lina']);
+    expect(starts[1].context?.traceId).not.toBe(starts[0].context?.traceId);
+    expect(starts[1].context?.spanId).not.toBe(starts[0].context?.spanId);
+    release();
+    await expect
+      .poll(() => events.filter((event) => event.kind === 'task_completed').length)
+      .toBe(2);
+    for (const [index, status] of ['canceled', 'completed'].entries()) {
+      expect(
+        events.filter(
+          (event) =>
+            event.kind === 'task_completed' &&
+            event.context?.traceId === starts[index].context?.traceId,
+        ),
+      ).toMatchObject([{ status, context: starts[index].context }]);
+    }
+    expect(await (await client.get(`${endpoint}/messages/read-lina`)).json()).toMatchObject({
+      taskStatus: 'completed',
+      modelReply: 'Det nya svaret.',
+    });
+  } finally {
+    release();
+  }
+});
+
+test('voice links after reset identify the new backend task generation', async () => {
+  const events: AssistantObservation[] = [];
+  const live = liveProvider();
+  const { path, session } = await setup((event) => events.push(event), undefined, {
+    liveFetch: live.provider,
+    liveSideband: live.attach,
+  });
+  const endpoint = `${path}/text-assistant/${session.id}`;
+  const reset = await client.post(`${endpoint}/new`, {
+    headers: { origin: app.origin },
+    data: { discard: false },
+  });
+  expect(reset.status()).toBe(200);
+  const current = await reset.json();
+  const started = await client.post(`${endpoint}/voice`, {
+    headers: { origin: app.origin },
+    data: {
+      sdp: 'synthetic-offer',
+      revision: current.revision,
+      draftVersion: current.review.version,
+      contentVersion: current.review.contentVersion,
+    },
+  });
+  expect(started.status(), await started.text()).toBe(201);
+  const providerId = [...live.channels.keys()][0];
+  live.emit(providerId, {
+    type: 'session.input_transcript.delta',
+    event_id: 'after-reset-input',
+    delta: 'Läs bara Lina.',
+    start_ms: 0,
+    end_ms: 1,
+  });
+  live.emit(providerId, {
+    type: 'session.delegation.created',
+    event_id: 'after-reset-delegation',
+    offset_ms: 1,
+    delegation: { id: 'after-reset', target: 'client', type: 'delegation' },
+  });
+  await expect
+    .poll(() => events.some((event) => event.kind === 'backend_result'), { timeout: 5000 })
+    .toBe(true);
+  const backend = events.find((event) => event.kind === 'task_started');
+  expect(backend?.context?.traceId).toBeTruthy();
+  for (const kind of ['backend_request', 'backend_result']) {
+    expect(events.find((event) => event.kind === kind)?.context).toMatchObject({
+      requestId: backend?.context?.requestId,
+      links: [{ traceId: backend?.context?.traceId, spanId: backend?.context?.spanId }],
+    });
+  }
+});
+
 test.each([
   { throws: false, ending: 'completed' },
   { throws: true, ending: 'completed' },
