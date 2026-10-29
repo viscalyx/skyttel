@@ -153,10 +153,11 @@ Do not rebuild the devcontainer just to change tracing: rebuilding runs
 the database reset described above. These steps preserve application data.
 
 For `npm run dev:prodlike`, use the same file and unset commands, replacing
-the final startup command. It still uses the development destination even
-though its runtime mode is production. Ordinary automated tests use isolated
-configuration; this setup enables tracing for interactive application use
-and manual testing.
+the final startup command. In step 4, open the compiled application at
+[http://localhost:3301](http://localhost:3301). It still uses the development
+destination even though its runtime mode is production. Ordinary automated
+tests use isolated configuration; this setup enables tracing for interactive
+application use and manual testing.
 
 ## Set up local sign-in
 
