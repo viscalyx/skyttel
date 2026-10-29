@@ -399,6 +399,7 @@ export function createApp({
   const voiceAssistant = voiceAssistantRoutes({
     now,
     voiceAccess: textAssistant.voiceAccess,
+    observationResetGeneration: textAssistant.observationResetGeneration,
     expireVoiceWork: textAssistant.expireVoiceWork,
     config,
     liveProfile,
