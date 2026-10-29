@@ -133,11 +133,18 @@ function projectionArrays(limit?: number): ProjectArray {
     const result = [];
     if (remaining !== undefined) remaining -= 2;
     for (const value of source) {
+      const available = remaining;
       const item = project(value);
-      if (item === undefined) continue;
-      if (remaining !== undefined) {
-        const json = traceJson(item, remaining);
-        remaining -= Buffer.byteLength(json) + (result.length ? 1 : 0);
+      if (item === undefined) {
+        remaining = available;
+        continue;
+      }
+      if (available !== undefined) {
+        // Nested projections bound construction while project runs. Their
+        // bytes are already included in this item's JSON, so replace their
+        // subtotal rather than charging the same content a second time.
+        const json = traceJson(item, available);
+        remaining = available - Buffer.byteLength(json) - (result.length ? 1 : 0);
         if (remaining < 0) throw new TraceJsonFailure('oversized');
       }
       result.push(item);
