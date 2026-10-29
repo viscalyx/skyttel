@@ -102,10 +102,11 @@ operator. Use sanitized shared status; do not copy payloads or credentials.
       evaluator automation, datasets or bulk export. Cleanup permission and
       asynchronous follow-up are verified; retained metadata limits are known.
 - [ ] Users receive current information before the first enabled release,
-      end active conversations and pause starts during rollout. Preserve the
-      durable disabled guard before configuration and automatic deployment.
-      If controls are absent, first deploy the completed release without
-      diagnostic settings and verify **Inte ansluten** before this preparation.
+      end active conversations and pause starts during configuration. Record
+      whether sending should start when configuration is loaded or wait for
+      manual activation. Only the latter choice requires disabling sending
+      before configuration and deployment. A saved opt-out or suspension
+      remains effective with either choice.
 - [ ] Review the release's required application/security checks and outstanding
       [security acceptance evidence](security-checks.md#cookie-and-storage-release-evidence).
       Verify actual providers, hosted HTTPS/proxy, physical browser restart,

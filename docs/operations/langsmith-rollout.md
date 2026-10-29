@@ -244,29 +244,47 @@ of the Base retention setting you selected above, not another setting to
 configure. See
 [retention](https://docs.langchain.com/langsmith/usage-and-billing).
 
-## 5. Prepare each Skyttel installation before adding credentials
+## 5. Prepare users and choose when sending starts
 
-Do this first in development, then independently in production.
-The steps below keep sending disabled while you configure and
-verify the connection, then enable it in step 8. This staged activation is
-a rollout choice: with valid settings and no stored opt-out or suspension,
-sending defaults to enabled.
+Do the required preparation for development first, then independently for
+production. Keeping sending disabled during configuration is optional.
 
-1. Verify application health, login and household access. As
-   installationsansvarig, open **Inställningar → Drift → Diagnostik med
-   LangSmith**. If no LangSmith settings are configured, expect
-   **Inte ansluten**; there are no settings to remove.
-2. Select **Stäng av sändning** if sending is enabled, and confirm the
-   disabled state. Keep the same database: this setting survives application
-   restarts. Existing LangSmith settings can remain in place.
-3. Inform users about the current conversation information, version 3. It
+### Required: prepare users before sending
+
+1. Verify application health, login and household access.
+2. Inform users about the current conversation information, version 3. It
    names OpenAI and LangSmith and describes exact text, relevant household
    tool content, excluded raw audio, installation control and deletion limits.
-4. End active conversations and pause new ones during configuration.
+3. End active conversations and pause new ones during configuration.
    Preserve household work. Accepting newer information does not make an
    older conversation eligible; start new conversations after activation.
+4. Complete the account and access checks above and review the
+   [pre-rollout checkpoint](langsmith-rollout-checkpoint.md). Ensure uploads
+   and the deployment are authorized before loading the settings that start
+   sending. Billable text/voice checks need their own authorization.
 
-Continue to step 6 for development or step 7 for production.
+**To start sending automatically:** continue to step 6 for development or
+step 7 for production. With valid settings and no saved opt-out or suspension,
+sending starts when the application loads the configuration on startup.
+Editing the environment file alone does not change the running application.
+Step 8 checks the sending state and verifies delivery.
+
+A saved opt-out or suspension survives restarts. If one exists, configuring
+the environment does not clear it; step 8 explains how to proceed.
+
+### Optional: wait to activate sending
+
+Use this only if you want to configure the connection first and enable
+sending manually afterward. Otherwise, skip this subsection.
+
+1. As installationsansvarig, open **Inställningar → Drift → Diagnostik med
+   LangSmith**. Select **Stäng av sändning** if that button is available,
+   then confirm the disabled state. If already disabled, leave it disabled.
+2. Keep the same database so the disabled state survives the restart or
+   deployment. Existing LangSmith settings can remain in place.
+
+Continue to step 6 or 7 to configure the connection. Sending will remain
+disabled until you select **Aktivera sändning** in step 8.
 
 ## 6. Connect development to skyttel-dev
 
@@ -299,8 +317,10 @@ Skyttel's setup. Remove `LANGSMITH_AGENT_ID` and
 their presence disconnects this integration.
 CLI profiles do not supply the application's configuration.
 
-Verify that the app starts with the same household data and remains disabled.
-Then complete [activation and verification](#8-activate-and-verify-one-installation-at-a-time)
+Verify that the app starts with the same household data. If you chose the
+optional wait in step 5, confirm sending remains disabled. Otherwise, valid
+configuration starts sending unless a saved opt-out or suspension prevents
+it. Complete [activation and verification](#8-activate-and-verify-one-installation-at-a-time)
 for development before moving to production.
 
 Interactive use and manual testing of the running app can send traces.
@@ -311,7 +331,9 @@ authorization for billable calls.
 
 ## 7. Connect production to skyttel-prod
 
-1. Confirm step 5 is complete on the actual Render installation.
+1. Complete the required preparation in step 5 for production. If you want
+   to wait before sending, also complete its optional disable procedure
+   before deploying the settings.
 2. Open the existing Render service, then **Environment → + Add Environment
    Variable**.
 3. Add the same four application settings from step 6, using the production
@@ -324,7 +346,9 @@ authorization for billable calls.
    follow the [Render guide](render.md) to deploy the exact verified image
    with the new environment. Check release identity, `/healthz`, database
    readiness, login and household access.
-6. Confirm the stored sending state remains disabled, then continue to step 8.
+6. Check the sending state in Skyttel. If you chose to wait, it should remain
+   disabled. Otherwise, valid configuration starts sending unless a saved
+   opt-out or suspension prevents it. Continue to step 8 to verify delivery.
 
 These are Render application settings, not GitHub deployment secrets.
 **Restart service** reuses the running deployment's configuration; it does
@@ -333,10 +357,11 @@ not apply newly saved settings. See
 and [deployment effects](https://render.com/docs/deploys).
 
 An approved merge to main can publish and deploy without another approval.
-**Save only** values can become active on that next release. Finish account
-preparation, user information, ending conversations and the durable opt-out
-before approving an enabled release. Preserve the existing SQLite disk and
-follow the exact-image flow rather than replacing it with a source build.
+**Save only** values can become active on that next release. Complete the
+required preparation in step 5 before that release. If you choose to wait
+before sending, establish the disabled state before deployment as well.
+Preserve the existing SQLite disk and follow the exact-image flow rather
+than replacing it with a source build.
 
 ## 8. Activate and verify one installation at a time
 
@@ -344,13 +369,15 @@ Use invented household information for development. Only use content
 permitted for upload in production. Text and voice checks can invoke paid
 model providers even when LangSmith tracing is within its free allowance.
 
-1. Confirm the destination worksheet, remaining allowance, disabled state
-   and current conversation information. Use the
-   [pre-rollout checkpoint](langsmith-rollout-checkpoint.md) for remaining
-   human checks. Obtain authorization for uploads and billable checks if it
-   is not already given.
-2. In **Diagnostik med LangSmith**, select **Aktivera sändning**. With valid
-   settings and no stored suspension, expect **Sändning aktiverad**.
+1. Confirm the destination worksheet, remaining allowance and current
+   conversation information. Confirm authorization for the live checks below,
+   including any billable provider calls.
+2. Open **Inställningar → Drift → Diagnostik med LangSmith**. If it shows
+   **Sändning aktiverad**, continue to the next item; no activation click is
+   needed. If sending is disabled and you are ready, select **Aktivera
+   sändning**. If it is suspended or shows **Inte ansluten**, resolve the
+   problem using step 9 before continuing. Changing environment variables
+   or restarting does not clear a saved opt-out or suspension.
 3. Start a new conversation and accept the current information. Send one
    short text request using permitted content. If voice checks are authorized,
    open a new voice session and make one request.
