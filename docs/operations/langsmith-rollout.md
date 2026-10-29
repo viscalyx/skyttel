@@ -211,9 +211,10 @@ different. They must resolve inside the intended workspace and region.
    14-day policy for new traces.
 2. Leave retention upgrades, evaluators and automation disabled. Do not
    create datasets, experiments or bulk exports as part of this setup.
-3. Open **Settings → API Keys → API Key → Tracing Only**. Use
-   `skyttel-dev` as the description, select only the intended workspace,
-   choose an expiration date and create the key.
+3. Open **Settings → API Keys** and click **+ Create API key**. In the
+   **Create an API Key** dialog, select **Tracing Only** under **Key Type**.
+   Use `skyttel-dev` as the description, select only the intended workspace,
+   choose an expiration date and click **Create API Key**.
 4. Copy the one-time secret into your password manager before closing the
    dialog. Label it for development and record its expiration.
 5. Create another tracing-only key described as `skyttel-prod`. Store and
@@ -473,7 +474,7 @@ destination identities using your account's permissions. You can create it
 before you know the workspace UUID: the dialog selects a workspace by name.
 Reuse an existing setup PAT if it has the necessary access.
 
-1. Open **Settings → API Keys**, then select **API Key** to open the
+1. Open **Settings → API Keys**, then click **+ Create API key** to open the
    **Create an API Key** dialog.
 2. In **Description**, enter a recognizable label such as `Management PAT`
    or `Skyttel setup PAT`.
