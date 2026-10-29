@@ -18,6 +18,8 @@ another free allowance or a security boundary between workspace members.
 
 LangSmith receives diagnostic evidence about assistant work. A **trace**
 groups a task or voice session with its related model and tool activity.
+In this guide, **sending** means Skyttel automatically uploads these traces
+to LangSmith during assistant use. You do not upload files manually.
 A **workspace** contains destinations and controls access. In the newer
 interface, an **agent** is a named application record with environments.
 Registering that record does not move Skyttel into LangSmith: Skyttel still
@@ -38,12 +40,6 @@ Before starting, have:
   to authenticate to LangSmith; do not paste it into chat or commit it.
 - Access to Skyttel's installation settings in development and production.
 - Access to the private development environment file and Render service.
-
-Account setup, activation and production deployment are separate actions.
-For an agent carrying out this guide, credentials and passing implementation
-tests do not authorize account changes, uploads, deployment or billable
-model/voice/judge calls. Use the authorization already given for each action;
-obtain it where it is absent.
 
 ## 2. Create or open your LangSmith account
 
@@ -252,16 +248,34 @@ production. Keeping sending disabled during configuration is optional.
 ### Required: prepare users before sending
 
 1. Verify application health, login and household access.
-2. Inform users about the current conversation information, version 3. It
-   names OpenAI and LangSmith and describes exact text, relevant household
-   tool content, excluded raw audio, installation control and deletion limits.
-3. End active conversations and pause new ones during configuration.
-   Preserve household work. Accepting newer information does not make an
-   older conversation eligible; start new conversations after activation.
-4. Complete the account and access checks above and review the
-   [pre-rollout checkpoint](langsmith-rollout-checkpoint.md). Ensure uploads
-   and the deployment are authorized before loading the settings that start
-   sending. Billable text/voice checks need their own authorization.
+2. Before enabling tracing, tell everyone who uses the assistant what will
+   be sent to LangSmith and why. They need to know that another service can
+   receive their actual words and household information, so they can decide
+   whether to use the assistant. You can use the message below.
+3. Ask users to finish current conversations and save their work, then wait
+   while you change the settings. Afterward, ask them to start a new
+   conversation and read and accept the information if Skyttel prompts them.
+   Old conversations are not made eligible for tracing by accepting newer
+   information later.
+
+Suggested message to users:
+
+> We are enabling LangSmith diagnostics to help investigate problems with
+> Skyttel's assistant. Skyttel already uses OpenAI to process assistant
+> requests. LangSmith is an additional service that can receive exact
+> conversation text, information sent to and returned by the AI model, and
+> the household information the assistant looks up or changes. Voice audio
+> recordings are not sent to LangSmith. The operator can turn off future
+> uploads, but this does not delete information already sent. Please read
+> Skyttel's conversation information before continuing to use the assistant.
+
+Skyttel handles each person's conversation consent in the application.
+Telling users about the change does not replace that consent.
+
+The account and key checks belong to steps 2–4. If you have completed them,
+there is no separate approval step here. The
+[production setup checklist](langsmith-rollout-checkpoint.md) helps you track
+the checks at each stage; it does not add an authorization process.
 
 **To start sending automatically:** continue to step 6 for development or
 step 7 for production. With valid settings and no saved opt-out or suspension,
@@ -342,7 +356,7 @@ authorization for billable calls.
    Enter plain values without surrounding shell quotes.
 4. Check linked environment groups for conflicting values. Service values
    take precedence. Confirm no development destination or key is selected.
-5. Choose **Save only** if deployment must wait. When deployment is authorized,
+5. Choose **Save only** if deployment must wait. When you are ready,
    follow the [Render guide](render.md) to deploy the exact verified image
    with the new environment. Check release identity, `/healthz`, database
    readiness, login and household access.
@@ -356,7 +370,7 @@ not apply newly saved settings. See
 [Render environment settings](https://render.com/docs/configure-environment-variables)
 and [deployment effects](https://render.com/docs/deploys).
 
-An approved merge to main can publish and deploy without another approval.
+A merge to main can publish and deploy automatically.
 **Save only** values can become active on that next release. Complete the
 required preparation in step 5 before that release. If you choose to wait
 before sending, establish the disabled state before deployment as well.
@@ -369,9 +383,14 @@ Use invented household information for development. Only use content
 permitted for upload in production. Text and voice checks can invoke paid
 model providers even when LangSmith tracing is within its free allowance.
 
+Items 1 and 2 below are required state checks after applying configuration.
+Items 3–8 are optional live verification: skip them if you do not want to
+send a test request now. Tracing can remain enabled, but actual cloud
+delivery and display remain unverified until you inspect a trace.
+
 1. Confirm the destination worksheet, remaining allowance and current
-   conversation information. Confirm authorization for the live checks below,
-   including any billable provider calls.
+   conversation information. If performing the optional live checks, choose
+   content you are willing to send and account for model-provider charges.
 2. Open **Inställningar → Drift → Diagnostik med LangSmith**. If it shows
    **Sändning aktiverad**, continue to the next item; no activation click is
    needed. If sending is disabled and you are ready, select **Aktivera
@@ -379,7 +398,7 @@ model providers even when LangSmith tracing is within its free allowance.
    problem using step 9 before continuing. Changing environment variables
    or restarting does not clear a saved opt-out or suspension.
 3. Start a new conversation and accept the current information. Send one
-   short text request using permitted content. If voice checks are authorized,
+   short text request using permitted content. If you choose to test voice,
    open a new voice session and make one request.
 4. Refresh delivery health in Skyttel. Check for a recent accepted delivery
    and inspect error/drop counts. Startup health alone does not prove that
@@ -403,7 +422,8 @@ also produce a linked backend summary trace. A failed preparation can leave
 a voice root without a Live-creation attempt. Treat uploading as active as
 soon as you enable it.
 
-**Success:** each installation reports accepted delivery, and its permitted
+**If you perform live verification, success means:** each installation
+reports accepted delivery, and its permitted
 text/voice activity appears only in the matching destination. If the
 destination or content is wrong, disable sending before investigating.
 
@@ -443,7 +463,7 @@ Rotate one installation at a time:
    guide, or replace the Render secret and deploy the verified image with
    the new settings.
 4. Verify configuration, then enable or recover sending as appropriate.
-   Perform live checks only when authorized.
+   Use the state checks in step 8; its live checks are optional.
 5. Revoke/delete that installation's old key. If a key leaks, revoke it
    immediately. Keep setup/delete credentials outside both applications.
 
@@ -465,7 +485,7 @@ authority. Household restoration uses [controlled recovery](database-restore.md)
    Verify `Inte ansluten` if enabled, or the durable disabled state.
 2. Revoke its runtime key. Keep the other installation's key, household
    storage and authority intact.
-3. With cleanup authorization, use separate read/delete access and the
+3. Use your LangSmith admin account's read/delete access and the
    worksheet's exact project UUID to identify remaining traces. For Path A,
    this UUID is `tracer_session_id`. Do not use the agent name, destination
    name or a Skyttel conversation ID. Do not bulk-export payloads.
@@ -483,6 +503,9 @@ Opt-out does not delete cloud data. Some analytics/billing metadata can
 remain; do not promise physical deletion of all metadata within 14 days.
 
 ## 12. Assess production usefulness after rollout
+
+This assessment is optional and does not block configuration or activation.
+Skip it if you only want to set up tracing.
 
 Use the [diagnosis and assessment procedure](langsmith-assessment.md) for the
 production destination: the first ten natural failures in occurrence order
@@ -637,7 +660,7 @@ use the value after `SKYTTEL_LANGSMITH_PROJECT:` in the separate
 Copy the two different destination values and UUIDs into the worksheet.
 Keep the project
 UUIDs for cleanup; neither is the workspace UUID. You can revoke the temporary
-setup PAT after lookup if it is not needed for other authorized setup work.
+setup PAT after lookup if it is not needed for other setup work.
 If lookup fails, check the region, workspace, exact agent IDs and PAT access.
 Do not try the runtime key or guess the destination name.
 
