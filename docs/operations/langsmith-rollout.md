@@ -220,24 +220,32 @@ different. They must resolve inside the intended workspace and region.
 5. Create another tracing-only key described as `skyttel-prod`. Store and
    label it for production, with an expiration and rotation reminder.
 
+**Ready to continue:** both destinations use Base retention, both runtime
+tracing keys are saved privately, and you have the admin account access
+covered in step 2. Continue to step 5. There is no additional PAT to create
+or cleanup to perform at this point.
+
+**Background information:** the following notes explain the keys and
+retention settings above; they do not add setup steps.
+
 Separate keys let you rotate or revoke one installation's credential.
 Their workspace scope does not restrict either key to one destination:
-the destination setting determines routing. Check the worksheet when copying.
+the destination setting determines routing. Steps 6 and 7 use the worksheet
+to connect each installation to its intended destination.
 
 A runtime tracing key submits traces and updates. It cannot inspect stored
-traces, register an agent or perform cleanup. Use your login and, when needed,
-a separate personal access token (PAT) for setup/read/delete operations.
-Follow [create a setup PAT](#create-a-setup-pat) when a lookup requires one.
-Never install that setup token in Skyttel. See
+traces, register an agent or perform cleanup. The setup PAT used for the
+earlier lookups is the separate credential for those operations; no new PAT
+is needed here. Steps 6 and 7 install only the tracing-only runtime keys in
+Skyttel. The setup PAT stays outside the application configuration. See
 [tracing-key permissions](https://docs.langchain.com/langsmith/create-account-api-key#tracing-keys).
 
 Retention applies separately to payloads and analytics/billing metadata.
 Some metadata can remain indefinitely. Changing retention affects new
-traces; dataset copies have independent lifetimes. See
+traces; dataset copies have independent lifetimes. This explains the limits
+of the Base retention setting you selected above, not another setting to
+configure. See
 [retention](https://docs.langchain.com/langsmith/usage-and-billing).
-
-**Check before continuing:** two destinations, two labelled runtime keys,
-verified retention and a permitted cleanup path.
 
 ## 5. Prepare each Skyttel installation before adding credentials
 
