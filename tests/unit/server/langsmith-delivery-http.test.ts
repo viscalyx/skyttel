@@ -1163,7 +1163,26 @@ test.each(['healthy', 'disabled', 'failing'])(
     const { voice } = await connected.json();
     const providerId = [...live.channels.keys()][0];
     let offset = 0;
+    const poll = async () => {
+      const current = await (await client.get(`${path}/text-assistant/${session.id}`)).json();
+      const response = await client.post(
+        `${path}/text-assistant/${session.id}/voice/${voice.id}/poll`,
+        {
+          headers: { origin: app.origin },
+          data: {
+            revision: current.revision,
+            draftVersion: current.review.version,
+            contentVersion: current.review.contentVersion,
+          },
+        },
+      );
+      expect(response.status(), await response.text()).toBe(200);
+      return response.json();
+    };
     const spoken = async (text: string, id: string, revision: number) => {
+      // The preceding poll can return a newer draft than its request acknowledged.
+      // Acknowledge that view before new speech captures the client's draft versions.
+      await poll();
       live.emit(providerId, {
         type: 'session.input_transcript.delta',
         event_id: `${id}-input`,
@@ -1180,20 +1199,7 @@ test.each(['healthy', 'disabled', 'failing'])(
       await expect
         .poll(
           async () => {
-            const current = await (await client.get(`${path}/text-assistant/${session.id}`)).json();
-            const response = await client.post(
-              `${path}/text-assistant/${session.id}/voice/${voice.id}/poll`,
-              {
-                headers: { origin: app.origin },
-                data: {
-                  revision: current.revision,
-                  draftVersion: current.review.version,
-                  contentVersion: current.review.contentVersion,
-                },
-              },
-            );
-            expect(response.status(), await response.text()).toBe(200);
-            result = await response.json();
+            result = await poll();
             return {
               progressed: result.assistant.revision > revision,
               phase: result.voice.phase,
