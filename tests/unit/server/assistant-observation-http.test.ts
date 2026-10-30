@@ -224,8 +224,9 @@ test.each([
         if (armed && message?.params?.name === 'read_map' && reached === false) {
           reached = true;
           await waiting;
-          if (status === 'failed')
-            return new Response('synthetic-tool-transport-secret', { status: 503 });
+          // Keep this a transport exception even if the caller has stopped.
+          // Returned MCP results are covered separately below.
+          return new Response('synthetic-tool-transport-secret', { status: 503 });
         }
         return dispatch(incoming);
       },
@@ -318,6 +319,91 @@ test.each([
     });
     expect(await (await client.get(`${path}/map`)).json()).toEqual(before);
     expect(JSON.stringify(events)).not.toContain('synthetic-tool-transport-secret');
+  },
+);
+
+test.each(['canceled', 'incomplete'] as const)(
+  'a returned MCP result stays complete when the task becomes %s before consuming it',
+  async (status) => {
+    const events: AssistantObservation[] = [];
+    let clock = Date.now();
+    let armed = false;
+    let returned: unknown;
+    let release!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let modelCalls = 0;
+    const model = textModel(() => {
+      modelCalls++;
+      return [modelTool('read_map', { query: 'Lina' })];
+    });
+    const { path, session } = await setup((event) => events.push(event), model.provider, {
+      now: () => clock,
+      assistantDispatch: async (incoming, dispatch) => {
+        const message = await incoming
+          .clone()
+          .json()
+          .catch(() => undefined);
+        const response = await dispatch(incoming);
+        if (armed && message?.params?.name === 'read_map' && returned === undefined) {
+          // Finish the real MCP operation before canceling/expiring its caller.
+          // Only delivery of the completed response is held at this boundary.
+          returned = (await response.clone().json()).result;
+          await waiting;
+        }
+        return response;
+      },
+    });
+    const before = await (await client.get(`${path}/map`)).json();
+    armed = true;
+    try {
+      await submit(path, session);
+      await expect.poll(() => returned).toBeDefined();
+      if (status === 'canceled') {
+        const stopped = await client.post(`${path}/text-assistant/${session.id}/cancel`, {
+          headers: { origin: app.origin },
+          data: { all: true },
+        });
+        expect(stopped.status()).toBe(200);
+      } else clock += 30 * 60_000;
+    } finally {
+      release();
+    }
+    await expect
+      .poll(() => events.filter((event) => event.kind === 'task_completed').length)
+      .toBe(1);
+    const tool = events.find(
+      (event) =>
+        event.kind === 'mcp_started' &&
+        event.taskId === 'read-lina' &&
+        (event.data as { name?: string }).name === 'read_map',
+    );
+    expect(tool?.context?.spanId).toBeTruthy();
+    expect(
+      events.filter(
+        (event) =>
+          event.kind === 'mcp_completed' && event.context?.spanId === tool?.context?.spanId,
+      ),
+    ).toMatchObject([
+      { status: 'completed', context: tool?.context, data: { name: 'read_map', result: returned } },
+    ]);
+    expect(
+      events.filter(
+        (event) => event.kind === 'mcp_failed' && event.context?.spanId === tool?.context?.spanId,
+      ),
+    ).toEqual([]);
+    expect(events.find((event) => event.kind === 'task_completed')).toMatchObject({ status });
+    expect(modelCalls).toBe(1);
+    expect(await (await client.get(`${path}/map`)).json()).toEqual(before);
+    const current = await client.get(`${path}/text-assistant/${session.id}/messages/read-lina`);
+    if (status === 'canceled') {
+      expect(current.status()).toBe(200);
+      expect(await current.json()).toMatchObject({ taskStatus: 'canceled' });
+    } else {
+      expect(current.status()).toBe(404);
+      expect(await current.json()).toEqual({ error: 'assistant_session_expired' });
+    }
   },
 );
 
