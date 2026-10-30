@@ -601,8 +601,6 @@ export function textAssistantRoutes({
       let result: Awaited<ReturnType<Mcp['call']>>;
       try {
         result = await session.mcp.call(name, args, guard, work?.session === session);
-        guard?.();
-        if (work?.session === session) work.guard();
       } catch (error) {
         // The MCP transport can wrap a task guard's error. Use the caller's
         // current authority for the observed ending, while preserving the
@@ -641,6 +639,8 @@ export function textAssistantRoutes({
         status: result.isError ? 'failed' : 'completed',
         data: { name, result, startedAt: at },
       });
+      guard?.();
+      if (work?.session === session) work.guard();
       if (!Array.isArray(result.content)) throw new Error('invalid_tool_result');
       const text = result.content.find((item) => item.type === 'text');
       if (!text || typeof text.text !== 'string') throw new Error('invalid_tool_result');
