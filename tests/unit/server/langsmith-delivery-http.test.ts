@@ -997,7 +997,7 @@ test('non-JSON content fails through the production delivery hook without SDK su
       at: Date.now(),
       sessionId: session.id,
       taskId: 'synthetic-invalid-task',
-      context: backendTaskObservationContext(session.id, 'invalid-json'),
+      context: backendTaskObservationContext(session.id, 'invalid-json', 0),
       kind: 'mcp_started',
       data: { name: 'synthetic-invalid-content', args },
     });
