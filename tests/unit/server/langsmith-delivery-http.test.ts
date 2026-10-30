@@ -28,6 +28,7 @@ let app: Awaited<ReturnType<typeof createInstallation>>;
 let client: APIRequestContext;
 let endpoint: Ingestion;
 afterEach(async () => {
+  vi.useRealTimers();
   await client?.dispose();
   await app?.close();
   await endpoint?.close();
@@ -566,7 +567,7 @@ test('non-JSON content fails through the production delivery hook without SDK su
       at: Date.now(),
       sessionId: session.id,
       taskId: 'synthetic-invalid-task',
-      context: backendTaskObservationContext(session.id, 'invalid-json'),
+      context: backendTaskObservationContext(session.id, 'invalid-json', 0),
       kind: 'mcp_started',
       data: { name: 'synthetic-invalid-content', args },
     });
@@ -1032,7 +1033,12 @@ test.each([
 ])(
   'the $resource capacity includes pending and active SDK work without blocking the task',
   async ({ resource, calls, textBytes }) => {
+    const clock = Date.now();
     const held: ServerResponse[] = [];
+    let finishTask = () => {};
+    const taskCompleted = new Promise<void>((resolve) => {
+      finishTask = resolve;
+    });
     let blocked = true;
     let observed = 0;
     let turn = 0;
@@ -1045,6 +1051,7 @@ test.each([
     );
     const { path, session } = await setup(
       {
+        now: () => clock,
         modelFetch: model.provider,
         observe: (event) => {
           if (
@@ -1060,6 +1067,7 @@ test.each([
             ].includes(event.kind)
           )
             observed++;
+          if (event.kind === 'task_completed') finishTask();
         },
         assistantDispatch: async (incoming, dispatch) => {
           const rpc = await incoming
@@ -1088,7 +1096,38 @@ test.each([
         else response.writeHead(204).end();
       },
     );
-    await send(path, session);
+    // Capacity is independent of how long real HTTP/MCP work takes under
+    // coverage. Keep both exporter and SDK deadlines on the paused test clock.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    vi.spyOn(AbortSignal, 'timeout').mockImplementation((milliseconds) => {
+      const controller = new AbortController();
+      setTimeout(
+        () => controller.abort(new DOMException('Synthetic timeout', 'TimeoutError')),
+        milliseconds,
+      ).unref();
+      return controller.signal;
+    });
+    const requestId = 'read-capacity';
+    expect(
+      (
+        await client.post(`${path}/text-assistant/${session.id}/messages`, {
+          headers: { origin: app.origin },
+          data: {
+            requestId,
+            revision: session.revision,
+            draftVersion: session.review.version,
+            contentVersion: session.review.contentVersion,
+            text: 'Läs Lina.',
+          },
+        })
+      ).status(),
+    ).toBe(202);
+    // Vitest polling advances fake timers. Await the existing observation
+    // boundary instead, then verify completion through authenticated HTTP.
+    await taskCompleted;
+    expect(
+      await (await client.get(`${path}/text-assistant/${session.id}/messages/${requestId}`)).json(),
+    ).toMatchObject({ taskStatus: 'completed' });
     const health = async () => (await client.get(`${app.origin}/api/operator/tracing`)).json();
     const before = await health();
     expect(before.lastError).toBe('capacity');
