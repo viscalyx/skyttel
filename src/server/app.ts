@@ -5,11 +5,12 @@ import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import { buildIdentity } from '../shared/build-identity.js';
+import { conversationConsentTextVersion } from '../shared/conversation-consent.js';
 import { normalizeHouseholdName } from '../shared/household-name.js';
 import type { TextAssistantView } from '../shared/text-assistant.js';
 import { AdministrationError } from './administration.js';
 import { administrationRoutes } from './administration-routes.js';
-import type { ObserveAssistant } from './assistant-observation.js';
+import { assistantObservationBoundary, type ObserveAssistant } from './assistant-observation.js';
 import { assistantRoutes } from './assistant-routes.js';
 import type { Auth } from './auth.js';
 import { authenticationCleanup } from './authentication-cleanup.js';
@@ -25,6 +26,7 @@ import { householdExportRoutes } from './household-export-routes.js';
 import { householdImportRoutes } from './household-import-routes.js';
 import { createHousehold, householdAccess, isFirstAdmin, isInitialized } from './households.js';
 import { installationAuthority } from './installation-authority.js';
+import { langSmithDelivery } from './langsmith-delivery.js';
 import type { LiveModelProfile, LiveSidebandFactory, LiveUsage } from './live-provider.js';
 import { createLoginMethods } from './login-methods.js';
 import { MapError } from './map.js';
@@ -37,6 +39,9 @@ import { textAssistantRoutes } from './text-assistant.js';
 import type { LocalDispatch } from './text-assistant-mcp.js';
 import type { TextModelProfile, TextModelUsage } from './text-assistant-model.js';
 import { themePreferenceRoutes } from './theme-preference-routes.js';
+import { traceEventByteLimit } from './trace-json.js';
+import { type ConnectTraceDelivery, traceSending } from './trace-sending.js';
+import { traceSendingRoutes } from './trace-sending-routes.js';
 import { voiceAssistantRoutes } from './voice-assistant.js';
 
 export function createApp({
@@ -53,8 +58,9 @@ export function createApp({
   assistantDispatch,
   modelProfile,
   liveProfile,
-  observe,
-  now = () => Date.now(),
+  observe: observationSink,
+  traceDelivery,
+  now: suppliedNow,
 }: {
   config: Config;
   database: Database.Database;
@@ -71,9 +77,11 @@ export function createApp({
   modelProfile?: TextModelProfile;
   liveProfile?: LiveModelProfile;
   observe?: ObserveAssistant;
+  traceDelivery?: ConnectTraceDelivery;
   /** Installation time in milliseconds since the Unix epoch. */
   now?: () => number;
 }) {
+  const now = suppliedNow ?? (() => Date.now());
   const app = new Hono();
   // Historical test installations can intentionally stop before this migration.
   const hasBindings = !!database
@@ -93,6 +101,29 @@ export function createApp({
       } as Auth)
     : originalAuth;
   const costs = installationCosts(database);
+  const sending = traceSending(database, now);
+  // Preserve the sender's monotonic lifetime clock unless time is explicitly controlled.
+  const connectDelivery =
+    traceDelivery ??
+    (config.langSmith ? langSmithDelivery({ ...config.langSmith, now: suppliedNow }) : undefined);
+  if (connectDelivery) sending.connect(connectDelivery);
+  const callerObservation = assistantObservationBoundary(observationSink);
+  const deliveryObservation = connectDelivery
+    ? assistantObservationBoundary((event) => sending.observe(event), {
+        maxBytes: traceEventByteLimit,
+        failed: (category) => sending.dropped(category),
+      })
+    : undefined;
+  const observe: ObserveAssistant | undefined =
+    callerObservation || deliveryObservation
+      ? (event) => {
+          callerObservation?.(event);
+          // Only the conversation's original information version authorizes
+          // live evidence. A later saved acceptance cannot upgrade that session.
+          if (sending.canSend() && event.consentTextVersion === conversationConsentTextVersion)
+            deliveryObservation?.(event);
+        }
+      : undefined;
   const linking = createLoginMethods(database, auth, config.origin, bindings);
   const consents = conversationConsents(database, consentTextVersion);
   let revalidateWork: (() => void) | undefined;
@@ -309,6 +340,7 @@ export function createApp({
   });
   app.route('/api', administrationRoutes(database, auth, config.origin));
   app.route('/api', costRoutes(database, auth, config, costs));
+  app.route('/api', traceSendingRoutes(database, auth, config, sending));
   app.route('/api', contentOwnerRoutes(database, auth, config.origin));
   app.route('/api', householdExportRoutes(database, auth, config.origin));
   app.route('/api', householdErasureRoutes(database, auth, config.origin));
@@ -367,6 +399,7 @@ export function createApp({
   const voiceAssistant = voiceAssistantRoutes({
     now,
     voiceAccess: textAssistant.voiceAccess,
+    observationResetGeneration: textAssistant.observationResetGeneration,
     expireVoiceWork: textAssistant.expireVoiceWork,
     config,
     liveProfile,
@@ -414,8 +447,10 @@ export function createApp({
     summarizeForEvaluation: textAssistant.summarizeForEvaluation,
     close: async () => {
       stopCleanup?.();
+      const delivery = sending.shutdown();
       await voiceAssistant.close();
       await textAssistant.close();
+      await delivery;
     },
   });
 }

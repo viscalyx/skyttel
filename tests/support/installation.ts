@@ -54,6 +54,8 @@ export async function createInstallation(
     modelProfile?: Parameters<typeof createApp>[0]['modelProfile'];
     liveProfile?: Parameters<typeof createApp>[0]['liveProfile'];
     observe?: Parameters<typeof createApp>[0]['observe'];
+    traceDelivery?: Parameters<typeof createApp>[0]['traceDelivery'];
+    langSmith?: Config['langSmith'];
     https?: boolean;
     now?: () => number;
     deliverResponse?: (request: Request, response: Response) => Response | Promise<Response>;
@@ -102,6 +104,7 @@ export async function createInstallation(
     microsoft: { clientId: 'fake-microsoft', clientSecret: 'fake-secret' },
     port: 0,
     host: '127.0.0.1',
+    langSmith: databaseOptions.langSmith,
     ...(databaseOptions.providerApiKey
       ? { openaiApiKey: databaseOptions.providerApiKey }
       : databaseOptions.modelFetch
@@ -217,6 +220,7 @@ export async function createInstallation(
       modelProfile: databaseOptions.modelProfile,
       liveProfile: databaseOptions.liveProfile,
       observe: databaseOptions.observe,
+      traceDelivery: databaseOptions.traceDelivery,
       consentTextVersion: databaseOptions.consentTextVersion,
       now: databaseOptions.now,
     });
@@ -334,6 +338,15 @@ export async function createInstallation(
     },
     revokeMembership(userId: string) {
       database.prepare('DELETE FROM membership WHERE userId = ?').run(userId);
+    },
+    // Arrange a later saved acceptance without restarting the old in-memory
+    // conversation. Assertions still use public conversation/ingestion APIs.
+    seedConversationConsent(userId: string, householdId: string, textVersion: number) {
+      database
+        .prepare(`INSERT INTO conversation_consent (userId, householdId, textVersion, savedAt)
+        VALUES (?, ?, ?, ?) ON CONFLICT(householdId, userId) DO UPDATE SET
+        textVersion = excluded.textVersion, savedAt = excluded.savedAt`)
+        .run(userId, householdId, textVersion, new Date().toISOString());
     },
     async saveDatabase(destination: string) {
       await database.backup(destination);

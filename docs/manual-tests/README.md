@@ -329,6 +329,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   och två medlemmars skilda utkast;
   samma fullständiga arbete provas med text och listor utan grafik eller ljud.
 
+- [Installationens diagnostik](tracing.md): sändningsval, beständig
+  avstängning och spärr, säker leveransstatus och skild driftbehörighet.
+  Faktisk skärmläsning redovisas separat.
 - [Månadskostnad](costs.md): separata belopp för Render, Live och textmodell,
   prisunderlag, månadens antaganden, okända värden, kumulativa mätningar,
   omstart, hämtningsfel, okänt sparresultat, tangentbordsfokus och
@@ -355,7 +358,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   [klientfångster](assistant-client-preparation.md) ger körbara indata och
   tekniska jämförelser utan modell.
 
-- [Samtalsmedgivandet](conversation-consent.md): medgivanderutan från
+- [Samtalsmedgivandet](conversation-consent.md): aktuell information om
+  OpenAI och LangSmith, förnyat medgivande och medgivanderutan från
   verktygsraden och snabblänken, avbruten start med bevarat
   fokus, start med röst eller text efter vald knapp, medgivande för besöket
   eller sparat per användare och hushåll på flera enheter samt tangentbord,

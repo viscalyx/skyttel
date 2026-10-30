@@ -6,6 +6,37 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Installation diagnostic sending control
+
+Normal startup now connects configured LangSmith delivery. Sending defaults
+on unless a stored opt-out or suspension prevents it. Before an enabled
+release, complete the account, free quota, retention, user-information and
+conversation-stop checks in the [rollout runbook](langsmith-rollout.md).
+An approved main merge can deploy automatically without another approval.
+If the running release has no diagnostic control or current information,
+first deploy with diagnostic configuration absent. Then verify the new
+information and set sending off before adding credentials.
+
+Keep the existing database to preserve opt-out and suspension. Resolve a
+suspension before explicitly restarting sending; do not add a payment
+method for recovery. Delivery health resets on process restart. Opt-out
+discards buffers and cancels delivery where possible. It cannot recall
+accepted requests or delete cloud data. Stop sending before recovery and
+repair forward; an older image against upgraded data is unsupported.
+
+### Renew conversation consent before diagnostic sending
+
+End active conversations when deploying this update. Users must accept the
+current conversation information before they can start again. Previous
+saved or visit-only acceptance does not cover LangSmith processing. Keep
+existing household data and saved changes.
+
+Verify the current information before the first enabled release. Each
+conversation keeps its original information version. Later acceptance
+does not authorize export of an older conversation. Opening voice can
+send identifiers and lifecycle evidence before context preparation or
+any transcript. Complete the rollout checks before opening it.
+
 ### Personal map references and archive compatibility
 
 Keep a backup from before the update if rollback is required. The update adds

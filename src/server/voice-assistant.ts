@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import OpenAI from 'openai';
-import type { InitialItem } from 'openai/resources/live/live';
+import type { InitialItem, LiveCreateParams } from 'openai/resources/live/live';
 import { SidebandWS } from 'openai/resources/live/sideband/ws';
 import { conversationConsentRevoked } from '../shared/conversation-consent.js';
 import { sessionWarningMessage } from '../shared/session-activity.js';
@@ -9,7 +9,13 @@ import type { TextAssistantView } from '../shared/text-assistant.js';
 import type { VoiceAssistantView } from '../shared/voice-assistant.js';
 import { voiceErrorGroup } from '../shared/voice-error.js';
 import { voiceAssistantInstructions } from './assistant-instructions.js';
-import type { ObserveAssistant } from './assistant-observation.js';
+import {
+  type AssistantObservationContext,
+  backendTaskObservationContext,
+  type ObserveAssistant,
+  voiceDelegationObservationContext,
+  withBackendObservationRequest,
+} from './assistant-observation.js';
 import type { Config } from './config.js';
 import { voiceConversationModel } from './conversation-capacity.js';
 import type {
@@ -29,6 +35,7 @@ type Voice = {
   path: string;
   headers: Headers;
   assistant: TextAssistantView;
+  consentTextVersion?: number;
   channel: LiveSideband;
   heartbeat: number;
   finalized: boolean;
@@ -71,6 +78,7 @@ export function voiceAssistantRoutes({
   prepareVoiceContext,
   voiceInput,
   observe,
+  observationResetGeneration,
   liveProfile = voiceConversationModel,
   now = () => Date.now(),
   voiceAccess,
@@ -99,9 +107,11 @@ export function voiceAssistantRoutes({
   prepareVoiceContext?: (
     sessionId: string,
     signal?: AbortSignal,
+    voiceLink?: { traceId: string; spanId: string },
   ) => Promise<TextAssistantView | undefined>;
   voiceInput?: (sessionId: string, pending: boolean, text?: string) => void;
   observe?: ObserveAssistant;
+  observationResetGeneration: (sessionId: string) => number | undefined;
   liveProfile?: LiveModelProfile;
 }) {
   if (
@@ -154,6 +164,15 @@ export function voiceAssistantRoutes({
   function record(voice: Voice) {
     report(voice.usage);
   }
+  function observationContext(voice: Voice): AssistantObservationContext {
+    return {
+      owner: 'voice',
+      traceId: voice.view.id,
+      spanId: voice.view.id,
+      voiceSessionId: voice.view.id,
+      providerCallId: voice.usage.attemptId,
+    };
+  }
   function close(voice: Voice, error?: string) {
     if (voice.closed) return voice.closed;
     const authorityEnded = error === 'voice_session_expired' || error === 'voice_access_lost';
@@ -192,6 +211,30 @@ export function voiceAssistantRoutes({
       voice.view.phase = error ? 'error' : 'closed';
       voice.usage.endedAt = new Date().toISOString();
       voice.usage.outcome = voice.view.usageFinal ? 'closed' : 'interrupted';
+      const status =
+        error === 'voice_connection_lost'
+          ? 'disconnected'
+          : error
+            ? 'failed'
+            : voice.view.usageFinal
+              ? 'completed'
+              : 'incomplete';
+      observe?.({
+        at: now(),
+        sessionId: voice.assistant.id,
+        consentTextVersion: voice.consentTextVersion,
+        context: observationContext(voice),
+        kind: 'voice_completed',
+        status,
+        ...(status === 'incomplete' ? { evidenceGap: 'missing_end' as const } : {}),
+        data: {
+          model: liveProfile.model,
+          endedAt: now(),
+          ...(error
+            ? { error: status === 'disconnected' ? 'voice_disconnected' : 'voice_failed' }
+            : {}),
+        },
+      });
       record(voice);
       voice.channel.close();
       setTimeout(() => voices.delete(voice.view.id), 60_000).unref();
@@ -275,6 +318,11 @@ export function voiceAssistantRoutes({
       final: false,
       outcome: 'starting',
     };
+    const voiceId = randomUUID();
+    const consentTextVersion = current.consentTextVersion;
+    let observationStarted = false;
+    let providerObservationStarted = false;
+    let providerObservationEnded = false;
     // Required ledger start must commit before any billable provider request.
     recordUsage?.({ ...usage });
     try {
@@ -287,6 +335,69 @@ export function voiceAssistantRoutes({
     context.req.raw.signal.addEventListener('abort', abortedStartup, { once: true });
     if (context.req.raw.signal.aborted) startup.abort();
     let activeVoice: Voice | undefined;
+    let startupObservationEnded = false;
+    const finishStartupObservation = (status: 'failed' | 'canceled') => {
+      if (!observationStarted || activeVoice || startupObservationEnded) return;
+      startupObservationEnded = true;
+      observe?.({
+        at: now(),
+        sessionId,
+        consentTextVersion,
+        context: {
+          owner: 'voice',
+          traceId: voiceId,
+          spanId: voiceId,
+          voiceSessionId: voiceId,
+          providerCallId: usage.attemptId,
+        },
+        kind: 'voice_completed',
+        status,
+        data: {
+          model: liveProfile.model,
+          endedAt: now(),
+          error: status === 'canceled' ? 'voice_canceled' : 'voice_failed',
+        },
+      });
+    };
+    const providerObservation = (
+      outcome: 'started' | 'completed' | 'failed' | 'aborted',
+      content: { input?: unknown; output?: unknown } = {},
+    ) => {
+      providerObservationStarted = true;
+      providerObservationEnded = outcome !== 'started';
+      observe?.({
+        at: now(),
+        sessionId,
+        consentTextVersion,
+        context: {
+          owner: 'voice',
+          traceId: voiceId,
+          spanId: usage.attemptId,
+          parentSpanId: voiceId,
+          voiceSessionId: voiceId,
+          providerCallId: usage.attemptId,
+        },
+        kind: 'voice_attempt',
+        status:
+          outcome === 'started'
+            ? 'incomplete'
+            : outcome === 'aborted'
+              ? 'canceled'
+              : outcome === 'completed'
+                ? 'completed'
+                : 'failed',
+        data: {
+          model: liveProfile.model,
+          outcome,
+          startedAt: usage.startedAt,
+          ...(outcome !== 'started' ? { endedAt: now() } : {}),
+          ...content,
+          ...(['failed', 'aborted'].includes(outcome)
+            ? { error: outcome === 'aborted' ? 'voice_canceled' : 'voice_failed' }
+            : {}),
+        },
+      });
+    };
     let deadlineTimer: NodeJS.Timeout | undefined;
     let warningTimer: NodeJS.Timeout | undefined;
     let expired = false;
@@ -370,7 +481,36 @@ export function voiceAssistantRoutes({
     starting.add(check);
     try {
       check();
-      current = (await prepareVoiceContext?.(sessionId, startup.signal)) ?? current;
+      observe?.({
+        at: now(),
+        sessionId,
+        consentTextVersion,
+        context: {
+          owner: 'voice',
+          traceId: voiceId,
+          spanId: voiceId,
+          voiceSessionId: voiceId,
+          providerCallId: usage.attemptId,
+        },
+        kind: 'voice_started',
+        status: 'incomplete',
+        data: {
+          model: liveProfile.model,
+          startedAt: now(),
+          input: {
+            model: liveProfile.model,
+            instructions: voiceAssistantInstructions,
+            store: false,
+            delegation: { type: 'client' },
+          },
+        },
+      });
+      observationStarted = true;
+      current =
+        (await prepareVoiceContext?.(sessionId, startup.signal, {
+          traceId: voiceId,
+          spanId: voiceId,
+        })) ?? current;
       check();
       current = await assistant(path, requestHeaders);
       check();
@@ -397,31 +537,33 @@ export function voiceAssistantRoutes({
           : undefined;
       }
       stage = 'create';
+      const liveSession: LiveCreateParams['session'] = {
+        model: liveProfile.model,
+        audio: { output: { voice: 'marin' } },
+        delegation: { type: 'client' },
+        store: false,
+        instructions: voiceAssistantInstructions,
+        // Historical rows only seed the provider. They never become voiceWork's
+        // pending user fragments, which alone can authorize a fresh save.
+        ...(history ? { input: history } : {}),
+        client: {
+          data_channel: {
+            allowed_client_events: ['session.close'],
+            allowed_server_events: [
+              { type: 'session.started' },
+              { type: 'session.closed' },
+              { type: 'session.input_transcript.delta' },
+              { type: 'session.output_transcript.delta' },
+              { type: 'session.delegation.created' },
+              { type: 'error' },
+            ],
+          },
+        },
+      };
+      providerObservation('started', { input: liveSession });
       const result = await client.live.create(
         {
-          session: {
-            model: liveProfile.model,
-            audio: { output: { voice: 'marin' } },
-            delegation: { type: 'client' },
-            store: false,
-            instructions: voiceAssistantInstructions,
-            // Historical rows only seed the provider. They never become voiceWork's
-            // pending user fragments, which alone can authorize a fresh save.
-            ...(history ? { input: history } : {}),
-            client: {
-              data_channel: {
-                allowed_client_events: ['session.close'],
-                allowed_server_events: [
-                  { type: 'session.started' },
-                  { type: 'session.closed' },
-                  { type: 'session.input_transcript.delta' },
-                  { type: 'session.output_transcript.delta' },
-                  { type: 'session.delegation.created' },
-                  { type: 'error' },
-                ],
-              },
-            },
-          },
+          session: liveSession,
           transport: { type: 'webrtc', sdp: body.sdp },
         },
         { signal: startup.signal },
@@ -432,6 +574,7 @@ export function voiceAssistantRoutes({
         typeof result.transport.sdp !== 'string'
       )
         throw new Error('invalid_live_response');
+      providerObservation('completed', { output: result.session });
       usage.sessionId = result.session.id;
       stage = 'sideband';
       const channel = liveSideband
@@ -442,10 +585,11 @@ export function voiceAssistantRoutes({
         warn,
         deadlineTimer,
         warningTimer,
-        view: { id: randomUUID(), phase: 'connecting', seconds: null, usageFinal: false },
+        view: { id: voiceId, phase: 'connecting', seconds: null, usageFinal: false },
         path,
         headers: requestHeaders,
         assistant: current,
+        consentTextVersion,
         channel,
         usage,
         heartbeat: now(),
@@ -455,6 +599,79 @@ export function voiceAssistantRoutes({
         }, 1000).unref(),
       };
       activeVoice = voice;
+      // Keep the old generation for delayed results after this voice is retired.
+      const resetGeneration = observationResetGeneration(sessionId);
+      const observeWork = (
+        kind: 'voice_event' | 'voice_commentary' | 'backend_request' | 'backend_result',
+        data: unknown,
+      ) => {
+        const identifiers = data as {
+          delegationId?: string | null;
+          requestId?: string;
+          status?: 'completed' | 'failed' | 'canceled' | 'disconnected' | 'incomplete';
+          delegation?: { id?: string };
+          view?: TextAssistantView;
+        };
+        const requestId =
+          kind !== 'voice_event' && typeof identifiers.requestId === 'string'
+            ? identifiers.requestId
+            : undefined;
+        const backend =
+          requestId && resetGeneration !== undefined
+            ? backendTaskObservationContext(sessionId, requestId, resetGeneration)
+            : undefined;
+        const execution =
+          requestId && (kind === 'backend_request' || kind === 'backend_result')
+            ? voiceDelegationObservationContext(voiceId, requestId)
+            : undefined;
+        const event = data as {
+          event?: { delegation_id?: string | null; delegation?: { id?: string } };
+          direction?: string;
+        };
+        const delegationId =
+          kind === 'voice_event'
+            ? event.direction === 'outgoing'
+              ? event.event?.delegation_id
+              : event.event?.delegation?.id
+            : identifiers.delegationId;
+        observe?.({
+          at: now(),
+          sessionId,
+          consentTextVersion,
+          context: {
+            ...observationContext(voice),
+            spanId: randomUUID(),
+            parentSpanId: voiceId,
+            ...execution,
+            ...(delegationId !== undefined ? { delegationId } : {}),
+            ...(backend ? { links: [{ traceId: backend.traceId, spanId: backend.spanId }] } : {}),
+          },
+          ...((kind === 'backend_request' || kind === 'backend_result') && !backend
+            ? { evidenceGap: 'unknown_parent' as const }
+            : {}),
+          kind,
+          status:
+            kind === 'backend_request'
+              ? 'incomplete'
+              : (identifiers.status ??
+                (identifiers.view?.taskStatus === 'canceled'
+                  ? 'canceled'
+                  : identifiers.view?.error
+                    ? 'failed'
+                    : 'completed')),
+          data,
+        });
+      };
+      const send = channel.send.bind(channel);
+      channel.send = (event) => {
+        try {
+          send(event);
+        } catch (error) {
+          observeWork('voice_event', { event, direction: 'outgoing', status: 'failed' });
+          throw error;
+        }
+        observeWork('voice_event', { event, direction: 'outgoing' });
+      };
       // Provider creation may resolve despite an abort. Attach only to close
       // that session; no work or provider event may regain its authority.
       if (expired) void close(voice, endReason);
@@ -515,7 +732,7 @@ export function voiceAssistantRoutes({
           }
         },
         observe: (kind, data) =>
-          observe?.({ at: now(), sessionId: voice.assistant.id, kind, data }),
+          observeWork(kind, kind === 'voice_event' ? { event: data, direction: 'incoming' } : data),
         channel,
         initial: current,
         response: (value) => {
@@ -528,25 +745,32 @@ export function voiceAssistantRoutes({
         transcript: (role, text) => transcript?.(context.req.param('sessionId'), role, text),
         input: (pending, text) => voiceInput?.(context.req.param('sessionId'), pending, text),
         interrupt: (revision) => interrupt(context.req.param('sessionId'), revision),
-        request: async (action, body, signal) => {
+        request: async (action, body, signal, observation) => {
           check();
-          const response = await dispatch(
-            new Request(`${config.origin}${path}${action ? `/${action}` : ''}`, {
-              method: action && !action.startsWith('messages/') ? 'POST' : 'GET',
-              headers: requestHeaders,
-              body: action
-                ? JSON.stringify(
-                    action === 'messages'
-                      ? {
-                          ...(body as Record<string, unknown>),
-                          deliveryConnectionId,
-                        }
-                      : body,
-                  )
-                : undefined,
-              signal,
-            }),
-          );
+          const request = new Request(`${config.origin}${path}${action ? `/${action}` : ''}`, {
+            method: action && !action.startsWith('messages/') ? 'POST' : 'GET',
+            headers: requestHeaders,
+            body: action
+              ? JSON.stringify(
+                  action === 'messages'
+                    ? {
+                        ...(body as Record<string, unknown>),
+                        deliveryConnectionId,
+                      }
+                    : body,
+                )
+              : undefined,
+            signal,
+          });
+          const response = await (observation
+            ? withBackendObservationRequest(
+                {
+                  requestId: observation.requestId,
+                  voiceLink: { traceId: voiceId, spanId: voiceId },
+                },
+                () => dispatch(request),
+              )
+            : dispatch(request));
           check();
           if (!response.ok) {
             const refusal = await response.json().catch(() => null);
@@ -634,6 +858,9 @@ export function voiceAssistantRoutes({
         context.req.raw.signal.removeEventListener('abort', aborted);
       }
     } catch (error) {
+      if (providerObservationStarted && !providerObservationEnded)
+        providerObservation(startup.signal.aborted ? 'aborted' : 'failed');
+      finishStartupObservation(startup.signal.aborted ? 'canceled' : 'failed');
       usage.outcome = 'failed';
       usage.endedAt = new Date().toISOString();
       report(usage);
@@ -667,6 +894,7 @@ export function voiceAssistantRoutes({
         clearTimeout(warningTimer);
       }
       if (usage.outcome === 'starting') {
+        finishStartupObservation(startup.signal.aborted ? 'canceled' : 'failed');
         usage.outcome = 'failed';
         usage.endedAt = new Date().toISOString();
         report(usage);
