@@ -29,8 +29,11 @@ sändningen aktiverad som grundval.
 
 Välj **Uppdatera leveransstatus** för aktuellt sändningsläge, senaste
 lyckade leverans, antal förlorade händelser och en säker felkategori.
-Dessa värden finns bara i minnet och nollställs vid omstart. De beskriver
-leveransen och bevisar varken lyckat samtal eller fullständig historik.
+Tidpunkten för senaste lyckade leverans, antalet förlorade händelser och
+den senaste felkategorin finns bara i minnet och nollställs vid omstart.
+Valet att aktivera eller stänga av sändning och en eventuell spärr finns
+kvar efter omstart. Leveransstatus bevisar varken lyckat samtal eller
+fullständig historik.
 
 Förbrukad kostnadsfri kvot eller ogiltiga LangSmith-uppgifter spärrar
 sändningen utan att samla en kö. Spärren finns kvar efter omstart och
