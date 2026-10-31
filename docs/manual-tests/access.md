@@ -1737,13 +1737,15 @@ behöver separata bevis. Följ operatörens
 installation. Använd inte proceduren på återställd kopia som genväg förbi
 återställningskontroller.
 
-[remembered-revocation.spec.ts](../../tests/integration/remembered-revocation.spec.ts)
+[remembered-revocation.spec.ts](../../tests/technical-browser/remembered-revocation.spec.ts)
 släpper faktiskt fördröjda beständiga HTTPS-kakor efter tidig, sen och
 upprepad avstängning. Den gamla kakan kan ligga kvar beständigt, men får
-ingen serveråtkomst eller längre tidsgräns. Separata aktuella kakpar
-behåller sessionsidentiteten. Andra bindningar och redan kopplade konton
-påverkas inte. Pågående callbacks och verifierade kontokopplingsbevis
-annulleras. Ägarens resultat kan läsas efter omstart och ny inloggning,
+ingen serveråtkomst eller längre tidsgräns.
+[remembered-revocation-transport.test.ts](../../tests/unit/server/remembered-revocation-transport.test.ts)
+provar att separata aktuella kakpar behåller sessionsidentiteten.
+Andra bindningar och redan kopplade konton påverkas inte. Pågående callbacks
+och verifierade kontokopplingsbevis annulleras. Ägarens resultat kan läsas
+efter omstart och ny inloggning,
 men inte av en annan användare eller från exakt 24 timmar efter ändringen.
 Det är syntetiskt tekniskt underlag, inte manuellt utförd driftverifiering.
 
@@ -1753,7 +1755,7 @@ förlorad fortsatt-inloggningskontroll och sena svar för en tidigare
 användare. En ändring från en äldre inloggning får inte rotera en nyare inloggning.
 Det ersätter inte faktisk skärmläsaruppläsning eller Chromium-kakpolicyn.
 
-[remembered-login.spec.ts](../../tests/integration/remembered-login.spec.ts)
+[remembered-login-transport.test.ts](../../tests/unit/server/remembered-login-transport.test.ts)
 kontrollerar vanlig och ihågkommen inloggning före, exakt vid och efter
 absolut utgång genom installationens gemensamma klocka. Omstart, fördröjd
 kakutgivning, läsningar, förfalskade val och direkta auth-vägar får inte
@@ -1764,7 +1766,8 @@ De vanliga inloggningarnas absoluta gräns arrangeras med uttryckliga
 användarhandlingar med mindre än 30 minuters mellanrum. Bakgrundsläsning
 håller inte dessa sessioner aktiva. Separata
 [inaktivitetsfall](session-inactivity.md) provar utgång utan sådan aktivitet.
-Ett separat tekniskt Chromium-prov håller ett riktigt bekräftelsesvar över
+[remembered-login.spec.ts](../../tests/technical-browser/remembered-login.spec.ts)
+håller i ett separat tekniskt Chromium-prov ett riktigt bekräftelsesvar över
 en ny vanlig inloggning. Det gamla svaret får varken ge framgångsbesked
 eller lämna säkerhetskakan beständig efter den nekade efterkontrollen.
 
@@ -1777,23 +1780,26 @@ Separata prov med olika frister för session och bindning visar att en ny
 start följer sessionens serverfrist och inte kan avsluta en levande
 session med enbart bindningskakan.
 
-[access.spec.ts](../../tests/unit/server/access-transport.test.ts) behåller sex
-requestdrivna kontroller: båda installationernas administratörsidentiteter,
-samma e-postadress före och efter första administratören, atomärt skapande
-med ogiltiga och främmande anrop, verkligt annat hushåll och återkallad
-session samt förfalskade återanrop och stängda inloggningsvägar.
-De är märkta `@technical` och utför inga manuella formulärflöden.
+[access-transport.test.ts](../../tests/unit/server/access-transport.test.ts)
+behåller sex requestdrivna kontroller: båda installationernas
+administratörsidentiteter, samma e-postadress före och efter första
+administratören, atomärt skapande med ogiltiga och främmande anrop,
+verkligt annat hushåll och återkallad session samt förfalskade återanrop
+och stängda inloggningsvägar.
+De körs i serversviten med `tags: ['technical']` och utför inga manuella
+formulärflöden.
 
-[linking.spec.ts](../../tests/integration/linking.spec.ts) behåller separat
-tekniskt bevis för länkning med samma e-postadress efter omstart. Befintlig
-identitet provas med fel identitet, nekat samtycke, leverantörsfel och
-avbrytande. Ny identitet provas med upptagen identitet, nekat samtycke,
+[linking-transport.test.ts](../../tests/unit/server/linking-transport.test.ts)
+behåller separat tekniskt bevis för länkning med samma e-postadress efter
+omstart. Befintlig identitet provas med fel identitet, nekat samtycke,
+leverantörsfel och avbrytande. Ny identitet provas med upptagen identitet,
+nekat samtycke,
 leverantörsfel och avbrytande. Ursprunglig session, uttryckligt bevis,
 anrop från rätt ursprung och förfalskad verifiering provas separat.
 Ingen av dessa kontroller ersätter ACCESS-09:s klick, profil och nya
 Microsoft-inloggning i webbläsaren.
 
-[browser-binding.spec.ts](../../tests/integration/browser-binding.spec.ts)
+[browser-binding-transport.test.ts](../../tests/unit/server/browser-binding-transport.test.ts)
 provar separat överlappande leverantörssvar för samma och olika användare,
 ersatt sessionsnyckel efter omstart och isolering mellan bindningar.
 Vid exakt åtta timmar nekas gammal åtkomst, men uttrycklig ny inloggning
@@ -1801,15 +1807,16 @@ kan ersätta en känd utgången bindning och få en egen sessionsfrist.
 Gamla kakpar och återanrop förblir nekade; okända kakor och upptagna
 levande bindningar utan auth-kaka får ingen ny bindning.
 Utloggning under pågående kontokoppling får inte lägga till en identitet.
-Ett faktiskt fördröjt HTTPS-svar skriver över webbläsarens auth-kaka efter
-ett senare lyckat byte, men ger ingen gammal serveråtkomst. Provet använder
+[browser-binding.spec.ts](../../tests/technical-browser/browser-binding.spec.ts)
+provar att ett faktiskt fördröjt HTTPS-svar skriver över webbläsarens auth-kaka
+efter ett senare lyckat byte, men ger ingen gammal serveråtkomst. Provet använder
 installationsfixturens kontrollerade svar och identiteter; det verifierar
 inte verkliga leverantörer eller manuellt skärmläsarbeteende.
 
-[assistants.spec.ts](../../tests/integration/assistants.spec.ts) kontrollerar
-tekniskt att saknad bindning nekar sessionskontroll, utloggning och nytt
-assistentmedgivande. Ersatt inloggning och utloggning påverkar inte en
-separat godkänd MCP-anslutning med fortsatt hushållstillgång.
+[assistants-transport.test.ts](../../tests/unit/server/assistants-transport.test.ts)
+kontrollerar tekniskt att saknad bindning nekar sessionskontroll,
+utloggning och nytt assistentmedgivande. Ersatt inloggning och utloggning
+påverkar inte en separat godkänd MCP-anslutning med fortsatt hushållstillgång.
 
 Tangentbordsfokus, omflöde och läsbara statusbesked är syntetiskt
 webbläsarunderlag. Faktiskt upplästa skärmläsarbesked, fysisk mikrofon,

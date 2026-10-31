@@ -625,8 +625,9 @@ inklistringen och inbjudningstjänsten används på riktigt.
 
 ## Separat tekniskt inbjudningsunderlag
 
-[invitations.spec.ts](../../tests/unit/server/invitations-transport.test.ts) behåller
-sex requestdrivna kontroller märkta `@technical`: uppgradering med befintlig
+[invitations-transport.test.ts](../../tests/unit/server/invitations-transport.test.ts)
+behåller sex requestdrivna kontroller i serversviten med
+`tags: ['technical']`: uppgradering med befintlig
 medlemsidentitet och användbar länkning, bunden mottagare och förbrukad kod
 efter omstart, hushållsgränser och medlemskap i annat hushåll, ersättning
 och återkallelse av gamla koder, samtidiga sista-administratörsändringar
