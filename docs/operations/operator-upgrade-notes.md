@@ -6,6 +6,18 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Allow time and disk space to index saved history
+
+The first startup after this update builds a lookup index from retained
+household history. Startup time and additional database space depend on the
+amount of history. Keep a current backup and allow for this work in the
+deployment window before opening ingress. Do not interrupt startup while
+the upgrade is in progress.
+
+Saved history and receipts remain complete. Household archives keep their
+current format; import builds the lookup index from the archive contents.
+Use the normal backup restore procedure if the upgrade cannot complete.
+
 ### Confirm access after a complete installation restore
 
 Before starting a declared database or disk restore, designate a trusted

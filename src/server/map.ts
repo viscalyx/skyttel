@@ -202,16 +202,15 @@ export function householdMap(database: Database.Database, actorId: string, house
     const removedTypes = new Map<string, ObjectType>();
     if (removed.length) {
       // Deletion receipts retain the field meanings at removal, even if a type changes later.
-      const receipts = database
-        .prepare(`SELECT s.receipt FROM map_history h
-        JOIN map_save s ON s.householdId = h.householdId AND s.userId = h.userId AND s.operationId = h.operationId
-        WHERE h.householdId = ? ORDER BY h.id DESC`)
-        .all(householdId) as { receipt: string }[];
-      for (const row of receipts) {
-        const receipt = JSON.parse(row.receipt) as SaveReceipt;
-        for (const change of receipt.changes)
-          if (change.before && !change.after && !removedTypes.has(change.before.id))
-            removedTypes.set(change.before.id, change.beforeType ?? change.type);
+      const deletion = database.prepare(`SELECT change FROM map_history_change
+        WHERE householdId = ? AND kind = 'object' AND entityId = ? AND removed = 1
+        ORDER BY historyId DESC, ordinal LIMIT 1`);
+      for (const object of removed) {
+        const row = deletion.get(householdId, object.id) as { change: string } | undefined;
+        if (row) {
+          const change = JSON.parse(row.change) as SaveReceipt['changes'][number];
+          removedTypes.set(object.id, change.beforeType ?? change.type);
+        }
       }
     }
     const allTypes = removed.length ? types.read(true) : [];
@@ -257,49 +256,39 @@ export function householdMap(database: Database.Database, actorId: string, house
     if (conflicts.length) {
       const actors: NonNullable<MapState['conflictActors']> = {};
       const propertyActors: NonNullable<MapState['conflictPropertyActors']> = {};
-      const remainingProperties = new Map(
-        conflicts.map((conflict) => [
-          `${conflict.kind}:${conflict.id}`,
-          new Set(conflictProperties(state, conflict).map((field) => field.key)),
-        ]),
-      );
-      const receipts = database
-        .prepare(
-          `SELECT s.receipt FROM map_history h JOIN map_save s ON s.householdId = h.householdId AND s.userId = h.userId AND s.operationId = h.operationId WHERE h.householdId = ? ORDER BY h.id DESC`,
-        )
-        .all(householdId) as { receipt: string }[];
-      for (const row of receipts) {
-        const receipt = JSON.parse(row.receipt) as SaveReceipt;
-        for (const conflict of conflicts) {
-          const key = `${conflict.kind}:${conflict.id}`;
-          const changes =
-            conflict.kind === 'object'
-              ? receipt.changes
-              : conflict.kind === 'relationship'
-                ? receipt.relationships
-                : conflict.kind === 'objectType'
-                  ? receipt.objectTypes
-                  : receipt.relationshipTypes;
-          const change = changes?.find(
-            (change) =>
-              ('id' in change ? change.id : (change.after?.id ?? change.before?.id)) ===
-              conflict.id,
-          );
-          if (!change) continue;
-          const name = receipt.actorName?.trim().split(/\s+/)[0];
-          const actor = name ? { name, savedAt: receipt.savedAt } : undefined;
+      const changes = database.prepare(`SELECT historyId, change, actorName, savedAt
+        FROM map_history_change WHERE householdId = ? AND kind = ? AND entityId = ?
+        ORDER BY historyId DESC, ordinal`);
+      for (const conflict of conflicts) {
+        const key = `${conflict.kind}:${conflict.id}`;
+        const remainingProperties = new Set(
+          conflictProperties(state, conflict).map((field) => field.key),
+        );
+        let previousHistoryId: number | undefined;
+        for (const row of changes.iterate(householdId, conflict.kind, conflict.id) as Iterable<{
+          historyId: number;
+          change: string;
+          actorName: string | null;
+          savedAt: string;
+        }>) {
+          // Preserve the first matching change within each receipt.
+          if (row.historyId === previousHistoryId) continue;
+          previousHistoryId = row.historyId;
+          const change = JSON.parse(row.change) as SaveReceipt['changes'][number];
+          const name = row.actorName?.trim().split(/\s+/)[0];
+          const actor = name ? { name, savedAt: row.savedAt } : undefined;
           if (
             !actors[key] &&
             actor &&
             (change.after?.revision ?? null) === (conflict.current?.revision ?? null)
           )
             actors[key] = actor;
-          for (const property of remainingProperties.get(key) ?? []) {
+          for (const property of remainingProperties) {
             const before = conflictPropertyValue(change.before, property);
             const after = conflictPropertyValue(change.after, property);
             if (sameConflictValue(before, after)) continue;
             // Stop at the latest actual write, including a receipt without known authorship.
-            remainingProperties.get(key)?.delete(property);
+            remainingProperties.delete(property);
             if (
               actor &&
               sameConflictValue(after, conflictPropertyValue(conflict.current, property))
@@ -308,6 +297,7 @@ export function householdMap(database: Database.Database, actorId: string, house
               propertyActors[key][property] = actor;
             }
           }
+          if (actors[key] && remainingProperties.size === 0) break;
         }
       }
       if (Object.keys(actors).length) state.conflictActors = actors;
