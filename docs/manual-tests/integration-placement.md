@@ -86,10 +86,116 @@ PLACERING-15/16, BAKGRUND-03/04 and LISTA-05. All 91 pass. Playwright reports
 cases, 104.14 for ocean, 97.27 for reduced motion and 114.83 for table return.
 This local run uses the existing application build and default fonts,
 Chromium and one worker. The application source is unchanged by this work.
+The local environment is Linux arm64, Node 24.21.0, Playwright 1.64.1,
+Vitest 5.0.5 and Chrome for Testing 156.0.8078.4. Ten logical processors
+are visible; the host processor model is unavailable. Timings include
+local scheduling and software rendering rather than isolated CPU cost.
 
-After migration, discovery and measured verification are recorded with the
-completed run results. Local suite times do not measure the hosted workflow
+After migration, discovery finds 758 integration tests in 130 files, with
+zero technical tags: 85 cases moved, one redundant technical case consolidated
+and three duplicate functional variants retired. The selected 80 journeys in
+19 files all passed without retries or skips in 277.51 seconds. This selection
+is broader than the five functional baseline cases, so its complete elapsed
+time is not a like-for-like comparison with the 91-case baseline run.
+
+The five shared journeys have the following summed test durations on the
+same local runtime and font profile:
+
+| Journeys | Before | After |
+| :-- | --: | --: |
+| PLACERING-15/16 | 97.27 s | 27.80 s |
+| BAKGRUND-03/04 | 104.14 s | 23.35 s |
+| LISTA-05 | 114.83 s | 2.67 s |
+| Total | 316.23 s | 53.82 s |
+
+These measurements are single runs, not a statistical benchmark. No new
+timing reduction is claimed for the earlier archive or compositor migrations.
+Local suite times do not measure the hosted workflow
 critical path: CI includes setup, builds, coverage, containers and parallel
-integration groups. The technical browser suite runs after unit coverage,
-so its cost belongs to that job when comparing actual CI completion times.
+integration groups. The technical browser suite has an independent required
+CI job, with its own build and retained diagnostics on successful runs too.
+Local `check` runs it sequentially after coverage; that local cost must not
+be added to the hosted unit job when comparing CI completion times.
 No hosted workflow speedup is inferred from fewer integration cases.
+
+The hosted baseline at the same starting commit is
+[Container release run 41197034350](https://github.com/viscalyx/skyttel/actions/runs/41197034350).
+Its unit job takes 32 minutes 27 seconds, including 31 minutes 31 seconds
+in the coverage step. Integration groups take 18:47, 16:30, 18:48 and
+20:15 respectively. Unit coverage therefore determines the application
+gate's critical path. The complete release workflow spans 62:40, including
+21:29 before its first job starts and the later image publication work.
+Those figures describe hosted jobs, not the focused local test selection.
+The new branch needs a hosted run before an after-change critical-path
+comparison is possible.
+
+The integration selection covers surviving edited specs and both existing
+consumers of the shared large-map seeding helper. Other journeys have no
+changed runtime path. The production application, font configuration and
+provider adapters are unchanged. The selected default runtime uses the
+current built client and real local HTTP installations; no provider billing
+is authorized or needed.
+
+After execution, the integration selection was reassessed against the
+cumulative diff from the starting commit. Every selected scenario passed
+after its latest test or helper change. Subsequent edits affect CI scheduling,
+documentation and evidence only, so those passes remain valid. The full
+integration suite, prodlike variants and hosted after-change CI were not run;
+no changed production or font path requires an additional local variant.
+
+```sh
+npm run test:integration -- \
+  tests/integration/assistants.spec.ts \
+  tests/integration/background-ocean.spec.ts \
+  tests/integration/background-reduced-motion.spec.ts \
+  tests/integration/browser-binding.spec.ts \
+  tests/integration/conflict-definition-restoration.spec.ts \
+  tests/integration/conversation-draft.spec.ts \
+  tests/integration/database-setup.spec.ts \
+  tests/integration/family.spec.ts \
+  tests/integration/linking.spec.ts \
+  tests/integration/object-list-flow.spec.ts \
+  tests/integration/operations.spec.ts \
+  tests/integration/remembered-login.spec.ts \
+  tests/integration/remembered-revocation.spec.ts \
+  tests/integration/storage-result-recovery.spec.ts \
+  tests/integration/text-assistant.spec.ts \
+  tests/integration/theme-preference.spec.ts \
+  tests/integration/type-change.spec.ts \
+  tests/integration/large-map.spec.ts \
+  tests/integration/object-list.spec.ts
+```
+
+The complete `npm run check` passed typechecking, lint, documentation,
+245 gate tests, full mapping, build, all unit/graphics coverage and the
+technical browser suite. Mapping discovered 857 manual cases and 2,461 tests
+across its configured suites. All 2,635 unit/graphics tests in 259 files
+passed in 1,090.62 seconds with coverage: statements 93.44%, branches 90.09%,
+functions 92.87% and lines 95.43%. All 23 technical browser tests passed in
+approximately 2.7 minutes, with 157.84 seconds of summed test durations.
+The later independent CI-job change passed its 12 focused gate tests after
+first demonstrating failure when the required job was absent.
+
+The two affected graphics files also passed all 32 tests with CI fonts in
+20.65 seconds through the JSON report's final test completion. The 18
+background matrix tests used 16.33 seconds of file execution; the six new
+property-form presentation cases used 0.76 seconds of summed test durations.
+The other eight property-editor tests remained in that verification run.
+This separate technical cost is excluded from the integration savings table.
+The exact command is:
+
+```sh
+npm run test:unit:ci -- \
+  tests/browser/background-rendering.test.tsx \
+  tests/browser/property-editor.test.tsx \
+  --reporter=json --outputFile=/tmp/504-graphics-final.json
+```
+
+The focused transport measurement passed 64 tests in 23.81 seconds;
+62 migrated cases accounted for 14.83 seconds of summed file execution,
+and the two manual map-fixture tests account for the remaining coverage.
+Its command uses
+`npm run test:unit -- tests/unit/server/*-transport.test.ts`
+plus `tests/unit/server/manual-map-fixtures.test.ts`. The baseline selection
+is `@technical|PLACERING-1[56]:|BAKGRUND-0[34]:|LISTA-05:` with Playwright's
+JSON reporter. All commands use the shared repository process lock.

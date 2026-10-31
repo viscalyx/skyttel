@@ -82,7 +82,7 @@ De separata tekniska definitionerna med titlarna
 `manual MCP read-only preparation preserves empty household work` och
 `manual MCP read-only preparation preserves seeded household work` ersätts
 av provfilens sammanhållna definition för tomt och sedan fyllt hushåll.
-Familjen omfattar en upptäckt integrationsexekvering i stället för två.
+Familjen omfattar en upptäckt teknisk webbläsarexekvering i stället för två.
 Tom serialisering och fylld läsning behålls i samma medgivande; en separat
 medgivandesekvens från en redan fylld demoinstallation upprepas inte.
 Inga manuella fall-ID:n utgår eller återanvänds.

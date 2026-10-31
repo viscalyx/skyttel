@@ -182,7 +182,7 @@ terminalfel. De tomma startobjekten och skapandet av ett första Lo-förslag
 början tomt hushåll. Förberedelsen ovan kan fortfarande köras manuellt
 från ett tomt hushåll; vanlig motsvarighet är fortsatt KONTEXT-12.
 
-PCM-familjen har en upptäckt integrationsexekvering i stället för två.
+PCM-familjen har en upptäckt teknisk webbläsarexekvering i stället för två.
 Hela förberedelsespecifikationen har tre i stället för fyra: PCM-testet
 ovan och de två huvudreceptproven som finns kvar:
 

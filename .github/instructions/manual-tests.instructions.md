@@ -1,5 +1,5 @@
 ---
-applyTo: "{docs/manual-tests/**/*.md,docs/development/testing.md,tests/integration/**/*.ts,tests/browser/**/*.tsx,tests/unit/server/**/*.ts}"
+applyTo: "{docs/manual-tests/**/*.md,docs/development/testing.md,tests/integration/**/*.ts,tests/technical-browser/**/*.ts,tests/browser/**/*.tsx,tests/unit/server/**/*.ts}"
 ---
 
 # Manual Cases, Counterparts and Evidence

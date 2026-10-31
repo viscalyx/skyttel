@@ -222,14 +222,14 @@ DEMO-02, Microsoft som konfigurerad administratör.
 
 ## Separat tekniskt installationsunderlag
 
-[database-setup.spec.ts](../../tests/integration/database-setup.spec.ts)
-behåller tre kontroller märkta `@technical`: upprepad återställning rensar
+[database-setup-transport.test.ts](../../tests/unit/server/database-setup-transport.test.ts)
+behåller tre tekniska serverprov: upprepad återställning rensar
 hushåll, medlemskap, inbjudningar, sessioner och framtida fixturtabeller;
 osäker eller ofullständig konfiguration avvisas före ändring; misslyckad
 sådd rullas tillbaka utan läckta privata diagnoser eller förlorad session.
 De ersätter inga av demofallens webbläsarhandlingar.
 
-[startup.spec.ts](../../tests/unit/server/startup-transport.test.ts) behåller
+[startup-transport.test.ts](../../tests/unit/server/startup-transport.test.ts) behåller
 separat tekniskt underlag för maskerade privata diagnoser vid ogiltig
 konfiguration, upptagen lyssnare utan falsk beredskap och ren avstängning
 med både SIGTERM och SIGINT följd av återöppnad SQLite-lagring.

@@ -131,6 +131,14 @@ for (const width of [1440, 390])
         for (let index = 0; index < 12; index++) scene.navigate('tilt-down');
         expect(warmth(pixels())).toBeLessThan(sand - 8);
       } else {
+        let redTotal = 0;
+        let greenMaximum = 0;
+        for (let index = 0; index < initial.length; index += 4) {
+          redTotal += initial[index];
+          greenMaximum = Math.max(greenMaximum, initial[index + 1]);
+        }
+        expect(redTotal / (initial.length / 4)).toBeLessThan(35);
+        expect(greenMaximum).toBeGreaterThan(40);
         for (const direction of ['rotate-left', 'rotate-right', 'tilt-up', 'tilt-down']) {
           scene.reset();
           for (let index = 0; index < 4; index++) scene.navigate(direction);

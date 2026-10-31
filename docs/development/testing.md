@@ -260,8 +260,10 @@ the background profiler's response and frame budgets.
 
 ### CI groups and reruns
 
-CI starts unit coverage, static/build/container checks, and four integration
-groups independently. The small required `application` job checks every result;
+CI starts unit coverage, technical browser contracts, static/build/container
+checks, and four integration groups independently. Technical browser contracts
+retain diagnostics and timings on successful runs as well as failures.
+The small required `application` job checks every result;
 `security-gate` also requires security scanners and, on pull requests,
 devcontainer checks. Failed, missing, cancelled or unexpectedly skipped jobs
 fail these gates.

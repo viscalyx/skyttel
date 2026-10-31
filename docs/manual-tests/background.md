@@ -227,8 +227,8 @@ mänsklig bedömning av motivens former eller prov på fysisk grafikhårdvara.
    havsvalet i inställningarna. Öppna hushållet på den andra klienten och
    kontrollera samma val och **Alla etiketter**.
 5. Med 16 och sedan 80 objekt, prova 1440 × 960 och 390 × 844. Ladda om,
-   öppna kartan och kontrollera etikettvalet. Fokusera Havsobjekt 0,
-   tryck **Skift+F10**, välj **Visa uppgifter för Havsobjekt 0** och
+   öppna kartan och kontrollera etikettvalet. Fokusera Provobjekt 00,
+   tryck **Skift+F10**, välj **Visa uppgifter för Provobjekt 00** och
    stäng uppgifterna. Objektet ska gå att läsa vid varje kombination.
 
 **Förväntat resultat:**
