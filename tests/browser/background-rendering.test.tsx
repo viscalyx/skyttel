@@ -141,7 +141,9 @@ for (const width of [1440, 390])
         expect(greenMaximum).toBeGreaterThan(40);
         for (const direction of ['rotate-left', 'rotate-right', 'tilt-up', 'tilt-down']) {
           scene.reset();
-          for (let index = 0; index < 4; index++) scene.navigate(direction);
+          // One command must change the frame. Repeating it only renders
+          // unchecked intermediate frames, which is costly on software GPUs.
+          scene.navigate(direction);
           expect(samePixels(pixels(), initial)).toBe(false);
         }
       }
