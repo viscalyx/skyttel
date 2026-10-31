@@ -20,6 +20,12 @@ function fixture(t, definitions) {
     config,
     `export default { testDir: ${JSON.stringify(directory)}, testMatch: 'workflow.spec.mjs', workers: 1, retries: 0 };\n`,
   );
+  const technicalSpec = join(directory, 'technical.spec.mjs');
+  const technicalConfig = join(directory, 'technical.config.mjs');
+  writeFileSync(
+    technicalConfig,
+    `export default { testDir: ${JSON.stringify(directory)}, testMatch: 'technical.spec.mjs', workers: 1, retries: 0 };\n`,
+  );
   symlinkSync(resolve('node_modules'), join(directory, 'node_modules'));
   const vitestConfig = join(directory, 'vitest.config.mjs');
   writeFileSync(
@@ -36,6 +42,13 @@ function fixture(t, definitions) {
   return {
     spec,
     manual,
+    technical(definitions) {
+      writeFileSync(
+        technicalSpec,
+        `import { test } from ${JSON.stringify(resolve('node_modules/@playwright/test/index.mjs'))};\n${definitions}\n`,
+      );
+      return technicalSpec;
+    },
     suite(suite, definitions) {
       const file = join(directory, `${suite}.test.mjs`);
       writeFileSync(file, `import { test, beforeAll } from 'vitest';\n${definitions}\n`);
@@ -53,6 +66,8 @@ function fixture(t, definitions) {
           manual,
           '--config',
           config,
+          '--technical-config',
+          technicalConfig,
           '--vitest-config',
           vitestConfig,
           ...args,
@@ -64,7 +79,7 @@ function fixture(t, definitions) {
 }
 
 test('explicit browser counterparts and server evidence collect without executing hooks or workflows', (t) => {
-  const f = fixture(t, "test('legacy support', { tag: '@technical' }, async () => {});");
+  const f = fixture(t, '');
   const browser = f.suite(
     'browser',
     `
@@ -100,11 +115,11 @@ test('explicit browser counterparts and server evidence collect without executin
   );
   const result = f.run();
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.match(result.stdout, /1 manual case.*3 discovered tests/);
+  assert.match(result.stdout, /1 manual case.*2 discovered tests/);
 });
 
 test('technical browser evidence stays separate from ordinary workflows and human observations', (t) => {
-  const f = fixture(t, "test('legacy support', { tag: '@technical' }, async () => {});");
+  const f = fixture(t, '');
   const browser = f.suite(
     'browser',
     "test('technical measurement', { tags: ['technical'] }, () => {});",
@@ -144,7 +159,7 @@ test('technical browser evidence stays separate from ordinary workflows and huma
 });
 
 test('browser generated variants resolve exact titles and preserve moved identities', (t) => {
-  const f = fixture(t, "test('legacy support', { tag: '@technical' }, async () => {});");
+  const f = fixture(t, '');
   const browser = f.suite(
     'browser',
     `
@@ -187,7 +202,7 @@ test('browser generated variants resolve exact titles and preserve moved identit
 });
 
 test('browser describe paths disambiguate supporting evidence independently of its suite', (t) => {
-  const f = fixture(t, "test('legacy support', { tag: '@technical' }, async () => {});");
+  const f = fixture(t, '');
   const browser = f.suite(
     'browser',
     `
@@ -317,6 +332,39 @@ function ordinary(id, spec, selector = { caseId: id }) {
   });
 }
 
+test('a technical tag cannot exempt an integration test, including scoped validation', (t) => {
+  const f = fixture(t, "test('hidden protocol', { tag: '@technical' }, async () => {});");
+  f.write('empty.md', '# No ordinary cases\n');
+  for (const args of [[], ['--area', join(f.manual, 'empty.md')]]) {
+    const result = f.run(...args);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /hidden protocol.*technical tests belong outside integration/);
+  }
+});
+
+test('technical browser discovery executes no bodies and cannot supply an ordinary counterpart', (t) => {
+  const f = fixture(t, '');
+  const spec = f.technical(`test.beforeAll(() => { throw new Error('Do not run hooks'); });
+    test('cookie delivery', async () => { throw new Error('Do not launch browsers'); });`);
+  f.write(
+    'workflows.md',
+    manualCase('CASE-01', {
+      counterpart: {
+        runner: 'playwright',
+        suite: 'technical-browser',
+        spec,
+        title: 'cookie delivery',
+      },
+      reference: 'Real browser cookie delivery',
+      outcomes: ['Revoked cookies cannot restore access'],
+    }),
+  );
+  const result = f.run();
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /technical browser test cannot be an ordinary counterpart/);
+  assert.doesNotMatch(result.stderr, /Do not (?:run hooks|launch browsers)/);
+});
+
 test('the command accepts one ordinary counterpart discovered by Playwright', (t) => {
   const f = fixture(t, "test('CASE-01: save and restart', async () => {});");
   f.write('workflows.md', ordinary('CASE-01', f.spec));
@@ -326,8 +374,8 @@ test('the command accepts one ordinary counterpart discovered by Playwright', (t
 });
 
 test('human observations and separate technical tests need no invented counterpart', (t) => {
-  const f = fixture(
-    t,
+  const f = fixture(t, '');
+  const technicalSpec = f.technical(
     "test('request-only archive evidence', { tag: '@technical' }, async () => {});",
   );
   f.write(
@@ -344,7 +392,9 @@ ${JSON.stringify(
     evidence: [
       {
         kind: 'technical',
-        spec: f.spec,
+        runner: 'playwright',
+        suite: 'technical-browser',
+        spec: technicalSpec,
         title: 'request-only archive evidence',
         purpose: 'Separate archive check',
       },
@@ -442,7 +492,7 @@ test('duplicate case identities and multiple ordinary counterparts fail', (t) =>
 });
 
 test('exceptions name a real human observation and retain reference and outcomes', (t) => {
-  const f = fixture(t, "test('request-only evidence', { tag: '@technical' }, async () => {});");
+  const f = fixture(t, '');
   const metadata = {
     humanObservation: { kind: 'paid-provider', observation: 'Run a paid API call' },
     reference: 'External provider',
@@ -487,9 +537,9 @@ test('area validation permits staged migration while the full command stays stri
 });
 
 test('additional evidence resolves separately and real-provider references are never executed', (t) => {
-  const f = fixture(
-    t,
-    "test('CASE-01: save', async () => {}); test('archive bytes', { tag: '@technical' }, async () => {});",
+  const f = fixture(t, "test('CASE-01: save', async () => {});");
+  const technicalSpec = f.technical(
+    "test('archive bytes', { tag: '@technical' }, async () => {});",
   );
   const providerSpec = join(f.manual, 'provider.spec.mjs');
   writeFileSync(providerSpec, "throw new Error('Provider suite must not be loaded');\n");
@@ -498,7 +548,14 @@ test('additional evidence resolves separately and real-provider references are n
     reference: 'Desktop',
     outcomes: ['Saved'],
     evidence: [
-      { kind: 'technical', spec: f.spec, title: 'archive bytes', purpose: 'Archive identity' },
+      {
+        kind: 'technical',
+        runner: 'playwright',
+        suite: 'technical-browser',
+        spec: technicalSpec,
+        title: 'archive bytes',
+        purpose: 'Archive identity',
+      },
       {
         kind: 'real-provider',
         spec: providerSpec,

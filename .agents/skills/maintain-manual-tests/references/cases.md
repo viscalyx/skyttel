@@ -36,6 +36,11 @@ Chromium for rendering checks and tag technical browser tests
 the integration suite. Move existing technical-only integration tests to the
 appropriate suite when working on their coverage.
 
+Use `tests/technical-browser/` for real-browser protocol and preparation-tool
+checks requiring Node-owned installations or child processes. Use
+`playwright` / `technical-browser` references only as supporting evidence.
+Keep component rendering in Vitest's `graphics` project.
+
 Keep fixture setup and observation helpers separate from the journey. Automated
 assertions may verify its visible outcomes, such as a preserved placement or
 an unchanged image; internal-state assertions do not replace the UI journey.
@@ -89,7 +94,8 @@ Use the template's ordinary or human-observation branch. Supply:
   A `caseId` selects the stable ID prefix. Either selector must resolve to one
   test after generated definitions expand.
 - Explicit references include `runner` and `suite`:
-  `playwright` / `integration`, `vitest` / `browser`, or `vitest` / `server`.
+  `playwright` / `integration`, `playwright` / `technical-browser`,
+  `vitest` / `browser`, or `vitest` / `server`.
   Omission of both selects legacy Playwright integration discovery.
   Supply both fields for new counterparts
   and discoverable evidence; real-provider evidence omits them. Runner and

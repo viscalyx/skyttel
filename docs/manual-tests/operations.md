@@ -229,7 +229,7 @@ osäker eller ofullständig konfiguration avvisas före ändring; misslyckad
 sådd rullas tillbaka utan läckta privata diagnoser eller förlorad session.
 De ersätter inga av demofallens webbläsarhandlingar.
 
-[startup.spec.ts](../../tests/integration/startup.spec.ts) behåller
+[startup.spec.ts](../../tests/unit/server/startup-transport.test.ts) behåller
 separat tekniskt underlag för maskerade privata diagnoser vid ogiltig
 konfiguration, upptagen lyssnare utan falsk beredskap och ren avstängning
 med både SIGTERM och SIGINT följd av återöppnad SQLite-lagring.

@@ -159,7 +159,7 @@ innan mikrofontrycket. Blocket håller endast nästa POST före vidarebefordran:
 
 Det separata tekniska testet
 `context preparation preserves buffered PCM through summary on seeded public installation`
-i [conversation-preparation.spec.ts](../../tests/integration/conversation-preparation.spec.ts)
+i [conversation-preparation.spec.ts](../../tests/technical-browser/conversation-preparation.spec.ts)
 kör blocket ovan genom riktig röststart, sammanfattning och syntetiska
 PCM-prov i Chromium mot riktig server och tillfällig SQLite. Referensen
 använder `seed-family` före inloggning: tidigare sparade objekt, samband,

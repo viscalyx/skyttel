@@ -37,7 +37,7 @@ Använd inte dessa adresser på telefonerna.
 | :-- | :-- | :-- |
 | `laskedja.zip` | `node --import tsx scripts/manual-household-reading.ts` | LÄS-01, LÄS-02, LÄS-07 |
 | `sokning.zip` | `node --import tsx scripts/manual-household-table.ts --search` | SÖK-03, SÖK-05, SÖK-10 |
-| `storkarta.zip` | `MAP_PAUSE=1 npm run measure:map` | LISTA-05 |
+| `rullning.zip` | `node --import tsx scripts/manual-household-table.ts --scroll` | LISTA-05 |
 <!-- markdownlint-enable MD013 -->
 
 För varje start:
@@ -50,26 +50,24 @@ För varje start:
    historiska ID tillsammans med arkivnamnet, utan att ändra kopplingen.
    Kontrollera historiskt innehålls-ID separat från profilens användar-ID;
    anta inte att de sammanfaller. Namnet räcker inte. Återgå till hushållet.
-   För storkartan behövs ingen historisk innehållskoppling: förberedelsen
+   För rullningskartan behövs ingen historisk innehållskoppling: förberedelsen
    innehåller bara gemensamma fakta. Ändra inga placeringar eller egna
    visningsval före dess export.
 2. Kontrollera utgångspunkten enligt rätt familj nedan. Behåll läs- och
-   sökkommandonas privata förslag; kasta eller spara dem inte. Storkartan
-   har inget utkast vid kommandots paus.
+   sökkommandonas privata förslag; kasta eller spara dem inte. Rullningskartan
+   har inget utkast vid start.
 3. Välj **Inställningar → Fullständig export → Förbered fullständig export**.
    Invänta **Exporten är klar att hämta** och välj **Hämta ZIP-fil**.
    Kontrollera den färdiga filen i datorns nedladdningar och byt namn enligt
    tabellen. Förvara arkiven och anteckningen med ursprungliga ägar-ID
    i en separat privat provmapp.
-4. För läs- och sökkommandona skriver du `quit`. Vid storkartans paus
-   trycker du Enter först efter exporten och låter kommandot avsluta sina
-   mätningar och rensa sin tillfälliga installation. Senare ändringar
-   påverkar inte den redan hämtade filen.
+4. Skriv `quit` efter exporten. Kommandot rensar sin tillfälliga installation.
+   Senare ändringar påverkar inte den redan hämtade filen.
 
 Använd **--search**, inte standardkommandot eller **--details**, för
 sökarkivet. **--details** hör till TABELL-02 och har andra privata
 preciseringar. Läskedjan behöver sitt eget kommando; LISTA-05 behöver
-den kompletta kartan med 500 objekt och 1 500 samband.
+46 objekt och inga samband från **--scroll**.
 
 Fullständig export innehåller gemensamma uppgifter och privata utkast,
 bilder och vyer. Alla fria egenskaper går att läsa och redigera på sina
@@ -89,7 +87,7 @@ arbetet: det krävs en uttrycklig koppling till det verifierade kontot.
    och välj **Ersätt hushållets innehåll**. Invänta slutförd import och
    välj **Läs in det återställda hushållet**. Om svaret saknas använder du
    **Hämta importens status** för samma försök innan du fortsätter.
-3. För storkartan hoppar du över innehållskopplingen i steg 3–5 och
+3. För rullningskartan hoppar du över innehållskopplingen i steg 3–5 och
    kontrollerar direkt dess gemensamma data och tomma utkast nedan.
    För läs- och sökarkiven behålls medlemskap och verkliga inloggningar.
    Importen ersätter tidigare
@@ -217,16 +215,15 @@ utkaststatusarna kan väljas i filtren. Återställ kontrollsökningar och
 filter innan fallet börjar. Ersätt inte dolda värden eller bildförslag
 med enbart synliga formulärfält.
 
-## Stor karta för LISTA-05
+## Rullningskarta för LISTA-05
 
-Använd `storkarta.zip`. Den har bara gemensamma provdata och behöver ingen
-historisk ägare kopplad till det verkliga kontot. Efter import
-kontrollerar du tomt eget utkast, alla 500 Provobjekt och tio sidor i
-Tabell med **Ta med upphörda** valt, samt kartans 1 500 samband.
-**Provobjekt 045** ska ha redigeringsknapp, fullständiga uppgifter och
-sambandsknapp. Återgå till första sidan och stäng kontrolläsningen.
-Utför fallets filterval, expandering, rullning och fokus från detta nya
-läge. Ersätt inte provkartan med den mindre läs- eller sökförberedelsen.
+Använd `rullning.zip`. Den har bara gemensamma provdata och behöver ingen
+historisk ägare kopplad till det verkliga kontot. Efter import kontrollerar
+du tomt eget utkast, 46 Provobjekt på en sida i Tabell med **Ta med upphörda**
+valt och inga samband. **Provobjekt 045** ska ha redigeringsknapp och
+fullständiga uppgifter. Stäng kontrolläsningen och utför fallets filterval,
+expandering, rullning och fokus från detta nya läge. STORKARTA-01 behåller
+den separata kartan med 500 objekt och 1 500 samband.
 
 ## Avslut och redovisning
 

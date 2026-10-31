@@ -142,7 +142,7 @@ den som förlorad åtkomst. Installera därefter blocken på nytt. Avsluta launc
 med `quit` och kontrollera borttagen katalog enligt röstguiden.
 
 De två separata tekniska proven för publika kontroller i
-[voice-controls-preparation.spec.ts](../../tests/integration/voice-controls-preparation.spec.ts)
+[voice-controls-preparation.spec.ts](../../tests/technical-browser/voice-controls-preparation.spec.ts)
 startar den faktiska publika launchern på `seed-family`-underlag vid
 320 × 250 respektive tomt underlag vid 1280 × 900. Både förberedelsesidan
 och observationswebbläsaren använder det angivna måttet. De provar

@@ -553,15 +553,19 @@ cleanup after the original administrator loses authority”.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
       "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup",
-      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring."
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring.",
+      "runner": "playwright",
+      "suite": "technical-browser"
     },
     {
       "kind": "technical",
-      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
       "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup",
-      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring."
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring.",
+      "runner": "playwright",
+      "suite": "technical-browser"
     }
   ]
 }
@@ -990,15 +994,19 @@ remain bound to the same unconfirmed preparation”.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
       "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup",
-      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring."
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring.",
+      "runner": "playwright",
+      "suite": "technical-browser"
     },
     {
       "kind": "technical",
-      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
       "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup",
-      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring."
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring.",
+      "runner": "playwright",
+      "suite": "technical-browser"
     }
   ]
 }
@@ -1073,15 +1081,19 @@ files even when another review is ready”.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
       "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup",
-      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring."
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök i ett tomt hushåll utan innehållsändring.",
+      "runner": "playwright",
+      "suite": "technical-browser"
     },
     {
       "kind": "technical",
-      "spec": "tests/integration/household-recovery-preparation.spec.ts",
+      "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
       "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup",
-      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring."
+      "purpose": "Den exakta filförberedelsen och dess städning körs mot ett verkligt importförsök med sparat provinnehåll utan innehållsändring.",
+      "runner": "playwright",
+      "suite": "technical-browser"
     }
   ]
 }

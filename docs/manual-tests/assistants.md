@@ -105,8 +105,8 @@ protokollunderlag och ska inte leverera någon kartinformation.
     {
       "kind": "technical",
       "runner": "playwright",
-      "suite": "integration",
-      "spec": "tests/integration/manual-mcp-preparation.spec.ts",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/manual-mcp-preparation.spec.ts",
       "title": "manual MCP read-only preparation preserves empty then populated household work",
       "purpose": "Den publicerade läsklienten läser tom och fylld karta och utkast med samma medgivande, utan ändringar; återkallelse stoppar läsning och quit avslutar processen."
     }
@@ -147,7 +147,7 @@ token”.
   hos klienten; Skyttel lovar inte att den raderas där.
 
 **Separat tekniskt underlag:**
-[manual-mcp-preparation.spec.ts](../../tests/integration/manual-mcp-preparation.spec.ts)
+[manual-mcp-preparation.spec.ts](../../tests/technical-browser/manual-mcp-preparation.spec.ts)
 provar den publicerade terminalklienten, tomma och fyllda resultat i samma
 medgivande, exakt läsande verktygslista, oförändrad karta och utkast samt
 återkallelse och processavslut. Det ersätter inte AI-02:s manuella steg.

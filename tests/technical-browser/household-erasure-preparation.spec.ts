@@ -6,8 +6,11 @@ import { createInstallation } from '../support/installation.js';
 import { expect, test } from '../support/test.js';
 
 const guide = readFileSync('docs/manual-tests/household-erasure-preparation.md', 'utf8');
+
 const snippets = [...guide.matchAll(/```javascript\n([\s\S]*?)\n```/g)].map((match) => match[1]);
+
 const readerCommand = guide.match(/--input-type=module -e '\n([\s\S]*?)\n'/)?.[1];
+
 if (snippets.length !== 3 || !readerCommand) throw new Error('Missing erasure preparation');
 
 test('documented erasure preparation preserves actual boundaries with seeded content', {

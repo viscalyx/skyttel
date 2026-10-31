@@ -4,8 +4,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { openDatabase } from '../../src/server/database.js';
-import { expect, test } from '../support/test.js';
+import { openDatabase } from '../../../src/server/database.js';
+import { expect, test } from '../../support/http-test.js';
 
 const entryPoint = resolve('dist/server/index.js');
 
@@ -65,7 +65,8 @@ async function reservePort() {
 }
 
 test('invalid configuration exits with only a redacted diagnostic', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-startup-'));
   const server = start(join(directory, 'skyttel.sqlite'), 3000, {
@@ -83,7 +84,8 @@ test('invalid configuration exits with only a redacted diagnostic', {
 });
 
 test('an existing legacy database reports the required administrator upgrade before readiness', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-startup-upgrade-'));
   const databasePath = join(directory, 'skyttel.sqlite');
@@ -109,7 +111,8 @@ test('an existing legacy database reports the required administrator upgrade bef
 });
 
 test('an occupied listener exits without readiness or private diagnostics', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-startup-'));
   const reservation = await reservePort();
@@ -125,7 +128,8 @@ test('an occupied listener exits without readiness or private diagnostics', {
 });
 
 test('a mismatched installation generation directs the administrator to controlled restore', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-startup-restore-'));
   const databasePath = join(directory, 'skyttel.sqlite');
@@ -152,7 +156,8 @@ test('a mismatched installation generation directs the administrator to controll
 
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {
   test(`the compiled server closes cleanly on ${signal} and can reopen its SQLite storage`, {
-    tag: '@technical',
+    tags: ['technical'],
+    timeout: 30_000,
   }, async ({ request }) => {
     const directory = await mkdtemp(join(tmpdir(), 'skyttel-startup-'));
     const reservation = await reservePort();

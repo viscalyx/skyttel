@@ -1,5 +1,6 @@
 import { createInterface } from 'node:readline';
 import { request } from '@playwright/test';
+import { createHousehold, signIn } from '../tests/support/client.js';
 import { prepareHouseholdTable } from '../tests/support/household-table.js';
 import { createInstallation } from '../tests/support/installation.js';
 import { prepareObjectSearch } from '../tests/support/object-search.js';
@@ -14,11 +15,18 @@ const stop = () => input?.close();
 process.once('SIGINT', stop);
 process.once('SIGTERM', stop);
 try {
-  await (process.argv.includes('--details')
-    ? prepareTableDetailProposals
-    : process.argv.includes('--search')
-      ? prepareObjectSearch
-      : prepareHouseholdTable)(client, installation.origin);
+  if (process.argv.includes('--scroll')) {
+    await signIn(client, installation.origin);
+    const { user } = await (await client.get(`${installation.origin}/api/bootstrap`)).json();
+    const { household } = await (await createHousehold(client, installation.origin)).json();
+    installation.seedTableScrollMap(user.id, household.id);
+  } else {
+    await (process.argv.includes('--details')
+      ? prepareTableDetailProposals
+      : process.argv.includes('--search')
+        ? prepareObjectSearch
+        : prepareHouseholdTable)(client, installation.origin);
+  }
   input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   console.log(
     JSON.stringify({

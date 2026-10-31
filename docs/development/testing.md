@@ -125,6 +125,28 @@ npm run test:env -- vitest watch tests/unit/server/config.test.ts
 Vitest reruns affected tests after changes. Press Ctrl+C to stop watching.
 The npm `test:unit` script uses `vitest run`, so it exits after one run.
 
+Server tests include real HTTP, compiled-process startup and preparation-tool
+contracts. Run `npm run build` before tests that start the compiled server.
+
+Browser cookie delivery and preparation tools that interact with a real page
+run separately from manual UI journeys:
+
+```sh
+npm run test:technical-browser
+npm run test:technical-browser -- tests/technical-browser/browser-binding.spec.ts
+npm run test:technical-browser:ci
+```
+
+These tests use synthetic providers and disposable installations. They need
+the same build and Chromium preparation as integration tests. CI and
+`npm run check` include them; failures retain traces under
+`test-results/technical-browser/`. Component rendering and numeric shader
+checks remain in Vitest's `graphics` project.
+
+Every integration test requires a manual UI counterpart. A `technical` tag
+in that suite fails mapping validation, including area-scoped validation.
+Use technical suites for supporting protocol or rendering evidence.
+
 Use `--project server`, `--project client` or `--project graphics` to select
 one configured project. Graphics tests use headless Chromium with WebGL 2:
 
@@ -136,7 +158,8 @@ npm run test:unit:coverage
 Coverage checks every TypeScript and TSX file under `src`. The thresholds
 are 85% for statements, lines and functions, and 90% for branches. The
 coverage command prints its summary and writes an HTML report under
-`coverage/`. Unit tests do not need an application build first.
+`coverage/`. The complete server suite needs a current build for its
+compiled-process tests; isolated source-only unit tests do not.
 
 ## Integration tests
 

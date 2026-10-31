@@ -1,14 +1,15 @@
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
-import { createManualTransport } from '../../scripts/manual-transport-control.js';
-import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, signIn } from '../support/client.js';
-import { createInstallation } from '../support/installation.js';
-import { expect, test } from '../support/test.js';
+import { createManualTransport } from '../../../scripts/manual-transport-control.js';
+import type { MapState } from '../../../src/shared/map.js';
+import { createHousehold, signIn } from '../../support/client.js';
+import { expect, test } from '../../support/http-test.js';
+import { createInstallation } from '../../support/installation.js';
 
 for (const seeded of [false, true]) {
   test(`workspace preparation holds completed personal reads and moves on ${seeded ? 'seeded' : 'empty'} content`, {
-    tag: '@technical',
+    tags: ['technical'],
+    timeout: 30_000,
   }, async ({ request }) => {
     const app = await createInstallation();
     let transport: Awaited<ReturnType<typeof createManualTransport>> | undefined;

@@ -11,32 +11,20 @@ import { createInstallation } from '../support/installation.js';
 import { focusMapSearch } from '../support/object-search.js';
 import { expect, test } from '../support/test.js';
 
-// The 500-object map repeats tens of megabytes of SVG occlusion markup per DOM
-// snapshot. Omit snapshots and the coupled browser network-tab capture; retain
-// action/API events, screencast screenshots, pending/error diagnostics and geometry
-// attachments without consuming the navigation test's budget on snapshot capture.
-test.use({
-  trace: {
-    mode: 'retain-on-failure',
-    snapshots: false,
-    screenshots: true,
-  },
-});
-
 test('LISTA-05: short-screen table returns preserve the visible result and keyboard focus', async ({
   page,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(30_000);
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
     const { user } = await (await page.request.get(`${installation.origin}/api/bootstrap`)).json();
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
-    installation.seedLargeMap(user.id, household.id);
+    installation.seedTableScrollMap(user.id, household.id);
     const path = `${installation.origin}/api/households/${household.id}/map`;
     const before = await (await page.request.get(path)).json();
     await page.setViewportSize({ width: 320, height: 250 });
-    // Navigation can finish before startup has fetched the large household map.
+    // Navigation can finish before startup has fetched the household map.
     // Begin the table journey only after that prerequisite has loaded.
     await Promise.all([
       page.waitForResponse(

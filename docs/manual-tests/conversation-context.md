@@ -892,8 +892,8 @@ släpp”.
     {
       "kind": "technical",
       "runner": "playwright",
-      "suite": "integration",
-      "spec": "tests/integration/conversation-preparation.spec.ts",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/conversation-preparation.spec.ts",
       "title": "context preparation preserves buffered PCM through summary on seeded public installation",
       "purpose": "Det publicerade konsolreceptet håller verklig röststart och bevarar äldre PCM genom sammanfattning på fylld installation. Mikrofon av, en mikrofonbegäran, uteslutet senare ljud, återställd fetch samt hela karta, utkast och historik kontrolleras; separat PCM-receptprov från tomt hushåll ingår inte."
     }

@@ -539,9 +539,11 @@ shared map after review”.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/family.spec.ts",
+      "spec": "tests/unit/server/family-transport.test.ts",
       "title": "HTTP family objects and directed relationships save together and keep their identities",
-      "purpose": "Bevarar riktade identiteter, normaliserad dubblett, fullständigt sparkvitto och historik efter omstart."
+      "purpose": "Bevarar riktade identiteter, normaliserad dubblett, fullständigt sparkvitto och historik efter omstart.",
+      "runner": "vitest",
+      "suite": "server"
     }
   ]
 }

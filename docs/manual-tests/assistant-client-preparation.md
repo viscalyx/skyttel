@@ -55,7 +55,7 @@ beviljar aldrig större åtkomst än Skyttels aktuella medgivande.
 ### Läsande terminalklient: tom och fylld karta
 
 Det separata tekniska provet i
-[manual-mcp-preparation.spec.ts](../../tests/integration/manual-mcp-preparation.spec.ts)
+[manual-mcp-preparation.spec.ts](../../tests/technical-browser/manual-mcp-preparation.spec.ts)
 använder en ny databas och ett läsmedgivande för båda utgångslägena.
 Det provar verklig webbläsare, den publicerade klienten, OAuth/MCP och SQLite
 utan språkmodell. Det är underlag för AI-02, inte ytterligare ett manuellt fall.

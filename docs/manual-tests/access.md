@@ -971,9 +971,11 @@ underlag provar samma e-postadress och protokollets behörighetsgränser.
   "evidence": [
     {
       "kind": "technical",
-      "spec": "tests/integration/linking.spec.ts",
+      "spec": "tests/unit/server/linking-transport.test.ts",
       "title": "both proven providers return to the same user and household",
-      "purpose": "Samma e-postadress länkas bara efter bevis för båda identiteterna"
+      "purpose": "Samma e-postadress länkas bara efter bevis för båda identiteterna",
+      "runner": "vitest",
+      "suite": "server"
     }
   ]
 }
@@ -1775,7 +1777,7 @@ Separata prov med olika frister för session och bindning visar att en ny
 start följer sessionens serverfrist och inte kan avsluta en levande
 session med enbart bindningskakan.
 
-[access.spec.ts](../../tests/integration/access.spec.ts) behåller sex
+[access.spec.ts](../../tests/unit/server/access-transport.test.ts) behåller sex
 requestdrivna kontroller: båda installationernas administratörsidentiteter,
 samma e-postadress före och efter första administratören, atomärt skapande
 med ogiltiga och främmande anrop, verkligt annat hushåll och återkallad

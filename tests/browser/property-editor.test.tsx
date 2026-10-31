@@ -5,13 +5,14 @@ import { ObjectDialog } from '../../src/client/ObjectDialog.js';
 import type { ObjectEditor } from '../../src/client/object-editor.js';
 import type { MapState } from '../../src/shared/map.js';
 import type { Property } from '../../src/shared/properties.js';
+import { measureContrast } from '../support/accessibility.js';
 import '../../src/client/styles.css';
 import '../../src/client/workspace.css';
 
 const type = { id: 'cycle', householdId: 'home', revision: 1, name: 'Cykel', description: '' };
 
 /** Controlled staging boundary; SQLite durability is covered by integration/HTTP tests. */
-async function open(properties: Property[], width = 1280) {
+async function open(properties: Property[], width = 1280, theme = 'light') {
   await page.viewport(width, 900);
   const staged: ObjectEditor[] = [];
   const dirty: boolean[] = [];
@@ -24,7 +25,7 @@ async function open(properties: Property[], width = 1280) {
     value: { typeId: 'cycle', name: 'Cykeln', identity: 'unspecified', properties },
   };
   render(
-    <main className="household-map workspace-shell" data-theme="light">
+    <main className="household-map workspace-shell" data-theme={theme}>
       <ObjectDialog
         initial={initial}
         active
@@ -62,6 +63,30 @@ afterEach(async () => {
   cleanup();
   await page.viewport(1280, 720);
 });
+
+for (const width of [1280, 390, 320])
+  for (const theme of ['light', 'dark'])
+    test(`property form and type selector presentation: ${width}px, ${theme}`, {
+      tags: ['technical'],
+    }, async () => {
+      const { dialog } = await open(
+        [
+          { id: 'serial', label: 'Nummer', kind: 'text', value: 'SYNTH-42' },
+          { id: 'insured', label: 'Försäkrad', kind: 'boolean', value: false },
+        ],
+        width,
+        theme,
+      );
+      const value = row(1).getByLabelText('Värde', { exact: true });
+      await expect.element(value).toHaveValue('SYNTH-42');
+      expect(measureContrast(value.element())).toBeGreaterThanOrEqual(4.5);
+      await dialog.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+      const typeChoice = dialog.getByLabelText('Objekttyp', { exact: true });
+      await typeChoice.selectOptions('cycle');
+      expect(measureContrast(typeChoice.element())).toBeGreaterThanOrEqual(4.5);
+      const element = dialog.element();
+      expect(element.scrollWidth).toBeLessThanOrEqual(element.clientWidth);
+    });
 
 for (const scenario of [
   {

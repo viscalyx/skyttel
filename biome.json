@@ -40,7 +40,11 @@
   },
   "overrides": [
     {
-      "includes": ["tests/integration/**/*.spec.ts", "tests/real-*/**/*.spec.ts"],
+      "includes": [
+        "tests/integration/**/*.spec.ts",
+        "tests/real-*/**/*.spec.ts",
+        "tests/technical-browser/**/*.spec.ts"
+      ],
       "linter": {
         "rules": {
           "correctness": {

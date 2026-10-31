@@ -16,7 +16,7 @@ import { adoptLegacyInstallationAuthority } from '../../src/server/legacy-login-
 import type { LiveSidebandFactory, LiveUsage } from '../../src/server/live-provider.js';
 import { attachTaskDelivery } from '../../src/server/task-delivery-transport.js';
 import type { TextModelUsage } from '../../src/server/text-assistant-model.js';
-import { seedLargeMap } from './large-map.js';
+import { seedLargeMap, seedTableScrollMap } from './large-map.js';
 import { legacyAuth } from './legacy-auth.js';
 
 export type Identity = {
@@ -299,6 +299,9 @@ export async function createInstallation(
     },
     seedLargeMap(userId: string, householdId: string) {
       seedLargeMap(database, userId, householdId);
+    },
+    seedTableScrollMap(userId: string, householdId: string) {
+      seedTableScrollMap(database, userId, householdId);
     },
     directory,
     setIdentity(value: Identity) {

@@ -26,7 +26,6 @@ import {
 } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
-// Retain the populated workflow; its independently empty starting state is retired.
 test('literal household preparation completes the family tools on seeded public installation', {
   tag: '@technical',
 }, async ({ page, browser }) => {
