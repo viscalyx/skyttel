@@ -49,7 +49,7 @@ function requireBodyIdentity(body, release) {
 
 function github({ release, token, fetchImpl = fetch, apiUrl = 'https://api.github.com' }) {
   // Release evidence and credentials are intended only for GitHub.com.
-  if (!['https://api.github.com', 'https://api.github.com/'].includes(apiUrl)) {
+  if (apiUrl !== 'https://api.github.com' && apiUrl !== 'https://api.github.com/') {
     throw new Error('Untrusted GitHub API URL.');
   }
   if (!/^[A-Za-z0-9][A-Za-z0-9-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/u.test(release.repository)) {
