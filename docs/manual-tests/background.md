@@ -198,7 +198,7 @@ mänsklig bedömning av motivens former eller prov på fysisk grafikhårdvara.
   "outcomes": [
     "Valet återkommer efter omladdning, omstart och på en andra klient.",
     "Temabyte bevarar båda bakgrundsvalen, markering och objektplaceringar.",
-    "Navigering och läsning av objekt fungerar över bakgrunden."
+    "Navigeringsreglagen ändrar bakgrundens utsnitt och objekten går att läsa."
   ],
   "evidence": [{
     "kind": "technical",
@@ -220,6 +220,7 @@ mänsklig bedömning av motivens former eller prov på fysisk grafikhårdvara.
 2. Återgå till kartan. Kontrollera bevarad markering, kamera och
    objektplacering. Öppna **Navigera**. Prova lutning uppåt och nedåt,
    rotation vänster och höger, panorering höger och zoom in. Stäng panelen.
+   Kontrollera att bakgrundens utsnitt har förändrats.
 3. Byt till mörkt tema. Kartans utsnitt ska vara kvar. Öppna inställningarna
    och kontrollera att båda bakgrundsvalen finns kvar. Återgå till kartan
    och byt tillbaka till ljust tema.
@@ -235,6 +236,7 @@ mänsklig bedömning av motivens former eller prov på fysisk grafikhårdvara.
 
 - Valet sparas för användaren i hushållet, oberoende för ljust och mörkt tema.
 - Omstart, omladdning och en andra klient bevarar val och objektplaceringar.
+- Navigeringsreglagen ändrar bakgrundens utsnitt.
 - Fokus och sparbesked fungerar. Kartans reglage och objektuppgifter är
   åtkomliga även i den smala vyn. Överlappande etiketter innebär inte att
   alla objekt har fria pekytor; tangentbordsvägen provas uttryckligen.
@@ -268,7 +270,7 @@ De identifierar inte djurens former eller bevisar fri pekyta för varje objekt.
   "outcomes": [
     "Valet återkommer efter omladdning, omstart och på en andra klient.",
     "Temabyte bevarar båda bakgrundsvalen, markering och objektplaceringar.",
-    "Navigering och läsning av objekt fungerar över bakgrunden."
+    "Navigeringsreglagen ändrar bakgrundens utsnitt och objekten går att läsa."
   ],
   "evidence": [{
     "kind": "technical",

@@ -1,6 +1,7 @@
 import type { Browser, Page } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import type { PersonalView } from '../../src/shared/personal-view.js';
+import { backgroundDifference, captureBackground } from '../support/background-pixels.js';
 import { createHousehold, openMap, openSettings, setAllLabels, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 import { waitForMapScene } from '../support/map-scene.js';
@@ -141,6 +142,10 @@ async function checkOceanPersistence(
       [background]: 'ocean',
       version: theme === 'light' ? before.settings.version + 1 : 1,
     });
+    const beforeNavigation = await captureBackground(
+      page,
+      test.info().outputPath(`${theme}-ocean-before-navigation.png`),
+    );
     await page.getByRole('button', { name: 'Navigera', exact: true }).click();
     for (const direction of [
       'Luta uppåt',
@@ -152,6 +157,11 @@ async function checkOceanPersistence(
     ])
       await page.getByRole('button', { name: direction, exact: true }).click();
     await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+    const afterNavigation = await captureBackground(
+      page,
+      test.info().outputPath(`${theme}-ocean-after-navigation.png`),
+    );
+    expect(backgroundDifference(beforeNavigation, afterNavigation)).toBeGreaterThan(0);
     const themeProjection = await markers.getAttribute('style');
     await page.emulateMedia({ colorScheme: otherTheme });
     await expect(space(page).locator('canvas')).toBeVisible();
