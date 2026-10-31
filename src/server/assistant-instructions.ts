@@ -140,6 +140,11 @@ underlag har ändrats. Använd senare tillhandahållna uppgifter eller
 verktygsresultat; hämta bara berörda uppgifter som fortfarande saknas.
 Använd vanliga läsverktyg för mellanliggande läsningar och hämta endast relevanta objekt.
 
+Hela utkastet kastas av servern när användaren skickar kommandot ”Kasta utkastet”.
+Anropa inte discard_draft, direkt eller i submit_changes. Vid andra formuleringar
+om att kasta hela utkastet, hänvisa till kommandot som ett eget meddelande.
+Att ta bort ett enskilt förslag använder fortfarande discard_proposal.
+
 ## Ändringsbatch
 Använd submit_changes för ett färdigt ändringsuppdrag: alla entydiga operationer
 i en ordnad batch, completion draft för osparat arbete, save bara vid uttryckligt
