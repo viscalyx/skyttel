@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
+import Database from 'better-sqlite3';
 import { afterEach, expect, test } from 'vitest';
 import { beginAssistant } from '../../support/assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
@@ -219,6 +220,60 @@ async function login(identity = alex, provider = 'google') {
   return client;
 }
 
+test('a large restored membership list can be explicitly confirmed in one action', async () => {
+  installation = await createInstallation();
+  const { origin } = installation;
+  const owner = await login();
+  const { household } = await (await createHousehold(owner, origin)).json();
+  const backup = join(installation.directory, 'large-list.sqlite');
+  await installation.saveDatabase(backup);
+  const copy = new Database(backup);
+  try {
+    copy.transaction(() => {
+      for (let index = 0; index < 250; index++) {
+        const id = crypto.randomUUID();
+        copy
+          .prepare(
+            `INSERT INTO user (id, name, email, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?)`,
+          )
+          .run(
+            id,
+            `Person ${index}`,
+            `${id}@example.test`,
+            new Date().toISOString(),
+            new Date().toISOString(),
+          );
+        copy
+          .prepare("INSERT INTO membership (householdId, userId, role) VALUES (?, ?, 'member')")
+          .run(household.id, id);
+      }
+    })();
+  } finally {
+    copy.close();
+  }
+  await installation.restoreDatabase(backup, {
+    generation: '22222222-2222-4222-8222-222222222222',
+    restore: {
+      fromGeneration: '11111111-1111-4111-8111-111111111111',
+      confirmedAt: Date.now(),
+      erasureReviewed: true,
+      recoveryAdmin: { provider: 'google', subject: alex.subject },
+    },
+  });
+  const recovery = await login();
+  const review = await (await recovery.get(`${origin}/api/recovery`)).json();
+  expect(review.households[0].members).toHaveLength(251);
+  expect(
+    (
+      await recovery.post(`${origin}/api/recovery/complete`, {
+        headers: { origin },
+        data: { ...review, confirmed: true },
+      })
+    ).status(),
+  ).toBe(200);
+  expect((await recovery.get(`${origin}/api/households/${household.id}/map`)).status()).toBe(200);
+});
+
 test('the complete review covers every household atomically and grants no automatic membership to its reviewer', async () => {
   installation = await createInstallation();
   const { origin } = installation;
@@ -232,26 +287,35 @@ test('the complete review covers every household atomically and grants no automa
     generation: '22222222-2222-4222-8222-222222222222',
     restore: {
       fromGeneration: '11111111-1111-4111-8111-111111111111',
-      confirmedAt: Date.now(), erasureReviewed: true,
+      confirmedAt: Date.now(),
+      erasureReviewed: true,
       recoveryAdmin: { provider: 'google', subject: robin.subject },
     },
   });
   const recovery = await login(robin);
   const review = await (await recovery.get(`${origin}/api/recovery`)).json();
   expect(review.households).toHaveLength(2);
-  const complete = (households: unknown) => recovery.post(`${origin}/api/recovery/complete`, {
-    headers: { origin }, data: { ...review, households, confirmed: true },
-  });
+  const complete = (households: unknown) =>
+    recovery.post(`${origin}/api/recovery/complete`, {
+      headers: { origin },
+      data: { ...review, households, confirmed: true },
+    });
   expect((await complete(review.households.slice(0, 1))).status()).toBe(400);
   expect((await complete([review.households[0], review.households[0]])).status()).toBe(400);
-  expect((await complete(review.households.map((item: { id: string }) => ({ ...item, members: [] })))).status()).toBe(409);
+  expect(
+    (
+      await complete(review.households.map((item: { id: string }) => ({ ...item, members: [] })))
+    ).status(),
+  ).toBe(409);
   const freshOwner = await login();
   for (const id of [household.id, 'another-household']) {
     for (const suffix of ['', '/map', '/administration', '/map/history', '/content-owners'])
       expect((await freshOwner.get(`${origin}/api/households/${id}${suffix}`)).status()).toBe(403);
   }
   expect((await complete(review.households)).status()).toBe(200);
-  expect(await (await recovery.get(`${origin}/api/bootstrap`)).json()).toMatchObject({ status: 'forbidden' });
+  expect(await (await recovery.get(`${origin}/api/bootstrap`)).json()).toMatchObject({
+    status: 'forbidden',
+  });
   for (const id of [household.id, 'another-household'])
     expect((await freshOwner.get(`${origin}/api/households/${id}/map`)).status()).toBe(200);
 });

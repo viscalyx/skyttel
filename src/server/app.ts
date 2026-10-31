@@ -175,7 +175,9 @@ export function createApp({
     await next();
   });
   app.use('/api/*', (context, next) =>
-    context.req.method === 'POST' && /^\/api\/households\/[^/]+\/imports$/.test(context.req.path)
+    context.req.method === 'POST' &&
+    (/^\/api\/households\/[^/]+\/imports$/.test(context.req.path) ||
+      context.req.path === '/api/recovery/complete')
       ? next()
       : bodyLimit({
           maxSize:

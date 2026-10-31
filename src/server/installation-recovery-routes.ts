@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import type { Auth } from './auth.js';
 import { completeRecovery, readRecovery } from './installation-recovery.js';
 
@@ -18,6 +19,26 @@ export function installationRecoveryRoutes(
     await next();
   });
   routes.get('/', (context) => context.json(readRecovery(database, context.get('sessionId'))));
+  routes.use('/complete', (context, next) => {
+    const review = readRecovery(database, context.get('sessionId'));
+    // Authorize before admitting a body. Bound it by the actual complete list,
+    // allowing every role change and explicit self-appointment in each household.
+    // A fixed generic JSON limit would strand larger restored installations.
+    const maximumReview = {
+      ...review,
+      households: review.households.map((household) => ({
+        ...household,
+        members: [
+          ...household.members.map((member) => ({ ...member, role: 'administrator' })),
+          { ...review.actor, role: 'administrator' },
+        ],
+      })),
+    };
+    return bodyLimit({
+      maxSize: Math.max(16_384, Buffer.byteLength(JSON.stringify(maximumReview)) + 1024),
+      onError: (failed) => failed.json({ error: 'invalid_request' }, 413),
+    })(context, next);
+  });
   routes.post('/complete', async (context) => {
     if (
       context.req.header('Content-Type')?.split(';', 1)[0].trim().toLowerCase() !==

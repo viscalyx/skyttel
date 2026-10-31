@@ -4,7 +4,7 @@ import type Database from 'better-sqlite3';
 import { assistantAuthPlugins } from './assistant-auth.js';
 import { authDatabase } from './auth-callback-transaction.js';
 import { clientAddressHeader } from './client-address.js';
-import type { Config } from './config.js';
+import type { Config, Provider } from './config.js';
 import { prepareInstallationAuthority } from './installation-authority.js';
 import { linkingAttempt } from './login-methods.js';
 import { recordProviderProof, sessionProviderProof } from './provider-proof.js';
@@ -13,13 +13,18 @@ export function internalEmail(provider: 'google' | 'microsoft', subject: unknown
   if (typeof subject !== 'string' || subject.trim().length === 0) {
     throw new Error('invalid_provider_identity');
   }
-  recordProviderProof(provider, subject);
   // Better Auth requires a unique email. A contact address must neither merge
   // identities nor let an earlier sign-in reserve another identity's user.
   const key = createHash('sha256')
     .update(JSON.stringify([provider, subject]))
     .digest('hex');
   return { email: `${key}@identity.skyttel.invalid`, emailVerified: false };
+}
+
+function mapProvenProviderIdentity(provider: Provider, subject: string) {
+  const mapped = internalEmail(provider, subject);
+  recordProviderProof(provider, subject);
+  return mapped;
 }
 
 export function createAuth(config: Config, database: Database.Database) {
@@ -92,7 +97,7 @@ export function createAuth(config: Config, database: Database.Database) {
       google: {
         ...config.google,
         prompt: 'select_account',
-        mapProfileToUser: (profile) => internalEmail('google', profile.sub),
+        mapProfileToUser: (profile) => mapProvenProviderIdentity('google', profile.sub),
       },
       microsoft: {
         ...config.microsoft,
@@ -101,7 +106,7 @@ export function createAuth(config: Config, database: Database.Database) {
         disableDefaultScope: true,
         scope: ['openid', 'profile', 'email'],
         disableProfilePhoto: true,
-        mapProfileToUser: (profile) => internalEmail('microsoft', profile.oid),
+        mapProfileToUser: (profile) => mapProvenProviderIdentity('microsoft', profile.oid),
       },
     },
     advanced: {

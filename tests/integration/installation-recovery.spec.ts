@@ -32,12 +32,17 @@ test('RESTORE-01: review excludes revoked membership before reopening access', a
     ).toBeVisible();
     await expect(other.getByRole('button', { name: confirm })).toHaveCount(0);
     const role = page.getByRole('combobox', { name: 'Robin Exempel – roll' });
+    await expect(role).toHaveAccessibleDescription(/^Användar-ID: /);
     await role.focus();
     await page.keyboard.press('End');
     await expect(role).toHaveValue('revoked');
     const completion = page.getByRole('button', { name: confirm });
     // Membership order follows stable user IDs, not the fixture's random ID order.
-    for (let step = 0; step < 2 && !(await completion.evaluate((element) => element === document.activeElement)); step++)
+    for (
+      let step = 0;
+      step < 2 && !(await completion.evaluate((element) => element === document.activeElement));
+      step++
+    )
       await page.keyboard.press('Tab');
     await expect(completion).toBeFocused();
     await page.keyboard.press('Enter');
@@ -113,13 +118,17 @@ test('RESTORE-03: a designated new person explicitly appoints an administrator b
     installation.setIdentity(alex);
     await openSettings(page);
     await page.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Administrera tillgång', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Administrera tillgång', exact: true }),
+    ).toBeVisible();
     const administrationAddress = page.url();
     const other = await otherContext.newPage();
     await login(other, installation.origin);
     await expect(other.getByRole('heading', { name: household.name, exact: true })).toBeVisible();
     await other.goto(administrationAddress);
-    await expect(other.getByRole('heading', { name: 'Du kan inte administrera hushållet' })).toBeVisible();
+    await expect(
+      other.getByRole('heading', { name: 'Du kan inte administrera hushållet' }),
+    ).toBeVisible();
   } finally {
     await otherContext.close();
     await installation.close();

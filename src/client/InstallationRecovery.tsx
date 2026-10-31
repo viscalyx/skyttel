@@ -102,9 +102,12 @@ export function InstallationRecovery({
                     return (
                       <div key={member.userId}>
                         <label htmlFor={key}>{member.name} – roll</label>
-                        <p className="recovery-identity">Användar-ID: {member.userId}</p>
+                        <p className="recovery-identity" id={`${key}-identity`}>
+                          Användar-ID: {member.userId}
+                        </p>
                         <select
                           id={key}
+                          aria-describedby={`${key}-identity`}
                           value={roles[key] ?? member.role}
                           onChange={(event) => setRoles({ ...roles, [key]: event.target.value })}
                         >
