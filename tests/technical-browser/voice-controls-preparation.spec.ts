@@ -15,8 +15,6 @@ import {
   voiceTonePreparationSource,
 } from '../support/voice-controls-preparation.js';
 
-// Representative references for each distinct preparation workflow.
-// Empty-short and populated-desktop combinations do not run independently.
 const references = [
   { seeded: true, viewport: { width: 320, height: 250 } },
   { seeded: false, viewport: { width: 1280, height: 900 } },
@@ -428,8 +426,6 @@ for (const { seeded, viewport } of references)
     }
   });
 
-// These literal recipes have independent setup and cleanup; the complete
-// control/observation cases above retain their original time budget.
 for (const { seeded, viewport } of references)
   test(`voice preparation executes literal fault recipes on ${seeded ? 'seeded' : 'empty'} content at ${viewport.width}x${viewport.height}`, {
     tag: '@technical',

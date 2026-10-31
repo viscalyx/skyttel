@@ -1,11 +1,12 @@
-import { createHousehold, signIn } from '../support/client.js';
-import { approvedForVisit } from '../support/conversation.js';
-import { createInstallation } from '../support/installation.js';
-import { expect, test } from '../support/test.js';
-import { modelTool, textModel } from '../support/text-model.js';
+import { createHousehold, signIn } from '../../support/client.js';
+import { approvedForVisit } from '../../support/conversation.js';
+import { expect, test } from '../../support/http-test.js';
+import { createInstallation } from '../../support/installation.js';
+import { modelTool, textModel } from '../../support/text-model.js';
 
 test('an accepted text tool waiting at MCP cannot write at its original deadline', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async ({ request }) => {
   let clock = Date.now();
   let typeId: string;

@@ -8,48 +8,55 @@ const { values } = parseArgs({
   options: {
     'manual-dir': { type: 'string', default: 'docs/manual-tests' },
     config: { type: 'string', default: 'playwright.config.ts' },
+    'technical-config': { type: 'string', default: 'playwright.technical.config.ts' },
     'vitest-config': { type: 'string', default: 'vitest.config.ts' },
     area: { type: 'string', multiple: true },
   },
 });
-const discovery = spawnSync(
-  process.execPath,
-  [
-    resolve('node_modules/@playwright/test/cli.js'),
-    'test',
-    '--list',
-    '--reporter=json',
-    '--config',
-    values.config,
-  ],
-  { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
-);
-if (discovery.status !== 0) {
-  console.error(discovery.stderr || discovery.stdout);
-  process.exit(1);
-}
-const report = JSON.parse(discovery.stdout);
 const tests = [];
-function collect(suites, parents = []) {
-  for (const suite of suites) {
-    const titles = [...parents, ...(suite.file === suite.title ? [] : [suite.title])];
-    for (const spec of suite.specs ?? []) {
-      for (const test of spec.tests) {
-        tests.push({
-          ...test,
-          runner: 'playwright',
-          suite: 'integration',
-          file: resolve(report.config.rootDir, spec.file),
-          title: spec.title,
-          fullTitle: [...titles, spec.title].join(' > '),
-          tags: spec.tags,
-        });
-      }
-    }
-    collect(suite.suites ?? [], titles);
+for (const [config, suiteName] of [
+  [values.config, 'integration'],
+  [values['technical-config'], 'technical-browser'],
+]) {
+  const discovery = spawnSync(
+    process.execPath,
+    [
+      resolve('node_modules/@playwright/test/cli.js'),
+      'test',
+      '--list',
+      '--pass-with-no-tests',
+      '--reporter=json',
+      '--config',
+      config,
+    ],
+    { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
+  );
+  if (discovery.status !== 0) {
+    console.error(discovery.stderr || discovery.stdout);
+    process.exit(1);
   }
+  const report = JSON.parse(discovery.stdout);
+  function collect(suites, parents = []) {
+    for (const suite of suites) {
+      const titles = [...parents, ...(suite.file === suite.title ? [] : [suite.title])];
+      for (const spec of suite.specs ?? []) {
+        for (const test of spec.tests) {
+          tests.push({
+            ...test,
+            runner: 'playwright',
+            suite: suiteName,
+            file: resolve(report.config.rootDir, spec.file),
+            title: spec.title,
+            fullTitle: [...titles, spec.title].join(' > '),
+            tags: spec.tags,
+          });
+        }
+      }
+      collect(suite.suites ?? [], titles);
+    }
+  }
+  collect(report.suites);
 }
-collect(report.suites);
 const vitest = await createVitest({
   config: values['vitest-config'],
   project: ['graphics', 'server'],
@@ -86,13 +93,18 @@ try {
 }
 if (process.exitCode) process.exit(process.exitCode);
 const caseIdentity = (title) => title.match(/^([\p{Lu}\d]+(?:-[\p{Lu}\d]+)*-\d+):/u)?.[1];
-const technical = (test) => test.suite === 'server' || test.tags.includes('technical');
+const technical = (test) =>
+  ['server', 'technical-browser'].includes(test.suite) || test.tags.includes('technical');
 const ordinary = (test) =>
   !technical(test) && (test.suite === 'integration' || caseIdentity(test.title));
 let count = 0;
 const claimed = new Map();
 const identities = new Map();
 const errors = [];
+for (const test of tests) {
+  if (test.suite === 'integration' && test.tags.includes('technical'))
+    errors.push(`${test.file}: ${test.fullTitle}: technical tests belong outside integration`);
+}
 const textPresent = (value) => typeof value === 'string' && value.trim().length > 0;
 const observationKinds = new Set([
   'screen-reader',
@@ -192,6 +204,8 @@ for (const file of manualFiles) {
       if (found.tags.includes('technical'))
         diagnostic('a technical test cannot be an ordinary counterpart');
       if (found.suite === 'server') diagnostic('a server test cannot be an ordinary counterpart');
+      if (found.suite === 'technical-browser')
+        diagnostic('a technical browser test cannot be an ordinary counterpart');
       if (found.suite === 'browser' && !testIdentity)
         diagnostic('a browser counterpart must have a stable case identity');
       if (claimed.has(found)) {
@@ -214,12 +228,13 @@ function validateReference(reference, diagnostic) {
   if (
     !legacy &&
     !(
-      (reference.runner === 'playwright' && reference.suite === 'integration') ||
+      (reference.runner === 'playwright' &&
+        ['integration', 'technical-browser'].includes(reference.suite)) ||
       (reference.runner === 'vitest' && ['browser', 'server'].includes(reference.suite))
     )
   ) {
     diagnostic(
-      'reference runner/suite must be playwright/integration, vitest/browser or vitest/server',
+      'reference runner/suite must be playwright/integration, playwright/technical-browser, vitest/browser or vitest/server',
     );
     return false;
   }

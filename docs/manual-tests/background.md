@@ -165,41 +165,25 @@ människan.
 
 ### BAKGRUND-03: Ljust hav, navigering och sparade val
 
-**Syfte:** Kontrollera att ljust Under världshavet har sand nedanför
-kameran, vattenyta ovanför och vatten däremellan, och att valet sparas.
+**Syfte:** Spara ljust Under världshavet och behålla kartarbete vid
+navigering, temabyte, omladdning, omstart och användning på en andra klient.
 
 **Användare:** Den inloggade användaren från förberedelsen.
 
-**Förutsättningar:** Prova båda kartstorlekarna i datorvy och smal vy.
-Behåll **Alla etiketter** aktiverat enligt den allmänna förberedelsen.
-Öppna navigeringspanelen och ett objekts uppgifter växelvis under
-granskningen.
-Flytta ett objekt i din personliga vy, markera det och panorera kameran
-innan du ändrar bakgrundsvalet.
+**Förutsättningar:** Börja med 16 objekt och 1440 × 960 CSS-pixlar.
+Behåll **Alla etiketter** aktiverat. Flytta ett objekt i din personliga vy,
+markera det och panorera kameran före bakgrundsbytet. Prova sedan läsning
+med 16 respektive 80 objekt vid 1440 respektive 390 pixlars bredd.
+Datorvyn provar den stora kartytan; den smala vyn provar åtkomliga
+objektuppgifter när paneler och etiketter trängs.
 
-**Automatiskt motsvarande test (integration):**
+**Automatiskt motsvarande test:**
 [background-ocean.spec.ts](../../tests/integration/background-ocean.spec.ts),
-BAKGRUND-03. Provet använder riktig app, scen och isolerad SQLite-databas.
-De sparade inställningarna, inklusive **Alla etiketter**, kontrolleras
-även efter omstart och i en andra webbläsare. Bilderna är underlag för
-visuell granskning, inte ett intyg om prestanda på fysisk grafikhårdvara
-eller fullständig tillgänglighet.
-
-**Bildobservation med Alla etiketter:** Bilderna omfattar 16 och 80 objekt
-i 1440 × 960 och 390 × 844, med uppgifter eller navigering öppna. Objekt-
-och sambandsetiketter visas, men flera täcker varandra och panelerna
-skymmer delar av kartan. Trängseln är särskilt stor med 80 objekt i den
-smala vyn; även 16 objekt har överlappande etiketter. Sand och vattenyta
-går att skilja från mellanläget. Bilderna visar inte att alla etiketter
-går att läsa samtidigt eller att varje objekt har en fri pekyta.
-
-**Separat observation med automatiska etiketter:** I det syntetiska
-80-objektsprovet vid 390 px överlappar Havsobjekt 1 pekytan för
-Havsobjekt 0, och många objektetiketter döljs. Denna observation gäller
-automatiskt etikettläge och ersätts inte av bilderna med **Alla etiketter**.
-Provet öppnar uppgifter via tangentbordets snabbmeny. Dolda etiketter och
-överlappningar ska redovisas vid läsbarhetsbedömningen; tangentbordsvägen
-bevisar inte att alla objekt har en fri pekyta.
+BAKGRUND-03, använder riktig app, SQLite, omstart och två klienter.
+[background-rendering.test.tsx](../../tests/browser/background-rendering.test.tsx)
+ger separat tekniskt underlag för havets färger, riktningar och stillhet.
+Bildmätningarna körs en gång per tema och bredd. De ersätter inte en
+mänsklig bedömning av motivens former eller prov på fysisk grafikhårdvara.
 
 <!--
 ```manual-mapping
@@ -212,11 +196,18 @@ bevisar inte att alla objekt har en fri pekyta.
   },
   "reference": "Ljust hav, Alla etiketter, 16/80 objekt, 1440/390 px, två klienter.",
   "outcomes": [
-    "Ljust hav återkommer efter omladdning och i en annan webbläsare.",
-    "Vanlig navigering visar sand nedanför, yta ovanför och vatten mellan dem.",
-    "Temabyte bevarar båda bakgrundsvalen och objektplaceringar.",
-    "Bakgrunden hindrar inte kartans navigering eller val av objekt."
-  ]
+    "Valet återkommer efter omladdning, omstart och på en andra klient.",
+    "Temabyte bevarar båda bakgrundsvalen, markering och objektplaceringar.",
+    "Navigeringsreglagen ändrar bakgrundens utsnitt och objekten går att läsa."
+  ],
+  "evidence": [{
+    "kind": "technical",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/background-rendering.test.tsx",
+    "title": "ocean stillness, direction and theme isolation: light, 1440px",
+    "purpose": "Separata pixelprov av sand, yta, stillhet och temabyte."
+  }]
 }
 ```
 -->
@@ -224,61 +215,47 @@ bevisar inte att alla objekt har en fri pekyta.
 **Steg:**
 
 1. Öppna **Inställningar → Rymdkartan**. Välj **Under världshavet** i
-   **Bakgrund i ljust tema** med tangentbordet. Kontrollera sparbeskedet
-   och att fokus stannar på väljaren.
-2. Gå tillbaka till kartan. Kontrollera att kamera, markering och
-   objektplaceringar finns kvar. Öppna **Navigera**.
-3. Prova **Luta uppåt** och **Luta nedåt** för att se sandbotten,
-   vattenytan och mellanläget. Prova även panorering och zoom.
-4. Välj ett objekt och öppna dess uppgifter. I täta vyer kan du fokusera
-   objektet med tangentbordet, trycka **Skift+F10** och välja
-   **Visa uppgifter**. Kontrollera objekt, samband,
-   etiketter, markering och kontroller i alla tre kamerariktningarna.
-   Upprepa med 16 och 80 objekt i datorvy och smal vy.
-5. Växla till mörkt tema och tillbaka. Kontrollera att det mörka valet
-   och den personliga placeringen bevaras och att ljust hav återkommer.
-6. Ladda om sidan och öppna samma hushåll i den andra webbläsaren.
-   Kontrollera att **Under världshavet** finns kvar i den ljusa väljaren
-   och att **Alla etiketter** fortfarande är aktiverat i kartan.
+   **Bakgrund i ljust tema** med tangentbordet. Kontrollera sparbeskedet,
+   bevarat fokus och att det mörka bakgrundsvalet finns kvar.
+2. Återgå till kartan. Kontrollera bevarad markering, kamera och
+   objektplacering. Öppna **Navigera**. Prova lutning uppåt och nedåt,
+   rotation vänster och höger, panorering höger och zoom in. Stäng panelen.
+   Kontrollera att bakgrundens utsnitt har förändrats.
+3. Byt till mörkt tema. Kartans utsnitt ska vara kvar. Öppna inställningarna
+   och kontrollera att båda bakgrundsvalen finns kvar. Återgå till kartan
+   och byt tillbaka till ljust tema.
+4. Låt provinstallationen starta om och öppna hushållet igen. Kontrollera
+   havsvalet i inställningarna. Öppna hushållet på den andra klienten och
+   kontrollera samma val och **Alla etiketter**.
+5. Med 16 och sedan 80 objekt, prova 1440 × 960 och 390 × 844. Ladda om,
+   öppna kartan och kontrollera etikettvalet. Fokusera Provobjekt 00,
+   tryck **Skift+F10**, välj **Visa uppgifter för Provobjekt 00** och
+   stäng uppgifterna. Objektet ska gå att läsa vid varje kombination.
 
 **Förväntat resultat:**
 
-- Sanden finns nedanför kameran och vattenytan ovanför. Vattnet skiljer
-  planen åt. Ljusmönstren följer sand och yta utan spiral eller centrum.
-- Bakgrunden står still när kameran står still. Kartans vanliga reglage
-  fungerar och innehållet går att läsa över bakgrunden.
-- Anteckna överlappande objekt och dolda etiketter i täta vyer. Att öppna
-  uppgifter med tangentbordet visar inte att alla pekytor är fria.
-- Valet sparas för användaren i hushållet. Byten flyttar inte kartan eller
-  objekten. Sparbesked och tangentbordsfokus fungerar.
+- Valet sparas för användaren i hushållet, oberoende för ljust och mörkt tema.
+- Omstart, omladdning och en andra klient bevarar val och objektplaceringar.
+- Navigeringsreglagen ändrar bakgrundens utsnitt.
+- Fokus och sparbesked fungerar. Kartans reglage och objektuppgifter är
+  åtkomliga även i den smala vyn. Överlappande etiketter innebär inte att
+  alla objekt har fria pekytor; tangentbordsvägen provas uttryckligen.
 
-### BAKGRUND-04: Mörkt hav med alla sex ljusformer och sparade val
+### BAKGRUND-04: Mörkt hav, navigering och sparade val
 
-**Syfte:** Kontrollera hela djurlivsmotivet i mörkt Under världshavet och
-att separata temaval sparas utan att flytta kartan eller objekten.
+**Syfte:** Spara mörkt Under världshavet med automatiska etiketter och
+behålla arbete över samma navigerings- och återöppningsgränser.
 
 **Användare:** Den inloggade användaren från förberedelsen.
 
-**Förutsättningar:** Välj mörkt tema och slå av **Alla etiketter** för
-automatisk etikettvisning. Prova 16 och 80 objekt i datorvy och smal vy
-med navigeringspanel respektive objektuppgifter öppna. Flytta ett
-objekt i din personliga vy, markera det och panorera innan bakgrundsbytet.
-Den kända överlappningen i det täta provunderlaget ovan gäller även här.
+**Förutsättningar:** Samma provdata och storlekar som BAKGRUND-03, men
+mörkt tema och **Alla etiketter** avstängt.
 
-**Automatiskt motsvarande test (integration):**
+**Automatiskt motsvarande test:**
 [background-ocean.spec.ts](../../tests/integration/background-ocean.spec.ts),
-BAKGRUND-04. Riktig app och scen samt isolerad SQLite-installation provar
-val, sparbesked, fokus, stillastående bild, temabyte, omladdning, omstart
-och en andra webbläsare. Bilder från matrisen stödjer visuell granskning
-av djurformer, objekt, samband, etiketter och kontroller. Automatiken
-identifierar inte djurens former och bevisar inte fri pekyta eller
-läsbarhet för alla etiketter i täta vyer. Fysisk grafikhårdvara och
-fullständig tillgänglighet behöver bedömas separat.
-Bildjämförelsen använder bakgrundspixlar som är fria från kartans överlägg
-i båda bilderna. Sparbeskedet får försvinna och navigeringen stängs med
-sin vanliga knapp före jämförelsen. Navigeringen öppnas igen för nästa
-kamerahandling. Helsidesbilder med öppet fönster finns kvar för granskning
-av paneler och etiketter.
+BAKGRUND-04. Separata tekniska renderingsprov kontrollerar hela mörka
+havsbildens stillhet och förändring vid fyra kamerariktningar.
+De identifierar inte djurens former eller bevisar fri pekyta för varje objekt.
 
 <!--
 ```manual-mapping
@@ -289,12 +266,66 @@ av paneler och etiketter.
     "spec": "tests/integration/background-ocean.spec.ts",
     "caseId": "BAKGRUND-04"
   },
-  "reference": "Mörkt hav, 16/80 objekt, 1440/390 px, fri bakgrund, två klienter.",
+  "reference": "Mörkt hav, 16/80 objekt, 1440/390 px, två klienter.",
   "outcomes": [
-    "Mörkt hav återkommer efter omladdning, omstart och i en annan webbläsare.",
-    "Motivet står still utan kamerarörelse och följer vanlig navigering.",
-    "Temabyte bevarar båda bakgrundsvalen, kameran och objektplaceringar.",
-    "Navigering, objektval och uppgifter fungerar över bakgrunden."
+    "Valet återkommer efter omladdning, omstart och på en andra klient.",
+    "Temabyte bevarar båda bakgrundsvalen, markering och objektplaceringar.",
+    "Navigeringsreglagen ändrar bakgrundens utsnitt och objekten går att läsa."
+  ],
+  "evidence": [{
+    "kind": "technical",
+    "runner": "vitest",
+    "suite": "browser",
+    "spec": "tests/browser/background-rendering.test.tsx",
+    "title": "ocean stillness, direction and theme isolation: dark, 1440px",
+    "purpose": "Separata pixelprov av stillhet, kamerariktningar och temabyte."
+  }]
+}
+```
+-->
+
+**Steg:**
+
+1. Följ BAKGRUND-03 steg 1–5 med **Bakgrund i mörkt tema** och
+   **Alla etiketter** avstängt. Byt till ljust tema vid temakontrollen
+   och återgå sedan till mörkt.
+2. Kontrollera det ljusa bakgrundsvalet separat. Bekräfta på båda klienterna
+   att automatisk etikettvisning gäller även efter omstart.
+
+**Förväntat resultat:**
+
+- Samma beständighet, fokus, navigering och objektläsning som BAKGRUND-03.
+- Det mörka havsvalet skriver inte över det ljusa valet.
+- Automatisk etikettvisning består över omladdning och klientbyte.
+
+### BAKGRUND-09: Känna igen havets motiv och deras riktningar
+
+**Syfte:** Bedöma motivens igenkännbara former separat från sparande och
+numeriska pixelprov i BAKGRUND-03/04.
+
+**Användare:** Den inloggade användaren från den allmänna förberedelsen.
+
+**Förutsättningar:** Under världshavet i båda teman, 16 och 80 provobjekt
+vid 1440 × 960 och 390 × 844 CSS-pixlar. Använd Alla etiketter i ljust tema
+och automatisk etikettvisning i mörkt tema.
+
+**Kräver mänsklig observation:** Känn igen sandbotten, vattenyta och de sex
+djurlivsformerna. Numerisk färgskillnad eller en ändrad bild visar inte att
+ett djur går att känna igen. Bedöm även hur paneler och etiketter skymmer
+motiven; notera brister utan att tolka tangentbordsåtkomst som fri pekyta.
+
+<!--
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "visual-symbol-recognition",
+    "observation": "Känn igen sand, vattenyta och sex djurformer."
+  },
+  "reference": "Ljust/mörkt hav, 16/80 objekt, 1440/390 px.",
+  "outcomes": [
+    "Sandbotten och vattenyta skiljs från mellanlägets vatten.",
+    "Alla sex djurlivsformer går att känna igen genom kameranavigering.",
+    "Överlappning och dolda motiv redovisas separat."
   ]
 }
 ```
@@ -302,37 +333,23 @@ av paneler och etiketter.
 
 **Steg:**
 
-1. Öppna **Inställningar → Rymdkartan**. Välj **Under världshavet** i
-   **Bakgrund i mörkt tema** med tangentbordet. Kontrollera sparbesked,
-   bevarat fokus och att det ljusa bakgrundsvalet finns kvar.
-2. Återgå till kartan. Kontrollera oförändrat utsnitt, markering och
-   objektplaceringar. Stäng **Navigera** om fönstret är öppet och vänta
-   tills sparbeskedet har försvunnit. Låt kameran stå still och kontrollera
-   att motivet inte simmar, pulserar, blinkar eller fortsätter röra sig.
-3. Öppna **Navigera**. Prova rotation åt båda hållen, lutning uppåt och
-   nedåt, panorering och zoom. Jämför hela motivet: kronmanet, sifonofor,
-   lanternfish, vampyrbläckfisk, musselkräftors ljusspår och
-   djuphavsmarulk med lysande lockbete. Formerna ingår tillsammans;
-   kamerans riktning avgör vilka delar som syns i utsnittet. Stäng
-   navigeringen för att granska den fria bakgrunden efter varje riktning
-   och öppna den igen för nästa kamerahandling.
-4. Välj ett objekt och öppna dess uppgifter. Använd vid tät överlappning
-   tangentbordets **Skift+F10 → Visa uppgifter**. Granska objekt,
-   samband, etiketter, markering och kontroller i flera riktningar.
-   Upprepa med båda kartstorlekarna och bredderna. Anteckna dolda
-   etiketter och överlappande pekytor.
-5. Växla till ljust tema och tillbaka. Kontrollera att respektive
-   bakgrund återkommer utan att kameran eller objekten flyttar sig.
-6. Ladda om sidan och öppna samma hushåll i den andra webbläsaren.
-   Kontrollera att det mörka valet och det ljusa valet finns kvar.
+1. Öppna Navigera i ljust tema. Luta uppåt sex gånger, sedan nedåt tolv
+   gånger och tillbaka uppåt sex gånger. Granska sandbotten, vattenyta och
+   mellanlägets vatten. Ljusmönstren ska följa sand och yta utan spiral.
+2. Byt till mörkt tema. Rotera åt båda hållen och luta uppåt och nedåt.
+   Granska kronmanet, sifonofor, lanternfish, vampyrbläckfisk,
+   musselkräftors ljusspår och djuphavsmarulk med lysande lockbete.
+3. Stäng navigeringen mellan riktningarna och låt kameran stå still.
+   Motivet ska inte simma, pulsera, blinka eller fortsätta röra sig.
+4. Upprepa med respektive kartstorlek och bredd. Öppna objektuppgifter
+   växelvis med navigering och anteckna skymda former och etiketter.
 
 **Förväntat resultat:**
 
-- Det mörkblå vattnet och de sex blågröna ljusformerna bildar ett
-  sammanhängande motiv med tomrum bakom hushållets information.
-- Motivet följer kartans navigering utan egen rörelse. Kartans vanliga
-  reglage, objektval och uppgifter går att använda.
-- Valet sparas per användare i hushållet. Temabyte och bakgrundsbyte
-  bevarar kamera, markering och personliga placeringar.
-- Läsbarhetsbedömningen redovisar faktiska överlappningar och dolda
-  etiketter; tangentbordsvägen visar inte att alla pekytor är fria.
+- Ljust hav har sand nedanför, vattenyta ovanför och vatten däremellan.
+- Mörkt hav innehåller alla sex former tillsammans; kamerans riktning
+  avgör vilka som syns. Stillastående kamera ger stillastående motiv.
+- Brister i igenkänning och överlappning redovisas per konfiguration.
+
+BAKGRUND-09 skiljer ut den mänskliga bildbedömningen från BAKGRUND-03/04.
+De två ursprungliga ID:na behåller sina automatiserade spar- och läsflöden.

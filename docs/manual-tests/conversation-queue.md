@@ -104,9 +104,9 @@ avbryter bara i textvyn”.
     },
     {
       "kind": "technical",
-      "runner": "playwright",
-      "suite": "integration",
-      "spec": "tests/integration/text-task-deadlines.spec.ts",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/text-task-deadlines-transport.test.ts",
       "title": "an accepted text tool waiting at MCP cannot write at its original deadline",
       "purpose": "Syntetiskt installationsbevis för sent verktygsresultat vid den ursprungliga fristen."
     }

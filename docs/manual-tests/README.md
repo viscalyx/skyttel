@@ -6,6 +6,10 @@ till motsvarande automatiserade prov i integrations- eller Chromium-sviten.
 Tekniskt stödjande prov anges separat från ett falls motsvarighet. Fall som
 kräver mänskliga observationer anger vad som behöver kontrolleras på riktigt;
 automatik ersätter inte de observationerna.
+HTTP- och processprov körs i server-sviten. Tekniska prov av kakleverans och
+förberedelser med riktiga webbläsare körs i `tests/technical-browser/`.
+[Placering och omfattning](integration-placement.md) anger gränser,
+bevarade varianter och mätunderlag för sviternas uppdelning.
 Fall som kräver mänsklig användning av verkliga externa konton anges som
 manuella och körs inte i CI.
 
@@ -702,7 +706,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   inställningar, oberoende panorering, zoom och lageravstånd med återställning,
   sparbekräftelse som toast i tre sekunder med bevarat fokus,
   stilla bakgrund vid minskad rörelse, återgång utan hopp och separat
-  återställning av kamerakopplingen för alla sju bakgrunder, flyttning med mus,
+  återställning av kamerakopplingen med ljust hav, flyttning med mus,
   pekgester och tangentbord, stabila fingerpar och kameraväxling,
   visningsval, samtidighetskonflikter, bevarad text,
   beständighet och avskildhet mellan användare samt inramning vid sen
@@ -710,6 +714,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   provhushåll på samma installation förbereds med ett lokalt kommando.
   Höjdhjälpen har stabil förhandsvisning och ett bevarat val i båda
   navigeringsstorlekarna.
+  Alla sju bakgrunders frysning och återgång har separat tekniskt
+  renderingsunderlag vid dator- och mobilbredd.
   Återhämtning efter placeringsfel bevarar senaste lokala position,
   erbjuder nytt sparförsök eller inläsning för ett objekt och finns kvar
   efter urvalsbyte och stängd navigering. Skärmläsarprovet omfattar även
@@ -718,8 +724,11 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   omfattar koordinatfält med faktiskt skärmtangentbord och förstoring.
 - [Kartans bakgrunder](background.md): Gryningsdis, Universum samt ljust
   och mörkt Under världshavet som personliga temaval, återläsning utan
-  ändrad karta, sandbotten, vattenyta och sex ljusformer genom vanlig
-  kameranavigering. [Respons och stabilitet](background-performance.md)
+  ändrad karta och åtkomlig objektläsning efter vanlig kameranavigering.
+  Sandbotten, vattenyta och motivens stillhet har separata pixelprov.
+  BAKGRUND-09 behåller den mänskliga bedömningen av havets sex djurformer
+  och synliga överlappningar, separat från spar- och läsflödena.
+  [Respons och stabilitet](background-performance.md)
   prövar alla sju utföranden med kort navigering, objektflyttning och
   bakgrundsbyten. Hela varv och zoomens ytterlägen har separat tekniskt
   underlag i webbläsarsviten.

@@ -4,7 +4,7 @@ Använd bara ett påhittat provhushåll i Chromium. Detta förbereder en verklig
 serverrespons innan den fördröjs eller tappas; vanligt offlineläge provar
 en annan felgräns. UI-stegen finns i återimportens och flyttens fall.
 Automatisk rökprovning av själva utdraget finns i
-[household-recovery-preparation.spec.ts](../../tests/integration/household-recovery-preparation.spec.ts).
+[household-recovery-preparation.spec.ts](../../tests/technical-browser/household-recovery-preparation.spec.ts).
 
 ## Fördröj eller tappa nästa verkliga svar
 

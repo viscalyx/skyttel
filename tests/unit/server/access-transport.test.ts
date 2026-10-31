@@ -1,10 +1,11 @@
 import { request } from '@playwright/test';
-import { createHousehold, signIn } from '../support/client.js';
-import { alex, createInstallation, robin } from '../support/installation.js';
-import { expect, test } from '../support/test.js';
+import { createHousehold, signIn } from '../../support/client.js';
+import { expect, test } from '../../support/http-test.js';
+import { alex, createInstallation, robin } from '../../support/installation.js';
 
 test('two installations honor different administrators and deny another identity the bootstrap', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const first = await createInstallation();
   const second = await createInstallation({ provider: 'microsoft', subject: robin.subject });
@@ -39,7 +40,8 @@ test('two installations honor different administrators and deny another identity
 });
 
 test('a second identity with the same email cannot acquire the first identity or its membership', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
@@ -68,7 +70,8 @@ test('a second identity with the same email cannot acquire the first identity or
 });
 
 test('an earlier same-email identity cannot block the configured first administrator', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
@@ -93,7 +96,8 @@ test('an earlier same-email identity cannot block the configured first administr
 });
 
 test('bootstrap is atomic and rejects cross-origin and malformed submissions', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const installation = await createInstallation();
   const client = await request.newContext();
@@ -129,7 +133,8 @@ test('bootstrap is atomic and rejects cross-origin and malformed submissions', {
 });
 
 test('current membership isolates households and revocation defeats an existing session', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const installation = await createInstallation();
   const administrator = await request.newContext();
@@ -176,7 +181,8 @@ test('current membership isolates households and revocation defeats an existing 
 });
 
 test('forged OAuth callbacks and unavailable authentication routes do not grant access', {
-  tag: '@technical',
+  tags: ['technical'],
+  timeout: 30_000,
 }, async () => {
   const installation = await createInstallation();
   const client = await request.newContext();

@@ -651,7 +651,9 @@ LISTA-04.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Provkartan med 500 objekt. Prova 320 × 250 CSS-pixlar
+**Förutsättningar:** Provkartan med 46 objekt och inga samband från
+`node --import tsx scripts/manual-household-table.ts --scroll`.
+Prova 320 × 250 CSS-pixlar
 i Chromium. Verklig förstoring och uppläsning provas i LISTA-09.
 
 **Integrationstest:**
@@ -1901,7 +1903,8 @@ iPhone och iPad. Använd vanlig HTTPS, leverantörsinloggning och medlemskap
 enligt [förberedelsen för verkliga enheter](object-list-device-preparation.md).
 Återställ rätt arkiv och koppla dess kompletta privata innehåll inför
 varje delegerat fall, enhet och hjälpmedelskörning: läskedjan för
-LÄS-01/02/07, hela storkartan för LISTA-05 och **--search** för SÖK-03/05/10.
+LÄS-01/02/07, 46-objektskartan med **--scroll** för LISTA-05 och
+**--search** för SÖK-03/05/10.
 Anteckna operativsystem, webbläsare, hjälpmedelsversion och faktisk zoomnivå.
 
 **Kräver mänsklig observation:** Lyssna med NVDA och VoiceOver vid

@@ -72,6 +72,7 @@ test('CI retains test output without turning failing commands into successful te
     ['checks', 'Workflow gate tests'],
     ['checks', 'Manual mapping'],
     ['unit', 'Unit coverage with CI fonts'],
+    ['technical-browser', 'Technical browser contracts with CI fonts'],
     ['integration', 'Integration tests with CI fonts'],
     ['checks', 'Container checks'],
   ]) {
@@ -142,12 +143,16 @@ ${command}`,
 });
 
 test('independent checks and every integration group feed a small gate that rejects incomplete results', () => {
-  for (const name of ['unit', 'checks']) {
+  for (const name of ['unit', 'checks', 'technical-browser']) {
     const body = job(name);
     assert.doesNotMatch(body, /^ {4}needs:/mu, `${name} must start independently`);
     assert.doesNotMatch(body, /^ {4}timeout-minutes:/mu);
   }
   assert.match(job('unit'), /npm run test:unit:ci -- --coverage/);
+  assert.doesNotMatch(job('unit'), /npm run test:technical-browser/);
+  assert.match(job('technical-browser'), /npm run test:technical-browser:ci/);
+  assert.match(job('technical-browser'), /- run: npm run build/);
+  assert.match(job('technical-browser'), /test-results\/technical-browser\//);
   assert.match(job('unit'), /- run: npm run build[\s\S]+- name: Unit coverage with CI fonts/);
   const count = JSON.parse(
     readFileSync('scripts/testing/integration-durations.json', 'utf8'),
@@ -180,7 +185,7 @@ test('independent checks and every integration group feed a small gate that reje
   assert.match(application, /^ {4}if: always\(\)$/mu);
   assert.match(application, /REQUIRED_RESULTS: \$\{\{ toJSON\(needs\) \}\}/);
   const required = application.match(/^ {4}needs: \[(.+)\]$/mu)?.[1].split(', ');
-  assert.deepEqual(required, ['checks', 'unit', ...groupNames]);
+  assert.deepEqual(required, ['checks', 'unit', 'technical-browser', ...groupNames]);
   assert.doesNotMatch(application, /npm ci|npm run|playwright install|upload-artifact/);
   const command = application.match(
     /^ {8}run: (node scripts\/security\/check-results.mjs jobs .+)$/mu,

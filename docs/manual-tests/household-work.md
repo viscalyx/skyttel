@@ -572,9 +572,11 @@ and resizing”.
     },
     {
       "kind": "technical",
-      "spec": "tests/integration/household-work-preparation.spec.ts",
+      "spec": "tests/technical-browser/household-work-preparation.spec.ts",
       "title": "literal household preparation completes the family tools on seeded public installation",
-      "purpose": "Exakta publicerade verktyg och grafikavbrott i befolkad referens; tidigare objekt och kvitto samt meningsfullt separat privat arbete bevaras genom rättelse, sparande och omstart. Kedjan upprepas inte från ett tomt hushåll."
+      "purpose": "Exakta publicerade verktyg och grafikavbrott i befolkad referens; tidigare objekt och kvitto samt meningsfullt separat privat arbete bevaras genom rättelse, sparande och omstart. Kedjan upprepas inte från ett tomt hushåll.",
+      "runner": "playwright",
+      "suite": "technical-browser"
     }
   ]
 }
@@ -794,9 +796,11 @@ ljudprovet ARBETE-13.
     },
     {
       "kind": "technical",
-      "spec": "tests/integration/household-work-preparation.spec.ts",
+      "spec": "tests/technical-browser/household-work-preparation.spec.ts",
       "title": "literal household preparation completes the family tools on seeded public installation",
-      "purpose": "Exakta publicerade verktyg och grafikavbrott i befolkad referens; tidigare objekt och kvitto samt meningsfullt separat privat arbete bevaras genom rättelse, sparande och omstart. Kedjan upprepas inte från ett tomt hushåll."
+      "purpose": "Exakta publicerade verktyg och grafikavbrott i befolkad referens; tidigare objekt och kvitto samt meningsfullt separat privat arbete bevaras genom rättelse, sparande och omstart. Kedjan upprepas inte från ett tomt hushåll.",
+      "runner": "playwright",
+      "suite": "technical-browser"
     }
   ]
 }

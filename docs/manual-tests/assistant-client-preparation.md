@@ -55,7 +55,7 @@ beviljar aldrig större åtkomst än Skyttels aktuella medgivande.
 ### Läsande terminalklient: tom och fylld karta
 
 Det separata tekniska provet i
-[manual-mcp-preparation.spec.ts](../../tests/integration/manual-mcp-preparation.spec.ts)
+[manual-mcp-preparation.spec.ts](../../tests/technical-browser/manual-mcp-preparation.spec.ts)
 använder en ny databas och ett läsmedgivande för båda utgångslägena.
 Det provar verklig webbläsare, den publicerade klienten, OAuth/MCP och SQLite
 utan språkmodell. Det är underlag för AI-02, inte ytterligare ett manuellt fall.
@@ -82,7 +82,7 @@ De separata tekniska definitionerna med titlarna
 `manual MCP read-only preparation preserves empty household work` och
 `manual MCP read-only preparation preserves seeded household work` ersätts
 av provfilens sammanhållna definition för tomt och sedan fyllt hushåll.
-Familjen omfattar en upptäckt integrationsexekvering i stället för två.
+Familjen omfattar en upptäckt teknisk webbläsarexekvering i stället för två.
 Tom serialisering och fylld läsning behålls i samma medgivande; en separat
 medgivandesekvens från en redan fylld demoinstallation upprepas inte.
 Inga manuella fall-ID:n utgår eller återanvänds.

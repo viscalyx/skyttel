@@ -713,113 +713,21 @@ SYNTH-42 och
   ännu den
   sparade typen.
 
-### TYP-18: Upprepade typbyten bevarar samtliga egenskaper
+### Pensionerat TYP-18 — samma typbyte vid samma bredd
 
-**Syfte:** Alla individuella egenskaper består omedelbart vid varje typbyte
-och i det privata
-förslaget.
+TYP-11 behåller typbytesflödet vid denna bredd. Båda temans kontrast och
+omflöde provas separat i
+[property-editor.test.tsx](../../tests/browser/property-editor.test.tsx).
+HTTP-proverna behåller egenskapers och bilders beständighet. Ingen separat
+spargräns beror på temat. ID:t återanvänds inte.
 
-**Användare:** Alex, och Robin i separat profil när stegen anger en annan
-medlem.
+### Pensionerat TYP-19 — samma typbyte vid samma bredd
 
-**Förutsättningar:** Spara typerna Cykel och Motorfordon, objekten Alex blå
-cykel och Garaget samt ett
-samband mellan dem. Cykeln har Nummer (Text, SYNTH-42) och Försäkrad (Ja/nej,
-Nej).
-
-<!-- markdownlint-disable MD013 -->
-<!--
-```manual-mapping
-{
-  "counterpart": {
-    "runner": "playwright",
-    "suite": "integration",
-    "spec": "tests/integration/type-change.spec.ts",
-    "caseId": "TYP-18"
-  },
-  "reference": "Chromium 1280 CSS-pixlar, mörkt tema. Varianten skyddar temats fokus och omflöde vid upprepade byten.",
-  "outcomes": [
-    "Alla individuella egenskaper består omedelbart vid varje typbyte och i det privata förslaget.",
-    "Formuläret fungerar utan vågrät rullning; den gemensamma kartan behåller ännu den sparade typen."
-  ]
-}
-```
--->
-<!-- markdownlint-enable MD013 -->
-
-**Steg:**
-
-1. Redigera Alex blå cykel. Byt till Motorfordon, tillbaka till Cykel och åter
-   till
-   Motorfordon. Efter varje byte, öppna Fria egenskaper och kontrollera
-SYNTH-42 och
-   Nej. Öppna Grunduppgifter före nästa byte.
-2. Lägg i utkastet och stäng. Läs förslaget och kontrollera samma värden.
-   Spara inte
-   hela utkastet.
-
-**Förväntat resultat:**
-
-- Alla individuella egenskaper består omedelbart vid varje typbyte och i det
-  privata
-  förslaget.
-- Formuläret fungerar utan vågrät rullning; den gemensamma kartan behåller
-  ännu den
-  sparade typen.
-
-### TYP-19: Upprepade typbyten bevarar samtliga egenskaper
-
-**Syfte:** Alla individuella egenskaper består omedelbart vid varje typbyte
-och i det privata
-förslaget.
-
-**Användare:** Alex, och Robin i separat profil när stegen anger en annan
-medlem.
-
-**Förutsättningar:** Spara typerna Cykel och Motorfordon, objekten Alex blå
-cykel och Garaget samt ett
-samband mellan dem. Cykeln har Nummer (Text, SYNTH-42) och Försäkrad (Ja/nej,
-Nej).
-
-<!-- markdownlint-disable MD013 -->
-<!--
-```manual-mapping
-{
-  "counterpart": {
-    "runner": "playwright",
-    "suite": "integration",
-    "spec": "tests/integration/type-change.spec.ts",
-    "caseId": "TYP-19"
-  },
-  "reference": "Chromium 390 CSS-pixlar, ljust tema. Varianten skyddar temats fokus och omflöde vid upprepade byten.",
-  "outcomes": [
-    "Alla individuella egenskaper består omedelbart vid varje typbyte och i det privata förslaget.",
-    "Formuläret fungerar utan vågrät rullning; den gemensamma kartan behåller ännu den sparade typen."
-  ]
-}
-```
--->
-<!-- markdownlint-enable MD013 -->
-
-**Steg:**
-
-1. Redigera Alex blå cykel. Byt till Motorfordon, tillbaka till Cykel och åter
-   till
-   Motorfordon. Efter varje byte, öppna Fria egenskaper och kontrollera
-SYNTH-42 och
-   Nej. Öppna Grunduppgifter före nästa byte.
-2. Lägg i utkastet och stäng. Läs förslaget och kontrollera samma värden.
-   Spara inte
-   hela utkastet.
-
-**Förväntat resultat:**
-
-- Alla individuella egenskaper består omedelbart vid varje typbyte och i det
-  privata
-  förslaget.
-- Formuläret fungerar utan vågrät rullning; den gemensamma kartan behåller
-  ännu den
-  sparade typen.
+TYP-20 behåller typbytesflödet vid denna bredd. Båda temans kontrast och
+omflöde provas separat i
+[property-editor.test.tsx](../../tests/browser/property-editor.test.tsx).
+HTTP-proverna behåller egenskapers och bilders beständighet. Ingen separat
+spargräns beror på temat. ID:t återanvänds inte.
 
 ### TYP-20: Upprepade typbyten bevarar samtliga egenskaper
 
@@ -929,61 +837,13 @@ SYNTH-42 och
   ännu den
   sparade typen.
 
-### TYP-22: Upprepade typbyten bevarar samtliga egenskaper
+### Pensionerat TYP-22 — samma typbyte vid samma bredd
 
-**Syfte:** Alla individuella egenskaper består omedelbart vid varje typbyte
-och i det privata
-förslaget.
-
-**Användare:** Alex, och Robin i separat profil när stegen anger en annan
-medlem.
-
-**Förutsättningar:** Spara typerna Cykel och Motorfordon, objekten Alex blå
-cykel och Garaget samt ett
-samband mellan dem. Cykeln har Nummer (Text, SYNTH-42) och Försäkrad (Ja/nej,
-Nej).
-
-<!-- markdownlint-disable MD013 -->
-<!--
-```manual-mapping
-{
-  "counterpart": {
-    "runner": "playwright",
-    "suite": "integration",
-    "spec": "tests/integration/type-change.spec.ts",
-    "caseId": "TYP-22"
-  },
-  "reference": "Chromium 320 CSS-pixlar, mörkt tema. Varianten skyddar temats fokus och omflöde vid upprepade byten.",
-  "outcomes": [
-    "Alla individuella egenskaper består omedelbart vid varje typbyte och i det privata förslaget.",
-    "Formuläret fungerar utan vågrät rullning; den gemensamma kartan behåller ännu den sparade typen."
-  ]
-}
-```
--->
-<!-- markdownlint-enable MD013 -->
-
-**Steg:**
-
-1. Redigera Alex blå cykel. Byt till Motorfordon, tillbaka till Cykel och åter
-   till
-   Motorfordon. Efter varje byte, öppna Fria egenskaper och kontrollera
-SYNTH-42 och
-   Nej. Öppna Grunduppgifter före nästa byte.
-2. Lägg i utkastet och stäng. Läs förslaget och kontrollera samma värden.
-   Spara inte
-   hela utkastet.
-
-**Förväntat resultat:**
-
-- Alla individuella egenskaper består omedelbart vid varje typbyte och i det
-  privata
-  förslaget.
-- Formuläret fungerar utan vågrät rullning; den gemensamma kartan behåller
-  ännu den
-  sparade typen.
-
-## Mänsklig observation
+TYP-21 behåller typbytesflödet vid denna bredd. Båda temans kontrast och
+omflöde provas separat i
+[property-editor.test.tsx](../../tests/browser/property-editor.test.tsx).
+HTTP-proverna behåller egenskapers och bilders beständighet. Ingen separat
+spargräns beror på temat. ID:t återanvänds inte.
 
 ### TYP-23: Fysiskt tangentbord vid verklig webbläsarförstoring
 
@@ -1029,7 +889,8 @@ TYP-12 respektive TYP-10, TYP-15, TYP-16 och TYP-17. Den rena förmågan att
 ordna typavsnitt har godkänd täckningsförlust eftersom den inte finns kvar.
 Tidigare skydd för att ändra datatypen på ett använt typfält är avvecklat
 med typfälten; individuell validering finns i TYP-05. TYP-06, TYP-07 och
-TYP-11 samt TYP-18–22 behåller sina identiteter med värdebevarande typbyten.
+TYP-11, TYP-20 och TYP-21 behåller värdebevarande typbyten vid tre bredder.
+TYP-18, TYP-19 och TYP-22 är pensionerade enligt hänvisningarna ovan.
 
 Automatiserade steg använder verklig server och SQLite men utför inga
 mänskliga hjälpmedelsobservationer. Fysisk inmatning och verklig uppläsning

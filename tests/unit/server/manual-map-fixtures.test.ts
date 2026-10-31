@@ -1,5 +1,6 @@
-import { execFile } from 'node:child_process';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { execFile, spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -9,6 +10,49 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { createInstallation, robin } from '../../support/installation.js';
 
 const execute = promisify(execFile);
+
+test('the scroll preparation publishes a bounded table fixture and removes it on quit', async () => {
+  const child = spawn(
+    process.execPath,
+    ['--import', 'tsx', 'scripts/manual-household-table.ts', '--scroll'],
+    {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    },
+  );
+  const closed = once(child, 'close');
+  let output = '';
+  let diagnostics = '';
+  child.stdout.on('data', (chunk) => {
+    output += String(chunk);
+  });
+  child.stderr.on('data', (chunk) => {
+    diagnostics += String(chunk);
+  });
+  const client = await request.newContext();
+  try {
+    await expect.poll(() => output.includes('"event":"ready"'), { timeout: 10_000 }).toBe(true);
+    const ready = JSON.parse(
+      output.split('\n').find((line) => line.includes('"event":"ready"')) ?? '',
+    );
+    await signIn(client, ready.origin);
+    const { household } = await (await client.get(`${ready.origin}/api/bootstrap`)).json();
+    const state = await (
+      await client.get(`${ready.origin}/api/households/${household.id}/map`)
+    ).json();
+    expect(state.objects).toHaveLength(46);
+    expect(state.objects).toContainEqual(expect.objectContaining({ name: 'Provobjekt 045' }));
+    expect(state.relationships).toEqual([]);
+    expect(state.draft.changes).toEqual([]);
+    child.stdin.write('quit\n');
+    expect(await closed, diagnostics).toEqual([0, null]);
+    await expect(stat(ready.directory)).rejects.toMatchObject({ code: 'ENOENT' });
+  } finally {
+    await client.dispose();
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
+    await closed;
+  }
+}, 15_000);
+
 test('the second-household manual fixture uses an existing verified login without granting access to Linden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-manual-map-'));
   const source = await createInstallation();

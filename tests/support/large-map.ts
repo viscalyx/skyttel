@@ -3,6 +3,24 @@ import { householdMap } from '../../src/server/map.js';
 
 // Fixture arrangement only. All measurements and assertions use the running app.
 export function seedLargeMap(database: Database.Database, userId: string, householdId: string) {
+  seedMap(database, userId, householdId, 500, 1500);
+}
+
+export function seedTableScrollMap(
+  database: Database.Database,
+  userId: string,
+  householdId: string,
+) {
+  seedMap(database, userId, householdId, 46, 0);
+}
+
+function seedMap(
+  database: Database.Database,
+  userId: string,
+  householdId: string,
+  objects: number,
+  relationships: number,
+) {
   const map = householdMap(database, userId, householdId);
   const state = map.read();
   const types = ['Person', 'Tjänst', 'Abonnemang', 'Bankkonto', 'Bostad'].map((name) => {
@@ -22,7 +40,7 @@ export function seedLargeMap(database: Database.Database, userId: string, househ
     (id, householdId, typeId, revision, sourceId, targetId, properties, lifecycle)
     VALUES (?, ?, ?, 1, ?, ?, ?, ?)`);
   database.transaction(() => {
-    for (let index = 0; index < 500; index += 1) {
+    for (let index = 0; index < objects; index += 1) {
       object.run(
         `large-${index}`,
         householdId,
@@ -41,7 +59,7 @@ export function seedLargeMap(database: Database.Database, userId: string, househ
         index % 17 === 0 ? 'ended' : null,
       );
     }
-    for (let index = 0; index < 1500; index += 1) {
+    for (let index = 0; index < relationships; index += 1) {
       const source = Math.floor(index / 3);
       const offset = (index % 3) + 1;
       edge.run(

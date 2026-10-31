@@ -60,7 +60,7 @@ uppläsning med skärmläsare.
     "spec": "tests/integration/background-reduced-motion.spec.ts",
     "caseId": "PLACERING-15"
   },
-  "reference": "16 objekt, 1440 × 960, alla sju motiv och minskad rörelse.",
+  "reference": "16 objekt, 1440 × 960, ljust hav och minskad rörelse.",
   "outcomes": [
     "Hela bakgrunden är synlig och stilla vid sidstart med minskad rörelse.",
     "Frysning och återgång behåller utsnittet utan uppspelad rörelse.",
@@ -70,6 +70,16 @@ uppläsning med skärmläsare.
     "Bakgrundsval och synlighet är redigerbara under minskad rörelse.",
     "Rörelsereglage och Återställ rörelse är inaktiva med värden kvar.",
     "Systemvalet ändrar inga sparade inställningar."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/background-rendering.test.tsx",
+      "title": "background freeze, resume and reset: light/ocean, 1440px",
+      "purpose": "Frysning och återgång; sviten provar alla sju motiv."
+    }
   ]
 }
 ```
@@ -82,11 +92,10 @@ uppläsning med skärmläsare.
    Kartan rör sig men hela bakgrunden ligger kvar. Välj Återställ vy:
    endast kartan återställs. Avaktivera minskad rörelse; bakgrunden ligger
    fortfarande kvar. Välj Återställ vy och stäng navigeringen.
-2. Prova följande en gång vardera med respektive tema: Pärlemor,
-   Gryningsdis och Under världshavet i ljust tema; Atmosfär, Dis och
-   ljuspunkter, Universum och Under världshavet i mörkt tema. Välj
-   bakgrund under Inställningar → Rymdkartan och återgå till kartan.
-   Öppna Navigera och återställ vyn om knappen är aktiv.
+2. Välj Under världshavet i ljust tema under Inställningar → Rymdkartan
+   och återgå till kartan. Öppna Navigera och återställ vyn om knappen
+   är aktiv. Detta representativa motiv provar systemvalet i appen;
+   alla sju motiv har separat tekniskt renderingsunderlag.
 3. Anteckna bakgrundens utsnitt. Rotera vänster två gånger, panorera höger
    två gånger och zooma in. Bakgrunden svarar. Aktivera minskad rörelse
    utan omladdning: det senast visade utsnittet ligger kvar utan hopp.
@@ -116,7 +125,7 @@ uppläsning med skärmläsare.
 
 **Förväntat resultat:**
 
-- Alla sju motiv behåller sitt synliga utsnitt vid frysning och återgång.
+- Det valda motivet behåller sitt synliga utsnitt vid frysning och återgång.
   Alla lager är kvar; bakgrunden spelar inte upp pausade rörelser.
 - De två återställningshandlingarna har skilda betydelser. Systemvalet
   skriver aldrig över synlighet, bakgrundsval, rörelsevärden eller placeringar.
@@ -148,11 +157,21 @@ navigation; fysisk mobil och fysisk pekinmatning behöver provas separat.
     "spec": "tests/integration/background-reduced-motion.spec.ts",
     "caseId": "PLACERING-16"
   },
-  "reference": "80 objekt, 390 × 844, alla sju motiv och öppna paneler.",
+  "reference": "80 objekt, 390 × 844, ljust hav och öppna paneler.",
   "outcomes": [
     "Minskad rörelse behåller hela bakgrunden stilla även i tät och smal karta.",
     "Återgång behåller utsnittet och bara nya rörelser påverkar motivet.",
     "Återställ vy och reglagetillstånden fungerar med sparade värden kvar."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "browser",
+      "spec": "tests/browser/background-rendering.test.tsx",
+      "title": "background freeze, resume and reset: light/ocean, 390px",
+      "purpose": "Frysning och återgång; sviten provar alla sju motiv."
+    }
   ]
 }
 ```

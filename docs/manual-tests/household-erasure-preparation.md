@@ -187,7 +187,7 @@ tekniskt underlag, samtidigt som varje vanligt fall har en UI-motsvarighet.
   Efter slutförandet ger den raderade bildadressen 404. RADERING-01/05
   kontrollerar också bevarade personliga placeringar och hela historiken.
 
-[household-erasure-preparation.spec.ts](../../tests/integration/household-erasure-preparation.spec.ts)
+[household-erasure-preparation.spec.ts](../../tests/technical-browser/household-erasure-preparation.spec.ts)
 rökprovar utdrag och läsarkommando mot en riktig databas med ett privat
 förslag; titeln anger `seeded content`.
 Den bevarar hela det oberoende utkastet efter tappat execute-svar, verklig

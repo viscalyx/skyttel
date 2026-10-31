@@ -253,8 +253,8 @@ dubbelt sparande”.
     {
       "kind": "technical",
       "runner": "playwright",
-      "suite": "integration",
-      "spec": "tests/integration/text-assistant.spec.ts",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/text-assistant.spec.ts",
       "title": "manual text launcher public preparation seeded rejects an unaccepted delivery",
       "purpose": "Publik textstart med ett verkligt Lo-förslag: saknad session ger 404/not-accepted, oförändrat utkast, inga sparförsök, återställd leveranskontroll efter omladdning och borttagen provkatalog. Tomt utkast provas inte längre oberoende."
     }

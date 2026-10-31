@@ -1,0 +1,1270 @@
+{
+  "baseline": "eb3bcff9b1e6fb6a3bbda2172c64777349e4b4b8",
+  "technical": [
+    {
+      "source": {
+        "spec": "tests/integration/access.spec.ts",
+        "title": "two installations honor different administrators and deny another identity the bootstrap"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/access-transport.test.ts",
+        "title": "two installations honor different administrators and deny another identity the bootstrap"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/access.spec.ts",
+        "title": "a second identity with the same email cannot acquire the first identity or its membership"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/access-transport.test.ts",
+        "title": "a second identity with the same email cannot acquire the first identity or its membership"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/access.spec.ts",
+        "title": "an earlier same-email identity cannot block the configured first administrator"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/access-transport.test.ts",
+        "title": "an earlier same-email identity cannot block the configured first administrator"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/access.spec.ts",
+        "title": "bootstrap is atomic and rejects cross-origin and malformed submissions"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/access-transport.test.ts",
+        "title": "bootstrap is atomic and rejects cross-origin and malformed submissions"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/access.spec.ts",
+        "title": "current membership isolates households and revocation defeats an existing session"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/access-transport.test.ts",
+        "title": "current membership isolates households and revocation defeats an existing session"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/access.spec.ts",
+        "title": "forged OAuth callbacks and unavailable authentication routes do not grant access"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/access-transport.test.ts",
+        "title": "forged OAuth callbacks and unavailable authentication routes do not grant access"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/assistants.spec.ts",
+        "title": "browser replacement and logout deny old cookies while an independently consented MCP connection remains valid"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/assistants-transport.test.ts",
+        "title": "browser replacement and logout deny old cookies while an independently consented MCP connection remains valid"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "explicit login replaces a known expired binding without reviving its old access"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "explicit login replaces a known expired binding without reviving its old access"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "first successful callback cancels an already verifying same user"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "first successful callback cancels an already verifying same user"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "first successful callback cancels an already verifying different user"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "first successful callback cancels an already verifying different user"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "a genuinely delayed callback header overwrites the browser cookie without reviving its old session"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/browser-binding.spec.ts",
+        "title": "a genuinely delayed callback header overwrites the browser cookie without reviving its old session"
+      },
+      "boundary": "Real Chromium plus real installation; browser cookie delivery, browser-executed recipes or launcher-controlled page workflow and cleanup assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "logout cancels a provider callback and its account linking effects without touching another binding"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "logout cancels a provider callback and its account linking effects without touching another binding"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "successful account proof keeps a separately registered login attempt valid"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "successful account proof keeps a separately registered login attempt valid"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "concurrent unrelated provider identities in independent bindings preserve committed accounts"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "concurrent unrelated provider identities in independent bindings preserve committed accounts"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "concurrent identical provider identities in independent bindings preserve committed accounts"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "concurrent identical provider identities in independent bindings preserve committed accounts"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "binding registration is required before provider start and never writes a binding header"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "binding registration is required before provider start and never writes a binding header"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "binding loss, occupied bindings and canonical origin checks fail closed"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "binding loss, occupied bindings and canonical origin checks fail closed"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "partial cookie restoration revokes the identifiable older binding before reinitializing"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "partial cookie restoration revokes the identifiable older binding before reinitializing"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/browser-binding.spec.ts",
+        "title": "callbacks without their positively registered binding cannot authenticate"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/browser-binding-transport.test.ts",
+        "title": "callbacks without their positively registered binding cannot authenticate"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+        "title": "historical preparation launcher preserves authority guards, applied and absent delivery and cleanup"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/conflict-definition-restoration.spec.ts",
+        "title": "historical preparation launcher preserves authority guards, applied and absent delivery and cleanup"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/conversation-draft.spec.ts",
+        "title": "conversation review preparation accepts a empty public household"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/conversation-draft.spec.ts",
+        "title": "conversation review preparation accepts a empty public household"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/conversation-draft.spec.ts",
+        "title": "conversation review preparation accepts a seeded public household"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/conversation-draft.spec.ts",
+        "title": "conversation review preparation accepts a seeded public household"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/conversation-preparation.spec.ts",
+        "title": "literal context preparation completes batch, questions, save, rejection and admitted revoke on empty public installation"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/conversation-preparation.spec.ts",
+        "title": "literal context preparation completes batch, questions, save, rejection and admitted revoke on empty public installation"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/conversation-preparation.spec.ts",
+        "title": "literal context preparation completes batch, questions, save, rejection and admitted revoke on seeded public installation"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/conversation-preparation.spec.ts",
+        "title": "literal context preparation completes batch, questions, save, rejection and admitted revoke on seeded public installation"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/conversation-preparation.spec.ts",
+        "title": "context preparation preserves buffered PCM through summary on seeded public installation"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/conversation-preparation.spec.ts",
+        "title": "context preparation preserves buffered PCM through summary on seeded public installation"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/database-setup.spec.ts",
+        "title": "repeated setup clears households, members, invitations, sessions and future fixture tables"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/database-setup-transport.test.ts",
+        "title": "repeated setup clears households, members, invitations, sessions and future fixture tables"
+      },
+      "boundary": "Published database setup command against disposable SQLite with rollback and authorization checked over real HTTP."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/database-setup.spec.ts",
+        "title": "setup rejects unsafe or incomplete configuration before touching existing data"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/database-setup-transport.test.ts",
+        "title": "setup rejects unsafe or incomplete configuration before touching existing data"
+      },
+      "boundary": "Published database setup command against disposable SQLite with rollback and authorization checked over real HTTP."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/database-setup.spec.ts",
+        "title": "a failed seed rolls back the reset and keeps existing sessions usable"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/database-setup-transport.test.ts",
+        "title": "a failed seed rolls back the reset and keeps existing sessions usable"
+      },
+      "boundary": "Published database setup command against disposable SQLite with rollback and authorization checked over real HTTP."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/family.spec.ts",
+        "title": "HTTP family objects and directed relationships save together and keep their identities"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/family-transport.test.ts",
+        "title": "HTTP family objects and directed relationships save together and keep their identities"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/household-erasure-preparation.spec.ts",
+        "title": "documented erasure preparation preserves actual boundaries with seeded content"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/household-erasure-preparation.spec.ts",
+        "title": "documented erasure preparation preserves actual boundaries with seeded content"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/household-recovery-preparation.spec.ts",
+        "title": "documented recovery delivery preparation uses real responses with empty content"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
+        "title": "documented recovery delivery preparation uses real responses with empty content"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/household-recovery-preparation.spec.ts",
+        "title": "documented recovery delivery preparation uses real responses with seeded content"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
+        "title": "documented recovery delivery preparation uses real responses with seeded content"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/household-recovery-preparation.spec.ts",
+        "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
+        "title": "documented filesystem preparation blocks and restores only the selected empty import cleanup"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/household-recovery-preparation.spec.ts",
+        "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/household-recovery-preparation.spec.ts",
+        "title": "documented filesystem preparation blocks and restores only the selected seeded import cleanup"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/household-work-preparation.spec.ts",
+        "title": "literal household preparation completes the family tools on seeded public installation"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/household-work-preparation.spec.ts",
+        "title": "literal household preparation completes the family tools on seeded public installation"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/invitations.spec.ts",
+        "title": "upgrading an existing household preserves its membership and enables invitations"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/invitations-transport.test.ts",
+        "title": "upgrading an existing household preserves its membership and enables invitations"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/invitations.spec.ts",
+        "title": "an invitation admits only its authenticated recipient and remains consumed after restart"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/invitations-transport.test.ts",
+        "title": "an invitation admits only its authenticated recipient and remains consumed after restart"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/invitations.spec.ts",
+        "title": "administrators cannot cross household boundaries and members can accept access to another household"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/invitations-transport.test.ts",
+        "title": "administrators cannot cross household boundaries and members can accept access to another household"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/invitations.spec.ts",
+        "title": "invitation replacement, cancellation, and membership revocation invalidate old codes"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/invitations-transport.test.ts",
+        "title": "invitation replacement, cancellation, and membership revocation invalidate old codes"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/invitations.spec.ts",
+        "title": "concurrent role changes cannot remove the last administrator"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/invitations-transport.test.ts",
+        "title": "concurrent role changes cannot remove the last administrator"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/invitations.spec.ts",
+        "title": "members cannot administer access, two administrators can share it, and revocation defeats old sessions"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/invitations-transport.test.ts",
+        "title": "members cannot administer access, two administrators can share it, and revocation defeats old sessions"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "both proven providers return to the same user and household"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "both proven providers return to the same user and household"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "existing identity proof preserves access after wrong identity"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "existing identity proof preserves access after wrong identity"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "existing identity proof preserves access after denied consent"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "existing identity proof preserves access after denied consent"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "existing identity proof preserves access after provider failure"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "existing identity proof preserves access after provider failure"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "existing identity proof preserves access after cancelled"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "existing identity proof preserves access after cancelled"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "new identity proof preserves both users after occupied identity"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "new identity proof preserves both users after occupied identity"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "new identity proof preserves both users after denied consent"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "new identity proof preserves both users after denied consent"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "new identity proof preserves both users after provider failure"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "new identity proof preserves both users after provider failure"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "new identity proof preserves both users after cancelled"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "new identity proof preserves both users after cancelled"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/linking.spec.ts",
+        "title": "linking requires the original session, explicit proof and same-origin requests"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/linking-transport.test.ts",
+        "title": "linking requires the original session, explicit proof and same-origin requests"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/manual-mcp-preparation.spec.ts",
+        "title": "manual MCP read-only preparation preserves empty then populated household work"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/manual-mcp-preparation.spec.ts",
+        "title": "manual MCP read-only preparation preserves empty then populated household work"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/operations.spec.ts",
+        "title": "installation restart releases a browser preconnection without an HTTP request @technical"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/operations-transport.test.ts",
+        "title": "installation restart releases a browser preconnection without an HTTP request"
+      },
+      "boundary": "Real TCP preconnections and held HTTP response delivery during installation shutdown/restart."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/operations.spec.ts",
+        "title": "installation close releases a browser preconnection without an HTTP request @technical"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/operations-transport.test.ts",
+        "title": "installation close releases a browser preconnection without an HTTP request"
+      },
+      "boundary": "Real TCP preconnections and held HTTP response delivery during installation shutdown/restart."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/operations.spec.ts",
+        "title": "installation restart drains an admitted HTTP response before closing its connections @technical"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/operations-transport.test.ts",
+        "title": "installation restart drains an admitted HTTP response before closing its connections"
+      },
+      "boundary": "Real TCP preconnections and held HTTP response delivery during installation shutdown/restart."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-login.spec.ts",
+        "title": "ordinary login uses a session cookie and never emits a remembered-choice mirror"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-login-transport.test.ts",
+        "title": "ordinary login uses a session cookie and never emits a remembered-choice mirror"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-login.spec.ts",
+        "title": "confirmation belongs to the exact current session and a proof alone grants no access"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-login-transport.test.ts",
+        "title": "confirmation belongs to the exact current session and a proof alone grants no access"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-login.spec.ts",
+        "title": "a delayed remembered confirmation cannot leave persistent binding after a newer ordinary callback"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/remembered-login.spec.ts",
+        "title": "a delayed remembered confirmation cannot leave persistent binding after a newer ordinary callback"
+      },
+      "boundary": "Real Chromium plus real installation; browser cookie delivery, browser-executed recipes or launcher-controlled page workflow and cleanup assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-login.spec.ts",
+        "title": "delayed remembered-cookie delivery and repeated reads retain the original absolute deadline"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-login-transport.test.ts",
+        "title": "delayed remembered-cookie delivery and repeated reads retain the original absolute deadline"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-login.spec.ts",
+        "title": "untrusted choice fields and direct authentication routes cannot create remembered access"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-login-transport.test.ts",
+        "title": "untrusted choice fields and direct authentication routes cannot create remembered access"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-login.spec.ts",
+        "title": "ordinary login ends exactly at its absolute deadline across reads and restart"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-login-transport.test.ts",
+        "title": "ordinary login ends exactly at its absolute deadline across reads and restart"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-login.spec.ts",
+        "title": "remembered login ends exactly at its absolute deadline across reads and restart"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-login-transport.test.ts",
+        "title": "remembered login ends exactly at its absolute deadline across reads and restart"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-revocation.spec.ts",
+        "title": "only the authenticated owner can read the committed result until its exact original 24-hour boundary"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-revocation-transport.test.ts",
+        "title": "only the authenticated owner can read the committed result until its exact original 24-hour boundary"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-revocation.spec.ts",
+        "title": "revocation clears verified proof without granting late account-linking effects"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-revocation-transport.test.ts",
+        "title": "revocation clears verified proof without granting late account-linking effects"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-revocation.spec.ts",
+        "title": "revocation clears verifying add without granting late account-linking effects"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-revocation-transport.test.ts",
+        "title": "revocation clears verifying add without granting late account-linking effects"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-revocation.spec.ts",
+        "title": "revocation preserves linked accounts without granting late account-linking effects"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-revocation-transport.test.ts",
+        "title": "revocation preserves linked accounts without granting late account-linking effects"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-revocation.spec.ts",
+        "title": "revocation rotates the current key and binding while preserving the session and durable owner result"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/remembered-revocation-transport.test.ts",
+        "title": "revocation rotates the current key and binding while preserving the session and durable owner result"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-revocation.spec.ts",
+        "title": "a real delayed persistent cookie cannot revive early revocation or its pending callback"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/remembered-revocation.spec.ts",
+        "title": "a real delayed persistent cookie cannot revive early revocation or its pending callback"
+      },
+      "boundary": "Real Chromium plus real installation; browser cookie delivery, browser-executed recipes or launcher-controlled page workflow and cleanup assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-revocation.spec.ts",
+        "title": "a real delayed persistent cookie cannot revive late revocation or its pending callback"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/remembered-revocation.spec.ts",
+        "title": "a real delayed persistent cookie cannot revive late revocation or its pending callback"
+      },
+      "boundary": "Real Chromium plus real installation; browser cookie delivery, browser-executed recipes or launcher-controlled page workflow and cleanup assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/remembered-revocation.spec.ts",
+        "title": "a real delayed persistent cookie cannot revive repeated revocation or its pending callback"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/remembered-revocation.spec.ts",
+        "title": "a real delayed persistent cookie cannot revive repeated revocation or its pending callback"
+      },
+      "boundary": "Real Chromium plus real installation; browser cookie delivery, browser-executed recipes or launcher-controlled page workflow and cleanup assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/startup.spec.ts",
+        "title": "invalid configuration exits with only a redacted diagnostic"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/startup-transport.test.ts",
+        "title": "invalid configuration exits with only a redacted diagnostic"
+      },
+      "boundary": "Compiled child process, listener, diagnostics, signal and on-disk storage assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/startup.spec.ts",
+        "title": "an existing legacy database reports the required administrator upgrade before readiness"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/startup-transport.test.ts",
+        "title": "an existing legacy database reports the required administrator upgrade before readiness"
+      },
+      "boundary": "Compiled child process, listener, diagnostics, signal and on-disk storage assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/startup.spec.ts",
+        "title": "an occupied listener exits without readiness or private diagnostics"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/startup-transport.test.ts",
+        "title": "an occupied listener exits without readiness or private diagnostics"
+      },
+      "boundary": "Compiled child process, listener, diagnostics, signal and on-disk storage assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/startup.spec.ts",
+        "title": "a mismatched installation generation directs the administrator to controlled restore"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/startup-transport.test.ts",
+        "title": "a mismatched installation generation directs the administrator to controlled restore"
+      },
+      "boundary": "Compiled child process, listener, diagnostics, signal and on-disk storage assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/startup.spec.ts",
+        "title": "the compiled server closes cleanly on SIGTERM and can reopen its SQLite storage"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/startup-transport.test.ts",
+        "title": "the compiled server closes cleanly on SIGTERM and can reopen its SQLite storage"
+      },
+      "boundary": "Compiled child process, listener, diagnostics, signal and on-disk storage assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/startup.spec.ts",
+        "title": "the compiled server closes cleanly on SIGINT and can reopen its SQLite storage"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/startup-transport.test.ts",
+        "title": "the compiled server closes cleanly on SIGINT and can reopen its SQLite storage"
+      },
+      "boundary": "Compiled child process, listener, diagnostics, signal and on-disk storage assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/storage-result-recovery.spec.ts",
+        "title": "result reads require the exact owner and retain their original 24-hour limit after restart"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/storage-result-recovery-transport.test.ts",
+        "title": "result reads require the exact owner and retain their original 24-hour limit after restart"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/text-assistant.spec.ts",
+        "title": "manual text launcher public preparation seeded rejects an unaccepted delivery"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/text-assistant.spec.ts",
+        "title": "manual text launcher public preparation seeded rejects an unaccepted delivery"
+      },
+      "boundary": "Real Chromium plus real installation; browser cookie delivery, browser-executed recipes or launcher-controlled page workflow and cleanup assertions unchanged."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/text-task-deadlines.spec.ts",
+        "title": "an accepted text tool waiting at MCP cannot write at its original deadline"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/text-task-deadlines-transport.test.ts",
+        "title": "an accepted text tool waiting at MCP cannot write at its original deadline"
+      },
+      "boundary": "Real HTTP client and installation, preserving original request, response, cookie, database and restart assertions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/theme-preference.spec.ts",
+        "title": "theme API authenticates the owner independently of household access and rejects forged writes"
+      },
+      "disposition": "consolidate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/theme-preference.test.ts",
+        "title": "account theme HTTP interface protects each authenticated owner without household membership"
+      },
+      "boundary": "Owner authentication, origin and malformed input validation, cross-account isolation without membership; existing server HTTP test covers every assertion. UI restart and second-client persistence remain in TEMA-01."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/voice-controls-preparation.spec.ts",
+        "title": "voice preparation controls the public launcher on seeded content at 320x250"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/voice-controls-preparation.spec.ts",
+        "title": "voice preparation controls the public launcher on seeded content at 320x250"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/voice-controls-preparation.spec.ts",
+        "title": "voice preparation controls the public launcher on empty content at 1280x900"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/voice-controls-preparation.spec.ts",
+        "title": "voice preparation controls the public launcher on empty content at 1280x900"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/voice-controls-preparation.spec.ts",
+        "title": "voice preparation executes literal fault recipes on seeded content at 320x250"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/voice-controls-preparation.spec.ts",
+        "title": "voice preparation executes literal fault recipes on seeded content at 320x250"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/voice-controls-preparation.spec.ts",
+        "title": "voice preparation executes literal fault recipes on empty content at 1280x900"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "playwright",
+        "suite": "technical-browser",
+        "spec": "tests/technical-browser/voice-controls-preparation.spec.ts",
+        "title": "voice preparation executes literal fault recipes on empty content at 1280x900"
+      },
+      "boundary": "Browser-executed public preparation recipe/launcher, real page and installation, fault delivery and cleanup. Functional journeys remain separate; empty starts detect seed assumptions, seeded starts detect interference with existing work."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/workspace-preparation.spec.ts",
+        "title": "workspace preparation holds completed personal reads and moves on empty content"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/workspace-preparation-transport.test.ts",
+        "title": "workspace preparation holds completed personal reads and moves on empty content"
+      },
+      "boundary": "Published launcher and transport controls over real HTTP; empty and seeded states protect distinct preparation preconditions."
+    },
+    {
+      "source": {
+        "spec": "tests/integration/workspace-preparation.spec.ts",
+        "title": "workspace preparation holds completed personal reads and moves on seeded content"
+      },
+      "disposition": "migrate",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/workspace-preparation-transport.test.ts",
+        "title": "workspace preparation holds completed personal reads and moves on seeded content"
+      },
+      "boundary": "Published launcher and transport controls over real HTTP; empty and seeded states protect distinct preparation preconditions."
+    }
+  ],
+  "earlierMigrations": [
+    {
+      "source": {
+        "commit": "b7b346f3ece6c59e96bda29eba0769065217ae58",
+        "spec": "tests/integration/household-export-content.spec.ts",
+        "title": "technical: revocation or demotion interrupts an active download and removes its private copy"
+      },
+      "disposition": "retain existing migration",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/household-export-stream-http.test.ts",
+        "title": "technical: revocation or demotion interrupts an active download and removes its private copy"
+      }
+    },
+    {
+      "source": {
+        "commit": "b7b346f3ece6c59e96bda29eba0769065217ae58",
+        "spec": "tests/integration/household-export-content.spec.ts",
+        "title": "technical: a full archive preserves object identities and saved, historical and private image versions"
+      },
+      "disposition": "retain existing migration",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/household-export-property-images-http.test.ts",
+        "title": "a full archive preserves object identities and saved, historical and private image versions"
+      }
+    },
+    {
+      "source": {
+        "commit": "b7b346f3ece6c59e96bda29eba0769065217ae58",
+        "spec": "tests/integration/household-import-definitions.spec.ts",
+        "title": "historical field kinds and exact receipts survive replacement and request corrections"
+      },
+      "disposition": "retain existing migration",
+      "destination": {
+        "runner": "vitest",
+        "suite": "server",
+        "spec": "tests/unit/server/household-import-property-history-http.test.ts",
+        "title": "historical property kinds and exact receipts survive replacement and ordinary corrections"
+      }
+    }
+  ],
+  "retiredFunctionalVariants": [
+    {
+      "caseId": "TYP-18",
+      "survivor": "TYP-11",
+      "reason": "Same type-change and image-preservation workflow at the same width; both themes retain separate component contrast and reflow coverage in property-editor.test.tsx."
+    },
+    {
+      "caseId": "TYP-19",
+      "survivor": "TYP-20",
+      "reason": "Same type-change and image-preservation workflow at the same width; both themes retain separate component contrast and reflow coverage in property-editor.test.tsx."
+    },
+    {
+      "caseId": "TYP-22",
+      "survivor": "TYP-21",
+      "reason": "Same type-change and image-preservation workflow at the same width; both themes retain separate component contrast and reflow coverage in property-editor.test.tsx."
+    }
+  ]
+}

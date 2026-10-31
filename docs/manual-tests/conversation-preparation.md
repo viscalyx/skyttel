@@ -159,7 +159,7 @@ innan mikrofontrycket. Blocket håller endast nästa POST före vidarebefordran:
 
 Det separata tekniska testet
 `context preparation preserves buffered PCM through summary on seeded public installation`
-i [conversation-preparation.spec.ts](../../tests/integration/conversation-preparation.spec.ts)
+i [conversation-preparation.spec.ts](../../tests/technical-browser/conversation-preparation.spec.ts)
 kör blocket ovan genom riktig röststart, sammanfattning och syntetiska
 PCM-prov i Chromium mot riktig server och tillfällig SQLite. Referensen
 använder `seed-family` före inloggning: tidigare sparade objekt, samband,
@@ -182,7 +182,7 @@ terminalfel. De tomma startobjekten och skapandet av ett första Lo-förslag
 början tomt hushåll. Förberedelsen ovan kan fortfarande köras manuellt
 från ett tomt hushåll; vanlig motsvarighet är fortsatt KONTEXT-12.
 
-PCM-familjen har en upptäckt integrationsexekvering i stället för två.
+PCM-familjen har en upptäckt teknisk webbläsarexekvering i stället för två.
 Hela förberedelsespecifikationen har tre i stället för fyra: PCM-testet
 ovan och de två huvudreceptproven som finns kvar:
 

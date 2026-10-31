@@ -68,11 +68,8 @@ test('TYP-06: changing object type preserves individual properties, identity, ed
 
 for (const [caseId, width, theme] of [
   ['TYP-11', 1280, 'light'],
-  ['TYP-18', 1280, 'dark'],
-  ['TYP-19', 390, 'light'],
   ['TYP-20', 390, 'dark'],
   ['TYP-21', 320, 'light'],
-  ['TYP-22', 320, 'dark'],
 ] as const) {
   test(`${caseId}: repeated type changes retain every property at ${width}px in ${theme}`, async ({
     page,

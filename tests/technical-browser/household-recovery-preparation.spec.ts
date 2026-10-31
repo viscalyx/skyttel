@@ -10,13 +10,17 @@ import { expect, test } from '../support/test.js';
 const preparation = readFileSync('docs/manual-tests/household-recovery-faults.md', 'utf8').match(
   /```javascript\n([\s\S]*?)\n```/,
 )?.[1];
+
 if (!preparation) throw new Error('Missing runnable recovery preparation');
+
 const filesystemPreparation = [
   ...readFileSync('docs/manual-tests/household-recovery-filesystem.md', 'utf8').matchAll(
     /```sh\n([\s\S]*?)\n```/g,
   ),
 ][1]?.[1];
+
 if (!filesystemPreparation) throw new Error('Missing runnable filesystem preparation');
+
 const runShell = promisify(execFile);
 
 for (const seeded of [false, true]) {

@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
-import type { MapState } from '../../src/shared/map.js';
 import { bounds } from '../support/accessibility.js';
 import { closeSupportDialog, createHousehold, openSettings, signIn } from '../support/client.js';
+import { installation } from '../support/conversation-draft-steps.js';
 import {
   openConversationText,
   openSavedHistory,
@@ -11,13 +11,16 @@ import { prepareConversationReview } from '../support/conversation-review-prepar
 import { createInstallation, robin } from '../support/installation.js';
 import { propertyValues } from '../support/property-controls.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
-import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
 
 const view = (page: Page) => page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
+
 const draft = (page: Page) => view(page).getByRole('region', { name: 'Utkastet', exact: true });
+
 const toggle = (page: Page) => view(page).getByRole('button', { name: /^(Visa|Dölj) utkastet/ });
+
 const preference = (page: Page) =>
   page.getByRole('checkbox', { name: 'Visa utkastet när ett samtal börjar', exact: true });
+
 async function readLoProposal(page: Page) {
   await draft(page)
     .getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true })
@@ -28,6 +31,7 @@ async function readLoProposal(page: Page) {
   await expect(proposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
   await closeSupportDialog(page, 'Lo Exempel');
 }
+
 async function settings(page: Page) {
   await openSettings(page);
   await page
@@ -36,54 +40,9 @@ async function settings(page: Page) {
     .click();
   await expect(preference(page)).toBeEnabled();
 }
+
 async function back(page: Page) {
   await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-}
-async function installation(page: Page, proposals = true) {
-  let typeId = '';
-  const app = await createInstallation(undefined, {
-    modelFetch: textModel((body) => {
-      const current = JSON.parse(
-        String(body.input.findLast((item) => item.role === 'user')?.content),
-      );
-      if (!current?.draft?.changes?.length && !lastToolResult(body))
-        return [
-          modelTool('propose_object', {
-            version: current.draft.version,
-            contentVersion: current.draft.contentVersion,
-            id: 'lo',
-            baseRevision: null,
-            value: { typeId, name: 'Lo Exempel' },
-          }),
-        ];
-      return [modelMessage(proposals ? 'Ett provsvar.' : 'Lo ligger i utkastet.')];
-    }).provider,
-  });
-  await signIn(page.request, app.origin);
-  const { household } = await (
-    await createHousehold(page.request, app.origin, 'Utkastprov')
-  ).json();
-  const path = `${app.origin}/api/households/${household.id}/map`;
-  const read = async (): Promise<MapState> => (await page.request.get(path)).json();
-  const post = async (route: string, data: object) => {
-    const state = await read();
-    const response = await page.request.post(`${path}/${route}`, {
-      headers: { origin: app.origin },
-      data: { version: state.draft.version, contentVersion: state.contentVersion, ...data },
-    });
-    expect(response.status(), await response.text()).toBe(200);
-  };
-  typeId = (await read()).types[0].id;
-  if (proposals) {
-    const state = await read();
-    await post('draft', {
-      id: 'lo',
-      baseRevision: null,
-      value: { typeId: state.types[0].id, name: 'Lo Exempel' },
-    });
-  }
-  await page.goto(`${app.origin}/households/${household.id}`);
-  return { app, path, household, read, post };
 }
 
 test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans symboler', async ({
@@ -388,50 +347,3 @@ test('SAMTALSUTKAST-05: utkastvalet fungerar utan tillgängligt samtal', async (
     await app.close();
   }
 });
-
-// Request-only public preparation smoke, including the exact Console function source.
-for (const seeded of [false, true])
-  test(`conversation review preparation accepts a ${seeded ? 'seeded' : 'empty'} public household`, {
-    tag: '@technical',
-  }, async ({ page }) => {
-    const { app, path, read } = await installation(page, seeded);
-    try {
-      await page.evaluate(
-        `window.prepareConversationReview = (${prepareConversationReview.toString()})`,
-      );
-      await page.evaluate(async (path) => {
-        const read = async () => (await fetch(path)).json();
-        const post = async (route: string, data: object) => {
-          const state = await read();
-          const response = await fetch(`${path}/${route}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              version: state.draft.version,
-              contentVersion: state.contentVersion,
-              ...data,
-            }),
-          });
-          if (!response.ok) throw Error(await response.text());
-        };
-        await (
-          window as unknown as {
-            prepareConversationReview: typeof prepareConversationReview;
-          }
-        ).prepareConversationReview({ read, post });
-      }, path);
-      const state = await read();
-      expect(propertyValues(state.objects.find((object) => object.id === 'card'))).toEqual({
-        'last-four': '1111',
-      });
-      expect(
-        propertyValues(state.draft.changes.find((change) => change.id === 'card')?.after),
-      ).toEqual({ 'last-four': '2222' });
-      expect(state.draft.changes).toHaveLength(4);
-      expect(state.draft.relationships).toHaveLength(2);
-      expect(state.draft.objectTypes).toHaveLength(1);
-      expect(state.draft.relationshipTypes).toHaveLength(1);
-    } finally {
-      await app.close();
-    }
-  });

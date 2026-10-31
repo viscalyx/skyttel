@@ -2,7 +2,7 @@
 
 Operatören använder en separat provinstallation utan verkliga uppgifter.
 UI-fallen finns i [bevarat hushållsarbete](household-work.md).
-Det [automatiska förberedelseprovet](../../tests/integration/household-work-preparation.spec.ts)
+Det [automatiska förberedelseprovet](../../tests/technical-browser/household-work-preparation.spec.ts)
 kontrollerar de publicerade verktygen i befolkad installation med ett tidigare
 sparat objekt, dess kvitto och Robins meningsfulla separata utkast. Det bevarar
 dessa genom hela text- och röstkedjan, rättelsen, sparandet och omstarten.
