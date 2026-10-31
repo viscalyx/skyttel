@@ -61,6 +61,7 @@ test('historical property kinds and exact receipts survive replacement and ordin
     ]);
     expect(inverse.changes[0].type.description).toBe('Första betydelsen');
     expect((await read()).objects).toEqual([]);
+    expect((await read()).removedObjects?.[0].type?.description).toBe('Senare betydelsen');
     const history = (await (await client.get(`${path}/history`)).json()).history;
 
     const prepared = await client.post(`${householdPath}/exports`, { headers, data: {} });
@@ -86,6 +87,7 @@ test('historical property kinds and exact receipts survive replacement and ordin
     expect(await confirmed.json()).toMatchObject({ status: 'completed', contentVersion: 2 });
     await installation.restart();
     expect((await (await client.get(`${path}/history`)).json()).history).toEqual(history);
+    expect((await read()).removedObjects?.[0].type?.description).toBe('Senare betydelsen');
     await define('Senare betydelsen');
     await post('draft', {
       id: 'new-measured-object',

@@ -1,0 +1,643 @@
+{
+  "measuredAt": "2026-10-31",
+  "baseline": {
+    "measuredAt": "2026-10-30",
+    "commit": "34e820a6788afa584ba764650a1cf90390706e5b",
+    "mapReaderUnchangedThrough": "02e3c207079697b497db88e66147d5af1bf9503f"
+  },
+  "after": {
+    "baseCommit": "02e3c207079697b497db88e66147d5af1bf9503f",
+    "sourceSha256": {
+      "src/server/map.ts": "6200b9d99669598abe863fb6b2367a23c59236a8f48ef32e03dce5973e1be2ee",
+      "migrations/041_map_history_changes.sql": "33baedc50b891c4a8923fcc4108f693fc93ef8eb36589171e96380ad272dd2de"
+    }
+  },
+  "method": {
+    "node": "24.21.0",
+    "request": "Authenticated GET /api/households/:id/map through the in-process HTTP handler, including response consumption, excluding socket transport and ingress.",
+    "data": "Two synthetic authenticated household members, three objects, one competing edit, one deletion or ordinary edit, followed by unrelated successful nonempty saves on the third object. No bulk receipt inserts or padding.",
+    "sampling": "Fresh process per case; five warm-up requests and 15 timed requests. Separate parse-instrumented diagnostic request. GC before timing and diagnostics. All cases assert successful responses, metadata presence, receipt count and foreign keys.",
+    "commands": [
+      "npm run test:env -- python3 /tmp/skyttel-fix-536.6dVra5/run.py preflight",
+      "npm run test:env -- python3 /tmp/skyttel-fix-536.6dVra5/run.py <100|1000> <plain|deleted|conflict|both>"
+    ],
+    "harness": "Disposable harness from the baseline run with updated query plans and parse counters. Regression tests retain deterministic receipt-processing and actual-query-plan checks.",
+    "harnessSha256": {
+      "run.py": "db33b9932ea8b3d8304ac4be9538451b29a7232860fa3d916424af86813191bc",
+      "measure.ts": "996f54262803518bacd4c5f4adafa2f1e42d00a8ca34ee375e9d4153078d4122"
+    },
+    "sandbox": {
+      "externalNetwork": false,
+      "sourceAndToolchain": "read-only",
+      "hostHomeSecretsAndGit": "not mounted",
+      "scratchBytes": 134217728,
+      "sharedMemoryBytes": 1048576,
+      "cpuSeconds": 45,
+      "wallSeconds": 90,
+      "virtualAddressBytes": 17179869184,
+      "nodeOldSpaceMiB": 256,
+      "processes": 128,
+      "openFiles": 256,
+      "fileBytes": 33554432,
+      "coreDumps": false,
+      "output": "Bounded JSON stdout promoted by parent with exclusive no-follow creation; no sandbox paths promoted."
+    }
+  },
+  "limitations": [
+    "Local growth measurements establish a performance defect and its remediation, not production capacity, denied service or security severity.",
+    "Sampled heap rise includes diagnostic and request overhead; it is neither retained memory nor a complete request peak. Plain reads have no parse sampling points.",
+    "Whole-process peak RSS includes imports, authentication and all save operations; it cannot be attributed to the read path.",
+    "Conflict work is proportional to relevant entity history until attribution is resolved; it is independent of unrelated receipts, not a constant bound on all history for that entity.",
+    "Storage increases because the index retains individual changes. History and receipts remain complete."
+  ],
+  "queryPlans": {
+    "before": [
+      {
+        "id": 5,
+        "parent": 0,
+        "notused": 216,
+        "detail": "SCAN h"
+      },
+      {
+        "id": 9,
+        "parent": 0,
+        "notused": 47,
+        "detail": "SEARCH s USING INDEX sqlite_autoindex_map_save_1 (householdId=? AND userId=? AND operationId=?)"
+      }
+    ],
+    "after": {
+      "removed": [
+        {
+          "id": 5,
+          "parent": 0,
+          "notused": 60,
+          "detail": "SEARCH map_history_change USING INDEX map_history_change_removed (householdId=? AND kind=? AND entityId=?)"
+        }
+      ],
+      "conflict": [
+        {
+          "id": 4,
+          "parent": 0,
+          "notused": 60,
+          "detail": "SEARCH map_history_change USING INDEX map_history_change_entity (householdId=? AND kind=? AND entityId=?)"
+        }
+      ],
+      "saveIndex": [
+        {
+          "id": 6,
+          "parent": 0,
+          "notused": 47,
+          "detail": "SEARCH s USING INDEX sqlite_autoindex_map_save_1 (householdId=? AND userId=? AND operationId=?)"
+        },
+        {
+          "id": 16,
+          "parent": 0,
+          "notused": 54,
+          "detail": "SEARCH h USING COVERING INDEX map_history_operation (householdId=? AND userId=? AND operationId=?)"
+        },
+        {
+          "id": 26,
+          "parent": 0,
+          "notused": 0,
+          "detail": "SCAN kinds VIRTUAL TABLE INDEX 1:"
+        },
+        {
+          "id": 39,
+          "parent": 0,
+          "notused": 0,
+          "detail": "SCAN item VIRTUAL TABLE INDEX 1:"
+        }
+      ]
+    }
+  },
+  "results": [
+    {
+      "retainedReceipts": 100,
+      "case": "plain",
+      "before": {
+        "receiptBytes": 83398,
+        "databaseBytes": 835584,
+        "latencyMs": {
+          "min": 1.4102500000001328,
+          "median": 1.5847920000001068,
+          "max": 12.917666999999938,
+          "samples": [
+            1.4102500000001328,
+            1.4251659999999902,
+            1.4429580000000897,
+            1.4688329999999041,
+            1.5065409999999702,
+            1.5318750000001273,
+            1.5661250000000564,
+            1.5847920000001068,
+            1.5949580000001333,
+            1.5972499999998035,
+            1.620542000000114,
+            1.731999999999971,
+            1.8064170000000104,
+            1.9145000000000891,
+            12.917666999999938
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 0,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 346480
+      },
+      "after": {
+        "receiptBytes": 83398,
+        "databaseBytes": 987136,
+        "latencyMs": {
+          "min": 1.3864159999999401,
+          "median": 1.5338330000000724,
+          "max": 16.730999999999995,
+          "samples": [
+            1.3864159999999401,
+            1.426584000000048,
+            1.4567909999999529,
+            1.4769169999999576,
+            1.5004999999999882,
+            1.5144169999999804,
+            1.5211249999999836,
+            1.5338330000000724,
+            1.5560830000000578,
+            1.6113750000000664,
+            1.656415999999922,
+            1.6609169999999267,
+            1.6864589999998998,
+            1.7988750000000664,
+            16.730999999999995
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 0,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 357200,
+        "changeParses": 0,
+        "unrelatedChanges": 0
+      }
+    },
+    {
+      "retainedReceipts": 100,
+      "case": "deleted",
+      "before": {
+        "receiptBytes": 83224,
+        "databaseBytes": 835584,
+        "latencyMs": {
+          "min": 1.5890000000000555,
+          "median": 1.7323749999999336,
+          "max": 13.389999999999986,
+          "samples": [
+            1.5890000000000555,
+            1.597250000000031,
+            1.59800000000007,
+            1.601165999999921,
+            1.6151250000000346,
+            1.6389580000000024,
+            1.6912499999999682,
+            1.7323749999999336,
+            1.7775000000000318,
+            1.8464159999999765,
+            1.854959000000008,
+            1.885582999999997,
+            1.9572919999999385,
+            2.142332999999894,
+            13.389999999999986
+          ]
+        },
+        "receiptParses": 100,
+        "diagnosticHeapGrowthBytes": 1012792,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 349536
+      },
+      "after": {
+        "receiptBytes": 83224,
+        "databaseBytes": 987136,
+        "latencyMs": {
+          "min": 1.460207999999966,
+          "median": 1.5842079999999896,
+          "max": 15.839249999999993,
+          "samples": [
+            1.460207999999966,
+            1.4825419999999667,
+            1.530999999999949,
+            1.5419999999999163,
+            1.5470829999999296,
+            1.553333000000066,
+            1.5631670000000213,
+            1.5842079999999896,
+            1.5929579999999532,
+            1.69987500000002,
+            1.7076250000000073,
+            1.7216249999999036,
+            1.7565419999999676,
+            2.1062090000000353,
+            15.839249999999993
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 776064,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 357780,
+        "changeParses": 1,
+        "unrelatedChanges": 0
+      }
+    },
+    {
+      "retainedReceipts": 100,
+      "case": "conflict",
+      "before": {
+        "receiptBytes": 83398,
+        "databaseBytes": 835584,
+        "latencyMs": {
+          "min": 1.6458750000000464,
+          "median": 1.8696670000000495,
+          "max": 13.093791999999894,
+          "samples": [
+            1.6458750000000464,
+            1.6504999999999654,
+            1.69399999999996,
+            1.7022080000000415,
+            1.7317500000000337,
+            1.7937089999999216,
+            1.8377080000000205,
+            1.8696670000000495,
+            1.8937919999999622,
+            1.9429999999999836,
+            1.9541249999999764,
+            2.032291999999984,
+            2.072084000000018,
+            2.1442499999999427,
+            13.093791999999894
+          ]
+        },
+        "receiptParses": 100,
+        "diagnosticHeapGrowthBytes": 1122152,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 330692
+      },
+      "after": {
+        "receiptBytes": 83398,
+        "databaseBytes": 987136,
+        "latencyMs": {
+          "min": 1.4689580000000433,
+          "median": 1.682790999999952,
+          "max": 16.418083000000024,
+          "samples": [
+            1.4689580000000433,
+            1.5004579999999805,
+            1.5485830000000078,
+            1.5536670000000186,
+            1.563541999999984,
+            1.6054160000001048,
+            1.6131659999999783,
+            1.682790999999952,
+            1.7102919999999813,
+            1.719791999999984,
+            1.7376250000000937,
+            1.758333000000107,
+            1.8430419999999685,
+            1.9460000000000264,
+            16.418083000000024
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 876392,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 357256,
+        "changeParses": 2,
+        "unrelatedChanges": 0
+      }
+    },
+    {
+      "retainedReceipts": 100,
+      "case": "both",
+      "before": {
+        "receiptBytes": 83224,
+        "databaseBytes": 835584,
+        "latencyMs": {
+          "min": 1.7548329999999623,
+          "median": 1.937791999999945,
+          "max": 13.023417000000109,
+          "samples": [
+            1.7548329999999623,
+            1.7981250000000273,
+            1.8440840000000662,
+            1.856916999999953,
+            1.8714169999999513,
+            1.8780420000000504,
+            1.935124999999971,
+            1.937791999999945,
+            2.0090830000000324,
+            2.042167000000063,
+            2.047458000000006,
+            2.126541999999972,
+            2.2741250000000264,
+            2.3354590000000144,
+            13.023417000000109
+          ]
+        },
+        "receiptParses": 200,
+        "diagnosticHeapGrowthBytes": 1397992,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 347204
+      },
+      "after": {
+        "receiptBytes": 83224,
+        "databaseBytes": 987136,
+        "latencyMs": {
+          "min": 1.5192909999999529,
+          "median": 1.69662500000004,
+          "max": 15.444208000000003,
+          "samples": [
+            1.5192909999999529,
+            1.5426660000000538,
+            1.5465000000000373,
+            1.5766250000000355,
+            1.5771670000000313,
+            1.6279169999999112,
+            1.6797079999998914,
+            1.69662500000004,
+            1.7234159999999292,
+            1.732332999999926,
+            1.793666999999914,
+            1.8376250000000027,
+            1.8917500000000018,
+            1.8920829999999569,
+            15.444208000000003
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 899016,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 357108,
+        "changeParses": 3,
+        "unrelatedChanges": 0
+      }
+    },
+    {
+      "retainedReceipts": 1000,
+      "case": "plain",
+      "before": {
+        "receiptBytes": 844390,
+        "databaseBytes": 2928640,
+        "latencyMs": {
+          "min": 1.4167090000000826,
+          "median": 1.5273749999998927,
+          "max": 3.0991670000000795,
+          "samples": [
+            1.4167090000000826,
+            1.4266250000000582,
+            1.4471670000000358,
+            1.4609590000000026,
+            1.4920420000000831,
+            1.5089159999999993,
+            1.5104590000000826,
+            1.5273749999998927,
+            1.5393749999998363,
+            1.5857919999998558,
+            1.6001249999999345,
+            1.6441669999999249,
+            1.6505839999999807,
+            1.685457999999926,
+            3.0991670000000795
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 0,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 620496
+      },
+      "after": {
+        "receiptBytes": 844390,
+        "databaseBytes": 4157440,
+        "latencyMs": {
+          "min": 1.4025839999999334,
+          "median": 1.5184589999998934,
+          "max": 3.243332999999893,
+          "samples": [
+            1.4025839999999334,
+            1.4671670000000177,
+            1.4885830000000624,
+            1.504790999999841,
+            1.5128750000001219,
+            1.513332999999875,
+            1.515374999999949,
+            1.5184589999998934,
+            1.5404579999999441,
+            1.5850829999999405,
+            1.5924999999999727,
+            1.6143749999998818,
+            1.6646659999998974,
+            1.8768750000001546,
+            3.243332999999893
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 0,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 700648,
+        "changeParses": 0,
+        "unrelatedChanges": 0
+      }
+    },
+    {
+      "retainedReceipts": 1000,
+      "case": "deleted",
+      "before": {
+        "receiptBytes": 844216,
+        "databaseBytes": 2928640,
+        "latencyMs": {
+          "min": 3.1142499999998563,
+          "median": 3.2400420000001304,
+          "max": 5.213584000000083,
+          "samples": [
+            3.1142499999998563,
+            3.119374999999991,
+            3.1243329999999787,
+            3.1364999999998417,
+            3.165707999999995,
+            3.180749999999989,
+            3.198374999999942,
+            3.2400420000001304,
+            3.281750000000102,
+            3.291541999999936,
+            3.294583999999986,
+            3.3376670000000104,
+            3.387707999999975,
+            3.6004590000000007,
+            5.213584000000083
+          ]
+        },
+        "receiptParses": 1000,
+        "diagnosticHeapGrowthBytes": 3364672,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 622436
+      },
+      "after": {
+        "receiptBytes": 844216,
+        "databaseBytes": 4157440,
+        "latencyMs": {
+          "min": 1.4867089999997916,
+          "median": 1.625,
+          "max": 3.5493750000000546,
+          "samples": [
+            1.4867089999997916,
+            1.4996249999999236,
+            1.5237090000000535,
+            1.5828329999999369,
+            1.5949580000001333,
+            1.596125000000029,
+            1.6073340000002645,
+            1.625,
+            1.6669170000000122,
+            1.6828749999999673,
+            1.7515419999999722,
+            1.8332919999998012,
+            1.9075410000000375,
+            1.9102090000001226,
+            3.5493750000000546
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 782408,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 701388,
+        "changeParses": 1,
+        "unrelatedChanges": 0
+      }
+    },
+    {
+      "retainedReceipts": 1000,
+      "case": "conflict",
+      "before": {
+        "receiptBytes": 844390,
+        "databaseBytes": 2928640,
+        "latencyMs": {
+          "min": 3.2079590000000735,
+          "median": 3.3787499999998545,
+          "max": 5.847332999999935,
+          "samples": [
+            3.2079590000000735,
+            3.2091669999999795,
+            3.2386659999999665,
+            3.2636669999999413,
+            3.292457999999897,
+            3.318708000000015,
+            3.3230000000000928,
+            3.3787499999998545,
+            3.547792000000072,
+            3.5695830000001934,
+            3.8173750000000837,
+            3.8205829999999423,
+            3.9131250000000364,
+            4.1496250000000146,
+            5.847332999999935
+          ]
+        },
+        "receiptParses": 1000,
+        "diagnosticHeapGrowthBytes": 3627344,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 620012
+      },
+      "after": {
+        "receiptBytes": 844390,
+        "databaseBytes": 4157440,
+        "latencyMs": {
+          "min": 1.475791000000072,
+          "median": 1.676958999999897,
+          "max": 3.5197079999998095,
+          "samples": [
+            1.475791000000072,
+            1.5004589999998643,
+            1.5441670000000158,
+            1.5535829999998896,
+            1.5567499999999654,
+            1.628582999999935,
+            1.6590830000000096,
+            1.676958999999897,
+            1.6783339999999498,
+            1.7002909999998792,
+            1.7219170000000759,
+            1.767042000000174,
+            1.86262499999998,
+            1.949041999999963,
+            3.5197079999998095
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 882648,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 700840,
+        "changeParses": 2,
+        "unrelatedChanges": 0
+      }
+    },
+    {
+      "retainedReceipts": 1000,
+      "case": "both",
+      "before": {
+        "receiptBytes": 844216,
+        "databaseBytes": 2928640,
+        "latencyMs": {
+          "min": 4.853708999999981,
+          "median": 5.192957999999862,
+          "max": 6.888958000000002,
+          "samples": [
+            4.853708999999981,
+            4.945666999999958,
+            4.965666999999939,
+            4.977208000000019,
+            5.036666999999852,
+            5.076832999999851,
+            5.107041999999865,
+            5.192957999999862,
+            5.222834000000148,
+            5.263042000000041,
+            5.300042000000076,
+            5.373916000000008,
+            5.499250000000075,
+            6.251750000000129,
+            6.888958000000002
+          ]
+        },
+        "receiptParses": 2000,
+        "diagnosticHeapGrowthBytes": 6195536,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 621776
+      },
+      "after": {
+        "receiptBytes": 844216,
+        "databaseBytes": 4157440,
+        "latencyMs": {
+          "min": 1.5382079999999405,
+          "median": 1.7090840000000753,
+          "max": 3.8673750000002656,
+          "samples": [
+            1.5382079999999405,
+            1.5805840000002718,
+            1.6112499999999272,
+            1.658542000000125,
+            1.6826249999999163,
+            1.6929999999997563,
+            1.700582999999824,
+            1.7090840000000753,
+            1.726709000000028,
+            1.8160830000001624,
+            1.837582999999995,
+            1.8487500000001091,
+            1.86462500000016,
+            2.1347920000002887,
+            3.8673750000002656
+          ]
+        },
+        "receiptParses": 0,
+        "diagnosticHeapGrowthBytes": 900904,
+        "diagnosticRssGrowthBytes": 0,
+        "processPeakRssKiB": 700860,
+        "changeParses": 3,
+        "unrelatedChanges": 0
+      }
+    }
+  ]
+}
