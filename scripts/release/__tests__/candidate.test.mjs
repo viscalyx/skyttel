@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import {
   checkPublication,
   checkRegistryTags,
+  registryTags,
   validateAttestation,
   validateCandidateReports,
 } from '../candidate.mjs';
@@ -24,6 +25,63 @@ const identity = {
   channel: 'preview',
   origin: { runId: '123' },
 };
+
+it('rejects invalid registry paths before making any network request', async () => {
+  const valid = { ...identity, imageTags: ['1.2.3-preview.4', 'sha-aaaaaaa'] };
+  for (const changed of [
+    { repository: '../skyttel' },
+    { repository: 'viscalyx/../../other' },
+    { repository: 'viscalyx/skyttel?scope=other' },
+    { repository: 'viscalyx/skyttel#fragment' },
+    { repository: 'viscalyx/skyttel%2fother' },
+    { imageTags: ['valid', '../other'] },
+    { imageTags: ['1.2.3?query'] },
+    { imageTags: ['1.2.3#fragment'] },
+    { imageTags: ['a'.repeat(129)] },
+    { imageTags: [123] },
+    { imageTags: [] },
+    { imageTags: undefined },
+  ]) {
+    let calls = 0;
+    await assert.rejects(
+      registryTags({ ...valid, ...changed }, async () => {
+        calls += 1;
+        throw new Error('Unexpected network request');
+      }),
+      /Invalid registry/u,
+    );
+    assert.equal(calls, 0);
+  }
+});
+
+it('queries only GHCR, refuses redirects and hashes manifest bytes', async () => {
+  const manifest = Buffer.from('{"schemaVersion":2}');
+  const calls = [];
+  const tags = await registryTags(
+    { ...identity, repository: 'Viscalyx/Skyttel', imageTags: ['1.2.3-preview.4', 'sha-aaaaaaa'] },
+    async (value, options) => {
+      const url = new URL(value);
+      calls.push(url);
+      assert.equal(url.origin, 'https://ghcr.io');
+      assert.equal(options.redirect, 'error');
+      assert.equal(options.body, undefined);
+      if (url.pathname === '/token') {
+        assert.equal(url.searchParams.get('scope'), 'repository:viscalyx/skyttel:pull');
+        return { ok: true, json: async () => ({ token: 'synthetic-registry-token' }) };
+      }
+      assert.equal(options.headers.authorization, 'Bearer synthetic-registry-token');
+      if (url.pathname === '/v2/viscalyx/skyttel/manifests/sha-aaaaaaa') {
+        return { ok: false, status: 404 };
+      }
+      assert.equal(url.pathname, '/v2/viscalyx/skyttel/manifests/1.2.3-preview.4');
+      return { ok: true, arrayBuffer: async () => manifest };
+    },
+  );
+  assert.equal(calls.length, 3);
+  assert.deepEqual(tags, {
+    '1.2.3-preview.4': `sha256:${createHash('sha256').update(manifest).digest('hex')}`,
+  });
+});
 
 it('preserves compatible published identities and rejects conflicting immutable tags', () => {
   assert.equal(checkPublication(identity, undefined), 'create');
