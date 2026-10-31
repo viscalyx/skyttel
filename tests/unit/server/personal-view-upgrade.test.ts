@@ -4,9 +4,8 @@ import { join, resolve } from 'node:path';
 import { expect, test } from 'vitest';
 import { openDatabase } from '../../../src/server/database.js';
 import { personalView } from '../../../src/server/personal-view.js';
-import { applicationFixture } from './fixture.js';
 
-test('background upgrade preserves explicit and implicit legacy choices and never overwrites later choices', async () => {
+test('background upgrade preserves explicit and implicit legacy choices and never overwrites later choices', () => {
   const directory = mkdtempSync(join(tmpdir(), 'skyttel-background-upgrade-'));
   const migrationsDirectory = join(directory, 'migrations');
   mkdirSync(migrationsDirectory);
@@ -14,11 +13,14 @@ test('background upgrade preserves explicit and implicit legacy choices and neve
     (name) => Number(name.slice(0, 3)) <= 33,
   ))
     copyFileSync(join('migrations', name), join(migrationsDirectory, name));
-  const fixture = await applicationFixture({ migrationsDirectory });
+  const historical = openDatabase(join(directory, 'skyttel.sqlite'), { migrationsDirectory });
   try {
-    const client = fixture.client();
-    await client.signIn();
-    const { user } = await (await client.request('/api/bootstrap')).json();
+    // Arrange the historical data without requiring today's authentication schema.
+    const user = { id: 'legacy-user' };
+    historical
+      .prepare(`INSERT INTO user (id, name, email, createdAt, updatedAt)
+        VALUES (?, 'Alex Exempel', 'alex@example.test', '2026-01-01', '2026-01-01')`)
+      .run(user.id);
     const households: string[] = [];
     const legacy = {
       invertX: true,
@@ -30,23 +32,23 @@ test('background upgrade preserves explicit and implicit legacy choices and neve
     };
     for (const [index, name] of ['Off', 'On', 'Positions', 'Access only'].entries()) {
       const household = { id: `legacy-${index}` };
-      fixture.database
+      historical
         .prepare('INSERT INTO household (id, name, createdAt) VALUES (?, ?, ?)')
         .run(household.id, name, '2026-01-01');
-      fixture.database
+      historical
         .prepare('INSERT INTO membership VALUES (?, ?, ?)')
         .run(household.id, user.id, 'administrator');
       households.push(household.id);
       if (index < 2)
-        fixture.database
+        historical
           .prepare('INSERT INTO personal_view_settings VALUES (?, ?, 7, ?)')
           .run(household.id, user.id, JSON.stringify({ ...legacy, stars: index === 1 }));
       if (index === 2)
-        fixture.database
+        historical
           .prepare('INSERT INTO personal_position VALUES (?, ?, ?, 4, 2, 3, 5)')
           .run(household.id, user.id, 'old-object');
     }
-    const database = openDatabase(fixture.database.name);
+    const database = openDatabase(historical.name);
     try {
       for (const [index, householdId] of households.entries()) {
         const view = personalView(database, user.id, householdId).read();
@@ -91,7 +93,7 @@ test('background upgrade preserves explicit and implicit legacy choices and neve
     } finally {
       database.close();
     }
-    const reopened = openDatabase(fixture.database.name);
+    const reopened = openDatabase(historical.name);
     try {
       expect(personalView(reopened, user.id, households[1]).read().settings).toMatchObject({
         background: false,
@@ -108,7 +110,7 @@ test('background upgrade preserves explicit and implicit legacy choices and neve
       reopened.close();
     }
   } finally {
-    fixture.close();
+    historical.close();
     rmSync(directory, { recursive: true, force: true });
   }
 });
