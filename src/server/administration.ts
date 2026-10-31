@@ -6,6 +6,7 @@ import type {
   MembershipRole,
 } from '../shared/administration.js';
 import { householdAccess } from './households.js';
+import { recoveryPending } from './installation-recovery.js';
 
 export class AdministrationError extends Error {
   constructor(
@@ -97,6 +98,7 @@ export function createInvitation(
 export function acceptInvitation(database: Database.Database, userId: string, code: string) {
   return database
     .transaction(() => {
+      if (recoveryPending(database)) throw new AdministrationError('forbidden', 403);
       const invitation = database
         .prepare(`SELECT invitation.id, householdId, household.name FROM invitation
       JOIN household ON household.id = invitation.householdId

@@ -123,3 +123,6 @@
     padding: 16px;
   }
 }
+.recovery-identity {
+  overflow-wrap: anywhere;
+}

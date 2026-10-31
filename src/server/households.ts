@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type Database from 'better-sqlite3';
 import type { Config } from './config.js';
+import { recoveryPending } from './installation-recovery.js';
 
 export interface Household {
   id: string;
@@ -13,6 +14,7 @@ export function householdAccess(
   userId: string,
   householdId?: string,
 ): Household | undefined {
+  if (recoveryPending(database)) return undefined;
   const query = `SELECT household.id, household.name, membership.role FROM household
     JOIN membership ON membership.householdId = household.id
     WHERE membership.userId = ?`;
@@ -43,6 +45,7 @@ export function createHousehold(
 ) {
   return database
     .transaction(() => {
+      if (recoveryPending(database)) return { error: 'forbidden' } as const;
       if (!isFirstAdmin(database, userId, config)) return { error: 'forbidden' } as const;
       if (isInitialized(database)) return { error: 'already_initialized' } as const;
       const household: Household = { id: randomUUID(), name, role: 'administrator' };

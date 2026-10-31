@@ -64,6 +64,13 @@ En Skyttel-användare med ansvar för installationens drift och gemensamma
 inställningar.
 Rollen är skild från hushållets administratör.
 
+**Återställningsadministratör**:
+En person som installationsansvarig utser för en viss återställning av
+installationen, med tillfällig behörighet att bekräfta vilka personer som
+får tillgång till hushållets karta och med vilka roller.
+Uppdraget ger inte i sig ett vanligt medlemskap eller en bestående
+administratörsroll i ett hushåll.
+
 **Företag**:
 En verksamhet som finns representerad i kartan och exempelvis kan erbjuda
 tjänster eller vara part i avtal.

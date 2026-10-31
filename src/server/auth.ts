@@ -7,11 +7,13 @@ import { clientAddressHeader } from './client-address.js';
 import type { Config } from './config.js';
 import { prepareInstallationAuthority } from './installation-authority.js';
 import { linkingAttempt } from './login-methods.js';
+import { recordProviderProof, sessionProviderProof } from './provider-proof.js';
 
 export function internalEmail(provider: 'google' | 'microsoft', subject: unknown) {
   if (typeof subject !== 'string' || subject.trim().length === 0) {
     throw new Error('invalid_provider_identity');
   }
+  recordProviderProof(provider, subject);
   // Better Auth requires a unique email. A contact address must neither merge
   // identities nor let an earlier sign-in reserve another identity's user.
   const key = createHash('sha256')
@@ -34,7 +36,21 @@ export function createAuth(config: Config, database: Database.Database) {
     trustedOrigins: [config.origin],
     logger: { disabled: true },
     telemetry: { enabled: false },
-    session: { disableSessionRefresh: true, cookieCache: { enabled: false } },
+    session: {
+      disableSessionRefresh: true,
+      cookieCache: { enabled: false },
+      additionalFields: {
+        loginProvider: { type: 'string', required: false, input: false, returned: false },
+        loginSubject: { type: 'string', required: false, input: false, returned: false },
+      },
+    },
+    databaseHooks: {
+      session: {
+        create: {
+          before: async (session) => ({ data: { ...session, ...sessionProviderProof() } }),
+        },
+      },
+    },
     account: {
       accountLinking: {
         enabled: true,

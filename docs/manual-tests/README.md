@@ -43,6 +43,8 @@ Använd områdesfallen för steg och förväntade resultat:
   webbläsaromstart, tidsgränser, textreserv vid ljudavbrott och säkerhetskopior.
   [Kakfallen](cookies.md) beskriver lagringsval och
   [återställningsfallen](household-recovery.md) beskriver flytt och återimport.
+  [Åtkomst efter fullständig återställning](installation-recovery.md)
+  beskriver spärren och återställningsadministratörens medlemsgranskning.
 
 Dokumentera en körning en gång och hänvisa till resultatet från andra
 berörda prov. Ange faktisk release/commit, datum, miljö, kontokategori,

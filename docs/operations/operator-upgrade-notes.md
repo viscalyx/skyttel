@@ -6,6 +6,21 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Confirm access after a complete installation restore
+
+Before starting a declared database or disk restore, designate a trusted
+recovery administrator by provider and stable account identifier in private
+configuration outside the restored disk. Keep the designation with the new
+authority generation. Missing settings stop startup. This also applies when
+upgrading an installation that retains an earlier restore declaration.
+
+Keep public ingress closed until the recovery administrator checks all
+memberships and roles against current records and explicitly confirms the
+remaining list. Fresh sign-in alone cannot open household access. Every
+household needs an administrator; the temporary designation grants no
+lasting membership. Pending invitations from the copy become invalid.
+Follow the [complete restore procedure](database-restore.md).
+
 ### LangSmith delivery compatibility
 
 Configured installations with sending enabled can begin uploading diagnostics

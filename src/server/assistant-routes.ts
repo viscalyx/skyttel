@@ -22,6 +22,7 @@ import {
 } from './assistant-work.js';
 import type { Auth } from './auth.js';
 import { householdAccess } from './households.js';
+import { recoveryPending } from './installation-recovery.js';
 import { householdMap, MapError } from './map.js';
 import { propertyWriteLimit } from './properties.js';
 
@@ -61,6 +62,7 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
   routes.get('/api/assistants/context', async (context) => {
     const session = await auth.api.getSession({ headers: context.req.raw.headers });
     if (!session) return context.json({ error: 'unauthenticated' }, 401);
+    if (recoveryPending(database)) return context.json({ error: 'forbidden' }, 403);
     const households = database
       .prepare(`SELECT h.id, h.name, m.role FROM household h JOIN membership m
       ON m.householdId = h.id WHERE m.userId = ? ORDER BY h.name, h.id`)

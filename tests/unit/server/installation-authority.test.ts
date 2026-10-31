@@ -15,6 +15,49 @@ afterEach(() => {
   rmSync(directory, { recursive: true, force: true });
 });
 
+test('restore startup rejects missing, malformed or changed recovery identity even on restart', async () => {
+  const config = readConfig(configurationEnvironment(join(directory, 'installation.sqlite')));
+  database = openDatabase(config.databasePath);
+  await verifyAuthSchema(createAuth(config, database));
+  const restore = {
+    fromGeneration: config.authorityFence.generation,
+    confirmedAt: Date.now(),
+    erasureReviewed: true as const,
+    recoveryAdmin: { provider: 'google' as const, subject: 'designated-person' },
+  };
+  const fence = { generation: '22222222-2222-4222-8222-222222222222', restore };
+  for (const recoveryAdmin of [
+    undefined,
+    { provider: 'email', subject: 'person' },
+    { provider: 'google', subject: '' },
+  ])
+    expect(() =>
+      createAuth(
+        {
+          ...config,
+          authorityFence: {
+            ...fence,
+            restore: { ...restore, recoveryAdmin },
+          } as AuthorityFence,
+        },
+        database,
+      ),
+    ).toThrow(InstallationAuthorityError);
+  await verifyAuthSchema(createAuth({ ...config, authorityFence: fence }, database));
+  expect(() =>
+    createAuth(
+      {
+        ...config,
+        authorityFence: {
+          ...fence,
+          restore: { ...restore, recoveryAdmin: { provider: 'google', subject: 'replacement' } },
+        },
+      },
+      database,
+    ),
+  ).toThrow(InstallationAuthorityError);
+});
+
 test('the direct production auth factory refuses a malformed host authority generation', async () => {
   const config = readConfig(configurationEnvironment(join(directory, 'installation.sqlite')));
   database = openDatabase(config.databasePath);
@@ -94,6 +137,7 @@ test('a changed host generation cannot reopen a copy without its matching truste
         fromGeneration: '33333333-3333-4333-8333-333333333333',
         confirmedAt: Date.now(),
         erasureReviewed: true as const,
+        recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
       },
     },
     {
@@ -102,6 +146,7 @@ test('a changed host generation cannot reopen a copy without its matching truste
         fromGeneration: config.authorityFence.generation,
         confirmedAt: Date.now() + 60_000,
         erasureReviewed: true as const,
+        recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
       },
     },
     {
@@ -110,6 +155,7 @@ test('a changed host generation cannot reopen a copy without its matching truste
         fromGeneration: 'legacy',
         confirmedAt: Date.now(),
         erasureReviewed: true as const,
+        recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
       },
     },
   ]) {
@@ -129,6 +175,7 @@ test('a restarted restored installation still requires its external erasure clea
       fromGeneration: config.authorityFence.generation,
       confirmedAt: Date.now(),
       erasureReviewed: true,
+      recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
     },
   };
   await verifyAuthSchema(createAuth({ ...config, authorityFence: fence }, database));

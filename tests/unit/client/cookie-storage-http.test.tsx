@@ -101,6 +101,7 @@ test('a proven restore reads the fresh ordinary preference rather than a cached 
       fromGeneration: '11111111-1111-4111-8111-111111111111',
       confirmedAt: Date.now(),
       erasureReviewed: true,
+      recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
     },
   });
   expect(

@@ -48,6 +48,7 @@ test('KAK-30: a proven older restore permits a fresh explicit choice without rep
         fromGeneration: '11111111-1111-4111-8111-111111111111',
         confirmedAt: Date.now(),
         erasureReviewed: true,
+        recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
       },
     });
     await page.goto(`${origin}/login`);
@@ -134,6 +135,7 @@ test('KAK-31: a trustworthy retained result survives restore and restart with it
         fromGeneration: '11111111-1111-4111-8111-111111111111',
         confirmedAt: Date.now(),
         erasureReviewed: true,
+        recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
       },
     });
     await page.goto(`${origin}/login`);
