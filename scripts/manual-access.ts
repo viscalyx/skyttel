@@ -126,7 +126,12 @@ try {
       generation = randomUUID();
       await installation.restoreDatabase(join(installation.directory, 'manual-copy.sqlite'), {
         generation,
-        restore: { fromGeneration: copyGeneration, confirmedAt: Date.now(), erasureReviewed: true },
+        restore: {
+          fromGeneration: copyGeneration,
+          confirmedAt: Date.now(),
+          erasureReviewed: true,
+          recoveryAdmin: { provider, subject: identity.subject },
+        },
       });
       console.log(JSON.stringify({ event: 'synthetic_copy_restored' }));
     } else if (command === 'advance-day') clockOffset += 86_400_000;

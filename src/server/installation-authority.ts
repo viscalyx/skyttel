@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3';
 import { type AuthorityFence, validAuthorityFence } from './config.js';
+import { prepareRecovery } from './installation-recovery.js';
 
 type Authority = { generation: string; restoredFrom: string | null; restoredAt: number | null };
 
@@ -71,6 +72,7 @@ export function prepareInstallationAuthority(database: Database.Database, fence:
           current.restoredAt !== (fence.restore?.confirmedAt ?? null)
         )
           throw new InstallationAuthorityError('restore_declaration_required');
+        prepareRecovery(database, fence, false);
         return current;
       }
       if (!current) {
@@ -78,6 +80,7 @@ export function prepareInstallationAuthority(database: Database.Database, fence:
         if ((fence.restore && !legacyRestore) || (!legacyRestore && hasInstallationState(database)))
           throw new InstallationAuthorityError('authority_initialization_required');
         invalidateInstallationAuthority(database);
+        prepareRecovery(database, fence, true);
         database
           .prepare(
             'INSERT INTO installation_authority (id, generation, restoredFrom, restoredAt) VALUES (1, ?, ?, ?)',
@@ -104,6 +107,7 @@ export function prepareInstallationAuthority(database: Database.Database, fence:
       )
         throw new InstallationAuthorityError('restore_declaration_required');
       invalidateInstallationAuthority(database);
+      prepareRecovery(database, fence, true);
       database
         .prepare(`UPDATE installation_authority SET generation = ?, restoredFrom = ?,
       restoredAt = ? WHERE id = 1`)

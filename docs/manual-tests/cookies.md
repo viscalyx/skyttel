@@ -1159,7 +1159,9 @@ Använd den utskrivna adressen i samma flik. Logga in som Alex med
 `lose-storage-reply` ger ett avbrutet resultat efter verkligt genomförd
 avstängning; `allow-storage-reply` återställer svaren. `restore-copy`
 stoppar installationen, återställer filen och tillför en separat ny
-testgeneration och fast återställningsdeklaration. Den isolerade kopian
+testgeneration och fast återställningsdeklaration. Den aktuella testpersonen
+utses till återställningsadministratör. Hushållsåtkomst spärras; kakvalen
+kan kontrolleras utan att medlemsgranskningen slutförs. Den isolerade kopian
 innehåller inga verkliga raderingar. Verktyget verifierar inte driftens
 kopior, leverantörsåtkomst eller fysisk radering.
 

@@ -4,9 +4,10 @@ import type Database from 'better-sqlite3';
 import { assistantAuthPlugins } from './assistant-auth.js';
 import { authDatabase } from './auth-callback-transaction.js';
 import { clientAddressHeader } from './client-address.js';
-import type { Config } from './config.js';
+import type { Config, Provider } from './config.js';
 import { prepareInstallationAuthority } from './installation-authority.js';
 import { linkingAttempt } from './login-methods.js';
+import { recordProviderProof, sessionProviderProof } from './provider-proof.js';
 
 export function internalEmail(provider: 'google' | 'microsoft', subject: unknown) {
   if (typeof subject !== 'string' || subject.trim().length === 0) {
@@ -18,6 +19,12 @@ export function internalEmail(provider: 'google' | 'microsoft', subject: unknown
     .update(JSON.stringify([provider, subject]))
     .digest('hex');
   return { email: `${key}@identity.skyttel.invalid`, emailVerified: false };
+}
+
+function mapProvenProviderIdentity(provider: Provider, subject: string) {
+  const mapped = internalEmail(provider, subject);
+  recordProviderProof(provider, subject);
+  return mapped;
 }
 
 export function createAuth(config: Config, database: Database.Database) {
@@ -34,7 +41,21 @@ export function createAuth(config: Config, database: Database.Database) {
     trustedOrigins: [config.origin],
     logger: { disabled: true },
     telemetry: { enabled: false },
-    session: { disableSessionRefresh: true, cookieCache: { enabled: false } },
+    session: {
+      disableSessionRefresh: true,
+      cookieCache: { enabled: false },
+      additionalFields: {
+        loginProvider: { type: 'string', required: false, input: false, returned: false },
+        loginSubject: { type: 'string', required: false, input: false, returned: false },
+      },
+    },
+    databaseHooks: {
+      session: {
+        create: {
+          before: async (session) => ({ data: { ...session, ...sessionProviderProof() } }),
+        },
+      },
+    },
     account: {
       accountLinking: {
         enabled: true,
@@ -76,7 +97,7 @@ export function createAuth(config: Config, database: Database.Database) {
       google: {
         ...config.google,
         prompt: 'select_account',
-        mapProfileToUser: (profile) => internalEmail('google', profile.sub),
+        mapProfileToUser: (profile) => mapProvenProviderIdentity('google', profile.sub),
       },
       microsoft: {
         ...config.microsoft,
@@ -85,7 +106,7 @@ export function createAuth(config: Config, database: Database.Database) {
         disableDefaultScope: true,
         scope: ['openid', 'profile', 'email'],
         disableProfilePhoto: true,
-        mapProfileToUser: (profile) => internalEmail('microsoft', profile.oid),
+        mapProfileToUser: (profile) => mapProvenProviderIdentity('microsoft', profile.oid),
       },
     },
     advanced: {

@@ -63,6 +63,7 @@ installation's unique generation stable across ordinary restarts.
 | `SKYTTEL_FIRST_ADMIN_SUBJECT` | The designated person's immutable provider account identifier. Never an email address or display name. |
 | `BETTER_AUTH_SECRET` | A randomly generated secret of at least 32 characters. |
 | `SKYTTEL_AUTHORITY_GENERATION` | A unique UUID held in private host settings outside the database and restored volume. Generate it with `node -p 'crypto.randomUUID()'`. Keep it stable for ordinary restart; change it before each controlled database or disk restore. |
+| `SKYTTEL_RECOVERY_ADMIN_PROVIDER`, `SKYTTEL_RECOVERY_ADMIN_SUBJECT` | Required for each declared complete restore: `google` or `microsoft` and that provider's stable account identifier for the trusted recovery administrator. Store outside the restored disk, alongside the restore declaration; retain unchanged across restarts. Never use email or name. See the [restore procedure](database-restore.md). |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Credentials for the installation's Google web application. |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` | Credentials for the installation's Microsoft web application. |
 | `OPENAI_API_KEY` | Optional server-only project key for Skyttel's text and voice assistants. Without it, manual map work remains available. |
@@ -78,8 +79,9 @@ an existing installation. They describe required preparation and data changes.
 
 For whole database or disk recovery, follow the
 [controlled restore procedure](database-restore.md). Its independent restore
-declaration and trusted permanent-erasure review are required before
-reopening. A copy of the database cannot provide its own restore barrier.
+declaration, trusted permanent-erasure review and explicit access review
+are required before reopening. A copy of the database cannot provide its
+own restore barrier.
 
 ## Configure authentication client addresses
 

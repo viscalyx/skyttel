@@ -53,6 +53,9 @@ med ett [familjeabonnemang](family-subscription.md).
 
 ### Inloggning och administration
 
+- [Åtkomst efter fullständig återställning](installation-recovery.md): som
+  utsedd återställningsadministratör granska medlemskap och öppna åtkomsten.
+
 - [Inloggning och tillgång](access.md): koppla inloggningssätt; som
   administratör bjuda in medlemmar, ändra roller och återkalla tillgång.
 - [Fullständig export](household-export.md): som administratör hämta och

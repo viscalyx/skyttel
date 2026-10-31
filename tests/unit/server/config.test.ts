@@ -91,11 +91,14 @@ describe('installation configuration', () => {
       SKYTTEL_RESTORE_FROM_GENERATION: 'legacy',
       SKYTTEL_RESTORE_CONFIRMED_AT: '2026-01-01T00:00:00.000Z',
       SKYTTEL_RESTORE_ERASURE_REVIEWED: 'true',
+      SKYTTEL_RECOVERY_ADMIN_PROVIDER: 'google',
+      SKYTTEL_RECOVERY_ADMIN_SUBJECT: 'alex-google',
     };
     expect(readConfig(environment).authorityFence.restore).toEqual({
       fromGeneration: 'legacy',
       confirmedAt: 1767225600000,
       erasureReviewed: true,
+      recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
     });
     for (const value of [undefined, 'false'])
       expect(() => readConfig({ ...environment, SKYTTEL_RESTORE_ERASURE_REVIEWED: value })).toThrow(

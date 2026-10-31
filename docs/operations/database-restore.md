@@ -40,7 +40,15 @@ a copy with the same generation. This operator step is mandatory.
    Set `SKYTTEL_RESTORE_CONFIRMED_AT` to the fixed UTC time of this controlled
    restore, in ISO format. Set `SKYTTEL_RESTORE_ERASURE_REVIEWED=true` only
    after the trusted review above. Retain these values unchanged across
-   restart and recopy; they are the independent restore declaration.
+   restart; they are the independent restore declaration.
+   Explicitly designate a trusted recovery administrator for this restore.
+   Set `SKYTTEL_RECOVERY_ADMIN_PROVIDER` to `google` or `microsoft`, and
+   `SKYTTEL_RECOVERY_ADMIN_SUBJECT` to that provider's stable account
+   identifier. Never use email or name. Keep these settings outside the
+   restored volume, with the generation. Retain the designation unchanged
+   through restarts, including after review completion. Missing or invalid
+   settings stop startup. The first administrator and roles in the copy do
+   not grant recovery authority.
    For a copy from before authority generations exist, use the explicit
    value `legacy` only after verifying that provenance. This path requires
    an absent authority record and the same trusted erasure clearance. It
@@ -54,16 +62,34 @@ a copy with the same generation. This operator step is mandatory.
    Before readiness, Skyttel invalidates old browser sessions, pending
    sign-in and linking attempts, OAuth codes and tokens, signing keys and
    assistant connections. Provider identity links and household content
-   remain. Already accepted model work does not resume.
+   remain. All pending invitations become invalid. Ordinary household access
+   stays blocked until explicit review, including fresh browser sign-in and
+   assistant access. Already accepted model work does not resume.
 5. Check readiness and version privately. Test old cookies, late callbacks,
    unused authorization codes, access tokens, refresh tokens and JWTs,
    including a client with cached signing keys. They must not grant access.
-   Restart and repeat. Recopy the old test copy under the same fixed restore
-   declaration in an isolated exercise; old access must stay invalid.
-6. Verify a new Google and Microsoft sign-in. **Kom ihåg mig** must begin
-   unchecked. Verify the restored household, drafts and registered save
-   results. Use a trustworthy retained action result when available. A
-   missing result or network failure alone does not establish a restore.
+   Restart and repeat. In an isolated exercise, restore another test copy
+   with another new generation; old access and previous review must not
+   authorize access.
+6. Allow the designated person to sign in through a restricted maintenance
+   route using the configured provider identity. A different linked login
+   does not prove that identity. The person may be absent from the copy.
+   Follow the [recovery review](../user-guide/installation-recovery.md).
+   Compare every membership and role against independent current records,
+   including revocations after the copy. Keep access blocked if current
+   permissions cannot be established. Record who checks the list and the
+   evidence used in private operational records.
+7. Revoke obsolete memberships and correct roles in the review. Ensure each
+   household has an administrator; the recovery administrator can explicitly
+   appoint themselves. Confirm the entire remaining list in one action,
+   even if no change is needed. This atomically opens access and ends the
+   temporary recovery authority. The designation itself grants no lasting
+   membership. Old invitations remain invalid; issue new ones if needed.
+8. Verify fresh sign-in for retained members and denied access for removed
+   members. **Kom ihåg mig** must begin unchecked. Verify the restored
+   household, drafts and registered save results. Restart and verify the
+   same outcome. Use a trustworthy retained action result when available.
+   A missing result or network failure alone does not establish a restore.
 
 Only the confirmed restore permits a new explicit storage choice when its
 older result is unavailable. It does not confirm that older choice or

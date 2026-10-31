@@ -24,6 +24,7 @@ test('a confirmed restore never initializes malformed or ambiguous binding cooki
       fromGeneration: '11111111-1111-4111-8111-111111111111',
       confirmedAt: Date.now(),
       erasureReviewed: true,
+      recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
     },
   });
   for (const cookie of [
@@ -65,7 +66,12 @@ test('an explicitly cleared real pre-fence SQLite copy rolls forward without res
       copyFileSync(join('migrations', name), join(migrations, name));
     await installation.restoreDatabase(backup, {
       generation: '22222222-2222-4222-8222-222222222222',
-      restore: { fromGeneration: 'legacy', confirmedAt: Date.now(), erasureReviewed: true },
+      restore: {
+        fromGeneration: 'legacy',
+        confirmedAt: Date.now(),
+        erasureReviewed: true,
+        recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
+      },
     });
     for (const restart of [false, true]) {
       if (restart) await installation.restart();
@@ -87,6 +93,22 @@ test('an explicitly cleared real pre-fence SQLite copy rolls forward without res
     ).toBe(200);
     await browser.clearCookies({ name: 'skyttel_binding' });
     await signIn(browser, origin);
+    expect(await (await browser.get(`${origin}/api/bootstrap`)).json()).toMatchObject({
+      status: 'recovery',
+      canReview: true,
+    });
+    expect(
+      (await browser.get(`${origin}/api/households/${before.household.id}/map`)).status(),
+    ).toBe(403);
+    const review = await (await browser.get(`${origin}/api/recovery`)).json();
+    expect(
+      (
+        await browser.post(`${origin}/api/recovery/complete`, {
+          headers: { origin },
+          data: { ...review, confirmed: true },
+        })
+      ).status(),
+    ).toBe(200);
     expect(await (await browser.get(`${origin}/api/bootstrap`)).json()).toMatchObject({
       status: 'ready',
       user: before.user,
@@ -166,6 +188,7 @@ test('a real older SQLite restore rejects every old browser and assistant author
       fromGeneration: '11111111-1111-4111-8111-111111111111',
       confirmedAt: Date.now(),
       erasureReviewed: true as const,
+      recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
     },
   };
   await installation.restoreDatabase(backup, fence);
@@ -211,6 +234,22 @@ test('a real older SQLite restore rejects every old browser and assistant author
     ).toBe(200);
     await browser.clearCookies({ name: 'skyttel_binding' });
     await signIn(browser, origin);
+    expect(await (await browser.get(`${origin}/api/bootstrap`)).json()).toMatchObject({
+      status: 'recovery',
+      canReview: true,
+    });
+    expect(
+      (await browser.get(`${origin}/api/households/${before.household.id}/map`)).status(),
+    ).toBe(403);
+    const review = await (await browser.get(`${origin}/api/recovery`)).json();
+    expect(
+      (
+        await browser.post(`${origin}/api/recovery/complete`, {
+          headers: { origin },
+          data: { ...review, confirmed: true },
+        })
+      ).status(),
+    ).toBe(200);
     expect(await (await browser.get(`${origin}/api/bootstrap`)).json()).toMatchObject({
       status: 'ready',
       user: before.user,

@@ -8,7 +8,12 @@ export type Provider = 'google' | 'microsoft';
 
 export type AuthorityFence = {
   generation: string;
-  restore?: { fromGeneration: string; confirmedAt: number; erasureReviewed: true };
+  restore?: {
+    fromGeneration: string;
+    confirmedAt: number;
+    erasureReviewed: true;
+    recoveryAdmin: { provider: Provider; subject: string };
+  };
 };
 
 export const authorityGenerationPattern =
@@ -23,6 +28,10 @@ export function validAuthorityFence(fence: AuthorityFence | undefined) {
       authorityGenerationPattern.test(restore.fromGeneration)) &&
       restore.fromGeneration !== fence.generation &&
       restore.erasureReviewed === true &&
+      ['google', 'microsoft'].includes(restore.recoveryAdmin?.provider) &&
+      typeof restore.recoveryAdmin?.subject === 'string' &&
+      restore.recoveryAdmin.subject.length > 0 &&
+      restore.recoveryAdmin.subject.trim() === restore.recoveryAdmin.subject &&
       Number.isSafeInteger(restore.confirmedAt) &&
       restore.confirmedAt > 0 &&
       restore.confirmedAt <= Date.now())
@@ -94,7 +103,9 @@ export function readConfig(environment: NodeJS.ProcessEnv = process.env): Config
   if (
     environment.SKYTTEL_RESTORE_FROM_GENERATION !== undefined ||
     environment.SKYTTEL_RESTORE_CONFIRMED_AT !== undefined ||
-    environment.SKYTTEL_RESTORE_ERASURE_REVIEWED !== undefined
+    environment.SKYTTEL_RESTORE_ERASURE_REVIEWED !== undefined ||
+    environment.SKYTTEL_RECOVERY_ADMIN_PROVIDER !== undefined ||
+    environment.SKYTTEL_RECOVERY_ADMIN_SUBJECT !== undefined
   ) {
     const fromGeneration = required('SKYTTEL_RESTORE_FROM_GENERATION');
     if (
@@ -108,7 +119,18 @@ export function readConfig(environment: NodeJS.ProcessEnv = process.env): Config
       throw new ConfigurationError('SKYTTEL_RESTORE_CONFIRMED_AT');
     if (required('SKYTTEL_RESTORE_ERASURE_REVIEWED') !== 'true')
       throw new ConfigurationError('SKYTTEL_RESTORE_ERASURE_REVIEWED');
-    authorityFence.restore = { fromGeneration, confirmedAt, erasureReviewed: true };
+    const recoveryProvider = required('SKYTTEL_RECOVERY_ADMIN_PROVIDER');
+    if (recoveryProvider !== 'google' && recoveryProvider !== 'microsoft')
+      throw new ConfigurationError('SKYTTEL_RECOVERY_ADMIN_PROVIDER');
+    authorityFence.restore = {
+      fromGeneration,
+      confirmedAt,
+      erasureReviewed: true,
+      recoveryAdmin: {
+        provider: recoveryProvider,
+        subject: required('SKYTTEL_RECOVERY_ADMIN_SUBJECT'),
+      },
+    };
   }
 
   return {

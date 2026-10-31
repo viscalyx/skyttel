@@ -46,6 +46,7 @@ import { HouseholdErasure } from './HouseholdErasure.js';
 import { HouseholdExport } from './HouseholdExport.js';
 import { HouseholdImport } from './HouseholdImport.js';
 import { HouseholdMap } from './HouseholdMap.js';
+import { InstallationRecovery } from './InstallationRecovery.js';
 import { MapRequestError as RequestError, request } from './map-request.js';
 import { PolicyContact } from './PolicyContact.js';
 import { SettingsOverview, SettingsScreen, settingsEntries } from './SettingsScreen.js';
@@ -75,6 +76,7 @@ type Bootstrap = { providers: Provider[]; operator: boolean } & (
     }
   | { status: 'setup'; user: { id: string; name: string }; loginId: string }
   | { status: 'forbidden'; user: { id: string; name: string }; loginId: string }
+  | { status: 'recovery'; user: { id: string; name: string }; loginId: string; canReview: boolean }
   | { status: 'ready'; user: { id: string; name: string }; household: Household; loginId: string }
 );
 type LoadState<T> =
@@ -1785,6 +1787,9 @@ function Application() {
             </TaskDeliveryContext>
             {bootstrap.status === 'loading' && <Loading />}
             {bootstrap.status === 'error' && <Failure onRetry={reload} />}
+            {data?.status === 'recovery' && !storagePage && !loginPage && (
+              <InstallationRecovery canReview={data.canReview} onComplete={reload} />
+            )}
             {(data?.status === 'anonymous' || loginPage) && data && !storagePage && (
               <>
                 {data.status === 'anonymous' && data.restored && (

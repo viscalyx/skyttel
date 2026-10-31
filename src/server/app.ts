@@ -26,6 +26,8 @@ import { householdExportRoutes } from './household-export-routes.js';
 import { householdImportRoutes } from './household-import-routes.js';
 import { createHousehold, householdAccess, isFirstAdmin, isInitialized } from './households.js';
 import { installationAuthority } from './installation-authority.js';
+import { canReviewRecovery, recoveryPending } from './installation-recovery.js';
+import { installationRecoveryRoutes } from './installation-recovery-routes.js';
 import { langSmithDelivery } from './langsmith-delivery.js';
 import type { LiveModelProfile, LiveSidebandFactory, LiveUsage } from './live-provider.js';
 import { createLoginMethods } from './login-methods.js';
@@ -35,6 +37,7 @@ import { policyContactRoutes } from './policy-contact-routes.js';
 import { profileImageRoutes } from './profile-image-routes.js';
 import { imageUploadLimit } from './profile-images.js';
 import { propertyWriteLimit } from './properties.js';
+import { withProviderProof } from './provider-proof.js';
 import { textAssistantRoutes } from './text-assistant.js';
 import type { LocalDispatch } from './text-assistant-mcp.js';
 import type { TextModelProfile, TextModelUsage } from './text-assistant-model.js';
@@ -172,7 +175,9 @@ export function createApp({
     await next();
   });
   app.use('/api/*', (context, next) =>
-    context.req.method === 'POST' && /^\/api\/households\/[^/]+\/imports$/.test(context.req.path)
+    context.req.method === 'POST' &&
+    (/^\/api\/households\/[^/]+\/imports$/.test(context.req.path) ||
+      context.req.path === '/api/recovery/complete')
       ? next()
       : bodyLimit({
           maxSize:
@@ -263,11 +268,13 @@ export function createApp({
     if (context.req.path === '/api/auth/sign-out' && bindings)
       return bindings.logout(context.req.raw, () => auth.handler(context.req.raw));
     if (context.req.path.startsWith('/api/auth/callback/'))
-      return bindings
-        ? linking.handleCallback(context.req.raw, (operation) =>
-            bindings.callback(context.req.raw, operation),
-          )
-        : linking.handleCallback(context.req.raw);
+      return withProviderProof(() =>
+        bindings
+          ? linking.handleCallback(context.req.raw, (operation) =>
+              bindings.callback(context.req.raw, operation),
+            )
+          : linking.handleCallback(context.req.raw),
+      );
     return auth.handler(context.req.raw);
   });
 
@@ -290,6 +297,15 @@ export function createApp({
       });
     const user = { id: session.user.id, name: session.user.name };
     const loginId = session.session.id;
+    if (recoveryPending(database))
+      return context.json({
+        status: 'recovery',
+        providers,
+        user,
+        loginId,
+        operator: false,
+        canReview: canReviewRecovery(database, loginId),
+      });
     const operator = isFirstAdmin(database, user.id, config);
     const household = householdAccess(database, user.id);
     if (household)
@@ -339,6 +355,7 @@ export function createApp({
     return context.json({ household });
   });
   app.route('/api', administrationRoutes(database, auth, config.origin));
+  app.route('/api/recovery', installationRecoveryRoutes(database, auth, config.origin));
   app.route('/api', costRoutes(database, auth, config, costs));
   app.route('/api', traceSendingRoutes(database, auth, config, sending));
   app.route('/api', contentOwnerRoutes(database, auth, config.origin));

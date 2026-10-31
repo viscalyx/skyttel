@@ -20,6 +20,7 @@ import { afterEach, beforeEach, expect, test } from 'vitest';
 import { createAuth, verifyAuthSchema } from '../../../src/server/auth.js';
 import { readConfig } from '../../../src/server/config.js';
 import { openDatabase } from '../../../src/server/database.js';
+import { completeRecovery, readRecovery } from '../../../src/server/installation-recovery.js';
 import { householdMap } from '../../../src/server/map.js';
 import { effectiveRelationships } from '../../../src/shared/map.js';
 import { configurationEnvironment } from './fixture.js';
@@ -131,7 +132,14 @@ test('the deployed preview before backgrounds upgrades directly and preserves ac
     'session',
     'browser_binding',
   ];
-  const access = accessTables.map((table) => previous.prepare(`SELECT * FROM ${table}`).all());
+  const access = accessTables.map((table) =>
+    previous
+      .prepare(`SELECT * FROM ${table}`)
+      .all()
+      .map((row) =>
+        table === 'session' ? { ...(row as object), loginProvider: null, loginSubject: null } : row,
+      ),
+  );
   previous.close();
 
   database = openDatabase(path, { authorityFence });
@@ -145,7 +153,7 @@ test('the deployed preview before backgrounds upgrades directly and preserves ac
     draft: { changes: [] },
   });
   expect(database.prepare('SELECT MAX(version) AS version FROM schema_migration').get()).toEqual({
-    version: 39,
+    version: 40,
   });
   const view = database
     .prepare('SELECT settings, backgroundVersion FROM personal_view_settings')
@@ -223,7 +231,14 @@ test('automatic preview migration keeps the household and its administrator whil
     'cost_coverage',
   ];
   const previous = new Database(path, { readonly: true });
-  const retained = retainedTables.map((table) => previous.prepare(`SELECT * FROM ${table}`).all());
+  const retained = retainedTables.map((table) =>
+    previous
+      .prepare(`SELECT * FROM ${table}`)
+      .all()
+      .map((row) =>
+        table === 'session' ? { ...(row as object), loginProvider: null, loginSubject: null } : row,
+      ),
+  );
   previous.close();
   expect(() => openDatabase(path)).toThrow(
     expect.objectContaining({ reason: 'unsupported_database_format' }),
@@ -331,14 +346,14 @@ test.each([33, 34])(
     const migrationsDirectory = join(directory, 'later-release');
     cpSync(resolve('migrations'), migrationsDirectory, { recursive: true });
     writeFileSync(
-      join(migrationsDirectory, '040_next_release.sql'),
+      join(migrationsDirectory, '041_next_release.sql'),
       'CREATE TABLE next_release_setting (name TEXT PRIMARY KEY);',
     );
     database.close();
     database = openDatabase(path, { authorityFence, migrationsDirectory });
     const upgraded = householdMap(database, 'alex', 'home');
     expect(database.prepare('SELECT MAX(version) AS version FROM schema_migration').get()).toEqual({
-      version: 40,
+      version: 41,
     });
     expect(upgraded.read()).toEqual(retainedMap);
     expect(upgraded.history()).toEqual(retainedHistory);
@@ -398,7 +413,12 @@ test.each(['legacy', generation])(
     const before = readFileSync(path);
     const restoreFence = {
       generation: fromGeneration === 'legacy' ? generation : '22222222-2222-4222-8222-222222222222',
-      restore: { fromGeneration, confirmedAt: Date.now(), erasureReviewed: true as const },
+      restore: {
+        fromGeneration,
+        confirmedAt: Date.now(),
+        erasureReviewed: true as const,
+        recoveryAdmin: { provider: 'google' as const, subject: 'alex-google' },
+      },
     };
     expect(() => openDatabase(path, { authorityFence: restoreFence })).toThrow(
       expect.objectContaining({ reason: 'unsupported_database_format' }),
@@ -427,14 +447,29 @@ test('a declared restore of the new format retains household content and applies
     SKYTTEL_RESTORE_FROM_GENERATION: generation,
     SKYTTEL_RESTORE_CONFIRMED_AT: '2026-01-01T00:00:00.000Z',
     SKYTTEL_RESTORE_ERASURE_REVIEWED: 'true',
+    SKYTTEL_RECOVERY_ADMIN_PROVIDER: 'google',
+    SKYTTEL_RECOVERY_ADMIN_SUBJECT: 'alex-google',
   });
   database = openDatabase(path, { authorityFence: config.authorityFence });
   await verifyAuthSchema(createAuth(config, database));
+  const recoveringDatabase = database;
+  expect(() => householdMap(recoveringDatabase, 'alex', 'home')).toThrow('forbidden');
+  expect(database.prepare('SELECT * FROM session').all()).toEqual([]);
+  // Arrange a fresh, proven login at the recovery module's public boundary.
+  database
+    .prepare(`INSERT INTO session (id, userId, token, expiresAt, createdAt, updatedAt, loginProvider, loginSubject)
+    VALUES ('review', 'alex', 'fresh-token', ?, ?, ?, 'google', 'alex-google')`)
+    .run(
+      new Date(Date.now() + 60_000).toISOString(),
+      new Date().toISOString(),
+      new Date().toISOString(),
+    );
+  completeRecovery(database, 'review', { ...readRecovery(database, 'review'), confirmed: true });
   const restored = householdMap(database, 'alex', 'home');
   expect(restored.read()).toEqual(content);
   expect(restored.history()).toEqual(history);
   expect(restored.operation('retained-save')).toMatchObject({ operation: { status: 'succeeded' } });
-  expect(database.prepare('SELECT * FROM session').all()).toEqual([]);
+  expect(database.prepare('SELECT token FROM session').all()).toEqual([{ token: 'fresh-token' }]);
   expect(database.prepare('SELECT * FROM installation_authority').get()).toEqual({
     id: 1,
     generation: config.authorityFence.generation,
@@ -495,7 +530,7 @@ test.each([
     seedPreviousPreview(version);
     const migrationsDirectory = join(directory, 'migrations');
     cpSync(resolve('migrations'), migrationsDirectory, { recursive: true });
-    writeFileSync(join(migrationsDirectory, '040_failure.sql'), failure);
+    writeFileSync(join(migrationsDirectory, '041_failure.sql'), failure);
     const previous = new Database(path, { readonly: true });
     const before = previous.serialize();
     previous.close();
@@ -725,6 +760,8 @@ test.each(['production', 'declared restore'])(
               SKYTTEL_RESTORE_FROM_GENERATION: 'legacy',
               SKYTTEL_RESTORE_CONFIRMED_AT: '2026-01-01T00:00:00.000Z',
               SKYTTEL_RESTORE_ERASURE_REVIEWED: 'true',
+              SKYTTEL_RECOVERY_ADMIN_PROVIDER: 'google',
+              SKYTTEL_RECOVERY_ADMIN_SUBJECT: 'alex-google',
             }
           : {}),
       },
