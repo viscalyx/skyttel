@@ -157,15 +157,29 @@ export async function verify(directory) {
   }
 }
 
-export async function registryTags(identity) {
+export async function registryTags(identity, fetchImpl = fetch) {
+  assert.match(
+    identity.repository ?? '',
+    /^[A-Za-z0-9][A-Za-z0-9-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/u,
+    'Invalid registry repository',
+  );
+  assert.ok(
+    Array.isArray(identity.imageTags) &&
+      identity.imageTags.length > 0 &&
+      identity.imageTags.every(
+        (tag) => typeof tag === 'string' && /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/u.test(tag),
+      ),
+    'Invalid registry image tags',
+  );
   // GHCR credentials are sent only to GHCR's own token endpoint.
   const tokenUrl = new URL('https://ghcr.io/token');
   tokenUrl.searchParams.set('service', 'ghcr.io');
   tokenUrl.searchParams.set('scope', `repository:${identity.repository.toLowerCase()}:pull`);
-  const response = await fetch(tokenUrl, {
+  const response = await fetchImpl(tokenUrl, {
     headers: {
       authorization: `Basic ${Buffer.from(`${process.env.GITHUB_ACTOR}:${process.env.GH_TOKEN}`).toString('base64')}`,
     },
+    redirect: 'error',
     signal: AbortSignal.timeout(30_000),
   });
   if (!response.ok) throw new Error(`Registry authorization failed: ${response.status}`);
@@ -173,7 +187,9 @@ export async function registryTags(identity) {
   assert.ok(token, 'Missing registry token');
   const tags = {};
   for (const tag of identity.imageTags) {
-    const result = await fetch(
+    // Intentional file-to-network flow: validated repository and tag metadata
+    // select a manifest on GHCR; no local file contents are uploaded.
+    const result = await fetchImpl(
       `https://ghcr.io/v2/${identity.repository.toLowerCase()}/manifests/${tag}`,
       {
         headers: {
@@ -181,6 +197,7 @@ export async function registryTags(identity) {
           accept:
             'application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json',
         },
+        redirect: 'error',
         signal: AbortSignal.timeout(30_000),
       },
     );

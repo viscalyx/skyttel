@@ -193,6 +193,63 @@ describe('release notes through the GitHub API', () => {
 });
 
 describe('release publication through the GitHub API', () => {
+  it('rejects API destinations that could disclose credentials or release files', async () => {
+    for (const apiUrl of [
+      'https://attacker.example',
+      'http://api.github.com',
+      'https://api.github.com.attacker.example',
+      'https://api.github.com@attacker.example',
+      'https://user:password@api.github.com',
+      'https://api.github.com/other-path',
+      'https://api.github.com?redirect=other',
+    ]) {
+      const api = fixture({});
+      await assert.rejects(
+        publishRelease({ ...api, apiUrl, release, body: releaseBody(), assets: [] }),
+        /Untrusted GitHub API URL/u,
+      );
+      assert.equal(api.calls.length, 0);
+    }
+  });
+
+  it('rejects untrusted upload origins before sending evidence bytes', async () => {
+    for (const origin of [
+      'https://attacker.example',
+      'http://uploads.github.com',
+      'https://uploads.github.com.attacker.example',
+      'https://uploads.github.com@attacker.example',
+    ]) {
+      const body = releaseBody();
+      const api = fixture({
+        [`${base}/git/ref/tags/${release.tag}`]: ok({
+          object: { type: 'commit', sha: release.commit },
+        }),
+        [`${base}/releases?per_page=100&page=1`]: ok([
+          {
+            id: 7,
+            tag_name: release.tag,
+            name: release.fullVersion,
+            prerelease: true,
+            draft: true,
+            body,
+            upload_url: `${origin}/releases/7/assets{?name,label}`,
+          },
+        ]),
+        [`${base}/releases/7/assets?per_page=100&page=1`]: ok([]),
+      });
+      await assert.rejects(
+        publishRelease({
+          ...api,
+          release,
+          body,
+          assets: [{ name: 'release.json', content: Buffer.from(JSON.stringify(release)) }],
+        }),
+        /Untrusted release asset upload URL/u,
+      );
+      assert.ok(api.calls.every((call) => call.options.method === 'GET'));
+    }
+  });
+
   it('resumes a stable draft by adding only missing assets and strips credentials from download redirects', async () => {
     const stable = {
       ...release,
@@ -359,9 +416,16 @@ describe('release publication through the GitHub API', () => {
         assert.equal(request.draft, true);
         assert.equal(request.prerelease, true);
         assert.equal(request.make_latest, 'false');
-        return ok({ id: 7, draft: true, upload_url: `${base}/releases/7/assets{?name,label}` });
+        return ok({
+          id: 7,
+          draft: true,
+          upload_url: `https://uploads.github.com/repos/${repository}/releases/7/assets{?name,label}`,
+        });
       },
-      [`POST ${base}/releases/7/assets?name=release.json`]: (options) => {
+      [`POST https://uploads.github.com/repos/${repository}/releases/7/assets?name=release.json`]: (
+        options,
+      ) => {
+        assert.equal(options.redirect, 'error');
         uploads.push(options.body);
         return ok({ id: 77, name: 'release.json' });
       },

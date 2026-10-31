@@ -16,6 +16,9 @@ const acceptanceWorkflow = '.github/workflows/release-acceptance.yml';
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const read = (directory, name) => fs.readFileSync(path.join(directory, name));
 const json = (directory, name) => JSON.parse(read(directory, name));
+// Intentional network-to-file flow: GitHub metadata is serialized as JSON evidence.
+// Callers supply literal filenames under the workflow's acceptance directory;
+// remote values are report contents, never output paths or executable code.
 const write = (directory, name, value) =>
   fs.writeFileSync(path.join(directory, name), `${JSON.stringify(value, null, 2)}\n`);
 
@@ -436,6 +439,8 @@ async function main() {
   } finally {
     write(directory, 'report.json', report);
     if (process.env.GITHUB_STEP_SUMMARY) {
+      // Render the same evidence in the runner-owned summary file. The path comes
+      // from the workflow environment, not the GitHub responses in the report.
       fs.appendFileSync(
         process.env.GITHUB_STEP_SUMMARY,
         `## Release acceptance: ${report.status}\n\n\`\`\`json\n${JSON.stringify(report, null, 2)}\n\`\`\`\n`,

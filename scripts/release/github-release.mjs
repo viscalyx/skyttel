@@ -48,6 +48,10 @@ function requireBodyIdentity(body, release) {
 }
 
 function github({ release, token, fetchImpl = fetch, apiUrl = 'https://api.github.com' }) {
+  // Release evidence and credentials are intended only for GitHub.com.
+  if (apiUrl !== 'https://api.github.com' && apiUrl !== 'https://api.github.com/') {
+    throw new Error('Untrusted GitHub API URL.');
+  }
   if (!/^[A-Za-z0-9][A-Za-z0-9-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/u.test(release.repository)) {
     throw new Error('Invalid release repository.');
   }
@@ -79,6 +83,8 @@ function github({ release, token, fetchImpl = fetch, apiUrl = 'https://api.githu
       }
       url = target.href;
     }
+    // Intentional file-to-network transfer: publish the explicit evidence asset
+    // list and release metadata to the checked GitHub origins, without redirects.
     const response = await fetchImpl(url, {
       method,
       headers: {
@@ -392,6 +398,9 @@ export async function main(args = process.argv.slice(2), options = {}) {
         ancestors,
         operatorNotes: read('operator-upgrade-notes.md').toString(),
       });
+      // GitHub changelog text is intentionally retained as Markdown evidence.
+      // The destination is a fixed local name, created without overwriting a file;
+      // prepareReleaseNotes checks its release identity before returning it.
       fsImpl.writeFileSync(bodyPath, body, { flag: 'wx' });
       consoleObj.log(`Prepared ${release.tag} release notes.`);
     } else {
