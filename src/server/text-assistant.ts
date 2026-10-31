@@ -1164,6 +1164,13 @@ export function textAssistantRoutes({
     expected: { version: number; contentVersion: number },
   ) {
     const serial = session.inputSerial ?? 0;
+    // Only the current whole-message command grants discard authority. Model
+    // output, stored content and earlier dialogue cannot expand this turn.
+    const discardRequested = conversationCommand(text)?.discard === true;
+    const checkDiscard = (name: string) => {
+      if (name === 'discard_draft' && !discardRequested)
+        throw new MapError('assistant_discard_not_requested', 409);
+    };
     let originalSaveIntent = Boolean(session.saveIntent);
     const guard = () => {
       if (task.signal.aborted || session.revision !== revision || !sessions.has(session.id))
@@ -1461,6 +1468,9 @@ export function textAssistantRoutes({
             )
               throw new MapError('invalid_request', 400);
           }
+          // Check the entire batch before its first mutation, even when an
+          // otherwise requested edit precedes the whole-draft discard.
+          for (const operation of batch.operations) checkDiscard(operation.name);
           const original = calls[0];
           session.parts.validateCompletion(batch.resolves);
           updateParts(session, batch.questions, [], original.call_id);
@@ -1675,6 +1685,7 @@ export function textAssistantRoutes({
           }
           const tool = session.mcp.tools.find((tool) => tool.name === action.name);
           if (!tool) throw new MapError('assistant_unknown_tool', 409);
+          checkDiscard(action.name);
           const isSave = action.name === 'save_draft' || action.name === 'prepare_save';
           if (isSave && combined) {
             session.parts.complete(combined.resolves);

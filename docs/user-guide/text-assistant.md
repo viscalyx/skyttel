@@ -247,6 +247,9 @@ knappen och frågar inte om medgivande igen. Vill du kasta hela det
 osparade utkastet, säg eller skriv **Kasta utkastet**, eller
 **Nytt samtal och kasta utkastet** för att också börja om samtalet.
 Redan sparade uppgifter påverkas inte av att utkastet kastas.
+Skicka kommandot som ett eget meddelande. En begäran att läsa, ändra,
+spara eller ta bort ett enskilt förslag ger inte tillåtelse att kasta
+hela utkastet. Ett tidigare kommando gäller inte ett nytt utkast.
 
 ## Följ samtalet
 

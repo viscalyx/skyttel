@@ -9,6 +9,8 @@ export function assistantFailureMessage(code: string): string {
       return 'Uppgiftens tid är slut. Kontrollera ditt utkast och tidigare sparresultat innan du lämnar en ny instruktion.';
     case 'assistant_save_not_requested':
       return 'Inget nytt sparande är bekräftat. Det saknas ett tydligt aktuellt besked om att spara hela utkastet.';
+    case 'assistant_discard_not_requested':
+      return 'Hela utkastet har inte kastats. För att kasta det, säg eller skriv ”Kasta utkastet” som ett eget meddelande.';
     case 'unresolved_identity':
       return 'Det är oklart vilken person eller sak som avses. Identiteten behöver redas ut innan utkastet kan sparas.';
     case 'assistant_draft_changed':

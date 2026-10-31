@@ -266,7 +266,7 @@ test('a pending provider connection is aborted at expiry before Live startup can
 
 test('the synchronous domain guard rejects a voice mutation at expiry even before its timer runs', async () => {
   let crossed = false;
-  const model = textModel(() => [modelTool('discard_draft', { version: 1, contentVersion: 1 })]);
+  const model = textModel(() => [modelMessage('Ska inte köras.')]);
   await setup(model, 5000, {
     assistantDispatch: async (incoming, dispatch) => {
       const rpc =
@@ -285,7 +285,7 @@ test('the synchronous domain guard rejects a voice mutation at expiry even befor
   const mapPath = path.replace(/text-assistant$/, 'map');
   const before = await (await client.get(mapPath)).json();
   await connect();
-  speak('Kasta hela utkastet.');
+  speak('Kasta utkastet.');
   await advance(2000);
   await vi.waitFor(() => expect(crossed).toBe(true));
   expect(live.channels.size).toBe(0);
@@ -293,6 +293,7 @@ test('the synchronous domain guard rejects a voice mutation at expiry even befor
   await signIn(client, app.origin);
   expect(await (await client.get(mapPath)).json()).toEqual(before);
   expect(await (await client.get(`${mapPath}/operations`)).json()).toEqual({ operations: [] });
+  expect(model.requests).toEqual([]);
 });
 
 test('a committed save receipt survives a late negation, fresh login and restart without replay', async () => {

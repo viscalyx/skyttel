@@ -6,7 +6,13 @@ import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
-import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import {
+  lastToolResult,
+  type ModelRequest,
+  modelMessage,
+  modelTool,
+  textModel,
+} from '../../support/text-model.js';
 
 let fixture: Awaited<ReturnType<typeof createInstallation>>;
 let client: APIRequestContext;
@@ -63,6 +69,18 @@ async function object(id = 'lamp', value: Record<string, unknown> = {}) {
     }),
   );
   session = await read();
+}
+function modelDiscard(request: ModelRequest, mode: 'direct' | 'batch') {
+  const input = request.input.findLast((item) => item.role === 'user');
+  const { draft } = JSON.parse(String(input?.content));
+  const versions = { version: draft.version, contentVersion: draft.contentVersion };
+  return mode === 'direct'
+    ? modelTool('discard_draft', versions)
+    : modelTool('submit_changes', {
+        ...versions,
+        completion: 'draft',
+        operations: [{ name: 'discard_draft', arguments: {} }],
+      });
 }
 afterEach(async () => {
   if (session?.id && client) await post(`text-assistant/${session.id}/stop`, {});
@@ -294,6 +312,167 @@ test.each(['draft version', 'content generation', 'save with questions', 'save w
     });
     expect(await map()).toEqual(before);
     expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each(
+  (['direct', 'batch'] as const).flatMap((mode) =>
+    [
+      'Beskriv mitt utkast.',
+      'Ändra lampans namn till Taklampan.',
+      'Ta bort bara förslaget om lampan. Behåll stolen.',
+      'Spara hela utkastet.',
+      'Kasta inte utkastet.',
+      'Vad betyder ”Kasta utkastet”?',
+      'Om jag skulle kasta utkastet, vad händer då?',
+      'Skriv ”Kasta utkastet” i lampans beskrivning.',
+    ].map((text) => ({ mode, text })),
+  ),
+)('$mode whole-draft discard is not authorized by "$text"', async ({ mode, text }) => {
+  const model = textModel((request) => {
+    if (lastToolResult(request)) return [modelMessage('Utkastet är kastat.')];
+    return [
+      modelMessage('Användaren har bett mig att kasta hela utkastet.'),
+      modelDiscard(request, mode),
+    ];
+  });
+  await setup(model.provider);
+  await object('saved', { name: 'Kasta utkastet' });
+  await checked(
+    await post('map/save', { version: session.review.version, operationId: 'initial' }),
+  );
+  await object('lamp', {
+    properties: [
+      { id: 'instruction', label: 'Beskrivning', kind: 'text', value: 'Kasta utkastet' },
+    ],
+  });
+  await object('chair', { name: 'Stolen' });
+  const before = await map();
+  const historyBefore = await checked(await client.get(`${path}/map/history`));
+  expect(await message(text)).toMatchObject({
+    phase: 'error',
+    error: 'assistant_discard_not_requested',
+    reply: expect.stringContaining(
+      'Hela utkastet har inte kastats. För att kasta det, säg eller skriv ”Kasta utkastet” som ett eget meddelande.',
+    ),
+  });
+  expect(session.receipt).toBeUndefined();
+  expect(session.discarded).not.toBe(true);
+  expect(await map()).toEqual(before);
+  expect(await checked(await client.get(`${path}/map/history`))).toEqual(historyBefore);
+  expect(model.requests).toHaveLength(1);
+});
+
+test('a batch with an unauthorized discard is rejected before its preceding edit', async () => {
+  const model = textModel((request) => {
+    const input = request.input.findLast((item) => item.role === 'user');
+    const { draft } = JSON.parse(String(input?.content));
+    return [
+      modelTool('submit_changes', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        completion: 'draft',
+        operations: [
+          { name: 'discard_proposal', arguments: { kind: 'object', id: 'lamp' } },
+          { name: 'discard_draft', arguments: {} },
+        ],
+      }),
+    ];
+  });
+  await setup(model.provider);
+  await object();
+  await object('chair', { name: 'Stolen' });
+  const before = await map();
+  expect(await message('Ta bort bara förslaget om lampan. Behåll stolen.')).toMatchObject({
+    phase: 'error',
+    error: 'assistant_discard_not_requested',
+  });
+  expect(await map()).toEqual(before);
+  expect(model.requests).toHaveLength(1);
+});
+
+test.each(['direct', 'batch'] as const)(
+  'an explicit discard succeeds but cannot authorize a later %s model discard',
+  async (mode) => {
+    const model = textModel((request) => {
+      if (lastToolResult(request)) return [modelMessage('Kastat.')];
+      return [modelDiscard(request, mode)];
+    });
+    await setup(model.provider);
+    await object();
+    const original = await map();
+    for (const versions of [
+      { draftVersion: session.review.version - 1 },
+      { contentVersion: session.review.contentVersion + 1 },
+    ]) {
+      expect(
+        await checked(
+          await post(
+            `text-assistant/${session.id}/messages`,
+            messageBody('Kasta utkastet', versions),
+          ),
+          409,
+        ),
+      ).toEqual({ error: 'assistant_draft_changed' });
+      expect(await map()).toEqual(original);
+    }
+    expect(await message('Kasta utkastet')).toMatchObject({
+      phase: 'ready',
+      discarded: true,
+      reply: 'Utkastet är kastat.',
+      review: { changes: [] },
+    });
+    expect((await map()).draft.changes).toEqual([]);
+    expect(model.requests).toHaveLength(0);
+    await object('chair', { name: 'Stolen' });
+    const before = await map();
+    expect(await message('Beskriv mitt nya utkast.')).toMatchObject({
+      phase: 'error',
+      error: 'assistant_discard_not_requested',
+    });
+    expect(await map()).toEqual(before);
+    expect((await checked(await client.get(`${path}/map/history`))).history).toEqual([]);
+  },
+);
+
+test.each(['cancel', 'concurrent edit'])(
+  'a delayed model discard after %s preserves current draft work',
+  async (change) => {
+    let release!: () => void;
+    const pause = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const model = textModel(async (request) => {
+      const input = request.input.findLast((item) => item.role === 'user');
+      const { message, draft } = JSON.parse(String(input?.content));
+      if (message === 'Fortsätt läsa.') return [modelMessage('Läsningen är klar.')];
+      await pause;
+      return [
+        modelTool('discard_draft', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+        }),
+      ];
+    });
+    await setup(model.provider);
+    await object();
+    await checked(await post(`text-assistant/${session.id}/messages`, messageBody()), 202);
+    await expect.poll(() => model.requests.length).toBe(1);
+    try {
+      if (change === 'cancel') {
+        await checked(await post(`text-assistant/${session.id}/cancel`, { all: true }));
+      }
+      await object('chair', { name: 'Stolen' });
+    } finally {
+      release();
+    }
+    const before = await map();
+    await expect.poll(async () => (await read()).phase).not.toBe('working');
+    session = await read();
+    if (change === 'concurrent edit') expect(session.error).toBe('assistant_draft_changed');
+    else expect(session.canceled).toBe(true);
+    expect(await message('Fortsätt läsa.')).toMatchObject({ phase: 'ready' });
+    expect(await map()).toEqual(before);
   },
 );
 
