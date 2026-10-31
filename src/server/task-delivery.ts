@@ -57,6 +57,8 @@ export function taskDeliveries(now: () => number, changed: () => void = () => {}
           const text = String(data);
           if (Buffer.byteLength(text) > 1_048_576) throw new Error('oversized_ack');
           body = JSON.parse(text);
+          if (body === null || typeof body !== 'object' || Array.isArray(body))
+            throw new Error('invalid_ack');
         } catch {
           close(channel);
           return;

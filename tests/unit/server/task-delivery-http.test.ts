@@ -269,6 +269,22 @@ test('partial text cannot acknowledge a full frozen answer and disconnect ends d
   expect(fixture.channel.messages.some((item) => item.state === 'received')).toBe(false);
 });
 
+test.each(['null', 'false', '42', '"receipt"', '[]'])(
+  'a non-object receipt (%s) closes its socket while unrelated HTTP requests remain serviceable',
+  async (receipt) => {
+    const fixture = await arrange(textModel(() => [modelMessage('Hela svaret.')]));
+    let closed = false;
+    fixture.channel.socket.on('close', () => {
+      closed = true;
+    });
+    fixture.channel.socket.send(receipt);
+    await expect.poll(() => closed).toBe(true);
+    const response = await browser.get(`${app.origin}/api/bootstrap`);
+    expect(response.status()).toBe(200);
+    expect((await response.json()).status).toBe('ready');
+  },
+);
+
 test.each(['malformed JSON', 'oversized frame', 'missing task', 'wrong frame type'] as const)(
   'an invalid receipt (%s) retires its actual channel without accepting known answer text',
   async (receipt) => {
