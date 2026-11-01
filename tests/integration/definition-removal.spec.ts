@@ -448,7 +448,10 @@ test('KATALOG-02: other drafts survive type deletion and recover through ordinar
       .getByLabel('Sambandstyp', { exact: true })
       .selectOption(initial.relationshipTypes[1].id);
     await relationshipEditor.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
-    await memberPage.keyboard.press('Escape');
+    await expect(
+      relationshipEditor.getByRole('heading', { name: 'Redigera samband', exact: true }),
+    ).not.toBeVisible();
+    await closeSupportDialog(memberPage, 'Samband för Privat provnamn');
     await saveReviewedConflictDraft(memberPage);
     await closeTextView(memberPage);
     await installation.restart();

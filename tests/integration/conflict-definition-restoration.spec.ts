@@ -336,18 +336,25 @@ test('UTKAST-68: a newer saved definition rejects stale restoration atomically a
     await administratorPage
       .getByRole('button', { name: 'Ta bort objekttypen', exact: true })
       .click();
-    await expect(administratorPage.getByRole('alert')).toContainText('ta bort eller byt typ');
-    expect(
-      (
-        await app.post(administrator.request, 'object-type', {
-          version: (await app.administratorRead()).draft.version,
-          contentVersion: original.contentVersion,
-          id: active.id,
-          baseRevision: active.revision,
-          value: null,
-        })
-      ).status(),
-    ).toBe(409);
+    await administratorPage
+      .getByRole('link', { name: 'Tillbaka till kartan', exact: true })
+      .click();
+    const removalReview = await openDraftReview(administratorPage);
+    await expect(removalReview).toContainText(active.name);
+    expect((await app.administratorRead()).draft.objectTypes).toEqual([
+      expect.objectContaining({ id: active.id, after: null }),
+    ]);
+    expect((await app.read()).draft).toEqual(privateRestoration.draft);
+    await removalReview.locator(`#draft-remove-Objekttyp-${active.id}`).click();
+    await expect(removalReview.locator(`#draft-remove-Objekttyp-${active.id}`)).toHaveCount(0);
+    expect((await app.read()).draft).toEqual(privateRestoration.draft);
+    await closeTextView(administratorPage);
+    await openTypeDefinitions(administratorPage);
+    const objectTypes = administratorPage.getByText('Objekttyper', { exact: true });
+    if ((await objectTypes.locator('..').getAttribute('open')) === null) await objectTypes.click();
+    await administratorPage
+      .getByRole('button', { name: `Ändra typ: ${active.name}`, exact: true })
+      .click();
     await administratorPage
       .getByLabel('Typens namn', { exact: true })
       .fill('Ny gemensam typbenämning');

@@ -135,7 +135,8 @@ Objekt och samband har status Upphört. Spara inte Robins utkast.
 5. Återgå till kartan. Markera Ta med upphörda i Tabellens filter.
    Redigera Privat provnamn, välj den nya typen och lägg ändringen i
    utkastet. Öppna Samband för Privat provnamn, redigera sambandet och välj
-   en annan befintlig sambandstyp. Lägg ändringen i utkastet.
+   en annan befintlig sambandstyp. Lägg ändringen i utkastet, invänta att
+   redigeringen stängs och stäng sedan dialogen Samband för Privat provnamn.
 6. Spara hela utkastet. Starta om och ladda om. Markera Ta med upphörda igen.
    Läs Privat provnamn i Tabell:
    serienumret och typnamnet Person ska finnas kvar.

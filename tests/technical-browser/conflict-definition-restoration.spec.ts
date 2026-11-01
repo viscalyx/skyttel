@@ -102,7 +102,7 @@ test('historical preparation launcher preserves authority guards, applied and ab
     expect(await preparation.result()).toEqual(reviewed);
     await preparation.command(
       'newer-definition',
-      /Deletion while another private restoration remains: HTTP 409/,
+      /Deletion while another private restoration remains: HTTP 200; canceled/,
     );
     // Flush the complete command, including the later legitimate definition save.
     const newer = await preparation.result();
