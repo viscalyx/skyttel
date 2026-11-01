@@ -105,7 +105,7 @@ test('the receipt announcement names retained identities and distinguishes remov
 
 test.each([
   ['restoration_conflict', /Inget sparades.*granska aktuellt underlag igen/s],
-  ['definition_in_use', /privata utkast.*Ingen ändring genomfördes/s],
+  ['definition_in_use', /nya följder.*Ingen ändring genomfördes/s],
   ['invalid_relationship_type', /benämningar från båda hållen/],
   ['duplicate_relationship', /Inget sparades.*befintliga sambandet/s],
   ['invalid_properties', /egenskapens etikett, datatyp och värde.*Inga uppgifter sparades/s],

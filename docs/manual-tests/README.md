@@ -357,8 +357,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   och arkivjämförelser från UI-stegen.
 
 - [Typer, historik och rättelser genom MCP](assistant-advanced.md):
-  egna typer och fält, daterade avtal, riktning och typbyte, skyddade
-  definitioner och läsbar historik efter import samt vanliga
+  egna typer och fält, daterade avtal, riktning och typbyte, granskade
+  typborttagningar med följder och läsbar historik efter import samt vanliga
   rättelser med aktuellt underlag, hela valda kvitton och oförändrat
   oberoende utkast. Separata
   [klientfångster](assistant-client-preparation.md) ger körbara indata och
@@ -870,8 +870,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   Dubbletter och samtidiga sparanden ger inget delsparande.
   STY-08/10/11 är avvecklade typavsnittsfall och får inte återanvändas.
 - [Borttagning av typer](definition-removal.md): granskad
-  katalogborttagning, användningsspärrar för upphört innehåll och privata
-  utkast utan privat läckage, fullständig förslagsläsning och läsning av
+  typborttagning med upphört innehåll, återtagning och samlat sparande,
+  bevarade privata utkast med vanlig rättning, fullständig förslagsläsning
+  och läsning av
   historiska definitioner som saknas i katalogen även efter omstart.
 - [Sparutfall, återhämtning och gemensamma demodata](operations.md):
   kontrollera samma väntande eller obekräftade försök efter omstart,

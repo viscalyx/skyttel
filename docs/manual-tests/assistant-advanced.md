@@ -229,79 +229,66 @@ klientsteg.
 - Historiken behåller Ramnummer som Text med SYNTH-42 och därefter Tal med 42,
   även när den äldre typen tas bort.
 
-### MCP-04: upphört innehåll och privata utkast skyddar typer
+### MCP-04: Granska typborttagning och bevara andras utkast som konflikter
 
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
 {
   "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
     "spec": "tests/integration/assistant-advanced.spec.ts",
     "caseId": "MCP-04"
   },
-  "reference": "Kontrollerad OAuth/MCP-klient utan språkmodell, riktiga browserformulär och beständig SQLite; ny isolerad databas per fall.",
+  "reference": "Kontrollerad OAuth/MCP-klient utan språkmodell, riktiga browserformulär och beständig SQLite; två profiler och ny isolerad databas.",
   "outcomes": [
-    "Upphört innehåll och andra användares privata förslag blockerar typborttagning.",
-    "Samtidig privat användning stoppar hela sparandet utan privat röjande; båda förslagen överlever omstart."
+    "Typborttagning omfattar upphört innehåll i ett granskningsbart utkast och kan återtas före sparande.",
+    "Andras privata förslag bevaras med konflikter utan privat röjande; vanlig ny typ och rättning bevarar värden genom samlat sparande och omstart."
   ]
 }
 ```
 -->
 <!-- markdownlint-enable MD013 -->
 
-**Syfte:** Prova användningsspärrar utan att avslöja privata förslag.
+**Syfte:** Prova samma granskade typborttagning genom MCP och webbläsaren.
 
-**Användare:** Alex, Robin och Alex kontrollerade klient.
+**Användare:** Alex och Robin med var sin kontrollerad klient och profil.
 
-**Förutsättningar:** Nytt provhushåll. Robin loggar in i en separat profil,
-kopierar sitt Skyttel-användar-ID från startsidan och ger det till Alex.
-Alex öppnar hushållets administration, bjuder in detta ID och ger koden
-till Robin, som accepterar den i sin profil. Håll båda profilerna öppna.
-
-**Integrationstest:**
-[assistant-advanced.spec.ts](../../tests/integration/assistant-advanced.spec.ts),
-testfallet “MCP-04: upphört innehåll och privata utkast skyddar typer”.
+**Förutsättningar:** Nytt provhushåll. Alex bjuder in Robin, som accepterar
+inbjudan. Förbered klienterna enligt
+[klientfångsterna](assistant-client-preparation.md#fångster-för-mcp-04).
 
 **Steg:**
 
-1. Använd klientens fångster för att skapa **Upphörd typ**, **Privat använd
-   typ** och
-   **Samtidig typ**, alla med namn och beskrivning. Skapa **Upphört
-   testobjekt** med
-   Upphörd typ och status Upphört. Spara allt. Försök ta bort Upphörd typ:
-   felet ska förklara att användande innehåll måste hanteras först.
-2. Robin väljer **Nytt objekt**, typ Privat använd typ, namn
-   **Andras privata namn**, en fri textegenskap **Beskrivning** med **Privat
-   hemlig anteckning**, och
-   **Lägg i utkastet och stäng** utan att spara. Alex använder klienten för att
-   ta bort
-   Privat använd typ. Kontrollera avvisningen och att varken namn eller
-   beskrivning finns i svaret. Utför den separata kontrollen av privata
-   objektidentiteter vid denna avvisning enligt
-   [förberedelsen](assistant-client-preparation.md#fångster-för-mcp-04).
-3. Alex föreslår borttagning av Samtidig typ men sparar inte. Robin lägger
-   därefter **Senare privat användning**, typ Samtidig typ, i sitt utkast
-   utan att spara. Först nu ber Alex kontrollerade klienten spara hela utkastet.
-4. Kontrollera att sparandet avvisas, att definitionen finns kvar i
-   sparad katalog och att inget innehåll tas bort. Alex webbläsare ska
-   visa Upphört testobjekt men inte Robins privata förslag. Välj först
-   **Tabell → Filter → Ta med upphörda** och stäng filtret. Robin ska
-   fortfarande se båda sina förslag i **Visa utkastet**.
-5. Starta om och ladda om Robins profil. Öppna båda förslagens fulla
-   läsdialoger. **Andras privata namn** ska ha typen **Privat använd typ**
-   och beskrivningen **Privat hemlig anteckning**.
-   **Senare privat användning** ska ha typen **Samtidig typ** och
-   inga fria egenskaper. Alex försöker åter ta bort Privat
-   använd typ och spara borttagningen av Samtidig typ enligt förberedelsen.
-   Båda försöken ska avvisas utan privata namn eller beskrivningar.
-   Utför förberedelsens separata kontroll av privata objektidentiteter
-   vid båda avvisningarna efter omstarten. Alex sparade katalog ska innehålla
-   Samtidig typ; Robins båda förslag och historiken ska vara oförändrade.
+1. Alex skapar Upphörd typ och Privat använd typ med klienten samt
+   Upphört testobjekt av Upphörd typ med status Upphört. Spara allt.
+2. Robin väljer Nytt objekt, Privat använd typ och namnet Andras privata
+   namn. Lägg till textegenskapen Beskrivning med Privat hemlig anteckning.
+   Lägg i utkastet och stäng utan att spara.
+3. Alex föreslår borttagning av Upphörd typ med klienten. Läs det fulla
+   förslaget för Upphört testobjekt i webbläsarens utkast: det tas bort.
+   Kasta typborttagningsförslaget med klienten. Ladda om och kontrollera
+   att objektborttagningsförslaget försvinner.
+4. Alex föreslår borttagning av båda typerna igen. Granska utkastet i
+   webbläsaren: Upphört testobjekt ingår, Robins namn och beskrivning visas
+   inte. Ge klienten ett separat besked att spara hela utkastet.
+5. Robin laddar om, läser hela sitt förslag och ser att det behöver rättas.
+   Namn och beskrivning finns kvar. Ett sparförsök genom Robins klient
+   avvisas och förslaget ligger kvar.
+6. Robin skapar en ny typ med namnet Privat använd typ, beskrivningen
+   Ny egen betydelse och en ny identitet. Rätta objektförslaget med klienten
+   till den nya typen, behåll övriga värden och granska i webbläsaren.
+   Spara hela utkastet separat.
+7. Starta om och ladda om. Robin ser Andras privata namn i Tabell.
+   Upphört testobjekt är borttaget. Den gamla typidentiteten återkommer inte.
 
 **Förväntat resultat:**
 
-- Upphört innehåll och beständiga utkast skyddar typer även vid sparandet.
-- Ingen del sparas när en definition blockeras. Privat arbete röjs inte.
+- MCP och webbläsare visar samma utkast med fullständiga följder.
+- Andras utkast hindrar inte borttagning och röjs inte i granskningen.
+- Vanlig rättning bevarar privata värden. Samlat sparande kräver giltigt
+  innehåll och nya typer återställer inte borttagna identiteter.
 
 ## Äldre historik
 

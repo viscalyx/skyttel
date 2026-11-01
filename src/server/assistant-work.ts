@@ -141,7 +141,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
         invalid_request:
           'Ogiltiga uppgifter. Rätta förslaget enligt verktygets egenskaps- och typdefinitioner.',
         definition_in_use:
-          'Definitionen används av aktuellt eller upphört innehåll eller beständiga utkast. Ta bort användande objekt eller samband, eller byt deras typ först. Andras privata förslag visas inte. Inget innehåll tas bort automatiskt.',
+          'Typborttagningen har nya följder. Föreslå den igen mot aktuellt underlag, granska hela utkastet och invänta ett nytt uttryckligt sparbesked. Inget sparades.',
         result_unknown:
           'Utfallet är okänt. Kontrollera sparförsöket före nya ändringar eller återförsök. Påstå inte att något sparades eller återställdes.',
       };
@@ -211,7 +211,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'propose_object_type',
     {
       description:
-        'Föreslå en ny objekttyp eller ersätt dess namn och gemensamma beskrivning, även förifyllda typer. value null föreslår borttagning. En typ ger inga egna fält: fria egenskaper hör till enskilda objekt och bevaras vid typbyte. Använd stabila typ-ID och aktuell revision. Använda typer skyddas vid sparandet. Hela ditt utkast returneras.',
+        'Föreslå en ny objekttyp eller ersätt dess namn och gemensamma beskrivning, även förifyllda typer. value null föreslår borttagning. En typ ger inga egna fält: fria egenskaper hör till enskilda objekt och bevaras vid typbyte. Använd stabila typ-ID och aktuell revision. Borttagning samlar också användande objekt och deras anslutna samband i utkastet, även upphört innehåll. Granska hela gruppen före samlat sparande. Andras utkast hindrar inte borttagning. Hela ditt utkast returneras.',
       inputSchema: z
         .object({
           ...versionFields,
@@ -274,7 +274,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'propose_relationship_type',
     {
       description:
-        'Föreslå en ny eller ändrad sambandstyp med namn, gemensam beskrivning och benämning i båda riktningarna. Behåll stabila typ-ID. Fria egenskaper hör till enskilda samband och bevaras vid typbyte. value null föreslår borttagning endast när typen inte används; inga samband tas bort automatiskt. Hela ditt utkast returneras.',
+        'Föreslå en ny eller ändrad sambandstyp med namn, gemensam beskrivning och benämning i båda riktningarna. Behåll stabila typ-ID. Fria egenskaper hör till enskilda samband och bevaras vid typbyte. value null föreslår borttagning av typen och dess samband, även upphörda, i en samlad granskning. Ändpunkternas objekt behålls. Andras utkast hindrar inte borttagning. Hela ditt utkast returneras.',
       inputSchema: z
         .object({
           ...versionFields,

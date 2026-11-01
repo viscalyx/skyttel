@@ -498,9 +498,9 @@ test('unknown prior failures and empty history produce server wording without cr
 
 test.each([
   [
-    'definition_in_use',
+    'type_conflict',
     null,
-    'Typen används fortfarande av objekt, samband eller utkast. De behöver hanteras innan typen kan tas bort.',
+    'Uppdraget kunde inte slutföras. Kontrollera det aktuella utkastet och eventuella sparförsök innan arbetet fortsätter.',
   ],
 ] as const)(
   'a real %s refusal is preserved and reported from server facts without applying the requested type mutation',
@@ -515,7 +515,7 @@ test.each([
           version: draft.version,
           contentVersion: draft.contentVersion,
           id: 'field-type',
-          baseRevision: 1,
+          baseRevision: 0,
           value: null,
         }),
       ];
@@ -552,6 +552,50 @@ test.each([
     expect(model.requests).toHaveLength(2);
   },
 );
+
+test('the built-in conversation stages the same reviewed type cascade without saving', async () => {
+  const model = textModel((request) => {
+    if (lastToolResult(request)) return [modelMessage('Förslaget finns i ditt utkast.')];
+    const input = request.input.findLast((item) => item.role === 'user');
+    const { draft } = JSON.parse(String(input?.content));
+    return [
+      modelTool('propose_object_type', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        id: 'cascade-type',
+        baseRevision: 1,
+        value: null,
+      }),
+    ];
+  });
+  await setup(model.provider);
+  await checked(
+    await post('map/object-type', {
+      id: 'cascade-type',
+      version: 0,
+      baseRevision: null,
+      value: { name: 'Utrustning', description: '' },
+    }),
+  );
+  await object('lamp', { typeId: 'cascade-type', lifecycle: 'ended' });
+  await checked(
+    await post('map/save', {
+      version: (await map()).draft.version,
+      operationId: 'cascade-baseline',
+    }),
+  );
+  session = await read();
+  const before = await map();
+  const result = await message('Föreslå borttagning av typen Utrustning.');
+  expect(result.phase).toBe('ready');
+  const after = await map();
+  expect(after.objects).toEqual(before.objects);
+  expect(after.types).toEqual(before.types);
+  expect(after.draft.changes).toContainEqual(expect.objectContaining({ id: 'lamp', after: null }));
+  expect(after.draft.objectTypes).toContainEqual(
+    expect.objectContaining({ id: 'cascade-type', after: null }),
+  );
+});
 
 test.each(['object', 'relationship'] as const)(
   '%s selection acknowledgement checks identity, generation, draft and display outcome',

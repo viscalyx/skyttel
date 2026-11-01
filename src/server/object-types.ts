@@ -8,10 +8,10 @@ import { definitionUsage } from './definition-usage.js';
 import { MapError } from './map-error.js';
 import { mapTombstones } from './map-tombstones.js';
 
-export function objectTypes(database: Database.Database, householdId: string, userId: string) {
+export function objectTypes(database: Database.Database, householdId: string, _userId: string) {
   const tombstones = mapTombstones(database, householdId);
   const restorations = definitionRestorations(database, householdId);
-  const usage = definitionUsage(database, householdId, userId);
+  const usage = definitionUsage(database, householdId);
   function read(includeRemoved = false): ObjectType[] {
     return database
       .prepare(`SELECT t.* FROM object_type t
@@ -103,7 +103,6 @@ export function objectTypes(database: Database.Database, householdId: string, us
       if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('type_conflict');
       if (body.value === null) {
         if (!before && !existing) throw new MapError('type_conflict');
-        usage.assertUnused('objectType', body.id, draft);
         draft.objectTypes = (draft.objectTypes ?? []).filter((item) => item.id !== body.id);
         if (before) draft.objectTypes.push({ id: body.id, before, after: null });
         return { ...draft, version: draft.version + 1 };

@@ -50,6 +50,8 @@ export interface MapObject extends ObjectValue {
   revision: number;
 }
 export interface DraftChange {
+  removedWithTypes?: string[];
+  suppressed?: Omit<DraftChange, 'suppressed' | 'removedWithTypes'>;
   proposedAt?: string;
   /** Private identifier of a complete object-form staging attempt. */
   stagingId?: string;
@@ -159,6 +161,7 @@ export interface RelationshipChange {
   objectNames?: Record<string, string>;
 }
 export interface DraftRelationshipChange extends RelationshipChange {
+  removedWithTypes?: string[];
   /** Server-issued authority to correct this retained proposal after endpoint loss. */
   endpointRecovery?: { removedRevision: number };
   // Object deletions that require this generated relationship deletion.

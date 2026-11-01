@@ -1,7 +1,7 @@
 # Manuella testfall för borttagning av typer
 
-Prova granskad katalogborttagning, användningsspärrar utan privat
-informationsläckage och läsning av historiska definitioner.
+Prova granskning av typborttagning med följder, bevarade utkast och
+vanlig rättning samt läsning av historiska definitioner.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -30,7 +30,7 @@ och stäng textvyn före fortsatt arbete i Inställningar eller Tabell.
 
 ## Borttagning och återställning
 
-### KATALOG-01: Granska, kasta och spara typbetydelse och oanvända typer
+### KATALOG-01: Granska, kasta och spara typborttagning med följder
 
 **Syfte:** Typbetydelse och båda typborttagningarna granskas som fullständiga
 privata förslag; kastning behåller katalogen oförändrad.
@@ -38,8 +38,9 @@ privata förslag; kastning behåller katalogen oförändrad.
 **Användare:** Alex, och Robin när två profiler anges.
 
 **Förutsättningar:** Spara Person med typbeskrivningen Gemensam betydelse och
-den egna oanvända typen Solcellsanläggning med beskrivningen En egen oanvänd
-typ. Använder är oanvänd.
+den egna typen Solcellsanläggning med beskrivningen Egen typ för soltak.
+Spara Soltaket av den typen, Huset av en annan typ och ett Använder-samband
+från Soltaket till Huset. Soltaket och sambandet har status Upphört.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -69,14 +70,16 @@ typ. Använder är oanvänd.
    och riktning, ändra Använder och välj Ta bort sambandstypen. Återgå till
    kartan.
 3. Granska Person-förslagets tidigare och nya beskrivning samt båda
-   borttagningsförslagens tidigare definitioner. Välj Kasta hela utkastet och
+   borttagningsförslagens tidigare definitioner. Läs också Soltaket och dess
+   samband som borttagningsförslag. Välj Kasta hela utkastet och
    bekräfta Ta bort hela utkastet. Kontrollera att katalogens tidigare
-   definitioner består.
+   definitioner, Soltaket och sambandet består.
 4. Upprepa samma ändring och typborttagningar. Öppna Objekttyper och
    Sambandstyper och riktning om respektive lista är stängd.
    Spara hela utkastet. Starta om,
    ladda om och läs Rättad gemensam betydelse i Person-definitionen. De två
-   valda typerna ska saknas, övriga finnas kvar.
+   valda typerna, Soltaket och sambandet ska saknas. Huset och övriga typer
+   ska finnas kvar.
 5. Öppna Rapporter och Visa ändringarna för det senaste sparandet. Läs de båda
    borttagna definitionerna och Person-beskrivningens före och efter.
 
@@ -87,18 +90,17 @@ typ. Använder är oanvänd.
 - Separat samlat sparande ändrar bara det valda underlaget och bevarar läsbar
   historik efter omstart.
 
-### KATALOG-02: Privat och upphörd användning spärrar typborttagning
+### KATALOG-02: Bevara andras utkast och rätta med vanliga formulär
 
-**Syfte:** Privata utkast och sparat upphört innehåll spärrar borttagning av
-använda objekt- och sambandstyper.
+**Syfte:** Typborttagning hindras inte av andras utkast. Saknade typer kan
+rättas för ännu osparat innehåll utan att privata värden försvinner.
 
-**Användare:** Alex, och Robin när två profiler anges.
+**Användare:** Alex och Robin i separata webbläsarprofiler.
 
 **Förutsättningar:** Alex sparar Garaget med en annan objekttyp än Person.
-Robin lägger Privat provnamn av typen Person med den fria textegenskapen
-Serienummer: PRIVAT-PROVVÄRDE i sitt utkast. Robin föreslår också ett
-Använder-samband till Garaget. Objekt och samband har uttrycklig status
-Upphört.
+Robin lägger Privat provnamn av typen Person med textegenskapen Serienummer:
+PRIVAT-PROVVÄRDE i sitt utkast, samt ett Använder-samband till Garaget.
+Objekt och samband har status Upphört. Spara inte Robins utkast.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -110,10 +112,10 @@ Upphört.
     "spec": "tests/integration/definition-removal.spec.ts",
     "caseId": "KATALOG-02"
   },
-  "reference": "Chromium, riktig lokal server och SQLite; konfiguration enligt förutsättningarna.",
+  "reference": "Chromium, två profiler, riktig lokal server och SQLite; upphörda privata tillägg med saknade objekt- och sambandstyper.",
   "outcomes": [
-    "Privata utkast och sparat upphört innehåll spärrar borttagning av använda objekt- och sambandstyper.",
-    "Felbesked ger handlingsväg utan att röja privata namn, egenskaper eller identiteter; avvisningen ändrar inget innehåll."
+    "Alex kan granska och spara båda typborttagningarna utan att se Robins privata namn eller värden.",
+    "Robins förslag bevaras med konflikter och kan rättas genom ny objekttyp och val av befintlig sambandstyp före samlat sparande."
   ]
 }
 ```
@@ -122,23 +124,28 @@ Upphört.
 
 **Steg:**
 
-1. Starta om med samma databas. Robin läser sitt hela objekt- och
-   sambandsförslag. Alex öppnar Typer och försöker ta bort Person. Läs
-   felbeskedet.
-2. Alex försöker ta bort sambandstypen Använder. Läs att sambanden och deras
-   ändpunkter behöver hanteras. Kontrollera att Alex inte ser Robins privata
-   namn eller egenskapsvärde i kartan eller beskeden.
-3. Robin läser åter sina hela förslag och sparar hela utkastet separat.
-   Markera Ta med upphörda i tabellens filter och läs objektet och sambandet.
-4. Alex laddar om och upprepar de två typborttagningsförsöken mot det nu
-   sparade upphörda innehållet.
+1. Starta om med samma databas. Robin läser sina fullständiga förslag.
+2. Alex öppnar Typer och tar bort Person och Använder. Återgå till kartan
+   och granska utkastet. Robins namn och serienummer ska inte visas.
+   Spara hela Alex utkast.
+3. Robin laddar om och läser sina förslag igen. Namn, status och serienummer
+   finns kvar, men utkastet visar att förslagen behöver rättas.
+4. Robin öppnar Inställningar → Typer → Ny objekttyp. Ange Person med
+   beskrivningen Ny egen betydelse och lägg typförslaget i utkastet.
+5. Återgå till kartan. Markera Ta med upphörda i Tabellens filter.
+   Redigera Privat provnamn, välj den nya typen och lägg ändringen i
+   utkastet. Öppna Samband för Privat provnamn, redigera sambandet och välj
+   en annan befintlig sambandstyp. Lägg ändringen i utkastet.
+6. Spara hela utkastet. Starta om och ladda om. Markera Ta med upphörda igen.
+   Läs Privat provnamn i Tabell:
+   serienumret och typnamnet Person ska finnas kvar.
 
 **Förväntat resultat:**
 
-- Privata utkast och sparat upphört innehåll spärrar borttagning av använda
-  objekt- och sambandstyper.
-- Felbesked ger handlingsväg utan att röja privata namn, egenskaper eller
-  identiteter; avvisningen ändrar inget innehåll.
+- Båda typborttagningarna går att spara utan privat röjande.
+- Robins fullständiga förslag ligger kvar och kräver rättning före sparande.
+- Den nya typen och rättade förslag sparas tillsammans. Den gamla typens
+  identitet återkommer inte; samma namn innebär inte samma typ.
 
 ### KATALOG-03: läs borttagna definitioner utan att ändra eget arbete
 
@@ -147,8 +154,9 @@ Upphört.
 **Användare:** Alex.
 
 **Förutsättningar:** Spara Lo Exempel som Person, Garaget som en annan typ
-och sambandet Lo Exempel Använder Garaget. Ta bort Lo och sambandet och
-spara. Ta sedan bort de oanvända typerna Person och Använder och spara.
+och sambandet Lo Exempel Använder Garaget. Ta bort typen Person, granska
+Lo och sambandet som följder och spara. Ta sedan bort den oanvända
+sambandstypen Använder och spara.
 Lägg ett oberoende objekt med en annan typ i utkastet utan att spara.
 
 **Integrationstest:**

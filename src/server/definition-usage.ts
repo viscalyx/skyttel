@@ -2,25 +2,9 @@ import type Database from 'better-sqlite3';
 import type { MapDraft, ObjectValue, RelationshipValue } from '../shared/map.js';
 import { MapError } from './map-error.js';
 
-export function definitionUsage(database: Database.Database, householdId: string, userId: string) {
-  function otherDrafts(): MapDraft[] {
-    return (
-      database
-        .prepare(
-          'SELECT changes, relationships, objectTypes, relationshipTypes FROM map_draft WHERE householdId = ? AND userId != ?',
-        )
-        .all(householdId, userId) as Record<string, string>[]
-    ).map((row) => ({
-      version: 0,
-      changes: JSON.parse(row.changes),
-      relationships: JSON.parse(row.relationships),
-      objectTypes: JSON.parse(row.objectTypes),
-      relationshipTypes: JSON.parse(row.relationshipTypes),
-    }));
-  }
+export function definitionUsage(database: Database.Database, householdId: string) {
   return {
     assertUnused(kind: 'objectType' | 'relationshipType', id: string, draft: MapDraft) {
-      const others = otherDrafts();
       if (kind === 'objectType') {
         const objects = new Map(
           (
@@ -42,15 +26,7 @@ export function definitionUsage(database: Database.Database, householdId: string
           else objects.delete(change.id);
         }
         const uses = (value: Pick<ObjectValue, 'typeId'> | null) => value?.typeId === id;
-        if (
-          [...objects.values()].some(uses) ||
-          others.some(
-            (other) =>
-              other.changes.some((change) => uses(change.after)) ||
-              other.objectTypes?.some((change) => change.id === id && change.after),
-          )
-        )
-          throw new MapError('definition_in_use');
+        if ([...objects.values()].some(uses)) throw new MapError('definition_in_use');
       } else {
         const edges = new Map(
           (
@@ -70,15 +46,7 @@ export function definitionUsage(database: Database.Database, householdId: string
           else edges.delete(change.id);
         }
         const uses = (value: Pick<RelationshipValue, 'typeId'> | null) => value?.typeId === id;
-        if (
-          [...edges.values()].some(uses) ||
-          others.some(
-            (other) =>
-              other.relationships?.some((change) => uses(change.after)) ||
-              other.relationshipTypes?.some((change) => change.id === id && change.after),
-          )
-        )
-          throw new MapError('definition_in_use');
+        if ([...edges.values()].some(uses)) throw new MapError('definition_in_use');
       }
     },
   };

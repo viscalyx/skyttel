@@ -330,32 +330,30 @@ webbläsarens historik med Text/SYNTH-42 respektive Tal/42.
 
 ### Fångster för MCP-04
 
-Skapa `ended-type`, **Upphörd typ**, `private-type`, **Privat använd typ**,
-och `race-type`, **Samtidig typ**, med tom typbeskrivning.
-Skapa `ended`, **Upphört testobjekt**, typ `ended-type`, utan fria egenskaper
-och `lifecycle: "ended"`. Granska och spara hela utkastet.
+Skapa `ended-type`, **Upphörd typ**, och `private-type`, **Privat använd typ**,
+med tom typbeskrivning. Skapa `ended`, **Upphört testobjekt**, typ
+`ended-type`, utan fria egenskaper och med `lifecycle: "ended"`.
+Granska och spara hela utkastet.
 
 Slå upp aktuell typrevision inför varje borttagningsförslag. Föreslå
 `propose_object_type` med typens ID, revision och `value: null`.
-Upphörd typ ska direkt ge `definition_in_use`. Följ Robins fulla
-objektsteg i MCP-04 innan Alex försöker Privat använd typ: avvisningen
-får inte innehålla Robins namn, beskrivning eller objektidentitet.
+Svaret ska innehålla definitionen och dess innehåll som borttagningsförslag.
+Kasta det första förslaget med `discard_proposal`, `kind: "objectType"`
+och `id: "ended-type"`. Läs utkastet och kontrollera att följderna försvinner.
 
-Alex skickar borttagningsförslaget för Samtidig typ före Robins andra
-objektförslag. Ladda om Robins sida före detta nya formulärförslag om
-klienten ändrar Robins utkast mellan webbläsarstegen. Först därefter ger
-Alex sparbeskedet. Det ska avvisas med
-`definition_in_use`. Starta om med samma databas; inga privata förslag
-får sparas eller försvinna.
+Efter Robins formulärförslag skickar Alex borttagning för båda typerna.
+Svaren får inte innehålla Robins privata namn, beskrivning eller objekt-ID.
+Granska hela utkastet och skicka ett separat `save_draft` med ett nytt
+operations-ID. Läs Robins utkast med Robins egen anslutning: dess innehåll
+ska finnas kvar. Robins `save_draft` ska ge `type_conflict` utan delsparande.
 
-Efter omstarten läser Robin sitt fulla utkast med `read` i sin egen
-anslutning. Alex upprepar borttagningsfångsten för Privat använd typ med
-dagens revision och en ny etikett: förvänta `definition_in_use` utan
-Robins privata namn, beskrivningar eller objektidentiteter. Alex fångar
-sedan sparandet av det kvarvarande förslaget för Samtidig typ med
-`capture-save blocked-after-restart` och skickar det. Även detta ska ge
-`definition_in_use` utan privata uppgifter. Läs Robins utkast och den
-sparade historiken igen: båda ska vara oförändrade.
+Robin skapar `replacement-type` med namnet **Privat använd typ** och
+beskrivningen **Ny egen betydelse** genom `propose_object_type`.
+Kopiera Robins fullständiga objektförslag, behåll dess ID och övriga värden,
+byt `typeId` till `replacement-type` och skicka `propose_object`.
+Granska och ge ett nytt sparbesked med ett nytt operations-ID.
+Efter omstart ska kartan ha objektets bevarade värden, den nya typen och
+ingen aktiv definition med ID `private-type` eller `ended-type`.
 
 ## Familjeärendet, AI-08
 

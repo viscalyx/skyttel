@@ -116,9 +116,12 @@ oberoende av deras typ. Assistenten använder samma definitioner, värden
 och privata utkast som formulären.
 
 Ett typbyte behåller objektets identitet, samband och fria egenskaper.
-En använd definition kan inte tas bort, även om innehållet är upphört
-eller bara används i ett beständigt privat utkast. Felet visar inte
-andra användares privata uppgifter.
+Typborttagning samlar också användande innehåll, även upphört, i ditt
+utkast för granskning. En objekttyp omfattar objekten och deras anslutna
+samband; en sambandstyp lämnar ändpunkternas objekt kvar. Andras utkast
+hindrar inte borttagningen och visas inte. Berörda förslag finns kvar
+hos respektive användare med konflikter som rättas i vanliga flöden.
+Läs [borttagning av typer](definition-removal.md) före samlat sparande.
 
 Be om relevant historik för att läsa tidigare värden, samband, tidpunkt
 och författare. Assistenten använder samma sparade historik som

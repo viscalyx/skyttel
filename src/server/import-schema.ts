@@ -82,6 +82,7 @@ const draftRelationship = z
     proposedAt: z.iso.datetime().optional(),
     endpointRecovery: z.object({ removedRevision: positive }).strict().optional(),
     removedWithObjects: z.array(id).optional(),
+    removedWithTypes: z.array(id).optional(),
     suppressed: z
       .object({
         ...relationshipChangeShape,
@@ -113,7 +114,7 @@ const mergeShape = {
     .strict()
     .optional(),
 };
-const draftChange: z.ZodType<DraftChange> = z
+const objectChange = z
   .object({
     id,
     before: object.nullable(),
@@ -124,6 +125,10 @@ const draftChange: z.ZodType<DraftChange> = z
     stagingId: z.uuid().optional(),
   })
   .strict();
+const draftChange: z.ZodType<DraftChange> = objectChange.extend({
+  removedWithTypes: z.array(id).optional(),
+  suppressed: objectChange.optional(),
+});
 const receipt = z
   .object({
     operationId: id,

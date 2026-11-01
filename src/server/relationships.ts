@@ -109,6 +109,11 @@ export function relationships(database: Database.Database, householdId: string) 
       const removal = receipt.relationships?.find(({ id }) => id === change.id);
       if (!removal) continue;
       if (
+        receipt.objectTypes?.some((change) => !change.after) ||
+        receipt.relationshipTypes?.some((change) => !change.after)
+      )
+        return;
+      if (
         !removal.after &&
         removal.before &&
         removal.before.revision + 1 === removedRevision(change.id) &&
@@ -165,7 +170,7 @@ export function relationships(database: Database.Database, householdId: string) 
             change.suppressed?.after?.targetId === id,
         )
         .map(({ id }) => id);
-      if (change.removedWithObjects.length) return [change];
+      if (change.removedWithObjects.length || change.removedWithTypes?.length) return [change];
       return change.suppressed ? [change.suppressed] : [];
     });
   }

@@ -49,7 +49,9 @@ export function profileImages(database: Database.Database, householdId: string, 
   const draftReference = `EXISTS (SELECT 1 FROM map_draft d, json_each(d.changes) j
     WHERE d.householdId = i.householdId AND
       (json_extract(j.value, '$.before.profileImageId') = i.id
-         OR json_extract(j.value, '$.after.profileImageId') = i.id)`;
+         OR json_extract(j.value, '$.after.profileImageId') = i.id
+         OR json_extract(j.value, '$.suppressed.before.profileImageId') = i.id
+         OR json_extract(j.value, '$.suppressed.after.profileImageId') = i.id)`;
   function read(id: string) {
     const image = database
       .prepare(`SELECT i.* FROM profile_image i

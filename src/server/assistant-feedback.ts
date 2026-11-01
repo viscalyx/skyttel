@@ -29,7 +29,7 @@ export function assistantFailureMessage(code: string): string {
     case 'assistant_object_missing':
       return 'Posten finns inte i den aktuella kartan eller utkastet och kunde därför inte markeras.';
     case 'definition_in_use':
-      return 'Typen används fortfarande av objekt, samband eller utkast. De behöver hanteras innan typen kan tas bort.';
+      return 'Typborttagningen har nya följder som behöver granskas i utkastet före ett nytt sparbesked.';
     case 'invalid_properties':
       return 'En egenskap innehåller ett ogiltigt värde. Kontrollera etikett och datatyp.';
     case 'invalid_request':

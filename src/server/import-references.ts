@@ -161,7 +161,18 @@ export function validateImportReferences(
   ) {
     for (const change of changes) {
       const id = 'id' in change ? change.id : (change.before?.id ?? change.after?.id);
-      requireReference(id && (change.before || change.after));
+      requireReference(
+        id && (change.before || change.after || ('suppressed' in change && change.suppressed)),
+      );
+      if ('suppressed' in change && change.suppressed) {
+        requireReference(
+          change.after === null &&
+            change.suppressed.id === id &&
+            change.suppressed.after &&
+            isDeepStrictEqual(change.before, change.suppressed.before),
+        );
+        changesForSuppression(change.suppressed, types, edgeTypes);
+      }
       const meanings = [change.type, ...(change.beforeType ? [change.beforeType] : []), ...types];
       if (change.before)
         object(change.before, id, [...(change.beforeType ? [change.beforeType] : []), ...meanings]);
@@ -191,6 +202,13 @@ export function validateImportReferences(
         requireReference(images.get(merge.imageCopy.copiedImageId)?.objectId === merge.survivorId);
       }
     }
+  }
+  function changesForSuppression(
+    change: DraftChange,
+    types: ObjectType[],
+    edgeTypes: Map<string, RelationshipType>,
+  ) {
+    changes([change], types, edgeTypes);
   }
   function edgeChange(
     change: DraftRelationshipChange | SavedRelationshipChange,
@@ -257,13 +275,21 @@ export function validateImportReferences(
     recovery(change);
     if (change.suppressed) recovery(change.suppressed);
     const causes = change.removedWithObjects;
-    requireReference(!change.suppressed || causes?.length);
-    if (!causes) {
+    const typeCauses = change.removedWithTypes ?? [];
+    requireReference(!change.removedWithTypes || typeCauses.length);
+    unique(typeCauses, (id) => id);
+    for (const id of typeCauses)
+      requireReference(
+        draft.relationshipTypes.some((type) => type.id === id && !type.after) &&
+          (change.suppressed?.after ?? change.before)?.typeId === id,
+      );
+    requireReference(!change.suppressed || causes?.length || typeCauses.length);
+    if (!causes?.length && !typeCauses.length) {
       requireReference(change.before || change.after);
       return;
     }
-    unique(causes, (id) => id);
-    requireReference(causes.length && !change.after);
+    unique(causes ?? [], (id) => id);
+    requireReference(!change.after);
     const saved = content.relationships.find((row) => row.id === change.id && !row.deleted);
     const endpoints = new Set(
       [saved, change.before, change.suppressed?.after].flatMap((value) =>
@@ -271,10 +297,11 @@ export function validateImportReferences(
       ),
     );
     const expected = draft.changes
-      .filter(({ before, after, id }) => before && !after && endpoints.has(id))
+      .filter(({ after, id }) => !after && endpoints.has(id))
       .map(({ id }) => id);
     requireReference(
-      causes.length === expected.length && causes.every((id) => expected.includes(id)),
+      (causes?.length ?? 0) === expected.length &&
+        (causes ?? []).every((id) => expected.includes(id)),
     );
     if (change.suppressed)
       requireReference(
@@ -344,6 +371,18 @@ export function validateImportReferences(
       ),
     ]);
     changes(draft.changes, types, edgeTypes);
+    for (const change of draft.changes) {
+      const causes = change.removedWithTypes ?? [];
+      requireReference(!change.removedWithTypes || causes.length);
+      unique(causes, (id) => id);
+      requireReference(!change.suppressed || causes.length);
+      for (const id of causes)
+        requireReference(
+          !change.after &&
+            draft.objectTypes.some((type) => type.id === id && !type.after) &&
+            (change.suppressed?.after ?? change.before)?.typeId === id,
+        );
+    }
     unique(draft.relationships, ({ id }) => id);
     for (const change of draft.relationships) {
       if (change.after) requireReference(Boolean(change.after.sourceId && change.after.targetId));

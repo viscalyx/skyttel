@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { draftConflicts } from '../../../src/shared/draft-conflicts.js';
 import type { MapState, SaveReceipt } from '../../../src/shared/map.js';
@@ -158,6 +159,342 @@ test('unused prefilled definitions are removed only by whole save and remain rea
   expect((await (await client.request(`${path}/history`)).json()).history[0]).toEqual(receipt);
 });
 
+test('object type deletion stages and saves objects and incident relationships together', async () => {
+  const initial = await read();
+  await object('source', initial.types[0].id, { lifecycle: 'ended' });
+  await object('target', initial.types[1].id);
+  await relationship('connection', initial.relationshipTypes[0].id);
+  await save('setup-cascade');
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  const staged = await read();
+  expect(staged.objects).toHaveLength(2);
+  expect(staged.draft.changes).toEqual([expect.objectContaining({ id: 'source', after: null })]);
+  expect(staged.draft.relationships).toEqual([
+    expect.objectContaining({ id: 'connection', after: null }),
+  ]);
+  const receipt = await save('save-cascade');
+  expect(receipt.changes).toHaveLength(1);
+  expect(receipt.relationships).toHaveLength(1);
+  expect((await read()).objects.map(({ id }) => id)).toEqual(['target']);
+  expect((await read()).relationships).toEqual([]);
+  expect((await (await client.request(`${path}/history`)).json()).history[0]).toEqual(receipt);
+});
+
+test('canceling overlapping type cascades restores suppressed work and keeps independent removals', async () => {
+  const state = await read();
+  const type = state.types[0],
+    edgeType = state.relationshipTypes[0];
+  await object('source', type.id);
+  await object('target', state.types[1].id);
+  await object('independent', type.id);
+  await object('retagged', type.id);
+  await relationship('connection', edgeType.id);
+  await save('baseline');
+  await object('source', type.id, {
+    name: 'Unfinished edit',
+    properties: [{ id: 'note', label: 'Note', value: 'Keep this', kind: 'text' }],
+  });
+  await object('new', type.id, { name: 'Unfinished addition' });
+  await object('retagged', type.id, { typeId: state.types[1].id });
+  await object('independent', type.id, null);
+  await relationship('connection', edgeType.id, {
+    properties: [{ id: 'edge-note', label: 'Note', value: 'Private edge', kind: 'text' }],
+  });
+  await relationship('fresh-edge', edgeType.id, { sourceId: 'target', targetId: 'source' });
+  const unfinished = (await read()).draft;
+  expect((await definition('object-type', type.id, null)).status).toBe(200);
+  expect((await definition('relationship-type', edgeType.id, null)).status).toBe(200);
+  expect(
+    (
+      await post('discard-change', {
+        version: (await read()).draft.version,
+        kind: 'objectType',
+        id: type.id,
+      })
+    ).status,
+  ).toBe(200);
+  const partial = (await read()).draft;
+  expect(partial.changes).toHaveLength(unfinished.changes.length);
+  expect(partial.changes).toEqual(expect.arrayContaining(unfinished.changes));
+  expect(partial.relationships).toHaveLength(2);
+  expect(partial.relationships?.every((change) => change.after === null)).toBe(true);
+  expect(
+    (
+      await post('discard-change', {
+        version: partial.version,
+        kind: 'relationshipType',
+        id: edgeType.id,
+      })
+    ).status,
+  ).toBe(200);
+  expect((await read()).draft.relationships).toEqual(unfinished.relationships);
+});
+
+test('export and import retain cancelable type cascades including unsaved objects', async () => {
+  const initial = await read();
+  await object('source', initial.types[0].id);
+  await object('target', initial.types[1].id);
+  await save('archive-baseline');
+  await object('source', initial.types[0].id, { name: 'Edited source' });
+  await object('new', initial.types[0].id, { name: 'Retained new object' });
+  await relationship('new-edge', initial.relationshipTypes[0].id, { sourceId: 'new' });
+  const original = (await read()).draft;
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  const householdPath = path.replace('/map', '');
+  const ready = await (await client.json(`${householdPath}/exports`, {})).json();
+  const bytes = await (await client.request(`${householdPath}/exports/${ready.id}`)).arrayBuffer();
+  const uploaded = await client.request(`${householdPath}/imports`, {
+    method: 'POST',
+    headers: {
+      origin: fixture.config.origin,
+      'content-type': 'application/zip',
+      'X-Skyttel-Content-Version': String(initial.contentVersion),
+    },
+    body: bytes,
+  });
+  expect(uploaded.status, await uploaded.clone().text()).toBe(201);
+  const upload = await uploaded.json();
+  expect(
+    (
+      await client.json(`${householdPath}/imports/${upload.id}/confirm`, {
+        contentVersion: initial.contentVersion,
+        confirmed: true,
+      })
+    ).status,
+  ).toBe(200);
+  const state = await read();
+  expect(
+    (
+      await post('discard-change', {
+        version: state.draft.version,
+        contentVersion: state.contentVersion,
+        kind: 'objectType',
+        id: initial.types[0].id,
+      })
+    ).status,
+  ).toBe(200);
+  const restored = (await read()).draft;
+  expect(restored.changes).toEqual(expect.arrayContaining(original.changes));
+  expect(restored.relationships).toEqual(original.relationships);
+});
+
+test('a suppressed object keeps its private image available until cancellation or accepted deletion', async () => {
+  const state = await read();
+  await object('pictured', state.types[0].id);
+  await save('image-baseline');
+  const png = await sharp({ create: { width: 16, height: 16, channels: 3, background: '#447799' } })
+    .png()
+    .toBuffer();
+  const householdPath = path.replace('/map', '');
+  const uploaded = await client.request(`${householdPath}/profile-images/pictured`, {
+    method: 'POST',
+    headers: {
+      origin: fixture.config.origin,
+      'content-type': 'image/png',
+      'x-skyttel-draft-version': String((await read()).draft.version),
+      'x-skyttel-content-version': String(state.contentVersion),
+      'x-skyttel-object-revision': '1',
+    },
+    body: new Uint8Array(png).buffer,
+  });
+  expect(uploaded.status).toBe(200);
+  const original = (await read()).draft.changes[0];
+  const imagePath = `${householdPath}/profile-images/${original.after?.profileImageId}`;
+  expect((await definition('object-type', state.types[0].id, null)).status).toBe(200);
+  expect((await client.request(imagePath)).status).toBe(200);
+  expect(
+    (
+      await post('discard-change', {
+        version: (await read()).draft.version,
+        kind: 'objectType',
+        id: state.types[0].id,
+      })
+    ).status,
+  ).toBe(200);
+  expect((await read()).draft.changes).toEqual([original]);
+  expect((await client.request(imagePath)).status).toBe(200);
+  expect((await definition('object-type', state.types[0].id, null)).status).toBe(200);
+  await save('accept-image-suppression');
+  expect((await client.request(imagePath)).status).toBe(404);
+});
+
+test.each(['object', 'relationship'] as const)(
+  '%s content and definition edits remain separate conflicts after deletion',
+  async (kind) => {
+    const scenario = await removalScenario(kind);
+    const other = await member();
+    await scenario.use(other);
+    const route = kind === 'object' ? 'object-type' : 'relationship-type';
+    const type = kind === 'object' ? scenario.objectType : scenario.edgeType;
+    const value = {
+      name: 'Private meaning',
+      description: 'Private explanation',
+      ...(kind === 'relationship' ? { forwardLabel: 'links', reverseLabel: 'linked' } : {}),
+    };
+    expect((await definition(route, type.id, value, other)).status).toBe(200);
+    const pending = (await read(other)).draft;
+    expect((await scenario.remove()).status).toBe(200);
+    await save('combined-conflict');
+    expect((await read(other)).draft).toEqual(pending);
+    expect(
+      (await post('save', { version: pending.version, operationId: 'invalid-combined' }, other))
+        .status,
+    ).toBe(409);
+    expect((await definition(route, 'new-meaning', value, other)).status).toBe(200);
+    if (kind === 'object')
+      await object(
+        'private-object',
+        'new-meaning',
+        { ...pending.changes[0].after, typeId: 'new-meaning' },
+        other,
+      );
+    else
+      await relationship(
+        'private-edge',
+        'new-meaning',
+        { ...pending.relationships?.[0].after, typeId: 'new-meaning' },
+        other,
+      );
+    expect(
+      (
+        await post(
+          'save',
+          { version: (await read(other)).draft.version, operationId: 'still-invalid-type-edit' },
+          other,
+        )
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await post(
+          'discard-change',
+          {
+            version: (await read(other)).draft.version,
+            kind: kind === 'object' ? 'objectType' : 'relationshipType',
+            id: type.id,
+          },
+          other,
+        )
+      ).status,
+    ).toBe(200);
+    await save('ordinary-recovery', other);
+  },
+);
+
+test('new incident relationships and changed objects cannot be silently included in a type cascade', async () => {
+  const initial = await read();
+  await object('source', initial.types[0].id);
+  await object('target', initial.types[1].id);
+  await save('baseline-race');
+  const other = await member();
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  await relationship('new-connection', initial.relationshipTypes[0].id, {}, other);
+  await object('source', initial.types[0].id, { name: 'Concurrent name' }, other);
+  await save('concurrent-change', other);
+  const before = await read();
+  expect(
+    (await post('save', { version: before.draft.version, operationId: 'unreviewed-cascade' }))
+      .status,
+  ).toBe(409);
+  expect((await read()).objects).toEqual(before.objects);
+  expect((await read()).relationships).toEqual(before.relationships);
+  expect((await read()).draft).toEqual(before.draft);
+  expect(draftConflicts(before)).toContainEqual(
+    expect.objectContaining({
+      id: 'source',
+      connections: [expect.objectContaining({ id: 'new-connection' })],
+    }),
+  );
+  expect(
+    (
+      await post('discard-change', {
+        version: before.draft.version,
+        kind: 'objectType',
+        id: initial.types[0].id,
+      })
+    ).status,
+  ).toBe(200);
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  await save('new-reviewed-cascade');
+  expect((await read()).objects.map(({ id }) => id)).toEqual(['target']);
+});
+
+test('ordinary edits cannot resurrect cascade-deleted content even after creating new types', async () => {
+  const initial = await read();
+  await object('source', initial.types[0].id);
+  await object('target', initial.types[1].id);
+  await relationship('connection', initial.relationshipTypes[0].id);
+  await save('saved-content');
+  const other = await member();
+  await object('source', initial.types[0].id, { name: 'Retained edit' }, other);
+  await relationship(
+    'connection',
+    initial.relationshipTypes[0].id,
+    { properties: [{ id: 'note', label: 'Note', kind: 'text', value: 'Retained' }] },
+    other,
+  );
+  const pending = (await read(other)).draft;
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  await save('cascade-first');
+  expect((await read(other)).draft).toEqual(pending);
+  expect(
+    (
+      await definition(
+        'object-type',
+        'replacement',
+        { name: initial.types[0].name, description: '' },
+        other,
+      )
+    ).status,
+  ).toBe(200);
+  expect(
+    (
+      await post(
+        'draft',
+        {
+          version: (await read(other)).draft.version,
+          id: 'source',
+          baseRevision: 1,
+          value: { ...pending.changes[0].after, typeId: 'replacement' },
+        },
+        other,
+      )
+    ).status,
+  ).toBe(200);
+  expect(
+    (
+      await post(
+        'relationship',
+        {
+          version: (await read(other)).draft.version,
+          id: 'connection',
+          baseRevision: 1,
+          value: { ...pending.relationships![0].after, sourceId: 'target' },
+        },
+        other,
+      )
+    ).status,
+  ).toBe(200);
+  const corrected = await read(other);
+  expect(draftConflicts(corrected)).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ kind: 'object', id: 'source', current: null }),
+      expect.objectContaining({ kind: 'relationship', id: 'connection', current: null }),
+    ]),
+  );
+  expect(
+    (
+      await post(
+        'save',
+        { version: corrected.draft.version, operationId: 'no-resurrection' },
+        other,
+      )
+    ).status,
+  ).toBe(409);
+  expect((await read(other)).draft).toEqual(corrected.draft);
+  expect((await read()).types.some(({ id }) => id === 'replacement')).toBe(false);
+});
+
 test('removed individual properties remain readable in history after a later type explanation edit', async () => {
   const type = (await read()).types[0];
   expect((await definition('object-type', type.id, { ...type })).status).toBe(200);
@@ -186,71 +523,81 @@ test('removed individual properties remain readable in history after a later typ
 });
 
 test.each(['object', 'relationship'] as const)(
-  '%s removal protects current, ended, own and other private use without exposing private facts',
+  '%s deletion leaves other private use untouched and blocks its stale save atomically',
   async (kind) => {
     const scenario = await removalScenario(kind);
     const other = await member();
-    for (const actor of [client, other]) {
-      await scenario.use(actor);
-      const before = await read();
-      const otherBefore = await read(other);
-      const failure = await scenario.remove();
-      expect(failure.status).toBe(409);
-      expect(await failure.json()).toEqual({ error: scenario.error });
-      expect(await read()).toEqual(before);
-      expect(await read(other)).toEqual(otherBefore);
-      expect(
-        (await post('discard', { version: (await read(actor)).draft.version }, actor)).status,
-      ).toBe(200);
-    }
-    await scenario.use();
-    await save('current-use');
-    expect(await (await scenario.remove()).json()).toEqual({ error: scenario.error });
-    await scenario.use(client, true);
-    await save('ended-use');
-    const before = await read();
-    expect(await (await scenario.remove()).json()).toEqual({ error: scenario.error });
-    expect(await read()).toEqual(before);
-    if (kind === 'relationship') await relationship('private-edge', scenario.edgeType.id, null);
-    else await object('private-object', scenario.objectType.id, null);
+    fixture.database.prepare("UPDATE membership SET role = 'member'").run();
+    await scenario.use(other, true);
+    await object('independent', (await read()).types[1].id, {}, other);
+    const retained = (await read(other)).draft;
     expect((await scenario.remove()).status).toBe(200);
-    await save('remove-use-and-definition');
-    const final = await read();
-    if (kind === 'relationship') {
-      expect(final.relationships).toEqual([]);
-      expect(final.objects).toHaveLength(2);
-    } else expect(final.objects).toEqual([]);
+    await save('remove-with-private-use');
+    const state = await read(other);
+    expect(state.draft).toEqual(retained);
+    expect(draftConflicts(state)).toContainEqual(expect.objectContaining({ kind, type: null }));
+    const failed = await post(
+      'save',
+      { version: retained.version, operationId: 'stale-private-use' },
+      other,
+    );
+    expect(failed.status).toBe(409);
+    expect((await read(other)).draft).toEqual(retained);
+    expect((await read()).objects.some(({ id }) => id === 'independent')).toBe(false);
+    const newId = 'fresh-type';
+    const value = {
+      name: 'New meaning',
+      description: '',
+      ...(kind === 'relationship' ? { forwardLabel: 'connects', reverseLabel: 'connected' } : {}),
+    };
+    expect(
+      (
+        await definition(
+          kind === 'object' ? 'object-type' : 'relationship-type',
+          newId,
+          value,
+          other,
+        )
+      ).status,
+    ).toBe(200);
+    if (kind === 'relationship')
+      await relationship(
+        'private-edge',
+        newId,
+        { ...retained.relationships![0].after, typeId: newId },
+        other,
+      );
+    if (kind === 'object')
+      await object(
+        'private-object',
+        newId,
+        { ...retained.changes.find(({ id }) => id === 'private-object')!.after, typeId: newId },
+        other,
+      );
+    await save('corrected-private-use', other);
   },
 );
 
 test.each(['object', 'relationship'] as const)(
-  '%s removal rechecks new persisted private and saved use and rolls back the whole group',
+  '%s removal rechecks newly saved use and requires explicit renewed review',
   async (kind) => {
     const scenario = await removalScenario(kind);
     const other = await member();
     expect((await scenario.remove()).status).toBe(200);
-    await object('independent', (await read()).types[1].id);
     await scenario.use(other);
+    await save('concurrent-use', other);
     const before = await read();
-    expect(
-      await (
-        await post('save', { version: before.draft.version, operationId: 'private-use-race' })
-      ).json(),
-    ).toEqual({ error: scenario.error });
+    const failure = await post('save', {
+      version: before.draft.version,
+      operationId: 'saved-use-race',
+    });
+    expect(await failure.json()).toEqual({ error: scenario.error });
     expect((await read()).objects).toEqual(before.objects);
     expect((await read()).draft).toEqual(before.draft);
-    await save('concurrent-use', other);
-    const afterUse = await read();
-    expect(
-      await (
-        await post('save', { version: afterUse.draft.version, operationId: 'saved-use-race' })
-      ).json(),
-    ).toEqual({ error: scenario.error });
-    expect((await read()).objects).toEqual(afterUse.objects);
-    expect((await read()).draft).toEqual(before.draft);
-    expect((await (await client.request(`${path}/history`)).json()).history).not.toContainEqual(
-      expect.objectContaining({ operationId: 'saved-use-race' }),
-    );
+    expect((await scenario.remove()).status).toBe(200);
+    await save('reviewed-new-use');
+    expect((await read()).relationships).toEqual([]);
+    expect((await read()).objects).toHaveLength(kind === 'object' ? 0 : 2);
   },
 );
 
@@ -331,7 +678,7 @@ test.each(['object-type', 'relationship-type'] as const)(
 );
 
 test.each(['object-type', 'relationship-type'] as const)(
-  "another member's pending %s edit keeps the definition in use",
+  "another member's pending %s edit is preserved as a conflict after deletion",
   async (kind) => {
     const defined = {
       name: 'Egen typ',
@@ -341,14 +688,23 @@ test.each(['object-type', 'relationship-type'] as const)(
     expect((await definition(kind, 'shared-type', defined)).status).toBe(200);
     await save('define-type');
     const actor = await member();
+    fixture.database.prepare("UPDATE membership SET role = 'member'").run();
     expect(
       (await definition(kind, 'shared-type', { ...defined, name: 'Nytt namn' }, actor)).status,
     ).toBe(200);
-    const before = await read();
+    const before = (await read(actor)).draft;
     const removal = await definition(kind, 'shared-type', null);
-    expect(removal.status).toBe(409);
-    expect(await removal.json()).toEqual({ error: 'definition_in_use' });
-    expect(await read()).toEqual(before);
+    expect(removal.status).toBe(200);
+    await save('delete-edited-type');
+    expect((await read(actor)).draft).toEqual(before);
+    expect(draftConflicts(await read(actor))).toContainEqual(
+      expect.objectContaining({ id: 'shared-type', current: null }),
+    );
+    expect(
+      (await post('save', { version: before.version, operationId: 'stale-definition' }, actor))
+        .status,
+    ).toBe(409);
+    expect((await read(actor)).draft).toEqual(before);
   },
 );
 
