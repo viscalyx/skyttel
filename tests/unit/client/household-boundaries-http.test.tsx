@@ -359,17 +359,36 @@ test('type explanation edits and unused type removal stay private until explicit
   expect((await fixture.read()).types).toEqual(before.types);
 }, 30_000);
 
-test('a used type rejects definition removal without losing the type form or private properties', async () => {
+test('a used type stages a reviewed cascade while retaining unfinished private properties', async () => {
   const fixture = await readingFixture();
   const before = await fixture.read();
   const settings = await typeSettings();
   await userEvent.click(settings.getByRole('button', { name: 'Ändra typ: Läsobjekt' }));
   const form = within(settings.getByRole('group', { name: 'Objekttypens definition' }));
-  await userEvent.type(form.getByLabelText('Typens namn'), ' med oskickad text');
   await userEvent.click(form.getByRole('button', { name: 'Ta bort objekttypen' }));
-  await screen.findByText(/Typen används fortfarande i kartan eller privata utkast/);
-  expect(await fixture.read()).toEqual(before);
-  expect(form.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' })).toBeTruthy();
+  await waitFor(() =>
+    expect(settings.queryByRole('group', { name: 'Objekttypens definition' })).toBeNull(),
+  );
+  const staged = await fixture.read();
+  expect(staged.types).toEqual(before.types);
+  expect(staged.objects).toEqual(before.objects);
+  expect(staged.relationships).toEqual(before.relationships);
+  expect(staged.draft.objectTypes).toEqual([
+    expect.objectContaining({ id: 'read-type', after: null }),
+  ]);
+  expect(staged.draft.changes).toHaveLength(3);
+  expect(staged.draft.changes.every(({ after }) => after === null)).toBe(true);
+  expect(staged.draft.changes.find(({ id }) => id === 'bike')?.suppressed).toEqual(
+    before.draft.changes.find(({ id }) => id === 'bike'),
+  );
+  expect(staged.draft.relationships?.find(({ id }) => id === 'bike-garage')?.suppressed).toEqual(
+    before.draft.relationships?.find(({ id }) => id === 'bike-garage'),
+  );
+  const review = await openDraftReview();
+  await userEvent.click(review.getByRole('button', { name: 'Visa förslaget: Cykel' }));
+  const retained = within(await screen.findByRole('dialog', { name: 'Cykel' }));
+  expect(retained.getByRole('heading', { name: 'Bevarat objektförslag' })).toBeTruthy();
+  expect(retained.getByText('2500 SEK (Text)')).toBeTruthy();
 }, 30_000);
 for (const outcome of ['absent', 'committed', 'duplicate', 'changed-duplicate'] as const) {
   test(`a lost relationship reply checks the authoritative ${outcome} result while preserving unrelated private work`, async () => {
