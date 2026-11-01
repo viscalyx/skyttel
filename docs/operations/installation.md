@@ -357,6 +357,29 @@ HTTPS through the host's ingress to the application's `PORT`, and use
 loopback for local use; configure ingress separately for remote access. Run
 exactly one instance and allow a deployment interruption.
 
+### Bound image processing
+
+The single-process deployment uses one active profile-image job and a queue
+of at most two jobs, shared by both image upload routes and all households.
+Excess work returns HTTP 503 with `image_processing_busy`. Queued work must
+still have household access and current draft state before decoding starts.
+The slot remains occupied until the draft update finishes, including failures.
+
+The input limits are 10 MB compressed and eight million pixels. These limits
+target the documented 512 MB service with an image-work planning allowance of
+256 MB, leaving the other half for the application and ordinary activity.
+An eight-million-pixel RGBA surface uses about 32 MB at eight bits per channel
+or 64 MB at sixteen bits. One active job leaves room for intermediate surfaces,
+the native cache and compressed inputs; the two queued image buffers alone
+can retain another 20 MB. Request parsing can retain additional copies.
+
+This is a planning allowance, not a measured peak or a hard process memory
+limit. Native formats, caches, allocator retention and other concurrent work
+affect actual memory use. Monitor process memory and HTTP 503 responses after
+rollout. Confirm headroom with representative images on the deployment host
+before increasing either concurrency or the pixel limit. Keep the ingress
+controls below: this queue does not bound uploads being received or parsed.
+
 ### Bound incoming request bodies
 
 Before opening public access, configure the ingress that receives uploads.
