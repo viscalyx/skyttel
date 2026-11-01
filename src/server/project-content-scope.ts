@@ -13,7 +13,7 @@ export function projectDraftScope<T extends MapDraft>(value: T, householdId: str
     scope(change.type);
     scope(change.beforeType);
   }
-  for (const { suppressed } of projected.relationships ?? []) {
+  for (const { suppressed } of [...projected.changes, ...(projected.relationships ?? [])]) {
     if (!suppressed) continue;
     scope(suppressed.before);
     if (suppressed.after && 'householdId' in suppressed.after)

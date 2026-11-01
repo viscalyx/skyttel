@@ -8,6 +8,7 @@ import type {
   RelationshipChange,
   SaveReceipt,
 } from '../shared/map.js';
+import { reconcileDraftRemovals } from '../shared/type-removal.js';
 import type { erasureContent } from './erasure-content.js';
 
 type Content = ReturnType<typeof erasureContent>;
@@ -57,6 +58,9 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
   function cleanDraftObject(change: DraftChange): DraftChange[] {
     if (affected.objects.has(change.id)) return [];
     let next = { ...change };
+    if (next.suppressed) next.suppressed = cleanDraftObject(next.suppressed)[0];
+    if (next.removedWithTypes)
+      next.removedWithTypes = next.removedWithTypes.filter((id) => !affected.objectTypes.has(id));
     if (affected.objectChange(change)) {
       const current = content.objects.find((object) => object.id === change.id);
       if (!current || affected.objectValue(current) || !change.before || !change.after) return [];
@@ -100,11 +104,15 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
     }
     if (next.removedWithObjects)
       next.removedWithObjects = next.removedWithObjects.filter((id) => !affected.objects.has(id));
+    if (next.removedWithTypes)
+      next.removedWithTypes = next.removedWithTypes.filter(
+        (id) => !affected.relationshipTypes.has(id),
+      );
     if (!next.before && !next.after && !next.suppressed) return [];
     return [next];
   }
   const drafts = content.drafts.map((draft) => {
-    return {
+    const projected = {
       ...draft,
       changes: draft.changes.flatMap(cleanDraftObject),
       relationships: draft.relationships.flatMap(cleanDraftEdge),
@@ -113,6 +121,8 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
         (change) => !affected.relationshipTypes.has(change.id),
       ),
     };
+    reconcileDraftRemovals(projected);
+    return projected;
   });
   const saves = content.saves.map((saved) => {
     const receipt: SaveReceipt = {
@@ -256,6 +266,7 @@ export function erasurePredicates(scope: ErasureScope) {
     const merge = 'merge' in change ? change.merge : undefined;
     return Boolean(
       objectChange(change) ||
+        ('suppressed' in change && change.suppressed && objectChange(change.suppressed)) ||
         (merge &&
           (namesTouched(merge.objectNames) ||
             merge.relationships.some((edge) => relationships.has(edge.id) || edgeValue(edge)) ||

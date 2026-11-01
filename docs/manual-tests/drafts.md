@@ -4875,7 +4875,7 @@ UTKAST-68.
   "outcomes": [
     "Ett gammalt återställningsförslag kan inte spara någon del av utkastet mot en nyare gemensam definition.",
     "Det egna fullständiga förslaget och det oberoende arbetet består vid avvisning.",
-    "Ny aktuell granskning följd av separat sparande bevarar båda ändringarna efter omstart. Borttagning blockeras medan den beständiga privata definitionen används."
+    "Ny aktuell granskning följd av separat sparande bevarar båda ändringarna efter omstart. Andras privata återställningsförslag hindrar inte ett återtagbart förslag om typborttagning."
   ]
 }
 ```
@@ -4906,8 +4906,8 @@ en nyare gemensam definition.
 - Det egna fullständiga förslaget och det oberoende arbetet består vid
 avvisning.
 - Ny aktuell granskning följd av separat sparande bevarar båda ändringarna
-efter omstart. Borttagning blockeras medan den beständiga privata definitionen
-används.
+efter omstart. Andras privata återställningsförslag hindrar inte ett
+återtagbart förslag om typborttagning.
 
 ### UTKAST-69: ompröva ett ägt återställningsförslag efter import
 

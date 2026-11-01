@@ -14,10 +14,16 @@ import {
   expectNoSavedConflictRelationships,
   expectSavedConflictDefinition,
   expectSavedConflictObject,
-  expectSavedConflictRelationship,
   refreshConflictReader,
 } from '../support/current-conflict-reading.js';
-import { openTypeDefinitions, readDraftProposal } from '../support/domain-work.js';
+import {
+  editObjectRelationship,
+  editTableObject,
+  openTypeDefinitions,
+  readDraftProposal,
+  readTableObject,
+} from '../support/domain-work.js';
+import { collaborators } from '../support/draft-conflict-http.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
@@ -39,7 +45,82 @@ async function readRemovalProposal(
   await closeSupportDialog(page, name);
 }
 
-test('KATALOG-01: unused custom and prefilled types and meaning corrections are reviewed, discarded or saved without automatic cleanup', async ({
+test('KATALOG-04: canceling a type deletion restores inspectable unfinished object and relationship work', async ({
+  page,
+  browser,
+}) => {
+  const other = await createPreparedContext(browser);
+  const app = await collaborators(page.request, other.request);
+  try {
+    const initial = await app.read();
+    const source = initial.objects.find(({ id }) => id === 'lo');
+    if (!source) throw new Error('Missing fixture object');
+    const type = initial.types.find(({ id }) => id === source.typeId);
+    if (!type) throw new Error('Missing fixture type');
+    await app.propose(page.request, 'draft', 'lo', {
+      ...source,
+      name: 'Mitt ändrade namn',
+      properties: [{ id: 'note', label: 'Anteckning', kind: 'text', value: 'Bevarat arbete' }],
+    });
+    await app.propose(page.request, 'draft', 'new-work', { typeId: type.id, name: 'Nytt arbete' });
+    await app.propose(page.request, 'relationship', 'new-connection', {
+      typeId: initial.relationshipTypes[0].id,
+      sourceId: 'new-work',
+      targetId: 'service',
+      properties: [
+        { id: 'edge-note', label: 'Anteckning', kind: 'text', value: 'Bevarat samband' },
+      ],
+    });
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.goto(app.installation.origin);
+    await openTypeDefinitions(page);
+    await page.getByText('Objekttyper', { exact: true }).click();
+    await page.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }).click();
+    await page.getByRole('button', { name: 'Ta bort objekttypen', exact: true }).click();
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    const draft = await openDraftReview(page);
+    await draft.locator('#draft-read-object-lo').focus();
+    await page.keyboard.press('Enter');
+    const reader = page.getByRole('dialog', { name: 'Lo Exempel', exact: true });
+    await expect(
+      reader.getByRole('heading', { name: 'Bevarat objektförslag', exact: true }),
+    ).toBeVisible();
+    await expect(reader).toContainText('Mitt ändrade namn');
+    await expect(reader).toContainText('Bevarat arbete');
+    await page.keyboard.press('Escape');
+    await expect(draft.locator('#draft-read-object-lo')).toBeFocused();
+    const fresh = await readDraftProposal(page, 'Nytt arbete');
+    await expect(fresh).toContainText('Bevarat objektförslag');
+    await page.keyboard.press('Escape');
+    await draft.locator(`#draft-remove-Objekttyp-${type.id}`).click();
+    await page
+      .getByRole('dialog', { name: 'Ta bort förslaget och dess beroenden?', exact: true })
+      .getByRole('button', { name: 'Ta bort', exact: true })
+      .click();
+    await expectConflictDraftValues(page, 'Mitt ändrade namn', {
+      Namn: 'Mitt ändrade namn',
+      Anteckning: 'Bevarat arbete',
+    });
+    await expectConflictDraftValues(page, 'Nytt arbete', { Namn: 'Nytt arbete' });
+    const restoredRelationship = await readDraftProposal(
+      page,
+      `Nytt arbete → ${initial.relationshipTypes[0].forwardLabel ?? initial.relationshipTypes[0].name} → Molnmusik`,
+    );
+    await expect(restoredRelationship).toContainText('Bevarat samband');
+    await expect(restoredRelationship).toContainText('Läggs till');
+    await page.keyboard.press('Escape');
+    await closeTextView(page);
+    const tableDetails = await readTableObject(page, 'Mitt ändrade namn');
+    await expect(tableDetails).toContainText('Sparat: Lo Exempel');
+    await expect(tableDetails).toContainText('Ditt förslag: Mitt ändrade namn');
+    expect((await app.read()).objects).toEqual(initial.objects);
+  } finally {
+    await other.close();
+    await app.installation.close();
+  }
+});
+
+test('KATALOG-01: type cascades and meaning corrections are reviewed, canceled and saved together', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -68,7 +149,27 @@ test('KATALOG-01: unused custom and prefilled types and meaning corrections are 
     await post('object-type', {
       id: 'solar',
       baseRevision: null,
-      value: { name: 'Solcellsanläggning', description: 'En egen oanvänd typ' },
+      value: { name: 'Solcellsanläggning', description: 'Egen typ för soltak' },
+    });
+    await post('draft', {
+      id: 'solar-object',
+      baseRevision: null,
+      value: { typeId: 'solar', name: 'Soltaket', lifecycle: 'ended' },
+    });
+    await post('draft', {
+      id: 'survivor',
+      baseRevision: null,
+      value: { typeId: initial.types[1].id, name: 'Huset' },
+    });
+    await post('relationship', {
+      id: 'solar-edge',
+      baseRevision: null,
+      value: {
+        typeId: edgeType.id,
+        sourceId: 'solar-object',
+        targetId: 'survivor',
+        lifecycle: 'ended',
+      },
     });
     await post('save', { operationId: 'definitions' });
     const baseline = await read();
@@ -110,18 +211,26 @@ test('KATALOG-01: unused custom and prefilled types and meaning corrections are 
     });
     await readRemovalProposal(page, 'Solcellsanläggning', {
       Namn: 'Solcellsanläggning',
-      Beskrivning: 'En egen oanvänd typ',
+      Beskrivning: 'Egen typ för soltak',
     });
     await readRemovalProposal(page, edgeType.name, {
       Namn: edgeType.name,
       Beskrivning: edgeType.description || 'Ej uppgivet',
     });
+    await readRemovalProposal(page, 'Soltaket', { Namn: 'Soltaket', Typ: 'Solcellsanläggning' });
+    await readRemovalProposal(
+      page,
+      `Soltaket → ${edgeType.forwardLabel ?? edgeType.name} → Huset`,
+      { Från: 'Soltaket', Till: 'Huset' },
+    );
     const draft = await openDraftReview(page);
     await draft.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
     await page
       .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
       .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
       .click();
+    expect((await read()).objects).toEqual(baseline.objects);
+    expect((await read()).relationships).toEqual(baseline.relationships);
     expect((await read()).types).toEqual(baseline.types);
     expect((await read()).relationshipTypes).toEqual(baseline.relationshipTypes);
     await closeTextView(page);
@@ -131,6 +240,8 @@ test('KATALOG-01: unused custom and prefilled types and meaning corrections are 
     await installation.restart();
     await page.reload();
     const final = await read();
+    expect(final.objects.map(({ name }) => name)).toEqual(['Huset']);
+    expect(final.relationships).toEqual([]);
     expect(final.types.find((item) => item.id === type.id)).toMatchObject({
       name: type.name,
       description: 'Rättad gemensam betydelse',
@@ -160,7 +271,7 @@ test('KATALOG-01: unused custom and prefilled types and meaning corrections are 
   }
 });
 
-test('KATALOG-02: private drafts and ended content block removal with a useful explanation and no private disclosure', async ({
+test('KATALOG-02: other drafts survive type deletion and recover through ordinary creation and editing', async ({
   page,
   browser,
 }) => {
@@ -283,99 +394,84 @@ test('KATALOG-02: private drafts and ended content block removal with a useful e
       await closeTextView(memberPage);
     };
     await readPrivate();
-    for (const stage of ['private', 'saved']) {
-      if (stage === 'saved') {
-        const savedResponse = memberPage.waitForResponse(
-          (response) =>
-            response.url().endsWith('/map/save') && response.request().method() === 'POST',
-        );
-        await saveReviewedConflictDraft(memberPage);
-        const saved = await savedResponse;
-        expect(saved.ok()).toBe(true);
-        expect(saved.request().postDataJSON()).toEqual({
-          version: 2,
-          contentVersion: (await read(other.request)).contentVersion,
-          operationId: expect.any(String),
-        });
-        const { receipt } = await saved.json();
-        expect(receipt.changes).toContainEqual(
-          expect.objectContaining({
-            after: expect.objectContaining({
-              id: 'private',
-              name: 'Privat provnamn',
-              lifecycle: 'ended',
-              properties: [
-                {
-                  id: 'serial',
-                  label: 'Serienummer',
-                  kind: 'text' as const,
-                  value: 'PRIVAT-PROVVÄRDE',
-                },
-              ],
-            }),
-          }),
-        );
-        expect(receipt.relationships).toContainEqual(
-          expect.objectContaining({
-            after: expect.objectContaining({
-              id: 'private-edge',
-              sourceId: 'private',
-              targetId: 'target',
-              lifecycle: 'ended',
-            }),
-          }),
-        );
-        await refreshConflictReader(memberPage, installation.origin);
-        await memberPage
-          .getByRole('region', { name: 'Hushållets tabell', exact: true })
-          .getByRole('button', { name: /^Filter/ })
-          .click();
-        await memberPage
-          .getByRole('dialog', { name: 'Tabellens filter', exact: true })
-          .getByLabel('Ta med upphörda')
-          .check();
-        await memberPage.keyboard.press('Escape');
-        const details = await expectSavedConflictObject(memberPage, 'Privat provnamn');
-        await expectConflictReadValue(details, 'Status', 'Manuellt upphört');
-        await expectConflictReadValue(details, 'Serienummer', 'PRIVAT-PROVVÄRDE');
-        await expectSavedConflictRelationship(
-          memberPage,
-          'Privat provnamn',
-          `Privat provnamn → ${edgeType.forwardLabel ?? edgeType.name} → Garaget`,
-          {
-            Typ: edgeType.name,
-            'Från objekt': 'Privat provnamn',
-            'Till objekt': 'Garaget',
-            Status: 'Manuellt upphört',
-          },
-        );
-      }
-      const before = await read();
-      const otherBefore = await read(other.request);
-      await page.goto(installation.origin);
-      await openTypeDefinitions(page);
-      await page.getByText('Objekttyper', { exact: true }).click();
-      await page.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }).click();
-      await page.getByRole('button', { name: 'Ta bort objekttypen' }).click();
-      await expect(page.getByRole('alert')).toContainText(
-        'ta bort eller byt typ på användande objekt',
-      );
-      await expect(page.getByRole('alert')).not.toContainText('Privat provnamn');
-      await expect(page.getByRole('alert')).not.toContainText('PRIVAT-PROVVÄRDE');
-      await page.getByRole('button', { name: 'Stäng typformuläret utan att skicka' }).click();
-      await page.getByText('Sambandstyper och riktning', { exact: true }).click();
-      await page
-        .getByRole('button', { name: `Ändra sambandstyp: ${edgeType.name}`, exact: true })
-        .click();
-      await page.getByRole('button', { name: 'Ta bort sambandstypen' }).click();
-      await expect(page.getByRole('alert')).toContainText('objekten kan finnas kvar');
-      await expect(page.getByRole('alert')).not.toContainText('Privat provnamn');
-      expect(await read()).toEqual(before);
-      expect(await read(other.request)).toEqual(otherBefore);
-      if (stage === 'private')
-        await expect(page.getByRole('main')).not.toContainText('Privat provnamn');
-      if (stage === 'private') await readPrivate();
-    }
+    const retained = (await read(other.request)).draft;
+    await page.goto(installation.origin);
+    await openTypeDefinitions(page);
+    await page.getByText('Objekttyper', { exact: true }).click();
+    await page.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }).click();
+    await page.getByRole('button', { name: 'Ta bort objekttypen', exact: true }).click();
+    await page.getByText('Sambandstyper och riktning', { exact: true }).click();
+    await page
+      .getByRole('button', { name: `Ändra sambandstyp: ${edgeType.name}`, exact: true })
+      .click();
+    await page.getByRole('button', { name: 'Ta bort sambandstypen', exact: true }).click();
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    const review = await openDraftReview(page);
+    await expect(review).not.toContainText('Privat provnamn');
+    await expect(review).not.toContainText('PRIVAT-PROVVÄRDE');
+    await saveReviewedConflictDraft(page);
+    expect((await read(other.request)).draft).toEqual(retained);
+    await memberPage.reload();
+    await readPrivate();
+    const conflicted = await openDraftReview(memberPage);
+    await expect(conflicted).toContainText('Rätta markerade förslag');
+    await closeTextView(memberPage);
+    await openTypeDefinitions(memberPage);
+    await memberPage.getByRole('button', { name: 'Ny objekttyp', exact: true }).click();
+    await memberPage.getByLabel('Typens namn', { exact: true }).fill(type.name);
+    await memberPage.getByLabel('Typens beskrivning', { exact: true }).fill('Ny egen betydelse');
+    await memberPage
+      .getByRole('button', { name: 'Lägg typförslaget i mitt utkast', exact: true })
+      .click();
+    const replacement = (await read(other.request)).draft.objectTypes![0].after!;
+    expect(replacement.id).not.toBe(type.id);
+    await memberPage.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await openTable(memberPage);
+    await memberPage
+      .getByRole('region', { name: 'Hushållets tabell', exact: true })
+      .getByRole('button', { name: /^Filter/ })
+      .click();
+    await memberPage
+      .getByRole('dialog', { name: 'Tabellens filter', exact: true })
+      .getByLabel('Ta med upphörda')
+      .check();
+    await memberPage.keyboard.press('Escape');
+    const editor = await editTableObject(memberPage, 'Privat provnamn');
+    await editor.getByLabel('Objekttyp', { exact: true }).selectOption(replacement.id);
+    await editor.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const relationshipEditor = await editObjectRelationship(
+      memberPage,
+      'Privat provnamn',
+      `Privat provnamn → ${edgeType.forwardLabel ?? edgeType.name} → Garaget`,
+    );
+    await relationshipEditor
+      .getByLabel('Sambandstyp', { exact: true })
+      .selectOption(initial.relationshipTypes[1].id);
+    await relationshipEditor.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    await expect(
+      relationshipEditor.getByRole('heading', { name: 'Redigera samband', exact: true }),
+    ).not.toBeVisible();
+    await closeSupportDialog(memberPage, 'Samband för Privat provnamn');
+    await saveReviewedConflictDraft(memberPage);
+    await closeTextView(memberPage);
+    await installation.restart();
+    await memberPage.reload();
+    const final = await read(other.request);
+    expect(final.types.some(({ id }) => id === type.id)).toBe(false);
+    expect(final.relationshipTypes.some(({ id }) => id === edgeType.id)).toBe(false);
+    await openTable(memberPage);
+    await memberPage
+      .getByRole('region', { name: 'Hushållets tabell', exact: true })
+      .getByRole('button', { name: /^Filter/ })
+      .click();
+    await memberPage
+      .getByRole('dialog', { name: 'Tabellens filter', exact: true })
+      .getByLabel('Ta med upphörda')
+      .check();
+    await memberPage.keyboard.press('Escape');
+    const details = await expectSavedConflictObject(memberPage, 'Privat provnamn');
+    await expectConflictReadValue(details, 'Serienummer', 'PRIVAT-PROVVÄRDE');
+    await expectConflictReadValue(details, 'Typ', type.name);
   } finally {
     await other.close();
     await installation.close();
@@ -428,17 +524,6 @@ test('KATALOG-03: history reads removed definitions and content without changing
     await save('content');
     expect(
       (
-        await post('draft', {
-          version: (await read()).draft.version,
-          id: 'source',
-          baseRevision: 1,
-          value: null,
-        })
-      ).ok(),
-    ).toBe(true);
-    const deletion = await save('delete-content');
-    expect(
-      (
         await post('object-type', {
           version: (await read()).draft.version,
           id: type.id,
@@ -447,6 +532,7 @@ test('KATALOG-03: history reads removed definitions and content without changing
         })
       ).ok(),
     ).toBe(true);
+    const deletion = await save('delete-content');
     expect(
       (
         await post('relationship-type', {
@@ -470,7 +556,9 @@ test('KATALOG-03: history reads removed definitions and content without changing
     await expect(group).toContainText(`Objekttyp: ${type.name}`);
     await expect(group).toContainText(`Samband: ${edgeType.name}`);
     await expect(group.getByText('Namn: Lo Exempel.', { exact: true })).toBeVisible();
-    await expect(group.getByText(`Objekttyp: ${type.name}`, { exact: false })).toBeVisible();
+    await expect(
+      group.getByRole('heading', { name: `Objekttyp: ${type.name}`, exact: true }),
+    ).toBeVisible();
     await expect(group.getByRole('heading', { name: `Samband: ${edgeType.name}` })).toBeVisible();
     expect(await read()).toEqual(before);
     await expect(group.getByRole('button', { name: 'Ångra sparandet' })).toHaveCount(0);

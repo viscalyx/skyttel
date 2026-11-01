@@ -321,22 +321,37 @@ try {
       const current: MapState = await (await other.request.get(app.path)).json();
       const type = current.types.find((type) => type.id === conflict.id);
       if (!type) throw new Error('Missing current definition');
-      await rejectedWithoutChanges(
-        app,
-        other.request,
-        'object-type',
-        {
-          id: type.id,
-          version: current.draft.version,
-          contentVersion: current.contentVersion,
-          baseRevision: type.revision,
-          value: null,
-        },
-        'Deletion while another private restoration remains',
-      );
-      const staged = await app.post(other.request, 'object-type', {
+      const privateDraft = (await app.read()).draft;
+      const history = await readHistory(app);
+      const removal = await app.post(other.request, 'object-type', {
         id: type.id,
         version: current.draft.version,
+        contentVersion: current.contentVersion,
+        baseRevision: type.revision,
+        value: null,
+      });
+      assert.equal(removal.status(), 200, await removal.text());
+      const removing: MapState = await (await other.request.get(app.path)).json();
+      assert.deepEqual(
+        removing.draft.objectTypes?.map(({ id, after }) => ({ id, after })),
+        [{ id: type.id, after: null }],
+      );
+      assert.deepEqual((await app.read()).draft, privateDraft);
+      assert.deepEqual(removing.types, current.types);
+      assert.deepEqual(await readHistory(app), history);
+      const canceled = await app.post(other.request, 'discard', {
+        version: removing.draft.version,
+        contentVersion: current.contentVersion,
+      });
+      assert.equal(canceled.status(), 200, await canceled.text());
+      assert.deepEqual((await app.read()).draft, privateDraft);
+      console.log(
+        'Deletion while another private restoration remains: HTTP 200; canceled without changing the other draft.',
+      );
+      const canceledState: MapState = await (await other.request.get(app.path)).json();
+      const staged = await app.post(other.request, 'object-type', {
+        id: type.id,
+        version: canceledState.draft.version,
         contentVersion: current.contentVersion,
         baseRevision: type.revision,
         value: {

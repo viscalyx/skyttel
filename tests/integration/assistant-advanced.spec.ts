@@ -446,27 +446,24 @@ test('MCP-03: typbyte bevarar riktade samband och äldre typers läsbara histori
   }
 });
 
-test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ page, browser }) => {
+test('MCP-04: granska typborttagning och bevara andras utkast som konflikter', async ({
+  page,
+  browser,
+}) => {
   const app = await createInstallation();
   const other = await createPreparedContext(browser);
   try {
     await signIn(page.request, app.origin);
     const { household } = await (await createHousehold(page.request, app.origin)).json();
     const mcp = await connect(page.request, app.origin, household.id);
-    for (const [id, name] of [
-      ['ended-type', 'Upphörd typ'],
-      ['private-type', 'Privat använd typ'],
-      ['race-type', 'Samtidig typ'],
-    ])
-      await mcp.type(id, { name, description: '' });
+    await mcp.type('ended-type', { name: 'Upphörd typ', description: '' });
+    await mcp.type('private-type', { name: 'Privat använd typ', description: '' });
     await mcp.object('ended', {
       typeId: 'ended-type',
       name: 'Upphört testobjekt',
       lifecycle: 'ended',
     });
-    await mcp.save('protected-types');
-    const blocked = await mcp.type('ended-type', null, 'definition_in_use');
-    expect(blocked.message).toContain('upphört');
+    await mcp.save('baseline-types');
     app.setIdentity(robin);
     await signIn(other.request, app.origin);
     const { user } = await (await other.request.get(`${app.origin}/api/bootstrap`)).json();
@@ -488,152 +485,63 @@ test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ pag
     const otherMcp = await connect(other.request, app.origin, household.id);
     const otherPage = await other.newPage();
     await otherPage.goto(app.origin);
-    await openTable(otherPage);
-    let privateForm = await openNewObject(otherPage);
-    await privateForm.getByLabel('Objekttyp').selectOption('private-type');
-    await privateForm.getByLabel('Namn', { exact: true }).fill('Andras privata namn');
-    await setProperty(privateForm, 'Beskrivning', 'Privat hemlig anteckning');
-    await privateForm
-      .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
-      .click();
-    let privateProposal = await readDraftProposal(otherPage, 'Andras privata namn');
-    await expect(privateProposal).toContainText('Privat använd typ');
-    await expect(privateProposal).toContainText('Privat hemlig anteckning');
-    await otherPage.keyboard.press('Escape');
-    const nativeSecret = await otherMcp.tool('read_my_draft');
-    expect(nativeSecret.changes).toEqual([
-      expect.objectContaining({
-        after: expect.objectContaining({
-          typeId: 'private-type',
-          name: 'Andras privata namn',
-          properties: [
-            {
-              id: expect.any(String),
-              label: 'Beskrivning',
-              kind: 'text' as const,
-              value: 'Privat hemlig anteckning',
-            },
-          ],
-        }),
-      }),
-    ]);
-    // Keep the original synthetic identity and exact no-disclosure guard, after
-    // verifying the native proposal and discarding only its generated identity.
-    await otherMcp.propose('discard_proposal', { kind: 'object', id: nativeSecret.changes[0].id });
-    await otherMcp.object('secret', {
-      typeId: 'private-type',
-      name: 'Andras privata namn',
-      properties: [
-        {
-          id: 'description',
-          label: 'Beskrivning',
-          kind: 'text' as const,
-          value: 'Privat hemlig anteckning',
-        },
-      ],
-    });
-    const privateBlock = await mcp.type('private-type', null, 'definition_in_use');
-    expect(JSON.stringify(privateBlock)).not.toMatch(
-      /Andras privata namn|Privat hemlig anteckning|"secret"/,
-    );
-    await mcp.type('race-type', null);
-    await otherPage.reload();
-    privateForm = await openNewObject(otherPage);
-    await privateForm.getByLabel('Objekttyp').selectOption('race-type');
-    await privateForm.getByLabel('Namn', { exact: true }).fill('Senare privat användning');
-    await privateForm
-      .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
-      .click();
-    privateProposal = await readDraftProposal(otherPage, 'Senare privat användning');
-    await expect(privateProposal).toContainText('Samtidig typ');
-    await expect(privateProposal.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
-    await otherPage.keyboard.press('Escape');
-    const nativeRace = (await otherMcp.tool('read_my_draft')).changes.find(
-      (change: { after: { name: string } }) => change.after.name === 'Senare privat användning',
-    );
-    expect(nativeRace.after).toMatchObject({
-      typeId: 'race-type',
-      name: 'Senare privat användning',
-    });
-    await otherMcp.propose('discard_proposal', { kind: 'object', id: nativeRace.id });
-    await otherMcp.object('race', { typeId: 'race-type', name: 'Senare privat användning' });
-    await mcp.propose('save_draft', { operationId: 'blocked-removal' }, 'definition_in_use');
+    const form = await openNewObject(otherPage);
+    await form.getByLabel('Objekttyp').selectOption('private-type');
+    await form.getByLabel('Namn', { exact: true }).fill('Andras privata namn');
+    await setProperty(form, 'Beskrivning', 'Privat hemlig anteckning');
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const retained = await otherMcp.tool('read_my_draft');
+    const cascade = await mcp.type('ended-type', null);
+    expect(cascade.changes).toContainEqual(expect.objectContaining({ id: 'ended', after: null }));
     await page.goto(app.origin);
-    await openTable(page);
-    const filters = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
-    await page
-      .getByRole('region', { name: 'Hushållets tabell', exact: true })
-      .getByRole('button', { name: 'Filter', exact: true })
-      .click();
-    await filters.getByLabel('Ta med upphörda', { exact: true }).check();
-    await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
-    await expect(
-      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
-    ).toContainText('Upphört testobjekt');
-    await expect(
-      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
-    ).toContainText('Upphört');
+    let proposal = await readDraftProposal(page, 'Upphört testobjekt');
+    await expect(proposal).toContainText('Tas bort');
+    await expect(proposal).toContainText('Upphört');
+    await page.keyboard.press('Escape');
+    await mcp.propose('discard_proposal', { kind: 'objectType', id: 'ended-type' });
+    await page.reload();
+    await expect(await openDraftReview(page)).not.toContainText('Upphört testobjekt');
+    await mcp.type('ended-type', null);
+    const reviewed = await mcp.type('private-type', null);
+    expect(JSON.stringify(reviewed)).not.toMatch(/Andras privata namn|Privat hemlig anteckning/);
+    await page.reload();
+    await expect(await openDraftReview(page)).toContainText('Upphört testobjekt');
     await expect(await openDraftReview(page)).not.toContainText('Andras privata namn');
-    await otherPage.goto(app.origin);
-    const otherDraft = await openDraftReview(otherPage);
-    await expect(otherDraft).toContainText('Andras privata namn');
-    await expect(otherDraft).toContainText('Senare privat användning');
+    await mcp.save('reviewed-type-cascade');
+    await otherPage.reload();
+    proposal = await readDraftProposal(otherPage, 'Andras privata namn');
+    await expect(proposal).toContainText('Privat hemlig anteckning');
+    await otherPage.keyboard.press('Escape');
+    await expect(await openDraftReview(otherPage)).toContainText('Rätta markerade förslag');
+    expect((await otherMcp.tool('read_my_draft')).changes).toEqual(retained.changes);
+    await otherMcp.propose('save_draft', { operationId: 'stale-private' }, 'type_conflict');
+    await otherMcp.type('replacement-type', {
+      name: 'Privat använd typ',
+      description: 'Ny egen betydelse',
+    });
+    await otherMcp.object(retained.changes[0].id, {
+      ...retained.changes[0].after,
+      typeId: 'replacement-type',
+    });
+    await otherPage.reload();
+    proposal = await readDraftProposal(otherPage, 'Andras privata namn');
+    await expect(proposal).toContainText('Privat hemlig anteckning');
+    await otherPage.keyboard.press('Escape');
+    await otherMcp.save('corrected-private');
     await app.restart();
     await otherPage.reload();
-    await expect(await openDraftReview(otherPage)).toContainText('Andras privata namn');
-    await expect(await openDraftReview(otherPage)).toContainText('Senare privat användning');
-    const restoredPrivate = await readDraftProposal(otherPage, 'Andras privata namn');
-    await expect(restoredPrivate).toContainText('Privat hemlig anteckning');
-    await expect(restoredPrivate).toContainText('Privat använd typ');
-    await otherPage.keyboard.press('Escape');
-    const restoredRace = await readDraftProposal(otherPage, 'Senare privat användning');
-    await expect(restoredRace).toContainText('Samtidig typ');
-    await expect(restoredRace.locator('dt').filter({ hasText: /^Beskrivning$/ })).toHaveCount(0);
-    await otherPage.keyboard.press('Escape');
-    const persistedPrivate = await otherMcp.tool('read_my_draft');
-    expect(persistedPrivate.changes).toEqual([
-      expect.objectContaining({
-        id: 'secret',
-        before: null,
-        after: {
-          typeId: 'private-type',
-          name: 'Andras privata namn',
-          properties: [
-            {
-              id: 'description',
-              label: 'Beskrivning',
-              kind: 'text' as const,
-              value: 'Privat hemlig anteckning',
-            },
-          ],
-        },
-      }),
-      expect.objectContaining({
-        id: 'race',
-        before: null,
-        after: { typeId: 'race-type', name: 'Senare privat användning' },
-      }),
-    ]);
-    const persistedHistory = await mcp.tool('read_history');
-    const restoredBlock = await mcp.type('private-type', null, 'definition_in_use');
-    expect(JSON.stringify(restoredBlock)).not.toMatch(
-      /Andras privata namn|Privat hemlig anteckning|Senare privat användning|"secret"|"race"/,
-    );
-    const restoredSaveBlock = await mcp.propose(
-      'save_draft',
-      { operationId: 'blocked-removal-after-restart' },
-      'definition_in_use',
-    );
-    expect(JSON.stringify(restoredSaveBlock)).not.toMatch(
-      /Andras privata namn|Privat hemlig anteckning|Senare privat användning|"secret"|"race"/,
-    );
-    expect(await otherMcp.tool('read_my_draft')).toEqual(persistedPrivate);
-    expect(await mcp.tool('read_history')).toEqual(persistedHistory);
+    await openTable(otherPage);
+    await expect(
+      otherPage.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).toContainText('Andras privata namn');
+    await expect(
+      otherPage.getByRole('button', { name: 'Redigera Upphört testobjekt', exact: true }),
+    ).toHaveCount(0);
     expect(
-      (await (await page.request.get(`${householdPath}/map`)).json()).types.some(
-        (type: { id: string }) => type.id === 'race-type',
+      (await mcp.tool('read_type_catalog')).types.some(
+        (type: { id: string }) => type.id === 'private-type',
       ),
-    ).toBe(true);
+    ).toBe(false);
   } finally {
     await other.close();
     await app.close();

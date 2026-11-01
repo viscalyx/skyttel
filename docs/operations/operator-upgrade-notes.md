@@ -6,6 +6,20 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Coordinate type deletion and draft compatibility
+
+Update external assistant clients to review the full draft after a type
+deletion proposal. The proposal now includes removal of content that uses
+the type. Other members' drafts do not block deletion. New saved use or
+conflicting changes require a new review and save instruction.
+
+Keep a backup before rollout. The update reads existing drafts and archives.
+New drafts can retain work suppressed by a type deletion, and history records
+which relationship removals follow type deletion. Use this release or a later
+compatible release to read and import this data. Do not roll
+back the application against data written after rollout; restore the
+pre-upgrade backup with the earlier application if rollback is required.
+
 ### Allow time and disk space to index saved history
 
 The first startup after this update builds a lookup index from retained

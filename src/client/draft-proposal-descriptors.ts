@@ -32,7 +32,7 @@ export function draftProposalDescriptors(draft: MapDraft): DraftProposalDescript
   return [
     ...draft.changes.map((change) => ({
       key: draftProposalKey('object', change.id),
-      name: change.after?.name ?? change.before?.name ?? 'Objekt',
+      name: change.after?.name ?? change.before?.name ?? change.suppressed?.after?.name ?? 'Objekt',
       kind: 'Objekt' as const,
       change,
     })),

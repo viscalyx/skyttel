@@ -8,10 +8,10 @@ import { definitionUsage } from './definition-usage.js';
 import { MapError } from './map-error.js';
 import { mapTombstones } from './map-tombstones.js';
 
-export function relationshipTypes(database: Database.Database, householdId: string, userId = '') {
+export function relationshipTypes(database: Database.Database, householdId: string, _userId = '') {
   const tombstones = mapTombstones(database, householdId);
   const restorations = definitionRestorations(database, householdId);
-  const usage = definitionUsage(database, householdId, userId);
+  const usage = definitionUsage(database, householdId);
   function read(includeRemoved = false): RelationshipType[] {
     return database
       .prepare(`SELECT t.*, l.forwardLabel, l.reverseLabel FROM relationship_type t
@@ -139,7 +139,8 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('type_conflict');
       if (body.value === null) {
         if (!before && !existing) throw new MapError('type_conflict');
-        usage.assertUnused('relationshipType', body.id, draft);
+        if (!before)
+          usage.assertUnused('relationshipType', body.id, draft, 'definition_creation_in_use');
         draft.relationshipTypes = (draft.relationshipTypes ?? []).filter(
           (item) => item.id !== body.id,
         );

@@ -35,6 +35,7 @@ import type {
   RelationshipFormOutcome,
   RelationshipFormResult,
 } from '../shared/relationship-form.js';
+import { reconcileDraftRemovals, stageTypeRemoval } from '../shared/type-removal.js';
 import { assistantTaskAccess } from './assistant-auth.js';
 import { contentOwner } from './content-identities.js';
 import { assertContentAvailable, assertContentVersion } from './content-maintenance.js';
@@ -103,6 +104,7 @@ export function householdMap(database: Database.Database, actorId: string, house
       : { version: 0, changes: [] };
   }
   function writeDraft(value: MapDraft) {
+    reconcileDraftRemovals(value);
     database
       .prepare(`INSERT INTO map_draft (householdId, userId, version, changes, relationships, objectTypes, relationshipTypes) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(householdId, userId)
       DO UPDATE SET version = excluded.version, changes = excluded.changes, relationships = excluded.relationships, objectTypes = excluded.objectTypes, relationshipTypes = excluded.relationshipTypes`)
@@ -190,6 +192,7 @@ export function householdMap(database: Database.Database, actorId: string, house
     } else if (body.kind === 'relationshipType') {
       current.relationshipTypes = current.relationshipTypes?.filter((item) => item.id !== body.id);
     } else throw new MapError('invalid_request', 400);
+    reconcileDraftRemovals(current);
     return current;
   }
   function readState(): MapState {
@@ -608,7 +611,10 @@ export function householdMap(database: Database.Database, actorId: string, house
     proposeObjectType(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        return writeDraft(types.propose(checkedDraft(body.version, body.contentVersion), body));
+        const current = types.propose(checkedDraft(body.version, body.contentVersion), body);
+        if (body.value === null)
+          stageTypeRemoval(readState(), current, 'objectType', body.id as string);
+        return writeDraft(current);
       });
     },
     proposeRelationship(body: Record<string, unknown>) {
@@ -672,7 +678,10 @@ export function householdMap(database: Database.Database, actorId: string, house
     proposeRelationshipType(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        return writeDraft(edgeTypes.propose(checkedDraft(body.version, body.contentVersion), body));
+        const current = edgeTypes.propose(checkedDraft(body.version, body.contentVersion), body);
+        if (body.value === null)
+          stageTypeRemoval(readState(), current, 'relationshipType', body.id as string);
+        return writeDraft(current);
       });
     },
     propose(body: Record<string, unknown>, image?: EncodedImage) {
@@ -862,6 +871,7 @@ export function householdMap(database: Database.Database, actorId: string, house
             const relationshipDefinitions = edgeTypes.save(current);
             if (relationshipDefinitions.length) receipt.relationshipTypes = relationshipDefinitions;
             for (const change of current.changes) {
+              if (!change.before && !change.after) continue;
               if (change.after?.identity === 'unresolved')
                 throw new MapError('unresolved_identity');
               const saved = object(change.id);

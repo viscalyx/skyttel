@@ -82,8 +82,9 @@ export function ObjectTypeEditor({
           Lägg typförslaget i mitt utkast
         </button>
         <p>
-          Använda typer kan inte tas bort. Hantera först objekt i kartan och privata utkast, även
-          upphört innehåll. Borttagning visas i utkastet före sparande.
+          Borttagning omfattar också objekt med typen och deras anslutna samband, även upphört
+          innehåll. Granska alla följder i ditt utkast före samlat sparande. Andras utkast hindrar
+          inte borttagningen.
         </p>
         {initial.revision > 0 && (
           <button type="button" disabled={stale} onClick={() => onSubmit(null)}>

@@ -23,7 +23,7 @@ export type DraftProposal = {
   before: Property[] | null;
   after: Property[] | null;
   images?: { before?: ObjectValue; after?: ObjectValue; householdId: string };
-  suppression?: { causes: string[]; values: Property[] | null };
+  suppression?: { causes: string[]; values: Property[] | null; types?: boolean };
 };
 function text(value: string | number | boolean | undefined) {
   return value === undefined || value === ''
@@ -92,6 +92,19 @@ export function draftProposals(draft: MapDraft): DraftProposal[] {
         kind,
         before: object(change.before, change.beforeType ?? change.type),
         after: object(change.after, change.type),
+        ...(change.removedWithTypes?.length
+          ? {
+              suppression: {
+                types: true,
+                causes: change.removedWithTypes.map(
+                  (id) => draft.objectTypes?.find((type) => type.id === id)?.before?.name ?? id,
+                ),
+                values: change.suppressed
+                  ? object(change.suppressed.after, change.suppressed.type)
+                  : null,
+              },
+            }
+          : {}),
         images: {
           before: change.before ?? undefined,
           after: change.after ?? undefined,
@@ -111,10 +124,17 @@ export function draftProposals(draft: MapDraft): DraftProposal[] {
           change.objectNames ?? {},
         ),
         after: relationship(change.after, change.type, proposedRelationshipNames(draft, change)),
-        ...(change.removedWithObjects?.length
+        ...(change.removedWithObjects?.length || change.removedWithTypes?.length
           ? {
               suppression: {
-                causes: change.removedWithObjects.map((id) => change.objectNames?.[id] ?? id),
+                types: Boolean(change.removedWithTypes?.length),
+                causes: [
+                  ...(change.removedWithObjects ?? []).map((id) => change.objectNames?.[id] ?? id),
+                  ...(change.removedWithTypes ?? []).map(
+                    (id) =>
+                      draft.relationshipTypes?.find((type) => type.id === id)?.before?.name ?? id,
+                  ),
+                ],
                 values: change.suppressed
                   ? relationship(
                       change.suppressed.after,
@@ -194,14 +214,21 @@ export function DraftProposalDetails({ proposal }: { proposal: DraftProposal }) 
         )}
       </div>
       {proposal.suppression && (
-        <section aria-label="Följder av objektborttagning">
-          <p>Följer objektborttagning: {proposal.suppression.causes.join(', ')}.</p>
+        <section
+          aria-label={
+            proposal.suppression.types ? 'Följder av borttagning' : 'Följder av objektborttagning'
+          }
+        >
+          <p>
+            {proposal.suppression.types ? 'Följer borttagning' : 'Följer objektborttagning'}:{' '}
+            {proposal.suppression.causes.join(', ')}.
+          </p>
           {proposal.suppression.values && (
             <>
-              <h3>Bevarat sambandsförslag</h3>
+              <h3>Bevarat {proposal.kind === 'Objekt' ? 'objektförslag' : 'sambandsförslag'}</h3>
               <p>
-                Förslaget återkommer för granskning när alla berörda objektborttagningar återtas.
-                Separata sambandsborttagningar behålls.
+                Förslaget återkommer för granskning när alla berörda borttagningar återtas. Separata
+                borttagningar behålls.
               </p>
               <dl>
                 {proposal.suppression.values.map(({ key, label, value }) => (

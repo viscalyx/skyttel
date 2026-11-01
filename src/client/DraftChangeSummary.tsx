@@ -83,6 +83,10 @@ function action(before: unknown, after: unknown) {
 }
 
 export function relationshipDifferences(change: DraftRelationshipChange) {
+  if (change.removedWithTypes?.length)
+    return [
+      'Följer typborttagning. Bevarat arbete återkommer när alla berörda borttagningar återtas.',
+    ];
   if (change.removedWithObjects?.length)
     return [
       `Följer objektborttagning: ${change.removedWithObjects.map((id) => change.objectNames?.[id] ?? id).join(', ')}.`,
@@ -115,9 +119,15 @@ export function DraftChangeSummary({ review }: { review: MapDraft }) {
       {review.changes.map((change) => (
         <li key={`object-${change.id}`}>
           <span>
-            {action(change.before, change.after)}: {change.before?.name ?? change.after?.name}
+            {action(change.before, change.after)}:{' '}
+            {change.before?.name ?? change.after?.name ?? change.suppressed?.after?.name}
           </span>
           {lines(objectDifferences(change))}
+          {change.removedWithTypes?.length ? (
+            <div>
+              Följer typborttagning. Bevarat arbete återkommer när typborttagningen återtas.
+            </div>
+          ) : null}
         </li>
       ))}
       {review.relationships?.map((change) => {

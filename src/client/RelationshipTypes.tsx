@@ -105,8 +105,9 @@ export function RelationshipTypeEditor({
           Lägg sambandstypen i mitt utkast
         </button>
         <p>
-          Använda typer kan inte tas bort. Ta bort eller byt typ på sambanden först, även upphörda
-          samband och förslag i privata utkast. Objekten kan finnas kvar.
+          Borttagning omfattar typens samband, även upphörda. Granska alla följder i ditt utkast
+          före samlat sparande. Ändpunkternas objekt finns kvar. Andras utkast hindrar inte
+          borttagningen.
         </p>
         {initial.revision > 0 && (
           <button type="button" disabled={stale} onClick={() => onSubmit(null)}>

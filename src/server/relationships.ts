@@ -10,6 +10,7 @@ import type {
   SaveReceipt,
 } from '../shared/map.js';
 import { proposedRelationships } from '../shared/map.js';
+import { reconcileDraftRemovals } from '../shared/type-removal.js';
 import { readLifecycle } from './lifecycle.js';
 import { MapError } from './map-error.js';
 import { mapTombstones } from './map-tombstones.js';
@@ -108,6 +109,7 @@ export function relationships(database: Database.Database, householdId: string) 
       const receipt = JSON.parse(row.receipt) as SaveReceipt;
       const removal = receipt.relationships?.find(({ id }) => id === change.id);
       if (!removal) continue;
+      if (removal.typeCascade) return;
       if (
         !removal.after &&
         removal.before &&
@@ -149,30 +151,10 @@ export function relationships(database: Database.Database, householdId: string) 
     }
     return Object.fromEntries(names);
   }
-  function reconcileObjectRemovals(draft: MapDraft) {
-    const removedObjects = draft.changes.filter((change) => !change.after);
-    draft.relationships = draft.relationships?.flatMap((change) => {
-      const causes = change.removedWithObjects;
-      // Explicit deletions and older drafts without provenance keep their proposals.
-      if (!causes) return [change];
-      change.removedWithObjects = removedObjects
-        .filter(
-          ({ id }) =>
-            causes.includes(id) ||
-            change.before?.sourceId === id ||
-            change.before?.targetId === id ||
-            change.suppressed?.after?.sourceId === id ||
-            change.suppressed?.after?.targetId === id,
-        )
-        .map(({ id }) => id);
-      if (change.removedWithObjects.length) return [change];
-      return change.suppressed ? [change.suppressed] : [];
-    });
-  }
   return {
     read,
     types,
-    reconcileObjectRemovals,
+    reconcileObjectRemovals: reconcileDraftRemovals,
     assertValid,
     removeObject(draft: MapDraft, id: string) {
       const retainedRemoval = draft.changes.some(
@@ -371,6 +353,15 @@ export function relationships(database: Database.Database, householdId: string) 
           before,
           after,
           type: change.type,
+          ...(!after &&
+          (change.removedWithTypes?.length ||
+            draft.changes.some(
+              (object) =>
+                object.removedWithTypes?.length &&
+                (before?.sourceId === object.id || before?.targetId === object.id),
+            ))
+            ? { typeCascade: true as const }
+            : {}),
           ...(beforeType &&
           (beforeType.id !== change.type.id || beforeType.revision !== change.type.revision)
             ? { beforeType }

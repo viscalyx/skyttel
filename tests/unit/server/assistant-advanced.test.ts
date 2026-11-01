@@ -417,14 +417,15 @@ test('MCP type changes preserve independent object and relationship properties a
   );
 });
 
-test('MCP protects ended definitions, explains private-use blocks without leaking content, and rechecks concurrent use at whole save', async () => {
+test('MCP reviews ended content cascades and preserves other private drafts without leaking content', async () => {
   const type = { name: 'Cykel', description: '' };
   await definition('cycle', type);
   const properties = [{ id: 'serial', label: 'Nummer', kind: 'text', value: 'SYNTH-42' }];
   await object('bike', { typeId: 'cycle', name: 'Alex blå cykel', properties, lifecycle: 'ended' });
   await save('used-definition');
-  const blockedType = await definition('cycle', null, 'definition_in_use');
-  expect(blockedType.message).toContain('upphört');
+  const cascade = await definition('cycle', null);
+  expect(cascade.changes).toContainEqual(expect.objectContaining({ id: 'bike', after: null }));
+  await tool('discard_proposal', { ...version(cascade), kind: 'objectType', id: 'cycle' });
   expect((await tool('read_map', { objectId: 'bike' })).objects[0].properties).toEqual(properties);
   await definition('cycle', { ...type, name: 'Trampcykel' });
   await save('renamed-type');
@@ -456,24 +457,20 @@ test('MCP protects ended definitions, explains private-use blocks without leakin
       expect(response.status()).toBe(200);
     };
     await propose('secret', 'private-type', 'Andras privata namn');
-    const denied = await definition('private-type', null, 'definition_in_use');
+    const denied = await definition('private-type', null);
     expect(JSON.stringify(denied)).not.toMatch(
       /Andras privata namn|Privat hemlig anteckning|"secret"/,
     );
     const review = await definition('race-type', null);
     await propose('racer', 'race-type', 'Nytt privat bruk');
-    await tool(
-      'save_draft',
-      { ...version(review), operationId: 'racing-removal' },
-      'definition_in_use',
-    );
+    await tool('save_draft', { ...version(review), operationId: 'racing-removal' });
     expect(
       (await tool('read_type_catalog')).types.some(
         (item: { id: string }) => item.id === 'private-type',
       ),
-    ).toBe(true);
+    ).toBe(false);
     const saved = await (await browser.get(path)).json();
-    expect(saved.types.some((item: { id: string }) => item.id === 'race-type')).toBe(true);
+    expect(saved.types.some((item: { id: string }) => item.id === 'race-type')).toBe(false);
     expect(saved.objects.some((item: { id: string }) => item.id === 'secret')).toBe(false);
     expect((await (await other.get(path)).json()).draft.changes).toHaveLength(2);
   } finally {

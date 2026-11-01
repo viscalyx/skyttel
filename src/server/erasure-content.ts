@@ -150,7 +150,10 @@ export function erasureContent(database: Database.Database, householdId: string,
   }
   for (const draft of drafts) {
     const own = draft.userId === ownerId;
-    for (const change of draft.changes) objectChange(change, own);
+    for (const change of draft.changes) {
+      objectChange(change, own);
+      if (change.suppressed) objectChange(change.suppressed, own);
+    }
     for (const change of draft.relationships) {
       edgeChange(change, own);
       if (change.suppressed) edgeChange(change.suppressed, own);

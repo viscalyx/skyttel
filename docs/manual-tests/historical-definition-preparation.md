@@ -75,8 +75,9 @@ Escape och nekade begäranden ändrar inte den gemensamma kartan eller historike
   `probe-reused-definition`; samma gamla jämförelse ska avvisas.
   Kör sedan `newer-definition` innan UI-fallet försöker spara. Kommandot
   granskar Alex eget förslag, sparar det, prövar typborttagning medan
-  Robins beständiga återställningsförslag finns kvar och kräver HTTP 409
-  utan ändring av bådas privata arbete, kartan eller historiken.
+  Robins beständiga återställningsförslag finns kvar och kräver HTTP 200.
+  Borttagningen läggs enbart i Alex utkast och återtas sedan. Robins privata
+  arbete, de gemensamma typerna och historiken förblir oförändrade.
   Alex sparar därefter **Ny gemensam typbenämning**. Robins gamla förslag
   får inte sparas mot denna nyare definition. `try-restoration-save`
   prövar även samma gräns via HTTP; användaren provar det synliga avvisade
