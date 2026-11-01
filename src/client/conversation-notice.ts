@@ -120,6 +120,13 @@ export const conversationNoticeDefinitions = [
     live: 'assertive',
   },
   {
+    id: 'actionBlocked',
+    text: 'Skyttel stoppade en åtgärd utanför din begäran. Kontakta installationsansvarig med felreferensen.',
+    kind: 'event',
+    icon: 'warning',
+    live: 'assertive',
+  },
+  {
     id: 'taskFailed',
     text: 'Skyttel kunde inte slutföra uppdraget. Försök igen.',
     kind: 'event',

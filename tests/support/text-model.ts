@@ -30,12 +30,33 @@ export function modelTool(name: string, args: Record<string, unknown>) {
 }
 export function textModel(
   respond: (request: ModelRequest, signal?: AbortSignal | null) => unknown[] | Promise<unknown[]>,
+  authorization?: (
+    request: ModelRequest,
+    signal?: AbortSignal | null,
+  ) => unknown[] | Promise<unknown[]>,
 ) {
   const requests: ModelRequest[] = [];
+  const authorizationRequests: ModelRequest[] = [];
   const provider: typeof fetch = async (_input, init) => {
     const body = JSON.parse(String(init?.body)) as ModelRequest;
-    requests.push(body);
-    const output = await respond(body, init?.signal);
+    const isAuthorization = body.instructions.startsWith('SKYTTEL_TURN_');
+    (isAuthorization ? authorizationRequests : requests).push(body);
+    // Ordinary workflow tests assume an allowed interpretation. Security tests
+    // supply each fallible decision explicitly; this default proves no model robustness.
+    const output = isAuthorization
+      ? await (
+          authorization ??
+          ((request) => [
+            modelMessage(
+              JSON.stringify(
+                request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+                  ? { mode: 'work', request: 'Perform the controlled test request.' }
+                  : { decision: 'allow' },
+              ),
+            ),
+          ])
+        )(body, init?.signal)
+      : await respond(body, init?.signal);
     return Response.json(
       {
         id: `resp_${randomUUID()}`,
@@ -55,7 +76,7 @@ export function textModel(
       { headers: { 'x-request-id': `request_${randomUUID()}` } },
     );
   };
-  return { provider, requests };
+  return { provider, requests, authorizationRequests };
 }
 export function lastToolResult(request: ModelRequest) {
   const item = request.input.findLast((item) => item.type === 'function_call_output');

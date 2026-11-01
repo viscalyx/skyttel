@@ -2591,30 +2591,30 @@ test.each([false, true])(
   },
 );
 
-test('usage emits one stable attempt before dispatch and final bounded metadata without message content', async () => {
+test('usage emits stable scope and worker attempts with bounded metadata without message content', async () => {
   const attempts: TextModelAttempt[] = [];
   const model = textModel(() => {
-    expect(attempts).toMatchObject([
-      {
-        outcome: 'started',
-        completeness: 'unknown',
-        endedAt: null,
-        usage: { input: null, output: null },
-      },
-    ]);
+    expect(attempts.at(-1)).toMatchObject({
+      outcome: 'started',
+      completeness: 'unknown',
+      endedAt: null,
+      usage: { input: null, output: null },
+    });
     return [modelMessage('Beskriv gärna vilket objekt du menar.')];
   });
   await setup(model.provider, (attempt) => attempts.push(structuredClone(attempt)));
   await message(await start(), 'Privat påhittad samtalstext');
-  expect(attempts).toHaveLength(2);
-  expect(attempts[1]).toMatchObject({
-    attemptId: attempts[0].attemptId,
-    outcome: 'completed',
-    completeness: 'complete',
-    usage: { input: 120, cached: 20, cacheWrite: 0, output: 30, reasoning: 10 },
-  });
-  expect(attempts[1].requestId).toMatch(/^request_/);
-  expect(attempts[1].responseId).toMatch(/^resp_/);
+  expect(attempts).toHaveLength(4);
+  for (const index of [0, 2]) {
+    expect(attempts[index + 1]).toMatchObject({
+      attemptId: attempts[index].attemptId,
+      outcome: 'completed',
+      completeness: 'complete',
+      usage: { input: 120, cached: 20, cacheWrite: 0, output: 30, reasoning: 10 },
+    });
+    expect(attempts[index + 1].requestId).toMatch(/^request_/);
+    expect(attempts[index + 1].responseId).toMatch(/^resp_/);
+  }
   expect(JSON.stringify(attempts)).not.toMatch(/Privat|samtalstext|synthetic-model-key/);
 });
 
@@ -2818,7 +2818,7 @@ test('an incomplete provider response cannot execute a save and retains only kno
   );
   await webProposal();
   const view = await message(await start(), 'Spara.');
-  expect(view).toMatchObject({ phase: 'error', error: 'assistant_provider_failed' });
+  expect(view).toMatchObject({ phase: 'error', error: 'assistant_scope_unavailable' });
   expect(view.receipt).toBeUndefined();
   expect(view.review.changes).toHaveLength(1);
   expect(view.operations).toEqual([]);

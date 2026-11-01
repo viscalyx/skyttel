@@ -1,5 +1,6 @@
 import { createInterface } from 'node:readline';
 import { createInstallation } from '../tests/support/installation.js';
+import { liveBrowserFixtureSource } from '../tests/support/live-browser.js';
 import { manualTextDeliverySource } from '../tests/support/manual-text-delivery.js';
 import {
   lastToolResult,
@@ -21,6 +22,7 @@ const emit = (event: string, values = {}) => console.log(JSON.stringify({ event,
 async function main() {
   const pending = new Map<string, Pending>();
   let sequence = 0;
+  let readOnlyScope = false;
   function describe(id: string, item: Pending) {
     const user = item.request.input.findLast((part) => part.role === 'user');
     const current = user && typeof user.content === 'string' ? JSON.parse(user.content) : {};
@@ -44,10 +46,19 @@ async function main() {
         // Intentionally retain a response after cancellation so a human can release
         // late provider work and check the application's own stale-work guard.
       }),
+    (request) => [
+      modelMessage(
+        JSON.stringify(
+          request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? { mode: readOnlyScope ? 'read' : 'work', request: 'Controlled manual request.' }
+            : { decision: 'allow' },
+        ),
+      ),
+    ],
   );
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
-    browserProviderScript: manualTextDeliverySource,
+    browserProviderScript: `${manualTextDeliverySource}\n${liveBrowserFixtureSource}`,
   });
   const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   const stop = () => input.close();
@@ -76,9 +87,13 @@ async function main() {
               'reply REQUEST TEXT',
               'fail REQUEST',
               'restart',
+              'scope-read | scope-work',
               'quit',
             ],
           });
+        } else if (command === 'scope-read' || command === 'scope-work') {
+          readOnlyScope = command === 'scope-read';
+          emit('scope', { mode: readOnlyScope ? 'read' : 'work' });
         } else if (command === 'pending') {
           emit('pending', { requests: [...pending].map(([key, item]) => describe(key, item)) });
         } else if (command === 'restart') {

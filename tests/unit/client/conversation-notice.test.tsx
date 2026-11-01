@@ -29,6 +29,7 @@ test.each([
   ['voiceInterrupted', 'assertive'],
   ['voiceAdministration', 'assertive'],
   ['consentRevoked', 'assertive'],
+  ['actionBlocked', 'assertive'],
   ['taskFailed', 'polite'],
   ['playbackStopped', 'polite'],
 ] as const)('%s announces its text and action in the specified %s region', (id, live) => {
@@ -70,6 +71,7 @@ test('all conversation situations follow the single priority order, including fu
     'voiceInterrupted',
     'voiceAdministration',
     'consentRevoked',
+    'actionBlocked',
     'taskFailed',
     'playbackStopped',
   ] as const;

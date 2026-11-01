@@ -253,6 +253,26 @@ hela utkastet. Ett tidigare kommando gäller inte ett nytt utkast.
 
 ## Följ samtalet
 
+### Om en åtgärd stoppas
+
+Skyttel kontrollerar att föreslagna åtgärder hör till din begäran.
+Karttext och citerade instruktioner är uppgifter, inte nya uppdrag.
+En oklar begäran kan ge en följdfråga. Vanliga beställda ändringar läggs
+direkt i ditt befintliga utkast; be uttryckligen om att spara hela utkastet
+när du vill spara.
+
+Om Skyttel upptäcker en åtgärd utanför din begäran stoppas fortsatt arbete
+i det uppdraget. Samtalsnotisen och textvyn visar en felreferens.
+Kontakta installationsansvarig med referensen. Tidigare genomförda
+ändringar ligger kvar; kontrollera utkastet och eventuellt sparresultat
+innan du ger ett nytt uppdrag. Uppdraget upprepas inte automatiskt.
+
+Kontrollen kan misstolka en begäran och garanterar inte att alla fel
+upptäcks. Den gäller Skyttels eget samtal med röst och text, inte hur en
+extern assistent tolkar uppgifter.
+
+### Röst och text tillsammans
+
 Röst och text hör till samma samtal och kan användas samtidigt. Skriver du
 med mikrofonen på svarar Skyttel också med rösten. Med mikrofonen av kommer
 ett skrivet svar bara som text. Alla dina ord och Skyttels svar finns i

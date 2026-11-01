@@ -101,7 +101,7 @@ test.each(['throwing', 'rejecting', 'mutating'])(
     expect(costs.status()).toBe(200);
     expect(await costs.json()).toMatchObject({
       recordingUnavailable: false,
-      terra: { attempts: 2, usage: { input: { known: 240 }, output: { known: 60 } } },
+      terra: { attempts: 3, usage: { input: { known: 360 }, output: { known: 90 } } },
     });
   },
 );
@@ -147,7 +147,7 @@ test('backend task and MCP observations keep explicit stable ownership and obser
     (event) =>
       event.kind === 'model_attempt' && (event.data as { outcome?: string }).outcome === 'started',
   );
-  expect(modelStarts).toHaveLength(2);
+  expect(modelStarts).toHaveLength(3);
   for (const start of modelStarts) {
     expect(start.context).toMatchObject({
       owner: 'backend',
@@ -165,7 +165,7 @@ test('backend task and MCP observations keep explicit stable ownership and obser
     ).toHaveLength(1);
   }
   expect(events.find((event) => event.kind === 'model_action')?.context?.providerCallId).toBe(
-    modelStarts[0]?.context?.providerCallId,
+    modelStarts[1]?.context?.providerCallId,
   );
   expect(JSON.stringify(events)).not.toMatch(/Bearer|synthetic-model-key|Cookie/);
   const privateEvents: AssistantObservation[] = [];

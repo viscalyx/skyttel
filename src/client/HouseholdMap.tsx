@@ -1156,6 +1156,9 @@ export function HouseholdMap({
     interruptedConversation.current ||
     Boolean(conversation.saveChecking || conversation.saveCheckFailed);
   beforeConnection.current = { blocked: Boolean(conversation.inputBlocked), ongoing };
+  const securityReference =
+    conversation.session?.securityReference ??
+    conversation.session?.completedReplies?.at(-1)?.securityReference;
   const noticeState = useConversationNotice({
     conditions: {
       saveChecking: Boolean(conversation.saveChecking),
@@ -1165,7 +1168,8 @@ export function HouseholdMap({
       ),
       disconnectedIdle: Boolean(!conversation.revokedHere && conversation.disconnected && !ongoing),
       unavailable: !conversation.revokedHere && conversation.available === false,
-      taskFailed: Boolean(conversation.taskFailed),
+      taskFailed: Boolean(conversation.taskFailed && !securityReference),
+      actionBlocked: Boolean(securityReference),
       consentRevoked: Boolean(conversation.consentRevoked),
       contextFull: conversation.session?.contextSummaryState === 'failed',
       ...(conversation.voice.failure ? { [conversation.voice.failure.noticeId]: true } : {}),
@@ -1173,11 +1177,13 @@ export function HouseholdMap({
     },
     ongoing,
     requested: conversation.noticeRequested ?? 0,
-    eventKey: `${conversation.session?.id}:${conversation.session?.revision}:${conversation.voice.failure?.occurrence ?? 0}`,
+    securityReference,
+    eventKey: `${conversation.session?.id}:${conversation.session?.revision}`,
     diagnostic: conversation.voice.failure
       ? {
           noticeId: conversation.voice.failure.noticeId,
           reference: conversation.voice.failure.diagnosticId,
+          eventKey: `${conversation.session?.id}:voice:${conversation.voice.failure.occurrence}`,
         }
       : undefined,
   });

@@ -45,6 +45,8 @@ export type ConversationReply = {
   voiced?: boolean;
   reply?: string;
   requiredNotice?: string;
+  /** Correlates a blocked action with the operator's content-free event. */
+  securityReference?: string;
   questionPending?: boolean;
   questions?: string[];
   newQuestions?: string[];
@@ -102,6 +104,7 @@ export interface TextAssistantView {
   modelReply?: string;
   /** Mandatory server guidance, also included in reply for text display. */
   requiredNotice?: string;
+  securityReference?: string;
   /** Explicit follow-up questions from a validated assistant action, never a save receipt. */
   questions?: string[];
   newQuestions?: string[];
