@@ -28,12 +28,6 @@ function fingerprint(submission: Record<string, unknown>) {
   return createHash('sha256').update(canonical).digest('hex');
 }
 
-// Charge variable-width evidence and identifiers plus a fixed allowance for
-// integers, row headers and index entries. Count also bounds index growth.
-const accountedBytes = `512 + length(cast(householdId AS blob)) + length(cast(userId AS blob))
-  + length(cast(stagingId AS blob)) + length(cast(submission AS blob))
-  + length(cast(outcome AS blob)) + coalesce(length(fingerprint), 0)`;
-
 /** Call only inside the map's authorized immediate transaction. */
 export function relationshipFormAttempts(
   database: Database.Database,
@@ -101,6 +95,8 @@ export function relationshipFormAttempts(
     record(submission: Record<string, unknown>, outcome: RelationshipFormOutcome) {
       const digest = fingerprint(submission);
       const encoded = JSON.stringify(outcome);
+      // Charge variable-width evidence and identifiers plus a fixed allowance for
+      // integers, row headers and index entries. Count also bounds index growth.
       const bytes =
         512 +
         [householdId, userId, outcome.stagingId, encoded, digest].reduce(
@@ -123,7 +119,7 @@ export function relationshipFormAttempts(
       ] as const) {
         const usage = database
           .prepare(
-            `SELECT count(*) AS count, coalesce(sum(${accountedBytes}), 0) AS bytes FROM relationship_form_attempt ${scope}`,
+            `SELECT count(*) AS count, coalesce(sum(accountedBytes), 0) AS bytes FROM relationship_form_attempt ${scope}`,
           )
           .get(...parameters) as { count: number; bytes: number };
         const metadata = scope ? 0 : relationshipConfirmationLimits.installationMetadataBytes;
@@ -132,8 +128,8 @@ export function relationshipFormAttempts(
       }
       database
         .prepare(`INSERT INTO relationship_form_attempt
-        (householdId, userId, contentVersion, stagingId, submission, outcome, expiresAt, fingerprint)
-        VALUES (?, ?, ?, ?, '', ?, ?, ?)`)
+        (householdId, userId, contentVersion, stagingId, submission, outcome, expiresAt, fingerprint, accountedBytes)
+        VALUES (?, ?, ?, ?, '', ?, ?, ?, ?)`)
         .run(
           householdId,
           userId,
@@ -142,6 +138,7 @@ export function relationshipFormAttempts(
           encoded,
           now + relationshipConfirmationLimits.lifetime,
           digest,
+          bytes,
         );
     },
   };
@@ -170,12 +167,17 @@ export function relationshipConfirmationCleanup(database: Database.Database, now
             .prepare(`SELECT rowid, submission FROM relationship_form_attempt
           WHERE fingerprint IS NULL LIMIT ?`)
             .all(100 - removed) as { rowid: number; submission: string }[];
-          for (const row of legacy)
+          for (const row of legacy) {
+            const digest = fingerprint(JSON.parse(row.submission));
             database
               .prepare(
-                "UPDATE relationship_form_attempt SET fingerprint = ?, submission = '' WHERE rowid = ?",
+                `UPDATE relationship_form_attempt
+                SET fingerprint = ?, submission = '',
+                  accountedBytes = accountedBytes - length(cast(submission AS blob)) + length(?)
+                WHERE rowid = ?`,
               )
-              .run(fingerprint(JSON.parse(row.submission)), row.rowid);
+              .run(digest, digest, row.rowid);
+          }
           return removed + legacy.length === 100;
         })
         .immediate();

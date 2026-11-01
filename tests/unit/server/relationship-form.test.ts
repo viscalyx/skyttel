@@ -300,8 +300,9 @@ test('duplicate padding has fixed retained cost and changed reuse remains reject
 function seedAttempts(count: number) {
   fixture.database
     .prepare(`WITH RECURSIVE numbers(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM numbers WHERE n < ?)
-    INSERT INTO relationship_form_attempt (householdId, userId, contentVersion, stagingId, submission, outcome, expiresAt, fingerprint)
-    SELECT householdId, userId, contentVersion, printf('seed-%08d', n), '', outcome, expiresAt, fingerprint
+    INSERT INTO relationship_form_attempt (householdId, userId, contentVersion, stagingId, submission, outcome, expiresAt, fingerprint, accountedBytes)
+    SELECT householdId, userId, contentVersion, printf('seed-%08d', n), '', outcome, expiresAt, fingerprint,
+      accountedBytes - length(cast(stagingId AS blob)) + length(printf('seed-%08d', n))
     FROM relationship_form_attempt, numbers WHERE stagingId = ?`)
     .run(count, submission.stagingId as string);
 }
@@ -415,6 +416,7 @@ test.each(['member', 'installation'] as const)(
       stagingId: ticket.stagingId,
       outcome: JSON.stringify(expectedOutcome),
     });
+    expect(original.accountedBytes).toBe(size(original));
     const limit = (scope === 'member' ? 8 : 64) * 1024 * 1024;
     if (scope === 'installation') {
       // An unrelated household's grandfathered evidence consumes the global budget.
@@ -430,19 +432,26 @@ test.each(['member', 'installation'] as const)(
       original.householdId = 'other-home';
     }
     const fill = limit - size(original) - nextSize - (scope === 'installation' ? 4096 : 0);
-    fixture.database
-      .prepare('UPDATE relationship_form_attempt SET submission = ?')
-      .run(JSON.stringify('x'.repeat(fill - 1)));
+    const fillEvidence = (length: number) => {
+      const submission = JSON.stringify('x'.repeat(length));
+      fixture.database
+        .prepare('UPDATE relationship_form_attempt SET submission = ?, accountedBytes = ?')
+        .run(submission, size({ ...original, submission }));
+    };
+    fillEvidence(fill - 1);
     expect(await (await submit(body)).json()).toEqual({
       error: 'relationship_confirmation_capacity',
     });
     expect(await read()).toEqual(before);
-    fixture.database
-      .prepare('UPDATE relationship_form_attempt SET submission = ?')
-      .run(JSON.stringify('x'.repeat(fill - 2)));
+    fillEvidence(fill - 2);
     const admitted = await submit(body);
     expect(admitted.status, await admitted.clone().text()).toBe(200);
     expect((await admitted.json()).outcome).toEqual(expectedOutcome);
+    const stored = fixture.database
+      .prepare('SELECT * FROM relationship_form_attempt WHERE stagingId = ?')
+      .get(ticket.stagingId) as Record<string, unknown>;
+    expect(stored.accountedBytes).toBe(nextSize);
+    expect(stored.accountedBytes).toBe(size(stored));
     expect((await read()).draft.relationships?.[0].after?.properties).toEqual(value.properties);
     if (scope === 'member')
       expect((await (await submit()).json()).outcome).toEqual(accepted.outcome);

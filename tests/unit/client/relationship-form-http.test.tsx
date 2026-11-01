@@ -462,3 +462,127 @@ test('capacity rejection keeps editable relationship input and explains the temp
   expect(dialog.getByLabelText('Sambandets status')).toHaveProperty('disabled', false);
   expect(dialog.getByLabelText('Sambandets status')).toHaveProperty('value', 'active');
 });
+
+test.each([401, 403, 500])(
+  'preparing a relationship ticket handles HTTP %i without exposing denied household data',
+  async (status) => {
+    await prepare();
+    const dialog = await editStorage();
+    const actual = authenticatedHttpFetch(client, installation.origin);
+    vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).endsWith('/relationship-form-ticket')
+        ? Promise.resolve(new Response(JSON.stringify({ error: 'request_failed' }), { status }))
+        : actual(input, init),
+    );
+    await userEvent.click(dialog.getByRole('button', { name: 'Lägg i utkastet' }));
+    if (status === 500) {
+      await dialog.findByText('Ändringen kunde inte bekräftas. Dina uppgifter finns kvar.');
+      expect(dialog.getByLabelText('Sambandets status')).toHaveProperty('disabled', false);
+    } else {
+      await screen.findByText(
+        'Du har inte längre tillgång. Logga in och kontrollera din tillgång till hushållet.',
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.queryByRole('region', { name: 'Hushållets tabell' })).toBeNull();
+    }
+  },
+  30_000,
+);
+
+test.each([401, 403, 500])(
+  'reviewing an unavailable confirmation handles HTTP %i without exposing denied household data',
+  async (status) => {
+    await prepare();
+    const dialog = await editStorage();
+    loseNextFormReply('/relationship-form', false);
+    await userEvent.click(dialog.getByRole('button', { name: 'Lägg i utkastet' }));
+    await dialog.findByText(/Det är oklart om ändringen lades i utkastet/);
+    const actual = authenticatedHttpFetch(client, installation.origin);
+    vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes('/relationship-form/'))
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: 'relationship_confirmation_unavailable' }), {
+            status: 409,
+          }),
+        );
+      if (String(input).endsWith('/map'))
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: 'request_failed' }), { status }),
+        );
+      return actual(input, init);
+    });
+    await userEvent.click(
+      dialog.getByRole('button', { name: 'Kontrollera om ändringen lades i utkastet' }),
+    );
+    await userEvent.click(await dialog.findByRole('button', { name: 'Granska aktuellt underlag' }));
+    if (status === 500) {
+      await dialog.findByText(/Aktuellt underlag kunde inte hämtas/);
+      expect(dialog.getByRole('button', { name: 'Granska aktuellt underlag' })).toHaveProperty(
+        'disabled',
+        false,
+      );
+    } else {
+      await screen.findByText(
+        'Du har inte längre tillgång. Logga in och kontrollera din tillgång till hushållet.',
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.queryByRole('region', { name: 'Hushållets tabell' })).toBeNull();
+    }
+  },
+  30_000,
+);
+
+test('successful current-state review refreshes household data and preserves input for an explicit fresh submission', async () => {
+  const fixture = await prepare();
+  const dialog = await editStorage();
+  await userEvent.selectOptions(dialog.getByLabelText('Sambandets status'), 'active');
+  loseNextFormReply('/relationship-form', false);
+  await userEvent.click(dialog.getByRole('button', { name: 'Lägg i utkastet' }));
+  await dialog.findByText(/Det är oklart om ändringen lades i utkastet/);
+  await fixture.post('draft', {
+    id: 'later',
+    baseRevision: null,
+    value: { name: 'Senare oberoende förslag', typeId: 'read-type' },
+  });
+  const latest = await fixture.read();
+  const actual = authenticatedHttpFetch(client, installation.origin);
+  vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
+    String(input).includes('/relationship-form/')
+      ? Promise.resolve(
+          new Response(JSON.stringify({ error: 'relationship_confirmation_unavailable' }), {
+            status: 409,
+          }),
+        )
+      : actual(input, init),
+  );
+  await userEvent.click(
+    dialog.getByRole('button', { name: 'Kontrollera om ändringen lades i utkastet' }),
+  );
+  await userEvent.click(await dialog.findByRole('button', { name: 'Granska aktuellt underlag' }));
+  const review = await dialog.findByRole('region', { name: 'Aktuellt underlag för nytt försök' });
+  expect(document.activeElement).toBe(
+    within(review).getByRole('heading', { name: 'Aktuellt underlag för nytt försök' }),
+  );
+  expect(
+    within(dialog.getByLabelText('Till objekt')).getByRole('option', {
+      name: /Senare oberoende förslag/,
+    }),
+  ).not.toBeNull();
+  const submit = dialog.getByRole('button', { name: 'Lägg i utkastet' });
+  expect(submit).toHaveProperty('disabled', true);
+  await userEvent.click(
+    within(review).getByRole('button', { name: 'Fortsätt med bevarade uppgifter' }),
+  );
+  expect(submit).toHaveProperty('disabled', false);
+  expect(dialog.getByLabelText('Sambandets status')).toHaveProperty('value', 'active');
+  expect(await fixture.read()).toEqual(latest);
+  await userEvent.click(submit);
+  await dialog.findByText('Sambandet lades i ditt utkast. Du kan hantera nästa samband.');
+  const after = await fixture.read();
+  expect(after.draft.version).toBe(latest.draft.version + 1);
+  expect(after.draft.changes).toEqual(latest.draft.changes);
+  expect(after.relationships).toEqual(latest.relationships);
+  expect(
+    after.draft.relationships?.find((change) => change.id === 'bike-garage')?.after?.lifecycle,
+  ).toBe('active');
+}, 30_000);

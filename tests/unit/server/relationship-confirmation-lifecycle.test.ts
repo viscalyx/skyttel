@@ -48,7 +48,7 @@ async function prepare(legacy = false) {
     baseRevision: null,
     typeRevision: state.relationshipTypes[0].revision,
     stagingId: crypto.randomUUID() as string,
-    ignoredPadding: 'x'.repeat(16384),
+    ignoredPadding: 'å'.repeat(16384),
     value: { typeId: state.relationshipTypes[0].id, sourceId: 'source', targetId: 'target' },
   };
   return { householdId: household.id, userId: state.userId, map, body };
@@ -98,6 +98,20 @@ test.each([1, 1001])(
         )
         .get() as { first: number; last: number };
     const grace = deadline();
+    const evidenceBytes = () =>
+      reopened
+        ?.prepare('SELECT sum(accountedBytes) AS bytes FROM relationship_form_attempt')
+        .get() as { bytes: number };
+    const compactedBytes =
+      512 +
+      [householdId, userId, body.stagingId, JSON.stringify(outcome)].reduce(
+        (sum, value) => sum + Buffer.byteLength(value, 'utf8'),
+        0,
+      ) +
+      64;
+    expect(evidenceBytes()).toEqual({
+      bytes: count * (compactedBytes - 64 + Buffer.byteLength(JSON.stringify(body), 'utf8')),
+    });
     expect(grace.first).toBeGreaterThanOrEqual(upgradeStart + 604800000);
     expect(grace.last).toBe(grace.first);
     expect(grace.first).toBeLessThanOrEqual(Date.now() + 604800000);
@@ -128,6 +142,11 @@ test.each([1, 1001])(
     ).toEqual({ count: 0 });
     expect(deadline()).toEqual(grace);
     expect(map().proposeRelationshipForm(body).outcome).toEqual(outcome);
+    expect(evidenceBytes()).toEqual({ bytes: count * compactedBytes });
+    // Repeating cleanup must not charge the fingerprint or release the request twice.
+    stop();
+    stop = relationshipConfirmationCleanup(reopened, () => time);
+    expect(evidenceBytes()).toEqual({ bytes: count * compactedBytes });
     expect(() => map().proposeRelationshipForm({ ...body, ignoredPadding: 'changed' })).toThrow(
       'operation_reused',
     );
@@ -185,7 +204,9 @@ test('startup and idle cleanup use bounded batches, recover after a database fai
   ).expiresAt;
   fixture.database
     .prepare(`WITH RECURSIVE numbers(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM numbers WHERE n < 249)
-    INSERT INTO relationship_form_attempt SELECT householdId, userId, contentVersion, 'seed-' || n, submission, outcome, expiresAt, fingerprint
+    INSERT INTO relationship_form_attempt (householdId, userId, contentVersion, stagingId, submission, outcome, expiresAt, fingerprint, accountedBytes)
+    SELECT householdId, userId, contentVersion, 'seed-' || n, submission, outcome, expiresAt, fingerprint,
+      accountedBytes - length(cast(stagingId AS blob)) + length('seed-' || n)
     FROM relationship_form_attempt, numbers WHERE stagingId = ?`)
     .run(body.stagingId);
   await fixture.app.close();

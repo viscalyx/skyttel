@@ -2015,16 +2015,28 @@ export function HouseholdMap({
           state={effectiveState ?? state}
           relationshipTypes={effectiveEdgeTypes}
           onPrepareRelationship={async (contentVersion) => {
-            const ticket = await request<{ stagingId: string }>(
-              `${path}/relationship-form-ticket`,
-              { contentVersion },
-            );
-            return ticket.stagingId;
+            try {
+              const ticket = await request<{ stagingId: string }>(
+                `${path}/relationship-form-ticket`,
+                { contentVersion },
+              );
+              return ticket.stagingId;
+            } catch (failure) {
+              if (failure instanceof MapRequestError && [401, 403].includes(failure.status))
+                loseAccess();
+              throw failure;
+            }
           }}
           onReviewRelationship={async () => {
-            const latest = await request<MapState>(path);
-            if (isCurrent()) setState(latest);
-            return latest;
+            try {
+              const latest = await request<MapState>(path);
+              if (isCurrent()) setState(latest);
+              return latest;
+            } catch (failure) {
+              if (failure instanceof MapRequestError && [401, 403].includes(failure.status))
+                loseAccess();
+              throw failure;
+            }
           }}
           onStageRelationship={async (editor, stagingId) => {
             setPending(true);
