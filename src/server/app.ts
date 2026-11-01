@@ -33,6 +33,7 @@ import type { LiveModelProfile, LiveSidebandFactory, LiveUsage } from './live-pr
 import { createLoginMethods } from './login-methods.js';
 import { MapError } from './map.js';
 import { mapRoutes } from './map-routes.js';
+import { oauthParameterError } from './oauth-parameters.js';
 import { policyContactRoutes } from './policy-contact-routes.js';
 import { profileImageRoutes } from './profile-image-routes.js';
 import { imageUploadLimit } from './profile-images.js';
@@ -243,6 +244,12 @@ export function createApp({
   ]);
   app.on(['GET', 'POST'], '/api/auth/*', async (context) => {
     if (!authRoutes.has(context.req.path)) return context.json({ error: 'not_found' }, 404);
+    const parameterError = await oauthParameterError(context.req.raw, `${config.origin}/mcp`);
+    if (parameterError) {
+      context.header('Cache-Control', 'no-store');
+      context.header('Pragma', 'no-cache');
+      return context.json({ error: parameterError }, 400);
+    }
     if (
       context.req.path === '/api/auth/oauth2/authorize' ||
       context.req.path === '/api/auth/oauth2/register'
