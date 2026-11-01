@@ -153,6 +153,9 @@ test('SAMBAND-11: the household object selector ignores table filters and exclud
     await target.selectOption('new-object');
     await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Använder' });
     await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    await expect(
+      dialog.getByRole('status').filter({ hasText: 'Sambandet lades i ditt utkast' }),
+    ).toBeVisible();
     expect((await read()).draft.relationships?.[0].after?.targetId).toBe('new-object');
     await dialog.getByRole('button', { name: 'Stäng samband', exact: true }).click();
     await expect(
@@ -473,6 +476,9 @@ test('SAMBAND-05: full relationship properties survive type changes and reversed
     await expect(dialog.getByLabel('Från objekt', { exact: true })).toHaveValue('bicycle');
     await expect(dialog.getByLabel('Till objekt', { exact: true })).toHaveValue('alex');
     await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    await expect(
+      dialog.getByRole('status').filter({ hasText: 'Sambandet lades i ditt utkast' }),
+    ).toBeVisible();
     expect((await read()).draft.relationships?.[0].after).toMatchObject({
       sourceId: 'bicycle',
       targetId: 'alex',
@@ -482,6 +488,9 @@ test('SAMBAND-05: full relationship properties survive type changes and reversed
     await dialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
     await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption(type?.id ?? '');
     await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    await expect(
+      dialog.getByRole('status').filter({ hasText: 'Sambandet lades i ditt utkast' }),
+    ).toBeVisible();
     expect((await read()).draft.relationships?.[0].after?.properties).toEqual(properties);
     expect((await read()).relationships).toEqual([]);
   } finally {

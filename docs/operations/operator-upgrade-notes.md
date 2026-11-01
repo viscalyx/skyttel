@@ -6,6 +6,27 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Allow for limited relationship-form confirmation storage
+
+Keep a current backup and review free disk space before rollout. Existing
+relationship-form confirmations receive seven days from upgrade. New
+confirmations remain available for seven days from acceptance. Restarts,
+checks and retries do not extend either period. Update the server and web
+client together; reload older open clients before new form submissions.
+
+New submissions can be temporarily blocked when retained confirmations
+reach a storage limit. Existing checks and exact retries remain available
+until expiry. Check that background cleanup restores capacity after expiry.
+Expiry removes no drafts, saved household information, receipts or history.
+See [confirmation storage](relationship-confirmations.md) for limits and
+cleanup behavior. No new configuration is required.
+
+Expired evidence cannot be recovered by rolling back the application alone.
+Do not run an older application against the upgraded database. If rollback
+is required, restore the pre-upgrade backup with its compatible application
+and follow the installation restore procedure. Ordinary cleanup reuses freed
+database space; it does not reduce the database file size.
+
 ### Coordinate type deletion and draft compatibility
 
 Update external assistant clients to review the full draft after a type

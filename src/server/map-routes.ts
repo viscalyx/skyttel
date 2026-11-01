@@ -19,6 +19,7 @@ export function mapRoutes(
     browserSessionId: string,
     householdId: string,
   ) => void,
+  now = () => Date.now(),
 ) {
   type Environment = {
     Variables: { userId: string; browserSessionId: string; body: Record<string, unknown> };
@@ -189,12 +190,23 @@ export function mapRoutes(
       ),
     ),
   );
+  routes.post('/households/:id/map/relationship-form-ticket', (context) =>
+    context.json(
+      householdMap(
+        database,
+        context.get('userId'),
+        context.req.param('id'),
+        now,
+      ).relationshipFormTicket(context.get('body').contentVersion as number),
+    ),
+  );
   routes.post('/households/:id/map/relationship-form', (context) =>
     context.json(
       householdMap(
         database,
         context.get('userId'),
         context.req.param('id'),
+        now,
       ).proposeRelationshipForm(context.get('body')),
     ),
   );
@@ -204,6 +216,7 @@ export function mapRoutes(
         database,
         context.get('userId'),
         context.req.param('id'),
+        now,
       ).relationshipFormOutcome(
         context.req.param('stagingId'),
         Number(context.req.query('contentVersion')),

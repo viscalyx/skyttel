@@ -88,6 +88,8 @@ export function HouseholdReadDialog({
   onClose,
   onEdit,
   onStageRelationship,
+  onPrepareRelationship,
+  onReviewRelationship,
   onCheckRelationship,
   active = true,
   suspended = false,
@@ -102,6 +104,8 @@ export function HouseholdReadDialog({
   relationshipTypes: RelationshipType[];
   onClose: () => void;
   onEdit?: (id: string, restoreFocus: () => void) => void;
+  onPrepareRelationship?: (contentVersion: number) => Promise<string>;
+  onReviewRelationship?: () => Promise<MapState>;
   onStageRelationship?: (
     editor: RelationshipFormSubmission,
     stagingId: string,
@@ -396,42 +400,48 @@ export function HouseholdReadDialog({
             ref={formPane}
             hidden={current.kind !== 'relationships' || current.id !== editorOrigin}
           >
-            {editor && onStageRelationship && onCheckRelationship && (
-              <RelationshipForm
-                key={editor.id}
-                initial={editor}
-                state={{ ...state, relationshipTypes }}
-                objects={
-                  new Map(
-                    rows.filter((row) => !row.removed).map((row) => [row.object.id, row.object]),
-                  )
-                }
-                onDirty={onDirty}
-                onBusy={setBusy}
-                onStage={onStageRelationship}
-                onCheck={onCheckRelationship}
-                onExisting={(id) => {
-                  const edge = householdReadRelationships(state, relationshipTypes).find(
-                    ({ value }) => value.id === id,
-                  );
-                  if (edge && edge.proposal !== 'Föreslagen borttagning')
-                    editRelationship(edge.value);
-                  else {
-                    finishEditing();
-                    setNotice('Det befintliga sambandet har ändrats. Granska aktuellt underlag.');
+            {editor &&
+              onStageRelationship &&
+              onCheckRelationship &&
+              onPrepareRelationship &&
+              onReviewRelationship && (
+                <RelationshipForm
+                  key={editor.id}
+                  initial={editor}
+                  state={{ ...state, relationshipTypes }}
+                  objects={
+                    new Map(
+                      rows.filter((row) => !row.removed).map((row) => [row.object.id, row.object]),
+                    )
                   }
-                }}
-                onComplete={(result) => {
-                  finishEditing();
-                  setNotice(
-                    result.outcome?.status === 'staged' && result.outcome.value === null
-                      ? 'Föreslagen borttagning lades i ditt utkast.'
-                      : 'Sambandet lades i ditt utkast. Du kan hantera nästa samband.',
-                  );
-                }}
-                onCancel={finishEditing}
-              />
-            )}
+                  onDirty={onDirty}
+                  onBusy={setBusy}
+                  onPrepare={onPrepareRelationship}
+                  onReview={onReviewRelationship}
+                  onStage={onStageRelationship}
+                  onCheck={onCheckRelationship}
+                  onExisting={(id) => {
+                    const edge = householdReadRelationships(state, relationshipTypes).find(
+                      ({ value }) => value.id === id,
+                    );
+                    if (edge && edge.proposal !== 'Föreslagen borttagning')
+                      editRelationship(edge.value);
+                    else {
+                      finishEditing();
+                      setNotice('Det befintliga sambandet har ändrats. Granska aktuellt underlag.');
+                    }
+                  }}
+                  onComplete={(result) => {
+                    finishEditing();
+                    setNotice(
+                      result.outcome?.status === 'staged' && result.outcome.value === null
+                        ? 'Föreslagen borttagning lades i ditt utkast.'
+                        : 'Sambandet lades i ditt utkast. Du kan hantera nästa samband.',
+                    );
+                  }}
+                  onCancel={finishEditing}
+                />
+              )}
           </div>
         </div>
       </div>

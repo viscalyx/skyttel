@@ -54,7 +54,12 @@ import { relationships } from './relationships.js';
 
 export { MapError } from './map-error.js';
 
-export function householdMap(database: Database.Database, actorId: string, householdId: string) {
+export function householdMap(
+  database: Database.Database,
+  actorId: string,
+  householdId: string,
+  now = () => Date.now(),
+) {
   const userId = database
     .transaction(() => {
       assistantTaskAccess.getStore()?.();
@@ -628,10 +633,30 @@ export function householdMap(database: Database.Database, actorId: string, house
         };
       });
     },
+    relationshipFormTicket(contentVersion: number) {
+      return transaction(() => {
+        if (!Number.isSafeInteger(contentVersion) || contentVersion < 1)
+          throw new MapError('invalid_request', 400);
+        assertContentVersion(database, householdId, contentVersion);
+        return relationshipFormAttempts(
+          database,
+          householdId,
+          userId,
+          contentVersion,
+          now(),
+        ).issue();
+      });
+    },
     relationshipFormOutcome(stagingId: string, contentVersion: number): RelationshipFormResult {
       return transaction(() => {
         assertContentVersion(database, householdId, contentVersion);
-        const attempts = relationshipFormAttempts(database, householdId, userId, contentVersion);
+        const attempts = relationshipFormAttempts(
+          database,
+          householdId,
+          userId,
+          contentVersion,
+          now(),
+        );
         return { outcome: attempts.outcome(stagingId), state: readState() };
       });
     },
@@ -647,6 +672,7 @@ export function householdMap(database: Database.Database, actorId: string, house
           householdId,
           userId,
           body.contentVersion as number,
+          now(),
         );
         const previous = attempts.previous(body);
         if (previous) return { outcome: previous, state: readState() };
@@ -661,7 +687,6 @@ export function householdMap(database: Database.Database, actorId: string, house
             relationshipId: result.existingId,
           };
         else {
-          writeDraft(result.draft);
           outcome = {
             status: 'staged',
             stagingId: body.stagingId as string,
@@ -672,6 +697,7 @@ export function householdMap(database: Database.Database, actorId: string, house
           };
         }
         attempts.record(body, outcome);
+        if (outcome.status === 'staged') writeDraft(result.draft);
         return { outcome, state: readState() };
       });
     },

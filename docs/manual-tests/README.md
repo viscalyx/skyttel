@@ -859,6 +859,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   Validering, dubbletter, borttagning, oklara utfall och förlustvarning
   bevarar tidigare förslag. Ett gammalt obekräftat försök efter en senare
   ändring kräver granskning av aktuellt underlag före nytt förslag.
+  Utgången bekräftelse kräver uttrycklig granskning med bevarad inmatning;
+  tillfällig kapacitetsbrist behåller ett redigerbart formulär.
   Läsning, filter, återfokus och tre webbläsarvyer provas med egna
   fallidentiteter. Faktisk skärmläsning och fysiskt skärmtangentbord har
   separata mänskliga observationsfall. Exakta dekorativa värden i

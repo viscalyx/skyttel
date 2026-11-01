@@ -53,6 +53,8 @@ test('endpoint inspection searches property labels and values without choosing a
     <FormLeaveProvider>
       <main className="household-map workspace-shell" data-theme="light">
         <RelationshipForm
+          onPrepare={async () => crypto.randomUUID()}
+          onReview={async () => state}
           initial={{
             id: 'edge',
             version: 0,

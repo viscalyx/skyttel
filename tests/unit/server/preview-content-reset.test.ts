@@ -153,7 +153,7 @@ test('the deployed preview before backgrounds upgrades directly and preserves ac
     draft: { changes: [] },
   });
   expect(database.prepare('SELECT MAX(version) AS version FROM schema_migration').get()).toEqual({
-    version: 41,
+    version: 42,
   });
   const view = database
     .prepare('SELECT settings, backgroundVersion FROM personal_view_settings')
@@ -346,14 +346,14 @@ test.each([33, 34])(
     const migrationsDirectory = join(directory, 'later-release');
     cpSync(resolve('migrations'), migrationsDirectory, { recursive: true });
     writeFileSync(
-      join(migrationsDirectory, '042_next_release.sql'),
+      join(migrationsDirectory, '043_next_release.sql'),
       'CREATE TABLE next_release_setting (name TEXT PRIMARY KEY);',
     );
     database.close();
     database = openDatabase(path, { authorityFence, migrationsDirectory });
     const upgraded = householdMap(database, 'alex', 'home');
     expect(database.prepare('SELECT MAX(version) AS version FROM schema_migration').get()).toEqual({
-      version: 42,
+      version: 43,
     });
     expect(upgraded.read()).toEqual(retainedMap);
     expect(upgraded.history()).toEqual(retainedHistory);
@@ -530,7 +530,7 @@ test.each([
     seedPreviousPreview(version);
     const migrationsDirectory = join(directory, 'migrations');
     cpSync(resolve('migrations'), migrationsDirectory, { recursive: true });
-    writeFileSync(join(migrationsDirectory, '042_failure.sql'), failure);
+    writeFileSync(join(migrationsDirectory, '043_failure.sql'), failure);
     const previous = new Database(path, { readonly: true });
     const before = previous.serialize();
     previous.close();

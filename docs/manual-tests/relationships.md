@@ -64,6 +64,44 @@ window.relationshipProbe = (mode) => {
 };
 ```
 
+Genomför vanliga återhämtningsfall inom en timme. Godkända försök kan
+kontrolleras i sju dygn; kontroller och omstart förlänger inte tiden.
+SAMBAND-20/21 använder styrda felsvar för att prova gränssnittet utan att
+vänta sju dygn eller fylla lagringen. Serversviten provar verkliga
+lagringsgränser, tidsgränser, migrering och återstart separat.
+
+För SAMBAND-20 kör operatören följande efter det förlorade svaret och före
+kontrollknappen. Återställ genom att ladda om efter fallet.
+
+```javascript
+const beforeExpiryProbe = window.fetch;
+window.fetch = (input, options) => {
+  if (!new URL(String(input), location.origin).pathname
+    .includes('/map/relationship-form/'))
+    return beforeExpiryProbe.call(window, input, options);
+  window.fetch = beforeExpiryProbe;
+  return Promise.resolve(Response.json(
+    { error: 'relationship_confirmation_unavailable' }, { status: 409 },
+  ));
+};
+```
+
+För SAMBAND-21 kör operatören följande före första inskickningen. Den
+inskickningen når inte servern. Återställ genom att ladda om efter fallet.
+
+```javascript
+const beforeCapacityProbe = window.fetch;
+window.fetch = (input, options) => {
+  if (!new URL(String(input), location.origin).pathname
+    .endsWith('/map/relationship-form'))
+    return beforeCapacityProbe.call(window, input, options);
+  window.fetch = beforeCapacityProbe;
+  return Promise.resolve(Response.json(
+    { error: 'relationship_confirmation_capacity' }, { status: 409 },
+  ));
+};
+```
+
 ## Arbetsflöden
 
 För den sista kontrollen i SAMBAND-13: operatören installerar följande
@@ -1141,3 +1179,144 @@ säkerhetslägen har avvecklats tillsammans med funktionerna. Verkliga
 ändpunkter och uttrycklig livscykel används i fortsatta avbrottsflöden.
 Fysisk förstoring, uppläsning och mobil tangentbordsskymning kräver sina
 mänskliga observationer. Inga sådana resultat följer av syntetiska tester.
+
+### SAMBAND-20: Utgången bekräftelse kräver granskning med bevarad inmatning
+
+**Integrationstest:** SAMBAND-20 i
+[relationship-confirmation-retention.spec.ts](../../tests/integration/relationship-confirmation-retention.spec.ts).
+
+**Syfte:** Saknad bekräftelse får inte påstå att försöket aldrig genomförs
+eller orsaka automatisk inskickning.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Alex och Blå cykeln finns i utkastet. Prova tre
+varianter i separata hushåll: utan samband, dubblett av ett sparat aktivt
+samband Använder från Alex till Blå cykeln, samt borttagning av samma
+sparade aktiva samband. Spara objekten och sambandet före de två senare
+varianterna. Operatören använder Styrda avbrott
+för förlorat svar och sedan för otillgänglig bekräftelse. Automationen
+använder samma styrda svar; verklig serverlagring provas separat.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/relationship-confirmation-retention.spec.ts",
+    "caseId": "SAMBAND-20"
+  },
+  "reference": "Chromium, datorvy. Tre varianter: genomfört tillägg, dubblett med oförändrat utkast och genomförd föreslagen borttagning. Verklig inskickning med förlorat svar, sedan styrt svar om otillgänglig bekräftelse.",
+  "outcomes": [
+    "Otillgänglig bekräftelse behåller formulärets uppgifter och påstår inte att ändringen aldrig genomförs.",
+    "Aktuellt underlag måste granskas och ett nytt försök uttryckligen skickas."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/relationship-form.test.ts",
+      "title": "seven-day recovery survives save and a real database reopen without renewal, then fences delayed writes",
+      "purpose": "Verklig tidsgräns och beständig återhämtning, oberoende av webbläsarens styrda felsvar."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Samband för Alex och Nytt samband. Välj Använder och Blå cykeln.
+   Välj manuellt upphört under Sambandets status. I borttagningsvarianten
+   väljer du i stället Redigera samband och behåller aktiva värden.
+2. Be operatören köra `relationshipProbe('lost-applied')`. Välj Lägg i
+   utkastet, eller Föreslå borttagning i borttagningsvarianten, och invänta
+   kontrollknappen.
+3. Be operatören förbereda otillgänglig bekräftelse. Välj Kontrollera om
+   ändringen lades i utkastet. Läs beskedet och de bevarade fälten.
+4. Kontrollera att Lägg i utkastet är spärrad. Välj Granska aktuellt
+   underlag. Läs det manuellt upphörda sambandet i tilläggsvarianten och
+   det aktiva sambandet i dubblettvarianten. I borttagningsvarianten ska
+   granskningen visa både de sparade aktiva uppgifterna och förslaget
+   att ta bort sambandet.
+5. Välj Fortsätt med bevarade uppgifter. Kontrollera att formuläret
+   fortfarande anger manuellt upphört. Välj Lägg i utkastet. I
+   borttagningsvarianten finns aktiva värden kvar; välj Föreslå borttagning
+   igen.
+
+**Förväntat resultat:**
+
+- Beskedet anger att bekräftelsen inte längre är tillgänglig, utan att
+  påstå att ändringen aldrig genomförs. Uppgifterna finns kvar.
+- Fokus följer kontrollen till granskningsknappen, granskningens rubrik och
+  sedan formulärets sambandstyp när de bevarade uppgifterna åter kan skickas.
+- Granskningen visar aktuellt underlag. Ingen inskickning sker förrän
+  användaren uttryckligen väljer Lägg i utkastet igen.
+- Tilläggsvarianten visar Sambandet lades i ditt utkast.
+  Dubblettvarianten visar Sambandet finns redan och bevarar aktiva värden
+  i det befintliga sambandet. Borttagningsvarianten visar bekräftelsen
+  Föreslagen borttagning lades i ditt utkast.
+
+### SAMBAND-21: Tillfälligt full lagring behåller ett redigerbart formulär
+
+**Integrationstest:** SAMBAND-21 i
+[relationship-confirmation-retention.spec.ts](../../tests/integration/relationship-confirmation-retention.spec.ts).
+
+**Syfte:** Kapacitetsavslag förlorar inga inmatade uppgifter och förklarar
+att användaren kan försöka senare.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Alex och Blå cykeln finns i utkastet, utan samband.
+Operatören förbereder kapacitetsavslaget enligt Styrda avbrott. Svaret
+provar gränssnittet; exakta lagringsgränser provas i serversviten.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/relationship-confirmation-retention.spec.ts",
+    "caseId": "SAMBAND-21"
+  },
+  "reference": "Chromium, datorvy, ett styrt kapacitetsavslag före verklig inskickning och därefter vanlig inskickning.",
+  "outcomes": [
+    "Tillfälligt fullt förklaras och hela formuläret förblir redigerbart.",
+    "Användaren kan rätta uppgifter och uttryckligen försöka igen."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/relationship-form.test.ts",
+      "title": "exact member count admission is atomic for concurrent requests and never evicts accepted outcomes",
+      "purpose": "Atomiskt kapacitetsavslag och återhämtning vid den verkliga gränsen."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Samband för Alex och Nytt samband. Välj Använder och Blå cykeln.
+   Välj manuellt upphört under Sambandets status.
+2. Be operatören förbereda kapacitetsavslaget. Välj Lägg i utkastet.
+3. Läs beskedet om tillfälligt fullt och att försöket inte ändrar något.
+   Kontrollera att Blå cykeln och manuellt upphört finns kvar och kan ändras.
+4. Byt status till aktivt och välj Lägg i utkastet igen. Efter bekräftelsen,
+   välj Redigera samband och läs statusen.
+
+**Förväntat resultat:**
+
+- Avslaget förklarar den tillfälliga begränsningen och behåller hela
+  formuläret redigerbart. Ingen automatisk inskickning sker.
+- Det uttryckliga nya försöket lyckas. Sambandets status är aktivt.
