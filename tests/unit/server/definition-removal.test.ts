@@ -188,6 +188,28 @@ test('object type deletion stages and saves objects and incident relationships t
   expect((await (await client.request(`${path}/history`)).json()).history[0]).toEqual(receipt);
 });
 
+test('type cascades retain only endpoint names and preserve existing relationship name snapshots', async () => {
+  const initial = await read();
+  await object('source', initial.types[0].id, { name: 'Source name' });
+  await object('target', initial.types[1].id, { name: 'Target name' });
+  await object('unrelated', initial.types[1].id, { name: 'Unrelated name' });
+  await relationship('saved-edge', initial.relationshipTypes[0].id);
+  await relationship('edited-edge', initial.relationshipTypes[1].id);
+  await save('name-snapshots');
+  await relationship('edited-edge', initial.relationshipTypes[1].id, { lifecycle: 'ended' });
+  const names = (await read()).draft.relationships?.find(
+    ({ id }) => id === 'edited-edge',
+  )?.objectNames;
+  expect(names).toEqual({ source: 'Source name', target: 'Target name' });
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  const removals = (await read()).draft.relationships;
+  expect(removals?.find(({ id }) => id === 'saved-edge')?.objectNames).toEqual({
+    source: 'Source name',
+    target: 'Target name',
+  });
+  expect(removals?.find(({ id }) => id === 'edited-edge')?.objectNames).toEqual(names);
+});
+
 test('canceling overlapping type cascades restores suppressed work and keeps independent removals', async () => {
   const state = await read();
   const type = state.types[0],
@@ -266,6 +288,49 @@ test('canceling relationship type removal retains a later independent endpoint r
   await save('independent-endpoint-removal');
   expect((await read()).relationships).toEqual([]);
 });
+
+test.each(['objectType', 'relationshipType'] as const)(
+  'canceling an unrelated %s removal preserves a relationship corrected after endpoint removal',
+  async (kind) => {
+    const initial = await read();
+    await object('source', initial.types[0].id);
+    await object('target', initial.types[1].id);
+    await object('unrelated', initial.types[2].id);
+    await relationship('connection', initial.relationshipTypes[0].id);
+    await relationship('unrelated-edge', initial.relationshipTypes[1].id, {
+      sourceId: 'unrelated',
+    });
+    await save('correction-baseline');
+    await object('source', initial.types[0].id, null);
+    await relationship('connection', initial.relationshipTypes[0].id, {
+      sourceId: 'target',
+      properties: [{ id: 'note', label: 'Note', kind: 'text', value: 'Keep correction' }],
+    });
+    const corrected = (await read()).draft;
+    expect(corrected.relationships?.find(({ id }) => id === 'connection')?.after).toMatchObject({
+      sourceId: 'target',
+      targetId: 'target',
+    });
+    const typeId = kind === 'objectType' ? initial.types[2].id : initial.relationshipTypes[1].id;
+    expect(
+      (await definition(kind === 'objectType' ? 'object-type' : 'relationship-type', typeId, null))
+        .status,
+    ).toBe(200);
+    expect(
+      (await post('discard-change', { version: (await read()).draft.version, kind, id: typeId }))
+        .status,
+    ).toBe(200);
+    const canceled = (await read()).draft;
+    expect(canceled.relationships).toEqual(corrected.relationships);
+    expect(canceled.changes).toEqual(corrected.changes);
+    await save('corrected-endpoint');
+    expect((await read()).relationships.find(({ id }) => id === 'connection')).toMatchObject({
+      sourceId: 'target',
+      targetId: 'target',
+      properties: [{ id: 'note', label: 'Note', kind: 'text', value: 'Keep correction' }],
+    });
+  },
+);
 
 test('unrelated type deletion does not disable ordinary correction after endpoint removal', async () => {
   const initial = await read();
@@ -572,6 +637,29 @@ test('new incident relationships and changed objects cannot be silently included
   ).toBe(200);
   expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
   await save('new-reviewed-cascade');
+  expect((await read()).objects.map(({ id }) => id)).toEqual(['target']);
+});
+
+test('renewing the same type-removal review includes new connections to its staged objects', async () => {
+  const initial = await read();
+  await object('source', initial.types[0].id);
+  await object('target', initial.types[1].id);
+  await save('renewal-baseline');
+  const other = await member();
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  await relationship('new-connection', initial.relationshipTypes[0].id, {}, other);
+  await save('new-incident-connection', other);
+  const before = await read();
+  expect(
+    (await post('save', { version: before.draft.version, operationId: 'before-renewal' })).status,
+  ).toBe(409);
+  expect((await read()).draft).toEqual(before.draft);
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  expect((await read()).draft.relationships).toEqual([
+    expect.objectContaining({ id: 'new-connection', after: null, removedWithObjects: ['source'] }),
+  ]);
+  await save('renewed-cascade');
+  expect((await read()).relationships).toEqual([]);
   expect((await read()).objects.map(({ id }) => id)).toEqual(['target']);
 });
 

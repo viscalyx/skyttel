@@ -8,9 +8,12 @@ export function stageTypeRemoval(
   kind: 'objectType' | 'relationshipType',
   id: string,
 ) {
+  const cascadedObjects = new Set<string>();
   if (kind === 'objectType') {
     const objects = new Map(state.objects.map((object) => [object.id, object]));
     for (const change of draft.changes) {
+      // Renewed review must include new edges attached to this same staged cascade.
+      if (change.removedWithTypes?.includes(id)) cascadedObjects.add(change.id);
       if (change.after)
         objects.set(change.id, {
           ...change.after,
@@ -22,6 +25,7 @@ export function stageTypeRemoval(
     }
     for (const object of objects.values()) {
       if (object.typeId !== id) continue;
+      cascadedObjects.add(object.id);
       const existing = draft.changes.find((change) => change.id === object.id);
       const before = existing ? existing.before : object;
       const type = state.types.find((type) => type.id === before?.typeId) ?? existing?.type;
@@ -37,9 +41,6 @@ export function stageTypeRemoval(
       });
     }
   }
-  const removedObjects = new Set(
-    draft.changes.filter((change) => !change.after).map((change) => change.id),
-  );
   const effective = proposedRelationships(state.relationships, draft.relationships);
   const suppressed = (draft.relationships ?? []).flatMap((change) =>
     change.suppressed?.after ? [{ ...change.suppressed.after, id: change.id }] : [],
@@ -48,7 +49,7 @@ export function stageTypeRemoval(
     const existing = draft.relationships?.find((change) => change.id === edge.id);
     const value = existing?.suppressed?.after ?? existing?.after ?? edge;
     const objectCauses = [edge.sourceId, edge.targetId, value.sourceId, value.targetId].filter(
-      (id) => removedObjects.has(id),
+      (id) => cascadedObjects.has(id),
     );
     const typeCause = kind === 'relationshipType' && value.typeId === id;
     if (!objectCauses.length && !typeCause) continue;
@@ -76,7 +77,18 @@ export function stageTypeRemoval(
       type,
       objectNames:
         existing?.objectNames ??
-        Object.fromEntries(state.objects.map((object) => [object.id, object.name])),
+        Object.fromEntries(
+          [edge.sourceId, edge.targetId, value.sourceId, value.targetId].flatMap((endpointId) => {
+            const saved = state.objects.find((object) => object.id === endpointId);
+            const change = draft.changes.find((object) => object.id === endpointId);
+            const name =
+              saved?.name ??
+              change?.after?.name ??
+              change?.before?.name ??
+              change?.suppressed?.after?.name;
+            return name === undefined ? [] : [[endpointId, name]];
+          }),
+        ),
       ...(objectCauses.length ? { removedWithObjects: [...new Set(objectCauses)] } : {}),
       ...(typeCause ? { removedWithTypes: [id] } : {}),
       ...(existing ? { suppressed: structuredClone(existing) } : {}),
