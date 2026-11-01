@@ -18,7 +18,11 @@ import type {
   TextAssistantReview,
   TextAssistantView,
 } from '../shared/text-assistant.js';
-import { assistantFailureMessage, newConversationMessage } from './assistant-feedback.js';
+import {
+  assistantFailureMessage,
+  blockedActionMessage,
+  newConversationMessage,
+} from './assistant-feedback.js';
 import { textAssistantInstructions } from './assistant-instructions.js';
 import {
   type AssistantObservationContext,
@@ -28,6 +32,12 @@ import {
   type ObserveAssistant,
 } from './assistant-observation.js';
 import { assistantReadCache } from './assistant-read-cache.js';
+import {
+  type CheckTurnActions,
+  compareTurnActions,
+  interpretTurnScope,
+  turnActionData,
+} from './assistant-turn-scope.js';
 import type { Auth } from './auth.js';
 import { sessionDeadline } from './browser-binding.js';
 import type { Config } from './config.js';
@@ -93,6 +103,8 @@ type Session = TextAssistantView & {
   activeMessage?: Message;
   input: ResponseInputItem[];
   conversation: { role: 'user' | 'assistant'; text: string; partial?: boolean }[];
+  /** User-originated executed turns, separate from model/history context. */
+  userRequests: string[];
   /** Dialogue already included in Responses input; add new fragments once. */
   contextOffset: number;
   queue: Message[];
@@ -367,6 +379,7 @@ export function textAssistantRoutes({
       reply,
       modelReply,
       requiredNotice,
+      securityReference,
       questions,
       result,
       error,
@@ -416,6 +429,7 @@ export function textAssistantRoutes({
       reply,
       modelReply,
       requiredNotice,
+      securityReference,
       questions,
       questionPending: Boolean(questions?.length),
       newQuestions: session.newQuestions ?? [],
@@ -1134,6 +1148,7 @@ export function textAssistantRoutes({
     session.workVersion = session.review.version;
     session.input = [];
     session.conversation = [];
+    session.userRequests = [];
     session.contextOffset = 0;
     session.contextRevision = (session.contextRevision ?? 0) + 1;
     session.parts.clear();
@@ -1151,6 +1166,7 @@ export function textAssistantRoutes({
     session.requiredNotice = undefined;
     session.result = undefined;
     session.error = undefined;
+    session.securityReference = undefined;
     session.receipt = undefined;
     session.saveCheck = undefined;
     session.discarded = undefined;
@@ -1167,6 +1183,7 @@ export function textAssistantRoutes({
     revision: number,
     task: AbortController,
     expected: { version: number; contentVersion: number },
+    scopeReady: (check: CheckTurnActions) => void,
   ) {
     const serial = session.inputSerial ?? 0;
     // Only the current whole-message command grants discard authority. Model
@@ -1184,6 +1201,66 @@ export function textAssistantRoutes({
     };
     try {
       guard();
+      if (!respond) throw new Error('assistant_unavailable');
+      const scope = await interpretTurnScope(
+        respond,
+        text,
+        session.userRequests.slice(0, -1),
+        task.signal,
+      );
+      guard();
+      if (scope.mode === 'read') {
+        session.saveIntent = undefined;
+        originalSaveIntent = false;
+      }
+      if (scope.mode === 'clarify') {
+        session.saveIntent = undefined;
+        session.phase = 'ready';
+        session.questions = [...session.parts.questions(), scope.request];
+        session.reply = scope.request;
+        session.conversation.push({ role: 'assistant', text: scope.request });
+        return;
+      }
+      const rejectAction = (name: string, reason: 'read_only_turn' | 'outside_requested_work') => {
+        const reference = randomUUID();
+        session.securityReference = reference;
+        console.error(
+          JSON.stringify({
+            event: 'assistant_action_out_of_scope',
+            reference,
+            at: new Date(now()).toISOString(),
+            householdId: session.householdId,
+            actorId: session.actorId,
+            sessionId: session.id,
+            taskId: session.taskId,
+            source: session.taskSource,
+            tool: name,
+            reason,
+          }),
+        );
+        throw new MapError('assistant_action_out_of_scope', 409);
+      };
+      const checkActions = async (
+        operations: { name: string; arguments: Record<string, unknown> }[],
+      ) => {
+        guard();
+        if (!operations.length) return;
+        if (scope.mode === 'read') rejectAction(operations[0].name, 'read_only_turn');
+        const map = await call(session, 'read_map', {}, guard);
+        guard();
+        const decision = await compareTurnActions(
+          respond,
+          { current: text, scope },
+          operations,
+          { map: turnActionData(map, operations), draft: session.review },
+          task.signal,
+        );
+        guard();
+        if (decision.decision === 'deny')
+          rejectAction(operations[decision.operation].name, 'outside_requested_work');
+        if (decision.decision === 'clarify') throw new MapError('assistant_scope_unclear', 409);
+      };
+      scopeReady(checkActions);
       const review = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
       guard();
       if (
@@ -1450,8 +1527,6 @@ export function textAssistantRoutes({
           const batch = parsed.data;
           if (batch.version !== version || batch.contentVersion !== contentVersion)
             throw new MapError('assistant_draft_changed', 409);
-          if (batch.completion === 'save' && !session.saveIntent && !originalSaveIntent)
-            throw new MapError('assistant_save_not_requested', 409);
           if (
             batch.completion === 'save' &&
             batch.questions.some(
@@ -1475,6 +1550,12 @@ export function textAssistantRoutes({
           }
           // Check the entire batch before its first mutation, even when an
           // otherwise requested edit precedes the whole-draft discard.
+          await checkActions([
+            ...batch.operations,
+            ...(batch.completion === 'save' ? [{ name: 'save_draft', arguments: {} }] : []),
+          ]);
+          if (batch.completion === 'save' && !session.saveIntent && !originalSaveIntent)
+            throw new MapError('assistant_save_not_requested', 409);
           for (const operation of batch.operations) checkDiscard(operation.name);
           const original = calls[0];
           session.parts.validateCompletion(batch.resolves);
@@ -1497,6 +1578,38 @@ export function textAssistantRoutes({
             (session.displayedSelection ? 'Markerat i kartan.' : undefined);
           session.phase = session.pendingSave ? 'recovery' : 'ready';
           return;
+        }
+        if (!combined) {
+          const operations = [];
+          for (const action of calls) {
+            const tool = session.mcp.tools.find((tool) => tool.name === action.name);
+            if (!tool) continue; // Local conversation/display tools do not mutate the draft.
+            const args = JSON.parse(action.arguments) as Record<string, unknown>;
+            // Internal saving supplies its own operation identity at dispatch.
+            // Validate the same server-owned field here without registering work.
+            const checkedArgs = ['save_draft', 'prepare_save'].includes(action.name)
+              ? { ...args, operationId: session.pendingSave?.operationId ?? randomUUID() }
+              : args;
+            if (
+              !z
+                .fromJSONSchema(tool.inputSchema as z.core.JSONSchema.JSONSchema)
+                .safeParse(checkedArgs).success
+            )
+              throw new MapError('invalid_request', 400);
+            if (tool.annotations?.readOnlyHint !== true) {
+              if (
+                scope.mode !== 'read' &&
+                ['save_draft', 'prepare_save'].includes(action.name) &&
+                !session.saveIntent &&
+                !originalSaveIntent
+              )
+                throw new MapError('assistant_save_not_requested', 409);
+              if (args.version !== version || args.contentVersion !== contentVersion)
+                throw new MapError('assistant_draft_changed', 409);
+              operations.push({ name: action.name, arguments: args });
+            }
+          }
+          await checkActions(operations);
         }
         for (const action of calls) {
           guard();
@@ -1864,6 +1977,10 @@ export function textAssistantRoutes({
       session.reply = session.previousFailure;
       session.modelReply = undefined;
       session.requiredNotice = undefined;
+      if (session.securityReference) {
+        session.requiredNotice = blockedActionMessage(session.securityReference);
+        session.reply = session.requiredNotice;
+      }
       if (error instanceof MapError && error.code === 'assistant_task_expired') return;
       try {
         await refresh(session, guard);
@@ -2010,6 +2127,7 @@ export function textAssistantRoutes({
     session.resetSource = undefined;
     session.canceled = undefined;
     session.error = undefined;
+    session.securityReference = undefined;
     session.reply = undefined;
     session.modelReply = undefined;
     session.newQuestions = [];
@@ -2023,6 +2141,10 @@ export function textAssistantRoutes({
     session.displayedSelection = undefined;
     session.displayedItem = undefined;
     if (!message.voice) session.conversation.push({ role: 'user', text: message.text });
+    session.userRequests = [...session.userRequests, message.text].slice(-24);
+    // Scope clarifications are transient; ledger questions remain pending until
+    // their existing identity/answer protocol resolves them.
+    syncQuestions(session);
     const revision = session.revision;
     const startedAt = now();
     const observationContext = backendTaskObservationContext(
@@ -2082,7 +2204,10 @@ export function textAssistantRoutes({
           { role: 'assistant', content: session.reply },
         );
       } else {
-        await run(session, message.text, revision, task, expected);
+        let checkTurnActions: CheckTurnActions | undefined;
+        await run(session, message.text, revision, task, expected, (check) => {
+          checkTurnActions = check;
+        });
         guard();
         const unregisteredQuestion = session.parts
           .read()
@@ -2123,11 +2248,18 @@ export function textAssistantRoutes({
               session.saveIntent = undefined;
               return;
             }
-            session.pendingSave = {
+            const pendingSave = {
               operationId: randomUUID(),
               version: review.version,
               contentVersion: review.contentVersion,
             };
+            if (!checkTurnActions) throw new MapError('assistant_scope_unavailable', 409);
+            await checkTurnActions([
+              { name: 'prepare_save', arguments: pendingSave },
+              { name: 'save_draft', arguments: pendingSave },
+            ]);
+            saveGuard();
+            session.pendingSave = pendingSave;
             await call(session, 'prepare_save', session.pendingSave, saveGuard);
             const value = await call(session, 'save_draft', session.pendingSave, saveGuard);
             verifyReceipt(session, value.receipt, session.pendingSave);
@@ -2185,7 +2317,13 @@ export function textAssistantRoutes({
         session.error = session.pendingSave
           ? 'assistant_save_unknown'
           : error instanceof MapError &&
-              ['assistant_task_expired', 'assistant_pending_part_changed'].includes(error.code)
+              [
+                'assistant_task_expired',
+                'assistant_pending_part_changed',
+                'assistant_action_out_of_scope',
+                'assistant_scope_unclear',
+                'assistant_scope_unavailable',
+              ].includes(error.code)
             ? error.code
             : 'assistant_draft_changed';
         session.reply = assistantFailureMessage(session.error);
@@ -2193,6 +2331,15 @@ export function textAssistantRoutes({
           session.reply +=
             ' Din tidigare sparbegäran gäller inte längre. Be om sparande igen när detta är löst.';
         session.saveIntent = undefined;
+        if (session.securityReference) {
+          session.requiredNotice = blockedActionMessage(session.securityReference);
+          session.reply = session.requiredNotice;
+        }
+        if (session.securityReference || session.error.startsWith('assistant_scope_')) {
+          session.modelReply = undefined;
+          session.previousFailure = session.reply;
+          session.conversation.push({ role: 'assistant', text: session.reply });
+        }
       })
       .finally(() => {
         observe?.({
@@ -2232,6 +2379,7 @@ export function textAssistantRoutes({
             source: message.voice ? 'voice' : 'text',
             reply: session.reply,
             requiredNotice: session.requiredNotice,
+            securityReference: session.securityReference,
             questionPending: view(session).questionPending,
             questions: session.questions,
             newQuestions: session.newQuestions,
@@ -2352,6 +2500,7 @@ export function textAssistantRoutes({
         operations: [],
         input: [],
         conversation: [],
+        userRequests: [],
         contextOffset: 0,
         capacity: new ConversationCapacity(modelProfile?.tokens, voiceTokens),
         contextRevision: 0,

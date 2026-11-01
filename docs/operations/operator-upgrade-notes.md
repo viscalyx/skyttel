@@ -6,6 +6,19 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Monitor blocked internal assistant actions
+
+Retain restricted server security logs and make sure the installation
+operator can find a user's blocked-action reference. After rollout,
+verify that the user notice and operator event have the same reference.
+Use the [investigation guide](assistant-security-events.md). A blocked action
+does not prove prompt injection. External assistants retain their existing
+access and are outside this protection.
+
+Allow for extra model calls and latency when the internal assistant checks
+requests and proposed edits. Monitor provider costs and task expiry.
+Existing drafts and explicit whole-draft saving remain in use.
+
 ### Allow for limited relationship-form confirmation storage
 
 Keep a current backup and review free disk space before rollout. Existing

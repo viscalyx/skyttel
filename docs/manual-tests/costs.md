@@ -80,23 +80,23 @@ Följ startguidens återställning mellan fall och `quit` efter provningen.
    mikrofonen med **Prata med Skyttel**. Vänta tills röstrutan har försvunnit
    och röstanslutningen har stängts, några sekunder senare.
 3. Öppna **Månadskostnad**. Kontrollera aktuell månad i UTC, Render **72,50 SEK
-   (7,25 USD)**, Live **0,75 SEK (0,075 USD)** och Sol **2,17 SEK (0,217
+   (7,25 USD)**, Live **0,75 SEK (0,075 USD)** och Sol **4,34 SEK (0,434
    USD)**. Öppna **Visa mätvärden för Live** och **Visa mätvärden för textmodell**.
-   Live visar 90 rapporterade sekunder. Sol visar 100 000 indatatoken med
-   cache och resonemang separat.
-4. Kräv delsumman **75,42 SEK (7,542 USD)** före de tre raderna. Öppna **Visa
+   Live visar 90 rapporterade sekunder. Sol visar sammanlagt 200 000
+   indatatoken med cache och resonemang separat.
+4. Kräv delsumman **77,59 SEK (7,759 USD)** före de tre raderna. Öppna **Visa
    driftantagandet**. Läs att Render avser hel månad, tidigare förbrukning är
    okänd och cirka 200 kronor är ett riktmärke utan automatisk spärr.
 5. Öppna modellpriserna under **Prisunderlag**. Kontrollera datum, enheter,
    tabell, källor och uttryckligt antagande om 10 SEK per USD. Startkrediten för
    Live ska inte läggas på en gång till.
 6. Öppna **Ändra månadens antaganden**, ändra **SEK per USD** till 11 och välj
-   **Spara månadens antaganden**. Kräv **82,96 SEK (7,542 USD)**.
+   **Spara månadens antaganden**. Kräv **85,35 SEK (7,759 USD)**.
 7. Välj föregående månad. Dess förval är fortfarande 10 SEK per USD och tidigare
    förbrukning är okänd. Återgå till aktuell månad; den har 11.
 8. Be operatören starta om samma installation och invänta bekräftelse. Ladda om
    webbläsaren och öppna mätvärdena igen. Kontrollera samma uppdelning, ändrade
-   valutantagande och delsumman **82,96 SEK (7,542 USD)**.
+   valutantagande och delsumman **85,35 SEK (7,759 USD)**.
 
 **Förväntat resultat:**
 
@@ -523,10 +523,11 @@ The known Sol example is 100,000 input tokens: 20,000 cache reads,
 10,000 cache writes and 70,000 ordinary input. Its 5,000 output tokens
 already include 2,000 reasoning tokens. At the recorded Standard rates,
 this is `0.14 + 0.002 + 0.025 + 0.05 = 0.217 USD`.
-A final 90-second Live session costs an estimated `0.075 USD`.
+The scope interpreter and worker each produce this fixture, for a total
+of `0.434 USD`. A final 90-second Live session costs an estimated `0.075 USD`.
 Together with the default full-month Render assumption of `7.25 USD`,
-the estimated subtotal is `7.542 USD`, or `75.42 SEK` at the explicit
-assumption of 10 SEK/USD. Changing that assumption to 11 gives `82.96 SEK`
+the estimated subtotal is `7.759 USD`, or `77.59 SEK` at the explicit
+assumption of 10 SEK/USD. Changing that assumption to 11 gives `85.35 SEK`
 after presentation rounding. A fresh installation still shows incomplete
 month coverage; the known example does not establish earlier usage.
 

@@ -2,6 +2,7 @@ import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   type ConversationNotice,
   type ConversationNoticeConditions,
+  conversationNoticeDefinitions,
   firstConversationNotice,
 } from './conversation-notice.js';
 import { VoiceSessionContext } from './voice-session-context.js';
@@ -27,28 +28,48 @@ export function useConversationNotice({
   requested,
   eventKey,
   diagnostic,
+  securityReference,
 }: {
   conditions: ConversationNoticeConditions;
   ongoing: boolean;
   requested: number;
   eventKey: string;
-  diagnostic?: { noticeId: ConversationNotice['id']; reference?: string };
+  diagnostic?: { noticeId: ConversationNotice['id']; reference?: string; eventKey?: string };
+  securityReference?: string;
 }) {
   const voiceSession = useContext(VoiceSessionContext);
-  const [dismissed, setDismissed] = useState('');
+  const [dismissed, setDismissed] = useState<Partial<Record<ConversationNotice['id'], string>>>({});
   const [usedRequest, setUsedRequest] = useState(0);
-  const definition = firstConversationNotice(conditions);
+  const identityFor = (notice: ConversationNotice) =>
+    `${notice.id}:${
+      notice.id === 'actionBlocked' && securityReference
+        ? securityReference
+        : notice.kind === 'event'
+          ? ((diagnostic?.noticeId === notice.id ? diagnostic.eventKey : undefined) ?? eventKey)
+          : ongoing
+            ? 'active'
+            : requested
+    }`;
+  // Dismissing one event must not suppress a different later event. The map
+  // retains at most one identity per known notice kind, rather than a history.
+  const visibleConditions = { ...conditions };
+  for (const definition of conversationNoticeDefinitions)
+    if (dismissed[definition.id] === identityFor(definition))
+      visibleConditions[definition.id] = false;
+  const definition = firstConversationNotice(visibleConditions);
+  const reference =
+    definition?.id === 'actionBlocked'
+      ? securityReference
+      : diagnostic?.noticeId === definition?.id
+        ? diagnostic?.reference
+        : undefined;
   const candidate: ConversationNotice | undefined =
-    definition && diagnostic?.noticeId === definition.id && diagnostic.reference
-      ? { ...definition, text: `${definition.text} Felreferens: ${diagnostic.reference}.` }
+    definition && reference
+      ? { ...definition, text: `${definition.text} Felreferens: ${reference}.` }
       : definition;
-  const identity = candidate
-    ? `${candidate.id}:${candidate.kind === 'event' ? eventKey : ongoing ? 'active' : requested}`
-    : '';
+  const identity = candidate ? identityFor(candidate) : '';
   const notice =
-    candidate &&
-    (candidate.kind === 'event' || ongoing || requested > usedRequest) &&
-    dismissed !== identity
+    candidate && (candidate.kind === 'event' || ongoing || requested > usedRequest)
       ? candidate
       : null;
   useEffect(() => {
@@ -89,7 +110,14 @@ export function useConversationNotice({
         assertive: live === 'assertive' ? text : '',
       }));
   }, [notice, identity, conditions, voiceSession]);
-  return { notice, closable, dismiss: () => setDismissed(identity), announcement };
+  return {
+    notice,
+    closable,
+    dismiss: () => {
+      if (notice) setDismissed((previous) => ({ ...previous, [notice.id]: identity }));
+    },
+    announcement,
+  };
 }
 
 export function ConversationNoticeAnnouncements({

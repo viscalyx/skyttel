@@ -1,6 +1,7 @@
 # Manuella testfall för samtal med Skyttel
 
-Fallen provar samlat utkast, rättelse och sparande, sena svar, avbrott,
+Fallen provar samlat utkast, rättelse och sparande, stoppade obeställda
+åtgärder med felreferens, sena svar, avbrott,
 kvittoåterhämtning, begärda samtalsdetaljer och faktisk markering.
 Anteckna commit, webbläsare,
 modell eller kontrollerad ersättare samt godkänt eller underkänt resultat.
@@ -45,6 +46,93 @@ formuläret; befintliga förslag i utkastet påverkas inte.
    stäng provfönstret enligt startguidens städningssteg.
 
 ## Samtal och samlat sparande
+
+### TEXT-SCOPE-01: stoppad åtgärd visar felreferens och behåller utkastet
+
+**Syfte:** Läsa en stoppnotis utan att förlora befintliga förslag.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Startguidens osparade **Lo Exempel** finns i utkastet.
+Modellers språkförståelse och verklig prompt-injektion ingår inte i provet.
+
+**Separat förberedelse:** Starta den
+[kontrollerade miljön](#controlled-text-fixture). Operatören skriver
+`scope-read` före meddelandet. När terminalen visar `held`, använd dess
+begärande-ID, `draft.version` och `draft.contentVersion` i:
+
+```text
+tool REQUEST discard_draft {"version":VERSION,"contentVersion":CONTENT_VERSION}
+```
+
+Detta släpper ett avsiktligt felaktigt modellsvar. Terminalens händelse
+`assistant_action_out_of_scope` ska ha samma `reference` som notisen.
+Inför mikrofonförsöken sätter operatören den simulerade mikrofonen till
+nekad i webbläsarens konsol:
+
+```javascript
+window.skyttelVoiceFixture.setMicrophone('deny');
+```
+
+Ingen fysisk mikrofon eller röstleverantör används. För det sista
+textuppdraget släpper operatören nästa hållna svar med
+`reply REQUEST Ett nytt svar.`. De två vanliga felproven använder
+`fail REQUEST` för respektive hållna svar. Återställ med `scope-work`; avsluta och
+städa med `quit` efter provet.
+
+**Automatiskt motsvarande test:**
+[assistant-turn-scope.spec.ts](../../tests/integration/assistant-turn-scope.spec.ts),
+TEXT-SCOPE-01. Separata HTTP-prov verifierar två medlemmars bevarade
+utkast, sparade uppgifter och historik samt loggens begränsade innehåll.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/assistant-turn-scope.spec.ts",
+    "caseId": "TEXT-SCOPE-01"
+  },
+  "reference": "Kontrollerad läsomfattning och felaktigt kastande; ingen verklig leverantör.",
+  "outcomes": ["Notis och samtalstext visar samma felreferens, Lo ligger kvar och senare mikrofonnotiser och textuppdrag fungerar."],
+  "evidence": [{
+    "kind": "technical",
+    "runner": "vitest",
+    "suite": "server",
+    "spec": "tests/unit/server/assistant-turn-scope.test.ts",
+    "title": "a read-only request rejects a model proposal after a map read and reports a private-content-free reference",
+    "purpose": "Kontrollerar gemensam loggreferens och oförändrat utkast utan privat innehåll i händelsen."
+  }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Starta samtalet med text och godkänn. Visa utkastet och läs **Lo Exempel**.
+2. Skicka **Sammanfatta kartan. Ändra ingenting.** Låt operatören släppa
+   det felaktiga modellsvar som beskrivs ovan.
+3. Läs notisen om stoppad åtgärd. Jämför felreferensen med samtalstexten.
+4. Kontrollera att **Lo Exempel** ligger kvar i utkastet.
+5. Stäng notisen. Låt operatören neka den simulerade mikrofonen.
+   Tryck **Prata med Skyttel**, läs mikrofonnotisen och stäng den.
+   Upprepa en gång; även det andra försöket ska visa samma mikrofonhinder.
+6. Skicka **Sammanfatta kartan igen. Ändra ingenting.** Låt operatören
+   åter släppa ett felaktigt kastande enligt förberedelsen. En ny stoppnotis
+   ska visas med en annan felreferens. Stäng notisen.
+7. Skicka **Prova ett vanligt fel.** Låt operatören neka svaret.
+   Läs uppdragsfelets notis och stäng den. Upprepa en gång; båda felen
+   ska visas trots det tidigare mikrofonhindret.
+8. Skriv och skicka **Mitt nästa uppdrag**. Låt operatören släppa svaret.
+   Läs **Ett nytt svar.** och kontrollera att ingen gammal notis visas.
+
+**Förväntat resultat:** Åtgärden stoppas, samma referens finns i notis och
+samtalstext och utkastet finns kvar. Senare fel kan visas på nytt och ett
+nytt textuppdrag kan slutföras.
+Ingen automatisk upprepning eller extra godkännanderuta visas.
 
 ### TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext
 

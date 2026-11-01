@@ -28,6 +28,9 @@ type Ingested = {
   accepted: boolean;
 };
 type Ingestion = Awaited<ReturnType<typeof ingestion>>;
+const isScopeAttempt = (item: Ingested) =>
+  (item.body.inputs as { instructions?: string })?.instructions?.startsWith('SKYTTEL_TURN_') ===
+  true;
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let client: APIRequestContext;
 let endpoint: Ingestion;
@@ -738,14 +741,14 @@ test('concurrent voice sessions keep overlapping delegation and late results und
       expect(backend).toMatchObject({
         extra: { metadata: { owner: 'backend', conversation_id: conversation } },
       });
-      expect(
-        endpoint.received.filter(
-          (item) =>
-            item.method === 'POST' &&
-            item.body.name === 'Skyttel model attempt' &&
-            item.traceId === linked,
-        ),
-      ).toHaveLength(1);
+      const attempts = endpoint.received.filter(
+        (item) =>
+          item.method === 'POST' &&
+          item.body.name === 'Skyttel model attempt' &&
+          item.traceId === linked,
+      );
+      expect(attempts).toHaveLength(2);
+      expect(attempts.filter(isScopeAttempt)).toHaveLength(1);
     }
     expect(
       JSON.stringify(live.sent.filter((item) => item.sessionId === alpha.providerId)),
@@ -1174,8 +1177,10 @@ test.each(['healthy', 'disabled', 'failing'])(
     const { path, session } = await setup(
       {
         modelFetch: async (...args) => {
+          const workerRequests = model.requests.length;
           const response = await model.provider(...args);
-          if (delivery === 'disabled' && model.requests.length === 2) {
+          // Hold only the second worker reply, not subsequent scope comparisons.
+          if (delivery === 'disabled' && workerRequests === 1 && model.requests.length === 2) {
             saveModelHeld = true;
             await saveModelReady;
           }
@@ -1327,7 +1332,8 @@ test.each(['healthy', 'disabled', 'failing'])(
           )
         ).json()
       ).terra,
-    ).toMatchObject({ attempts: 3 });
+      // Three scope interpretations, three worker calls and two edit/save comparisons.
+    ).toMatchObject({ attempts: 8 });
     await client.post(`${path}/text-assistant/${session.id}/voice/${voice.id}/stop`, {
       headers: { origin: app.origin },
       data: {},
@@ -1819,7 +1825,8 @@ test('voice delegation links one backend owner and captures actual outbound Live
   const modelStarts = endpoint.received.filter(
     (item) => item.method === 'POST' && item.body.name === 'Skyttel model attempt',
   );
-  expect(modelStarts).toHaveLength(2);
+  expect(modelStarts).toHaveLength(3);
+  expect(modelStarts.filter(isScopeAttempt)).toHaveLength(1);
   expect(
     modelStarts.every(
       (item) => item.traceId === backend?.id && item.body.parent_run_id === backend?.id,
@@ -2071,14 +2078,15 @@ test('complete text evidence preserves the exact model exchange and all actions 
   const attempts = endpoint.received.filter(
     (item) => item.method === 'POST' && item.body.run_type === 'llm',
   );
-  expect(attempts).toHaveLength(2);
-  expect(attempts[0].body.inputs).toEqual(model.requests[0]);
-  expect(attempts[1].body.inputs).toMatchObject({
+  expect(attempts).toHaveLength(3);
+  expect(attempts[0].body.inputs).toEqual(model.authorizationRequests[0]);
+  expect(attempts[1].body.inputs).toEqual(model.requests[0]);
+  expect(attempts[2].body.inputs).toMatchObject({
     model: model.requests[1].model,
     instructions: model.requests[1].instructions,
   });
   const firstEnding = endpoint.received.find(
-    (item) => item.path === `/runs/${attempts[0].body.id}`,
+    (item) => item.path === `/runs/${attempts[1].body.id}`,
   )!.body;
   expect(firstEnding.outputs).toMatchObject({
     output: [
@@ -2091,7 +2099,7 @@ test('complete text evidence preserves the exact model exchange and all actions 
     ],
   });
   const secondEnding = endpoint.received.find(
-    (item) => item.path === `/runs/${attempts[1].body.id}`,
+    (item) => item.path === `/runs/${attempts[2].body.id}`,
   )!.body;
   expect(secondEnding.outputs).toMatchObject({
     output: [{ ...reply, content: [{ type: 'output_text', text: result.modelReply }] }],
@@ -2099,7 +2107,10 @@ test('complete text evidence preserves the exact model exchange and all actions 
   expect(
     attempts.every((item) => item.body.parent_run_id === root.id && item.traceId === root.id),
   ).toBe(true);
-  expect(new Set(attempts.map((item) => item.body.id)).size).toBe(2);
+  expect(new Set(attempts.map((item) => item.body.id)).size).toBe(3);
+  expect(
+    endpoint.received.find((item) => item.path === `/runs/${attempts[0].body.id}`)?.body,
+  ).toMatchObject({ extra: { metadata: { outcome: 'completed' } } });
   expect(JSON.stringify(endpoint.received)).not.toMatch(
     /excluded-provider|excluded-raw-audio|synthetic-model-key|synthetic-trace-secret/,
   );
@@ -2108,7 +2119,7 @@ test('complete text evidence preserves the exact model exchange and all actions 
   ).not.toMatch(
     /Lina|Eken|excluded-provider|excluded-raw-audio|synthetic-model-key|synthetic-trace-secret/,
   );
-  expect(costs).toHaveLength(4);
+  expect(costs).toHaveLength(6);
   expect(JSON.stringify(costs)).not.toMatch(/instructions|Lina|Eken|arguments|excluded-provider/);
 });
 
@@ -2177,9 +2188,15 @@ test.each(['large text', 'many content parts'])(
     const health = await (await client.get(`${app.origin}/api/operator/tracing`)).json();
     expect(health).toMatchObject({ state: 'sending', lastError: 'oversized' });
     expect(health.droppedEvents).toBeGreaterThan(0);
-    const attempt = endpoint.received.find(
+    const attempts = endpoint.received.filter(
       (item) => item.method === 'POST' && item.body.run_type === 'llm',
-    )!;
+    );
+    expect(attempts).toHaveLength(2);
+    const scope = attempts.find(isScopeAttempt)!;
+    expect(
+      endpoint.received.find((item) => item.path === `/runs/${scope.body.id}`)?.body,
+    ).toMatchObject({ extra: { metadata: { outcome: 'completed' } } });
+    const attempt = attempts.find((item) => !isScopeAttempt(item))!;
     expect(attempt).toBeDefined();
     expect(endpoint.received.filter((item) => item.path === `/runs/${attempt.body.id}`)).toEqual(
       [],
@@ -2304,7 +2321,8 @@ test.each(['healthy', 'disabled', 'failing'])(
         )
       ).json(),
     ).toMatchObject({
-      terra: { attempts: 3, usage: { input: { known: 360 }, output: { known: 90 } } },
+      // Three scope interpretations, three worker calls and two edit/save comparisons.
+      terra: { attempts: 8, usage: { input: { known: 960 }, output: { known: 240 } } },
     });
     if (delivery === 'healthy') {
       await expect
@@ -2370,6 +2388,7 @@ test('overlapping devices keep separate task evidence and a canceled late model 
   });
   const { path, session } = await setup({ modelFetch: model.provider });
   const other = await request.newContext();
+  let beta: ReturnType<typeof send> | undefined;
   try {
     await signIn(other, app.origin);
     const started = await other.post(`${path}/text-assistant`, {
@@ -2389,7 +2408,7 @@ test('overlapping devices keep separate task evidence and a canceled late model 
       },
     });
     expect(submitted.status()).toBe(202);
-    const beta = send(path, second, 'same-request', 'Beta', other);
+    beta = send(path, second, 'same-request', 'Beta', other);
     await expect.poll(() => reached.length).toBe(2);
     await expect
       .poll(
@@ -2397,7 +2416,7 @@ test('overlapping devices keep separate task evidence and a canceled late model 
           endpoint.received.filter((item) => item.method === 'POST' && item.body.run_type === 'llm')
             .length,
       )
-      .toBe(2);
+      .toBe(4);
     const roots = endpoint.received.filter(
       (item) => item.method === 'POST' && item.body.parent_run_id === undefined,
     );
@@ -2444,9 +2463,12 @@ test('overlapping devices keep separate task evidence and a canceled late model 
     );
     for (const conversation of [session.id, second.id]) {
       const rootId = byConversation(conversation);
-      const attempt = endpoint.received.find(
+      const attempts = endpoint.received.filter(
         (item) => item.method === 'POST' && item.body.run_type === 'llm' && item.traceId === rootId,
-      )!;
+      );
+      expect(attempts).toHaveLength(2);
+      expect(attempts.filter(isScopeAttempt)).toHaveLength(1);
+      const attempt = attempts.find((item) => !isScopeAttempt(item))!;
       expect(attempt.body.parent_run_id).toBe(rootId);
       expect(attempt.body.inputs).toMatchObject({ input: expect.any(Array) });
       expect(
@@ -2460,9 +2482,12 @@ test('overlapping devices keep separate task evidence and a canceled late model 
     expect(JSON.stringify(late)).not.toContain('Svar för Alfa');
     expect(
       endpoint.received.filter((item) => item.method === 'POST' && item.body.run_type === 'llm'),
-    ).toHaveLength(2);
+    ).toHaveLength(4);
   } finally {
     for (const release of releases.values()) release();
+    // Finish the concurrent request before its browser context is disposed,
+    // including when an earlier assertion fails.
+    await beta?.catch(() => undefined);
     await other.dispose();
   }
 });
@@ -2525,10 +2550,10 @@ test('an authenticated task reaches ingestion through the real SDK with one back
     ).json(),
   ).toMatchObject({
     terra: {
-      attempts: 2,
+      attempts: 3,
       usage: {
-        input: { known: 240 },
-        output: { known: 60 },
+        input: { known: 360 },
+        output: { known: 90 },
       },
     },
   });
@@ -2566,10 +2591,10 @@ test('disabled sending survives restart while the same task outcome and costs re
     ).json(),
   ).toMatchObject({
     terra: {
-      attempts: 2,
+      attempts: 3,
       usage: {
-        input: { known: 240 },
-        output: { known: 60 },
+        input: { known: 360 },
+        output: { known: 90 },
       },
     },
   });
@@ -2613,7 +2638,7 @@ test('temporary ingestion failure gets at most two retries per event without cha
       (item) => item.method === 'POST' && item.body.run_type === 'llm',
     );
     const identities = new Set(attempts.map((item) => item.body.id));
-    expect(identities.size).toBe(2);
+    expect(identities.size).toBe(3);
     for (const id of identities)
       expect(attempts.filter((item) => item.body.id === id)).toHaveLength(3);
     expect(await (await client.get(`${path}/map`)).json()).toEqual(before);
@@ -2623,10 +2648,10 @@ test('temporary ingestion failure gets at most two retries per event without cha
       )
     ).json();
     expect(costs.terra).toMatchObject({
-      attempts: 2,
+      attempts: 3,
       usage: {
-        input: { known: 240 },
-        output: { known: 60 },
+        input: { known: 360 },
+        output: { known: 90 },
       },
     });
     const health = await (await client.get(`${app.origin}/api/operator/tracing`)).json();
@@ -3139,9 +3164,11 @@ test('an incomplete model output remains incomplete evidence and cannot execute 
     contentVersion: 1,
     operationId: 'incomplete-must-not-save',
   });
+  const scopeModel = textModel(() => []);
   const { path, session } = await setup({
     modelFetch: async (_url, init) => {
       const request = JSON.parse(String(init?.body));
+      if (request.instructions.startsWith('SKYTTEL_TURN_')) return scopeModel.provider(_url, init);
       return Response.json(
         {
           id: 'resp_incomplete',
@@ -3172,7 +3199,7 @@ test('an incomplete model output remains incomplete evidence and cannot execute 
     )
     .toBe(true);
   const attempt = endpoint.received.find(
-    (item) => item.method === 'POST' && item.body.run_type === 'llm',
+    (item) => item.method === 'POST' && item.body.run_type === 'llm' && !isScopeAttempt(item),
   )!;
   expect(
     endpoint.received.find((item) => item.path === `/runs/${attempt.body.id}`)?.body,
@@ -3368,7 +3395,8 @@ test('reviewed MCP text and model attempts keep exact content, explicit parentag
   const models = endpoint.received.filter(
     (item) => item.method === 'POST' && item.body.run_type === 'llm',
   );
-  expect(models).toHaveLength(2);
+  expect(models).toHaveLength(3);
+  expect(models.filter(isScopeAttempt)).toHaveLength(1);
   for (const model of models) {
     expect(model.body).toMatchObject({ parent_run_id: root?.id });
     expect(model.traceId).toBe(root?.id);
@@ -3439,7 +3467,7 @@ test('an oversized MCP event is dropped with a gap instead of shortening or uplo
     .toBe(1);
   expect(
     endpoint.received.filter((item) => item.method === 'POST' && item.body.run_type === 'llm'),
-  ).toHaveLength(1);
+  ).toHaveLength(2);
   expect(
     endpoint.received.filter(
       (item) =>
@@ -3447,7 +3475,7 @@ test('an oversized MCP event is dropped with a gap instead of shortening or uplo
         (item.body.extra as { metadata?: { provider_call_id?: string } })?.metadata
           ?.provider_call_id,
     ),
-  ).toHaveLength(2);
+  ).toHaveLength(3);
 });
 
 test('many small MCP text entries exceed one event budget as a whole without changing the task', async () => {
