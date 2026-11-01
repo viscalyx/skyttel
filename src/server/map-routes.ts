@@ -6,7 +6,7 @@ import { conversationPreferences } from './conversation-preferences.js';
 import { householdAccess } from './households.js';
 import { householdMap, MapError } from './map.js';
 import { personalView } from './personal-view.js';
-import { type EncodedImage, encodeProfileImage } from './profile-images.js';
+import { processProfileImage } from './profile-images.js';
 import { propertyWriteLimit } from './properties.js';
 
 export function mapRoutes(
@@ -152,7 +152,6 @@ export function mapRoutes(
     const householdId = context.req.param('id');
     if (!householdAccess(database, userId, householdId)) throw new MapError('forbidden', 403);
     let body = context.get('body');
-    let image: EncodedImage | undefined;
     if (context.req.header('Content-Type')?.startsWith('multipart/form-data;')) {
       let values: FormData;
       try {
@@ -178,10 +177,18 @@ export function mapRoutes(
       }
       if (!body || typeof body !== 'object' || Array.isArray(body))
         throw new MapError('invalid_request', 400);
-      image = await encodeProfileImage(await file.arrayBuffer());
+      if (typeof body.stagingId !== 'string') throw new MapError('invalid_request', 400);
+      const map = householdMap(database, userId, householdId);
+      return context.json(
+        await processProfileImage(
+          await file.arrayBuffer(),
+          () => map.checkObjectImageChange(body),
+          (image) => map.propose(body, image),
+        ),
+      );
     }
     if (typeof body?.stagingId !== 'string') throw new MapError('invalid_request', 400);
-    return context.json(householdMap(database, userId, householdId).propose(body, image));
+    return context.json(householdMap(database, userId, householdId).propose(body));
   });
   routes.post('/households/:id/map/relationship', (context) =>
     context.json(

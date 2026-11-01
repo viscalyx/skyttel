@@ -11,10 +11,40 @@ export interface EncodedImage {
   height: number;
 }
 
-export async function encodeProfileImage(source: ArrayBuffer): Promise<EncodedImage> {
+// Process-wide admission, shared by both upload routes and all households.
+let processing = false;
+const waiting: Array<() => void> = [];
+
+export async function processProfileImage<T>(
+  source: ArrayBuffer,
+  check: () => void,
+  accept: (image: EncodedImage) => T,
+): Promise<T> {
   if (!source.byteLength || source.byteLength > imageUploadLimit)
     throw new MapError('image_size', 400);
-  const input = sharp(Buffer.from(source), { limitInputPixels: 40_000_000, failOn: 'warning' });
+  check();
+  if (processing) {
+    if (waiting.length >= 2) throw new MapError('image_processing_busy', 503);
+    await new Promise<void>((resolve) => waiting.push(resolve));
+  } else {
+    processing = true;
+  }
+  try {
+    check();
+    // Hold admission through the synchronous draft transaction so the next
+    // waiter observes its result before starting native work.
+    return accept(await encodeProfileImage(source));
+  } finally {
+    const next = waiting.shift();
+    if (next) next();
+    else processing = false;
+  }
+}
+
+async function encodeProfileImage(source: ArrayBuffer): Promise<EncodedImage> {
+  // One 8 MP decode plus two compressed waiters fits the image-work planning
+  // allowance for the 512 MB deployment; see the installation guide.
+  const input = sharp(Buffer.from(source), { limitInputPixels: 8_000_000, failOn: 'warning' });
   let metadata: Metadata;
   try {
     metadata = await input.metadata();

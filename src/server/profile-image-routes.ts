@@ -2,7 +2,7 @@ import type Database from 'better-sqlite3';
 import { Hono } from 'hono';
 import type { Auth } from './auth.js';
 import { householdMap, MapError } from './map.js';
-import { encodeProfileImage } from './profile-images.js';
+import { processProfileImage } from './profile-images.js';
 
 export function profileImageRoutes(database: Database.Database, auth: Auth, origin: string) {
   const routes = new Hono<{ Variables: { userId: string } }>();
@@ -38,11 +38,14 @@ export function profileImageRoutes(database: Database.Database, auth: Auth, orig
           : integer('X-Skyttel-Object-Revision'),
     };
     map.checkImageChange(body);
-    const image =
-      context.req.method === 'DELETE'
-        ? null
-        : await encodeProfileImage(await context.req.arrayBuffer());
-    return context.json(map.proposeImage(body, image));
+    if (context.req.method === 'DELETE') return context.json(map.proposeImage(body, null));
+    return context.json(
+      await processProfileImage(
+        await context.req.arrayBuffer(),
+        () => map.checkImageChange(body),
+        (image) => map.proposeImage(body, image),
+      ),
+    );
   });
   return routes;
 }

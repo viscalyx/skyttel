@@ -71,7 +71,7 @@ export function ProfileImageEditor({
       <h3>Profilbild</h3>
       <ProfileImage householdId={householdId} value={value} typeName={typeName} />
       <p>
-        JPEG, PNG eller WebP, högst 10 MB och 40 miljoner bildpunkter. Bilden blir högst 300 × 300
+        JPEG, PNG eller WebP, högst 10 MB och 8 miljoner bildpunkter. Bilden blir högst 300 × 300
         bildpunkter. En animerad bild blir en stillbild.
       </p>
       <p>
