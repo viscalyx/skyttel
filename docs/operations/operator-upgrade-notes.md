@@ -6,6 +6,20 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Check upload limits at public ingress
+
+Before rollout, set finite body-read deadlines, concurrent upload limits and
+request-size limits at public ingress. Preserve the supported image, object
+form and archive sizes, and allow the complete installation recovery review.
+Use the [installation guide](installation.md#bound-incoming-request-bodies).
+If the host cannot enforce a required control, use a controlled ingress with
+restricted origin access or record the missing control and accepted exposure.
+
+Large uploads now reject callers without current access before the application
+reads their bodies. Check that authorized uploads still succeed through each
+public route. This change does not bound upstream buffering or concurrent
+authorized uploads. Local checks do not verify the deployed proxy.
+
 ### Check external assistant OAuth requests
 
 Check external assistant clients before rollout. Authorization and token
