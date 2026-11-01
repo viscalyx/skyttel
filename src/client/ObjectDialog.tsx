@@ -264,7 +264,7 @@ export function ObjectDialog({
         setError(
           failure instanceof Error &&
             ['invalid_image', 'image_processing_failed', 'image_size'].includes(failure.message)
-            ? 'Profilbilden kunde inte läggas i utkastet. Välj en giltig PNG-, JPEG- eller WebP-bild på högst 10 MB. Alla uppgifter finns kvar.'
+            ? 'Profilbilden kunde inte läggas i utkastet. Välj en giltig PNG-, JPEG- eller WebP-bild på högst 10 MB och 8 miljoner bildpunkter. Alla uppgifter finns kvar.'
             : 'Ändringen kunde inte bekräftas. Dina uppgifter finns kvar.',
         );
       }
@@ -469,7 +469,7 @@ export function ObjectDialog({
                   />
                   <p>
                     Bilden och hela formuläret läggs i utkastet tillsammans. PNG, JPEG eller WebP,
-                    högst 10 MB.
+                    högst 10 MB och 8 miljoner bildpunkter.
                   </p>
                   {(imagePreview || (image === undefined && editor.value.profileImageId)) && (
                     <img

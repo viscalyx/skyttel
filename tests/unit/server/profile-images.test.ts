@@ -1,8 +1,16 @@
 import sharp from 'sharp';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { draftConflicts } from '../../../src/shared/draft-conflicts.js';
 import type { MapState, SaveReceipt } from '../../../src/shared/map.js';
 import { applicationFixture } from './fixture.js';
+
+function deferred() {
+  let resolve = () => {};
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
 let client: ReturnType<typeof fixture.client>;
@@ -78,7 +86,142 @@ beforeEach(async () => {
     ).status,
   ).toBe(200);
 });
-afterEach(() => fixture.close());
+afterEach(() => {
+  vi.restoreAllMocks();
+  fixture.close();
+});
+
+async function submitImage(
+  route: 'image' | 'form',
+  bytes: Buffer,
+  state: MapState,
+  actor = client,
+) {
+  if (route === 'image') return upload(bytes, actor, state);
+  const form = new FormData();
+  const object =
+    state.draft.changes.find((change) => change.id === 'person')?.after ?? state.objects[0];
+  form.set(
+    'metadata',
+    JSON.stringify({
+      id: 'person',
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      baseRevision: state.objects[0]?.revision ?? null,
+      stagingId: crypto.randomUUID(),
+      value: object,
+    }),
+  );
+  form.set('image', new Blob([new Uint8Array(bytes)]), 'synthetic.png');
+  return actor.request(`${path}/object-form`, {
+    method: 'POST',
+    headers: { origin: fixture.config.origin },
+    body: form,
+  });
+}
+
+test.each(['image', 'form'] as const)(
+  '%s uploads share bounded processing and identical draft versions decode only once',
+  async (route) => {
+    const source = await sourceImage();
+    const state = await read();
+    const gate = deferred();
+    const entered = deferred();
+    const metadata = sharp.prototype.metadata;
+    const native = vi.spyOn(sharp.prototype, 'metadata').mockImplementationOnce(async function () {
+      entered.resolve();
+      await gate.promise;
+      return metadata.call(this);
+    });
+    const first = submitImage(route, source, state);
+    await entered.promise;
+    const responses: Response[] = [];
+    const pending = (['image', 'form', 'image'] as const).map(async (entry) => {
+      const response = await submitImage(entry, source, state);
+      responses.push(response);
+      return response;
+    });
+    try {
+      await vi.waitFor(() =>
+        expect(responses.some((response) => response.status === 503)).toBe(true),
+      );
+      expect(native).toHaveBeenCalledTimes(1);
+    } finally {
+      gate.resolve();
+      await Promise.all([first, ...pending]);
+    }
+    expect((await first).status).toBe(200);
+    expect(responses.map((response) => response.status).sort()).toEqual([409, 409, 503]);
+    expect(native).toHaveBeenCalledTimes(1);
+    expect((await read()).draft.version).toBe(state.draft.version + 1);
+  },
+);
+
+test.each([
+  ['image', 'access'],
+  ['form', 'access'],
+  ['image', 'draft'],
+  ['form', 'draft'],
+] as const)(
+  '%s uploads recheck %s after waiting without decoding stale work',
+  async (route, change) => {
+    await save('initial');
+    const { actor, userId } = await member();
+    const state = await read(actor);
+    const own = await read();
+    const source = await sourceImage();
+    const gate = deferred();
+    const entered = deferred();
+    const metadata = sharp.prototype.metadata;
+    const native = vi.spyOn(sharp.prototype, 'metadata').mockImplementationOnce(async function () {
+      entered.resolve();
+      await gate.promise;
+      return metadata.call(this);
+    });
+    const first = submitImage('image', source, own);
+    await entered.promise;
+    const responses: Response[] = [];
+    const queued = Array.from({ length: 3 }, async () => {
+      const response = await submitImage(route, source, state, actor);
+      responses.push(response);
+      return response;
+    });
+    try {
+      await vi.waitFor(() =>
+        expect(responses.some((response) => response.status === 503)).toBe(true),
+      );
+      if (change === 'access') {
+        expect(
+          (await client.json(`${path.replace('/map', '')}/members/${userId}/revoke`, {})).status,
+        ).toBe(200);
+      } else {
+        expect(
+          (
+            await actor.json(`${path}/draft`, {
+              id: 'person',
+              version: state.draft.version,
+              baseRevision: 1,
+              value: { ...state.objects[0], name: 'Bevara nytt namn' },
+            })
+          ).status,
+        ).toBe(200);
+      }
+    } finally {
+      gate.resolve();
+      await Promise.all([first, ...queued]);
+    }
+    expect((await first).status).toBe(200);
+    expect(responses.map((response) => response.status).sort()).toEqual(
+      change === 'access' ? [403, 403, 503] : [409, 409, 503],
+    );
+    expect(native).toHaveBeenCalledTimes(1);
+    if (change === 'draft')
+      expect((await read(actor)).draft.changes[0].after).toMatchObject({
+        name: 'Bevara nytt namn',
+      });
+    expect((await submitImage(route, source, await read())).status).toBe(200);
+  },
+);
 
 test('a real PNG becomes a bounded private image proposal and is fetched separately', async () => {
   const source = await sharp({

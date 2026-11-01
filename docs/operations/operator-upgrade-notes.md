@@ -685,6 +685,13 @@ and private proposals as well as current content.
 
 ### Private profile images
 
+Profile-image uploads accept at most eight million pixels and 10 MB. Resize
+larger source images before upload. One image job can run and two can wait;
+excess requests receive HTTP 503. Allow clients to check the draft outcome
+before a later retry. Monitor memory use and rejected uploads after rollout
+on the 512 MB service. Keep ingress upload limits in place; the processing
+queue does not limit incoming body buffering.
+
 Rebuild the complete application image so the native image processor matches
 the deployment architecture. Verify image upload, private access and restart
 recovery after rollout. Monitor persistent disk use: the database now retains

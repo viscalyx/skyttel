@@ -332,6 +332,23 @@ export function householdMap(
       throw new MapError('type_conflict');
     return { current, existing, before, after, type, id: body.id };
   }
+  function proposalDraft(body: Record<string, unknown>) {
+    operations.assertEditable();
+    const current = checkedDraft(body.version, body.contentVersion);
+    if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
+      throw new MapError('invalid_request', 400);
+    const id = body.id;
+    if (
+      body.stagingId !== undefined &&
+      (typeof body.stagingId !== 'string' ||
+        !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(body.stagingId))
+    )
+      throw new MapError('invalid_request', 400);
+    const existing = current.changes.find((change) => change.id === id);
+    const before = existing ? existing.before : (object(id) ?? null);
+    if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('object_conflict');
+    return { current, id, existing, before };
+  }
   return {
     image(id: string) {
       return transaction(() => images.read(id));
@@ -710,22 +727,14 @@ export function householdMap(
         return writeDraft(current);
       });
     },
+    checkObjectImageChange(body: Record<string, unknown>) {
+      transaction(() => {
+        proposalDraft(body);
+      });
+    },
     propose(body: Record<string, unknown>, image?: EncodedImage) {
       return transaction(() => {
-        operations.assertEditable();
-        const current = checkedDraft(body.version, body.contentVersion);
-        if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
-          throw new MapError('invalid_request', 400);
-        const id = body.id;
-        if (
-          body.stagingId !== undefined &&
-          (typeof body.stagingId !== 'string' ||
-            !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(body.stagingId))
-        )
-          throw new MapError('invalid_request', 400);
-        const existing = current.changes.find((change) => change.id === id);
-        const before = existing ? existing.before : (object(id) ?? null);
-        if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('object_conflict');
+        const { current, id, existing, before } = proposalDraft(body);
         let after: ObjectValue | null = null;
         if (body.value !== null) {
           const value = body.value as Partial<ObjectValue> | undefined;

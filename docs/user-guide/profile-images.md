@@ -34,9 +34,15 @@ historik och fullständig export och återimport.
 ## Format och storlek
 
 Välj JPEG, PNG eller WebP på högst 10 MB, alltså 10 000 000 byte, och
-högst 40 miljoner bildpunkter. Servern kontrollerar bildinnehållet;
+högst 8 miljoner bildpunkter. Minska större bilder före uppladdning.
+Servern kontrollerar bildinnehållet;
 filnamnet eller filtypen som webbläsaren anger avgör inte vad som godkänns.
 En trasig bild kan avvisas även om dess filnamn slutar med rätt ändelse.
+
+När flera bilder skickas samtidigt kan du behöva vänta eller försöka igen
+senare. Om formuläret visar att resultatet är oklart, välj
+**Kontrollera om ändringen lades i utkastet** före nästa försök.
+Dina formulärvärden finns kvar.
 
 Bilden anpassas till högst 300 × 300 bildpunkter med samma proportioner.
 Mindre bilder förstoras inte. En animerad bild blir en stillbild av den
