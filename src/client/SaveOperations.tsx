@@ -67,6 +67,8 @@ export function rejectionMessage(code: string) {
     return 'Det borttagna innehållet har ändrats sedan återställningsförslaget skapades. Inget sparades. Hämta aktuellt underlag, kasta det gamla återställningsförslaget och granska aktuellt underlag igen.';
   if (code === 'definition_in_use')
     return 'Typborttagningen har nya följder i kartan. Kasta typborttagningsförslaget, föreslå borttagningen igen och granska hela utkastet före ett nytt sparbesked. Ingen ändring genomfördes.';
+  if (code === 'definition_creation_in_use')
+    return 'Den nya typen används i ditt utkast. Byt typ eller kasta de användande innehållsförslagen innan du tar bort den ännu osparade typen. Ditt utkast finns kvar.';
   if (code === 'invalid_relationship_type')
     return 'Ange sambandstypens namn, beskrivning, benämningar från båda hållen för sambandet.';
   if (code === 'duplicate_relationship')

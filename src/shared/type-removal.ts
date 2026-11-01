@@ -15,7 +15,7 @@ export function stageTypeRemoval(
         objects.set(change.id, {
           ...change.after,
           id: change.id,
-          householdId: state.types[0]?.householdId ?? '',
+          householdId: change.type.householdId,
           revision: change.before?.revision ?? 0,
         });
       else objects.delete(change.id);
@@ -24,12 +24,14 @@ export function stageTypeRemoval(
       if (object.typeId !== id) continue;
       const existing = draft.changes.find((change) => change.id === object.id);
       const before = existing ? existing.before : object;
+      const type = state.types.find((type) => type.id === before?.typeId) ?? existing?.type;
+      if (!type) throw new Error('Missing object type in removal review');
       draft.changes = draft.changes.filter((change) => change.id !== object.id);
       draft.changes.push({
         id: object.id,
         before,
         after: null,
-        type: state.types.find((type) => type.id === before?.typeId) ?? existing!.type,
+        type,
         removedWithTypes: [id],
         ...(existing ? { suppressed: structuredClone(existing) } : {}),
       });
@@ -62,13 +64,16 @@ export function stageTypeRemoval(
     const before = existing
       ? existing.before
       : (state.relationships.find((value) => value.id === edge.id) ?? null);
+    const type =
+      state.relationshipTypes.find((type) => type.id === before?.typeId) ?? existing?.type;
+    if (!type) throw new Error('Missing relationship type in removal review');
     draft.relationships ??= [];
     draft.relationships = draft.relationships.filter((change) => change.id !== edge.id);
     draft.relationships.push({
       id: edge.id,
       before,
       after: null,
-      type: state.relationshipTypes.find((type) => type.id === before?.typeId) ?? existing!.type,
+      type,
       objectNames:
         existing?.objectNames ??
         Object.fromEntries(state.objects.map((object) => [object.id, object.name])),
@@ -80,7 +85,7 @@ export function stageTypeRemoval(
 }
 
 /** Cancellation restores the original proposal only after its last cause disappears. */
-export function reconcileTypeRemovals(draft: MapDraft) {
+export function reconcileDraftRemovals(draft: MapDraft) {
   const objectTypes = new Set(
     draft.objectTypes?.filter((change) => !change.after).map((change) => change.id),
   );
@@ -99,8 +104,14 @@ export function reconcileTypeRemovals(draft: MapDraft) {
     if (!change.removedWithTypes && !change.removedWithObjects) return [change];
     if (change.removedWithTypes)
       change.removedWithTypes = change.removedWithTypes.filter((id) => edgeTypes.has(id));
-    if (change.removedWithObjects)
-      change.removedWithObjects = change.removedWithObjects.filter((id) => objects.has(id));
+    change.removedWithObjects = [...objects].filter(
+      (id) =>
+        change.removedWithObjects?.includes(id) ||
+        change.before?.sourceId === id ||
+        change.before?.targetId === id ||
+        change.suppressed?.after?.sourceId === id ||
+        change.suppressed?.after?.targetId === id,
+    );
     if (!change.removedWithTypes?.length) delete change.removedWithTypes;
     if (!change.removedWithObjects?.length) delete change.removedWithObjects;
     return change.removedWithTypes?.length || change.removedWithObjects?.length

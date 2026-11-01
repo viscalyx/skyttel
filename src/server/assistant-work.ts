@@ -142,6 +142,8 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
           'Ogiltiga uppgifter. Rätta förslaget enligt verktygets egenskaps- och typdefinitioner.',
         definition_in_use:
           'Typborttagningen har nya följder. Föreslå den igen mot aktuellt underlag, granska hela utkastet och invänta ett nytt uttryckligt sparbesked. Inget sparades.',
+        definition_creation_in_use:
+          'Den ännu osparade typen används i ditt utkast. Byt typ eller kasta de användande innehållsförslagen innan du tar bort typförslaget. Inget ändrades.',
         result_unknown:
           'Utfallet är okänt. Kontrollera sparförsöket före nya ändringar eller återförsök. Påstå inte att något sparades eller återställdes.',
       };

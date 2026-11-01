@@ -103,6 +103,8 @@ export function objectTypes(database: Database.Database, householdId: string, _u
       if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('type_conflict');
       if (body.value === null) {
         if (!before && !existing) throw new MapError('type_conflict');
+        // Canceling an unsaved definition is not deletion of a shared type.
+        if (!before) usage.assertUnused('objectType', body.id, draft, 'definition_creation_in_use');
         draft.objectTypes = (draft.objectTypes ?? []).filter((item) => item.id !== body.id);
         if (before) draft.objectTypes.push({ id: body.id, before, after: null });
         return { ...draft, version: draft.version + 1 };

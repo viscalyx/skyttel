@@ -8,7 +8,7 @@ import type {
   RelationshipChange,
   SaveReceipt,
 } from '../shared/map.js';
-import { reconcileTypeRemovals } from '../shared/type-removal.js';
+import { reconcileDraftRemovals } from '../shared/type-removal.js';
 import type { erasureContent } from './erasure-content.js';
 
 type Content = ReturnType<typeof erasureContent>;
@@ -121,7 +121,7 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
         (change) => !affected.relationshipTypes.has(change.id),
       ),
     };
-    reconcileTypeRemovals(projected);
+    reconcileDraftRemovals(projected);
     return projected;
   });
   const saves = content.saves.map((saved) => {

@@ -35,7 +35,7 @@ import type {
   RelationshipFormOutcome,
   RelationshipFormResult,
 } from '../shared/relationship-form.js';
-import { reconcileTypeRemovals, stageTypeRemoval } from '../shared/type-removal.js';
+import { reconcileDraftRemovals, stageTypeRemoval } from '../shared/type-removal.js';
 import { assistantTaskAccess } from './assistant-auth.js';
 import { contentOwner } from './content-identities.js';
 import { assertContentAvailable, assertContentVersion } from './content-maintenance.js';
@@ -104,7 +104,7 @@ export function householdMap(database: Database.Database, actorId: string, house
       : { version: 0, changes: [] };
   }
   function writeDraft(value: MapDraft) {
-    reconcileTypeRemovals(value);
+    reconcileDraftRemovals(value);
     database
       .prepare(`INSERT INTO map_draft (householdId, userId, version, changes, relationships, objectTypes, relationshipTypes) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(householdId, userId)
       DO UPDATE SET version = excluded.version, changes = excluded.changes, relationships = excluded.relationships, objectTypes = excluded.objectTypes, relationshipTypes = excluded.relationshipTypes`)
@@ -192,7 +192,7 @@ export function householdMap(database: Database.Database, actorId: string, house
     } else if (body.kind === 'relationshipType') {
       current.relationshipTypes = current.relationshipTypes?.filter((item) => item.id !== body.id);
     } else throw new MapError('invalid_request', 400);
-    reconcileTypeRemovals(current);
+    reconcileDraftRemovals(current);
     return current;
   }
   function readState(): MapState {

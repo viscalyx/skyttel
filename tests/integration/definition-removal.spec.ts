@@ -21,7 +21,9 @@ import {
   editTableObject,
   openTypeDefinitions,
   readDraftProposal,
+  readTableObject,
 } from '../support/domain-work.js';
+import { collaborators } from '../support/draft-conflict-http.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 
@@ -42,6 +44,81 @@ async function readRemovalProposal(
   await expect(proposal).toContainText('Tas bort');
   await closeSupportDialog(page, name);
 }
+
+test('KATALOG-04: canceling a type deletion restores inspectable unfinished object and relationship work', async ({
+  page,
+  browser,
+}) => {
+  const other = await createPreparedContext(browser);
+  const app = await collaborators(page.request, other.request);
+  try {
+    const initial = await app.read();
+    const source = initial.objects.find(({ id }) => id === 'lo');
+    if (!source) throw new Error('Missing fixture object');
+    const type = initial.types.find(({ id }) => id === source.typeId);
+    if (!type) throw new Error('Missing fixture type');
+    await app.propose(page.request, 'draft', 'lo', {
+      ...source,
+      name: 'Mitt ändrade namn',
+      properties: [{ id: 'note', label: 'Anteckning', kind: 'text', value: 'Bevarat arbete' }],
+    });
+    await app.propose(page.request, 'draft', 'new-work', { typeId: type.id, name: 'Nytt arbete' });
+    await app.propose(page.request, 'relationship', 'new-connection', {
+      typeId: initial.relationshipTypes[0].id,
+      sourceId: 'new-work',
+      targetId: 'service',
+      properties: [
+        { id: 'edge-note', label: 'Anteckning', kind: 'text', value: 'Bevarat samband' },
+      ],
+    });
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.goto(app.installation.origin);
+    await openTypeDefinitions(page);
+    await page.getByText('Objekttyper', { exact: true }).click();
+    await page.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }).click();
+    await page.getByRole('button', { name: 'Ta bort objekttypen', exact: true }).click();
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    const draft = await openDraftReview(page);
+    await draft.locator('#draft-read-object-lo').focus();
+    await page.keyboard.press('Enter');
+    const reader = page.getByRole('dialog', { name: 'Lo Exempel', exact: true });
+    await expect(
+      reader.getByRole('heading', { name: 'Bevarat objektförslag', exact: true }),
+    ).toBeVisible();
+    await expect(reader).toContainText('Mitt ändrade namn');
+    await expect(reader).toContainText('Bevarat arbete');
+    await page.keyboard.press('Escape');
+    await expect(draft.locator('#draft-read-object-lo')).toBeFocused();
+    const fresh = await readDraftProposal(page, 'Nytt arbete');
+    await expect(fresh).toContainText('Bevarat objektförslag');
+    await page.keyboard.press('Escape');
+    await draft.locator(`#draft-remove-Objekttyp-${type.id}`).click();
+    await page
+      .getByRole('dialog', { name: 'Ta bort förslaget och dess beroenden?', exact: true })
+      .getByRole('button', { name: 'Ta bort', exact: true })
+      .click();
+    await expectConflictDraftValues(page, 'Mitt ändrade namn', {
+      Namn: 'Mitt ändrade namn',
+      Anteckning: 'Bevarat arbete',
+    });
+    await expectConflictDraftValues(page, 'Nytt arbete', { Namn: 'Nytt arbete' });
+    const restoredRelationship = await readDraftProposal(
+      page,
+      `Nytt arbete → ${initial.relationshipTypes[0].forwardLabel ?? initial.relationshipTypes[0].name} → Molnmusik`,
+    );
+    await expect(restoredRelationship).toContainText('Bevarat samband');
+    await expect(restoredRelationship).toContainText('Läggs till');
+    await page.keyboard.press('Escape');
+    await closeTextView(page);
+    const tableDetails = await readTableObject(page, 'Mitt ändrade namn');
+    await expect(tableDetails).toContainText('Sparat: Lo Exempel');
+    await expect(tableDetails).toContainText('Ditt förslag: Mitt ändrade namn');
+    expect((await app.read()).objects).toEqual(initial.objects);
+  } finally {
+    await other.close();
+    await app.installation.close();
+  }
+});
 
 test('KATALOG-01: type cascades and meaning corrections are reviewed, canceled and saved together', async ({
   page,

@@ -693,6 +693,7 @@ export function HouseholdMap({
           'invalid_type_definition',
           'invalid_relationship_type',
           'definition_in_use',
+          'definition_creation_in_use',
         ].includes(failure.code)
       ) {
         setError(rejectionMessage(failure.code));

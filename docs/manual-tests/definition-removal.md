@@ -55,7 +55,7 @@ från Soltaket till Huset. Soltaket och sambandet har status Upphört.
   "reference": "Chromium, riktig lokal server och SQLite; konfiguration enligt förutsättningarna.",
   "outcomes": [
     "Typbetydelse och båda typborttagningarna granskas som fullständiga privata förslag; kastning behåller katalogen oförändrad.",
-    "Separat samlat sparande ändrar bara det valda underlaget och bevarar läsbar historik efter omstart."
+    "Separat samlat sparande tar bort Soltaket och dess samband med typerna, behåller Huset och bevarar läsbar historik efter omstart."
   ]
 }
 ```
@@ -87,8 +87,8 @@ från Soltaket till Huset. Soltaket och sambandet har status Upphört.
 
 - Typbetydelse och båda typborttagningarna granskas som fullständiga privata
   förslag; kastning behåller katalogen oförändrad.
-- Separat samlat sparande ändrar bara det valda underlaget och bevarar läsbar
-  historik efter omstart.
+- Separat samlat sparande tar bort Soltaket och dess samband med typerna,
+  behåller Huset och bevarar läsbar historik efter omstart.
 
 ### KATALOG-02: Bevara andras utkast och rätta med vanliga formulär
 
@@ -202,6 +202,57 @@ changing independent work”.
   är oförändrat och det oberoende förslaget finns kvar i utkastet.
 - Omstart bevarar dessa värden och den ursprungliga historikgruppen.
   Historikläsningen skapar inga återställningsförslag.
+
+### KATALOG-04: Återta typborttagning och återfå bevarat arbete
+
+**Syfte:** Egna osparade objekt- och sambandsförslag kan läsas under
+typborttagningen och återkommer när borttagningsförslaget kastas.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Spara Lo Exempel som Person och Molnmusik som en annan
+typ. Föreslå namnbytet Mitt ändrade namn för Lo och textegenskapen
+Anteckning: Bevarat arbete. Föreslå ett nytt Person-objekt Nytt arbete och
+ett Använder-samband till Molnmusik med Anteckning: Bevarat samband.
+Spara inte utkastet. Använd en 320 bildpunkter bred webbläsarvy.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/definition-removal.spec.ts",
+    "caseId": "KATALOG-04"
+  },
+  "reference": "Chromium, 320 × 900, riktig lokal server och SQLite; tangentbord öppnar och stänger förslagsläsningen.",
+  "outcomes": [
+    "Fullständiga osparade värden går att läsa medan typborttagningen undertrycker dem.",
+    "Återtagning av typborttagningen återger objektens och sambandets tidigare förslag utan att ändra sparat innehåll."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Typer, ändra Person och välj Ta bort objekttypen. Återgå till
+   kartan och öppna Visa utkastet.
+2. Fokusera Visa förslaget: Lo Exempel och tryck Retur. Läs Bevarat
+   objektförslag med Mitt ändrade namn och Bevarat arbete. Stäng med Escape
+   och kontrollera att fokus återgår till samma knapp.
+3. Läs även Nytt arbete som bevarat objektförslag. Stäng läsdialogen.
+4. Kasta typborttagningsförslaget för Person. Granska beroendena och välj
+   Ta bort. Läs Mitt ändrade namn, dess anteckning och Nytt arbete som
+   vanliga förslag igen. Läs sambandet till Molnmusik och Bevarat samband.
+5. Stäng textvyn och läs Mitt ändrade namn i Tabell. Inget är sparat;
+   förslagen finns kvar för fortsatt arbete och senare samlat sparande.
+
+**Förväntat resultat:** Bevarade värden är läsbara, tangentbordsfokus
+återkommer efter läsning och återtagning av typborttagningen återger
+arbetet utan ändringar i den gemensamma kartan.
 
 ## Avvecklat beteende
 

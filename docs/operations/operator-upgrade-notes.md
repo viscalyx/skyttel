@@ -14,8 +14,9 @@ the type. Other members' drafts do not block deletion. New saved use or
 conflicting changes require a new review and save instruction.
 
 Keep a backup before rollout. The update reads existing drafts and archives.
-New drafts can retain work suppressed by a type deletion. Use this release
-or a later compatible release to read and import those drafts. Do not roll
+New drafts can retain work suppressed by a type deletion, and history records
+which relationship removals follow type deletion. Use this release or a later
+compatible release to read and import this data. Do not roll
 back the application against data written after rollout; restore the
 pre-upgrade backup with the earlier application if rollback is required.
 

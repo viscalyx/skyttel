@@ -96,6 +96,7 @@ const draftRelationship = z
 const savedRelationship = z
   .object({
     ...relationshipChangeShape,
+    typeCascade: z.literal(true).optional(),
     after: relationship.nullable(),
     beforeType: relationshipType.optional(),
   })

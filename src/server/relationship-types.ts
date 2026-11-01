@@ -139,6 +139,8 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('type_conflict');
       if (body.value === null) {
         if (!before && !existing) throw new MapError('type_conflict');
+        if (!before)
+          usage.assertUnused('relationshipType', body.id, draft, 'definition_creation_in_use');
         draft.relationshipTypes = (draft.relationshipTypes ?? []).filter(
           (item) => item.id !== body.id,
         );

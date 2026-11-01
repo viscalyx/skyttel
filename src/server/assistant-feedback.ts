@@ -30,6 +30,8 @@ export function assistantFailureMessage(code: string): string {
       return 'Posten finns inte i den aktuella kartan eller utkastet och kunde därför inte markeras.';
     case 'definition_in_use':
       return 'Typborttagningen har nya följder som behöver granskas i utkastet före ett nytt sparbesked.';
+    case 'definition_creation_in_use':
+      return 'Den ännu osparade typen används i ditt utkast. Byt typ eller kasta de användande innehållsförslagen innan du tar bort typförslaget.';
     case 'invalid_properties':
       return 'En egenskap innehåller ett ogiltigt värde. Kontrollera etikett och datatyp.';
     case 'invalid_request':

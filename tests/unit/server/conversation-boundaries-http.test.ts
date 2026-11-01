@@ -515,7 +515,7 @@ test.each([
           version: draft.version,
           contentVersion: draft.contentVersion,
           id: 'field-type',
-          baseRevision: 0,
+          baseRevision: 2,
           value: null,
         }),
       ];

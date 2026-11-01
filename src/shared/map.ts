@@ -173,6 +173,8 @@ export interface DraftRelationshipChange extends RelationshipChange {
 }
 export interface SavedRelationshipChange extends RelationshipChange {
   after: MapRelationship | null;
+  /** A reviewed type cascade cannot be undone by ordinary endpoint correction. */
+  typeCascade?: true;
 }
 
 export function proposedRelationships(

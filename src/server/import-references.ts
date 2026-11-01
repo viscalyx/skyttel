@@ -155,11 +155,11 @@ export function validateImportReferences(
     edgeDefinition(type);
   }
   function changes(
-    changes: DraftChange[] | SaveReceipt['changes'],
+    entries: DraftChange[] | SaveReceipt['changes'],
     types: ObjectType[],
     edgeTypes: Map<string, RelationshipType>,
   ) {
-    for (const change of changes) {
+    for (const change of entries) {
       const id = 'id' in change ? change.id : (change.before?.id ?? change.after?.id);
       requireReference(
         id && (change.before || change.after || ('suppressed' in change && change.suppressed)),
@@ -171,7 +171,7 @@ export function validateImportReferences(
             change.suppressed.after &&
             isDeepStrictEqual(change.before, change.suppressed.before),
         );
-        changesForSuppression(change.suppressed, types, edgeTypes);
+        changes([change.suppressed], types, edgeTypes);
       }
       const meanings = [change.type, ...(change.beforeType ? [change.beforeType] : []), ...types];
       if (change.before)
@@ -202,13 +202,6 @@ export function validateImportReferences(
         requireReference(images.get(merge.imageCopy.copiedImageId)?.objectId === merge.survivorId);
       }
     }
-  }
-  function changesForSuppression(
-    change: DraftChange,
-    types: ObjectType[],
-    edgeTypes: Map<string, RelationshipType>,
-  ) {
-    changes([change], types, edgeTypes);
   }
   function edgeChange(
     change: DraftRelationshipChange | SavedRelationshipChange,
@@ -258,6 +251,7 @@ export function validateImportReferences(
         current.revision >= removedRevision &&
         removal?.before &&
         !removal.after &&
+        !removal.typeCascade &&
         (current.revision > removedRevision ||
           (current.deleted === 1 &&
             removal.before.typeId === current.typeId &&

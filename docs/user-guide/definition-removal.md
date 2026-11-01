@@ -19,6 +19,11 @@ dem för framtida användning.
 4. Välj **Spara hela utkastet** för att genomföra alla förslagen, eller
    **Kasta förslaget** för att avstå från just borttagningen.
 
+För en helt ny typ som ännu inte är sparad innebär borttagning att
+typförslaget dras tillbaka. Om egna innehållsförslag använder typen behöver
+du först välja en annan typ eller kasta dessa innehållsförslag.
+Ett avvisat försök lämnar hela utkastet kvar.
+
 ## När definitionen används
 
 Även upphörda objekt och samband ingår i följderna:

@@ -4,7 +4,12 @@ import { MapError } from './map-error.js';
 
 export function definitionUsage(database: Database.Database, householdId: string) {
   return {
-    assertUnused(kind: 'objectType' | 'relationshipType', id: string, draft: MapDraft) {
+    assertUnused(
+      kind: 'objectType' | 'relationshipType',
+      id: string,
+      draft: MapDraft,
+      code: 'definition_in_use' | 'definition_creation_in_use' = 'definition_in_use',
+    ) {
       if (kind === 'objectType') {
         const objects = new Map(
           (
@@ -26,7 +31,7 @@ export function definitionUsage(database: Database.Database, householdId: string
           else objects.delete(change.id);
         }
         const uses = (value: Pick<ObjectValue, 'typeId'> | null) => value?.typeId === id;
-        if ([...objects.values()].some(uses)) throw new MapError('definition_in_use');
+        if ([...objects.values()].some(uses)) throw new MapError(code);
       } else {
         const edges = new Map(
           (
@@ -46,7 +51,7 @@ export function definitionUsage(database: Database.Database, householdId: string
           else edges.delete(change.id);
         }
         const uses = (value: Pick<RelationshipValue, 'typeId'> | null) => value?.typeId === id;
-        if ([...edges.values()].some(uses)) throw new MapError('definition_in_use');
+        if ([...edges.values()].some(uses)) throw new MapError(code);
       }
     },
   };

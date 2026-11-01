@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import { afterEach, beforeEach, expect, test } from 'vitest';
+import { conflictBasis } from '../../../src/shared/conflict-properties.js';
 import { draftConflicts } from '../../../src/shared/draft-conflicts.js';
 import type { MapState, SaveReceipt } from '../../../src/shared/map.js';
 import { applicationFixture } from './fixture.js';
@@ -21,14 +22,21 @@ async function definition(
   );
   return post(
     kind,
-    { version: state.draft.version, id, baseRevision: before?.revision ?? null, value },
+    {
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      id,
+      baseRevision: before?.revision ?? null,
+      value,
+    },
     actor,
   );
 }
 async function save(operationId: string, actor = client): Promise<SaveReceipt> {
+  const state = await read(actor);
   const response = await post(
     'save',
-    { version: (await read(actor)).draft.version, operationId },
+    { version: state.draft.version, contentVersion: state.contentVersion, operationId },
     actor,
   );
   const result = await response.json();
@@ -230,10 +238,130 @@ test('canceling overlapping type cascades restores suppressed work and keeps ind
   expect((await read()).draft.relationships).toEqual(unfinished.relationships);
 });
 
+test('canceling relationship type removal retains a later independent endpoint removal', async () => {
+  const initial = await read();
+  await object('source', initial.types[0].id);
+  await object('target', initial.types[1].id);
+  await relationship('connection', initial.relationshipTypes[0].id);
+  await save('reverse-overlap-baseline');
+  await relationship('fresh', initial.relationshipTypes[0].id, {
+    sourceId: 'target',
+    targetId: 'source',
+  });
+  expect(
+    (await definition('relationship-type', initial.relationshipTypes[0].id, null)).status,
+  ).toBe(200);
+  await object('source', initial.types[0].id, null);
+  expect(
+    (
+      await post('discard-change', {
+        version: (await read()).draft.version,
+        kind: 'relationshipType',
+        id: initial.relationshipTypes[0].id,
+      })
+    ).status,
+  ).toBe(200);
+  expect((await read()).draft.relationships?.every((change) => change.after === null)).toBe(true);
+  expect((await read()).draft.relationships).toHaveLength(2);
+  await save('independent-endpoint-removal');
+  expect((await read()).relationships).toEqual([]);
+});
+
+test('unrelated type deletion does not disable ordinary correction after endpoint removal', async () => {
+  const initial = await read();
+  await object('source', initial.types[0].id);
+  await object('target', initial.types[1].id);
+  await relationship('connection', initial.relationshipTypes[0].id);
+  await save('ordinary-removal-baseline');
+  const other = await member();
+  await relationship('connection', initial.relationshipTypes[0].id, {}, other);
+  await object('source', initial.types[0].id, null);
+  expect((await definition('object-type', initial.types[2].id, null)).status).toBe(200);
+  await save('ordinary-and-unrelated-removal');
+  expect(
+    (
+      await post(
+        'relationship',
+        {
+          version: (await read(other)).draft.version,
+          id: 'connection',
+          baseRevision: 1,
+          value: {
+            typeId: initial.relationshipTypes[0].id,
+            sourceId: 'target',
+            targetId: 'target',
+          },
+        },
+        other,
+      )
+    ).status,
+  ).toBe(200);
+  await save('ordinary-endpoint-correction', other);
+  expect((await read()).relationships).toMatchObject([
+    { id: 'connection', sourceId: 'target', targetId: 'target' },
+  ]);
+});
+
+test('explicitly reviewing a changed incident relationship keeps type-cascade recovery restrictions', async () => {
+  const initial = await read();
+  await object('source', initial.types[0].id);
+  await object('target', initial.types[1].id);
+  await relationship('connection', initial.relationshipTypes[0].id);
+  await save('review-baseline');
+  const other = await member();
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  await relationship('connection', initial.relationshipTypes[0].id, { lifecycle: 'ended' }, other);
+  await save('changed-incident-edge', other);
+  await relationship('connection', initial.relationshipTypes[0].id, { lifecycle: 'active' }, other);
+  const state = await read();
+  const conflict = draftConflicts(state).find((item) => item.kind === 'relationship');
+  if (!conflict) throw new Error('Expected changed incident relationship');
+  expect(
+    (
+      await post('resolve', {
+        version: state.draft.version,
+        conflict,
+        basis: conflictBasis(state, conflict),
+        command: 'removal-choices',
+        removalChoices: { relationship: 'proposed' },
+      })
+    ).status,
+  ).toBe(200);
+  await save('reviewed-incident-removal');
+  expect(
+    (
+      await post(
+        'relationship',
+        {
+          version: (await read(other)).draft.version,
+          id: 'connection',
+          baseRevision: 2,
+          value: {
+            typeId: initial.relationshipTypes[0].id,
+            sourceId: 'target',
+            targetId: 'target',
+          },
+        },
+        other,
+      )
+    ).status,
+  ).toBe(200);
+  expect(
+    (
+      await post(
+        'save',
+        { version: (await read(other)).draft.version, operationId: 'no-cascade-restoration' },
+        other,
+      )
+    ).status,
+  ).toBe(409);
+});
+
 test('export and import retain cancelable type cascades including unsaved objects', async () => {
   const initial = await read();
   await object('source', initial.types[0].id);
   await object('target', initial.types[1].id);
+  await relationship('saved-edge', initial.relationshipTypes[0].id);
   await save('archive-baseline');
   await object('source', initial.types[0].id, { name: 'Edited source' });
   await object('new', initial.types[0].id, { name: 'Retained new object' });
@@ -276,6 +404,34 @@ test('export and import retain cancelable type cascades including unsaved object
   const restored = (await read()).draft;
   expect(restored.changes).toEqual(expect.arrayContaining(original.changes));
   expect(restored.relationships).toEqual(original.relationships);
+  expect((await definition('object-type', initial.types[0].id, null)).status).toBe(200);
+  const receipt = await save('archived-type-cascade');
+  expect(receipt.relationships).toMatchObject([
+    { id: 'saved-edge', after: null, typeCascade: true },
+  ]);
+  const completed = await (await client.json(`${householdPath}/exports`, {})).json();
+  const completedBytes = await (
+    await client.request(`${householdPath}/exports/${completed.id}`)
+  ).arrayBuffer();
+  const completedUpload = await client.request(`${householdPath}/imports`, {
+    method: 'POST',
+    headers: {
+      origin: fixture.config.origin,
+      'content-type': 'application/zip',
+      'X-Skyttel-Content-Version': String(state.contentVersion),
+    },
+    body: completedBytes,
+  });
+  expect(completedUpload.status, await completedUpload.clone().text()).toBe(201);
+  expect(
+    (
+      await client.json(`${householdPath}/imports/${(await completedUpload.json()).id}/confirm`, {
+        contentVersion: state.contentVersion,
+        confirmed: true,
+      })
+    ).status,
+  ).toBe(200);
+  expect((await (await client.request(`${path}/history`)).json()).history[0]).toEqual(receipt);
 });
 
 test('a suppressed object keeps its private image available until cancellation or accepted deletion', async () => {
@@ -674,6 +830,33 @@ test.each(['object-type', 'relationship-type'] as const)(
       ),
     ).toBe(true);
     expect((await definition(kind, 'unknown-type', null)).status).toBe(409);
+  },
+);
+
+test.each(['object-type', 'relationship-type'] as const)(
+  '%s creation cancellation preserves its unsaved dependents',
+  async (kind) => {
+    const initial = await read();
+    const value = {
+      name: 'Unfinished type',
+      description: '',
+      ...(kind === 'relationship-type' ? { forwardLabel: 'links', reverseLabel: 'linked' } : {}),
+    };
+    expect((await definition(kind, 'new-type', value)).status).toBe(200);
+    if (kind === 'object-type') await object('new-content', 'new-type');
+    else {
+      await object('source', initial.types[0].id);
+      await object('target', initial.types[0].id);
+      await relationship('new-content', 'new-type');
+    }
+    const before = await read();
+    const canceled = await definition(kind, 'new-type', null);
+    expect(canceled.status).toBe(409);
+    expect(await canceled.json()).toEqual({ error: 'definition_creation_in_use' });
+    expect(await read()).toEqual(before);
+    await save('save-new-type-and-content');
+    expect((await definition(kind, 'new-type', null)).status).toBe(200);
+    await save('delete-saved-type-and-content');
   },
 );
 

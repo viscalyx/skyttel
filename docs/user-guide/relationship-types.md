@@ -92,6 +92,7 @@ Det sparade sambandet och andra förslag behålls. Granska övriga förslag
 innan du sparar igen.
 
 Läs också om [objekttyper](object-types.md) och
-[hushållets abonnemang](family-subscription.md). Oanvända typer kan
-[tas bort](definition-removal.md); användande samband måste först
-hanteras och ändpunkterna kan finnas kvar.
+[hushållets abonnemang](family-subscription.md). En sambandstyp kan
+[tas bort](definition-removal.md) tillsammans med sina samband.
+Granska alla följder i utkastet före samlat sparande. Ändpunkternas
+objekt finns kvar och andra medlemmars utkast bevaras med konflikter.
