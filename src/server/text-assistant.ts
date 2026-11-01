@@ -49,6 +49,11 @@ import { type DeliverySocket, taskDeliveries } from './task-delivery.js';
 import { connectTextAssistant, type LocalDispatch } from './text-assistant-mcp.js';
 import { type TextModelProfile, type TextModelUsage, textModel } from './text-assistant-model.js';
 import { draftResult, historyResult } from './text-assistant-results.js';
+import {
+  type AssistantResultSnapshot,
+  captureAssistantResult,
+  restoreAssistantResult,
+} from './text-assistant-snapshot.js';
 
 type Mcp = Awaited<ReturnType<typeof connectTextAssistant>>;
 type Message = {
@@ -66,7 +71,7 @@ type AcceptedMessage = {
   hash: string;
   voice: boolean;
   status: NonNullable<TextAssistantView['taskStatus']>;
-  result?: TextAssistantView;
+  result?: AssistantResultSnapshot;
   receivedAt: number;
   deadline: number;
   delivery?: ReturnType<ReturnType<typeof taskDeliveries>['bind']>;
@@ -1899,7 +1904,7 @@ export function textAssistantRoutes({
       session.reply =
         'Uppgiftens tid är slut. Redan lagrat arbete finns kvar i ditt utkast eller sparresultat.';
     }
-    accepted.result = view(session);
+    accepted.result = captureAssistantResult(view(session), 'live');
     accepted.delivery?.stop();
     syncWork();
     nextMessage(session);
@@ -1929,7 +1934,7 @@ export function textAssistantRoutes({
       if (accepted) {
         accepted.status = 'canceled';
         accepted.delivery?.stop();
-        accepted.result = view(session);
+        accepted.result = captureAssistantResult(view(session), 'live');
       }
     }
     if (session.taskSource === 'voice') {
@@ -1946,7 +1951,7 @@ export function textAssistantRoutes({
       if (accepted) {
         accepted.status = 'canceled';
         accepted.delivery?.stop();
-        accepted.result = view(session);
+        accepted.result = captureAssistantResult(view(session), 'live');
       }
     }
     session.voiceInputPending = false;
@@ -2238,14 +2243,11 @@ export function textAssistantRoutes({
         session.activeMessage = undefined;
         session.taskId = undefined;
         session.taskSource = undefined;
-        accepted.result = {
-          ...view(session),
-          completedReplies: [...(session.completedReplies ?? [])],
-        };
+        accepted.result = captureAssistantResult(view(session), 'prefix');
         if (accepted.status === 'completed' && session.phase === 'ready')
           accepted.delivery?.freeze(
-            completeAssistantText(accepted.result),
-            assistantSaveState(accepted.result),
+            completeAssistantText(accepted.result.view),
+            assistantSaveState(accepted.result.view),
           );
         else accepted.delivery?.stop();
         syncWork();
@@ -2590,9 +2592,9 @@ export function textAssistantRoutes({
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
     const accepted = session.accepted.get(context.req.param('requestId'));
     if (!accepted) return context.json({ error: 'assistant_turn_changed' }, 409);
+    const current = view(session);
     return context.json({
-      ...(accepted.result ?? view(session)),
-      tasks: view(session).tasks,
+      ...(accepted.result ? restoreAssistantResult(accepted.result, current) : current),
       taskStatus: accepted.status,
     });
   });
@@ -2642,7 +2644,7 @@ export function textAssistantRoutes({
       accepted.delivery?.stop();
       if (accepted.status === 'queued' || accepted.status === 'working') {
         accepted.status = 'canceled';
-        accepted.result = view(session);
+        accepted.result = captureAssistantResult(view(session), 'live');
       }
     }
     syncWork();

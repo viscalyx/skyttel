@@ -123,6 +123,50 @@ async function arrange(
   };
 }
 
+test.each(['text', 'voice'] as const)(
+  'a completed %s result and its frozen delivery survive the next FIFO task before polling',
+  async (source) => {
+    const held: ((output: unknown[]) => void)[] = [];
+    const fixture = await arrange(textModel(() => new Promise((resolve) => held.push(resolve))));
+    const voice = source === 'voice' ? { voiceContext: 'Beskriv svaret.' } : {};
+    expect((await fixture.post('first', voice)).status()).toBe(202);
+    await expect.poll(() => held.length).toBe(1);
+    expect((await fixture.post('second', voice)).status()).toBe(202);
+    held[0]([modelMessage('Första svaret.')]);
+    await expect.poll(() => held.length).toBe(2);
+    await expect
+      .poll(() =>
+        fixture.channel.messages.find(
+          (item) => item.taskId === 'first' && item.state === 'awaiting-receipt',
+        ),
+      )
+      .toBeTruthy();
+    const delivery = fixture.channel.messages.find(
+      (item) => item.taskId === 'first' && item.state === 'awaiting-receipt',
+    );
+    const readFirst = async () => (await browser.get(`${fixture.endpoint}/messages/first`)).json();
+    const first = await readFirst();
+    expect(first).toMatchObject({
+      taskStatus: 'completed',
+      phase: 'ready',
+      modelReply: 'Första svaret.',
+      completedReplies: [{ id: 'first', source }],
+      tasks: [
+        { id: 'first', status: 'completed' },
+        { id: 'second', status: 'working' },
+      ],
+    });
+    expect(delivery?.text).toContain('Första svaret.');
+    held[1]([modelMessage('Andra svaret.')]);
+    await expect.poll(async () => (await readFirst()).tasks[1].status).toBe('completed');
+    const later = await readFirst();
+    expect(later).toEqual({ ...first, tasks: later.tasks });
+    expect(later.completedReplies).toHaveLength(1);
+    expect(later.tasks[0].delivery.text).toBe(delivery?.text);
+    expect(later.tasks[1].delivery.text).toContain('Andra svaret.');
+  },
+);
+
 test.each(['receipt', 'late-failure'] as const)(
   'idle restarts at bounded whole delivery %s, never at a delayed observation or unanswered question',
   async (ending) => {
