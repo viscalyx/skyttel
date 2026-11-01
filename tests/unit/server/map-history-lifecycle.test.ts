@@ -70,6 +70,7 @@ test('upgrading retained receipts restores deletion meanings and conflict attrib
   migrationDirectory = mkdtempSync(join(tmpdir(), 'skyttel-history-migrations-'));
   cpSync(resolve('migrations'), migrationDirectory, { recursive: true });
   rmSync(join(migrationDirectory, '041_map_history_changes.sql'));
+  rmSync(join(migrationDirectory, '042_relationship_confirmation_retention.sql'));
   const app = await setup(migrationDirectory);
   await app.post('save', { operationId: 'combined' });
   const history = await (await app.owner.request(`${app.path}/map/history`)).json();

@@ -64,6 +64,8 @@ test('relationship invalid property input blocks staging, preserves dirty work a
     <FormLeaveProvider>
       <main className="household-map workspace-shell" data-theme="light">
         <RelationshipForm
+          onPrepare={async () => crypto.randomUUID()}
+          onReview={async () => state}
           initial={{ id: 'edge', version: 0, contentVersion: 1, baseRevision: 1, value }}
           state={state}
           objects={new Map(state.objects.map((object) => [object.id, object]))}

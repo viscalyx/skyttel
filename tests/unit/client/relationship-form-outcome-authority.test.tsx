@@ -74,6 +74,8 @@ test.each(['another-owner', 'replaced-content', 'another-attempt', 'missing-proo
     const completed = vi.fn();
     render(
       <RelationshipForm
+        onPrepare={async () => crypto.randomUUID()}
+        onReview={async () => state}
         initial={{ id: 'edge', version: 7, contentVersion: 37, baseRevision: null, value }}
         state={state}
         objects={new Map(objects.map((object) => [object.id, object]))}

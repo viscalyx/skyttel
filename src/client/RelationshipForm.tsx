@@ -1,7 +1,7 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { sameConflictValue } from '../shared/conflict-properties.js';
 import type { MapObject, MapState, RelationshipValue } from '../shared/map.js';
-import { proposedRelationships } from '../shared/map.js';
+import { proposedRelationships, proposedRelationshipTypes } from '../shared/map.js';
 import type { RelationshipFormResult } from '../shared/relationship-form.js';
 import { EndpointPicker } from './EndpointPicker.js';
 import { useFormLeave } from './FormLeave.js';
@@ -10,6 +10,7 @@ import { validateFormControls } from './form-validation.js';
 import { LifecycleEditor } from './Lifecycle.js';
 import { MapRequestError } from './map-request.js';
 import { PropertyEditor } from './PropertyEditor.js';
+import { RelationshipReadDetails } from './RelationshipReadDetails.js';
 
 export type RelationshipFormValue = {
   id: string;
@@ -30,6 +31,8 @@ export function RelationshipForm({
   state,
   objects,
   onStage,
+  onPrepare,
+  onReview,
   onComplete,
   onCancel,
   onCheck,
@@ -40,6 +43,8 @@ export function RelationshipForm({
   initial: RelationshipFormValue;
   state: MapState;
   objects: Map<string, MapObject>;
+  onPrepare: (contentVersion: number) => Promise<string>;
+  onReview: () => Promise<MapState>;
   onStage: (
     editor: RelationshipFormSubmission,
     stagingId: string,
@@ -52,9 +57,12 @@ export function RelationshipForm({
   onBusy?: (busy: boolean) => void;
 }) {
   const prefix = useId();
+  const [basis, setBasis] = useState(initial);
+  const [unavailable, setUnavailable] = useState(false);
+  const [review, setReview] = useState<MapState | null>(null);
   const [value, setValue] = useState(initial.value);
   const [invalidProperties, setInvalidProperties] = useState(false);
-  const [typeRevisions] = useState(
+  const [typeRevisions, setTypeRevisions] = useState(
     () => new Map(state.relationshipTypes.map((type) => [type.id, type.revision])),
   );
   const [sourceQuery, setSourceQuery] = useState('');
@@ -104,19 +112,27 @@ export function RelationshipForm({
     setPending(true);
     setError('');
     setDuplicateId(undefined);
-    const stagingId = crypto.randomUUID();
-    attempt.current = {
-      stagingId,
-      editor: {
-        ...initial,
-        value: remove ? null : value,
-        typeRevision: typeRevisions.get(remove ? initial.value.typeId : value.typeId),
-      },
-    };
     try {
+      const stagingId = await onPrepare(basis.contentVersion);
+      attempt.current = {
+        stagingId,
+        editor: {
+          ...basis,
+          value: remove ? null : value,
+          typeRevision: typeRevisions.get(remove ? basis.value.typeId : value.typeId),
+        },
+      };
       confirm(await onStage(attempt.current.editor, stagingId));
     } catch (failure) {
-      if (!(failure instanceof MapRequestError) || failure.status >= 500) {
+      if (
+        failure instanceof MapRequestError &&
+        failure.code === 'relationship_confirmation_unavailable'
+      ) {
+        expire();
+      } else if (
+        attempt.current &&
+        (!(failure instanceof MapRequestError) || failure.status >= 500)
+      ) {
         setUnknown(true);
         setError(
           'Det är oklart om ändringen lades i utkastet. Kontrollera utfallet innan du försöker igen. Alla uppgifter finns kvar.',
@@ -124,7 +140,12 @@ export function RelationshipForm({
       } else {
         lock.current = false;
         attempt.current = null;
-        setError('Ändringen kunde inte bekräftas. Dina uppgifter finns kvar.');
+        setError(
+          failure instanceof MapRequestError &&
+            failure.code === 'relationship_confirmation_capacity'
+            ? 'Tillfälligt fullt för nya sambandsbekräftelser. Inget ändrades av detta försök. Dina uppgifter finns kvar. Försök igen senare.'
+            : 'Ändringen kunde inte bekräftas. Dina uppgifter finns kvar.',
+        );
       }
     } finally {
       setPending(false);
@@ -180,6 +201,56 @@ export function RelationshipForm({
     }
     attempt.current = null;
   }
+  function expire() {
+    lock.current = false;
+    attempt.current = null;
+    setUnknown(false);
+    setStale(true);
+    setUnavailable(true);
+    setReview(null);
+    setError(
+      'Bekräftelsen är inte längre tillgänglig. Den kan ha gått ut efter sju dygn. Det betyder inte att ändringen aldrig lades i utkastet. Dina uppgifter finns kvar. Granska aktuellt underlag före ett nytt försök.',
+    );
+  }
+  async function reviewCurrent() {
+    setPending(true);
+    try {
+      const latest = await onReview();
+      if (latest.userId !== state.userId || latest.contentVersion !== basis.contentVersion)
+        throw new Error('changed_authority');
+      setReview({
+        ...latest,
+        relationshipTypes: proposedRelationshipTypes(latest.relationshipTypes, latest.draft.relationshipTypes),
+      });
+    } catch {
+      setError(
+        'Aktuellt underlag kunde inte hämtas. Dina uppgifter finns kvar. Försök granska igen.',
+      );
+    } finally {
+      setPending(false);
+    }
+  }
+  function acceptReview() {
+    if (!review) return;
+    const saved = review.relationships.find((edge) => edge.id === initial.id);
+    setBasis({ ...basis, version: review.draft.version, baseRevision: saved?.revision ?? null });
+    setTypeRevisions(new Map(review.relationshipTypes.map((type) => [type.id, type.revision])));
+    setStale(false);
+    setUnavailable(false);
+    setReview(null);
+    setError(
+      'Du granskar ett nytt försök. Kontrollera dina bevarade uppgifter och välj Lägg i utkastet när du är klar.',
+    );
+  }
+  const reviewedEdge =
+    review &&
+    [...proposedRelationships(review.relationships, review.draft.relationships).values()].find(
+      (edge) =>
+        edge.id === initial.id ||
+        (edge.typeId === value.typeId &&
+          edge.sourceId === value.sourceId &&
+          edge.targetId === value.targetId),
+    );
   async function check() {
     const current = attempt.current;
     if (pending || !unknown || !current) return;
@@ -216,10 +287,16 @@ export function RelationshipForm({
         setError(
           'Utkastet har ändrats och utfallet kan inte bekräftas. Dina uppgifter finns kvar. Kontrollera samma ändring igen innan du lämnar eller försöker igen.',
         );
-    } catch {
-      setError(
-        'Utkastet kunde inte kontrolleras. Dina uppgifter finns kvar. Kontrollera igen innan du försöker lägga ändringen i utkastet.',
-      );
+    } catch (failure) {
+      if (
+        failure instanceof MapRequestError &&
+        failure.code === 'relationship_confirmation_unavailable'
+      )
+        expire();
+      else
+        setError(
+          'Utkastet kunde inte kontrolleras. Dina uppgifter finns kvar. Kontrollera igen innan du försöker lägga ändringen i utkastet.',
+        );
     } finally {
       setPending(false);
     }
@@ -261,6 +338,32 @@ export function RelationshipForm({
           </div>
         )}
         {error && <p role="alert">{error}</p>}
+        {unavailable && (
+          <button type="button" disabled={pending} onClick={() => void reviewCurrent()}>
+            Granska aktuellt underlag
+          </button>
+        )}
+        {review && (
+          <section aria-label="Aktuellt underlag för nytt försök">
+            <h4>Aktuellt underlag för nytt försök</h4>
+            {reviewedEdge ? (
+              <RelationshipReadDetails
+                value={reviewedEdge}
+                type={review.relationshipTypes.find((item) => item.id === reviewedEdge.typeId)}
+                before={review.relationships.find((item) => item.id === reviewedEdge.id)}
+                objects={objects}
+              />
+            ) : (
+              <p>
+                Sambandet finns inte i den aktuella kartan och ditt utkast. Dina försökta uppgifter
+                visas nedan.
+              </p>
+            )}
+            <button type="button" onClick={acceptReview}>
+              Fortsätt med bevarade uppgifter
+            </button>
+          </section>
+        )}
         {pending && <p role="status">Lägger sambandet i ditt utkast…</p>}
         {unknown && (
           <button type="button" disabled={pending} onClick={() => void check()}>

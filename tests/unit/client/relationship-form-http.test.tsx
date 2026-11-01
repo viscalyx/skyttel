@@ -442,3 +442,23 @@ test('indistinguishable object names in a relationship selector include identity
   expect(target.value).toBe('same-one');
   expect(await fixture.read()).toEqual(before);
 }, 30_000);
+
+test('capacity rejection keeps editable relationship input and explains the temporary limit', async () => {
+  await prepare();
+  const dialog = await editStorage();
+  await userEvent.selectOptions(dialog.getByLabelText('Sambandets status'), 'active');
+  const actual = authenticatedHttpFetch(client, installation.origin);
+  vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
+    String(input).endsWith('/relationship-form')
+      ? Promise.resolve(
+          new Response(JSON.stringify({ error: 'relationship_confirmation_capacity' }), {
+            status: 409,
+          }),
+        )
+      : actual(input, init),
+  );
+  await userEvent.click(dialog.getByRole('button', { name: 'Lägg i utkastet' }));
+  await dialog.findByText(/Tillfälligt fullt/);
+  expect(dialog.getByLabelText('Sambandets status')).toHaveProperty('disabled', false);
+  expect(dialog.getByLabelText('Sambandets status')).toHaveProperty('value', 'active');
+});

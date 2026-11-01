@@ -130,6 +130,8 @@ for (const width of [1280, 320]) {
               state={state}
               relationshipTypes={[edgeType]}
               onEdit={() => {}}
+              onPrepareRelationship={async () => crypto.randomUUID()}
+              onReviewRelationship={async () => state}
               onStageRelationship={async (editor, stagingId) => {
                 staged.push(editor);
                 return {

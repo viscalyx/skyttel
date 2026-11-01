@@ -38,6 +38,7 @@ import { profileImageRoutes } from './profile-image-routes.js';
 import { imageUploadLimit } from './profile-images.js';
 import { propertyWriteLimit } from './properties.js';
 import { withProviderProof } from './provider-proof.js';
+import { relationshipConfirmationCleanup } from './relationship-form-attempts.js';
 import { textAssistantRoutes } from './text-assistant.js';
 import type { LocalDispatch } from './text-assistant-mcp.js';
 import type { TextModelProfile, TextModelUsage } from './text-assistant-model.js';
@@ -401,7 +402,7 @@ export function createApp({
     onNewConversation: (view, deferVoiceClose) => newVoiceConversation?.(view, deferVoiceClose),
   });
   app.route('/api', textAssistant.routes);
-  app.route('/api', mapRoutes(database, auth, config.origin, textAssistant.checkManualSave));
+  app.route('/api', mapRoutes(database, auth, config.origin, textAssistant.checkManualSave, now));
   revalidateWork = textAssistant.stopUnauthorizedWork;
   app.route(
     '/api',
@@ -439,6 +440,7 @@ export function createApp({
   summarizeVoice = voiceAssistant.summarizeSession;
   newVoiceConversation = voiceAssistant.newConversation;
   app.route('/api', voiceAssistant.routes);
+  const stopRelationshipCleanup = relationshipConfirmationCleanup(database, now);
   const stopCleanup = hasBindings
     ? authenticationCleanup({
         database,
@@ -464,6 +466,7 @@ export function createApp({
     summarizeForEvaluation: textAssistant.summarizeForEvaluation,
     close: async () => {
       stopCleanup?.();
+      stopRelationshipCleanup();
       const delivery = sending.shutdown();
       await voiceAssistant.close();
       await textAssistant.close();

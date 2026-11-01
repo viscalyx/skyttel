@@ -86,6 +86,8 @@ function Session({
           state={state}
           relationshipTypes={state.relationshipTypes}
           onClose={() => setOpen(false)}
+          onPrepareRelationship={async () => crypto.randomUUID()}
+          onReviewRelationship={async () => state}
           onStageRelationship={async () => ({ state, outcome: null })}
           onCheckRelationship={async () => ({ state, outcome: null })}
         />

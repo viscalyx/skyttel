@@ -68,6 +68,8 @@ test('read-only relationship chains keep cross and Escape closure while ordinary
     view.rerender(
       <HouseholdReadDialog
         {...props}
+        onPrepareRelationship={async () => crypto.randomUUID()}
+        onReviewRelationship={async () => state}
         onStageRelationship={async () => ({ state, outcome: null })}
       />,
     );

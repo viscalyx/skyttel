@@ -302,6 +302,23 @@ fält. Under inskickning spärras redigering, dubbelinskickning och vanlig
 stängning. Vid oklart resultat väljer du
 **Kontrollera om ändringen lades i utkastet** innan nytt försök.
 Kontrollen återspelar aldrig ett äldre utkast över senare arbete.
+Bekräftelsen kan hämtas i sju dygn från inskickningens godkännande, även
+när ett befintligt samband väljs utan ändring. Sparande, kontroll och
+omstart förlänger inte tiden. Ditt utkast och sparade uppgifter finns kvar
+även när bekräftelsen går ut.
+
+Om **Bekräftelsen är inte längre tillgänglig** visas, är det inte bevis
+för att ändringen aldrig genomfördes. Alla formulärvärden finns kvar.
+Välj **Granska aktuellt underlag**, jämför uppgifterna med ditt formulär
+och välj **Fortsätt med bevarade uppgifter**. Rätta vid behov och välj
+sedan **Lägg i utkastet** för ett nytt försök. Appen skickar inget
+automatiskt under granskningen.
+
+**Tillfälligt fullt för nya sambandsbekräftelser** betyder att detta
+försök inte ändrar utkastet. Uppgifterna är kvar och kan redigeras.
+Försök igen senare; tidigare bekräftelser kan fortfarande kontrolleras
+under sina sju dygn.
+
 Om utkastet har ändrats och kontrollen saknar en bevarad bekräftelse,
 behålls inmatningen och du kan lämna formuläret med förlustvarningen.
 Anteckna de uppgifter du vill använda, stäng formuläret och välj Nytt samband
