@@ -282,6 +282,65 @@ async function message(session: TextAssistantView, text: string) {
   return status;
 }
 
+test('old completed polls retain their original results and reply prefixes after 40 text and voice turns', async () => {
+  let turns = 0;
+  const model = textModel(() => [modelMessage(`Svar ${++turns}.`)]);
+  await setup(model.provider);
+  let session = await start();
+  const originals = new Map<number, TextAssistantView>();
+  let firstBody: object = {};
+  for (let turn = 1; turn <= 40; turn++) {
+    const body = {
+      revision: session.revision,
+      ...displayedVersion(session),
+      requestId: `turn-${turn}`,
+      text: `Förklara uppgift ${turn}.`,
+      ...(turn % 2 === 0 ? { voiceContext: 'Svara på uppgiften.' } : {}),
+    };
+    if (turn === 1) firstBody = body;
+    const sent = await browser.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data: body,
+    });
+    expect(sent.status(), await sent.text()).toBe(202);
+    await expect
+      .poll(
+        async () => {
+          session = await (await browser.get(`${path}/${session.id}/messages/turn-${turn}`)).json();
+          return session.taskStatus;
+        },
+        { interval: 10 },
+      )
+      .toBe('completed');
+    if ([1, 10, 20, 40].includes(turn)) originals.set(turn, session);
+  }
+  for (const [turn, original] of originals) {
+    for (let read = 0; read < 2; read++) {
+      const result = await (
+        await browser.get(`${path}/${session.id}/messages/turn-${turn}`)
+      ).json();
+      expect(result).toEqual({ ...original, tasks: session.tasks });
+      expect(result.completedReplies).toHaveLength(turn);
+      expect(result.modelReply).toBe(`Svar ${turn}.`);
+    }
+  }
+  const retry = (data: object) =>
+    browser.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data,
+    });
+  expect((await retry(firstBody)).status()).toBe(202);
+  expect((await retry({ ...firstBody, text: 'En annan begäran.' })).status()).toBe(409);
+  expect(turns).toBe(40);
+  const reset = await browser.post(`${path}/${session.id}/new`, {
+    headers: { origin: app.origin },
+    data: {},
+  });
+  expect(reset.status()).toBe(200);
+  expect(await reset.json()).toMatchObject({ tasks: [], completedReplies: [] });
+  expect((await browser.get(`${path}/${session.id}/messages/turn-1`)).status()).toBe(409);
+});
+
 test('a question about the previous failure reports its verified reason without repeating or authorizing the failed save', async () => {
   let step = 0;
   const model = textModel(() => {
