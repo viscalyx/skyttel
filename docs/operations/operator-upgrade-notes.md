@@ -6,6 +6,15 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Check external assistant OAuth requests
+
+Check external assistant clients before rollout. Authorization and token
+requests must send each single-value OAuth parameter only once, even when
+the values are identical. Malformed requests now receive HTTP 400 instead
+of using the last value. Update affected clients before reconnecting or
+renewing access. Repeated resource indicators remain supported, but every
+resource must identify this installation's MCP endpoint.
+
 ### Monitor blocked internal assistant actions
 
 Retain restricted server security logs and make sure the installation

@@ -165,6 +165,16 @@ för motsvarande separat förberedelse utan språkmodell.
     "spec": "tests/integration/assistants.spec.ts",
     "caseId": "AI-03"
   },
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/oauth-parameters-http.test.ts",
+      "title": "duplicate token callbacks are rejected before consuming the authorization code",
+      "purpose": "Felaktiga OAuth-anrop avvisas utan att förbruka koden för ett giltigt återförsök."
+    }
+  ],
   "reference": "Kontrollerad OAuth/MCP-klient, påhittade identiteter, riktig webbläsare och beständig SQLite. Ingen språkmodell används.",
   "outcomes": [
     "Både hushållsval och separat AI-val krävs.",
@@ -200,6 +210,15 @@ testfallet “AI-03: medgivandet kräver val av hushåll och AI-behandling”.
 - Rätt identifierad användare och valt hushåll framgår. Godkännandet
   kräver både hushållsval och AI-val. Efter återkallelse är listan tom
   och manuellt kartarbete finns kvar.
+
+**Separat tekniskt underlag:**
+[oauth-parameters-http.test.ts](../../tests/unit/server/oauth-parameters-http.test.ts)
+provar felaktiga OAuth-anrop genom riktiga HTTP-gränser med påhittade
+identiteter. Upprepade parametrar för enstaka värden avvisas före
+medgivande och utbyte av kod eller token. Identiska värden, olika värden
+i båda ordningarna och kodade parameternamn ingår. Ett giltigt återförsök
+med samma kod eller förnyelsetoken fungerar. Upprepade resursvärden
+kontrolleras mot tillåten åtkomst. Provet ersätter inte AI-03:s manuella steg.
 
 ### AI-04: inloggning följs av medgivande och ett nej bevarar kartarbete
 
