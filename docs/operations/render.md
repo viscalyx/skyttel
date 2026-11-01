@@ -499,6 +499,17 @@ through each supported route. A missing or invalid selected address causes
 HTTP 503 and an address-free diagnostic; it never falls back to another
 header. Do not use `direct` behind Render ingress to bypass this failure.
 
+### Upload admission and ingress limits
+
+Before rollout, complete the
+[incoming request body controls](installation.md#bound-incoming-request-bodies).
+The repository's Render deployment does not configure body-read deadlines,
+concurrent upload limits or proxy request-size limits. Verify the effective
+platform controls and their availability for this service with Render. Apply
+the installation guide's fallback if a required control is unavailable.
+Check both custom and platform-provided hostnames; an additional proxy does
+not protect a directly reachable origin. Record any remaining exposure.
+
 ## 6. Verify the first live application
 
 1. Open your public origin with `/healthz` appended. Expect

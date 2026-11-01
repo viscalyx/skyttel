@@ -40,6 +40,7 @@ import { imageUploadLimit } from './profile-images.js';
 import { propertyWriteLimit } from './properties.js';
 import { withProviderProof } from './provider-proof.js';
 import { relationshipConfirmationCleanup } from './relationship-form-attempts.js';
+import { requestBodyLimit } from './request-body-limit.js';
 import { textAssistantRoutes } from './text-assistant.js';
 import type { LocalDispatch } from './text-assistant-mcp.js';
 import type { TextModelProfile, TextModelUsage } from './text-assistant-model.js';
@@ -176,28 +177,48 @@ export function createApp({
       return context.json({ error: 'client_outdated' }, 409);
     await next();
   });
-  app.use('/api/*', (context, next) =>
-    context.req.method === 'POST' &&
-    (/^\/api\/households\/[^/]+\/imports$/.test(context.req.path) ||
-      context.req.path === '/api/recovery/complete')
-      ? next()
-      : bodyLimit({
-          maxSize:
-            context.req.method === 'POST' &&
-            /^\/api\/households\/[^/]+\/profile-images\/[^/]+$/.test(context.req.path)
-              ? imageUploadLimit
-              : context.req.method === 'POST' &&
-                  /^\/api\/households\/[^/]+\/map\/object-form$/.test(context.req.path)
-                ? imageUploadLimit + propertyWriteLimit + 32_768
-                : context.req.method === 'POST' &&
-                    /^\/api\/households\/[^/]+\/map\/(draft|relationship|relationship-form|resolve|discard-review)$/.test(
-                      context.req.path,
-                    )
-                  ? propertyWriteLimit
-                  : 16_384,
-          onError: (failed) => failed.json({ error: 'invalid_request' }, 413),
-        })(context, next),
-  );
+  app.use('/api/*', async (context, next) => {
+    if (
+      context.req.method === 'POST' &&
+      (/^\/api\/households\/[^/]+\/imports$/.test(context.req.path) ||
+        context.req.path === '/api/recovery/complete')
+    )
+      return next();
+    const maxSize =
+      context.req.method === 'POST' &&
+      /^\/api\/households\/[^/]+\/profile-images\/[^/]+$/.test(context.req.path)
+        ? imageUploadLimit
+        : context.req.method === 'POST' &&
+            /^\/api\/households\/[^/]+\/map\/object-form$/.test(context.req.path)
+          ? imageUploadLimit + propertyWriteLimit + 32_768
+          : context.req.method === 'POST' &&
+              /^\/api\/households\/[^/]+\/map\/(draft|relationship|relationship-form|resolve|discard-review)$/.test(
+                context.req.path,
+              )
+            ? propertyWriteLimit
+            : 16_384;
+    if (maxSize > 16_384) {
+      const session = await auth.api.getSession({ headers: context.req.raw.headers });
+      if (!session) throw new MapError('unauthenticated', 401);
+      // Global middleware has no route parameters yet.
+      let householdId: string;
+      try {
+        householdId = decodeURIComponent(context.req.path.split('/')[3]);
+      } catch {
+        throw new MapError('invalid_request', 400);
+      }
+      if (
+        context.req.header('Origin') !== config.origin ||
+        !householdAccess(database, session.user.id, householdId)
+      )
+        throw new MapError('forbidden', 403);
+    }
+    const limit = maxSize > 16_384 ? requestBodyLimit : bodyLimit;
+    return limit({
+      maxSize,
+      onError: (failed) => failed.json({ error: 'invalid_request' }, 413),
+    })(context, next);
+  });
   app.onError((error, context) => {
     if (error instanceof AdministrationError || error instanceof MapError)
       return context.json({ error: error.code }, error.status);

@@ -357,6 +357,61 @@ HTTPS through the host's ingress to the application's `PORT`, and use
 loopback for local use; configure ingress separately for remote access. Run
 exactly one instance and allow a deployment interruption.
 
+### Bound incoming request bodies
+
+Before opening public access, configure the ingress that receives uploads.
+Application checks reject callers without a valid login and current household
+access before reading large protected bodies. MCP checks its connection and
+household access first. These checks do not bound connections or buffering in
+an upstream proxy. Authorized callers can still hold uploads open or send
+several requests at once.
+
+Set all of these controls at ingress:
+
+- A finite total body-read deadline and an idle body-read timeout. Include
+  time spent buffering before forwarding to Skyttel. Choose the total deadline
+  from the permitted size and the slowest supported upload rate; use a longer
+  deadline for archive imports than for images or JSON requests.
+- A concurrent upload limit for each client and a total concurrent upload
+  limit for the service. Bound the queue and reject excess requests instead
+  of retaining an unlimited number of waiting bodies. Base the limits on the
+  available memory, temporary disk and ordinary household activity. An IP
+  limit alone does not bound requests from many clients.
+- Request-size limits enforced on actual bytes, including chunked uploads.
+  A declared Content-Length alone is insufficient. Use route-specific limits
+  so the archive allowance does not apply to ordinary authentication requests.
+
+Preserve these supported application limits, in bytes:
+
+| Request body | Maximum bytes |
+| --- | ---: |
+| Profile image | 10,000,000 |
+| Complete object form, including multipart overhead | 12,032,768 |
+| Enlarged map writes and MCP | 2,000,000 |
+| Ordinary API requests, including public authentication | 16,384 |
+| Household archive import | 1,100,000,000 |
+
+Installation recovery has an authorized, variable limit based on the complete
+restored membership review. Before recovery, allow that full review through
+ingress; do not apply the ordinary JSON ceiling to its completion request.
+The application retains its recovery authorization and size calculation.
+
+Record the chosen deadlines, concurrency limits, queue bounds, temporary
+storage limits and size rules in private deployment records. Check every
+public hostname and direct origin path. The repository does not provision an
+ingress proxy or these host controls. Obtain the managed platform's effective
+limits and available configuration from the host. If a required control is
+unavailable, use an ingress you control and restrict origin access to it, or
+record the missing control and the accepted residual exposure before rollout.
+
+Verify the deployed route separately with synthetic data and a small, fixed
+number of requests. Confirm that an unfinished anonymous upload receives 401,
+an authenticated non-member receives 403, and authorized uploads and imports
+within the limits succeed. Confirm that excess bytes, expired deadlines and
+excess concurrent uploads receive a bounded rejection. Close every probe
+connection. Local application tests do not verify the deployed proxy, its
+buffering, its deadlines or its resistance to resource exhaustion.
+
 ## Startup failures and storage
 
 A failed migration or inaccessible database exits with failure and no ready

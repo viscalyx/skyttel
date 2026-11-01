@@ -4,7 +4,6 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type Database from 'better-sqlite3';
 import { Hono } from 'hono';
-import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import { objectMatchesQuery } from '../shared/object-search.js';
 import {
@@ -25,11 +24,14 @@ import { householdAccess } from './households.js';
 import { recoveryPending } from './installation-recovery.js';
 import { householdMap, MapError } from './map.js';
 import { propertyWriteLimit } from './properties.js';
+import { requestBodyLimit } from './request-body-limit.js';
 
 type Connection = { id: string; userId: string; householdId: string; clientId: string };
 
 export function assistantRoutes(database: Database.Database, auth: Auth, origin: string) {
-  const routes = new Hono();
+  const routes = new Hono<{
+    Variables: { connection: Connection; canWrite: boolean };
+  }>();
   const verifier = oauthProviderResourceClient(auth).getActions();
   routes.use('*', async (context, next) => {
     context.header('Cache-Control', 'no-store');
@@ -160,8 +162,7 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
     return context.json({ revoked: true });
   });
 
-  routes.use('/mcp', bodyLimit({ maxSize: propertyWriteLimit }));
-  routes.all('/mcp', async (context) => {
+  routes.use('/mcp', async (context, next) => {
     if (context.req.header('Origin') && context.req.header('Origin') !== origin)
       return context.json({ error: 'forbidden' }, 403);
     let connection: Connection;
@@ -212,6 +213,14 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
         401,
       );
     }
+    context.set('connection', connection);
+    context.set('canWrite', canWrite);
+    await next();
+  });
+  routes.use('/mcp', requestBodyLimit({ maxSize: propertyWriteLimit }));
+  routes.all('/mcp', async (context) => {
+    const connection = context.get('connection');
+    const canWrite = context.get('canWrite');
     const server = new McpServer(
       { name: 'Skyttel', version: '1.0.0' },
       {
