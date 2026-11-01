@@ -44,7 +44,8 @@ test('current household archives reimport without replacing or transferring inst
         async () =>
           (await (await owner.get(`${source.origin}${costPath}`)).json()).terra.estimatedUsd,
       )
-      .toBeCloseTo(0.217, 10);
+      // Both scope interpretation and the worker response contribute usage.
+      .toBeCloseTo(2 * 0.217, 10);
     const before = await (await owner.get(`${source.origin}${costPath}`)).json();
     const prepared = await (await owner.post(`${path}/exports`, { headers, data: {} })).json();
     const archive = await (await owner.get(`${path}/exports/${prepared.id}`)).body();
