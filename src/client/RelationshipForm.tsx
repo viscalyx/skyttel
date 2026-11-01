@@ -77,6 +77,10 @@ export function RelationshipForm({
   const [error, setError] = useState('');
   const form = useRef<HTMLFormElement>(null);
   const summary = useRef<HTMLDivElement>(null);
+  const checkButton = useRef<HTMLButtonElement>(null);
+  const reviewButton = useRef<HTMLButtonElement>(null);
+  const reviewHeading = useRef<HTMLHeadingElement>(null);
+  const focusAfterTransition = useRef<'review' | 'details' | 'form' | null>(null);
   const [errors, setErrors] = useState<{ id: string; label: string; message: string }[]>([]);
   const { requestLeave } = useFormLeave();
   const dirty =
@@ -94,6 +98,14 @@ export function RelationshipForm({
   useLayoutEffect(() => {
     if (errors.length) summary.current?.focus();
   }, [errors]);
+  useLayoutEffect(() => {
+    if (pending) return;
+    if (focusAfterTransition.current === 'review' && unavailable) reviewButton.current?.focus();
+    if (focusAfterTransition.current === 'details' && review) reviewHeading.current?.focus();
+    if (focusAfterTransition.current === 'form' && !review)
+      form.current?.querySelector<HTMLSelectElement>('select')?.focus();
+    focusAfterTransition.current = null;
+  }, [pending, unavailable, review]);
   function validate() {
     const problems = validateFormControls(form.current);
     setErrors(problems);
@@ -202,6 +214,8 @@ export function RelationshipForm({
     attempt.current = null;
   }
   function expire() {
+    if (document.activeElement === document.body || form.current?.contains(document.activeElement))
+      focusAfterTransition.current = 'review';
     lock.current = false;
     attempt.current = null;
     setUnknown(false);
@@ -218,9 +232,17 @@ export function RelationshipForm({
       const latest = await onReview();
       if (latest.userId !== state.userId || latest.contentVersion !== basis.contentVersion)
         throw new Error('changed_authority');
+      if (
+        document.activeElement === document.body ||
+        document.activeElement === reviewButton.current
+      )
+        focusAfterTransition.current = 'details';
       setReview({
         ...latest,
-        relationshipTypes: proposedRelationshipTypes(latest.relationshipTypes, latest.draft.relationshipTypes),
+        relationshipTypes: proposedRelationshipTypes(
+          latest.relationshipTypes,
+          latest.draft.relationshipTypes,
+        ),
       });
     } catch {
       setError(
@@ -232,6 +254,7 @@ export function RelationshipForm({
   }
   function acceptReview() {
     if (!review) return;
+    focusAfterTransition.current = 'form';
     const saved = review.relationships.find((edge) => edge.id === initial.id);
     setBasis({ ...basis, version: review.draft.version, baseRevision: saved?.revision ?? null });
     setTypeRevisions(new Map(review.relationshipTypes.map((type) => [type.id, type.revision])));
@@ -242,14 +265,18 @@ export function RelationshipForm({
       'Du granskar ett nytt försök. Kontrollera dina bevarade uppgifter och välj Lägg i utkastet när du är klar.',
     );
   }
+  const reviewedChange = review?.draft.relationships?.find((change) => change.id === initial.id);
+  const reviewedRelationships =
+    review && proposedRelationships(review.relationships, review.draft.relationships);
   const reviewedEdge =
-    review &&
-    [...proposedRelationships(review.relationships, review.draft.relationships).values()].find(
+    reviewedRelationships?.get(initial.id) ??
+    reviewedChange?.before ??
+    review?.relationships.find((edge) => edge.id === initial.id) ??
+    [...(reviewedRelationships?.values() ?? [])].find(
       (edge) =>
-        edge.id === initial.id ||
-        (edge.typeId === value.typeId &&
-          edge.sourceId === value.sourceId &&
-          edge.targetId === value.targetId),
+        edge.typeId === value.typeId &&
+        edge.sourceId === value.sourceId &&
+        edge.targetId === value.targetId,
     );
   async function check() {
     const current = attempt.current;
@@ -339,13 +366,23 @@ export function RelationshipForm({
         )}
         {error && <p role="alert">{error}</p>}
         {unavailable && (
-          <button type="button" disabled={pending} onClick={() => void reviewCurrent()}>
+          <button
+            ref={reviewButton}
+            type="button"
+            disabled={pending}
+            onClick={() => void reviewCurrent()}
+          >
             Granska aktuellt underlag
           </button>
         )}
         {review && (
           <section aria-label="Aktuellt underlag för nytt försök">
-            <h4>Aktuellt underlag för nytt försök</h4>
+            <h4 ref={reviewHeading} tabIndex={-1}>
+              Aktuellt underlag för nytt försök
+            </h4>
+            {reviewedChange?.after === null && (
+              <p>Ditt utkast föreslår att sambandet tas bort. De sparade uppgifterna visas här.</p>
+            )}
             {reviewedEdge ? (
               <RelationshipReadDetails
                 value={reviewedEdge}
@@ -366,7 +403,7 @@ export function RelationshipForm({
         )}
         {pending && <p role="status">Lägger sambandet i ditt utkast…</p>}
         {unknown && (
-          <button type="button" disabled={pending} onClick={() => void check()}>
+          <button ref={checkButton} type="button" disabled={pending} onClick={() => void check()}>
             Kontrollera om ändringen lades i utkastet
           </button>
         )}

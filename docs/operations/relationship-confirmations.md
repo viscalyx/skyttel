@@ -16,7 +16,8 @@ identities cannot bypass the installation limit.
 The byte budget includes UTF-8 identifiers, complete outcomes, request
 fingerprints and a 512-byte allowance per record for fixed metadata and
 index entries. The installation budget also reserves 4 KiB for the single
-signing record and fixed index metadata. Count limits also bound index growth. This is an evidence
+signing record and fixed index metadata. Count limits also bound index
+growth. This is an evidence
 accounting budget, not a SQLite file-size or whole-installation disk quota.
 Unused request fields contribute only to a fixed-size fingerprint;
 legitimate properties remain complete in staged outcomes. Rejected

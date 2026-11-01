@@ -1182,14 +1182,19 @@ mänskliga observationer. Inga sådana resultat följer av syntetiska tester.
 
 ### SAMBAND-20: Utgången bekräftelse kräver granskning med bevarad inmatning
 
+**Integrationstest:** SAMBAND-20 i
+[relationship-confirmation-retention.spec.ts](../../tests/integration/relationship-confirmation-retention.spec.ts).
+
 **Syfte:** Saknad bekräftelse får inte påstå att försöket aldrig genomförs
 eller orsaka automatisk inskickning.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Alex och Blå cykeln finns i utkastet. Prova två
-varianter i separata hushåll: utan samband och med ett aktivt samband
-Använder från Alex till Blå cykeln. Operatören använder Styrda avbrott
+**Förutsättningar:** Alex och Blå cykeln finns i utkastet. Prova tre
+varianter i separata hushåll: utan samband, dubblett av ett sparat aktivt
+samband Använder från Alex till Blå cykeln, samt borttagning av samma
+sparade aktiva samband. Spara objekten och sambandet före de två senare
+varianterna. Operatören använder Styrda avbrott
 för förlorat svar och sedan för otillgänglig bekräftelse. Automationen
 använder samma styrda svar; verklig serverlagring provas separat.
 
@@ -1203,7 +1208,7 @@ använder samma styrda svar; verklig serverlagring provas separat.
     "spec": "tests/integration/relationship-confirmation-retention.spec.ts",
     "caseId": "SAMBAND-20"
   },
-  "reference": "Chromium, datorvy. Två varianter: genomfört tillägg och dubblett med oförändrat utkast. Verklig inskickning med förlorat svar, sedan styrt svar om otillgänglig bekräftelse.",
+  "reference": "Chromium, datorvy. Tre varianter: genomfört tillägg, dubblett med oförändrat utkast och genomförd föreslagen borttagning. Verklig inskickning med förlorat svar, sedan styrt svar om otillgänglig bekräftelse.",
   "outcomes": [
     "Otillgänglig bekräftelse behåller formulärets uppgifter och påstår inte att ändringen aldrig genomförs.",
     "Aktuellt underlag måste granskas och ett nytt försök uttryckligen skickas."
@@ -1226,28 +1231,40 @@ använder samma styrda svar; verklig serverlagring provas separat.
 **Steg:**
 
 1. Öppna Samband för Alex och Nytt samband. Välj Använder och Blå cykeln.
-   Välj manuellt upphört under Sambandets status.
+   Välj manuellt upphört under Sambandets status. I borttagningsvarianten
+   väljer du i stället Redigera samband och behåller aktiva värden.
 2. Be operatören köra `relationshipProbe('lost-applied')`. Välj Lägg i
-   utkastet och invänta kontrollknappen.
+   utkastet, eller Föreslå borttagning i borttagningsvarianten, och invänta
+   kontrollknappen.
 3. Be operatören förbereda otillgänglig bekräftelse. Välj Kontrollera om
    ändringen lades i utkastet. Läs beskedet och de bevarade fälten.
 4. Kontrollera att Lägg i utkastet är spärrad. Välj Granska aktuellt
    underlag. Läs det manuellt upphörda sambandet i tilläggsvarianten och
-   det aktiva sambandet i dubblettvarianten.
+   det aktiva sambandet i dubblettvarianten. I borttagningsvarianten ska
+   granskningen visa både de sparade aktiva uppgifterna och förslaget
+   att ta bort sambandet.
 5. Välj Fortsätt med bevarade uppgifter. Kontrollera att formuläret
-   fortfarande anger manuellt upphört. Välj Lägg i utkastet.
+   fortfarande anger manuellt upphört. Välj Lägg i utkastet. I
+   borttagningsvarianten finns aktiva värden kvar; välj Föreslå borttagning
+   igen.
 
 **Förväntat resultat:**
 
 - Beskedet anger att bekräftelsen inte längre är tillgänglig, utan att
   påstå att ändringen aldrig genomförs. Uppgifterna finns kvar.
+- Fokus följer kontrollen till granskningsknappen, granskningens rubrik och
+  sedan formulärets sambandstyp när de bevarade uppgifterna åter kan skickas.
 - Granskningen visar aktuellt underlag. Ingen inskickning sker förrän
   användaren uttryckligen väljer Lägg i utkastet igen.
 - Tilläggsvarianten visar Sambandet lades i ditt utkast.
   Dubblettvarianten visar Sambandet finns redan och bevarar aktiva värden
-  i det befintliga sambandet.
+  i det befintliga sambandet. Borttagningsvarianten visar bekräftelsen
+  Föreslagen borttagning lades i ditt utkast.
 
 ### SAMBAND-21: Tillfälligt full lagring behåller ett redigerbart formulär
+
+**Integrationstest:** SAMBAND-21 i
+[relationship-confirmation-retention.spec.ts](../../tests/integration/relationship-confirmation-retention.spec.ts).
 
 **Syfte:** Kapacitetsavslag förlorar inga inmatade uppgifter och förklarar
 att användaren kan försöka senare.

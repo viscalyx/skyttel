@@ -491,16 +491,30 @@ test('saved relationship edits and removals keep their full outcomes for seven d
   const { householdMap } = await import('../../../src/server/map.js');
   const before = await read();
   let time = Date.now();
-  const map = householdMap(fixture.database, before.userId, path.split('/').at(-1) as string, () => time);
+  const map = householdMap(
+    fixture.database,
+    before.userId,
+    path.split('/').at(-1) as string,
+    () => time,
+  );
   const added = map.proposeRelationshipForm(submission);
   map.save({ version: added.state.draft.version, contentVersion: 1, operationId: 'save-add' });
-  const edit = { ...submission, version: map.read().draft.version, baseRevision: 1,
+  const edit = {
+    ...submission,
+    version: map.read().draft.version,
+    baseRevision: 1,
     stagingId: map.relationshipFormTicket(1).stagingId,
-    value: { ...(submission.value as object), lifecycle: 'ended' } };
+    value: { ...(submission.value as object), lifecycle: 'ended' },
+  };
   const edited = map.proposeRelationshipForm(edit);
   map.save({ version: edited.state.draft.version, contentVersion: 1, operationId: 'save-edit' });
-  const remove = { ...edit, version: map.read().draft.version, baseRevision: 2,
-    stagingId: map.relationshipFormTicket(1).stagingId, value: null };
+  const remove = {
+    ...edit,
+    version: map.read().draft.version,
+    baseRevision: 2,
+    stagingId: map.relationshipFormTicket(1).stagingId,
+    value: null,
+  };
   const removed = map.proposeRelationshipForm(remove);
   map.save({ version: removed.state.draft.version, contentVersion: 1, operationId: 'save-remove' });
   const stable = map.read();
@@ -510,9 +524,26 @@ test('saved relationship edits and removals keep their full outcomes for seven d
   expect(map.proposeRelationshipForm(remove).outcome).toEqual(removed.outcome);
   time++;
   for (const body of [edit, remove]) {
-    expect(() => map.proposeRelationshipForm(body)).toThrow('relationship_confirmation_unavailable');
-    expect(() => map.relationshipFormOutcome(body.stagingId, 1)).toThrow('relationship_confirmation_unavailable');
+    expect(() => map.proposeRelationshipForm(body)).toThrow(
+      'relationship_confirmation_unavailable',
+    );
+    expect(() => map.relationshipFormOutcome(body.stagingId, 1)).toThrow(
+      'relationship_confirmation_unavailable',
+    );
   }
   expect(map.read()).toEqual(stable);
   expect(map.history()).toEqual(history);
+});
+
+test('revoked membership cannot recover an accepted result or obtain new attempt identifiers', async () => {
+  const before = await read();
+  expect((await submit()).status).toBe(200);
+  fixture.database
+    .prepare('DELETE FROM membership WHERE householdId = ? AND userId = ?')
+    .run(path.split('/').at(-1), before.userId);
+  expect((await client.request(outcome())).status).toBe(403);
+  expect((await submit()).status).toBe(403);
+  expect(
+    (await client.json(`${path}/map/relationship-form-ticket`, { contentVersion: 1 })).status,
+  ).toBe(403);
 });
