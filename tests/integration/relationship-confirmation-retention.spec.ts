@@ -110,14 +110,12 @@ test('SAMBAND-20: unavailable confirmation preserves input and requires current-
       if (duplicate) await expect(dialog.getByRole('alert')).toContainText('Sambandet finns redan');
       else
         await expect(
-          dialog
-            .getByRole('status')
-            .filter({
-              hasText:
-                mode === 'remove'
-                  ? 'Föreslagen borttagning lades i ditt utkast'
-                  : 'Sambandet lades i ditt utkast',
-            }),
+          dialog.getByRole('status').filter({
+            hasText:
+              mode === 'remove'
+                ? 'Föreslagen borttagning lades i ditt utkast'
+                : 'Sambandet lades i ditt utkast',
+          }),
         ).toBeVisible();
     } finally {
       await installation.close();
