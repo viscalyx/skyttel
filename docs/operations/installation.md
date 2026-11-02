@@ -24,6 +24,46 @@ For an authorized LangSmith rollout, use the
 to review natural text and voice failures without creating another trace
 archive.
 
+## Space for household archives
+
+Before export or import, allow free space on the database volume for archive
+work and database growth. An import reserves 768 MiB and an export reserves
+256 MiB. All households share a 2 GiB archive reservation budget. Admission
+also leaves at least 128 MiB, or twice the current logical database size,
+whichever is larger, for database and WAL activity. Data in WAL counts toward
+the logical size. A small initial database therefore needs at least 896 MiB
+free for one import, or 384 MiB for one export. Increase a small disk before
+it reaches these limits.
+
+Import and export accept at most 128 MiB of ZIP data, 32 MiB of content and
+64 MiB of images. The export limit applies to all retained images and history,
+not only the current map. Larger archives cannot be imported, and larger
+households cannot produce a full archive. Before upgrade, check existing
+recovery copies against these limits and retain a consistent installation
+backup when a household exceeds them. Follow the
+[database restore procedure](database-restore.md) for whole-installation
+recovery; do not remove household information merely to fit an archive.
+
+Reservations cover archive copies and conservative database/WAL growth during
+replacement. They stay charged through review, download and cleanup. The
+free-space check also counts existing reservations, even when some bytes
+already occupy the disk. This can reject work early. Import checks capacity
+again before replacement. A capacity rejection returns HTTP 503 with
+`archive_storage_unavailable`; an archive size rejection returns HTTP 400
+with `archive_too_large`. Finish or cancel other archive work, check cleanup
+errors and free space, and expand the disk if needed before retrying.
+
+Import upload and validation have a combined five-minute deadline. Expiration
+returns `import_preparation_timeout` and removes temporary files. A successful
+preparation has a separate ten-minute review lifetime. Failed cleanup retains
+its reservation until removal succeeds or startup removes the abandoned files.
+Resolve filesystem permissions or storage failures before restarting.
+
+These controls assume the supported single application instance. They are
+not a filesystem quota: unrelated processes and ordinary database writes can
+consume free space after admission. Keep disk monitoring and ingress request
+limits in place, and retain recovery copies outside the running volume.
+
 ## Configure the installation
 
 For production, enter these settings through the host's private environment
