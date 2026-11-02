@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="sv">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Prototyp: avbrott och ren återstart</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; padding: 32px 20px 70px; max-width: 1160px; color: #1b2833; background: #f5f7fa; font: 16px/1.5 system-ui, sans-serif; }
+  h1 { font-size: 2rem; margin-bottom: 8px; } h2 { font-size: 1.25rem; } h3 { font-size: 1rem; }
+  p { max-width: 85ch; } .label { color: #365b81; font-weight: bold; }
+  section, details { padding: 20px; background: white; border: 1px solid #c7d2de; border-radius: 10px; margin: 18px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(270px,1fr)); gap: 18px; }
+  .grid section { margin: 0; } button, select { font: inherit; padding: 8px 12px; border: 1px solid #8b9daf; border-radius: 5px; background: white; color: #152c42; }
+  button { cursor: pointer; margin: 3px; } button:hover { background: #eaf1f8; } button:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid #1767b0; outline-offset: 3px; }
+  button:disabled { cursor: default; color: #626d77; background: #eef1f3; } button[aria-selected="true"] { background: #254e79; color: white; }
+  dl { margin: 0; } dt { font-weight: 650; margin-top: 10px; } dd { margin-left: 0; overflow-wrap: anywhere; }
+  li { margin: 5px 0; } .muted { color: #526170; } #notice { border-left: 4px solid #365b81; padding-left: 12px; }
+  .scroll { overflow-x: auto; } table { border-collapse: collapse; width: 100%; } th, td { text-align: left; padding: 8px; border-bottom: 1px solid #d8e0e7; vertical-align: top; }
+  .steps { display: flex; flex-wrap: wrap; gap: 5px; } .steps button { text-align: left; max-width: 300px; }
+  summary { cursor: pointer; font-weight: 650; } small { font-size: .9rem; }
+</style>
+<header>
+  <div class="label">KASTBAR PROTOTYP · FÖRSLAG ATT TA STÄLLNING TILL</div>
+  <h1>Avbrott utan att förlora kartarbetet</h1>
+  <p>Kan Skyttel kontrollera en begäran samtidigt som svaret börjar, hålla tillbaka ändringar och återstarta med ren kontext när kontrollen säger nej? Klicka fram olika ordningar och se vad som bevaras.</p>
+  <p class="muted">Allt är simulerat i den här filen. Inga nätverksanrop, ingen lagring och inget riktigt ljud. Exempel på svar är handskrivna platshållare för dynamiskt genererade svar i den föreslagna produkten.</p>
+</header>
+<section aria-labelledby="state-heading">
+  <h2 id="state-heading">Samma samtal och utkast</h2>
+  <p id="notice" role="status" aria-live="polite"></p>
+  <div class="grid">
+    <div><h3>Arbete och anslutning</h3><dl id="connection"></dl></div>
+    <div><h3>Hushållets uppgifter</h3><dl id="household"></dl></div>
+    <div><h3>Kontext för fortsättningen</h3><ul id="context"></ul></div>
+  </div>
+  <h3>Begäranden och ändringar som väntar</h3>
+  <div class="scroll"><table><thead><tr><th>Begäran</th><th>Kontroll</th><th>Bygger på</th><th>Väntande arbete</th></tr></thead><tbody id="requests"></tbody></table></div>
+  <h3>Redan visat eller hört — kan inte tas tillbaka</h3><ul id="delivered"></ul>
+</section>
+<section aria-labelledby="free-heading">
+  <h2 id="free-heading">Prova själv</h2>
+  <p>Välj vilken begäran ett sent svar ska gälla. Kontrollerna nedan föreställer server- och leverantörshändelser; de är inte ett förslag till produktens knappar.</p>
+  <label for="target">Begäran och version: </label><select id="target"><option value="">Ingen ännu</option></select>
+  <div id="free"></div>
+</section>
+<section aria-labelledby="guide-heading">
+  <h2 id="guide-heading">Guidade förlopp</h2>
+  <p>Varje flik börjar om med samma accepterade samtal, utkast och väntande förtydligande.</p>
+  <div id="tabs" role="tablist" aria-label="Förlopp"></div>
+  <div id="walkthrough" role="tabpanel" tabindex="0"><h3 id="scenario-title"></h3><p id="scenario-description"></p><div id="steps" class="steps"></div></div>
+</section>
+<details>
+  <summary>Föreslagna regler och vad provet inte visar</summary>
+  <ul>
+    <li>En röstbegäran får en stabil identitet. Först när både turens slut och ett färdigt transkript finns startar kontrollen, även utan delegering. En dubblett med samma identitet och innehåll återanvänds. En verklig adapter måste bevisa att alla direkta röstturer fångas.</li>
+    <li>Kontrollen binds till identitet, version och den kontext som användes. Modellresultat binds även till leverantörssessionen. I provet pekar varje ny tur på alla tidigare giltiga turer som modellen kunde se, inklusive obesvarade förtydliganden. Detta är avsiktligt försiktigt.</li>
+    <li>Ändringar väntar på godkännande för både den egna begäran och dess beroenden. Ett godkännande gör aldrig sparande uttryckligen begärt. Ny indata upphäver tidigare väntande sparavsikt. Behörighet, giltiga ändringar och aktuellt utkast antas separat kontrollerade i provet.</li>
+    <li>Vid avvisning stängs den gamla leverantörssessionen. Berörda turer och deras följder tas ur kontexten, även sammanfattningar. Annat ännu okontrollerat arbete i samma session avbryts också och körs inte om automatiskt. Tidigare accepterade begäranden behålls; pågående svarsgenerering i den gamla sessionen stoppas.</li>
+    <li>En blandad begäran stoppas som helhet. Endast en tydligt avskiljbar, redan uttryckt kartdel kan bli en ny begränsad begäran i ren kontext och kontrolleras på nytt. Otydlig uppdelning kräver användarens förtydligande.</li>
+    <li>En transkripträttelse före verkställande skapar en ny version och underkänner äldre resultat. Efter verkställande behandlas en rättelse som en ny begäran; den kan inte ändra ett redan genomfört sparande. Denna gräns behöver beställarens ställningstagande.</li>
+    <li>Avvisningssvaret får bara ett avgränsat skäl och en uppmaning att formulera om sig, inga verktyg eller den avvisade instruktionen. Provet visar detta som en separat leverans, följd av en ny leverantörssession.</li>
+    <li>Fel i kontrollen ger tekniskt besked, aldrig ämnesavvisning. Fel i avvisningssvaret ger ett tekniskt reservbesked utan nya genereringsförsök.</li>
+  </ul>
+  <p>Provet visar föreslagen händelseordning, beroenden, spärrar och bevarat tillstånd. Det belägger inte transkriptens slutlighet, verklig Decisions-kvalitet, hur en säker kartdel extraheras, dynamisk formulering, WebRTC-avbrott, tömning av ljudbuffertar, stopp hos leverantören eller återanslutning med återförd kontext. Det mäter inte kostnad eller väntetid. Ett redan levererat svar kan vara orelaterat.</p>
+</details>
+<details><summary>Händelser i provet</summary><ol id="log"></ol></details>
+<script>
+// Portable state model. No DOM, providers, storage or timers.
+const seed = () => ({
+  mode: 'röst', epoch: 1, connected: true, serial: 0, turns: [], effects: [],
+  voice: null, safePart: null, refusal: null, notice: 'Tidigare accepterat kartarbete finns kvar.',
+  base: ['Alex har en blå cykel.', 'Skyttel frågar vilket garage cykeln står i.'],
+  clarification: 'Vilket garage står cykeln i?', draft: ['Alex blå cykel'],
+  map: ['Hushållets bostad'], receipts: [], delivered: [], log: [], lastToken: null,
+});
+const key = t => `${t.id}.${t.version}`;
+const live = t => !['avvisad', 'avbruten', 'ersatt'].includes(t.status);
+const settled = t => ['godkänd', 'förtydligande'].includes(t.status);
+function ready(s, t) {
+  return live(t) && settled(t) && t.deps.every(k => { const p = s.turns.find(x => key(x) === k); return p && ready(s, p); });
+}
+function start(s, kind, text, id, version = 1) {
+  if (!s.connected) { s.notice = 'Starta en ren session innan nästa begäran.'; return; }
+  for (const old of s.turns) old.explicitSave = false;
+  const t = { id: id || `B${++s.serial}`, version, epoch: s.epoch, kind, text,
+    deps: s.turns.filter(live).map(key), status: 'väntar', output: null, closed: false,
+    explicitSave: kind === 'save', changed: false };
+  s.turns.push(t); s.lastToken = key(t);
+  s.notice = 'Kontrollen och assistenten arbetar parallellt. Ändringar väntar.';
+}
+function stop(s, target, status, reason) {
+  const invalid = new Set([key(target)]);
+  for (const t of s.turns) if (t.deps.some(k => invalid.has(k))) invalid.add(key(t));
+  for (const t of s.turns) {
+    if (!live(t)) continue;
+    if (invalid.has(key(t))) t.status = t === target ? status : 'avbruten';
+    else if (!ready(s, t)) t.status = 'avbruten';
+  }
+  for (const e of s.effects) if (e.status === 'väntar') e.status = 'förkastat';
+  s.connected = false; s.epoch++; s.voice = null;
+  s.notice = reason;
+}
+function release(s) {
+  for (const e of s.effects) {
+    if (e.status !== 'väntar') continue;
+    const t = s.turns.find(x => key(x) === e.token);
+    if (!t || !live(t)) { e.status = 'förkastat'; continue; }
+    if (!s.connected || t.epoch !== s.epoch || !ready(s, t) || t.status !== 'godkänd') continue;
+    if (e.type === 'spara' && !t.explicitSave) { e.status = 'nekas: inte uttryckligen begärt'; continue; }
+    if (e.type === 'spara' && s.effects.some(p => p !== e && p.status === 'väntar')) continue;
+    if (e.type === 'spara') {
+      s.map.push(...s.draft); s.draft = []; s.receipts.push(`Sparkvitto ${s.receipts.length + 1}: ${s.map.join(', ')}`);
+    } else if (e.type === 'kasta') s.draft = [];
+    else {
+      s.draft.push(t.kind === 'safe' ? 'Cykelförsäkring' : t.kind === 'corrected' ? 'Cykeln står i garaget' : 'Förslag för cykeln');
+      if (t.kind === 'corrected') s.clarification = '';
+    }
+    t.changed = true; e.status = 'genomfört';
+  }
+}
+function reduce(previous, action) {
+  if (action.type === 'reset') return seed();
+  const s = structuredClone(previous);
+  const t = s.turns.find(x => key(x) === (action.token || s.lastToken));
+  const usable = () => t && live(t) && t.epoch === s.epoch && s.connected;
+  const say = text => { s.notice = text; };
+  switch (action.type) {
+    case 'text': start(s, 'map', 'Lägg till uppgifter om cykeln.'); break;
+    case 'outside': start(s, 'outside', 'Skriv en fristående äventyrsberättelse.'); break;
+    case 'mixed': start(s, 'mixed', 'Lägg till cykelförsäkringen och skriv en äventyrsberättelse.'); break;
+    case 'follow': start(s, 'follow', 'Använd det du just sade för cykeln.'); break;
+    case 'save': start(s, 'save', 'Spara mitt utkast.'); break;
+    case 'voice':
+      if (!s.connected) { say('Starta först en ren session.'); break; }
+      for (const old of s.turns) old.explicitSave = false;
+      s.voice = { id: `B${++s.serial}`, text: 'Lägg till cykeln', ended: false, final: false };
+      say('Röstfragment tas emot. Ingen färdig begäran finns ännu.'); break;
+    case 'end': case 'transcript':
+      if (!s.voice) { say('Börja med ett röstfragment.'); break; }
+      if (action.type === 'end') s.voice.ended = true; else s.voice.final = true;
+      if (s.voice.ended && s.voice.final) {
+        const old = s.turns.find(x => x.id === s.voice.id);
+        if (old) say('Dubblett av samma tur: ingen ny kontroll eller ändring.');
+        else start(s, 'map', s.voice.text, s.voice.id);
+      } else say('Inväntar både turens slut och färdigt transkript. Ingen delegering krävs.');
+      break;
+    case 'output':
+      if (!usable() || t.closed) { say('Sent eller dubbelt modellsvar ignoreras.'); break; }
+      t.output = t.kind === 'outside' || t.kind === 'mixed' ? 'Exempel: en orelaterad berättelse börjar.' : 'Exempel: jag arbetar med uppgifterna om cykeln.';
+      s.delivered.push(`${key(t)} (${s.mode}): ${t.output}`); t.closed = true;
+      say('Svaret har levererats. Det är inte ett besked om genomförda ändringar.'); break;
+    case 'summary':
+      if (!usable()) { say('Sen sammanfattning från avbrutet arbete ignoreras.'); break; }
+      t.summary = `Sammanfattning av ${key(t)} och dess tidigare kontext: ${t.text}`;
+      say('Sammanfattningen bär samma beroenden som underlaget. Den kan inte överleva att underlaget avvisas.'); break;
+    case 'approve': case 'clarify':
+      if (!usable() || t.status !== 'väntar') { say('Gammalt eller dubbelt kontrollresultat ignoreras.'); break; }
+      t.status = action.type === 'approve' ? 'godkänd' : 'förtydligande';
+      if (action.type === 'clarify') { t.output = 'Vilken uppgift om cykeln menar du?'; t.closed = true; s.delivered.push(t.output); }
+      say(action.type === 'approve' ? 'Denna version är godkänd. Beroenden och sparrätt kontrolleras också.' : 'Samtalet får fortsätta med en fråga. Den oklara begäran får inte ändra något.'); break;
+    case 'queue': case 'queueSave': case 'queueDiscard': {
+      if (!usable()) { say('Verktygsresultat från avbrutet arbete ignoreras.'); break; }
+      const type = action.type === 'queueSave' ? 'spara' : action.type === 'queueDiscard' ? 'kasta' : 'ändra';
+      if (s.effects.some(e => e.token === key(t) && e.type === type)) { say('Dubblett: arbetet verkställs inte två gånger.'); break; }
+      s.effects.push({ token: key(t), type, status: 'väntar' }); say('Verktyget begär arbete. Serverns spärr avgör om det får genomföras.'); break;
+    }
+    case 'reject': case 'split': case 'error':
+      if (!usable() || t.status !== 'väntar') { say('Gammalt kontrollresultat ignoreras.'); break; }
+      if (action.type === 'split' && t.kind !== 'mixed') { say('Välj den blandade begäran för detta simulerade utfall.'); break; }
+      if (action.type === 'split') s.safePart = 'Lägg till cykelförsäkringen.';
+      stop(s, t, 'avvisad', action.type === 'error' ? 'Kontrollen kunde inte slutföras. Försök igen eller arbeta manuellt med kartan.' : 'Arbetet stoppas. En kort avvisning väntar. Tidigare utkast bevaras.');
+      if (action.type === 'error') { t.status = 'avbruten'; s.refusal = null; }
+      else s.refusal = { reason: 'utanför kartarbetet', status: 'väntar', tools: false };
+      break;
+    case 'refusal': case 'refusalError':
+      if (!s.refusal || s.refusal.status !== 'väntar') { say('Inget avvisningssvar väntar.'); break; }
+      s.refusal.status = action.type === 'refusal' ? 'levererat' : 'tekniskt reservbesked';
+      say(action.type === 'refusal' ? 'Exempelsvar: Jag kan hjälpa dig med hushållets karta. Formulera om den del som ligger utanför kartarbetet.' : 'Svaret kunde inte skapas. Försök igen eller arbeta manuellt med kartan.');
+      s.delivered.push(s.notice); break;
+    case 'restart':
+      if (s.connected) { say('Sessionen är redan ansluten.'); break; }
+      if (s.refusal?.status === 'väntar') { say('Leverera avvisningen eller dess tekniska reservbesked först.'); break; }
+      s.connected = true;
+      say('Ny leverantörssession med endast behållen kontext. Samma samtal och utkast. Ingen avvisad begäran körs om.');
+      if (s.safePart) { const text = s.safePart; s.safePart = null; start(s, 'safe', text); }
+      break;
+    case 'correct': {
+      if (!usable()) { say('Den gamla begäran är avbruten. Formulera en ny.'); break; }
+      const committed = s.turns.some(x => x.changed && (key(x) === key(t) || x.deps.includes(key(t))));
+      if (committed) { start(s, 'corrected', 'Rättelse: cykeln står i garaget.'); say('En ändring är redan genomförd för begäran eller en följdbegäran. Rättelsen är en ny begäran utan automatisk återställning.'); break; }
+      const id = t.id, version = t.version + 1;
+      stop(s, t, 'ersatt', 'Tidigare version och dess följder underkänns.');
+      s.connected = true; s.refusal = null;
+      start(s, 'corrected', 'Rättelse: cykeln står i garaget.', id, version); break;
+    }
+    case 'switch': s.mode = s.mode === 'röst' ? 'text' : 'röst'; say('Läget ändras. Samtal, utkast och spärrar är desamma.'); break;
+  }
+  release(s); s.log.push(s.notice); return s;
+}
+</script>
+<script>
+// Thin demo shell. No production code is imported.
+let state = seed(), currentScenario = 0, stepIndex = 0;
+const $ = id => document.getElementById(id);
+const labels = {
+  voice: 'Ta emot röstfragment', end: 'Turens slut', transcript: 'Färdigt transkript / dubblett',
+  text: 'Ny kartbegäran', outside: 'Ny orelaterad begäran', mixed: 'Ny blandad begäran',
+  follow: 'Ny följdbegäran', save: 'Användaren begär spara', output: 'Leverera modellsvar',
+  summary: 'Sammanfatta aktuell kontext',
+  queue: 'Begär utkaständring', queueSave: 'Begär verkställande av sparande', queueDiscard: 'Begär kasta utkast',
+  approve: 'Kontroll: godkänd', reject: 'Kontroll: avvisad', split: 'Kontroll: tydligt separerbar kartdel',
+  clarify: 'Kontroll: behöver förtydligande', error: 'Kontrollfel / tidsgräns', correct: 'Rätta transkriptet',
+  refusal: 'Leverera kort avvisning', refusalError: 'Avvisningssvaret misslyckas', restart: 'Starta ren session',
+  switch: 'Byt röst / text', reset: 'Börja om',
+};
+const a = (type, token) => ({ type, token });
+const scenarios = [
+  ['Direkt röst', 'Ingen delegering sker. Kontroll startar när både turens slut och transkript finns. Svaret kan komma före kontrollen; ändringen väntar. Dubbletten gör inget nytt.',
+    [a('voice'), a('end'), a('transcript'), a('output'), a('queue'), a('transcript'), a('approve'), a('queue')]],
+  ['Sent nej', 'Ett svar kan redan vara hört när kontrollen säger nej. Det ligger kvar under redan levererat, men finns inte i nästa modellkontext. Gamla resultat återinför inget.',
+    [a('outside'), a('output'), a('queue'), a('reject'), a('approve','B1.1'), a('refusal'), a('restart'), a('output','B1.1'), a('text')]],
+  ['Tidigt nej', 'Kontrollen hinner före svaret. Den gamla modellen får inte leverera efter avbrottet. Textläge fortsätter samma kartarbete.',
+    [a('outside'), a('reject'), a('output','B1.1'), a('queue','B1.1'), a('refusal'), a('restart'), a('switch'), a('text'), a('approve')]],
+  ['Följdbegäran', 'Den andra begäran godkänns först men bygger på den första. Dess ändring väntar. Ett nej till den första tar bort båda ur framtida kontext.',
+    [a('outside'), a('output'), a('follow'), a('approve'), a('queue'), a('summary'), a('reject','B1.1'), a('refusal'), a('restart'), a('queue','B2.1'), a('summary','B2.1')]],
+  ['Blandad begäran', 'Det blandade arbetet får ingen allmän behörighet. Efter stopp och förklaring får bara kartdelen en egen begäran, ny kontroll och nytt modellarbete.',
+    [a('mixed'), a('queue'), a('split'), a('refusal'), a('restart'), a('queue'), a('approve'), a('output')]],
+  ['Rättelse före ändring', 'Ett sent transkript ändrar versionen innan något verkställs. Ett godkännande för den äldre versionen räcker inte.',
+    [a('voice'), a('transcript'), a('end'), a('queue'), a('correct'), a('approve','B1.1'), a('queue','B1.2'), a('approve','B1.2')]],
+  ['Sparande och sen rättelse', 'Ett godkännande ger inte i sig rätt att spara. En uttrycklig sparbegäran får sin egen kontroll. Rättelse efter genomfört sparande kan inte ta bort sparkvittot.',
+    [a('text'), a('approve'), a('queueSave'), a('save'), a('queueSave'), a('approve'), a('queueSave'), a('correct'), a('queue'), a('approve')]],
+  ['Kontrollfel', 'Ett tekniskt fel är inte ett ämnesbrott. Utkastet bevaras, sent godkännande ignoreras och användaren kan göra ett nytt försök i samma samtal.',
+    [a('text'), a('queueDiscard'), a('error'), a('approve','B1.1'), a('restart'), a('text'), a('approve')]],
+  ['Förtydligande och reservbesked', 'Otydlighet får en fråga, men ingen ändring. En senare avvisning och ett misslyckat avvisningssvar tar inte bort det tidigare förtydligandet.',
+    [a('text'), a('clarify'), a('queue'), a('outside'), a('reject'), a('refusalError'), a('restart')]],
+];
+function element(tag, text) { const e = document.createElement(tag); e.textContent = text; return e; }
+function list(id, texts) { $(id).replaceChildren(...(texts.length ? texts : ['Inget ännu.']).map(x => element('li', x))); }
+function fields(id, pairs) { $(id).replaceChildren(...pairs.flatMap(([k,v]) => [element('dt', k),element('dd', v)])); }
+function dispatch(action) { state = reduce(state, action); render(); }
+function choose(index) { currentScenario = index; stepIndex = 0; state = seed(); render(); }
+function render() {
+  $('notice').textContent = state.notice;
+  fields('connection', [
+    ['Läge', state.mode], ['Leverantörssession', `${state.epoch} · ${state.connected ? 'ansluten' : 'stoppad'}`],
+    ['Rösttur', state.voice ? `${state.voice.id} · slut: ${state.voice.ended ? 'ja' : 'nej'} · färdigt transkript: ${state.voice.final ? 'ja' : 'nej'}` : 'Ingen ofärdig rösttur'],
+    ['Separat avvisningssvar', state.refusal ? `${state.refusal.status} · skäl: ${state.refusal.reason} · inga verktyg` : 'Inget'],
+    ['Avskild kartdel', state.safePart || 'Ingen väntar'],
+  ]);
+  fields('household', [['Ditt utkast', state.draft.join('; ') || 'Tomt'], ['Hushållets karta', state.map.join('; ')], ['Sparkvitton', state.receipts.join('; ') || 'Inga'], ['Tidigare väntande del', state.clarification || 'Ingen']]);
+  const kept = state.turns.filter(t => ready(state, t));
+  const tentative = state.turns.filter(t => live(t) && !kept.includes(t));
+  list('context', [...state.base, ...kept.map(t => `${key(t)} · behålls: ${t.text} ${t.output || ''} ${t.summary || ''}`), ...tentative.map(t => `${key(t)} · provisoriskt i aktuell session: ${t.text} ${t.output || ''} ${t.summary || ''}`)]);
+  $('requests').replaceChildren(...state.turns.map(t => {
+    const row = document.createElement('tr');
+    const effects = state.effects.filter(e => e.token === key(t)).map(e => `${e.type}: ${e.status}`).join('; ') || 'Inget';
+    [ `${key(t)} · ${t.text}`, `${t.status} · session ${t.epoch}${t.closed ? ' · svar klart' : ''}`, t.deps.join(', ') || 'Tidigare accepterad kontext', effects ].forEach(v => row.append(element('td', v)));
+    return row;
+  }));
+  list('delivered', state.delivered); list('log', state.log);
+  const selected = $('target').value;
+  $('target').replaceChildren(...state.turns.map(t => { const o = element('option', `${key(t)} · ${t.text}`); o.value = key(t); return o; }));
+  $('target').value = selected && state.turns.some(t => key(t) === selected) ? selected : state.lastToken || '';
+  // New requests become the default target; old ones remain selectable for late results.
+  if (render.last !== state.lastToken) $('target').value = state.lastToken || '';
+  render.last = state.lastToken;
+  const tabs = scenarios.map((sc, i) => {
+    const b = element('button', sc[0]); b.type = 'button'; b.setAttribute('role', 'tab'); b.id = `tab-${i}`;
+    b.setAttribute('aria-selected', String(i === currentScenario)); b.setAttribute('aria-controls', 'walkthrough'); b.tabIndex = i === currentScenario ? 0 : -1;
+    b.onclick = () => { choose(i); $(`tab-${i}`).focus(); };
+    b.onkeydown = e => { if (['ArrowRight','ArrowLeft','Home','End'].includes(e.key)) { e.preventDefault(); const j = e.key === 'Home' ? 0 : e.key === 'End' ? scenarios.length-1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + scenarios.length) % scenarios.length; choose(j); $(`tab-${j}`).focus(); } };
+    return b;
+  });
+  $('tabs').replaceChildren(...tabs);
+  const scenario = scenarios[currentScenario]; $('walkthrough').setAttribute('aria-labelledby', `tab-${currentScenario}`);
+  $('scenario-title').textContent = scenario[0]; $('scenario-description').textContent = scenario[1];
+  $('steps').replaceChildren(...scenario[2].map((action,i) => {
+    const b = element('button', `${i < stepIndex ? '✓ ' : ''}${i+1}. ${labels[action.type]}${action.token ? ` (${action.token})` : ''}`);
+    b.disabled = i !== stepIndex; b.onclick = () => { stepIndex++; dispatch(action); const next = $('steps').querySelector('button:not(:disabled)'); if (next) next.focus(); else $('walkthrough').focus(); }; return b;
+  }));
+}
+for (const [type,label] of Object.entries(labels)) {
+  const b = element('button', label); b.onclick = () => dispatch({type,token:$('target').value || undefined}); $('free').append(b);
+}
+render();
+</script>
+</html>
