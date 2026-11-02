@@ -12,7 +12,8 @@ created. Authentication library logging stays disabled.
 Render collects stderr in application logs. Open the service's **Logs**
 page, select the relevant time range and instance, and search for
 `security_operation` or an event's `reference`. Use `operationReference`
-to find related stages. See [Render application logging](https://render.com/articles/how-render-handles-logging-and-observability).
+to find related stages. See
+[Render application logging](https://render.com/articles/how-render-handles-logging-and-observability).
 
 Review workspace membership and API credentials before rollout. Permit
 log access only for operators and maintainers who need it. Render's
@@ -213,16 +214,16 @@ server in a terminal, or open the test service's Render **Logs** page.
 
 1. Invite a synthetic signed-in recipient and replace the invitation once.
    Find creation and replacement events; no invitation code may appear.
-2. Accept the current invitation, promote the member, repeat the same
+1. Accept the current invitation, promote the member, repeat the same
    role assignment, then demote them. Confirm `succeeded` versus `unchanged`.
-3. From that member's session, attempt administration and confirm a bounded
+1. From that member's session, attempt administration and confirm a bounded
    rejection without an unverified target reference.
-4. Approve and revoke a synthetic external client, then decline a fresh
+1. Approve and revoke a synthetic external client, then decline a fresh
    consent request. Confirm success, revocation and refusal separately.
-5. Prepare and download a full export, then prepare another and cancel it.
+1. Prepare and download a full export, then prepare another and cancel it.
    Match operation references and distinguish server completion from saving
    the file in the browser.
-6. Record the instance, time, build identity, observed event references,
+1. Record the instance, time, build identity, observed event references,
    applicable retention period and who checks collection. Remove synthetic
    accounts and downloaded archives using the test installation's reset
    procedure. Retained logs follow the policy above.
