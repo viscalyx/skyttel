@@ -452,7 +452,7 @@ Preserve these supported application limits, in bytes:
 | Complete object form, including multipart overhead | 12,032,768 |
 | Enlarged map writes and MCP | 2,000,000 |
 | Ordinary API requests, including public authentication | 16,384 |
-| Household archive import | 1,100,000,000 |
+| Household archive import | 134,217,728 |
 
 Installation recovery has an authorized, variable limit based on the complete
 restored membership review. Before recovery, allow that full review through
