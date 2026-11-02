@@ -270,13 +270,14 @@ export async function prepareHouseholdImport(
       await file.close();
     }
     const content = await validateImportArchive(directory, signal);
-    if (performance.now() >= deadline) timedOut = true;
-    if (timedOut) throw new MapError('import_preparation_timeout', 400);
     signal.throwIfAborted();
     authorize(database, actorId, householdId);
     assertContentAvailable(database, householdId);
     assertContentVersion(database, householdId, contentVersion);
     assertImportCollisions(database, householdId, content);
+    // Synchronous validation can cross the deadline before its timer can run.
+    if (performance.now() >= deadline) timedOut = true;
+    if (timedOut) throw new MapError('import_preparation_timeout', 400);
     const job: ReadyImport = {
       id,
       actorId,

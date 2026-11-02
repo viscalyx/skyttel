@@ -213,3 +213,21 @@ test('validation cannot publish a ready import after the preparation deadline ev
   clock.mockRestore();
   expect((await upload()).status).toBe(201);
 });
+
+test('the final database collision scan cannot publish a review after the deadline', async () => {
+  smallVolume();
+  const started = performance.now();
+  const clock = vi.spyOn(performance, 'now').mockReturnValue(started);
+  const prepare = fixture.database.prepare.bind(fixture.database);
+  const delay = vi.spyOn(fixture.database, 'prepare').mockImplementation((sql: string) => {
+    // Inject latency at the SQLite boundary; execute the real collision query.
+    if (sql === 'SELECT 1 FROM map_history WHERE id = ? AND householdId != ?')
+      clock.mockReturnValue(started + 300_001);
+    return prepare(sql);
+  });
+  expect(await (await upload()).json()).toEqual({ error: 'import_preparation_timeout' });
+  expect(readdirSync(join(dirname(fixture.database.name), '.skyttel-imports'))).toEqual([]);
+  delay.mockRestore();
+  clock.mockRestore();
+  expect((await upload()).status).toBe(201);
+});
