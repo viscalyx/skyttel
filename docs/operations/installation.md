@@ -48,7 +48,7 @@ Reservations cover archive copies and conservative database/WAL growth during
 replacement. They stay charged through review, download and cleanup. The
 free-space check also counts existing reservations, even when some bytes
 already occupy the disk. This can reject work early. Import checks capacity
-again before replacement. A capacity rejection returns HTTP 503 with
+again before replacement. Rejection at admission returns HTTP 503 with
 `archive_storage_unavailable`; an archive size rejection returns HTTP 400
 with `archive_too_large`. Finish or cancel other archive work, check cleanup
 errors and free space, and expand the disk if needed before retrying.

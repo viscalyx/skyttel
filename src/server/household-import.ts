@@ -214,7 +214,6 @@ export async function prepareHouseholdImport(
   if (!request.body) throw new MapError('invalid_archive', 400);
   const store = storeFor(database);
   if (store.uploading || store.jobs.size >= 2) throw new MapError('import_busy');
-  const fingerprint = householdContentFingerprint(database, householdId);
   const id = randomUUID();
   const directory = join(store.directory, id);
   const reservation = reserveArchiveStorage(database, 'import');
@@ -231,6 +230,12 @@ export async function prepareHouseholdImport(
     controller.abort();
     expire();
   }, preparationMs).unref();
+  function assertPreparationTime() {
+    // Synchronous validation can cross the deadline before its timer can run.
+    if (performance.now() >= deadline) timedOut = true;
+    if (timedOut) throw new MapError('import_preparation_timeout', 400);
+    signal.throwIfAborted();
+  }
   let resolveSettled: () => void = () => {};
   const settled = new Promise<void>((resolve) => {
     resolveSettled = resolve;
@@ -238,6 +243,8 @@ export async function prepareHouseholdImport(
   store.uploading = { householdId, controller, settled };
   store.abandoned.set(id, { householdId, directory, reservation });
   try {
+    const fingerprint = householdContentFingerprint(database, householdId);
+    assertPreparationTime();
     await mkdir(directory, { mode: 0o700 });
     const file = await open(join(directory, 'archive.zip'), 'wx', 0o600);
     try {
@@ -275,9 +282,7 @@ export async function prepareHouseholdImport(
     assertContentAvailable(database, householdId);
     assertContentVersion(database, householdId, contentVersion);
     assertImportCollisions(database, householdId, content);
-    // Synchronous validation can cross the deadline before its timer can run.
-    if (performance.now() >= deadline) timedOut = true;
-    if (timedOut) throw new MapError('import_preparation_timeout', 400);
+    assertPreparationTime();
     const job: ReadyImport = {
       id,
       actorId,
