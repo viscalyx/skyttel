@@ -1,6 +1,6 @@
 # Manuella testfall för samtalets kö och avbrott
 
-Fallen provar ordnade uppdrag på dator och gemensamma avbrott för text
+Fallen provar ordnade uppdrag över samtal och enheter samt avbrott för text
 och röst på dator, mobil och smal skärm. Anteckna commit, webbläsare och
 godkänt eller underkänt resultat vid körning. Kontrollerade ljudspår är
 tysta; faktiskt hört tal och skärmläsarens uppläsning redovisas separat.
@@ -401,6 +401,166 @@ KÖ-06.
   frågan om Johan.
 - Samma slutbesked ligger kvar när textvyn öppnas igen. Lo-förslaget
   innehåller telefonnumret och bevarad Beskrivning.
+
+### KÖ-07: två enheter delar ordningen men stopp gäller bara ett samtal
+
+**Syfte:** Fortsätta samma användares arbete från en annan enhet utan
+samtidiga ändringar och stoppa bara det valda samtalet.
+
+**Användare:** Alex i två separata webbläsarprofiler eller enheter.
+
+**Förutsättningar:** Följ allmän förberedelse med Lo-förslaget osparat.
+Öppna samma installationsadress i den andra profilen, logga in med Google
+som Alex och öppna **Skriv till Skyttel → Nytt samtal**. Godkänn samtalet.
+Använd datorfönster bredare än 700 px i båda profilerna. En ny flik med
+samma inloggning ersätter inte den andra profilen i detta prov.
+
+**Automatiskt motsvarande test (integration):**
+[conversation-queue.spec.ts](../../tests/integration/conversation-queue.spec.ts),
+KÖ-07. Leverantören är kontrollerad; server och SQLite är riktiga.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-queue.spec.ts",
+    "caseId": "KÖ-07"
+  },
+  "reference": "Två separata Chromium-inloggningar för Alex i samma hushåll, datorbredd och kontrollerad leverantör. Samtalens text hålls separat medan utkastets arbete ordnas gemensamt.",
+  "outcomes": [
+    "Andra enheten väntar på tidigare uppdrag och behandlas först när utkastet blir ledigt.",
+    "Stopp avbryter bara första samtalets pågående och köade uppdrag. Andra samtalets svar visas där, och Lo-förslaget finns kvar.",
+    "Samtalstexterna blandas inte och ett sent svar återupplivar inget stoppat arbete."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "two devices serialize their conversations against one draft and dequeue current data",
+      "purpose": "Publikt HTTP-underlag för ordning och aktuellt utkast vid köstart; separat från UI-förloppet."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "stopping one conversation releases other devices and preserves completed batches",
+      "purpose": "HTTP-bevis med kontrollerat sent modellsvar för kvarvarande batch och stoppets samtalsgräns."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Skicka **Hållet uppdrag.** i första profilen. Låt terminalens första
+   modelluppdrag vänta. Skicka också **Ska strykas.** där.
+2. Skicka **Den andra enhetens uppdrag.** i andra profilen. Läs arbetsraden
+   **Väntar på tidigare uppdrag**. Kontrollera med `pending` enligt
+   förberedelsen att bara det första modelluppdraget har börjat.
+3. Tryck Escape i första profilens meddelandefält. Läs **Avbrutet.
+   Föreslagna ändringar ligger kvar i utkastet.**
+4. Släpp andra profilens modelluppdrag med svaret **Den andra enhetens
+   svar.** enligt förberedelsens `reply`-kommando. Läs svaret där.
+5. Släpp det gamla första uppdraget med **För sent i det första samtalet.**
+   Kontrollera att det inte visas och att **Ska strykas.** aldrig behandlas.
+   Läs det kvarvarande Lo-förslaget enligt områdets läsanvisning.
+
+**Förväntat resultat:**
+
+- Uppdragen delar ordning mot Alex utkast, men samtalstexterna blandas inte.
+- Stopp i första samtalet lämnar andra samtalets uppdrag kvar. Det blir
+  behandlat utan att vänta på det gamla första leverantörssvaret.
+- Lo-förslaget ligger kvar osparat; det stoppade uppdraget ger ingen effekt.
+
+### KÖ-08: ett nytt köat meddelande kräver ett nytt uttryckligt sparande
+
+**Syfte:** Rätta ett förslag under ett väntande sparuppdrag och behålla
+rättelsen osparad tills användaren ber om sparande igen.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Följ allmän förberedelse med Lo Exempel osparad och
+textvyn öppen i ett datorfönster bredare än 700 px.
+
+**Separat förberedelse:** Använd paketen i
+[utkastbatch och sparande](conversation-preparation.md#utkastbatch-och-sparande).
+Vid UI-steg 2 släpps det gamla sparuppdraget med `save_draft`, med dess
+aktuella versionsvärden. Släpp sedan rättelsen med `submit_changes`,
+`completion:draft` och namnet Lo Lind; kopiera hela det befintliga värdet
+och behåll Beskrivning. Vid steg 4 släpps det nya sparuppdraget med
+`save_draft` och det nya uppdragets aktuella versionsvärden. Ingen
+leverantörshållning efter registrering används i detta fall. Avsluta med
+`quit`.
+
+**Automatiskt motsvarande test (integration):**
+[conversation-queue.spec.ts](../../tests/integration/conversation-queue.spec.ts),
+KÖ-08. Kontrollerad leverantör, riktig server och SQLite.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-queue.spec.ts",
+    "caseId": "KÖ-08"
+  },
+  "reference": "Chromium på bred dator med ett sparuppdrag hållet före registrering. Ett senare rättelsemeddelande får ingen egen sparbehörighet.",
+  "outcomes": [
+    "Det nya meddelandet upphäver det äldre avsedda sparandet och förklaringen ber om ett nytt sparande.",
+    "Lo Lind och den tidigare beskrivningen ligger kvar i utkastet efter rättelsen.",
+    "Först en ny uttrycklig sparbegäran sparar Lo Lind; den gemensamma tabellen visar rätt värden och historiken ett sparande."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "new input in another conversation revokes a save before registration",
+      "purpose": "HTTP-underlag för samma återkallelse över två samtal."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "a stopped registered save is checked before another conversation can mutate the draft",
+      "purpose": "Separat registreringsgräns med verkligt sparförsök och samma beständiga kvitto efter stopp."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Skicka **Spara hela utkastet.** och låt modelluppdraget vänta.
+   Skicka **Rätta namnet till Lo Lind.** innan svaret släpps.
+2. Släpp först sparuppdraget och sedan rättelsen enligt förberedelsen.
+   Läs förklaringen som ber om sparande igen.
+3. Läs **Lo Lind**, **Person** och **Påhittad uppgift (Text)** i det
+   osparade förslaget. Stäng förslagsdialogen.
+4. Skicka **Spara hela utkastet.** igen och släpp det nya sparuppdraget.
+   Läs sparbeskedet och Lo Lind i **Tabell**, inklusive typ och Beskrivning.
+5. Öppna **Rapporter → Ändringshistorik** och kontrollera ett sparande.
+
+**Förväntat resultat:**
+
+- Rättelsen sparas inte av den gamla sparbegäran. Förslaget och dess
+  tidigare uppgifter finns kvar osparade.
+- Det nya uttryckliga sparandet ger ett verifierat sparbesked och rätt
+  värden i den gemensamma kartan, med ett historikinlägg.
 
 ## Tillgänglighetsbedömning
 

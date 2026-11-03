@@ -16,9 +16,15 @@ export type ConversationMessage = {
   saveScopeChanged?: boolean;
   answerTo?: PendingPartReference[];
   contentVersion: number;
+  /** Displayed draft version admitted with this request; only verified work advances it. */
+  draftVersion: number;
   owner: string;
   receivedAt: number;
   deadline: number;
+  /** Admission order across conversations sharing one user's household draft. */
+  sequence: number;
+  /** Later input revokes this request's unregistered save, even before dequeue. */
+  saveSuperseded?: boolean;
 };
 type AcceptedMessage = {
   hash: string;

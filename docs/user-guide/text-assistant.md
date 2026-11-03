@@ -484,8 +484,14 @@ sparbesked ger inte tillåtelse för ett nytt sparande. Vid oklarheter
 behövs ett nytt tydligt besked. Kvittot och kartans verkliga markering
 är bekräftelsen även när du använder röst.
 
-Nya talade och skrivna uppdrag köas medan Skyttel arbetar. Vid bruten
-anslutning stängs
+Nya talade och skrivna uppdrag köas medan Skyttel arbetar. Samma ordning
+gäller dina samtal på olika enheter när de arbetar mot ditt utkast i samma
+hushåll. Ett väntande samtal visar **Väntar på tidigare uppdrag** och läser
+aktuellt utkast när det får börja. Samtalstexterna hålls separata.
+Ett nytt köat meddelande upphäver ett tidigare avsett sparande som ännu
+inte är registrerat, även om meddelandet kommer från ett annat samtal.
+Be då uttryckligen om sparande igen när uppgifterna är klara.
+Vid bruten anslutning stängs
 mikrofonen av medan anslutningen kontrolleras. Efter en längre störning
 slår du själv på den igen. Ett ljudsvar som inte hördes betyder inte att ett
 sparande misslyckades. Skyttel kontrollerar själv ett oklart resultat innan
@@ -585,8 +591,10 @@ ett smalt datorfönster. När stoppikonen finns i textvyn visar röstrutan
 bara statusordet.
 
 Stoppikonen i röstrutan avbryter också. Alla avbrott stoppar pågående
-arbete, tystar rösten och tömmer kön, oavsett om uppdragen kom med tal
-eller text. Genomförda förslag finns kvar i utkastet. Ett genomfört
+arbete i det valda samtalet, tystar dess röst och tömmer dess kö, oavsett
+om uppdragen kom med tal eller text. Dina andra samtals köade uppdrag
+finns kvar och kan fortsätta när tidigare arbete inte längre kan ändra
+utkastet. Genomförda förslag finns kvar i utkastet. Ett genomfört
 sparande blir inte ångrat. Textvyn visar **Avbrutet. Föreslagna ändringar
 ligger kvar i utkastet.** tills nästa uppdrag börjar eller du väljer
 **Nytt samtal**. Nytt samtal tömmer också kön.
