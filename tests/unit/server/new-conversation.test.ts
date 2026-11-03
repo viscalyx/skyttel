@@ -4,7 +4,7 @@ import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
-import { liveProvider } from '../../support/live-provider.js';
+import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
 import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
@@ -75,6 +75,98 @@ function deferred<T = void>() {
   });
   return { promise, resolve };
 }
+
+test('a delayed spoken reset discard delivers its final outcome once after the retained draft notice', async () => {
+  const releaseWork = deferred<unknown[]>();
+  const model = textModel(() => releaseWork.promise);
+  const live = liveProvider();
+  await setup({ modelFetch: model.provider, liveFetch: live.provider, liveSideband: live.attach });
+  const other = await request.newContext();
+  const spokenPost = (url: string, data: object) =>
+    other.post(url, { headers: { origin: app.origin }, data });
+  try {
+    await signIn(other, app.origin);
+    await propose('lo', 'Lo Exempel');
+    const first = await start();
+    const spoken: TextAssistantView = await (await spokenPost(path, approvedForVisit)).json();
+    const occupied = await send(first, 'Håll tidigare arbete.');
+    await expect.poll(() => model.requests.length).toBe(1);
+    const ordinaryReconnect = await post(`${path}/${first.id}/voice`, {
+      sdp: 'synthetic-unrelated-offer',
+      revision: occupied.revision,
+      draftVersion: occupied.review.version,
+      contentVersion: occupied.review.contentVersion,
+      newConversation: true,
+    });
+    expect(ordinaryReconnect.status()).toBe(409);
+    expect(live.requests).toEqual([]);
+    const resetting = await spokenPost(`${path}/${spoken.id}/messages`, {
+      revision: spoken.revision,
+      draftVersion: spoken.review.version,
+      contentVersion: spoken.review.contentVersion,
+      requestId: crypto.randomUUID(),
+      text: 'Nytt samtal och kasta utkastet.',
+      voiceContext: 'Nytt samtal och kasta utkastet.',
+    });
+    expect(resetting.status(), await resetting.text()).toBe(200);
+    const renewed: TextAssistantView = await resetting.json();
+    expect(renewed).toMatchObject({
+      phase: 'working',
+      queuedMessages: 1,
+      resetSource: 'voice',
+      resetDiscardPending: true,
+    });
+    const replacement = await spokenPost(`${path}/${spoken.id}/voice`, {
+      sdp: 'synthetic-replacement-offer',
+      revision: renewed.revision,
+      draftVersion: renewed.review.version,
+      contentVersion: renewed.review.contentVersion,
+      newConversation: true,
+      microphoneOn: false,
+    });
+    expect(replacement.status(), await replacement.text()).toBe(201);
+    const { voice } = await replacement.json();
+    expect(voiceAnswerParts(live.sent)).toEqual([
+      'Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+    ]);
+    releaseWork.resolve([modelMessage('Det tidigare arbetet är klart.')]);
+    let completed!: TextAssistantView;
+    await expect
+      .poll(async () => {
+        completed = await (await other.get(`${path}/${spoken.id}`)).json();
+        return completed.phase;
+      })
+      .not.toBe('working');
+    expect(completed.discarded).toBe(true);
+    expect(completed.resetDiscardPending).toBe(false);
+    expect(completed.completedReplies).toMatchObject([
+      { resetContextRevision: renewed.contextRevision, source: 'voice' },
+    ]);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const response = await spokenPost(`${path}/${spoken.id}/voice/${voice.id}/poll`, {
+        revision: completed.revision,
+        draftVersion: completed.review.version,
+        contentVersion: completed.review.contentVersion,
+        microphoneOn: false,
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    }
+    expect(voiceAnswerParts(live.sent)).toEqual([
+      'Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+      'Skyttels resultat (verifierat): Nytt samtal. Utkastet är tomt.',
+    ]);
+    expect(
+      live.sent.filter(
+        ({ event }) =>
+          event.type === 'session.commentary.append' && event.content.startsWith('Svar '),
+      ),
+    ).toHaveLength(1);
+    expect((await (await browser.get(map)).json()).draft.changes).toEqual([]);
+  } finally {
+    releaseWork.resolve([modelMessage('Släpp provet.')]);
+    await other.dispose();
+  }
+});
 
 test('a new conversation empties the context and says that the draft is empty', async () => {
   const model = textModel(() => [modelMessage('Ett provsvar.')]);

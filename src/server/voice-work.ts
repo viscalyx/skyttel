@@ -631,11 +631,16 @@ export function voiceWork({
           delivered?.({ id: reply.id, voiced: true });
           continue;
         }
-        // Spoken executors hand their own results to Live. OFF completions are
-        // consumed too: enabling capture later must not replay old text.
-        if (reply.source === 'voice' || !microphoneOn) {
+        // A reset retires the spoken executor before its queued discard can
+        // finish. Its replacement delivers that outcome, including after OFF.
+        const resetReply = reply.resetContextRevision !== undefined;
+        const spokenExecutorDelivered = reply.source === 'voice' && !resetReply;
+        if (
+          spokenExecutorDelivered ||
+          (!microphoneOn && !(resetReply && reply.source === 'voice'))
+        ) {
           answeredReplies.add(reply.id);
-          delivered?.({ id: reply.id, voiced: reply.source === 'voice' });
+          delivered?.({ id: reply.id, voiced: spokenExecutorDelivered });
           if (reply.revision !== undefined) answered.add(reply.revision);
           continue;
         }

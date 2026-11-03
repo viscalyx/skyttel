@@ -541,6 +541,22 @@ KÖ-09. Leverantören är kontrollerad; server och SQLite är riktiga.
       "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
       "title": "stopping a queued new reset preserves the earlier batch and other conversation queue",
       "purpose": "HTTP-bevis med tre samtal att stopp av köat kastande bevarar både tidigare batch och ett annat samtals kö."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "stop during a new reset refresh prevents late discard and releases other conversation work",
+      "purpose": "HTTP-bevis att ett stopp under samtalsstartens fördröjda läsning förhindrar sent kastande utan att blockera andra samtal. Båda sätten att börja om provas i samma serverfil."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/new-conversation.test.ts",
+      "title": "a delayed spoken reset discard delivers its final outcome once after the retained draft notice",
+      "purpose": "Separat röstprotokoll visar ett besked om kvarvarande utkast och sedan ett verifierat kastande en gång, även med mikrofonen av. Automationen bevisar inte hörd uppspelning."
     }
   ]
 }
@@ -573,6 +589,7 @@ KÖ-09. Leverantören är kontrollerad; server och SQLite är riktiga.
   Det andra samtalet visar först efteråt att utkastet är tomt.
 - Samtalstexterna blandas inte. Ingen tidigare ändring får versionsfel
   på grund av ett senare kastande.
+- Slutbeskedet om kastandet visas en gång för varje nytt samtal.
 
 ### KÖ-08: ett nytt köat meddelande kräver ett nytt uttryckligt sparande
 

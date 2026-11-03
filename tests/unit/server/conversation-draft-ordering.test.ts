@@ -12,6 +12,26 @@ const clients: APIRequestContext[] = [];
 const releases: (() => void)[] = [];
 let base: string;
 type Conversation = { client: APIRequestContext; path: string; initial: TextAssistantView };
+function heldResponse() {
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+    releases.push(resolve);
+  });
+  return { pending, release };
+}
+function proposeObject(
+  draft: Pick<TextAssistantView['review'], 'version' | 'contentVersion'>,
+  id: string,
+  value: { typeId: string; name: string },
+) {
+  return modelTool('submit_changes', {
+    version: draft.version,
+    contentVersion: draft.contentVersion,
+    completion: 'draft',
+    operations: [{ name: 'propose_object', arguments: { id, baseRevision: null, value } }],
+  });
+}
 afterEach(async () => {
   for (const release of releases.splice(0)) release();
   for (const client of clients.splice(0)) await client.dispose();
@@ -103,40 +123,180 @@ async function resetAndDiscard(value: Conversation, endpoint: 'messages' | 'new'
   expect(response.status(), await response.text()).toBe(200);
 }
 
+test.each(['messages', 'new'] as const)(
+  'stop during a %s reset refresh prevents late discard and releases other conversation work',
+  async (endpoint) => {
+    const { pending: heldRead, release: releaseRead } = heldResponse();
+    const { pending: heldModel, release: releaseModel } = heldResponse();
+    let holdRead = false;
+    let readHeld = false;
+    const model = textModel(async (body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (input.message === 'Beskriv Stolen.') await heldModel;
+      return [modelMessage('Stolen finns kvar i utkastet.')];
+    });
+    const first = await arrange(model.provider, async (incoming, dispatch) => {
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      const response = await dispatch(incoming);
+      if (holdRead && rpc?.params?.name === 'read_my_draft') {
+        holdRead = false;
+        readHeld = true;
+        await heldRead;
+      }
+      return response;
+    });
+    await seed(first);
+    const second = await conversation();
+    await send(first, 'Beskriv Stolen.');
+    await expect.poll(() => model.requests.length).toBe(1);
+    const current = await read(first);
+    holdRead = true;
+    const resetting = post(
+      first.client,
+      `${first.path}/${endpoint}`,
+      endpoint === 'new'
+        ? { discard: true }
+        : {
+            revision: current.revision,
+            draftVersion: current.review.version,
+            contentVersion: current.review.contentVersion,
+            requestId: crypto.randomUUID(),
+            text: 'Nytt samtal och kasta utkastet.',
+          },
+    );
+    await expect.poll(() => readHeld).toBe(true);
+    const queued = await send(second, 'Beskriv mitt utkast.');
+    const stopped = await post(first.client, `${first.path}/cancel`, { all: true });
+    expect(stopped.status()).toBe(200);
+    expect((await stopped.json()).canceled).toBe(true);
+    releaseRead();
+    const superseded = await resetting;
+    expect(superseded.status()).toBe(409);
+    expect(await superseded.json()).toEqual({ error: 'assistant_turn_changed' });
+    expect((await completed(second, queued)).modelReply).toBe('Stolen finns kvar i utkastet.');
+    expect((await map(first)).draft.changes).toMatchObject([{ id: 'chair' }]);
+    const final = await read(first);
+    expect(final.canceled).toBe(true);
+    expect(final.discarded).not.toBe(true);
+    expect(final.reply).toBe('Avbrutet. Föreslagna ändringar ligger kvar i utkastet.');
+    releaseModel();
+  },
+);
+
+test.each(['new reset', 'session end'] as const)(
+  '%s retires an older reset before its delayed discard can start',
+  async (replacement) => {
+    const { pending: heldRead, release } = heldResponse();
+    let holdRead = false;
+    let readHeld = false;
+    const model = textModel(() => [modelMessage('Stolen finns kvar i utkastet.')]);
+    const first = await arrange(model.provider, async (incoming, dispatch) => {
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      const response = await dispatch(incoming);
+      if (holdRead && rpc?.params?.name === 'read_my_draft') {
+        holdRead = false;
+        readHeld = true;
+        await heldRead;
+      }
+      return response;
+    });
+    await seed(first);
+    await read(first);
+    const second = await conversation();
+    holdRead = true;
+    const resetting = post(first.client, `${first.path}/new`, { discard: true });
+    await expect.poll(() => readHeld).toBe(true);
+    const replacing = await post(
+      first.client,
+      `${first.path}/${replacement === 'new reset' ? 'new' : 'stop'}`,
+      {},
+    );
+    expect(replacing.status()).toBe(200);
+    release();
+    const superseded = await resetting;
+    expect(superseded.status()).toBe(replacement === 'new reset' ? 409 : 404);
+    expect(await superseded.json()).toEqual({
+      error: replacement === 'new reset' ? 'assistant_turn_changed' : 'assistant_session_expired',
+    });
+    expect((await map(second)).draft.changes).toMatchObject([{ id: 'chair' }]);
+    expect((await completed(second, await send(second, 'Beskriv mitt utkast.'))).modelReply).toBe(
+      'Stolen finns kvar i utkastet.',
+    );
+  },
+);
+
+test('a registered save status result does not revoke a reset waiting for its draft read', async () => {
+  const { pending: heldSave, release: releaseSave } = heldResponse();
+  const { pending: heldRead, release: releaseRead } = heldResponse();
+  let holdRead = false;
+  let readHeld = false;
+  let saveHeld = false;
+  const model = textModel((body) => {
+    const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    return input.message === 'Spara hela utkastet.'
+      ? [
+          modelTool('save_draft', {
+            version: input.draft.version,
+            contentVersion: input.draft.contentVersion,
+          }),
+        ]
+      : [modelMessage('Det tidigare sparandet är kontrollerat.')];
+  });
+  const first = await arrange(model.provider, async (incoming, dispatch) => {
+    const rpc = await incoming
+      .clone()
+      .json()
+      .catch(() => null);
+    const response = await dispatch(incoming);
+    if (rpc?.params?.name === 'prepare_save') {
+      saveHeld = true;
+      await heldSave;
+    }
+    if (holdRead && rpc?.params?.name === 'read_my_draft') {
+      holdRead = false;
+      readHeld = true;
+      await heldRead;
+    }
+    return response;
+  });
+  await seed(first);
+  const second = await conversation();
+  await send(first, 'Spara hela utkastet.');
+  await expect.poll(() => saveHeld).toBe(true);
+  const queued = await send(second, 'Beskriv mitt utkast.');
+  await read(first);
+  holdRead = true;
+  const resetting = post(first.client, `${first.path}/new`, { discard: true });
+  await expect.poll(() => readHeld).toBe(true);
+  releaseSave();
+  expect((await completed(second, queued)).error).toBeUndefined();
+  expect((await map(second)).objects).toMatchObject([{ id: 'chair', name: 'Stolen' }]);
+  releaseRead();
+  const renewed = await resetting;
+  expect(renewed.status(), await renewed.text()).toBe(200);
+  await expect.poll(async () => (await read(first)).discarded).toBe(true);
+  expect((await map(first)).draft.changes).toEqual([]);
+  expect((await (await first.client.get(`${base}/map/history`)).json()).history).toHaveLength(1);
+});
+
 test('reset rereads the draft when an earlier batch completes during the reset refresh', async () => {
-  let releaseModel!: () => void;
-  let releaseRead!: () => void;
-  const heldModel = new Promise<void>((resolve) => {
-    releaseModel = resolve;
-    releases.push(resolve);
-  });
-  const heldRead = new Promise<void>((resolve) => {
-    releaseRead = resolve;
-    releases.push(resolve);
-  });
+  const { pending: heldModel, release: releaseModel } = heldResponse();
+  const { pending: heldRead, release: releaseRead } = heldResponse();
   let holdRead = false;
   let readHeld = false;
   let typeId = '';
   const model = textModel(async (body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     await heldModel;
-    return [
-      modelTool('submit_changes', {
-        version: input.draft.version,
-        contentVersion: input.draft.contentVersion,
-        completion: 'draft',
-        operations: [
-          {
-            name: 'propose_object',
-            arguments: {
-              id: 'lamp',
-              baseRevision: null,
-              value: { typeId, name: 'Lampan' },
-            },
-          },
-        ],
-      }),
-    ];
+    return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
   });
   const first = await arrange(model.provider, async (incoming, dispatch) => {
     const rpc = await incoming
@@ -172,34 +332,14 @@ test('reset rereads the draft when an earlier batch completes during the reset r
 test.each(['messages', 'new'] as const)(
   '%s reset discards after an earlier conversation batch without invalidating it',
   async (endpoint) => {
-    let release!: () => void;
-    const held = new Promise<void>((resolve) => {
-      release = resolve;
-      releases.push(resolve);
-    });
+    const { pending: held, release } = heldResponse();
     let typeId = '';
     const model = textModel(async (body) => {
       const input = JSON.parse(
         String(body.input.findLast((item) => item.role === 'user')?.content),
       );
       await held;
-      return [
-        modelTool('submit_changes', {
-          version: input.draft.version,
-          contentVersion: input.draft.contentVersion,
-          completion: 'draft',
-          operations: [
-            {
-              name: 'propose_object',
-              arguments: {
-                id: 'lamp',
-                baseRevision: null,
-                value: { typeId, name: 'Lampan' },
-              },
-            },
-          ],
-        }),
-      ];
+      return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
     });
     const first = await arrange(model.provider);
     typeId = (await map(first)).types[0].id;
@@ -224,11 +364,7 @@ test.each(['messages', 'new'] as const)(
 test.each(['messages', 'new'] as const)(
   '%s reset waits for the registered save outcome before discarding',
   async (endpoint) => {
-    let release!: () => void;
-    const held = new Promise<void>((resolve) => {
-      release = resolve;
-      releases.push(resolve);
-    });
+    const { pending: held, release } = heldResponse();
     const model = textModel((body) => {
       const input = JSON.parse(
         String(body.input.findLast((item) => item.role === 'user')?.content),
@@ -274,11 +410,7 @@ test.each(['messages', 'new'] as const)(
 test.each(['messages', 'new'] as const)(
   'stopping a queued %s reset preserves the earlier batch and other conversation queue',
   async (endpoint) => {
-    let release!: () => void;
-    const held = new Promise<void>((resolve) => {
-      release = resolve;
-      releases.push(resolve);
-    });
+    const { pending: held, release } = heldResponse();
     let typeId = '';
     const model = textModel(async (body) => {
       const input = JSON.parse(
@@ -287,23 +419,7 @@ test.each(['messages', 'new'] as const)(
       if (input.message === 'Beskriv mitt utkast.')
         return [modelMessage('Båda förslagen finns kvar.')];
       await held;
-      return [
-        modelTool('submit_changes', {
-          version: input.draft.version,
-          contentVersion: input.draft.contentVersion,
-          completion: 'draft',
-          operations: [
-            {
-              name: 'propose_object',
-              arguments: {
-                id: 'lamp',
-                baseRevision: null,
-                value: { typeId, name: 'Lampan' },
-              },
-            },
-          ],
-        }),
-      ];
+      return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
     });
     const first = await arrange(model.provider);
     typeId = (await map(first)).types[0].id;
@@ -327,31 +443,16 @@ test.each(['messages', 'new'] as const)(
 );
 
 test('two devices serialize their conversations against one draft and dequeue current data', async () => {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-    releases.push(resolve);
-  });
+  const { pending: held, release } = heldResponse();
   let typeId = '';
   const model = textModel(async (body) => {
     if (lastToolResult(body)) return [modelMessage('Utkastet är uppdaterat.')];
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     if (input.message === 'Lägg till Stolen.') await held;
     return [
-      modelTool('submit_changes', {
-        version: input.draft.version,
-        contentVersion: input.draft.contentVersion,
-        completion: 'draft',
-        operations: [
-          {
-            name: 'propose_object',
-            arguments: {
-              id: input.message === 'Lägg till Stolen.' ? 'chair' : 'lamp',
-              baseRevision: null,
-              value: { typeId, name: input.message === 'Lägg till Stolen.' ? 'Stolen' : 'Lampan' },
-            },
-          },
-        ],
+      proposeObject(input.draft, input.message === 'Lägg till Stolen.' ? 'chair' : 'lamp', {
+        typeId,
+        name: input.message === 'Lägg till Stolen.' ? 'Stolen' : 'Lampan',
       }),
     ];
   });
@@ -412,11 +513,7 @@ test('new input in another conversation revokes a save before registration', asy
 });
 
 test('stopping one conversation releases other devices and preserves completed batches', async () => {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-    releases.push(resolve);
-  });
+  const { pending: held, release } = heldResponse();
   let typeId = '';
   const model = textModel(async (body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
@@ -427,19 +524,7 @@ test('stopping one conversation releases other devices and preserves completed b
         : input.message === 'Lägg till Lampan.'
           ? ['lamp', 'Lampan']
           : ['table', 'Bordet'];
-    return [
-      modelTool('submit_changes', {
-        version: input.draft.version,
-        contentVersion: input.draft.contentVersion,
-        completion: 'draft',
-        operations: [
-          {
-            name: 'propose_object',
-            arguments: { id, baseRevision: null, value: { typeId, name } },
-          },
-        ],
-      }),
-    ];
+    return [proposeObject(input.draft, id, { typeId, name })];
   });
   const first = await arrange(model.provider);
   typeId = (await map(first)).types[0].id;
@@ -468,33 +553,13 @@ test('stopping one conversation releases other devices and preserves completed b
 });
 
 test('a stopped registered save is checked before another conversation can mutate the draft', async () => {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-    releases.push(resolve);
-  });
+  const { pending: held, release } = heldResponse();
   let typeId = '';
   const model = textModel((body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     if (input.message === 'Spara hela utkastet.')
       return [modelTool('save_draft', { version: input.draft.version, contentVersion: 1 })];
-    return [
-      modelTool('submit_changes', {
-        version: input.draft.version,
-        contentVersion: input.draft.contentVersion,
-        completion: 'draft',
-        operations: [
-          {
-            name: 'propose_object',
-            arguments: {
-              id: 'lamp',
-              baseRevision: null,
-              value: { typeId, name: 'Lampan' },
-            },
-          },
-        ],
-      }),
-    ];
+    return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
   });
   const first = await arrange(model.provider, async (incoming, dispatch) => {
     const rpc = await incoming
@@ -525,11 +590,7 @@ test('a stopped registered save is checked before another conversation can mutat
 });
 
 test('an older queued save cannot regain authority when its turn starts', async () => {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-    releases.push(resolve);
-  });
+  const { pending: held, release } = heldResponse();
   const model = textModel(async (body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     if (input.message === 'Förklara.') await held;
@@ -554,11 +615,7 @@ test('an older queued save cannot regain authority when its turn starts', async 
 });
 
 test('another user and another household do not wait for or receive the occupied draft', async () => {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-    releases.push(resolve);
-  });
+  const { pending: held, release } = heldResponse();
   const model = textModel(async (body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     if (input.message === 'Håll min kö.') await held;
@@ -606,25 +663,14 @@ test('another user and another household do not wait for or receive the occupied
 });
 
 test('stop after the atomic batch commits reports the actual retained draft without undo', async () => {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-    releases.push(resolve);
-  });
+  const { pending: held, release } = heldResponse();
   let typeId = '';
   const model = textModel((body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     return [
-      modelTool('submit_changes', {
-        version: input.draft.version,
-        contentVersion: 1,
-        completion: 'draft',
-        operations: [
-          {
-            name: 'propose_object',
-            arguments: { id: 'lamp', baseRevision: null, value: { typeId, name: 'Lampan' } },
-          },
-        ],
+      proposeObject({ version: input.draft.version, contentVersion: 1 }, 'lamp', {
+        typeId,
+        name: 'Lampan',
       }),
     ];
   });
@@ -652,11 +698,7 @@ test('stop after the atomic batch commits reports the actual retained draft with
 });
 
 test('a queued save includes a verified predecessor batch in another conversation', async () => {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-    releases.push(resolve);
-  });
+  const { pending: held, release } = heldResponse();
   let typeId = '';
   const model = textModel(async (body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
@@ -664,16 +706,9 @@ test('a queued save includes a verified predecessor batch in another conversatio
       return [modelTool('save_draft', { version: input.draft.version, contentVersion: 1 })];
     await held;
     return [
-      modelTool('submit_changes', {
-        version: input.draft.version,
-        contentVersion: 1,
-        completion: 'draft',
-        operations: [
-          {
-            name: 'propose_object',
-            arguments: { id: 'chair', baseRevision: null, value: { typeId, name: 'Stolen' } },
-          },
-        ],
+      proposeObject({ version: input.draft.version, contentVersion: 1 }, 'chair', {
+        typeId,
+        name: 'Stolen',
       }),
     ];
   });

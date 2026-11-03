@@ -427,6 +427,10 @@ export function textAssistantRoutes({
         Buffer.byteLength(JSON.stringify(providerConversation(session))),
       ),
       resetSource,
+      resetDiscardPending: Boolean(
+        session.state.activeMessage?.resetDiscard ||
+          session.state.queue.some((message) => message.resetDiscard),
+      ),
       discarded,
       canceled,
       completedReplies,
@@ -1480,63 +1484,80 @@ export function textAssistantRoutes({
     session.state.boundaryRevision = session.state.revision;
     session.state.saveIntent = undefined;
     session.state.voiceInputPending = false;
-    await refresh(session);
-    session.state.phase = session.state.pendingSave ? 'recovery' : 'ready';
-    session.state.workVersion = session.state.review.version;
-    session.state.input = [];
-    session.state.conversation = [];
-    session.state.userRequests = [];
-    session.state.unfinishedRequests = [];
-    session.state.contextOffset = 0;
-    session.state.contextRevision = (session.state.contextRevision ?? 0) + 1;
-    session.execution.parts.clear();
-    session.state.newQuestions = [];
-    session.state.answers = [];
-    session.execution.capacity.reset();
-    session.state.resetSource = deferVoiceClose ? 'voice' : 'text';
-    session.state.previousFailure = undefined;
-    session.state.selection = undefined;
-    session.state.displayedSelection = undefined;
-    session.state.displayedItem = undefined;
-    session.state.modelReply = undefined;
-    session.state.reply = undefined;
-    session.state.questions = undefined;
-    session.state.requiredNotice = undefined;
-    session.state.result = undefined;
-    session.state.error = undefined;
-    session.state.securityReference = undefined;
-    session.state.receipt = undefined;
-    session.state.saveCheck = undefined;
-    session.state.discarded = undefined;
-    session.state.phase =
-      session.state.pendingSave ||
-      session.state.operations.some((item) => item.status === 'pending')
-        ? 'recovery'
-        : 'ready';
-    session.state.reply = newConversationMessage(session.state.review);
-    onNewConversation?.(view(session), deferVoiceClose);
-    if (discard) {
-      const receivedAt = now();
-      admitMessage(
-        session,
-        {
-          id: randomUUID(),
-          text: 'Kasta utkastet.',
-          voice: deferVoiceClose,
-          resetDiscard: true,
-          contentVersion: session.state.review.contentVersion,
-          draftVersion: session.state.review.version,
-          owner: contentOwner(database, session.state.householdId, session.state.actorId),
-          receivedAt,
-          deadline: receivedAt + 30 * 60_000,
-          sequence: messageSequence++,
-        },
-        session.state.review,
-        'reset-discard',
-      );
+    const boundaryRevision = session.state.boundaryRevision;
+    const checkReset = () => {
+      if (sessions.get(session.state.id) !== session)
+        throw new MapError('assistant_session_expired', 404);
+      if (session.state.boundaryRevision !== boundaryRevision)
+        throw new MapError('assistant_turn_changed', 409);
+    };
+    try {
+      await refresh(session, checkReset);
+      checkReset();
+      session.state.phase = session.state.pendingSave ? 'recovery' : 'ready';
+      session.state.workVersion = session.state.review.version;
+      session.state.input = [];
+      session.state.conversation = [];
+      session.state.userRequests = [];
+      session.state.unfinishedRequests = [];
+      session.state.contextOffset = 0;
+      session.state.contextRevision = (session.state.contextRevision ?? 0) + 1;
+      session.execution.parts.clear();
+      session.state.newQuestions = [];
+      session.state.answers = [];
+      session.execution.capacity.reset();
+      session.state.resetSource = deferVoiceClose ? 'voice' : 'text';
+      session.state.previousFailure = undefined;
+      session.state.selection = undefined;
+      session.state.displayedSelection = undefined;
+      session.state.displayedItem = undefined;
+      session.state.modelReply = undefined;
+      session.state.reply = undefined;
+      session.state.questions = undefined;
+      session.state.requiredNotice = undefined;
+      session.state.result = undefined;
+      session.state.error = undefined;
+      session.state.securityReference = undefined;
+      session.state.receipt = undefined;
+      session.state.saveCheck = undefined;
+      session.state.discarded = undefined;
+      session.state.phase =
+        session.state.pendingSave ||
+        session.state.operations.some((item) => item.status === 'pending')
+          ? 'recovery'
+          : 'ready';
+      session.state.reply = newConversationMessage(session.state.review);
+      onNewConversation?.(view(session), deferVoiceClose);
+      if (discard) {
+        const receivedAt = now();
+        admitMessage(
+          session,
+          {
+            id: randomUUID(),
+            text: 'Kasta utkastet.',
+            voice: deferVoiceClose,
+            resetDiscard: true,
+            contentVersion: session.state.review.contentVersion,
+            draftVersion: session.state.review.version,
+            owner: contentOwner(database, session.state.householdId, session.state.actorId),
+            receivedAt,
+            deadline: receivedAt + 30 * 60_000,
+            sequence: messageSequence++,
+          },
+          session.state.review,
+          'reset-discard',
+        );
+      }
+    } catch (error) {
+      // Closing the MCP transport can reject before its guarded read returns.
+      // A retired reset still reports its current authority instead of that
+      // transport error.
+      checkReset();
+      throw error;
+    } finally {
+      if (task) releaseDraft(session, task);
+      else nextMessage(session);
     }
-    if (task) releaseDraft(session, task);
-    else nextMessage(session);
   }
   async function run(
     session: Session,
@@ -3105,6 +3126,7 @@ export function textAssistantRoutes({
             request: message.text,
             text: session.state.modelReply ?? '',
             revision,
+            resetContextRevision: message.resetDiscard ? session.state.contextRevision : undefined,
             source: message.voice ? 'voice' : 'text',
             reply: session.state.reply,
             requiredNotice: session.state.requiredNotice,
