@@ -992,7 +992,8 @@ efter fallet och avsluta med `quit`.
 
 1. Kör `window.skyttelVoiceFixture.setPlayback('blocked')` i konsolen. Tryck
    **Prata med Skyttel**.
-2. Fokusera mikrofonknappen och tabba via **Skriv till Skyttel** till
+2. Fokusera mikrofonknappen och tabba via **Skriv till Skyttel** och
+   röstrutans **Modell och resonemang** till
    **Starta ljudet**.
 3. Kör `window.skyttelVoiceFixture.setPlayback('allow')`. Tryck Retur medan
    **Starta ljudet** är fokuserad.

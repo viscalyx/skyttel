@@ -9,6 +9,38 @@ Första **Skicka** eller **Nytt samtal** börjar samtalet med text; utan
 giltigt medgivande visas först [medgivanderutan](#medgivande).
 Utkastets granskning och kartans formulär fungerar även när samtal saknas.
 
+## Modell och resonemang
+
+I ett pågående samtal öppnar ikonen **Modell och resonemang** ovanför
+meddelandefältet och till höger om röstindikatorn samma val. Dialogens
+slider har stegen **Låg**, **Medium** och **Hög**. Använd piltangenterna
+eller de tre knapparna för att välja utan att dra. Modellnamnet öppnar
+ett separat val mellan **GPT-6.1 Terra** och **GPT-6.1 Sol**. Modellbyte
+behåller resonemangsnivån. Escape eller **Stäng** återför fokus till
+kontrollen som öppnar dialogen.
+
+Utan sparat personligt val används Terra och hög nivå. Ditt senaste
+uttryckliga val sparas för nya samtal i alla dina hushåll och på andra
+enheter. Ett annat redan pågående samtal behåller sitt eget val. Vanligt
+arbete i ett äldre samtal ändrar inte det personliga valet.
+
+Valet gäller uppdragstolkning, arbete, oberoende kontroll av föreslagna
+ändringar och sammanfattning. GPT-Live 1 lyssnar och talar även när du
+väljer en annan arbetsmodell. Text och röst delar val och samtalsarbete.
+Pågående begäran behåller valet från sin start. Nästa begäran, även en
+redan köad, använder det nya valet utan att utkast eller samtalstext töms.
+
+Installationsansvarig avgör vilka kombinationer som är aktiverade.
+Aktivering garanterar inte kontoåtkomst. Ett otillgängligt sparat val
+visas och behålls tills du själv väljer ett annat. Om både modell och
+nivå behöver ändras kan du välja en namngiven aktiverad kombination i
+dialogen. Det är ett uttryckligt val av båda inställningarna.
+Felbesked skiljer tillfälligt fel, saknad åtkomst och ett alternativ som
+inte stöds eller inte är aktiverat. Inget modellbyte eller återförsök sker
+automatiskt.
+Kostnadsöversikten kan sakna prisuppgift för en modell; saknade priser
+visas som okända och betyder inte noll kostnad.
+
 ## Medgivande
 
 Skyttel behöver ditt medgivande innan ett samtal startar. Textversion 3

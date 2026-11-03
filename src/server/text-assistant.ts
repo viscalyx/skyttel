@@ -12,6 +12,7 @@ import {
   conversationConsentRequired,
   conversationConsentRevoked,
 } from '../shared/conversation-consent.js';
+import { sameModelChoice } from '../shared/conversation-model.js';
 import { assistantSaveState, completeAssistantText } from '../shared/task-delivery.js';
 import type {
   MapSelection,
@@ -45,6 +46,13 @@ import { contentOwner } from './content-identities.js';
 import { ConversationCapacity, voiceConversationModel } from './conversation-capacity.js';
 import type { ConversationConsents } from './conversation-consent.js';
 import type { ConversationMessage, ConversationState } from './conversation-state.js';
+import {
+  conversationModelProfile,
+  enabledModelChoices,
+  modelChoiceSchema,
+  personalModelChoice,
+  requireEnabledChoice,
+} from './conversation-model.js';
 import {
   contextSummaryMessage,
   historicalSummary,
@@ -184,51 +192,63 @@ export function textAssistantRoutes({
   const revocations = new Map<string, number>();
   const consentKey = (actorId: string, householdId: string) =>
     JSON.stringify([householdId, actorId]);
+  const modelWork = new AsyncLocalStorage<TextModelProfile>();
   const respond = config.openaiApiKey
-    ? textModel(config.openaiApiKey, modelFetch, modelUsage, modelProfile, (attempt, content) => {
-        if (!observe) return;
-        const work = observationWork.getStore();
-        if (work) work.providerCallId = attempt.attemptId;
-        observe({
-          at: now(),
-          sessionId: work?.session.state.id ?? '',
-          taskId: work?.context.requestId,
-          revision: work?.revision,
-          consentTextVersion: work?.session.state.consentTextVersion,
-          context: {
-            owner: 'backend',
-            traceId: work?.context.traceId ?? attempt.attemptId,
-            spanId: attempt.attemptId,
-            parentSpanId: work?.context.spanId,
-            requestId: work?.context.requestId,
-            providerCallId: attempt.attemptId,
-          },
-          kind: 'model_attempt',
-          status:
-            attempt.outcome === 'completed'
-              ? 'completed'
-              : attempt.outcome === 'failed'
-                ? 'failed'
-                : attempt.outcome === 'aborted'
-                  ? 'canceled'
-                  : 'incomplete',
-          ...(!work ? { evidenceGap: 'unknown_parent' as const } : {}),
-          data: {
-            attemptId: attempt.attemptId,
-            startedAt: attempt.startedAt,
-            endedAt: attempt.endedAt,
-            model: attempt.model,
-            resolvedModel: attempt.resolvedModel,
-            serviceTier: attempt.serviceTier,
-            providerRequestId: attempt.requestId,
-            responseId: attempt.responseId,
-            outcome: attempt.outcome,
-            completeness: attempt.completeness,
-            usage: attempt.usage,
-            ...content,
-          },
-        });
-      })
+    ? textModel(
+        config.openaiApiKey,
+        modelFetch,
+        modelUsage,
+        modelProfile,
+        (attempt, content) => {
+          if (!observe) return;
+          const work = observationWork.getStore();
+          if (work) work.providerCallId = attempt.attemptId;
+          observe({
+            at: now(),
+            sessionId: work?.session.state.id ?? '',
+            taskId: work?.context.requestId,
+            revision: work?.revision,
+            consentTextVersion: work?.session.state.consentTextVersion,
+            context: {
+              owner: 'backend',
+              traceId: work?.context.traceId ?? attempt.attemptId,
+              spanId: attempt.attemptId,
+              parentSpanId: work?.context.spanId,
+              requestId: work?.context.requestId,
+              providerCallId: attempt.attemptId,
+            },
+            kind: 'model_attempt',
+            status:
+              attempt.outcome === 'completed'
+                ? 'completed'
+                : attempt.outcome === 'failed'
+                  ? 'failed'
+                  : attempt.outcome === 'aborted'
+                    ? 'canceled'
+                    : 'incomplete',
+            ...(!work ? { evidenceGap: 'unknown_parent' as const } : {}),
+            data: {
+              attemptId: attempt.attemptId,
+              startedAt: attempt.startedAt,
+              endedAt: attempt.endedAt,
+              model: attempt.model,
+              resolvedModel: attempt.resolvedModel,
+              serviceTier: attempt.serviceTier,
+              providerRequestId: attempt.requestId,
+              responseId: attempt.responseId,
+              outcome: attempt.outcome,
+              completeness: attempt.completeness,
+              usage: attempt.usage,
+              ...content,
+            },
+          });
+        },
+        () => {
+          const selected = modelWork.getStore();
+          if (!selected) throw new MapError('assistant_model_unsupported', 409);
+          return selected;
+        },
+      )
     : null;
   function authorityLost(error: unknown) {
     return (
@@ -356,6 +376,12 @@ export function textAssistantRoutes({
     return {
       id,
       consentTextVersion: session.state.consentTextVersion,
+      modelChoice: session.state.modelChoice,
+      modelChoiceRevision: session.state.modelChoiceRevision ?? 0,
+      enabledModelChoices: enabledModelChoices(config.conversationModels),
+      modelChoiceUnavailable: !enabledModelChoices(config.conversationModels).some((choice) =>
+        sameModelChoice(choice, session.state.modelChoice),
+      ),
       revision,
       contextRevision,
       contextGeneration: session.state.contextGeneration,
@@ -571,14 +597,17 @@ export function textAssistantRoutes({
       parentGuard?.();
     };
     session.state.contextSummaryState = 'summarizing';
+    const summaryChoice = { ...session.state.modelChoice };
+    const summaryProfile = modelWork.getStore() ?? conversationModelProfile(summaryChoice);
     try {
       guard();
       if (!respond) throw new Error('assistant_unavailable');
+      if (!modelWork.getStore()) requireEnabledChoice(summaryChoice, config.conversationModels);
       if (handoff) await onSummary?.(session.state.id, task.signal);
       guard();
       const snapshot = session.state.conversation.length;
       const summary = await summarizeConversation(
-        respond,
+        (...args) => modelWork.run(summaryProfile, () => respond(...args)),
         JSON.stringify({
           previousSummary: session.state.summary,
           conversation: session.state.conversation.slice(session.state.summaryOffset ?? 0),
@@ -1096,6 +1125,8 @@ export function textAssistantRoutes({
     }
   }
   async function resetContext(session: Session, discard: boolean, deferVoiceClose: boolean) {
+    session.state.modelChoice = personalModelChoice(database, session.state.actorId).read();
+    session.state.modelChoiceRevision = (session.state.modelChoiceRevision ?? 0) + 1;
     // Retire the old executor before its task records disappear. A delayed
     // status response must not cancel work belonging to the new conversation.
     onResetStart?.(session.state.id);
@@ -2365,39 +2396,41 @@ export function textAssistantRoutes({
       }
     };
     let observationStatus: ObservationStatus = 'incomplete';
-    const executing = observationWork.run(
-      { session, context: observationContext, revision, deadline: message.deadline },
-      async () => {
-        try {
-          await (message.voice ? execute() : textWork.run({ session, guard }, execute));
-          // Capture the outcome before a queued or concurrent request can replace
-          // the mutable conversation view. A stale execution has no known success.
-          observationStatus =
-            now() >= message.deadline
-              ? 'incomplete'
-              : task.signal.aborted
-                ? 'canceled'
-                : session.state.revision !== revision ||
-                    session.execution.task !== task ||
-                    !sessions.has(session.state.id)
-                  ? 'incomplete'
-                  : session.state.error ||
-                      session.state.phase === 'error' ||
-                      session.state.phase === 'recovery'
-                    ? 'failed'
-                    : 'completed';
-        } catch (error) {
-          observationStatus =
-            now() >= message.deadline ||
-            (error instanceof MapError && error.code === 'assistant_task_expired')
-              ? 'incomplete'
-              : task.signal.aborted ||
-                  (error instanceof MapError && error.code === 'assistant_canceled')
-                ? 'canceled'
-                : 'failed';
-          throw error;
-        }
-      },
+    const selectedModel = { ...session.state.modelChoice };
+    const executing = modelWork.run(conversationModelProfile(selectedModel), () =>
+      observationWork.run(
+        { session, context: observationContext, revision, deadline: message.deadline },
+        async () => {
+          try {
+            requireEnabledChoice(selectedModel, config.conversationModels);
+            await (message.voice ? execute() : textWork.run({ session, guard }, execute));
+            // Capture the outcome before a queued or concurrent request can replace
+            // the mutable conversation view. A stale execution has no known success.
+            observationStatus =
+              now() >= message.deadline
+                ? 'incomplete'
+                : task.signal.aborted
+                  ? 'canceled'
+                  : session.state.revision !== revision ||
+                      session.execution.task !== task ||
+                      !sessions.has(session.state.id)
+                    ? 'incomplete'
+                    : session.state.error || session.state.phase === 'error' || session.state.phase === 'recovery'
+                      ? 'failed'
+                      : 'completed';
+          } catch (error) {
+            observationStatus =
+              now() >= message.deadline ||
+              (error instanceof MapError && error.code === 'assistant_task_expired')
+                ? 'incomplete'
+                : task.signal.aborted ||
+                    (error instanceof MapError && error.code === 'assistant_canceled')
+                  ? 'canceled'
+                  : 'failed';
+            throw error;
+          }
+        },
+      ),
     );
     void executing
       .catch((error) => {
@@ -2413,6 +2446,9 @@ export function textAssistantRoutes({
                 'assistant_scope_unclear',
                 'assistant_scope_unavailable',
                 'assistant_batch_incomplete',
+                'assistant_model_unsupported',
+                'assistant_model_access',
+                'assistant_model_temporary',
               ].includes(error.code)
             ? error.code
             : 'assistant_draft_changed';
@@ -2591,7 +2627,9 @@ export function textAssistantRoutes({
         return JSON.parse(text.text) as TextAssistantReview;
       });
       contentVersion = review.contentVersion;
+      const modelChoice = personalModelChoice(database, actorId).read();
       const state: ConversationState = {
+        modelChoice,
         consentTextVersion: consents.textVersion,
         pendingPartsLedger: pendingPartsState(),
         id: randomUUID(),
@@ -2620,7 +2658,10 @@ export function textAssistantRoutes({
           mcp,
           reads,
           parts: pendingParts(state.pendingPartsLedger),
-          capacity: new ConversationCapacity(modelProfile?.tokens, voiceTokens),
+          capacity: new ConversationCapacity(
+            modelProfile?.tokens ?? conversationModelProfile(modelChoice).tokens,
+            voiceTokens,
+          ),
           messageTimers: new Map(),
           deliveries: new Map(),
           timer: setTimeout(
@@ -2703,6 +2744,24 @@ export function textAssistantRoutes({
       return context.json({ error: 'assistant_session_expired' }, 404);
     }
     return context.json(view(session));
+  });
+  routes.post(`${base}/:sessionId/model-choice`, async (context) => {
+    const session = sessions.get(context.req.param('sessionId'));
+    if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    const parsed = modelChoiceSchema.safeParse(await context.req.json().catch(() => null));
+    if (!parsed.success) return context.json({ error: 'invalid_request' }, 400);
+    try {
+      requireEnabledChoice(parsed.data, config.conversationModels);
+      personalModelChoice(database, session.state.actorId).write(parsed.data);
+      session.state.modelChoice = parsed.data;
+      session.state.modelChoiceRevision = (session.state.modelChoiceRevision ?? 0) + 1;
+      return context.json(view(session));
+    } catch (error) {
+      return context.json(
+        { error: error instanceof MapError ? error.code : 'invalid_request' },
+        409,
+      );
+    }
   });
   routes.post(`${base}/:sessionId/stop`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
