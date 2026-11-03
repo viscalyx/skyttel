@@ -62,6 +62,52 @@ const passingJudge = async (input: JudgeInput) =>
     reason: 'Verified by local fixture.',
   }));
 
+test('an unnecessary clarification cannot qualify merely because a catalog reply matches', {
+  tags: ['technical'],
+}, async () => {
+  const attempt: Attempt = {
+    scenario: scenario.id,
+    step: 'price',
+    profile: 'local',
+    repetition: 1,
+    modality: 'text',
+    outcome: 'fail',
+    fixed: ['effective_objects'],
+    elapsedMs: null,
+    backendCostUsd: 0,
+    content: [{ id: 'backend-0', outcome: 'pass', reason: 'Original observation.' }],
+  };
+  const reply = await selectFollowUp({
+    step: scenario.steps[0],
+    attempt,
+    stateFailures: ['effective_objects'],
+    questionPending: true,
+    sources: { backend: { text: 'Menar du det entydigt namngivna abonnemanget?', complete: true } },
+    checkWaiting: async () => [],
+    waitingContext: () => 'The exact subscription name unambiguously identifies one subscription.',
+    judge: async (input) =>
+      input.requirements.map(({ id }) => ({
+        id,
+        outcome: id.endsWith('-necessary') ? 'fail' : 'pass',
+        reason: id.endsWith('-necessary')
+          ? 'The request and available facts already identify the target.'
+          : 'The reply matches.',
+      })),
+  });
+  expect(reply).toBeUndefined();
+  expect(attempt).toMatchObject({
+    outcome: 'fail',
+    elapsedMs: null,
+    fixed: ['effective_objects'],
+    content: [{ id: 'backend-0', outcome: 'pass', reason: 'Original observation.' }],
+    assessment: {
+      kind: 'unnecessary_clarification',
+      stateFailures: [],
+      reason: expect.stringContaining('already identify'),
+    },
+  });
+});
+
 test('waiting checks retain the original target and reject unrelated draft damage', {
   tags: ['technical'],
 }, async () => {

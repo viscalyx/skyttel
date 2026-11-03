@@ -73,6 +73,11 @@ export async function selectFollowUp({
     }
     const requirements = Object.keys(sources).flatMap((source) => [
       { id: `${source}-follow-up`, source: source as 'backend' | 'voice', text: reply.when },
+      {
+        id: `${source}-necessary`,
+        source: source as 'backend' | 'voice',
+        text: 'The extra question is necessary and relevant because the available request, recognized input and current facts do not already determine the intended action and target. A matching catalog reply alone does not make a question necessary.',
+      },
       ...reply.waiting.requirements.map((text, index) => ({
         id: `${source}-waiting-${index}`,
         source: source as 'backend' | 'voice',
@@ -83,7 +88,7 @@ export async function selectFollowUp({
     try {
       content = await judge({
         context:
-          'Select a catalog reply only when its question is explicitly asked and all waiting requirements are satisfied. This selection does not decide whether the question was necessary or change any original verdict.\n' +
+          'Assess the explicit question, its necessity and the complete safe waiting contract independently. Preserve all original verdicts.\n' +
           (waitingContext?.() ?? ''),
         sources,
         requirements,
@@ -93,15 +98,21 @@ export async function selectFollowUp({
       return undefined;
     }
     // Unknown, missing, duplicate or additional verdicts never select a reply.
-    const complete =
+    const wellFormed =
       content.length === requirements.length &&
       requirements.every(
-        (requirement) =>
-          content.filter((item) => item.id === requirement.id && item.outcome === 'pass').length ===
-          1,
+        (requirement) => content.filter((item) => item.id === requirement.id).length === 1,
       );
+    const unnecessary =
+      wellFormed &&
+      content.some((item) => item.id.endsWith('-necessary') && item.outcome === 'fail') &&
+      content
+        .filter((item) => !item.id.endsWith('-necessary'))
+        .every((item) => item.outcome === 'pass');
+    const complete = wellFormed && content.every((item) => item.outcome === 'pass');
     candidates.push({ id: reply.id, fixed, content });
-    if (!complete) fixed.push('follow_up_question_not_matched');
+    if (!complete)
+      fixed.push(unnecessary ? 'unnecessary_question' : 'follow_up_question_not_matched');
   }
   const matched = candidates.filter((candidate) => !candidate.fixed.length);
   const selected = matched.length === 1 ? matched[0].id : undefined;
@@ -112,5 +123,24 @@ export async function selectFollowUp({
       ? 'One safe waiting state and explicit question matched.'
       : 'No unique verified question and safe waiting state matched.',
   };
+  const assessment = selected
+    ? matched[0]
+    : candidates.filter(
+          (candidate) =>
+            candidate.fixed.length === 1 && candidate.fixed[0] === 'unnecessary_question',
+        ).length === 1
+      ? candidates.find((candidate) => candidate.fixed[0] === 'unnecessary_question')
+      : undefined;
+  if (assessment?.content) {
+    attempt.assessment = {
+      kind: selected ? 'necessary_clarification' : 'unnecessary_clarification',
+      reason: assessment.content
+        .filter((item) => item.id.endsWith('-necessary'))
+        .map((item) => item.reason)
+        .join(' '),
+      stateFailures: [],
+      evidence: assessment.content,
+    };
+  }
   return step.followUps.find((reply) => reply.id === selected);
 }

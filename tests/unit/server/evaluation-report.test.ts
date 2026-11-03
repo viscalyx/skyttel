@@ -17,6 +17,250 @@ import {
 import { referenceSpeech } from '../../../scripts/model-evaluation/speech.js';
 import type { Attempt, Catalog } from '../../../scripts/model-evaluation/types.js';
 
+test('an everyday comparison keeps advanced costs visible without mixing them into its cost difference', {
+  tags: ['technical'],
+}, () => {
+  const scenarios = [
+    { id: 'daily', group: 'everyday' as const, steps: [{ id: 'a' }] },
+    { id: 'complex', group: 'complex' as const, steps: [{ id: 'b' }] },
+  ];
+  const attempts: Attempt[] = [
+    {
+      scenario: 'daily',
+      step: 'a',
+      profile: 'reference',
+      repetition: 1,
+      modality: 'text',
+      outcome: 'pass',
+      fixed: [],
+      elapsedMs: 1000,
+      backendCostUsd: 0.01,
+    },
+    {
+      scenario: 'complex',
+      step: 'b',
+      profile: 'reference',
+      repetition: 1,
+      modality: 'text',
+      outcome: 'pass',
+      fixed: [],
+      elapsedMs: 10000,
+      backendCostUsd: 1,
+    },
+  ];
+  const reference = summarizeProfile(attempts, scenarios, 'reference', 'text', [1]);
+  const candidate = summarizeProfile(
+    attempts.map((attempt) => ({
+      ...attempt,
+      profile: 'candidate',
+      backendCostUsd: attempt.scenario === 'complex' ? 100 : 0.01,
+    })),
+    scenarios,
+    'candidate',
+    'text',
+    [1],
+  );
+  expect(candidate.groups.complex.backendCostUsd).toBe(100);
+  expect(compareProfiles(reference, candidate)).toMatchObject({ costDifferenceUsd: 0 });
+});
+
+test('a failed reference can support a scoped correctness decision without timing comparison', {
+  tags: ['technical'],
+}, () => {
+  const scenarios = [{ id: 'one', steps: [{ id: 'a' }] }];
+  const base = {
+    scenario: 'one',
+    step: 'a',
+    repetition: 1,
+    modality: 'text' as const,
+    backendCostUsd: 0,
+  };
+  const reference = summarizeProfile(
+    [
+      {
+        ...base,
+        profile: 'reference',
+        outcome: 'fail',
+        fixed: ['effective_objects'],
+        elapsedMs: null,
+      },
+    ],
+    scenarios,
+    'reference',
+    'text',
+    [1],
+  );
+  const candidate = summarizeProfile(
+    [{ ...base, profile: 'candidate', outcome: 'pass', fixed: [], elapsedMs: 1000 }],
+    scenarios,
+    'candidate',
+    'text',
+    [1],
+  );
+  expect(compareProfiles(reference, candidate)).toMatchObject({
+    label: 'Ej jämförbart',
+    recommendation: expect.stringContaining('kravuppfyllelse'),
+  });
+});
+
+test('missing advanced retention evidence blocks a recommendation without inventing a correctness verdict', {
+  tags: ['technical'],
+}, () => {
+  const scenarios = [
+    { id: 'daily', group: 'everyday' as const, steps: [{ id: 'a' }] },
+    { id: 'complex', group: 'complex' as const, steps: [{ id: 'b' }] },
+  ];
+  const base = {
+    profile: 'local',
+    repetition: 1,
+    modality: 'text' as const,
+    fixed: [],
+    backendCostUsd: 0,
+  };
+  const summary = summarizeProfile(
+    [
+      { ...base, scenario: 'daily', step: 'a', outcome: 'pass', elapsedMs: 1000 },
+      {
+        ...base,
+        scenario: 'complex',
+        step: 'b',
+        outcome: 'fail',
+        elapsedMs: null,
+        assessment: {
+          kind: 'inconclusive',
+          reason: 'Exact retained work cannot be observed.',
+          stateFailures: ['unfinished_instructions'],
+          evidence: [],
+        },
+      },
+    ],
+    scenarios,
+    'local',
+    'text',
+    [1],
+  );
+  expect(summary).toMatchObject({
+    finalQualified: false,
+    correctnessFailures: [],
+    unresolvedAssessments: [{ scenario: 'complex', step: 'b', repetition: 1 }],
+  });
+});
+
+test.each(['everyday', 'long_conversation', 'complex'] as const)(
+  'a correctness failure in %s blocks an otherwise qualified everyday result',
+  { tags: ['technical'] },
+  (group) => {
+    const scenarios = [
+      { id: 'daily', group: 'everyday' as const, steps: [{ id: 'a' }] },
+      { id: 'fault', group, steps: [{ id: 'b' }] },
+    ];
+    const base = { profile: 'local', repetition: 1, modality: 'text' as const, backendCostUsd: 0 };
+    expect(
+      summarizeProfile(
+        [
+          { ...base, scenario: 'daily', step: 'a', outcome: 'pass', fixed: [], elapsedMs: 1000 },
+          {
+            ...base,
+            scenario: 'fault',
+            step: 'b',
+            outcome: 'fail',
+            fixed: ['unrequested_save_attempt'],
+            elapsedMs: null,
+          },
+        ],
+        scenarios,
+        'local',
+        'text',
+        [1],
+      ),
+    ).toMatchObject({
+      finalQualified: false,
+      correctnessFailures: [{ scenario: 'fault', step: 'b', repetition: 1 }],
+    });
+  },
+);
+
+test('timing comparisons require the same qualification scope and everyday scenarios', {
+  tags: ['technical'],
+}, () => {
+  const values: Attempt[] = [
+    {
+      scenario: 'one',
+      step: 'a',
+      profile: 'local',
+      repetition: 1,
+      modality: 'text',
+      outcome: 'pass',
+      fixed: [],
+      elapsedMs: 1000,
+      backendCostUsd: 0,
+    },
+  ];
+  const summary = summarizeProfile(
+    values,
+    [{ id: 'one', steps: [{ id: 'a' }] }],
+    'local',
+    'text',
+    [1],
+  );
+  expect(compareProfiles(summary, { ...summary, qualificationScope: undefined })).toMatchObject({
+    label: 'Ej jämförbart',
+  });
+  expect(
+    compareProfiles(summary, {
+      ...summary,
+      scenarioTimes: [{ scenario: 'other', medianMs: 1000, minMs: 1000, maxMs: 1000 }],
+    }),
+  ).toMatchObject({ label: 'Ej jämförbart' });
+});
+
+test('everyday qualification names its scope and retains safe advanced inability without a completion time', {
+  tags: ['technical'],
+}, () => {
+  const scenarios = [
+    { id: 'daily', group: 'everyday' as const, steps: [{ id: 'a' }] },
+    { id: 'long', group: 'long_conversation' as const, steps: [{ id: 'b' }] },
+    { id: 'complex', group: 'complex' as const, steps: [{ id: 'c' }] },
+  ];
+  const base = {
+    profile: 'local',
+    repetition: 1,
+    modality: 'text' as const,
+    fixed: [],
+    backendCostUsd: 0,
+  };
+  const attempts = [
+    { ...base, scenario: 'daily', step: 'a', outcome: 'pass' as const, elapsedMs: 1000 },
+    ...['long', 'complex'].map((scenario) => ({
+      ...base,
+      scenario,
+      step: scenario === 'long' ? 'b' : 'c',
+      outcome: 'fail' as const,
+      elapsedMs: null,
+      assessment: {
+        kind: 'safe_inability' as const,
+        stateFailures: [],
+        reason: 'Limitation explained; exact instructions and all data preserved.',
+        evidence: [{ id: 'safe', outcome: 'pass' as const, reason: 'Verified.' }],
+      },
+    })),
+  ];
+  const original = structuredClone(attempts);
+  expect(summarizeProfile(attempts, scenarios, 'local', 'text', [1])).toMatchObject({
+    qualified: false,
+    finalQualified: true,
+    qualificationScope: 'everyday',
+    fullCatalogQualified: false,
+    meanScenarioMedianMs: 1000,
+    groups: {
+      everyday: { qualified: true, completedScenarios: 1 },
+      long_conversation: { qualified: false, safeInabilities: 1, scenarioTimes: [] },
+      complex: { qualified: false, safeInabilities: 1, scenarioTimes: [] },
+    },
+  });
+  expect(attempts).toEqual(original);
+});
+
 test.each(['json', 'md'])(
   'reporter refuses to overwrite existing %s evidence in a reused directory',
   { tags: ['technical'] },

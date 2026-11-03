@@ -1,7 +1,8 @@
 import type { AssistantObservation } from '../../src/server/assistant-observation.js';
 import type { VoiceAssistantResponse } from '../../src/shared/voice-assistant.js';
 import type { createInstallation } from '../../tests/support/installation.js';
-import catalog from './catalog.json' with { type: 'json' };
+import { assessInability } from './assessment.js';
+import { scenarioHistory } from './catalog.js';
 import { evaluationEnvironment } from './environment.js';
 import { scenarioUtterances, selectFollowUp } from './follow-ups.js';
 import {
@@ -139,6 +140,7 @@ export async function runVoiceScenario(
       let continuing = false;
       const result: Attempt = {
         scenario: scenario.id,
+        group: scenario.group ?? 'everyday',
         step: step.id,
         profile: options.profile,
         repetition: options.repetition,
@@ -154,6 +156,7 @@ export async function runVoiceScenario(
       const callsBefore = options.providerCalls?.() ?? 0;
       let voiceAttempted = Boolean(voiceId);
       let startedAt = Date.now();
+      let recognizedRequest: string | undefined;
       try {
         if (sessionExpired) throw new Error('evaluation_live_time_limit');
         if (blocked || options.stopped?.()) {
@@ -167,16 +170,19 @@ export async function runVoiceScenario(
             repetition: options.repetition,
           });
           startedAt = Date.now();
+          const history = scenarioHistory(scenario);
           const summary = await environment.installation.summarizeForEvaluation(
             environment.assistant.id,
-            catalog.summaryHistory as { role: 'user' | 'assistant'; text: string }[],
+            history,
           );
           if (!summary.installed || !summary.summary)
             throw new Error('evaluation_summary_installation_failed');
           if (
             summary.retained.length !== 8 ||
             summary.retained.some(
-              (row) => !catalog.summaryHistory.some((fixture) => fixture.text === row.text),
+              (row, index) =>
+                row.text !== history.at(index - 8)?.text ||
+                row.role !== history.at(index - 8)?.role,
             )
           )
             throw new Error('evaluation_summary_tail_invalid');
@@ -300,6 +306,21 @@ export async function runVoiceScenario(
           result.fixed.push(...fixed);
           result.observedEndMs = Date.now() - startedAt;
           result.diagnostics = observationDiagnostics(events.slice(offset), startedAt);
+          recognizedRequest =
+            events
+              .slice(offset)
+              .filter((event) => event.kind === 'voice_event')
+              .map((event) => {
+                const data = event.data as {
+                  event?: { role?: string; delta?: string };
+                  role?: string;
+                  delta?: string;
+                };
+                return data.event ?? data;
+              })
+              .filter((data) => data.role === 'user')
+              .map((data) => data.delta ?? '')
+              .join('') || undefined;
           const completionMs =
             stateAt === undefined ? null : Math.max(stateAt, latestOutput) - startedAt;
           if (index === queue.length - 1 && !(options.followUps && step.followUps?.length))
@@ -332,7 +353,7 @@ export async function runVoiceScenario(
               },
               checkWaiting: (waiting) =>
                 environment.check(step, view, modelActions(events.slice(offset)), waiting),
-              waitingContext: () => environment.judgeContext(step, []),
+              waitingContext: () => environment.judgeContext(step, [], '', recognizedRequest),
               judge: options.judge ? judgeWithHeartbeat : undefined,
             });
             if (followUp && !options.stopped?.()) {
@@ -349,6 +370,24 @@ export async function runVoiceScenario(
               continuing = true;
             }
           }
+          await assessInability({
+            scenario,
+            step,
+            attempt: result,
+            sources: {
+              backend: { text: [view.reply, view.modelReply].filter(Boolean).join('\n'), complete },
+              voice: { text: output, complete },
+            },
+            check: (expected) =>
+              environment.check(
+                entry.target ?? step,
+                view,
+                modelActions(events.slice(offset)),
+                expected,
+              ),
+            context: () => environment.judgeContext(step, result.fixed, '', recognizedRequest),
+            judge: options.judge ? judgeWithHeartbeat : undefined,
+          });
           if (index === queue.length - 1) await closeVoice();
         }
         if (sessionExpired) throw new Error('evaluation_live_time_limit');
@@ -365,6 +404,9 @@ export async function runVoiceScenario(
       result.backendCostUsd = after == null ? null : after - before;
       const judgeAfter = options.judgeCosts?.();
       result.judgeCostUsd = judgeAfter == null ? null : judgeAfter - judgeBefore;
+      result.providerCalls = options.providerCalls
+        ? options.providerCalls() - callsBefore
+        : undefined;
       attempts.push(result);
       await options.record?.(result);
       if (result.outcome !== 'pass' && !continuing) {
@@ -375,7 +417,7 @@ export async function runVoiceScenario(
         if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
         if (!requirements.length) return [];
         const input: JudgeInput = {
-          context: environment.judgeContext(step, result.fixed),
+          context: environment.judgeContext(step, result.fixed, '', recognizedRequest),
           sources,
           requirements: Object.keys(sources).flatMap((source) =>
             requirements.map((text, i) => ({
