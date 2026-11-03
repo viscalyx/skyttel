@@ -10,6 +10,17 @@ import {
   textModel,
 } from '../../support/text-model.js';
 
+const postAsClient = (request: Request, url: string, data: unknown) =>
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      cookie: request.headers.get('cookie') ?? '',
+      origin: new URL(request.url).origin,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
 test('intermediate prose is a response observation but cannot establish the first useful answer', {
   tags: ['technical'],
 }, async () => {
@@ -112,20 +123,12 @@ test('text queue wait belongs to the submitted request and excludes the previous
             /\/text-assistant$/.test(new URL(request.url).pathname)
           ) {
             const view = (await response.clone().json()) as TextAssistantView;
-            const accepted = await fetch(`${request.url}/${view.id}/messages`, {
-              method: 'POST',
-              headers: {
-                cookie: request.headers.get('cookie') ?? '',
-                origin: new URL(request.url).origin,
-                'content-type': 'application/json',
-              },
-              body: JSON.stringify({
-                requestId: 'earlier-request',
-                revision: view.revision,
-                draftVersion: view.review.version,
-                contentVersion: view.review.contentVersion,
-                text: 'Håll den tidigare frågan.',
-              }),
+            const accepted = await postAsClient(request, `${request.url}/${view.id}/messages`, {
+              requestId: 'earlier-request',
+              revision: view.revision,
+              draftVersion: view.review.version,
+              contentVersion: view.review.contentVersion,
+              text: 'Håll den tidigare frågan.',
             });
             if (!accepted.ok) throw new Error('controlled_queue_admission_failed');
             timer = setTimeout(release, 150);
@@ -201,6 +204,199 @@ test.each(['incomplete', 'canceled'] as const)(
     expect(model.requests).toHaveLength(1);
   },
 );
+
+test.each(['before work', 'after a committed batch'] as const)(
+  'application cancellation %s ends text evaluation without successful completion time',
+  { tags: ['technical'] },
+  async (boundary) => {
+    let committed!: () => void;
+    const batchCommitted = new Promise<void>((resolve) => {
+      committed = resolve;
+    });
+    let releaseBatch!: () => void;
+    const heldBatch = new Promise<void>((resolve) => {
+      releaseBatch = resolve;
+    });
+    const model = textModel(async (body, signal) => {
+      if (boundary === 'after a committed batch') {
+        const turn = JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        );
+        const change = turn.draft.changes.find((item: { id: string }) => item.id === 'lo');
+        return [
+          modelTool('submit_changes', {
+            version: turn.draft.version,
+            contentVersion: turn.draft.contentVersion,
+            completion: 'draft',
+            operations: [
+              {
+                name: 'propose_object',
+                arguments: {
+                  id: 'lo',
+                  baseRevision: change.before?.revision ?? null,
+                  value: { ...change.after, name: 'Lo med nytt namn' },
+                },
+              },
+            ],
+          }),
+        ];
+      }
+      await new Promise<void>((resolve) => {
+        if (signal?.aborted) resolve();
+        else signal?.addEventListener('abort', () => resolve(), { once: true });
+      });
+      return [modelMessage('Ett sent svar.')];
+    });
+    let cancellationStatus: number | undefined;
+    const run = await runTextScenario(
+      {
+        id: 'application-canceled',
+        title: 'Application cancellation',
+        voice: false,
+        steps: [
+          {
+            id: 'first',
+            text:
+              boundary === 'after a committed batch'
+                ? 'Ändra namnet på Lo Berg till Lo med nytt namn. Spara inte.'
+                : 'Svara på frågan.',
+            expected: {
+              ...(boundary === 'after a committed batch'
+                ? { objects: { lo: { name: 'Lo med nytt namn' } } }
+                : {}),
+              requirements: [],
+            },
+          },
+          { id: 'dependent', text: 'Fortsätt sedan.', expected: { requirements: [] } },
+        ],
+      },
+      {
+        modelFetch: model.provider,
+        assistantDispatch: async (request, dispatch) => {
+          const rpc = await request
+            .clone()
+            .json()
+            .catch(() => null);
+          const response = await dispatch(request);
+          if (boundary === 'after a committed batch' && rpc?.params?.name === 'apply_draft_batch') {
+            committed();
+            await heldBatch;
+          }
+          return response;
+        },
+        deliverResponse: async (request, response) => {
+          if (request.method === 'POST' && new URL(request.url).pathname.endsWith('/messages')) {
+            if (boundary === 'after a committed batch') await batchCommitted;
+            const canceled = await postAsClient(
+              request,
+              request.url.replace(/\/messages$/, '/cancel'),
+              { all: true },
+            );
+            cancellationStatus = canceled.status;
+            await canceled.arrayBuffer();
+            releaseBatch();
+          }
+          return response;
+        },
+      },
+      { profile: 'local', repetition: 1 },
+    );
+    expect(cancellationStatus).toBe(200);
+    expect(run.attempts[0]).toMatchObject({
+      outcome: 'aborted',
+      reason: 'evaluation_application_canceled',
+      elapsedMs: null,
+      timing: { firstUsefulMs: null, successfulCompletionMs: null },
+    });
+    expect(run.attempts[0].observedEndMs).toBeGreaterThanOrEqual(0);
+    expect(run.attempts[1]).toMatchObject({ outcome: 'not_run', elapsedMs: null });
+    if (boundary === 'after a committed batch') {
+      expect(run.finalMap.draft.changes).toContainEqual(
+        expect.objectContaining({
+          id: 'lo',
+          after: expect.objectContaining({ name: 'Lo med nytt namn' }),
+        }),
+      );
+      expect(run.finalMap.objects.find((item) => item.id === 'lo')?.name).toBe('Lo Berg');
+      expect(run.attempts[0].diagnostics?.mcp).not.toEqual([]);
+    }
+  },
+);
+
+test('application expiry ends text evaluation at its terminal response without another poll', {
+  tags: ['technical'],
+}, async () => {
+  let clock = Date.now();
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const model = textModel(async () => {
+    await held;
+    return [modelMessage('Ett för sent svar.')];
+  });
+  let terminalPolls = 0;
+  let expiryArranged = false;
+  let laterStatus: number | undefined;
+  const run = await runTextScenario(
+    {
+      id: 'application-expired',
+      title: 'Application request expiry',
+      voice: false,
+      steps: [
+        { id: 'first', text: 'Svara på frågan.', expected: { requirements: [] } },
+        { id: 'dependent', text: 'Fortsätt sedan.', expected: { requirements: [] } },
+      ],
+    },
+    {
+      now: () => clock,
+      modelFetch: model.provider,
+      deliverResponse: async (request, response) => {
+        const path = new URL(request.url).pathname;
+        if (request.method === 'POST' && path.endsWith('/messages') && !expiryArranged) {
+          expiryArranged = true;
+          const view = (await response.clone().json()) as TextAssistantView;
+          // A later accepted request keeps access to the original terminal
+          // result valid after its own deadline, independently of session end.
+          clock += 60_000;
+          const later = await postAsClient(request, request.url, {
+            requestId: 'later-accepted-request',
+            revision: view.revision,
+            draftVersion: view.review.version,
+            contentVersion: view.review.contentVersion,
+            text: 'Beskriv sedan mitt utkast.',
+          });
+          laterStatus = later.status;
+          await later.arrayBuffer();
+          clock += 29 * 60_000;
+          release();
+        }
+        if (request.method === 'GET' && /\/messages\/[^/]+$/.test(path)) {
+          const view = (await response.clone().json()) as TextAssistantView;
+          if (view.taskStatus === 'expired') {
+            terminalPolls++;
+            // Bound the regression's old polling behavior at the actual HTTP
+            // boundary; a fixed runner consumes the first terminal response.
+            if (terminalPolls > 1)
+              return Response.json({ error: 'terminal_request_polled_again' }, { status: 503 });
+          }
+        }
+        return response;
+      },
+    },
+    { profile: 'local', repetition: 1 },
+  );
+  expect(laterStatus).toBe(202);
+  expect(run.attempts[0]).toMatchObject({
+    outcome: 'error',
+    reason: 'evaluation_application_expired',
+    elapsedMs: null,
+    timing: { firstUsefulMs: null, successfulCompletionMs: null },
+  });
+  expect(run.attempts[0].observedEndMs).toBeGreaterThanOrEqual(0);
+  expect(run.attempts[1]).toMatchObject({ outcome: 'not_run', elapsedMs: null });
+  expect(terminalPolls).toBe(1);
+});
 
 test('assisted text retains the full exchange origin and treats a necessary question as useful but unfinished', {
   tags: ['technical'],

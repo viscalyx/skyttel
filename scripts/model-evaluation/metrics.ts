@@ -1,6 +1,12 @@
 import type { AssistantObservation } from '../../src/server/assistant-observation.js';
 import type { ProviderCall } from './provider.js';
 
+const mcpObservationScope = {
+  scope: 'observed_task_spans',
+  limitation:
+    'Counts and durations cover observed MCP spans with a task identity, not total application calls. Admission, dequeue, polling and other unbound calls are outside this measurement. Complete describes observed span pairs, not total application coverage.',
+} as const;
+
 export type ModelMetrics = {
   count: number | null;
   elapsedMs: number | null;
@@ -14,7 +20,11 @@ export type ModelMetrics = {
 };
 export type EvaluationMetrics = {
   model: Record<ProviderCall['kind'], ModelMetrics>;
-  mcp: { count: number | null; elapsedMs: number | null; complete: boolean };
+  mcp: typeof mcpObservationScope & {
+    count: number | null;
+    elapsedMs: number | null;
+    complete: boolean;
+  };
   readCache: { hits: null; limitation: string };
 };
 const numeric = (value: unknown): number | null =>
@@ -96,6 +106,7 @@ export function evaluationMetrics(
       judge: modelMetrics(calls?.filter((call) => call.kind === 'judge')),
     },
     mcp: {
+      ...mcpObservationScope,
       count: observed && !unidentified ? spans.size : null,
       elapsedMs: observed && !unidentified ? sum(durations) : null,
       complete: observed && !unidentified && durations.every((value) => value !== null),
@@ -130,6 +141,7 @@ export function aggregateMetrics(attempts: { metrics?: EvaluationMetrics }[]): E
   return {
     model,
     mcp: {
+      ...mcpObservationScope,
       count: observed ? sum(metrics.map((value) => value?.mcp.count ?? null)) : null,
       elapsedMs: observed ? sum(metrics.map((value) => value?.mcp.elapsedMs ?? null)) : null,
       complete: observed && metrics.every((value) => value?.mcp.complete),

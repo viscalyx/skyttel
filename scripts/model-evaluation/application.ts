@@ -6,6 +6,8 @@ import { approvedForVisit } from '../../tests/support/conversation.js';
 import { createInstallation } from '../../tests/support/installation.js';
 
 export type ApplicationVersion = { id: string; directory: string; commit: string };
+export const validApplicationIdentity = ({ id, commit }: ApplicationVersion) =>
+  /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$/.test(id) && /^[a-f0-9]{40}$/.test(commit);
 const loadedApplications = new Map<string, string>();
 const evaluatorDirectory = fileURLToPath(new URL('../../', import.meta.url));
 const loadedEvaluator = (() => {
@@ -31,10 +33,7 @@ export async function evaluatorVersion(commit: string) {
 }
 
 async function verifiedDirectory(selected: ApplicationVersion) {
-  if (
-    !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$/.test(selected.id) ||
-    !/^[a-f0-9]{40}$/.test(selected.commit)
-  )
+  if (!validApplicationIdentity(selected))
     throw new Error('evaluation_application_version_invalid');
   try {
     const directory = await realpath(selected.directory);

@@ -24,24 +24,22 @@ An incompatible revision is an untested configuration; preserve it and explain
 the gap before payment.
 
 Use the checked-in optimization plan for the initial wait-time comparison.
-Its source is `scripts/model-evaluation/optimization-comparison-plan.json`.
-It requires five repetitions of every selected scenario and version, with
-baseline/candidate order reversed on alternate repetitions. It names target
-everyday scenarios before execution. Run 6.1 Terra/high and 6.1 Sol/high
-separately; lower efforts need functional verification only. The old Terra
-profile is a different model. Supply a separately verified backend profile
-when the intended exact model lacks a current registry entry. Missing support,
-access or verified pricing leaves that selection untested.
+Read `scripts/model-evaluation/optimization-comparison-plan.json` for its
+models, effort, repetitions, target scenarios and acceptance limits.
+Reverse baseline/candidate order on alternate repetitions. Run each selected
+model separately at the plan's effort. Verify the exact model identity;
+registry aliases can identify a different model. Supply a separately verified
+backend profile when the selected model lacks a current registry entry.
+Missing support, access or verified pricing leaves that selection untested.
 
 Use an explicit custom plan for future comparisons. Record repetitions,
 target scenarios, acceptance thresholds and a maximum permitted relative
 range. Keep all planned correctness checks; a speed-only subset cannot
 establish qualification.
 
-The prepared plan permits a maximum range of 20% of the median for either
-version's everyday scenario. Greater variation is inconclusive, even when
-the median meets a speed threshold. Set a different explicit rule before
-running a future plan when its intended evidence requires one.
+Apply the selected plan's `maximumRelativeRange` to each version's everyday
+scenario: divide its maximum-minus-minimum duration by its median. Greater
+variation is inconclusive, even when the median meets a speed threshold.
 
 Completion: both revisions, the exact model profile and complete shared
 conditions are identified, local checks pass, and the plan is recorded before
@@ -67,6 +65,9 @@ preserve the original attempt and individual replies. Report direct and
 assisted completion separately. Failed, canceled, inconclusive and unrun work
 has no successful completion time. Publish every planned individual outcome,
 median, minimum and maximum.
+Treat canceled and expired application requests as terminal unsuccessful
+outcomes before scoring or selecting another clarification. Retain their
+observed status and partial effects; cancellation does not undo committed work.
 
 Use the declared immediate-scripted-reply policy for text assistance. Record
 first-send-to-last-delivery wall time and measured harness-only gaps separately.
@@ -81,12 +82,12 @@ judge configurations, assistance policy and acceptance plan. Older records
 without it are not directly comparable.
 
 Apply mandatory correctness gates in every scenario group before accepting
-speed. Apply percentage thresholds only to everyday scenarios, separately
-for each model and modality: candidate median at most 80% of baseline for
-targets and at most 110% for other everyday scenarios. Report advanced
-capability limits and regressions separately. Insufficient repetitions,
-missing evidence or excessive variation yields an inconclusive comparison.
-Five observations supply initial evidence, not a statistically secure ranking.
+speed. Compare candidate-to-baseline median ratios with the selected plan's
+`targetMaximumRatio` for targets and `otherMaximumRatio` for other everyday
+scenarios, separately for each model and modality. Report advanced capability
+limits and regressions separately. Insufficient repetitions, missing evidence
+or excessive variation yields an inconclusive comparison. Small repetition
+sets supply initial evidence, not a statistically secure ranking.
 
 Report model and MCP counts and durations, context bytes, input/output and
 reasoning tokens, costs, and provider cached tokens. Separate backend work,
@@ -94,6 +95,8 @@ summary and judge calls. Keep read-cache observations separate from provider
 cache tokens; an unobserved read-cache count is unknown. Label missing fields
 as null and state their limits. Diagnostic improvements do not replace full
 user-wait measurement.
+Publish each MCP metric's `scope`, `limitation` and `complete` fields with its
+counts and durations. Use the emitted boundary when explaining diagnostics.
 
 Context bytes count serialized instructions, input, tools and response-format
 configuration. This observed byte count is not a token estimate. Provider usage

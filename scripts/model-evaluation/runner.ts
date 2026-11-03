@@ -107,6 +107,7 @@ export async function runTextScenario(
         let firstResponseMs: number | null = null;
         let completedResponseMs: number | null = null;
         let earlierResponseUnverified = false;
+        let applicationTerminalStatus: 'canceled' | 'expired' | undefined;
         const costBefore = options.costs?.() ?? 0;
         const judgeBefore = options.judgeCosts?.() ?? 0;
         const callsBefore = options.providerCalls?.() ?? 0;
@@ -150,6 +151,10 @@ export async function runTextScenario(
               view = await environment.get<TextAssistantView>(
                 `${environment.path}/messages/${requestId}`,
               );
+              if (view.taskStatus === 'canceled' || view.taskStatus === 'expired') {
+                applicationTerminalStatus = view.taskStatus;
+                throw new Error(`evaluation_application_${view.taskStatus}`);
+              }
               // Raw prose does not establish usefulness. Certification uses
               // the completed response and later state/content assessment.
               if (
@@ -176,7 +181,7 @@ export async function runTextScenario(
                 });
                 if (!matches) result.fixed.push('unexpected_selection');
               }
-              if (view.taskStatus === 'completed' || view.taskStatus === 'canceled') break;
+              if (view.taskStatus === 'completed') break;
               if (options.stopped?.()) {
                 await environment.post(`${environment.path}/cancel`, {
                   revision: view.revision,
@@ -308,11 +313,18 @@ export async function runTextScenario(
               : (options.judgeCosts() ?? 0) - judgeBefore
             : 0;
         } catch (error) {
-          failAttempt(result, error, Date.now() - startedAt, {
-            stopped: options.stopped?.() ?? false,
-            reason: options.stopReason?.() ?? null,
-            attempted: (options.providerCalls?.() ?? 0) > callsBefore,
-          });
+          if (applicationTerminalStatus) {
+            result.outcome = applicationTerminalStatus === 'canceled' ? 'aborted' : 'error';
+            result.reason = `evaluation_application_${applicationTerminalStatus}`;
+            result.observedEndMs = Date.now() - startedAt;
+            result.diagnostics = observationDiagnostics(events.slice(offset), startedAt);
+          } else {
+            failAttempt(result, error, Date.now() - startedAt, {
+              stopped: options.stopped?.() ?? false,
+              reason: options.stopReason?.() ?? null,
+              attempted: (options.providerCalls?.() ?? 0) > callsBefore,
+            });
+          }
           result.elapsedMs = null;
           if (result.assistedElapsedMs !== undefined) result.assistedElapsedMs = null;
           const costAfter = options.costs?.();

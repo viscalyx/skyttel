@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { ApplicationVersion } from './application.js';
+import { type ApplicationVersion, validApplicationIdentity } from './application.js';
 import { aggregateMetrics } from './metrics.js';
 import preparedPlan from './optimization-comparison-plan.json' with { type: 'json' };
 import { type EvaluationProfile, verifiedProfile } from './provider.js';
@@ -61,11 +61,7 @@ export function prepareComparison(
   const versions = [selection.baseline, selection.candidate].map((version) => ({ ...version }));
   if (
     versions[0].id === versions[1].id ||
-    versions.some(
-      (version) =>
-        !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$/.test(version.id) ||
-        !/^[a-f0-9]{40}$/.test(version.commit),
-    ) ||
+    versions.some((version) => !validApplicationIdentity(version)) ||
     !plan.id ||
     plan.modality !== 'text' ||
     !plan.repetitions.length ||
