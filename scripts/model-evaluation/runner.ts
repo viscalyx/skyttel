@@ -5,7 +5,7 @@ import type { createInstallation } from '../../tests/support/installation.js';
 import { assessInability } from './assessment.js';
 import { scenarioHistory } from './catalog.js';
 import { evaluationEnvironment } from './environment.js';
-import { scenarioUtterances, selectFollowUp } from './follow-ups.js';
+import { followUpStep, scenarioUtterances, selectFollowUp } from './follow-ups.js';
 import {
   concludeAttempt,
   failAttempt,
@@ -203,11 +203,7 @@ export async function runTextScenario(
             });
             if (followUp && !options.stopped?.()) {
               queue.splice(index + 1, 0, {
-                step: {
-                  id: followUp.id,
-                  text: followUp.text,
-                  expected: { requirements: followUp.requirements },
-                },
+                step: followUpStep(step, followUp),
                 parent: step.id,
                 target: step,
                 startedAt,
@@ -226,7 +222,9 @@ export async function runTextScenario(
               },
             },
             check: (expected) => environment.check(entry.target ?? step, view, actions, expected),
-            context: () => environment.judgeContext(step, result.fixed, summaryText),
+            context: () =>
+              environment.judgeContext(entry.target ?? step, result.fixed, summaryText) +
+              (entry.parent ? `\nCurrent clarification: ${JSON.stringify(step.text)}` : ''),
             judge: options.judge,
           });
           result.backendCostUsd = options.costs

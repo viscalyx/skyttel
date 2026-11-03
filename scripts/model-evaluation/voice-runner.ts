@@ -4,7 +4,7 @@ import type { createInstallation } from '../../tests/support/installation.js';
 import { assessInability } from './assessment.js';
 import { scenarioHistory } from './catalog.js';
 import { evaluationEnvironment } from './environment.js';
-import { scenarioUtterances, selectFollowUp } from './follow-ups.js';
+import { followUpStep, scenarioUtterances, selectFollowUp } from './follow-ups.js';
 import {
   concludeAttempt,
   failAttempt,
@@ -358,11 +358,7 @@ export async function runVoiceScenario(
             });
             if (followUp && !options.stopped?.()) {
               queue.splice(index + 1, 0, {
-                step: {
-                  id: followUp.id,
-                  text: followUp.text,
-                  expected: { requirements: followUp.requirements },
-                },
+                step: followUpStep(step, followUp),
                 parent: step.id,
                 target: step,
                 startedAt,
@@ -385,13 +381,20 @@ export async function runVoiceScenario(
                 modelActions(events.slice(offset)),
                 expected,
               ),
-            context: () => environment.judgeContext(step, result.fixed, '', recognizedRequest),
+            context: () =>
+              environment.judgeContext(entry.target ?? step, result.fixed, '', recognizedRequest) +
+              (entry.parent ? `\nCurrent clarification: ${JSON.stringify(step.text)}` : ''),
             judge: options.judge ? judgeWithHeartbeat : undefined,
           });
           if (index === queue.length - 1) await closeVoice();
         }
         if (sessionExpired) throw new Error('evaluation_live_time_limit');
-        if (options.stopped?.() && !(result.outcome === 'fail' && result.followUpSelection))
+        // Optional judgments cannot erase the application's completed verdict.
+        // The stopped state still prevents every later step from starting.
+        if (
+          options.stopped?.() &&
+          !(result.outcome === 'fail' && (result.followUpSelection || result.assessment))
+        )
           throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
       } catch (error) {
         failAttempt(result, error, Date.now() - startedAt, {

@@ -40,6 +40,14 @@ Include the full exchange's additional waiting, calls and costs. Preserve
 failed, aborted, inconclusive and unrun attempts without successful completion
 times. A selected reply alone proves neither necessity nor completion.
 
+Declare `safeInability` on a conditional reply when an advanced limit can follow
+clarification. Specify its complete permitted state after independent work and
+nonempty `preservedRequests` for the unfinished instructions and clarified
+constraints. The original request remains required. Verify these exact requests
+in active pending work; historical transcript alone is insufficient. Keep this
+contract separate from the parent's alternate state. Missing retained-work
+evidence yields an inconclusive assessment.
+
 ## Scope and publication
 
 Read `qualified` as the original unassisted catalog outcome. Read

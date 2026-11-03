@@ -1,11 +1,32 @@
 import type {
   Attempt,
   Expected,
+  FollowUp,
   JudgeInput,
   JudgeResult,
   Scenario,
   ScenarioStep,
 } from './types.js';
+
+/** Continued work has its own safe-state contract, separate from the parent's. */
+export function followUpStep(parent: ScenarioStep, reply: FollowUp): ScenarioStep {
+  const retained = reply.safeInability?.preservedRequests;
+  return {
+    id: reply.id,
+    text: reply.text,
+    expected: { requirements: reply.requirements },
+    ...(reply.safeInability
+      ? {
+          safeInability: {
+            ...reply.safeInability,
+            preservedRequests: retained?.length
+              ? [...new Set([...(parent.text ? [parent.text] : []), ...retained])]
+              : [],
+          },
+        }
+      : {}),
+  };
+}
 
 /** Catalog replies are optional inputs, never replacement verdicts or retries. */
 export function scenarioUtterances(scenario: Scenario, followUps = false) {

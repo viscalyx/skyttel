@@ -37,6 +37,8 @@ export type FollowUp = {
    * and still-answerable content instead of the parent's completion response. */
   waiting: Expected;
   requirements: string[];
+  /** Explicit state after clarification; retained instructions are mandatory. */
+  safeInability?: Expected & { preservedRequests: string[] };
 };
 export type ScenarioStep = {
   id: string;
