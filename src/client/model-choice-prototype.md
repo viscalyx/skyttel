@@ -2,7 +2,10 @@
 
 This prototype lets product reviewers compare four places for model and
 reasoning controls in one conversation shared by text and voice.
-It is a proposal awaiting human feedback, not an accepted design.
+Variant D is the selected interaction direction for continued planning.
+Its visual appearance and overall UX are not approved. The prototype does
+not give the user a sufficiently faithful view of the application to judge
+those aspects. Further UX work is deferred to later work in the actual app.
 
 Run `npm run deps:prepare` once in this checkout, then:
 
@@ -10,7 +13,7 @@ Run `npm run deps:prepare` once in this checkout, then:
 npm run dev:client -- --host 0.0.0.0 --port 5173 --strictPort
 ```
 
-Open <http://localhost:5173/households/prototype?variant=A>.
+Open <http://localhost:5173/households/prototype?variant=D>.
 Use the bottom arrows or change `variant` to `A`, `B`, `C`, or `D`:
 
 - A: compact picker below the existing text-view heading, opening a dialog.
@@ -22,10 +25,11 @@ Use the bottom arrows or change `variant` to `A`, `B`, `C`, or `D`:
 
 The existing App and router render the actual HouseholdMap, WorkspaceTools,
 TextView, draft review, VoiceBox, SettingsScreen and ConversationSettings.
-The prototype adds controls inside those components. Their existing layout,
-navigation, map renderer and responsive behavior remain in use.
-When the text view closes, the same selection is available below the actual
-voice box. Conversation settings include the choices in all three variants.
+The prototype adds controls inside those components. This source reuse does
+not establish that its appearance or experience matches the real application
+closely enough for a UX decision. In A and B, voice-only selection sits below
+the voice box. In D, the icon sits to its right. Conversation settings include
+the choices in all four variants.
 
 On the development household route, fixture responses supply a signed-in
 example household, map data, a draft and settings. A simulated conversation
@@ -65,8 +69,8 @@ Browser inspection covers desktop at 1440 pixels, mobile at 390 and 320
 pixels, native select keyboard changes, dialog Escape and focus restoration,
 changes during work, the next request, unavailable models, voice-only
 presentation, and actual settings navigation. Accessible labels and status
-text are inspected through the
-browser accessibility tree. No screen reader software evaluation or full
+text are inspected through the browser accessibility tree.
+No screen reader software evaluation or full
 WCAG conformance assessment is performed. No automated tests are added.
 
 Screenshots show initial proposals; the live demo is the source for interaction.
