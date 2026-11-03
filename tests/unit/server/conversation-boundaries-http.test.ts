@@ -3,6 +3,7 @@ import { afterEach, expect, test } from 'vitest';
 import { assistantFailureMessage } from '../../../src/server/assistant-feedback.js';
 import type { MapState } from '../../../src/shared/map.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { beginAssistant, callAssistant } from '../../support/assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
@@ -187,6 +188,7 @@ test('recovery validates its durable request even without a conversation or AI a
 
 test.each([
   ['unknown tool', [modelTool('merge_objects', {})], 'assistant_unknown_tool'],
+  ['executor batch', [modelTool('apply_draft_batch', {})], 'assistant_unknown_tool'],
   ['mixed batch', [modelTool('submit_changes', {}), modelTool('read_map', {})], 'invalid_request'],
   ['malformed batch', [modelTool('submit_changes', { operations: [] })], 'invalid_request'],
   [
@@ -314,6 +316,185 @@ test.each(['draft version', 'content generation', 'save with questions', 'save w
     expect(model.requests).toHaveLength(1);
   },
 );
+
+test('a failed dependent batch rolls back its object and retains an earlier independent batch and pending changes', async () => {
+  let turn = 0;
+  let typeId = '';
+  let relationshipTypeId = '';
+  const model = textModel((request) => {
+    const { draft } = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    const first = turn++ === 0;
+    return [
+      modelTool('submit_changes', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        completion: 'draft',
+        questions: first ? [] : ['Vilket kort ska användas?'],
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: first ? 'independent' : 'dependent',
+              baseRevision: null,
+              value: { typeId, name: first ? 'Stolen' : 'Lampan' },
+            },
+          },
+          ...(first
+            ? []
+            : [
+                {
+                  name: 'propose_relationship',
+                  arguments: {
+                    id: 'required-link',
+                    baseRevision: null,
+                    value: {
+                      typeId: relationshipTypeId,
+                      sourceId: 'dependent',
+                      targetId: 'missing-endpoint',
+                    },
+                  },
+                },
+              ]),
+        ],
+      }),
+    ];
+  });
+  await setup(model.provider);
+  const initial = await map();
+  typeId = initial.types[0].id;
+  relationshipTypeId = initial.relationshipTypes[0].id;
+  expect(await message('Lägg Stolen i utkastet.')).toMatchObject({ phase: 'ready' });
+  const before = await map();
+  const result = await message(
+    'Lägg Lampan och dess nödvändiga samband i utkastet. Fråga om kortet.',
+  );
+  expect(result).toMatchObject({ phase: 'error', error: 'invalid_endpoint' });
+  expect(await map()).toEqual(before);
+  expect(result.review.changes.map(({ id }) => id)).toEqual(['independent']);
+  expect(result.pendingParts).toEqual([
+    expect.objectContaining({
+      kind: 'change',
+      status: 'waiting',
+      question: 'Vilket kort ska användas?',
+    }),
+  ]);
+  expect(result.receipt).toBeUndefined();
+  expect(model.authorizationRequests).toHaveLength(4);
+});
+
+test('multiple direct draft mutations require an atomic batch before either can change the draft', async () => {
+  let typeId = '';
+  const model = textModel((request) => {
+    const { draft } = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return ['one', 'two'].map((id) =>
+      modelTool('propose_object', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        id,
+        baseRevision: null,
+        value: { typeId, name: id },
+      }),
+    );
+  });
+  await setup(model.provider);
+  const before = await map();
+  typeId = before.types[0].id;
+  expect(await message('Lägg till de två sakerna i utkastet.')).toMatchObject({
+    phase: 'error',
+    error: 'assistant_batch_required',
+  });
+  expect(await map()).toEqual(before);
+});
+
+test('an unlisted dependent mutation is rejected before a preceding valid direct draft mutation', async () => {
+  let typeId = '';
+  const model = textModel((request) => {
+    const { draft } = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('propose_object', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        id: 'dependent',
+        baseRevision: null,
+        value: { typeId, name: 'Lampan' },
+      }),
+      modelTool('connect_missing_endpoint', {}),
+    ];
+  });
+  await setup(model.provider);
+  const before = await map();
+  typeId = before.types[0].id;
+  expect(await message('Lägg till Lampan med dess nödvändiga samband.')).toMatchObject({
+    phase: 'error',
+    error: 'assistant_unknown_tool',
+  });
+  expect(await map()).toEqual(before);
+});
+
+test('a rolled-back MCP batch cannot discard pending parts, and a committed discard retains independent information', async () => {
+  await setup(
+    textModel(() => [
+      modelTool('ask_questions', {
+        questions: [
+          { kind: 'change', request: 'Ange kort', question: 'Vilket kort?', dependsOnDraft: true },
+          {
+            kind: 'information',
+            request: 'Hitta hjälmen',
+            question: 'Vilken hjälm?',
+            dependsOnDraft: false,
+          },
+        ],
+      }),
+    ]).provider,
+  );
+  await object();
+  const waiting = await message('Ange kort och hitta hjälmen.');
+  const before = await map();
+  const flow = await beginAssistant(client, fixture.origin, 'skyttel:read skyttel:write');
+  const grant = await flow.consent(path.split('/').at(-1) ?? '');
+  expect(grant.status()).toBe(200);
+  const exchanged = await flow.exchange((await grant.json()).url);
+  expect(exchanged.status).toBe(200);
+  const { access_token: token } = await exchanged.json();
+  const invoke = async (operations: { name: string; arguments: Record<string, unknown> }[]) => {
+    const response = await callAssistant(fixture.origin, token, 'apply_draft_batch', {
+      version: before.draft.version,
+      contentVersion: before.contentVersion,
+      operations,
+    });
+    expect(response.status).toBe(200);
+    return (await response.json()).result;
+  };
+  const discarded = { name: 'discard_draft', arguments: {} };
+  const failed = await invoke([
+    discarded,
+    {
+      name: 'propose_object',
+      arguments: { id: 'new', baseRevision: null, value: { typeId: 'missing-type', name: 'Nytt' } },
+    },
+  ]);
+  expect(failed.isError).toBe(true);
+  expect(JSON.parse(failed.content[0].text).error).toBe('invalid_type');
+  expect(await map()).toEqual(before);
+  expect((await read()).pendingParts).toEqual(waiting.pendingParts);
+  const committed = await invoke([discarded]);
+  expect(committed.isError).not.toBe(true);
+  expect((await map()).draft.changes).toEqual([]);
+  expect(await read()).toMatchObject({
+    saveBlocked: false,
+    questions: ['Vilken hjälm?'],
+    pendingParts: [
+      { status: 'discarded', kind: 'change' },
+      { status: 'waiting', kind: 'information' },
+    ],
+  });
+});
 
 test.each(
   (['direct', 'batch'] as const).flatMap((mode) =>
