@@ -1770,7 +1770,7 @@
       "group": "complex",
       "dimensions": {
         "conversation": "short",
-        "instruction": "short"
+        "instruction": "long"
       }
     },
     {
