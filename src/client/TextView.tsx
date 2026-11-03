@@ -6,6 +6,7 @@ import {
 import { ContextMeter } from './ConversationContext.js';
 import { ConversationTranscript } from './ConversationTranscript.js';
 import { ConversationWidthHandle } from './ConversationWidthHandle.js';
+import { PrototypeModelControls } from './ModelChoicePrototype.js';
 import type { Conversation } from './use-conversation.js';
 import type { useConversationPreferences } from './use-conversation-preferences.js';
 import { useConversationViewport } from './use-conversation-viewport.js';
@@ -191,6 +192,7 @@ export function TextView({
               <WorkspaceIcon name="close" />
             </button>
           </header>
+          <PrototypeModelControls place="header" />
           {widthPreferences?.widthFeedback &&
             !widthPreferences.widthFeedback.includes('återställda') && (
               <p role="status">{widthPreferences.widthFeedback}</p>
@@ -284,6 +286,7 @@ export function TextView({
             {session?.canceled ? 'Avbrutet. Föreslagna ändringar ligger kvar i utkastet.' : ''}
           </p>
           {notice}
+          <PrototypeModelControls place="composer" />
           <form
             className="text-view-message"
             onSubmit={(event) => {

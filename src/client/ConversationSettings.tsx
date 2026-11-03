@@ -4,6 +4,7 @@ import {
   conversationConsentTextVersion,
 } from '../shared/conversation-consent.js';
 import { draftCount } from './ConversationDraft.js';
+import { PrototypeModelControls } from './ModelChoicePrototype.js';
 import type { Conversation } from './use-conversation.js';
 import type { useConversationPreferences } from './use-conversation-preferences.js';
 import { useConversationViewport } from './use-conversation-viewport.js';
@@ -30,6 +31,7 @@ export function ConversationSettings({
   const { mobile } = useConversationViewport();
   return (
     <div className="conversation-settings">
+      <PrototypeModelControls place="settings" />
       {conversation.available === false && <p>Samtal med Skyttel är inte tillgängligt just nu.</p>}
       <ConsentSetting conversation={conversation} householdName={householdName} ongoing={ongoing} />
       {personal && <DraftSetting personal={personal} />}

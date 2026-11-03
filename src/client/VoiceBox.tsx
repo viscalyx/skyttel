@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ContextAnnouncement, ContextSymbol } from './ConversationContext.js';
+import { PrototypeModelControls } from './ModelChoicePrototype.js';
 import type { Conversation } from './use-conversation.js';
 import type { Voice } from './use-voice.js';
 import './voice-box.css';
@@ -247,6 +248,7 @@ export function VoiceBox({
         </div>
       )}
       {notice}
+      {status && <PrototypeModelControls place="voice" />}
     </div>
   );
 }

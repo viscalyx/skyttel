@@ -48,6 +48,7 @@ import { type MapRevealRequest, waitForMapDisplay } from './map-display.js';
 import { mapConnections } from './map-presentation.js';
 import { MapRequestError, request } from './map-request.js';
 import { mapSearchContext } from './map-search-context.js';
+import { modelPrototypeEnabled } from './model-choice-prototype-fixture.js';
 import { ObjectActions, type ObjectActionsEntry } from './ObjectActions.js';
 import { ObjectDialog } from './ObjectDialog.js';
 import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
@@ -268,8 +269,10 @@ export function HouseholdMap({
   const revealAbort = useRef<AbortController | null>(null);
   useEffect(() => () => revealAbort.current?.abort(), []);
   const workTrigger = useRef<HTMLElement | null>(null);
-  const [textViewOpen, setTextViewOpen] = useState(false);
-  const [workspaceView, setWorkspaceView] = useState<'map' | 'navigation' | 'text'>('map');
+  const [textViewOpen, setTextViewOpen] = useState(modelPrototypeEnabled);
+  const [workspaceView, setWorkspaceView] = useState<'map' | 'navigation' | 'text'>(
+    modelPrototypeEnabled ? 'text' : 'map',
+  );
   const [textFocusRequest, setTextFocusRequest] = useState(0);
   const [draftViewOpen, setDraftViewOpen] = useState(false);
   const [draftOpenRequest, setDraftOpenRequest] = useState(0);

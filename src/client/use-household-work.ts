@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MapState, SaveOperation, SaveReceipt } from '../shared/map.js';
 import type { MapSelection } from '../shared/text-assistant.js';
+import { usePrototypeConversation } from './ModelChoicePrototype.js';
 import { MapRequestError, request } from './map-request.js';
+import { modelPrototypeEnabled } from './model-choice-prototype-fixture.js';
 import { initialObjectSearch } from './ObjectSearch.js';
 import {
   checkOperation,
@@ -11,10 +13,15 @@ import {
   type SaveAttempt,
   type SaveProgress,
 } from './SaveOperations.js';
-import { type ConversationMode, useConversation } from './use-conversation.js';
+import {
+  type ConversationMode,
+  useConversation as useRealConversation,
+} from './use-conversation.js';
 import { useConversationPreferences } from './use-conversation-preferences.js';
 import { usePersonalView } from './use-personal-view.js';
 import { useSaveToast } from './use-save-toast.js';
+
+const useConversation = modelPrototypeEnabled ? usePrototypeConversation : useRealConversation;
 
 function checkOperations(operations: SaveOperation[], householdId: string, current: MapState) {
   for (const operation of operations)

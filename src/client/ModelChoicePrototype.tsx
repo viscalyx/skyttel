@@ -1,39 +1,331 @@
-// THROWAWAY: three conversation layouts on /households/prototype?variant=A|B|C.
-// Fixture shell only: no authentication, model, microphone, or persistence calls.
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import './workspace.css';
+// THROWAWAY: actual App components host three model-control placements.
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { conversationConsentTextVersion } from '../shared/conversation-consent.js';
+import type { TextAssistantView } from '../shared/text-assistant.js';
+import type { TranscriptRow } from './ConversationTranscript.js';
+import { trapDialogTab } from './modal-focus.js';
+import { modelPrototypeEnabled, prototypeMap } from './model-choice-prototype-fixture.js';
+import type { Conversation, useConversation } from './use-conversation.js';
 import './model-choice-prototype.css';
 
 type Choice = { model: string; level: string };
+type Variant = 'A' | 'B' | 'C';
+const names = { A: 'I textvyns huvud', B: 'Vid meddelandet', C: 'I inställningarna' };
+const label = (value: Choice) => `${value.model} · ${value.level}`;
+const fullLabel = (value: Choice) => `GPT-6.1 ${label(value)}`;
 const initial = { model: 'Terra', level: 'Hög' };
-const variants = ['A', 'B', 'C'] as const;
-type Variant = (typeof variants)[number];
-const names = { A: 'I samtalets huvud', B: 'Vid meddelandet', C: 'Gemensam sidopanel' };
-const label = (choice: Choice) => `GPT-6.1 ${choice.model} · ${choice.level}`;
-
-function Choices({
-  choice,
-  choose,
-  unavailable,
-}: {
+const starter: TranscriptRow[] = [
+  { id: 'example-1', role: 'user', text: 'Vilka abonnemang har vi och vem betalar dem?' },
+  {
+    id: 'example-2',
+    role: 'assistant',
+    text: 'Alex betalar musikabonnemanget och Lo betalar filmabonnemanget. I ditt utkast finns också ett tidningsabonnemang som ännu inte är sparat.',
+  },
+];
+type PrototypeState = {
+  variant: Variant;
   choice: Choice;
-  choose: (next: Choice) => void;
+  running: Choice | null;
   unavailable: string;
-}) {
-  const id = useId();
+  feedback: string;
+  choose: (value: Choice) => void;
+  conversation: Conversation;
+  finish: () => void;
+  setUnavailable: (value: string) => void;
+  showDialog: (button: HTMLButtonElement) => void;
+};
+const Context = createContext<PrototypeState | null>(null);
+const usePrototype = () => useContext(Context);
+const baseSession: TextAssistantView = {
+  id: 'prototype-conversation',
+  revision: 1,
+  phase: 'ready',
+  operations: [],
+  contextPercentage: 12,
+  review: {
+    ...prototypeMap.draft,
+    contentVersion: 0,
+    readyToSave: true,
+    conflicts: [],
+    unresolvedIdentities: [],
+    pendingOperations: [],
+  },
+};
+
+export function ModelChoicePrototypeProvider({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [variant, setVariant] = useState<Variant>(() => {
+    const value = new URLSearchParams(location.search).get('variant');
+    return value === 'B' || value === 'C' ? value : 'A';
+  });
+  const [choice, setChoice] = useState(initial);
+  const [running, setRunning] = useState<Choice | null>(null);
+  const [unavailable, setUnavailable] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [text, setText] = useState('');
+  const [transcript, setTranscript] = useState(starter);
+  const [microphone, setMicrophone] = useState<'on' | 'off'>('off');
+  const [canceled, setCanceled] = useState(false);
+  const [menuHidden, setMenuHidden] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const opener = useRef<HTMLButtonElement | null>(null);
+  const blocked = choice.model === unavailable;
+  const session = useMemo(
+    () => ({
+      ...baseSession,
+      canceled,
+      phase: running ? ('working' as const) : ('ready' as const),
+    }),
+    [running, canceled],
+  );
+  const start = () => {
+    if (running || blocked) return;
+    setRunning({ ...choice });
+    setCanceled(false);
+    setTranscript((rows) => [
+      ...rows,
+      { id: crypto.randomUUID(), role: 'user', text: text || 'Visa vem som betalar abonnemangen.' },
+    ]);
+    setText('');
+    setFeedback('');
+  };
+  const finish = () => {
+    if (!running) return;
+    setRunning(null);
+    setTranscript((rows) => [
+      ...rows,
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        text: 'Alex betalar musikabonnemanget och Lo betalar filmabonnemanget. Ditt utkast är kvar.',
+      },
+    ]);
+    setFeedback('');
+  };
+  const reset = async () => {
+    setRunning(null);
+    setTranscript([]);
+    setCanceled(false);
+    return baseSession;
+  };
+  const conversation: Conversation = {
+    inputBlocked: blocked,
+    available: true,
+    consent: {
+      saved: { textVersion: conversationConsentTextVersion, savedAt: '2026-11-03T12:00:00Z' },
+      visit: false,
+      valid: true,
+      known: true,
+      asking: null,
+      saving: false,
+      error: '',
+    },
+    session,
+    transcript,
+    text,
+    pending: false,
+    error: '',
+    unknown: false,
+    working: Boolean(running),
+    needsAnswer: false,
+    voice: {
+      state: microphone === 'on' ? 'listening' : 'idle',
+      phase: microphone === 'on' ? 'listening' : null,
+      microphone,
+      starting: false,
+      speaking: false,
+      userSpeaking: false,
+      working: Boolean(running) && microphone === 'on',
+      error: '',
+      playbackBlocked: false,
+      disconnected: false,
+      disabled: false,
+      level: () => 0,
+      activate: () => setMicrophone((value) => (value === 'on' ? 'off' : 'on')),
+      start: async () => setMicrophone('on'),
+      stop: async () => setMicrophone('off'),
+      silence: async () => {},
+      newConversation: async (resetConversation) => resetConversation(),
+      playAudio: () => {},
+    },
+    setText,
+    begin: (mode) => {
+      if (mode === 'voice') setMicrophone('on');
+    },
+    approve: async () => {},
+    decline: () => {},
+    saveConsent: async () => true,
+    revokeConsent: async () => false,
+    send: async () => start(),
+    cancel: async () => {
+      setRunning(null);
+      setCanceled(true);
+    },
+    newConversation: async () => {
+      await reset();
+    },
+    recover: async () => {},
+    retry: async () => {},
+  };
+  const state: PrototypeState = {
+    variant,
+    choice,
+    running,
+    unavailable,
+    feedback,
+    conversation,
+    finish,
+    setUnavailable,
+    choose: (next) => {
+      setChoice(next);
+      setFeedback(
+        `${fullLabel(next)} valt. ${running ? 'Gäller när nästa begäran börjar behandlas.' : 'Gäller nästa begäran.'}`,
+      );
+    },
+    showDialog: (button) => {
+      opener.current = button;
+      dialog.current?.showModal();
+    },
+  };
+  const cycle = useCallback(
+    (delta: number) => {
+      const variants: Variant[] = ['A', 'B', 'C'];
+      const next = variants[(variants.indexOf(variant) + delta + 3) % 3];
+      setVariant(next);
+      const query = new URLSearchParams(location.search);
+      query.set('variant', next);
+      navigate({ pathname: location.pathname, search: query.toString() }, { replace: true });
+    },
+    [variant, location.pathname, location.search, navigate],
+  );
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (
+        !(event.target instanceof HTMLElement) ||
+        event.target.closest(
+          'input, textarea, select, [contenteditable], [role="slider"], canvas',
+        ) ||
+        dialog.current?.open
+      )
+        return;
+      // Arrow shortcuts belong only to the prototype switcher, not the app's map.
+      if (!event.target.closest('.model-prototype-switcher')) return;
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        cycle(event.key === 'ArrowLeft' ? -1 : 1);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [cycle]);
   return (
-    <div className="mp-choices">
+    <Context value={state}>
+      {children}
+      <dialog
+        ref={dialog}
+        className="model-prototype-dialog"
+        aria-labelledby="model-prototype-title"
+        onKeyDown={trapDialogTab}
+        onClose={() => opener.current?.focus()}
+      >
+        <h2 id="model-prototype-title">Modell och resonemangsnivå</h2>
+        <PrototypeChoices help />
+        <PrototypeScope />
+        <PrototypeStatus />
+        <button type="button" onClick={() => dialog.current?.close()}>
+          Klart
+        </button>
+      </dialog>
+      {menuHidden && (
+        <button
+          type="button"
+          className="model-prototype-restore"
+          onClick={() => setMenuHidden(false)}
+        >
+          Prototyp {variant}
+        </button>
+      )}
+      <nav className="model-prototype-switcher" aria-label="Prototypvarianter" hidden={menuHidden}>
+        <button type="button" aria-label="Föregående variant" onClick={() => cycle(-1)}>
+          ←
+        </button>
+        <span aria-live="polite">
+          {variant} · {names[variant]}
+        </span>
+        <button type="button" aria-label="Nästa variant" onClick={() => cycle(1)}>
+          →
+        </button>
+        <details>
+          <summary>Prova</summary>
+          <section aria-label="Prototypens scenarier">
+            <strong>Kastbar prototyp i den riktiga appen</strong>
+            <p>Exempeldata. Röst och modellsvar simuleras. Inget sparas mellan omladdningar.</p>
+            <button type="button" onClick={() => setMenuHidden(true)}>
+              Dölj prototypmenyn
+            </button>
+            <button type="button" disabled={Boolean(running) || blocked} onClick={start}>
+              Starta arbete
+            </button>
+            <button type="button" disabled={!running} onClick={finish}>
+              Slutför arbete
+            </button>
+            <button type="button" onClick={() => setUnavailable(unavailable ? '' : choice.model)}>
+              {unavailable ? 'Återställ stöd' : 'Gör vald modell otillgänglig'}
+            </button>
+            <output aria-live="off">
+              Val: {fullLabel(choice)}. Pågår: {running ? fullLabel(running) : 'inget'}. Röst:{' '}
+              {microphone}. Utkast: 1.
+            </output>
+          </section>
+        </details>
+      </nav>
+    </Context>
+  );
+}
+
+export function usePrototypeConversation(
+  options: Parameters<typeof useConversation>[0],
+): Conversation {
+  const state = usePrototype();
+  if (!state) throw new Error('Prototype conversation needs its provider');
+  return {
+    ...state.conversation,
+    begin: (mode) => {
+      state.conversation.begin(mode);
+      options.onStarted?.(mode);
+    },
+  };
+}
+
+function PrototypeChoices({ help = false }: { help?: boolean }) {
+  const state = usePrototype();
+  const id = useId();
+  if (!state) return null;
+  return (
+    <div className="model-prototype-choices">
       <label htmlFor={`${id}-model`}>
         Modell
         <select
           id={`${id}-model`}
-          value={choice.model}
-          onChange={(e) => choose({ ...choice, model: e.target.value })}
+          value={state.choice.model}
+          onChange={(event) => state.choose({ ...state.choice, model: event.target.value })}
         >
           {['Terra', 'Sol'].map((model) => (
-            <option key={model} value={model} disabled={unavailable === model}>
+            <option key={model} value={model} disabled={state.unavailable === model}>
               GPT-6.1 {model}
-              {unavailable === model ? ' — inte tillgänglig' : ''}
+              {state.unavailable === model ? ' — otillgänglig' : ''}
             </option>
           ))}
         </select>
@@ -42,317 +334,113 @@ function Choices({
         Resonemangsnivå
         <select
           id={`${id}-level`}
-          value={choice.level}
-          aria-describedby={`${id}-help`}
-          onChange={(e) => choose({ ...choice, level: e.target.value })}
+          value={state.choice.level}
+          aria-describedby={help ? `${id}-help` : undefined}
+          onChange={(event) => state.choose({ ...state.choice, level: event.target.value })}
         >
           {['Låg', 'Medium', 'Hög'].map((level) => (
             <option key={level}>{level}</option>
           ))}
         </select>
       </label>
-      <p id={`${id}-help`} className="mp-help">
-        Hög ger mer utrymme för krävande uppgifter och kan ta längre tid. Låg och medium ger mindre
-        utrymme. Resultat och väntetid kan variera.
+      {help && (
+        <p id={`${id}-help`}>
+          Hög ger mer utrymme för krävande uppgifter och kan ta längre tid. Låg och medium ger
+          mindre utrymme. Resultat och väntetid kan variera.
+        </p>
+      )}
+    </div>
+  );
+}
+function PrototypeScope() {
+  return (
+    <div className="model-prototype-scope">
+      <p>
+        Samma val gäller text och röst. GPT-Live 1 lyssnar och talar; den valda modellen arbetar med
+        dina uppdrag.
+      </p>
+      <p>
+        Ditt senaste val används i nya samtal på alla dina enheter och i alla dina hushåll. Andra
+        pågående samtal behåller sina val.
+      </p>
+      <p>
+        Ändringar gäller när nästa begäran börjar behandlas. Pågående arbete fortsätter med sina
+        ursprungliga val.
       </p>
     </div>
   );
 }
-
-export function ModelChoicePrototype() {
-  const [variant, setVariant] = useState<Variant>(() => {
-    const value = new URLSearchParams(location.search).get('variant');
-    return variants.find((v) => v === value) ?? 'A';
-  });
-  const [choice, setChoice] = useState<Choice>(initial);
-  const [remembered, setRemembered] = useState<Choice>(initial);
-  const [running, setRunning] = useState<Choice | null>(null);
-  const [unavailable, setUnavailable] = useState('');
-  const [textOpen, setTextOpen] = useState(true);
-  const [voice, setVoice] = useState(false);
-  const [dark, setDark] = useState(false);
-  const [message, setMessage] = useState('Vilka abonnemang betalar Alex?');
-  const [feedback, setFeedback] = useState('');
-  const [sent, setSent] = useState('Visa hushållets abonnemang.');
-  const [answer, setAnswer] = useState(
-    'Här är hushållets abonnemang. Vill du se vem som betalar dem?',
-  );
-  const dialog = useRef<HTMLDialogElement>(null);
-  const opener = useRef<HTMLButtonElement | null>(null);
-  const blocked = choice.model === unavailable;
-  const pending = running && label(running) !== label(choice);
-  const switchVariant = useCallback((delta: number) => {
-    setVariant((current) => {
-      const next =
-        variants[(variants.indexOf(current) + delta + variants.length) % variants.length];
-      const url = new URL(location.href);
-      url.searchParams.set('variant', next);
-      history.replaceState(null, '', url);
-      return next;
-    });
-  }, []);
-  useEffect(() => {
-    function key(event: KeyboardEvent) {
-      if (
-        !(event.target instanceof HTMLElement) ||
-        event.target.closest('input, textarea, select, [contenteditable], [role="slider"]') ||
-        dialog.current?.open
-      )
-        return;
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-        event.preventDefault();
-        switchVariant(event.key === 'ArrowLeft' ? -1 : 1);
-      }
-    }
-    window.addEventListener('keydown', key);
-    return () => window.removeEventListener('keydown', key);
-  }, [switchVariant]);
-  function choose(next: Choice) {
-    setChoice(next);
-    setRemembered(next);
-    setFeedback(
-      `${label(next)} valt. ${running ? 'Gäller när nästa begäran börjar behandlas.' : 'Gäller nästa begäran.'}`,
-    );
-  }
-  function open(event: React.MouseEvent<HTMLButtonElement>) {
-    opener.current = event.currentTarget;
-    dialog.current?.showModal();
-  }
-  function start() {
-    if (running || blocked) return;
-    setRunning({ ...choice });
-    setSent(message || 'Vilka abonnemang betalar Alex?');
-    setMessage('');
-    setFeedback(`Skyttel arbetar med ${label(choice)}.`);
-  }
-  function finish() {
-    setRunning(null);
-    setAnswer('Alex betalar för musiktjänsten. Uppgiften finns i kartan.');
-    setFeedback('Svaret är klart. Ditt utkast är kvar.');
-  }
-  const controls = <Choices choice={choice} choose={choose} unavailable={unavailable} />;
-  const status = (
-    <div className="mp-status" role="status" aria-live="polite" aria-atomic="true">
-      {blocked ? (
+function PrototypeStatus() {
+  const state = usePrototype();
+  if (!state) return null;
+  const changed = state.running && label(state.running) !== label(state.choice);
+  return (
+    <div role="status" aria-live="polite" aria-atomic="true" className="model-prototype-status">
+      {state.choice.model === state.unavailable && (
         <p>
-          GPT-6.1 {choice.model} är inte tillgänglig. Välj en annan modell för att fortsätta.
+          GPT-6.1 {state.choice.model} är inte tillgänglig. Välj en annan modell för att fortsätta.
           Samtalet och ditt utkast är kvar.
         </p>
-      ) : null}
-      {running ? (
+      )}
+      {changed ? (
         <p>
-          <strong>Pågår: {label(running)}</strong>
-          {pending && (
-            <>
-              <br />
-              Nästa begäran: {label(choice)}.
-            </>
-          )}
+          Pågår: {label(state.running as Choice)}. Nästa begäran: {label(state.choice)}.
         </p>
-      ) : null}
-      <span>{feedback}</span>
+      ) : (
+        state.feedback && <p>{state.feedback}</p>
+      )}
     </div>
   );
-  const scope = (
-    <p className="mp-help">
-      Samma val gäller text och röst. GPT-Live 1 lyssnar och talar; den valda modellen arbetar med
-      dina uppdrag.
-    </p>
-  );
-  const preferences = (
-    <p className="mp-help">
-      Ditt senaste val används i nya samtal på alla dina enheter och i alla dina hushåll. Andra
-      pågående samtal behåller sina val.
-    </p>
-  );
-  const picker = (
-    <button className="mp-picker" type="button" aria-haspopup="dialog" onClick={open}>
-      {label(choice)} <span aria-hidden="true">⌄</span>
-      <span className="visually-hidden">. Ändra modell och resonemangsnivå</span>
-    </button>
-  );
-  return (
-    <div className="household-map workspace-shell mp-root" data-theme={dark ? 'dark' : 'light'}>
-      <header className="mp-header">
-        <strong>
-          Skyttel <span> / Hushållet Lind</span>
-        </strong>
-        <span className="mp-tag">Kastbar prototyp · exempeldata</span>
-      </header>
-      <main className={`mp-layout mp-variant-${variant}`}>
-        <nav className="mp-tools" aria-label="Samtalets visning">
-          <button type="button" aria-pressed={textOpen} onClick={() => setTextOpen(!textOpen)}>
-            Textvy
-          </button>
-          <button type="button" aria-pressed={voice} onClick={() => setVoice(!voice)}>
-            Röstläge
-          </button>
-          {variant === 'C' && (
-            <button type="button" onClick={open} aria-haspopup="dialog">
-              Samtalsval
-            </button>
-          )}
-        </nav>
-        <section className="mp-map" aria-label="Hushållets karta, exempeldata">
-          <div className="mp-node mp-person">
-            Alex <small>Person</small>
-          </div>
-          <div className="mp-link">betalar ↓</div>
-          <div className="mp-node">
-            Musikabonnemang <small>129 kr / månad</small>
-          </div>
-          <div className="mp-link">gäller ↓</div>
-          <div className="mp-node">
-            Musiktjänst <small>Tjänst</small>
-          </div>
-          <p className="mp-draft">
-            Ditt utkast · 1 föreslagen ändring
-            <br />
-            <small>Kontaktadress för musiktjänsten</small>
-          </p>
-        </section>
-        <div className="mp-conversation">
-          {variant === 'A' && (
-            <section className="mp-card mp-shared" aria-label="Samtalets modellval">
-              <div className="mp-row">
-                <h1>Samtal med Skyttel</h1>
-                {picker}
-              </div>
-              {scope}
-              {status}
-            </section>
-          )}
-          {variant === 'C' && (
-            <aside className="mp-card mp-sidebar" aria-label="Samtalsval">
-              <h1>Samtalsval</h1>
-              {controls}
-              {scope}
-              {preferences}
-              {status}
-            </aside>
-          )}
-          {voice && (
-            <section className="mp-card mp-voice" aria-label="Röstruta">
-              <strong>▥ {running ? 'Skyttel arbetar' : 'Lyssnar'}</strong>
-              <span>Simulerat röstläge</span>
-              {variant === 'B' && (
-                <>
-                  {picker}
-                  {!textOpen && status}
-                </>
-              )}
-            </section>
-          )}
-          {textOpen && (
-            <section className="mp-card mp-text" aria-label="Textvy">
-              <header>
-                <h2>Samtalstext</h2>
-                <span className="mp-help">Kontext 12 %</span>
-              </header>
-              <div className="mp-messages">
-                <p className="mp-user">{sent}</p>
-                <p>{answer}</p>
-                {running && <p>Skyttel arbetar…</p>}
-              </div>
-              {variant === 'B' && (
-                <div className="mp-inline">
-                  <strong>Val för ditt uppdrag</strong>
-                  {controls}
-                  {status}
-                  <details>
-                    <summary>Text och röst använder samma val</summary>
-                    {scope}
-                    {preferences}
-                  </details>
-                </div>
-              )}
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  start();
-                }}
-              >
-                <label htmlFor="mp-message">Skriv till Skyttel</label>
-                <textarea
-                  id="mp-message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                />
-                <button type="submit" disabled={Boolean(running) || blocked}>
-                  Skicka exempel
-                </button>
-              </form>
-            </section>
-          )}
-          {!textOpen && !voice && (
-            <section className="mp-card">
-              <p>Samtalet och ditt utkast är kvar.</p>
-              {variant === 'B' && picker}
-            </section>
-          )}
-        </div>
-      </main>
-      <dialog
-        ref={dialog}
-        className="mp-dialog"
-        aria-labelledby="mp-dialog-title"
-        onClose={() => opener.current?.focus()}
-      >
-        <h2 id="mp-dialog-title">Modell och resonemangsnivå</h2>
-        {controls}
-        {scope}
-        {preferences}
-        <p>
-          Ändringar gäller när nästa begäran börjar behandlas. Pågående arbete fortsätter med sina
-          ursprungliga val.
-        </p>
-        {status}
-        <button type="button" onClick={() => dialog.current?.close()}>
-          Klart
-        </button>
-      </dialog>
-      <aside className="mp-lab" aria-label="Prototypens scenarier">
+}
+
+export function PrototypeModelControls({
+  place,
+}: {
+  place: 'header' | 'composer' | 'voice' | 'settings';
+}) {
+  const state = usePrototype();
+  if (!modelPrototypeEnabled || !state) return null;
+  if (place === 'settings')
+    return (
+      <section className="conversation-setting model-prototype-setting">
+        <h2>Modell och resonemangsnivå</h2>
+        <p className="conversation-setting-scope">Gäller ditt samtal i både text- och röstläge.</p>
+        <PrototypeChoices help />
+        <PrototypeScope />
+        <PrototypeStatus />
+      </section>
+    );
+  if (place === 'header' && state.variant === 'B') return null;
+  if (place === 'composer' && state.variant !== 'B') return null;
+  if (place === 'composer')
+    return (
+      <section className="model-prototype-inline" aria-label="Modellval">
+        <PrototypeChoices />
         <details>
-          <summary>Prova tillstånd · endast prototyp</summary>
-          <div className="mp-lab-actions">
-            <button type="button" onClick={start} disabled={Boolean(running) || blocked}>
-              Starta arbete
-            </button>
-            <button type="button" onClick={finish} disabled={!running}>
-              Slutför arbete
-            </button>
-            <button type="button" onClick={() => setUnavailable(unavailable ? '' : choice.model)}>
-              {unavailable ? 'Återställ stöd' : 'Gör vald modell otillgänglig'}
-            </button>
-            <button type="button" onClick={() => setDark(!dark)}>
-              Byt tema
-            </button>
-          </div>
-          <p>
-            Prova: starta arbete → ändra val → slutför → starta igen. Växla text/röst. Ingen
-            mikrofon eller modell används. Allt nollställs vid omladdning.
-          </p>
-          <output aria-live="off">
-            Variant {variant} | Samtal: {label(choice)} | Pågår:{' '}
-            {running ? label(running) : 'inget'} | Ihågkommet (simulerat): {label(remembered)} |
-            Otillgänglig: {unavailable || 'ingen'} | Text: {String(textOpen)} | Röst:{' '}
-            {String(voice)} | Utkast: 1
-          </output>
+          <summary>Om modell och resonemang</summary>
+          <p>Hög ger mer utrymme för krävande uppgifter och kan ta längre tid.</p>
+          <PrototypeScope />
         </details>
-      </aside>
-      {import.meta.env.DEV && (
-        <nav className="mp-switcher" aria-label="Prototypvarianter">
-          <button type="button" aria-label="Föregående variant" onClick={() => switchVariant(-1)}>
-            ←
-          </button>
-          <strong aria-live="polite">
-            {variant} · {names[variant]}
-          </strong>
-          <button type="button" aria-label="Nästa variant" onClick={() => switchVariant(1)}>
-            →
-          </button>
-        </nav>
+        <PrototypeStatus />
+      </section>
+    );
+  return (
+    <div className={`model-prototype-compact model-prototype-${place}`}>
+      {state.variant === 'C' ? (
+        <Link to={`/households/prototype/settings/conversation?variant=${state.variant}`}>
+          {fullLabel(state.choice)} · Ändra i inställningar
+        </Link>
+      ) : (
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-label={`Modell och resonemangsnivå: ${fullLabel(state.choice)}`}
+          onClick={(event) => state.showDialog(event.currentTarget)}
+        >
+          {fullLabel(state.choice)} <span aria-hidden="true">⌄</span>
+        </button>
       )}
+      <PrototypeStatus />
     </div>
   );
 }

@@ -1,316 +1,182 @@
-.household-map.mp-root {
-  position: relative;
-  min-height: 100dvh;
-  overflow: visible;
-  padding-bottom: 100px;
+/* Only the proposed controls and the dev switcher. Existing app layout is intact. */
+.model-prototype-switcher[hidden] {
+  display: none;
 }
-.mp-root button,
-.mp-root select,
-.mp-root textarea {
-  font: inherit;
-  min-height: 44px;
-  border: 1px solid var(--space-control);
-  border-radius: 8px;
-  padding: 8px 12px;
-}
-.mp-root button[aria-pressed="true"] {
-  box-shadow: inset 0 0 0 2px var(--space-accent);
-}
-.mp-header {
-  padding: 20px 28px;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--space-line);
-  flex-wrap: wrap;
-}
-.mp-header strong {
-  font-size: 21px;
-}
-.mp-header :where(strong) span {
-  font-size: 15px;
-  font-weight: 400;
-}
-.mp-tag {
-  font-size: 13px;
-  color: var(--space-muted);
-}
-.mp-layout {
-  display: grid;
-  grid-template-columns: 100px minmax(180px, 1fr) minmax(350px, 480px);
-  gap: 24px;
-  padding: 28px;
-  align-items: start;
-}
-.mp-tools {
-  display: grid;
-  gap: 10px;
-}
-.mp-map {
-  padding: 36px 12px;
-  text-align: center;
-}
-.mp-node {
-  padding: 22px;
-  border: 1px solid var(--space-control);
-  border-radius: 18px;
-  background: var(--space-surface);
-  max-width: 230px;
-  margin: auto;
-}
-.mp-node small {
-  display: block;
-  color: var(--space-muted);
-}
-.mp-person {
-  border-radius: 60px;
-  max-width: 145px;
-}
-.mp-link {
-  color: var(--space-muted);
-  padding: 15px;
-}
-.mp-draft {
-  padding: 16px;
-  border: 1px dashed var(--space-control);
+.model-prototype-restore {
+  position: fixed;
+  top: 4px;
+  right: 4px;
+  z-index: 80;
+  font-size: 11px;
+  padding: 4px 8px;
   border-radius: 12px;
-  margin-top: 45px;
+  border: 1px solid #607c89;
+  background: #1d3543;
+  color: white;
 }
-.mp-conversation {
-  display: grid;
-  gap: 14px;
-  min-width: 0;
+.model-prototype-compact {
+  padding: 6px 12px;
+  font-size: 13px;
 }
-.mp-card {
-  background: var(--space-surface);
-  border: 1px solid var(--space-control);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: var(--space-shadow);
-  min-width: 0;
-}
-.mp-root h1,
-.mp-root h2 {
-  font-size: 18px;
-  margin: 0 0 12px;
-}
-.mp-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-.mp-picker {
-  text-align: left;
+.model-prototype-compact button {
   width: 100%;
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  min-height: 36px;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font: inherit;
 }
-.mp-help {
-  color: var(--space-muted);
-  font-size: 14px;
+.model-prototype-inline {
+  flex: none;
+  padding: 8px 12px;
+  border-top: 1px solid var(--space-line);
+  font-size: 13px;
 }
-.mp-status {
-  font-size: 14px;
+.model-prototype-choices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
 }
-.mp-status:has(p),
-.mp-status:has(span:not(:empty)) {
-  border-left: 3px solid var(--space-accent);
-  padding-left: 12px;
-  margin-top: 14px;
+.model-prototype-choices label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 13px;
 }
-.mp-status p {
+.model-prototype-choices select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  font: inherit;
+  padding: 6px;
+  border: 1px solid var(--space-control, #607c89);
+  border-radius: 6px;
+}
+.model-prototype-choices p {
+  grid-column: 1 / -1;
+}
+.model-prototype-status p {
+  font-size: 12px;
   margin: 6px 0;
 }
-.mp-text header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
+.model-prototype-scope,
+.model-prototype-choices > p {
+  font-size: 14px;
 }
-.mp-messages {
-  min-height: 170px;
-  padding: 10px 0;
-}
-.mp-user {
-  padding: 14px;
-  border-radius: 12px;
-  background: var(--space-bg);
-  margin-left: 25px;
-}
-.mp-root form {
-  display: grid;
-  gap: 8px;
-}
-.mp-root textarea {
-  resize: vertical;
-  width: 100%;
-  min-height: 80px;
-}
-.mp-root :where(form) button {
-  justify-self: end;
-}
-.mp-choices {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.mp-choices label {
-  display: grid;
-  gap: 5px;
-  font-weight: 600;
-  min-width: 0;
-}
-.mp-choices select {
-  width: 100%;
-  min-width: 0;
-}
-.mp-choices p {
-  grid-column: 1 / -1;
-  margin: 0;
-}
-.mp-inline {
-  padding: 16px 0;
-  border-top: 1px solid var(--space-line);
-  display: grid;
-  gap: 12px;
-}
-.mp-root summary {
+.model-prototype-inline summary {
+  padding: 6px 0;
   cursor: pointer;
-  min-height: 44px;
-  padding: 10px 0;
 }
-.mp-voice {
-  display: grid;
-  gap: 8px;
+.model-prototype-inline details[open] {
+  max-height: 180px;
+  overflow-y: auto;
 }
-.mp-voice > span {
-  font-size: 13px;
-  color: var(--space-muted);
+.model-prototype-voice {
+  width: min(300px, calc(100vw - 24px));
+  max-width: min(340px, calc(100vw - 24px));
+  background: var(--space-surface, white);
+  color: var(--space-text, #1d3543);
+  border: 1px solid var(--space-control, #607c89);
+  border-radius: 12px;
+  margin-top: 6px;
 }
-.mp-dialog {
-  color: var(--space-text);
-  background: var(--space-surface);
-  border: 1px solid var(--space-control);
-  border-radius: 16px;
-  width: min(520px, calc(100vw - 24px));
+.model-prototype-dialog {
+  color-scheme: light;
+  width: min(480px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
-  overflow: auto;
   padding: 24px;
+  overflow: auto;
+  border: 1px solid #607c89;
+  border-radius: 12px;
+  color: #1d3543;
+  background: white;
 }
-.mp-dialog::backdrop {
-  background: #0007;
+body:has(.app-shell[data-theme="dark"]) .model-prototype-dialog {
+  color-scheme: dark;
+  color: #edf2f9;
+  background: #1a293a;
 }
-.mp-dialog > button {
+.model-prototype-dialog::backdrop {
+  background: #0006;
+}
+.model-prototype-dialog h2 {
+  font-size: 20px;
+  margin-top: 0;
+}
+.model-prototype-dialog button {
+  min-height: 44px;
+}
+.model-prototype-setting .model-prototype-choices {
   margin-top: 16px;
 }
-.mp-lab {
-  margin: 0 28px;
-  border-top: 1px dashed var(--space-control);
-  font-size: 13px;
-}
-.mp-lab-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.mp-lab output {
-  display: block;
-  overflow-wrap: anywhere;
-}
-.mp-switcher {
+.model-prototype-switcher {
   position: fixed;
-  z-index: 50;
-  bottom: 16px;
+  z-index: 80;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: var(--space-text);
-  color: var(--space-surface);
-  border-radius: 40px;
-  padding: 7px;
-  box-shadow: var(--space-shadow);
-  max-width: calc(100vw - 20px);
+  gap: 6px;
+  border-radius: 30px;
+  background: #1d3543;
+  color: white;
+  padding: 5px;
+  box-shadow: 0 3px 12px #0003;
+  max-width: calc(100vw - 12px);
+  font: 12px / 1.4 system-ui;
 }
-.mp-switcher strong {
-  font-size: 13px;
-  min-width: 150px;
+.model-prototype-switcher > button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: white;
+  color: #1d3543;
+  flex: none;
+}
+.model-prototype-switcher > span {
+  min-width: 125px;
   text-align: center;
 }
-.mp-switcher button {
-  flex: 0 0 44px;
-  border-radius: 50%;
+.model-prototype-switcher summary {
+  cursor: pointer;
+  padding: 12px 8px;
 }
-.mp-variant-C {
-  grid-template-columns: 100px minmax(150px, 1fr) minmax(580px, 2fr);
-}
-.mp-variant-C .mp-conversation {
-  grid-template-columns: minmax(230px, 1fr) minmax(290px, 1.2fr);
-}
-.mp-sidebar {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-}
-.mp-variant-C .mp-text,
-.mp-variant-C .mp-voice {
-  grid-column: 2;
-}
-.mp-sidebar .mp-choices {
-  grid-template-columns: 1fr;
-}
-@media (max-width: 1050px) {
-  .mp-layout,
-  .mp-variant-C {
-    grid-template-columns: 1fr minmax(320px, 1.4fr);
-    padding: 16px;
-    gap: 16px;
-  }
-  .mp-tools {
-    grid-column: 1 / -1;
-    display: flex;
-    flex-wrap: wrap;
-  }
-  .mp-variant-C .mp-conversation {
-    grid-template-columns: 1fr;
-  }
-  .mp-sidebar,
-  .mp-variant-C .mp-text,
-  .mp-variant-C .mp-voice {
-    grid-column: auto;
-    grid-row: auto;
-  }
-}
-@media (max-width: 620px) {
-  .mp-layout,
-  .mp-variant-C {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 12px;
-  }
-  .mp-map {
-    display: none;
-  }
-  .mp-header {
-    padding: 16px;
-  }
-  .mp-card {
-    padding: 16px;
-  }
-  .mp-choices {
-    grid-template-columns: 1fr;
-  }
-  .mp-lab {
-    margin: 0 16px;
-  }
-}
-.mp-root .visually-hidden {
+.model-prototype-switcher section {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
+  bottom: 58px;
+  left: 0;
+  width: min(400px, calc(100vw - 12px));
+  max-height: 65dvh;
+  overflow: auto;
+  background: white;
+  color: #1d3543;
+  border: 1px solid #607c89;
+  border-radius: 12px;
+  padding: 16px;
+}
+.model-prototype-switcher section button {
+  min-height: 44px;
+  margin: 3px;
+}
+.model-prototype-switcher output {
+  display: block;
+  padding-top: 8px;
+}
+.text-view-open .model-prototype-voice {
+  display: none;
+}
+.household-map.workspace-shell .conversation-corner .model-prototype-voice button {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 44px;
   white-space: nowrap;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
 }
