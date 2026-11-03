@@ -104,6 +104,8 @@ export type Attempt = {
   step: string;
   profile: string;
   repetition: number;
+  applicationVersion?: string;
+  applicationCommit?: string;
   modality: 'text' | 'voice';
   group?: ScenarioGroup;
   outcome: Outcome;
@@ -111,6 +113,15 @@ export type Attempt = {
   content?: JudgeResult;
   reason?: string;
   elapsedMs: number | null;
+  timing?: {
+    contract: 'text-delivery-v2' | 'summary-execution-v1';
+    submittedAt: number;
+    queueMs: number | null;
+    firstResponseMs: number | null;
+    firstUsefulMs: number | null;
+    observedResponseEndMs: number | null;
+    successfulCompletionMs: number | null;
+  };
   observedEndMs?: number;
   backendCostUsd: number | null;
   judgeCostUsd?: number | null;

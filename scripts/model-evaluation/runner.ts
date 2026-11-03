@@ -3,6 +3,7 @@ import type { AssistantObservation } from '../../src/server/assistant-observatio
 import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import type { createInstallation } from '../../tests/support/installation.js';
 import { assessInability } from './assessment.js';
+import type { ApplicationVersion } from './application.js';
 import { scenarioHistory } from './catalog.js';
 import { evaluationEnvironment } from './environment.js';
 import { followUpStep, scenarioUtterances, selectFollowUp } from './follow-ups.js';
@@ -19,6 +20,7 @@ import type { Attempt, JudgeInput, JudgeResult, Scenario, ScenarioStep } from '.
 export type RunOptions = {
   profile: string;
   repetition: number;
+  application?: ApplicationVersion;
   followUps?: boolean;
   judge?: (input: JudgeInput) => Promise<JudgeResult>;
   record?: (attempt: Attempt) => Promise<void>;
@@ -44,7 +46,7 @@ export async function runTextScenario(
       events.push(retainedObservation(event, options.recordObservation));
       installationOptions?.observe?.(event);
     },
-  });
+  }, options.application);
   const attempts: Attempt[] = [];
   let blocked: string | undefined;
   let summaryText = '';
@@ -59,6 +61,10 @@ export async function runTextScenario(
     fixed: [],
     elapsedMs: null,
     backendCostUsd: 0,
+    ...(environment.application ? {
+      applicationVersion: environment.application.id,
+      applicationCommit: environment.application.commit,
+    } : {}),
   });
   const queue: {
     step: ScenarioStep;
@@ -82,7 +88,10 @@ export async function runTextScenario(
           repetition: options.repetition,
         });
         const offset = events.length;
-        const startedAt = Date.now();
+        let startedAt = Date.now();
+        let requestId: string | undefined;
+        let submitted = step.transition === 'summary';
+        let firstResponseMs: number | null = null;
         const costBefore = options.costs?.() ?? 0;
         const judgeBefore = options.judgeCosts?.() ?? 0;
         const callsBefore = options.providerCalls?.() ?? 0;
@@ -111,7 +120,9 @@ export async function runTextScenario(
             responseText = summaryText;
           } else {
             view = await environment.get<TextAssistantView>(environment.path);
-            const requestId = randomUUID();
+            requestId = randomUUID();
+            startedAt = Date.now();
+            submitted = true;
             await environment.post(`${environment.path}/messages`, {
               requestId,
               revision: view.revision,
@@ -123,6 +134,15 @@ export async function runTextScenario(
               view = await environment.get<TextAssistantView>(
                 `${environment.path}/messages/${requestId}`,
               );
+              // Only delivered result content can be useful. Activity/status
+              // labels and previous requests' replies never start this clock.
+              if (
+                firstResponseMs === null &&
+                (view.taskId === requestId || view.taskStatus === 'completed') &&
+                !view.error &&
+                (view.modelReply || view.result || view.receipt)
+              )
+                firstResponseMs = Date.now() - startedAt;
               if (view.selection) {
                 const matches =
                   view.selection.kind === 'object' && view.selection.id === scenario.selection;
@@ -182,6 +202,18 @@ export async function runTextScenario(
           if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
           concludeAttempt(result, finishedAt - startedAt);
           result.observedEndMs = finishedAt - startedAt;
+          const taskStarted = observed.find(
+            (event) => event.kind === 'task_started' && event.taskId === requestId,
+          );
+          result.timing = {
+            contract: step.transition === 'summary' ? 'summary-execution-v1' : 'text-delivery-v2',
+            submittedAt: startedAt,
+            queueMs: taskStarted ? Math.max(0, taskStarted.at - startedAt) : null,
+            firstResponseMs,
+            firstUsefulMs: result.outcome === 'pass' ? firstResponseMs : null,
+            observedResponseEndMs: finishedAt - startedAt,
+            successfulCompletionMs: result.elapsedMs,
+          };
           if (entry.startedAt !== undefined)
             result.assistedElapsedMs =
               result.outcome === 'pass' ? finishedAt - entry.startedAt : null;
@@ -227,6 +259,8 @@ export async function runTextScenario(
               (entry.parent ? `\nCurrent clarification: ${JSON.stringify(step.text)}` : ''),
             judge: options.judge,
           });
+          if (result.assessment?.kind === 'necessary_clarification' && result.timing)
+            result.timing.firstUsefulMs = firstResponseMs;
           result.backendCostUsd = options.costs
             ? options.costs() === null
               ? null
@@ -247,6 +281,19 @@ export async function runTextScenario(
           result.backendCostUsd = costAfter == null ? null : costAfter - costBefore;
           const judgeAfter = options.judgeCosts?.();
           result.judgeCostUsd = judgeAfter == null ? null : judgeAfter - judgeBefore;
+          if (submitted) {
+            result.timing ??= {
+              contract: step.transition === 'summary' ? 'summary-execution-v1' : 'text-delivery-v2',
+              submittedAt: startedAt,
+              queueMs: null,
+              firstResponseMs,
+              firstUsefulMs: null,
+              observedResponseEndMs: null,
+              successfulCompletionMs: null,
+            };
+            result.timing.successfulCompletionMs = null;
+            result.timing.firstUsefulMs = null;
+          }
         }
         if (result.outcome !== 'pass' && !continuing) blocked = `${step.id}: ${result.outcome}`;
         result.providerCalls = options.providerCalls

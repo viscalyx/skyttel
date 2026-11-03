@@ -6,6 +6,48 @@ import type { Scenario } from '../../../scripts/model-evaluation/types.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
+test('text timing includes final response delivery and identifies the measurement contract', {
+  tags: ['technical'],
+}, async () => {
+  const model = textModel(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    return [modelMessage('Hela svaret.')];
+  });
+  let held = false;
+  const run = await runTextScenario(
+    {
+      id: 'delivered-text',
+      title: 'Whole response delivery',
+      voice: false,
+      steps: [{ id: 'read', text: 'Vad vet du?', expected: { requirements: [] } }],
+    },
+    {
+      modelFetch: model.provider,
+      deliverResponse: async (request, response) => {
+        if (request.method === 'GET' && /\/messages\/[^/]+$/.test(new URL(request.url).pathname)) {
+          const view = (await response.clone().json()) as TextAssistantView;
+          if (view.taskStatus === 'completed' && !held) {
+            held = true;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
+        return response;
+      },
+    },
+    { profile: 'local', repetition: 1 },
+  );
+  expect(held).toBe(true);
+  expect(run.attempts[0]).toMatchObject({
+    outcome: 'pass',
+    timing: { contract: 'text-delivery-v2' },
+  });
+  expect(run.attempts[0].timing?.successfulCompletionMs).toBeGreaterThanOrEqual(100);
+  expect(run.attempts[0].timing?.firstUsefulMs).toBeGreaterThanOrEqual(100);
+  expect(run.attempts[0].timing?.firstUsefulMs).toBeLessThanOrEqual(run.attempts[0].elapsedMs ?? 0);
+  expect(run.attempts[0].timing?.successfulCompletionMs).toBe(run.attempts[0].elapsedMs);
+  expect(run.attempts[0].timing?.queueMs).toBeGreaterThanOrEqual(0);
+});
+
 test.each(['preserved', 'missing', 'judge-error'] as const)(
   'advanced inability needs explicit retained unfinished instructions: %s',
   { tags: ['technical'] },

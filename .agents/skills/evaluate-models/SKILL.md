@@ -18,6 +18,9 @@ Use the user's models, intended text or voice use, and payment authorization.
 Ask for missing models or payment authorization before making paid calls.
 Apply a spending limit only when the user specifies one, using its stated
 scope. An authorized run without a specified budget has no cost ceiling.
+For application changes within one model, load
+[application-version comparison](references/application-comparison.md) and
+record its shared contract and acceptance plan before selecting runs.
 Resolve the provider for each supplied model; ask the user when it is unclear.
 Confirm that the selected providers are supported and their required credentials
 are available to this session. If a key or token is missing, stop paid execution
@@ -48,8 +51,9 @@ including corrections. Identify comparable results by catalog, fixture, commit,
 profile, scoring configuration, modality, limits and repetitions. Explain gaps
 that prevent a comparison. Apply [qualification by scenario group](references/qualification.md)
 before selecting scenarios, interpreting outcomes or recommending a model.
-Use one repetition unless the user specifies another plan; require every
-planned repetition within the declared qualification scope. Preserve original
+Use the explicit application-comparison plan when comparing revisions.
+Otherwise use one repetition unless the user specifies another plan; require
+every planned repetition within the declared qualification scope. Preserve original
 records and link a policy correction when their interpretation changes.
 
 ## Gather evidence
