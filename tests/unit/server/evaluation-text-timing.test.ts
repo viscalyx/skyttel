@@ -86,68 +86,110 @@ test('intermediate prose is a response observation but cannot establish the firs
   );
 });
 
-test('text queue wait belongs to the submitted request and excludes the previous reply from first useful response', {
-  tags: ['technical'],
-}, async () => {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let work = 0;
-  const model = textModel(async (_body, signal) => {
-    if (work++ === 0) {
-      await Promise.race([
-        held,
-        new Promise<void>((resolve) =>
-          signal?.addEventListener('abort', () => resolve(), { once: true }),
-        ),
-      ]);
-      return [modelMessage('Det tidigare svaret.')];
-    }
-    return [modelMessage('Det nya fullständiga svaret.')];
-  });
-  try {
-    const run = await runTextScenario(
-      {
-        id: 'queued',
-        title: 'Queued text delivery',
-        voice: false,
-        steps: [{ id: 'read', text: 'En ny fråga.', expected: { requirements: [] } }],
-      },
-      {
-        modelFetch: model.provider,
-        deliverResponse: async (request, response) => {
-          if (
-            request.method === 'POST' &&
-            /\/text-assistant$/.test(new URL(request.url).pathname)
-          ) {
-            const view = (await response.clone().json()) as TextAssistantView;
-            const accepted = await postAsClient(request, `${request.url}/${view.id}/messages`, {
-              requestId: 'earlier-request',
-              revision: view.revision,
-              draftVersion: view.review.version,
-              contentVersion: view.review.contentVersion,
-              text: 'Håll den tidigare frågan.',
-            });
-            if (!accepted.ok) throw new Error('controlled_queue_admission_failed');
-            timer = setTimeout(release, 150);
-          }
-          return response;
+test.each(['completed', 'canceled'] as const)(
+  'text %s retains the submitted request queue wait independently of successful completion',
+  {
+    tags: ['technical'],
+  },
+  async (terminal) => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let canceled = false;
+    let work = 0;
+    const model = textModel(async (_body, signal) => {
+      if (work++ === 0) {
+        await Promise.race([
+          held,
+          new Promise<void>((resolve) =>
+            signal?.addEventListener('abort', () => resolve(), { once: true }),
+          ),
+        ]);
+        return [modelMessage('Det tidigare svaret.')];
+      }
+      if (terminal === 'canceled')
+        await new Promise<void>((resolve) => {
+          if (signal?.aborted) resolve();
+          else signal?.addEventListener('abort', () => resolve(), { once: true });
+        });
+      return [modelMessage('Det nya fullständiga svaret.')];
+    });
+    try {
+      const run = await runTextScenario(
+        {
+          id: 'queued',
+          title: 'Queued text delivery',
+          voice: false,
+          steps: [{ id: 'read', text: 'En ny fråga.', expected: { requirements: [] } }],
         },
-      },
-      { profile: 'local', repetition: 1 },
-    );
-    const result = run.attempts[0];
-    expect(result).toMatchObject({ outcome: 'pass', timing: { contract: 'text-delivery-v2' } });
-    expect(result.timing?.queueMs).toBeGreaterThanOrEqual(70);
-    expect(result.timing?.firstUsefulMs).toBeGreaterThanOrEqual(result.timing?.queueMs ?? 0);
-    expect(result.elapsedMs).toBeGreaterThanOrEqual(result.timing?.queueMs ?? 0);
-  } finally {
-    release();
-    clearTimeout(timer);
-  }
-});
+        {
+          modelFetch: model.provider,
+          deliverResponse: async (request, response) => {
+            if (
+              request.method === 'POST' &&
+              /\/text-assistant$/.test(new URL(request.url).pathname)
+            ) {
+              const view = (await response.clone().json()) as TextAssistantView;
+              const accepted = await postAsClient(request, `${request.url}/${view.id}/messages`, {
+                requestId: 'earlier-request',
+                revision: view.revision,
+                draftVersion: view.review.version,
+                contentVersion: view.review.contentVersion,
+                text: 'Håll den tidigare frågan.',
+              });
+              if (!accepted.ok) throw new Error('controlled_queue_admission_failed');
+            }
+            if (request.method === 'POST' && new URL(request.url).pathname.endsWith('/messages')) {
+              const view = (await response.clone().json()) as TextAssistantView;
+              if (view.queuedMessages) timer = setTimeout(release, 150);
+            }
+            if (
+              terminal === 'canceled' &&
+              !canceled &&
+              request.method === 'GET' &&
+              /\/messages\/[^/]+$/.test(new URL(request.url).pathname)
+            ) {
+              const view = (await response.clone().json()) as TextAssistantView;
+              if (view.taskStatus === 'working' && work === 2) {
+                const cancellation = await postAsClient(
+                  request,
+                  request.url.replace(/\/messages\/[^/]+$/, '/cancel'),
+                  { all: true },
+                );
+                expect(cancellation.status).toBe(200);
+                await cancellation.arrayBuffer();
+                canceled = true;
+              }
+            }
+            return response;
+          },
+        },
+        { profile: 'local', repetition: 1 },
+      );
+      const result = run.attempts[0];
+      expect(result.timing?.queueMs).toBeGreaterThanOrEqual(70);
+      expect(result.observedEndMs).toBeGreaterThanOrEqual(result.timing?.queueMs ?? 0);
+      if (terminal === 'completed') {
+        expect(result).toMatchObject({ outcome: 'pass', timing: { contract: 'text-delivery-v2' } });
+        expect(result.timing?.firstUsefulMs).toBeGreaterThanOrEqual(result.timing?.queueMs ?? 0);
+        expect(result.elapsedMs).toBeGreaterThanOrEqual(result.timing?.queueMs ?? 0);
+      } else {
+        expect(canceled).toBe(true);
+        expect(result).toMatchObject({
+          outcome: 'aborted',
+          reason: 'evaluation_application_canceled',
+          elapsedMs: null,
+          timing: { firstUsefulMs: null, successfulCompletionMs: null },
+        });
+      }
+    } finally {
+      release();
+      clearTimeout(timer);
+    }
+  },
+);
 
 test.each(['incomplete', 'canceled'] as const)(
   'text %s preserves its observed outcome without successful completion time',
@@ -394,6 +436,7 @@ test('application expiry ends text evaluation at its terminal response without a
     timing: { firstUsefulMs: null, successfulCompletionMs: null },
   });
   expect(run.attempts[0].observedEndMs).toBeGreaterThanOrEqual(0);
+  expect(run.attempts[0].timing?.queueMs).toBeGreaterThanOrEqual(0);
   expect(run.attempts[1]).toMatchObject({ outcome: 'not_run', elapsedMs: null });
   expect(terminalPolls).toBe(1);
 });

@@ -227,13 +227,10 @@ export async function runTextScenario(
           if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
           concludeAttempt(result, finishedAt - startedAt);
           result.observedEndMs = finishedAt - startedAt;
-          const taskStarted = observed.find(
-            (event) => event.kind === 'task_started' && event.taskId === requestId,
-          );
           result.timing = {
             contract: step.transition === 'summary' ? 'summary-execution-v1' : 'text-delivery-v2',
             submittedAt: startedAt,
-            queueMs: taskStarted ? Math.max(0, taskStarted.at - startedAt) : null,
+            queueMs: null,
             firstResponseMs,
             firstUsefulMs:
               result.outcome === 'pass' && !earlierResponseUnverified ? completedResponseMs : null,
@@ -346,6 +343,12 @@ export async function runTextScenario(
             result.timing.firstUsefulMs = null;
             result.timing.firstVerifiedUsefulMs = null;
           }
+        }
+        if (result.timing && requestId) {
+          const taskStarted = events
+            .slice(offset)
+            .find((event) => event.kind === 'task_started' && event.taskId === requestId);
+          result.timing.queueMs = taskStarted ? Math.max(0, taskStarted.at - startedAt) : null;
         }
         if (result.outcome !== 'pass' && !continuing) blocked = `${step.id}: ${result.outcome}`;
         result.providerCalls = options.providerCalls
