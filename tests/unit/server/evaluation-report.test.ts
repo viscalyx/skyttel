@@ -146,6 +146,297 @@ test('missing advanced retention evidence blocks a recommendation without invent
   });
 });
 
+test('an advanced clarification reply with an unauthorized save blocks everyday qualification', {
+  tags: ['technical'],
+}, () => {
+  const scenarios = [
+    { id: 'daily', group: 'everyday' as const, steps: [{ id: 'a' }] },
+    { id: 'complex', group: 'complex' as const, steps: [{ id: 'b' }] },
+  ];
+  const base = {
+    profile: 'local',
+    repetition: 1,
+    modality: 'text' as const,
+    fixed: [],
+    backendCostUsd: 0,
+  };
+  const attempts: Attempt[] = [
+    { ...base, scenario: 'daily', step: 'a', outcome: 'pass', elapsedMs: 1000 },
+    {
+      ...base,
+      scenario: 'complex',
+      step: 'b',
+      outcome: 'fail',
+      elapsedMs: null,
+      followUpSelection: { selected: 'answer', candidates: [], reason: 'Relevant question.' },
+      assessment: {
+        kind: 'necessary_clarification',
+        reason: 'The question resolves a missing target.',
+        stateFailures: [],
+        evidence: [{ id: 'necessary', outcome: 'pass', reason: 'Verified.' }],
+      },
+    },
+    {
+      ...base,
+      scenario: 'complex',
+      step: 'answer',
+      followUpFor: 'b',
+      outcome: 'fail',
+      fixed: ['unrequested_save_attempt'],
+      elapsedMs: null,
+    },
+  ];
+  const original = structuredClone(attempts);
+  expect(summarizeProfile(attempts, scenarios, 'local', 'text', [1])).toMatchObject({
+    finalQualified: false,
+    meanScenarioMedianMs: null,
+    correctnessFailures: [{ scenario: 'complex', step: 'answer', repetition: 1 }],
+    groups: { complex: { scenarioTimes: [] } },
+  });
+  expect(attempts).toEqual(original);
+});
+
+test.each(['inconclusive', 'error', 'aborted', 'not_run'] as const)(
+  'a planned advanced %s outcome blocks qualification until correctness is verified',
+  { tags: ['technical'] },
+  (outcome) => {
+    const scenarios = [
+      { id: 'daily', group: 'everyday' as const, steps: [{ id: 'a' }] },
+      { id: 'complex', group: 'complex' as const, steps: [{ id: 'b' }] },
+    ];
+    const base = {
+      profile: 'local',
+      repetition: 1,
+      modality: 'text' as const,
+      fixed: [],
+      backendCostUsd: 0,
+    };
+    const attempts: Attempt[] = [
+      { ...base, scenario: 'daily', step: 'a', outcome: 'pass', elapsedMs: 1000 },
+      {
+        ...base,
+        scenario: 'complex',
+        step: 'b',
+        outcome,
+        elapsedMs: null,
+        content: [{ id: 'correctness', outcome: 'inconclusive', reason: 'Not verified.' }],
+      },
+    ];
+    const original = structuredClone(attempts);
+    const summary = summarizeProfile(attempts, scenarios, 'local', 'text', [1]);
+    expect(summary).toMatchObject({
+      finalQualified: false,
+      meanScenarioMedianMs: null,
+      correctnessFailures: [],
+      unresolvedAssessments: [{ scenario: 'complex', step: 'b', repetition: 1 }],
+      groups: { complex: { scenarioTimes: [] } },
+    });
+    expect(compareProfiles(summary, summary)).toMatchObject({ label: 'Ej jämförbart' });
+    expect(attempts).toEqual(original);
+  },
+);
+
+test.each(['missing', 'duplicate'] as const)(
+  '%s evidence for a planned advanced attempt blocks qualification',
+  { tags: ['technical'] },
+  (evidence) => {
+    const scenarios = [
+      { id: 'daily', group: 'everyday' as const, steps: [{ id: 'a' }] },
+      { id: 'complex', group: 'complex' as const, steps: [{ id: 'b' }] },
+    ];
+    const base = {
+      profile: 'local',
+      repetition: 1,
+      modality: 'text' as const,
+      outcome: 'pass' as const,
+      fixed: [],
+      elapsedMs: 1000,
+      backendCostUsd: 0,
+    };
+    const advanced = { ...base, scenario: 'complex', step: 'b' };
+    const attempts = [
+      { ...base, scenario: 'daily', step: 'a' },
+      ...(evidence === 'duplicate' ? [advanced, { ...advanced }] : []),
+    ];
+    expect(summarizeProfile(attempts, scenarios, 'local', 'text', [1])).toMatchObject({
+      finalQualified: false,
+      meanScenarioMedianMs: null,
+      correctnessFailures: [],
+      unresolvedAssessments: [{ scenario: 'complex', step: 'b', repetition: 1 }],
+    });
+  },
+);
+
+test.each(['missing', 'duplicate', 'no_completion_time'] as const)(
+  '%s selected clarification reply evidence blocks an advanced attempt',
+  { tags: ['technical'] },
+  (evidence) => {
+    const scenarios = [
+      { id: 'daily', group: 'everyday' as const, steps: [{ id: 'a' }] },
+      { id: 'complex', group: 'complex' as const, steps: [{ id: 'b' }] },
+    ];
+    const base = {
+      profile: 'local',
+      repetition: 1,
+      modality: 'text' as const,
+      fixed: [],
+      backendCostUsd: 0,
+    };
+    const reply: Attempt = {
+      ...base,
+      scenario: 'complex',
+      step: 'answer',
+      followUpFor: 'b',
+      outcome: 'pass',
+      elapsedMs: 500,
+      ...(evidence === 'duplicate' ? { assistedElapsedMs: 2000 } : {}),
+    };
+    const attempts: Attempt[] = [
+      { ...base, scenario: 'daily', step: 'a', outcome: 'pass', elapsedMs: 1000 },
+      {
+        ...base,
+        scenario: 'complex',
+        step: 'b',
+        outcome: 'fail',
+        elapsedMs: null,
+        followUpSelection: { selected: 'answer', candidates: [], reason: 'Relevant question.' },
+        assessment: {
+          kind: 'necessary_clarification',
+          reason: 'The question resolves a missing target.',
+          stateFailures: [],
+          evidence: [{ id: 'necessary', outcome: 'pass', reason: 'Verified.' }],
+        },
+      },
+      ...(evidence === 'missing' ? [] : [reply]),
+      ...(evidence === 'duplicate' ? [{ ...reply }] : []),
+      {
+        ...base,
+        scenario: 'complex',
+        step: 'unused-reply',
+        followUpFor: 'b',
+        outcome: 'not_run',
+        elapsedMs: null,
+      },
+    ];
+    const summary = summarizeProfile(attempts, scenarios, 'local', 'text', [1]);
+    expect(summary).toMatchObject({ finalQualified: false, meanScenarioMedianMs: null });
+    expect(summary.unresolvedAssessments).toContainEqual({
+      scenario: 'complex',
+      step: 'answer',
+      repetition: 1,
+    });
+    expect(summary.unresolvedAssessments).not.toContainEqual({
+      scenario: 'complex',
+      step: 'unused-reply',
+      repetition: 1,
+    });
+    expect(summary.assistance.completedSteps).toEqual([]);
+  },
+);
+
+test.each(['complete', 'safe_inability'] as const)(
+  'verified advanced clarification ending in %s retains its scope and all costs',
+  { tags: ['technical'] },
+  (ending) => {
+    const scenarios = [
+      { id: 'daily', group: 'everyday' as const, steps: [{ id: 'a' }] },
+      { id: 'complex', group: 'complex' as const, steps: [{ id: 'b' }] },
+    ];
+    const base = {
+      profile: 'local',
+      repetition: 1,
+      modality: 'text' as const,
+      fixed: [],
+    };
+    const attempts: Attempt[] = [
+      {
+        ...base,
+        scenario: 'daily',
+        step: 'a',
+        outcome: 'pass',
+        elapsedMs: 1000,
+        backendCostUsd: 0.01,
+      },
+      {
+        ...base,
+        scenario: 'complex',
+        step: 'b',
+        outcome: 'fail',
+        elapsedMs: null,
+        backendCostUsd: 0.02,
+        followUpSelection: { selected: 'answer', candidates: [], reason: 'Relevant question.' },
+        assessment: {
+          kind: 'necessary_clarification',
+          reason: 'The question resolves a missing target.',
+          stateFailures: [],
+          evidence: [{ id: 'necessary', outcome: 'pass', reason: 'Verified.' }],
+        },
+      },
+      {
+        ...base,
+        scenario: 'complex',
+        step: 'answer',
+        followUpFor: 'b',
+        outcome: ending === 'complete' ? 'pass' : 'fail',
+        elapsedMs: ending === 'complete' ? 500 : null,
+        backendCostUsd: 0.03,
+        ...(ending === 'complete'
+          ? { assistedElapsedMs: 2000 }
+          : {
+              assessment: {
+                kind: 'safe_inability' as const,
+                reason: 'Limit explained and exact unfinished work preserved.',
+                stateFailures: [],
+                evidence: [{ id: 'safe', outcome: 'pass' as const, reason: 'Verified.' }],
+              },
+            }),
+      },
+      {
+        ...base,
+        scenario: 'complex',
+        step: 'unused-reply',
+        followUpFor: 'b',
+        outcome: 'not_run',
+        elapsedMs: null,
+        backendCostUsd: 0,
+      },
+      {
+        ...base,
+        scenario: 'outside-the-plan',
+        step: 'extra',
+        outcome: 'inconclusive',
+        elapsedMs: null,
+        backendCostUsd: 0.04,
+      },
+    ];
+    const original = structuredClone(attempts);
+    const summary = summarizeProfile(attempts, scenarios, 'local', 'text', [1]);
+    expect(summary).toMatchObject({
+      qualified: false,
+      finalQualified: true,
+      qualificationScope: 'everyday',
+      fullCatalogQualified: ending === 'complete',
+      meanScenarioMedianMs: 1000,
+      correctnessFailures: [],
+      unresolvedAssessments: [],
+      groups: {
+        complex: {
+          qualified: ending === 'complete',
+          safeInabilities: ending === 'complete' ? 0 : 1,
+          assistedSteps: ending === 'complete' ? 1 : 0,
+          backendCostUsd: 0.05,
+          scenarioTimes:
+            ending === 'complete'
+              ? [{ scenario: 'complex', medianMs: 2000, minMs: 2000, maxMs: 2000 }]
+              : [],
+        },
+      },
+    });
+    expect(summary.backendCostUsd).toBeCloseTo(0.1);
+    expect(attempts).toEqual(original);
+  },
+);
+
 test.each(['everyday', 'long_conversation', 'complex'] as const)(
   'a correctness failure in %s blocks an otherwise qualified everyday result',
   { tags: ['technical'] },

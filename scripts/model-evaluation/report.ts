@@ -55,16 +55,18 @@ export function summarizeProfile(
     !attempt.assessment.stateFailures.length &&
     attempt.assessment.evidence.length > 0 &&
     attempt.assessment.evidence.every((item) => item.outcome === 'pass');
-  const completedReply = (attempt: Attempt) => {
-    if (!assessed(attempt, 'necessary_clarification') || !attempt.followUpSelection?.selected)
-      return undefined;
-    const matches = followUps.filter(
+  const repliesFor = (attempt: Attempt) =>
+    followUps.filter(
       (reply) =>
         reply.scenario === attempt.scenario &&
         reply.repetition === attempt.repetition &&
         reply.followUpFor === attempt.step &&
         reply.step === attempt.followUpSelection?.selected,
     );
+  const completedReply = (attempt: Attempt) => {
+    if (!assessed(attempt, 'necessary_clarification') || !attempt.followUpSelection?.selected)
+      return undefined;
+    const matches = repliesFor(attempt);
     return matches.length === 1 &&
       matches[0].outcome === 'pass' &&
       matches[0].assistedElapsedMs != null
@@ -75,15 +77,70 @@ export function summarizeProfile(
     attempt.outcome === 'pass'
       ? attempt.elapsedMs
       : (completedReply(attempt)?.assistedElapsedMs ?? null);
-  const selectedIds = new Set(scenarios.map((scenario) => scenario.id));
-  const unresolvedAssessments = baseValues
-    .filter(
-      (attempt) => selectedIds.has(attempt.scenario) && attempt.assessment?.kind === 'inconclusive',
+  const plannedValues = values.filter(
+    (attempt) =>
+      repetitions.includes(attempt.repetition) &&
+      scenarios.some(
+        (scenario) =>
+          scenario.id === attempt.scenario &&
+          scenario.steps.some((step) => step.id === (attempt.followUpFor ?? attempt.step)),
+      ),
+  );
+  const unresolvedAssessments: Pick<Attempt, 'scenario' | 'step' | 'repetition'>[] = [];
+  function unresolved({ scenario, step, repetition }: (typeof unresolvedAssessments)[number]) {
+    if (
+      !unresolvedAssessments.some(
+        (item) =>
+          item.scenario === scenario && item.step === step && item.repetition === repetition,
+      )
     )
-    .map(({ scenario, step, repetition }) => ({ scenario, step, repetition }));
-  const correctnessFailures = baseValues
+      unresolvedAssessments.push({ scenario, step, repetition });
+  }
+  for (const attempt of plannedValues) {
+    const required =
+      !attempt.followUpFor ||
+      plannedValues.some(
+        (parent) =>
+          !parent.followUpFor &&
+          parent.scenario === attempt.scenario &&
+          parent.repetition === attempt.repetition &&
+          parent.step === attempt.followUpFor &&
+          parent.followUpSelection?.selected === attempt.step,
+      );
+    if (
+      attempt.assessment?.kind === 'inconclusive' ||
+      ['inconclusive', 'error', 'aborted'].includes(attempt.outcome) ||
+      (required && attempt.outcome === 'not_run')
+    )
+      unresolved(attempt);
+  }
+  for (const scenario of scenarios)
+    for (const repetition of repetitions)
+      for (const step of scenario.steps) {
+        const matches = baseValues.filter(
+          (attempt) =>
+            attempt.scenario === scenario.id &&
+            attempt.step === step.id &&
+            attempt.repetition === repetition,
+        );
+        if (matches.length !== 1) {
+          unresolved({ scenario: scenario.id, step: step.id, repetition });
+        } else if (assessed(matches[0], 'necessary_clarification')) {
+          const replies = repliesFor(matches[0]);
+          const safeInability =
+            (scenario.group ?? 'everyday') !== 'everyday' &&
+            replies.length === 1 &&
+            assessed(replies[0], 'safe_inability');
+          if (!completedReply(matches[0]) && !safeInability)
+            unresolved({
+              scenario: scenario.id,
+              step: matches[0].followUpSelection?.selected ?? step.id,
+              repetition,
+            });
+        }
+      }
+  const correctnessFailures = plannedValues
     .filter((attempt) => {
-      if (!selectedIds.has(attempt.scenario)) return false;
       const hardFailure = attempt.fixed.some(
         (failure) =>
           ['unrequested_save_attempt', 'save_receipts_history', 'saved_map_changed'].includes(
@@ -155,7 +212,9 @@ export function summarizeProfile(
       safeInabilities:
         group === 'everyday'
           ? 0
-          : groupValues.filter((attempt) => assessed(attempt, 'safe_inability')).length,
+          : plannedValues.filter(
+              (attempt) => groupIds.has(attempt.scenario) && assessed(attempt, 'safe_inability'),
+            ).length,
       correctnessFailures: correctnessFailures.filter((failure) => groupIds.has(failure.scenario)),
       scenarioTimes,
       totals,
