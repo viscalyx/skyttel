@@ -19,6 +19,63 @@ afterEach(async () => {
 });
 
 test.each([
+  [403, 'assistant_model_access', 'Installationens konto saknar åtkomst'],
+  [400, 'assistant_model_unsupported', 'Modellen och resonemangsnivån stöds inte'],
+  [503, 'assistant_model_temporary', 'Modellen är tillfälligt otillgänglig.'],
+])(
+  'summary provider HTTP %s preserves its classified failure and the completed work',
+  async (status, code, explanation) => {
+    let summaryCalls = 0;
+    const model = textModel(() => [modelMessage('Det färdiga svaret.')]);
+    app = await createInstallation(undefined, {
+      modelFetch: async (input, init) => {
+        const body = JSON.parse(String(init?.body));
+        if (!body.tools.length && !body.instructions.startsWith('SKYTTEL_TURN_')) {
+          summaryCalls++;
+          return Response.json(
+            { error: { message: 'Synthetic summary failure' } },
+            { status: Number(status) },
+          );
+        }
+        const response = await model.provider(input, init);
+        if (!body.tools.length) return response;
+        const completed = await response.json();
+        completed.usage.input_tokens = 1_040_000;
+        return Response.json(completed, { headers: response.headers });
+      },
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    const { household } = await (await createHousehold(browser, app.origin)).json();
+    const base = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const post = (path: string, data: object) =>
+      browser.post(path, { headers: { origin: app.origin }, data });
+    let view: TextAssistantView = await (await post(base, approvedForVisit)).json();
+    await post(`${base}/${view.id}/messages`, {
+      revision: view.revision,
+      draftVersion: view.review.version,
+      contentVersion: view.review.contentVersion,
+      requestId: crypto.randomUUID(),
+      text: 'Beskriv kartan.',
+    });
+    await expect
+      .poll(async () => {
+        view = await (await browser.get(`${base}/${view.id}`)).json();
+        return view.contextSummaryState;
+      })
+      .toBe('failed');
+    expect(view).toMatchObject({
+      contextSummaryFailure: { code, message: expect.stringContaining(explanation) },
+      modelChoice: { model: 'gpt-6.1-terra', effort: 'high' },
+      modelReply: 'Det färdiga svaret.',
+      review: { version: 0, changes: [] },
+    });
+    expect(summaryCalls).toBe(1);
+    expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each([
   ['gpt-6.1-terra', 'low'],
   ['gpt-6.1-terra', 'medium'],
   ['gpt-6.1-terra', 'high'],

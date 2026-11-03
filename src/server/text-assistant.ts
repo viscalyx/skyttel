@@ -386,6 +386,7 @@ export function textAssistantRoutes({
       contextRevision,
       contextGeneration: session.state.contextGeneration,
       contextSummaryState: session.state.contextSummaryState,
+      contextSummaryFailure: session.state.contextSummaryFailure,
       contextSummaries: session.state.contextSummaries,
       contextPercentage: session.execution.capacity.percent(
         contextBytes(session),
@@ -597,6 +598,7 @@ export function textAssistantRoutes({
       parentGuard?.();
     };
     session.state.contextSummaryState = 'summarizing';
+    session.state.contextSummaryFailure = undefined;
     const summaryChoice = { ...session.state.modelChoice };
     const summaryProfile = modelWork.getStore() ?? conversationModelProfile(summaryChoice);
     try {
@@ -659,6 +661,18 @@ export function textAssistantRoutes({
         return 'canceled' as const;
       }
       session.state.contextSummaryState = 'failed';
+      if (
+        error instanceof MapError &&
+        [
+          'assistant_model_access',
+          'assistant_model_unsupported',
+          'assistant_model_temporary',
+        ].includes(error.code)
+      )
+        session.state.contextSummaryFailure = {
+          code: error.code,
+          message: assistantFailureMessage(error.code),
+        };
       // A distinct DTO state, not a generic task/provider failure.
       return 'failed' as const;
     } finally {
@@ -1138,6 +1152,7 @@ export function textAssistantRoutes({
     session.state.summary = undefined;
     session.state.summaryOffset = undefined;
     session.state.contextSummaryState = undefined;
+    session.state.contextSummaryFailure = undefined;
     session.state.contextSummaries = [];
     session.execution.reads.clear();
     session.state.activity = undefined;

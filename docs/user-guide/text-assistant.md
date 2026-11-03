@@ -17,7 +17,7 @@ slider har stegen **Låg**, **Medium** och **Hög**. Använd piltangenterna
 eller de tre knapparna för att välja utan att dra. Modellnamnet öppnar
 ett separat val mellan **GPT-6.1 Terra** och **GPT-6.1 Sol**. Modellbyte
 behåller resonemangsnivån. Escape eller **Stäng** återför fokus till
-kontrollen som öppnar dialogen.
+kontrollen som öppnar dialogen utan att avbryta pågående eller köat arbete.
 
 Utan sparat personligt val används Terra och hög nivå. Ditt senaste
 uttryckliga val sparas för nya samtal i alla dina hushåll och på andra
@@ -260,12 +260,17 @@ replikerna för fortsatt arbete, och läser ditt aktuella utkast på nytt.
 Rösten pausar inspelningen under bytet och behåller mikrofonens läge.
 Tal som redan spelades in före släpp kan fortfarande skickas efteråt.
 
-Om sammanfattningen misslyckas visas **Kontexten är full, och Skyttel
-kunde inte sammanfatta samtalet. Inget har gått förlorat, och utkastet
-ligger kvar.** Det ursprungliga samtalet ligger kvar i textvyn, och
-**Skicka** och mikrofonen är avstängda. Välj **Nytt samtal** i notisen
-för att tömma samtalstexten och kontexten. Utkastet ligger kvar, och
-du kan fortsätta med det i det nya samtalet.
+Om sammanfattningen misslyckas visas ett hinderbesked. Vid modellfel
+förklarar notisen om modellen är tillfälligt otillgänglig, om kontot
+saknar åtkomst eller om kombinationen inte stöds. Följ det angivna nästa
+steget. Det ursprungliga samtalet och utkastet ligger kvar. **Skicka** och
+mikrofonen är avstängda; ett modellbyte startar inget arbete automatiskt.
+
+Du kan uttryckligen välja **Nytt samtal** i notisen för att tömma
+samtalstexten och kontexten. Det nya samtalet använder ditt senaste
+personliga modellval. Detta löser inte modellfelet och ger inte ny
+kontoåtkomst. Utkastet ligger kvar för fortsatt arbete när modellen
+är tillgänglig.
 
 Skyttel har med sig hela det pågående samtalet, också efter att ett förslag
 har lagts i utkastet, efter sparande, avbrott eller fel. Du kan exempelvis

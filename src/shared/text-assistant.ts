@@ -72,6 +72,8 @@ export interface TextAssistantView {
   contextPercentage?: number;
   /** A provider handoff is separate from clearing the visible conversation. */
   contextSummaryState?: 'needed' | 'summarizing' | 'failed';
+  /** A summary failure does not change the verified outcome of completed work. */
+  contextSummaryFailure?: { code: string; message: string };
   contextGeneration?: number;
   contextSummaries?: { id: string; text: string }[];
   /** Origin of the explicit reset; pre-release spoken work still gets its voice reply. */

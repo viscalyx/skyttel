@@ -643,7 +643,8 @@ läsbarhet och nåbara kontroller.
    .
 4. Kör `user Beskriv utkastet.`, `delegate`, släpp anropet med ett svar och
    kör `setSound('remote', true)`.
-5. Gå med Tab från **Prata med Skyttel**.
+5. Gå med Tab från **Prata med Skyttel** via **Skriv till Skyttel** och
+   **Modell och resonemang** till **Avbryt** och **Utkast**.
 6. Välj **Prata med Skyttel**, flytta fokus till **Återställ vy** och kör
    `setSound('remote', false)`.
 7. Slå på mikrofonen igen och öppna **Inställningar**. Kör

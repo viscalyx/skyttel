@@ -11,6 +11,98 @@ import { liveProvider } from '../support/live-provider.js';
 import { expect, test } from '../support/test.js';
 import { modelMessage, textModel } from '../support/text-model.js';
 
+test('MODELLVAL-04: Escape stänger modelldialogen utan att avbryta arbete eller kö', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  let release = () => {};
+  const waiting = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const model = textModel(async () => {
+    const first = model.requests.length === 1;
+    if (first) await waiting;
+    return [modelMessage(first ? 'Första svaret' : 'Andra svaret')];
+  });
+  const app = await createInstallation(undefined, { modelFetch: model.provider });
+  try {
+    await signIn(page.request, app.origin);
+    await createHousehold(page.request, app.origin);
+    await page.goto(app.origin);
+    await startConversationWithText(page);
+    const text = page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
+    const field = text.getByRole('textbox', { name: 'Meddelande till Skyttel' });
+    await field.fill('Första uppdraget');
+    await text.getByRole('button', { name: 'Skicka', exact: true }).click();
+    await expect.poll(() => model.requests.length).toBe(1);
+    await field.fill('Andra uppdraget');
+    await text.getByRole('button', { name: 'Skicka', exact: true }).click();
+    await expect(field).toHaveValue('');
+    const opener = text.getByRole('button', { name: /^Modell och resonemang:/ });
+    await opener.click();
+    await expect(page.getByRole('dialog', { name: 'Resonemangsnivå', exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(opener).toBeFocused();
+    release();
+    await expect(text.getByRole('log', { name: 'Samtalstext' })).toContainText(
+      /Första svaret[\s\S]*Andra svaret/,
+    );
+  } finally {
+    release();
+    await app.close();
+  }
+});
+
+test('MODELLVAL-05: alla aktiverade modellpar går att välja utan avstängda mellanval', async ({
+  page,
+}) => {
+  const app = await createInstallation(undefined, {
+    modelFetch: textModel(() => [modelMessage('Ett svar.')]).provider,
+    conversationModels: [
+      { model: 'gpt-6.1-terra', effort: 'high' },
+      { model: 'gpt-6.1-sol', effort: 'low' },
+    ],
+  });
+  try {
+    await signIn(page.request, app.origin);
+    await createHousehold(page.request, app.origin);
+    await page.goto(app.origin);
+    await startConversationWithText(page);
+    await page
+      .getByRole('button', { name: 'Modell och resonemang: GPT-6.1 Terra, Hög', exact: true })
+      .click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'GPT-6.1 Terra', exact: true })
+      .click();
+    const dialog = page.getByRole('dialog', { name: 'Modellval', exact: true });
+    await dialog.getByRole('button', { name: 'Välj GPT-6.1 Sol, Låg', exact: true }).click();
+    await expect(dialog.getByRole('radio', { name: 'GPT-6.1 Sol', exact: true })).toBeChecked();
+    await expect(dialog.getByRole('status')).toContainText('Valet är sparat');
+    await page.keyboard.press('Escape');
+    const sol = page.getByRole('button', {
+      name: 'Modell och resonemang: GPT-6.1 Sol, Låg',
+      exact: true,
+    });
+    await expect(sol).toBeFocused();
+    await sol.click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'GPT-6.1 Sol', exact: true })
+      .click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Välj GPT-6.1 Terra, Hög', exact: true })
+      .click();
+    await expect(
+      page.getByRole('dialog').getByRole('radio', { name: 'GPT-6.1 Terra', exact: true }),
+    ).toBeChecked();
+  } finally {
+    await app.close();
+  }
+});
+
 test('MODELLVAL-01: text och röst delar modellval och tre resonemangsnivåer med tangentbord', async ({
   page,
 }) => {

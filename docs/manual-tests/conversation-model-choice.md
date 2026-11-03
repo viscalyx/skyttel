@@ -109,6 +109,94 @@ visar när valet börjar gälla, och fokus återgår efter Escape.
 **Förväntat resultat:** Terra/Medium visas fram till det uttryckliga valet.
 Sol/Hög blir därefter samtalets val. Ingen reservmodell väljs automatiskt.
 
+### MODELLVAL-04: stäng modelldialogen medan arbete och kö fortsätter
+
+**Syfte:** Escape stänger dialogen utan att avbryta samtalets arbete.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Datorbredd och ett nytt textsamtal. Använd
+[köförberedelsens hållna modellsvar](conversation-queue.md#allmän-förberedelse).
+
+**Separat förberedelse:** Vid steg 4, kör `pending` i installationens
+terminal och `reply REQUEST "Första svaret"` med det första anropets ID.
+Kör därefter `pending` och `reply REQUEST "Andra svaret"` med nästa ID.
+
+**Automatiskt motsvarande test:**
+[conversation-model-choice.spec.ts](../../tests/integration/conversation-model-choice.spec.ts).
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-model-choice.spec.ts",
+    "caseId": "MODELLVAL-04"
+  },
+  "reference": "Dator, riktig server och kontrollerat fördröjt modellsvar.",
+  "outcomes": [
+    "Escape stänger modelldialogen och återför fokus",
+    "Pågående och köat uppdrag slutförs i ordning"
+  ]
+}
+```
+-->
+
+**Steg:**
+
+1. Börja ett textsamtal och skicka **Första uppdraget**. Skicka sedan
+   **Andra uppdraget** medan Skyttel arbetar.
+2. Öppna **Modell och resonemang** och tryck Escape.
+3. Kontrollera att dialogen stängs och att fokus återgår till ikonen.
+4. Följ den separata förberedelsen för att släppa svaren. Läs
+   **Första svaret** och därefter **Andra svaret** i samtalstexten.
+
+**Förväntat resultat:** Dialogen stängs utan att något uppdrag avbryts.
+Det andra uppdraget ligger kvar i kön och besvaras efter det första.
+
+### MODELLVAL-05: välj mellan aktiverade par utan en gemensam nivå
+
+**Syfte:** Alla aktiverade kombinationer går att nå med ett uttryckligt val.
+
+**Användare:** Alex Exempel; installationsansvarig förbereder aktiveringen.
+
+**Förutsättningar:** Bara Terra/hög och Sol/låg är aktiverade enligt
+[aktiveringsguiden](../operations/conversation-models.md). Nytt textsamtal.
+
+**Automatiskt motsvarande test:**
+[conversation-model-choice.spec.ts](../../tests/integration/conversation-model-choice.spec.ts).
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-model-choice.spec.ts",
+    "caseId": "MODELLVAL-05"
+  },
+  "reference": "Terra/hög och Sol/låg är installationens enda aktiverade par.",
+  "outcomes": [
+    "Ett tillgängligt val hindrar inte byte till ett annat aktiverat par",
+    "Användaren väljer uttryckligen både modell och nivå"
+  ]
+}
+```
+-->
+
+**Steg:**
+
+1. Öppna **Modell och resonemang**. Läs att Terra/hög är aktuellt.
+2. Öppna modellvalet via **GPT-6.1 Terra**. Välj uttryckligen
+   **Välj GPT-6.1 Sol, Låg** och vänta på sparbeskedet.
+3. Stäng dialogen och kontrollera Sol/Låg vid ikonen. Öppna modellvalet
+   igen och välj uttryckligen **Välj GPT-6.1 Terra, Hög**.
+
+**Förväntat resultat:** Båda aktiverade par går att välja. De vanliga
+modellvalen behåller resonemangsnivån; det särskilda parvalet anger
+uttryckligen båda inställningarna. Avstängda mellanval behövs inte.
+
 ### MODELLVAL-02: skärmläsare, förstoring och visuell bedömning
 
 **Syfte:** Bedöm hela flödet med verkliga hjälpmedel och förstoring.
@@ -119,7 +207,9 @@ Sol/Hög blir därefter samtalets val. Ingen reservmodell väljs automatiskt.
 skärmläsare på dator och mobil, samt 200 och 400 procents förstoring.
 Kontrollera namn, sliderns upplästa nivå, statusbesked, fokusordning,
 fokusåtergång, kontrast, pekmål och att text och kontroller kan nås utan
-förlust eller överlappning. Bedöm ikon och dialoger visuellt i appen.
+förlust eller överlappning. Stäng dialogen innan ett fördröjt sparbesked
+kommer och kontrollera att både framgång och fel läses upp. Bedöm ikon
+och dialoger visuellt i appen.
 Detta kräver separat utförd observation och är inte visuellt godkänt.
 
 <!--

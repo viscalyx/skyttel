@@ -46,6 +46,12 @@ export function ConversationModel({
   const enabled = conversation.session?.enabledModelChoices ?? [];
   const available = (next: ConversationModelChoice) =>
     enabled.some((entry) => sameModelChoice(entry, next));
+  const explicitChoices = enabled.filter(
+    (entry) =>
+      conversation.session?.modelChoiceUnavailable ||
+      (!available({ ...choice, model: entry.model }) &&
+        !available({ ...choice, effort: entry.effort })),
+  );
   const modelName =
     conversationModels.find((entry) => entry.id === choice.model)?.name ?? choice.model;
   async function change(next: ConversationModelChoice) {
@@ -84,13 +90,23 @@ export function ConversationModel({
           />
         </svg>
       </button>
+      <p className="conversation-model-announcement" role="status">
+        {dialog ? '' : feedback}
+      </p>
       {dialog && (
         <dialog
           ref={modal}
           className="conversation-model-dialog"
           aria-labelledby={`${id}-title`}
+          onKeyDown={(event) => {
+            if (event.key !== 'Escape') return;
+            event.preventDefault();
+            event.stopPropagation();
+            setDialog(null);
+          }}
           onCancel={(event) => {
             event.preventDefault();
+            event.stopPropagation();
             setDialog(null);
           }}
         >
@@ -156,13 +172,19 @@ export function ConversationModel({
               ))}
             </fieldset>
           )}
-          {conversation.session?.modelChoiceUnavailable && (
+          {(conversation.session?.modelChoiceUnavailable || explicitChoices.length > 0) && (
             <div>
-              <p role="status">
-                Det sparade valet är inte aktiverat på installationen. Välj ett aktiverat alternativ
-                eller kontakta installationsansvarig. Valet behålls tills du ändrar det.
-              </p>
-              {enabled.map((entry) => (
+              {conversation.session?.modelChoiceUnavailable && (
+                <p role="status">
+                  Det sparade valet är inte aktiverat på installationen. Välj ett aktiverat
+                  alternativ eller kontakta installationsansvarig. Valet behålls tills du ändrar
+                  det.
+                </p>
+              )}
+              {explicitChoices.length > 0 && (
+                <p>Du kan också uttryckligen välja både modell och nivå tillsammans.</p>
+              )}
+              {explicitChoices.map((entry) => (
                 <button
                   type="button"
                   key={`${entry.model}-${entry.effort}`}
