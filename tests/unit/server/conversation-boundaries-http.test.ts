@@ -495,7 +495,9 @@ test.each(['direct', 'batch'] as const)(
     );
     await setup(model.provider);
     typeId = (await map()).types[0].id;
-    expect(await message('Lägg till Stolen. Ändra också kortet men fråga vilket kort.')).toMatchObject({
+    expect(
+      await message('Lägg till Stolen. Ändra också kortet men fråga vilket kort.'),
+    ).toMatchObject({
       phase: 'ready',
     });
     const before = await map();

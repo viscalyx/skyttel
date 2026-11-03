@@ -412,7 +412,8 @@ test('literal instruction text, mixed edits, clarification and a later save pres
     (input) => {
       if (input.instructions.startsWith('SKYTTEL_TURN_ACTIONS')) {
         const operations = JSON.parse(String(input.input[0].content)).untrusted.operations;
-        if (operations[0].name === 'prepare_save') return [modelMessage('{"decision":"allow","complete":true}')];
+        if (operations[0].name === 'prepare_save')
+          return [modelMessage('{"decision":"allow","complete":true}')];
         expect(
           JSON.parse(String(input.input[0].content)).untrusted.operations[0].arguments.value
             .properties[0].value,
