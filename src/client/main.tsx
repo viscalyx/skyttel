@@ -8,21 +8,33 @@ import './styles.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('The application root element is missing.');
+const modelPrototype =
+  import.meta.env.DEV &&
+  import.meta.env.MODE === 'development' &&
+  location.pathname === '/households/prototype' &&
+  new URLSearchParams(location.search).has('variant');
+const Prototype = modelPrototype
+  ? (await import('./ModelChoicePrototype.js')).ModelChoicePrototype
+  : null;
 createRoot(root).render(
   <StrictMode>
-    <RouterProvider
-      router={createBrowserRouter([
-        {
-          path: '*',
-          ErrorBoundary: ApplicationError,
-          element: (
-            <>
-              <BuildNotice />
-              <App />
-            </>
-          ),
-        },
-      ])}
-    />
+    {Prototype ? (
+      <Prototype />
+    ) : (
+      <RouterProvider
+        router={createBrowserRouter([
+          {
+            path: '*',
+            ErrorBoundary: ApplicationError,
+            element: (
+              <>
+                <BuildNotice />
+                <App />
+              </>
+            ),
+          },
+        ])}
+      />
+    )}
   </StrictMode>,
 );
