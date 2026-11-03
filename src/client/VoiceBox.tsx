@@ -247,6 +247,7 @@ export function VoiceBox({
           )}
         </div>
       )}
+      {status && <PrototypeModelControls place="voice-icon" />}
       {notice}
       {status && <PrototypeModelControls place="voice" />}
     </div>

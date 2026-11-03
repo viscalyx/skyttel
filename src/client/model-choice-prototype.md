@@ -1,6 +1,6 @@
 # Conversation model controls: throwaway prototype
 
-This prototype lets product reviewers compare three places for model and
+This prototype lets product reviewers compare four places for model and
 reasoning controls in one conversation shared by text and voice.
 It is a proposal awaiting human feedback, not an accepted design.
 
@@ -11,11 +11,14 @@ npm run dev:client -- --host 0.0.0.0 --port 5173 --strictPort
 ```
 
 Open <http://localhost:5173/households/prototype?variant=A>.
-Use the bottom arrows or change `variant` to `A`, `B`, or `C`:
+Use the bottom arrows or change `variant` to `A`, `B`, `C`, or `D`:
 
 - A: compact picker below the existing text-view heading, opening a dialog.
 - B: visible controls beside the message field; voice has a dialog opener.
 - C: a link to the actual conversation settings page, with the choices there.
+- D: the existing settings icon above the message field and directly to the
+  right of the voice indicator. It opens a compact dialog with a three-step
+  reasoning slider. The model name opens a separate model-selection dialog.
 
 The existing App and router render the actual HouseholdMap, WorkspaceTools,
 TextView, draft review, VoiceBox, SettingsScreen and ConversationSettings.
@@ -34,7 +37,7 @@ Production mode does not activate these fixtures or proposed controls.
 
 ## Review scenarios
 
-1. Compare all three layouts on desktop and mobile.
+1. Compare the layouts on desktop and mobile.
 2. Open Prova in the floating prototype menu. Hide the menu when assessing
    the message field; the small Prototyp button brings it back.
 3. Start work, then select a different model and reasoning level. Compare
@@ -46,6 +49,9 @@ Production mode does not activate these fixtures or proposed controls.
 7. Use Tab, native select keys, and Escape. Closing the dialog restores focus.
 8. Open the actual draft panel and conversation settings, then return to the
    map. Compare the controls in the context of those existing app surfaces.
+9. In D, adjust the slider with arrow keys, open the model name, select a
+   model or press Escape, then close the first dialog. Focus returns first
+   to the model name and then to the original text or voice icon.
 
 Availability loss is a presentation scenario. Recovery of a failed running
 request is not modeled here. There is no queued-request simulation.

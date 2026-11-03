@@ -17,11 +17,17 @@ import type { TranscriptRow } from './ConversationTranscript.js';
 import { trapDialogTab } from './modal-focus.js';
 import { modelPrototypeEnabled, prototypeMap } from './model-choice-prototype-fixture.js';
 import type { Conversation, useConversation } from './use-conversation.js';
+import { WorkspaceIcon } from './WorkspaceTools.js';
 import './model-choice-prototype.css';
 
 type Choice = { model: string; level: string };
-type Variant = 'A' | 'B' | 'C';
-const names = { A: 'I textvyns huvud', B: 'Vid meddelandet', C: 'I inställningarna' };
+type Variant = 'A' | 'B' | 'C' | 'D';
+const names = {
+  A: 'I textvyns huvud',
+  B: 'Vid meddelandet',
+  C: 'I inställningarna',
+  D: 'Ikon och slider',
+};
 const label = (value: Choice) => `${value.model} · ${value.level}`;
 const fullLabel = (value: Choice) => `GPT-6.1 ${label(value)}`;
 const initial = { model: 'Terra', level: 'Hög' };
@@ -68,7 +74,7 @@ export function ModelChoicePrototypeProvider({ children }: { children: ReactNode
   const navigate = useNavigate();
   const [variant, setVariant] = useState<Variant>(() => {
     const value = new URLSearchParams(location.search).get('variant');
-    return value === 'B' || value === 'C' ? value : 'A';
+    return value === 'B' || value === 'C' || value === 'D' ? value : 'A';
   });
   const [choice, setChoice] = useState(initial);
   const [running, setRunning] = useState<Choice | null>(null);
@@ -201,8 +207,9 @@ export function ModelChoicePrototypeProvider({ children }: { children: ReactNode
   };
   const cycle = useCallback(
     (delta: number) => {
-      const variants: Variant[] = ['A', 'B', 'C'];
-      const next = variants[(variants.indexOf(variant) + delta + 3) % 3];
+      const variants: Variant[] = ['A', 'B', 'C', 'D'];
+      const next =
+        variants[(variants.indexOf(variant) + delta + variants.length) % variants.length];
       setVariant(next);
       const query = new URLSearchParams(location.search);
       query.set('variant', next);
@@ -235,14 +242,22 @@ export function ModelChoicePrototypeProvider({ children }: { children: ReactNode
       {children}
       <dialog
         ref={dialog}
-        className="model-prototype-dialog"
+        className={`model-prototype-dialog${variant === 'D' ? ' model-prototype-simple-dialog' : ''}`}
         aria-labelledby="model-prototype-title"
         onKeyDown={trapDialogTab}
         onClose={() => opener.current?.focus()}
       >
-        <h2 id="model-prototype-title">Modell och resonemangsnivå</h2>
-        <PrototypeChoices help />
-        <PrototypeScope />
+        <h2 id="model-prototype-title">
+          {variant === 'D' ? 'Modell och resonemang' : 'Modell och resonemangsnivå'}
+        </h2>
+        {variant === 'D' ? (
+          <PrototypeSimpleChoices />
+        ) : (
+          <>
+            <PrototypeChoices help />
+            <PrototypeScope />
+          </>
+        )}
         <PrototypeStatus />
         <button type="button" onClick={() => dialog.current?.close()}>
           Klart
@@ -352,6 +367,90 @@ function PrototypeChoices({ help = false }: { help?: boolean }) {
     </div>
   );
 }
+
+function PrototypeSimpleChoices() {
+  const state = usePrototype();
+  const id = useId();
+  const models = useRef<HTMLDialogElement>(null);
+  const modelButton = useRef<HTMLButtonElement>(null);
+  const levels = ['Låg', 'Medium', 'Hög'];
+  if (!state) return null;
+  return (
+    <div className="model-prototype-simple">
+      <button
+        ref={modelButton}
+        type="button"
+        className="model-prototype-model-name"
+        aria-haspopup="dialog"
+        aria-label={`Modell: GPT-6.1 ${state.choice.model}. Byt modell`}
+        onClick={() => models.current?.showModal()}
+      >
+        GPT-6.1 {state.choice.model}
+        <span aria-hidden="true">⌄</span>
+      </button>
+      <div className="model-prototype-effort-heading">
+        <label htmlFor={`${id}-effort`}>Resonemangsnivå</label>
+        <output htmlFor={`${id}-effort`}>{state.choice.level}</output>
+      </div>
+      <input
+        id={`${id}-effort`}
+        type="range"
+        min="0"
+        max="2"
+        step="1"
+        value={levels.indexOf(state.choice.level)}
+        aria-valuetext={state.choice.level}
+        onChange={(event) =>
+          state.choose({ ...state.choice, level: levels[Number(event.target.value)] })
+        }
+      />
+      <div className="model-prototype-effort-labels" aria-hidden="true">
+        <span>Låg</span>
+        <span>Medium</span>
+        <span>Hög</span>
+      </div>
+      <p className="model-prototype-next">Gäller nästa begäran i text och röst.</p>
+      <dialog
+        ref={models}
+        className="model-prototype-dialog model-prototype-models"
+        aria-labelledby={`${id}-models-title`}
+        onKeyDown={(event) => {
+          trapDialogTab(event);
+          event.stopPropagation();
+        }}
+        onCancel={(event) => event.stopPropagation()}
+        onClose={(event) => {
+          event.stopPropagation();
+          modelButton.current?.focus();
+        }}
+      >
+        <h2 id={`${id}-models-title`}>Välj modell</h2>
+        {['Terra', 'Sol'].map((model) => (
+          <button
+            type="button"
+            key={model}
+            aria-pressed={state.choice.model === model}
+            disabled={state.unavailable === model}
+            onClick={() => {
+              state.choose({ ...state.choice, model });
+              models.current?.close();
+            }}
+          >
+            GPT-6.1 {model}
+            {state.unavailable === model
+              ? ' — inte tillgänglig'
+              : state.choice.model === model
+                ? ' ✓'
+                : ''}
+          </button>
+        ))}
+        <button type="button" onClick={() => models.current?.close()}>
+          Tillbaka
+        </button>
+      </dialog>
+    </div>
+  );
+}
 function PrototypeScope() {
   return (
     <div className="model-prototype-scope">
@@ -374,6 +473,7 @@ function PrototypeStatus() {
   const state = usePrototype();
   if (!state) return null;
   const changed = state.running && label(state.running) !== label(state.choice);
+  if (state.variant === 'D' && !changed && state.choice.model !== state.unavailable) return null;
   return (
     <div role="status" aria-live="polite" aria-atomic="true" className="model-prototype-status">
       {state.choice.model === state.unavailable && (
@@ -396,10 +496,34 @@ function PrototypeStatus() {
 export function PrototypeModelControls({
   place,
 }: {
-  place: 'header' | 'composer' | 'voice' | 'settings';
+  place: 'header' | 'composer' | 'voice' | 'voice-icon' | 'settings';
 }) {
   const state = usePrototype();
   if (!modelPrototypeEnabled || !state) return null;
+  if (place === 'voice-icon' && state.variant !== 'D') return null;
+  if (state.variant === 'D' && place !== 'settings') {
+    if (place !== 'composer' && place !== 'voice-icon') return null;
+    const icon = (
+      <button
+        type="button"
+        className="model-prototype-icon"
+        aria-haspopup="dialog"
+        aria-label={`Modell och resonemangsnivå: ${fullLabel(state.choice)}`}
+        title={`Modell och resonemangsnivå: ${fullLabel(state.choice)}`}
+        onClick={(event) => state.showDialog(event.currentTarget)}
+      >
+        <WorkspaceIcon name="settings" />
+      </button>
+    );
+    return place === 'voice-icon' ? (
+      <div className="model-prototype-voice-icon">{icon}</div>
+    ) : (
+      <div className="model-prototype-d-composer">
+        {icon}
+        <PrototypeStatus />
+      </div>
+    );
+  }
   if (place === 'settings')
     return (
       <section className="conversation-setting model-prototype-setting">

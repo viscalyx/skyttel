@@ -159,13 +159,112 @@ body:has(.app-shell[data-theme="dark"]) .model-prototype-dialog {
   border-radius: 12px;
   padding: 16px;
 }
-.model-prototype-switcher section button {
+.model-prototype-switcher :where(section) button {
   min-height: 44px;
   margin: 3px;
 }
 .model-prototype-switcher output {
   display: block;
   padding-top: 8px;
+}
+.model-prototype-d-composer {
+  flex: none;
+  padding: 2px 12px;
+}
+.model-prototype-icon,
+.household-map.workspace-shell .conversation-corner .model-prototype-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--space-control, #607c89);
+  border-radius: 10px;
+  color: var(--space-text, #1d3543);
+  background: var(--space-surface, white);
+}
+.model-prototype-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.conversation-corner:has(> .model-prototype-voice-icon) {
+  display: grid;
+  grid-template-columns: auto 44px;
+  gap: 6px;
+  align-items: center;
+}
+.conversation-corner > .model-prototype-voice-icon {
+  grid-column: 2;
+  grid-row: 1;
+}
+.conversation-corner:has(> .model-prototype-voice-icon) > .voice-box {
+  grid-column: 1;
+  grid-row: 1;
+}
+.conversation-corner:has(> .model-prototype-voice-icon)
+  > :not(.voice-box, .model-prototype-voice-icon) {
+  grid-column: 1 / -1;
+}
+.model-prototype-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.model-prototype-simple-dialog {
+  max-width: 360px;
+}
+.model-prototype-model-name {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid #607c89;
+  border-radius: 8px;
+}
+.model-prototype-effort-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+.model-prototype-effort-heading label {
+  margin: 0;
+}
+.model-prototype-effort-heading output {
+  font-weight: 600;
+}
+.model-prototype-simple input[type="range"] {
+  width: 100%;
+  margin: 0;
+  min-height: 44px;
+  accent-color: #1d706b;
+}
+.model-prototype-effort-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-top: -12px;
+}
+.model-prototype-next {
+  font-size: 13px;
+  margin: 4px 0;
+}
+.model-prototype-models {
+  max-width: 360px;
+}
+.model-prototype-models > button {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  border: 1px solid #607c89;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: left;
+}
+.model-prototype-models > button[aria-pressed="true"] {
+  outline: 2px solid #1d706b;
+  outline-offset: 2px;
 }
 .text-view-open .model-prototype-voice {
   display: none;
