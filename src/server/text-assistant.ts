@@ -139,8 +139,89 @@ export function textAssistantRoutes({
   const sessions = new Map<string, Session>();
   let messageSequence = 0;
   const draftExecutions = new Map<string, { session: Session; task: AbortController }>();
+  const latestAcceptedSequences = new Map<string, number>();
+  type Preparation = {
+    session: Session;
+    sequence: number;
+    active: boolean;
+    body: Promise<unknown>;
+    finished: Promise<void>;
+    finish: () => void;
+  };
+  const preparations = new Set<Preparation>();
+  const requestPreparations = new WeakMap<Request, Preparation>();
   const draftKey = (session: Session) =>
     JSON.stringify([session.state.actorId, session.state.householdId]);
+  function ownedDraftTask(session: Session) {
+    const claim = draftExecutions.get(draftKey(session));
+    // Reset clears its executor before awaited preparation has retired the
+    // already-aborted claim. Stop and a newer reset must still find that claim.
+    return (
+      session.execution.task ??
+      (claim?.session === session && claim.task.signal.aborted ? claim.task : undefined)
+    );
+  }
+  function reservePreparation(session: Session, body: Promise<unknown>): Preparation {
+    let finish!: () => void;
+    const finished = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const preparation = {
+      session,
+      sequence: messageSequence++,
+      active: true,
+      body,
+      finished,
+      finish,
+    };
+    preparations.add(preparation);
+    return preparation;
+  }
+  function hasEarlierPreparation(session: Session, sequence: number) {
+    return [...preparations].some(
+      (item) => item.sequence < sequence && draftKey(item.session) === draftKey(session),
+    );
+  }
+  function releasePreparation(preparation: Preparation) {
+    if (!preparation.active) return;
+    preparation.active = false;
+    preparations.delete(preparation);
+    preparation.finish();
+    nextMessage(preparation.session);
+  }
+  function retirePreparations(session: Session, current?: Preparation) {
+    for (const preparation of preparations)
+      if (preparation.session === session && preparation !== current)
+        releasePreparation(preparation);
+  }
+  function checkPreparation(preparation: Preparation) {
+    if (sessions.get(preparation.session.state.id) !== preparation.session)
+      throw new MapError('assistant_session_expired', 404);
+    if (!preparation.active) throw new MapError('assistant_turn_changed', 409);
+  }
+  function requestPreparation(request: Request) {
+    const preparation = requestPreparations.get(request);
+    if (!preparation) throw new MapError('assistant_turn_changed', 409);
+    checkPreparation(preparation);
+    return preparation;
+  }
+  async function waitForOriginalPreparation(preparation: Preparation, requestId: string) {
+    for (const earlier of preparations) {
+      if (earlier.session !== preparation.session || earlier.sequence >= preparation.sequence)
+        continue;
+      const body = await Promise.race([earlier.body, earlier.finished, preparation.finished]);
+      checkPreparation(preparation);
+      if (
+        earlier.active &&
+        body &&
+        typeof body === 'object' &&
+        'requestId' in body &&
+        body.requestId === requestId
+      )
+        await Promise.race([earlier.finished, preparation.finished]);
+      checkPreparation(preparation);
+    }
+  }
   function advanceDraftVersion(session: Session, before: number, after: number) {
     if (!Number.isSafeInteger(after)) return;
     for (const candidate of sessions.values())
@@ -148,7 +229,7 @@ export function textAssistantRoutes({
         for (const message of candidate.state.queue)
           if (message.draftVersion === before) message.draftVersion = after;
   }
-  function supersedeSaves(session: Session) {
+  function supersedeSaves(session: Session, sequence: number) {
     for (const candidate of sessions.values()) {
       if (draftKey(candidate) !== draftKey(session)) continue;
       const registered =
@@ -157,8 +238,12 @@ export function textAssistantRoutes({
           candidate.state.pendingSave.operationId,
         ).operation;
       for (const message of candidate.state.queue)
-        if (requestsSave(message.text)) message.saveSuperseded = true;
-      if (!registered) {
+        if (message.sequence < sequence && requestsSave(message.text))
+          message.saveSuperseded = true;
+      if (
+        !registered &&
+        (!candidate.state.activeMessage || candidate.state.activeMessage.sequence < sequence)
+      ) {
         candidate.state.saveIntent = undefined;
         if (candidate.state.activeMessage && requestsSave(candidate.state.activeMessage.text))
           candidate.state.activeMessage.saveSuperseded = true;
@@ -294,8 +379,11 @@ export function textAssistantRoutes({
     session.execution.messageTimers.clear();
   }
   async function stop(session: Session, retireDelivery = true) {
-    const task = session.execution.task;
+    const task = ownedDraftTask(session);
     sessions.delete(session.state.id);
+    retirePreparations(session);
+    if (![...sessions.values()].some((candidate) => draftKey(candidate) === draftKey(session)))
+      latestAcceptedSequences.delete(draftKey(session));
     for (const [id, owner] of deliveryOwners) {
       if (owner !== session) continue;
       if (retireDelivery) deliveries.retire(id);
@@ -1434,8 +1522,13 @@ export function textAssistantRoutes({
       answered.add(item.call_id);
     }
   }
-  async function startOver(session: Session, discard = false, deferVoiceClose = false) {
-    const completion = resetContext(session, discard, deferVoiceClose);
+  async function startOver(
+    session: Session,
+    preparation: Preparation,
+    discard = false,
+    deferVoiceClose = false,
+  ) {
+    const completion = resetContext(session, preparation, discard, deferVoiceClose);
     session.execution.resetCompletion = completion;
     try {
       await completion;
@@ -1444,10 +1537,16 @@ export function textAssistantRoutes({
         session.execution.resetCompletion = undefined;
     }
   }
-  async function resetContext(session: Session, discard: boolean, deferVoiceClose: boolean) {
+  async function resetContext(
+    session: Session,
+    preparation: Preparation,
+    discard: boolean,
+    deferVoiceClose: boolean,
+  ) {
+    checkPreparation(preparation);
     session.state.modelChoice = personalModelChoice(database, session.state.actorId).read();
     session.state.modelChoiceRevision = (session.state.modelChoiceRevision ?? 0) + 1;
-    const task = session.execution.task;
+    const task = ownedDraftTask(session);
     // Retire the old executor before its task records disappear. A delayed
     // status response must not cancel work belonging to the new conversation.
     onResetStart?.(session.state.id);
@@ -1482,10 +1581,12 @@ export function textAssistantRoutes({
     session.state.completedReplies = [];
     session.state.revision++;
     session.state.boundaryRevision = session.state.revision;
+    retirePreparations(session, preparation);
     session.state.saveIntent = undefined;
     session.state.voiceInputPending = false;
     const boundaryRevision = session.state.boundaryRevision;
     const checkReset = () => {
+      checkPreparation(preparation);
       if (sessions.get(session.state.id) !== session)
         throw new MapError('assistant_session_expired', 404);
       if (session.state.boundaryRevision !== boundaryRevision)
@@ -1542,7 +1643,7 @@ export function textAssistantRoutes({
             owner: contentOwner(database, session.state.householdId, session.state.actorId),
             receivedAt,
             deadline: receivedAt + 30 * 60_000,
-            sequence: messageSequence++,
+            sequence: preparation.sequence,
           },
           session.state.review,
           'reset-discard',
@@ -2519,6 +2620,7 @@ export function textAssistantRoutes({
       .filter((candidate) => draftKey(candidate) === key && candidate.state.queue.length)
       .sort((left, right) => left.state.queue[0].sequence - right.state.queue[0].sequence)[0];
     if (!waiting) return;
+    if (hasEarlierPreparation(waiting, waiting.state.queue[0].sequence)) return;
     try {
       const members = [...sessions.values()].filter((candidate) => draftKey(candidate) === key);
       const operations = householdMap(
@@ -2732,10 +2834,16 @@ export function textAssistantRoutes({
       ).unref(),
     );
     session.state.inputSerial = (session.state.inputSerial ?? 0) + 1;
-    supersedeSaves(session);
+    const key = draftKey(session);
+    const latestSequence = latestAcceptedSequences.get(key) ?? -1;
+    if (requestsSave(message.text) && latestSequence > message.sequence)
+      message.saveSuperseded = true;
+    latestAcceptedSequences.set(key, Math.max(latestSequence, message.sequence));
+    supersedeSaves(session, message.sequence);
     if (withdrawsSave(message.text)) session.state.saveIntent = undefined;
     if (
       message.resetDiscard ||
+      hasEarlierPreparation(session, message.sequence) ||
       draftExecutions.has(draftKey(session)) ||
       current.pendingOperations.length ||
       [...sessions.values()].some(
@@ -2743,6 +2851,7 @@ export function textAssistantRoutes({
       )
     ) {
       session.state.queue.push(message);
+      session.state.queue.sort((left, right) => left.sequence - right.sequence);
       session.state.phase = 'working';
       session.state.canceled = undefined;
       if (!session.execution.task) session.state.activity = 'Väntar på tidigare uppdrag';
@@ -2870,9 +2979,8 @@ export function textAssistantRoutes({
           throw new MapError('content_conflict', 409);
         if (current.version !== message.draftVersion) invalidateQueuedSaves(session);
         if (
-          requestsSave(message.text) &&
-          !message.saveSuperseded &&
-          !message.saveScopeChanged &&
+          ((requestsSave(message.text) && !message.saveSuperseded && !message.saveScopeChanged) ||
+            (!message.resetDiscard && conversationCommand(message.text)?.discard)) &&
           current.version !== message.draftVersion
         )
           throw new MapError('assistant_draft_changed', 409);
@@ -3324,16 +3432,46 @@ export function textAssistantRoutes({
       const { error, status } = ended(sessionId, context.get('actorId'), context.req.param('id'));
       return context.json({ error }, status);
     }
-    try {
-      if (context.req.method === 'GET' && now() >= session.execution.mcp.expiresAt) {
-        checkViewAccess(session);
-      } else if (context.req.method === 'GET') await refreshConfirmed(session);
-      else await call(session, 'read_my_draft', {});
-    } catch {
-      await stop(session);
-      return context.json({ error: 'assistant_session_expired' }, 404);
+    // Reserve authenticated arrival before draft reads or body preparation can
+    // yield to another conversation sharing this draft. Rejected requests do
+    // not become work, but later work cannot overtake their preparation.
+    const preparation =
+      context.req.method === 'POST' &&
+      (context.req.path.endsWith('/messages') || context.req.path.endsWith('/new'))
+        ? reservePreparation(
+            session,
+            context.req.json().catch(() => null),
+          )
+        : undefined;
+    const abandon = () => preparation && releasePreparation(preparation);
+    if (preparation) {
+      requestPreparations.set(context.req.raw, preparation);
+      context.req.raw.signal.addEventListener('abort', abandon, { once: true });
+      if (context.req.raw.signal.aborted) abandon();
     }
-    await next();
+    try {
+      if (preparation) checkPreparation(preparation);
+      try {
+        if (context.req.method === 'GET' && now() >= session.execution.mcp.expiresAt) {
+          checkViewAccess(session);
+        } else if (context.req.method === 'GET') await refreshConfirmed(session);
+        else await call(session, 'read_my_draft', {});
+      } catch {
+        if (preparation && !preparation.active) {
+          checkPreparation(preparation);
+        }
+        await stop(session);
+        return context.json({ error: 'assistant_session_expired' }, 404);
+      }
+      if (preparation) checkPreparation(preparation);
+      await next();
+    } finally {
+      if (preparation) {
+        context.req.raw.signal.removeEventListener('abort', abandon);
+        requestPreparations.delete(context.req.raw);
+        releasePreparation(preparation);
+      }
+    }
   });
   routes.get(`${base}/:sessionId`, async (context) => {
     const sessionId = context.req.param('sessionId');
@@ -3386,11 +3524,13 @@ export function textAssistantRoutes({
   routes.post(`${base}/:sessionId/messages`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    const preparation = requestPreparation(context.req.raw);
     if (session.state.contextSummaryState === 'failed' && !session.state.capacityPaused)
       return context.json({ error: 'assistant_context_summary_failed' }, 409);
     if (session.state.contextSummaryState === 'summarizing')
       return context.json({ error: 'assistant_busy' }, 409);
     const body = await context.req.json().catch(() => null);
+    checkPreparation(preparation);
     if (
       !body ||
       typeof body.text !== 'string' ||
@@ -3423,6 +3563,7 @@ export function textAssistantRoutes({
         }),
       )
       .digest('hex');
+    await waitForOriginalPreparation(preparation, body.requestId);
     const accepted = session.state.accepted.get(body.requestId);
     if (accepted)
       return accepted.hash === requestHash
@@ -3447,6 +3588,7 @@ export function textAssistantRoutes({
     )
       return context.json({ error: 'operation_pending' }, 409);
     const current = await call(session, 'read_my_draft', {});
+    checkPreparation(preparation);
     if (!currentTurn()) return context.json({ error: 'assistant_turn_changed' }, 409);
     if (answerTo.data) session.execution.parts.validateReply(answerTo.data);
     if (
@@ -3457,7 +3599,7 @@ export function textAssistantRoutes({
     if (context.req.raw.signal.aborted) return context.json({ error: 'assistant_canceled' }, 409);
     const control = conversationCommand(body.text);
     if (control?.reset) {
-      await startOver(session, control.discard, body.voiceContext !== undefined);
+      await startOver(session, preparation, control.discard, body.voiceContext !== undefined);
       return context.json(view(session));
     }
     if (draftExecutions.has(draftKey(session)) && body.queue === false)
@@ -3493,7 +3635,7 @@ export function textAssistantRoutes({
       owner: contentOwner(database, session.state.householdId, session.state.actorId),
       receivedAt,
       deadline: receivedAt + 30 * 60_000,
-      sequence: messageSequence++,
+      sequence: preparation.sequence,
     };
     admitMessage(
       session,
@@ -3559,7 +3701,7 @@ export function textAssistantRoutes({
       if ((session.state.contextRevision ?? 0) !== contextRevision)
         throw new MapError('assistant_turn_changed', 409);
     };
-    const task = session.execution.task;
+    const task = ownedDraftTask(session);
     const canceledIds = new Set(
       [...session.state.accepted]
         .filter(([, accepted]) => ['queued', 'working'].includes(accepted.status))
@@ -3591,6 +3733,7 @@ export function textAssistantRoutes({
     session.state.phase = session.state.pendingSave ? 'recovery' : 'ready';
     // Aborted work has no remaining mutation authority. Retire its claim before
     // an awaited refresh can overlap a new conversation or other queued work.
+    retirePreparations(session);
     if (task) releaseDraft(session, task);
     else nextMessage(session);
     await refresh(session, checkContext);
@@ -3612,10 +3755,12 @@ export function textAssistantRoutes({
   routes.post(`${base}/:sessionId/new`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    const preparation = requestPreparation(context.req.raw);
     const body = await context.req.json().catch(() => ({}));
+    checkPreparation(preparation);
     if (body.discard !== undefined && typeof body.discard !== 'boolean')
       return context.json({ error: 'invalid_request' }, 400);
-    await startOver(session, body.discard === true);
+    await startOver(session, preparation, body.discard === true);
     return context.json(view(session));
   });
   routes.post(`${base}/:sessionId/recover`, async (context) => {

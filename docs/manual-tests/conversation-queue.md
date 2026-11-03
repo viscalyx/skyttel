@@ -449,6 +449,14 @@ KÖ-07. Leverantören är kontrollerad; server och SQLite är riktiga.
       "runner": "vitest",
       "suite": "server",
       "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "an earlier message held in preparation keeps its position before another conversation",
+      "purpose": "HTTP-bevis att en fördröjd läsning före köstart inte låter ett senare samtal gå före."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
       "title": "stopping one conversation releases other devices and preserves completed batches",
       "purpose": "HTTP-bevis med kontrollerat sent modellsvar för kvarvarande batch och stoppets samtalsgräns."
     }
@@ -525,6 +533,14 @@ KÖ-09. Leverantören är kontrollerad; server och SQLite är riktiga.
       "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
       "title": "messages reset discards after an earlier conversation batch without invalidating it",
       "purpose": "HTTP-bevis att samtalskommandot köar kastandet efter en tidigare atomisk ändringsbatch. Även new-ingången provas i samma serverfil."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "a held new reset discards before a later conversation proposal",
+      "purpose": "HTTP-bevis att ett tidigare kastkommando behåller sin plats medan det förbereds och inte kastar ett senare förslag. Båda samtalsingångarna provas."
     },
     {
       "kind": "technical",
@@ -639,6 +655,22 @@ KÖ-08. Kontrollerad leverantör, riktig server och SQLite.
       "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
       "title": "new input in another conversation revokes a save before registration",
       "purpose": "HTTP-underlag för samma återkallelse över två samtal."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "save authority follows arrival order when earlier preparation finishes later (earlier save=true, cancel later=true)",
+      "purpose": "HTTP-bevis att återkallat sparande förblir återkallat även när det nya meddelandet stoppas innan det äldre hinner förberedas."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "a duplicate during preparation keeps the original order without revoking a later save",
+      "purpose": "HTTP-bevis att återleverans av samma begäran inte blir ett nytt meddelande som upphäver en senare uttrycklig sparbegäran."
     },
     {
       "kind": "technical",

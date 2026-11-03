@@ -12,6 +12,9 @@ const clients: APIRequestContext[] = [];
 const releases: (() => void)[] = [];
 let base: string;
 type Conversation = { client: APIRequestContext; path: string; initial: TextAssistantView };
+type AssistantDispatch = NonNullable<
+  NonNullable<Parameters<typeof createInstallation>[1]>['assistantDispatch']
+>;
 function heldResponse() {
   let release!: () => void;
   const pending = new Promise<void>((resolve) => {
@@ -20,15 +23,50 @@ function heldResponse() {
   });
   return { pending, release };
 }
+function heldDraftRead() {
+  const { pending, release } = heldResponse();
+  let holdNext = false;
+  let entered = false;
+  let followingReads = 0;
+  const dispatch: AssistantDispatch = async (incoming, dispatch) => {
+    const rpc = await incoming
+      .clone()
+      .json()
+      .catch(() => null);
+    const response = await dispatch(incoming);
+    if (rpc?.params?.name === 'read_my_draft') {
+      if (holdNext) {
+        holdNext = false;
+        entered = true;
+        await pending;
+      } else if (entered) followingReads++;
+    }
+    return response;
+  };
+  return {
+    dispatch,
+    hold: () => {
+      holdNext = true;
+    },
+    release,
+    get held() {
+      return entered;
+    },
+    get followingReads() {
+      return followingReads;
+    },
+  };
+}
 function proposeObject(
   draft: Pick<TextAssistantView['review'], 'version' | 'contentVersion'>,
   id: string,
   value: { typeId: string; name: string },
+  completion: 'draft' | 'save' = 'draft',
 ) {
   return modelTool('submit_changes', {
     version: draft.version,
     contentVersion: draft.contentVersion,
-    completion: 'draft',
+    completion,
     operations: [{ name: 'propose_object', arguments: { id, baseRevision: null, value } }],
   });
 }
@@ -53,10 +91,7 @@ async function conversation(
   const initial: TextAssistantView = await response.json();
   return { client, initial, path: `${householdPath}/text-assistant/${initial.id}` };
 }
-async function arrange(
-  modelFetch: typeof fetch,
-  assistantDispatch?: NonNullable<Parameters<typeof createInstallation>[1]>['assistantDispatch'],
-) {
+async function arrange(modelFetch: typeof fetch, assistantDispatch?: AssistantDispatch) {
   app = await createInstallation(undefined, { modelFetch, assistantDispatch });
   const client = await request.newContext();
   clients.push(client);
@@ -123,6 +158,361 @@ async function resetAndDiscard(value: Conversation, endpoint: 'messages' | 'new'
   expect(response.status(), await response.text()).toBe(200);
 }
 
+test('an earlier message held in preparation keeps its position before another conversation', async () => {
+  const readGate = heldDraftRead();
+  const { pending: heldModel, release: releaseModel } = heldResponse();
+  let typeId = '';
+  const model = textModel(async (body) => {
+    const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    await heldModel;
+    const first = input.message === 'Lägg till Lampan A.';
+    return [
+      proposeObject(input.draft, first ? 'lamp-a' : 'lamp-b', {
+        typeId,
+        name: first ? 'Lampan A' : 'Lampan B',
+      }),
+    ];
+  });
+  const first = await arrange(model.provider, readGate.dispatch);
+  const current = await read(first);
+  await seed(first);
+  const state = await map(first);
+  typeId = state.types[0].id;
+  const second = await conversation();
+  const firstId = crypto.randomUUID();
+  readGate.hold();
+  const preparing = post(first.client, `${first.path}/messages`, {
+    revision: current.revision,
+    draftVersion: state.draft.version,
+    contentVersion: state.contentVersion,
+    requestId: firstId,
+    text: 'Lägg till Lampan A.',
+  });
+  await expect.poll(() => readGate.held).toBe(true);
+  const secondId = await send(second, 'Lägg till Lampan B.');
+  const waiting: TextAssistantView = await (
+    await second.client.get(`${second.path}/messages/${secondId}`)
+  ).json();
+  expect(waiting.taskStatus).toBe('queued');
+  readGate.release();
+  expect((await preparing).status()).toBe(202);
+  releaseModel();
+  expect((await completed(first, firstId)).error).toBeUndefined();
+  expect((await completed(second, secondId)).error).toBeUndefined();
+  expect((await map(second)).draft.changes).toMatchObject([
+    { id: 'chair' },
+    { id: 'lamp-a', after: { name: 'Lampan A' } },
+    { id: 'lamp-b', after: { name: 'Lampan B' } },
+  ]);
+});
+
+test.each(['messages', 'new'] as const)(
+  'a held %s reset discards before a later conversation proposal',
+  async (endpoint) => {
+    const readGate = heldDraftRead();
+    const { pending: heldModel, release: releaseModel } = heldResponse();
+    let typeId = '';
+    const model = textModel(async (body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      await heldModel;
+      return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
+    });
+    const first = await arrange(model.provider, readGate.dispatch);
+    await seed(first);
+    typeId = (await map(first)).types[0].id;
+    await read(first);
+    const second = await conversation();
+    readGate.hold();
+    const resetting = resetAndDiscard(first, endpoint);
+    await expect.poll(() => readGate.held).toBe(true);
+    const id = await send(second, 'Lägg till Lampan.');
+    const waiting: TextAssistantView = await (
+      await second.client.get(`${second.path}/messages/${id}`)
+    ).json();
+    expect(waiting.taskStatus).toBe('queued');
+    readGate.release();
+    await resetting;
+    releaseModel();
+    expect((await completed(second, id)).error).toBeUndefined();
+    expect((await map(second)).draft.changes).toMatchObject([
+      { id: 'lamp', after: { name: 'Lampan' } },
+    ]);
+    expect((await read(first)).discarded).toBe(true);
+  },
+);
+
+test.each([
+  { earlierSave: false, cancelLater: false },
+  { earlierSave: true, cancelLater: false },
+  { earlierSave: true, cancelLater: true },
+])(
+  'save authority follows arrival order when earlier preparation finishes later (earlier save=$earlierSave, cancel later=$cancelLater)',
+  async ({ earlierSave, cancelLater }) => {
+    const readGate = heldDraftRead();
+    let typeId = '';
+    const earlierText = earlierSave ? 'Lägg till Lampan och spara.' : 'Lägg till Lampan.';
+    const laterText = earlierSave ? 'Beskriv mitt utkast.' : 'Spara hela utkastet.';
+    const model = textModel((body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (input.message === earlierText)
+        return [
+          proposeObject(
+            input.draft,
+            'lamp',
+            { typeId, name: 'Lampan' },
+            earlierSave ? 'save' : 'draft',
+          ),
+        ];
+      if (!earlierSave)
+        return [
+          modelTool('save_draft', {
+            version: input.draft.version,
+            contentVersion: input.draft.contentVersion,
+          }),
+        ];
+      return [modelMessage('Förslagen ligger i utkastet.')];
+    });
+    const first = await arrange(model.provider, readGate.dispatch);
+    const current = await read(first);
+    await seed(first);
+    const state = await map(first);
+    typeId = state.types[0].id;
+    const second = await conversation();
+    const earlierId = crypto.randomUUID();
+    readGate.hold();
+    const preparing = post(first.client, `${first.path}/messages`, {
+      revision: current.revision,
+      draftVersion: state.draft.version,
+      contentVersion: state.contentVersion,
+      requestId: earlierId,
+      text: earlierText,
+    });
+    await expect.poll(() => readGate.held).toBe(true);
+    const laterId = await send(second, laterText);
+    if (cancelLater)
+      expect((await post(second.client, `${second.path}/cancel`, { all: true })).status()).toBe(
+        200,
+      );
+    readGate.release();
+    expect((await preparing).status()).toBe(202);
+    const earlier = await completed(first, earlierId);
+    const later = cancelLater ? undefined : await completed(second, laterId);
+    const final = await map(second);
+    if (earlierSave) {
+      expect(earlier.receipt).toBeUndefined();
+      expect(final.objects).toEqual([]);
+      expect(final.draft.changes).toHaveLength(2);
+      expect((await (await second.client.get(`${base}/map/history`)).json()).history).toEqual([]);
+    } else {
+      expect(later?.receipt).toBeDefined();
+      expect(final.objects).toHaveLength(2);
+      expect(final.objects).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'chair' }),
+          expect.objectContaining({ id: 'lamp' }),
+        ]),
+      );
+      expect(final.draft.changes).toEqual([]);
+    }
+  },
+);
+
+test('a duplicate during preparation keeps the original order without revoking a later save', async () => {
+  const readGate = heldDraftRead();
+  let typeId = '';
+  const model = textModel((body) => {
+    const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    return input.message === 'Spara hela utkastet.'
+      ? [
+          modelTool('save_draft', {
+            version: input.draft.version,
+            contentVersion: input.draft.contentVersion,
+          }),
+        ]
+      : [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
+  });
+  const first = await arrange(model.provider, readGate.dispatch);
+  const current = await read(first);
+  await seed(first);
+  const state = await map(first);
+  typeId = state.types[0].id;
+  const second = await conversation();
+  const body = {
+    revision: current.revision,
+    draftVersion: state.draft.version,
+    contentVersion: state.contentVersion,
+    requestId: crypto.randomUUID(),
+    text: 'Lägg till Lampan.',
+  };
+  readGate.hold();
+  const preparing = post(first.client, `${first.path}/messages`, body);
+  await expect.poll(() => readGate.held).toBe(true);
+  const saveId = await send(second, 'Spara hela utkastet.');
+  const retrying = post(first.client, `${first.path}/messages`, body);
+  await expect.poll(() => readGate.followingReads > 0).toBe(true);
+  readGate.release();
+  expect((await preparing).status()).toBe(202);
+  expect((await retrying).status()).toBe(202);
+  expect((await completed(first, body.requestId)).error).toBeUndefined();
+  expect((await completed(second, saveId)).receipt).toBeDefined();
+  const final = await map(second);
+  expect(final.objects).toHaveLength(2);
+  expect(final.objects).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ id: 'chair' }),
+      expect.objectContaining({ id: 'lamp' }),
+    ]),
+  );
+  expect(final.draft.changes).toEqual([]);
+  expect((await (await second.client.get(`${base}/map/history`)).json()).history).toHaveLength(1);
+});
+
+test.each([false, true])(
+  'a queued ordinary discard respects verified predecessor and manual versions (manual=%s)',
+  async (manualChange) => {
+    const { pending: heldModel, release: releaseModel } = heldResponse();
+    const { pending: heldSummary, release: releaseSummary } = heldResponse();
+    let summaryHeld = false;
+    let typeId = '';
+    const model = textModel(async (body) => {
+      if (!body.tools.length) {
+        summaryHeld = true;
+        await heldSummary;
+        return [modelMessage('Stolen finns i utkastet.')];
+      }
+      await heldModel;
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
+    });
+    const first = await arrange(async (input, init) => {
+      const body = JSON.parse(String(init?.body));
+      const response = await model.provider(input, init);
+      if (!body.tools.length || body.instructions.startsWith('SKYTTEL_TURN_')) return response;
+      const result = await response.json();
+      result.usage.input_tokens = 1_040_000;
+      return Response.json(result, { headers: response.headers });
+    });
+    await seed(first);
+    typeId = (await map(first)).types[0].id;
+    const second = await conversation();
+    const running = await send(first, 'Lägg till Lampan.');
+    await expect.poll(() => model.requests.length).toBe(1);
+    const discard = await send(second, 'Kasta utkastet.');
+    releaseModel();
+    await expect.poll(() => summaryHeld).toBe(true);
+    if (manualChange) {
+      const state = await map(second);
+      const changed = await post(second.client, `${base}/map/draft`, {
+        version: state.draft.version,
+        contentVersion: state.contentVersion,
+        id: 'chair',
+        baseRevision: null,
+        value: { typeId: state.types[0].id, name: 'Manuellt bevarad stol' },
+      });
+      expect(changed.status()).toBe(200);
+    }
+    releaseSummary();
+    await completed(first, running);
+    const result = await completed(second, discard);
+    if (manualChange) {
+      expect(result.error).toBe('assistant_draft_changed');
+      const changes = (await map(second)).draft.changes;
+      expect(changes).toHaveLength(2);
+      expect(changes).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'chair',
+            after: expect.objectContaining({ name: 'Manuellt bevarad stol' }),
+          }),
+          expect.objectContaining({
+            id: 'lamp',
+            after: expect.objectContaining({ name: 'Lampan' }),
+          }),
+        ]),
+      );
+    } else {
+      expect(result.discarded).toBe(true);
+      expect((await map(second)).draft.changes).toEqual([]);
+    }
+  },
+);
+
+test.each(['rejected', 'stop', 'new reset', 'end', 'abort'] as const)(
+  'a %s preparation releases later conversation work without reviving the earlier message',
+  async (ending) => {
+    const readGate = heldDraftRead();
+    let typeId = '';
+    const model = textModel((body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
+    });
+    const first = await arrange(model.provider, readGate.dispatch);
+    const current = await read(first);
+    await seed(first);
+    const state = await map(first);
+    typeId = state.types[0].id;
+    const second = await conversation();
+    const body = {
+      revision: current.revision,
+      draftVersion: state.draft.version,
+      contentVersion: state.contentVersion,
+      requestId: crypto.randomUUID(),
+      text: ending === 'rejected' ? '' : 'Lägg till Felaktiga lampan.',
+    };
+    const controller = new AbortController();
+    const cookies = (await first.client.storageState()).cookies
+      .map((cookie) => `${cookie.name}=${cookie.value}`)
+      .join('; ');
+    readGate.hold();
+    const preparing =
+      ending === 'abort'
+        ? fetch(`${first.path}/messages`, {
+            method: 'POST',
+            headers: { Origin: app.origin, Cookie: cookies, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          }).catch((error: unknown) => error)
+        : post(first.client, `${first.path}/messages`, body);
+    await expect.poll(() => readGate.held).toBe(true);
+    const later = await send(second, 'Lägg till Lampan.');
+    if (ending === 'rejected') readGate.release();
+    else if (ending === 'abort') controller.abort();
+    else {
+      const endpoint = ending === 'stop' ? 'cancel' : ending === 'new reset' ? 'new' : 'stop';
+      const result = await post(
+        first.client,
+        `${first.path}/${endpoint}`,
+        ending === 'stop' ? { all: true } : {},
+      );
+      expect(result.status()).toBe(200);
+    }
+    expect((await completed(second, later)).error).toBeUndefined();
+    readGate.release();
+    const earlier = await preparing;
+    if (ending === 'abort') expect(earlier).toBeInstanceOf(Error);
+    else {
+      expect((earlier as Awaited<ReturnType<typeof post>>).status()).toBe(
+        ending === 'rejected' ? 400 : ending === 'end' ? 404 : 409,
+      );
+    }
+    expect((await map(second)).draft.changes).toMatchObject([{ id: 'chair' }, { id: 'lamp' }]);
+    expect(model.requests).toHaveLength(1);
+    if (ending === 'stop') {
+      const stopped = await read(first);
+      expect(stopped.canceled).toBe(true);
+      expect(stopped.reply).toBe('Avbrutet. Föreslagna ändringar ligger kvar i utkastet.');
+    }
+  },
+);
+
 test.each(['messages', 'new'] as const)(
   'stop during a %s reset refresh prevents late discard and releases other conversation work',
   async (endpoint) => {
@@ -174,11 +564,11 @@ test.each(['messages', 'new'] as const)(
     const stopped = await post(first.client, `${first.path}/cancel`, { all: true });
     expect(stopped.status()).toBe(200);
     expect((await stopped.json()).canceled).toBe(true);
+    expect((await completed(second, queued)).modelReply).toBe('Stolen finns kvar i utkastet.');
     releaseRead();
     const superseded = await resetting;
     expect(superseded.status()).toBe(409);
     expect(await superseded.json()).toEqual({ error: 'assistant_turn_changed' });
-    expect((await completed(second, queued)).modelReply).toBe('Stolen finns kvar i utkastet.');
     expect((await map(first)).draft.changes).toMatchObject([{ id: 'chair' }]);
     const final = await read(first);
     expect(final.canceled).toBe(true);

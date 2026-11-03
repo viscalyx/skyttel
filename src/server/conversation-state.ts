@@ -21,7 +21,7 @@ export type ConversationMessage = {
   owner: string;
   receivedAt: number;
   deadline: number;
-  /** Admission order across conversations sharing one user's household draft. */
+  /** Authenticated arrival order across conversations sharing one user's household draft. */
   sequence: number;
   /** Later input revokes this request's unregistered save, even before dequeue. */
   saveSuperseded?: boolean;

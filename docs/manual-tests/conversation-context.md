@@ -202,6 +202,16 @@ och kastar utkastet”.
     "Tidigare samtalsord och pågående arbete följer inte med till det nya samtalet. Utkast, mikrofonläge och annan oskickad text bevaras vid nytt samtal utan kastkommando. Redan sparade uppgifter påverkas inte.",
     "Logga ut avslutar samtalet. Samtalsord och ljud lagras inte. Faktiskt hört tal, mikrofon och skärmläsare återstår att prova manuellt enligt [förberedelsen i TAL-17](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare).",
     "Ett skrivet nytt samtal med mikrofonen av ger enbart text. Ett talat nytt samtal får sitt röstbesked efter släpp eller avstängning, medan mikrofonen förblir av. Teknisk överlämning kontrolleras separat; faktiskt hört tal kräver den verkliga röstinstallationen."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "a queued ordinary discard respects verified predecessor and manual versions (manual=true)",
+      "purpose": "HTTP-bevis att ett köat kastkommando bevarar en senare manuell rättelse och kräver en aktuell begäran. En verifierad tidigare batch provas separat i samma serverfil."
+    }
   ]
 }
 ```
