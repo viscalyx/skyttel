@@ -51,7 +51,7 @@ async function read(value: Conversation): Promise<TextAssistantView> {
 async function map(value: Conversation): Promise<MapState> {
   return (await value.client.get(`${value.path.split('/text-assistant/')[0]}/map`)).json();
 }
-async function send(value: Conversation, text: string, requestId = crypto.randomUUID()) {
+async function send(value: Conversation, text: string, requestId: string = crypto.randomUUID()) {
   const current = await read(value);
   const response = await post(value.client, `${value.path}/messages`, {
     revision: current.revision,
@@ -84,6 +84,247 @@ async function seed(value: Conversation) {
   });
   expect(response.status()).toBe(200);
 }
+
+async function resetAndDiscard(value: Conversation, endpoint: 'messages' | 'new') {
+  const current = await read(value);
+  const response = await post(
+    value.client,
+    `${value.path}/${endpoint}`,
+    endpoint === 'new'
+      ? { discard: true }
+      : {
+          revision: current.revision,
+          draftVersion: current.review.version,
+          contentVersion: current.review.contentVersion,
+          requestId: crypto.randomUUID(),
+          text: 'Nytt samtal och kasta utkastet.',
+        },
+  );
+  expect(response.status(), await response.text()).toBe(200);
+}
+
+test('reset rereads the draft when an earlier batch completes during the reset refresh', async () => {
+  let releaseModel!: () => void;
+  let releaseRead!: () => void;
+  const heldModel = new Promise<void>((resolve) => {
+    releaseModel = resolve;
+    releases.push(resolve);
+  });
+  const heldRead = new Promise<void>((resolve) => {
+    releaseRead = resolve;
+    releases.push(resolve);
+  });
+  let holdRead = false;
+  let readHeld = false;
+  let typeId = '';
+  const model = textModel(async (body) => {
+    const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    await heldModel;
+    return [
+      modelTool('submit_changes', {
+        version: input.draft.version,
+        contentVersion: input.draft.contentVersion,
+        completion: 'draft',
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: 'lamp',
+              baseRevision: null,
+              value: { typeId, name: 'Lampan' },
+            },
+          },
+        ],
+      }),
+    ];
+  });
+  const first = await arrange(model.provider, async (incoming, dispatch) => {
+    const rpc = await incoming
+      .clone()
+      .json()
+      .catch(() => null);
+    const response = await dispatch(incoming);
+    if (holdRead && rpc?.params?.name === 'read_my_draft') {
+      holdRead = false;
+      readHeld = true;
+      await heldRead;
+    }
+    return response;
+  });
+  typeId = (await map(first)).types[0].id;
+  await seed(first);
+  const second = await conversation();
+  const firstId = await send(first, 'Lägg till Lampan.');
+  await expect.poll(() => model.requests.length).toBe(1);
+  holdRead = true;
+  const resetting = post(second.client, `${second.path}/new`, { discard: true });
+  await expect.poll(() => readHeld).toBe(true);
+  releaseModel();
+  expect((await completed(first, firstId)).error).toBeUndefined();
+  releaseRead();
+  expect((await resetting).status()).toBe(200);
+  await expect.poll(async () => (await read(second)).phase).not.toBe('working');
+  expect((await read(second)).error).toBeUndefined();
+  expect((await read(second)).discarded).toBe(true);
+  expect((await map(second)).draft.changes).toEqual([]);
+});
+
+test.each(['messages', 'new'] as const)(
+  '%s reset discards after an earlier conversation batch without invalidating it',
+  async (endpoint) => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+      releases.push(resolve);
+    });
+    let typeId = '';
+    const model = textModel(async (body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      await held;
+      return [
+        modelTool('submit_changes', {
+          version: input.draft.version,
+          contentVersion: input.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'lamp',
+                baseRevision: null,
+                value: { typeId, name: 'Lampan' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    const first = await arrange(model.provider);
+    typeId = (await map(first)).types[0].id;
+    await seed(first);
+    const second = await conversation();
+    const firstId = await send(first, 'Lägg till Lampan.');
+    await expect.poll(() => model.requests.length).toBe(1);
+    await resetAndDiscard(second, endpoint);
+    expect((await map(second)).draft.changes).toMatchObject([{ id: 'chair' }]);
+    expect((await read(second)).queuedMessages).toBe(1);
+    expect((await read(second)).discarded).not.toBe(true);
+    expect((await read(second)).reply).not.toContain('Utkastet är tomt');
+    release();
+    expect((await completed(first, firstId)).error).toBeUndefined();
+    await expect.poll(async () => (await read(second)).phase).toBe('ready');
+    expect((await map(second)).draft.changes).toEqual([]);
+    expect((await read(second)).discarded).toBe(true);
+    expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each(['messages', 'new'] as const)(
+  '%s reset waits for the registered save outcome before discarding',
+  async (endpoint) => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+      releases.push(resolve);
+    });
+    const model = textModel((body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('save_draft', {
+          version: input.draft.version,
+          contentVersion: input.draft.contentVersion,
+        }),
+      ];
+    });
+    const first = await arrange(model.provider, async (incoming, dispatch) => {
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      const response = await dispatch(incoming);
+      if (rpc?.params?.name === 'prepare_save') await held;
+      return response;
+    });
+    await seed(first);
+    const second = await conversation();
+    await send(first, 'Spara hela utkastet.');
+    await expect.poll(async () => (await read(first)).saving).toBe(true);
+    const registered = (await read(first)).operations[0];
+    await resetAndDiscard(second, endpoint);
+    expect((await read(second)).queuedMessages).toBe(1);
+    expect((await read(second)).discarded).not.toBe(true);
+    expect((await map(second)).draft.changes).toHaveLength(1);
+    expect((await post(first.client, `${first.path}/cancel`, { all: true })).status()).toBe(200);
+    await expect.poll(async () => (await read(second)).discarded).toBe(true);
+    expect((await read(first)).receipt?.operationId).toBe(registered.operationId);
+    expect((await map(second)).objects).toMatchObject([{ id: 'chair', name: 'Stolen' }]);
+    expect((await map(second)).draft.changes).toEqual([]);
+    expect((await (await first.client.get(`${base}/map/history`)).json()).history).toMatchObject([
+      { operationId: registered.operationId },
+    ]);
+    release();
+    expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each(['messages', 'new'] as const)(
+  'stopping a queued %s reset preserves the earlier batch and other conversation queue',
+  async (endpoint) => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+      releases.push(resolve);
+    });
+    let typeId = '';
+    const model = textModel(async (body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (input.message === 'Beskriv mitt utkast.')
+        return [modelMessage('Båda förslagen finns kvar.')];
+      await held;
+      return [
+        modelTool('submit_changes', {
+          version: input.draft.version,
+          contentVersion: input.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'lamp',
+                baseRevision: null,
+                value: { typeId, name: 'Lampan' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    const first = await arrange(model.provider);
+    typeId = (await map(first)).types[0].id;
+    await seed(first);
+    const second = await conversation();
+    const third = await conversation();
+    const firstId = await send(first, 'Lägg till Lampan.');
+    await expect.poll(() => model.requests.length).toBe(1);
+    await resetAndDiscard(second, endpoint);
+    const thirdId = await send(third, 'Beskriv mitt utkast.');
+    expect((await post(second.client, `${second.path}/cancel`, { all: true })).status()).toBe(200);
+    expect((await read(second)).tasks).toMatchObject([{ status: 'canceled' }]);
+    expect((await read(third)).queuedMessages).toBe(1);
+    release();
+    expect((await completed(first, firstId)).error).toBeUndefined();
+    expect((await completed(third, thirdId)).modelReply).toBe('Båda förslagen finns kvar.');
+    expect((await read(second)).discarded).not.toBe(true);
+    expect((await map(third)).draft.changes).toMatchObject([{ id: 'chair' }, { id: 'lamp' }]);
+    expect(model.requests).toHaveLength(2);
+  },
+);
 
 test('two devices serialize their conversations against one draft and dequeue current data', async () => {
   let release!: () => void;

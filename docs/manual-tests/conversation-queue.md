@@ -480,6 +480,100 @@ KÖ-07. Leverantören är kontrollerad; server och SQLite är riktiga.
   behandlat utan att vänta på det gamla första leverantörssvaret.
 - Lo-förslaget ligger kvar osparat; det stoppade uppdraget ger ingen effekt.
 
+### KÖ-09: nytt samtal köar kastandet och stopp bevarar andra enhetens arbete
+
+**Syfte:** Börja om samtalet och kasta utkastet i gemensam ordning, med
+möjlighet att stoppa kastandet medan ett annat samtal arbetar.
+
+**Användare:** Alex i två separata webbläsarprofiler eller enheter.
+
+**Förutsättningar:** Använd samma två datorprofiler och osparade Lo-förslag
+som i KÖ-07. Båda har ett öppet textsamtal. Håll modelluppdragen med
+områdets terminalförberedelse. Den första varianten provar stopp före
+kastande; den andra låter kastandet genomföras efter en tidigare ändring.
+
+**Separat förberedelse:** Släpp namnändringen med aktuell version och
+objektidentitet enligt
+[utkastbatch och sparande](conversation-preparation.md#utkastbatch-och-sparande).
+Använd namnet Lo Lind och bevara Beskrivning.
+
+**Automatiskt motsvarande test (integration):**
+[conversation-queue.spec.ts](../../tests/integration/conversation-queue.spec.ts),
+KÖ-09. Leverantören är kontrollerad; server och SQLite är riktiga.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-queue.spec.ts",
+    "caseId": "KÖ-09"
+  },
+  "reference": "Två separata Chromium-inloggningar för Alex i samma hushåll på dator. Ett nytt samtal börjar om direkt, medan kastandet väntar på det andra samtalets arbete. Stopp och genomfört kastande är avgränsade varianter.",
+  "outcomes": [
+    "Det nya samtalet visar att det väntar på tidigare uppdrag och påstår inte att utkastet är tomt medan kastandet köas.",
+    "Stopp under väntan bevarar Lo-förslaget och det andra samtalets uppdrag slutförs där.",
+    "När kastandet får fortsätta slutförs den tidigare ändringen först. Det nya samtalet visar sedan att utkastet är tomt; samtalstexterna blandas inte."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "messages reset discards after an earlier conversation batch without invalidating it",
+      "purpose": "HTTP-bevis att samtalskommandot köar kastandet efter en tidigare atomisk ändringsbatch. Även new-ingången provas i samma serverfil."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "new reset waits for the registered save outcome before discarding",
+      "purpose": "HTTP-bevis att ett registrerat sparförsök får verifierat utfall före kastandet, med ett enda sparkvitto och bevarade sparade uppgifter."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "stopping a queued new reset preserves the earlier batch and other conversation queue",
+      "purpose": "HTTP-bevis med tre samtal att stopp av köat kastande bevarar både tidigare batch och ett annat samtals kö."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Skicka **Hållet uppdrag.** i första profilen och låt det vänta.
+2. Skicka **Nytt samtal och kasta utkastet.** i andra profilen.
+   Läs **Väntar på tidigare uppdrag**. Samtalet börjar om utan besked om
+   att utkastet är tomt.
+3. Tryck Escape i andra profilens meddelandefält. Läs avbrottsbeskedet.
+4. Släpp första profilens uppdrag med svaret **Första arbetet är klart.**
+   Läs svaret där. Öppna Lo-förslaget i andra profilen och kontrollera
+   namn och Beskrivning enligt områdets läsanvisning.
+5. Skicka **Byt namn på Lo till Lo Lind.** i första profilen och håll
+   modelluppdraget. Skicka åter **Nytt samtal och kasta utkastet.** i andra.
+6. Läs väntestatusen i andra profilen. Släpp första profilens ändringsbatch
+   enligt förberedelsen, med namnet Lo Lind och bevarad Beskrivning.
+7. Läs **Lo Exempel bytte namn till Lo Lind.** i första profilen och därefter
+   **Nytt samtal. Utkastet är tomt.** i andra.
+
+**Förväntat resultat:**
+
+- Samtalet börjar om direkt; kastandet väntar på tidigare arbete.
+- Stopp under väntan bevarar utkastet. Första samtalets uppdrag slutförs.
+- Utan stopp genomförs första samtalets ändring före kastandet.
+  Det andra samtalet visar först efteråt att utkastet är tomt.
+- Samtalstexterna blandas inte. Ingen tidigare ändring får versionsfel
+  på grund av ett senare kastande.
+
 ### KÖ-08: ett nytt köat meddelande kräver ett nytt uttryckligt sparande
 
 **Syfte:** Rätta ett förslag under ett väntande sparuppdrag och behålla

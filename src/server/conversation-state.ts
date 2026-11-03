@@ -25,6 +25,8 @@ export type ConversationMessage = {
   sequence: number;
   /** Later input revokes this request's unregistered save, even before dequeue. */
   saveSuperseded?: boolean;
+  /** Discard requested by an already-reset conversation, with no dialogue turn. */
+  resetDiscard?: boolean;
 };
 type AcceptedMessage = {
   hash: string;

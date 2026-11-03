@@ -1352,6 +1352,43 @@ export function textAssistantRoutes({
     )
       throw new Error('invalid_receipt');
   }
+  function applyCheckedSave(
+    session: Session,
+    checked: ReturnType<typeof checkSaves>,
+    verificationSession = session,
+  ) {
+    if (checked.receipt) {
+      const operation = checked.operations.find((item) => item.status === 'succeeded');
+      if (!operation) throw new Error('invalid_receipt');
+      // A queued request supplies current access while its result is delivered
+      // to the conversation that originally registered the attempt.
+      verifyReceipt(verificationSession, checked.receipt, {
+        operationId: operation.operationId,
+        version: operation.draftVersion,
+        contentVersion: operation.contentVersion,
+      });
+      saved(session, checked.receipt);
+    }
+    const changed = session.state.saveCheck?.id !== checked.id;
+    if (changed) {
+      session.state.revision++;
+      session.state.completedReplies?.push({
+        id: `check-${checked.id}`,
+        source: 'text',
+        revision: session.state.revision,
+        text: '',
+        reply: checked.reply,
+        receipt: checked.receipt,
+        saveCheck: checked,
+      });
+    }
+    session.state.pendingSave = undefined;
+    session.state.phase = 'ready';
+    session.state.error = undefined;
+    session.state.saveCheck = checked;
+    session.state.reply = checked.reply;
+    return changed;
+  }
   async function refreshConfirmed(session: Session, guard?: () => void) {
     try {
       await refresh(session, guard);
@@ -1445,12 +1482,6 @@ export function textAssistantRoutes({
     session.state.voiceInputPending = false;
     await refresh(session);
     session.state.phase = session.state.pendingSave ? 'recovery' : 'ready';
-    if (discard) {
-      session.state.review = await call(session, 'discard_draft', {
-        version: session.state.review.version,
-        contentVersion: session.state.review.contentVersion,
-      });
-    }
     session.state.workVersion = session.state.review.version;
     session.state.input = [];
     session.state.conversation = [];
@@ -1484,6 +1515,26 @@ export function textAssistantRoutes({
         : 'ready';
     session.state.reply = newConversationMessage(session.state.review);
     onNewConversation?.(view(session), deferVoiceClose);
+    if (discard) {
+      const receivedAt = now();
+      admitMessage(
+        session,
+        {
+          id: randomUUID(),
+          text: 'Kasta utkastet.',
+          voice: deferVoiceClose,
+          resetDiscard: true,
+          contentVersion: session.state.review.contentVersion,
+          draftVersion: session.state.review.version,
+          owner: contentOwner(database, session.state.householdId, session.state.actorId),
+          receivedAt,
+          deadline: receivedAt + 30 * 60_000,
+          sequence: messageSequence++,
+        },
+        session.state.review,
+        'reset-discard',
+      );
+    }
     if (task) releaseDraft(session, task);
     else nextMessage(session);
   }
@@ -2466,38 +2517,15 @@ export function textAssistantRoutes({
         const checked = checkSaves(database, waiting.state.actorId, waiting.state.householdId, [
           id,
         ]);
-        const operation = checked.operations[0];
-        if (checked.receipt) {
-          if (!operation) throw new Error('invalid_receipt');
-          verifyReceipt(waiting, checked.receipt, {
-            operationId: operation.operationId,
-            version: operation.draftVersion,
-            contentVersion: operation.contentVersion,
-          });
-        }
         const origins = members.filter((member) => member.state.pendingSave?.operationId === id);
         for (const origin of origins.length ? origins : [waiting]) {
-          if (checked.receipt) saved(origin, checked.receipt);
-          origin.state.pendingSave = undefined;
+          applyCheckedSave(origin, checked, waiting);
           origin.state.saveIntent = undefined;
-          origin.state.phase = 'ready';
-          origin.state.error = undefined;
-          origin.state.saveCheck = checked;
-          origin.state.reply = checked.reply;
           origin.state.operations = householdMap(
             database,
             origin.state.actorId,
             origin.state.householdId,
           ).operations().operations;
-          origin.state.completedReplies?.push({
-            id: `check-${checked.id}`,
-            source: 'text',
-            revision: ++origin.state.revision,
-            text: '',
-            reply: checked.reply,
-            receipt: checked.receipt,
-            saveCheck: checked,
-          });
         }
       }
     } catch {
@@ -2645,6 +2673,65 @@ export function textAssistantRoutes({
         ),
       );
   }
+  function admitMessage(
+    session: Session,
+    message: Message,
+    current: TextAssistantReview,
+    requestHash: string,
+    deliveryConnectionId?: string,
+    deliveryAudio = false,
+  ) {
+    // Draft reads and resets can cross login expiry. Admission is synchronous,
+    // and retries retain this original receipt.
+    authorize(session.state.actorId, session.execution.browserSessionId, session.state.householdId);
+    session.execution.mcp.acceptTask(message.deadline);
+    session.state.accepted.set(message.id, {
+      hash: requestHash,
+      voice: message.voice,
+      status: 'queued',
+      receivedAt: message.receivedAt,
+      deadline: message.deadline,
+    });
+    session.execution.deliveries.set(
+      message.id,
+      deliveries.bind(
+        deliveryConnectionId,
+        message.id,
+        message.deadline,
+        () => messageAccess(session, message),
+        message.voice || deliveryAudio,
+      ),
+    );
+    syncWork();
+    session.execution.messageTimers.set(
+      message,
+      setTimeout(
+        () => expireMessage(session, message),
+        Math.max(1, message.deadline - now()),
+      ).unref(),
+    );
+    session.state.inputSerial = (session.state.inputSerial ?? 0) + 1;
+    supersedeSaves(session);
+    if (withdrawsSave(message.text)) session.state.saveIntent = undefined;
+    if (
+      message.resetDiscard ||
+      draftExecutions.has(draftKey(session)) ||
+      current.pendingOperations.length ||
+      [...sessions.values()].some(
+        (candidate) => draftKey(candidate) === draftKey(session) && candidate.state.queue.length,
+      )
+    ) {
+      session.state.queue.push(message);
+      session.state.phase = 'working';
+      session.state.canceled = undefined;
+      if (!session.execution.task) session.state.activity = 'Väntar på tidigare uppdrag';
+      nextMessage(session);
+    } else {
+      session.state.review = current;
+      session.state.workVersion = current.version;
+      beginMessage(session, message);
+    }
+  }
   function beginMessage(session: Session, message: Message, queued = false) {
     const accepted = session.state.accepted.get(message.id);
     if (!accepted) return;
@@ -2685,7 +2772,7 @@ export function textAssistantRoutes({
     session.state.phase = 'working';
     session.state.activity = 'Förbereder uppgiften';
     session.state.activitySteps = [];
-    session.state.resetSource = undefined;
+    if (!message.resetDiscard) session.state.resetSource = undefined;
     session.state.canceled = undefined;
     session.state.error = undefined;
     session.state.securityReference = undefined;
@@ -2701,12 +2788,14 @@ export function textAssistantRoutes({
     session.state.selection = undefined;
     session.state.displayedSelection = undefined;
     session.state.displayedItem = undefined;
-    if (!message.voice) appendConversation(session, { role: 'user', text: message.text });
-    session.state.userRequests = [...session.state.userRequests, message.text].slice(-24);
-    session.state.unfinishedRequests.push({
-      id: message.id,
-      text: message.text,
-    });
+    if (!message.resetDiscard) {
+      if (!message.voice) appendConversation(session, { role: 'user', text: message.text });
+      session.state.userRequests = [...session.state.userRequests, message.text].slice(-24);
+      session.state.unfinishedRequests.push({
+        id: message.id,
+        text: message.text,
+      });
+    }
     // Scope clarifications are transient; ledger questions remain pending until
     // their existing identity/answer protocol resolves them.
     syncQuestions(session);
@@ -2780,15 +2869,19 @@ export function textAssistantRoutes({
         session.state.workVersion = session.state.review.version;
         session.state.phase = 'ready';
         session.state.result = { kind: 'draft', message: 'Utkastet är kastat.' };
-        session.state.reply = session.state.result.message;
+        session.state.reply = message.resetDiscard
+          ? newConversationMessage(session.state.review)
+          : session.state.result.message;
         session.state.discarded = true;
-        appendConversation(session, { role: 'assistant', text: session.state.reply });
-        finishInterruptedInput(session);
-        session.state.input.push(
-          { role: 'user', content: JSON.stringify({ message: message.text }) },
-          { role: 'assistant', content: session.state.reply },
-        );
-        settleRequests(session, message.id, true);
+        if (!message.resetDiscard) {
+          appendConversation(session, { role: 'assistant', text: session.state.reply });
+          finishInterruptedInput(session);
+          session.state.input.push(
+            { role: 'user', content: JSON.stringify({ message: message.text }) },
+            { role: 'assistant', content: session.state.reply },
+          );
+          settleRequests(session, message.id, true);
+        }
       } else {
         let checkTurnActions: CheckTurnActions | undefined;
         let readOnly = false;
@@ -3380,55 +3473,14 @@ export function textAssistantRoutes({
       deadline: receivedAt + 30 * 60_000,
       sequence: messageSequence++,
     };
-    // The body, draft check and queue wait above can cross login expiry.
-    // Admission is synchronous, and retries retain this original receipt.
-    authorize(session.state.actorId, session.execution.browserSessionId, session.state.householdId);
-    session.execution.mcp.acceptTask(message.deadline);
-    session.state.accepted.set(message.id, {
-      hash: requestHash,
-      voice: message.voice,
-      status: 'queued',
-      receivedAt: message.receivedAt,
-      deadline: message.deadline,
-    });
-    session.execution.deliveries.set(
-      message.id,
-      deliveries.bind(
-        body.deliveryConnectionId,
-        message.id,
-        message.deadline,
-        () => messageAccess(session, message),
-        message.voice || body.deliveryAudio === true,
-      ),
-    );
-    syncWork();
-    session.execution.messageTimers.set(
+    admitMessage(
+      session,
       message,
-      setTimeout(
-        () => expireMessage(session, message),
-        Math.max(1, message.deadline - now()),
-      ).unref(),
+      current,
+      requestHash,
+      body.deliveryConnectionId,
+      body.deliveryAudio === true,
     );
-    session.state.inputSerial = (session.state.inputSerial ?? 0) + 1;
-    supersedeSaves(session);
-    if (withdrawsSave(message.text)) session.state.saveIntent = undefined;
-    if (
-      draftExecutions.has(draftKey(session)) ||
-      current.pendingOperations.length ||
-      [...sessions.values()].some(
-        (candidate) => draftKey(candidate) === draftKey(session) && candidate.state.queue.length,
-      )
-    ) {
-      session.state.queue.push(message);
-      session.state.phase = 'working';
-      session.state.canceled = undefined;
-      if (!session.execution.task) session.state.activity = 'Väntar på tidigare uppdrag';
-      nextMessage(session);
-    } else {
-      session.state.review = current;
-      session.state.workVersion = current.version;
-      beginMessage(session, message);
-    }
     return context.json(
       { ...view(session), taskStatus: session.state.accepted.get(message.id)?.status },
       202,
@@ -3515,6 +3567,10 @@ export function textAssistantRoutes({
     session.state.answers = [];
     session.state.requiredNotice = undefined;
     session.state.phase = session.state.pendingSave ? 'recovery' : 'ready';
+    // Aborted work has no remaining mutation authority. Retire its claim before
+    // an awaited refresh can overlap a new conversation or other queued work.
+    if (task) releaseDraft(session, task);
+    else nextMessage(session);
     await refresh(session, checkContext);
     checkContext();
     for (const [id, accepted] of session.state.accepted) {
@@ -3526,8 +3582,6 @@ export function textAssistantRoutes({
       }
     }
     syncWork();
-    if (task) releaseDraft(session, task);
-    else nextMessage(session);
     return context.json(view(session));
   });
   // Nytt samtal: the conversation text and the context are emptied, and
@@ -3583,40 +3637,15 @@ export function textAssistantRoutes({
           body.checkId,
         );
         await refresh(session);
-        if (checked.receipt) {
-          const operation = checked.operations.find((item) => item.status === 'succeeded');
-          if (!operation) throw new Error('invalid_receipt');
-          verifyReceipt(session, checked.receipt, {
-            operationId: operation.operationId,
-            version: operation.draftVersion,
-            contentVersion: operation.contentVersion,
-          });
-          saved(session, checked.receipt);
-        }
-        if (session.state.saveCheck?.id !== checked.id) {
-          session.state.revision++;
+        if (applyCheckedSave(session, checked)) {
           appendConversation(session, { role: 'assistant', text: checked.reply });
-          session.state.completedReplies?.push({
-            id: `check-${checked.id}`,
-            source: 'text',
-            revision: session.state.revision,
-            text: '',
-            reply: checked.reply,
-            receipt: checked.receipt,
-            saveCheck: checked,
-          });
         }
-        session.state.saveCheck = checked;
-        session.state.reply = checked.reply;
         session.state.modelReply = undefined;
         syncQuestions(session);
         session.state.newQuestions = [];
         session.state.answers = [];
         session.state.requiredNotice = undefined;
-        session.state.error = undefined;
         session.state.result = undefined;
-        session.state.pendingSave = undefined;
-        session.state.phase = 'ready';
         finish('completed', observationResult(session));
         nextMessage(session);
         return context.json(view(session));

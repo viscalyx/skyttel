@@ -304,6 +304,11 @@ Du kan också säga eller skriva **Nytt samtal**. Det gör samma sak som
 knappen och frågar inte om medgivande igen. Vill du kasta hela det
 osparade utkastet, säg eller skriv **Kasta utkastet**, eller
 **Nytt samtal och kasta utkastet** för att också börja om samtalet.
+Samtalet börjar om direkt. Kastandet väntar på tidigare uppdrag mot ditt
+utkast, även från andra samtal och enheter, och på kontroll av redan
+påbörjat sparande. Under väntan finns förslagen kvar. Stoppar du det nya
+samtalet innan kastandet genomförs, ligger utkastet kvar och andra
+samtals köade uppdrag fortsätter.
 Redan sparade uppgifter påverkas inte av att utkastet kastas.
 Skicka kommandot som ett eget meddelande. En begäran att läsa, ändra,
 spara eller ta bort ett enskilt förslag ger inte tillåtelse att kasta
