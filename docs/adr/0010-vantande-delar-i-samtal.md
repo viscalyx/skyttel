@@ -165,6 +165,16 @@ kontrollerar hela batchen före tillämpning; ingen extra modellkontroll
 krävs per operation. Serverns åtkomst-, ägar- och versionskontroller
 gäller varje operation inom samma transaktion.
 
+Den oberoende kontrollen ska uttryckligen bekräfta att varje berörd
+sammanhängande del är komplett utifrån användarens uppdrag. Nödvändiga
+beroende ändringar ska ingå i samma batch eller redan vara uppfyllda i
+aktuellt underlag. Ett ofullständigt förslag ska avvisas före tillämpning,
+även om det lämnas som enstaka verktygsanrop i flera modellomgångar.
+Avvisningen är ett fel i förslaget och innebär inte att användarens
+begäran är oklar. Tidigare slutförda batcher och väntande delar bevaras;
+en sparbegäran återupplivas inte. Den språkliga bedömningen är fortfarande
+modellens ansvar och bevisas inte av en schemaenlig bekräftelse.
+
 Självständiga delar får använda separata batcher och fortsätta även när
 andra delar väntar. Ett senare batchfel påverkar inte tidigare slutförda
 batcher. Sparande är ett separat steg efter batchen; avvisat sparande

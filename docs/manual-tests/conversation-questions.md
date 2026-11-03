@@ -300,6 +300,22 @@ FRAGA-13.
       "spec": "tests/unit/server/conversation-boundaries-http.test.ts",
       "title": "a failed dependent batch rolls back its object and retains an earlier independent batch and pending changes",
       "purpose": "Jämför hela utkastet före och efter rollback och kontrollerar bevarad delstatus genom publika HTTP-vägar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-boundaries-http.test.ts",
+      "title": "an unchecked connected proposal cannot commit before its later dependent operation",
+      "purpose": "Kontrollerar att en oberoende bekräftelse utan uttrycklig kontroll av delens fullständighet inte tillåter ett första beroende steg genom publika HTTP-vägar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-boundaries-http.test.ts",
+      "title": "an incomplete batch proposal preserves complete independent work and pending parts",
+      "purpose": "Verifierar att ett ofullständigt sammanhängande förslag avvisas före ändring, med tidigare självständigt arbete och väntande delar kvar."
     }
   ]
 }

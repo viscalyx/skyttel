@@ -384,6 +384,139 @@ test('a failed dependent batch rolls back its object and retains an earlier inde
   expect(model.authorizationRequests).toHaveLength(4);
 });
 
+test('an unchecked connected proposal cannot commit before its later dependent operation', async () => {
+  let typeId = '';
+  let relationshipTypeId = '';
+  let round = 0;
+  const text = 'Lägg till Lampan och dess nödvändiga samband tillsammans. Spara hela utkastet.';
+  const model = textModel(
+    (request) => {
+      const { draft } = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      const versions = { version: draft.version, contentVersion: draft.contentVersion };
+      return [
+        round++ === 0
+          ? modelTool('propose_object', {
+              ...versions,
+              id: 'dependent',
+              baseRevision: null,
+              value: { typeId, name: 'Lampan' },
+            })
+          : modelTool('propose_relationship', {
+              ...versions,
+              id: 'required-link',
+              baseRevision: null,
+              value: {
+                typeId: relationshipTypeId,
+                sourceId: 'dependent',
+                targetId: 'missing-endpoint',
+              },
+            }),
+      ];
+    },
+    (request) => [
+      modelMessage(
+        JSON.stringify(
+          request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? { mode: 'work', request: text }
+            : { decision: 'allow' },
+        ),
+      ),
+    ],
+  );
+  await setup(model.provider);
+  const before = await map();
+  typeId = before.types[0].id;
+  relationshipTypeId = before.relationshipTypes[0].id;
+  const result = await message(text);
+  expect(await map()).toEqual(before);
+  expect(result).toMatchObject({ phase: 'error', error: 'assistant_scope_unavailable' });
+  expect(result.receipt).toBeUndefined();
+  expect(result.reply).toContain('sparbegäran gäller inte längre');
+  expect(model.requests).toHaveLength(1);
+});
+
+test.each(['direct', 'batch'] as const)(
+  'an incomplete %s proposal preserves complete independent work and pending parts',
+  async (mode) => {
+    let typeId = '';
+    let round = 0;
+    const model = textModel(
+      (request) => {
+        const { draft } = JSON.parse(
+          String(request.input.findLast((item) => item.role === 'user')?.content),
+        );
+        const versions = { version: draft.version, contentVersion: draft.contentVersion };
+        const operation = {
+          name: 'propose_object',
+          arguments: {
+            id: round === 0 ? 'independent' : 'dependent',
+            baseRevision: null,
+            value: { typeId, name: round === 0 ? 'Stolen' : 'Lampan' },
+          },
+        };
+        if (round++ > 1) return [modelMessage('Den oberoende kortfrågan återstår.')];
+        if (round === 2 && mode === 'direct')
+          return [modelTool(operation.name, { ...versions, ...operation.arguments })];
+        return [
+          modelTool('submit_changes', {
+            ...versions,
+            completion: 'draft',
+            questions:
+              round === 1
+                ? [
+                    {
+                      kind: 'change',
+                      request: 'Ändra kortet',
+                      question: 'Vilket kort?',
+                      dependsOnDraft: true,
+                    },
+                  ]
+                : [],
+            operations: [operation],
+          }),
+        ];
+      },
+      (request) => {
+        const input = JSON.parse(String(request.input[0].content));
+        return [
+          modelMessage(
+            JSON.stringify(
+              request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+                ? { mode: 'work', request: input.current }
+                : input.authority.current.includes('Lampan')
+                  ? { decision: 'incomplete' }
+                  : { decision: 'allow', complete: true },
+            ),
+          ),
+        ];
+      },
+    );
+    await setup(model.provider);
+    typeId = (await map()).types[0].id;
+    expect(await message('Lägg till Stolen. Ändra också kortet men fråga vilket kort.')).toMatchObject({
+      phase: 'ready',
+    });
+    const before = await map();
+    const pending = session.pendingParts;
+    expect(before.draft.changes.map(({ id }) => id)).toEqual(['independent']);
+    expect(pending).toEqual([
+      expect.objectContaining({ status: 'waiting', question: 'Vilket kort?' }),
+    ]);
+    const result = await message(
+      'Lägg till Lampan och dess nödvändiga samband tillsammans. Spara hela utkastet.',
+    );
+    expect(await map()).toEqual(before);
+    expect(result).toMatchObject({ phase: 'error', error: 'assistant_batch_incomplete' });
+    expect(result.pendingParts).toEqual(pending);
+    expect(result.reply).toContain('Förslaget är ofullständigt');
+    expect(result.reply).toContain('sparbegäran gäller inte längre');
+    expect(result.receipt).toBeUndefined();
+    expect(model.requests).toHaveLength(2);
+  },
+);
+
 test('multiple direct draft mutations require an atomic batch before either can change the draft', async () => {
   let typeId = '';
   const model = textModel((request) => {

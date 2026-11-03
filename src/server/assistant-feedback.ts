@@ -17,6 +17,8 @@ export function assistantFailureMessage(code: string): string {
       return 'Den väntande delen har ändrats. Läs aktuellt samtal och fortsätt bara det arbete som återstår.';
     case 'assistant_batch_required':
       return 'De sammanhängande ändringarna kunde inte genomföras tillsammans. Inget i förslaget har ändrats. Be Skyttel försöka igen.';
+    case 'assistant_batch_incomplete':
+      return 'Förslaget är ofullständigt. De sammanhängande ändringarna har inte genomförts. Be Skyttel försöka igen.';
     case 'assistant_task_expired':
       return 'Uppgiftens tid är slut. Kontrollera ditt utkast och tidigare sparresultat innan du lämnar en ny instruktion.';
     case 'assistant_save_not_requested':

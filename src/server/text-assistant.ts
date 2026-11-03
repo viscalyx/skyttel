@@ -1257,6 +1257,8 @@ export function textAssistantRoutes({
         if (decision.decision === 'deny')
           rejectAction(operations[decision.operation].name, 'outside_requested_work');
         if (decision.decision === 'clarify') throw new MapError('assistant_scope_unclear', 409);
+        if (decision.decision === 'incomplete')
+          throw new MapError('assistant_batch_incomplete', 409);
       };
       scopeReady(checkActions);
       const review = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
@@ -2410,6 +2412,7 @@ export function textAssistantRoutes({
                 'assistant_action_out_of_scope',
                 'assistant_scope_unclear',
                 'assistant_scope_unavailable',
+                'assistant_batch_incomplete',
               ].includes(error.code)
             ? error.code
             : 'assistant_draft_changed';
@@ -2422,7 +2425,11 @@ export function textAssistantRoutes({
           session.state.requiredNotice = blockedActionMessage(session.state.securityReference);
           session.state.reply = session.state.requiredNotice;
         }
-        if (session.state.securityReference || session.state.error.startsWith('assistant_scope_')) {
+        if (
+          session.state.securityReference ||
+          session.state.error.startsWith('assistant_scope_') ||
+          session.state.error === 'assistant_batch_incomplete'
+        ) {
           session.state.modelReply = undefined;
           session.state.previousFailure = session.state.reply;
           session.state.conversation.push({ role: 'assistant', text: session.state.reply });
