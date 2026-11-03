@@ -275,6 +275,7 @@ export function textAssistantRoutes({
     session.execution.task?.abort();
     clearWorkTimers(session);
     session.execution.summaryTask?.abort();
+    session.state.pendingSummaryChoice = undefined;
     session.state.queue = [];
     for (const id of session.state.accepted.keys()) session.execution.deliveries.get(id)?.stop();
     session.state.accepted.clear();
@@ -599,12 +600,16 @@ export function textAssistantRoutes({
     };
     session.state.contextSummaryState = 'summarizing';
     session.state.contextSummaryFailure = undefined;
-    const summaryChoice = { ...session.state.modelChoice };
-    const summaryProfile = modelWork.getStore() ?? conversationModelProfile(summaryChoice);
+    const deferredChoice = session.state.pendingSummaryChoice;
+    const summaryChoice = deferredChoice ?? session.state.modelChoice;
+    const summaryProfile = deferredChoice
+      ? conversationModelProfile(deferredChoice)
+      : (modelWork.getStore() ?? conversationModelProfile(summaryChoice));
     try {
       guard();
       if (!respond) throw new Error('assistant_unavailable');
-      if (!modelWork.getStore()) requireEnabledChoice(summaryChoice, config.conversationModels);
+      if (deferredChoice || !modelWork.getStore())
+        requireEnabledChoice(summaryChoice, config.conversationModels);
       if (handoff) await onSummary?.(session.state.id, task.signal);
       guard();
       const snapshot = session.state.conversation.length;
@@ -650,6 +655,7 @@ export function textAssistantRoutes({
       session.state.contextSummaries ??= [];
       session.state.contextSummaries.push({ id: randomUUID(), text: contextSummaryMessage });
       session.state.contextSummaryState = undefined;
+      session.state.pendingSummaryChoice = undefined;
       session.execution.capacity.reset();
     } catch (error) {
       if (task.signal.aborted) return 'canceled' as const;
@@ -1149,6 +1155,7 @@ export function textAssistantRoutes({
     clearWorkTimers(session);
     session.execution.summaryTask?.abort();
     session.execution.summaryTask = undefined;
+    session.state.pendingSummaryChoice = undefined;
     session.state.summary = undefined;
     session.state.summaryOffset = undefined;
     session.state.contextSummaryState = undefined;
@@ -2406,8 +2413,10 @@ export function textAssistantRoutes({
           session.state.phase === 'ready' &&
           needsSummary(session)
         )
-          if (message.voice) session.state.contextSummaryState = 'needed';
-          else await summarize(session, guard);
+          if (message.voice) {
+            session.state.pendingSummaryChoice = selectedModel;
+            session.state.contextSummaryState = 'needed';
+          } else await summarize(session, guard);
       }
     };
     let observationStatus: ObservationStatus = 'incomplete';
@@ -2976,6 +2985,7 @@ export function textAssistantRoutes({
     };
     session.execution.task?.abort();
     session.execution.summaryTask?.abort();
+    session.state.pendingSummaryChoice = undefined;
     session.state.saveIntent = undefined;
     clearWorkTimers(session);
     session.state.voiceInputPending = false;

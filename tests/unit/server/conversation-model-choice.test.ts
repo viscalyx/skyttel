@@ -145,6 +145,118 @@ test.each([
   },
 );
 
+test.each(['handoff', 'queue', 'cancel', 'new'] as const)(
+  'a deferred spoken summary uses the correct request choice through %s',
+  async (action) => {
+    let entered = () => {};
+    const started = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const live = liveProvider();
+    const model = textModel(async (body) => {
+      if (model.requests.length === 1) {
+        entered();
+        await waiting;
+      }
+      return [modelMessage(body.tools.length ? 'Ett färdigt svar.' : 'Historisk sammanfattning.')];
+    });
+    app = await createInstallation(undefined, {
+      modelFetch: async (input, init) => {
+        const response = await model.provider(input, init);
+        if (!JSON.parse(String(init?.body)).tools.length) return response;
+        const completed = await response.json();
+        completed.usage.input_tokens = 1_040_000;
+        return Response.json(completed, { headers: response.headers });
+      },
+      liveFetch: live.provider,
+      liveSideband: live.attach,
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    const { household } = await (await createHousehold(browser, app.origin)).json();
+    const base = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const post = (path: string, data: object = {}) =>
+      browser.post(path, { headers: { origin: app.origin }, data });
+    let view: TextAssistantView = await (await post(base, approvedForVisit)).json();
+    expect(
+      (
+        await post(`${base}/${view.id}/voice`, {
+          sdp: 'synthetic-offer',
+          revision: view.revision,
+          draftVersion: view.review.version,
+          contentVersion: view.review.contentVersion,
+        })
+      ).status(),
+    ).toBe(201);
+    const provider = [...live.channels.keys()][0];
+    live.emit(provider, {
+      type: 'session.input_transcript.delta',
+      event_id: crypto.randomUUID(),
+      delta: 'Beskriv kartan.',
+      start_ms: 0,
+      end_ms: 100,
+    });
+    live.emit(provider, {
+      type: 'session.delegation.created',
+      event_id: crypto.randomUUID(),
+      offset_ms: 100,
+      delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
+    });
+    await started;
+    const choice = { model: 'gpt-6.1-sol', effort: 'low' };
+    expect((await post(`${base}/${view.id}/model-choice`, choice)).status()).toBe(200);
+    const send = () =>
+      post(`${base}/${view.id}/messages`, {
+        revision: view.revision,
+        draftVersion: view.review.version,
+        contentVersion: view.review.contentVersion,
+        requestId: crypto.randomUUID(),
+        text: 'Beskriv kartan igen.',
+      });
+    if (action === 'queue') expect((await send()).status()).toBe(202);
+    release();
+    if (action !== 'queue') {
+      await expect
+        .poll(async () => {
+          view = await (await browser.get(`${base}/${view.id}`)).json();
+          return [view.phase, view.contextSummaryState];
+        })
+        .toEqual(['ready', 'needed']);
+      const next = await post(
+        `${base}/${view.id}/${action === 'handoff' ? 'summarize' : action}`,
+        action === 'cancel' ? { all: true } : {},
+      );
+      expect(next.status()).toBe(200);
+      view = await next.json();
+      expect((await send()).status()).toBe(202);
+    }
+    await expect
+      .poll(async () => {
+        view = await (await browser.get(`${base}/${view.id}`)).json();
+        return [view.phase, view.contextSummaries?.length];
+      })
+      .toEqual(['ready', action === 'new' ? 1 : 2]);
+    expect(view.modelChoice).toEqual(choice);
+    const retired = action === 'cancel' || action === 'new';
+    const original = retired ? model.requests.slice(0, 1) : model.requests.slice(0, 2);
+    for (const entry of [...original, model.authorizationRequests[0]])
+      expect(entry).toMatchObject({
+        model: 'gpt-6.1-terra',
+        reasoning: { effort: 'high' },
+      });
+    for (const entry of model.requests.slice(retired ? 1 : 2))
+      expect(entry).toMatchObject({ model: 'gpt-6.1-sol', reasoning: { effort: 'low' } });
+    expect(model.authorizationRequests.at(-1)).toMatchObject({
+      model: 'gpt-6.1-sol',
+      reasoning: { effort: 'low' },
+    });
+    expect(model.requests).toHaveLength(action === 'new' ? 3 : 4);
+  },
+);
+
 test.each([
   ['gpt-6.1-terra', 'low'],
   ['gpt-6.1-terra', 'medium'],

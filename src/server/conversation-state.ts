@@ -49,6 +49,8 @@ export type ConversationState = TextAssistantView & {
   resetGeneration: number;
   summary?: string;
   summaryOffset?: number;
+  /** The request's binding survives the browser's deferred voice handoff. */
+  pendingSummaryChoice?: ConversationModelChoice;
   previousFailure?: string;
   pendingSave?: { operationId: string; version: number; contentVersion: number };
   /** Authority belongs to unfinished current work, never historical dialogue. */
