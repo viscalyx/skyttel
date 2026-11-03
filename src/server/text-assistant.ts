@@ -45,7 +45,6 @@ import type { Config } from './config.js';
 import { contentOwner } from './content-identities.js';
 import { ConversationCapacity, voiceConversationModel } from './conversation-capacity.js';
 import type { ConversationConsents } from './conversation-consent.js';
-import type { ConversationMessage, ConversationState } from './conversation-state.js';
 import {
   conversationModelProfile,
   enabledModelChoices,
@@ -53,6 +52,7 @@ import {
   personalModelChoice,
   requireEnabledChoice,
 } from './conversation-model.js';
+import type { ConversationMessage, ConversationState } from './conversation-state.js';
 import {
   contextSummaryMessage,
   historicalSummary,
@@ -2439,7 +2439,9 @@ export function textAssistantRoutes({
                       session.execution.task !== task ||
                       !sessions.has(session.state.id)
                     ? 'incomplete'
-                    : session.state.error || session.state.phase === 'error' || session.state.phase === 'recovery'
+                    : session.state.error ||
+                        session.state.phase === 'error' ||
+                        session.state.phase === 'recovery'
                       ? 'failed'
                       : 'completed';
           } catch (error) {
