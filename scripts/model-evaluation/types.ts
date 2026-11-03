@@ -106,6 +106,7 @@ export type Attempt = {
   repetition: number;
   applicationVersion?: string;
   applicationCommit?: string;
+  comparisonContract?: string;
   modality: 'text' | 'voice';
   group?: ScenarioGroup;
   outcome: Outcome;
@@ -119,6 +120,8 @@ export type Attempt = {
     queueMs: number | null;
     firstResponseMs: number | null;
     firstUsefulMs: number | null;
+    firstVerifiedUsefulMs?: number | null;
+    firstUsefulLimitation?: string;
     observedResponseEndMs: number | null;
     successfulCompletionMs: number | null;
   };
@@ -129,6 +132,8 @@ export type Attempt = {
   providerCalls?: number;
   followUpFor?: string;
   assistedElapsedMs?: number | null;
+  assistedWallElapsedMs?: number;
+  assistedEvaluationOverheadMs?: number;
   followUpSelection?: {
     selected?: string;
     candidates: { id: string; fixed: string[]; content?: JudgeResult }[];
@@ -146,4 +151,5 @@ export type Attempt = {
     evidence: JudgeResult;
   };
   diagnostics?: ReturnType<typeof import('./observations.js').observationDiagnostics>;
+  metrics?: import('./metrics.js').EvaluationMetrics;
 };

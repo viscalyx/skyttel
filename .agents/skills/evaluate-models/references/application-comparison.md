@@ -1,7 +1,9 @@
 # Application-version comparison
 
-Use this contract to compare application changes within the same model,
-effort and modality. Keep model selection separate from application changes.
+Use this contract to compare application changes within the same model and
+effort. The application-comparison runner currently measures text. Voice
+completion requires its own delivered-audio contract and separate evidence.
+Keep model selection separate from application changes.
 Require the user's authorization before paid execution.
 
 ## Prepare the comparison
@@ -10,13 +12,19 @@ Select baseline and candidate as clean local Git worktrees. Record each full
 commit and directory in `EvaluationPlan.applicationComparison`. The runner
 verifies the worktree and loads that revision's real installation and server.
 Prepare dependencies and run applicable local checks through each revision's
-npm scripts. Keep the common evaluator checkout and its test evidence explicit.
+npm scripts. Run the common evaluator from a clean committed checkout. Its
+loaded module location must identify the supplied evaluator commit; another
+clean directory cannot establish that provenance. Keep its test evidence explicit.
+Load it only after committing its complete executing state. Use immutable
+application paths for the process; a path imported at one commit cannot be
+reused for a different commit because module caches could retain old code.
 Use the same checked-in catalog, starting map and draft, fixture identities,
 profile limits and prices, judge configuration, assistance policy and audio.
 An incompatible revision is an untested configuration; preserve it and explain
 the gap before payment.
 
 Use the checked-in optimization plan for the initial wait-time comparison.
+Its source is `scripts/model-evaluation/optimization-comparison-plan.json`.
 It requires five repetitions of every selected scenario and version, with
 baseline/candidate order reversed on alternate repetitions. It names target
 everyday scenarios before execution. Run 6.1 Terra/high and 6.1 Sol/high
@@ -30,6 +38,11 @@ target scenarios, acceptance thresholds and a maximum permitted relative
 range. Keep all planned correctness checks; a speed-only subset cannot
 establish qualification.
 
+The prepared plan permits a maximum range of 20% of the median for either
+version's everyday scenario. Greater variation is inconclusive, even when
+the median meets a speed threshold. Set a different explicit rule before
+running a future plan when its intended evidence requires one.
+
 Completion: both revisions, the exact model profile and complete shared
 conditions are identified, local checks pass, and the plan is recorded before
 any paid attempt.
@@ -41,6 +54,10 @@ and finish after the completed request's entire HTTP response is delivered
 and parsed. Include queue wait. Record observed response time separately from
 successful completion time; only verified correct state and required content
 qualify the latter. First useful response excludes activity/status labels.
+Keep raw `firstResponseMs` separate from certified usefulness. When earlier
+prose has unverified usefulness, leave `firstUsefulMs` unknown. Report
+`firstVerifiedUsefulMs` as a verified completed response or necessary question;
+it does not prove that no earlier partial response was useful.
 The endpoint observes a client receiving the response, not browser paint.
 Synthetic summary preparation remains a separately identified technical step.
 
@@ -51,8 +68,15 @@ assisted completion separately. Failed, canceled, inconclusive and unrun work
 has no successful completion time. Publish every planned individual outcome,
 median, minimum and maximum.
 
+Use the declared immediate-scripted-reply policy for text assistance. Record
+first-send-to-last-delivery wall time and measured harness-only gaps separately.
+Exclude scoring, scripted-reply selection and fixture bookkeeping between
+turns from assisted application wait. Keep every turn's delivered duration and
+application queue/selection wait. Do not attribute the judge's execution to
+user/application wait or invent a human reply delay.
+
 Compare only matching comparison-contract identifiers. The identifier covers
-measurement revision, catalog/start data, approved audio, exact backend and
+measurement and common evaluator revisions, catalog/start data, approved audio, exact backend and
 judge configurations, assistance policy and acceptance plan. Older records
 without it are not directly comparable.
 
@@ -70,6 +94,10 @@ summary and judge calls. Keep read-cache observations separate from provider
 cache tokens; an unobserved read-cache count is unknown. Label missing fields
 as null and state their limits. Diagnostic improvements do not replace full
 user-wait measurement.
+
+Context bytes count serialized instructions, input, tools and response-format
+configuration. This observed byte count is not a token estimate. Provider usage
+supplies token counts; missing usage cannot establish zero tokens or cost.
 
 Completion: every planned attempt is accounted for, all correctness gates
 and timing comparability checks are applied, and the report names accepted,

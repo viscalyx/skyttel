@@ -26,7 +26,7 @@ Confirm that the selected providers are supported and their required credentials
 are available to this session. If a key or token is missing, stop paid execution
 and explain how to configure it using the credential guidance in
 [run support](references/run-support.md).
-Identify the model currently used by the application from its effective
+For model selection, identify the model used by the application from its effective
 configuration. Its corresponding result in a `model-evaluation` issue is the
 baseline for comparison. Reuse that result; run the application model or any
 previously tested model again only when the user explicitly supplies it.
@@ -84,7 +84,8 @@ authorized scope.
 
 Publish each model's versioned results on its issue, using
 the publication guidance in [run support](references/run-support.md). Compare
-qualified models with the application's recorded baseline.
+qualified models with the application's recorded baseline. For application
+comparisons, apply the selected revisions' shared acceptance plan instead.
 Recommend a model when correctness and the comparison rules support it;
 otherwise explain which evidence is missing. Report regressions and costs
 alongside any response-time improvement. Leave production model selection to

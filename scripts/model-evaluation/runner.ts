@@ -2,11 +2,12 @@ import { randomUUID } from 'node:crypto';
 import type { AssistantObservation } from '../../src/server/assistant-observation.js';
 import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import type { createInstallation } from '../../tests/support/installation.js';
-import { assessInability } from './assessment.js';
 import type { ApplicationVersion } from './application.js';
+import { assessInability } from './assessment.js';
 import { scenarioHistory } from './catalog.js';
 import { evaluationEnvironment } from './environment.js';
 import { followUpStep, scenarioUtterances, selectFollowUp } from './follow-ups.js';
+import { evaluationMetrics } from './metrics.js';
 import {
   concludeAttempt,
   failAttempt,
@@ -21,6 +22,7 @@ export type RunOptions = {
   profile: string;
   repetition: number;
   application?: ApplicationVersion;
+  comparisonContract?: string;
   followUps?: boolean;
   judge?: (input: JudgeInput) => Promise<JudgeResult>;
   record?: (attempt: Attempt) => Promise<void>;
@@ -30,6 +32,7 @@ export type RunOptions = {
   stopped?: () => boolean;
   stopReason?: () => string | null;
   providerCalls?: () => number;
+  providerRecords?: () => ProviderCall[];
   recordObservation?: (event: AssistantObservation) => void;
 };
 
@@ -40,13 +43,17 @@ export async function runTextScenario(
 ) {
   scenarioUtterances(scenario, options.followUps);
   const events: AssistantObservation[] = [];
-  const environment = await evaluationEnvironment(scenario, {
-    ...installationOptions,
-    observe: (event) => {
-      events.push(retainedObservation(event, options.recordObservation));
-      installationOptions?.observe?.(event);
+  const environment = await evaluationEnvironment(
+    scenario,
+    {
+      ...installationOptions,
+      observe: (event) => {
+        events.push(retainedObservation(event, options.recordObservation));
+        installationOptions?.observe?.(event);
+      },
     },
-  }, options.application);
+    options.application,
+  );
   const attempts: Attempt[] = [];
   let blocked: string | undefined;
   let summaryText = '';
@@ -61,16 +68,21 @@ export async function runTextScenario(
     fixed: [],
     elapsedMs: null,
     backendCostUsd: 0,
-    ...(environment.application ? {
-      applicationVersion: environment.application.id,
-      applicationCommit: environment.application.commit,
-    } : {}),
+    comparisonContract: options.comparisonContract,
+    ...(environment.application
+      ? {
+          applicationVersion: environment.application.id,
+          applicationCommit: environment.application.commit,
+        }
+      : {}),
   });
   const queue: {
     step: ScenarioStep;
     parent?: string;
     target?: ScenarioStep;
     startedAt?: number;
+    previousResponseEndAt?: number;
+    evaluationOverheadMs?: number;
   }[] = scenario.steps.map((step) => ({ step }));
   try {
     for (const [index, entry] of queue.entries()) {
@@ -86,15 +98,19 @@ export async function runTextScenario(
           step: step.id,
           modality: 'text',
           repetition: options.repetition,
+          applicationVersion: environment.application?.id,
         });
         const offset = events.length;
         let startedAt = Date.now();
         let requestId: string | undefined;
         let submitted = step.transition === 'summary';
         let firstResponseMs: number | null = null;
+        let completedResponseMs: number | null = null;
+        let earlierResponseUnverified = false;
         const costBefore = options.costs?.() ?? 0;
         const judgeBefore = options.judgeCosts?.() ?? 0;
         const callsBefore = options.providerCalls?.() ?? 0;
+        const recordIds = new Set(options.providerRecords?.().map((call) => call.id) ?? []);
         try {
           let view: TextAssistantView;
           let responseText: string;
@@ -134,15 +150,19 @@ export async function runTextScenario(
               view = await environment.get<TextAssistantView>(
                 `${environment.path}/messages/${requestId}`,
               );
-              // Only delivered result content can be useful. Activity/status
-              // labels and previous requests' replies never start this clock.
+              // Raw prose does not establish usefulness. Certification uses
+              // the completed response and later state/content assessment.
               if (
-                firstResponseMs === null &&
                 (view.taskId === requestId || view.taskStatus === 'completed') &&
                 !view.error &&
-                (view.modelReply || view.result || view.receipt)
-              )
-                firstResponseMs = Date.now() - startedAt;
+                (view.modelReply ||
+                  (view.reply && (view.result || view.receipt || view.questionPending)))
+              ) {
+                const deliveredAt = Date.now() - startedAt;
+                firstResponseMs ??= deliveredAt;
+                if (view.taskStatus === 'completed') completedResponseMs ??= deliveredAt;
+                else earlierResponseUnverified = true;
+              }
               if (view.selection) {
                 const matches =
                   view.selection.kind === 'object' && view.selection.id === scenario.selection;
@@ -210,13 +230,25 @@ export async function runTextScenario(
             submittedAt: startedAt,
             queueMs: taskStarted ? Math.max(0, taskStarted.at - startedAt) : null,
             firstResponseMs,
-            firstUsefulMs: result.outcome === 'pass' ? firstResponseMs : null,
+            firstUsefulMs:
+              result.outcome === 'pass' && !earlierResponseUnverified ? completedResponseMs : null,
+            firstVerifiedUsefulMs: result.outcome === 'pass' ? completedResponseMs : null,
+            firstUsefulLimitation: earlierResponseUnverified
+              ? 'The usefulness of earlier delivered prose is unverified. First useful time is unknown; firstVerifiedUsefulMs identifies a verified completed response, not the earliest possibly useful fragment.'
+              : undefined,
             observedResponseEndMs: finishedAt - startedAt,
             successfulCompletionMs: result.elapsedMs,
           };
-          if (entry.startedAt !== undefined)
+          if (entry.startedAt !== undefined) {
+            result.assistedWallElapsedMs = finishedAt - entry.startedAt;
+            result.assistedEvaluationOverheadMs =
+              (entry.evaluationOverheadMs ?? 0) +
+              Math.max(0, startedAt - (entry.previousResponseEndAt ?? startedAt));
             result.assistedElapsedMs =
-              result.outcome === 'pass' ? finishedAt - entry.startedAt : null;
+              result.outcome === 'pass'
+                ? result.assistedWallElapsedMs - result.assistedEvaluationOverheadMs
+                : null;
+          }
           if (options.followUps && !options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,
@@ -238,7 +270,9 @@ export async function runTextScenario(
                 step: followUpStep(step, followUp),
                 parent: step.id,
                 target: step,
-                startedAt,
+                startedAt: entry.startedAt ?? startedAt,
+                previousResponseEndAt: finishedAt,
+                evaluationOverheadMs: result.assistedEvaluationOverheadMs ?? 0,
               });
               continuing = true;
             }
@@ -259,8 +293,10 @@ export async function runTextScenario(
               (entry.parent ? `\nCurrent clarification: ${JSON.stringify(step.text)}` : ''),
             judge: options.judge,
           });
-          if (result.assessment?.kind === 'necessary_clarification' && result.timing)
-            result.timing.firstUsefulMs = firstResponseMs;
+          if (result.assessment?.kind === 'necessary_clarification' && result.timing) {
+            result.timing.firstUsefulMs = earlierResponseUnverified ? null : completedResponseMs;
+            result.timing.firstVerifiedUsefulMs = completedResponseMs;
+          }
           result.backendCostUsd = options.costs
             ? options.costs() === null
               ? null
@@ -277,6 +313,8 @@ export async function runTextScenario(
             reason: options.stopReason?.() ?? null,
             attempted: (options.providerCalls?.() ?? 0) > callsBefore,
           });
+          result.elapsedMs = null;
+          if (result.assistedElapsedMs !== undefined) result.assistedElapsedMs = null;
           const costAfter = options.costs?.();
           result.backendCostUsd = costAfter == null ? null : costAfter - costBefore;
           const judgeAfter = options.judgeCosts?.();
@@ -288,17 +326,23 @@ export async function runTextScenario(
               queueMs: null,
               firstResponseMs,
               firstUsefulMs: null,
+              firstVerifiedUsefulMs: null,
               observedResponseEndMs: null,
               successfulCompletionMs: null,
             };
             result.timing.successfulCompletionMs = null;
             result.timing.firstUsefulMs = null;
+            result.timing.firstVerifiedUsefulMs = null;
           }
         }
         if (result.outcome !== 'pass' && !continuing) blocked = `${step.id}: ${result.outcome}`;
         result.providerCalls = options.providerCalls
           ? options.providerCalls() - callsBefore
           : undefined;
+        result.metrics = evaluationMetrics(
+          options.providerRecords?.().filter((call) => !recordIds.has(call.id)),
+          events.slice(offset),
+        );
       }
       attempts.push(result);
       await options.record?.(result);

@@ -3,7 +3,7 @@ import { type APIRequestContext, request } from '@playwright/test';
 import type { MapState, ObjectValue, RelationshipValue } from '../../src/shared/map.js';
 import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../tests/support/client.js';
-import { createInstallation } from '../../tests/support/installation.js';
+import type { createInstallation } from '../../tests/support/installation.js';
 import { type ApplicationVersion, applicationAdapter } from './application.js';
 import rawCatalog from './catalog.json' with { type: 'json' };
 import type { Catalog, Expected, FixtureProperty, NamedRelationship, Scenario } from './types.js';
