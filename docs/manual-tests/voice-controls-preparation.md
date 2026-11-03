@@ -158,7 +158,10 @@ med `seed-family`-underlag vid 320 × 250 respektive tomt underlag vid
 samtyckesstarter,
 återställningar, status 201/200, oförändrad karta/utkast/historik och borttagen
 provkatalog. Serverns förväntade säkerhetshändelser för lyckade
-åtkomständringar valideras separat; övriga diagnostikutdata ska vara tomma.
+åtkomständringar valideras separat. Det avsiktliga modellfelet ska ge en enda
+diagnostikhändelse med modell, resonemangsnivå, felkategori, tidpunkt och
+UUID-referens utan samtalsinnehåll eller inloggningsuppgifter. Övriga
+diagnostikutdata ska vara tomma även efter återhämtning och avslut.
 Okända fält, misslyckade säkerhetshändelser och råa fel godtas inte.
 Proven delar inte tidsbudget med
 blockens och runnerns fullständiga prov.
