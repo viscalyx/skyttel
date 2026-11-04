@@ -5,6 +5,7 @@ import { assessInability } from './assessment.js';
 import { scenarioHistory } from './catalog.js';
 import { evaluationEnvironment } from './environment.js';
 import { followUpStep, scenarioUtterances, selectFollowUp } from './follow-ups.js';
+import { evaluationMetrics } from './metrics.js';
 import {
   concludeAttempt,
   failAttempt,
@@ -13,8 +14,20 @@ import {
   observationDiagnostics,
   retainedObservation,
 } from './observations.js';
+import {
+  outputRecordingWorklet,
+  type PlaybackRecognition,
+  type PlaybackRecording,
+  renderedResponseEnd,
+  renderedResponseRequirement,
+} from './playback.js';
 import type { RunOptions } from './runner.js';
-import { type ReferenceVoice, referenceSpeech, speechConnection } from './speech.js';
+import {
+  type ReferenceVoice,
+  referenceSpeech,
+  type SourcePlayback,
+  speechConnection,
+} from './speech.js';
 import type { Attempt, JudgeInput, Scenario, ScenarioStep } from './types.js';
 
 /** Keeps ordinary multi-step dialogs connected, closes before the final judge,
@@ -26,6 +39,11 @@ export async function runVoiceScenario(
     referenceVoice?: ReferenceVoice;
     maximumSeconds?: number;
     sessionTimeLimit?: () => void;
+    assessPlayback?: (recording: PlaybackRecording) => Promise<PlaybackRecognition>;
+    maximumPlaybackCandidates?: number;
+    recordPlayback?: (recording: PlaybackRecording) => void;
+    recordInput?: (input: SourcePlayback) => void;
+    playbackReady?: (connection: Awaited<ReturnType<typeof speechConnection>>) => void;
   },
 ) {
   // Optional branches must have reviewed, matching audio before opening a paid session.
@@ -43,13 +61,23 @@ export async function runVoiceScenario(
   )
     throw new Error('evaluation_live_time_limit');
   const events: AssistantObservation[] = [];
-  const environment = await evaluationEnvironment(scenario, {
-    ...installationOptions,
-    observe: (event) => {
-      events.push(retainedObservation(event, options.recordObservation));
-      installationOptions?.observe?.(event);
+  const environment = await evaluationEnvironment(
+    scenario,
+    {
+      ...installationOptions,
+      deliverResponse: (request, response) =>
+        new URL(request.url).pathname === '/__evaluation_output.js'
+          ? new Response(outputRecordingWorklet, {
+              headers: { 'Content-Type': 'application/javascript' },
+            })
+          : (installationOptions?.deliverResponse?.(request, response) ?? response),
+      observe: (event) => {
+        events.push(retainedObservation(event, options.recordObservation));
+        installationOptions?.observe?.(event);
+      },
     },
-  });
+    options.application,
+  );
   let connection: Awaited<ReturnType<typeof speechConnection>> | undefined;
   let voiceId: string | undefined;
   let blocked: string | undefined;
@@ -62,11 +90,17 @@ export async function runVoiceScenario(
     parent?: string;
     target?: ScenarioStep;
     startedAt?: number;
+    previousResponseEndAt?: number;
+    evaluationOverheadMs?: number;
   }[] = scenario.steps.map((step) => ({ step }));
   async function judgeWithHeartbeat(input: JudgeInput) {
-    if (!options.judge) throw new Error('evaluation_judge_missing');
+    const judge = options.judge;
+    if (!judge) throw new Error('evaluation_judge_missing');
+    return withHeartbeat(() => judge(input));
+  }
+  async function withHeartbeat<T>(work: () => Promise<T>): Promise<T> {
     const id = voiceId;
-    if (!id) return options.judge(input);
+    if (!id) return work();
     let pending = Promise.resolve();
     let polling = false;
     let failure: unknown;
@@ -98,7 +132,7 @@ export async function runVoiceScenario(
         });
     }, 1000);
     try {
-      const result = await options.judge(input);
+      const result = await work();
       await pending;
       if (failure) throw failure;
       return result;
@@ -149,14 +183,24 @@ export async function runVoiceScenario(
         fixed: [],
         elapsedMs: null,
         backendCostUsd: 0,
+        comparisonContract: options.comparisonContract,
+        ...(environment.application
+          ? {
+              applicationVersion: environment.application.id,
+              applicationCommit: environment.application.commit,
+            }
+          : {}),
         ...(entry.parent ? { followUpFor: entry.parent } : {}),
       };
       const before = options.costs?.() ?? 0;
       const judgeBefore = options.judgeCosts?.() ?? 0;
       const callsBefore = options.providerCalls?.() ?? 0;
+      const recordIds = new Set(options.providerRecords?.().map((call) => call.id) ?? []);
+      const eventOffset = events.length;
       let voiceAttempted = Boolean(voiceId);
       let startedAt = Date.now();
       let recognizedRequest: string | undefined;
+      let partialChecks: string[] = [];
       try {
         if (sessionExpired) throw new Error('evaluation_live_time_limit');
         if (blocked || options.stopped?.()) {
@@ -193,6 +237,15 @@ export async function runVoiceScenario(
             step.expected.requirements,
           );
           concludeAttempt(result, result.observedEndMs);
+          result.timing = {
+            contract: 'summary-execution-v1',
+            submittedAt: startedAt,
+            queueMs: null,
+            firstResponseMs: null,
+            firstUsefulMs: null,
+            observedResponseEndMs: result.observedEndMs,
+            successfulCompletionMs: result.elapsedMs,
+          };
         } else {
           const reference = await referenceSpeech(step.id, step.text, options.referenceVoice);
           if (!connection) {
@@ -212,6 +265,7 @@ export async function runVoiceScenario(
               );
             }
             voiceId = await connection.start();
+            options.playbackReady?.(connection);
           }
           voiceAttempted = true;
           const offset = events.length;
@@ -220,14 +274,36 @@ export async function runVoiceScenario(
             step: step.id,
             modality: 'voice',
             repetition: options.repetition,
+            applicationVersion: environment.application?.id,
           });
           const playback = connection.play(step.id);
           let playbackError: unknown;
           let audioEnd: number | undefined;
           void playback
             .then((audio) => {
-              startedAt = audio.startedAt;
+              options.recordInput?.(audio);
+              startedAt = audio.endedAt;
               audioEnd = audio.endedAt;
+              result.timing = {
+                contract: 'voice-rendered-v1',
+                submittedAt: audio.endedAt,
+                queueMs: null,
+                firstResponseMs: null,
+                firstUsefulMs: null,
+                observedResponseEndMs: null,
+                successfulCompletionMs: null,
+              };
+              if (result.playback)
+                result.playback.input = {
+                  sha256: audio.sha256,
+                  frames: audio.frames,
+                  speechFrames: audio.speechFrames,
+                  drainedAt: audio.drainedAt,
+                  sampleRate: audio.sampleRate,
+                  sourceStartPosition: audio.sourceStartPosition,
+                  speechPosition: audio.speechPosition,
+                  ended: audio.ended,
+                };
             })
             .catch((error) => {
               playbackError = error;
@@ -236,12 +312,22 @@ export async function runVoiceScenario(
           let stateAt: number | undefined;
           let complete = false;
           let output = '';
-          let latestOutput = startedAt;
           let latestEvent = startedAt;
           let fixed: string[] = [];
           let stateFailures: string[] = [];
-          // Measure from reference-audio end, including negative completion
-          // times. Quiet observation is reported separately.
+          let renderedEnd: ReturnType<typeof renderedResponseEnd> = null;
+          let assessedOutput = '';
+          let lastAssessedFrame: number | null = null;
+          let candidateCount = 0;
+          let nextRecordingAt = 0;
+          result.playback = {
+            contract: 'voice-rendered-v1',
+            candidates: [],
+            limitation:
+              'Single negotiated WebRTC stream through one common WebAudio output graph. Device timestamps bracket rendered frames; ASR/semantic assessment is uncertain, not sample-exact or a physical audibility guarantee. Exact digital input trailing zeros are excluded. Earlier fragment usefulness is unverified.',
+          };
+          // Quiet finds candidates. Only independently assessed recording and
+          // device-render evidence can certify the required response.
           for (;;) {
             if (sessionExpired) throw new Error('evaluation_live_time_limit');
             if (options.stopped?.()) throw new Error('evaluation_budget_stopped');
@@ -257,6 +343,9 @@ export async function runVoiceScenario(
               },
             );
             view = status.assistant;
+            if (status.voice.error) throw new Error(status.voice.error);
+            if (view.taskStatus === 'canceled' || view.taskStatus === 'expired')
+              throw new Error(`evaluation_application_${view.taskStatus}`);
             if (view.selection) {
               const displayed =
                 view.selection.kind === 'object' && view.selection.id === scenario.selection;
@@ -267,25 +356,39 @@ export async function runVoiceScenario(
               if (!displayed) result.fixed.push('unexpected_selection');
             }
             const observed = events.slice(offset);
+            recognizedRequest =
+              observed
+                .filter((event) => event.kind === 'voice_event')
+                .map((event) => {
+                  const data = event.data as {
+                    event?: { role?: string; delta?: string };
+                    role?: string;
+                    delta?: string;
+                  };
+                  return data.event ?? data;
+                })
+                .filter((data) => data.role === 'user')
+                .map((data) => data.delta ?? '')
+                .join('') || undefined;
             const outputs = observed.filter(
               (event) =>
                 event.kind === 'voice_event' &&
                 (event.data as { role?: string }).role === 'assistant',
             );
             output = outputs.map((event) => (event.data as { delta: string }).delta).join('');
-            latestOutput = outputs.at(-1)?.at ?? startedAt;
             latestEvent = lastVoiceActivityAt(observed, startedAt);
             const actions = modelActions(observed);
             stateFailures = await environment.check(entry.target ?? step, view, actions);
             fixed = [...stateFailures];
             if (scenario.selection && view.displayedSelection !== scenario.selection)
               fixed.push('selection_unconfirmed');
+            partialChecks = fixed;
             const idle =
               view.phase !== 'working' &&
               !view.queuedMessages &&
               status.voice.phase === 'listening';
             if (!fixed.length && view.phase !== 'working' && !view.queuedMessages)
-              stateAt ??= Date.now();
+              stateAt ??= await connection.observedAt();
             else stateAt = undefined;
             const quiet =
               audioEnd !== undefined && Date.now() - Math.max(latestEvent, audioEnd) >= 2000;
@@ -293,38 +396,150 @@ export async function runVoiceScenario(
               quiet &&
               idle &&
               output &&
-              observed.some((event) => event.kind === 'voice_commentary')
+              observed.some((event) => event.kind === 'voice_commentary') &&
+              Date.now() >= nextRecordingAt
             ) {
-              complete = true;
-              break;
+              nextRecordingAt = Date.now() + 500;
+              const assessPlayback = options.assessPlayback;
+              if (!assessPlayback) {
+                result.reason = 'Independent rendered-recording assessor not supplied.';
+                break;
+              }
+              const recording = await connection.recording();
+              options.recordPlayback?.(recording);
+              result.playback.recordingSha256 = recording.sha256;
+              result.playback.sampleRate = recording.sampleRate;
+              result.playback.frames = recording.frames;
+              result.playback.firstFrame = recording.firstFrame;
+              result.playback.lastActiveFrame = recording.lastActiveFrame;
+              result.playback.interruption = recording.interruption;
+              result.playback.error = recording.error;
+              if (recording.interruption || recording.error) {
+                result.reason = recording.interruption ?? recording.error;
+                break;
+              }
+              const lastActivity = recording.lastActiveFrame;
+              const device = recording.clocks.at(-1);
+              if (
+                lastActivity !== null &&
+                lastActivity !== lastAssessedFrame &&
+                device &&
+                device.position - lastActivity / recording.sampleRate >= 0.5
+              ) {
+                if (++candidateCount > (options.maximumPlaybackCandidates ?? 8)) {
+                  result.reason = 'Rendered-recording candidate limit reached.';
+                  break;
+                }
+                lastAssessedFrame = lastActivity;
+                const recognition = await withHeartbeat(() => assessPlayback(recording));
+                const candidate: NonNullable<Attempt['playback']>['candidates'][number] = {
+                  callId: recognition.callId,
+                  profile: recognition.profile,
+                  outcome: recognition.outcome,
+                  costUsd: recognition.costUsd,
+                  recordingSha256: recording.sha256,
+                  alignmentMarginMs: recognition.alignmentMarginMs,
+                  lastWordEndSeconds: recognition.lastWordEndSeconds,
+                };
+                result.playback.candidates.push(candidate);
+                const end = renderedResponseEnd(recording, recognition);
+                if (!end) {
+                  result.reason = recognition.reason ?? 'Rendered response boundary is unverified.';
+                  break;
+                }
+                const requiredResponse = options.judge
+                  ? await judgeWithHeartbeat({
+                      context: environment.judgeContext(step, fixed, '', recognizedRequest),
+                      sources: { voice: { text: recognition.text, complete: false } },
+                      requirements: [
+                        {
+                          id: 'voice-rendered-response',
+                          source: 'voice',
+                          text: renderedResponseRequirement,
+                        },
+                      ],
+                    })
+                  : [];
+                candidate.requiredResponse = requiredResponse;
+                const current = await connection.recording();
+                options.recordPlayback?.(current);
+                // Offline assessment cannot hide a tail that arrived while it
+                // ran. Its wall time is never the measured user completion.
+                if (current.lastActiveFrame !== lastActivity) continue;
+                if (current.interruption || current.error) {
+                  result.playback.interruption = current.interruption;
+                  result.playback.error = current.error;
+                  result.reason = current.interruption ?? current.error;
+                  break;
+                }
+                if (
+                  requiredResponse.length === 1 &&
+                  requiredResponse[0].id === 'voice-rendered-response' &&
+                  requiredResponse[0].outcome === 'pass'
+                ) {
+                  const verified = await environment.post<VoiceAssistantResponse>(
+                    `${environment.path}/voice/${voiceId}/poll`,
+                    {
+                      revision: view.revision,
+                      draftVersion: view.review.version,
+                      contentVersion: view.review.contentVersion,
+                      microphoneOn: true,
+                      microphoneActive: false,
+                    },
+                  );
+                  view = verified.assistant;
+                  if (verified.voice.error) throw new Error(verified.voice.error);
+                  if (view.taskStatus === 'canceled' || view.taskStatus === 'expired')
+                    throw new Error(`evaluation_application_${view.taskStatus}`);
+                  stateFailures = await environment.check(
+                    entry.target ?? step,
+                    view,
+                    modelActions(events.slice(offset)),
+                  );
+                  fixed = [...stateFailures];
+                  if (scenario.selection && view.displayedSelection !== scenario.selection)
+                    fixed.push('selection_unconfirmed');
+                  partialChecks = fixed;
+                  if (fixed.length) stateAt = undefined;
+                  if (
+                    view.phase === 'working' ||
+                    view.queuedMessages ||
+                    verified.voice.phase !== 'listening'
+                  ) {
+                    result.reason =
+                      'Application changed while the recording was assessed; final response remains unverified.';
+                    break;
+                  }
+                  renderedEnd = end;
+                  assessedOutput = recognition.text;
+                  result.playback.renderedEnd = end;
+                  complete = true;
+                  break;
+                }
+              }
             }
-            if (status.voice.error) throw new Error(status.voice.error);
             await new Promise((resolve) => setTimeout(resolve, 25));
           }
           const audio = await playback;
           startedAt = audio.endedAt;
+          result.playback.input = {
+            sha256: audio.sha256,
+            frames: audio.frames,
+            speechFrames: audio.speechFrames,
+            drainedAt: audio.drainedAt,
+            sampleRate: audio.sampleRate,
+            sourceStartPosition: audio.sourceStartPosition,
+            speechPosition: audio.speechPosition,
+            ended: audio.ended,
+          };
+          output = assessedOutput;
           result.fixed.push(...fixed);
-          result.observedEndMs = Date.now() - startedAt;
+          result.observedEndMs = (await connection.observedAt()) - startedAt;
           result.diagnostics = observationDiagnostics(events.slice(offset), startedAt);
-          recognizedRequest =
-            events
-              .slice(offset)
-              .filter((event) => event.kind === 'voice_event')
-              .map((event) => {
-                const data = event.data as {
-                  event?: { role?: string; delta?: string };
-                  role?: string;
-                  delta?: string;
-                };
-                return data.event ?? data;
-              })
-              .filter((data) => data.role === 'user')
-              .map((data) => data.delta ?? '')
-              .join('') || undefined;
           const completionMs =
-            stateAt === undefined ? null : Math.max(stateAt, latestOutput) - startedAt;
-          if (index === queue.length - 1 && !(options.followUps && step.followUps?.length))
-            await closeVoice();
+            stateAt === undefined || !renderedEnd
+              ? null
+              : Math.max(0, Math.max(stateAt, renderedEnd.upper) - startedAt);
           result.content = await judge(
             {
               backend: { text: [view.reply, view.modelReply].filter(Boolean).join('\n'), complete },
@@ -333,11 +548,31 @@ export async function runVoiceScenario(
             step.expected.requirements,
           );
           concludeAttempt(result, completionMs);
-          if (entry.startedAt !== undefined)
+          result.timing = {
+            contract: 'voice-rendered-v1',
+            submittedAt: startedAt,
+            queueMs: null,
+            firstResponseMs: null,
+            firstUsefulMs: null,
+            firstVerifiedUsefulMs: result.outcome === 'pass' ? completionMs : null,
+            firstUsefulLimitation:
+              'Earlier audible fragments are not independently certified useful. Status and receipt timestamps are excluded.',
+            observedResponseEndMs: renderedEnd ? renderedEnd.upper - startedAt : null,
+            successfulCompletionMs: result.elapsedMs,
+          };
+          if (entry.startedAt !== undefined) {
+            const completedAt =
+              completionMs === null ? renderedEnd?.upper : startedAt + completionMs;
+            result.assistedWallElapsedMs =
+              completedAt === undefined ? undefined : completedAt - entry.startedAt;
+            result.assistedEvaluationOverheadMs =
+              (entry.evaluationOverheadMs ?? 0) +
+              Math.max(0, audio.startedAt - (entry.previousResponseEndAt ?? audio.startedAt));
             result.assistedElapsedMs =
-              result.outcome === 'pass' && completionMs !== null
-                ? startedAt + completionMs - entry.startedAt
+              result.outcome === 'pass' && result.assistedWallElapsedMs !== undefined
+                ? result.assistedWallElapsedMs - result.assistedEvaluationOverheadMs
                 : null;
+          }
           if (options.followUps && !options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,
@@ -361,7 +596,9 @@ export async function runVoiceScenario(
                 step: followUpStep(step, followUp),
                 parent: step.id,
                 target: step,
-                startedAt,
+                startedAt: entry.startedAt ?? startedAt,
+                previousResponseEndAt: renderedEnd?.upper,
+                evaluationOverheadMs: result.assistedEvaluationOverheadMs ?? 0,
               });
               continuing = true;
             }
@@ -386,6 +623,8 @@ export async function runVoiceScenario(
               (entry.parent ? `\nCurrent clarification: ${JSON.stringify(step.text)}` : ''),
             judge: options.judge ? judgeWithHeartbeat : undefined,
           });
+          if (result.assessment?.kind === 'necessary_clarification' && result.timing && renderedEnd)
+            result.timing.firstVerifiedUsefulMs = Math.max(0, renderedEnd.upper - startedAt);
           if (index === queue.length - 1) await closeVoice();
         }
         if (sessionExpired) throw new Error('evaluation_live_time_limit');
@@ -397,11 +636,43 @@ export async function runVoiceScenario(
         )
           throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
       } catch (error) {
-        failAttempt(result, error, Date.now() - startedAt, {
-          stopped: options.stopped?.() ?? false,
-          reason: options.stopReason?.() ?? null,
-          attempted: voiceAttempted || (options.providerCalls?.() ?? 0) > callsBefore,
-        });
+        if (connection && result.playback) {
+          try {
+            const recording = await connection.recording();
+            options.recordPlayback?.(recording);
+            Object.assign(result.playback, {
+              recordingSha256: recording.sha256,
+              sampleRate: recording.sampleRate,
+              frames: recording.frames,
+              firstFrame: recording.firstFrame,
+              lastActiveFrame: recording.lastActiveFrame,
+              interruption: recording.interruption,
+              error: recording.error,
+            });
+          } catch {
+            result.playback.error ??= 'Partial rendered recording unavailable after failure.';
+          }
+        }
+        const partial = [...new Set([...result.fixed, ...partialChecks])];
+        if (
+          error instanceof Error &&
+          ['evaluation_application_canceled', 'evaluation_application_expired'].includes(
+            error.message,
+          )
+        ) {
+          result.outcome =
+            error.message === 'evaluation_application_canceled' ? 'aborted' : 'error';
+          result.reason = error.message;
+          result.observedEndMs = Date.now() - startedAt;
+        } else
+          failAttempt(result, error, Date.now() - startedAt, {
+            stopped: options.stopped?.() ?? false,
+            reason: options.stopReason?.() ?? null,
+            attempted: voiceAttempted || (options.providerCalls?.() ?? 0) > callsBefore,
+          });
+        result.fixed = partial;
+        result.elapsedMs = null;
+        if (result.timing) result.timing.successfulCompletionMs = null;
       }
       const after = options.costs?.();
       result.backendCostUsd = after == null ? null : after - before;
@@ -410,6 +681,24 @@ export async function runVoiceScenario(
       result.providerCalls = options.providerCalls
         ? options.providerCalls() - callsBefore
         : undefined;
+      const observed = events.slice(eventOffset);
+      result.metrics = evaluationMetrics(
+        options.providerRecords?.().filter((call) => !recordIds.has(call.id)),
+        observed,
+      );
+      result.playbackAssessmentCostUsd = result.playback?.candidates.some(
+        (item) => item.costUsd === null,
+      )
+        ? null
+        : result.playback?.candidates.reduce((sum, item) => sum + (item.costUsd ?? 0), 0);
+      if (result.timing) {
+        const request = observed.find((event) => event.kind === 'backend_request');
+        const requestId = (request?.data as { requestId?: string } | undefined)?.requestId;
+        const task = observed.find(
+          (event) => event.kind === 'task_started' && event.taskId === requestId,
+        );
+        result.timing.queueMs = request && task ? Math.max(0, task.at - request.at) : null;
+      }
       attempts.push(result);
       await options.record?.(result);
       if (result.outcome !== 'pass' && !continuing) {
