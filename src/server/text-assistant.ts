@@ -119,6 +119,12 @@ type ConversationExecution = {
 };
 type Session = { state: ConversationState; execution: ConversationExecution };
 const savedReply = 'Sparat. Hela utkastet finns i hushållets karta.';
+const modelFailureRecovery = new Map([
+  ['assistant_model_temporary', 'Försök igen'],
+  ['assistant_provider_failed', 'Försök igen'],
+  ['assistant_model_access', 'Fortsätt med valt alternativ'],
+  ['assistant_model_unsupported', 'Fortsätt med valt alternativ'],
+]);
 
 export function textAssistantRoutes({
   database,
@@ -654,13 +660,13 @@ export function textAssistantRoutes({
               failure.code === 'assistant_draft_changed'
                 ? 'Utkastet har ändrats efter det genomförda arbetet. Hur vill du fortsätta med dina aktuella ändringar? Avstå från den gamla oavslutade delen innan du lämnar en ny instruktion. Det aktuella utkastet bevaras; borttagna förslag återskapas inte.'
                 : assistantFailureMessage(failure.code),
-            retry: ['assistant_model_temporary', 'assistant_provider_failed'].includes(failure.code)
-              ? 'Försök igen'
-              : ['assistant_model_access', 'assistant_model_unsupported'].includes(failure.code)
-                ? 'Fortsätt med valt alternativ'
+            retry:
+              modelFailureRecovery.get(failure.code) ??
+              (failure.code === 'assistant_batch_not_committed'
+                ? 'Försök igen'
                 : failure.code === 'assistant_request_unfinished'
                   ? 'Fortsätt det oavslutade arbetet'
-                  : undefined,
+                  : undefined),
           }
         : undefined;
     return {
@@ -1583,10 +1589,11 @@ export function textAssistantRoutes({
           after,
           pending.messageId,
         );
+      const failed = session.state.failedWork;
       session.execution.parts.complete(resolves);
-      const original = session.state.activeMessage;
-      if (original && original.id === pending.messageId)
-        recordReplyProgress(session, resolves, original);
+      for (const message of [session.state.activeMessage, failed?.message])
+        if (message && message.id === pending.messageId)
+          recordReplyProgress(session, resolves, message);
       advanceDraftVersion(session, pending.request.version, after.version);
       session.state.workVersion = after.version;
       session.state.result = {
@@ -1600,7 +1607,6 @@ export function textAssistantRoutes({
       session.state.discarded = pending.discarded;
       session.state.pendingBatch = undefined;
       const unfinished = !pending.finishesRequest || hasReadyPendingParts(session);
-      const failed = session.state.failedWork;
       if (failed && failed.message.id === pending.messageId) {
         if (unfinished) failed.code = 'assistant_request_unfinished';
         else {
@@ -1660,6 +1666,9 @@ export function textAssistantRoutes({
         : error instanceof MapError
           ? error.code
           : 'assistant_batch_unknown';
+      const failed = session.state.failedWork;
+      if (!session.state.pendingBatch && failed && failed.message.id === pending.messageId)
+        failed.code = session.state.error;
       session.state.reply = assistantFailureMessage(session.state.error);
       session.state.modelReply = undefined;
       session.state.saveIntent = undefined;
@@ -4492,13 +4501,7 @@ export function textAssistantRoutes({
         if (
           (session.state.phase === 'recovery' && hasPendingOutcome(session)) ||
           (session.state.phase === 'error' &&
-            (message.continuation ||
-              [
-                'assistant_model_temporary',
-                'assistant_model_access',
-                'assistant_model_unsupported',
-                'assistant_provider_failed',
-              ].includes(session.state.error ?? '')))
+            (message.continuation || modelFailureRecovery.has(session.state.error ?? '')))
         )
           session.state.failedWork = {
             message,

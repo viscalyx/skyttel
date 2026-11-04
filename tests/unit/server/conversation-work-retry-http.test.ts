@@ -23,6 +23,327 @@ afterEach(async () => {
   crashDirectory = undefined;
 });
 
+test.each(['provider failure', 'lost batch status', 'manually discarded question'] as const)(
+  'a spoken clarification retries only unfinished work after its own verified question and draft transitions: %s',
+  async (boundary) => {
+    let typeId: string;
+    let fail = true;
+    const delivery = controlledBatchDelivery();
+    if (boundary === 'lost batch status') {
+      delivery.arm();
+      delivery.blockStatus(true);
+    }
+    const model = textModel((body) => {
+      const current = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (model.requests.length === 1)
+        return [
+          modelTool('ask_questions', {
+            questions: [
+              {
+                kind: 'change',
+                request: 'Lägg till personen.',
+                question: 'Vad heter personen?',
+                dependsOnDraft: true,
+              },
+            ],
+          }),
+        ];
+      const part = current.pendingParts[0];
+      if (model.requests.length === 2)
+        return [
+          modelTool('ask_questions', {
+            questions: [],
+            updates: [
+              {
+                id: part.id,
+                revision: part.revision,
+                action: 'clarify',
+                messageId: current.messageId,
+                evidence: current.message,
+              },
+            ],
+            continueResponse: true,
+          }),
+        ];
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          resolves:
+            model.requests.length === 3 && boundary !== 'manually discarded question'
+              ? [{ id: part.id, revision: part.revision }]
+              : [],
+          completion: 'draft',
+          continueResponse: model.requests.length === 3,
+          operations: (model.requests.length === 3 ? ['lo'] : ['lo', 'mira']).map((id) => ({
+            name: 'propose_object',
+            arguments: {
+              id,
+              baseRevision: null,
+              value: { typeId, name: id === 'lo' ? 'Lo' : 'Mira' },
+            },
+          })),
+        }),
+      ];
+    });
+    app = await createInstallation(undefined, {
+      modelFetch: async (input, init) => {
+        const body = JSON.parse(String(init?.body));
+        if (
+          boundary !== 'lost batch status' &&
+          !body.instructions.startsWith('SKYTTEL_TURN_') &&
+          model.requests.length === 3 &&
+          fail
+        ) {
+          fail = false;
+          return Response.json(
+            { error: { message: 'Controlled outage after clarification' } },
+            { status: 503 },
+          );
+        }
+        return model.provider(input, init);
+      },
+      assistantDispatch: delivery.dispatch,
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    const { household } = await (await createHousehold(browser, app.origin)).json();
+    const map = `${app.origin}/api/households/${household.id}/map`;
+    typeId = (await (await browser.get(map)).json()).types[0].id;
+    const base = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const post = (url: string, data: object) =>
+      browser.post(url, { headers: { origin: app.origin }, data });
+    let view: TextAssistantView = await (await post(base, approvedForVisit)).json();
+    const endpoint = `${base}/${view.id}`;
+    const send = (data: object) =>
+      post(`${endpoint}/messages`, {
+        revision: view.revision,
+        draftVersion: view.review.version,
+        contentVersion: view.review.contentVersion,
+        ...data,
+      });
+    await send({ requestId: crypto.randomUUID(), text: 'Lägg till personen.' });
+    await expect
+      .poll(async () => {
+        view = await (await browser.get(endpoint)).json();
+        return view.phase;
+      })
+      .toBe('ready');
+    const question = view.pendingParts?.[0];
+    expect(question).toMatchObject({ status: 'waiting', revision: 0 });
+    const requestId = crypto.randomUUID();
+    const original = {
+      requestId,
+      text: 'Personen heter Lo. Lägg också till Mira utan att spara.',
+      voiceContext: '[]',
+      answerTo: [{ id: question?.id, revision: question?.revision }],
+    };
+    expect((await send(original)).status()).toBe(202);
+    await expect
+      .poll(async () => {
+        view = await (await browser.get(endpoint)).json();
+        return boundary !== 'lost batch status' ? view.workFailure?.code : view.phase;
+      })
+      .toBe(boundary !== 'lost batch status' ? 'assistant_model_temporary' : 'recovery');
+    if (boundary === 'lost batch status') {
+      expect(view.pendingParts?.[0]).toMatchObject({
+        id: question?.id,
+        revision: 1,
+        status: 'ready',
+      });
+      expect(view.workFailure).toBeUndefined();
+      expect(
+        (await post(`${endpoint}/retry-work`, { revision: view.revision, requestId })).status(),
+      ).toBe(409);
+      expect(model.requests).toHaveLength(3);
+      delivery.blockStatus(false);
+      view = await (await post(`${endpoint}/recover`, {})).json();
+      expect(view.workFailure).toMatchObject({ requestId, code: 'assistant_request_unfinished' });
+    }
+    expect(view.pendingParts?.[0]).toMatchObject({
+      id: question?.id,
+      revision: boundary === 'manually discarded question' ? 1 : 2,
+      status: boundary === 'manually discarded question' ? 'ready' : 'completed',
+    });
+    expect((await (await browser.get(map)).json()).draft).toMatchObject({
+      version: 1,
+      changes: [{ id: 'lo' }],
+    });
+    expect(model.requests).toHaveLength(3);
+    if (boundary === 'manually discarded question') {
+      expect(
+        (
+          await post(`${map}/discard`, { version: 1, contentVersion: view.review.contentVersion })
+        ).status(),
+      ).toBe(200);
+      expect(
+        (await post(`${endpoint}/retry-work`, { revision: view.revision, requestId })).status(),
+      ).toBe(202);
+      await expect
+        .poll(async () => {
+          view = await (await browser.get(endpoint)).json();
+          return [view.phase, view.error];
+        })
+        .toEqual(['error', 'assistant_pending_part_changed']);
+      expect(view.pendingParts?.[0]).toMatchObject({
+        id: question?.id,
+        revision: 2,
+        status: 'discarded',
+      });
+      expect(view.workFailure?.retry).toBeUndefined();
+      expect(model.requests).toHaveLength(3);
+      expect((await (await browser.get(map)).json()).draft.changes).toEqual([]);
+      return;
+    }
+    expect(
+      (await post(`${endpoint}/retry-work`, { revision: view.revision, requestId })).status(),
+    ).toBe(202);
+    await expect
+      .poll(async () => {
+        view = await (await browser.get(endpoint)).json();
+        return [view.phase, view.error];
+      })
+      .toEqual(['ready', undefined]);
+    expect(view.workFailure).toBeUndefined();
+    expect(view.tasks?.filter((task) => task.id === requestId)).toHaveLength(1);
+    expect(view.pendingParts?.[0]).toMatchObject({
+      id: question?.id,
+      revision: 2,
+      status: 'completed',
+    });
+    expect((await (await browser.get(map)).json()).draft).toMatchObject({
+      version: 2,
+      changes: [
+        { id: 'lo', after: { name: 'Lo' } },
+        { id: 'mira', after: { name: 'Mira' } },
+      ],
+    });
+    expect(model.requests).toHaveLength(4);
+    expect((await (await browser.get(`${map}/operations`)).json()).operations).toEqual([]);
+    expect((await (await browser.get(`${map}/history`)).json()).history).toEqual([]);
+  },
+);
+
+test.each(['retry', 'abandon'] as const)(
+  'a definitive absent batch status offers explicit %s without starting model work automatically',
+  async (action) => {
+    let typeId: string;
+    let blockStatus = true;
+    let rejectBatch = true;
+    const model = textModel((body) => {
+      const current = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: { id: 'lo', baseRevision: null, value: { typeId, name: 'Lo' } },
+            },
+          ],
+        }),
+      ];
+    });
+    app = await createInstallation(undefined, {
+      modelFetch: model.provider,
+      assistantDispatch: async (incoming, dispatch) => {
+        const rpc =
+          incoming.method === 'POST' && new URL(incoming.url).pathname === '/mcp'
+            ? await incoming
+                .clone()
+                .json()
+                .catch(() => null)
+            : null;
+        if (rpc?.params?.name === 'apply_draft_batch' && rejectBatch) {
+          rejectBatch = false;
+          throw new Error('Controlled transport loss before batch submission');
+        }
+        if (rpc?.params?.name === 'read_draft_batch' && blockStatus)
+          throw new Error('Controlled unavailable batch status');
+        return dispatch(incoming);
+      },
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    const { household } = await (await createHousehold(browser, app.origin)).json();
+    const map = `${app.origin}/api/households/${household.id}/map`;
+    typeId = (await (await browser.get(map)).json()).types[0].id;
+    const base = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const post = (url: string, data: object) =>
+      browser.post(url, { headers: { origin: app.origin }, data });
+    let view: TextAssistantView = await (await post(base, approvedForVisit)).json();
+    const endpoint = `${base}/${view.id}`;
+    const requestId = crypto.randomUUID();
+    await post(`${endpoint}/messages`, {
+      revision: view.revision,
+      draftVersion: view.review.version,
+      contentVersion: view.review.contentVersion,
+      requestId,
+      text: 'Lägg till Lo utan att spara.',
+    });
+    await expect
+      .poll(async () => {
+        view = await (await browser.get(endpoint)).json();
+        return view.phase;
+      })
+      .toBe('recovery');
+    expect(view.batchPending).toBe(true);
+    expect(view.workFailure).toBeUndefined();
+    for (const next of ['retry', 'abandon'])
+      expect(
+        (await post(`${endpoint}/${next}-work`, { revision: view.revision, requestId })).status(),
+      ).toBe(409);
+    view = await (await post(`${endpoint}/recover`, {})).json();
+    expect(view).toMatchObject({
+      phase: 'recovery',
+      error: 'assistant_batch_unknown',
+      batchPending: true,
+    });
+    expect(model.requests).toHaveLength(1);
+    blockStatus = false;
+    const recovered = await post(`${endpoint}/recover`, {});
+    expect(recovered.status(), await recovered.text()).toBe(200);
+    view = await recovered.json();
+    expect(view).toMatchObject({
+      phase: 'error',
+      error: 'assistant_batch_not_committed',
+      workFailure: { requestId, code: 'assistant_batch_not_committed', retry: 'Försök igen' },
+    });
+    expect(view.batchPending).not.toBe(true);
+    expect(view.workFailure?.message).toContain('genomfördes inte');
+    expect((await (await browser.get(map)).json()).draft).toMatchObject({
+      version: 0,
+      changes: [],
+    });
+    expect(model.requests).toHaveLength(1);
+    expect(
+      (await post(`${endpoint}/${action}-work`, { revision: view.revision, requestId })).status(),
+    ).toBe(202);
+    await expect
+      .poll(async () => {
+        view = await (await browser.get(endpoint)).json();
+        return view.phase;
+      })
+      .toBe('ready');
+    expect(view.workFailure).toBeUndefined();
+    expect(view.unfinishedRequests).toEqual([]);
+    expect(model.requests).toHaveLength(action === 'retry' ? 2 : 1);
+    expect((await (await browser.get(map)).json()).draft).toMatchObject(
+      action === 'retry'
+        ? { version: 1, changes: [{ id: 'lo', after: { name: 'Lo' } }] }
+        : { version: 0, changes: [] },
+    );
+    expect((await (await browser.get(`${map}/operations`)).json()).operations).toEqual([]);
+    expect((await (await browser.get(`${map}/history`)).json()).history).toEqual([]);
+  },
+);
+
 test.each([true, false])(
   'a lost registered save response keeps only its unfinished explanation behind an explicit continuation action: explanation=%s',
   async (explanation) => {

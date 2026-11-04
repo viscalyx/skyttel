@@ -94,6 +94,46 @@ TEXT-18.
       "spec": "tests/technical-browser/conversation-work-clarification.spec.ts",
       "title": "a concurrent draft discard asks a visible question and requires explicit abandonment before a fresh instruction and save",
       "purpose": "Ändrat underlag ger en synlig fråga, bevarar oskickad instruktion och kräver avstående före ny instruktion och nytt sparande utan att återskapa kastade förslag."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a spoken clarification retries only unfinished work after its own verified question and draft transitions: provider failure",
+      "purpose": "Ett uttryckligt återförsök efter ett talat förtydligande behåller samma begäran och genomförda förslag utan att upprepa dem."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a spoken clarification retries only unfinished work after its own verified question and draft transitions: lost batch status",
+      "purpose": "Statuskontroll av en genomförd ändring efter ett talat förtydligande bevarar frågans verifierade utveckling och kräver uttryckligt återförsök för återstående arbete."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a spoken clarification retries only unfinished work after its own verified question and draft transitions: manually discarded question",
+      "purpose": "Ett tidigare talat förtydligande kan inte fortsätta en väntande del som därefter avslutas genom manuellt kastande av utkastet."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a definitive absent batch status offers explicit retry without starting model work automatically",
+      "purpose": "En statuskontroll som bekräftar att ändringarna inte genomförs visar rätt nästa steg och startar nytt modellarbete först vid uttryckligt återförsök."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a definitive absent batch status offers explicit abandon without starting model work automatically",
+      "purpose": "Ett bekräftat uteblivet resultat tillåter uttryckligt avstående utan nytt modellarbete; ett okänt utfall behåller spärren."
     }
   ]
 }
