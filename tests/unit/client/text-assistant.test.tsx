@@ -11,6 +11,7 @@ import type {
 } from '../../../src/shared/map.js';
 import { defaultViewSettings } from '../../../src/shared/personal-view.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { approvedForVisit } from '../../support/conversation.js';
 import {
   closeConversationText,
   findConsentBox,
@@ -363,7 +364,10 @@ test('recovery retains the pending operation until its durable receipt replaces 
     'Nästa ändring',
   );
   expect(screen.queryByText('Visa kvittot')).toBeNull();
-  expect(requests.at(-1)).toEqual({ url: `${path}/session/new`, body: { discard: false } });
+  expect(requests.at(-1)).toEqual({
+    url: `${path}/session/new`,
+    body: { discard: false, ...approvedForVisit },
+  });
 });
 
 test.each([
