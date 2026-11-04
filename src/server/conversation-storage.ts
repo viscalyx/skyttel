@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import type { ConversationState } from './conversation-state.js';
 import { MapError } from './map-error.js';
+import { pendingParts } from './pending-parts.js';
 
 export const conversationLifetime = 7 * 24 * 60 * 60_000;
 export const conversationStorageConsentVersion = 4;
@@ -84,7 +85,7 @@ export function conversationStorage(database: Database.Database, now: () => numb
   }
   sweep();
   const timer = setInterval(sweep, 60_000).unref();
-  return {
+  const storage = {
     erase,
     sweep,
     close: () => clearInterval(timer),
@@ -161,6 +162,38 @@ export function conversationStorage(database: Database.Database, now: () => numb
         return;
       }
     },
+    /** A whole-draft discard also retires dependent parts while their conversation is unloaded. */
+    discardDraftParts(owner: string, householdId: string, version: number): void {
+      if (!enabled) return;
+      database
+        .transaction(() => {
+          const rows = database
+            .prepare(`SELECT c.id, c.userId, c.browserBindingId FROM conversation c
+          JOIN household h ON h.id = c.householdId
+          WHERE c.owner = ? AND c.householdId = ? AND c.contentVersion = h.contentVersion
+          AND c.expiresAt > ?`)
+            .all(owner, householdId, now()) as {
+            id: string;
+            userId: string;
+            browserBindingId: string;
+          }[];
+          for (const row of rows) {
+            const state = storage.read(row.userId, householdId, row.browserBindingId, row.id);
+            if (!state) continue;
+            const parts = pendingParts(state.pendingPartsLedger);
+            parts.discard();
+            const questions = parts.questions();
+            state.questions = questions.length ? questions : undefined;
+            state.newQuestions = state.newQuestions?.filter((question) =>
+              questions.includes(question),
+            );
+            state.saveIntent = undefined;
+            state.workVersion = version;
+            storage.write(state, row.browserBindingId);
+          }
+        })
+        .immediate();
+    },
     eraseActor(actorId: string, householdId: string) {
       if (enabled)
         database
@@ -180,4 +213,5 @@ export function conversationStorage(database: Database.Database, now: () => numb
       );
     },
   };
+  return storage;
 }

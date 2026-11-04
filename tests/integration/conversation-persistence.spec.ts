@@ -108,9 +108,12 @@ test('KONTEXT-24: omladdning bevarar pausat samtal och avslut lämnar utkastet',
     await expect(text).toContainText('Samtalet är pausat');
     await openConversationDraft(page);
     await readVoiceProposal(page, 'Lo Exempel', null);
-    await text.getByRole('button', { name: 'Avsluta samtalet', exact: true }).click();
+    const end = text.getByRole('button', { name: 'Avsluta samtalet', exact: true });
+    await end.focus();
+    await page.keyboard.press('Enter');
     await expect(log).not.toContainText(instruction);
     await expect(log).not.toContainText('Vilken cykel?');
+    await expect(text.getByRole('button', { name: 'Nytt samtal', exact: true })).toBeFocused();
     await page.reload();
     await openConversationText(page);
     await expect(log).not.toContainText(instruction);

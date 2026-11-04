@@ -67,6 +67,8 @@ export function TextView({
   const initialComputer = useRef(computer);
   const stop = working && !computer;
   const stopFocused = useRef(false);
+  const endFocused = useRef(false);
+  const newConversation = useRef<HTMLButtonElement>(null);
   const id = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
@@ -124,6 +126,12 @@ export function TextView({
       field.current?.focus();
     }
   }, [stop]);
+  useLayoutEffect(() => {
+    if (pending) return;
+    if (!session && endFocused.current && document.activeElement === document.body)
+      newConversation.current?.focus();
+    endFocused.current = false;
+  }, [session, pending]);
   const blocked =
     conversation.inputBlocked ||
     session?.paused ||
@@ -176,6 +184,7 @@ export function TextView({
               <ContextMeter percentage={session?.contextPercentage} />
             </div>
             <button
+              ref={newConversation}
               type="button"
               className="text-view-new"
               disabled={conversation.inputBlocked || pending}
@@ -209,7 +218,10 @@ export function TextView({
             <button
               type="button"
               disabled={pending}
-              onClick={() => void conversation.endConversation()}
+              onClick={(event) => {
+                endFocused.current = document.activeElement === event.currentTarget;
+                void conversation.endConversation();
+              }}
             >
               Avsluta samtalet
             </button>

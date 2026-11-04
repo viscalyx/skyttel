@@ -225,9 +225,12 @@ uppgifter och sparoperationer innan delen fortsätter. Ett tomt utkast
 eller en ny version bevisar inte att begäran är uppfylld eller kastad.
 Verifierade resultat kan avsluta berörda delar; annat arbete ska bevaras
 eller få en ny fråga. För att skilja kastande från sparande ska den
-gemensamma utkastmutationen meddela aktiva samtal om ett lyckat kastande,
-med ägare, hushåll, innehållsversion och berörd utkastversion. Detta
-gäller även kastande via andra klienter och MCP. Efter omladdning eller
+gemensamma utkastmutationen uppdatera aktiva och bevarade samtal vid ett
+lyckat kastande, med ägare, hushåll, innehållsversion och berörd
+utkastversion. Ändringsdelar och beroende informationsdelar får status
+`discarded` även innan samtalet läses in; oberoende informationsdelar
+bevaras. Detta gäller även kastande via andra klienter och MCP.
+Efter omladdning eller
 omstart ska återhämtningen läsa aktuellt auktoriserat utkast och
 operationsunderlag innan gammalt delunderlag får påverka fortsatt arbete.
 En äldre utkastbild bevisar inte vad som finns kvar.
