@@ -146,10 +146,14 @@ gap cannot certify that the complete required response played.
 Transcribe only the rendered recording, without expected words or provider
 transcripts as hints. Validate usage, word/segment evidence and confidence under
 the explicit assessor profile. Have the calibrated semantic judge independently
-assess the complete required final response or complete necessary question/safe
-inability from this recording. Keep backend text separate. Unknown recognition,
+assess two separate requirements in each candidate call: useful content and the
+complete required final response or complete necessary question/safe inability.
+Useful content can be a correct relevant partial result before the whole answer;
+status, intent, irrelevant content and unverified success claims never qualify.
+Keep backend text separate. Unknown recognition,
 missing timing, dropped audio or uncertain completeness remains inconclusive.
-New audio during offline assessment invalidates the older candidate. Continue
+New audio during offline assessment invalidates the older completion candidate;
+retain already verified useful content from its rendered recording. Continue
 observation within the declared session and candidate bounds; never promote an
 interim status to successful completion.
 Live supplies no sample-exact required-response identity. Treat completeness
@@ -169,8 +173,14 @@ do not establish output-device playback.
 
 Exclude offline recognition/judging wall time from user wait; retain its calls,
 usage, cost and unknown holds. Keep queue wait when request-correlated, raw first
-response observations and verified usefulness separate. Earlier unassessed audio
-has unknown usefulness; status labels never qualify. Interrupted, muted, paused,
+response observations and verified usefulness separate. Report the first useful
+sample's conservative rendered end as an upper bound, not its first word onset.
+Retain each candidate's useful verdict and device-clock interval. An earlier
+inconclusive candidate leaves `firstUsefulMs` unknown; `firstVerifiedUsefulMs`
+still identifies the first certified useful boundary. Preserve usefulness if a
+later tail fails, without granting successful completion. Keep both semantic
+requirements in the common comparison identity and existing finite candidate
+call reservations. Interrupted, muted, paused,
 failed, canceled, expired or unfinished output has no successful duration. Retain
 partial state, recordings and every dependent unrun outcome.
 

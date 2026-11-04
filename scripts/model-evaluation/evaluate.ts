@@ -314,6 +314,8 @@ export async function evaluateModels(plan: EvaluationPlan) {
             session: commonLiveSession(voiceSelection.profile),
             assessorTime:
               'Offline assessment of the recorded boundary is excluded from user wait; all paid calls and unknown holds remain in the shared ledger.',
+            candidateJudgment:
+              'One judge call per recognized candidate assesses useful content and complete required response separately under the same reservation and output limit.',
           }
         : undefined,
       textTimingDefinitions: {

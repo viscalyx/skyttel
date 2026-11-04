@@ -9,6 +9,7 @@ import type { PlaybackRecording } from '../../scripts/model-evaluation/playback.
 import profiles from '../../scripts/model-evaluation/profiles.json' with { type: 'json' };
 import { verifiedProfile } from '../../scripts/model-evaluation/provider.js';
 import { runVoiceScenario } from '../../scripts/model-evaluation/voice-runner.js';
+import { renderedToneWindows } from '../support/evaluation-rendered-tone.js';
 import { evaluationVoiceApplication } from '../support/evaluation-voice-application.js';
 import { evaluationVoiceProvider } from '../support/evaluation-voice-provider.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
@@ -17,6 +18,10 @@ for (const mode of [
   'full',
   'delayed',
   'assessment-tail',
+  'useful-partial',
+  'useful-interrupt',
+  'useful-uncertain',
+  'useful-irrelevant',
   'interrupt',
   'mute',
   'pause',
@@ -26,7 +31,10 @@ for (const mode of [
   test(`voice completion requires rendered complete output (${mode})`, {
     tag: '@technical',
   }, async () => {
-    const live = await evaluationVoiceProvider(mode === 'full' ? 0.5 : 3);
+    const usefulMode = mode.startsWith('useful-');
+    const live = await evaluationVoiceProvider(mode === 'full' ? 0.5 : usefulMode ? 6 : 3, {
+      usefulPartial: usefulMode,
+    });
     const application =
       mode === 'full' || mode === 'delayed'
         ? await evaluationVoiceApplication(mode === 'full' ? 'Baseline' : 'Candidate')
@@ -37,7 +45,8 @@ for (const mode of [
     const recordings: PlaybackRecording[] = [];
     try {
       const model = textModel((body) => {
-        if (lastToolResult(body)) return [modelMessage('Sparat.')];
+        if (lastToolResult(body))
+          return [modelMessage(usefulMode ? 'Hela utkastet är sparat.' : 'Sparat.')];
         const input = JSON.parse(
           String(body.input.findLast((item) => item.role === 'user')?.content),
         );
@@ -65,7 +74,11 @@ for (const mode of [
               expected: {
                 saves: 1,
                 saveAttempts: 1,
-                requirements: ['Bekräfta att utkastet sparats.'],
+                requirements: [
+                  usefulMode
+                    ? 'Bekräfta att hela utkastet sparats, inte bara en enskild ändring.'
+                    : 'Bekräfta att utkastet sparats.',
+                ],
               },
             },
           ],
@@ -91,7 +104,7 @@ for (const mode of [
           profile: liveProfile.id,
           application,
           repetition: 1,
-          maximumSeconds: mode === 'assessment-tail' ? 20 : 16,
+          maximumSeconds: mode === 'assessment-tail' || usefulMode ? 20 : 16,
           stopped: () => stopped,
           sessionTimeLimit: () => {
             stopped = true;
@@ -100,13 +113,24 @@ for (const mode of [
             recordings.push(recording);
           },
           playbackReady: (connection) => {
-            if (mode === 'interrupt' || mode === 'mute' || mode === 'pause' || mode === 'error') {
+            if (
+              mode === 'interrupt' ||
+              mode === 'mute' ||
+              mode === 'pause' ||
+              mode === 'error' ||
+              mode === 'useful-interrupt'
+            ) {
               control = live.outputStarted.then(
                 () =>
                   new Promise<void>((resolve, reject) => {
-                    controlTimer = setTimeout(() => {
-                      void connection.control(mode).then(resolve, reject);
-                    }, 800);
+                    controlTimer = setTimeout(
+                      () => {
+                        void connection
+                          .control(mode === 'useful-interrupt' ? 'interrupt' : mode)
+                          .then(resolve, reject);
+                      },
+                      mode === 'useful-interrupt' ? 4000 : 800,
+                    );
                   }),
               );
             }
@@ -122,9 +146,15 @@ for (const mode of [
               outcome: mode === 'uncertain' ? 'inconclusive' : 'recognized',
               // A misleading assessment must not override actual output faults.
               text:
-                final || ['interrupt', 'mute', 'pause', 'error', 'assessment-tail'].includes(mode)
-                  ? 'Sparat.'
-                  : 'Jag arbetar.',
+                final || ['interrupt', 'mute', 'pause', 'error'].includes(mode)
+                  ? usefulMode
+                    ? 'Hela utkastet är sparat.'
+                    : 'Sparat.'
+                  : usefulMode && hasTone(recording, 660)
+                    ? mode === 'useful-irrelevant'
+                      ? 'Det är soligt.'
+                      : 'Lo Bergs beskrivning är sparad.'
+                    : 'Jag arbetar.',
               lastWordEndSeconds:
                 recording.lastActiveFrame === null
                   ? null
@@ -140,7 +170,20 @@ for (const mode of [
               expect(input.sources.backend.text).toContain(application.id);
             return input.requirements.map((requirement) => ({
               id: requirement.id,
-              outcome: input.sources.voice?.text === 'Sparat.' ? 'pass' : 'inconclusive',
+              outcome:
+                requirement.id === 'voice-rendered-useful'
+                  ? input.sources.voice?.text === 'Jag arbetar.' ||
+                    input.sources.voice?.text === 'Det är soligt.'
+                    ? 'fail'
+                    : mode === 'useful-uncertain' &&
+                        !input.sources.voice?.text.includes('Hela utkastet')
+                      ? 'inconclusive'
+                      : 'pass'
+                  : (mode === 'assessment-tail' && requirement.id === 'voice-rendered-response') ||
+                      input.sources.voice?.text === 'Sparat.' ||
+                      input.sources.voice?.text.includes('Hela utkastet')
+                    ? 'pass'
+                    : 'inconclusive',
               reason:
                 'Controlled semantic interpretation of the independently recognized rendered tones.',
             }));
@@ -155,11 +198,22 @@ for (const mode of [
       await test
         .info()
         .attach('rendered-playback-evidence', { path: evidence, contentType: 'application/json' });
-      if (mode !== 'full' && mode !== 'delayed' && mode !== 'assessment-tail') {
+      if (
+        mode === 'interrupt' ||
+        mode === 'mute' ||
+        mode === 'pause' ||
+        mode === 'error' ||
+        mode === 'uncertain' ||
+        mode === 'useful-interrupt'
+      ) {
         expect(result.attempts[0].outcome).not.toBe('pass');
         expect(result.attempts[0].elapsedMs).toBeNull();
         expect(result.attempts[0].timing?.successfulCompletionMs).toBeNull();
         expect(recordings.length).toBeGreaterThan(0);
+        if (mode === 'useful-interrupt') {
+          expect(result.attempts[0].timing?.firstUsefulMs).toBeGreaterThan(0);
+          expect(recordings.some((recording) => hasTone(recording, 660))).toBe(true);
+        } else expect(result.attempts[0].timing?.firstUsefulMs).toBeNull();
         if (mode !== 'uncertain') {
           expect(recordings.some(hasFinalTone)).toBe(false);
           expect(
@@ -187,6 +241,26 @@ for (const mode of [
         expect(result.attempts[0].playback?.candidates.length).toBeGreaterThanOrEqual(2);
         expect(elapsed).toBeGreaterThanOrEqual(sentAt - input.ended.upper);
       }
+      if (mode === 'useful-partial') {
+        const useful = attempt.timing?.firstUsefulMs;
+        expect(useful).not.toBeNull();
+        expect(useful).toBeGreaterThan(0);
+        expect(useful).toBeLessThan(sentAt - input.ended.upper - 1000);
+        expect(attempt.timing?.firstVerifiedUsefulMs).toBe(useful);
+        expect(attempt.timing?.successfulCompletionMs).toBeGreaterThan(useful ?? Infinity);
+        expect(attempt.playbackAssessmentElapsedMs).toBeGreaterThanOrEqual(600);
+      }
+      if (mode === 'useful-uncertain' || mode === 'useful-irrelevant') {
+        expect(attempt.timing?.firstVerifiedUsefulMs).toBeGreaterThanOrEqual(
+          sentAt - input.ended.upper,
+        );
+        if (mode === 'useful-uncertain') expect(attempt.timing?.firstUsefulMs).toBeNull();
+        else expect(attempt.timing?.firstUsefulMs).toBe(attempt.timing?.firstVerifiedUsefulMs);
+      }
+      if (mode === 'delayed') {
+        expect(attempt.playback?.candidates[0].usefulContent?.[0].outcome).toBe('fail');
+        expect(attempt.timing?.firstUsefulMs).toBeGreaterThanOrEqual(sentAt - input.ended.upper);
+      }
       expect(
         model.requests.every(
           (request) => request.model === 'gpt-6.1-sol' && request.reasoning.effort === 'high',
@@ -206,17 +280,9 @@ for (const mode of [
 }
 
 function hasFinalTone(recording: PlaybackRecording) {
-  const pcm = recording.wav.subarray(44);
-  const window = Math.round(recording.sampleRate / 10);
-  for (let start = 0; start + window < recording.frames; start += window) {
-    let crossings = 0;
-    let peak = 0;
-    for (let frame = start + 1; frame < start + window; frame++) {
-      const value = pcm.readInt16LE(frame * 2);
-      peak = Math.max(peak, Math.abs(value));
-      if (value > 0 && pcm.readInt16LE((frame - 1) * 2) <= 0) crossings++;
-    }
-    if (peak > 100 && crossings > 65) return true;
-  }
-  return false;
+  return hasTone(recording, 880);
+}
+
+function hasTone(recording: PlaybackRecording, frequency: number) {
+  return renderedToneWindows(recording, frequency) > 0;
 }

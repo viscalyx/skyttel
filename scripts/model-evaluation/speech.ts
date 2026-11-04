@@ -142,8 +142,14 @@ export async function speechConnection(
           const inputClocks: ClockSample[] = [];
           const requests = new Map<string, (value: Record<string, unknown>) => void>();
           recorder.port.onmessage = ({ data }) => {
-            if (data.pcm) chunks.push(new Uint8Array(data.pcm.buffer));
             const voice = (window as EvaluationWindow).evaluationVoice;
+            // The port orders prior-capture PCM before this acknowledgement.
+            // Reset at that boundary, after queued old blocks are delivered.
+            if (data.began) {
+              chunks.length = 0;
+              if (voice) voice.lastSnapshot = undefined;
+            }
+            if (data.pcm) chunks.push(new Uint8Array(data.pcm.buffer));
             if (data.error && voice) voice.error = data.error;
             if (data.snapshot && voice) voice.lastSnapshot = data;
             const key = data.began ?? data.snapshot;
@@ -267,8 +273,6 @@ export async function speechConnection(
           source.buffer = buffer;
           source.connect(voice.destination);
           voice.source = source;
-          voice.chunks.length = 0;
-          voice.lastSnapshot = undefined;
           const begin = crypto.randomUUID();
           await new Promise((resolve) => {
             voice.requests.set(begin, resolve);

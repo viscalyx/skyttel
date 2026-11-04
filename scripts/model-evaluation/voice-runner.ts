@@ -20,6 +20,7 @@ import {
   type PlaybackRecording,
   renderedResponseEnd,
   renderedResponseRequirement,
+  renderedUsefulRequirement,
 } from './playback.js';
 import type { RunOptions } from './runner.js';
 import {
@@ -29,6 +30,47 @@ import {
   speechConnection,
 } from './speech.js';
 import type { Attempt, JudgeInput, Scenario, ScenarioStep } from './types.js';
+
+type PlaybackEvidence = NonNullable<Attempt['playback']>;
+
+function inputEvidence(audio: SourcePlayback): NonNullable<PlaybackEvidence['input']> {
+  return {
+    sha256: audio.sha256,
+    frames: audio.frames,
+    speechFrames: audio.speechFrames,
+    drainedAt: audio.drainedAt,
+    sampleRate: audio.sampleRate,
+    sourceStartPosition: audio.sourceStartPosition,
+    speechPosition: audio.speechPosition,
+    ended: audio.ended,
+  };
+}
+
+function recordingEvidence(
+  recording: PlaybackRecording,
+): Pick<
+  PlaybackEvidence,
+  | 'recordingSha256'
+  | 'sampleRate'
+  | 'frames'
+  | 'firstFrame'
+  | 'lastActiveFrame'
+  | 'interruption'
+  | 'error'
+> {
+  return {
+    recordingSha256: recording.sha256,
+    sampleRate: recording.sampleRate,
+    frames: recording.frames,
+    firstFrame: recording.firstFrame,
+    lastActiveFrame: recording.lastActiveFrame,
+    interruption: recording.interruption,
+    error: recording.error,
+  };
+}
+
+const firstUsefulLimitation =
+  'Conservative rendered end of the first sampled independently useful candidate, not word onset. Earlier inconclusive candidates leave firstUsefulMs unknown. Status and receipt timestamps are excluded; usefulness does not imply whole-task success.';
 
 /** Keeps ordinary multi-step dialogs connected, closes before the final judge,
  * and starts a second session only after the ordinary summary installation. */
@@ -201,6 +243,15 @@ export async function runVoiceScenario(
       let startedAt = Date.now();
       let recognizedRequest: string | undefined;
       let partialChecks: string[] = [];
+      let playbackAssessmentElapsedMs: number | undefined;
+      async function measurePlaybackAssessment<T>(work: () => Promise<T>): Promise<T> {
+        const began = Date.now();
+        try {
+          return await work();
+        } finally {
+          playbackAssessmentElapsedMs = (playbackAssessmentElapsedMs ?? 0) + Date.now() - began;
+        }
+      }
       try {
         if (sessionExpired) throw new Error('evaluation_live_time_limit');
         if (blocked || options.stopped?.()) {
@@ -290,20 +341,11 @@ export async function runVoiceScenario(
                 queueMs: null,
                 firstResponseMs: null,
                 firstUsefulMs: null,
+                firstUsefulLimitation,
                 observedResponseEndMs: null,
                 successfulCompletionMs: null,
               };
-              if (result.playback)
-                result.playback.input = {
-                  sha256: audio.sha256,
-                  frames: audio.frames,
-                  speechFrames: audio.speechFrames,
-                  drainedAt: audio.drainedAt,
-                  sampleRate: audio.sampleRate,
-                  sourceStartPosition: audio.sourceStartPosition,
-                  speechPosition: audio.speechPosition,
-                  ended: audio.ended,
-                };
+              if (result.playback) result.playback.input = inputEvidence(audio);
             })
             .catch((error) => {
               playbackError = error;
@@ -320,11 +362,12 @@ export async function runVoiceScenario(
           let lastAssessedFrame: number | null = null;
           let candidateCount = 0;
           let nextRecordingAt = 0;
+          let usefulnessUncertain = false;
           result.playback = {
             contract: 'voice-rendered-v1',
             candidates: [],
             limitation:
-              'Single negotiated WebRTC stream through one common WebAudio output graph. Device timestamps bracket rendered frames; ASR/semantic assessment is uncertain, not sample-exact or a physical audibility guarantee. Exact digital input trailing zeros are excluded. Earlier fragment usefulness is unverified.',
+              'Single negotiated WebRTC stream through one common WebAudio output graph. Device timestamps bracket rendered frames; ASR/semantic assessment is uncertain, not sample-exact or a physical audibility guarantee. Exact digital input trailing zeros are excluded. Useful time is a sampled conservative upper bound, not word onset.',
           };
           // Quiet finds candidates. Only independently assessed recording and
           // device-render evidence can certify the required response.
@@ -407,13 +450,7 @@ export async function runVoiceScenario(
               }
               const recording = await connection.recording();
               options.recordPlayback?.(recording);
-              result.playback.recordingSha256 = recording.sha256;
-              result.playback.sampleRate = recording.sampleRate;
-              result.playback.frames = recording.frames;
-              result.playback.firstFrame = recording.firstFrame;
-              result.playback.lastActiveFrame = recording.lastActiveFrame;
-              result.playback.interruption = recording.interruption;
-              result.playback.error = recording.error;
+              Object.assign(result.playback, recordingEvidence(recording));
               if (recording.interruption || recording.error) {
                 result.reason = recording.interruption ?? recording.error;
                 break;
@@ -431,7 +468,9 @@ export async function runVoiceScenario(
                   break;
                 }
                 lastAssessedFrame = lastActivity;
-                const recognition = await withHeartbeat(() => assessPlayback(recording));
+                const recognition = await measurePlaybackAssessment(() =>
+                  withHeartbeat(() => assessPlayback(recording)),
+                );
                 const candidate: NonNullable<Attempt['playback']>['candidates'][number] = {
                   callId: recognition.callId,
                   profile: recognition.profile,
@@ -447,20 +486,41 @@ export async function runVoiceScenario(
                   result.reason = recognition.reason ?? 'Rendered response boundary is unverified.';
                   break;
                 }
-                const requiredResponse = options.judge
-                  ? await judgeWithHeartbeat({
-                      context: environment.judgeContext(step, fixed, '', recognizedRequest),
-                      sources: { voice: { text: recognition.text, complete: false } },
-                      requirements: [
-                        {
-                          id: 'voice-rendered-response',
-                          source: 'voice',
-                          text: renderedResponseRequirement,
-                        },
-                      ],
-                    })
+                candidate.renderedEnd = end;
+                const assessments = options.judge
+                  ? await measurePlaybackAssessment(() =>
+                      judgeWithHeartbeat({
+                        context: environment.judgeContext(step, fixed, '', recognizedRequest),
+                        sources: { voice: { text: recognition.text, complete: false } },
+                        requirements: [
+                          {
+                            id: 'voice-rendered-response',
+                            source: 'voice',
+                            text: renderedResponseRequirement,
+                          },
+                          {
+                            id: 'voice-rendered-useful',
+                            source: 'voice',
+                            text: renderedUsefulRequirement,
+                          },
+                        ],
+                      }),
+                    )
                   : [];
+                const requiredResponse = assessments.filter(
+                  (item) => item.id === 'voice-rendered-response',
+                );
+                const useful = assessments.filter((item) => item.id === 'voice-rendered-useful');
                 candidate.requiredResponse = requiredResponse;
+                candidate.usefulContent = useful;
+                if (result.timing && result.timing.firstVerifiedUsefulMs == null) {
+                  if (useful.length === 1 && useful[0].outcome === 'pass') {
+                    result.timing.firstVerifiedUsefulMs = Math.max(0, end.upper - startedAt);
+                    if (!usefulnessUncertain)
+                      result.timing.firstUsefulMs = result.timing.firstVerifiedUsefulMs;
+                  } else if (useful.length !== 1 || useful[0].outcome === 'inconclusive')
+                    usefulnessUncertain = true;
+                }
                 const current = await connection.recording();
                 options.recordPlayback?.(current);
                 // Offline assessment cannot hide a tail that arrived while it
@@ -522,16 +582,7 @@ export async function runVoiceScenario(
           }
           const audio = await playback;
           startedAt = audio.endedAt;
-          result.playback.input = {
-            sha256: audio.sha256,
-            frames: audio.frames,
-            speechFrames: audio.speechFrames,
-            drainedAt: audio.drainedAt,
-            sampleRate: audio.sampleRate,
-            sourceStartPosition: audio.sourceStartPosition,
-            speechPosition: audio.speechPosition,
-            ended: audio.ended,
-          };
+          result.playback.input = inputEvidence(audio);
           output = assessedOutput;
           result.fixed.push(...fixed);
           result.observedEndMs = (await connection.observedAt()) - startedAt;
@@ -553,10 +604,9 @@ export async function runVoiceScenario(
             submittedAt: startedAt,
             queueMs: null,
             firstResponseMs: null,
-            firstUsefulMs: null,
-            firstVerifiedUsefulMs: result.outcome === 'pass' ? completionMs : null,
-            firstUsefulLimitation:
-              'Earlier audible fragments are not independently certified useful. Status and receipt timestamps are excluded.',
+            firstUsefulMs: result.timing?.firstUsefulMs ?? null,
+            firstVerifiedUsefulMs: result.timing?.firstVerifiedUsefulMs ?? null,
+            firstUsefulLimitation,
             observedResponseEndMs: renderedEnd ? renderedEnd.upper - startedAt : null,
             successfulCompletionMs: result.elapsedMs,
           };
@@ -623,8 +673,6 @@ export async function runVoiceScenario(
               (entry.parent ? `\nCurrent clarification: ${JSON.stringify(step.text)}` : ''),
             judge: options.judge ? judgeWithHeartbeat : undefined,
           });
-          if (result.assessment?.kind === 'necessary_clarification' && result.timing && renderedEnd)
-            result.timing.firstVerifiedUsefulMs = Math.max(0, renderedEnd.upper - startedAt);
           if (index === queue.length - 1) await closeVoice();
         }
         if (sessionExpired) throw new Error('evaluation_live_time_limit');
@@ -640,15 +688,7 @@ export async function runVoiceScenario(
           try {
             const recording = await connection.recording();
             options.recordPlayback?.(recording);
-            Object.assign(result.playback, {
-              recordingSha256: recording.sha256,
-              sampleRate: recording.sampleRate,
-              frames: recording.frames,
-              firstFrame: recording.firstFrame,
-              lastActiveFrame: recording.lastActiveFrame,
-              interruption: recording.interruption,
-              error: recording.error,
-            });
+            Object.assign(result.playback, recordingEvidence(recording));
           } catch {
             result.playback.error ??= 'Partial rendered recording unavailable after failure.';
           }
@@ -691,6 +731,7 @@ export async function runVoiceScenario(
       )
         ? null
         : result.playback?.candidates.reduce((sum, item) => sum + (item.costUsd ?? 0), 0);
+      result.playbackAssessmentElapsedMs = playbackAssessmentElapsedMs;
       if (result.timing) {
         const request = observed.find((event) => event.kind === 'backend_request');
         const requestId = (request?.data as { requestId?: string } | undefined)?.requestId;

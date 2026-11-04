@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 export const voicePlaybackContract = 'voice-rendered-v1';
 export const renderedResponseRequirement =
   'Det inspelade talet innehåller hela det nödvändiga slutliga svaret på den aktuella begäran, eller hela en nödvändig följdfråga eller säker oförmåga. Ett mellanbesked, avsikt eller avbruten mening räcker inte. Saknat eller osäkert innehåll ger inconclusive.';
+export const renderedUsefulRequirement =
+  'Det inspelade talet ger minst ett korrekt, relevant och användbart delresultat för den aktuella begäran, eller en nödvändig konkret följdfråga eller säker oförmåga. Hela uppdraget behöver inte vara slutfört. Enbart status, bekräftelse på mottagen begäran, avsikt, irrelevant innehåll eller obestyrkta framgångsbesked är fail. Osäker användbarhet är inconclusive. Bedöm oberoende av om hela slutliga svaret är färdigt.';
 export type ClockSample = { position: number; at: number };
 export type TimeInterval = { lower: number; upper: number };
 export type PlaybackSnapshot = {
@@ -176,9 +178,16 @@ export const voicePlaybackInstrumentation = {
   source: 'original-negotiated-webrtc-remote-stream',
   output: 'one-web-audio-destination-with-pass-through-pcm-recorder',
   recording: 'mono-downmix-of-all-rendered-output-channels',
+  captureBoundary: 'reset-accumulated-pcm-at-ordered-worklet-began-acknowledgement',
   workletSha256: createHash('sha256').update(outputRecordingWorklet).digest('hex'),
   inputEnd: 'unchanged-fixture-last-nonzero-pcm-frame-bracketed-on-browser-clock',
   outputEnd: 'device-clock-bracket-of-observed-recording-end-and-asr-alignment-margin',
+  semanticRequirements: {
+    complete: renderedResponseRequirement,
+    useful: renderedUsefulRequirement,
+  },
+  firstUseful:
+    'Conservative rendered end of the first sampled candidate independently verified useful; an upper bound, not word onset. Earlier inconclusive candidates leave firstUsefulMs unknown while firstVerifiedUsefulMs retains the first certified boundary.',
   overhead:
     'Common instrumented renderer replaces native element playout in both versions. Recording, WebAudio buffering and clock sampling can affect latency; their additional overhead is unquantified. This is the instrumented user-output path, not an uninstrumented production-latency estimate.',
 };

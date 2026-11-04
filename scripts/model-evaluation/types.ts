@@ -153,12 +153,15 @@ export type Attempt = {
       alignmentMarginMs: number;
       lastWordEndSeconds: number | null;
       requiredResponse?: JudgeResult;
+      usefulContent?: JudgeResult;
+      renderedEnd?: import('./playback.js').TimeInterval;
     }[];
     interruption?: string;
     error?: string;
     limitation: string;
   };
   playbackAssessmentCostUsd?: number | null;
+  playbackAssessmentElapsedMs?: number;
   backendCostUsd: number | null;
   judgeCostUsd?: number | null;
   voiceCostUsd?: number | null;

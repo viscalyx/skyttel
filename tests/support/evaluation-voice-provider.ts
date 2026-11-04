@@ -6,7 +6,10 @@ import { liveProvider, voiceAnswerParts } from './live-provider.js';
 
 /** External speech provider with real local WebRTC media and controlled words.
  * The application, source recording, receiver and output renderer stay real. */
-export async function evaluationVoiceProvider(tailOffsetSeconds = 3) {
+export async function evaluationVoiceProvider(
+  tailOffsetSeconds = 3,
+  options: { usefulPartial?: boolean; manual?: boolean } = {},
+) {
   const server = createServer((_request, response) =>
     response.end('<!doctype html><title>Controlled speech provider</title>'),
   );
@@ -64,6 +67,7 @@ export async function evaluationVoiceProvider(tailOffsetSeconds = 3) {
   };
   const attach: LiveSidebandFactory = (...args) => {
     const sideband = live.attach(...args);
+    if (options.manual) return sideband;
     const send = sideband.send.bind(sideband);
     sideband.send = (event) => {
       send(event);
@@ -79,35 +83,39 @@ export async function evaluationVoiceProvider(tailOffsetSeconds = 3) {
             end_ms: 6500,
           });
           void page
-            .evaluate((tailOffset) => {
-              const { audio, destination } = (
-                window as unknown as {
-                  providerVoice: {
-                    audio: AudioContext;
-                    destination: MediaStreamAudioDestinationNode;
-                  };
+            .evaluate(
+              ({ tailOffset, usefulPartial }) => {
+                const { audio, destination } = (
+                  window as unknown as {
+                    providerVoice: {
+                      audio: AudioContext;
+                      destination: MediaStreamAudioDestinationNode;
+                    };
+                  }
+                ).providerVoice;
+                const start = audio.currentTime + 0.05;
+                for (const [frequency, offset, duration] of [
+                  [400, 0, 0.4],
+                  ...(usefulPartial ? [[660, 1, 0.5]] : []),
+                  [880, tailOffset, 0.5],
+                ]) {
+                  const source = audio.createOscillator();
+                  const gain = audio.createGain();
+                  source.frequency.value = frequency;
+                  gain.gain.value = 0.15;
+                  source.connect(gain).connect(destination);
+                  source.start(start + offset);
+                  source.stop(start + offset + duration);
+                  if (frequency === 880)
+                    source.onended = () => {
+                      void (
+                        window as unknown as { outputTailEnded: () => Promise<void> }
+                      ).outputTailEnded();
+                    };
                 }
-              ).providerVoice;
-              const start = audio.currentTime + 0.05;
-              for (const [frequency, offset, duration] of [
-                [400, 0, 0.4],
-                [880, tailOffset, 0.5],
-              ]) {
-                const source = audio.createOscillator();
-                const gain = audio.createGain();
-                source.frequency.value = frequency;
-                gain.gain.value = 0.15;
-                source.connect(gain).connect(destination);
-                source.start(start + offset);
-                source.stop(start + offset + duration);
-                if (frequency === 880)
-                  source.onended = () => {
-                    void (
-                      window as unknown as { outputTailEnded: () => Promise<void> }
-                    ).outputTailEnded();
-                  };
-              }
-            }, tailOffsetSeconds)
+              },
+              { tailOffset: tailOffsetSeconds, usefulPartial: options.usefulPartial },
+            )
             .then(() => {
               outputStartedAt = Date.now();
               resolveOutputStarted();
@@ -141,6 +149,34 @@ export async function evaluationVoiceProvider(tailOffsetSeconds = 3) {
     },
     get finalAudioSentAt() {
       return finalAudioSentAt;
+    },
+    async tone(frequency: number, seconds: number) {
+      return page.evaluate(
+        async ({ frequency, seconds }) => {
+          const { audio, destination } = (
+            window as unknown as {
+              providerVoice: {
+                audio: AudioContext;
+                destination: MediaStreamAudioDestinationNode;
+              };
+            }
+          ).providerVoice;
+          const source = audio.createOscillator();
+          const gain = audio.createGain();
+          source.frequency.value = frequency;
+          gain.gain.value = 0.15;
+          source.connect(gain).connect(destination);
+          const startedAt = performance.timeOrigin + performance.now();
+          await new Promise<void>((resolve) => {
+            source.onended = () => resolve();
+            source.start();
+            source.stop(audio.currentTime + seconds);
+          });
+          source.disconnect();
+          return { startedAt, endedAt: performance.timeOrigin + performance.now() };
+        },
+        { frequency, seconds },
+      );
     },
     async close() {
       clearTimeout(inputTimer);
