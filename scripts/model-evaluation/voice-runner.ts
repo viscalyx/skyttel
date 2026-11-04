@@ -37,6 +37,7 @@ import {
   speechConnection,
 } from './speech.js';
 import type { Attempt, JudgeInput, JudgeResult, Scenario } from './types.js';
+import { executeUserStop, missedUserStop, validateUserStop } from './user-stop.js';
 
 type PlaybackEvidence = NonNullable<Attempt['playback']>;
 type StateObserver = (status: VoiceAssistantResponse) => Promise<void>;
@@ -51,6 +52,7 @@ function inputEvidence(audio: SourcePlayback): NonNullable<PlaybackEvidence['inp
     sourceStartPosition: audio.sourceStartPosition,
     speechPosition: audio.speechPosition,
     ended: audio.ended,
+    started: audio.started,
   };
 }
 
@@ -96,6 +98,7 @@ export async function runVoiceScenario(
     playbackReady?: (connection: Awaited<ReturnType<typeof speechConnection>>) => void;
   },
 ) {
+  scenario.steps.forEach(validateUserStop);
   // Optional branches must have reviewed, matching audio before opening a paid session.
   if (options.followUps)
     await Promise.all(
@@ -474,6 +477,48 @@ export async function runVoiceScenario(
               },
             );
             await observeState(status);
+            if (step.userStop && audioEnd !== undefined) {
+              const request = events
+                .slice(offset)
+                .findLast((event) => event.kind === 'backend_request');
+              const correlatedRequest = (request?.data as { requestId?: string } | undefined)
+                ?.requestId;
+              const task = view.tasks?.find((entry) => entry.id === correlatedRequest);
+              if (
+                task?.status === 'working' &&
+                view.taskSource === 'voice' &&
+                view.taskId === correlatedRequest &&
+                correlatedRequest
+              ) {
+                const stoppedRequest = correlatedRequest;
+                const recording = await connection.recording();
+                options.recordPlayback?.(recording);
+                Object.assign(result.playback, recordingEvidence(recording));
+                const stopped = await executeUserStop({
+                  step,
+                  view,
+                  origin: result.playback.input?.ended.lower ?? startedAt,
+                  cancel: () =>
+                    environment.post(`${environment.path}/cancel`, {
+                      revision: view.revision,
+                      contextRevision: view.contextRevision,
+                      all: true,
+                    }),
+                  status: () => environment.get(`${environment.path}/messages/${stoppedRequest}`),
+                  check: (current, expected) =>
+                    environment.check(step, current, modelActions(events.slice(offset)), expected),
+                  events: () => events.slice(offset),
+                  readState: environment.read,
+                  quiesceAudio: () => closeVoice(true),
+                });
+                result.scriptedStop = stopped.proof;
+                throw new Error('evaluation_scripted_user_stop');
+              }
+              if (task?.status === 'completed') {
+                result.scriptedStop = missedUserStop();
+                throw new Error('evaluation_scripted_user_stop');
+              }
+            }
             const observed = events.slice(offset);
             recognizedRequest =
               observed
@@ -756,7 +801,13 @@ export async function runVoiceScenario(
           }
         }
         const partial = [...new Set([...result.fixed, ...partialChecks])];
-        if (
+        if (result.scriptedStop) {
+          result.outcome =
+            result.scriptedStop.verdict === 'pass' ? 'aborted' : result.scriptedStop.verdict;
+          result.reason = 'evaluation_scripted_user_stop';
+          result.fixed = result.scriptedStop.stateFailures;
+          result.observedEndMs = Date.now() - startedAt;
+        } else if (
           error instanceof Error &&
           ['evaluation_application_canceled', 'evaluation_application_expired'].includes(
             error.message,
@@ -772,7 +823,7 @@ export async function runVoiceScenario(
             reason: options.stopReason?.() ?? null,
             attempted: voiceAttempted || (options.providerCalls?.() ?? 0) > callsBefore,
           });
-        result.fixed = partial;
+        if (!result.scriptedStop) result.fixed = partial;
         result.elapsedMs = null;
         if (result.timing) result.timing.successfulCompletionMs = null;
       }
@@ -784,6 +835,7 @@ export async function runVoiceScenario(
         ? options.providerCalls() - callsBefore
         : undefined;
       const observed = events.slice(eventOffset);
+      result.diagnostics ??= observationDiagnostics(observed, startedAt);
       result.metrics = evaluationMetrics(
         options.providerRecords?.().filter((call) => !recordIds.has(call.id)),
         observed,

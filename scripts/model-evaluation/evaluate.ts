@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
+import type { LiveUsageAttempt } from '../../src/server/live-provider.js';
 import { type ApplicationVersion, applicationAdapter, evaluatorVersion } from './application.js';
 import audioManifest from './audio/manifest.json' with { type: 'json' };
 import { EvaluationBudget } from './budget.js';
@@ -21,6 +22,7 @@ import {
   verifiedLiveProfile,
 } from './live.js';
 import { modelMetrics } from './metrics.js';
+import { compareOverlap, type ScenarioVoiceUsage } from './overlap.js';
 import { voicePlaybackInstrumentation } from './playback.js';
 import {
   type PlaybackAssessorProfile,
@@ -45,6 +47,7 @@ import {
 import { runTextScenario } from './runner.js';
 import { type ReferenceVoice, referenceSpeech } from './speech.js';
 import { type Attempt, type Catalog, type Scenario, scenarioGroups } from './types.js';
+import { validateUserStop } from './user-stop.js';
 import { runVoiceScenario } from './voice-runner.js';
 
 export type EvaluationPlan = {
@@ -70,6 +73,9 @@ export type EvaluationPlan = {
   followUps?: boolean;
   repetitions?: number[];
   references?: RecordedReference[];
+  /** Versioned explicit experiment scope. The full catalog's fixture remains
+   * unchanged; this selection never establishes full-catalog qualification. */
+  scenarioSet?: Scenario[];
   // Exact counting, including its verified billing, is supplied only by an
   // agent after checking the official endpoint/model/pricing documentation.
   counting?: {
@@ -149,7 +155,19 @@ export async function evaluateModels(plan: EvaluationPlan) {
       }),
     )
     .digest('hex');
-  const catalog = rawCatalog as Catalog;
+  const catalog = { ...rawCatalog, scenarios: plan.scenarioSet ?? rawCatalog.scenarios } as Catalog;
+  if (
+    !catalog.scenarios.length ||
+    new Set(catalog.scenarios.map((scenario) => scenario.id)).size !== catalog.scenarios.length ||
+    catalog.scenarios.some(
+      (scenario) =>
+        !scenario.id ||
+        !scenario.steps.length ||
+        new Set(scenario.steps.map((step) => step.id)).size !== scenario.steps.length,
+    )
+  )
+    throw new Error('evaluation_scenario_set_invalid');
+  for (const scenario of catalog.scenarios) scenario.steps.forEach(validateUserStop);
   const evaluator = plan.applicationComparison ? await evaluatorVersion(plan.commit) : undefined;
   const comparisonRun = plan.applicationComparison
     ? prepareComparison(
@@ -157,7 +175,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
         catalog.scenarios,
         backendProfile(voiceSelection ? voiceSelection.profile.backend : plan.textProfiles[0]),
         {
-          catalog: rawCatalog,
+          catalog,
           audio: { manifest: audioManifest, referenceVoice: plan.referenceVoice ?? 'marin' },
           judge: { sha256: judgeSha256, profile: judgeProfile },
           followUps: plan.followUps ?? false,
@@ -190,7 +208,11 @@ export async function evaluateModels(plan: EvaluationPlan) {
     ? {
         contractId: comparisonRun.contractId,
         plan: comparisonRun.plan,
-        versions: comparisonRun.versions.map(({ id, commit }) => ({ id, commit })),
+        versions: comparisonRun.versions.map(({ id, commit, conversationWorkMode }) => ({
+          id,
+          commit,
+          conversationWorkMode,
+        })),
         order: comparisonRun.order.map(({ repetition, application }) => ({
           repetition,
           applicationVersion: application.id,
@@ -224,6 +246,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
       request: {},
       response: call.response
         ? {
+            id: call.response.id,
             model: call.response.model,
             status: call.response.status,
             usage: call.response.usage,
@@ -275,6 +298,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
       )
     : undefined;
   const attempts: Attempt[] = [];
+  const scenarioVoiceUsage: ScenarioVoiceUsage[] = [];
   const profiles = [...plan.textProfiles];
   const voiceProfile = plan.voiceProfile;
   const plannedUtterances = catalog.scenarios.reduce(
@@ -338,7 +362,9 @@ export async function evaluateModels(plan: EvaluationPlan) {
       catalog: {
         source: rawCatalog.source,
         decision: rawCatalog.decision,
-        sha256: createHash('sha256').update(JSON.stringify(rawCatalog)).digest('hex'),
+        sha256: createHash('sha256').update(JSON.stringify(catalog)).digest('hex'),
+        scope: plan.scenarioSet ? 'explicit_scenario_set' : 'full_catalog',
+        scenarioSet: plan.scenarioSet,
         scenarios: catalog.scenarios.map((scenario) => ({
           id: scenario.id,
           title: scenario.title,
@@ -360,7 +386,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
         minimumRepetitions: 1,
         allPlannedChecksRequired: true,
         policy: 'scenario-groups-v1',
-        scope: 'everyday',
+        scope: plan.scenarioSet ? 'explicit_scenario_set' : 'everyday',
         groups: scenarioGroups,
         correctnessRequiredAcrossAllGroups: true,
       },
@@ -553,7 +579,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
             const maximumSeconds = Math.ceil(
               audioSeconds + utterances * 180 + 32 + (utterances - 1) * 120,
             );
-            const liveUsage: unknown[] = [];
+            const liveUsage: LiveUsageAttempt[] = [];
             const live = budgetedLive(
               budget,
               maximumSeconds,
@@ -646,6 +672,29 @@ export async function evaluateModels(plan: EvaluationPlan) {
               stepCost: 'Estimated allocations are not used to rank models.',
               observation: voicePlaybackInstrumentation,
             });
+            const finalUsage = [
+              ...new Map(liveUsage.map((usage) => [usage.attemptId, usage])).values(),
+            ];
+            scenarioVoiceUsage.push({
+              scenario: scenario.id,
+              applicationVersion: application?.id,
+              repetition,
+              sessions: finalUsage,
+              costUsd:
+                finalUsage.length &&
+                finalUsage.every(
+                  (usage) =>
+                    usage.final &&
+                    usage.endedAt &&
+                    usage.model === voiceProfile.model &&
+                    usage.seconds !== null,
+                )
+                  ? finalUsage.reduce(
+                      (sum, usage) => sum + ((usage.seconds ?? 0) * voiceProfile.usdPerMinute) / 60,
+                      0,
+                    )
+                  : null,
+            });
             privateRecords.observation({
               scenario: scenario.id,
               applicationVersion: application?.id,
@@ -678,10 +727,15 @@ export async function evaluateModels(plan: EvaluationPlan) {
       'voice',
       repetitions,
     );
-    const catalogSha256 = createHash('sha256').update(JSON.stringify(rawCatalog)).digest('hex');
+    const catalogSha256 = createHash('sha256').update(JSON.stringify(catalog)).digest('hex');
     const applicationResult = comparisonRun
       ? compareApplicationVersions(attempts, catalog.scenarios, comparisonRun)
       : undefined;
+    const overlapResult =
+      comparisonRun &&
+      comparisonRun.plan.id === `overlap-public-stop-v1-${comparisonRun.plan.modality}`
+        ? compareOverlap(attempts, comparisonRun, scenarioVoiceUsage, [...calls.values()])
+        : undefined;
     const { comparisons, historicalComparisons, recommendation, recommendationBasis } =
       comparisonRun
         ? {
@@ -743,13 +797,16 @@ export async function evaluateModels(plan: EvaluationPlan) {
       comparisons,
       historicalComparisons,
       applicationComparison: applicationResult,
+      overlapComparison: overlapResult,
     });
     await emit('recommendation', 'Rekommendation', {
       recommendation,
       recommendationBasis,
+      overlapComparison: overlapResult,
       preliminary: Boolean(comparisonRun),
-      qualificationScope: 'everyday',
+      qualificationScope: plan.scenarioSet ? 'explicit_scenario_set' : 'everyday',
       fullCatalogQualified:
+        !plan.scenarioSet &&
         calibrated &&
         (applicationResult
           ? applicationResult.versions.every((version) => version.summary.fullCatalogQualified)
@@ -813,6 +870,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
       attempts,
       budget: budget.snapshot(),
       applicationComparison: applicationResult,
+      overlapComparison: overlapResult,
     };
   } catch (error) {
     budget.stop(error instanceof Error ? error.message : 'evaluation_failed');

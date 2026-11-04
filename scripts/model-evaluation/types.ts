@@ -48,6 +48,13 @@ export type ScenarioStep = {
   followUps?: FollowUp[];
   /** Alternate safe state, never a successful completion of this step. */
   safeInability?: Expected;
+  /** A declared public Stop experiment, never an ordinary successful mutation. */
+  userStop?: {
+    trigger: 'first-working-after-input';
+    maximumObservationMs: number;
+    /** Complete independently permitted atomic effects before cancellation. */
+    allowedStates: Expected[];
+  };
 };
 export const scenarioGroups = ['everyday', 'long_conversation', 'complex'] as const;
 export type ScenarioGroup = (typeof scenarioGroups)[number];
@@ -126,6 +133,33 @@ export type Attempt = {
     successfulCompletionMs: number | null;
   };
   observedEndMs?: number;
+  scriptedStop?: {
+    contract: 'public-user-stop-v1';
+    verdict: 'pass' | 'fail' | 'inconclusive';
+    trigger: 'first-working-after-input';
+    requestedAt?: number;
+    acknowledgedAt?: number;
+    terminalAt?: number;
+    audioQuiescedAt?: number;
+    settledAt?: number;
+    terminalStatus?: string;
+    matchedState?: number;
+    pendingAtStop?: { batch: boolean; save: boolean; operationIds: string[] };
+    pendingAtAcknowledgment?: { batch: boolean; save: boolean };
+    stateCapturedAt?: number;
+    admittedMutationSpans?: {
+      spanId: string | null;
+      tool: string;
+      endedBeforeAcknowledgment: boolean;
+    }[];
+    stateFailures: string[];
+    /** Input boundary to verified Stop endpoint, including renderer retirement.
+     * Never an ordinary successfulCompletionMs. */
+    endpointMs: number | null;
+    controlMs?: number | null;
+    reason?: string;
+    limitation: string;
+  };
   playback?: {
     contract: 'voice-rendered-v1';
     input?: {
@@ -137,6 +171,7 @@ export type Attempt = {
       sourceStartPosition?: number;
       speechPosition?: number;
       ended: import('./playback.js').TimeInterval;
+      started?: import('./playback.js').TimeInterval;
     };
     recordingSha256?: string;
     sampleRate?: number;
