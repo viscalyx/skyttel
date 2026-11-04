@@ -183,7 +183,8 @@ export async function runApplicationContextLimit(
 
 /** Bounded preparation seam. The adapter submits ordinary application input
  * and supplies observed completed-request usage and public context generation.
- * A byte estimate or a low-usage summary never proves a measured boundary.
+ * Growth stops at the first summary or generation increase, with at most one recall.
+ * Low or missing usage identifies application configuration preemption only.
  * This detects the application's effective boundary; the physical provider
  * maximum remains a separate unverified claim. */
 export async function runContextLimit(
@@ -209,19 +210,27 @@ export async function runContextLimit(
       reason = `terminal_turn_${turn.outcome}`;
       break;
     }
+    if (Number.isSafeInteger(turn.inputTokens) && Number(turn.inputTokens) >= 0)
+      maximumInput = Math.max(maximumInput, Number(turn.inputTokens));
     const transitioned = previousGeneration !== undefined && turn.generation > previousGeneration;
-    if (transitioned && turn.summary && maximumInput >= options.contextTokens * 0.95) {
+    if (turn.summary || transitioned) {
       const recall = await options.submit(fixture.recall, 'recall');
       turns.push({ ...recall, stage: 'recall' });
-      boundary = recall.outcome === 'pass' ? 'application_boundary' : 'inconclusive';
+      const measuredCapacity = maximumInput >= options.contextTokens * 0.95;
+      boundary =
+        recall.outcome === 'pass'
+          ? measuredCapacity
+            ? 'application_boundary'
+            : 'configuration_limited'
+          : 'inconclusive';
       reason =
         recall.outcome === 'pass'
-          ? 'natural_application_transition_after_measured_growth'
+          ? measuredCapacity
+            ? 'natural_application_transition_after_measured_growth'
+            : 'natural_application_transition_before_measured_capacity'
           : 'recall_not_verified_after_application_transition';
       break;
     }
-    if (Number.isSafeInteger(turn.inputTokens) && Number(turn.inputTokens) >= 0)
-      maximumInput = Math.max(maximumInput, Number(turn.inputTokens));
     previousGeneration = turn.generation;
   }
   return {
