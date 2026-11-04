@@ -121,7 +121,7 @@ for (const mode of ['sequential', 'overlap'] as const) {
       const check = await held(at, 'action-check');
       expect(await (await page.request.get(path)).json()).toEqual(map);
       command(`reply ${check.id} {"decision":"allow","complete":true,"fulfillsRequest":true}`);
-      await expect(log).toContainText('Utkastet är uppdaterat.');
+      await expect(log).toContainText('Kim Lind lades till.');
       const changed = await (await page.request.get(path)).json();
       expect(changed.draft.changes).toMatchObject([{ id: 'kim', after: { name: 'Kim Lind' } }]);
       const unclear = await send('Lägg till personen.');
