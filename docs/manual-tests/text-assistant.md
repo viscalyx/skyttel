@@ -30,7 +30,8 @@ formuläret; befintliga förslag i utkastet påverkas inte.
 
 1. TEXT-01 använder familjeunderlaget i
    [separat förberedelse](text-conversation-preparation.md#familjerättelsen).
-   TEXT-15 använder röstinstallationen enligt sin separata förberedelse.
+   TEXT-15 och TEXT-17 använder röstinstallationen enligt sin separata
+   förberedelse.
    Övriga fall använder den
    [kontrollerade startguiden](#controlled-text-fixture).
    Den senare håller varje modellsvar tills du släpper det i terminalen.
@@ -202,6 +203,91 @@ formulärtext”.
   verifiering. Ingen sådan mänsklig körning påstås här vara genomförd.
 
 ## Kontrollerade sena svar och fel
+
+### TEXT-17: verifierat slutbesked behåller beställd förklaring i text och röst
+
+**Syfte:** Få ett kort besked för ett färdigt enkelt uppdrag och hela den
+beställda förklaringen när samma slags uppdrag kräver mer än beskedet.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Lo Exempel av typen Person med beskrivningen
+Påhittad uppgift ligger osparad i utkastet. Mikrofonen är av.
+
+**Separat förberedelse:** Följ
+[verifierat slutbesked](text-conversation-preparation.md#verifierat-slutbesked).
+En kontrollerad leverantör lämnar svaren. Provet verifierar serverns och
+webbläsarens hantering; fysisk uppläsning och verklig modellförståelse
+ingår inte.
+
+**Automatiskt motsvarande test:**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+TEXT-17.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-17"
+  },
+  "reference": "Dator; riktig server och databas med kontrollerade leverantörer. Enkelt textuppdrag, textuppdrag med förklaring och talad sparbegäran med förklaring.",
+  "outcomes": [
+    "Ett verifierat enkelt uppdrag ger kort slutbesked utan att förslagen sparas.",
+    "En beställd förklaring finns kvar efter utkaständringen och efter sparande med röst.",
+    "Sparandet bekräftas med tomt utkast, verkliga objekt och ett gemensamt kvitto."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "direct save continues requested explanation with missing result certification",
+      "purpose": "Saknad slutkontroll får inte avsluta uppdraget före den beställda förklaringen."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified voice save retains the failure of its remaining requested explanation",
+      "purpose": "Ett verkligt sparresultat får inte dölja felet när en beställd förklaring fortfarande saknas."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Skriv **Lägg till Kim som person utan att spara.** Läs **Kim lades
+   till.** när arbetet är klart. Öppna utkastet och läs Kim. Inget
+   sparbesked visas.
+2. Skriv **Ändra Kim till Kim Lind och förklara vad objekttypen Person
+   betyder. Spara inte.** Läs både namnändringen och **Person är en
+   objekttyp. Kim Lind är ett objekt av den typen.** Utkastet visar Kim
+   Lind och inget sparbesked.
+3. Slå på mikrofonen i samma samtal. Operatören lämnar det kontrollerade
+   talet **Beskriv efter sparandet vilka objekt som är sparade. Spara
+   hela utkastet.** Läs **Sparat.** och **Lo Exempel och Kim Lind
+   finns nu i hushållets karta.** från samma svar. Utkastet är tomt.
+4. Öppna Tabell och läs Person för både Lo Exempel och Kim Lind. Öppna
+   **Rapporter → Ändringshistorik → Visa ändringarna** och läs båda
+   objekten i samma sparande.
+
+**Förväntat resultat:**
+
+- Det enkla slutbeskedet gäller ett verifierat osparat förslag. Förslaget
+  blir sparat först när ett beständigt kvitto bekräftar sparandet.
+- En beställd förklaring kräver fortsatt arbete och kommer med i hela
+  svaret, även när resultatet sparas. Ett kort statusbesked ersätter den
+  inte. Text och den kontrollerade röstleveransen ger samma sakliga
+  sparresultat och förklaring.
 
 ### TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked
 

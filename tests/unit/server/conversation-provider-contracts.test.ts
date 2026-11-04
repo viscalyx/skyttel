@@ -1366,7 +1366,7 @@ test('an explicit complete restatement scopes capacity-paused work while retaini
     },
     (request) => {
       if (!request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
-        return [modelMessage('{"decision":"allow","complete":true}')];
+        return [modelMessage('{"decision":"allow","complete":true,"fulfillsRequest":true}')];
       const { current, earlier } = JSON.parse(String(request.input[0].content));
       if (current !== original && current !== 'Spara hela utkastet.') {
         expect(earlier).toEqual([]);
@@ -1380,7 +1380,7 @@ test('an explicit complete restatement scopes capacity-paused work while retaini
                   mode: 'clarify',
                   request: 'Skriv hela det avgränsade uppdraget med mål och begränsningar.',
                 }
-              : { mode: 'work', request: current },
+              : { mode: 'work', request: current, responseRequired: false },
           ),
         ),
       ];
@@ -1582,6 +1582,7 @@ test.each([
                   ? 'read'
                   : 'work',
                 request: current,
+                responseRequired: false,
               }),
             ),
           ];
@@ -1589,7 +1590,8 @@ test.each([
         const { operations, data } = JSON.parse(String(request.input[0].content)).untrusted;
         const bound = data.queuedReference;
         // A missing server reference deliberately tempts the old implementation.
-        if (!bound) return [modelMessage('{"decision":"allow","complete":true}')];
+        if (!bound)
+          return [modelMessage('{"decision":"allow","complete":true,"fulfillsRequest":true}')];
         const previous = bound.draft.changes.find(
           (item: { id: string }) => item.id === operations[0].arguments.id,
         );
@@ -1602,7 +1604,7 @@ test.each([
               previous?.after?.name === 'Min stol' &&
                 matches.length === 1 &&
                 matches[0].id === previous.id
-                ? { decision: 'allow', complete: true }
+                ? { decision: 'allow', complete: true, fulfillsRequest: true }
                 : { decision: 'clarify' },
             ),
           ),

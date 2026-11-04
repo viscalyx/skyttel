@@ -113,7 +113,8 @@ text-context 99
 Skicka och köa de två texterna enligt fallet. Släpp läsningens `held` med
 `reply REQUEST Den första läsningen är klar.`. Håll nästa `held`, vars
 `kind` är `context-summary`, medan den manuella ändringen görs. Kör
-`scope-work` och `text-context 0` innan sammanfattningen släpps med
+`scope-work`, `response-required off` och `text-context 0` innan
+sammanfattningen släpps med
 `reply REQUEST Avslutad historisk läsning.`.
 
 Nästa arbetsanrop innehåller den köade rättelsen och aktuellt utkast.
@@ -131,7 +132,7 @@ I KONTEXT-21 har bara beskrivningen ändrats manuellt. Släpp kontrollens
 svar som tillåter samma tydliga mål och åtgärd:
 
 ```text
-reply CHECK {"decision":"allow","complete":true}
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
 ```
 
 I KONTEXT-22 har målets namn ändrats till Lo Manuell. Släpp i stället

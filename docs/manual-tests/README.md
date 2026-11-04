@@ -529,6 +529,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   sparande med tappat svar och omstart. Varje TEXT-08-storlek har eget ID.
   TEXT-15 bevarar tidigare och nya förslag efter avvisat sparande och
   kräver ett nytt uttryckligt talat ändra-och-spara-besked.
+  TEXT-17 skiljer enkelt verifierat slutbesked från beställd förklaring
+  och behåller hela förklaringen vid sparande med röst.
   På smal skärm provas även tangentbordsåtkomst till kartans sammanhang
   efter ett nytt urval medan svaret finns kvar i textvyn.
   [Operatörsförberedelsen](text-conversation-preparation.md) skiljer

@@ -372,18 +372,20 @@ for (const renamed of [false, true]) {
                 JSON.stringify({
                   mode: current === 'Fyll kontexten.' ? 'read' : 'work',
                   request: current,
+                  responseRequired: false,
                 }),
               ),
             ];
           }
           const { data } = JSON.parse(String(request.input[0].content)).untrusted;
-          if (!data.queuedReference) return [modelMessage('{"decision":"allow","complete":true}')];
+          if (!data.queuedReference)
+            return [modelMessage('{"decision":"allow","complete":true,"fulfillsRequest":true}')];
           return [
             modelMessage(
               JSON.stringify(
                 data.draft.changes[0].after.name ===
                   data.queuedReference.draft.changes[0].after.name
-                  ? { decision: 'allow', complete: true }
+                  ? { decision: 'allow', complete: true, fulfillsRequest: true }
                   : { decision: 'clarify' },
               ),
             ),

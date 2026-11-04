@@ -465,6 +465,66 @@ test.each([
   },
 );
 
+test('a verified voice save retains the failure of its remaining requested explanation', async () => {
+  const model = textModel(
+    (body) => {
+      const { draft } = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('save_draft', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          operationId: 'controlled-save',
+        }),
+      ];
+    },
+    (body) => [
+      modelMessage(
+        JSON.stringify(
+          body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? {
+                mode: 'work',
+                request: JSON.parse(String(body.input[0].content)).current,
+                responseRequired: true,
+              }
+            : { decision: 'allow', complete: true, fulfillsRequest: true },
+        ),
+      ),
+    ],
+  );
+  const voice = await setupVoice(async (input, init) => {
+    const body = JSON.parse(String(init?.body));
+    if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length)
+      return Response.json(
+        { error: { message: 'Controlled explanation failure.' } },
+        { status: 400 },
+      );
+    return model.provider(input, init);
+  });
+  await proposal(voice.path);
+  await voice.poll();
+  voice.transcript('Beskriv de sparade objekten. Spara hela utkastet.');
+  voice.delegate();
+  await expect
+    .poll(() => voiceAnswerParts(voice.live.sent).join('\n'))
+    .toContain('Modellen och resonemangsnivån stöds inte');
+  const { assistant } = await voice.poll();
+  expect(assistant).toMatchObject({
+    phase: 'error',
+    error: 'assistant_model_unsupported',
+    receipt: {
+      changes: [
+        expect.objectContaining({ after: expect.objectContaining({ name: 'Formulärförslag' }) }),
+      ],
+    },
+  });
+  expect(assistant.review.changes).toEqual([]);
+  expect(voiceAnswerParts(voice.live.sent).join('\n')).toContain(
+    'Skyttels resultat (verifierat): Sparat.',
+  );
+});
+
 test('voice commentary separates unverified paraphrased claims and useful questions from actual result proof', async () => {
   const modelReply =
     'Klart. Ändringarna är nu lagrade i hushållets karta. Saved successfully. Vem betalar?';

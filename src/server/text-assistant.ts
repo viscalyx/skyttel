@@ -1514,7 +1514,11 @@ export function textAssistantRoutes({
     session.state.modelReply = turnReply(session);
     return result;
   }
-  function saved(session: Session, receipt: TextAssistantView['receipt']) {
+  function saved(
+    session: Session,
+    receipt: TextAssistantView['receipt'],
+    preserveCurrentReply = false,
+  ) {
     if (receipt) advanceDraftVersion(session, receipt.draftVersion, receipt.draftVersion + 1);
     session.state.saveIntent = undefined;
     session.state.receipt = receipt;
@@ -1522,7 +1526,9 @@ export function textAssistantRoutes({
     session.state.pendingSave = undefined;
     session.state.reply = savedReply;
     appendConversation(session, { role: 'assistant', text: session.state.reply });
-    session.state.modelReply = undefined;
+    session.state.modelReply = preserveCurrentReply
+      ? turnReply(session, session.state.modelReply ?? '')
+      : undefined;
     syncQuestions(session);
     session.state.requiredNotice = undefined;
     session.state.error = undefined;
@@ -1877,9 +1883,11 @@ export function textAssistantRoutes({
         );
         throw new MapError('assistant_action_out_of_scope', 409);
       };
+      let wholeRequestComplete = false;
       const checkActions = async (
         operations: { name: string; arguments: Record<string, unknown> }[],
       ) => {
+        wholeRequestComplete = false;
         guard();
         if (!operations.length) return;
         if (scope.mode === 'read') rejectAction(operations[0].name, 'read_only_turn');
@@ -1938,6 +1946,8 @@ export function textAssistantRoutes({
         if (decision.decision === 'clarify') throw new MapError('assistant_scope_unclear', 409);
         if (decision.decision === 'incomplete')
           throw new MapError('assistant_batch_incomplete', 409);
+        wholeRequestComplete =
+          decision.decision === 'allow' && decision.fulfillsRequest && !scope.responseRequired;
       };
       scopeReady(checkActions, scope.mode);
       const [review, saveState] = await session.execution.reads.consistent(() =>
@@ -2038,7 +2048,7 @@ export function textAssistantRoutes({
         refreshContext(session, outdated);
         return outdated;
       }
-      for (let step = 0; step < 48; step++) {
+      work: for (let step = 0; step < 48; step++) {
         guard();
         if (!respond) throw new Error('assistant_unavailable');
         const outdatedReads = await refreshCurrentDraft();
@@ -2103,7 +2113,7 @@ export function textAssistantRoutes({
           type: 'function',
           name: 'submit_changes',
           description:
-            'Utför en sammanhängande ordnad ändringsbatch atomiskt med aktuella versioner. Ett nytt objekt och dess nödvändiga samband ska ingå i samma batch; ett fel lämnar hela batchen ogenomförd. Lägg självständiga delar i separata batcher. Behåll andra förslag. completion draft lämnar allt osparat; save kräver ett aktuellt uttryckligt besked om hela utkastet. questions registrerar nya väntande delar med kind, request, question och dependsOnDraft. resolves anger id och revision för förtydligade ändringsdelar som batchens återstående operationer slutför. Ofärdiga ändringsdelar hindrar sparande även efter förtydligande; oberoende informationsfrågor gör det inte. Sätt continueResponse true om faktasvar, detaljer eller markering återstår. Annars avslutar servern.',
+            'Utför en sammanhängande ordnad ändringsbatch atomiskt med aktuella versioner. Ett nytt objekt och dess nödvändiga samband ska ingå i samma batch; ett fel lämnar hela batchen ogenomförd. Lägg självständiga delar i separata batcher. Behåll andra förslag. completion draft lämnar allt osparat; save kräver ett aktuellt uttryckligt besked om hela utkastet. questions registrerar nya väntande delar med kind, request, question och dependsOnDraft. resolves anger id och revision för förtydligade ändringsdelar som batchens återstående operationer slutför. Ofärdiga ändringsdelar hindrar sparande även efter förtydligande; oberoende informationsfrågor gör det inte. Sätt continueResponse true om ändringar, förklaring, jämförelse, faktasvar, detaljer eller markering återstår. Servern avslutar först när separat kontroll visar att ett kort verifierat besked räcker för hela uppdraget.',
           parameters: {
             type: 'object',
             properties: {
@@ -2166,7 +2176,7 @@ export function textAssistantRoutes({
           type: 'function',
           name: 'report_result',
           description:
-            'Ge detaljer från aktuellt utkast eller ett verkligt sparande. latest_save hämtar senaste kvittot; save kräver operationId och userId från historiken. last_failure återger det senaste registrerade felet i samtalet utan att upprepa uppdraget. Texten skapas av servern från faktiska poster och fel, inte av modellen. Sätt continueResponse true om andra beställda faktasvar eller markeringar återstår; serverns detaljer behålls och resten slutförs i nästa modellomgång. Annars avslutar servern och medföljande modelltext används inte.',
+            'Ge detaljer från aktuellt utkast eller ett verkligt sparande. latest_save hämtar senaste kvittot; save kräver operationId och userId från historiken. last_failure återger det senaste registrerade felet i samtalet utan att upprepa uppdraget. Texten skapas av servern från faktiska poster och fel, inte av modellen. Sätt continueResponse true om andra beställda förklaringar, jämförelser, faktasvar eller markeringar återstår; serverns detaljer behålls och resten slutförs i nästa modellomgång. Servern avslutar direkt bara när uppdragstolkningen uttryckligen visar att rapporten räcker. Medföljande modelltext används inte.',
           parameters: {
             type: 'object',
             properties: {
@@ -2232,6 +2242,7 @@ export function textAssistantRoutes({
         session.state.input.push(...toResponseInputItems(response.output));
         session.execution.capacity.text(response.usage, contextBytes(session));
         let calls = response.output.filter((item) => item.type === 'function_call');
+        wholeRequestComplete = false;
         const observed = observationWork.getStore();
         for (const action of calls)
           observe?.({
@@ -2583,7 +2594,7 @@ export function textAssistantRoutes({
               call_id: action.call_id,
               output: JSON.stringify(session.state.result),
             });
-            if (report.continueResponse) {
+            if (report.continueResponse || scope.responseRequired) {
               session.state.phase = 'working';
               break;
             }
@@ -2730,7 +2741,9 @@ export function textAssistantRoutes({
           if (action.name === 'save_draft') {
             if (!session.state.pendingSave) throw new Error('invalid_receipt');
             verifyReceipt(session, value.receipt, session.state.pendingSave);
-            saved(session, value.receipt);
+            saved(session, value.receipt, true);
+            if (!wholeRequestComplete || combined?.continueResponse)
+              session.state.phase = 'working';
             await refreshConfirmed(session, guard);
             originalSaveIntent = false;
             if (combined) {
@@ -2743,6 +2756,12 @@ export function textAssistantRoutes({
               call_id: action.call_id,
               output: JSON.stringify(value),
             });
+            if (!wholeRequestComplete) {
+              version = session.state.review.version;
+              contentVersion = session.state.review.contentVersion;
+              session.state.phase = 'working';
+              continue work;
+            }
             return;
           }
           if (!combined)
@@ -2790,10 +2809,26 @@ export function textAssistantRoutes({
             appendConversation(session, { role: 'assistant', text: session.state.reply });
           if (session.state.modelReply)
             appendConversation(session, { role: 'assistant', text: session.state.modelReply });
-          if (combined.continueResponse) {
+          if (
+            combined.continueResponse ||
+            !wholeRequestComplete ||
+            session.execution.parts.read().some((part) => part.status === 'ready')
+          ) {
             session.state.phase = 'working';
             continue;
           }
+          return;
+        }
+        if (
+          wholeRequestComplete &&
+          mutations.size &&
+          !session.execution.parts.read().some((part) => part.status === 'ready')
+        ) {
+          session.state.reply = verifiedReply(session);
+          session.state.modelReply = turnReply(session);
+          session.state.phase = 'ready';
+          if (session.state.reply)
+            appendConversation(session, { role: 'assistant', text: session.state.reply });
           return;
         }
       }
@@ -3317,7 +3352,7 @@ export function textAssistantRoutes({
             await call(session, 'prepare_save', session.state.pendingSave, saveGuard);
             const value = await call(session, 'save_draft', session.state.pendingSave, saveGuard);
             verifyReceipt(session, value.receipt, session.state.pendingSave);
-            saved(session, value.receipt);
+            saved(session, value.receipt, true);
             await refreshConfirmed(session, guard);
           }
         }

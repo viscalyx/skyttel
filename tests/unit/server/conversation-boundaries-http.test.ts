@@ -484,10 +484,10 @@ test.each(['direct', 'batch'] as const)(
           modelMessage(
             JSON.stringify(
               request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
-                ? { mode: 'work', request: input.current }
+                ? { mode: 'work', request: input.current, responseRequired: false }
                 : input.authority.current.includes('Lampan')
                   ? { decision: 'incomplete' }
-                  : { decision: 'allow', complete: true },
+                  : { decision: 'allow', complete: true, fulfillsRequest: true },
             ),
           ),
         ];

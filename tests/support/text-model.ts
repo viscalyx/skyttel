@@ -37,6 +37,7 @@ export function textModel(
 ) {
   const requests: ModelRequest[] = [];
   const authorizationRequests: ModelRequest[] = [];
+  const terminalWork = new Map<string, boolean>();
   const provider: typeof fetch = async (_input, init) => {
     const body = JSON.parse(String(init?.body)) as ModelRequest;
     const isAuthorization = body.instructions.startsWith('SKYTTEL_TURN_');
@@ -50,13 +51,45 @@ export function textModel(
             modelMessage(
               JSON.stringify(
                 request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
-                  ? { mode: 'work', request: 'Perform the controlled test request.' }
-                  : { decision: 'allow', complete: true },
+                  ? {
+                      mode: 'work',
+                      request: 'Perform the controlled test request.',
+                      responseRequired: false,
+                    }
+                  : {
+                      decision: 'allow',
+                      complete: true,
+                      fulfillsRequest:
+                        terminalWork.get(
+                          JSON.parse(String(request.input[0].content)).authority.current,
+                        ) ?? false,
+                    },
               ),
             ),
           ])
         )(body, init?.signal)
       : await respond(body, init?.signal);
+    if (!isAuthorization) {
+      // The generic fixture certifies only the existing explicit terminal
+      // contract. Ordinary direct tools may be steps in a scripted workflow.
+      // Tests for whole-request certification supply an independent decision.
+      const calls = output.filter((item): item is ReturnType<typeof modelTool> =>
+        Boolean(
+          item && typeof item === 'object' && 'type' in item && item.type === 'function_call',
+        ),
+      );
+      const current = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      terminalWork.set(
+        current.message,
+        !calls.length ||
+          (calls.length === 1 &&
+            (calls[0].name === 'save_draft' ||
+              (calls[0].name === 'submit_changes' &&
+                JSON.parse(calls[0].arguments).continueResponse !== true))),
+      );
+    }
     return Response.json(
       {
         id: `resp_${randomUUID()}`,

@@ -74,6 +74,77 @@ Verklig svensk modellförståelse kräver separat uttryckligen godkänd
 leverantörskörning och redovisas separat, aldrig som mänsklig observation
 enbart därför att API-anropet kan vara debiterbart.
 
+## Verifierat slutbesked
+
+TEXT-17 använder en ny röstinstallation utan `seed-family`. Logga in
+som Alex, skapa Textprov och lägg Lo Exempel av typen Person med
+beskrivningen Påhittad uppgift i utkastet. Starta samtalet med text och
+lämna mikrofonen av. Aktivera följande kontroller före första meddelandet:
+
+```text
+scope-work
+response-required off
+hold-check on
+```
+
+Vid första `held` kopieras V och C från `draft` och TYPE från
+Lo-förslagets `after.typeId`. Släpp det enkla tillägget och godkänn sedan
+den hållna oberoende kontrollen med dess eget anrops-ID:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST propose_object {"version":V,"contentVersion":C,"id":"kim","baseRevision":null,"value":{"typeId":"TYPE","name":"Kim"}}
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+```
+<!-- markdownlint-enable MD013 -->
+
+Ingen ytterligare arbetsbegäran ska behövas för det korta beskedet.
+Kör `response-required on` före nästa användarmeddelande. Vid dess
+`held` kopieras nya V och C samt hela Kim-värdet från utkastet. Ändra
+bara dess namn och använd en kombinerad begäran:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST submit_changes {"version":V,"contentVersion":C,"completion":"draft","operations":[{"name":"propose_object","arguments":{"id":"kim","baseRevision":null,"value":{"typeId":"TYPE","name":"Kim Lind"}}}]}
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+```
+<!-- markdownlint-enable MD013 -->
+
+Trots kontrollens påstående om slutförande kräver uppdragstolkningen
+fortsatt svar. Släpp nästa arbetsbegäran:
+
+```text
+reply REQUEST Person är en objekttyp. Kim Lind är ett objekt av den typen.
+```
+
+När användaren slår på mikrofonen lämnar operatören talet:
+
+<!-- markdownlint-disable MD013 -->
+```text
+user Beskriv efter sparandet vilka objekt som är sparade. Spara hela utkastet.
+delegate
+```
+<!-- markdownlint-enable MD013 -->
+
+Släpp `save_draft` med dess aktuella V och C. Den hållna kontrollen ska
+ha `comparison.untrusted.data.wholeDraft:true` och innehålla både Lo
+Exempel och Kim Lind. Godkänn kontrollen. Släpp därefter nästa
+arbetsbegäran med hela förklaringen. När röstleveransen visar samma text
+släpps också dess kontrollerade transkript:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST save_draft {"version":V,"contentVersion":C,"operationId":"controlled-save"}
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+reply REQUEST Lo Exempel och Kim Lind finns nu i hushållets karta.
+assistant Sparat. Lo Exempel och Kim Lind finns nu i hushållets karta.
+```
+<!-- markdownlint-enable MD013 -->
+
+Röstleveransens faktiska innehåll kontrolleras separat i automatiken;
+ett manuellt injicerat transkript bevisar ingen fysisk uppläsning.
+Efter granskning avslutas installationen med `quit`.
+
 ## Avvisad kontroll av hela utkastet
 
 TEXT-15 använder en ny röstinstallation utan `seed-family`. Logga in som
@@ -116,8 +187,9 @@ reply CHECK {"decision":"clarify"}
 hold-check off
 ```
 
-Invänta avvisningen och det osparade utkastet. För nästa informationsfråga
-släpps `tool REQUEST report_result {"source":"draft"}`. Det avslutar
+Invänta avvisningen och det osparade utkastet. Kör `response-required off`
+före nästa informationsfråga och släpp
+`tool REQUEST report_result {"source":"draft"}`. Det avslutar
 uppdraget utan en ny arbetsbegäran och utan sparande.
 
 När användaren slår på mikrofonen i samma samtal kör operatören:

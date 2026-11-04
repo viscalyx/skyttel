@@ -171,7 +171,13 @@ export function voiceWork({
         text: view.saveCheck
           ? view.saveCheck.reply + (view.receipt ? ' Sparat.' : '')
           : view.receipt
-            ? 'Sparat.'
+            ? [
+                'Sparat.',
+                view.error ? (view.reply ?? assistantFailureMessage(view.error)) : undefined,
+                view.modelReply,
+              ]
+                .filter(Boolean)
+                .join('\n')
             : [view.reply, view.modelReply].filter(Boolean).join('\n'),
         questionPending: Boolean(view.questionPending),
         receiptOperationId: view.receipt?.operationId,
@@ -180,7 +186,17 @@ export function voiceWork({
   }
   function completion(view: TextAssistantView): VoiceAnswer {
     if (view.saveCheck) return view.saveCheck.reply + (view.receipt ? ' Sparat.' : '');
-    if (view.receipt) return 'Sparat.';
+    if (view.receipt)
+      return view.modelReply || view.error
+        ? [
+            { kind: 'result', text: 'Sparat.' },
+            {
+              kind: 'notice',
+              text: view.error ? (view.reply ?? assistantFailureMessage(view.error)) : '',
+            },
+            { kind: 'conversation', text: view.modelReply ?? '' },
+          ]
+        : 'Sparat.';
     if (view.questionPending && view.modelReply)
       return [
         { kind: 'notice', text: view.requiredNotice ?? '' },
