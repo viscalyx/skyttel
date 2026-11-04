@@ -542,105 +542,180 @@ for (const mode of ['sequential', 'overlap'] as const) {
     });
   }
 
-  test(`${mode} keeps a registered save used when Stop precedes its transport reply`, async () => {
-    const registration = held();
-    const events: AssistantObservation[] = [];
-    let registered = false;
-    const model = textModel((body) => {
-      const { draft } = JSON.parse(
-        String(body.input.findLast((item) => item.role === 'user')?.content),
+  for (const ending of ['stop', 'revoke'] as const) {
+    const saveTitle =
+      ending === 'stop'
+        ? 'keeps a registered save used when Stop precedes its transport reply'
+        : 'keeps a registered save unknown after access revocation before its transport reply';
+    test(`${mode} ${saveTitle}`, { tags: ['technical'] }, async () => {
+      const registration = held();
+      const events: AssistantObservation[] = [];
+      let registered = false;
+      const model = textModel((body) => {
+        const { draft } = JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        );
+        return [
+          modelTool('save_draft', {
+            version: draft.version,
+            contentVersion: draft.contentVersion,
+          }),
+        ];
+      });
+      const flow = await start(
+        model.provider,
+        mode,
+        events,
+        undefined,
+        async (incoming, dispatch) => {
+          const rpc = await incoming
+            .clone()
+            .json()
+            .catch(() => null);
+          const response = await dispatch(incoming);
+          if (rpc?.params?.name === 'prepare_save') {
+            registered = true;
+            await registration.wait;
+          }
+          return response;
+        },
       );
-      return [
-        modelTool('save_draft', {
-          version: draft.version,
-          contentVersion: draft.contentVersion,
-        }),
-      ];
-    });
-    const flow = await start(
-      model.provider,
-      mode,
-      events,
-      undefined,
-      async (incoming, dispatch) => {
-        const rpc = await incoming
-          .clone()
-          .json()
-          .catch(() => null);
-        const response = await dispatch(incoming);
-        if (rpc?.params?.name === 'prepare_save') {
-          registered = true;
-          await registration.wait;
-        }
-        return response;
-      },
-    );
-    expect(
-      (
-        await client.post(`${flow.path}/map/draft`, {
-          headers: { origin: app.origin },
+      expect(
+        (
+          await client.post(`${flow.path}/map/draft`, {
+            headers: { origin: app.origin },
+            data: {
+              version: flow.map.draft.version,
+              contentVersion: flow.map.contentVersion,
+              id: 'registered-person',
+              baseRevision: null,
+              value: { typeId: flow.map.types[0].id, name: 'Kim Lind', properties: [] },
+            },
+          })
+        ).status(),
+      ).toBe(200);
+      await flow.submit('Spara hela utkastet.', await flow.current());
+      await expect.poll(() => registered).toBe(true);
+      const pending = await flow.current();
+      expect(pending.saving).toBe(true);
+      expect(pending.operations).toMatchObject([{ status: 'pending' }]);
+      const operationId = pending.operations[0].operationId;
+      expect(pending.receipt).toBeUndefined();
+      expect((await (await client.get(`${flow.path}/map`)).json()).objects).toEqual([]);
+      expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual({ history: [] });
+      if (ending === 'revoke') {
+        const { connections } = await (
+          await client.get(`${app.origin}/api/assistants/context`)
+        ).json();
+        expect(connections).toHaveLength(1);
+        expect(
+          (
+            await client.post(`${app.origin}/api/assistants/${connections[0].id}/revoke`, {
+              headers: { origin: app.origin },
+              data: {},
+            })
+          ).status(),
+        ).toBe(200);
+        registration.release();
+        await expect
+          .poll(() => events.filter((event) => event.kind === 'work_result').length)
+          .toBe(1);
+        const saving = events.find(
+          (event) =>
+            event.kind === 'model_action' && (event.data as { name: string }).name === 'save_draft',
+        );
+        expect(saving?.context?.providerCallId).toBeTruthy();
+        expect(events.find((event) => event.kind === 'work_result')).toMatchObject({
+          taskId: 'controlled',
+          status: 'incomplete',
           data: {
-            version: flow.map.draft.version,
-            contentVersion: flow.map.contentVersion,
-            id: 'registered-person',
-            baseRevision: null,
-            value: { typeId: flow.map.types[0].id, name: 'Kim Lind', properties: [] },
+            providerCallId: saving?.context?.providerCallId,
+            executionMode: mode,
+            disposition: 'unknown',
+            reason: 'save_outcome_unknown',
           },
-        })
-      ).status(),
-    ).toBe(200);
-    await flow.submit('Spara hela utkastet.', await flow.current());
-    await expect.poll(() => registered).toBe(true);
-    const pending = await flow.current();
-    expect(pending.saving).toBe(true);
-    expect(pending.operations).toMatchObject([{ status: 'pending' }]);
-    const operationId = pending.operations[0].operationId;
-    expect(pending.receipt).toBeUndefined();
-    expect((await (await client.get(`${flow.path}/map`)).json()).objects).toEqual([]);
-    expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual({ history: [] });
-    expect(
-      (
-        await client.post(`${flow.path}/text-assistant/${flow.session.id}/cancel`, {
-          headers: { origin: app.origin },
-          data: { all: true },
-        })
-      ).status(),
-    ).toBe(200);
-    const stopped = await flow.current();
-    expect(stopped.canceled).toBe(true);
-    expect(stopped.operations).toMatchObject([{ operationId, status: 'pending' }]);
-    const recovery = await client.post(`${flow.path}/text-assistant/${flow.session.id}/recover`, {
-      headers: { origin: app.origin },
-      data: {},
+        });
+        const operations = await (await client.get(`${flow.path}/map/operations`)).json();
+        expect(operations.operations).toMatchObject([{ operationId, status: 'pending' }]);
+        expect((await (await client.get(`${flow.path}/map`)).json()).objects).toEqual([]);
+        expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual({
+          history: [],
+        });
+        expect([403, 404]).toContain(
+          (
+            await client.post(`${flow.path}/text-assistant/${flow.session.id}/recover`, {
+              headers: { origin: app.origin },
+              data: {},
+            })
+          ).status(),
+        );
+        const diagnostics = observationDiagnostics(events, events[0].at);
+        expect(diagnostics.workResults).toHaveLength(1);
+        expect(diagnostics.workResults[0]).toMatchObject({
+          providerCallId: saving?.context?.providerCallId,
+          disposition: 'unknown',
+          usage: { input: 120, output: 30 },
+          classificationHistory: [{ disposition: 'unknown', reason: 'save_outcome_unknown' }],
+        });
+        const cost = await (
+          await client.get(
+            `${app.origin}/api/operator/costs?month=${new Date().toISOString().slice(0, 7)}`,
+          )
+        ).json();
+        expect(cost.terra).toMatchObject({
+          attempts: 3,
+          usage: { input: { known: 360, missing: 0 }, output: { known: 90, missing: 0 } },
+        });
+        expect(model.requests).toHaveLength(1);
+        expect(model.authorizationRequests).toHaveLength(2);
+        return;
+      }
+      expect(
+        (
+          await client.post(`${flow.path}/text-assistant/${flow.session.id}/cancel`, {
+            headers: { origin: app.origin },
+            data: { all: true },
+          })
+        ).status(),
+      ).toBe(200);
+      const stopped = await flow.current();
+      expect(stopped.canceled).toBe(true);
+      expect(stopped.operations).toMatchObject([{ operationId, status: 'pending' }]);
+      const recovery = await client.post(`${flow.path}/text-assistant/${flow.session.id}/recover`, {
+        headers: { origin: app.origin },
+        data: {},
+      });
+      expect(recovery.status()).toBe(200);
+      const recovered: TextAssistantView = await recovery.json();
+      expect(recovered.receipt?.operationId).toBe(operationId);
+      expect(recovered.review.changes).toEqual([]);
+      const map = await (await client.get(`${flow.path}/map`)).json();
+      expect(map.objects).toContainEqual(
+        expect.objectContaining({ id: 'registered-person', name: 'Kim Lind' }),
+      );
+      const history = await (await client.get(`${flow.path}/map/history`)).json();
+      expect(history.history).toMatchObject([{ operationId }]);
+      registration.release();
+      await expect
+        .poll(() => events.filter((event) => event.kind === 'work_result').length)
+        .toBe(1);
+      const saving = events.find(
+        (event) =>
+          event.kind === 'model_action' && (event.data as { name: string }).name === 'save_draft',
+      );
+      expect(saving?.context?.providerCallId).toBeTruthy();
+      expect(events.find((event) => event.kind === 'work_result')?.data).toMatchObject({
+        providerCallId: saving?.context?.providerCallId,
+        executionMode: mode,
+        disposition: 'used',
+      });
+      expect((await flow.current()).receipt).toEqual(recovered.receipt);
+      expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(map);
+      expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual(history);
+      expect(model.requests).toHaveLength(1);
+      expect(model.authorizationRequests).toHaveLength(2);
     });
-    expect(recovery.status()).toBe(200);
-    const recovered: TextAssistantView = await recovery.json();
-    expect(recovered.receipt?.operationId).toBe(operationId);
-    expect(recovered.review.changes).toEqual([]);
-    const map = await (await client.get(`${flow.path}/map`)).json();
-    expect(map.objects).toContainEqual(
-      expect.objectContaining({ id: 'registered-person', name: 'Kim Lind' }),
-    );
-    const history = await (await client.get(`${flow.path}/map/history`)).json();
-    expect(history.history).toMatchObject([{ operationId }]);
-    registration.release();
-    await expect.poll(() => events.filter((event) => event.kind === 'work_result').length).toBe(1);
-    const saving = events.find(
-      (event) =>
-        event.kind === 'model_action' && (event.data as { name: string }).name === 'save_draft',
-    );
-    expect(saving?.context?.providerCallId).toBeTruthy();
-    expect(events.find((event) => event.kind === 'work_result')?.data).toMatchObject({
-      providerCallId: saving?.context?.providerCallId,
-      executionMode: mode,
-      disposition: 'used',
-    });
-    expect((await flow.current()).receipt).toEqual(recovered.receipt);
-    expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(map);
-    expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual(history);
-    expect(model.requests).toHaveLength(1);
-    expect(model.authorizationRequests).toHaveLength(2);
-  });
+  }
 
   for (const ending of ['error', 'stop'] as const) {
     test(`${mode} keeps a verified existing-draft save used after explanation ${ending}`, async () => {

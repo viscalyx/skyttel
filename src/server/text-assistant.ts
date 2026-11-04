@@ -1343,6 +1343,18 @@ export function textAssistantRoutes({
       // Diagnostic delivery cannot replace the operation's primary outcome.
     }
   }
+  function matchesCommittedBatch(
+    value: Awaited<ReturnType<typeof call>>,
+    request: NonNullable<ConversationState['pendingBatch']>['request'],
+  ) {
+    return (
+      value.operationId === request.operationId &&
+      value.contentVersion === request.contentVersion &&
+      value.fromVersion === request.version &&
+      value.appliedCount === request.operations.length &&
+      value.status === 'committed'
+    );
+  }
   async function verifyBatchOutcome(
     session: Session,
     pending: NonNullable<ConversationState['pendingBatch']>,
@@ -1351,14 +1363,10 @@ export function textAssistantRoutes({
   ) {
     guard?.();
     checkViewAccess(session);
-    const { operationId, version, contentVersion, operations } = pending.request;
+    const { contentVersion } = pending.request;
     if (
       pending.owner !== contentOwner(database, session.state.householdId, session.state.actorId) ||
-      value.operationId !== operationId ||
-      value.contentVersion !== contentVersion ||
-      value.fromVersion !== version ||
-      value.appliedCount !== operations.length ||
-      value.status !== 'committed'
+      !matchesCommittedBatch(value, pending.request)
     )
       throw new MapError('assistant_batch_unknown', 409);
     settleBatchAccounting(session, pending, true);
@@ -2104,7 +2112,7 @@ export function textAssistantRoutes({
       id?: string;
       used?: boolean;
       verified?: boolean;
-      unknown?: boolean;
+      unknown?: 'batch' | 'save';
       resolve?: (committed: boolean) => void;
     }[] = [];
     const batchWork: {
@@ -3335,22 +3343,18 @@ export function textAssistantRoutes({
           if (
             batch &&
             pending.owner === session.state.owner &&
-            batch.operationId === pending.request.operationId &&
-            batch.contentVersion === pending.request.contentVersion &&
-            batch.fromVersion === pending.request.version &&
-            batch.appliedCount === pending.request.operations.length &&
-            batch.status === 'committed'
+            matchesCommittedBatch(batch, pending.request)
           ) {
             for (const attempt of batchAttempts) attempt.verified = true;
             continue;
           }
-          if (batch) for (const attempt of batchAttempts) attempt.unknown = true;
+          if (batch) for (const attempt of batchAttempts) attempt.unknown = 'batch';
         } catch {
           // Missing authority or evidence cannot prove that work was unused.
-          for (const attempt of batchAttempts) attempt.unknown = true;
+          for (const attempt of batchAttempts) attempt.unknown = 'batch';
         }
         if (session.state.pendingBatch === pending) {
-          for (const attempt of batchAttempts) attempt.unknown = true;
+          for (const attempt of batchAttempts) attempt.unknown = 'batch';
           session.execution.pendingBatchAccounting = {
             operationId: pending.request.operationId,
             settle: (committed) => {
@@ -3381,6 +3385,7 @@ export function textAssistantRoutes({
             for (const attempt of saveAttempts) attempt.verified = true;
         } catch {
           // Diagnostic access/read failures cannot replace the task's outcome.
+          for (const attempt of saveAttempts) attempt.unknown = 'save';
         }
       }
       for (const attempt of attempts) {
@@ -3422,9 +3427,10 @@ export function textAssistantRoutes({
         };
         if (used) report('used');
         else if (attempt.unknown) {
-          report('unknown', 'batch_outcome_unknown');
-          attempt.resolve = (committed) =>
-            report(committed ? 'used' : 'discarded', 'batch_outcome_verified');
+          report('unknown', `${attempt.unknown}_outcome_unknown`);
+          if (attempt.unknown === 'batch')
+            attempt.resolve = (committed) =>
+              report(committed ? 'used' : 'discarded', 'batch_outcome_verified');
         } else report('discarded', discardReason);
       }
     }

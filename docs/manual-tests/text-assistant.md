@@ -753,6 +753,22 @@ dubbelt sparande”.
     },
     {
       "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a registered save unknown after access revocation before its transport reply",
+      "purpose": "Registrerat sparförsök med fördröjt svar och återkallad assistentåtkomst klassificeras som okänt när underlaget inte längre får läsas; modellförbrukning räknas en gång och återställning utan åtkomst avvisas."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a registered save unknown after access revocation before its transport reply",
+      "purpose": "Försöksvarianten behåller samma okända klassificering efter fördröjt registreringssvar och återkallad åtkomst, utan extra modellförbrukning, kvitto eller historikpost."
+    },
+    {
+      "kind": "technical",
       "runner": "playwright",
       "suite": "technical-browser",
       "spec": "tests/technical-browser/text-assistant.spec.ts",
