@@ -16,12 +16,18 @@ for (const mode of [
   'known-then-heartbeat',
   'known-then-exception',
   'semantic-heartbeat',
+  'semantic-heartbeat-inconclusive',
+  'uncertain-then-semantic-heartbeat',
+  'semantic-exception',
   'success',
 ] as const) {
   test(`recognition accounting preserves charges and terminal outcome (${mode})`, {
     tag: '@technical',
   }, async () => {
-    const multiple = mode.startsWith('known-then-');
+    const multiple = mode.startsWith('known-then-') || mode === 'uncertain-then-semantic-heartbeat';
+    const recognitionException =
+      mode === 'recognition-exception' || mode === 'known-then-exception';
+    const semanticHeartbeat = mode.includes('semantic-heartbeat');
     const live = await evaluationVoiceProvider(multiple ? 6 : 0.5);
     let failPoll = false;
     let failedPolls = 0;
@@ -115,13 +121,21 @@ for (const mode of [
           },
           judge: async (input) => {
             judgeCostUsd += 0.007;
-            if (mode === 'semantic-heartbeat') {
+            if (mode === 'semantic-exception') throw new Error('controlled_judge_failed');
+            if (semanticHeartbeat && (!multiple || recognitions === 2)) {
               failPoll = true;
               await new Promise((resolve) => setTimeout(resolve, 1200));
             }
             return input.requirements.map(({ id }) => ({
               id,
-              outcome: input.sources.voice?.text === 'Sparat.' ? 'pass' : 'fail',
+              outcome:
+                id === 'voice-rendered-useful' &&
+                (mode === 'semantic-heartbeat-inconclusive' ||
+                  (mode === 'uncertain-then-semantic-heartbeat' && recognitions === 1))
+                  ? 'inconclusive'
+                  : input.sources.voice?.text === 'Sparat.'
+                    ? 'pass'
+                    : 'fail',
               reason: 'Controlled interpretation of the independently recognized rendered tones.',
             }));
           },
@@ -138,7 +152,7 @@ for (const mode of [
         path: evidence,
         contentType: 'application/json',
       });
-      const exception = mode.endsWith('exception');
+      const exception = recognitionException || mode === 'semantic-exception';
       expect(failedPolls).toBe(mode === 'success' || exception ? 0 : 1);
       expect(recognitions).toBe(multiple ? 2 : 1);
       if (mode === 'success') {
@@ -148,12 +162,19 @@ for (const mode of [
       } else {
         expect(attempt).toMatchObject({
           outcome: 'error',
-          reason: exception ? 'controlled_recognition_failed' : 'evaluation_http_503',
+          reason:
+            mode === 'semantic-exception'
+              ? 'controlled_judge_failed'
+              : recognitionException
+                ? 'controlled_recognition_failed'
+                : 'evaluation_http_503',
         });
         expect(attempt.elapsedMs).toBeNull();
         expect(attempt.timing?.successfulCompletionMs).toBeNull();
+        expect(summary.qualified).toBe(false);
+        expect(summary.finalQualified).toBe(false);
       }
-      if (mode === 'heartbeat-unknown' || exception) {
+      if (mode === 'heartbeat-unknown' || recognitionException) {
         expect(attempt.playbackAssessmentCostUsd).toBeNull();
         expect(summary.playbackAssessmentCostUsd).toBeNull();
       } else {
@@ -175,7 +196,35 @@ for (const mode of [
           else expect(candidates).toHaveLength(1);
         }
       }
-      if (mode === 'semantic-heartbeat') {
+      if (semanticHeartbeat) {
+        expect(attempt.judgeCostUsd).toBe(multiple ? 0.014 : 0.007);
+        expect(summary.judgeCostUsd).toBe(multiple ? 0.014 : 0.007);
+        expect(candidates?.at(-1)).toMatchObject({
+          requiredResponse: [{ id: 'voice-rendered-response', outcome: 'pass' }],
+          usefulContent: [
+            {
+              id: 'voice-rendered-useful',
+              outcome: mode === 'semantic-heartbeat-inconclusive' ? 'inconclusive' : 'pass',
+            },
+          ],
+        });
+        if (mode === 'semantic-heartbeat-inconclusive') {
+          expect(attempt.timing?.firstUsefulMs).toBeNull();
+          expect(attempt.timing?.firstVerifiedUsefulMs ?? null).toBeNull();
+        } else {
+          expect(attempt.timing?.firstVerifiedUsefulMs).toBeGreaterThan(0);
+          if (multiple) {
+            expect(candidates?.[0].usefulContent?.[0].outcome).toBe('inconclusive');
+            expect(attempt.timing?.firstUsefulMs).toBeNull();
+          } else expect(attempt.timing?.firstUsefulMs).toBe(attempt.timing?.firstVerifiedUsefulMs);
+        }
+        expect(result.attempts).toHaveLength(1);
+      }
+      if (mode === 'semantic-exception') {
+        expect(candidates?.[0].requiredResponse).toBeUndefined();
+        expect(candidates?.[0].usefulContent).toBeUndefined();
+        expect(attempt.timing?.firstUsefulMs).toBeNull();
+        expect(attempt.timing?.firstVerifiedUsefulMs ?? null).toBeNull();
         expect(attempt.judgeCostUsd).toBe(0.007);
         expect(summary.judgeCostUsd).toBe(0.007);
       }

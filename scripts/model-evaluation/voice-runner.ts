@@ -29,7 +29,7 @@ import {
   type SourcePlayback,
   speechConnection,
 } from './speech.js';
-import type { Attempt, JudgeInput, Scenario, ScenarioStep } from './types.js';
+import type { Attempt, JudgeInput, JudgeResult, Scenario, ScenarioStep } from './types.js';
 
 type PlaybackEvidence = NonNullable<Attempt['playback']>;
 
@@ -135,10 +135,16 @@ export async function runVoiceScenario(
     previousResponseEndAt?: number;
     evaluationOverheadMs?: number;
   }[] = scenario.steps.map((step) => ({ step }));
-  async function judgeWithHeartbeat(input: JudgeInput) {
+  async function judgeWithHeartbeat(input: JudgeInput, retain?: (result: JudgeResult) => void) {
     const judge = options.judge;
     if (!judge) throw new Error('evaluation_judge_missing');
-    return withHeartbeat(() => judge(input));
+    return withHeartbeat(async () => {
+      const result = await judge(input);
+      // Completed evidence survives a pending heartbeat failure; that failure
+      // still propagates before any task-success or follow-up decision.
+      retain?.(result);
+      return result;
+    });
   }
   async function withHeartbeat<T>(work: () => Promise<T>): Promise<T> {
     const id = voiceId;
@@ -498,9 +504,25 @@ export async function runVoiceScenario(
                   break;
                 }
                 candidate.renderedEnd = end;
-                const assessments = options.judge
-                  ? await measurePlaybackAssessment(() =>
-                      judgeWithHeartbeat({
+                const retainAssessment = (assessments: JudgeResult) => {
+                  candidate.requiredResponse = assessments.filter(
+                    (item) => item.id === 'voice-rendered-response',
+                  );
+                  const useful = assessments.filter((item) => item.id === 'voice-rendered-useful');
+                  candidate.usefulContent = useful;
+                  if (result.timing && result.timing.firstVerifiedUsefulMs == null) {
+                    if (useful.length === 1 && useful[0].outcome === 'pass') {
+                      result.timing.firstVerifiedUsefulMs = Math.max(0, end.upper - startedAt);
+                      if (!usefulnessUncertain)
+                        result.timing.firstUsefulMs = result.timing.firstVerifiedUsefulMs;
+                    } else if (useful.length !== 1 || useful[0].outcome === 'inconclusive')
+                      usefulnessUncertain = true;
+                  }
+                };
+                if (options.judge)
+                  await measurePlaybackAssessment(() =>
+                    judgeWithHeartbeat(
+                      {
                         context: environment.judgeContext(step, fixed, '', recognizedRequest),
                         sources: { voice: { text: recognition.text, complete: false } },
                         requirements: [
@@ -515,23 +537,12 @@ export async function runVoiceScenario(
                             text: renderedUsefulRequirement,
                           },
                         ],
-                      }),
-                    )
-                  : [];
-                const requiredResponse = assessments.filter(
-                  (item) => item.id === 'voice-rendered-response',
-                );
-                const useful = assessments.filter((item) => item.id === 'voice-rendered-useful');
-                candidate.requiredResponse = requiredResponse;
-                candidate.usefulContent = useful;
-                if (result.timing && result.timing.firstVerifiedUsefulMs == null) {
-                  if (useful.length === 1 && useful[0].outcome === 'pass') {
-                    result.timing.firstVerifiedUsefulMs = Math.max(0, end.upper - startedAt);
-                    if (!usefulnessUncertain)
-                      result.timing.firstUsefulMs = result.timing.firstVerifiedUsefulMs;
-                  } else if (useful.length !== 1 || useful[0].outcome === 'inconclusive')
-                    usefulnessUncertain = true;
-                }
+                      },
+                      retainAssessment,
+                    ),
+                  );
+                else retainAssessment([]);
+                const requiredResponse = candidate.requiredResponse ?? [];
                 const current = await connection.recording();
                 options.recordPlayback?.(current);
                 // Offline assessment cannot hide a tail that arrived while it
