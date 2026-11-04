@@ -211,6 +211,38 @@ och kastar utkastet”.
       "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
       "title": "a queued ordinary discard respects verified predecessor and manual versions (manual=true)",
       "purpose": "HTTP-bevis att ett köat kastkommando bevarar en senare manuell rättelse och kräver en aktuell begäran. En verifierad tidigare batch provas separat i samma serverfil."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/new-conversation.test.ts",
+      "title": "a delegated spoken reset completes its own request while retiring the old voice work (discard=false)",
+      "purpose": "HTTP-bevis att det talade nytt-samtal-kommandot slutför återstarten när den gamla röstanslutningens arbete avslutas och behåller utkastet."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/new-conversation.test.ts",
+      "title": "a delegated spoken reset completes its own request while retiring the old voice work (discard=true)",
+      "purpose": "HTTP-bevis att det kombinerade talade kommandot slutför återstarten och kastar utkastet utan att tidigare samtalsord följer med."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/new-conversation.test.ts",
+      "title": "a retired spoken reset still cancels its retained request on stop",
+      "purpose": "HTTP-bevis att ett separat Stopp avbryter det talade reset-kommandot även under återstartens fördröjda statusläsning."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/new-conversation.test.ts",
+      "title": "a retired spoken reset still cancels its retained request on newer reset",
+      "purpose": "HTTP-bevis att ett senare nytt samtal ersätter det tidigare talade reset-kommandot och att dess sena svar inte ändrar det nya samtalet."
     }
   ]
 }

@@ -76,6 +76,167 @@ function deferred<T = void>() {
   return { promise, resolve };
 }
 
+function delegateSpeech(live: ReturnType<typeof liveProvider>, text: string) {
+  const providerId = [...live.channels.keys()].at(-1);
+  if (!providerId) throw new Error('No active voice');
+  live.emit(providerId, {
+    type: 'session.input_transcript.delta',
+    event_id: crypto.randomUUID(),
+    delta: text,
+    start_ms: 0,
+    end_ms: 100,
+  });
+  live.emit(providerId, {
+    type: 'session.delegation.created',
+    event_id: crypto.randomUUID(),
+    offset_ms: 100,
+    delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
+  });
+}
+
+test.each([false, true])(
+  'a delegated spoken reset completes its own request while retiring the old voice work (discard=%s)',
+  { timeout: 10000 },
+  async (discard) => {
+    const model = textModel(() => [modelMessage('Det tidigare samtalet.')]);
+    const live = liveProvider();
+    await setup({
+      modelFetch: model.provider,
+      liveFetch: live.provider,
+      liveSideband: live.attach,
+    });
+    await propose('lo', 'Lo Exempel');
+    let session = await start();
+    session = await settled(await send(session, 'Ett tidigare samtalsord.'));
+    const started = await post(`${path}/${session.id}/voice`, {
+      sdp: 'synthetic-offer',
+      revision: session.revision,
+      draftVersion: session.review.version,
+      contentVersion: session.review.contentVersion,
+      microphoneOn: true,
+    });
+    expect(started.status(), await started.text()).toBe(201);
+    const voiceId = (await started.json()).voice.id;
+    delegateSpeech(live, discard ? 'Nytt samtal och kasta utkastet' : 'Nytt samtal');
+    let renewed!: TextAssistantView;
+    await expect
+      .poll(
+        async () => {
+          renewed = await (await browser.get(`${path}/${session.id}`)).json();
+          return { contextRevision: renewed.contextRevision, phase: renewed.phase };
+        },
+        { timeout: 5000 },
+      )
+      .toEqual({ contextRevision: 1, phase: 'ready' });
+    expect(renewed).toMatchObject({
+      phase: 'ready',
+      reply: discard
+        ? 'Nytt samtal. Utkastet är tomt.'
+        : 'Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+      resetSource: 'voice',
+      review: {
+        changes: discard
+          ? []
+          : [expect.objectContaining({ after: expect.objectContaining({ name: 'Lo Exempel' }) })],
+      },
+    });
+    const retired = await post(`${path}/${session.id}/voice/${voiceId}/poll`, {
+      revision: renewed.revision,
+      draftVersion: renewed.review.version,
+      contentVersion: renewed.review.contentVersion,
+      microphoneOn: true,
+    });
+    expect(retired.status(), await retired.text()).toBe(200);
+    expect((await retired.json()).assistant.contextRevision).toBe(1);
+    const replacement = await post(`${path}/${session.id}/voice`, {
+      sdp: 'synthetic-replacement-offer',
+      revision: renewed.revision,
+      draftVersion: renewed.review.version,
+      contentVersion: renewed.review.contentVersion,
+      newConversation: true,
+    });
+    expect(replacement.status(), await replacement.text()).toBe(201);
+    expect(live.requests[1].session.input).toBeUndefined();
+    await settled(await send(renewed, 'Har vi börjat om?'));
+    expect(model.requests).toHaveLength(2);
+    expect(model.requests[1].input).toHaveLength(1);
+    expect(JSON.stringify(model.requests[1].input)).not.toContain('Ett tidigare samtalsord.');
+  },
+);
+
+test.each(['stop', 'newer reset'] as const)(
+  'a retired spoken reset still cancels its retained request on %s',
+  { timeout: 10000 },
+  async (interruption) => {
+    const live = liveProvider();
+    const release = deferred();
+    const resetResponse = deferred<number>();
+    let resetting: Request | undefined;
+    let stopping: ReturnType<typeof post> | undefined;
+    let heldRefresh = false;
+    await setup({
+      modelFetch: textModel(() => [modelMessage('Ett provsvar.')]).provider,
+      liveFetch: live.provider,
+      liveSideband: live.attach,
+      assistantDispatch: async (incoming, dispatch) => {
+        const pathname = new URL(incoming.url).pathname;
+        if (incoming.method === 'POST' && pathname.endsWith('/messages')) {
+          resetting = incoming;
+          const response = await dispatch(incoming);
+          resetResponse.resolve(response.status);
+          return response;
+        }
+        const rpc =
+          incoming.method === 'POST' && pathname === '/mcp' ? await incoming.clone().json() : null;
+        if (
+          resetting &&
+          !heldRefresh &&
+          rpc?.method === 'tools/call' &&
+          rpc.params.name === 'read_my_save_operations'
+        ) {
+          heldRefresh = true;
+          await release.promise;
+        }
+        return dispatch(incoming);
+      },
+    });
+    try {
+      await propose('lo', 'Lo Exempel');
+      const session = await start();
+      const started = await post(`${path}/${session.id}/voice`, {
+        sdp: 'synthetic-offer',
+        revision: session.revision,
+        draftVersion: session.review.version,
+        contentVersion: session.review.contentVersion,
+      });
+      expect(started.status(), await started.text()).toBe(201);
+      const voiceId = (await started.json()).voice.id;
+      delegateSpeech(live, 'Nytt samtal');
+      await expect.poll(() => heldRefresh, { timeout: 5000 }).toBe(true);
+      expect(resetting?.signal.aborted).toBe(false);
+      if (interruption === 'stop') {
+        stopping = post(`${path}/${session.id}/voice/${voiceId}/stop`);
+        await expect.poll(() => resetting?.signal.aborted).toBe(true);
+      } else {
+        const renewed = await newConversation(session);
+        expect(renewed.contextRevision).toBe(1);
+        expect(renewed.resetSource).toBe('text');
+      }
+      expect(resetting?.signal.aborted).toBe(true);
+      release.resolve();
+      expect(await resetResponse.promise).toBe(409);
+      if (stopping) expect((await stopping).status()).toBe(200);
+      const current: TextAssistantView = await (await browser.get(`${path}/${session.id}`)).json();
+      expect(current.contextRevision).toBe(interruption === 'stop' ? 0 : 1);
+      expect(current.review.changes).toHaveLength(1);
+      if (interruption === 'newer reset') expect(current.resetSource).toBe('text');
+    } finally {
+      release.resolve();
+      await stopping;
+    }
+  },
+);
+
 test('a delayed spoken reset discard delivers its final outcome once after the retained draft notice', async () => {
   const releaseWork = deferred<unknown[]>();
   const model = textModel(() => releaseWork.promise);

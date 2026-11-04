@@ -926,10 +926,12 @@ export function voiceAssistantRoutes({
     if (context.req.header('Origin') !== config.origin)
       return context.json({ error: 'forbidden' }, 403);
     voice.access();
+    // Stop must revoke a retained reset dispatch before its status read can
+    // wait for that same reset to finish.
+    if (context.req.param('action') === 'stop') await close(voice);
     voice.assistant = await assistant(path, headers(context.req.raw.headers));
     voice.access();
-    if (context.req.param('action') === 'stop') await close(voice);
-    else if (context.req.param('action') === 'poll') {
+    if (context.req.param('action') === 'poll') {
       const body = await context.req.json().catch(() => null);
       if (
         !Number.isSafeInteger(body?.revision) ||
@@ -948,7 +950,8 @@ export function voiceAssistantRoutes({
       voice.warn();
       voice.view.summaryReady = voice.work?.readyForSummary() ?? true;
       voice.heartbeat = now();
-    } else return context.json({ error: 'not_found' }, 404);
+    } else if (context.req.param('action') !== 'stop')
+      return context.json({ error: 'not_found' }, 404);
     return context.json({ voice: voice.view, assistant: voice.assistant });
   });
   return {
@@ -968,9 +971,9 @@ export function voiceAssistantRoutes({
         }
       }
     },
-    retireSessionWork: (sessionId: string) => {
+    retireSessionWork: (sessionId: string, requestId?: string) => {
       for (const voice of voices.values())
-        if (voice.assistant.id === sessionId && !voice.closed) voice.work?.retire();
+        if (voice.assistant.id === sessionId && !voice.closed) voice.work?.retire(requestId);
     },
     summarizeSession: async (sessionId: string, signal: AbortSignal) => {
       const active = [...voices.values()].filter((voice) => voice.assistant.id === sessionId);
@@ -992,8 +995,7 @@ export function voiceAssistantRoutes({
         if (voice.assistant.id !== view.id || voice.closed) continue;
         voice.assistant = view;
         voice.work?.reset(view);
-        if (deferVoiceClose) voice.work?.stop();
-        else void close(voice);
+        if (!deferVoiceClose) void close(voice);
       }
     },
     stopSession: (sessionId: string) => {

@@ -127,7 +127,7 @@ export function textAssistantRoutes({
   voiceTokens?: number;
   observe?: ObserveAssistant;
   onStop?: (sessionId: string) => void;
-  onResetStart?: (sessionId: string) => void;
+  onResetStart?: (sessionId: string, requestId?: string) => void;
   onSummary?: (sessionId: string, signal: AbortSignal) => Promise<void> | undefined;
   onWork?: (browserSessionId: string, until: number | undefined) => void;
   onActivity?: (browserSessionId: string) => void;
@@ -1555,8 +1555,9 @@ export function textAssistantRoutes({
     preparation: Preparation,
     discard = false,
     deferVoiceClose = false,
+    requestId?: string,
   ) {
-    const completion = resetContext(session, preparation, discard, deferVoiceClose);
+    const completion = resetContext(session, preparation, discard, deferVoiceClose, requestId);
     session.execution.resetCompletion = completion;
     try {
       await completion;
@@ -1565,11 +1566,25 @@ export function textAssistantRoutes({
         session.execution.resetCompletion = undefined;
     }
   }
+  async function waitForReset(session: Session) {
+    while (session.execution.resetCompletion) {
+      const completion = session.execution.resetCompletion;
+      try {
+        await completion;
+      } catch (error) {
+        // A stopped or superseded reset rejects its own request. Status readers
+        // still recheck the surviving conversation's authority and current data.
+        if (!(error instanceof MapError && error.code === 'assistant_turn_changed')) throw error;
+      }
+      if (session.execution.resetCompletion === completion) return;
+    }
+  }
   async function resetContext(
     session: Session,
     preparation: Preparation,
     discard: boolean,
     deferVoiceClose: boolean,
+    requestId?: string,
   ) {
     checkPreparation(preparation);
     session.state.modelChoice = personalModelChoice(database, session.state.actorId).read();
@@ -1577,7 +1592,7 @@ export function textAssistantRoutes({
     const task = ownedDraftTask(session);
     // Retire the old executor before its task records disappear. A delayed
     // status response must not cancel work belonging to the new conversation.
-    onResetStart?.(session.state.id);
+    onResetStart?.(session.state.id, requestId);
     for (const [id, owner] of deliveryOwners) if (owner === session) deliveries.retire(id);
     session.execution.task?.abort();
     session.execution.task = undefined;
@@ -3514,11 +3529,11 @@ export function textAssistantRoutes({
       return context.json({ error }, status);
     }
     try {
-      await session.execution.resetCompletion;
+      await waitForReset(session);
       checkViewAccess(session);
       if (now() < session.execution.mcp.expiresAt) await refreshConfirmed(session);
       checkViewAccess(session);
-      await session.execution.resetCompletion;
+      await waitForReset(session);
       checkViewAccess(session);
     } catch {
       await stop(session);
@@ -3638,7 +3653,13 @@ export function textAssistantRoutes({
     if (context.req.raw.signal.aborted) return context.json({ error: 'assistant_canceled' }, 409);
     const control = conversationCommand(body.text);
     if (control?.reset) {
-      await startOver(session, preparation, control.discard, body.voiceContext !== undefined);
+      await startOver(
+        session,
+        preparation,
+        control.discard,
+        body.voiceContext !== undefined,
+        body.requestId,
+      );
       return context.json(view(session));
     }
     if (draftExecutions.has(draftKey(session)) && body.queue === false)
@@ -3692,7 +3713,7 @@ export function textAssistantRoutes({
   routes.post(`${base}/:sessionId/summarize`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
-    await session.execution.resetCompletion;
+    await waitForReset(session);
     if (
       session.state.phase === 'working' ||
       session.state.phase === 'recovery' ||
@@ -3704,7 +3725,7 @@ export function textAssistantRoutes({
       // handoff. Close its server sideband before taking the ledger snapshot.
       await summarize(session, undefined, [], true);
     }
-    await session.execution.resetCompletion;
+    await waitForReset(session);
     return context.json(view(session));
   });
   // Poll a particular accepted message: a subsequent FIFO task may already be
