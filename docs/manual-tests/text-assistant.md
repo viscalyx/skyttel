@@ -134,6 +134,38 @@ TEXT-18.
       "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
       "title": "a definitive absent batch status offers explicit abandon without starting model work automatically",
       "purpose": "Ett bekräftat uteblivet resultat tillåter uttryckligt avstående utan nytt modellarbete; ett okänt utfall behåller spärren."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "an incomplete interpretation reply pauses the original request and queue until explicit retry",
+      "purpose": "Ett ofullständigt tolkningssvar pausar kön utan ändringar; uttryckligt återförsök behåller begäran och aktuellt modellval utan återupplivat sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "an invalid interpretation reply pauses the original request and queue until explicit abandon",
+      "purpose": "Ett ogiltigt tolkningssvar ändrar inget och kräver uttryckligt avstående innan senare kö fortsätter i ordning."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "an incomplete checking reply pauses the original request and queue until explicit abandon",
+      "purpose": "Ett ofullständigt kontrollsvar efter en genomförd batch lämnar nästa batch orörd och behåller den tidigare tills användaren uttryckligen avstår."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "an invalid checking reply pauses the original request and queue until explicit retry",
+      "purpose": "Ett ogiltigt kontrollsvar pausar kön efter en genomförd batch; uttryckligt återförsök fortsätter bara återstående ändringar utan dubbla batcher eller gammalt sparande."
     }
   ]
 }
