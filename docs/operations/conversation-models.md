@@ -67,7 +67,16 @@ anrop: ett vanligt lyckat uppdrag behöver redan tolkning och arbete.
 
 Den uttryckligt aktiverade diagnostiken anger körsätt vid uppdragets
 start och slut. Arbetsresultat anger leverantörsanropets identitet och
-om resultatet används eller förkastas. Knyt detta till anropets faktiska
+om resultatet används, förkastas eller ännu har okänt utfall. Ett tappat
+ändringsbesked kan höra till genomfört arbete. Verifierat genomförande räknas
+som använt även när beskedet saknas eller arbetet stoppas. Saknas behörig
+åtkomst till underlaget förblir klassificeringen okänd.
+
+En senare statuskontroll kan precisera ett okänt arbetsresultat med samma
+leverantörsanrops identitet. Använd den senaste klassificeringen och bevara
+tidigare observationer som historik. Utvärderingens arbetsresultat samlar
+klassificeringarnas historik och kopplar token en gång per leverantörsanrop.
+Knyt detta till anropets faktiska
 tokenuppgifter och installationens kostnadsunderlag. Bevara okända
 värden och avbrutna försök; de är inga lyckade slutförandetider.
 Diagnostik kan innehålla hushållsuppgifter och följer installationens

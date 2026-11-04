@@ -96,6 +96,8 @@ type ConversationExecution = {
   summaryTask?: AbortController;
   /** Context status and canceled handoffs wait for the complete reset. */
   resetCompletion?: Promise<void>;
+  /** Diagnostic continuation only; it never authorizes or resumes work. */
+  pendingBatchAccounting?: { operationId: string; settle: (committed: boolean) => void };
   displayed?: (value: boolean) => void;
 };
 type Session = { state: ConversationState; execution: ConversationExecution };
@@ -1264,6 +1266,7 @@ export function textAssistantRoutes({
     guard: () => void,
     resolves: z.infer<typeof partReference>[] = [],
     finishesRequest = false,
+    submitted?: (pending: NonNullable<ConversationState['pendingBatch']>) => void,
   ) {
     if (session.state.pendingBatch) throw new MapError('assistant_batch_unknown', 409);
     const request = structuredClone({ ...batch, operationId: batch.operationId ?? randomUUID() });
@@ -1279,6 +1282,7 @@ export function textAssistantRoutes({
       discarded: request.operations.length === 1 && request.operations[0].name === 'discard_draft',
       finishesRequest,
     };
+    submitted?.(session.state.pendingBatch);
     session.state.batchCheckId = undefined;
     let value: Awaited<ReturnType<typeof call>>;
     try {
@@ -1319,10 +1323,25 @@ export function textAssistantRoutes({
       guard,
     );
     if (!batch) {
+      settleBatchAccounting(session, pending, false);
       session.state.pendingBatch = undefined;
       throw new MapError('assistant_batch_not_committed', 409);
     }
     return batch;
+  }
+  function settleBatchAccounting(
+    session: Session,
+    pending: NonNullable<ConversationState['pendingBatch']>,
+    committed: boolean,
+  ) {
+    const accounting = session.execution.pendingBatchAccounting;
+    if (accounting?.operationId !== pending.request.operationId) return;
+    session.execution.pendingBatchAccounting = undefined;
+    try {
+      accounting.settle(committed);
+    } catch {
+      // Diagnostic delivery cannot replace the operation's primary outcome.
+    }
   }
   async function verifyBatchOutcome(
     session: Session,
@@ -1342,6 +1361,7 @@ export function textAssistantRoutes({
       value.status !== 'committed'
     )
       throw new MapError('assistant_batch_unknown', 409);
+    settleBatchAccounting(session, pending, true);
     await call(session, 'read_my_draft', {}, guard, 'lifecycle');
     guard?.();
     checkViewAccess(session);
@@ -2080,7 +2100,20 @@ export function textAssistantRoutes({
     let scopeJob: Promise<NonNullable<typeof scopeOutcome>> | undefined;
     let admitted = false;
     let workContextStarted = false;
-    const attempts: { id?: string; used?: boolean; verified?: boolean }[] = [];
+    const attempts: {
+      id?: string;
+      used?: boolean;
+      verified?: boolean;
+      unknown?: boolean;
+      resolve?: (committed: boolean) => void;
+    }[] = [];
+    const batchWork: {
+      pending: NonNullable<ConversationState['pendingBatch']>;
+      attempts: typeof attempts;
+    }[] = [];
+    const recordBatchWork = (pending: NonNullable<ConversationState['pendingBatch']>) => {
+      if (observe) batchWork.push({ pending, attempts: attempts.slice() });
+    };
     let saveWork:
       | {
           operation: { operationId: string; version: number; contentVersion: number };
@@ -2692,6 +2725,7 @@ export function textAssistantRoutes({
                 !batch.continueResponse &&
                 batch.completion === 'draft' &&
                 !session.state.saveIntent,
+              recordBatchWork,
             );
             const afterBatch = session.state.review;
             // No operation is recorded as completed until the whole batch has
@@ -3104,6 +3138,7 @@ export function textAssistantRoutes({
               guard,
               [],
               wholeRequestComplete && calls.length === 1 && !session.state.saveIntent,
+              recordBatchWork,
             );
             value = batch.applied?.[0]?.result ?? { ...session.state.review };
             // Duplicate relationship additions are successful no-ops. Their
@@ -3283,6 +3318,47 @@ export function textAssistantRoutes({
       // Retain actual attempt/usage endings even when one branch fails early.
       // No new model call or tool execution is started by this cleanup.
       await scopeJob;
+      for (const { pending, attempts: batchAttempts } of batchWork) {
+        if (batchAttempts.every((attempt) => attempt.verified)) continue;
+        try {
+          // A committed batch is used even if its response and status transport
+          // fail or Stop wins delivery. Inspect metadata only; keep the public
+          // pending-outcome barrier and all task state unchanged.
+          const batch = textWork.exit(() => {
+            checkViewAccess(session);
+            return householdMap(
+              database,
+              session.state.actorId,
+              session.state.householdId,
+            ).draftBatch(pending.request.operationId, pending.request.contentVersion).batch;
+          });
+          if (
+            batch &&
+            pending.owner === session.state.owner &&
+            batch.operationId === pending.request.operationId &&
+            batch.contentVersion === pending.request.contentVersion &&
+            batch.fromVersion === pending.request.version &&
+            batch.appliedCount === pending.request.operations.length &&
+            batch.status === 'committed'
+          ) {
+            for (const attempt of batchAttempts) attempt.verified = true;
+            continue;
+          }
+          if (batch) for (const attempt of batchAttempts) attempt.unknown = true;
+        } catch {
+          // Missing authority or evidence cannot prove that work was unused.
+          for (const attempt of batchAttempts) attempt.unknown = true;
+        }
+        if (session.state.pendingBatch === pending) {
+          for (const attempt of batchAttempts) attempt.unknown = true;
+          session.execution.pendingBatchAccounting = {
+            operationId: pending.request.operationId,
+            settle: (committed) => {
+              for (const attempt of batchAttempts) attempt.resolve?.(committed);
+            },
+          };
+        }
+      }
       if (saveWork?.attempts.some((attempt) => !attempt.verified)) {
         const { operation: expectedSave, attempts: saveAttempts } = saveWork;
         try {
@@ -3317,27 +3393,39 @@ export function textAssistantRoutes({
               !task.signal.aborted &&
               discardReason !== 'stale'),
         );
-        observe?.({
-          at: now(),
-          sessionId: session.state.id,
-          taskId: observationWork.getStore()?.context.requestId,
-          revision,
-          consentTextVersion: session.state.consentTextVersion,
-          context: observed && {
-            ...observed.context,
-            spanId: randomUUID(),
-            parentSpanId: observed.context.spanId,
-            providerCallId: attempt.id,
-          },
-          kind: 'work_result',
-          status: 'completed',
-          data: {
-            providerCallId: attempt.id,
-            executionMode: overlap ? 'overlap' : 'sequential',
-            disposition: used ? 'used' : 'discarded',
-            ...(used ? {} : { reason: discardReason }),
-          },
-        });
+        const report = (disposition: 'used' | 'discarded' | 'unknown', reason?: string) => {
+          try {
+            observe?.({
+              at: now(),
+              sessionId: session.state.id,
+              taskId: observed?.context.requestId,
+              revision,
+              consentTextVersion: session.state.consentTextVersion,
+              context: observed && {
+                ...observed.context,
+                spanId: randomUUID(),
+                parentSpanId: observed.context.spanId,
+                providerCallId: attempt.id,
+              },
+              kind: 'work_result',
+              status: disposition === 'unknown' ? 'incomplete' : 'completed',
+              data: {
+                providerCallId: attempt.id,
+                executionMode: overlap ? 'overlap' : 'sequential',
+                disposition,
+                ...(reason ? { reason } : {}),
+              },
+            });
+          } catch {
+            // Diagnostic delivery cannot replace the task's primary outcome.
+          }
+        };
+        if (used) report('used');
+        else if (attempt.unknown) {
+          report('unknown', 'batch_outcome_unknown');
+          attempt.resolve = (committed) =>
+            report(committed ? 'used' : 'discarded', 'batch_outcome_verified');
+        } else report('discarded', discardReason);
       }
     }
   }
