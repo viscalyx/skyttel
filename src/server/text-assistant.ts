@@ -1328,6 +1328,21 @@ export function textAssistantRoutes({
       ? ' Ändringarna ligger kvar osparade i ditt utkast.'
       : '';
   }
+  function failureMessages(session: Session, error: string) {
+    const saveRequested = !!session.state.saveIntent;
+    const unsavedNotice = saveRequested ? unsavedDraftNotice(session) : '';
+    return {
+      ordinary:
+        assistantFailureMessage(error) +
+        unsavedNotice +
+        (saveRequested
+          ? ' Din tidigare sparbegäran gäller inte längre. Be om sparande igen när detta är löst.'
+          : ''),
+      security: session.state.securityReference
+        ? blockedActionMessage(session.state.securityReference) + unsavedNotice
+        : undefined,
+    };
+  }
   async function saveReady(session: Session, serial: number, guard: () => void) {
     const deadline = now() + 180_000;
     for (;;) {
@@ -2690,20 +2705,15 @@ export function textAssistantRoutes({
           : 'error';
       session.state.error = error instanceof MapError ? error.code : 'assistant_provider_failed';
       if (session.state.error === 'assistant_context_capacity') pauseCapacity(session);
-      const unsavedNotice = session.state.saveIntent ? unsavedDraftNotice(session) : '';
-      session.state.previousFailure = assistantFailureMessage(session.state.error) + unsavedNotice;
-      if (session.state.saveIntent) {
-        session.state.saveIntent = undefined;
-        session.state.previousFailure +=
-          ' Din tidigare sparbegäran gäller inte längre. Be om sparande igen när detta är löst.';
-      }
+      const messages = failureMessages(session, session.state.error);
+      session.state.previousFailure = messages.ordinary;
+      if (session.state.saveIntent) session.state.saveIntent = undefined;
       appendConversation(session, { role: 'assistant', text: session.state.previousFailure });
       session.state.reply = session.state.previousFailure;
       session.state.modelReply = undefined;
       session.state.requiredNotice = undefined;
-      if (session.state.securityReference) {
-        session.state.requiredNotice =
-          blockedActionMessage(session.state.securityReference) + unsavedNotice;
+      if (messages.security) {
+        session.state.requiredNotice = messages.security;
         session.state.reply = session.state.requiredNotice;
       }
       if (error instanceof MapError && error.code === 'assistant_task_expired') return;
@@ -3288,15 +3298,11 @@ export function textAssistantRoutes({
             ? error.code
             : 'assistant_draft_changed';
         if (session.state.error === 'assistant_context_capacity') pauseCapacity(session);
-        const unsavedNotice = session.state.saveIntent ? unsavedDraftNotice(session) : '';
-        session.state.reply = assistantFailureMessage(session.state.error) + unsavedNotice;
-        if (session.state.saveIntent)
-          session.state.reply +=
-            ' Din tidigare sparbegäran gäller inte längre. Be om sparande igen när detta är löst.';
+        const messages = failureMessages(session, session.state.error);
+        session.state.reply = messages.ordinary;
         session.state.saveIntent = undefined;
-        if (session.state.securityReference) {
-          session.state.requiredNotice =
-            blockedActionMessage(session.state.securityReference) + unsavedNotice;
+        if (messages.security) {
+          session.state.requiredNotice = messages.security;
           session.state.reply = session.state.requiredNotice;
         }
         if (

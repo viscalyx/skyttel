@@ -218,6 +218,10 @@ Lo Exempel av typen Person och beskrivningen Påhittad uppgift. Mikrofonen
 [avvisad kontroll av hela utkastet](text-conversation-preparation.md#avvisad-kontroll-av-hela-utkastet).
 Operatören styr modellens svar och det simulerade talet där.
 
+**Automatiskt motsvarande test (integration eller webbläsare):**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+TEXT-15.
+
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
