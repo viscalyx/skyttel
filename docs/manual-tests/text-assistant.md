@@ -812,6 +812,14 @@ om samma server med samma databas vid det angivna steget.
       "spec": "tests/technical-browser/text-assistant.spec.ts",
       "title": "literal text preparation drops a committed batch reply and preserves its proposals across restart",
       "purpose": "Den publicerade operatörsförberedelsen kör verkliga kommandon mot textverktyget, tappar genomfört MCP-svar, startar om samma databas och städar provkatalogen."
+    },
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/text-assistant.spec.ts",
+      "title": "literal voice preparation drops a committed batch reply and preserves its proposals across restart",
+      "purpose": "Röstverktygets publicerade kommandon prövas med skrivet uppdrag och mikrofonen på: tappat genomfört MCP-svar återhämtas med Kim, pausat återstående arbete och väntande fråga i text och kontrollerad röstleverans utan nytt modellarbete eller sparande; utkastet bevaras vid omstart och provkatalogen städas."
     }
   ]
 }
