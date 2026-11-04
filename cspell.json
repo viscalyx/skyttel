@@ -1092,7 +1092,10 @@
     "mätunderlag",
     "batchutfall",
     "batchunderlaget",
-    "modellbegäranden"
+    "modellbegäranden",
+    "batchsvaret",
+    "delbatch",
+    "förtydligandereplik"
   ],
   "overrides": [
     {
