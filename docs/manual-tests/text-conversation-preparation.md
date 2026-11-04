@@ -180,6 +180,29 @@ innehåll i terminalen före ett eventuellt `assistant`-transkript med
 samma besked. Ett sådant transkript bevisar inte fysisk uppläsning.
 Avsluta även felvariantens installation med `quit`.
 
+För den osparade felvarianten startas ytterligare en ny röstinstallation
+enligt inledningen, utan `seed-family`. Lägg enbart Lo Exempel av typen
+Person i utkastet. Starta text och slå på mikrofonen. Ställ samma
+kontroller som för felvarianten ovan innan användaren skriver sitt
+uppdrag. Kopiera V, C och TYPE från dess hållna underlag. Släpp en
+kontrollerad batch och godkänn den oberoende kontrollen. Avbryt sedan
+just nästa arbetsbegäran för förklaringen:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST submit_changes {"version":V,"contentVersion":C,"completion":"draft","operations":[{"name":"propose_object","arguments":{"id":"kim","baseRevision":null,"value":{"typeId":"TYPE","name":"Kim"}}}]}
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+fail REQUEST
+```
+<!-- markdownlint-enable MD013 -->
+
+Kontrollera att både Kim och Lo ligger kvar i utkastet och att inget
+sparande finns i ändringshistoriken. Jämför **Kim lades till.** och
+felbeskedet i samtalstexten med den faktiska kontrollerade
+röstleveransen. Ändringen är ett verifierat resultat; felet är ett
+obligatoriskt besked. Leveransen får inte säga **Sparat.** eller påstå
+att Lo lades till av detta uppdrag. Avsluta installationen med `quit`.
+
 ## Avvisad kontroll av hela utkastet
 
 TEXT-15 använder en ny röstinstallation utan `seed-family`. Logga in som

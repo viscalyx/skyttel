@@ -616,6 +616,72 @@ test('a verified voice save retains the failure of its remaining requested expla
   );
 });
 
+test('a verified unsaved voice change retains its details when the required explanation fails', async () => {
+  const model = textModel((body) => {
+    const { draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('submit_changes', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        completion: 'draft',
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: 'kim',
+              baseRevision: null,
+              value: { typeId: draft.changes[0].after.typeId, name: 'Kim' },
+            },
+          },
+        ],
+      }),
+    ];
+  }, saveExplanationAuthorization);
+  const voice = await setupVoice(async (input, init) => {
+    const body = JSON.parse(String(init?.body));
+    if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length)
+      return Response.json(
+        { error: { message: 'Controlled explanation outage.' } },
+        { status: 503 },
+      );
+    return model.provider(input, init);
+  });
+  await proposal(voice.path);
+  await voice.poll();
+  voice.transcript(
+    'Lägg till Kim med samma objekttyp som Formulärförslag och förklara typen. Spara inte.',
+  );
+  voice.delegate();
+  await expect.poll(async () => (await voice.poll()).assistant.phase).toBe('error');
+  const { assistant } = await voice.poll();
+  expect(assistant.result).toMatchObject({
+    kind: 'draft',
+    changes: [{ subject: 'Kim', action: 'lades till' }],
+  });
+  expect(assistant.error).toBe('assistant_model_temporary');
+  expect(assistant.receipt).toBeUndefined();
+  const mapPath = voice.path.replace('/text-assistant', '/map');
+  const map = await (await browser.get(mapPath)).json();
+  expect(map.objects).toEqual([]);
+  expect(map.draft.changes).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ id: 'kim', after: expect.objectContaining({ name: 'Kim' }) }),
+    ]),
+  );
+  expect((await (await browser.get(`${mapPath}/history`)).json()).history).toEqual([]);
+  await expect.poll(() => voiceAnswerParts(voice.live.sent).join('\n')).toContain(assistant.reply);
+  const spoken = voiceAnswerParts(voice.live.sent).join('\n');
+  expect(spoken).toContain('Skyttels resultat (verifierat): Utkastet är uppdaterat.');
+  expect(spoken).toContain('Kim lades till.');
+  expect(spoken).toContain(`Obligatoriskt besked från Skyttel: ${assistant.reply}`);
+  expect(spoken).not.toContain('Sparat.');
+  const { voice: current } = await voice.poll();
+  expect(current.response.text).toContain('Kim lades till.');
+  expect(current.response.text).toContain(assistant.reply);
+});
+
 test('voice commentary separates unverified paraphrased claims and useful questions from actual result proof', async () => {
   const modelReply =
     'Klart. Ändringarna är nu lagrade i hushållets karta. Saved successfully. Vem betalar?';
@@ -712,9 +778,11 @@ test('combined type proposals speak the directed question and retain the verifie
   });
   const content = voiceAnswerParts(voice.live.sent).join('');
   expect(content).toBe(
-    `Skyttels resultat (verifierat): Utkastet är uppdaterat.\nNödvändig fråga (samtalsdata): ${JSON.stringify(question)}`,
+    `Skyttels resultat (verifierat): Utkastet är uppdaterat.\nSambandstypen Delar lades till.\nNödvändig fråga (samtalsdata): ${JSON.stringify(question)}`,
   );
-  expect(status.voice.response.text).toBe(`Utkastet är uppdaterat.\n${question}`);
+  expect(status.voice.response.text).toBe(
+    `Utkastet är uppdaterat.\nSambandstypen Delar lades till.\n${question}`,
+  );
   expect(status.assistant.questionPending).toBe(true);
   expect(status.assistant.receipt).toBeUndefined();
   expect(Buffer.byteLength(content, 'utf8')).toBeLessThanOrEqual(480);

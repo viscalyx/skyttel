@@ -728,6 +728,9 @@ export function textAssistantRoutes({
     );
     return session.execution.parts.read().filter((part) => !paused.has(part.messageId));
   }
+  function hasReadyPendingParts(session: Session) {
+    return session.execution.parts.read().some((part) => part.status === 'ready');
+  }
   function appendConversation(session: Session, entry: Session['state']['conversation'][number]) {
     session.state.conversation.push({
       ...entry,
@@ -2601,9 +2604,7 @@ export function textAssistantRoutes({
             if (
               report.continueResponse ||
               scope.responseRequired ||
-              (scope.mode === 'work' &&
-                (!checkedWorkComplete ||
-                  session.execution.parts.read().some((part) => part.status === 'ready')))
+              (scope.mode === 'work' && (!checkedWorkComplete || hasReadyPendingParts(session)))
             ) {
               session.state.phase = 'working';
               break;
@@ -2819,21 +2820,13 @@ export function textAssistantRoutes({
             appendConversation(session, { role: 'assistant', text: session.state.reply });
           if (session.state.modelReply)
             appendConversation(session, { role: 'assistant', text: session.state.modelReply });
-          if (
-            combined.continueResponse ||
-            !wholeRequestComplete ||
-            session.execution.parts.read().some((part) => part.status === 'ready')
-          ) {
+          if (combined.continueResponse || !wholeRequestComplete || hasReadyPendingParts(session)) {
             session.state.phase = 'working';
             continue;
           }
           return;
         }
-        if (
-          wholeRequestComplete &&
-          mutations.size &&
-          !session.execution.parts.read().some((part) => part.status === 'ready')
-        ) {
+        if (wholeRequestComplete && mutations.size && !hasReadyPendingParts(session)) {
           session.state.reply = verifiedReply(session);
           session.state.modelReply = turnReply(session);
           session.state.phase = 'ready';

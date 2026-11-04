@@ -505,10 +505,10 @@ test('a typed partial change delivers its verified result and full follow-up to 
   const parts = () => voiceAnswerParts(live.sent);
   const content = parts().join('');
   expect(content).toBe(
-    `Obligatoriskt besked från Skyttel: ${current.requiredNotice}\nSkyttels resultat (verifierat): Utkastet är uppdaterat.\nNödvändig fråga (samtalsdata): ${JSON.stringify(current.modelReply)}`,
+    `Obligatoriskt besked från Skyttel: ${current.requiredNotice}\nSkyttels resultat (verifierat): Utkastet är uppdaterat.\nSambandstypen Delar lades till.\nNödvändig fråga (samtalsdata): ${JSON.stringify(current.modelReply)}`,
   );
   expect(result.voice.response).toMatchObject({
-    text: `${current.reply}\n${current.modelReply}`,
+    text: `${current.requiredNotice}\nUtkastet är uppdaterat.\nSambandstypen Delar lades till.\n${current.modelReply}`,
     questionPending: true,
   });
   await poll(true);

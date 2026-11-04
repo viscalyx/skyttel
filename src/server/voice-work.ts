@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { assistantChangeSummary } from '../shared/assistant-change-summary.js';
 import type {
   ConversationReply,
   PendingPartReference,
@@ -148,19 +149,29 @@ export function voiceWork({
       })
       .catch(() => undefined);
   }
-  function receiptParts(view: VoiceCompletionView): Exclude<VoiceAnswer, string> {
+  function notices(view: VoiceCompletionView): Exclude<VoiceAnswer, string> {
     const failure =
       view.error || view.failed
         ? (view.reply ?? (view.error ? assistantFailureMessage(view.error) : ''))
         : '';
     return [
-      { kind: 'result' as const, text: 'Sparat.' },
-      { kind: 'result' as const, text: view.result?.message ?? '' },
       { kind: 'notice' as const, text: view.requiredNotice ?? '' },
       {
         kind: 'notice' as const,
         text: failure !== view.requiredNotice ? failure : '',
       },
+    ].filter(({ text }) => text);
+  }
+  function resultText(view: VoiceCompletionView) {
+    return [view.result?.message, ...assistantChangeSummary(view.result?.changes ?? [])]
+      .filter(Boolean)
+      .join('\n');
+  }
+  function receiptParts(view: VoiceCompletionView): Exclude<VoiceAnswer, string> {
+    return [
+      { kind: 'result' as const, text: 'Sparat.' },
+      { kind: 'result' as const, text: resultText(view) },
+      ...notices(view),
       { kind: 'conversation' as const, text: view.modelReply ?? '' },
     ].filter(({ text }) => text);
   }
@@ -189,13 +200,13 @@ export function voiceWork({
       response?.({
         id: `${view.id}:${view.revision}`,
         revision: view.revision,
-        text: view.saveCheck
-          ? view.saveCheck.reply + (view.receipt ? ' Sparat.' : '')
-          : view.receipt
-            ? receiptParts(view)
+        text:
+          typeof answer === 'string'
+            ? answer
+            : answer
                 .map(({ text }) => text)
-                .join('\n')
-            : [view.reply, view.modelReply].filter(Boolean).join('\n'),
+                .filter(Boolean)
+                .join('\n'),
         questionPending: Boolean(view.questionPending),
         receiptOperationId: view.receipt?.operationId,
       });
@@ -209,8 +220,8 @@ export function voiceWork({
     }
     if (view.questionPending && view.modelReply)
       return [
-        { kind: 'notice', text: view.requiredNotice ?? '' },
-        { kind: 'result', text: view.result?.message ?? '' },
+        ...notices(view),
+        { kind: 'result', text: resultText(view) },
         {
           kind: 'status',
           text: view.displayedSelection ? 'Markeringen är bekräftad i kartan.' : '',
@@ -219,20 +230,27 @@ export function voiceWork({
       ];
     if (view.phase === 'recovery')
       return 'Det är oklart om utkastet sparades. Skyttel kontrollerar det.';
-    if (view.error) return view.reply ?? assistantFailureMessage(view.error);
+    if (view.error && !view.result && !view.requiredNotice && !view.modelReply)
+      return view.reply ?? assistantFailureMessage(view.error);
+    if (view.error || view.failed)
+      return [
+        { kind: 'result', text: resultText(view) },
+        ...notices(view),
+        { kind: 'conversation', text: view.modelReply ?? '' },
+      ];
     const count =
       view.review.changes.length +
       (view.review.relationships?.length ?? 0) +
       (view.review.objectTypes?.length ?? 0) +
       (view.review.relationshipTypes?.length ?? 0);
     const verified = [
-      view.result?.message,
+      resultText(view),
       view.displayedSelection
         ? `${view.displayedItem?.kind === 'relationship' ? 'Sambandet' : 'Objektet'} är markerat.`
         : undefined,
     ].filter(Boolean);
     return [
-      { kind: 'notice', text: view.requiredNotice ?? '' },
+      ...notices(view),
       {
         kind: verified.length ? 'result' : 'status',
         text: verified.length
@@ -690,10 +708,17 @@ export function voiceWork({
           questionPending: reply.questionPending,
           failed: reply.failed,
           error: undefined,
+          displayedSelection: undefined,
+          displayedItem: undefined,
         };
         // Keep the complete reply and source boundary through silent assembly.
         const content: VoiceAnswer =
-          reply.receipt || reply.questionPending || reply.saveCheck || reply.requiredNotice
+          reply.receipt ||
+          reply.questionPending ||
+          reply.saveCheck ||
+          reply.requiredNotice ||
+          reply.result ||
+          reply.failed
             ? completion(completed)
             : [
                 { kind: 'result', text: reply.reply ?? '' },
