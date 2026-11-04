@@ -1,0 +1,995 @@
+import { join } from 'node:path';
+import { type APIRequestContext, request } from '@playwright/test';
+import Database from 'better-sqlite3';
+import { afterEach, expect, test } from 'vitest';
+import type { MapState } from '../../../src/shared/map.js';
+import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { beginAssistant, callAssistant } from '../../support/assistant.js';
+import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
+import { approvedForVisit } from '../../support/conversation.js';
+import { createInstallation } from '../../support/installation.js';
+import { liveProvider } from '../../support/live-provider.js';
+import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
+
+let app: Awaited<ReturnType<typeof createInstallation>>;
+let browser: APIRequestContext;
+let householdId: string;
+let dropNextBatch = false;
+const mapPath = () => `${app.origin}/api/households/${householdId}/map`;
+const read = async (): Promise<MapState> => (await browser.get(mapPath())).json();
+afterEach(async () => {
+  await browser?.dispose();
+  await app?.close();
+});
+
+async function connect() {
+  const flow = await beginAssistant(
+    browser,
+    app.origin,
+    'skyttel:read skyttel:write offline_access',
+  );
+  const consent = await flow.consent(householdId);
+  expect(consent.status()).toBe(200);
+  return (await (await flow.exchange((await consent.json()).url)).json()).access_token as string;
+}
+async function tool(token: string, name: string, args: Record<string, unknown>) {
+  const response = await callAssistant(app.origin, token, name, args);
+  expect(response.status).toBe(200);
+  const body = await response.json();
+  expect(body.error).toBeUndefined();
+  return { error: body.result.isError === true, value: JSON.parse(body.result.content[0].text) };
+}
+
+test('a committed batch and its evidence survive lost HTTP delivery and restart, and replay cannot change the draft twice', {
+  tags: ['technical'],
+}, async () => {
+  app = await createInstallation(undefined, {
+    deliverResponse: async (incoming, response) => {
+      if (new URL(incoming.url).pathname !== '/mcp' || incoming.method !== 'POST') return response;
+      if (!dropNextBatch) return response;
+      dropNextBatch = false;
+      // This runs after the real HTTP/MCP handler has returned its committed
+      // result. Break the actual response stream before any body is delivered.
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.error(new Error('Dropped committed batch response'));
+          },
+        }),
+        { headers: response.headers },
+      );
+    },
+  });
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  ({
+    household: { id: householdId },
+  } = await (await createHousehold(browser, app.origin)).json());
+  let token = await connect();
+  const initial = await read();
+  const batch = {
+    operationId: 'lost-batch',
+    version: initial.draft.version,
+    contentVersion: initial.contentVersion,
+    operations: [
+      {
+        name: 'propose_object',
+        arguments: {
+          id: 'lo',
+          baseRevision: null,
+          value: { typeId: initial.types[0].id, name: 'Lo' },
+        },
+      },
+    ],
+  };
+  dropNextBatch = true;
+  await callAssistant(app.origin, token, 'apply_draft_batch', batch)
+    .then((response) => response.text())
+    .catch(() => undefined);
+  const committed = await read();
+  expect(committed.draft.changes).toMatchObject([{ id: 'lo', after: { name: 'Lo' } }]);
+  expect(committed.draft.version).toBe(1);
+  browser = await restartWithSession(browser, () => app.restart());
+  token = await connect();
+  const recovered = await tool(token, 'read_draft_batch', {
+    operationId: batch.operationId,
+    contentVersion: initial.contentVersion,
+  });
+  expect(recovered.error).toBe(false);
+  expect(recovered.value.batch).toMatchObject({ operationId: 'lost-batch', version: 1 });
+  const replay = await tool(token, 'apply_draft_batch', batch);
+  expect(replay.error).toBe(false);
+  expect(replay.value).toEqual(recovered.value.batch);
+  expect(await read()).toEqual(committed);
+  expect((await (await browser.get(`${mapPath()}/history`)).json()).history).toEqual([]);
+  expect((await (await browser.get(`${mapPath()}/operations`)).json()).operations).toEqual([]);
+});
+
+test.each(['text', 'voice'] as const)(
+  'a %s request recovers its committed batch after lost MCP delivery without another model call',
+  {
+    tags: ['technical'],
+  },
+  async (mode) => {
+    let typeId: string;
+    let dropped = false;
+    let batchId: string | undefined;
+    const model = textModel((body) => {
+      const { draft } = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'lo',
+                baseRevision: null,
+                value: { typeId, name: 'Lo' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    const live = liveProvider();
+    app = await createInstallation(undefined, {
+      modelFetch: model.provider,
+      liveFetch: live.provider,
+      liveSideband: live.attach,
+      assistantDispatch: async (incoming, dispatch) => {
+        const rpc = await incoming
+          .clone()
+          .json()
+          .catch(() => null);
+        const response = await dispatch(incoming);
+        if (rpc?.params?.name === 'apply_draft_batch' && !dropped) {
+          batchId = rpc.params.arguments.operationId;
+          dropped = true;
+          throw new Error('Lost committed MCP response');
+        }
+        return response;
+      },
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    ({
+      household: { id: householdId },
+    } = await (await createHousehold(browser, app.origin)).json());
+    typeId = (await read()).types[0].id;
+    browser = await restartWithSession(browser, () => app.restart());
+    const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+    const post = (path: string, data: unknown) =>
+      browser.post(path, { headers: { origin: app.origin }, data });
+    const started = await post(base, approvedForVisit);
+    expect(started.status()).toBe(201);
+    const session: TextAssistantView = await started.json();
+    const endpoint = `${base}/${session.id}`;
+    if (mode === 'text') {
+      expect(
+        (
+          await post(`${endpoint}/messages`, {
+            requestId: 'recover-batch',
+            revision: session.revision,
+            draftVersion: session.review.version,
+            contentVersion: session.review.contentVersion,
+            text: 'Lägg till Lo utan att spara.',
+          })
+        ).status(),
+      ).toBe(202);
+    } else {
+      expect(
+        (
+          await post(`${endpoint}/voice`, {
+            sdp: 'synthetic-offer',
+            revision: session.revision,
+            draftVersion: session.review.version,
+            contentVersion: session.review.contentVersion,
+          })
+        ).status(),
+      ).toBe(201);
+      const providerId = [...live.channels.keys()][0];
+      live.emit(providerId, {
+        type: 'session.input_transcript.delta',
+        event_id: 'lo-input',
+        delta: 'Lägg till Lo utan att spara.',
+        start_ms: 0,
+        end_ms: 100,
+      });
+      live.emit(providerId, {
+        type: 'session.delegation.created',
+        event_id: 'lo-delegation',
+        offset_ms: 100,
+        delegation: { id: 'lo-work', target: 'client' },
+      });
+    }
+    await expect
+      .poll(
+        async () => {
+          const current: TextAssistantView = await (await browser.get(endpoint)).json();
+          return dropped && current.phase !== 'working' ? current.phase : undefined;
+        },
+        { timeout: 3500 },
+      )
+      .not.toBeUndefined();
+    const completed: TextAssistantView = await (await browser.get(endpoint)).json();
+    expect(dropped).toBe(true);
+    expect((await read()).draft).toMatchObject({
+      version: 1,
+      changes: [{ id: 'lo', after: { name: 'Lo' } }],
+    });
+    expect(model.requests).toHaveLength(1);
+    expect(completed.phase).toBe('ready');
+    expect(batchId).toMatch(/^[\w-]+$/);
+    expect(completed.result).toMatchObject({
+      kind: 'draft',
+      changes: [{ subject: 'Lo', action: 'lades till' }],
+    });
+    expect(completed.error).toBeUndefined();
+    expect(model.requests).toHaveLength(1);
+    expect((await read()).draft).toMatchObject({ version: 1, changes: [{ id: 'lo' }] });
+    browser = await restartWithSession(browser, () => app.restart());
+    expect((await read()).draft).toMatchObject({ version: 1, changes: [{ id: 'lo' }] });
+    const recovered = await tool(await connect(), 'read_draft_batch', {
+      operationId: batchId,
+      contentVersion: 1,
+    });
+    expect(recovered.value.batch).toMatchObject({
+      operationId: batchId,
+      status: 'committed',
+      version: 1,
+      currentDraft: true,
+    });
+    expect(recovered.value.batch.changes).toBeUndefined();
+    expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each(['save', 'discard', 'edit', 'remove', 'independent batch'] as const)(
+  'a later %s retains committed batch evidence without retaining obsolete private values',
+  { tags: ['technical'] },
+  async (transition) => {
+    app = await createInstallation();
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    ({
+      household: { id: householdId },
+    } = await (await createHousehold(browser, app.origin)).json());
+    let token = await connect();
+    const initial = await read();
+    const batch = {
+      operationId: 'earlier-independent-batch',
+      version: 0,
+      contentVersion: 1,
+      operations: [
+        {
+          name: 'propose_object',
+          arguments: {
+            id: 'lo',
+            baseRevision: null,
+            value: { typeId: initial.types[0].id, name: 'HEMLIGT TIDIGARE UTKASTVÄRDE' },
+          },
+        },
+      ],
+    };
+    const applied = await tool(token, 'apply_draft_batch', batch);
+    expect(applied.error).toBe(false);
+    expect(applied.value.currentDraft).toBe(true);
+    const state = await read();
+    if (transition === 'independent batch') {
+      const later = await tool(token, 'apply_draft_batch', {
+        operationId: 'later-independent-batch',
+        version: state.draft.version,
+        contentVersion: 1,
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: 'kim',
+              baseRevision: null,
+              value: { typeId: initial.types[0].id, name: 'Kim' },
+            },
+          },
+        ],
+      });
+      expect(later.error).toBe(false);
+    } else {
+      const route =
+        transition === 'edit' ? 'draft' : transition === 'remove' ? 'discard-change' : transition;
+      const response = await browser.post(`${mapPath()}/${route}`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: 1,
+          ...(transition === 'save' ? { operationId: 'save-original' } : {}),
+          ...(transition === 'remove' ? { kind: 'object', id: 'lo' } : {}),
+          ...(transition === 'edit'
+            ? {
+                id: 'lo',
+                baseRevision: null,
+                value: { typeId: initial.types[0].id, name: 'Aktuellt rättat namn' },
+              }
+            : {}),
+        },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    }
+    const current = await read();
+    const history = await (await browser.get(`${mapPath()}/history`)).json();
+    browser = await restartWithSession(browser, () => app.restart());
+    token = await connect();
+    const recovered = await tool(token, 'read_draft_batch', {
+      operationId: batch.operationId,
+      contentVersion: 1,
+    });
+    expect(recovered.error).toBe(false);
+    expect(recovered.value.batch).toEqual({
+      operationId: batch.operationId,
+      status: 'committed',
+      contentVersion: 1,
+      fromVersion: 0,
+      version: 1,
+      appliedCount: 1,
+      currentDraft: false,
+    });
+    expect(JSON.stringify(recovered.value)).not.toContain('HEMLIGT TIDIGARE UTKASTVÄRDE');
+    const replay = await tool(token, 'apply_draft_batch', batch);
+    expect(replay).toEqual({ error: false, value: recovered.value.batch });
+    expect(await read()).toEqual(current);
+    expect(await (await browser.get(`${mapPath()}/history`)).json()).toEqual(history);
+  },
+);
+
+test('a batch that discards private work retains only committed metadata from its first commit', {
+  tags: ['technical'],
+}, async () => {
+  app = await createInstallation();
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  ({
+    household: { id: householdId },
+  } = await (await createHousehold(browser, app.origin)).json());
+  const initial = await read();
+  expect(
+    (
+      await browser.post(`${mapPath()}/draft`, {
+        headers: { origin: app.origin },
+        data: {
+          version: 0,
+          contentVersion: 1,
+          id: 'private',
+          baseRevision: null,
+          value: { typeId: initial.types[0].id, name: 'HEMLIGT KASTAT UTKASTVÄRDE' },
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  const token = await connect();
+  const batch = {
+    operationId: 'discarding-batch',
+    version: 1,
+    contentVersion: 1,
+    operations: [{ name: 'discard_draft', arguments: {} }],
+  };
+  expect((await tool(token, 'apply_draft_batch', batch)).error).toBe(false);
+  expect((await read()).draft).toEqual({ version: 2, changes: [] });
+  const recovered = await tool(token, 'read_draft_batch', {
+    operationId: batch.operationId,
+    contentVersion: 1,
+  });
+  expect(recovered.error).toBe(false);
+  expect(JSON.stringify(recovered.value)).not.toContain('HEMLIGT KASTAT UTKASTVÄRDE');
+  expect(recovered.value.batch).toEqual({
+    operationId: batch.operationId,
+    status: 'committed',
+    contentVersion: 1,
+    fromVersion: 1,
+    version: 2,
+    appliedCount: 1,
+    currentDraft: true,
+  });
+  expect(await tool(token, 'apply_draft_batch', batch)).toEqual({
+    error: false,
+    value: recovered.value.batch,
+  });
+  expect((await read()).draft).toEqual({ version: 2, changes: [] });
+});
+
+test('a committed batch changed during withheld delivery pauses with its verified outcome and the actual current draft', {
+  tags: ['technical'],
+}, async () => {
+  let typeId: string;
+  let dropped = false;
+  const model = textModel((body) => {
+    const { draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('submit_changes', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        completion: 'draft',
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: 'lo',
+              baseRevision: null,
+              value: { typeId, name: 'Lo' },
+            },
+          },
+        ],
+      }),
+    ];
+  });
+  app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    assistantDispatch: async (incoming, dispatch) => {
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      const response = await dispatch(incoming);
+      if (rpc?.params?.name === 'apply_draft_batch' && !dropped) {
+        const committed = await read();
+        expect(committed.draft).toMatchObject({
+          version: 1,
+          changes: [{ id: 'lo', after: { name: 'Lo' } }],
+        });
+        expect(
+          (
+            await browser.post(`${mapPath()}/draft`, {
+              headers: { origin: app.origin },
+              data: {
+                version: 1,
+                contentVersion: 1,
+                id: 'lo',
+                baseRevision: null,
+                value: { typeId, name: 'Manuellt rättad Lo' },
+              },
+            })
+          ).status(),
+        ).toBe(200);
+        dropped = true;
+        throw new Error('Lost batch response after manual correction');
+      }
+      return response;
+    },
+  });
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  ({
+    household: { id: householdId },
+  } = await (await createHousehold(browser, app.origin)).json());
+  typeId = (await read()).types[0].id;
+  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+  const started = await browser.post(base, {
+    headers: { origin: app.origin },
+    data: approvedForVisit,
+  });
+  expect(started.status()).toBe(201);
+  const session: TextAssistantView = await started.json();
+  const endpoint = `${base}/${session.id}`;
+  expect(
+    (
+      await browser.post(`${endpoint}/messages`, {
+        headers: { origin: app.origin },
+        data: {
+          requestId: 'committed-then-edited',
+          revision: session.revision,
+          draftVersion: 0,
+          contentVersion: 1,
+          text: 'Lägg till Lo utan att spara.',
+        },
+      })
+    ).status(),
+  ).toBe(202);
+  await expect
+    .poll(async () => {
+      const current: TextAssistantView = await (await browser.get(endpoint)).json();
+      return dropped && current.phase !== 'working';
+    })
+    .toBe(true);
+  const completed: TextAssistantView = await (await browser.get(endpoint)).json();
+  expect(dropped).toBe(true);
+  expect((await read()).draft).toMatchObject({
+    version: 2,
+    changes: [{ id: 'lo', after: { name: 'Manuellt rättad Lo' } }],
+  });
+  expect(model.requests).toHaveLength(1);
+  expect(completed.error).toBe('assistant_batch_committed_changed');
+  expect(completed.reply).toContain('genomfördes');
+  expect(completed.review).toMatchObject({
+    version: 2,
+    changes: [{ id: 'lo', after: { name: 'Manuellt rättad Lo' } }],
+  });
+});
+
+test('a direct one-operation change recovers its lost committed response through the durable batch contract', {
+  tags: ['technical'],
+}, async () => {
+  let typeId: string;
+  let dropped = false;
+  const model = textModel((body) => {
+    if (lastToolResult(body)) return [modelMessage('Lo finns i ditt utkast.')];
+    const { draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('propose_object', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        id: 'lo',
+        baseRevision: null,
+        value: { typeId, name: 'Lo' },
+      }),
+    ];
+  });
+  app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    assistantDispatch: async (incoming, dispatch) => {
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      const response = await dispatch(incoming);
+      if (['propose_object', 'apply_draft_batch'].includes(rpc?.params?.name) && !dropped) {
+        dropped = true;
+        throw new Error('Lost committed one-operation response');
+      }
+      return response;
+    },
+  });
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  ({
+    household: { id: householdId },
+  } = await (await createHousehold(browser, app.origin)).json());
+  typeId = (await read()).types[0].id;
+  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+  const started = await browser.post(base, {
+    headers: { origin: app.origin },
+    data: approvedForVisit,
+  });
+  expect(started.status()).toBe(201);
+  const session: TextAssistantView = await started.json();
+  const endpoint = `${base}/${session.id}`;
+  expect(
+    (
+      await browser.post(`${endpoint}/messages`, {
+        headers: { origin: app.origin },
+        data: {
+          requestId: 'direct-recovery',
+          revision: session.revision,
+          draftVersion: 0,
+          contentVersion: 1,
+          text: 'Lägg till Lo utan att spara.',
+        },
+      })
+    ).status(),
+  ).toBe(202);
+  await expect
+    .poll(async () => dropped && (await (await browser.get(endpoint)).json()).phase !== 'working')
+    .toBe(true);
+  const completed: TextAssistantView = await (await browser.get(endpoint)).json();
+  expect(dropped).toBe(true);
+  expect((await read()).draft).toMatchObject({
+    version: 1,
+    changes: [{ id: 'lo', after: { name: 'Lo' } }],
+  });
+  // The normal direct flow may need its ordinary final model response. Recovery
+  // itself must not repeat the instruction or add another work round.
+  expect(model.requests.length).toBeGreaterThanOrEqual(1);
+  expect(model.requests.length).toBeLessThanOrEqual(2);
+  expect(completed.phase).toBe('ready');
+  expect(completed.error).toBeUndefined();
+  if (model.requests[1]) {
+    const result = lastToolResult(model.requests[1]);
+    expect(result).toMatchObject({ version: 1, changes: [{ id: 'lo' }] });
+    expect(result.applied).toBeUndefined();
+    expect(result.operationId).toBeUndefined();
+  }
+  expect((await (await browser.get(`${mapPath()}/history`)).json()).history).toEqual([]);
+});
+
+test('an explicit whole-draft discard recovers lost committed delivery without model work', {
+  tags: ['technical'],
+}, async () => {
+  let dropped = false;
+  const model = textModel(() => {
+    throw new Error('Explicit discard must not start model work');
+  });
+  app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    assistantDispatch: async (incoming, dispatch) => {
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      const response = await dispatch(incoming);
+      if (['discard_draft', 'apply_draft_batch'].includes(rpc?.params?.name) && !dropped) {
+        dropped = true;
+        throw new Error('Lost committed explicit discard response');
+      }
+      return response;
+    },
+  });
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  ({
+    household: { id: householdId },
+  } = await (await createHousehold(browser, app.origin)).json());
+  const initial = await read();
+  expect(
+    (
+      await browser.post(`${mapPath()}/draft`, {
+        headers: { origin: app.origin },
+        data: {
+          version: 0,
+          contentVersion: 1,
+          id: 'private',
+          baseRevision: null,
+          value: { typeId: initial.types[0].id, name: 'Kastat förslag' },
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+  const started = await browser.post(base, {
+    headers: { origin: app.origin },
+    data: approvedForVisit,
+  });
+  expect(started.status()).toBe(201);
+  const session: TextAssistantView = await started.json();
+  const endpoint = `${base}/${session.id}`;
+  const body = {
+    requestId: 'explicit-discard-recovery',
+    revision: session.revision,
+    draftVersion: 1,
+    contentVersion: 1,
+    text: 'Kasta utkastet.',
+  };
+  expect(
+    (
+      await browser.post(`${endpoint}/messages`, { headers: { origin: app.origin }, data: body })
+    ).status(),
+  ).toBe(202);
+  await expect
+    .poll(async () => dropped && (await (await browser.get(endpoint)).json()).phase !== 'working')
+    .toBe(true);
+  expect(dropped).toBe(true);
+  expect((await read()).draft).toEqual({ version: 2, changes: [] });
+  expect(model.requests).toEqual([]);
+  const completed: TextAssistantView = await (await browser.get(endpoint)).json();
+  expect(completed.phase).toBe('ready');
+  expect(completed.discarded).toBe(true);
+  expect(completed.reply).toBe('Utkastet är kastat.');
+  expect(
+    (
+      await browser.post(`${endpoint}/messages`, { headers: { origin: app.origin }, data: body })
+    ).status(),
+  ).toBe(202);
+  expect((await read()).draft).toEqual({ version: 2, changes: [] });
+  browser = await restartWithSession(browser, () => app.restart());
+  expect((await read()).draft).toEqual({ version: 2, changes: [] });
+  expect((await (await browser.get(`${mapPath()}/operations`)).json()).operations).toEqual([]);
+  expect(model.requests).toEqual([]);
+});
+
+test('a recovered direct duplicate relationship preserves existingId and leaves the saved edge unchanged', {
+  tags: ['technical'],
+}, async () => {
+  let edgeType: string;
+  let armed = false;
+  let dropped = false;
+  let delivered: Record<string, unknown> | undefined;
+  const model = textModel((body) => {
+    const result = lastToolResult(body);
+    if (result) {
+      delivered = result;
+      return [modelMessage('Sambandet finns redan.')];
+    }
+    const { draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('propose_relationship', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        id: 'duplicate',
+        baseRevision: null,
+        value: { typeId: edgeType, sourceId: 'source', targetId: 'target' },
+      }),
+    ];
+  });
+  app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    assistantDispatch: async (incoming, dispatch) => {
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      const response = await dispatch(incoming);
+      if (armed && rpc?.params?.name === 'apply_draft_batch') {
+        armed = false;
+        dropped = true;
+        throw new Error('Lost committed duplicate relationship result');
+      }
+      return response;
+    },
+  });
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  ({
+    household: { id: householdId },
+  } = await (await createHousehold(browser, app.origin)).json());
+  const initial = await read();
+  edgeType = initial.relationshipTypes[0].id;
+  const seeded = await tool(await connect(), 'apply_draft_batch', {
+    operationId: 'seed-endpoints',
+    version: 0,
+    contentVersion: 1,
+    operations: [
+      ...['source', 'target'].map((id) => ({
+        name: 'propose_object',
+        arguments: { id, baseRevision: null, value: { typeId: initial.types[0].id, name: id } },
+      })),
+      {
+        name: 'propose_relationship',
+        arguments: {
+          id: 'existing-edge',
+          baseRevision: null,
+          value: { typeId: edgeType, sourceId: 'source', targetId: 'target' },
+        },
+      },
+    ],
+  });
+  expect(seeded.error).toBe(false);
+  expect(
+    (
+      await browser.post(`${mapPath()}/save`, {
+        headers: { origin: app.origin },
+        data: {
+          operationId: 'save-endpoints',
+          version: 3,
+          contentVersion: 1,
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  const before = await read();
+  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+  const started = await browser.post(base, {
+    headers: { origin: app.origin },
+    data: approvedForVisit,
+  });
+  expect(started.status()).toBe(201);
+  const session: TextAssistantView = await started.json();
+  const endpoint = `${base}/${session.id}`;
+  armed = true;
+  expect(
+    (
+      await browser.post(`${endpoint}/messages`, {
+        headers: { origin: app.origin },
+        data: {
+          requestId: 'duplicate-edge-recovery',
+          revision: session.revision,
+          draftVersion: before.draft.version,
+          contentVersion: 1,
+          text: 'Ange om sambandet redan finns, utan att skapa en kopia.',
+        },
+      })
+    ).status(),
+  ).toBe(202);
+  await expect
+    .poll(async () => dropped && (await (await browser.get(endpoint)).json()).phase !== 'working')
+    .toBe(true);
+  expect(dropped).toBe(true);
+  expect(delivered).toMatchObject({ version: 4, existingId: 'existing-edge', changes: [] });
+  expect(delivered?.operationId).toBeUndefined();
+  expect(delivered?.applied).toBeUndefined();
+  expect(await read()).toEqual(before);
+  expect(model.requests).toHaveLength(2);
+});
+
+test('a verified failed later draft batch reports its failure without inventing a save attempt or losing earlier committed work', {
+  tags: ['technical'],
+}, async () => {
+  let typeId: string;
+  let round = 0;
+  const ids: string[] = [];
+  const model = textModel((body) => {
+    const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    const draft = lastToolResult(body)?.review ?? input.draft;
+    const first = round++ === 0;
+    return [
+      modelTool('submit_changes', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        completion: 'draft',
+        continueResponse: first,
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: first ? 'lo' : 'kim',
+              baseRevision: null,
+              value: { typeId, name: first ? 'Lo' : 'Kim' },
+            },
+          },
+        ],
+      }),
+    ];
+  });
+  app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    assistantDispatch: async (incoming, dispatch) => {
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      if (rpc?.params?.name === 'apply_draft_batch') ids.push(rpc.params.arguments.operationId);
+      return dispatch(incoming);
+    },
+  });
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  ({
+    household: { id: householdId },
+  } = await (await createHousehold(browser, app.origin)).json());
+  typeId = (await read()).types[0].id;
+  const storage = new Database(join(app.directory, 'skyttel.db'));
+  storage.exec(
+    "CREATE TRIGGER later_evidence_unavailable BEFORE INSERT ON draft_batch_outcome WHEN NEW.fromVersion = 1 BEGIN SELECT RAISE(ABORT, 'controlled later evidence outage'); END",
+  );
+  storage.close();
+  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+  const started = await browser.post(base, {
+    headers: { origin: app.origin },
+    data: approvedForVisit,
+  });
+  expect(started.status()).toBe(201);
+  const session: TextAssistantView = await started.json();
+  const endpoint = `${base}/${session.id}`;
+  expect(
+    (
+      await browser.post(`${endpoint}/messages`, {
+        headers: { origin: app.origin },
+        data: {
+          requestId: 'independent-then-failed',
+          revision: session.revision,
+          draftVersion: 0,
+          contentVersion: 1,
+          text: 'Lägg till Lo och Kim som självständiga förslag utan att spara.',
+        },
+      })
+    ).status(),
+  ).toBe(202);
+  await expect
+    .poll(async () => (await (await browser.get(endpoint)).json()).phase)
+    .not.toBe('working');
+  const completed: TextAssistantView = await (await browser.get(endpoint)).json();
+  expect(ids).toHaveLength(2);
+  expect(model.requests).toHaveLength(2);
+  expect((await read()).draft).toMatchObject({
+    version: 1,
+    changes: [{ id: 'lo', after: { name: 'Lo' } }],
+  });
+  expect(completed.result?.changes).toEqual([{ subject: 'Lo', action: 'lades till' }]);
+  const grant = await connect();
+  expect(
+    (await tool(grant, 'read_draft_batch', { operationId: ids[0], contentVersion: 1 })).value.batch,
+  ).toMatchObject({ status: 'committed', version: 1, currentDraft: true });
+  expect(
+    (await tool(grant, 'read_draft_batch', { operationId: ids[1], contentVersion: 1 })).value,
+  ).toEqual({ batch: null });
+  expect((await (await browser.get(`${mapPath()}/operations`)).json()).operations).toEqual([]);
+  expect((await (await browser.get(`${mapPath()}/history`)).json()).history).toEqual([]);
+  expect(completed.receipt).toBeUndefined();
+  expect(completed.reply).not.toContain('Sparresultatet');
+  expect(completed.error).toBe('assistant_batch_not_committed');
+  expect(completed.reply).toContain('genomfördes inte');
+});
+
+test('a terminal immutable-request conflict cannot use an earlier committed row as proof that different requested work succeeded', {
+  tags: ['technical'],
+}, async () => {
+  let typeId: string;
+  let seeded = false;
+  let rejected = false;
+  const model = textModel((body) => {
+    const { draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('submit_changes', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        completion: 'draft',
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: 'requested',
+              baseRevision: null,
+              value: { typeId, name: 'Begärt förslag' },
+            },
+          },
+        ],
+      }),
+    ];
+  });
+  app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    assistantDispatch: async (incoming, dispatch) => {
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      if (rpc?.params?.name === 'apply_draft_batch' && !seeded) {
+        seeded = true;
+        // Arrange the collision through the real authorized MCP handler:
+        // another immutable request already uses this very operation ID.
+        const previous = structuredClone(rpc);
+        previous.params.arguments.operations[0].arguments.id = 'earlier';
+        previous.params.arguments.operations[0].arguments.value.name = 'Tidigare förslag';
+        const first = await dispatch(new Request(incoming, { body: JSON.stringify(previous) }));
+        const firstEnvelope = await first.json();
+        expect(firstEnvelope.result.isError).not.toBe(true);
+        const response = await dispatch(incoming);
+        const envelope = await response.clone().json();
+        rejected =
+          envelope.result.isError === true &&
+          JSON.parse(envelope.result.content[0].text).error === 'operation_conflict';
+        return response;
+      }
+      return dispatch(incoming);
+    },
+  });
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  ({
+    household: { id: householdId },
+  } = await (await createHousehold(browser, app.origin)).json());
+  typeId = (await read()).types[0].id;
+  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+  const started = await browser.post(base, {
+    headers: { origin: app.origin },
+    data: approvedForVisit,
+  });
+  expect(started.status()).toBe(201);
+  const session: TextAssistantView = await started.json();
+  const endpoint = `${base}/${session.id}`;
+  expect(
+    (
+      await browser.post(`${endpoint}/messages`, {
+        headers: { origin: app.origin },
+        data: {
+          requestId: 'immutable-conflict',
+          revision: session.revision,
+          draftVersion: 0,
+          contentVersion: 1,
+          text: 'Lägg till det begärda förslaget utan att spara.',
+        },
+      })
+    ).status(),
+  ).toBe(202);
+  await expect
+    .poll(async () => (await (await browser.get(endpoint)).json()).phase)
+    .not.toBe('working');
+  expect(rejected).toBe(true);
+  expect((await read()).draft).toMatchObject({
+    version: 1,
+    changes: [{ id: 'earlier', after: { name: 'Tidigare förslag' } }],
+  });
+  expect(model.requests).toHaveLength(1);
+  const completed: TextAssistantView = await (await browser.get(endpoint)).json();
+  expect(completed.phase).toBe('error');
+  expect(completed.error).toBe('operation_conflict');
+  expect(completed.reply).not.toContain('Sparförsöket');
+  expect(completed.result).toBeUndefined();
+});

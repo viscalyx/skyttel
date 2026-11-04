@@ -1247,6 +1247,59 @@ export function textAssistantRoutes({
     return value;
   }
 
+  async function applyCheckedBatch(
+    session: Session,
+    operations: { name: string; arguments: Record<string, unknown> }[],
+    version: number,
+    contentVersion: number,
+    guard: () => void,
+  ) {
+    const operationId = randomUUID();
+    let value: Awaited<ReturnType<typeof call>>;
+    try {
+      value = await call(
+        session,
+        'apply_draft_batch',
+        {
+          operationId,
+          version,
+          contentVersion,
+          operations,
+        },
+        guard,
+      );
+    } catch (error) {
+      // Inspect this exact identity after a missing response. Never submit
+      // a replacement mutation or start new model work.
+      guard();
+      if (error instanceof MapError && error.code !== 'result_unknown') throw error;
+      const recovered = await call(
+        session,
+        'read_draft_batch',
+        { operationId, contentVersion },
+        guard,
+      );
+      if (!recovered.batch) throw new MapError('assistant_batch_not_committed', 409);
+      value = recovered.batch;
+    }
+    guard();
+    if (
+      value.operationId !== operationId ||
+      value.contentVersion !== contentVersion ||
+      value.fromVersion !== version ||
+      value.appliedCount !== operations.length ||
+      value.status !== 'committed'
+    )
+      throw new MapError('assistant_draft_changed', 409);
+    const after = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
+    session.state.review = after;
+    if (!value.currentDraft || after.version !== value.version) {
+      session.state.result = { kind: 'draft', message: 'Ändringarna genomfördes i utkastet.' };
+      throw new MapError('assistant_batch_committed_changed', 409);
+    }
+    return value;
+  }
+
   // This deliberately narrow command check is not general language
   // verification. Ambiguous, quoted, negative and hypothetical requests need
   // a new clear instruction; a model-supplied approval flag has no authority.
@@ -1385,9 +1438,13 @@ export function textAssistantRoutes({
   function failureMessages(session: Session, error: string) {
     const saveRequested = !!session.state.saveIntent;
     const unsavedNotice = saveRequested ? unsavedDraftNotice(session) : '';
+    const failure =
+      error === 'operation_conflict' && !session.state.pendingSave
+        ? 'Ändringsuppdraget stämmer inte med den tidigare begäran. Granska ditt aktuella utkast innan du fortsätter.'
+        : assistantFailureMessage(error);
     return {
       ordinary:
-        assistantFailureMessage(error) +
+        failure +
         unsavedNotice +
         (saveRequested
           ? ' Din tidigare sparbegäran gäller inte längre. Be om sparande igen när detta är löst.'
@@ -2074,7 +2131,7 @@ export function textAssistantRoutes({
         // The executor owns the atomic transport command. The work model
         // proposes submit_changes, which must pass independent batch review.
         const tools = session.execution.mcp.tools
-          .filter((tool) => tool.name !== 'apply_draft_batch')
+          .filter((tool) => !['apply_draft_batch', 'read_draft_batch'].includes(tool.name))
           .map((tool) => ({
             type: 'function' as const,
             name: tool.name,
@@ -2350,19 +2407,24 @@ export function textAssistantRoutes({
             ),
           );
           if (operations.length) {
-            const value = await call(
+            const beforeBatch = session.state.review;
+            const value = await applyCheckedBatch(
               session,
-              'apply_draft_batch',
-              {
-                version,
-                contentVersion,
-                operations,
-              },
+              operations,
+              version,
+              contentVersion,
               guard,
             );
+            const afterBatch = session.state.review;
             // No operation is recorded as completed until the whole batch has
             // committed. A failed batch preserves its pending parts unchanged.
-            for (const applied of value.applied as {
+            const previousChanges = session.state.result?.changes ?? [];
+            for (const applied of (value.applied ??
+              operations.map((operation) => ({
+                ...operation,
+                before: beforeBatch,
+                after: afterBatch,
+              }))) as {
               name: string;
               arguments: Record<string, unknown>;
               before: TextAssistantReview;
@@ -2376,8 +2438,12 @@ export function textAssistantRoutes({
                 batch.resolves,
               );
             }
+            if (!value.applied && session.state.result)
+              session.state.result.changes = [
+                ...previousChanges,
+                ...draftUpdateDetails(beforeBatch, afterBatch),
+              ];
             session.state.workVersion = value.version;
-            session.state.review = await call(session, 'read_my_draft', {}, guard);
             version = session.state.review.version;
             contentVersion = session.state.review.contentVersion;
           }
@@ -2742,12 +2808,45 @@ export function textAssistantRoutes({
             )
           )
             continue;
-          const value = await call(
-            session,
-            action.name,
-            args,
-            isSave ? currentSaveGuard(session, serial, guard) : guard,
-          );
+          let value: Awaited<ReturnType<typeof call>>;
+          if (!isSave && draftTools.some((tool) => tool.name === action.name)) {
+            const { version: _version, contentVersion: _contentVersion, ...arguments_ } = args;
+            const batch = await applyCheckedBatch(
+              session,
+              [{ name: action.name, arguments: arguments_ }],
+              version,
+              contentVersion,
+              guard,
+            );
+            value = batch.applied?.[0]?.result ?? { ...session.state.review };
+            // Duplicate relationship additions are successful no-ops. Their
+            // original tool contract identifies the actual existing edge.
+            if (action.name === 'propose_relationship' && batch.version === version) {
+              const edge = args.value as { sourceId: string; targetId: string; typeId: string };
+              const saved = await call(session, 'read_map', { objectId: edge.sourceId }, guard);
+              const candidates = [
+                ...(session.state.review.relationships ?? []).flatMap((change) =>
+                  change.after ? [{ ...change.after, id: change.id }] : [],
+                ),
+                ...saved.relationships,
+              ];
+              const existing = candidates.find(
+                (candidate) =>
+                  candidate.typeId === edge.typeId &&
+                  candidate.sourceId === edge.sourceId &&
+                  candidate.targetId === edge.targetId,
+              );
+              if (!existing || (value.existingId && value.existingId !== existing.id))
+                throw new MapError('assistant_batch_committed_changed', 409);
+              value.existingId = existing.id;
+            }
+          } else
+            value = await call(
+              session,
+              action.name,
+              args,
+              isSave ? currentSaveGuard(session, serial, guard) : guard,
+            );
           guard();
           if (action.name === 'save_draft') {
             if (!session.state.pendingSave) throw new Error('invalid_receipt');
@@ -3263,7 +3362,13 @@ export function textAssistantRoutes({
       }
       if (message.answerTo) session.execution.parts.validateReply(message.answerTo);
       if (conversationCommand(message.text)?.discard) {
-        session.state.review = await call(session, 'discard_draft', expected, guard);
+        await applyCheckedBatch(
+          session,
+          [{ name: 'discard_draft', arguments: {} }],
+          expected.version,
+          expected.contentVersion,
+          guard,
+        );
         guard();
         advanceDraftVersion(session, expected.version, session.state.review.version);
         session.state.workVersion = session.state.review.version;
@@ -3441,6 +3546,8 @@ export function textAssistantRoutes({
                 'assistant_scope_unclear',
                 'assistant_scope_unavailable',
                 'assistant_batch_incomplete',
+                'assistant_batch_committed_changed',
+                'assistant_batch_not_committed',
                 'assistant_model_unsupported',
                 'assistant_model_access',
                 'assistant_model_temporary',

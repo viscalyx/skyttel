@@ -42,6 +42,7 @@ import { assertContentAvailable, assertContentVersion } from './content-maintena
 import { draftDiscards } from './draft-discards.js';
 import { householdAccess } from './households.js';
 import { readLifecycle } from './lifecycle.js';
+import { mapDraftBatches } from './map-draft-batches.js';
 import { MapError } from './map-error.js';
 import { mapOperations } from './map-operations.js';
 import { mapTombstones } from './map-tombstones.js';
@@ -73,6 +74,7 @@ export function householdMap(
   const types = objectTypes(database, householdId, userId);
   const edgeTypes = relationshipTypes(database, householdId, userId);
   const operations = mapOperations(database, userId, householdId);
+  const batches = mapDraftBatches(database, householdId, userId);
   const tombstones = mapTombstones(database, householdId);
   function authorize() {
     // Runs inside the same immediate transaction as a mutation or save registration.
@@ -350,6 +352,20 @@ export function householdMap(
     return { current, id, existing, before };
   }
   return {
+    applyDraftBatch(body: Record<string, unknown>, apply: () => Record<string, unknown>) {
+      return draftDiscards(database).atomic(() =>
+        transaction(() => {
+          assertContentVersion(database, householdId, body.contentVersion);
+          return batches.apply(body, draft, apply);
+        }),
+      );
+    },
+    draftBatch(operationId: string, contentVersion: number) {
+      return transaction(() => {
+        assertContentVersion(database, householdId, contentVersion);
+        return { batch: batches.read(operationId, contentVersion, draft()) };
+      });
+    },
     image(id: string) {
       return transaction(() => images.read(id));
     },

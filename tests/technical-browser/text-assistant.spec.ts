@@ -1,11 +1,147 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
+import type { TextAssistantReview } from '../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../support/client.js';
+import { openConversationDraft, startConversationWithText } from '../support/conversation-page.js';
 import { expect, test } from '../support/test.js';
 
 const assistant = (page: Page) => page.getByRole('region', { name: 'Arbetsyta', exact: true });
+
+test('literal text preparation drops a committed batch reply and preserves its proposals across restart', {
+  tag: '@technical',
+}, async ({ page }) => {
+  const preparation = await readFile(
+    new URL('../../docs/manual-tests/text-conversation-preparation.md', import.meta.url),
+    'utf8',
+  );
+  const section = preparation.split('## Tappat ändringsbesked\n')[1]?.split('\n## ')[0];
+  const arm = section?.match(/```text\n(drop-batch)\n```/)?.[1];
+  const readTypes = section?.match(/^tool REQUEST read_type_catalog \{\}$/m)?.[0];
+  const command = section?.match(/^tool REQUEST submit_changes .*$/m)?.[0];
+  expect(arm).toBeDefined();
+  expect(readTypes).toBeDefined();
+  expect(command).toBeDefined();
+  const child = spawn(process.execPath, ['--import', 'tsx', 'scripts/manual-text-assistant.ts'], {
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  const events: {
+    event: string;
+    origin?: string;
+    directory?: string;
+    id?: string;
+    draft?: TextAssistantReview;
+    phase?: string;
+    operationId?: string;
+    lastToolResult?: { contentVersion: number; types: { id: string; name: string }[] };
+  }[] = [];
+  let output = '';
+  let pending = '';
+  let errors = '';
+  child.stdout.on('data', (chunk) => {
+    output += String(chunk);
+    pending += String(chunk);
+    const lines = pending.split('\n');
+    pending = lines.pop() ?? '';
+    for (const line of lines) if (line.trim()) events.push(JSON.parse(line));
+  });
+  child.stderr.on('data', (chunk) => {
+    errors += String(chunk);
+  });
+  let directory: string | undefined;
+  try {
+    await expect.poll(() => events.find((event) => event.event === 'ready')).toBeTruthy();
+    const ready = events.find((event) => event.event === 'ready');
+    const origin = ready?.origin as string;
+    directory = ready?.directory;
+    await signIn(page.request, origin);
+    const { household } = await (await createHousehold(page.request, origin)).json();
+    const path = `${origin}/api/households/${household.id}/map`;
+    const initial = await (await page.request.get(path)).json();
+    expect(
+      (
+        await page.request.post(`${path}/draft`, {
+          headers: { origin },
+          data: {
+            version: 0,
+            contentVersion: initial.contentVersion,
+            id: 'lo',
+            baseRevision: null,
+            value: {
+              typeId: initial.types[0].id,
+              name: 'Lo Exempel',
+              properties: [
+                {
+                  id: 'description',
+                  label: 'Beskrivning',
+                  kind: 'text',
+                  value: 'Påhittad uppgift',
+                },
+              ],
+            },
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    await page.goto(`${origin}/households/${household.id}`);
+    await startConversationWithText(page);
+    await assistant(page)
+      .getByLabel('Meddelande till Skyttel')
+      .fill('Lägg till Kim utan att spara.');
+    await assistant(page).getByRole('button', { name: 'Skicka', exact: true }).click();
+    await expect.poll(() => events.find((event) => event.event === 'held')).toBeTruthy();
+    const first = events.find((event) => event.event === 'held');
+    child.stdin.write(`${readTypes?.replace('REQUEST', first?.id ?? '')}\n`);
+    await expect.poll(() => events.filter((event) => event.event === 'held').length).toBe(2);
+    const held = events.filter((event) => event.event === 'held')[1];
+    const draft = held?.draft as TextAssistantReview;
+    const typeId = held.lastToolResult?.types.find((type) => type.name === 'Person')?.id;
+    expect(typeId).toBeTruthy();
+    child.stdin.write(`${arm}\n`);
+    await expect
+      .poll(() =>
+        events.some((event) => event.event === 'batch-delivery' && event.phase === 'armed'),
+      )
+      .toBe(true);
+    child.stdin.write(
+      `${command
+        ?.replace('REQUEST', held?.id ?? '')
+        .replaceAll('VERSION', String(draft.version))
+        .replaceAll('CONTENT', String(held.lastToolResult?.contentVersion))
+        .replaceAll('TYPE', String(typeId))}\n`,
+    );
+    await expect
+      .poll(() =>
+        events.find(
+          (event) => event.event === 'batch-delivery' && event.phase === 'dropped-after-commit',
+        ),
+      )
+      .toBeTruthy();
+    await expect(page.getByRole('log', { name: 'Samtalstext', exact: true })).toContainText('Kim');
+    await expect(page.getByRole('log', { name: 'Samtalstext', exact: true })).toContainText(
+      'lades till',
+    );
+    const before = await (await page.request.get(path)).json();
+    expect(before.draft).toMatchObject({ version: 2, changes: [{ id: 'lo' }, { id: 'kim' }] });
+    expect(events.filter((event) => event.event === 'held')).toHaveLength(2);
+    child.stdin.write('restart\n');
+    await expect.poll(() => events.find((event) => event.event === 'restarted')).toBeTruthy();
+    await page.reload();
+    await startConversationWithText(page);
+    const retained = await openConversationDraft(page);
+    await expect(retained).toContainText('Lo Exempel');
+    await expect(retained).toContainText('Kim');
+    expect((await (await page.request.get(path)).json()).draft).toEqual(before.draft);
+    expect(events.filter((event) => event.event === 'held')).toHaveLength(2);
+  } finally {
+    child.stdin.end('quit\n');
+    if (child.exitCode === null) await once(child, 'exit');
+    expect(child.exitCode, errors).toBe(0);
+    expect(output).toContain('"event":"closed"');
+    if (directory) await expect(access(directory)).rejects.toThrow();
+  }
+});
 
 test('manual text launcher public preparation seeded rejects an unaccepted delivery', {
   tag: '@technical',

@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
 import type { SaveOperation, SaveReceipt } from '../../src/shared/map.js';
-import type { TextAssistantView } from '../../src/shared/text-assistant.js';
+import type { TextAssistantReview, TextAssistantView } from '../../src/shared/text-assistant.js';
+import { controlledBatchDelivery } from '../support/batch-response-delivery.js';
 import {
   closeSupportDialog,
   closeTextView,
@@ -353,6 +354,73 @@ async function verifyTypedSaveExplanationFailure(page: Page) {
     await app.close();
   }
 }
+
+test('TEXT-16: ett tappat ändringsbesked bevarar tidigare förslag och återfinns utan dubbla ändringar', async ({
+  page,
+}) => {
+  const delivery = controlledBatchDelivery();
+  const model = textModel((body) => {
+    const { draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    const person = lastToolResult(body)?.types?.find(
+      (type: { name: string }) => type.name === 'Person',
+    );
+    if (!person) return [modelTool('read_type_catalog', {})];
+    return [
+      modelTool('submit_changes', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        completion: 'draft',
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: { id: 'kim', baseRevision: null, value: { typeId: person.id, name: 'Kim' } },
+          },
+        ],
+      }),
+    ];
+  });
+  const app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    assistantDispatch: delivery.dispatch,
+  });
+  try {
+    await arrange(page, app);
+    await consent(page);
+    delivery.arm();
+    await send(page, 'Lägg till Kim utan att spara.');
+    await expect(transcript(page)).toContainText('Kim');
+    await expect(transcript(page)).toContainText('lades till');
+    expect(delivery.status().phase).toBe('dropped-after-commit');
+    expect(model.requests).toHaveLength(2);
+    const draft = await showDraft(page);
+    await expect(
+      draft.getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true }),
+    ).toHaveCount(1);
+    await expect(
+      draft.getByRole('button', { name: 'Visa förslaget: Kim', exact: true }),
+    ).toHaveCount(1);
+    await draft.getByRole('button', { name: 'Visa förslaget: Kim', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Kim', exact: true })).toContainText('Person');
+    await closeSupportDialog(page, 'Kim');
+    await app.restart();
+    await page.reload();
+    await openTable(page);
+    await consent(page);
+    const retained = await showDraft(page);
+    await expect(
+      retained.getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true }),
+    ).toHaveCount(1);
+    await expect(
+      retained.getByRole('button', { name: 'Visa förslaget: Kim', exact: true }),
+    ).toHaveCount(1);
+    await expect(transcript(page)).not.toContainText('Sparat.');
+    expect(model.requests).toHaveLength(2);
+  } finally {
+    await app.close();
+  }
+});
 
 test('TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked', async ({
   page,
