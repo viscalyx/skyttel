@@ -3799,11 +3799,9 @@ export function textAssistantRoutes({
         throw new MapError('assistant_turn_changed', 409);
     };
     const task = ownedDraftTask(session);
-    const canceledIds = new Set(
-      [...session.state.accepted]
-        .filter(([, accepted]) => ['queued', 'working'].includes(accepted.status))
-        .map(([id]) => id),
-    );
+    // Completed work can still await delivery. Limit this stop to tasks
+    // accepted now, so work admitted during refresh keeps its delivery.
+    const acceptedIds = new Set(session.state.accepted.keys());
     session.execution.task?.abort();
     session.execution.task = undefined;
     session.state.activeMessage = undefined;
@@ -3836,7 +3834,7 @@ export function textAssistantRoutes({
     await refresh(session, checkContext);
     checkContext();
     for (const [id, accepted] of session.state.accepted) {
-      if (!canceledIds.has(id)) continue;
+      if (!acceptedIds.has(id)) continue;
       session.execution.deliveries.get(id)?.stop();
       if (accepted.status === 'queued' || accepted.status === 'working') {
         accepted.status = 'canceled';
