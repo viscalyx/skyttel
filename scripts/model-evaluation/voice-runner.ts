@@ -4,7 +4,13 @@ import type { createInstallation } from '../../tests/support/installation.js';
 import { assessInability } from './assessment.js';
 import { scenarioHistory } from './catalog.js';
 import { evaluationEnvironment } from './environment.js';
-import { followUpStep, scenarioUtterances, selectFollowUp } from './follow-ups.js';
+import {
+  assistedExchangeTiming,
+  followUpStep,
+  type ScenarioExchange,
+  scenarioUtterances,
+  selectFollowUp,
+} from './follow-ups.js';
 import { evaluationMetrics } from './metrics.js';
 import {
   concludeAttempt,
@@ -30,7 +36,7 @@ import {
   type SourcePlayback,
   speechConnection,
 } from './speech.js';
-import type { Attempt, JudgeInput, JudgeResult, Scenario, ScenarioStep } from './types.js';
+import type { Attempt, JudgeInput, JudgeResult, Scenario } from './types.js';
 
 type PlaybackEvidence = NonNullable<Attempt['playback']>;
 type StateObserver = (status: VoiceAssistantResponse) => Promise<void>;
@@ -129,14 +135,7 @@ export async function runVoiceScenario(
   let sessionTimer: ReturnType<typeof setTimeout> | undefined;
   let closing: Promise<void> | undefined;
   let sessionExpired = false;
-  const queue: {
-    step: ScenarioStep;
-    parent?: string;
-    target?: ScenarioStep;
-    startedAt?: number;
-    previousResponseEndAt?: number;
-    evaluationOverheadMs?: number;
-  }[] = scenario.steps.map((step) => ({ step }));
+  const queue: ScenarioExchange[] = scenario.steps.map((step) => ({ step }));
   async function judgeWithHeartbeat(
     input: JudgeInput,
     retain?: (result: JudgeResult) => void,
@@ -678,19 +677,14 @@ export async function runVoiceScenario(
             observedResponseEndMs: renderedEnd ? renderedEnd.upper - startedAt : null,
             successfulCompletionMs: result.elapsedMs,
           };
-          if (entry.startedAt !== undefined) {
-            const completedAt =
-              completionMs === null ? renderedEnd?.upper : startedAt + completionMs;
-            result.assistedWallElapsedMs =
-              completedAt === undefined ? undefined : completedAt - entry.startedAt;
-            result.assistedEvaluationOverheadMs =
-              (entry.evaluationOverheadMs ?? 0) +
-              Math.max(0, audio.startedAt - (entry.previousResponseEndAt ?? audio.startedAt));
-            result.assistedElapsedMs =
-              result.outcome === 'pass' && result.assistedWallElapsedMs !== undefined
-                ? result.assistedWallElapsedMs - result.assistedEvaluationOverheadMs
-                : null;
-          }
+          Object.assign(
+            result,
+            assistedExchangeTiming(entry, {
+              submittedAt: audio.startedAt,
+              completedAt: completionMs === null ? renderedEnd?.upper : startedAt + completionMs,
+              outcome: result.outcome,
+            }),
+          );
           if (options.followUps && !options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,

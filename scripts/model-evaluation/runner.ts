@@ -6,7 +6,13 @@ import type { ApplicationVersion } from './application.js';
 import { assessInability } from './assessment.js';
 import { scenarioHistory } from './catalog.js';
 import { evaluationEnvironment } from './environment.js';
-import { followUpStep, scenarioUtterances, selectFollowUp } from './follow-ups.js';
+import {
+  assistedExchangeTiming,
+  followUpStep,
+  type ScenarioExchange,
+  scenarioUtterances,
+  selectFollowUp,
+} from './follow-ups.js';
 import { evaluationMetrics } from './metrics.js';
 import {
   concludeAttempt,
@@ -16,7 +22,7 @@ import {
   retainedObservation,
 } from './observations.js';
 import type { ProviderCall } from './provider.js';
-import type { Attempt, JudgeInput, JudgeResult, Scenario, ScenarioStep } from './types.js';
+import type { Attempt, JudgeInput, JudgeResult, Scenario } from './types.js';
 
 export type RunOptions = {
   profile: string;
@@ -76,14 +82,7 @@ export async function runTextScenario(
         }
       : {}),
   });
-  const queue: {
-    step: ScenarioStep;
-    parent?: string;
-    target?: ScenarioStep;
-    startedAt?: number;
-    previousResponseEndAt?: number;
-    evaluationOverheadMs?: number;
-  }[] = scenario.steps.map((step) => ({ step }));
+  const queue: ScenarioExchange[] = scenario.steps.map((step) => ({ step }));
   try {
     for (const [index, entry] of queue.entries()) {
       const { step } = entry;
@@ -241,16 +240,14 @@ export async function runTextScenario(
             observedResponseEndMs: finishedAt - startedAt,
             successfulCompletionMs: result.elapsedMs,
           };
-          if (entry.startedAt !== undefined) {
-            result.assistedWallElapsedMs = finishedAt - entry.startedAt;
-            result.assistedEvaluationOverheadMs =
-              (entry.evaluationOverheadMs ?? 0) +
-              Math.max(0, startedAt - (entry.previousResponseEndAt ?? startedAt));
-            result.assistedElapsedMs =
-              result.outcome === 'pass'
-                ? result.assistedWallElapsedMs - result.assistedEvaluationOverheadMs
-                : null;
-          }
+          Object.assign(
+            result,
+            assistedExchangeTiming(entry, {
+              submittedAt: startedAt,
+              completedAt: finishedAt,
+              outcome: result.outcome,
+            }),
+          );
           if (options.followUps && !options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,

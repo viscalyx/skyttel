@@ -8,6 +8,39 @@ import type {
   ScenarioStep,
 } from './types.js';
 
+export type ScenarioExchange = {
+  step: ScenarioStep;
+  parent?: string;
+  target?: ScenarioStep;
+  startedAt?: number;
+  previousResponseEndAt?: number;
+  evaluationOverheadMs?: number;
+};
+
+/** Exclude harness gaps using each modality's measured submission and completion. */
+export function assistedExchangeTiming(
+  exchange: ScenarioExchange,
+  {
+    submittedAt,
+    completedAt,
+    outcome,
+  }: { submittedAt: number; completedAt: number | undefined; outcome: Attempt['outcome'] },
+): Pick<Attempt, 'assistedWallElapsedMs' | 'assistedEvaluationOverheadMs' | 'assistedElapsedMs'> {
+  if (exchange.startedAt === undefined) return {};
+  const wallElapsedMs = completedAt === undefined ? undefined : completedAt - exchange.startedAt;
+  const evaluationOverheadMs =
+    (exchange.evaluationOverheadMs ?? 0) +
+    Math.max(0, submittedAt - (exchange.previousResponseEndAt ?? submittedAt));
+  return {
+    assistedWallElapsedMs: wallElapsedMs,
+    assistedEvaluationOverheadMs: evaluationOverheadMs,
+    assistedElapsedMs:
+      outcome === 'pass' && wallElapsedMs !== undefined
+        ? wallElapsedMs - evaluationOverheadMs
+        : null,
+  };
+}
+
 /** Continued work has its own safe-state contract, separate from the parent's. */
 export function followUpStep(parent: ScenarioStep, reply: FollowUp): ScenarioStep {
   const retained = reply.safeInability?.preservedRequests;
