@@ -48,7 +48,10 @@ import { sessionDeadline } from './browser-binding.js';
 import type { Config } from './config.js';
 import { contentOwner } from './content-identities.js';
 import { ConversationCapacity, voiceConversationModel } from './conversation-capacity.js';
-import type { ConversationConsents } from './conversation-consent.js';
+import type {
+  ConversationConsentProvenance,
+  ConversationConsents,
+} from './conversation-consent.js';
 import {
   conversationModelProfile,
   enabledModelChoices,
@@ -409,15 +412,15 @@ export function textAssistantRoutes({
   }>();
   // Observation identity is independent of the authorization context. Voice
   // keeps its existing access checks while sharing the backend's one owner.
-  const observationWork = new AsyncLocalStorage<{
-    session: Session;
-    consentTextVersion: number;
-    conversationConsentTextVersion: number;
-    context: AssistantObservationContext;
-    revision: number;
-    deadline: number;
-    providerCallId?: string;
-  }>();
+  const observationWork = new AsyncLocalStorage<
+    ConversationConsentProvenance & {
+      session: Session;
+      context: AssistantObservationContext;
+      revision: number;
+      deadline: number;
+      providerCallId?: string;
+    }
+  >();
   // The conversations that a revoked consent has ended, until the time they
   // would have expired by themselves. Work with them is refused with the reason.
   const revoked = new Map<string, { actorId: string; householdId: string }>();
@@ -4290,6 +4293,33 @@ export function textAssistantRoutes({
       });
   }
   const base = '/households/:id/text-assistant';
+  function createSession(
+    state: ConversationState,
+    execution: Pick<
+      ConversationExecution,
+      'browserSessionId' | 'approvedVersion' | 'mcp' | 'reads'
+    >,
+    expiresAt: number,
+  ): Session {
+    const session: Session = {
+      state,
+      execution: {
+        ...execution,
+        parts: pendingParts(state.pendingPartsLedger),
+        capacity: new ConversationCapacity(
+          modelProfile?.tokens ?? conversationModelProfile(state.modelChoice).tokens,
+          voiceTokens,
+        ),
+        messageTimers: new Map(),
+        deliveries: new Map(),
+        timer: setTimeout(
+          () => expireConversation(session),
+          Math.max(1, expiresAt - now()),
+        ).unref(),
+      },
+    };
+    return session;
+  }
   async function restoreSession(
     actorId: string,
     browserSessionId: string,
@@ -4347,25 +4377,15 @@ export function textAssistantRoutes({
         await mcp.close();
         return existing;
       }
-      const session: Session = {
+      const session = createSession(
         state,
-        execution: {
+        {
           browserSessionId,
           mcp,
           reads: assistantReadCache(database, householdId, owner),
-          parts: pendingParts(state.pendingPartsLedger),
-          capacity: new ConversationCapacity(
-            modelProfile?.tokens ?? conversationModelProfile(state.modelChoice).tokens,
-            voiceTokens,
-          ),
-          messageTimers: new Map(),
-          deliveries: new Map(),
-          timer: setTimeout(
-            () => expireConversation(session),
-            Math.max(1, (state.expiresAt ?? now()) - now()),
-          ).unref(),
         },
-      };
+        state.expiresAt ?? now(),
+      );
       state.review = current;
       state.operations = householdMap(database, actorId, householdId).operations().operations;
       pauseState(
@@ -4526,26 +4546,16 @@ export function textAssistantRoutes({
         resetGeneration: 0,
         completedReplies: [],
       };
-      const session: Session = {
+      const session = createSession(
         state,
-        execution: {
+        {
           browserSessionId,
           approvedVersion: consents.textVersion,
           mcp,
           reads,
-          parts: pendingParts(state.pendingPartsLedger),
-          capacity: new ConversationCapacity(
-            modelProfile?.tokens ?? conversationModelProfile(modelChoice).tokens,
-            voiceTokens,
-          ),
-          messageTimers: new Map(),
-          deliveries: new Map(),
-          timer: setTimeout(
-            () => expireConversation(session),
-            Math.max(1, (state.expiresAt ?? mcp.expiresAt) - now()),
-          ).unref(),
         },
-      };
+        state.expiresAt ?? mcp.expiresAt,
+      );
       try {
         await refresh(session);
       } catch (error) {

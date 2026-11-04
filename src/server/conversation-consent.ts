@@ -6,6 +6,14 @@ import {
 
 export type ConversationConsents = ReturnType<typeof conversationConsents>;
 
+/** Approval for a request is separate from eligibility of its original context. */
+export type ConversationConsentProvenance = {
+  /** Accepted information bound when this request starts, independent of later approval. */
+  consentTextVersion: number;
+  /** Original context eligibility, independent of approval for this request. */
+  conversationConsentTextVersion: number;
+};
+
 /**
  * The conversation consents of the installation, for the consent text version
  * that the running release has. A consent is valid when the user has saved it

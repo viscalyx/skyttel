@@ -2,11 +2,12 @@ import type { ResponseInputItem } from 'openai/resources/responses/responses';
 import type { ConversationModelChoice } from '../shared/conversation-model.js';
 import type { DraftBatchRequest } from '../shared/draft-batch.js';
 import type { PendingPartReference, TextAssistantView } from '../shared/text-assistant.js';
+import type { ConversationConsentProvenance } from './conversation-consent.js';
 import type { PendingPartsState, pendingParts } from './pending-parts.js';
 import type { QueuedRequestReference } from './queued-request-context.js';
 import type { AssistantResultSnapshot } from './text-assistant-snapshot.js';
 
-export type ConversationMessage = {
+export type ConversationMessage = Partial<ConversationConsentProvenance> & {
   id: string;
   text: string;
   voice: boolean;
@@ -24,9 +25,6 @@ export type ConversationMessage = {
   deadline: number;
   /** Authenticated arrival order across conversations sharing one user's household draft. */
   sequence: number;
-  /** Accepted information bound when this request starts, independent of later approval. */
-  consentTextVersion?: number;
-  conversationConsentTextVersion?: number;
   /** Later input revokes this request's unregistered save, even before dequeue. */
   saveSuperseded?: boolean;
   /** Discard requested by an already-reset conversation, with no dialogue turn. */
