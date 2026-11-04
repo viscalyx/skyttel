@@ -1,6 +1,4 @@
 import type Database from 'better-sqlite3';
-import { isDeepStrictEqual } from 'node:util';
-import type { DraftBatchRequest } from '../shared/draft-batch.js';
 import type { ConversationState } from './conversation-state.js';
 import { MapError } from './map-error.js';
 
@@ -60,32 +58,19 @@ export function assertConversationSaveAllowed(
     throw new MapError('assistant_questions_pending', 409);
 }
 
-function unknownBatches(database: Database.Database, owner: string, householdId: string) {
-  if (!available(database)) return [];
-  return database
-    .prepare(`SELECT json_extract(c.state, '$.pendingBatch.request') AS request
-    FROM conversation c JOIN household h ON h.id = c.householdId
-    WHERE c.owner = ? AND c.householdId = ? AND c.contentVersion = h.contentVersion
-    AND c.expiresAt > ? AND json_type(c.state, '$.pendingBatch') = 'object'`)
-    .all(owner, householdId, (clocks.get(database) ?? Date.now)()) as { request: string }[];
-}
 export function conversationBatchPending(
   database: Database.Database,
   owner: string,
   householdId: string,
 ) {
-  return unknownBatches(database, owner, householdId).length > 0;
-}
-/** Only this exact checked batch may cross its own durable outcome barrier. */
-export function assertConversationEditable(
-  database: Database.Database,
-  owner: string,
-  householdId: string,
-  applying?: DraftBatchRequest,
-) {
-  for (const pending of unknownBatches(database, owner, householdId))
-    if (!applying || !isDeepStrictEqual(JSON.parse(pending.request), applying))
-      throw new MapError('assistant_batch_unknown', 409);
+  if (!available(database)) return false;
+  return Boolean(
+    database
+      .prepare(`SELECT 1 FROM conversation c JOIN household h ON h.id = c.householdId
+    WHERE c.owner = ? AND c.householdId = ? AND c.contentVersion = h.contentVersion
+    AND c.expiresAt > ? AND json_type(c.state, '$.pendingBatch') = 'object' LIMIT 1`)
+      .get(owner, householdId, (clocks.get(database) ?? Date.now)()),
+  );
 }
 
 /** Domain snapshots contain no process resources or provider-owned continuation. */
@@ -188,7 +173,8 @@ export function conversationStorage(database: Database.Database, now: () => numb
         database
           .prepare(`SELECT 1 FROM conversation WHERE userId = ?
         AND householdId = ? AND id != ? AND expiresAt > ? AND json_extract(state, '$.paused') = 1
-        AND (json_type(state, '$.activeMessage') = 'object' OR json_array_length(state, '$.queue') > 0)
+        AND (json_type(state, '$.activeMessage') = 'object' OR json_array_length(state, '$.queue') > 0
+        OR json_array_length(state, '$.unfinishedRequests') > 0)
         LIMIT 1`)
           .get(actorId, householdId, exceptId ?? '', now()),
       );

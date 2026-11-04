@@ -74,8 +74,7 @@ export function householdMap(
   const edges = relationships(database, householdId);
   const types = objectTypes(database, householdId, userId);
   const edgeTypes = relationshipTypes(database, householdId, userId);
-  let applyingBatch: DraftBatchRequest | undefined;
-  const operations = mapOperations(database, userId, householdId, () => applyingBatch);
+  const operations = mapOperations(database, userId, householdId);
   const batches = mapDraftBatches(database, householdId, userId);
   const tombstones = mapTombstones(database, householdId);
   function authorize() {
@@ -358,15 +357,7 @@ export function householdMap(
       return draftDiscards(database).atomic(() =>
         transaction(() => {
           assertContentVersion(database, householdId, body.contentVersion);
-          return batches.apply(body, draft, () => {
-            const previous = applyingBatch;
-            applyingBatch = body;
-            try {
-              return apply();
-            } finally {
-              applyingBatch = previous;
-            }
-          });
+          return batches.apply(body, draft, apply);
         }),
       );
     },
