@@ -514,8 +514,7 @@ manuell ändring eller en redan inaktuell begäran fortfarande avvisas.
 1. Skicka **Hållet uppdrag.** i första profilen. Låt terminalens första
    modelluppdrag vänta. Skicka också **Ska strykas.** där.
 2. Skicka **Den andra enhetens uppdrag.** i andra profilen. Läs arbetsraden
-   **Väntar på tidigare uppdrag**. Kontrollera med `pending` enligt
-   förberedelsen att bara det första modelluppdraget har börjat.
+   **Väntar på tidigare uppdrag**.
 3. Tryck Escape i första profilens meddelandefält. Läs **Avbrutet.
    Föreslagna ändringar ligger kvar i utkastet.**
 4. Släpp andra profilens modelluppdrag med svaret **Den andra enhetens
