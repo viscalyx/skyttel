@@ -121,6 +121,11 @@ export function TextView({
     if (body.current && follow.current) body.current.scrollTop = body.current.scrollHeight;
   }, [transcript, working, session?.activity, session?.activitySteps?.length]);
   useLayoutEffect(() => {
+    // Present the paused state and deadline on return, above the retained text.
+    if (session?.paused && body.current) body.current.scrollTop = 0;
+    follow.current = !session?.paused;
+  }, [session?.paused]);
+  useLayoutEffect(() => {
     if (!stop && stopFocused.current) {
       stopFocused.current = false;
       field.current?.focus();
@@ -202,30 +207,6 @@ export function TextView({
               <WorkspaceIcon name="close" />
             </button>
           </header>
-          {session?.expiresAt && (
-            <p role="status" aria-label="Samtalets livslängd">
-              {session.paused && 'Samtalet är pausat. '}
-              Löper ut{' '}
-              <time dateTime={new Date(session.expiresAt).toISOString()}>
-                {new Date(session.expiresAt).toLocaleString('sv-SE')}
-              </time>{' '}
-              efter sju dygn utan ditt meddelande eller uttrycklig återupptagning.
-              {session.paused &&
-                ' Nytt samtal tar bort det tidigare samtalet; utkastet ligger kvar.'}
-            </p>
-          )}
-          {session && (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={(event) => {
-                endFocused.current = document.activeElement === event.currentTarget;
-                void conversation.endConversation();
-              }}
-            >
-              Avsluta samtalet
-            </button>
-          )}
           {widthPreferences?.widthFeedback &&
             !widthPreferences.widthFeedback.includes('återställda') && (
               <p role="status">{widthPreferences.widthFeedback}</p>
@@ -300,6 +281,32 @@ export function TextView({
               follow.current = scrollHeight - scrollTop - clientHeight < 80;
             }}
           >
+            {session && (
+              <div className="text-view-lifetime">
+                {session.expiresAt && (
+                  <p role="status" aria-label="Samtalets livslängd">
+                    {session.paused && 'Samtalet är pausat. '}
+                    Löper ut{' '}
+                    <time dateTime={new Date(session.expiresAt).toISOString()}>
+                      {new Date(session.expiresAt).toLocaleString('sv-SE')}
+                    </time>{' '}
+                    efter sju dygn utan ditt meddelande eller uttrycklig återupptagning.
+                    {session.paused &&
+                      ' Nytt samtal tar bort det tidigare samtalet; utkastet ligger kvar.'}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={(event) => {
+                    endFocused.current = document.activeElement === event.currentTarget;
+                    void conversation.endConversation();
+                  }}
+                >
+                  Avsluta samtalet
+                </button>
+              </div>
+            )}
             {children}
             <ConversationTranscript
               rows={transcript}
