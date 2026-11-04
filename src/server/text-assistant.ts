@@ -59,6 +59,7 @@ import {
 import {
   type ConversationMessage,
   type ConversationState,
+  discardConversationDraftParts,
   syncConversationQuestions,
 } from './conversation-state.js';
 import {
@@ -157,18 +158,19 @@ export function textAssistantRoutes({
   const sessions = new Map<string, Session>();
   let closed = false;
   const storage = conversationStorage(database, now);
-  function persist(session: Session) {
-    if (sessions.get(session.state.id) !== session) return;
-    if (!householdAccess(database, session.state.actorId, session.state.householdId)) return;
+  function canRetainConversation(state: ConversationState) {
+    if (!householdAccess(database, state.actorId, state.householdId)) return false;
     const current = database
       .prepare('SELECT contentVersion FROM household WHERE id = ?')
-      .get(session.state.householdId) as { contentVersion: number } | undefined;
-    if (
-      current?.contentVersion !== session.state.review.contentVersion ||
-      contentOwner(database, session.state.householdId, session.state.actorId) !==
-        session.state.owner
-    )
-      return;
+      .get(state.householdId) as { contentVersion: number } | undefined;
+    return (
+      current?.contentVersion === state.review.contentVersion &&
+      contentOwner(database, state.householdId, state.actorId) === state.owner
+    );
+  }
+  function persist(session: Session) {
+    if (sessions.get(session.state.id) !== session) return;
+    if (!canRetainConversation(session.state)) return;
     if (
       consents.textVersion >= conversationStorageConsentVersion &&
       consents.approvesCurrentText(consents.saved(session.state.actorId, session.state.householdId))
@@ -369,10 +371,11 @@ export function textAssistantRoutes({
     for (const session of sessions.values()) {
       if (session.state.householdId !== event.householdId || session.state.owner !== event.userId)
         continue;
-      session.execution.parts.discard();
-      syncQuestions(session);
-      session.state.saveIntent = undefined;
-      if (!session.execution.task) session.state.workVersion = event.version;
+      discardConversationDraftParts(
+        session.state,
+        session.execution.parts,
+        session.execution.task ? undefined : event.version,
+      );
       persist(session);
     }
   });
@@ -5439,14 +5442,8 @@ export function textAssistantRoutes({
         try {
           session.execution.mcp.checkTaskAccess();
         } catch {
-          const current = database
-            .prepare('SELECT contentVersion FROM household WHERE id = ?')
-            .get(session.state.householdId) as { contentVersion: number } | undefined;
           const canRetain =
-            householdAccess(database, session.state.actorId, session.state.householdId) &&
-            current?.contentVersion === session.state.review.contentVersion &&
-            contentOwner(database, session.state.householdId, session.state.actorId) ===
-              session.state.owner &&
+            canRetainConversation(session.state) &&
             (loginDeadline(session.state.actorId, session.execution.browserSessionId) <= now() ||
               session.execution.mcp.expiresAt <= now());
           void stop(session, { conversation: canRetain ? 'pause' : 'end' });
