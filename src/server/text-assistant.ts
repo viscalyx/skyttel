@@ -2211,6 +2211,18 @@ export function textAssistantRoutes({
     scopeReady: (check: CheckTurnActions, mode: 'read' | 'work') => void,
   ) {
     const serial = session.state.inputSerial ?? 0;
+    const currentObservation = observationWork.getStore();
+    const observed = currentObservation?.session === session ? currentObservation : undefined;
+    // Deferred batch accounting belongs to this work, even after a later
+    // approval or conversation reset changes the session's current context.
+    const observationIdentity = {
+      sessionId: session.state.id,
+      taskId: observed?.context.requestId,
+      revision,
+      consentTextVersion: observed?.consentTextVersion ?? session.state.consentTextVersion,
+      conversationConsentTextVersion:
+        observed?.conversationConsentTextVersion ?? session.state.consentTextVersion,
+    };
     // Only the current whole-message command grants discard authority. Model
     // output, stored content and earlier dialogue cannot expand this turn.
     const discardRequested = conversationCommand(text)?.discard === true;
@@ -3513,7 +3525,6 @@ export function textAssistantRoutes({
       }
       for (const attempt of attempts) {
         if (!attempt.id) continue;
-        const observed = observationWork.getStore();
         const used = Boolean(
           attempt.verified ||
             (attempt.used &&
@@ -3524,11 +3535,8 @@ export function textAssistantRoutes({
         const report = (disposition: 'used' | 'discarded' | 'unknown', reason?: string) => {
           try {
             observe?.({
+              ...observationIdentity,
               at: now(),
-              sessionId: session.state.id,
-              taskId: observed?.context.requestId,
-              revision,
-              consentTextVersion: session.state.consentTextVersion,
               context: observed && {
                 ...observed.context,
                 spanId: randomUUID(),
