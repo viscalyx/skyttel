@@ -8,6 +8,7 @@ import type { EvaluationPlan } from './evaluate.js';
 import plan from './overlap-comparison-plan.json' with { type: 'json' };
 import type { ProviderCall } from './provider.js';
 import type { Attempt, Catalog, Expected, Scenario } from './types.js';
+import { validVoiceStopEvidence } from './user-stop.js';
 
 export type ScenarioVoiceUsage = {
   scenario: string;
@@ -146,8 +147,7 @@ export function compareOverlap(
               ? matches[0].outcome === 'aborted' &&
                 matches[0].scriptedStop?.verdict === 'pass' &&
                 matches[0].scriptedStop?.endpointMs !== null &&
-                (run.plan.modality !== 'voice' ||
-                  Boolean(matches[0].scriptedStop?.audioQuiescedAt && matches[0].playback?.input))
+                (run.plan.modality !== 'voice' || validVoiceStopEvidence(matches[0]))
               : matches[0].outcome === 'pass' &&
                 matches[0].elapsedMs !== null &&
                 matches[0].timing?.successfulCompletionMs === matches[0].elapsedMs &&
@@ -172,7 +172,8 @@ export function compareOverlap(
           endpointMs,
           endpointBounds: valid
             ? scripted && endpointMs !== null
-              ? { lower: endpointMs, upper: endpointMs }
+              ? (ordered[0]?.scriptedStop?.endpointBounds ??
+                (run.plan.modality === 'text' ? { lower: endpointMs, upper: endpointMs } : null))
               : (dialogTiming?.applicationWaitMs ?? null)
             : null,
           dialogTiming,

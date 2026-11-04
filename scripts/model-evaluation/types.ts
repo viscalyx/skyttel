@@ -153,9 +153,10 @@ export type Attempt = {
       endedBeforeAcknowledgment: boolean;
     }[];
     stateFailures: string[];
-    /** Input boundary to verified Stop endpoint, including renderer retirement.
-     * Never an ordinary successfulCompletionMs. */
+    /** Conservative upper input-to-Stop duration, including renderer retirement.
+     * Device uncertainty stays in endpointBounds; never successfulCompletionMs. */
     endpointMs: number | null;
+    endpointBounds?: import('./playback.js').TimeInterval;
     controlMs?: number | null;
     reason?: string;
     limitation: string;

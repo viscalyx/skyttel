@@ -1,7 +1,16 @@
+import { randomUUID } from 'node:crypto';
 import { expect, test } from 'vitest';
+import { prepareComparison } from '../../../scripts/model-evaluation/comparison.js';
+import {
+  compareOverlap,
+  overlapComparison,
+  overlapScenarios,
+} from '../../../scripts/model-evaluation/overlap.js';
+import { verifiedProfile } from '../../../scripts/model-evaluation/provider.js';
 import { runTextScenario } from '../../../scripts/model-evaluation/runner.js';
 import type { Scenario } from '../../../scripts/model-evaluation/types.js';
 import type { MapState } from '../../../src/shared/map.js';
+import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { type ModelRequest, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
 function descriptionChange(body: ModelRequest, description: string) {
@@ -169,12 +178,35 @@ test('Stop preserves a previously completed checked draft batch while rejecting 
   ).toEqual([{ id: 'description', label: 'Beskrivning', kind: 'text', value: 'Läser poesi.' }]);
 });
 
-test('an otherwise allowed state introduced after Stop acknowledgement is rejected', {
-  tags: ['technical'],
-}, async () => {
+async function lateStateChange(
+  pendingRegisteredOutcome = false,
+  startLateTask = false,
+  holdLateTask = false,
+) {
   let canceled = false;
   let changed = false;
+  let requests = 0;
+  let lateStarted!: () => void;
+  const lateStart = new Promise<void>((resolve) => {
+    lateStarted = resolve;
+  });
   const model = textModel(async (_request, signal) => {
+    if (requests++ > 0) {
+      lateStarted();
+      if (holdLateTask)
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, 1500);
+          signal?.addEventListener(
+            'abort',
+            () => {
+              clearTimeout(timer);
+              resolve();
+            },
+            { once: true },
+          );
+        });
+      return [modelMessage('Ett nytt arbete efter stopp.')];
+    }
     await new Promise<void>((resolve) => {
       const timer = setTimeout(resolve, 1500);
       const finish = () => {
@@ -187,7 +219,10 @@ test('an otherwise allowed state introduced after Stop acknowledgement is reject
     return [modelMessage('Sent svar.')];
   });
   const scenario = structuredClone(stopScenario);
-  scenario.steps[0].userStop?.allowedStates.push({
+  const stop = scenario.steps[0].userStop;
+  if (!stop) throw new Error('Missing controlled Stop contract');
+  if (holdLateTask) stop.maximumObservationMs = 200;
+  stop.allowedStates.push({
     objects: {
       lo: {
         properties: [
@@ -209,7 +244,16 @@ test('an otherwise allowed state introduced after Stop acknowledgement is reject
       modelFetch: model.provider,
       deliverResponse: async (request, response) => {
         const path = new URL(request.url).pathname;
-        if (request.method === 'POST' && path.endsWith('/cancel')) canceled = true;
+        if (request.method === 'POST' && path.endsWith('/cancel')) {
+          canceled = true;
+          // Fault at the public delivery boundary: a registered effect remains
+          // pending at acknowledgment, independently of the later forbidden task.
+          if (pendingRegisteredOutcome)
+            return Response.json(
+              { ...(await response.json()), batchPending: true },
+              { status: response.status, headers: response.headers },
+            );
+        }
         if (canceled && !changed && request.method === 'GET' && /\/messages\/[^/]+$/.test(path)) {
           changed = true;
           const base = request.url.split('/text-assistant/')[0];
@@ -244,6 +288,35 @@ test('an otherwise allowed state introduced after Stop acknowledgement is reject
             }),
           });
           expect(mutation.ok).toBe(true);
+          if (startLateTask) {
+            const conversation = request.url.split('/messages/')[0];
+            const current = (await (
+              await fetch(conversation, { headers })
+            ).json()) as TextAssistantView;
+            const requestId = randomUUID();
+            const accepted = await fetch(`${conversation}/messages`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                requestId,
+                revision: current.revision,
+                draftVersion: current.review.version,
+                contentVersion: current.review.contentVersion,
+                text: 'Ett otillåtet nytt uppdrag efter stopp.',
+              }),
+            });
+            expect(accepted.ok).toBe(true);
+            await lateStart;
+            const deadline = Date.now() + 2000;
+            for (; !holdLateTask; ) {
+              const status = (await (
+                await fetch(`${conversation}/messages/${requestId}`, { headers })
+              ).json()) as TextAssistantView;
+              if (status.taskStatus === 'completed') break;
+              if (Date.now() > deadline) throw new Error('Controlled late task did not complete');
+              await new Promise((resolve) => setTimeout(resolve, 10));
+            }
+          }
         }
         return response;
       },
@@ -251,9 +324,83 @@ test('an otherwise allowed state introduced after Stop acknowledgement is reject
     { profile: 'controlled', repetition: 1 },
   );
   expect(changed).toBe(true);
+  return run;
+}
+
+test('an otherwise allowed state introduced after Stop acknowledgement is rejected', {
+  tags: ['technical'],
+}, async () => {
+  const run = await lateStateChange();
   expect(run.attempts[0]).toMatchObject({
     outcome: 'fail',
     elapsedMs: null,
     scriptedStop: { verdict: 'fail', stateFailures: ['state_changed_after_stop_acknowledgment'] },
+  });
+});
+
+test('proven task work after Stop remains a correctness failure alongside unattributed registered effects', {
+  tags: ['technical'],
+}, async () => {
+  const result = await lateStateChange(true, true);
+  expect(result.attempts[0]).toMatchObject({
+    outcome: 'fail',
+    scriptedStop: {
+      verdict: 'fail',
+      reason: 'registered_outcome_attribution_incomplete',
+      stateFailures: expect.arrayContaining(['new_task_work_after_stop_acknowledgment']),
+      endpointMs: null,
+    },
+  });
+  const comparison = prepareComparison(
+    overlapComparison({ directory: '/controlled/app', modality: 'text' }),
+    overlapScenarios(),
+    verifiedProfile('sol-high'),
+    { catalog: 'controlled', audio: 'controlled', judge: 'controlled', followUps: true },
+  );
+  expect(
+    compareOverlap(
+      [
+        {
+          ...result.attempts[0],
+          scenario: 'overlap-early-stop',
+          step: overlapScenarios()[2].steps[0].id,
+          profile: comparison.profile.id,
+          applicationVersion: comparison.versions[0].id,
+          applicationCommit: comparison.versions[0].commit,
+          comparisonContract: comparison.contractId,
+        },
+      ],
+      comparison,
+    ),
+  ).toMatchObject({ status: 'rejected', waitDecision: 'rejected' });
+});
+
+test('an unattributed registered state change without proven late work remains inconclusive', {
+  tags: ['technical'],
+}, async () => {
+  const run = await lateStateChange(true);
+  expect(run.attempts[0]).toMatchObject({
+    outcome: 'inconclusive',
+    scriptedStop: {
+      verdict: 'inconclusive',
+      reason: 'registered_outcome_attribution_incomplete',
+      stateFailures: [],
+      endpointMs: null,
+    },
+  });
+});
+
+test('proven work after Stop remains a failure while later provider settlement is incomplete', {
+  tags: ['technical'],
+}, async () => {
+  const run = await lateStateChange(true, true, true);
+  expect(run.attempts[0]).toMatchObject({
+    outcome: 'fail',
+    scriptedStop: {
+      verdict: 'fail',
+      reason: 'stop_endpoint_observation_incomplete',
+      stateFailures: ['new_task_work_after_stop_acknowledgment'],
+      endpointMs: null,
+    },
   });
 });
