@@ -751,6 +751,11 @@ notisen **Det är oklart om ändringarna genomfördes. Skyttel kontrollerar
 det.** Du kan skriva men inte skicka ett nytt uppdrag under kontrollen.
 Oskickad text finns kvar när resultatet kan verifieras. Kontrollen lägger
 inte till förslagen en gång till och startar inget nytt modellarbete.
+Ett genomfört förslag betyder inte att hela uppdraget är klart. Om en
+beställd förklaring, ett sparande eller annat arbete återstår visas
+**Uppdraget är inte slutfört. Återstående arbete är pausat** tillsammans
+med ändringsbeskedet. Din ursprungliga instruktion finns kvar. Kontrollen
+fortsätter inte det återstående arbetet automatiskt.
 Om utkastet ändras under tiden får du veta att ändringarna genomförs men
 att aktuellt utkast behöver granskas. Läs ditt utkast och förtydliga hur
 du vill fortsätta. Ett registrerat sparförsök följs upp separat, även när

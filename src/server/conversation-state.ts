@@ -95,7 +95,11 @@ export type ConversationState = TextAssistantView & {
     before: TextAssistantView['review'];
     resolves: PendingPartReference[];
     messageId?: string;
+    /** The submitting instruction also survives an explicit conversation reset. */
+    message?: Pick<ConversationMessage, 'text'>;
     discarded: boolean;
+    /** Independent whole-request verdict before delivery; batch evidence alone is insufficient. */
+    finishesRequest: boolean;
   };
   /** Repeated checks preserve the last verified batch result until another turn. */
   batchCheckId?: string;

@@ -80,9 +80,29 @@ block-batch-status off
 
 Invänta beskedet om det redan genomförda Kim-förslaget. Statuskontrollen
 använder samma operation och skapar inget nytt förslag.
-Den inledande typläsningen är förberedande arbete. Återhämtningen efter
-svarsförlust avslutar det verifierade uppdraget utan en ny hållen
-arbetsbegäran.
+Den kontrollerade leverantören intygar inte att hela uppdraget är klart.
+Läs därför även beskedet **Uppdraget är inte slutfört. Återstående arbete
+är pausat**. Ursprunglig instruktion finns kvar. Den inledande typläsningen
+är förberedande arbete. Återhämtningen verifierar endast genomförandet och
+skapar ingen ny hållen arbetsbegäran. Släpp inget extra modellsvar här.
+
+För varianten med beställd förklaring startar operatören en ny kontrollerad
+röstinstallation enligt inledningen. Förbered samma Lo-förslag, starta med
+text och slå på mikrofonen. Användaren skriver **Lägg till Kim utan att
+spara, förklara vad ett utkast betyder och beskriv vilket år uppgifterna
+gäller.** Kör samma typläsning och leveransbortfall ovan. Byt enbart
+förslagskommandot till följande variant med en oberoende väntande fråga:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST submit_changes {"version":VERSION,"contentVersion":CONTENT,"completion":"draft","questions":[{"kind":"information","request":"Beskriv vilket år uppgifterna gäller.","question":"Vilket år gäller beskrivningen?","dependsOnDraft":false}],"operations":[{"name":"propose_object","arguments":{"id":"kim","baseRevision":null,"value":{"typeId":"TYPE","name":"Kim"}}}]}
+```
+<!-- markdownlint-enable MD013 -->
+
+Återställ statuskontrollen enligt ovan. Läs det genomförda förslaget och
+beskedet om pausat återstående arbete i text och kontrollerad röstleverans.
+Frågan **Vilket år gäller beskrivningen?** följer det återhämtade beskedet.
+Ingen förklaring eller nytt sparande startar genom statuskontrollen.
 
 Låt användaren granska Lo och Kim och stänga förslaget. Kör därefter
 `restart`, invänta `restarted` och låt användaren ladda om sidan och

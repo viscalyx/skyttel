@@ -704,7 +704,8 @@ med fortsatt okänt utfall, bevarad spärr och upprepade statuskontroller.
 ### TEXT-16: tappat ändringsbesked återfinns utan dubbla förslag
 
 **Syfte:** Återfinna genomförda osparade ändringar efter ett tappat
-verktygssvar, med tidigare självständiga förslag kvar.
+verktygssvar, med tidigare självständiga förslag kvar. Skilj genomförandet
+från ett slutfört uppdrag när återstående arbete inte är klart.
 
 **Användare:** Alex i den kontrollerade textinstallationen.
 
@@ -730,13 +731,32 @@ om samma server med samma databas vid det angivna steget.
     "spec": "tests/integration/text-assistant.spec.ts",
     "caseId": "TEXT-16"
   },
-  "reference": "Dator; kontrollerad leverantör, genomförda utkaständringar före tappat MCP-svar, tillfälligt otillgänglig statuskontroll och omstart med samma databas.",
+  "reference": "Dator; kontrollerad leverantör, genomförda utkaständringar före tappat MCP-svar, tillfälligt otillgänglig statuskontroll och omstart med samma databas. Separat ny installation prövar ett skrivet uppdrag med beställd förklaring och mikrofonen på. Den enkla textvarianten saknar intyg om hela uppdragets slutförande; förklaringsvarianten har ett batchintyg men kräver fortfarande svar.",
   "outcomes": [
     "Ett verifierat ändringsbesked visas efter tappat verktygssvar.",
     "Nytt arbete väntar tills samma ändringars utfall kan kontrolleras; notisen beskriver ändringar utan att påstå att något sparas.",
-    "Tidigare Lo-förslag och ett enda Kim-förslag ligger kvar osparade även efter omstart."
+    "Tidigare Lo-förslag och ett enda Kim-förslag ligger kvar osparade även efter omstart.",
+    "Genomförandet visas tillsammans med besked om pausat återstående arbete och ursprunglig instruktion när hela uppdraget inte är verifierat klart.",
+    "Beställd men utebliven förklaring blir inte ett lyckat slutbesked i text eller kontrollerad röstleverans; statuskontrollen startar inget nytt arbete.",
+    "Den oberoende väntande frågan om vilket år uppgifterna gäller finns kvar i både text och den återhämtade röstleveransen."
   ],
   "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "status-only recovery preserves unfinished requested explanation in voice",
+      "purpose": "Tappat genomfört ändringsbesked och otillgänglig första statuskontroll får inte ersätta beställd förklaring med ett färdigt uppdrag; den ursprungliga instruktionen och felbeskedet följer även den accepterade begärans publika hämtning."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "status-only recovery checks pending changes after batch resolution with another ready change",
+      "purpose": "En batch slutför sin bevisade väntande del men får inte ge ett färdigt uppdrag när en annan förtydligad ändring återstår."
+    },
     {
       "kind": "technical",
       "runner": "vitest",
@@ -807,14 +827,24 @@ om samma server med samma databas vid det angivna steget.
    Skriv **Vänta med nästa uppdrag.** utan att skicka. Kontrollera att
    **Skicka** inte går att välja.
    Låt operatören återställa statuskontrollen. Läs beskedet att Kim läggs
-   till i utkastet. Kontrollera att den oskickade texten finns kvar och ta
-   sedan bort den.
+   till i utkastet och att uppdraget inte är slutfört, med återstående
+   arbete pausat och ursprunglig instruktion kvar. Kontrollera att den
+   oskickade texten finns kvar och ta sedan bort den.
 2. Välj **Visa utkastet**. Läs det tidigare förslaget om Lo Exempel och ett
    enda förslag om Kim. Öppna Kim-förslaget och kontrollera typen Person.
    Stäng förslaget.
 3. Låt operatören starta om servern. Ladda om sidan, öppna tabellen och
    starta med text igen. Välj **Visa utkastet** och läs samma Lo-förslag och
    ett enda Kim-förslag.
+4. Upprepa i en ny kontrollerad röstinstallation med samma Lo-förslag.
+   Starta med text och slå på mikrofonen. Skriv **Lägg till Kim utan att
+   spara, förklara vad ett utkast betyder och beskriv vilket år uppgifterna
+   gäller.** Upprepa steg 1–3 med samma
+   leveransbortfall. Läs beskedet om genomfört förslag och pausat återstående
+   arbete i text och kontrollerad röstleverans. Kontrollera att hela din
+   instruktion finns kvar i samtalstexten.
+   Läs även **Vilket år gäller beskrivningen?** i text och i den återhämtade
+   röstleveransen. Lämna frågan obesvarad under kontrollen.
 
 **Förväntat resultat:**
 
@@ -823,12 +853,20 @@ om samma server med samma databas vid det angivna steget.
 - Både Lo Exempel och Kim ligger kvar osparade före och efter omstart.
   Inget sparbesked visas. Omstarten bevarar utkastet; ett nytt samtal får
   sitt eget tillstånd.
+- Det genomförda förslaget betyder inte att den uteblivna förklaringen
+  är klar. Beskedet om pausat arbete finns kvar utan ny instruktion,
+  förklaring eller sparande genom statuskontrollen. Om hela det enkla
+  uppdraget har ett separat verifierat slutintyg räcker dess korta
+  ändringsbesked; den kontrollerade manuella textleverantören saknar det.
 
 Separat serverevidens kontrollerar nya och redan öppna samtal i andra
 webbläsare. Deras skickade uppdrag väntar på tidigare ändringars utfall och
 fortsätter sedan i ordning med aktuellt underlag. En manuell rättelse
 under fördröjd utkastläsning finns kvar och ger ett besked om att utkastet
 ändras efter det tidigare genomförandet.
+Ytterligare serverevidens skiljer en slutförd väntande del från en annan
+förtydligad ändring som återstår. Ett senare uttryckligen registrerat
+sparförsök kan kontrolleras även efter ett tidigare ändringsbesked.
 
 ### TEXT-05: markering kräver visning och skyddar oskickad text
 

@@ -48,6 +48,8 @@ export function assistantFailureMessage(code: string): string {
       return 'De senaste ändringarna genomfördes inte. Granska ditt aktuella utkast innan du fortsätter.';
     case 'assistant_batch_unknown':
       return 'Resultatet av de senaste ändringarna är inte bekräftat. Samma ändringar behöver kontrolleras innan arbetet kan fortsätta.';
+    case 'assistant_request_unfinished':
+      return 'Uppdraget är inte slutfört. Återstående arbete är pausat och din ursprungliga instruktion finns kvar.';
     case 'content_conflict':
       return 'Hushållets innehåll har ersatts. Det nya underlaget behöver läsas innan arbetet kan fortsätta.';
     case 'operation_pending':
