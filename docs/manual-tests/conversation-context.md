@@ -1350,7 +1350,31 @@ modells faktiska kontextgräns.
       "suite": "server",
       "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
       "title": "an explicit complete restatement scopes capacity-paused work while retaining the original instruction and unrelated queue",
-      "purpose": "Publik HTTP visar att en fullständig ny avgränsning krävs, att kön förblir pausad och att tidigare sparbegäran inte återupplivas."
+      "purpose": "Publik HTTP visar att en fullständig ny avgränsning krävs, att kön förblir pausad även över samtal och att tidigare sparbegäran inte återupplivas när kön släpps."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "capacity restatement waits for the shared draft barrier executing",
+      "purpose": "En ny avgränsning väntar på ett annat samtals pågående arbete."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "capacity restatement waits for the shared draft barrier preparation",
+      "purpose": "En ny avgränsning väntar på en tidigare reserverad förberedelse."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "capacity restatement waits for the shared draft barrier registered-save",
+      "purpose": "Ett registrerat sparförsök måste få verifierat utfall före en ny avgränsning."
     },
     {
       "kind": "technical",
@@ -1519,9 +1543,57 @@ Detta mäter inte en verklig modells kontextgräns.
       "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
       "title": "queued actions use fresh facts but preserve the admitted target when facts are overbudget",
       "purpose": "Ett underlag som överskrider den lokala storleksgränsen behandlas som ofullständigt och kräver förtydligande; det kortas inte till ett falskt fullständigt underlag."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "queued target stays bound across conversations with executing and replacement=false",
+      "purpose": "Köstart efter ett annat samtals aktiva arbete bevarar det ursprungliga målet vid manuellt namnbyte."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "queued target stays bound across conversations with executing and replacement=true",
+      "purpose": "Ett annat samtals aktiva arbete får inte låta ett ersättningsobjekt bli mål för den äldre begäran."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "queued target stays bound across conversations with preparation and replacement=false",
+      "purpose": "En tidigare reserverad förberedelse bevarar senare köade begärans ursprungliga mål vid namnbyte."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "queued target stays bound across conversations with preparation and replacement=true",
+      "purpose": "En tidigare reserverad förberedelse tillåter inget byte till ett ersättningsobjekt vid köstart."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "queued target stays bound across conversations with target-preparation and replacement=false",
+      "purpose": "Målunderlaget fångas före begärans egen väntan i förberedelse, före manuell namnändring."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "queued target stays bound across conversations with target-preparation and replacement=true",
+      "purpose": "Senare aktuella fakta under förberedelse får inte ersätta det ursprungliga målunderlaget."
     }
   ],
-  "reference": "Namnbyte genom vanligt formulär i UI; byte av referent och tvetydighet har separat tekniskt HTTP-underlag.",
+  "reference": "Namnbyte genom vanligt formulär i UI; byte av referent och tvetydighet samt väntan över samtal och asynkron förberedelse har separat tekniskt HTTP-underlag.",
   "outcomes": [
     "Skyttel ber användaren förtydliga rättelsen och bevarar det manuella namnet Lo Manuell.",
     "Utkast, beskrivning och synlig begäran finns kvar utan nytt sparande."

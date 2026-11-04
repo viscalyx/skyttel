@@ -39,6 +39,7 @@ import {
   interpretTurnScope,
   turnActionData,
 } from './assistant-turn-scope.js';
+import { assistantDraftReview } from './assistant-work.js';
 import type { Auth } from './auth.js';
 import { sessionDeadline } from './browser-binding.js';
 import type { Config } from './config.js';
@@ -145,6 +146,11 @@ export function textAssistantRoutes({
     sequence: number;
     active: boolean;
     advances: { before: number; after: number; contentVersion: number }[];
+    original?: {
+      version: number;
+      reference: ReturnType<typeof captureQueuedReference>;
+      waiting: boolean;
+    };
     body: Promise<unknown>;
     finished: Promise<void>;
     finish: () => void;
@@ -182,6 +188,16 @@ export function textAssistantRoutes({
   function hasEarlierPreparation(session: Session, sequence: number) {
     return [...preparations].some(
       (item) => item.sequence < sequence && draftKey(item.session) === draftKey(session),
+    );
+  }
+  function waitsForDraft(session: Session, sequence: number, current: TextAssistantReview) {
+    return (
+      hasEarlierPreparation(session, sequence) ||
+      draftExecutions.has(draftKey(session)) ||
+      current.pendingOperations.length > 0 ||
+      [...sessions.values()].some(
+        (candidate) => draftKey(candidate) === draftKey(session) && candidate.state.queue.length,
+      )
     );
   }
   function releasePreparation(preparation: Preparation) {
@@ -2659,11 +2675,24 @@ export function textAssistantRoutes({
   function nextMessage(session: Session) {
     const key = draftKey(session);
     if (draftExecutions.has(key)) return;
-    const waiting = [...sessions.values()]
-      .filter((candidate) => draftKey(candidate) === key && candidate.state.queue.length)
-      .sort((left, right) => left.state.queue[0].sequence - right.state.queue[0].sequence)[0];
-    if (!waiting) return;
-    if (hasEarlierPreparation(waiting, waiting.state.queue[0].sequence)) return;
+    const queued = [...sessions.values()]
+      .filter((candidate) => draftKey(candidate) === key)
+      .flatMap((session) => session.state.queue.map((message) => ({ session, message })))
+      .sort((left, right) => left.message.sequence - right.message.sequence);
+    let next = queued[0];
+    if (!next) return;
+    if (next.session.state.capacityPaused && !next.message.restate) {
+      // A complete new scope may pass deliberately paused work. Keep that
+      // work queued, with its save authority revoked, and retain every actual
+      // executing, preparation and registered-save barrier below.
+      const restatement = queued.find(
+        ({ session, message }) => session.state.capacityPaused && message.restate,
+      );
+      if (!restatement) return;
+      next = restatement;
+    }
+    const { session: waiting, message } = next;
+    if (hasEarlierPreparation(waiting, message.sequence)) return;
     try {
       const members = [...sessions.values()].filter((candidate) => draftKey(candidate) === key);
       const operations = householdMap(
@@ -2701,14 +2730,15 @@ export function textAssistantRoutes({
     }
     if (
       waiting.state.phase === 'recovery' ||
-      waiting.state.error === 'assistant_context_capacity' ||
-      waiting.state.capacityPaused ||
-      waiting.state.contextSummaryState === 'failed' ||
+      (!message.restate &&
+        (waiting.state.error === 'assistant_context_capacity' ||
+          waiting.state.capacityPaused ||
+          waiting.state.contextSummaryState === 'failed')) ||
       waiting.state.contextSummaryState === 'summarizing'
     )
       return;
-    const next = waiting.state.queue.shift();
-    if (next) beginMessage(waiting, next, true);
+    waiting.state.queue = waiting.state.queue.filter((candidate) => candidate !== message);
+    beginMessage(waiting, message, true);
   }
   function releaseDraft(session: Session, task: AbortController) {
     const key = draftKey(session);
@@ -2884,15 +2914,7 @@ export function textAssistantRoutes({
     latestAcceptedSequences.set(key, Math.max(latestSequence, message.sequence));
     supersedeSaves(session, message.sequence);
     if (withdrawsSave(message.text)) session.state.saveIntent = undefined;
-    if (
-      message.resetDiscard ||
-      hasEarlierPreparation(session, message.sequence) ||
-      draftExecutions.has(draftKey(session)) ||
-      current.pendingOperations.length ||
-      [...sessions.values()].some(
-        (candidate) => draftKey(candidate) === draftKey(session) && candidate.state.queue.length,
-      )
-    ) {
+    if (message.resetDiscard || waitsForDraft(session, message.sequence, current)) {
       session.state.queue.push(message);
       session.state.queue.sort((left, right) => left.sequence - right.sequence);
       session.state.phase = 'working';
@@ -3495,6 +3517,19 @@ export function textAssistantRoutes({
     try {
       if (preparation) checkPreparation(preparation);
       try {
+        if (preparation) {
+          checkViewAccess(session);
+          // Capture original server facts before any awaited preparation or
+          // delegated read. Later current facts cannot prove the original target.
+          const original = assistantDraftReview(
+            householdMap(database, session.state.actorId, session.state.householdId),
+          );
+          preparation.original = {
+            version: original.version,
+            reference: captureQueuedReference(original),
+            waiting: waitsForDraft(session, preparation.sequence, original),
+          };
+        }
         if (context.req.method === 'GET' && now() >= session.execution.mcp.expiresAt) {
           checkViewAccess(session);
         } else if (context.req.method === 'GET') await refreshConfirmed(session);
@@ -3685,8 +3720,10 @@ export function textAssistantRoutes({
       text: body.text,
       restate: body.restate === true,
       queuedReference:
-        session.execution.task && !session.execution.task.signal.aborted
-          ? captureQueuedReference(current)
+        preparation.original?.waiting ||
+        waitsForDraft(session, preparation.sequence, current) ||
+        current.version !== preparation.original?.version
+          ? (preparation.original?.reference ?? null)
           : undefined,
       voice: body.voiceContext !== undefined,
       answerTo: answerTo.data,

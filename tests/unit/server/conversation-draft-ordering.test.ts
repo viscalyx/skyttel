@@ -207,6 +207,153 @@ test('an earlier message held in preparation keeps its position before another c
 });
 
 test.each([
+  { barrier: 'executing', replacement: false },
+  { barrier: 'executing', replacement: true },
+  { barrier: 'preparation', replacement: false },
+  { barrier: 'preparation', replacement: true },
+  { barrier: 'target-preparation', replacement: false },
+  { barrier: 'target-preparation', replacement: true },
+])(
+  'queued target stays bound across conversations with $barrier and replacement=$replacement',
+  async ({ barrier, replacement }) => {
+    const readGate = heldDraftRead();
+    const { pending: heldModel, release: releaseModel } = heldResponse();
+    const correction = 'Byt namnet på Stolen till Klar stol. Spara inte.';
+    let correctionEntered = false;
+    const model = textModel(
+      async (body) => {
+        const input = JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        );
+        if (input.message !== correction) {
+          await heldModel;
+          return [modelMessage('Läsningen är klar.')];
+        }
+        correctionEntered = true;
+        const target =
+          input.draft.changes.find(
+            (item: { after?: { name: string } }) => item.after?.name === 'Stolen',
+          ) ?? input.draft.changes[0];
+        return [proposeObject(input.draft, target.id, { ...target.after, name: 'Klar stol' })];
+      },
+      (body) => {
+        if (body.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
+          const { current } = JSON.parse(String(body.input[0].content));
+          return [
+            modelMessage(
+              JSON.stringify({
+                mode: current === correction ? 'work' : 'read',
+                request: current,
+              }),
+            ),
+          ];
+        }
+        const { data, operations } = JSON.parse(String(body.input[0].content)).untrusted;
+        const reference = data.queuedReference;
+        // Without original server facts the provider would accept the current
+        // apparent target, reproducing the lost binding rather than guessing it.
+        if (!reference) return [modelMessage('{"decision":"allow","complete":true}')];
+        const original = reference.draft.changes.find(
+          (item: { id: string }) => item.id === operations[0].arguments.id,
+        );
+        const matches = data.draft.changes.filter(
+          (item: { after?: { name: string } }) => item.after?.name === 'Stolen',
+        );
+        return [
+          modelMessage(
+            JSON.stringify(
+              original?.after?.name === 'Stolen' &&
+                matches.length === 1 &&
+                matches[0].id === original.id
+                ? { decision: 'allow', complete: true }
+                : { decision: 'clarify' },
+            ),
+          ),
+        ];
+      },
+    );
+    const first = await arrange(model.provider, readGate.dispatch);
+    await seed(first);
+    const second = await conversation();
+    const initial = await read(first);
+    const addMarker = async (id: string) => {
+      const state = await map(first);
+      expect(
+        (
+          await post(first.client, `${base}/map/draft`, {
+            version: state.draft.version,
+            contentVersion: state.contentVersion,
+            id,
+            baseRevision: null,
+            value: { typeId: state.types[0].id, name: 'Oberoende markör' },
+          })
+        ).status(),
+      ).toBe(200);
+      return map(first);
+    };
+    const arrival = barrier === 'preparation' ? await addMarker('first-marker') : await map(first);
+    const earlierId = crypto.randomUUID();
+    if (barrier === 'preparation') readGate.hold();
+    const earlier = post(first.client, `${first.path}/messages`, {
+      revision: initial.revision,
+      draftVersion: arrival.draft.version,
+      contentVersion: arrival.contentVersion,
+      requestId: earlierId,
+      text: 'Läs färdigt först.',
+    });
+    if (barrier === 'preparation') await expect.poll(() => readGate.held).toBe(true);
+    else {
+      expect((await earlier).status()).toBe(202);
+      await expect.poll(() => model.requests.length).toBe(1);
+    }
+    if (barrier === 'target-preparation') await send(second, 'Läs sedan.');
+    const admitted = await read(second);
+    const targetArrival =
+      barrier === 'target-preparation' ? await addMarker('target-marker') : await map(second);
+    const targetId = crypto.randomUUID();
+    if (barrier === 'target-preparation') readGate.hold();
+    const target = post(second.client, `${second.path}/messages`, {
+      revision: admitted.revision,
+      draftVersion: targetArrival.draft.version,
+      contentVersion: targetArrival.contentVersion,
+      requestId: targetId,
+      text: correction,
+    });
+    if (barrier === 'target-preparation') await expect.poll(() => readGate.held).toBe(true);
+    else expect((await target).status()).toBe(202);
+    await seed(first, 'Manuellt nytt namn');
+    if (replacement) {
+      const state = await map(first);
+      expect(
+        (
+          await post(first.client, `${base}/map/draft`, {
+            version: state.draft.version,
+            contentVersion: state.contentVersion,
+            id: 'replacement-chair',
+            baseRevision: null,
+            value: { typeId: state.types[0].id, name: 'Stolen' },
+          })
+        ).status(),
+      ).toBe(200);
+    }
+    const before = await map(first);
+    readGate.release();
+    const earlierResponse = await earlier;
+    if (barrier === 'preparation') {
+      expect(earlierResponse.status()).toBe(409);
+      expect(await earlierResponse.json()).toEqual({ error: 'assistant_draft_changed' });
+    } else expect(earlierResponse.status()).toBe(202);
+    expect((await target).status()).toBe(202);
+    releaseModel();
+    const final = await completed(second, targetId);
+    expect(correctionEntered).toBe(true);
+    expect(final).toMatchObject({ phase: 'error', error: 'assistant_scope_unclear' });
+    expect(await map(second)).toEqual(before);
+    expect((await (await second.client.get(`${base}/map/history`)).json()).history).toEqual([]);
+  },
+);
+
+test.each([
   { preparing: true, manualChange: false },
   { preparing: true, manualChange: true },
   { preparing: false, manualChange: false },
@@ -281,6 +428,120 @@ test.each([
     });
     expect(changedRetry.status()).toBe(409);
     expect(await changedRetry.json()).toEqual({ error: 'assistant_turn_changed' });
+  },
+);
+
+test.each(['executing', 'preparation', 'registered-save'] as const)(
+  'capacity restatement waits for the shared draft barrier %s',
+  async (barrier) => {
+    const readGate = heldDraftRead();
+    const { pending: held, release } = heldResponse();
+    const narrower = 'Beskriv aktuellt utkast. Spara inte.';
+    let restatementEntered = false;
+    let saveRegistered = false;
+    let overflow = true;
+    const model = textModel(async (body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (input.message === narrower) {
+        restatementEntered = true;
+        if (barrier === 'registered-save')
+          expect(input.saveOperations).toContainEqual(
+            expect.objectContaining({ status: 'succeeded' }),
+          );
+        return [modelMessage('Det aktuella underlaget är läst.')];
+      }
+      if (input.message === 'Spara hela utkastet.')
+        return [
+          modelTool('save_draft', {
+            version: input.draft.version,
+            contentVersion: input.draft.contentVersion,
+          }),
+        ];
+      await held;
+      return [modelMessage('Den tidigare läsningen är klar.')];
+    });
+    const first = await arrange(
+      async (input, init) => {
+        const body = JSON.parse(String(init?.body));
+        if (body.tools.length && overflow) {
+          overflow = false;
+          return Response.json(
+            { error: { code: 'context_length_exceeded', message: 'Controlled capacity stop.' } },
+            { status: 400 },
+          );
+        }
+        return model.provider(input, init);
+      },
+      (incoming, dispatch) =>
+        readGate.dispatch(incoming, async (request) => {
+          const rpc = await request
+            .clone()
+            .json()
+            .catch(() => null);
+          const response = await dispatch(request);
+          if (rpc?.params?.name === 'prepare_save' && barrier === 'registered-save') {
+            saveRegistered = true;
+            await held;
+          }
+          return response;
+        }),
+    );
+    await seed(first);
+    const stopped = await completed(first, await send(first, 'Ett för stort uppdrag.'));
+    expect(stopped).toMatchObject({ phase: 'error', capacityPaused: true });
+    const second = await conversation();
+    const current = await read(second);
+    await seed(first, 'Manuellt aktuell stol');
+    const state = await map(second);
+    if (barrier === 'preparation') readGate.hold();
+    const earlier = post(second.client, `${second.path}/messages`, {
+      revision: current.revision,
+      draftVersion: state.draft.version,
+      contentVersion: state.contentVersion,
+      requestId: crypto.randomUUID(),
+      text: barrier === 'registered-save' ? 'Spara hela utkastet.' : 'Håll läsningen.',
+    });
+    if (barrier === 'preparation') await expect.poll(() => readGate.held).toBe(true);
+    else {
+      expect((await earlier).status()).toBe(202);
+      await expect
+        .poll(() => (barrier === 'registered-save' ? saveRegistered : model.requests.length === 1))
+        .toBe(true);
+    }
+    const paused = await read(first);
+    const restatementId = crypto.randomUUID();
+    const accepted = await post(first.client, `${first.path}/messages`, {
+      revision: paused.revision,
+      draftVersion: paused.review.version,
+      contentVersion: paused.review.contentVersion,
+      requestId: restatementId,
+      text: narrower,
+      restate: true,
+    });
+    expect(accepted.status()).toBe(202);
+    expect((await accepted.json()).taskStatus).toBe('queued');
+    expect(restatementEntered).toBe(false);
+    if (barrier === 'registered-save')
+      expect((await post(second.client, `${second.path}/cancel`, { all: true })).status()).toBe(
+        200,
+      );
+    readGate.release();
+    release();
+    expect((await earlier).status()).toBe(202);
+    expect((await completed(first, restatementId)).error).toBeUndefined();
+    expect(restatementEntered).toBe(true);
+    const final = await map(first);
+    if (barrier === 'registered-save') {
+      expect(final.objects).toMatchObject([{ id: 'chair', name: 'Manuellt aktuell stol' }]);
+      expect(final.draft.changes).toEqual([]);
+    } else {
+      expect(final.objects).toEqual([]);
+      expect(final.draft.changes).toMatchObject([
+        { id: 'chair', after: { name: 'Manuellt aktuell stol' } },
+      ]);
+    }
   },
 );
 
