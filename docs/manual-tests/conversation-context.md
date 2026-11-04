@@ -2172,6 +2172,11 @@ med kontrollerad modell och Live. Mikrofon och media är kontrollerade och
 tysta; fysisk mikrofon, hört tal och skärmläsare provas separat.
 Separat HTTP-underlag använder ett verkligt lagringsfel för att kontrollera
 att ett okänt registrerat sparutfall behåller paus och spärr vid återupptagning.
+Ett annat HTTP-underlag startar om med två separata oavslutade samtal.
+Det äldre kan återupptas medan det yngre förblir pausat tills användaren
+uttryckligen återupptar även det.
+Om båda i stället väntar på förtydligande kan frågan i det äldre besvaras.
+En väntande ändringsdel i det yngre behåller samtidigt sin spärr mot sparande.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -2213,6 +2218,22 @@ att ett okänt registrerat sparutfall behåller paus och spärr vid återupptagn
       "spec": "tests/unit/server/conversation-resume-http.test.ts",
       "title": "explicit resume after actual restart continues the interrupted identity before its queue without duplicating conversation turns",
       "purpose": "En verklig omstart behåller uppdragens identitet och ordning utan dubbla samtalsrader."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-resume-http.test.ts",
+      "title": "after actual restart the oldest retained conversation resumes while its younger conversation stays paused until explicitly resumed",
+      "purpose": "Ett yngre pausat samtal blockerar inte det äldre efter omstart. Det yngre startar först efter sin egen uttryckliga återupptagning."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-resume-http.test.ts",
+      "title": "after actual restart an older retained question can be answered while a younger question stays paused and blocks saving",
+      "purpose": "Ett slutfört modelluppdrag med kvarvarande fråga hindrar inte svar i ett annat återupptaget samtal. En väntande ändringsdel behåller spärren mot sparande."
     },
     {
       "kind": "technical",

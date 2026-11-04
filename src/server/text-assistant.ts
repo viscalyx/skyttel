@@ -269,7 +269,12 @@ export function textAssistantRoutes({
       hasEarlierPreparation(session, sequence) ||
       draftExecutions.has(draftKey(session)) ||
       draftHasPendingBatch(session) ||
-      storage.pausedWork(session.state.actorId, session.state.householdId, session.state.id) ||
+      storage.pausedWork(
+        session.state.actorId,
+        session.state.householdId,
+        session.state.id,
+        sequence,
+      ) ||
       current.pendingOperations.length > 0 ||
       [...sessions.values()].some(
         (candidate) => draftKey(candidate) === draftKey(session) && candidate.state.queue.length,
@@ -3637,6 +3642,7 @@ export function textAssistantRoutes({
         next.session.state.actorId,
         next.session.state.householdId,
         next.session.state.id,
+        next.message.sequence,
       )
     )
       return;
@@ -3843,6 +3849,30 @@ export function textAssistantRoutes({
         ),
       );
   }
+  function bindMessageResources(
+    session: Session,
+    message: Message,
+    deliveryConnectionId?: string,
+    deliveryAudio = false,
+  ) {
+    session.execution.deliveries.set(
+      message.id,
+      deliveries.bind(
+        deliveryConnectionId,
+        message.id,
+        message.deadline,
+        () => messageAccess(session, message),
+        deliveryAudio,
+      ),
+    );
+    session.execution.messageTimers.set(
+      message,
+      setTimeout(
+        () => expireMessage(session, message),
+        Math.max(1, message.deadline - now()),
+      ).unref(),
+    );
+  }
   function admitMessage(
     session: Session,
     message: Message,
@@ -3866,24 +3896,8 @@ export function textAssistantRoutes({
       receivedAt: message.receivedAt,
       deadline: message.deadline,
     });
-    session.execution.deliveries.set(
-      message.id,
-      deliveries.bind(
-        deliveryConnectionId,
-        message.id,
-        message.deadline,
-        () => messageAccess(session, message),
-        message.voice || deliveryAudio,
-      ),
-    );
+    bindMessageResources(session, message, deliveryConnectionId, message.voice || deliveryAudio);
     syncWork();
-    session.execution.messageTimers.set(
-      message,
-      setTimeout(
-        () => expireMessage(session, message),
-        Math.max(1, message.deadline - now()),
-      ).unref(),
-    );
     session.state.inputSerial = (session.state.inputSerial ?? 0) + 1;
     const key = draftKey(session);
     const latestSequence = latestAcceptedSequences.get(key) ?? -1;
@@ -3924,16 +3938,7 @@ export function textAssistantRoutes({
     accepted.deadline = message.deadline;
     accepted.result = undefined;
     session.execution.deliveries.get(message.id)?.stop();
-    session.execution.deliveries.set(
-      message.id,
-      deliveries.bind(deliveryConnectionId, message.id, message.deadline, () =>
-        messageAccess(session, message),
-      ),
-    );
-    session.execution.messageTimers.set(
-      message,
-      setTimeout(() => expireMessage(session, message), message.deadline - now()).unref(),
-    );
+    bindMessageResources(session, message, deliveryConnectionId);
     session.state.saveIntent = undefined;
     session.state.saveIntentDeadline = undefined;
     session.execution.reads.clear();

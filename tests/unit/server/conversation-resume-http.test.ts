@@ -7,7 +7,7 @@ import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
-import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import { modelMessage, modelTool, pendingUpdate, textModel } from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let crashDirectory: string | undefined;
@@ -348,6 +348,169 @@ test('explicit resume after actual restart continues the interrupted identity be
   } finally {
     release([modelMessage('Det sena gamla svaret får inte användas.')]);
   }
+});
+
+test('after actual restart the oldest retained conversation resumes while its younger conversation stays paused until explicitly resumed', async () => {
+  let release!: (value: unknown[]) => void;
+  const held = new Promise<unknown[]>((resolve) => {
+    release = resolve;
+  });
+  const started: string[] = [];
+  let calls = 0;
+  const model = textModel((body) => {
+    if (calls++ === 0) return held;
+    const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    started.push(input.message);
+    return [modelMessage(`Klart: ${input.message}`)];
+  });
+  app = await createInstallation(undefined, { modelFetch: model.provider });
+  const first = await browser();
+  const { household } = await (await createHousehold(first, app.origin)).json();
+  const path = `${app.origin}/api/households/${household.id}/text-assistant`;
+  const post = (client: APIRequestContext, url: string, data: object = {}) =>
+    client.post(url, { headers: { origin: app.origin }, data });
+  const send = async (client: APIRequestContext, state: TextAssistantView, text: string) => {
+    const response = await post(client, `${path}/${state.id}/messages`, {
+      requestId: crypto.randomUUID(),
+      revision: state.revision,
+      draftVersion: state.review.version,
+      contentVersion: state.review.contentVersion,
+      text,
+      queue: true,
+    });
+    expect(response.status(), await response.text()).toBe(202);
+    return (await response.json()) as TextAssistantView;
+  };
+  try {
+    const older = await send(
+      first,
+      await (await post(first, path, approvedForVisit)).json(),
+      'Först garaget, utan ändringar.',
+    );
+    await expect.poll(() => model.requests.length).toBe(1);
+    const second = await browser();
+    const younger = await send(
+      second,
+      await (await post(second, path, approvedForVisit)).json(),
+      'Sedan cykeln, utan ändringar.',
+    );
+    expect(younger.queuedMessages).toBe(1);
+    await app.restart();
+    const other = await browser();
+    const opened = await post(other, `${path}/retained/${older.id}/open`);
+    expect(opened.status(), await opened.text()).toBe(200);
+    expect(await opened.json()).toMatchObject({ paused: true });
+    const resumed = await post(other, `${path}/${older.id}/resume`, approvedForVisit);
+    expect(resumed.status(), await resumed.text()).toBe(200);
+    await expect
+      .poll(async () => (await (await other.get(`${path}/${older.id}`)).json()).phase)
+      .toBe('ready');
+    expect(started).toEqual(['Först garaget, utan ändringar.']);
+    const retained = await (await other.get(`${path}/retained`)).json();
+    expect(retained.conversations).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: younger.id, paused: true })]),
+    );
+    const youngerOpened = await post(other, `${path}/retained/${younger.id}/open`);
+    expect(youngerOpened.status(), await youngerOpened.text()).toBe(200);
+    expect(await youngerOpened.json()).toMatchObject({ paused: true, queuedMessages: 1 });
+    expect(started).toEqual(['Först garaget, utan ändringar.']);
+    expect((await post(other, `${path}/${younger.id}/resume`, approvedForVisit)).status()).toBe(
+      200,
+    );
+    await expect
+      .poll(async () => (await (await other.get(`${path}/${younger.id}`)).json()).phase)
+      .toBe('ready');
+    expect(started).toEqual(['Först garaget, utan ändringar.', 'Sedan cykeln, utan ändringar.']);
+    expect(model.requests).toHaveLength(3);
+  } finally {
+    release([modelMessage('Det gamla svaret får inte användas.')]);
+  }
+});
+
+test('after actual restart an older retained question can be answered while a younger question stays paused and blocks saving', async () => {
+  const model = textModel((body) => {
+    const call = model.requests.length;
+    if (call <= 2)
+      return [
+        modelTool('ask_questions', {
+          questions: [
+            {
+              kind: call === 1 ? 'information' : 'change',
+              request: call === 1 ? 'Beskriv garaget.' : 'Byt cykelns namn till Blå.',
+              question: call === 1 ? 'Vilket garage?' : 'Vilken cykel?',
+              dependsOnDraft: call !== 1,
+            },
+          ],
+        }),
+      ];
+    if (call === 3)
+      return [
+        modelTool('ask_questions', {
+          questions: [],
+          updates: [pendingUpdate(body, 'Vilket garage?', { answer: 'Garaget heter Västra.' })],
+          continueResponse: true,
+        }),
+      ];
+    return [modelMessage('Garaget heter Västra.')];
+  });
+  app = await createInstallation(undefined, { modelFetch: model.provider });
+  const first = await browser();
+  const { household } = await (await createHousehold(first, app.origin)).json();
+  const root = `${app.origin}/api/households/${household.id}`;
+  const path = `${root}/text-assistant`;
+  const post = (client: APIRequestContext, url: string, data: object = {}) =>
+    client.post(url, { headers: { origin: app.origin }, data });
+  const send = async (client: APIRequestContext, state: TextAssistantView, text: string) => {
+    const response = await post(client, `${path}/${state.id}/messages`, {
+      requestId: crypto.randomUUID(),
+      revision: state.revision,
+      draftVersion: state.review.version,
+      contentVersion: state.review.contentVersion,
+      text,
+    });
+    expect(response.status(), await response.text()).toBe(202);
+  };
+  const question = async (client: APIRequestContext, text: string) => {
+    let state: TextAssistantView = await (await post(client, path, approvedForVisit)).json();
+    await send(client, state, text);
+    await expect
+      .poll(async () => {
+        state = await (await client.get(`${path}/${state.id}`)).json();
+        return state.tasks?.at(-1)?.status;
+      })
+      .toBe('completed');
+    expect(state).toMatchObject({ phase: 'ready', questionPending: true, queuedMessages: 0 });
+    expect(state.unfinishedRequests).toHaveLength(1);
+    return state;
+  };
+  const older = await question(first, 'Beskriv garaget.');
+  const second = await browser();
+  const younger = await question(second, 'Byt cykelns namn till Blå.');
+  expect(younger.saveBlocked).toBe(true);
+  await app.restart();
+  const other = await browser();
+  const opened = await post(other, `${path}/retained/${older.id}/open`);
+  expect(opened.status(), await opened.text()).toBe(200);
+  expect(await opened.json()).toMatchObject({ paused: true, questions: ['Vilket garage?'] });
+  const resumed = await post(other, `${path}/${older.id}/resume`, approvedForVisit);
+  expect(resumed.status(), await resumed.text()).toBe(200);
+  expect(model.requests).toHaveLength(2);
+  await send(other, await resumed.json(), 'Det västra garaget.');
+  await expect
+    .poll(async () => (await (await other.get(`${path}/${older.id}`)).json()).modelReply)
+    .toBe('Garaget heter Västra.');
+  expect(model.requests).toHaveLength(4);
+  const retained = await (await other.get(`${path}/retained`)).json();
+  expect(retained.conversations).toEqual(
+    expect.arrayContaining([expect.objectContaining({ id: younger.id, paused: true })]),
+  );
+  const manualSave = await post(other, `${root}/map/operations`, {
+    operationId: 'younger-question-still-blocks-saving',
+    version: older.review.version,
+    contentVersion: older.review.contentVersion,
+  });
+  expect(manualSave.status(), await manualSave.text()).toBe(409);
+  expect(await manualSave.json()).toEqual({ error: 'assistant_questions_pending' });
 });
 
 test('a new request after reopening an active crash image waits for earlier retained work before that conversation is loaded', async () => {
