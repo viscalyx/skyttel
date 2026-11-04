@@ -53,6 +53,31 @@ async function setup(options: Parameters<typeof createInstallation>[1]) {
 const post = (url: string, data: object) =>
   browser.post(url, { headers: { origin: app.origin }, data });
 const readMap = async (): Promise<MapState> => (await browser.get(`${base}/map`)).json();
+async function seedUnrelatedTable(session: TextAssistantView) {
+  const before = await readMap();
+  const added = await post(`${base}/map/draft`, {
+    version: before.draft.version,
+    contentVersion: before.contentVersion,
+    id: 'a',
+    baseRevision: null,
+    value: {
+      typeId: before.types[0].id,
+      name: 'Annat bord',
+      properties: [
+        {
+          id: 'private-detail',
+          label: 'Beskrivning',
+          kind: 'text',
+          value: 'Orelaterad bordsuppgift',
+        },
+      ],
+    },
+  });
+  expect(added.status(), await added.text()).toBe(200);
+  return (
+    await browser.get(`${base}/text-assistant/${session.id}`)
+  ).json() as Promise<TextAssistantView>;
+}
 async function send(
   session: TextAssistantView,
   text = 'Beskriv mitt utkast.',
@@ -258,27 +283,7 @@ test('verified relevant start facts answer directly while unrelated draft detail
       : [modelTool('read_my_draft', {})];
   });
   const session = await setup({ modelFetch: model.provider });
-  const before = await readMap();
-  const added = await post(`${base}/map/draft`, {
-    version: before.draft.version,
-    contentVersion: before.contentVersion,
-    id: 'a',
-    baseRevision: null,
-    value: {
-      typeId: before.types[0].id,
-      name: 'Annat bord',
-      properties: [
-        {
-          id: 'private-detail',
-          label: 'Beskrivning',
-          kind: 'text',
-          value: 'Orelaterad bordsuppgift',
-        },
-      ],
-    },
-  });
-  expect(added.status(), await added.text()).toBe(200);
-  const fresh = await (await browser.get(`${base}/text-assistant/${session.id}`)).json();
+  const fresh = await seedUnrelatedTable(session);
   const final = await settled(await send(fresh, 'Vad heter Min stol i mitt utkast?'));
   expect(final).toMatchObject({ phase: 'ready', modelReply: 'Stolen heter Min stol.' });
   expect(model.requests).toHaveLength(1);
@@ -328,27 +333,7 @@ test.each(['batch', 'single'])(
       liveFetch: live.provider,
       liveSideband: live.attach,
     });
-    const before = await readMap();
-    const added = await post(`${base}/map/draft`, {
-      version: before.draft.version,
-      contentVersion: before.contentVersion,
-      id: 'a',
-      baseRevision: null,
-      value: {
-        typeId: before.types[0].id,
-        name: 'Annat bord',
-        properties: [
-          {
-            id: 'private-detail',
-            label: 'Beskrivning',
-            kind: 'text',
-            value: 'Orelaterad bordsuppgift',
-          },
-        ],
-      },
-    });
-    expect(added.status()).toBe(200);
-    const fresh = await (await browser.get(`${base}/text-assistant/${session.id}`)).json();
+    const fresh = await seedUnrelatedTable(session);
     const final = await settled(
       await send(fresh, 'Rätta Min stol till Min stol Klar och beskriv resultatet. Spara inte.'),
     );

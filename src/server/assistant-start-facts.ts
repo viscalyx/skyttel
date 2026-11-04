@@ -30,6 +30,16 @@ export function assistantFactReferences(message: string, earlier: readonly strin
   return references;
 }
 
+export function assistantFactRelevanceText(
+  message: string,
+  earlier: readonly string[],
+  references: readonly string[] = [],
+) {
+  return [message, ...references, ...assistantFactReferences(message, earlier)]
+    .join(' ')
+    .toLocaleLowerCase('sv');
+}
+
 /** Context selection grants no authority and never proves that omitted facts
  * are absent. Full draft reads and the independent checker remain available. */
 export function assistantStartDraft(
@@ -46,9 +56,7 @@ export function assistantStartDraft(
   )
     return { ...review, complete: true };
   const indirect = /\b(?:den|det|samma|sista|senaste|förslaget|namnet)\b/u.test(normalized);
-  const text = [message, ...references, ...assistantFactReferences(message, earlier)]
-    .join(' ')
-    .toLocaleLowerCase('sv');
+  const text = assistantFactRelevanceText(message, earlier, references);
   const words = new Set(text.split(/[^\p{L}\p{N}_-]+/u));
   const mentioned = (id: string, name?: string) =>
     assistantFactMention(text, id) ||
