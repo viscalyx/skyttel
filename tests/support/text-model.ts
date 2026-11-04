@@ -28,6 +28,17 @@ export function modelTool(name: string, args: Record<string, unknown>) {
     status: 'completed',
   };
 }
+export function readOnlyScope() {
+  return [
+    modelMessage(
+      JSON.stringify({
+        mode: 'read',
+        request: 'Besvara den aktuella frågan utan ändringar.',
+        responseRequired: false,
+      }),
+    ),
+  ];
+}
 export function textModel(
   respond: (request: ModelRequest, signal?: AbortSignal | null) => unknown[] | Promise<unknown[]>,
   authorization?: (

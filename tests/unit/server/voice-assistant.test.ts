@@ -6,7 +6,13 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
-import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import {
+  lastToolResult,
+  modelMessage,
+  modelTool,
+  readOnlyScope,
+  textModel,
+} from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
@@ -237,28 +243,52 @@ test('resuming interrupted output keeps historical context separate from new sav
 
 test('only one actual delegation executes raw voice fragments through Terra and the current MCP catalog, and a new explicit save confirms its receipt', async () => {
   let step = 0;
-  const model = textModel((body) => {
-    if (step++ === 0) return [modelTool('read_type_catalog', {})];
-    if (step === 2)
+  const model = textModel(
+    (body) => {
+      if (step++ === 0) return [modelTool('read_type_catalog', {})];
+      if (step === 2)
+        return [
+          modelTool('propose_object', {
+            version: 0,
+            contentVersion: 1,
+            id: 'family-music',
+            baseRevision: null,
+            value: {
+              typeId: lastToolResult(body).types[0].id,
+              name: 'Familjens musik',
+            },
+          }),
+        ];
+      if (step === 3) return [modelMessage('Familjens musik finns i utkastet. Vill du spara?')];
+      if (step === 4)
+        return [
+          modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'model-chosen' }),
+        ];
+      return [modelTool('report_result', { source: 'latest_save' })];
+    },
+    (body) => {
+      const input = JSON.parse(String(body.input[0].content));
+      if (body.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+        return input.current === 'Vad sparades?'
+          ? readOnlyScope()
+          : [
+              modelMessage(
+                JSON.stringify({ mode: 'work', request: input.current, responseRequired: false }),
+              ),
+            ];
       return [
-        modelTool('propose_object', {
-          version: 0,
-          contentVersion: 1,
-          id: 'family-music',
-          baseRevision: null,
-          value: {
-            typeId: lastToolResult(body).types[0].id,
-            name: 'Familjens musik',
-          },
-        }),
+        modelMessage(
+          JSON.stringify({
+            decision: 'allow',
+            complete: true,
+            fulfillsRequest: input.untrusted.operations.every((operation: { name: string }) =>
+              ['prepare_save', 'save_draft'].includes(operation.name),
+            ),
+          }),
+        ),
       ];
-    if (step === 3) return [modelMessage('Familjens musik finns i utkastet. Vill du spara?')];
-    if (step === 4)
-      return [
-        modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'model-chosen' }),
-      ];
-    return [modelTool('report_result', { source: 'latest_save' })];
-  });
+    },
+  );
   const voice = await setupVoice(model.provider);
   voice.transcript('Lägg till Familjens');
   voice.transcript(' musik.');
@@ -685,7 +715,7 @@ test('an unpunctuated save mention used for guidance does not grant automatic sa
 });
 
 test('large verified draft details are assembled completely within the Live limit', async () => {
-  const model = textModel(() => [modelTool('report_result', { source: 'draft' })]);
+  const model = textModel(() => [modelTool('report_result', { source: 'draft' })], readOnlyScope);
   const voice = await setupVoice(model.provider);
   const mapPath = voice.path.replace('/text-assistant', '/map');
   const map = await (await browser.get(mapPath)).json();

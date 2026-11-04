@@ -1884,12 +1884,16 @@ export function textAssistantRoutes({
         throw new MapError('assistant_action_out_of_scope', 409);
       };
       let wholeRequestComplete = false;
+      // A read/report round cannot turn a partial checked batch into completed
+      // work. Keep its independent verdict within this request, across reads.
+      let checkedWorkComplete = false;
       const checkActions = async (
         operations: { name: string; arguments: Record<string, unknown> }[],
       ) => {
         wholeRequestComplete = false;
         guard();
         if (!operations.length) return;
+        checkedWorkComplete = false;
         if (scope.mode === 'read') rejectAction(operations[0].name, 'read_only_turn');
         const reference = session.state.activeMessage?.queuedReference;
         const checksQueuedTarget = operations.some(
@@ -1946,8 +1950,8 @@ export function textAssistantRoutes({
         if (decision.decision === 'clarify') throw new MapError('assistant_scope_unclear', 409);
         if (decision.decision === 'incomplete')
           throw new MapError('assistant_batch_incomplete', 409);
-        wholeRequestComplete =
-          decision.decision === 'allow' && decision.fulfillsRequest && !scope.responseRequired;
+        checkedWorkComplete = decision.decision === 'allow' && decision.fulfillsRequest;
+        wholeRequestComplete = checkedWorkComplete && !scope.responseRequired;
       };
       scopeReady(checkActions, scope.mode);
       const [review, saveState] = await session.execution.reads.consistent(() =>
@@ -2594,7 +2598,13 @@ export function textAssistantRoutes({
               call_id: action.call_id,
               output: JSON.stringify(session.state.result),
             });
-            if (report.continueResponse || scope.responseRequired) {
+            if (
+              report.continueResponse ||
+              scope.responseRequired ||
+              (scope.mode === 'work' &&
+                (!checkedWorkComplete ||
+                  session.execution.parts.read().some((part) => part.status === 'ready')))
+            ) {
               session.state.phase = 'working';
               break;
             }

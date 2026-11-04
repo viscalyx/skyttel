@@ -88,7 +88,9 @@ hold-check on
 ```
 
 Vid första `held` kopieras V och C från `draft` och TYPE från
-Lo-förslagets `after.typeId`. Släpp det enkla tillägget och godkänn sedan
+Lo-förslagets `after.typeId`. Den uttryckliga hänvisningen till Los
+objekttyp gör Lo relevant i det avgränsade underlaget. Släpp det enkla
+tillägget och godkänn sedan
 den hållna oberoende kontrollen med dess eget anrops-ID:
 
 <!-- markdownlint-disable MD013 -->
@@ -187,14 +189,27 @@ reply CHECK {"decision":"clarify"}
 hold-check off
 ```
 
-Invänta avvisningen och det osparade utkastet. Kör `response-required off`
-före nästa informationsfråga och släpp
-`tool REQUEST report_result {"source":"draft"}`. Det avslutar
-uppdraget utan en ny arbetsbegäran och utan sparande.
+Invänta avvisningen och det osparade utkastet. Välj läsande omfattning
+utan ytterligare svarskrav före nästa informationsfråga:
+
+```text
+scope-read
+response-required off
+```
+
+Släpp dess hållna arbetsbegäran med:
+
+```text
+tool REQUEST report_result {"source":"draft"}
+```
+
+Det avslutar informationsfrågan utan en ny arbetsbegäran och utan sparande.
 
 När användaren slår på mikrofonen i samma samtal kör operatören:
 
 ```text
+scope-work
+hold-check on
 user Ändra namnet på Kim till Kim Lind och spara.
 delegate
 ```
@@ -208,10 +223,19 @@ tool REQUEST submit_changes {"version":V,"contentVersion":C,"completion":"save",
 ```
 <!-- markdownlint-enable MD013 -->
 
-Kontrollerna godkänns nu av den kontrollerade leverantören. Invänta det
-verifierade sparandet innan `assistant Sparat.` används för den simulerade
-samtalstexten. Läs resultatet enligt TEXT-15. Avsluta med `quit` och stäng
-provprofilen. Detta bevisar varken verklig talförståelse eller hörbart ljud.
+Godkänn den hållna ändringskontrollen med det första `allow`-svaret ovan.
+Nästa kontroll gäller hela utkastet. Kontrollera åter att Lo Exempel
+finns kvar och att Kim nu heter Kim Lind. Bekräfta först därefter att
+hela den nya begäran blir klar genom sparandet:
+
+```text
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+```
+
+Invänta det verifierade sparandet innan `assistant Sparat.` används för
+den simulerade samtalstexten. Läs resultatet enligt TEXT-15. Avsluta med
+`quit` och stäng provprofilen. Detta bevisar varken verklig talförståelse
+eller hörbart ljud.
 
 ## Sena svar och nekade sparverktyg
 
@@ -379,12 +403,20 @@ bevarat oskickat formulär vid `displayed:false`.
 
 ## Begärda detaljer
 
-TEXT-09 börjar med Lo, Tonrum med status **Gäller fortfarande** och
-**Lo Exempel → Använder → Tonrum**, samlat sparade genom gränssnittet.
-Efter användarens båda native rättelser släpps `report_result` med
-`{"source":"draft"}`. Efter sparmeddelandet släpps `save_draft` med
-aktuella versioner och `operationId:"details-save"`. Efter sista frågan
-släpps `report_result` med `{"source":"latest_save"}`.
+TEXT-09 använder textinstallationen. Börja med Lo, Tonrum med status
+**Gäller fortfarande** och **Lo Exempel → Använder → Tonrum**, samlat
+sparade genom gränssnittet. Kör `scope-read` före den första
+informationsfrågan. Efter användarens båda native rättelser släpps
+`report_result` med `{"source":"draft"}`. Textinstallationen lämnar
+inget uttryckligt besked om att rapporten räcker som hela svaret; släpp
+därför nästa hållna arbetsbegäran med `reply REQUEST Klart.`.
+
+Återställ `scope-work` före användarens sparmeddelande. Släpp
+`save_draft` med aktuella versioner och `operationId:"details-save"`.
+Invänta det verifierade sparandet och släpp nästa hållna arbetsbegäran
+med `reply REQUEST Klart.`. Kör åter `scope-read` före sista frågan.
+Släpp `report_result` med `{"source":"latest_save"}` och därefter
+den sista hållna arbetsbegäran med `reply REQUEST Klart.`.
 Granska de faktiska rättelserna i gränssnittet innan någon separat
 HTTP-jämförelse. Ett senare direkt anrop får inte reparera en trasig form.
 

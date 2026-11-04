@@ -472,8 +472,9 @@ ges även när vanliga bekräftelser är korta.
 Ett enkelt färdigt uppdrag får ett kort besked från det verifierade
 resultatet. **Utkastet är uppdaterat** betyder att ändringen ligger
 osparad i ditt utkast. **Sparat** betyder att ett beständigt kvitto
-bekräftar sparandet i hushållets karta. Ber du också om en förklaring,
-jämförelse eller annan information arbetar Skyttel vidare med den delen.
+bekräftar sparandet i hushållets karta. Återstår fler beställda ändringar,
+en förklaring, jämförelse eller annan information arbetar Skyttel vidare
+med den delen. Ett statusbesked ersätter inte det återstående arbetet.
 Samma sakliga resultat och hela den beställda
 förklaringen gäller i text och med röst.
 

@@ -82,7 +82,10 @@ test('TEXT-17: verifierat slutbesked behåller beställd förklaring i text och 
           contentVersion: draft.contentVersion,
           id: 'kim',
           baseRevision: null,
-          value: { typeId: draft.changes[0].after.typeId, name: 'Kim' },
+          value: {
+            typeId: draft.changes.find((change: { id: string }) => change.id === 'lo').after.typeId,
+            name: 'Kim',
+          },
         }),
       ];
     },
@@ -115,7 +118,7 @@ test('TEXT-17: verifierat slutbesked behåller beställd förklaring i text och 
     await page.addInitScript({ content: liveBrowserFixtureSource });
     await page.reload();
     await consent(page);
-    await send(page, 'Lägg till Kim som person utan att spara.');
+    await send(page, 'Lägg till Kim som person med samma objekttyp som Lo Exempel utan att spara.');
     await expect(transcript(page)).toContainText('Kim lades till.');
     await expect(transcript(page).locator('.working')).toHaveCount(0);
     expect(model.requests).toHaveLength(1);
@@ -870,21 +873,39 @@ test('TEXT-06: obekräftad samtalstext skiljs från sparande och markering', asy
 
 test('TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitto', async ({ page }) => {
   let step = 0;
-  const model = textModel((body) => {
-    const current = JSON.parse(
-      String(body.input.findLast((item) => item.role === 'user')?.content),
-    ).draft;
-    const turn = step++;
-    return [
-      turn === 1
-        ? modelTool('save_draft', {
-            version: current.version,
-            contentVersion: current.contentVersion,
-            operationId: 'details-save',
-          })
-        : modelTool('report_result', { source: turn === 0 ? 'draft' : 'latest_save' }),
-    ];
-  });
+  const model = textModel(
+    (body) => {
+      const current = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      ).draft;
+      const turn = step++;
+      return [
+        turn === 1
+          ? modelTool('save_draft', {
+              version: current.version,
+              contentVersion: current.contentVersion,
+              operationId: 'details-save',
+            })
+          : modelTool('report_result', { source: turn === 0 ? 'draft' : 'latest_save' }),
+      ];
+    },
+    (body) => {
+      const input = JSON.parse(String(body.input[0].content));
+      return [
+        modelMessage(
+          JSON.stringify(
+            body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+              ? {
+                  mode: input.current === 'Spara hela utkastet nu.' ? 'work' : 'read',
+                  request: input.current,
+                  responseRequired: false,
+                }
+              : { decision: 'allow', complete: true, fulfillsRequest: true },
+          ),
+        ),
+      ];
+    },
+  );
   const app = await createInstallation(undefined, { modelFetch: model.provider });
   try {
     const { path } = await arrange(page, app);

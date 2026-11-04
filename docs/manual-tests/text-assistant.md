@@ -253,6 +253,30 @@ TEXT-17.
       "kind": "technical",
       "runner": "vitest",
       "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "a report before requested changes keeps unfinished work active",
+      "purpose": "Ett statusbesked får inte avsluta ett ändringsuppdrag innan något av det begärda arbetet är genomfört."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "a report after a partial batch keeps unfinished work active",
+      "purpose": "En godkänd självständig del och ett statusbesked får inte ersätta återstående begärda ändringar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "a report with a ready pending change keeps unfinished work active",
+      "purpose": "En felaktig kontrolluppgift om slutförande får inte avsluta en känd återstående ändringsdel som är redo att utföras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
       "spec": "tests/unit/server/voice-assistant.test.ts",
       "title": "a verified voice save retains the failure of its remaining requested explanation",
       "purpose": "Ett verkligt sparresultat får inte dölja felet när en beställd förklaring fortfarande saknas."
@@ -265,7 +289,8 @@ TEXT-17.
 
 **Steg:**
 
-1. Skriv **Lägg till Kim som person utan att spara.** Läs **Kim lades
+1. Skriv **Lägg till Kim som person med samma objekttyp som Lo Exempel
+   utan att spara.** Läs **Kim lades
    till.** när arbetet är klart. Öppna utkastet och läs Kim. Inget
    sparbesked visas.
 2. Skriv **Ändra Kim till Kim Lind och förklara vad objekttypen Person
@@ -344,7 +369,7 @@ TEXT-15.
     "suite": "technical-browser",
     "spec": "tests/technical-browser/whole-draft-preparation.spec.ts",
     "title": "literal whole-draft preparation reads omitted proposals before a rejected combined save",
-    "purpose": "Kör förberedelsens publicerade läsning, batch och kontrollsvar mot den disponibla installationen; hela utkastet hämtas innan Lo-förslagets typ används."
+    "purpose": "Kör publicerad läsning, batch, avvisning, informationsfråga och nytt talat sparande mot den disponibla installationen; hela utkastet hämtas innan Lo-förslagets typ används och omfattningen växlar uttryckligen mellan läsning och arbete."
   }]
 }
 ```
