@@ -122,6 +122,7 @@ const savedReply = 'Sparat. Hela utkastet finns i hushållets karta.';
 const modelFailureRecovery = new Map([
   ['assistant_model_temporary', 'Försök igen'],
   ['assistant_provider_failed', 'Försök igen'],
+  ['assistant_scope_unavailable', 'Försök igen'],
   ['assistant_model_access', 'Fortsätt med valt alternativ'],
   ['assistant_model_unsupported', 'Fortsätt med valt alternativ'],
 ]);

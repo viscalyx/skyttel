@@ -23,6 +23,186 @@ afterEach(async () => {
   crashDirectory = undefined;
 });
 
+test.each([
+  { boundary: 'interpretation', reply: 'incomplete', action: 'retry' },
+  { boundary: 'interpretation', reply: 'invalid', action: 'abandon' },
+  { boundary: 'checking', reply: 'incomplete', action: 'abandon' },
+  { boundary: 'checking', reply: 'invalid', action: 'retry' },
+] as const)(
+  'an $reply $boundary reply pauses the original request and queue until explicit $action',
+  async ({ boundary, reply, action }) => {
+    let entered = () => {};
+    const started = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let typeId: string;
+    let failed = false;
+    let checks = 0;
+    let calls = 0;
+    const original = 'Lägg till Lo och Mira. Spara hela utkastet.';
+    const queued = ['Beskriv kartan.', 'Beskriv hushållets typer.'];
+    const model = textModel(
+      (body) => {
+        const current = JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        );
+        if (current.message !== original) return [modelMessage(`Svar: ${current.message}`)];
+        const first = !current.draft.changes.length;
+        return [
+          modelTool('submit_changes', {
+            version: current.draft.version,
+            contentVersion: current.draft.contentVersion,
+            completion: first ? 'draft' : 'save',
+            continueResponse: first,
+            operations: (first ? ['lo'] : ['lo', 'mira']).map((id) => ({
+              name: 'propose_object',
+              arguments: {
+                id,
+                baseRevision: null,
+                value: { typeId, name: id === 'lo' ? 'Lo' : 'Mira' },
+              },
+            })),
+          }),
+        ];
+      },
+      (body) => {
+        const current = JSON.parse(String(body.input[0].content)).current;
+        return [
+          modelMessage(
+            JSON.stringify(
+              body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+                ? {
+                    mode: current === original ? 'work' : 'read',
+                    request: current,
+                    responseRequired: false,
+                  }
+                : { decision: 'allow', complete: true, fulfillsRequest: checks > 1 },
+            ),
+          ),
+        ];
+      },
+    );
+    app = await createInstallation(undefined, {
+      modelFetch: async (input, init) => {
+        calls++;
+        const body = JSON.parse(String(init?.body));
+        const interpretation = body.instructions.startsWith('SKYTTEL_TURN_SCOPE');
+        const checking = body.instructions.startsWith('SKYTTEL_TURN_ACTIONS');
+        if (checking) checks++;
+        if (
+          !failed &&
+          (boundary === 'interpretation' ? interpretation : checking && checks === 2)
+        ) {
+          failed = true;
+          entered();
+          await held;
+          return Response.json({
+            id: `resp_${crypto.randomUUID()}`,
+            object: 'response',
+            model: body.model,
+            status: reply === 'incomplete' ? 'incomplete' : 'completed',
+            output: [
+              modelMessage(
+                reply === 'invalid'
+                  ? '{"unrecognized":"structured reply"}'
+                  : JSON.stringify(
+                      interpretation
+                        ? { mode: 'work', request: original, responseRequired: false }
+                        : { decision: 'allow', complete: true, fulfillsRequest: true },
+                    ),
+              ),
+            ],
+          });
+        }
+        return model.provider(input, init);
+      },
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    const { household } = await (await createHousehold(browser, app.origin)).json();
+    const map = `${app.origin}/api/households/${household.id}/map`;
+    const read = async (): Promise<MapState> => (await browser.get(map)).json();
+    typeId = (await read()).types[0].id;
+    const base = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const post = (url: string, data: object) =>
+      browser.post(url, { headers: { origin: app.origin }, data });
+    let view: TextAssistantView = await (await post(base, approvedForVisit)).json();
+    const endpoint = `${base}/${view.id}`;
+    const requestId = crypto.randomUUID();
+    const send = (text: string, id = crypto.randomUUID()) =>
+      post(`${endpoint}/messages`, {
+        revision: view.revision,
+        draftVersion: view.review.version,
+        contentVersion: view.review.contentVersion,
+        requestId: id,
+        text,
+      });
+    view = await (await send(original, requestId)).json();
+    await started;
+    for (const text of queued) expect((await send(text)).status()).toBe(202);
+    const before = await read();
+    expect(before.draft).toMatchObject(
+      boundary === 'checking'
+        ? { version: 1, changes: [{ id: 'lo', after: { name: 'Lo' } }] }
+        : { version: 0, changes: [] },
+    );
+    release();
+    await expect
+      .poll(async () => {
+        view = await (await browser.get(endpoint)).json();
+        return [view.phase, view.error, view.queuedMessages];
+      })
+      .toEqual(['error', 'assistant_scope_unavailable', 2]);
+    expect(view.workFailure).toMatchObject({
+      requestId,
+      request: original,
+      code: 'assistant_scope_unavailable',
+      retry: 'Försök igen',
+    });
+    expect(await read()).toEqual(before);
+    const failedCalls = calls;
+    expect(
+      (await post(`${endpoint}/model-choice`, { model: 'gpt-6.1-sol', effort: 'medium' })).status(),
+    ).toBe(200);
+    view = await (await browser.get(endpoint)).json();
+    expect(view.queuedMessages).toBe(2);
+    expect(calls).toBe(failedCalls);
+    const workBeforeAction = model.requests.length;
+    expect(
+      (await post(`${endpoint}/${action}-work`, { revision: view.revision, requestId })).status(),
+    ).toBe(202);
+    await expect
+      .poll(async () => {
+        view = await (await browser.get(endpoint)).json();
+        return [view.phase, view.queuedMessages];
+      })
+      .toEqual(['ready', 0]);
+    const resumed = model.requests.slice(workBeforeAction);
+    const resumedInputs = resumed.map((body) =>
+      JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content)),
+    );
+    expect(resumedInputs.map((current) => current.message)).toEqual(
+      action === 'retry'
+        ? [...(boundary === 'interpretation' ? [original, original] : [original]), ...queued]
+        : queued,
+    );
+    if (action === 'retry') expect(resumedInputs[0].messageId).toBe(requestId);
+    expect(
+      resumed.every((body) => body.model === 'gpt-6.1-sol' && body.reasoning.effort === 'medium'),
+    ).toBe(true);
+    expect(view.workFailure).toBeUndefined();
+    expect((await read()).draft).toMatchObject(
+      action === 'retry' ? { version: 2, changes: [{ id: 'lo' }, { id: 'mira' }] } : before.draft,
+    );
+    expect((await read()).objects).toEqual([]);
+    expect((await (await browser.get(`${map}/operations`)).json()).operations).toEqual([]);
+    expect((await (await browser.get(`${map}/history`)).json()).history).toEqual([]);
+  },
+);
+
 test.each(['provider failure', 'lost batch status', 'manually discarded question'] as const)(
   'a spoken clarification retries only unfinished work after its own verified question and draft transitions: %s',
   async (boundary) => {
