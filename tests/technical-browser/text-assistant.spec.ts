@@ -134,6 +134,9 @@ test('literal text preparation drops a committed batch reply and preserves its p
     await expect(page.getByRole('log', { name: 'Samtalstext', exact: true })).toContainText(
       'lades till',
     );
+    await expect(page.getByRole('log', { name: 'Samtalstext', exact: true })).toContainText(
+      'Uppdraget är inte slutfört. Återstående arbete är pausat',
+    );
     await expect(assistant(page).getByLabel('Meddelande till Skyttel')).toHaveValue(
       'Vänta med nästa uppdrag.',
     );

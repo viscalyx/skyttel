@@ -15,6 +15,7 @@ import {
   type ModelRequest,
   modelMessage,
   modelTool,
+  pendingUpdate,
   textModel,
 } from '../../support/text-model.js';
 
@@ -232,6 +233,411 @@ test.each(['text', 'voice'] as const)(
     });
     expect(recovered.value.batch.changes).toBeUndefined();
     expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each([
+  { remaining: true, suffix: 'with another ready change' },
+  { remaining: false, suffix: 'with all ready changes resolved' },
+])(
+  'status-only recovery checks pending changes after batch resolution $suffix',
+  { tags: ['technical'] },
+  async ({ remaining }) => {
+    let typeId: string;
+    const questions = remaining
+      ? ['Vad heter första kollegan?', 'Vad heter andra kollegan?']
+      : ['Vad heter första kollegan?'];
+    const delivery = controlledBatchDelivery();
+    const model = textModel(
+      (body) => {
+        if (model.requests.length === 1)
+          return [
+            modelTool('ask_questions', {
+              questions: questions.map((question) => ({
+                kind: 'change',
+                request: 'Lägg till kollegan som person.',
+                question,
+                dependsOnDraft: false,
+              })),
+            }),
+          ];
+        if (model.requests.length === 2)
+          return [
+            modelTool('ask_questions', {
+              questions: [],
+              updates: questions.map((question) => pendingUpdate(body, question)),
+            }),
+          ];
+        const [proposal] = submitLo(typeId, body);
+        const input = JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        );
+        const part = input.pendingParts.find(
+          (part: { question: string }) => part.question === questions[0],
+        );
+        return [
+          {
+            ...proposal,
+            arguments: JSON.stringify({
+              ...JSON.parse(proposal.arguments),
+              resolves: [{ id: part.id, revision: part.revision }],
+            }),
+          },
+        ];
+      },
+      (body) => [
+        modelMessage(
+          JSON.stringify(
+            body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+              ? {
+                  mode: 'work',
+                  request: JSON.parse(String(body.input[0].content)).current,
+                  responseRequired: false,
+                }
+              : { decision: 'allow', complete: true, fulfillsRequest: true },
+          ),
+        ),
+      ],
+    );
+    app = await createInstallation(undefined, {
+      modelFetch: model.provider,
+      assistantDispatch: delivery.dispatch,
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    ({
+      household: { id: householdId },
+    } = await (await createHousehold(browser, app.origin)).json());
+    typeId = (await read()).types[0].id;
+    const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+    const post = (path: string, data: unknown) =>
+      browser.post(path, { headers: { origin: app.origin }, data });
+    let current: TextAssistantView = await (await post(base, approvedForVisit)).json();
+    const endpoint = `${base}/${current.id}`;
+    for (const [index, instruction] of [
+      'Lägg till kollegorna som personer utan att spara.',
+      'Första kollegan heter Lo och andra kollegan heter Kim.',
+    ].entries()) {
+      expect(
+        (
+          await post(`${endpoint}/messages`, {
+            requestId: `prepare-parts-${index}`,
+            revision: current.revision,
+            draftVersion: current.review.version,
+            contentVersion: current.review.contentVersion,
+            text: instruction,
+          })
+        ).status(),
+      ).toBe(202);
+      await expect
+        .poll(async () => {
+          current = await (await browser.get(endpoint)).json();
+          return current.phase;
+        })
+        .toBe('ready');
+    }
+    expect(current.pendingParts?.map((part) => part.status)).toEqual(questions.map(() => 'ready'));
+    delivery.arm();
+    delivery.blockStatus(true);
+    expect(
+      (
+        await post(`${endpoint}/messages`, {
+          requestId: 'resolve-committed-part',
+          revision: current.revision,
+          draftVersion: current.review.version,
+          contentVersion: current.review.contentVersion,
+          text: 'Gör klart kollegorna utan att spara.',
+        })
+      ).status(),
+    ).toBe(202);
+    await expect
+      .poll(async () => {
+        current = await (await browser.get(endpoint)).json();
+        return delivery.status().phase === 'dropped-after-commit' && current.phase === 'recovery';
+      })
+      .toBe(true);
+    const authorizations = model.authorizationRequests.length;
+    delivery.blockStatus(false);
+    const recovered: TextAssistantView = await (await post(`${endpoint}/recover`, {})).json();
+    expect(recovered.pendingParts?.map((part) => part.status)).toEqual(
+      remaining ? ['completed', 'ready'] : ['completed'],
+    );
+    expect(recovered.result?.changes).toEqual([{ subject: 'Lo', action: 'lades till' }]);
+    expect(recovered.phase).toBe(remaining ? 'error' : 'ready');
+    expect(recovered.error).toBe(remaining ? 'assistant_request_unfinished' : undefined);
+    expect(recovered.completedReplies?.filter((reply) => reply.id.startsWith('batch-'))).toEqual([
+      expect.objectContaining({
+        failed: remaining,
+        request: 'Gör klart kollegorna utan att spara.',
+      }),
+    ]);
+    expect(model.requests).toHaveLength(3);
+    expect(model.authorizationRequests).toHaveLength(authorizations);
+    expect((await read()).draft).toMatchObject({
+      version: 1,
+      changes: [{ id: 'lo', after: { name: 'Lo' } }],
+    });
+    expect((await (await browser.get(`${mapPath()}/history`)).json()).history).toEqual([]);
+    expect((await (await browser.get(`${mapPath()}/operations`)).json()).operations).toEqual([]);
+  },
+);
+
+test.each([
+  {
+    mode: 'text',
+    remaining: 'requested explanation',
+    responseRequired: true,
+    fulfillsRequest: true,
+    completion: 'draft',
+  },
+  {
+    mode: 'voice',
+    remaining: 'requested explanation',
+    responseRequired: true,
+    fulfillsRequest: true,
+    completion: 'draft',
+  },
+  {
+    mode: 'text',
+    remaining: 'independent change',
+    responseRequired: false,
+    fulfillsRequest: false,
+    completion: 'draft',
+  },
+  {
+    mode: 'text',
+    remaining: 'requested save',
+    responseRequired: false,
+    fulfillsRequest: true,
+    completion: 'save',
+  },
+] as const)(
+  'status-only recovery preserves unfinished $remaining in $mode',
+  { tags: ['technical'] },
+  async ({ mode, remaining, responseRequired, fulfillsRequest, completion }) => {
+    const question = mode === 'voice' ? 'Vilket år gäller beskrivningen?' : undefined;
+    const instruction =
+      remaining === 'independent change'
+        ? 'Lägg till Lo och Kim utan att spara.'
+        : remaining === 'requested save'
+          ? 'Lägg till Lo och spara hela utkastet.'
+          : 'Lägg till Lo utan att spara och förklara vad ett utkast betyder.' +
+            (question ? ' Beskriv också vilket år uppgifterna gäller.' : '');
+    let typeId: string;
+    const delivery = controlledBatchDelivery();
+    delivery.blockStatus(true);
+    const model = textModel(
+      (body) => {
+        if (model.requests.length > 1)
+          return [modelTool('ask_questions', { questions: ['Vilken sak vill du läsa om?'] })];
+        const [proposal] = submitLo(typeId, body);
+        return [
+          {
+            ...proposal,
+            arguments: JSON.stringify({
+              ...JSON.parse(proposal.arguments),
+              completion,
+              questions: question
+                ? [
+                    {
+                      kind: 'information',
+                      request: 'Beskriv vilket år uppgifterna gäller.',
+                      question,
+                      dependsOnDraft: false,
+                    },
+                  ]
+                : [],
+            }),
+          },
+        ];
+      },
+      (body) => [
+        modelMessage(
+          JSON.stringify(
+            body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+              ? { mode: 'work', request: instruction, responseRequired }
+              : { decision: 'allow', complete: true, fulfillsRequest },
+          ),
+        ),
+      ],
+    );
+    app = await createInstallation(undefined, {
+      modelFetch: model.provider,
+      assistantDispatch: delivery.dispatch,
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    ({
+      household: { id: householdId },
+    } = await (await createHousehold(browser, app.origin)).json());
+    typeId = (await read()).types[0].id;
+    const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+    const post = (path: string, data: unknown) =>
+      browser.post(path, { headers: { origin: app.origin }, data });
+    const session: TextAssistantView = await (await post(base, approvedForVisit)).json();
+    const endpoint = `${base}/${session.id}`;
+    delivery.arm();
+    expect(
+      (
+        await post(`${endpoint}/messages`, {
+          requestId: 'unfinished-explanation',
+          revision: session.revision,
+          draftVersion: session.review.version,
+          contentVersion: session.review.contentVersion,
+          text: instruction,
+          ...(mode === 'voice' ? { voiceContext: '[]' } : {}),
+        })
+      ).status(),
+    ).toBe(202);
+    await expect
+      .poll(async () => {
+        const current: TextAssistantView = await (await browser.get(endpoint)).json();
+        return delivery.status().phase === 'dropped-after-commit' && current.phase === 'recovery';
+      })
+      .toBe(true);
+    const committed = await read();
+    expect(committed.draft).toMatchObject({
+      version: 1,
+      changes: [{ id: 'lo', after: { name: 'Lo' } }],
+    });
+    expect(model.requests).toHaveLength(1);
+    const authorizations = model.authorizationRequests.length;
+    delivery.blockStatus(false);
+    const checkId = '11111111-1111-4111-8111-111111111111';
+    const recovered: TextAssistantView = await (
+      await post(`${endpoint}/recover`, { checkId })
+    ).json();
+    expect(recovered.result).toMatchObject({
+      kind: 'draft',
+      changes: [{ subject: 'Lo', action: 'lades till' }],
+    });
+    expect(recovered.phase).toBe('error');
+    expect(recovered.error).toBe('assistant_request_unfinished');
+    expect(recovered.requiredNotice).toContain('Uppdraget är inte slutfört');
+    expect(recovered.reply).toContain('Ändringarna genomfördes i utkastet.');
+    expect(recovered.reply).toContain(recovered.requiredNotice);
+    const recoveryReplies = recovered.completedReplies?.filter((reply) =>
+      reply.id.startsWith('batch-'),
+    );
+    expect(recoveryReplies).toEqual([
+      expect.objectContaining({
+        request: instruction,
+        failed: true,
+        requiredNotice: recovered.requiredNotice,
+        source: 'text',
+      }),
+    ]);
+    if (question)
+      expect(recoveryReplies).toMatchObject([
+        {
+          questionPending: true,
+          questions: [question],
+          newQuestions: [question],
+        },
+      ]);
+    const polled: TextAssistantView = await (
+      await browser.get(`${endpoint}/messages/unfinished-explanation`)
+    ).json();
+    expect(polled.phase).toBe('error');
+    expect(polled.requiredNotice).toBe(recovered.requiredNotice);
+    expect(polled.result).toEqual(recovered.result);
+    if (question) expect(polled.questions).toEqual([question]);
+    const repeated: TextAssistantView = await (
+      await post(`${endpoint}/recover`, { checkId })
+    ).json();
+    expect(repeated.completedReplies).toEqual(recovered.completedReplies);
+    const checkedAgain: TextAssistantView = await (
+      await post(`${endpoint}/recover`, { checkId: '22222222-2222-4222-8222-222222222222' })
+    ).json();
+    expect(checkedAgain).toEqual(repeated);
+    expect(model.requests).toHaveLength(1);
+    expect(model.authorizationRequests).toHaveLength(authorizations);
+    expect(await read()).toEqual(committed);
+    expect((await (await browser.get(`${mapPath()}/history`)).json()).history).toEqual([]);
+    expect((await (await browser.get(`${mapPath()}/operations`)).json()).operations).toEqual([]);
+    if (remaining === 'requested save') {
+      // Another client explicitly registers a save after batch recovery. The
+      // retained batch result must not conceal that independent durable attempt.
+      const save = {
+        operationId: 'registered-after-batch-recovery',
+        version: committed.draft.version,
+        contentVersion: committed.contentVersion,
+      };
+      expect((await post(`${mapPath()}/operations`, save)).status()).toBe(200);
+      expect(
+        (await (await browser.get(`${mapPath()}/operations`)).json()).operations,
+      ).toMatchObject([{ operationId: save.operationId, status: 'pending' }]);
+      const saved: TextAssistantView = await (
+        await post(`${endpoint}/recover`, {
+          checkId: '33333333-3333-4333-8333-333333333333',
+        })
+      ).json();
+      expect(saved.receipt).toMatchObject({ operationId: save.operationId, draftVersion: 1 });
+      expect((await read()).draft.changes).toEqual([]);
+      expect((await read()).objects).toMatchObject([{ id: 'lo', name: 'Lo' }]);
+      expect((await (await browser.get(`${mapPath()}/history`)).json()).history).toEqual([
+        saved.receipt,
+      ]);
+      expect(
+        (await (await browser.get(`${mapPath()}/operations`)).json()).operations,
+      ).toMatchObject([{ operationId: save.operationId, status: 'succeeded' }]);
+      const original: TextAssistantView = await (
+        await browser.get(`${endpoint}/messages/unfinished-explanation`)
+      ).json();
+      expect(original.phase).toBe('error');
+      expect(original.requiredNotice).toBe(recovered.requiredNotice);
+      expect(model.requests).toHaveLength(1);
+      expect(model.authorizationRequests).toHaveLength(authorizations);
+      return;
+    }
+    expect(
+      (
+        await post(`${endpoint}/messages`, {
+          requestId: 'later-question',
+          revision: repeated.revision,
+          draftVersion: repeated.review.version,
+          contentVersion: repeated.review.contentVersion,
+          text: 'Ställ en fråga om vilken sak jag vill läsa om.',
+        })
+      ).status(),
+    ).toBe(202);
+    await expect
+      .poll(async () => {
+        const later: TextAssistantView = await (await browser.get(endpoint)).json();
+        return later.phase === 'ready' && later.questions;
+      })
+      .toEqual([...(question ? [question] : []), 'Vilken sak vill du läsa om?']);
+    const original: TextAssistantView = await (
+      await browser.get(`${endpoint}/messages/unfinished-explanation`)
+    ).json();
+    expect(original.phase).toBe('error');
+    expect(original.requiredNotice).toBe(recovered.requiredNotice);
+    expect(original.result).toEqual(recovered.result);
+    if (question) {
+      expect(original.questions).toEqual([question]);
+      expect(original.newQuestions).toEqual([question]);
+      expect(
+        original.completedReplies?.filter((reply) => reply.id.startsWith('batch-')),
+      ).toMatchObject([
+        {
+          questionPending: true,
+          questions: [question],
+          newQuestions: [question],
+        },
+      ]);
+    }
+    const later: TextAssistantView = await (
+      await browser.get(`${endpoint}/messages/later-question`)
+    ).json();
+    expect(later.questions).toEqual([
+      ...(question ? [question] : []),
+      'Vilken sak vill du läsa om?',
+    ]);
+    expect(later.newQuestions).toEqual(['Vilken sak vill du läsa om?']);
+    expect(later.error).toBeUndefined();
+    expect(later.requiredNotice).toBeUndefined();
+    expect(model.requests).toHaveLength(2);
+    expect(await read()).toEqual(committed);
   },
 );
 

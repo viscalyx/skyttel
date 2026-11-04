@@ -358,39 +358,84 @@ async function verifyTypedSaveExplanationFailure(page: Page) {
 test('TEXT-16: ett tappat ändringsbesked bevarar tidigare förslag och återfinns utan dubbla ändringar', async ({
   page,
 }) => {
+  await verifyBatchRecovery(page, false);
+  await verifyBatchRecovery(page, true);
+});
+
+async function verifyBatchRecovery(page: Page, explanation: boolean) {
   const delivery = controlledBatchDelivery();
-  const model = textModel((body) => {
-    const { draft } = JSON.parse(
-      String(body.input.findLast((item) => item.role === 'user')?.content),
-    );
-    const person = lastToolResult(body)?.types?.find(
-      (type: { name: string }) => type.name === 'Person',
-    );
-    if (!person) return [modelTool('read_type_catalog', {})];
-    return [
-      modelTool('submit_changes', {
-        version: draft.version,
-        contentVersion: draft.contentVersion,
-        completion: 'draft',
-        operations: [
-          {
-            name: 'propose_object',
-            arguments: { id: 'kim', baseRevision: null, value: { typeId: person.id, name: 'Kim' } },
-          },
-        ],
-      }),
-    ];
-  });
+  const question = 'Vilket år gäller beskrivningen?';
+  const instruction = explanation
+    ? 'Lägg till Kim utan att spara, förklara vad ett utkast betyder och beskriv vilket år uppgifterna gäller.'
+    : 'Lägg till Kim utan att spara.';
+  const model = textModel(
+    (body) => {
+      const { draft } = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      const person = lastToolResult(body)?.types?.find(
+        (type: { name: string }) => type.name === 'Person',
+      );
+      if (!person) return [modelTool('read_type_catalog', {})];
+      return [
+        modelTool('submit_changes', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          completion: 'draft',
+          questions: explanation
+            ? [
+                {
+                  kind: 'information',
+                  request: 'Beskriv vilket år uppgifterna gäller.',
+                  question,
+                  dependsOnDraft: false,
+                },
+              ]
+            : [],
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'kim',
+                baseRevision: null,
+                value: { typeId: person.id, name: 'Kim' },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (body) => [
+      modelMessage(
+        JSON.stringify(
+          body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? { mode: 'work', request: instruction, responseRequired: explanation }
+            : { decision: 'allow', complete: true, fulfillsRequest: explanation },
+        ),
+      ),
+    ],
+  );
+  const live = liveProvider();
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
+    liveFetch: live.provider,
+    liveSideband: live.attach,
     assistantDispatch: delivery.dispatch,
   });
   try {
     await arrange(page, app);
+    if (explanation) {
+      await page.addInitScript({ content: liveBrowserFixtureSource });
+      await page.reload();
+    }
     await consent(page);
+    if (explanation) {
+      await turnMicrophoneOn(page);
+      await expect(voiceBox(page)).toHaveText('Lyssnar');
+    }
     delivery.arm();
     delivery.blockStatus(true);
-    await send(page, 'Lägg till Kim utan att spara.');
+    await send(page, instruction);
     const notice = page.getByRole('region', { name: 'Samtalsnotis', exact: true });
     await expect(notice).toContainText('Det är oklart om ändringarna genomfördes.');
     await expect(notice).not.toContainText('sparades');
@@ -398,13 +443,34 @@ test('TEXT-16: ett tappat ändringsbesked bevarar tidigare förslag och återfin
     await field.fill('Vänta med nästa uppdrag.');
     await expect(page.getByRole('button', { name: 'Skicka', exact: true })).toBeDisabled();
     expect(model.requests).toHaveLength(2);
+    const authorizations = model.authorizationRequests.length;
+    if (explanation)
+      await expect.poll(() => voiceAnswerParts(live.sent).join('\n')).toContain(question);
+    const recoveryVoiceStart = live.sent.length;
     delivery.blockStatus(false);
     await expect(transcript(page)).toContainText('Kim');
     await expect(transcript(page)).toContainText('lades till');
+    const unfinished = 'Uppdraget är inte slutfört.';
+    await expect(transcript(page)).toContainText(unfinished);
+    await expect(transcript(page)).toContainText('Återstående arbete är pausat');
+    await expect(transcript(page)).toContainText(instruction);
+    if (explanation) {
+      await expect(transcript(page)).toContainText(question);
+      await expect
+        .poll(() => voiceAnswerParts(live.sent.slice(recoveryVoiceStart)).join('\n'))
+        .toContain(unfinished);
+      const recoveredVoice = voiceAnswerParts(live.sent.slice(recoveryVoiceStart)).join('\n');
+      expect(recoveredVoice).toContain('Kim lades till.');
+      expect(recoveredVoice).toContain(
+        `Nödvändig fråga (samtalsdata): ${JSON.stringify(question)}`,
+      );
+      expect(recoveredVoice).not.toContain('Sparat.');
+    }
     await expect(field).toHaveValue('Vänta med nästa uppdrag.');
     await field.fill('');
     expect(delivery.status().phase).toBe('dropped-after-commit');
     expect(model.requests).toHaveLength(2);
+    expect(model.authorizationRequests).toHaveLength(authorizations);
     const draft = await showDraft(page);
     await expect(
       draft.getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true }),
@@ -431,7 +497,7 @@ test('TEXT-16: ett tappat ändringsbesked bevarar tidigare förslag och återfin
   } finally {
     await app.close();
   }
-});
+}
 
 test('TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked', async ({
   page,

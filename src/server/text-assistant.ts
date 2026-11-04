@@ -1261,6 +1261,7 @@ export function textAssistantRoutes({
     batch: DraftBatchRequest,
     guard: () => void,
     resolves: z.infer<typeof partReference>[] = [],
+    finishesRequest = false,
   ) {
     if (session.state.pendingBatch) throw new MapError('assistant_batch_unknown', 409);
     const request = structuredClone({ ...batch, operationId: batch.operationId ?? randomUUID() });
@@ -1270,7 +1271,11 @@ export function textAssistantRoutes({
       before: structuredClone(session.state.review),
       resolves: structuredClone(resolves),
       messageId: session.state.activeMessage?.id,
+      message: session.state.activeMessage && {
+        text: session.state.activeMessage.text,
+      },
       discarded: request.operations.length === 1 && request.operations[0].name === 'discard_draft',
+      finishesRequest,
     };
     session.state.batchCheckId = undefined;
     let value: Awaited<ReturnType<typeof call>>;
@@ -1335,7 +1340,7 @@ export function textAssistantRoutes({
       value.status !== 'committed'
     )
       throw new MapError('assistant_batch_unknown', 409);
-    await call(session, 'read_my_draft', {}, guard);
+    await call(session, 'read_my_draft', {}, guard, 'lifecycle');
     guard?.();
     checkViewAccess(session);
     // A real read response can be delayed after its snapshot is taken. Use
@@ -1397,12 +1402,30 @@ export function textAssistantRoutes({
       };
       session.state.discarded = pending.discarded;
       session.state.pendingBatch = undefined;
-      session.state.error = undefined;
-      session.state.reply = session.state.result.message;
+      const unfinished = !pending.finishesRequest || hasReadyPendingParts(session);
+      session.state.error = unfinished ? 'assistant_request_unfinished' : undefined;
+      if (unfinished) {
+        const request = session.state.unfinishedRequests.find(
+          (request) => request.id === pending.messageId,
+        );
+        if (request) request.paused = true;
+        session.state.requiredNotice = [
+          session.state.requiredNotice,
+          assistantFailureMessage('assistant_request_unfinished'),
+        ]
+          .filter(Boolean)
+          .join('\n');
+      }
+      session.state.reply = [session.state.result.message, session.state.requiredNotice]
+        .filter(Boolean)
+        .join('\n');
       session.state.phase =
-        session.state.pendingSave || after.pendingOperations.length ? 'recovery' : 'ready';
+        session.state.pendingSave || after.pendingOperations.length
+          ? 'recovery'
+          : unfinished
+            ? 'error'
+            : 'ready';
       session.state.modelReply = undefined;
-      session.state.requiredNotice = undefined;
       session.state.saveIntent = undefined;
       syncQuestions(session);
     } catch (error) {
@@ -1437,14 +1460,21 @@ export function textAssistantRoutes({
       session.state.saveIntent = undefined;
     }
     if (!session.state.pendingBatch) {
-      session.state.batchCheckId = checkId;
+      session.state.batchCheckId = checkId ?? pending.request.operationId;
       session.state.revision++;
       session.state.completedReplies?.push({
         id: `batch-${pending.request.operationId}`,
+        request: pending.message?.text,
+        // The original spoken executor can already have ended on the unknown
+        // outcome. This new status reply uses the shared completion handoff.
         source: 'text',
         revision: session.state.revision,
         text: '',
         reply: session.state.reply,
+        requiredNotice: session.state.requiredNotice,
+        questionPending: Boolean(session.state.questions?.length),
+        questions: session.state.questions?.slice(),
+        newQuestions: session.state.newQuestions?.slice(),
         result: session.state.result,
         failed: Boolean(session.state.error),
       });
@@ -2571,6 +2601,10 @@ export function textAssistantRoutes({
               { operations, version, contentVersion },
               guard,
               batch.resolves,
+              wholeRequestComplete &&
+                !batch.continueResponse &&
+                batch.completion === 'draft' &&
+                !session.state.saveIntent,
             );
             const afterBatch = session.state.review;
             // No operation is recorded as completed until the whole batch has
@@ -2976,6 +3010,8 @@ export function textAssistantRoutes({
                 contentVersion,
               },
               guard,
+              [],
+              wholeRequestComplete && calls.length === 1 && !session.state.saveIntent,
             );
             value = batch.applied?.[0]?.result ?? { ...session.state.review };
             // Duplicate relationship additions are successful no-ops. Their
@@ -3535,6 +3571,8 @@ export function textAssistantRoutes({
           session,
           { ...expected, operations: [{ name: 'discard_draft', arguments: {} }] },
           guard,
+          [],
+          true,
         );
         guard();
         advanceDraftVersion(session, expected.version, session.state.review.version);
@@ -4398,9 +4436,11 @@ export function textAssistantRoutes({
           return context.json(view(session));
         }
         if (
-          body.checkId &&
-          session.state.batchCheckId === body.checkId &&
-          !session.state.pendingSave
+          session.state.batchCheckId &&
+          !session.state.pendingSave &&
+          !householdMap(database, session.state.actorId, session.state.householdId)
+            .operations()
+            .operations.some((operation) => operation.status === 'pending')
         ) {
           finish('completed', observationResult(session), 'already_checked');
           return context.json(view(session));
