@@ -182,6 +182,8 @@ export const voicePlaybackInstrumentation = {
   workletSha256: createHash('sha256').update(outputRecordingWorklet).digest('hex'),
   inputEnd: 'unchanged-fixture-last-nonzero-pcm-frame-bracketed-on-browser-clock',
   outputEnd: 'device-clock-bracket-of-observed-recording-end-and-asr-alignment-margin',
+  finalRecordingValidation:
+    'Resnapshot rendered output after final content judgment and current-state validation. Newly active frames require fresh recognition and semantic assessment; any observed playback interruption or error prevents successful completion.',
   stateObservation: {
     contract: 'checked-state-browser-clock-v2',
     cadenceMs: 25,

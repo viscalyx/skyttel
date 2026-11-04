@@ -420,6 +420,44 @@ export async function runVoiceScenario(
               stateAt ??= await active.observedAt();
             else stateAt = undefined;
           };
+          async function verifyState() {
+            const status = await environment.post<VoiceAssistantResponse>(
+              `${environment.path}/voice/${voiceId}/poll`,
+              {
+                revision: view.revision,
+                draftVersion: view.review.version,
+                contentVersion: view.review.contentVersion,
+                microphoneOn: true,
+                microphoneActive: false,
+              },
+            );
+            await observeState?.(status);
+            return status;
+          }
+          async function judgeCurrentContent(voiceText: string, completed: boolean) {
+            const fixedBeforeJudge = new Set(fixed);
+            result.fixed.push(...fixed);
+            result.content = await judge(
+              {
+                backend: {
+                  text: [view.reply, view.modelReply].filter(Boolean).join('\n'),
+                  complete: completed,
+                },
+                voice: { text: voiceText, complete: completed },
+              },
+              step.expected.requirements,
+            );
+            if (completed) {
+              const verified = await verifyState();
+              if (verified.voice.phase !== 'listening') stateAt = undefined;
+            }
+            // Refresh current state without dropping independent failures
+            // observed during judgment, such as an unexpected selection.
+            result.fixed = [
+              ...result.fixed.filter((failure) => !fixedBeforeJudge.has(failure)),
+              ...fixed,
+            ];
+          }
           // Quiet finds candidates. Only independently assessed recording and
           // device-render evidence can certify the required response.
           for (;;) {
@@ -583,17 +621,7 @@ export async function runVoiceScenario(
                   requiredResponse[0].id === 'voice-rendered-response' &&
                   requiredResponse[0].outcome === 'pass'
                 ) {
-                  const verified = await environment.post<VoiceAssistantResponse>(
-                    `${environment.path}/voice/${voiceId}/poll`,
-                    {
-                      revision: view.revision,
-                      draftVersion: view.review.version,
-                      contentVersion: view.review.contentVersion,
-                      microphoneOn: true,
-                      microphoneActive: false,
-                    },
-                  );
-                  await observeState(verified);
+                  const verified = await verifyState();
                   if (
                     view.phase === 'working' ||
                     view.queuedMessages ||
@@ -603,6 +631,17 @@ export async function runVoiceScenario(
                       'Application changed while the recording was assessed; final response remains unverified.';
                     break;
                   }
+                  await judgeCurrentContent(recognition.text, true);
+                  const finalRecording = await active.recording();
+                  options.recordPlayback?.(finalRecording);
+                  if (finalRecording.interruption || finalRecording.error) {
+                    Object.assign(result.playback, recordingEvidence(finalRecording));
+                    throw new Error(finalRecording.interruption ?? finalRecording.error);
+                  }
+                  // Content judgment is offline work too. New rendered audio
+                  // must pass recognition and both semantic checks before its
+                  // recording, response boundary or final content can qualify.
+                  if (finalRecording.lastActiveFrame !== lastActivity) continue;
                   renderedEnd = end;
                   assessedOutput = recognition.text;
                   result.playback.renderedEnd = end;
@@ -619,35 +658,7 @@ export async function runVoiceScenario(
           startedAt = audio.endedAt;
           result.playback.input = inputEvidence(audio);
           output = assessedOutput;
-          const fixedBeforeJudge = new Set(fixed);
-          result.fixed.push(...fixed);
-          result.content = await judge(
-            {
-              backend: { text: [view.reply, view.modelReply].filter(Boolean).join('\n'), complete },
-              voice: { text: output, complete },
-            },
-            step.expected.requirements,
-          );
-          if (complete) {
-            const verified = await environment.post<VoiceAssistantResponse>(
-              `${environment.path}/voice/${voiceId}/poll`,
-              {
-                revision: view.revision,
-                draftVersion: view.review.version,
-                contentVersion: view.review.contentVersion,
-                microphoneOn: true,
-                microphoneActive: false,
-              },
-            );
-            await observeState(verified);
-            if (verified.voice.phase !== 'listening') stateAt = undefined;
-          }
-          // Refresh state checks while preserving independent failures that
-          // arrive during judgment, such as an unexpected selection.
-          result.fixed = [
-            ...result.fixed.filter((failure) => !fixedBeforeJudge.has(failure)),
-            ...fixed,
-          ];
+          if (!complete) await judgeCurrentContent(output, false);
           result.observedEndMs = (await connection.observedAt()) - startedAt;
           result.diagnostics = observationDiagnostics(events.slice(offset), startedAt);
           const completionMs =
