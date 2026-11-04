@@ -249,9 +249,7 @@ test('a manual edit during summary prevents another work request with the older 
 
 test('verified relevant start facts answer directly while unrelated draft details remain unread', async () => {
   const model = textModel((request) => {
-    const current = JSON.parse(
-      String(request.input.findLast((item) => item.role === 'user')?.content),
-    );
+    const current = startEnvelope(request);
     const chair = current.draft.changes.find(
       (change: { id: string }) => change.id === 'private-chair',
     );
@@ -294,9 +292,7 @@ test.each(['batch', 'single'])(
   async (mode) => {
     const live = liveProvider();
     const model = textModel((request) => {
-      const current = JSON.parse(
-        String(request.input.findLast((item) => item.role === 'user')?.content),
-      );
+      const current = startEnvelope(request);
       if (model.requests.length > 1) return [modelMessage('Stolen är rättad.')];
       if (mode === 'single')
         return [
@@ -476,9 +472,7 @@ test('repeated draft reads replace old snapshots while verified batch evidence r
 
 test('successive single corrections supersede obsolete draft pictures and preserve checked batch evidence', async () => {
   const model = textModel((request) => {
-    const current = JSON.parse(
-      String(request.input.findLast((item) => item.role === 'user')?.content),
-    );
+    const current = startEnvelope(request);
     const step = model.requests.length;
     const operation = {
       name: 'propose_object',
@@ -525,7 +519,7 @@ test('successive single corrections supersede obsolete draft pictures and preser
   expect(model.requests).toHaveLength(4);
   expect(model.authorizationRequests).toHaveLength(4);
   const input = model.requests[3].input;
-  const current = JSON.parse(String(input.findLast((item) => item.role === 'user')?.content));
+  const current = startEnvelope(model.requests[3]);
   const results = input
     .filter((item) => item.type === 'function_call_output')
     .map((item) => JSON.parse(String(item.output)));
@@ -551,9 +545,7 @@ test.each(['saved', 'draft'])(
   'a completed human follow-up starts with bounded current %s facts without another read round',
   async (source) => {
     const model = textModel((request) => {
-      const current = JSON.parse(
-        String(request.input.findLast((item) => item.role === 'user')?.content),
-      );
+      const current = startEnvelope(request);
       const target = current.message.startsWith('Finns Lo') ? 'Lo' : 'Lina';
       const last = request.input.findLast((item) => item.type === 'function_call_output');
       const read = last && JSON.parse(String(last.output));
@@ -591,9 +583,7 @@ test.each(['saved', 'draft'])(
     const final = await settled(await send(second, 'Vilket födelsedatum har hon?'));
     expect(final).toMatchObject({ phase: 'ready', modelReply: 'Födelsedatum är 1990-02-03.' });
     expect(model.requests).toHaveLength(before + 1);
-    const current = JSON.parse(
-      String(model.requests[before].input.findLast((item) => item.role === 'user')?.content),
-    );
+    const current = startEnvelope(model.requests[before]);
     expect(JSON.stringify({ draft: current.draft, reads: current.verifiedReads })).toContain(
       '1990-02-03',
     );
