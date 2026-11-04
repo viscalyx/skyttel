@@ -4,7 +4,7 @@ import Database from 'better-sqlite3';
 import { unzipSync } from 'fflate';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import type { MapState } from '../../../src/shared/map.js';
-import { beginAssistant, callAssistant } from '../../support/assistant.js';
+import { authorizeAssistant, callAssistant, callAssistantTool } from '../../support/assistant.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { createInstallation, robin } from '../../support/installation.js';
 
@@ -33,26 +33,10 @@ const batch = () => ({
     },
   ],
 });
-async function connect(client = browser, household = householdId) {
-  const flow = await beginAssistant(
-    client,
-    app.origin,
-    'skyttel:read skyttel:write offline_access',
-  );
-  const accepted = await flow.consent(household);
-  expect(accepted.status()).toBe(200);
-  return (await (await flow.exchange((await accepted.json()).url)).json()).access_token as string;
-}
-async function tool(name: string, args: Record<string, unknown>, grant = token) {
-  const response = await callAssistant(app.origin, grant, name, args);
-  expect(response.status).toBe(200);
-  const envelope = await response.json();
-  expect(envelope.error).toBeUndefined();
-  return {
-    error: envelope.result.isError === true,
-    value: JSON.parse(envelope.result.content[0].text),
-  };
-}
+const connect = (client = browser, household = householdId) =>
+  authorizeAssistant(client, app.origin, household);
+const tool = (name: string, args: Record<string, unknown>, grant = token) =>
+  callAssistantTool(app.origin, grant, name, args);
 beforeEach(async () => {
   app = await createInstallation();
   browser = await request.newContext();
