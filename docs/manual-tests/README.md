@@ -512,8 +512,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   relevant aktuellt underlag inom mängdgränser utan att välja en tvetydig
   person eller återanvända inaktuella uppgifter.
   [Separat samtalsförberedelse](conversation-preparation.md) beskriver
-  versionsvärden, paket, oberoende kontroll av köade mål, registrerat
-  sparande och PCM genom hållen start.
+  versionsvärden, paket med slutbesked, oberoende kontroll av köade mål,
+  registrerat sparande och PCM genom hållen start.
   PCM-receptets tekniska referens är fylld installation med oförändrad
   karta, utkast och historik; separat körning från tomt hushåll ingår inte.
   Båda huvudreceptproven finns kvar, inklusive fylld konfliktlösning.
