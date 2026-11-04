@@ -60,7 +60,6 @@ export type ConversationState = TextAssistantView & {
     id: string;
     text: string;
     paused?: boolean;
-    reference?: QueuedRequestReference | null;
   }[];
   /** Dialogue already included in Responses input; add new fragments once. */
   contextOffset: number;

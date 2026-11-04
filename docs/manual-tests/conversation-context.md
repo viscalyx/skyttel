@@ -1362,6 +1362,8 @@ modells faktiska kontextgräns.
 Påhittad uppgift. Förbered en kontrollerad textmätning på 99 procent
 enligt [sammanfattningsförberedelsen](conversation-preparation.md#sammanfattning-och-mätning).
 Håll den första läsningens svar och dess följande sammanfattning separat.
+Följ [förberedelsen för oberoende kontroll](conversation-preparation.md#köad-rättelse-och-oberoende-kontroll)
+för läsbehörighet, aktuell arbetsbehörighet och kontrollens separata svar.
 Detta mäter inte en verklig modells kontextgräns.
 
 <!-- markdownlint-disable MD013 -->
@@ -1381,6 +1383,13 @@ Detta mäter inte en verklig modells kontextgräns.
     "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
     "title": "queued actions use fresh facts but preserve the admitted target when facts are unrelated",
     "purpose": "Publik HTTP visar att nytt aktuellt underlag får användas med oförändrad entydig åtgärd och mål."
+  }, {
+    "kind": "technical",
+    "runner": "vitest",
+    "suite": "server",
+    "spec": "tests/unit/server/manual-voice.test.ts",
+    "title": "published queued correction preparation compares admitted and current targets with manual rename false",
+    "purpose": "Det publicerade terminalreceptet håller den verkliga oberoende kontrollen och släpper ett tillåtande svar för samma mål med ändrad beskrivning."
   }],
   "reference": "Kontrollerad sammanfattning, riktig server och SQLite; vanligt formulär gör den oberoende ändringen.",
   "outcomes": [
@@ -1400,7 +1409,8 @@ Detta mäter inte en verklig modells kontextgräns.
    **Tabell → Redigera Lo Exempel → Fria egenskaper**. Ändra Beskrivning
    till ”Manuell aktuell uppgift”. Välj **Lägg i utkastet och stäng**.
 3. Öppna textvyn och släpp sammanfattningen. Låt den köade begäran rätta
-   samma Lo-förslag med den aktuella beskrivningen.
+   samma Lo-förslag med den aktuella beskrivningen. Släpp kontrollens
+   tillåtande svar enligt förberedelsen.
 4. Läs ”Lo Exempel bytte namn till Lo Klar.” och öppna Lo Klar i utkastet.
 
 **Förväntat resultat:**
@@ -1428,6 +1438,14 @@ Detta mäter inte en verklig modells kontextgräns.
     "caseId": "KONTEXT-22"
   },
   "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/manual-voice.test.ts",
+      "title": "published queued correction preparation compares admitted and current targets with manual rename true",
+      "purpose": "Det publicerade terminalreceptet visar ursprungligt och manuellt ändrat mål i den verkliga kontrollen och släpper ett förtydligande svar utan effekt."
+    },
     {
       "kind": "technical",
       "runner": "vitest",
@@ -1478,7 +1496,8 @@ Detta mäter inte en verklig modells kontextgräns.
 2. Öppna **Tabell → Redigera Lo Exempel**. Byt Namn till ”Lo Manuell”
    och välj **Lägg i utkastet och stäng**.
 3. Öppna textvyn och släpp sammanfattningen. Låt operatören föreslå den
-   tidigare rättelsen. Läs förtydligandet och öppna Lo Manuell i utkastet.
+   tidigare rättelsen och släppa kontrollens förtydligande svar enligt
+   förberedelsen. Läs förtydligandet och öppna Lo Manuell i utkastet.
 
 **Förväntat resultat:**
 

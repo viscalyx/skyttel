@@ -507,6 +507,14 @@ export function textAssistantRoutes({
     session.state.saveIntent = undefined;
     session.state.saveIntentDeadline = undefined;
   }
+  function failSummaryCapacity(session: Session) {
+    session.state.contextSummaryState = 'failed';
+    session.state.contextSummaryFailure = {
+      code: 'assistant_context_capacity',
+      message: assistantFailureMessage('assistant_context_capacity'),
+    };
+    pauseCapacity(session);
+  }
   function invalidateQueuedSaves(session: Session) {
     session.state.saveIntent = undefined;
     session.state.saveIntentDeadline = undefined;
@@ -1654,14 +1662,8 @@ export function textAssistantRoutes({
           guard();
           turnStart = session.state.input.length - continuation.length;
           if (view(session).contextSummaryState === 'failed' || needsSummary(session)) {
-            session.state.contextSummaryState = 'failed';
-            if (!session.state.contextSummaryFailure) {
-              session.state.contextSummaryFailure = {
-                code: 'assistant_context_capacity',
-                message: assistantFailureMessage('assistant_context_capacity'),
-              };
-              pauseCapacity(session);
-            }
+            if (session.state.contextSummaryFailure) session.state.contextSummaryState = 'failed';
+            else failSummaryCapacity(session);
             session.state.phase = 'ready';
             return;
           }
@@ -1809,12 +1811,7 @@ export function textAssistantRoutes({
             return;
           }
           if (exceedsRequestBudget(session, instructions, tools)) {
-            session.state.contextSummaryState = 'failed';
-            session.state.contextSummaryFailure = {
-              code: 'assistant_context_capacity',
-              message: assistantFailureMessage('assistant_context_capacity'),
-            };
-            pauseCapacity(session);
+            failSummaryCapacity(session);
             session.state.phase = 'ready';
             return;
           }
@@ -2579,7 +2576,6 @@ export function textAssistantRoutes({
     session.state.unfinishedRequests.push({
       id: message.id,
       text: message.text,
-      reference: message.queuedReference,
     });
     // Scope clarifications are transient; ledger questions remain pending until
     // their existing identity/answer protocol resolves them.
@@ -3760,12 +3756,7 @@ export function textAssistantRoutes({
         Buffer.byteLength(JSON.stringify(providerConversation(session))) / 3 >=
         voiceTokens * 0.89
       ) {
-        session.state.contextSummaryState = 'failed';
-        pauseCapacity(session);
-        session.state.contextSummaryFailure = {
-          code: 'assistant_context_capacity',
-          message: assistantFailureMessage('assistant_context_capacity'),
-        };
+        failSummaryCapacity(session);
       }
       return view(session);
     },
