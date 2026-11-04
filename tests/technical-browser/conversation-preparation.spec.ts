@@ -474,7 +474,9 @@ for (const seeded of [false, true]) {
       // Prepare before starting, exactly as each independent manual case does.
       // The new text session therefore owns this prepared current draft.
       await page.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
-      await giveConversationConsent(page);
+      // This combined proof still has an active visit consent. Resetting that
+      // conversation completes directly, without another consent dialog.
+      await expect(log).toContainText('Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.');
       await expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
         'data-session-active',
         'true',
