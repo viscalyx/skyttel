@@ -234,13 +234,13 @@ TEXT-17.
     "spec": "tests/integration/text-assistant.spec.ts",
     "caseId": "TEXT-17"
   },
-  "reference": "Dator; riktig server och databas med kontrollerade leverantörer. Enkelt textuppdrag, textuppdrag med förklaring och talad sparbegäran med förklaring. Separata nya installationer prövar skrivna uppdrag med mikrofonen på där förklaringen misslyckas efter verkligt sparande respektive en osparad utkaständring.",
+  "reference": "Dator; riktig server och databas med kontrollerade leverantörer. Enkelt textuppdrag, textuppdrag med förklaring och talad sparbegäran med förklaring. Separata nya installationer prövar skrivna uppdrag med mikrofonen på där förklaringen misslyckas efter verkligt sparande respektive en osparad utkaständring med en separat väntande fråga.",
   "outcomes": [
     "Ett verifierat enkelt uppdrag ger kort slutbesked utan att förslagen sparas.",
     "En beställd förklaring finns kvar efter utkaständringen och efter sparande med röst.",
     "Sparandet bekräftas med tomt utkast, verkliga objekt och ett gemensamt kvitto.",
     "Ett verkligt sparande och felet i en återstående förklaring finns båda med i text och kontrollerad röstleverans.",
-    "En genomförd osparad ändring och den uteblivna förklaringens felbesked finns båda med i text och kontrollerad röstleverans utan sparbesked."
+    "En genomförd osparad ändring, dess separata väntande fråga och den uteblivna förklaringens felbesked finns med i text och kontrollerad röstleverans utan sparbesked."
   ],
   "evidence": [
     {
@@ -250,6 +250,14 @@ TEXT-17.
       "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
       "title": "direct save continues requested explanation with missing result certification",
       "purpose": "Saknad slutkontroll får inte avsluta uppdraget före den beställda förklaringen."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "direct save continues requested explanation with following catalog read certification",
+      "purpose": "Ett sparande får inte hoppa över en efterföljande beställd läsning i samma verktygsomgång innan förklaringen fortsätter."
     },
     {
       "kind": "technical",
@@ -298,6 +306,22 @@ TEXT-17.
       "spec": "tests/unit/server/voice-assistant.test.ts",
       "title": "a verified unsaved voice change retains its details when the required explanation fails",
       "purpose": "En talad begärans verifierade utkaständring och verkliga fel måste båda levereras utan att påstå sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified unsaved voice change retains its pending question when the required explanation fails",
+      "purpose": "En talad begärans självständiga ändring, väntande fråga och senare förklaringsfel måste alla levereras med sina sakliga roller."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-typed-delivery.test.ts",
+      "title": "a failed typed completion delivers its own question before a later task question",
+      "purpose": "En senare begärans fråga får inte ersätta en tidigare slutförd begärans väntande fråga i röstleveransen."
     }
   ]
 }
@@ -333,12 +357,12 @@ TEXT-17.
    innehåller Lo Exempel.
 8. Följ förberedelsens osparade felvariant i ytterligare en ny
    installation med enbart Lo Exempel osparad. Starta text och slå på
-   mikrofonen. Skriv **Lägg till Kim med samma objekttyp som Lo Exempel
-   och förklara typen Person. Spara inte.**
+   mikrofonen. Skriv **Lägg till Kim och en kollega med samma objekttyp
+   som Lo Exempel och förklara typen Person. Spara inte.**
 9. Operatören släpper utkaständringen och avbryter därefter förklaringen.
-   Läs både **Kim lades till.** och felbeskedet. Kontrollera samma
-   sakliga innehåll i den kontrollerade röstleveransen. Inget
-   **Sparat.** ska finnas i text eller röstleverans.
+   Läs **Kim lades till.**, **Vad heter kollegan?** och felbeskedet.
+   Kontrollera samma sakliga innehåll i den kontrollerade
+   röstleveransen. Inget **Sparat.** ska finnas i text eller röstleverans.
 10. Läs Kim och Lo Exempel i utkastet. Öppna
     **Rapporter → Ändringshistorik** och kontrollera att inget sparande
     finns.
@@ -355,8 +379,9 @@ TEXT-17.
   leveranssätten sparbeskedet och det aktuella felbeskedet. Sparandet
   ersätter inte den uteblivna förklaringen.
 - Om förklaringen misslyckas efter en osparad ändring behåller båda
-  leveranssätten den genomförda ändringens detaljer och det aktuella
-  felet. Ändringen ligger kvar i utkastet; inget sparande påstås.
+  leveranssätten den genomförda ändringens detaljer, frågan om kollegan
+  och det aktuella felet. Den väntande delen framstår inte som färdig.
+  Ändringen ligger kvar i utkastet; inget sparande påstås.
 
 ### TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked
 

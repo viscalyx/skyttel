@@ -190,18 +190,20 @@ just nästa arbetsbegäran för förklaringen:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-tool REQUEST submit_changes {"version":V,"contentVersion":C,"completion":"draft","operations":[{"name":"propose_object","arguments":{"id":"kim","baseRevision":null,"value":{"typeId":"TYPE","name":"Kim"}}}]}
+tool REQUEST submit_changes {"version":V,"contentVersion":C,"completion":"draft","questions":[{"kind":"change","request":"Lägg till kollegan som person.","question":"Vad heter kollegan?","dependsOnDraft":false}],"operations":[{"name":"propose_object","arguments":{"id":"kim","baseRevision":null,"value":{"typeId":"TYPE","name":"Kim"}}}]}
 reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
 fail REQUEST
 ```
 <!-- markdownlint-enable MD013 -->
 
 Kontrollera att både Kim och Lo ligger kvar i utkastet och att inget
-sparande finns i ändringshistoriken. Jämför **Kim lades till.** och
-felbeskedet i samtalstexten med den faktiska kontrollerade
-röstleveransen. Ändringen är ett verifierat resultat; felet är ett
-obligatoriskt besked. Leveransen får inte säga **Sparat.** eller påstå
-att Lo lades till av detta uppdrag. Avsluta installationen med `quit`.
+sparande finns i ändringshistoriken. Jämför **Kim lades till.**,
+**Vad heter kollegan?** och felbeskedet i samtalstexten med den faktiska
+kontrollerade röstleveransen. Frågan gäller den separata väntande delen
+om kollegan; den delen är inte genomförd. Ändringen är ett verifierat
+resultat; felet är ett obligatoriskt besked. Leveransen får inte säga
+**Sparat.** eller påstå att Lo lades till av detta uppdrag. Avsluta
+installationen med `quit`.
 
 ## Avvisad kontroll av hela utkastet
 

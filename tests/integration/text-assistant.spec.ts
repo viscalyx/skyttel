@@ -186,8 +186,29 @@ test('TEXT-17: verifierat slutbesked behåller beställd förklaring i text och 
   }
 });
 
-async function verifyTypedUnsavedExplanationFailure(page: Page) {
+async function createExplanationFailureInstallation(model: ReturnType<typeof textModel>) {
   let explanationFailures = 0;
+  const live = liveProvider();
+  const app = await createInstallation(undefined, {
+    modelFetch: async (input, init) => {
+      const body = JSON.parse(String(init?.body));
+      if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length) {
+        explanationFailures++;
+        return Response.json(
+          { error: { message: 'Controlled explanation outage.' } },
+          { status: 503 },
+        );
+      }
+      return model.provider(input, init);
+    },
+    liveFetch: live.provider,
+    liveSideband: live.attach,
+  });
+  return { app, live, explanationFailures: () => explanationFailures };
+}
+
+async function verifyTypedUnsavedExplanationFailure(page: Page) {
+  const question = 'Vad heter kollegan?';
   const model = textModel((body) => {
     const { draft } = JSON.parse(
       String(body.input.findLast((item) => item.role === 'user')?.content),
@@ -197,6 +218,14 @@ async function verifyTypedUnsavedExplanationFailure(page: Page) {
         version: draft.version,
         contentVersion: draft.contentVersion,
         completion: 'draft',
+        questions: [
+          {
+            kind: 'change',
+            request: 'Lägg till kollegan som person.',
+            question,
+            dependsOnDraft: false,
+          },
+        ],
         operations: [
           {
             name: 'propose_object',
@@ -210,22 +239,7 @@ async function verifyTypedUnsavedExplanationFailure(page: Page) {
       }),
     ];
   }, completionAuthorization);
-  const live = liveProvider();
-  const app = await createInstallation(undefined, {
-    modelFetch: async (input, init) => {
-      const body = JSON.parse(String(init?.body));
-      if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length) {
-        explanationFailures++;
-        return Response.json(
-          { error: { message: 'Controlled explanation outage.' } },
-          { status: 503 },
-        );
-      }
-      return model.provider(input, init);
-    },
-    liveFetch: live.provider,
-    liveSideband: live.attach,
-  });
+  const { app, live, explanationFailures } = await createExplanationFailureInstallation(model);
   try {
     await arrange(page, app);
     await consent(page);
@@ -233,23 +247,25 @@ async function verifyTypedUnsavedExplanationFailure(page: Page) {
     await expect(voiceBox(page)).toHaveText('Lyssnar');
     await send(
       page,
-      'Lägg till Kim med samma objekttyp som Lo Exempel och förklara typen Person. Spara inte.',
+      'Lägg till Kim och en kollega med samma objekttyp som Lo Exempel och förklara typen Person. Spara inte.',
     );
     const failure =
       'Modellen är tillfälligt otillgänglig. Valet är kvar. Försök igen genom en egen handling när felet är löst.';
     await expect(transcript(page)).toContainText('Kim lades till.');
     await expect(transcript(page)).toContainText(failure);
+    await expect(transcript(page)).toContainText(question);
     await expect(transcript(page)).not.toContainText('Sparat.');
     await expect(await showDraft(page)).toContainText('Kim');
     await expect(await showDraft(page)).toContainText('Lo Exempel');
     const history = await openSavedHistory(page);
     await expect(history.getByRole('article')).toHaveCount(0);
-    expect(explanationFailures).toBe(1);
+    expect(explanationFailures()).toBe(1);
     expect(model.requests).toHaveLength(1);
     await expect.poll(() => voiceAnswerParts(live.sent).join('\n')).toContain(failure);
     const spoken = voiceAnswerParts(live.sent).join('\n');
     expect(spoken).toContain('Skyttels resultat (verifierat): Utkastet är uppdaterat.');
     expect(spoken).toContain('Kim lades till.');
+    expect(spoken).toContain(`Nödvändig fråga (samtalsdata): ${JSON.stringify(question)}`);
     expect(spoken).toContain(`Obligatoriskt besked från Skyttel: ${failure}`);
     expect(spoken).not.toContain('Sparat.');
     expect(spoken).not.toContain('Lo Exempel lades till.');
@@ -259,7 +275,6 @@ async function verifyTypedUnsavedExplanationFailure(page: Page) {
 }
 
 async function verifyTypedSaveExplanationFailure(page: Page) {
-  let explanationFailures = 0;
   const model = textModel((body) => {
     const { draft } = JSON.parse(
       String(body.input.findLast((item) => item.role === 'user')?.content),
@@ -272,22 +287,7 @@ async function verifyTypedSaveExplanationFailure(page: Page) {
       }),
     ];
   }, completionAuthorization);
-  const live = liveProvider();
-  const app = await createInstallation(undefined, {
-    modelFetch: async (input, init) => {
-      const body = JSON.parse(String(init?.body));
-      if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length) {
-        explanationFailures++;
-        return Response.json(
-          { error: { message: 'Controlled explanation outage.' } },
-          { status: 503 },
-        );
-      }
-      return model.provider(input, init);
-    },
-    liveFetch: live.provider,
-    liveSideband: live.attach,
-  });
+  const { app, live, explanationFailures } = await createExplanationFailureInstallation(model);
   try {
     await arrange(page, app);
     await consent(page);
@@ -304,7 +304,7 @@ async function verifyTypedSaveExplanationFailure(page: Page) {
     await expect(history.getByRole('article')).toHaveCount(1);
     await history.getByText('Visa ändringarna', { exact: true }).click();
     await expect(history.locator('.history-changes')).toContainText('Lo Exempel');
-    expect(explanationFailures).toBe(1);
+    expect(explanationFailures()).toBe(1);
     expect(model.requests).toHaveLength(1);
     await expect.poll(() => voiceAnswerParts(live.sent).join('\n')).toContain('Sparat.');
     expect(voiceAnswerParts(live.sent).join('\n')).toContain(failure);

@@ -245,10 +245,13 @@ for (const boundary of [
 ])
   for (const certificate of boundary === 'report'
     ? ['missing scope', 'contradictory response']
-    : ['missing scope', 'missing result', 'contradictory response'])
+    : boundary === 'direct save'
+      ? ['missing scope', 'missing result', 'contradictory response', 'following catalog read']
+      : ['missing scope', 'missing result', 'contradictory response'])
     test(`${boundary} continues requested explanation with ${certificate} certification`, async () => {
       const explanation = 'Person är en objekttyp. Förslagen hör till ditt utkast före sparande.';
       const saving = boundary.endsWith('save');
+      const readAfterSave = certificate === 'following catalog read';
       const holdResponse = boundary === 'direct save' && certificate === 'contradictory response';
       let releaseResponse = () => {};
       const responseReady = new Promise<void>((resolve) => {
@@ -273,6 +276,7 @@ for (const boundary of [
                 contentVersion: initialDraft.contentVersion,
                 operationId: 'controlled-save',
               }),
+              ...(readAfterSave ? [modelTool('read_type_catalog', {})] : []),
             ];
           if (!result) return [modelTool('read_my_draft', {})];
           const draft = result;
@@ -312,7 +316,10 @@ for (const boundary of [
                     request: JSON.parse(String(body.input[0].content)).current,
                     ...(certificate === 'missing scope'
                       ? {}
-                      : { responseRequired: certificate === 'contradictory response' }),
+                      : {
+                          responseRequired:
+                            certificate === 'contradictory response' || readAfterSave,
+                        }),
                   }
                 : {
                     decision: 'allow',
@@ -395,6 +402,17 @@ for (const boundary of [
         if (saving) {
           expect(finished.receipt?.operationId).toBeTruthy();
           expect(finished.review.changes).toEqual([]);
+          if (readAfterSave) {
+            const followUp = model.requests[setupReads + 1];
+            const calls = followUp.input.filter((item) => item.type === 'function_call');
+            const outputs = followUp.input.filter((item) => item.type === 'function_call_output');
+            expect(calls.map((call) => call.name)).toEqual(['save_draft', 'read_type_catalog']);
+            expect(outputs.map((output) => output.call_id)).toEqual(
+              calls.map((call) => call.call_id),
+            );
+            const catalog = JSON.parse(String(outputs.at(-1)?.output));
+            expect(catalog.types).toContainEqual(expect.objectContaining({ name: 'Person' }));
+          }
           expect((await (await browser.get(mapPath)).json()).objects).toEqual(
             expect.arrayContaining([expect.objectContaining({ name: 'Lo Exempel' })]),
           );

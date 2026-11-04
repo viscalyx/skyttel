@@ -2055,7 +2055,7 @@ export function textAssistantRoutes({
         refreshContext(session, outdated);
         return outdated;
       }
-      work: for (let step = 0; step < 48; step++) {
+      for (let step = 0; step < 48; step++) {
         guard();
         if (!respond) throw new Error('assistant_unavailable');
         const outdatedReads = await refreshCurrentDraft();
@@ -2767,13 +2767,10 @@ export function textAssistantRoutes({
               call_id: action.call_id,
               output: JSON.stringify(value),
             });
-            if (!wholeRequestComplete) {
-              version = session.state.review.version;
-              contentVersion = session.state.review.contentVersion;
-              session.state.phase = 'working';
-              continue work;
-            }
-            return;
+            version = session.state.review.version;
+            contentVersion = session.state.review.contentVersion;
+            if (!wholeRequestComplete) session.state.phase = 'working';
+            continue;
           }
           if (!combined)
             session.state.input.push({
@@ -2826,6 +2823,7 @@ export function textAssistantRoutes({
           }
           return;
         }
+        if (wholeRequestComplete && session.state.receipt && !hasReadyPendingParts(session)) return;
         if (wholeRequestComplete && mutations.size && !hasReadyPendingParts(session)) {
           session.state.reply = verifiedReply(session);
           session.state.modelReply = turnReply(session);
@@ -3270,10 +3268,13 @@ export function textAssistantRoutes({
         advanceDraftVersion(session, expected.version, session.state.review.version);
         session.state.workVersion = session.state.review.version;
         session.state.phase = 'ready';
-        session.state.result = { kind: 'draft', message: 'Utkastet är kastat.' };
-        session.state.reply = message.resetDiscard
-          ? newConversationMessage(session.state.review)
-          : session.state.result.message;
+        session.state.result = {
+          kind: 'draft',
+          message: message.resetDiscard
+            ? newConversationMessage(session.state.review)
+            : 'Utkastet är kastat.',
+        };
+        session.state.reply = session.state.result.message;
         session.state.discarded = true;
         if (!message.resetDiscard) {
           appendConversation(session, { role: 'assistant', text: session.state.reply });

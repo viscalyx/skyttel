@@ -218,7 +218,8 @@ export function voiceWork({
       const parts = receiptParts(view);
       return parts.length > 1 ? parts : 'Sparat.';
     }
-    if (view.questionPending && view.modelReply)
+    const question = view.modelReply ?? (view.newQuestions ?? view.questions)?.join('\n');
+    if (view.questionPending && question)
       return [
         ...notices(view),
         { kind: 'result', text: resultText(view) },
@@ -226,7 +227,7 @@ export function voiceWork({
           kind: 'status',
           text: view.displayedSelection ? 'Markeringen är bekräftad i kartan.' : '',
         },
-        { kind: 'question', text: view.modelReply },
+        { kind: 'question', text: question },
       ];
     if (view.phase === 'recovery')
       return 'Det är oklart om utkastet sparades. Skyttel kontrollerar det.';
@@ -706,6 +707,8 @@ export function voiceWork({
           result: reply.result,
           saveCheck: reply.saveCheck,
           questionPending: reply.questionPending,
+          questions: reply.questions,
+          newQuestions: reply.newQuestions,
           failed: reply.failed,
           error: undefined,
           displayedSelection: undefined,

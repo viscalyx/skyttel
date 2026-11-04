@@ -481,8 +481,9 @@ Om sparandet är klart men förklaringen misslyckas får du både
 sparbeskedet och felbeskedet. Sparandet finns kvar i ändringshistoriken;
 en saknad förklaring betyder inte att sparandet saknas.
 Om förklaringen misslyckas efter en ändring som inte ska sparas får du
-ändringens detaljer och felbeskedet i både text och röst. Ändringen
-ligger kvar osparad i ditt utkast.
+ändringens detaljer och felbeskedet i både text och röst. Finns också
+en väntande del får du dess fråga, så att du vet vad som återstår.
+Ändringen ligger kvar osparad i ditt utkast.
 
 I textvyn läser du svar, följdfrågor och sparbesked. Välj **Visa utkastet**
 för att läsa föreslagna ändringar.
