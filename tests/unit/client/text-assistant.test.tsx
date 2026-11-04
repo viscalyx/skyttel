@@ -97,6 +97,7 @@ test('keyboard focus moves to a surviving control after successfully ending the 
   const next = screen.getByRole('button', { name: 'Nytt samtal' });
   next.focus();
   await userEvent.tab(); // Close text view.
+  await userEvent.tab(); // Draft toggle.
   await userEvent.tab(); // End conversation.
   expect(document.activeElement).toBe(end);
   await userEvent.keyboard('{Enter}');

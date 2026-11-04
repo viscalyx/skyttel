@@ -463,9 +463,10 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   en enda artig uppläsning, fasta mått och minskad rörelse. Kommentarspaket
   och faktiskt hört tal provas separat. Mobilfallen har separata ID för
   varje kvarvarande emulerad konfiguration, fast sidofält på bred pekare,
-  kompakt rad vid kort synlig höjd,
-  bibehållet fokus, 190 px synlig höjd med rösten på, fria kartkontroller
-  och långa rullbara notiser. Datorfallen provar oberoende breddhandtag
+  kompakt rad vid kort synlig höjd, paus och utgångstid vid återkomst,
+  nåbart avslut med fokusåtergång, bibehållet fokus, 190 px synlig höjd med
+  rösten på, fria kartkontroller och långa rullbara notiser. Datorfallen
+  provar oberoende breddhandtag
   med mus och piltangenter, personliga bredder mellan hushåll och enheter,
   visningsbegränsning utan ändrat sparat val samt återställning även utan
   tillgängligt samtal. Mobil enhet och smal skärm behåller sina bredder.
