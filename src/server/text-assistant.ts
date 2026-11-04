@@ -1556,6 +1556,9 @@ export function textAssistantRoutes({
           pending.messageId,
         );
       session.execution.parts.complete(resolves);
+      const original = session.state.activeMessage;
+      if (original && original.id === pending.messageId)
+        recordReplyProgress(session, resolves, original);
       advanceDraftVersion(session, pending.request.version, after.version);
       session.state.workVersion = after.version;
       session.state.result = {
@@ -1918,11 +1921,28 @@ export function textAssistantRoutes({
     )
       throw new MapError('assistant_pending_part_changed');
     const result = session.execution.parts.apply(questions, updates, { ...message, callId });
+    recordReplyProgress(session, updates, message);
     syncQuestions(session);
     session.state.newQuestions = [...(session.state.newQuestions ?? []), ...result.questions];
     session.state.answers = [...(session.state.answers ?? []), ...result.answers];
     session.state.modelReply = turnReply(session);
     return result;
+  }
+  function recordReplyProgress(
+    session: Session,
+    refs: { id: string; revision: number }[],
+    message = session.state.activeMessage,
+  ) {
+    if (!message?.answerTo || !refs.length) return;
+    const previous = message.answerProgress ?? message.answerTo;
+    const current = session.execution.parts.read();
+    // Advance only an uninterrupted chain from this request's admitted answer.
+    // Manual changes and transitions by other requests cannot enter this proof.
+    message.answerProgress = previous.map((ref) => {
+      if (!refs.some((item) => item.id === ref.id && item.revision === ref.revision)) return ref;
+      const part = current.find((part) => part.id === ref.id);
+      return part && part.revision > ref.revision ? { id: ref.id, revision: part.revision } : ref;
+    });
   }
   function saved(
     session: Session,
@@ -3240,6 +3260,7 @@ export function textAssistantRoutes({
           const isSave = action.name === 'save_draft' || action.name === 'prepare_save';
           if (isSave && combined) {
             session.execution.parts.complete(combined.resolves);
+            recordReplyProgress(session, combined.resolves);
             combined.resolves = [];
             syncQuestions(session);
           }
@@ -3422,6 +3443,7 @@ export function textAssistantRoutes({
         }
         if (combined) {
           session.execution.parts.complete(combined.resolves);
+          recordReplyProgress(session, combined.resolves);
           syncQuestions(session);
           session.state.reply = verifiedReply(session);
           session.state.phase = 'ready';
@@ -4090,7 +4112,11 @@ export function textAssistantRoutes({
         session.state.workVersion = current.version;
         expected.version = current.version;
       }
-      if (message.answerTo) session.execution.parts.validateReply(message.answerTo);
+      if (message.answerTo)
+        session.execution.parts.validateReply(
+          message.answerTo,
+          message.continuation ? message.answerProgress : undefined,
+        );
       if (conversationCommand(message.text)?.discard) {
         if (message.continuation)
           session.execution.parts.checkContinuation(message.id, session.state.review);

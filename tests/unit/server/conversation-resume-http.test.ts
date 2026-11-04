@@ -598,6 +598,210 @@ test('a new request after reopening an active crash image waits for earlier reta
   }
 });
 
+test.each([false, true])(
+  'a spoken clarification resumes only unfinished work after actual restart without renewing its old save request: lostBatchReply=%s',
+  async (lostBatchReply) => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let interrupted = false;
+    let typeId = '';
+    const model = textModel((body) => {
+      const current = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (model.requests.length === 1)
+        return [
+          modelTool('ask_questions', {
+            questions: [
+              {
+                kind: 'change',
+                request: 'Lägg till personen.',
+                question: 'Vad heter personen?',
+                dependsOnDraft: true,
+              },
+            ],
+          }),
+        ];
+      const part = current.pendingParts[0];
+      if (model.requests.length === 2)
+        return [
+          modelTool('ask_questions', {
+            questions: [],
+            updates: [
+              {
+                id: part.id,
+                revision: part.revision,
+                action: 'clarify',
+                messageId: current.messageId,
+                evidence: current.message,
+              },
+            ],
+            continueResponse: true,
+          }),
+        ];
+      const partial = model.requests.length === 3;
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          resolves: partial ? [{ id: part.id, revision: part.revision }] : [],
+          completion: 'draft',
+          continueResponse: partial,
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: partial ? 'lo' : 'mira',
+                baseRevision: null,
+                value: { typeId, name: partial ? 'Lo' : 'Mira' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    app = await createInstallation(undefined, {
+      modelFetch: async (input, init) => {
+        const body = JSON.parse(String(init?.body));
+        if (
+          !lostBatchReply &&
+          !body.instructions.startsWith('SKYTTEL_TURN_') &&
+          model.requests.length === 3 &&
+          !interrupted
+        ) {
+          interrupted = true;
+          await held;
+          return Response.json(
+            { error: { message: 'Retired provider response' } },
+            { status: 503 },
+          );
+        }
+        return model.provider(input, init);
+      },
+      assistantDispatch: async (incoming, dispatch) => {
+        const rpc =
+          incoming.method === 'POST' && new URL(incoming.url).pathname === '/mcp'
+            ? await incoming
+                .clone()
+                .json()
+                .catch(() => null)
+            : null;
+        const response = await dispatch(incoming);
+        if (!lostBatchReply || interrupted || rpc?.params?.name !== 'apply_draft_batch')
+          return response;
+        const envelope = await response.clone().json();
+        expect(envelope.result.isError).not.toBe(true);
+        const result = JSON.parse(
+          envelope.result.content.find((item: { type: string }) => item.type === 'text').text,
+        );
+        expect(result.status).toBe('committed');
+        interrupted = true;
+        await held;
+        throw new Error('Controlled committed batch response loss during restart');
+      },
+    });
+    const first = await browser();
+    const { household } = await (await createHousehold(first, app.origin)).json();
+    const path = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const map = `${app.origin}/api/households/${household.id}/map`;
+    typeId = (await (await first.get(map)).json()).types[0].id;
+    const post = (client: APIRequestContext, url: string, data: object = {}) =>
+      client.post(url, { headers: { origin: app.origin }, data });
+    let state: TextAssistantView = await (await post(first, path, approvedForVisit)).json();
+    const endpoint = `${path}/${state.id}`;
+    const send = (data: object) =>
+      post(first, `${endpoint}/messages`, {
+        revision: state.revision,
+        draftVersion: state.review.version,
+        contentVersion: state.review.contentVersion,
+        ...data,
+      });
+    try {
+      expect(
+        (await send({ requestId: crypto.randomUUID(), text: 'Lägg till personen.' })).status(),
+      ).toBe(202);
+      await expect
+        .poll(async () => {
+          state = await (await first.get(endpoint)).json();
+          return state.phase;
+        })
+        .toBe('ready');
+      const question = state.pendingParts?.[0];
+      expect(question).toMatchObject({ status: 'waiting', revision: 0 });
+      if (!question) throw new Error('Missing waiting question');
+      const requestId = crypto.randomUUID();
+      const text = 'Personen heter Lo. Lägg också till Mira. Spara hela utkastet.';
+      expect(
+        (
+          await send({
+            requestId,
+            text,
+            voiceContext: '[]',
+            answerTo: [{ id: question.id, revision: question.revision }],
+          })
+        ).status(),
+      ).toBe(202);
+      await expect.poll(() => interrupted).toBe(true);
+      state = await (await first.get(endpoint)).json();
+      expect(state.pendingParts?.[0]).toMatchObject({
+        id: question.id,
+        status: lostBatchReply ? 'ready' : 'completed',
+        revision: lostBatchReply ? 1 : 2,
+      });
+      expect((await (await first.get(map)).json()).draft).toMatchObject({
+        version: 1,
+        changes: [{ id: 'lo', after: { name: 'Lo' } }],
+      });
+      await app.restart();
+      const other = await browser();
+      const opened = await post(other, `${path}/retained/${state.id}/open`);
+      expect(opened.status(), await opened.text()).toBe(200);
+      expect(await opened.json()).toMatchObject({ paused: true, review: { version: 1 } });
+      expect(model.requests).toHaveLength(3);
+      const resumed = await post(other, `${endpoint}/resume`, approvedForVisit);
+      expect(resumed.status(), await resumed.text()).toBe(200);
+      await expect
+        .poll(async () => {
+          state = await (await other.get(endpoint)).json();
+          return [state.phase, state.error];
+        })
+        .toEqual(['ready', undefined]);
+      expect(state.pendingParts?.[0]).toMatchObject({
+        id: question.id,
+        status: 'completed',
+        revision: 2,
+      });
+      expect(state.tasks?.filter((task) => task.id === requestId)).toEqual([
+        expect.objectContaining({ status: 'completed' }),
+      ]);
+      expect(
+        state.conversation?.filter((row) => row.role === 'user').map((row) => row.text),
+      ).toEqual(['Lägg till personen.']);
+      expect((await (await other.get(map)).json()).draft).toMatchObject({
+        version: 2,
+        changes: [
+          { id: 'lo', after: { name: 'Lo' } },
+          { id: 'mira', after: { name: 'Mira' } },
+        ],
+      });
+      expect(model.requests).toHaveLength(4);
+      expect(
+        JSON.parse(
+          String(model.requests[3].input.findLast((item) => item.role === 'user')?.content),
+        ),
+      ).toMatchObject({ messageId: requestId });
+      expect((await (await other.get(`${map}/operations`)).json()).operations).toEqual([]);
+      expect((await (await other.get(`${map}/history`)).json()).history).toEqual([]);
+      expect(state.receipt).toBeUndefined();
+      expect(state.requiredNotice).toContain('upphävt sparbegäran');
+    } finally {
+      release();
+    }
+  },
+);
+
 test('resume after actual restart preserves a verified partial batch and never renews its old save request', async () => {
   let release!: () => void;
   let entered!: () => void;

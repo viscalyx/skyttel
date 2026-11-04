@@ -137,9 +137,20 @@ export function pendingParts(state: PendingPartsState = pendingPartsState()) {
     questions: () =>
       state.parts.filter((part) => part.status === 'waiting').map((part) => part.question),
     blocked: () => state.parts.some((part) => part.kind === 'change' && active(part)),
-    validateReply(refs: z.infer<typeof partReference>[]) {
-      for (const ref of refs)
-        if (find(ref).status !== 'waiting') throw new MapError('assistant_pending_part_changed');
+    validateReply(
+      refs: z.infer<typeof partReference>[],
+      progress: z.infer<typeof partReference>[] = [],
+    ) {
+      for (const ref of refs) {
+        const verified = progress.find(
+          (item) => item.id === ref.id && item.revision > ref.revision,
+        );
+        if (verified) {
+          if (state.parts.find((part) => part.id === ref.id)?.revision !== verified.revision)
+            throw new MapError('assistant_pending_part_changed');
+        } else if (find(ref).status !== 'waiting')
+          throw new MapError('assistant_pending_part_changed');
+      }
     },
     apply(
       questions: z.infer<typeof pendingQuestions>,
