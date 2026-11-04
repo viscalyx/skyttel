@@ -56,7 +56,11 @@ import {
   personalModelChoice,
   requireEnabledChoice,
 } from './conversation-model.js';
-import type { ConversationMessage, ConversationState } from './conversation-state.js';
+import {
+  type ConversationMessage,
+  type ConversationState,
+  syncConversationQuestions,
+} from './conversation-state.js';
 import {
   conversationBatchPending,
   conversationLifetime,
@@ -1875,11 +1879,7 @@ export function textAssistantRoutes({
     return session.state.result?.message ?? (session.state.receipt ? savedReply : undefined);
   }
   function syncQuestions(session: Session) {
-    const questions = session.execution.parts.questions();
-    session.state.questions = questions.length ? questions : undefined;
-    session.state.newQuestions = session.state.newQuestions?.filter((question) =>
-      questions.includes(question),
-    );
+    syncConversationQuestions(session.state, session.execution.parts.questions());
   }
   function turnReply(session: Session, text = '', separator = ' ') {
     const retained = [
