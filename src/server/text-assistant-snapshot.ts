@@ -1,4 +1,5 @@
 import type { TextAssistantView } from '../shared/text-assistant.js';
+
 type RecoveryView = Pick<
   TextAssistantView,
   'paused' | 'expiresAt' | 'conversation' | 'queuedRequests' | 'unfinishedRequests'
