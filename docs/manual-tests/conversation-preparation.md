@@ -415,8 +415,10 @@ verkliga ID:t. Kör följande hela Console-paket för varje egen anslutning:
 })()
 ```
 
-Läs status 200 och `voice.phase:"closed"` för varje ID. Ladda därefter
-om sidan och öppna **Skriv till Skyttel**. Kontrollera noll kontext,
+Läs status 200 och `voice.phase:"closed"` för varje ID. Transportstoppet
+bevarar samtalet, som återställs pausat vid omladdning. Välj därför
+**Avsluta samtalet** i textvyn innan nästa självständiga fall.
+Ladda därefter om sidan och öppna **Skriv till Skyttel**. Kontrollera noll kontext,
 borttagen tidigare samtalstext och samma hela sparade karta, historik
 och Robins privata förslag. Gör nästa rättelse i det vanliga
 objektformuläret och läs hela förslaget. Välj därefter **Nytt samtal**,
