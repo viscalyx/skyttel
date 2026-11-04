@@ -30,6 +30,7 @@ async function start(
   mode: 'sequential' | 'overlap',
   events: AssistantObservation[],
   live?: ReturnType<typeof liveProvider>,
+  assistantDispatch?: NonNullable<Parameters<typeof createInstallation>[1]>['assistantDispatch'],
 ) {
   app = await createInstallation(undefined, {
     modelFetch,
@@ -37,6 +38,7 @@ async function start(
     liveFetch: live?.provider,
     liveSideband: live?.attach,
     observe: (event) => events.push(event),
+    assistantDispatch,
   });
   client = await request.newContext();
   await signIn(client, app.origin);
@@ -81,6 +83,272 @@ async function start(
 }
 
 for (const mode of ['sequential', 'overlap'] as const) {
+  test(`${mode} keeps a registered save used when Stop precedes its transport reply`, async () => {
+    const registration = held();
+    const events: AssistantObservation[] = [];
+    let registered = false;
+    const model = textModel((body) => {
+      const { draft } = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('save_draft', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+        }),
+      ];
+    });
+    const flow = await start(
+      model.provider,
+      mode,
+      events,
+      undefined,
+      async (incoming, dispatch) => {
+        const rpc = await incoming
+          .clone()
+          .json()
+          .catch(() => null);
+        const response = await dispatch(incoming);
+        if (rpc?.params?.name === 'prepare_save') {
+          registered = true;
+          await registration.wait;
+        }
+        return response;
+      },
+    );
+    expect(
+      (
+        await client.post(`${flow.path}/map/draft`, {
+          headers: { origin: app.origin },
+          data: {
+            version: flow.map.draft.version,
+            contentVersion: flow.map.contentVersion,
+            id: 'registered-person',
+            baseRevision: null,
+            value: { typeId: flow.map.types[0].id, name: 'Kim Lind', properties: [] },
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    await flow.submit('Spara hela utkastet.', await flow.current());
+    await expect.poll(() => registered).toBe(true);
+    const pending = await flow.current();
+    expect(pending.saving).toBe(true);
+    expect(pending.operations).toMatchObject([{ status: 'pending' }]);
+    const operationId = pending.operations[0].operationId;
+    expect(pending.receipt).toBeUndefined();
+    expect((await (await client.get(`${flow.path}/map`)).json()).objects).toEqual([]);
+    expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual({ history: [] });
+    expect(
+      (
+        await client.post(`${flow.path}/text-assistant/${flow.session.id}/cancel`, {
+          headers: { origin: app.origin },
+          data: { all: true },
+        })
+      ).status(),
+    ).toBe(200);
+    const stopped = await flow.current();
+    expect(stopped.canceled).toBe(true);
+    expect(stopped.operations).toMatchObject([{ operationId, status: 'pending' }]);
+    const recovery = await client.post(`${flow.path}/text-assistant/${flow.session.id}/recover`, {
+      headers: { origin: app.origin },
+      data: {},
+    });
+    expect(recovery.status()).toBe(200);
+    const recovered: TextAssistantView = await recovery.json();
+    expect(recovered.receipt?.operationId).toBe(operationId);
+    expect(recovered.review.changes).toEqual([]);
+    const map = await (await client.get(`${flow.path}/map`)).json();
+    expect(map.objects).toContainEqual(
+      expect.objectContaining({ id: 'registered-person', name: 'Kim Lind' }),
+    );
+    const history = await (await client.get(`${flow.path}/map/history`)).json();
+    expect(history.history).toMatchObject([{ operationId }]);
+    registration.release();
+    await expect.poll(() => events.filter((event) => event.kind === 'work_result').length).toBe(1);
+    const saving = events.find(
+      (event) =>
+        event.kind === 'model_action' && (event.data as { name: string }).name === 'save_draft',
+    );
+    expect(saving?.context?.providerCallId).toBeTruthy();
+    expect(events.find((event) => event.kind === 'work_result')?.data).toMatchObject({
+      providerCallId: saving?.context?.providerCallId,
+      executionMode: mode,
+      disposition: 'used',
+    });
+    expect((await flow.current()).receipt).toEqual(recovered.receipt);
+    expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(map);
+    expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual(history);
+    expect(model.requests).toHaveLength(1);
+    expect(model.authorizationRequests).toHaveLength(2);
+  });
+
+  for (const ending of ['error', 'stop'] as const) {
+    test(`${mode} keeps a verified existing-draft save used after explanation ${ending}`, async () => {
+      const interpretation = held();
+      const explanation = held();
+      const events: AssistantObservation[] = [];
+      let checkedWholeDraft = false;
+      const model = textModel(
+        async (body) => {
+          const { draft } = JSON.parse(
+            String(body.input.findLast((item) => item.role === 'user')?.content),
+          );
+          if (model.requests.length === 1)
+            return [
+              modelTool('save_draft', {
+                version: draft.version,
+                contentVersion: draft.contentVersion,
+              }),
+            ];
+          if (model.requests.length === 2) return [modelTool('read_type_catalog', {})];
+          await explanation.wait;
+          throw new Error('controlled_explanation_failure');
+        },
+        async (body) => {
+          if (body.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
+            await interpretation.wait;
+            return [
+              modelMessage(
+                JSON.stringify({
+                  mode: 'work',
+                  request:
+                    'Beskriv skillnaden mellan objekttypen Person och ett objekt. Spara hela utkastet.',
+                  responseRequired: true,
+                }),
+              ),
+            ];
+          }
+          const { untrusted } = JSON.parse(String(body.input[0].content));
+          expect(untrusted.operations).toEqual([expect.objectContaining({ name: 'save_draft' })]);
+          expect(untrusted.data).toMatchObject({
+            wholeDraft: true,
+            draft: { changes: [{ id: 'existing-person', after: { name: 'Kim Lind' } }] },
+          });
+          checkedWholeDraft = true;
+          return [
+            modelMessage(
+              JSON.stringify({ decision: 'allow', complete: true, fulfillsRequest: true }),
+            ),
+          ];
+        },
+      );
+      const flow = await start(
+        async (url, init) => {
+          const response = await model.provider(url, init);
+          return Response.json(
+            { ...(await response.json()), service_tier: 'default' },
+            { headers: response.headers },
+          );
+        },
+        mode,
+        events,
+      );
+      // Sol has a verified rate card; the later failed/aborted request must
+      // retain unknown usage alongside the completed calls' known cost.
+      expect(
+        (
+          await client.post(`${flow.path}/text-assistant/${flow.session.id}/model-choice`, {
+            headers: { origin: app.origin },
+            data: { model: 'gpt-6.1-sol', effort: 'high' },
+          })
+        ).status(),
+      ).toBe(200);
+      const staged = await client.post(`${flow.path}/map/draft`, {
+        headers: { origin: app.origin },
+        data: {
+          version: flow.map.draft.version,
+          contentVersion: flow.map.contentVersion,
+          id: 'existing-person',
+          baseRevision: null,
+          value: { typeId: flow.map.types[0].id, name: 'Kim Lind', properties: [] },
+        },
+      });
+      expect(staged.status()).toBe(200);
+      const current = await flow.current();
+      await flow.submit(
+        'Beskriv skillnaden mellan objekttypen Person och ett objekt. Spara hela utkastet.',
+        current,
+      );
+      await expect.poll(() => model.authorizationRequests.length).toBe(1);
+      if (mode === 'overlap') await expect.poll(() => model.requests.length).toBe(1);
+      else expect(model.requests).toHaveLength(0);
+      expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual({ history: [] });
+      interpretation.release();
+      await expect.poll(() => model.requests.length).toBe(3);
+      const saved = await flow.current();
+      expect(checkedWholeDraft).toBe(true);
+      expect(saved.phase).toBe('working');
+      expect(saved.receipt?.operationId).toBeTruthy();
+      expect(saved.review.changes).toEqual([]);
+      const map = await (await client.get(`${flow.path}/map`)).json();
+      expect(map.objects).toContainEqual(
+        expect.objectContaining({ id: 'existing-person', name: 'Kim Lind' }),
+      );
+      const history = await (await client.get(`${flow.path}/map/history`)).json();
+      expect(history.history).toHaveLength(1);
+      if (ending === 'stop')
+        expect(
+          (
+            await client.post(`${flow.path}/text-assistant/${flow.session.id}/cancel`, {
+              headers: { origin: app.origin },
+              data: { all: true },
+            })
+          ).status(),
+        ).toBe(200);
+      explanation.release();
+      await expect
+        .poll(() => events.filter((event) => event.kind === 'work_result').length)
+        .toBe(3);
+      const final = ending === 'error' ? await flow.completed() : await flow.current();
+      if (ending === 'error') expect(final.error).toBe('assistant_model_temporary');
+      else expect(final.canceled).toBe(true);
+      expect(final.receipt).toEqual(saved.receipt);
+      expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(map);
+      expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual(history);
+      const results = events.filter((event) => event.kind === 'work_result');
+      const saving = events.find(
+        (event) =>
+          event.kind === 'model_action' && (event.data as { name: string }).name === 'save_draft',
+      );
+      expect(saving?.context?.providerCallId).toBeTruthy();
+      expect(results[0].data).toMatchObject({
+        providerCallId: saving?.context?.providerCallId,
+        executionMode: mode,
+        disposition: 'used',
+      });
+      for (const result of results.slice(1))
+        expect(result.data).toMatchObject({ executionMode: mode, disposition: 'discarded' });
+      const attempts = results.map((result) =>
+        events.find(
+          (event) =>
+            event.kind === 'model_attempt' &&
+            (event.data as { attemptId: string }).attemptId ===
+              (result.data as { providerCallId: string }).providerCallId &&
+            (event.data as { outcome: string }).outcome !== 'started',
+        ),
+      );
+      expect(attempts.map((event) => event?.data)).toMatchObject([
+        { outcome: 'completed', usage: { input: 120, output: 30 } },
+        { outcome: 'completed', usage: { input: 120, output: 30 } },
+        { outcome: ending === 'stop' ? 'aborted' : 'failed', usage: { input: null, output: null } },
+      ]);
+      const cost = await (
+        await client.get(
+          `${app.origin}/api/operator/costs?month=${new Date().toISOString().slice(0, 7)}`,
+        )
+      ).json();
+      expect(cost.terra).toMatchObject({
+        attempts: 5,
+        uncertainAttempts: 1,
+        unpricedAttempts: 1,
+        usage: { input: { known: 480, missing: 1 }, output: { known: 120, missing: 1 } },
+      });
+      expect(cost.terra.estimatedUsd).toBeGreaterThan(0);
+      expect(cost.total.incomplete).toBe(true);
+    });
+  }
+
   for (const ending of ['worker-error', 'inflight-clarification'] as const) {
     test(`${mode} ${ending} retires the other branch without reviving late work`, async () => {
       const interpretation = held();
@@ -513,53 +781,22 @@ test('overlap reads current facts while interpretation is held but changes await
       ];
     },
   );
-  app = await createInstallation(undefined, {
-    modelFetch: model.provider,
-    conversationWorkMode: 'overlap',
-  });
-  client = await request.newContext();
-  await signIn(client, app.origin);
-  const { household } = await (await createHousehold(client, app.origin)).json();
-  const path = `${app.origin}/api/households/${household.id}`;
-  const before = await (await client.get(`${path}/map`)).json();
-  typeId = before.types[0].id;
-  const session: TextAssistantView = await (
-    await client.post(`${path}/text-assistant`, {
-      headers: { origin: app.origin },
-      data: approvedForVisit,
-    })
-  ).json();
-  expect(
-    (
-      await client.post(`${path}/text-assistant/${session.id}/messages`, {
-        headers: { origin: app.origin },
-        data: {
-          requestId: 'overlap',
-          revision: session.revision,
-          draftVersion: session.review.version,
-          contentVersion: session.review.contentVersion,
-          text: 'Lägg till Kim Lind som person. Spara inte.',
-        },
-      })
-    ).status(),
-  ).toBe(202);
+  const flow = await start(model.provider, 'overlap', []);
+  typeId = flow.map.types[0].id;
+  await flow.submit('Lägg till Kim Lind som person. Spara inte.');
   await expect.poll(() => model.requests.length).toBe(2);
   expect(checkingEntered).toBe(false);
-  expect(await (await client.get(`${path}/map`)).json()).toEqual(before);
+  expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(flow.map);
   interpretation.release();
   await expect.poll(() => checkingEntered).toBe(true);
-  expect(await (await client.get(`${path}/map`)).json()).toEqual(before);
+  expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(flow.map);
   checking.release();
-  const result = `${path}/text-assistant/${session.id}/messages/overlap`;
-  await expect
-    .poll(async () => (await (await client.get(result)).json()).taskStatus)
-    .toBe('completed');
-  const ended: TextAssistantView = await (await client.get(result)).json();
+  const ended = await flow.completed();
   expect(ended.review.changes).toMatchObject([
     { id: 'overlap-person', after: { name: 'Kim Lind' } },
   ]);
   expect(ended.receipt).toBeUndefined();
-  expect(await (await client.get(`${path}/map/history`)).json()).toEqual({ history: [] });
+  expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual({ history: [] });
   expect(model.authorizationRequests).toHaveLength(2);
   expect(
     model.requests.every(
