@@ -4,7 +4,7 @@ import Database from 'better-sqlite3';
 import { afterEach, expect, test } from 'vitest';
 import type { MapState } from '../../../src/shared/map.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
-import { beginAssistant, callAssistant } from '../../support/assistant.js';
+import { authorizeAssistant, callAssistant, callAssistantTool } from '../../support/assistant.js';
 import { controlledBatchDelivery } from '../../support/batch-response-delivery.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
@@ -29,23 +29,9 @@ afterEach(async () => {
   await app?.close();
 });
 
-async function connect() {
-  const flow = await beginAssistant(
-    browser,
-    app.origin,
-    'skyttel:read skyttel:write offline_access',
-  );
-  const consent = await flow.consent(householdId);
-  expect(consent.status()).toBe(200);
-  return (await (await flow.exchange((await consent.json()).url)).json()).access_token as string;
-}
-async function tool(token: string, name: string, args: Record<string, unknown>) {
-  const response = await callAssistant(app.origin, token, name, args);
-  expect(response.status).toBe(200);
-  const body = await response.json();
-  expect(body.error).toBeUndefined();
-  return { error: body.result.isError === true, value: JSON.parse(body.result.content[0].text) };
-}
+const connect = () => authorizeAssistant(browser, app.origin, householdId);
+const tool = (token: string, name: string, args: Record<string, unknown>) =>
+  callAssistantTool(app.origin, token, name, args);
 
 function submitLo(typeId: string, body: ModelRequest) {
   const { draft } = JSON.parse(
