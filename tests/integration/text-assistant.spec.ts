@@ -34,6 +34,7 @@ import { propertyRow, setProperty } from '../support/property-controls.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 import { expect, test } from '../support/test.js';
 import {
+  failExplanation,
   lastToolResult,
   type ModelRequest,
   modelMessage,
@@ -190,17 +191,13 @@ async function createExplanationFailureInstallation(model: ReturnType<typeof tex
   let explanationFailures = 0;
   const live = liveProvider();
   const app = await createInstallation(undefined, {
-    modelFetch: async (input, init) => {
-      const body = JSON.parse(String(init?.body));
-      if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length) {
-        explanationFailures++;
-        return Response.json(
-          { error: { message: 'Controlled explanation outage.' } },
-          { status: 503 },
-        );
-      }
-      return model.provider(input, init);
-    },
+    modelFetch: failExplanation(model, () => {
+      explanationFailures++;
+      return Response.json(
+        { error: { message: 'Controlled explanation outage.' } },
+        { status: 503 },
+      );
+    }),
     liveFetch: live.provider,
     liveSideband: live.attach,
   });

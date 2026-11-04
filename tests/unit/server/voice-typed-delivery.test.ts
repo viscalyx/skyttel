@@ -5,7 +5,13 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
-import { modelMessage, modelTool, pendingUpdate, textModel } from '../../support/text-model.js';
+import {
+  failExplanation,
+  modelMessage,
+  modelTool,
+  pendingUpdate,
+  textModel,
+} from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
@@ -550,21 +556,21 @@ test('a failed typed completion delivers its own question before a later task qu
           }),
         ],
   );
-  const { live, householdPath, send, poll } = await arrange(async (input, init) => {
-    const body = JSON.parse(String(init?.body));
-    if (
-      !body.instructions.startsWith('SKYTTEL_TURN_') &&
-      model.requests.length === 1 &&
-      JSON.parse(
-        String(body.input.findLast((item: { role?: string }) => item.role === 'user')?.content),
-      ).message === firstRequest
-    )
-      return Response.json(
-        { error: { message: 'Controlled explanation outage.' } },
-        { status: 503 },
-      );
-    return model.provider(input, init);
-  });
+  const { live, householdPath, send, poll } = await arrange(
+    failExplanation(
+      model,
+      () =>
+        Response.json(
+          { error: { message: 'Controlled explanation outage.' } },
+          { status: 503 },
+        ),
+      (body) =>
+        model.requests.length === 1 &&
+        JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        ).message === firstRequest,
+    ),
+  );
   const failed = await send(firstRequest, 'failed-partial');
   expect(failed).toMatchObject({
     phase: 'error',

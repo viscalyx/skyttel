@@ -122,6 +122,22 @@ export function textModel(
   };
   return { provider, requests, authorizationRequests };
 }
+export function failExplanation(
+  model: ReturnType<typeof textModel>,
+  failure: Response | (() => Response),
+  shouldFail?: (request: ModelRequest) => boolean,
+): typeof fetch {
+  return async (input, init) => {
+    const body = JSON.parse(String(init?.body)) as ModelRequest;
+    if (
+      !body.instructions.startsWith('SKYTTEL_TURN_') &&
+      model.requests.length &&
+      (!shouldFail || shouldFail(body))
+    )
+      return typeof failure === 'function' ? failure() : failure.clone();
+    return model.provider(input, init);
+  };
+}
 export function lastToolResult(request: ModelRequest) {
   const item = request.input.findLast((item) => item.type === 'function_call_output');
   return item ? JSON.parse(String(item.output)) : null;

@@ -7,6 +7,7 @@ import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
 import {
+  failExplanation,
   lastToolResult,
   type ModelRequest,
   modelMessage,
@@ -570,15 +571,6 @@ test('a verified voice save retains requested saved-change report details before
   expect(spoken).toContain('Formulärförslag');
   expect(spoken).toContain(assistant.result.message);
 });
-
-function failExplanation(model: ReturnType<typeof textModel>, failure: Response): typeof fetch {
-  return (input, init) => {
-    const body = JSON.parse(String(init?.body));
-    return !body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length
-      ? Promise.resolve(failure.clone())
-      : model.provider(input, init);
-  };
-}
 
 for (const { question, fails } of [
   { question: undefined, fails: true },
