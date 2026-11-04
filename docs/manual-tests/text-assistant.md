@@ -716,6 +716,10 @@ Påhittad uppgift finns i ditt utkast. Kim finns inte ännu.
 Den förberedelsen tappar svaret efter verkligt genomförande och startar
 om samma server med samma databas vid det angivna steget.
 
+**Automatiskt motsvarande test (integration):**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+`TEXT-16`.
+
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
@@ -759,6 +763,30 @@ om samma server med samma databas vid det angivna steget.
     },
     {
       "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "a committed batch changed during withheld delivery pauses with its verified outcome and the actual current draft during a draft response race",
+      "purpose": "Ett redan läst men fördröjt utkastbesked får inte ersätta en senare manuell rättelse eller ge ett falskt färdigbesked."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "an unresolved batch blocks direct admission in a new conversation on another browser",
+      "purpose": "Ett uttryckligen skickat uppdrag i en annan webbläsare väntar på samma utkast tills den tidigare batchens utfall är verifierat och fortsätter sedan en gång med aktuellt underlag."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "an unresolved batch blocks direct admission in a previously opened conversation on another browser",
+      "purpose": "Ett redan öppet samtal i en annan webbläsare har samma spärr för nya uppdrag medan en tidigare batch har okänt utfall."
+    },
+    {
+      "kind": "technical",
       "runner": "playwright",
       "suite": "technical-browser",
       "spec": "tests/technical-browser/text-assistant.spec.ts",
@@ -795,6 +823,12 @@ om samma server med samma databas vid det angivna steget.
 - Både Lo Exempel och Kim ligger kvar osparade före och efter omstart.
   Inget sparbesked visas. Omstarten bevarar utkastet; ett nytt samtal får
   sitt eget tillstånd.
+
+Separat serverevidens kontrollerar nya och redan öppna samtal i andra
+webbläsare. Deras skickade uppdrag väntar på tidigare ändringars utfall och
+fortsätter sedan i ordning med aktuellt underlag. En manuell rättelse
+under fördröjd utkastläsning finns kvar och ger ett besked om att utkastet
+ändras efter det tidigare genomförandet.
 
 ### TEXT-05: markering kräver visning och skyddar oskickad text
 
