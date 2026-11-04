@@ -2,11 +2,7 @@ import { createHash } from 'node:crypto';
 import type Database from 'better-sqlite3';
 import type { MapDraft, SaveOperation, SaveReceipt } from '../shared/map.js';
 import { MapError } from './map-error.js';
-import {
-  assertConversationEditable,
-  assertConversationSaveAllowed,
-} from './conversation-storage.js';
-import type { DraftBatchRequest } from '../shared/draft-batch.js';
+import { assertConversationSaveAllowed } from './conversation-storage.js';
 
 interface OperationRow {
   operationId: string;
@@ -22,12 +18,7 @@ interface OperationRow {
 }
 
 // Call only inside the map's authorized transaction.
-export function mapOperations(
-  database: Database.Database,
-  userId: string,
-  householdId: string,
-  applyingBatch?: () => DraftBatchRequest | undefined,
-) {
+export function mapOperations(database: Database.Database, userId: string, householdId: string) {
   function contentVersion() {
     return (
       database.prepare('SELECT contentVersion FROM household WHERE id = ?').get(householdId) as {
@@ -75,7 +66,6 @@ export function mapOperations(
         .get(householdId, userId, contentVersion())
     )
       throw new MapError('operation_pending');
-    assertConversationEditable(database, userId, householdId, applyingBatch?.());
   }
   return {
     contentVersion,

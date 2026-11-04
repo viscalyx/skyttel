@@ -622,21 +622,30 @@ test('an unloaded unknown batch blocks fresh draft work after restart and status
   const operationId = delivery.status().operationId;
   await restart();
   const map = await (await browser.get(`${root}/map`)).json();
-  const blocked = await post(`${root}/map/draft`, {
-    version: map.draft.version,
+  const other = await post(path, approvedForVisit);
+  expect(other.status(), await other.text()).toBe(201);
+  const otherView = await other.json();
+  expect(otherView.pendingParts).toEqual([]);
+  expect(otherView.questions).toBeUndefined();
+  const requestId = crypto.randomUUID();
+  const text = 'Beskriv utkastet utan att ändra.';
+  const blocked = await post(`${path}/${otherView.id}/messages`, {
+    requestId,
+    revision: otherView.revision,
+    draftVersion: map.draft.version,
     contentVersion: map.contentVersion,
-    id: 'other',
-    baseRevision: null,
-    value: { typeId, name: 'Får vänta' },
+    text,
   });
-  expect(blocked.status(), await blocked.text()).toBe(409);
-  expect(await blocked.json()).toEqual({ error: 'assistant_batch_unknown' });
-  const blockedSave = await post(`${root}/map/operations`, {
-    operationId: 'must-wait',
-    version: map.draft.version,
-    contentVersion: map.contentVersion,
+  expect(blocked.status(), await blocked.text()).toBe(202);
+  expect(await blocked.json()).toMatchObject({
+    taskStatus: 'queued',
+    queuedRequests: [{ id: requestId, text, source: 'text' }],
+    tasks: [{ id: requestId, status: 'queued' }],
   });
-  expect(blockedSave.status(), await blockedSave.text()).toBe(409);
+  const waiting = await browser.get(`${path}/${otherView.id}/messages/${requestId}`);
+  expect(waiting.status(), await waiting.text()).toBe(200);
+  expect(await waiting.json()).toMatchObject({ taskStatus: 'queued' });
+  expect(model.requests).toHaveLength(1);
   delivery.blockStatus(false);
   const restored = await browser.get(`${path}/${state.id}`);
   expect(restored.status(), await restored.text()).toBe(200);

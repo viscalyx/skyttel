@@ -205,8 +205,20 @@ hushåll och ägande klient, och kontrollera dess ofärdiga ändringar i
 samma kritiska förlopp som sparförsöket registreras. Ett gammalt eller
 felaktigt angivet samtal ska ge omläsning eller fel, inte en väg runt
 kontrollen. UI-spärren ska spegla serverns besked. Klienter utan detta
-samtal och externa MCP-klienter följer sina befintliga sparregler;
-samtalsidentiteten utgör inte ett nytt globalt behörighetskrav.
+samtal och externa MCP-klienter får inte kringgå kvarvarande ofärdiga
+ändringsdelars sparhinder. Servern kontrollerar även beständiga samtal
+som ännu inte har lästs in efter omstart, för aktuell innehållsägare och
+innehållsversion. Kontrollen förmedlar bara ett sparhinder och visar inte
+andra användares privata instruktioner eller frågor. Samtalsidentiteten
+utgör inte ett nytt globalt behörighetskrav. Ett redan registrerat
+sparförsök behåller sina egna villkor och kontrolleras före nya sparhinder.
+
+Ett okänt batchutfall hindrar fortsatt assistentarbete över samma utkast
+även när det bevarade samtalet ännu inte har lästs in. Vanliga manuella
+rättelser och kontrollen av oföränderliga operationsbegäranden följer sina
+befintliga regler. Återhämtningen måste läsa aktuellt utkast efter en
+sådan rättelse. Statuskontroll får inte starta senare köat arbete så länge
+det ursprungliga samtalet är pausat med en oavslutad instruktion.
 
 Vid ändrad utkastversion ska servern läsa om utkast, relevanta sparade
 uppgifter och sparoperationer innan delen fortsätter. Ett tomt utkast

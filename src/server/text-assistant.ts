@@ -4577,20 +4577,6 @@ export function textAssistantRoutes({
       await stop(session);
       return context.json({ error: 'assistant_session_expired' }, 404);
     }
-    if (context.req.method === 'POST' && /\/(messages|new|summarize)$/.test(context.req.path)) {
-      const body = await context.req.json().catch(() => null);
-      try {
-        currentConsent(session, body?.consent);
-      } catch {
-        return context.json({ error: conversationConsentRequired }, 403);
-      }
-    }
-    if (
-      session.state.paused &&
-      context.req.method === 'POST' &&
-      /\/(messages|summarize)$/.test(context.req.path)
-    )
-      return context.json({ error: 'assistant_work_paused' }, 409);
     // Reserve authenticated arrival before draft reads or body preparation can
     // yield to another conversation sharing this draft. Rejected requests do
     // not become work, but later work cannot overtake their preparation.
@@ -4640,6 +4626,20 @@ export function textAssistantRoutes({
         return context.json({ error: 'assistant_session_expired' }, 404);
       }
       if (preparation) checkPreparation(preparation);
+      if (context.req.method === 'POST' && /\/(messages|new|summarize)$/.test(context.req.path)) {
+        const body = await context.req.json().catch(() => null);
+        try {
+          currentConsent(session, body?.consent);
+        } catch {
+          return context.json({ error: conversationConsentRequired }, 403);
+        }
+      }
+      if (
+        session.state.paused &&
+        context.req.method === 'POST' &&
+        /\/(messages|summarize)$/.test(context.req.path)
+      )
+        return context.json({ error: 'assistant_work_paused' }, 409);
       await next();
     } finally {
       if (preparation) {
