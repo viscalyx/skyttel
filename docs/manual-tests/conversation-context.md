@@ -1660,6 +1660,30 @@ frågan om du provar med syntetisk mikrofon. Faktiskt hört ljud ingår inte.
       "kind": "technical",
       "runner": "vitest",
       "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a completed human follow-up starts with bounded current saved facts without another read round",
+      "purpose": "En avslutad fråga om Lina följs av hon utan en extra läsomgång; äldre orelaterade personuppgifter utelämnas."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a completed human follow-up starts with bounded current draft facts without another read round",
+      "purpose": "Samma indirekta följdfråga använder aktuella relevanta utkastuppgifter utan en extra läsomgång."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "successive single corrections supersede obsolete draft pictures and preserve checked batch evidence",
+      "purpose": "Efter flera rättelser ser nästa arbetsanrop aktuell utkastbild och bevarade kontrollerade ändringsbesked."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
       "spec": "tests/unit/server/text-assistant.test.ts",
       "title": "independent reads overlap and identical concurrent reads share one authorized result",
       "purpose": "Publik MCP och kontrollerad leverantör visar överlappande oberoende läsningar och ett gemensamt resultat för identiska anrop."

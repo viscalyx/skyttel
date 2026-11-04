@@ -12,6 +12,24 @@ export function assistantFactMention(text: string, value: string) {
   return Boolean(phrase && ` ${words(text)} `.includes(` ${phrase} `));
 }
 
+function indirectReference(message: string) {
+  return /\b(?:den|det|samma|sista|senaste|förslaget|namnet|hon|han|hen|henne|honom|hennes|hans|hens|de|dem|dom|deras|dessa|båda)\b/u.test(
+    message.toLocaleLowerCase('sv'),
+  );
+}
+
+/** Recent mentions supply candidates, never a resolved identity. Stop at the
+ * closest explicit request; allow at most two turns for an indirect chain. */
+export function assistantFactReferences(message: string, earlier: readonly string[]) {
+  if (!indirectReference(message)) return [];
+  const references: string[] = [];
+  for (const previous of earlier.slice(-2).reverse()) {
+    references.unshift(previous);
+    if (!indirectReference(previous)) break;
+  }
+  return references;
+}
+
 /** Context selection grants no authority and never proves that omitted facts
  * are absent. Full draft reads and the independent checker remain available. */
 export function assistantStartDraft(
@@ -28,7 +46,7 @@ export function assistantStartDraft(
   )
     return { ...review, complete: true };
   const indirect = /\b(?:den|det|samma|sista|senaste|förslaget|namnet)\b/u.test(normalized);
-  const text = [message, ...references, ...(indirect ? earlier.slice(-2) : [])]
+  const text = [message, ...references, ...assistantFactReferences(message, earlier)]
     .join(' ')
     .toLocaleLowerCase('sv');
   const words = new Set(text.split(/[^\p{L}\p{N}_-]+/u));

@@ -810,21 +810,36 @@ export function textAssistantRoutes({
       if (item.type === 'function_call_output' && typeof item.output === 'string') {
         try {
           const value = JSON.parse(item.output);
-          if (
-            value.review &&
-            !value.review.superseded &&
-            (value.review.version !== session.state.review.version ||
-              value.review.contentVersion !== session.state.review.contentVersion)
-          ) {
-            // Keep checked effects and receipts; replace the obsolete draft picture.
-            value.review = {
-              version: value.review.version,
-              contentVersion: value.review.contentVersion,
-              superseded: true,
-            };
+          for (const snapshot of [value, value.review]) {
+            if (
+              !snapshot ||
+              !Array.isArray(snapshot.changes) ||
+              !Number.isSafeInteger(snapshot.version) ||
+              !Number.isSafeInteger(snapshot.contentVersion) ||
+              (snapshot.version === session.state.review.version &&
+                snapshot.contentVersion === session.state.review.contentVersion)
+            )
+              continue;
+            // Both direct mutations and batch reviews contain draft pictures.
+            // Keep their versions, checked effects, receipts and result identity.
+            for (const field of [
+              'readyToSave',
+              'complete',
+              'totals',
+              'changes',
+              'relationships',
+              'objectTypes',
+              'relationshipTypes',
+              'current',
+              'conflicts',
+              'unresolvedIdentities',
+              'pendingOperations',
+            ])
+              delete snapshot[field];
+            snapshot.superseded = true;
             replaced = true;
-            item.output = JSON.stringify(value);
           }
+          item.output = JSON.stringify(value);
         } catch {
           // Non-JSON tool content is preserved as returned.
         }
@@ -841,7 +856,10 @@ export function textAssistantRoutes({
         item.content = JSON.stringify({
           ...value,
           draft: draftFacts(session, value.message),
-          verifiedReads: session.execution.reads.facts(value.message),
+          verifiedReads: session.execution.reads.facts(
+            value.message,
+            session.state.userRequests.slice(0, -1),
+          ),
           pendingParts: contextParts(session),
         });
       } catch {
@@ -1977,7 +1995,10 @@ export function textAssistantRoutes({
           questionPending: contextParts(session).some((part) => part.status === 'waiting'),
           pendingParts: contextParts(session),
           draft: draftFacts(session, text, review),
-          verifiedReads: session.execution.reads.facts(text),
+          verifiedReads: session.execution.reads.facts(
+            text,
+            session.state.userRequests.slice(0, -1),
+          ),
           saveOperations: session.state.operations.map(
             ({ operationId, status, draftVersion, contentVersion }) => ({
               operationId,
@@ -1993,20 +2014,19 @@ export function textAssistantRoutes({
             : undefined,
         }),
       });
+      async function refreshCurrentDraft() {
+        const current = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
+        if (current.version !== version || current.contentVersion !== contentVersion)
+          throw new MapError('assistant_draft_changed', 409);
+        session.state.review = current;
+        const outdated = session.execution.reads.outdated();
+        refreshContext(session, outdated);
+        return outdated;
+      }
       for (let step = 0; step < 48; step++) {
         guard();
         if (!respond) throw new Error('assistant_unavailable');
-        const currentReview = (await call(
-          session,
-          'read_my_draft',
-          {},
-          guard,
-        )) as TextAssistantReview;
-        if (currentReview.version !== version || currentReview.contentVersion !== contentVersion)
-          throw new MapError('assistant_draft_changed', 409);
-        session.state.review = currentReview;
-        const outdatedReads = session.execution.reads.outdated();
-        refreshContext(session, outdatedReads);
+        const outdatedReads = await refreshCurrentDraft();
         if (needsSummary(session)) {
           const continuation = session.state.input.slice(turnStart);
           await summarize(session, guard, continuation);
@@ -2170,16 +2190,7 @@ export function textAssistantRoutes({
         // Summaries await a provider and rebuild context. Revalidate their
         // continuation before dispatch so an intervening edit cannot reach
         // another work call as an older draft picture.
-        const dispatchReview = (await call(
-          session,
-          'read_my_draft',
-          {},
-          guard,
-        )) as TextAssistantReview;
-        if (dispatchReview.version !== version || dispatchReview.contentVersion !== contentVersion)
-          throw new MapError('assistant_draft_changed', 409);
-        session.state.review = dispatchReview;
-        refreshContext(session, session.execution.reads.outdated());
+        await refreshCurrentDraft();
         if (exceedsRequestBudget(session, instructions, tools)) {
           failSummaryCapacity(session);
           session.state.phase = 'ready';

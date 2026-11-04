@@ -378,6 +378,170 @@ test('repeated draft reads replace old snapshots while verified batch evidence r
   expect((await readMap()).objects).toEqual([]);
 });
 
+test('successive single corrections supersede obsolete draft pictures and preserve checked batch evidence', async () => {
+  const model = textModel((request) => {
+    const current = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    const step = model.requests.length;
+    const operation = {
+      name: 'propose_object',
+      arguments: {
+        id: 'private-chair',
+        baseRevision: null,
+        value: {
+          ...current.draft.changes[0].after,
+          name: ['Kontrollerad stol', 'Första rättelsen', 'Slutlig stol'][step - 1],
+        },
+      },
+    };
+    if (step === 1)
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          continueResponse: true,
+          operations: [operation],
+        }),
+      ];
+    if (step <= 3)
+      return [
+        modelTool(operation.name, {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          ...operation.arguments,
+        }),
+      ];
+    return [modelMessage('Den sista rättelsen är klar och kontrollerad.')];
+  });
+  const session = await setup({ modelFetch: model.provider });
+  const final = await settled(
+    await send(
+      session,
+      'Rätta Min stol i tre steg till Kontrollerad stol, Första rättelsen och Slutlig stol. Spara inte.',
+    ),
+  );
+  expect(final).toMatchObject({
+    phase: 'ready',
+    modelReply: 'Den sista rättelsen är klar och kontrollerad.',
+  });
+  expect(model.requests).toHaveLength(4);
+  expect(model.authorizationRequests).toHaveLength(4);
+  const input = model.requests[3].input;
+  const current = JSON.parse(String(input.findLast((item) => item.role === 'user')?.content));
+  const results = input
+    .filter((item) => item.type === 'function_call_output')
+    .map((item) => JSON.parse(String(item.output)));
+  expect(results).toHaveLength(3);
+  expect(results[0]).toMatchObject({
+    result: {
+      kind: 'draft',
+      changes: [{ subject: 'Min stol', action: 'bytte namn till Kontrollerad stol' }],
+    },
+    review: { version: 2, contentVersion: 1, superseded: true },
+  });
+  expect(results[1]).toEqual({ version: 3, contentVersion: 1, superseded: true });
+  expect(results[2]).toMatchObject({
+    version: 4,
+    changes: [{ after: { name: 'Slutlig stol' } }],
+  });
+  expect(current.draft.changes[0].after.name).toBe('Slutlig stol');
+  expect((await readMap()).draft.changes[0].after?.name).toBe('Slutlig stol');
+  expect((await readMap()).objects).toEqual([]);
+});
+
+test.each(['saved', 'draft'])(
+  'a completed human follow-up starts with bounded current %s facts without another read round',
+  async (source) => {
+    const model = textModel(
+      (request) => {
+        const current = JSON.parse(
+          String(request.input.findLast((item) => item.role === 'user')?.content),
+        );
+        const target = current.message.startsWith('Finns Lo') ? 'Lo' : 'Lina';
+        const last = request.input.findLast((item) => item.type === 'function_call_output');
+        const read = last && JSON.parse(String(last.output));
+        const objects =
+          source === 'draft'
+            ? (read?.changes ?? current.draft.changes).map(
+                (change: { after: unknown }) => change.after,
+              )
+            : current.verifiedReads
+                .flatMap((fact: { value: { objects: unknown[] } }) => fact.value.objects)
+                .concat(read?.objects ?? []);
+        const person = objects.find((object: { name: string }) => object?.name === target);
+        if (!person)
+          return [
+            modelTool(
+              source === 'saved' ? 'read_map' : 'read_my_draft',
+              source === 'saved' ? { query: target } : {},
+            ),
+          ];
+        return [
+          modelMessage(
+            current.message.startsWith('Finns')
+              ? `${target} finns.`
+              : `Födelsedatum är ${person.properties.find((property: { label: string }) => property.label === 'Födelsedatum').value}.`,
+          ),
+        ];
+      },
+      () => [
+        modelMessage(
+          JSON.stringify({ mode: 'read', request: 'Besvara den aktuella frågan utan ändringar.' }),
+        ),
+      ],
+    );
+    const session = await setup({ modelFetch: model.provider });
+    for (const [id, name, date] of [
+      ['lo', 'Lo', '1980-01-01'],
+      ['lina', 'Lina', '1990-02-03'],
+    ]) {
+      const map = await readMap();
+      const response = await post(`${base}/map/draft`, {
+        version: map.draft.version,
+        contentVersion: map.contentVersion,
+        id,
+        baseRevision: null,
+        value: {
+          typeId: map.types[0].id,
+          name,
+          properties: [{ id: `${id}-date`, label: 'Födelsedatum', kind: 'date', value: date }],
+        },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    }
+    if (source === 'saved') {
+      const map = await readMap();
+      const response = await post(`${base}/map/save`, {
+        version: map.draft.version,
+        contentVersion: map.contentVersion,
+        operationId: 'seed-people',
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    }
+    const fresh = await (await browser.get(`${base}/text-assistant/${session.id}`)).json();
+    const first = await settled(await send(fresh, 'Finns Lo?'));
+    expect(first).toMatchObject({ phase: 'ready', modelReply: 'Lo finns.' });
+    const second = await settled(await send(first, 'Finns Lina?'));
+    expect(second).toMatchObject({ phase: 'ready', modelReply: 'Lina finns.' });
+    const before = model.requests.length;
+    const final = await settled(await send(second, 'Vilket födelsedatum har hon?'));
+    expect(final).toMatchObject({ phase: 'ready', modelReply: 'Födelsedatum är 1990-02-03.' });
+    expect(model.requests).toHaveLength(before + 1);
+    const current = JSON.parse(
+      String(model.requests[before].input.findLast((item) => item.role === 'user')?.content),
+    );
+    expect(JSON.stringify({ draft: current.draft, reads: current.verifiedReads })).toContain(
+      '1990-02-03',
+    );
+    expect(JSON.stringify({ draft: current.draft, reads: current.verifiedReads })).not.toContain(
+      '1980-01-01',
+    );
+    expect((await readMap()).draft.changes).toHaveLength(source === 'draft' ? 3 : 0);
+  },
+);
+
 test('necessary exact instructions exceeding the selected profile pause without truncation or effects', async () => {
   const exact = `Ändra ingenting och spara inte. Behåll ordagrant: ${'blå; grön, '.repeat(300)}`;
   const model = textModel(() => [modelMessage('Ett svar som inte ska begäras.')]);

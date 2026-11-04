@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { assistantFactMention } from './assistant-start-facts.js';
+import { assistantFactMention, assistantFactReferences } from './assistant-start-facts.js';
 import { assertContentAvailable } from './content-maintenance.js';
 import { MapError } from './map-error.js';
 
@@ -79,8 +79,10 @@ export function assistantReadCache(
     sources.set(name, current);
   }
   return {
-    facts(message: string) {
-      const text = message.toLocaleLowerCase('sv');
+    facts(message: string, earlier: readonly string[] = []) {
+      const text = [message, ...assistantFactReferences(message, earlier)]
+        .join(' ')
+        .toLocaleLowerCase('sv');
       const facts: { name: string; args: Record<string, unknown>; value: unknown }[] = [];
       let size = 0;
       for (const [key, entry] of [...entries].reverse()) {
