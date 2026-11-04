@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import type { ConversationState } from './conversation-state.js';
+import { type ConversationState, syncConversationQuestions } from './conversation-state.js';
 import { MapError } from './map-error.js';
 import { pendingParts } from './pending-parts.js';
 
@@ -182,11 +182,7 @@ export function conversationStorage(database: Database.Database, now: () => numb
             if (!state) continue;
             const parts = pendingParts(state.pendingPartsLedger);
             parts.discard();
-            const questions = parts.questions();
-            state.questions = questions.length ? questions : undefined;
-            state.newQuestions = state.newQuestions?.filter((question) =>
-              questions.includes(question),
-            );
+            syncConversationQuestions(state, parts.questions());
             state.saveIntent = undefined;
             state.workVersion = version;
             storage.write(state, row.browserBindingId);

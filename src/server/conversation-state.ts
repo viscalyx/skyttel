@@ -118,3 +118,8 @@ export type ConversationState = Omit<TextAssistantView, 'conversation' | 'unfini
   voiceInputPending?: boolean;
   lastVoiceInputAt?: number;
 };
+
+export function syncConversationQuestions(state: ConversationState, questions: string[]) {
+  state.questions = questions.length ? questions : undefined;
+  state.newQuestions = state.newQuestions?.filter((question) => questions.includes(question));
+}
