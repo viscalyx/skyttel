@@ -98,6 +98,8 @@ test('keyboard focus moves to a surviving control after successfully ending the 
   next.focus();
   await userEvent.tab(); // Close text view.
   await userEvent.tab(); // Draft toggle.
+  await userEvent.tab(); // Retained conversations.
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Bevarade samtal' }));
   await userEvent.tab(); // End conversation.
   expect(document.activeElement).toBe(end);
   await userEvent.keyboard('{Enter}');
