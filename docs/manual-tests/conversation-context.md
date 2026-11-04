@@ -739,8 +739,8 @@ efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
 
 **Steg:**
 
-1. Skicka **Behåll vårt sammanhang.** och släpp ett vanligt textsvar. Slå på
-   mikrofonen. Låt mikrofonen vara på.
+1. Skicka **Behåll vårt sammanhang om Lo Exempel.** och släpp ett vanligt
+   textsvar. Slå på mikrofonen. Låt mikrofonen vara på.
 2. Be operatören förbereda och leverera sammanfattningsgränsen. Invänta
    bekräftelse av samma nya sammanfattningsanrops släppta historiska
    Lo-sammandrag.
@@ -748,8 +748,10 @@ efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
    samma mikrofonläge efter bytet. Inget nytt reset- eller sparbesked visas.
 4. Släpp den gamla mätningen enligt den separata förberedelsen. Procenttalet ska
    inte höjas av den gamla anslutningen.
-5. Stäng av mikrofonen vid behov. Skicka **Ändra den sista.** och släpp
-   rättelsen till Lo Senaste enligt KONTEXT-08, steg 3.
+5. Stäng av mikrofonen vid behov. Läs det oförändrade Lo-förslaget med
+   **Utkast → Visa förslaget: Lo Exempel**. Skicka **Ändra den sista.** och
+   släpp rättelsen till Lo Senaste enligt KONTEXT-08, steg 3. Läs rättelsen
+   i utkastet. Lo ska fortfarande vara osparad och inget sparbesked visas.
 
 **Förväntat resultat:**
 
