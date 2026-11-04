@@ -38,6 +38,7 @@ import {
 } from './speech.js';
 import type { Attempt, JudgeInput, JudgeResult, Scenario } from './types.js';
 import {
+  concludeUserStop,
   executeUserStop,
   missedUserStop,
   validateUserStop,
@@ -809,15 +810,7 @@ export async function runVoiceScenario(
         }
         const partial = [...new Set([...result.fixed, ...partialChecks])];
         if (result.scriptedStop) {
-          result.outcome =
-            result.scriptedStop.verdict === 'fail'
-              ? 'fail'
-              : result.scriptedStop.terminalStatus === 'canceled'
-                ? 'aborted'
-                : result.scriptedStop.verdict;
-          result.reason = 'evaluation_scripted_user_stop';
-          result.fixed = result.scriptedStop.stateFailures;
-          result.observedEndMs = Date.now() - startedAt;
+          concludeUserStop(result, result.scriptedStop, Date.now() - startedAt);
         } else if (
           error instanceof Error &&
           ['evaluation_application_canceled', 'evaluation_application_expired'].includes(

@@ -11,6 +11,7 @@ import { runTextScenario } from '../../../scripts/model-evaluation/runner.js';
 import type { Scenario } from '../../../scripts/model-evaluation/types.js';
 import type { MapState } from '../../../src/shared/map.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { waitForAbortOrTimeout } from '../../support/abort-wait.js';
 import { type ModelRequest, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
 function descriptionChange(body: ModelRequest, description: string) {
@@ -63,15 +64,8 @@ test.each(['sequential', 'overlap'] as const)(
   async (conversationWorkMode) => {
     let aborted = 0;
     const model = textModel(async (request, signal) => {
-      await new Promise<void>((resolve) => {
-        const timer = setTimeout(resolve, 1500);
-        const finish = () => {
-          clearTimeout(timer);
-          aborted++;
-          resolve();
-        };
-        if (signal?.aborted) finish();
-        else signal?.addEventListener('abort', finish, { once: true });
+      await waitForAbortOrTimeout(1500, signal, () => {
+        aborted++;
       });
       return [descriptionChange(request, 'Fel efter stopp.')];
     });
@@ -130,15 +124,7 @@ test('Stop preserves a previously completed checked draft batch while rejecting 
   let work = 0;
   const model = textModel(async (request, signal) => {
     if (work++ === 0) return [descriptionChange(request, 'Läser poesi.')];
-    await new Promise<void>((resolve) => {
-      const timer = setTimeout(resolve, 1500);
-      const finish = () => {
-        clearTimeout(timer);
-        resolve();
-      };
-      if (signal?.aborted) finish();
-      else signal?.addEventListener('abort', finish, { once: true });
-    });
+    await waitForAbortOrTimeout(1500, signal);
     return [descriptionChange(request, 'Fel efter stopp.')];
   });
   const run = await runTextScenario(
@@ -207,15 +193,7 @@ async function lateStateChange(
         });
       return [modelMessage('Ett nytt arbete efter stopp.')];
     }
-    await new Promise<void>((resolve) => {
-      const timer = setTimeout(resolve, 1500);
-      const finish = () => {
-        clearTimeout(timer);
-        resolve();
-      };
-      if (signal?.aborted) finish();
-      else signal?.addEventListener('abort', finish, { once: true });
-    });
+    await waitForAbortOrTimeout(1500, signal);
     return [modelMessage('Sent svar.')];
   });
   const scenario = structuredClone(stopScenario);

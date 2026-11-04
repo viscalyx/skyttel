@@ -23,7 +23,12 @@ import {
 } from './observations.js';
 import type { ProviderCall } from './provider.js';
 import type { Attempt, JudgeInput, JudgeResult, Scenario } from './types.js';
-import { executeUserStop, missedUserStop, validateUserStop } from './user-stop.js';
+import {
+  concludeUserStop,
+  executeUserStop,
+  missedUserStop,
+  validateUserStop,
+} from './user-stop.js';
 
 export type RunOptions = {
   profile: string;
@@ -329,11 +334,7 @@ export async function runTextScenario(
             : 0;
         } catch (error) {
           if (result.scriptedStop) {
-            result.outcome =
-              result.scriptedStop.verdict === 'pass' ? 'aborted' : result.scriptedStop.verdict;
-            result.fixed = result.scriptedStop.stateFailures;
-            result.reason = 'evaluation_scripted_user_stop';
-            result.observedEndMs = Date.now() - startedAt;
+            concludeUserStop(result, result.scriptedStop, Date.now() - startedAt);
             result.diagnostics = observationDiagnostics(events.slice(offset), startedAt);
           } else if (applicationTerminalStatus) {
             result.outcome = applicationTerminalStatus === 'canceled' ? 'aborted' : 'error';

@@ -78,6 +78,28 @@ export function missedUserStop(): NonNullable<Attempt['scriptedStop']> {
   };
 }
 
+export function concludeUserStop(
+  attempt: Attempt,
+  proof: NonNullable<Attempt['scriptedStop']>,
+  observedEndMs: number,
+) {
+  // Text cancellation follows the Stop verdict. Voice also retains observed
+  // application cancellation when capture evidence is inconclusive.
+  attempt.outcome =
+    attempt.modality === 'text'
+      ? proof.verdict === 'pass'
+        ? 'aborted'
+        : proof.verdict
+      : proof.verdict === 'fail'
+        ? 'fail'
+        : proof.terminalStatus === 'canceled'
+          ? 'aborted'
+          : proof.verdict;
+  attempt.fixed = proof.stateFailures;
+  attempt.reason = 'evaluation_scripted_user_stop';
+  attempt.observedEndMs = observedEndMs;
+}
+
 /** Only public conversation controls can stop the app. The finite bound applies
  * to this scripted control observation, never to ordinary model processing.
  * Providers may keep unknown usage after cancellation; this function neither
