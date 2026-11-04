@@ -18,6 +18,7 @@ import {
 } from './assistant-observation.js';
 import type { Config } from './config.js';
 import { voiceConversationModel } from './conversation-capacity.js';
+import type { ConversationConsentProvenance } from './conversation-consent.js';
 import type {
   LiveModelProfile,
   LiveSideband,
@@ -29,14 +30,12 @@ import { MapError } from './map.js';
 import type { LocalDispatch } from './text-assistant-mcp.js';
 import { voiceWork } from './voice-work.js';
 
-type Voice = {
+type Voice = Partial<ConversationConsentProvenance> & {
   view: VoiceAssistantView;
   usage: LiveUsageAttempt;
   path: string;
   headers: Headers;
   assistant: TextAssistantView;
-  consentTextVersion?: number;
-  conversationConsentTextVersion?: number;
   channel: LiveSideband;
   heartbeat: number;
   finalized: boolean;
@@ -87,12 +86,10 @@ export function voiceAssistantRoutes({
 }: {
   now?: () => number;
   voiceAccess: (sessionId: string) =>
-    | {
+    | (Partial<ConversationConsentProvenance> & {
         expiresAt: number;
         guard: () => number;
-        consentTextVersion?: number;
-        conversationConsentTextVersion?: number;
-      }
+      })
     | undefined;
   expireVoiceWork: (sessionId: string) => void;
   config: Config;
