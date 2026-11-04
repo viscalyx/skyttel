@@ -684,13 +684,22 @@ export function textAssistantRoutes({
         .flatMap((part) => [part.request, part.question]),
     ];
   }
-  function draftFacts(session: Session, message: string, review = session.state.review) {
-    return assistantStartDraft(
-      review,
+  function factRelevance(session: Session, message: string) {
+    return [
       message,
       session.state.userRequests.slice(0, -1),
       unfinishedFactReferences(session),
-    );
+    ] as const;
+  }
+  function draftFacts(session: Session, message: string, review = session.state.review) {
+    return assistantStartDraft(review, ...factRelevance(session, message));
+  }
+  function envelopeFacts(session: Session, message: string, review = session.state.review) {
+    const relevance = factRelevance(session, message);
+    return {
+      draft: assistantStartDraft(review, ...relevance),
+      verifiedReads: session.execution.reads.facts(...relevance),
+    };
   }
   function pauseCapacity(session: Session) {
     session.state.capacityPaused = true;
@@ -863,12 +872,7 @@ export function textAssistantRoutes({
           replaced = true;
         item.content = JSON.stringify({
           ...value,
-          draft: draftFacts(session, value.message),
-          verifiedReads: session.execution.reads.facts(
-            value.message,
-            session.state.userRequests.slice(0, -1),
-            unfinishedFactReferences(session),
-          ),
+          ...envelopeFacts(session, value.message),
           pendingParts: contextParts(session),
         });
       } catch {
@@ -2003,12 +2007,7 @@ export function textAssistantRoutes({
             .map((part) => part.question),
           questionPending: contextParts(session).some((part) => part.status === 'waiting'),
           pendingParts: contextParts(session),
-          draft: draftFacts(session, text, review),
-          verifiedReads: session.execution.reads.facts(
-            text,
-            session.state.userRequests.slice(0, -1),
-            unfinishedFactReferences(session),
-          ),
+          ...envelopeFacts(session, text, review),
           saveOperations: session.state.operations.map(
             ({ operationId, status, draftVersion, contentVersion }) => ({
               operationId,
