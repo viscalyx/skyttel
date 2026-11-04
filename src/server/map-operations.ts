@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import type Database from 'better-sqlite3';
 import type { MapDraft, SaveOperation, SaveReceipt } from '../shared/map.js';
-import { MapError } from './map-error.js';
 import { assertConversationSaveAllowed } from './conversation-storage.js';
+import { MapError } from './map-error.js';
 
 interface OperationRow {
   operationId: string;

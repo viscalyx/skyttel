@@ -7,9 +7,9 @@ import type { SessionStatus } from '../shared/session-activity.js';
 import { storageConsentInformationVersion } from '../shared/storage-consent.js';
 import type { Auth } from './auth.js';
 import { stageAuthCallback } from './auth-callback-transaction.js';
+import { transferConversationBinding } from './conversation-storage.js';
 import { installationAuthority } from './installation-authority.js';
 import { linkingAttempt } from './login-methods.js';
-import { transferConversationBinding } from './conversation-storage.js';
 
 const attemptLifetime = 10 * 60_000;
 type Binding = {
