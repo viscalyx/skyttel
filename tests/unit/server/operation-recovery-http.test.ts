@@ -34,6 +34,24 @@ const connect = () => authorizeAssistant(browser, app.origin, householdId);
 const tool = (token: string, name: string, args: Record<string, unknown>) =>
   callAssistantTool(app.origin, token, name, args);
 
+async function setUpHousehold() {
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  ({
+    household: { id: householdId },
+  } = await (await createHousehold(browser, app.origin)).json());
+}
+
+async function startConversation() {
+  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+  const post = (path: string, data: unknown) =>
+    browser.post(path, { headers: { origin: app.origin }, data });
+  const started = await post(base, approvedForVisit);
+  expect(started.status()).toBe(201);
+  const session: TextAssistantView = await started.json();
+  return { session, endpoint: `${base}/${session.id}`, post };
+}
+
 function submitLo(typeId: string, body: ModelRequest) {
   const { draft } = JSON.parse(
     String(body.input.findLast((item) => item.role === 'user')?.content),
@@ -77,11 +95,7 @@ test('a committed batch and its evidence survive lost HTTP delivery and restart,
       );
     },
   });
-  browser = await request.newContext();
-  await signIn(browser, app.origin);
-  ({
-    household: { id: householdId },
-  } = await (await createHousehold(browser, app.origin)).json());
+  await setUpHousehold();
   let token = await connect();
   const initial = await read();
   const batch = {
@@ -139,20 +153,10 @@ test.each(['text', 'voice'] as const)(
       liveSideband: live.attach,
       assistantDispatch: delivery.dispatch,
     });
-    browser = await request.newContext();
-    await signIn(browser, app.origin);
-    ({
-      household: { id: householdId },
-    } = await (await createHousehold(browser, app.origin)).json());
+    await setUpHousehold();
     typeId = (await read()).types[0].id;
     browser = await restartWithSession(browser, () => app.restart());
-    const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-    const post = (path: string, data: unknown) =>
-      browser.post(path, { headers: { origin: app.origin }, data });
-    const started = await post(base, approvedForVisit);
-    expect(started.status()).toBe(201);
-    const session: TextAssistantView = await started.json();
-    const endpoint = `${base}/${session.id}`;
+    const { session, endpoint, post } = await startConversation();
     if (mode === 'text') {
       expect(
         (
@@ -303,17 +307,10 @@ test.each([
       modelFetch: model.provider,
       assistantDispatch: delivery.dispatch,
     });
-    browser = await request.newContext();
-    await signIn(browser, app.origin);
-    ({
-      household: { id: householdId },
-    } = await (await createHousehold(browser, app.origin)).json());
+    await setUpHousehold();
     typeId = (await read()).types[0].id;
-    const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-    const post = (path: string, data: unknown) =>
-      browser.post(path, { headers: { origin: app.origin }, data });
-    let current: TextAssistantView = await (await post(base, approvedForVisit)).json();
-    const endpoint = `${base}/${current.id}`;
+    const { session, endpoint, post } = await startConversation();
+    let current = session;
     for (const [index, instruction] of [
       'Lägg till kollegorna som personer utan att spara.',
       'Första kollegan heter Lo och andra kollegan heter Kim.',
@@ -465,17 +462,9 @@ test.each([
       modelFetch: model.provider,
       assistantDispatch: delivery.dispatch,
     });
-    browser = await request.newContext();
-    await signIn(browser, app.origin);
-    ({
-      household: { id: householdId },
-    } = await (await createHousehold(browser, app.origin)).json());
+    await setUpHousehold();
     typeId = (await read()).types[0].id;
-    const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-    const post = (path: string, data: unknown) =>
-      browser.post(path, { headers: { origin: app.origin }, data });
-    const session: TextAssistantView = await (await post(base, approvedForVisit)).json();
-    const endpoint = `${base}/${session.id}`;
+    const { session, endpoint, post } = await startConversation();
     delivery.arm();
     expect(
       (
@@ -672,17 +661,9 @@ test.each([
         return response;
       },
     });
-    browser = await request.newContext();
-    await signIn(browser, app.origin);
-    ({
-      household: { id: householdId },
-    } = await (await createHousehold(browser, app.origin)).json());
+    await setUpHousehold();
     typeId = (await read()).types[0].id;
-    const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-    const post = (path: string, data: unknown) =>
-      browser.post(path, { headers: { origin: app.origin }, data });
-    const session: TextAssistantView = await (await post(base, approvedForVisit)).json();
-    const endpoint = `${base}/${session.id}`;
+    const { session, endpoint, post } = await startConversation();
     delivery.arm();
     const checkId = '11111111-1111-4111-8111-111111111111';
     expect(
@@ -828,11 +809,7 @@ test.each(['new', 'previously opened'] as const)(
       modelFetch: model.provider,
       assistantDispatch: delivery.dispatch,
     });
-    browser = await request.newContext();
-    await signIn(browser, app.origin);
-    ({
-      household: { id: householdId },
-    } = await (await createHousehold(browser, app.origin)).json());
+    await setUpHousehold();
     typeId = (await read()).types[0].id;
     const otherBrowser = await request.newContext();
     try {
@@ -923,11 +900,7 @@ test.each(['save', 'discard', 'edit', 'remove', 'independent batch'] as const)(
   { tags: ['technical'] },
   async (transition) => {
     app = await createInstallation();
-    browser = await request.newContext();
-    await signIn(browser, app.origin);
-    ({
-      household: { id: householdId },
-    } = await (await createHousehold(browser, app.origin)).json());
+    await setUpHousehold();
     let token = await connect();
     const initial = await read();
     const batch = {
@@ -1017,11 +990,7 @@ test('a batch that discards private work retains only committed metadata from it
   tags: ['technical'],
 }, async () => {
   app = await createInstallation();
-  browser = await request.newContext();
-  await signIn(browser, app.origin);
-  ({
-    household: { id: householdId },
-  } = await (await createHousehold(browser, app.origin)).json());
+  await setUpHousehold();
   const initial = await read();
   expect(
     (
@@ -1145,20 +1114,9 @@ test.each([
         return response;
       },
     });
-    browser = await request.newContext();
-    await signIn(browser, app.origin);
-    ({
-      household: { id: householdId },
-    } = await (await createHousehold(browser, app.origin)).json());
+    await setUpHousehold();
     typeId = (await read()).types[0].id;
-    const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-    const started = await browser.post(base, {
-      headers: { origin: app.origin },
-      data: approvedForVisit,
-    });
-    expect(started.status()).toBe(201);
-    const session: TextAssistantView = await started.json();
-    const endpoint = `${base}/${session.id}`;
+    const { session, endpoint } = await startConversation();
     expect(
       (
         await browser.post(`${endpoint}/messages`, {
@@ -1225,20 +1183,9 @@ test('a direct one-operation change recovers its lost committed response through
     modelFetch: model.provider,
     assistantDispatch: delivery.dispatch,
   });
-  browser = await request.newContext();
-  await signIn(browser, app.origin);
-  ({
-    household: { id: householdId },
-  } = await (await createHousehold(browser, app.origin)).json());
+  await setUpHousehold();
   typeId = (await read()).types[0].id;
-  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-  const started = await browser.post(base, {
-    headers: { origin: app.origin },
-    data: approvedForVisit,
-  });
-  expect(started.status()).toBe(201);
-  const session: TextAssistantView = await started.json();
-  const endpoint = `${base}/${session.id}`;
+  const { session, endpoint } = await startConversation();
   expect(
     (
       await browser.post(`${endpoint}/messages`, {
@@ -1293,11 +1240,7 @@ test('an explicit whole-draft discard recovers lost committed delivery without m
     modelFetch: model.provider,
     assistantDispatch: delivery.dispatch,
   });
-  browser = await request.newContext();
-  await signIn(browser, app.origin);
-  ({
-    household: { id: householdId },
-  } = await (await createHousehold(browser, app.origin)).json());
+  await setUpHousehold();
   const initial = await read();
   expect(
     (
@@ -1313,14 +1256,7 @@ test('an explicit whole-draft discard recovers lost committed delivery without m
       })
     ).status(),
   ).toBe(200);
-  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-  const started = await browser.post(base, {
-    headers: { origin: app.origin },
-    data: approvedForVisit,
-  });
-  expect(started.status()).toBe(201);
-  const session: TextAssistantView = await started.json();
-  const endpoint = `${base}/${session.id}`;
+  const { session, endpoint } = await startConversation();
   const body = {
     requestId: 'explicit-discard-recovery',
     revision: session.revision,
@@ -1388,11 +1324,7 @@ test('a recovered direct duplicate relationship preserves existingId and leaves 
     modelFetch: model.provider,
     assistantDispatch: delivery.dispatch,
   });
-  browser = await request.newContext();
-  await signIn(browser, app.origin);
-  ({
-    household: { id: householdId },
-  } = await (await createHousehold(browser, app.origin)).json());
+  await setUpHousehold();
   const initial = await read();
   edgeType = initial.relationshipTypes[0].id;
   const seeded = await tool(await connect(), 'apply_draft_batch', {
@@ -1428,14 +1360,7 @@ test('a recovered direct duplicate relationship preserves existingId and leaves 
     ).status(),
   ).toBe(200);
   const before = await read();
-  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-  const started = await browser.post(base, {
-    headers: { origin: app.origin },
-    data: approvedForVisit,
-  });
-  expect(started.status()).toBe(201);
-  const session: TextAssistantView = await started.json();
-  const endpoint = `${base}/${session.id}`;
+  const { session, endpoint } = await startConversation();
   delivery.arm();
   expect(
     (
@@ -1506,25 +1431,14 @@ test('a verified failed later draft batch reports its failure without inventing 
       return dispatch(incoming);
     },
   });
-  browser = await request.newContext();
-  await signIn(browser, app.origin);
-  ({
-    household: { id: householdId },
-  } = await (await createHousehold(browser, app.origin)).json());
+  await setUpHousehold();
   typeId = (await read()).types[0].id;
   const storage = new Database(join(app.directory, 'skyttel.db'));
   storage.exec(
     "CREATE TRIGGER later_evidence_unavailable BEFORE INSERT ON draft_batch_outcome WHEN NEW.fromVersion = 1 BEGIN SELECT RAISE(ABORT, 'controlled later evidence outage'); END",
   );
   storage.close();
-  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-  const started = await browser.post(base, {
-    headers: { origin: app.origin },
-    data: approvedForVisit,
-  });
-  expect(started.status()).toBe(201);
-  const session: TextAssistantView = await started.json();
-  const endpoint = `${base}/${session.id}`;
+  const { session, endpoint } = await startConversation();
   expect(
     (
       await browser.post(`${endpoint}/messages`, {
@@ -1620,20 +1534,9 @@ test('a terminal immutable-request conflict cannot use an earlier committed row 
       return dispatch(incoming);
     },
   });
-  browser = await request.newContext();
-  await signIn(browser, app.origin);
-  ({
-    household: { id: householdId },
-  } = await (await createHousehold(browser, app.origin)).json());
+  await setUpHousehold();
   typeId = (await read()).types[0].id;
-  const base = `${app.origin}/api/households/${householdId}/text-assistant`;
-  const started = await browser.post(base, {
-    headers: { origin: app.origin },
-    data: approvedForVisit,
-  });
-  expect(started.status()).toBe(201);
-  const session: TextAssistantView = await started.json();
-  const endpoint = `${base}/${session.id}`;
+  const { session, endpoint } = await startConversation();
   expect(
     (
       await browser.post(`${endpoint}/messages`, {
