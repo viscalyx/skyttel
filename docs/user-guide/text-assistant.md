@@ -477,6 +477,9 @@ en förklaring, jämförelse eller annan information arbetar Skyttel vidare
 med den delen. Ett statusbesked ersätter inte det återstående arbetet.
 Samma sakliga resultat och hela den beställda
 förklaringen gäller i text och med röst.
+Om sparandet är klart men förklaringen misslyckas får du både
+sparbeskedet och felbeskedet. Sparandet finns kvar i ändringshistoriken;
+en saknad förklaring betyder inte att sparandet saknas.
 
 I textvyn läser du svar, följdfrågor och sparbesked. Välj **Visa utkastet**
 för att läsa föreslagna ändringar.

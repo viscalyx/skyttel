@@ -145,7 +145,40 @@ assistant Sparat. Lo Exempel och Kim Lind finns nu i hushållets karta.
 
 Röstleveransens faktiska innehåll kontrolleras separat i automatiken;
 ett manuellt injicerat transkript bevisar ingen fysisk uppläsning.
-Efter granskning avslutas installationen med `quit`.
+Efter den lyckade varianten avslutas installationen med `quit`.
+
+För felvarianten startas en ny röstinstallation enligt inledningen,
+utan `seed-family`. Logga in som Alex, skapa Textprov och lägg enbart
+Lo Exempel av typen Person med beskrivningen Påhittad uppgift i
+utkastet. Starta text och slå på mikrofonen. Ställ kontrollerna innan
+användaren skriver sin sparbegäran:
+
+```text
+scope-work
+response-required on
+hold-check on
+```
+
+Vid det skrivna uppdragets `held` kopieras aktuella V och C från
+`draft`. Släpp sparandet och granska den hållna kontrollen av hela utkastet
+innan godkännandet. Vänta sedan på nästa arbetsbegäran för förklaringen
+och avbryt just den:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST save_draft {"version":V,"contentVersion":C,"operationId":"controlled-save"}
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+fail REQUEST
+```
+<!-- markdownlint-enable MD013 -->
+
+Sparandet måste vara klart innan förklaringen avbryts. Läs ett tomt
+utkast, Lo i Tabell och ett verkligt sparande i ändringshistoriken.
+Samtalstextens felbesked ska finnas tillsammans med **Sparat.** också i
+den kontrollerade röstleveransen. Operatören jämför leveransens faktiska
+innehåll i terminalen före ett eventuellt `assistant`-transkript med
+samma besked. Ett sådant transkript bevisar inte fysisk uppläsning.
+Avsluta även felvariantens installation med `quit`.
 
 ## Avvisad kontroll av hela utkastet
 

@@ -234,11 +234,12 @@ TEXT-17.
     "spec": "tests/integration/text-assistant.spec.ts",
     "caseId": "TEXT-17"
   },
-  "reference": "Dator; riktig server och databas med kontrollerade leverantörer. Enkelt textuppdrag, textuppdrag med förklaring och talad sparbegäran med förklaring.",
+  "reference": "Dator; riktig server och databas med kontrollerade leverantörer. Enkelt textuppdrag, textuppdrag med förklaring och talad sparbegäran med förklaring. Separat ny installation prövar ett skrivet sparuppdrag med mikrofonen på där förklaringen misslyckas efter verkligt sparande.",
   "outcomes": [
     "Ett verifierat enkelt uppdrag ger kort slutbesked utan att förslagen sparas.",
     "En beställd förklaring finns kvar efter utkaständringen och efter sparande med röst.",
-    "Sparandet bekräftas med tomt utkast, verkliga objekt och ett gemensamt kvitto."
+    "Sparandet bekräftas med tomt utkast, verkliga objekt och ett gemensamt kvitto.",
+    "Ett verkligt sparande och felet i en återstående förklaring finns båda med i text och kontrollerad röstleverans."
   ],
   "evidence": [
     {
@@ -278,6 +279,14 @@ TEXT-17.
       "runner": "vitest",
       "suite": "server",
       "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified voice save retains requested saved-change report details before its final response",
+      "purpose": "Begärda verifierade detaljer från samma sparande måste nå rösten tillsammans med det fullständiga svaret."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
       "title": "a verified voice save retains the failure of its remaining requested explanation",
       "purpose": "Ett verkligt sparresultat får inte dölja felet när en beställd förklaring fortfarande saknas."
     }
@@ -304,6 +313,15 @@ TEXT-17.
 4. Öppna Tabell och läs Person för både Lo Exempel och Kim Lind. Öppna
    **Rapporter → Ändringshistorik → Visa ändringarna** och läs båda
    objekten i samma sparande.
+5. Följ förberedelsens separata felvariant i en ny installation med
+   enbart Lo Exempel osparad. Starta text och slå på mikrofonen.
+6. Skriv **Beskriv de sparade objekten. Spara hela utkastet.**
+   Operatören släpper sparandet och avbryter därefter den begärda
+   förklaringen. Läs både **Sparat.** och felbeskedet. Kontrollera samma
+   besked i den kontrollerade röstleveransen enligt förberedelsen.
+7. Läs ett tomt utkast och Lo Exempel av typen Person i Tabell. Öppna
+   **Rapporter → Ändringshistorik** och kontrollera att ett sparande
+   innehåller Lo Exempel.
 
 **Förväntat resultat:**
 
@@ -313,6 +331,9 @@ TEXT-17.
   svaret, även när resultatet sparas. Ett kort statusbesked ersätter den
   inte. Text och den kontrollerade röstleveransen ger samma sakliga
   sparresultat och förklaring.
+- Om förklaringen misslyckas efter verkligt sparande behåller båda
+  leveranssätten sparbeskedet och det aktuella felbeskedet. Sparandet
+  ersätter inte den uteblivna förklaringen.
 
 ### TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked
 

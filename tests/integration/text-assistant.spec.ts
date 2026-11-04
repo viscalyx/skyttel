@@ -33,80 +33,85 @@ import { verifyObjectDepartureAndDiscard } from '../support/object-form-departur
 import { propertyRow, setProperty } from '../support/property-controls.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 import { expect, test } from '../support/test.js';
-import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
+import {
+  lastToolResult,
+  type ModelRequest,
+  modelMessage,
+  modelTool,
+  textModel,
+} from '../support/text-model.js';
+
+function completionAuthorization(body: ModelRequest) {
+  const input = JSON.parse(String(body.input[0].content));
+  return [
+    modelMessage(
+      JSON.stringify(
+        body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+          ? {
+              mode: 'work',
+              request: input.current,
+              responseRequired:
+                input.current.includes('förklara') || input.current.startsWith('Beskriv'),
+            }
+          : { decision: 'allow', complete: true, fulfillsRequest: true },
+      ),
+    ),
+  ];
+}
 
 test('TEXT-17: verifierat slutbesked behåller beställd förklaring i text och röst', async ({
   page,
 }) => {
   const explanation = 'Person är en objekttyp. Kim Lind är ett objekt av den typen.';
   const saveExplanation = 'Lo Exempel och Kim Lind finns nu i hushållets karta.';
-  const model = textModel(
-    (body) => {
-      const { message, draft } = JSON.parse(
-        String(body.input.findLast((item) => item.role === 'user')?.content),
-      );
-      const current = body.input.slice(body.input.findLastIndex((item) => item.role === 'user'));
-      if (current.some((item) => item.type === 'function_call_output'))
-        return [modelMessage(message.startsWith('Beskriv') ? saveExplanation : explanation)];
-      if (message.startsWith('Beskriv'))
-        return [
-          modelTool('save_draft', {
-            version: draft.version,
-            contentVersion: draft.contentVersion,
-            operationId: 'controlled-save',
-          }),
-        ];
-      if (message.startsWith('Ändra')) {
-        const kim = draft.changes.find((change: { id: string }) => change.id === 'kim');
-        return [
-          modelTool('submit_changes', {
-            version: draft.version,
-            contentVersion: draft.contentVersion,
-            completion: 'draft',
-            operations: [
-              {
-                name: 'propose_object',
-                arguments: {
-                  id: 'kim',
-                  baseRevision: null,
-                  value: { ...kim.after, name: 'Kim Lind' },
-                },
-              },
-            ],
-          }),
-        ];
-      }
+  const model = textModel((body) => {
+    const { message, draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    const current = body.input.slice(body.input.findLastIndex((item) => item.role === 'user'));
+    if (current.some((item) => item.type === 'function_call_output'))
+      return [modelMessage(message.startsWith('Beskriv') ? saveExplanation : explanation)];
+    if (message.startsWith('Beskriv'))
       return [
-        modelTool('propose_object', {
+        modelTool('save_draft', {
           version: draft.version,
           contentVersion: draft.contentVersion,
-          id: 'kim',
-          baseRevision: null,
-          value: {
-            typeId: draft.changes.find((change: { id: string }) => change.id === 'lo').after.typeId,
-            name: 'Kim',
-          },
+          operationId: 'controlled-save',
         }),
       ];
-    },
-    (body) => {
-      const input = JSON.parse(String(body.input[0].content));
+    if (message.startsWith('Ändra')) {
+      const kim = draft.changes.find((change: { id: string }) => change.id === 'kim');
       return [
-        modelMessage(
-          JSON.stringify(
-            body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
-              ? {
-                  mode: 'work',
-                  request: input.current,
-                  responseRequired:
-                    input.current.includes('förklara') || input.current.startsWith('Beskriv'),
-                }
-              : { decision: 'allow', complete: true, fulfillsRequest: true },
-          ),
-        ),
+        modelTool('submit_changes', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'kim',
+                baseRevision: null,
+                value: { ...kim.after, name: 'Kim Lind' },
+              },
+            },
+          ],
+        }),
       ];
-    },
-  );
+    }
+    return [
+      modelTool('propose_object', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        id: 'kim',
+        baseRevision: null,
+        value: {
+          typeId: draft.changes.find((change: { id: string }) => change.id === 'lo').after.typeId,
+          name: 'Kim',
+        },
+      }),
+    ];
+  }, completionAuthorization);
   const live = liveProvider();
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
@@ -174,10 +179,66 @@ test('TEXT-17: verifierat slutbesked behåller beställd förklaring i text och 
     await history.getByText('Visa ändringarna', { exact: true }).click();
     await expect(history.locator('.history-changes')).toContainText('Lo Exempel');
     await expect(history.locator('.history-changes')).toContainText('Kim Lind');
+    await verifyTypedSaveExplanationFailure(page);
   } finally {
     await app.close();
   }
 });
+
+async function verifyTypedSaveExplanationFailure(page: Page) {
+  let explanationFailures = 0;
+  const model = textModel((body) => {
+    const { draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('save_draft', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        operationId: 'controlled-save',
+      }),
+    ];
+  }, completionAuthorization);
+  const live = liveProvider();
+  const app = await createInstallation(undefined, {
+    modelFetch: async (input, init) => {
+      const body = JSON.parse(String(init?.body));
+      if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length) {
+        explanationFailures++;
+        return Response.json(
+          { error: { message: 'Controlled explanation outage.' } },
+          { status: 503 },
+        );
+      }
+      return model.provider(input, init);
+    },
+    liveFetch: live.provider,
+    liveSideband: live.attach,
+  });
+  try {
+    await arrange(page, app);
+    await consent(page);
+    await turnMicrophoneOn(page);
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
+    await send(page, 'Beskriv de sparade objekten. Spara hela utkastet.');
+    const failure =
+      'Modellen är tillfälligt otillgänglig. Valet är kvar. Försök igen genom en egen handling när felet är löst.';
+    await expect(transcript(page)).toContainText(failure);
+    await expect(transcript(page)).toContainText('Sparat.');
+    await expect(await showDraft(page)).toContainText('Utkastet är tomt.');
+    await expect(await readTableObject(page, 'Lo Exempel')).toContainText('Person');
+    const history = await openSavedHistory(page);
+    await expect(history.getByRole('article')).toHaveCount(1);
+    await history.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(history.locator('.history-changes')).toContainText('Lo Exempel');
+    expect(explanationFailures).toBe(1);
+    expect(model.requests).toHaveLength(1);
+    await expect.poll(() => voiceAnswerParts(live.sent).join('\n')).toContain('Sparat.');
+    expect(voiceAnswerParts(live.sent).join('\n')).toContain(failure);
+  } finally {
+    await app.close();
+  }
+}
 
 test('TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked', async ({
   page,

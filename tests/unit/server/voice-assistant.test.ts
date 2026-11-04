@@ -8,6 +8,7 @@ import { createInstallation } from '../../support/installation.js';
 import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
 import {
   lastToolResult,
+  type ModelRequest,
   modelMessage,
   modelTool,
   readOnlyScope,
@@ -495,34 +496,94 @@ test.each([
   },
 );
 
-test('a verified voice save retains the failure of its remaining requested explanation', async () => {
-  const model = textModel(
-    (body) => {
-      const { draft } = JSON.parse(
-        String(body.input.findLast((item) => item.role === 'user')?.content),
-      );
-      return [
-        modelTool('save_draft', {
-          version: draft.version,
-          contentVersion: draft.contentVersion,
-          operationId: 'controlled-save',
-        }),
-      ];
-    },
-    (body) => [
-      modelMessage(
-        JSON.stringify(
-          body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
-            ? {
-                mode: 'work',
-                request: JSON.parse(String(body.input[0].content)).current,
-                responseRequired: true,
-              }
-            : { decision: 'allow', complete: true, fulfillsRequest: true },
-        ),
+function saveExplanationAuthorization(body: ModelRequest) {
+  return [
+    modelMessage(
+      JSON.stringify(
+        body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+          ? {
+              mode: 'work',
+              request: JSON.parse(String(body.input[0].content)).current,
+              responseRequired: true,
+            }
+          : { decision: 'allow', complete: true, fulfillsRequest: true },
       ),
+    ),
+  ];
+}
+
+test('a verified voice save retains requested saved-change report details before its final response', async () => {
+  const explanation = 'Beskrivningen hör till det sparade objektet.';
+  const model = textModel((body) => {
+    if (model.requests.length === 2) return [modelTool('report_result', { source: 'latest_save' })];
+    if (model.requests.length === 3) return [modelMessage(explanation)];
+    const { draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('save_draft', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        operationId: 'controlled-report-save',
+      }),
+    ];
+  }, saveExplanationAuthorization);
+  const voice = await setupVoice(model.provider);
+  await proposal(voice.path);
+  await voice.poll();
+  voice.transcript('Beskriv de sparade objekten. Spara hela utkastet.');
+  voice.delegate();
+  await expect
+    .poll(async () => {
+      const current = (await voice.poll()).assistant;
+      return {
+        calls: model.requests.length,
+        phase: current.phase,
+        error: current.error,
+        receipt: Boolean(current.receipt),
+      };
+    })
+    .toEqual({ calls: 3, phase: 'ready', error: undefined, receipt: true });
+  const { assistant } = await voice.poll();
+  expect(assistant.receipt).toMatchObject({
+    changes: [
+      expect.objectContaining({ after: expect.objectContaining({ name: 'Formulärförslag' }) }),
     ],
-  );
+  });
+  expect(assistant.result).toMatchObject({ kind: 'history' });
+  expect(assistant.result.message).toContain('Formulärförslag');
+  expect(assistant.modelReply).toContain(explanation);
+  const mapPath = voice.path.replace('/text-assistant', '/map');
+  const map = await (await browser.get(mapPath)).json();
+  expect(map.objects).toMatchObject([expect.objectContaining({ name: 'Formulärförslag' })]);
+  expect(map.draft.changes).toEqual([]);
+  expect((await (await browser.get(`${mapPath}/history`)).json()).history).toEqual([
+    assistant.receipt,
+  ]);
+  expect(model.requests).toHaveLength(3);
+  await expect
+    .poll(() => voiceAnswerParts(voice.live.sent).join('\n'))
+    .toContain('Formulärförslag');
+  const spoken = voiceAnswerParts(voice.live.sent).join('\n');
+  expect(spoken).toContain('Sparat.');
+  expect(spoken).toContain(explanation);
+  expect(spoken).toContain('Formulärförslag');
+  expect(spoken).toContain(assistant.result.message);
+});
+
+test('a verified voice save retains the failure of its remaining requested explanation', async () => {
+  const model = textModel((body) => {
+    const { draft } = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('save_draft', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        operationId: 'controlled-save',
+      }),
+    ];
+  }, saveExplanationAuthorization);
   const voice = await setupVoice(async (input, init) => {
     const body = JSON.parse(String(init?.body));
     if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length)

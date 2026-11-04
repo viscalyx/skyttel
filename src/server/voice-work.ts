@@ -1,11 +1,16 @@
 import { randomUUID } from 'node:crypto';
-import type { PendingPartReference, TextAssistantView } from '../shared/text-assistant.js';
+import type {
+  ConversationReply,
+  PendingPartReference,
+  TextAssistantView,
+} from '../shared/text-assistant.js';
 import { assistantFailureMessage } from './assistant-feedback.js';
 import type { LiveSideband } from './live-provider.js';
 import { type VoiceAnswer, voiceAnswerText, voiceCommentary } from './voice-commentary.js';
 
 type Anchor = { revision: number; draftVersion: number; contentVersion: number };
 type Fragment = { role: 'user' | 'assistant'; text: string; startMs: number; endMs: number };
+type VoiceCompletionView = TextAssistantView & Pick<ConversationReply, 'failed'>;
 
 /** One executor for delegated tasks and replies to pending server questions.
  * Only new user deltas can authorize a save; conversation context cannot. */
@@ -143,7 +148,23 @@ export function voiceWork({
       })
       .catch(() => undefined);
   }
-  function append(delegationId: string | null, answer: VoiceAnswer, view?: TextAssistantView) {
+  function receiptParts(view: VoiceCompletionView): Exclude<VoiceAnswer, string> {
+    const failure =
+      view.error || view.failed
+        ? (view.reply ?? (view.error ? assistantFailureMessage(view.error) : ''))
+        : '';
+    return [
+      { kind: 'result' as const, text: 'Sparat.' },
+      { kind: 'result' as const, text: view.result?.message ?? '' },
+      { kind: 'notice' as const, text: view.requiredNotice ?? '' },
+      {
+        kind: 'notice' as const,
+        text: failure !== view.requiredNotice ? failure : '',
+      },
+      { kind: 'conversation' as const, text: view.modelReply ?? '' },
+    ].filter(({ text }) => text);
+  }
+  function append(delegationId: string | null, answer: VoiceAnswer, view?: VoiceCompletionView) {
     if (!allowed()) return;
     const content = voiceAnswerText(answer);
     observe?.('voice_commentary', { delegationId, content, revision: view?.revision });
@@ -171,12 +192,8 @@ export function voiceWork({
         text: view.saveCheck
           ? view.saveCheck.reply + (view.receipt ? ' Sparat.' : '')
           : view.receipt
-            ? [
-                'Sparat.',
-                view.error ? (view.reply ?? assistantFailureMessage(view.error)) : undefined,
-                view.modelReply,
-              ]
-                .filter(Boolean)
+            ? receiptParts(view)
+                .map(({ text }) => text)
                 .join('\n')
             : [view.reply, view.modelReply].filter(Boolean).join('\n'),
         questionPending: Boolean(view.questionPending),
@@ -184,19 +201,12 @@ export function voiceWork({
       });
     }
   }
-  function completion(view: TextAssistantView): VoiceAnswer {
+  function completion(view: VoiceCompletionView): VoiceAnswer {
     if (view.saveCheck) return view.saveCheck.reply + (view.receipt ? ' Sparat.' : '');
-    if (view.receipt)
-      return view.modelReply || view.error
-        ? [
-            { kind: 'result', text: 'Sparat.' },
-            {
-              kind: 'notice',
-              text: view.error ? (view.reply ?? assistantFailureMessage(view.error)) : '',
-            },
-            { kind: 'conversation', text: view.modelReply ?? '' },
-          ]
-        : 'Sparat.';
+    if (view.receipt) {
+      const parts = receiptParts(view);
+      return parts.length > 1 ? parts : 'Sparat.';
+    }
     if (view.questionPending && view.modelReply)
       return [
         { kind: 'notice', text: view.requiredNotice ?? '' },
@@ -667,7 +677,7 @@ export function voiceWork({
         }
         if (owned !== undefined) continue;
         answeredReplies.add(reply.id);
-        const completed: TextAssistantView = {
+        const completed: VoiceCompletionView = {
           ...view,
           phase: 'ready',
           revision: reply.revision ?? view.revision,
@@ -678,6 +688,7 @@ export function voiceWork({
           result: reply.result,
           saveCheck: reply.saveCheck,
           questionPending: reply.questionPending,
+          failed: reply.failed,
           error: undefined,
         };
         // Keep the complete reply and source boundary through silent assembly.

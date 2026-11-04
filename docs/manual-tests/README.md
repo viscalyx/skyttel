@@ -530,7 +530,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   TEXT-15 bevarar tidigare och nya förslag efter avvisat sparande och
   kräver ett nytt uttryckligt talat ändra-och-spara-besked.
   TEXT-17 skiljer enkelt verifierat slutbesked från beställd förklaring
-  och behåller hela förklaringen vid sparande med röst.
+  och behåller hela förklaringen vid sparande med röst. Ett fel efter
+  sparandet behåller både sparkvittot och felbeskedet i text och röst.
   På smal skärm provas även tangentbordsåtkomst till kartans sammanhang
   efter ett nytt urval medan svaret finns kvar i textvyn.
   [Operatörsförberedelsen](text-conversation-preparation.md) skiljer
