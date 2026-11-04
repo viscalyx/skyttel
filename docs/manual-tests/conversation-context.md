@@ -2041,6 +2041,9 @@ vid steg 2. Starta en ny installation för fallet och avsluta med `quit`.
 **Automatiskt motsvarande test:**
 [conversation-persistence.spec.ts](../../tests/integration/conversation-persistence.spec.ts),
 KONTEXT-24. Provet använder riktig server, SQLite och kontrollerad modell.
+Separat HTTP-underlag provar tal utan uppdrag och fördröjd delegering med
+kontrollerad klocka. Det skiljer den mottagna repliken från senare arbete
+och verifierar sjudygnsgränsen genom verklig omstart.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -2081,6 +2084,22 @@ KONTEXT-24. Provet använder riktig server, SQLite och kontrollerad modell.
       "spec": "tests/unit/server/conversation-persistence-http.test.ts",
       "title": "seven-day expiry survives restart and ignores model completion, polling and restoration",
       "purpose": "Kontrollerad klocka och verklig omstart bevisar den ursprungliga sjudygnsgränsen; modellarbete och upprepad visning förlänger den inte."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-persistence-http.test.ts",
+      "title": "non-delegated speech renews the seven-day lifetime across restart without renewal by other voice activity",
+      "purpose": "Tal utan delegerat uppdrag flyttar sjudygnsgränsen från mottagandet och består genom verklig omstart; tomt tal, Skyttels tal, ljudaktivitet och kontroller flyttar den inte."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-persistence-http.test.ts",
+      "title": "spoken instructions and pending parts survive actual restart with voice paused and no provider reconnect",
+      "purpose": "Fördröjd delegering av ett redan mottaget talat uppdrag flyttar inte sjudygnsgränsen; samma gräns och väntande del består genom verklig omstart."
     },
     {
       "kind": "technical",

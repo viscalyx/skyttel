@@ -497,6 +497,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   återställer mätaren och gamla mätningar ignoreras.
   Omladdning återställer bevarad text och modellval med arbetet pausat;
   utgångstid visas och uttryckligt avslut lämnar utkastet kvar.
+  Egna talade repliker förnyar tiden från mottagandet; senare modellarbete
+  och kontroller flyttar inte gränsen.
   Full kontext sammanfattas automatiskt med kvarvarande samtalstext,
   aktuellt utkast, mikrofonläge och tidigare inspelat tal. Misslyckad
   sammanfattning blockerar nya uppdrag tills Nytt samtal. Pågående
