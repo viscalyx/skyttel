@@ -27,6 +27,29 @@ function held() {
   return { wait, release };
 }
 
+function pricedProvider(provider: typeof fetch): typeof fetch {
+  return async (url, init) => {
+    const response = await provider(url, init);
+    return Response.json(
+      { ...(await response.json()), service_tier: 'default' },
+      { headers: response.headers },
+    );
+  };
+}
+
+async function selectPricedModel(flow: { path: string; session: TextAssistantView }) {
+  // Sol has a verified rate card; failed/aborted requests retain unknown
+  // usage alongside the completed calls' known cost.
+  expect(
+    (
+      await client.post(`${flow.path}/text-assistant/${flow.session.id}/model-choice`, {
+        headers: { origin: app.origin },
+        data: { model: 'gpt-6.1-sol', effort: 'high' },
+      })
+    ).status(),
+  ).toBe(200);
+}
+
 function proposeKim(
   request: ModelRequest,
   typeId: string,
@@ -194,26 +217,13 @@ for (const mode of ['sequential', 'overlap'] as const) {
     delivery.blockStatus(true);
     const model = textModel((body) => proposeKim(body, flow.map.types[0].id, 'kim'));
     const flow = await start(
-      async (url, init) => {
-        const response = await model.provider(url, init);
-        return Response.json(
-          { ...(await response.json()), service_tier: 'default' },
-          { headers: response.headers },
-        );
-      },
+      pricedProvider(model.provider),
       mode,
       events,
       undefined,
       delivery.dispatch,
     );
-    expect(
-      (
-        await client.post(`${flow.path}/text-assistant/${flow.session.id}/model-choice`, {
-          headers: { origin: app.origin },
-          data: { model: 'gpt-6.1-sol', effort: 'high' },
-        })
-      ).status(),
-    ).toBe(200);
+    await selectPricedModel(flow);
     delivery.arm();
     await flow.submit('Lägg till Kim Lind utan att spara.');
     await expect.poll(() => events.filter((event) => event.kind === 'work_result').length).toBe(1);
@@ -473,25 +483,8 @@ for (const mode of ['sequential', 'overlap'] as const) {
           ),
         ],
       );
-      const flow = await start(
-        async (url, init) => {
-          const response = await model.provider(url, init);
-          return Response.json(
-            { ...(await response.json()), service_tier: 'default' },
-            { headers: response.headers },
-          );
-        },
-        mode,
-        events,
-      );
-      expect(
-        (
-          await client.post(`${flow.path}/text-assistant/${flow.session.id}/model-choice`, {
-            headers: { origin: app.origin },
-            data: { model: 'gpt-6.1-sol', effort: 'high' },
-          })
-        ).status(),
-      ).toBe(200);
+      const flow = await start(pricedProvider(model.provider), mode, events);
+      await selectPricedModel(flow);
       await flow.submit('Lägg till Kim Lind och förklara objekttypen Person. Spara inte.');
       await expect.poll(() => model.requests.length).toBe(2);
       const changed = await (await client.get(`${flow.path}/map`)).json();
@@ -767,27 +760,8 @@ for (const mode of ['sequential', 'overlap'] as const) {
           ];
         },
       );
-      const flow = await start(
-        async (url, init) => {
-          const response = await model.provider(url, init);
-          return Response.json(
-            { ...(await response.json()), service_tier: 'default' },
-            { headers: response.headers },
-          );
-        },
-        mode,
-        events,
-      );
-      // Sol has a verified rate card; the later failed/aborted request must
-      // retain unknown usage alongside the completed calls' known cost.
-      expect(
-        (
-          await client.post(`${flow.path}/text-assistant/${flow.session.id}/model-choice`, {
-            headers: { origin: app.origin },
-            data: { model: 'gpt-6.1-sol', effort: 'high' },
-          })
-        ).status(),
-      ).toBe(200);
+      const flow = await start(pricedProvider(model.provider), mode, events);
+      await selectPricedModel(flow);
       const staged = await client.post(`${flow.path}/map/draft`, {
         headers: { origin: app.origin },
         data: {
