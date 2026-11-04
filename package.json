@@ -77,7 +77,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.6.3",
     "@cspell/dict-sv": "^2.3.4",
-    "@devcontainers/cli": "0.89.0",
+    "@devcontainers/cli": "0.90.0",
     "@playwright/test": "^1.64.1",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "^14.6.8",
