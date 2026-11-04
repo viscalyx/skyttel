@@ -106,6 +106,8 @@ export type AssistantObservation = {
   taskId?: string;
   revision?: number;
   consentTextVersion?: number;
+  /** Original context eligibility, independent of approval for this request. */
+  conversationConsentTextVersion?: number;
   context?: AssistantObservationContext;
   status?: ObservationStatus;
   evidenceGap?: 'unknown_parent' | 'missing_end' | 'excluded_content';
@@ -532,6 +534,7 @@ export function assistantObservationBoundary(
           'taskId',
           'revision',
           'consentTextVersion',
+          'conversationConsentTextVersion',
           'status',
           'evidenceGap',
           'kind',

@@ -36,6 +36,7 @@ type Voice = {
   headers: Headers;
   assistant: TextAssistantView;
   consentTextVersion?: number;
+  conversationConsentTextVersion?: number;
   channel: LiveSideband;
   heartbeat: number;
   finalized: boolean;
@@ -85,7 +86,14 @@ export function voiceAssistantRoutes({
   expireVoiceWork,
 }: {
   now?: () => number;
-  voiceAccess: (sessionId: string) => { expiresAt: number; guard: () => number } | undefined;
+  voiceAccess: (sessionId: string) =>
+    | {
+        expiresAt: number;
+        guard: () => number;
+        consentTextVersion?: number;
+        conversationConsentTextVersion?: number;
+      }
+    | undefined;
   expireVoiceWork: (sessionId: string) => void;
   config: Config;
   dispatch: LocalDispatch;
@@ -223,6 +231,7 @@ export function voiceAssistantRoutes({
         at: now(),
         sessionId: voice.assistant.id,
         consentTextVersion: voice.consentTextVersion,
+        conversationConsentTextVersion: voice.conversationConsentTextVersion,
         context: observationContext(voice),
         kind: 'voice_completed',
         status,
@@ -320,7 +329,9 @@ export function voiceAssistantRoutes({
       outcome: 'starting',
     };
     const voiceId = randomUUID();
-    const consentTextVersion = current.consentTextVersion;
+    const consentTextVersion = access.consentTextVersion ?? current.consentTextVersion;
+    const conversationConsentTextVersion =
+      access.conversationConsentTextVersion ?? current.consentTextVersion;
     let observationStarted = false;
     let providerObservationStarted = false;
     let providerObservationEnded = false;
@@ -344,6 +355,7 @@ export function voiceAssistantRoutes({
         at: now(),
         sessionId,
         consentTextVersion,
+        conversationConsentTextVersion,
         context: {
           owner: 'voice',
           traceId: voiceId,
@@ -370,6 +382,7 @@ export function voiceAssistantRoutes({
         at: now(),
         sessionId,
         consentTextVersion,
+        conversationConsentTextVersion,
         context: {
           owner: 'voice',
           traceId: voiceId,
@@ -486,6 +499,7 @@ export function voiceAssistantRoutes({
         at: now(),
         sessionId,
         consentTextVersion,
+        conversationConsentTextVersion,
         context: {
           owner: 'voice',
           traceId: voiceId,
@@ -591,6 +605,7 @@ export function voiceAssistantRoutes({
         headers: requestHeaders,
         assistant: current,
         consentTextVersion,
+        conversationConsentTextVersion,
         channel,
         usage,
         heartbeat: now(),
@@ -639,6 +654,7 @@ export function voiceAssistantRoutes({
           at: now(),
           sessionId,
           consentTextVersion,
+          conversationConsentTextVersion,
           context: {
             ...observationContext(voice),
             spanId: randomUUID(),

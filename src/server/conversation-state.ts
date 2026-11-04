@@ -24,6 +24,9 @@ export type ConversationMessage = {
   deadline: number;
   /** Authenticated arrival order across conversations sharing one user's household draft. */
   sequence: number;
+  /** Accepted information bound when this request starts, independent of later approval. */
+  consentTextVersion?: number;
+  conversationConsentTextVersion?: number;
   /** Later input revokes this request's unregistered save, even before dequeue. */
   saveSuperseded?: boolean;
   /** Discard requested by an already-reset conversation, with no dialogue turn. */
@@ -38,9 +41,11 @@ type AcceptedMessage = {
   deadline: number;
 };
 /** The single owner of recoverable conversation data; no live process resources. */
-export type ConversationState = TextAssistantView & {
+export type ConversationState = Omit<TextAssistantView, 'conversation' | 'unfinishedRequests'> & {
+  /** Storage approval is independent of the original provider information. */
+  storageConsentVersion?: number;
   modelChoice: ConversationModelChoice;
-  readonly consentTextVersion: number;
+  consentTextVersion: number;
   pendingPartsLedger: PendingPartsState;
   answers?: string[];
   id: string;
@@ -96,7 +101,10 @@ export type ConversationState = TextAssistantView & {
     resolves: PendingPartReference[];
     messageId?: string;
     /** The submitting instruction also survives an explicit conversation reset. */
-    message?: Pick<ConversationMessage, 'text'>;
+    message?: Pick<
+      ConversationMessage,
+      'text' | 'consentTextVersion' | 'conversationConsentTextVersion'
+    >;
     discarded: boolean;
     /** Independent whole-request verdict before delivery; batch evidence alone is insufficient. */
     finishesRequest: boolean;

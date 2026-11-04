@@ -6,6 +6,7 @@ import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, expect, test, vi } from 'vitest';
 import {
   backendTaskObservationContext,
+  type AssistantObservation,
   type ObserveAssistant,
 } from '../../../src/server/assistant-observation.js';
 import { langSmithDelivery } from '../../../src/server/langsmith-delivery.js';
@@ -1989,7 +1990,7 @@ test('voice startup and exact transcripts reach a separate trace without transpo
         owner: 'voice',
         conversation_id: session.id,
         voice_session_id: voice.id,
-        consent_text_version: 3,
+        consent_text_version: 4,
         status: 'incomplete',
       },
     },
@@ -2143,7 +2144,7 @@ test('complete text evidence preserves the exact model exchange and all actions 
 
 test('later current acceptance never makes an old conversation eligible for live evidence', async () => {
   const live = liveProvider();
-  const observed: { consentTextVersion?: number }[] = [];
+  const observed: AssistantObservation[] = [];
   const { path, session } = await setup({
     consentTextVersion: 2,
     liveFetch: live.provider,
@@ -2152,10 +2153,14 @@ test('later current acceptance never makes an old conversation eligible for live
   });
   const current = await send(path, session, 'old-before');
   expect(endpoint.received).toEqual([]);
-  const { user, household } = await (await client.get(`${app.origin}/api/bootstrap`)).json();
-  app.seedConversationConsent(user.id, household.id, 3);
+  app.setConversationConsentTextVersion(4);
+  const approved = await client.post(`${path}/conversation-consent`, {
+    headers: { origin: app.origin },
+    data: { textVersion: 4 },
+  });
+  expect(approved.status(), await approved.text()).toBe(200);
   expect(await (await client.get(`${path}/conversation-consent`)).json()).toMatchObject({
-    saved: { textVersion: 3 },
+    saved: { textVersion: 4 },
   });
   const after = await send(path, current, 'old-after');
   const connected = await client.post(`${path}/text-assistant/${session.id}/voice`, {
@@ -2182,7 +2187,36 @@ test('later current acceptance never makes an old conversation eligible for live
   });
   expect(endpoint.received).toEqual([]);
   expect(observed.length).toBeGreaterThan(0);
-  expect(observed.every((event) => event.consentTextVersion === 2)).toBe(true);
+  expect(observed.filter((event) => event.taskId === 'old-before')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ kind: 'task_completed', consentTextVersion: 2 }),
+    ]),
+  );
+  expect(observed.filter((event) => event.taskId === 'old-after')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ kind: 'task_completed', consentTextVersion: 4 }),
+    ]),
+  );
+  expect(
+    observed
+      .filter((event) => event.context?.owner === 'voice')
+      .every((event) => event.consentTextVersion === 4),
+  ).toBe(true);
+  const reset = await client.post(`${path}/text-assistant/${session.id}/new`, {
+    headers: { origin: app.origin },
+    data: {},
+  });
+  expect(reset.status(), await reset.text()).toBe(200);
+  await send(path, await reset.json(), 'current-context');
+  await expect
+    .poll(() =>
+      endpoint.received.some(
+        (item) =>
+          (item.body.extra as { metadata?: { consent_text_version?: number } })?.metadata
+            ?.consent_text_version === 4,
+      ),
+    )
+    .toBe(true);
 });
 
 test.each(['large text', 'many content parts'])(

@@ -7,6 +7,32 @@ verkliga leverantörsanrop eller fysiska ljudprov ingår här.
 
 ## Utkastbatch och sparande
 
+### Fråga före omladdning
+
+För KONTEXT-24: använd det nya REQUEST från `held` efter meddelandet
+**Byt cykelns namn till Blå, men ändra inte ägaren.**. Skicka följande
+kontrollerade svar och invänta att frågan visas före omladdning:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST ask_questions {"questions":[{"kind":"change","request":"Byt cykelns namn till Blå, men ändra inte ägaren.","question":"Vilken cykel?","dependsOnDraft":true}]}
+```
+<!-- markdownlint-enable MD013 -->
+
+Efter omladdningen ska inget nytt `held` visas. Avsluta med `quit` efter
+UI-proceduren; provkatalogen tas bort. Vid omstart använder du det
+befintliga kommandot `restart` och inväntar `restarted` innan omladdning.
+Exakta tidsgränser verifieras separat genom de publika HTTP-kontrollerna.
+
+Lämna svaret på **Beskriv garaget utan att ändra.** hållet före
+omladdningen. Det följande köade meddelandet ska inte skapa ett nytt
+modelluppdrag. Återleverera inte det tidigare verktygsanropet eller
+skapa ett nytt uppdrag för att återställa samtalet. `restart` släpper
+kvarvarande gamla leverantörssvar och startar samma databas på nytt;
+pausat arbete och kön ska fortfarande inte starta.
+
+### Aktuella värden för ändringar
+
 Vid ett angivet släpp i ett vanligt fall: kopiera `id`, `draft.version`,
 `draft.contentVersion`, Lo-förslagets `id` och hela `after` från aktuellt
 `held`. Vid nästa uppdrag används dess nya `id` och aktuella `draft`.
