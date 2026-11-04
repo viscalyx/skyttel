@@ -244,6 +244,7 @@ export async function runVoiceScenario(
       let recognizedRequest: string | undefined;
       let partialChecks: string[] = [];
       let playbackAssessmentElapsedMs: number | undefined;
+      const playbackRecognitionCosts: (number | null)[] = [];
       async function measurePlaybackAssessment<T>(work: () => Promise<T>): Promise<T> {
         const began = Date.now();
         try {
@@ -468,19 +469,29 @@ export async function runVoiceScenario(
                   break;
                 }
                 lastAssessedFrame = lastActivity;
-                const recognition = await measurePlaybackAssessment(() =>
-                  withHeartbeat(() => assessPlayback(recording)),
+                const candidates = result.playback.candidates;
+                // A started recognition has unknown cost until it returns,
+                // independently of heartbeat and semantic completion.
+                const costIndex = playbackRecognitionCosts.push(null) - 1;
+                const { recognition, candidate } = await measurePlaybackAssessment(() =>
+                  withHeartbeat(async () => {
+                    const recognition = await assessPlayback(recording);
+                    playbackRecognitionCosts[costIndex] = recognition.costUsd;
+                    const candidate: PlaybackEvidence['candidates'][number] = {
+                      callId: recognition.callId,
+                      profile: recognition.profile,
+                      outcome: recognition.outcome,
+                      costUsd: recognition.costUsd,
+                      recordingSha256: recording.sha256,
+                      alignmentMarginMs: recognition.alignmentMarginMs,
+                      lastWordEndSeconds: recognition.lastWordEndSeconds,
+                    };
+                    // Completed recognition is evidence even if the pending
+                    // heartbeat fails before semantic assessment can begin.
+                    candidates.push(candidate);
+                    return { recognition, candidate };
+                  }),
                 );
-                const candidate: NonNullable<Attempt['playback']>['candidates'][number] = {
-                  callId: recognition.callId,
-                  profile: recognition.profile,
-                  outcome: recognition.outcome,
-                  costUsd: recognition.costUsd,
-                  recordingSha256: recording.sha256,
-                  alignmentMarginMs: recognition.alignmentMarginMs,
-                  lastWordEndSeconds: recognition.lastWordEndSeconds,
-                };
-                result.playback.candidates.push(candidate);
                 const end = renderedResponseEnd(recording, recognition);
                 if (!end) {
                   result.reason = recognition.reason ?? 'Rendered response boundary is unverified.';
@@ -726,11 +737,11 @@ export async function runVoiceScenario(
         options.providerRecords?.().filter((call) => !recordIds.has(call.id)),
         observed,
       );
-      result.playbackAssessmentCostUsd = result.playback?.candidates.some(
-        (item) => item.costUsd === null,
-      )
-        ? null
-        : result.playback?.candidates.reduce((sum, item) => sum + (item.costUsd ?? 0), 0);
+      result.playbackAssessmentCostUsd = result.playback
+        ? playbackRecognitionCosts.some((cost) => cost === null)
+          ? null
+          : playbackRecognitionCosts.reduce<number>((sum, cost) => sum + (cost ?? 0), 0)
+        : undefined;
       result.playbackAssessmentElapsedMs = playbackAssessmentElapsedMs;
       if (result.timing) {
         const request = observed.find((event) => event.kind === 'backend_request');
