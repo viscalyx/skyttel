@@ -372,9 +372,12 @@ test('visit-only updated approval covers later requests without rewriting runnin
     const original = events.filter((event) => event.taskId === 'original-terms');
     expect(original.some((event) => event.kind === 'task_completed')).toBe(true);
     expect(original.every((event) => event.consentTextVersion === 3)).toBe(true);
+    expect(original.every((event) => event.conversationConsentTextVersion === 3)).toBe(true);
     const updated = events.filter((event) => event.taskId === 'updated-terms');
     expect.soft(updated.some((event) => event.kind === 'task_completed')).toBe(true);
     expect.soft(updated.every((event) => event.consentTextVersion === 4)).toBe(true);
+    expect(updated.some((event) => event.kind === 'work_result')).toBe(true);
+    expect(updated.every((event) => event.conversationConsentTextVersion === 3)).toBe(true);
     expect(state.consentTextVersion).toBe(3);
     const later = await send('same-visit');
     expect(later.status(), await later.text()).toBe(202);
@@ -385,6 +388,10 @@ test('visit-only updated approval covers later requests without rewriting runnin
         return state.phase;
       })
       .toBe('ready');
+    const sameVisit = events.filter((event) => event.taskId === 'same-visit');
+    expect(sameVisit.some((event) => event.kind === 'work_result')).toBe(true);
+    expect(sameVisit.every((event) => event.consentTextVersion === 4)).toBe(true);
+    expect(sameVisit.every((event) => event.conversationConsentTextVersion === 3)).toBe(true);
     const voice = await post(`${path}/${state.id}/voice`, {
       sdp: 'synthetic-offer',
       revision: state.revision,

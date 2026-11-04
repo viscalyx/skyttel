@@ -5,8 +5,8 @@ import { join } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, expect, test, vi } from 'vitest';
 import {
-  backendTaskObservationContext,
   type AssistantObservation,
+  backendTaskObservationContext,
   type ObserveAssistant,
 } from '../../../src/server/assistant-observation.js';
 import { langSmithDelivery } from '../../../src/server/langsmith-delivery.js';
@@ -2197,6 +2197,10 @@ test('later current acceptance never makes an old conversation eligible for live
       expect.objectContaining({ kind: 'task_completed', consentTextVersion: 4 }),
     ]),
   );
+  const laterWork = observed.filter((event) => event.taskId === 'old-after');
+  expect(laterWork.some((event) => event.kind === 'work_result')).toBe(true);
+  expect(laterWork.every((event) => event.consentTextVersion === 4)).toBe(true);
+  expect(laterWork.every((event) => event.conversationConsentTextVersion === 2)).toBe(true);
   expect(
     observed
       .filter((event) => event.context?.owner === 'voice')
