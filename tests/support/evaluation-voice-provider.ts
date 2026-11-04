@@ -25,6 +25,21 @@ export async function evaluationVoiceProvider(
   const page = await browser.newPage();
   await page.goto(`http://127.0.0.1:${address.port}`);
   const live = liveProvider();
+  function emitDelegation(sessionId: string, text: string, startMs: number, endMs: number) {
+    live.emit(sessionId, {
+      type: 'session.input_transcript.delta',
+      event_id: randomUUID(),
+      delta: text,
+      start_ms: startMs,
+      end_ms: endMs,
+    });
+    live.emit(sessionId, {
+      type: 'session.delegation.created',
+      event_id: randomUUID(),
+      offset_ms: endMs,
+      delegation: { id: randomUUID(), type: 'delegation', target: 'client' },
+    });
+  }
   let finalAudioSentAt: number | undefined;
   let outputStarted = false;
   let inputTimer: ReturnType<typeof setTimeout> | undefined;
@@ -129,19 +144,12 @@ export async function evaluationVoiceProvider(
       }
     };
     inputTimer = setTimeout(() => {
-      live.emit(args[1], {
-        type: 'session.input_transcript.delta',
-        event_id: randomUUID(),
-        delta: options.initialText ?? 'Spara hela utkastet.',
-        start_ms: 0,
-        end_ms: options.initialEndMs ?? 2400,
-      });
-      live.emit(args[1], {
-        type: 'session.delegation.created',
-        event_id: randomUUID(),
-        offset_ms: options.initialEndMs ?? 2400,
-        delegation: { id: randomUUID(), type: 'delegation', target: 'client' },
-      });
+      emitDelegation(
+        args[1],
+        options.initialText ?? 'Spara hela utkastet.',
+        0,
+        options.initialEndMs ?? 2400,
+      );
     }, 3000);
     return sideband;
   };
@@ -151,19 +159,7 @@ export async function evaluationVoiceProvider(
     delegate(text: string, startMs = 0, endMs = 2400) {
       const sessionId = live.channels.keys().next().value;
       if (!sessionId) throw new Error('voice_provider_session_missing');
-      live.emit(sessionId, {
-        type: 'session.input_transcript.delta',
-        event_id: randomUUID(),
-        delta: text,
-        start_ms: startMs,
-        end_ms: endMs,
-      });
-      live.emit(sessionId, {
-        type: 'session.delegation.created',
-        event_id: randomUUID(),
-        offset_ms: endMs,
-        delegation: { id: randomUUID(), type: 'delegation', target: 'client' },
-      });
+      emitDelegation(sessionId, text, startMs, endMs);
     },
     outputStarted: outputStartedSignal,
     get outputStartedAt() {
