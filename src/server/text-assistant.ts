@@ -155,6 +155,7 @@ export function textAssistantRoutes({
 }) {
   const routes = new Hono<{ Variables: { actorId: string; browserSessionId: string } }>();
   const sessions = new Map<string, Session>();
+  let closed = false;
   const storage = conversationStorage(database, now);
   function persist(session: Session) {
     if (sessions.get(session.state.id) !== session) return;
@@ -3567,6 +3568,7 @@ export function textAssistantRoutes({
     }
   }
   function nextMessage(session: Session) {
+    if (closed) return;
     const key = draftKey(session);
     if (draftExecutions.has(key)) return;
     if (draftHasPendingBatch(session)) return;
@@ -5507,6 +5509,7 @@ export function textAssistantRoutes({
       return receipts;
     },
     close: async () => {
+      closed = true;
       unsubscribeDiscards();
       storage.close();
       await Promise.all(
