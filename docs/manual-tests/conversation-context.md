@@ -2177,6 +2177,11 @@ Det äldre kan återupptas medan det yngre förblir pausat tills användaren
 uttryckligen återupptar även det.
 Om båda i stället väntar på förtydligande kan frågan i det äldre besvaras.
 En väntande ändringsdel i det yngre behåller samtidigt sin spärr mot sparande.
+Separat HTTP-underlag avbryter en talad förtydligandereplik efter en
+verifierad deländring och startar om servern. Efter uttrycklig återupptagning
+fortsätter samma replik med kvarvarande arbete utan att upprepa deländringen
+eller återuppliva dess tidigare sparbegäran. En separat variant tappar
+batchsvaret efter genomförandet och verifierar samma utfall efter omstart.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -2250,6 +2255,22 @@ En väntande ändringsdel i det yngre behåller samtidigt sin spärr mot sparand
       "spec": "tests/unit/server/conversation-resume-http.test.ts",
       "title": "resume after actual restart preserves a verified partial batch and never renews its old save request",
       "purpose": "Verifierade deländringar upprepas inte efter omstart, och gammal sparauktoritet återupplivas inte."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-resume-http.test.ts",
+      "title": "a spoken clarification resumes only unfinished work after actual restart without renewing its old save request: lostBatchReply=false",
+      "purpose": "En talad replik behåller sin identitet efter egna verifierade förtydliganden och deländringar. Omstart följd av uttrycklig återupptagning fortsätter bara kvarvarande arbete utan nytt sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-resume-http.test.ts",
+      "title": "a spoken clarification resumes only unfinished work after actual restart without renewing its old save request: lostBatchReply=true",
+      "purpose": "Efter förlorat svar från en genomförd delbatch verifierar återupptagning samma utfall. Replikens eget förtydligande slutförs utan upprepad ändring eller ny sparbegäran."
     },
     {
       "kind": "technical",

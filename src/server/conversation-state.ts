@@ -21,6 +21,8 @@ export type ConversationMessage = Partial<ConversationConsentProvenance> & {
   /** A manual scope change cannot be crossed by an older queued save request. */
   saveScopeChanged?: boolean;
   answerTo?: PendingPartReference[];
+  /** Exact revisions advanced by this request; bounded by its original answers. */
+  answerProgress?: PendingPartReference[];
   contentVersion: number;
   /** Displayed draft version admitted with this request; only verified work advances it. */
   draftVersion: number;
