@@ -5,6 +5,7 @@ import { afterEach, expect, test } from 'vitest';
 import type { MapState } from '../../../src/shared/map.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { beginAssistant, callAssistant } from '../../support/assistant.js';
+import { controlledBatchDelivery } from '../../support/batch-response-delivery.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
@@ -112,8 +113,8 @@ test.each(['text', 'voice'] as const)(
   },
   async (mode) => {
     let typeId: string;
-    let dropped = false;
-    let batchId: string | undefined;
+    const delivery = controlledBatchDelivery();
+    delivery.arm();
     const model = textModel((body) => {
       const { draft } = JSON.parse(
         String(body.input.findLast((item) => item.role === 'user')?.content),
@@ -141,19 +142,7 @@ test.each(['text', 'voice'] as const)(
       modelFetch: model.provider,
       liveFetch: live.provider,
       liveSideband: live.attach,
-      assistantDispatch: async (incoming, dispatch) => {
-        const rpc = await incoming
-          .clone()
-          .json()
-          .catch(() => null);
-        const response = await dispatch(incoming);
-        if (rpc?.params?.name === 'apply_draft_batch' && !dropped) {
-          batchId = rpc.params.arguments.operationId;
-          dropped = true;
-          throw new Error('Lost committed MCP response');
-        }
-        return response;
-      },
+      assistantDispatch: delivery.dispatch,
     });
     browser = await request.newContext();
     await signIn(browser, app.origin);
@@ -211,19 +200,22 @@ test.each(['text', 'voice'] as const)(
       .poll(
         async () => {
           const current: TextAssistantView = await (await browser.get(endpoint)).json();
-          return dropped && current.phase !== 'working' ? current.phase : undefined;
+          return delivery.status().phase === 'dropped-after-commit' && current.phase !== 'working'
+            ? current.phase
+            : undefined;
         },
         { timeout: 3500 },
       )
       .not.toBeUndefined();
     const completed: TextAssistantView = await (await browser.get(endpoint)).json();
-    expect(dropped).toBe(true);
+    expect(delivery.status().phase).toBe('dropped-after-commit');
     expect((await read()).draft).toMatchObject({
       version: 1,
       changes: [{ id: 'lo', after: { name: 'Lo' } }],
     });
     expect(model.requests).toHaveLength(1);
     expect(completed.phase).toBe('ready');
+    const batchId = delivery.status().operationId;
     expect(batchId).toMatch(/^[\w-]+$/);
     expect(completed.result).toMatchObject({
       kind: 'draft',
@@ -246,6 +238,199 @@ test.each(['text', 'voice'] as const)(
     });
     expect(recovered.value.batch.changes).toBeUndefined();
     expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each([
+  { suffix: '', boundary: 'unchanged' },
+  { suffix: ' after Stop', boundary: 'stop' },
+  { suffix: ' after a conversation reset', boundary: 'reset' },
+  { suffix: ' with a manual correction during recovery', boundary: 'edit' },
+  { suffix: ' with revoked access during recovery', boundary: 'revoke' },
+] as const)(
+  'an unresolved batch retains its identity through failed status reads and recovers without new work$suffix',
+  {
+    tags: ['technical'],
+  },
+  async ({ boundary }) => {
+    let typeId: string;
+    const delivery = controlledBatchDelivery();
+    delivery.blockStatus(true);
+    let holdStatus = false;
+    const heldStatus: (() => void)[] = [];
+    const model = textModel((body) => {
+      const { draft } = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'lo',
+                baseRevision: null,
+                value: { typeId, name: 'Lo' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    app = await createInstallation(undefined, {
+      modelFetch: model.provider,
+      assistantDispatch: async (incoming, dispatch) => {
+        const rpc = await incoming
+          .clone()
+          .json()
+          .catch(() => null);
+        const response = await delivery.dispatch(incoming, dispatch);
+        if (holdStatus && rpc?.params?.name === 'read_draft_batch')
+          await new Promise<void>((resolve) => heldStatus.push(resolve));
+        return response;
+      },
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    ({
+      household: { id: householdId },
+    } = await (await createHousehold(browser, app.origin)).json());
+    typeId = (await read()).types[0].id;
+    const base = `${app.origin}/api/households/${householdId}/text-assistant`;
+    const post = (path: string, data: unknown) =>
+      browser.post(path, { headers: { origin: app.origin }, data });
+    const session: TextAssistantView = await (await post(base, approvedForVisit)).json();
+    const endpoint = `${base}/${session.id}`;
+    delivery.arm();
+    const checkId = '11111111-1111-4111-8111-111111111111';
+    expect(
+      (
+        await post(`${endpoint}/messages`, {
+          requestId: 'unresolved-batch',
+          revision: session.revision,
+          draftVersion: 0,
+          contentVersion: 1,
+          text: 'Lägg till Lo utan att spara.',
+        })
+      ).status(),
+    ).toBe(202);
+    await expect
+      .poll(async () => {
+        const current: TextAssistantView = await (await browser.get(endpoint)).json();
+        return delivery.status().phase === 'dropped-after-commit' && current.phase !== 'working';
+      })
+      .toBe(true);
+    const committed = await read();
+    expect(committed.draft).toMatchObject({
+      version: 1,
+      changes: [{ id: 'lo', after: { name: 'Lo' } }],
+    });
+    expect(model.requests).toHaveLength(1);
+    let current: TextAssistantView = await (await browser.get(endpoint)).json();
+    expect(current.phase).toBe('recovery');
+    expect(current.error).toBe('assistant_batch_unknown');
+    if (boundary === 'stop' || boundary === 'reset') {
+      const response = await post(`${endpoint}/${boundary === 'stop' ? 'cancel' : 'new'}`, {
+        revision: current.revision,
+      });
+      expect(response.status()).toBe(200);
+      current = await response.json();
+      expect(current.phase).toBe('recovery');
+      expect(current.batchPending).toBe(true);
+    }
+    expect(
+      (
+        await post(`${endpoint}/messages`, {
+          requestId: 'blocked-replacement',
+          revision: current.revision,
+          draftVersion: 1,
+          contentVersion: 1,
+          text: 'Lägg till Lo utan att spara.',
+        })
+      ).status(),
+    ).toBe(409);
+    current = await (await post(`${endpoint}/recover`, { checkId })).json();
+    expect(current.phase).toBe('recovery');
+    expect(current.error).toBe('assistant_batch_unknown');
+    expect(model.requests).toHaveLength(1);
+    expect(await read()).toEqual(committed);
+    delivery.blockStatus(false);
+    holdStatus = true;
+    const checks = [post(`${endpoint}/recover`, { checkId })];
+    try {
+      await expect.poll(() => heldStatus.length).toBe(1);
+      checks.push(post(`${endpoint}/recover`, { checkId }));
+      await expect.poll(() => heldStatus.length).toBe(2);
+      if (boundary === 'edit') {
+        expect(
+          (
+            await post(`${mapPath()}/draft`, {
+              version: 1,
+              contentVersion: 1,
+              id: 'lo',
+              baseRevision: null,
+              value: { typeId, name: 'Manuellt rättad Lo' },
+            })
+          ).status(),
+        ).toBe(200);
+      } else if (boundary === 'revoke') {
+        const { connections } = await (
+          await browser.get(`${app.origin}/api/assistants/context`)
+        ).json();
+        expect(connections).toHaveLength(1);
+        expect(
+          (await post(`${app.origin}/api/assistants/${connections[0].id}/revoke`, {})).status(),
+        ).toBe(200);
+      }
+    } finally {
+      holdStatus = false;
+      for (const release of heldStatus) release();
+    }
+    const responses = await Promise.all(checks);
+    if (boundary === 'revoke') {
+      for (const response of responses) {
+        expect([403, 404]).toContain(response.status());
+        expect((await response.json()).result).toBeUndefined();
+      }
+      expect(await read()).toEqual(committed);
+      expect(model.requests).toHaveLength(1);
+      return;
+    }
+    current = await (await browser.get(endpoint)).json();
+    if (boundary === 'edit') {
+      expect(current.phase).toBe('error');
+      expect(current.error).toBe('assistant_batch_committed_changed');
+      expect(current.review).toMatchObject({
+        version: 2,
+        changes: [{ id: 'lo', after: { name: 'Manuellt rättad Lo' } }],
+      });
+      expect(current.result?.changes).toBeUndefined();
+      expect(model.requests).toHaveLength(1);
+      expect(current.review).toMatchObject((await read()).draft);
+      return;
+    }
+    expect(current.phase).toBe('ready');
+    expect(current.error).toBeUndefined();
+    expect(current.review).toMatchObject(committed.draft);
+    expect(current.result).toEqual({
+      kind: 'draft',
+      message: 'Ändringarna genomfördes i utkastet.',
+      changes: [{ subject: 'Lo', action: 'lades till' }],
+    });
+    expect(current.completedReplies?.filter((reply) => reply.id.startsWith('batch-'))).toHaveLength(
+      1,
+    );
+    const repeated: TextAssistantView = await (
+      await post(`${endpoint}/recover`, { checkId })
+    ).json();
+    expect(repeated.result).toEqual(current.result);
+    expect(model.requests).toHaveLength(1);
+    expect(await read()).toEqual(committed);
+    expect((await (await browser.get(`${mapPath()}/history`)).json()).history).toEqual([]);
+    expect((await (await browser.get(`${mapPath()}/operations`)).json()).operations).toEqual([]);
   },
 );
 
@@ -513,7 +698,8 @@ test('a direct one-operation change recovers its lost committed response through
   tags: ['technical'],
 }, async () => {
   let typeId: string;
-  let dropped = false;
+  const delivery = controlledBatchDelivery();
+  delivery.arm();
   const model = textModel((body) => {
     if (lastToolResult(body)) return [modelMessage('Lo finns i ditt utkast.')];
     const { draft } = JSON.parse(
@@ -531,18 +717,7 @@ test('a direct one-operation change recovers its lost committed response through
   });
   app = await createInstallation(undefined, {
     modelFetch: model.provider,
-    assistantDispatch: async (incoming, dispatch) => {
-      const rpc = await incoming
-        .clone()
-        .json()
-        .catch(() => null);
-      const response = await dispatch(incoming);
-      if (['propose_object', 'apply_draft_batch'].includes(rpc?.params?.name) && !dropped) {
-        dropped = true;
-        throw new Error('Lost committed one-operation response');
-      }
-      return response;
-    },
+    assistantDispatch: delivery.dispatch,
   });
   browser = await request.newContext();
   await signIn(browser, app.origin);
@@ -573,10 +748,14 @@ test('a direct one-operation change recovers its lost committed response through
     ).status(),
   ).toBe(202);
   await expect
-    .poll(async () => dropped && (await (await browser.get(endpoint)).json()).phase !== 'working')
+    .poll(
+      async () =>
+        delivery.status().phase === 'dropped-after-commit' &&
+        (await (await browser.get(endpoint)).json()).phase !== 'working',
+    )
     .toBe(true);
   const completed: TextAssistantView = await (await browser.get(endpoint)).json();
-  expect(dropped).toBe(true);
+  expect(delivery.status().phase).toBe('dropped-after-commit');
   expect((await read()).draft).toMatchObject({
     version: 1,
     changes: [{ id: 'lo', after: { name: 'Lo' } }],
@@ -599,24 +778,14 @@ test('a direct one-operation change recovers its lost committed response through
 test('an explicit whole-draft discard recovers lost committed delivery without model work', {
   tags: ['technical'],
 }, async () => {
-  let dropped = false;
+  const delivery = controlledBatchDelivery();
+  delivery.arm();
   const model = textModel(() => {
     throw new Error('Explicit discard must not start model work');
   });
   app = await createInstallation(undefined, {
     modelFetch: model.provider,
-    assistantDispatch: async (incoming, dispatch) => {
-      const rpc = await incoming
-        .clone()
-        .json()
-        .catch(() => null);
-      const response = await dispatch(incoming);
-      if (['discard_draft', 'apply_draft_batch'].includes(rpc?.params?.name) && !dropped) {
-        dropped = true;
-        throw new Error('Lost committed explicit discard response');
-      }
-      return response;
-    },
+    assistantDispatch: delivery.dispatch,
   });
   browser = await request.newContext();
   await signIn(browser, app.origin);
@@ -659,9 +828,13 @@ test('an explicit whole-draft discard recovers lost committed delivery without m
     ).status(),
   ).toBe(202);
   await expect
-    .poll(async () => dropped && (await (await browser.get(endpoint)).json()).phase !== 'working')
+    .poll(
+      async () =>
+        delivery.status().phase === 'dropped-after-commit' &&
+        (await (await browser.get(endpoint)).json()).phase !== 'working',
+    )
     .toBe(true);
-  expect(dropped).toBe(true);
+  expect(delivery.status().phase).toBe('dropped-after-commit');
   expect((await read()).draft).toEqual({ version: 2, changes: [] });
   expect(model.requests).toEqual([]);
   const completed: TextAssistantView = await (await browser.get(endpoint)).json();
@@ -684,8 +857,7 @@ test('a recovered direct duplicate relationship preserves existingId and leaves 
   tags: ['technical'],
 }, async () => {
   let edgeType: string;
-  let armed = false;
-  let dropped = false;
+  const delivery = controlledBatchDelivery();
   let delivered: Record<string, unknown> | undefined;
   const model = textModel((body) => {
     const result = lastToolResult(body);
@@ -708,19 +880,7 @@ test('a recovered direct duplicate relationship preserves existingId and leaves 
   });
   app = await createInstallation(undefined, {
     modelFetch: model.provider,
-    assistantDispatch: async (incoming, dispatch) => {
-      const rpc = await incoming
-        .clone()
-        .json()
-        .catch(() => null);
-      const response = await dispatch(incoming);
-      if (armed && rpc?.params?.name === 'apply_draft_batch') {
-        armed = false;
-        dropped = true;
-        throw new Error('Lost committed duplicate relationship result');
-      }
-      return response;
-    },
+    assistantDispatch: delivery.dispatch,
   });
   browser = await request.newContext();
   await signIn(browser, app.origin);
@@ -770,7 +930,7 @@ test('a recovered direct duplicate relationship preserves existingId and leaves 
   expect(started.status()).toBe(201);
   const session: TextAssistantView = await started.json();
   const endpoint = `${base}/${session.id}`;
-  armed = true;
+  delivery.arm();
   expect(
     (
       await browser.post(`${endpoint}/messages`, {
@@ -786,9 +946,13 @@ test('a recovered direct duplicate relationship preserves existingId and leaves 
     ).status(),
   ).toBe(202);
   await expect
-    .poll(async () => dropped && (await (await browser.get(endpoint)).json()).phase !== 'working')
+    .poll(
+      async () =>
+        delivery.status().phase === 'dropped-after-commit' &&
+        (await (await browser.get(endpoint)).json()).phase !== 'working',
+    )
     .toBe(true);
-  expect(dropped).toBe(true);
+  expect(delivery.status().phase).toBe('dropped-after-commit');
   expect(delivered).toMatchObject({ version: 4, existingId: 'existing-edge', changes: [] });
   expect(delivered?.operationId).toBeUndefined();
   expect(delivered?.applied).toBeUndefined();

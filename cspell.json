@@ -1081,7 +1081,10 @@
     "redigerbarhet",
     "läsflöden",
     "läsflödena",
-    "mätunderlag"
+    "mätunderlag",
+    "batchutfall",
+    "batchunderlaget",
+    "modellbegäranden"
   ],
   "overrides": [
     {

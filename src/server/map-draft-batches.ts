@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type Database from 'better-sqlite3';
+import type { DraftBatchRequest } from '../shared/draft-batch.js';
 import type { MapDraft } from '../shared/map.js';
 import { MapError } from './map-error.js';
 
@@ -53,11 +54,7 @@ export function mapDraftBatches(database: Database.Database, householdId: string
       if (row && row.contentVersion !== contentVersion) throw new MapError('content_conflict');
       return row ? result(row, draft) : null;
     },
-    apply(
-      body: Record<string, unknown>,
-      draft: () => MapDraft,
-      apply: () => Record<string, unknown>,
-    ) {
+    apply(body: DraftBatchRequest, draft: () => MapDraft, apply: () => Record<string, unknown>) {
       const operationId = body.operationId === undefined ? randomUUID() : body.operationId;
       if (typeof operationId !== 'string' || !/^[\w-]{1,128}$/.test(operationId))
         throw new MapError('invalid_request', 400);

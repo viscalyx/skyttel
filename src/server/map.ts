@@ -12,6 +12,7 @@ import {
 import { conflictRemovalPlan } from '../shared/conflict-removal.js';
 import { specialConflict } from '../shared/conflict-special.js';
 import { removedConflictDefinition } from '../shared/definition-restoration.js';
+import type { DraftBatchRequest } from '../shared/draft-batch.js';
 import {
   draftConflicts,
   resolvedObjectValue,
@@ -352,7 +353,7 @@ export function householdMap(
     return { current, id, existing, before };
   }
   return {
-    applyDraftBatch(body: Record<string, unknown>, apply: () => Record<string, unknown>) {
+    applyDraftBatch(body: DraftBatchRequest, apply: () => Record<string, unknown>) {
       return draftDiscards(database).atomic(() =>
         transaction(() => {
           assertContentVersion(database, householdId, body.contentVersion);

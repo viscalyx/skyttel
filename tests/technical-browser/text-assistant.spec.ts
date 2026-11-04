@@ -18,9 +18,13 @@ test('literal text preparation drops a committed batch reply and preserves its p
   );
   const section = preparation.split('## Tappat ändringsbesked\n')[1]?.split('\n## ')[0];
   const arm = section?.match(/```text\n(drop-batch)\n```/)?.[1];
+  const blockStatus = section?.match(/^block-batch-status on$/m)?.[0];
+  const restoreStatus = section?.match(/^block-batch-status off$/m)?.[0];
   const readTypes = section?.match(/^tool REQUEST read_type_catalog \{\}$/m)?.[0];
   const command = section?.match(/^tool REQUEST submit_changes .*$/m)?.[0];
   expect(arm).toBeDefined();
+  expect(blockStatus).toBeDefined();
+  expect(restoreStatus).toBeDefined();
   expect(readTypes).toBeDefined();
   expect(command).toBeDefined();
   const child = spawn(process.execPath, ['--import', 'tsx', 'scripts/manual-text-assistant.ts'], {
@@ -98,7 +102,7 @@ test('literal text preparation drops a committed batch reply and preserves its p
     const draft = held?.draft as TextAssistantReview;
     const typeId = held.lastToolResult?.types.find((type) => type.name === 'Person')?.id;
     expect(typeId).toBeTruthy();
-    child.stdin.write(`${arm}\n`);
+    child.stdin.write(`${blockStatus}\n${arm}\n`);
     await expect
       .poll(() =>
         events.some((event) => event.event === 'batch-delivery' && event.phase === 'armed'),
@@ -118,10 +122,22 @@ test('literal text preparation drops a committed batch reply and preserves its p
         ),
       )
       .toBeTruthy();
+    const notice = page.getByRole('region', { name: 'Samtalsnotis', exact: true });
+    await expect(notice).toContainText('Det är oklart om ändringarna genomfördes.');
+    await expect(notice).not.toContainText('sparades');
+    await assistant(page).getByLabel('Meddelande till Skyttel').fill('Vänta med nästa uppdrag.');
+    await expect(
+      assistant(page).getByRole('button', { name: 'Skicka', exact: true }),
+    ).toBeDisabled();
+    child.stdin.write(`${restoreStatus}\n`);
     await expect(page.getByRole('log', { name: 'Samtalstext', exact: true })).toContainText('Kim');
     await expect(page.getByRole('log', { name: 'Samtalstext', exact: true })).toContainText(
       'lades till',
     );
+    await expect(assistant(page).getByLabel('Meddelande till Skyttel')).toHaveValue(
+      'Vänta med nästa uppdrag.',
+    );
+    await assistant(page).getByLabel('Meddelande till Skyttel').fill('');
     const before = await (await page.request.get(path)).json();
     expect(before.draft).toMatchObject({ version: 2, changes: [{ id: 'lo' }, { id: 'kim' }] });
     expect(events.filter((event) => event.event === 'held')).toHaveLength(2);

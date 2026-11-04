@@ -726,12 +726,21 @@ om samma server med samma databas vid det angivna steget.
     "spec": "tests/integration/text-assistant.spec.ts",
     "caseId": "TEXT-16"
   },
-  "reference": "Dator; kontrollerad leverantör, verkligt genomförda utkaständringar före tappat MCP-svar och omstart med samma databas.",
+  "reference": "Dator; kontrollerad leverantör, genomförda utkaständringar före tappat MCP-svar, tillfälligt otillgänglig statuskontroll och omstart med samma databas.",
   "outcomes": [
     "Ett verifierat ändringsbesked visas efter tappat verktygssvar.",
+    "Nytt arbete väntar tills samma ändringars utfall kan kontrolleras; notisen beskriver ändringar utan att påstå att något sparas.",
     "Tidigare Lo-förslag och ett enda Kim-förslag ligger kvar osparade även efter omstart."
   ],
   "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "an unresolved batch retains its identity through failed status reads and recovers without new work",
+      "purpose": "Genomförd batch, tappat svar och otillgänglig första statuskontroll bevarar operationens identitet och spärrar nytt arbete tills samma utfall återhämtas utan nya modell- eller ändringsanrop."
+    },
     {
       "kind": "technical",
       "runner": "vitest",
@@ -765,8 +774,13 @@ om samma server med samma databas vid det angivna steget.
 **Steg:**
 
 1. Starta med text. Skicka **Lägg till Kim utan att spara.** Låt operatören
-   leverera förslaget vid den förberedda felgränsen. Läs beskedet att Kim
-   läggs till i utkastet.
+   leverera förslaget vid den förberedda felgränsen. Läs notisen att det är
+   oklart om ändringarna genomförs och att Skyttel kontrollerar dem.
+   Skriv **Vänta med nästa uppdrag.** utan att skicka. Kontrollera att
+   **Skicka** inte går att välja.
+   Låt operatören återställa statuskontrollen. Läs beskedet att Kim läggs
+   till i utkastet. Kontrollera att den oskickade texten finns kvar och ta
+   sedan bort den.
 2. Välj **Visa utkastet**. Läs det tidigare förslaget om Lo Exempel och ett
    enda förslag om Kim. Öppna Kim-förslaget och kontrollera typen Person.
    Stäng förslaget.

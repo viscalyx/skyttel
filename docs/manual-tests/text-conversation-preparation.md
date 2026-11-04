@@ -44,8 +44,13 @@ tool REQUEST read_type_catalog {}
 Invänta nästa `held`. Kopiera `VERSION` från `draft.version`, `CONTENT`
 från `lastToolResult.contentVersion` och `TYPE` från typen Person i
 `lastToolResult.types`. Förberedelsen behöver inte få hela Lo-förslaget i
-det första underlaget. Arma bortfall av det verkliga MCP-svaret från nästa
-genomförda ändringsbatch:
+det första underlaget. Blockera först kontrollen av batchens utfall:
+
+```text
+block-batch-status on
+```
+
+Arma bortfall av det verkliga MCP-svaret från nästa genomförda ändringsbatch:
 
 ```text
 drop-batch
@@ -65,6 +70,16 @@ betyder att den riktiga servern returnerar ett genomfört utfall innan
 förberedelsen tappar MCP-svaret. `not-committed` räknas som en felaktig
 förberedelse: läs orsaken, avsluta installationen och börja om med ett
 nytt utkast. Kontrollen `batch-delivery` visar senaste felgränsens status.
+Låt användaren läsa notisen att ändringarnas resultat är oklart och att
+Skyttel kontrollerar det. Användaren kan skriva men inte skicka nytt arbete.
+Återställ sedan kontrollens transport:
+
+```text
+block-batch-status off
+```
+
+Invänta beskedet om det redan genomförda Kim-förslaget. Statuskontrollen
+använder samma operation och skapar inget nytt förslag.
 Den inledande typläsningen är förberedande arbete. Återhämtningen efter
 svarsförlust avslutar det verifierade uppdraget utan en ny hållen
 arbetsbegäran.
