@@ -18,6 +18,7 @@ import { draftChangeCount } from '../shared/map.js';
 import { assistantSaveState, completeAssistantText } from '../shared/task-delivery.js';
 import type {
   MapSelection,
+  RetainedConversation,
   TextAssistantReview,
   TextAssistantView,
 } from '../shared/text-assistant.js';
@@ -248,7 +249,7 @@ export function textAssistantRoutes({
     });
     const preparation: Preparation = {
       session,
-      sequence: messageSequence++,
+      sequence: storage.reserveMessageSequence() ?? messageSequence++,
       active: true,
       advances: [],
       body,
@@ -1547,6 +1548,7 @@ export function textAssistantRoutes({
           operation.arguments,
           pending.before,
           after,
+          pending.messageId,
         );
       session.execution.parts.complete(resolves);
       advanceDraftVersion(session, pending.request.version, after.version);
@@ -1922,6 +1924,22 @@ export function textAssistantRoutes({
     receipt: TextAssistantView['receipt'],
     preserveCurrentReply = false,
   ) {
+    // Every caller verifies the receipt first. Preserve only its identity on
+    // the original request, before clearing the pending operation. A later
+    // explanation can complete without presenting this as a new receipt.
+    const pending = session.state.pendingSave;
+    if (
+      receipt &&
+      pending?.messageId &&
+      pending.operationId === receipt.operationId &&
+      pending.version === receipt.draftVersion &&
+      pending.contentVersion === receipt.contentVersion
+    ) {
+      const original = [session.state.activeMessage, session.state.failedWork?.message].find(
+        (message) => message?.id === pending.messageId,
+      );
+      if (original) original.completedSaveOperationId = receipt.operationId;
+    }
     if (receipt) advanceDraftVersion(session, receipt.draftVersion, receipt.draftVersion + 1);
     session.state.saveIntent = undefined;
     session.state.receipt = receipt;
@@ -2215,7 +2233,7 @@ export function textAssistantRoutes({
     revision: number,
     task: AbortController,
     expected: { version: number; contentVersion: number },
-    scopeReady: (check: CheckTurnActions, mode: 'read' | 'work') => void,
+    scopeReady: (check: CheckTurnActions, mode: 'read' | 'work', complete: () => boolean) => void,
   ) {
     const serial = session.state.inputSerial ?? 0;
     const currentObservation = observationWork.getStore();
@@ -2340,7 +2358,7 @@ export function textAssistantRoutes({
         }
         admitted = true;
         for (const attempt of attempts) attempt.used = true;
-        scopeReady(checkActions, scope.mode);
+        scopeReady(checkActions, scope.mode, () => wholeRequestComplete);
         return true;
       }
       const rejectAction = (name: string, reason: 'read_only_turn' | 'outside_requested_work') => {
@@ -2378,6 +2396,11 @@ export function textAssistantRoutes({
         const checksQueuedTarget = operations.some(
           (operation) => !['save_draft', 'prepare_save'].includes(operation.name),
         );
+        if (session.state.activeMessage?.continuation && checksQueuedTarget)
+          session.execution.parts.checkContinuation(
+            session.state.activeMessage.id,
+            session.state.review,
+          );
         if (reference === null && checksQueuedTarget)
           throw new MapError('assistant_scope_unclear', 409);
         const wholeDraft = operations.every((operation) =>
@@ -2474,7 +2497,14 @@ export function textAssistantRoutes({
       ) {
         for (const attempt of attempts) attempt.verified = true;
         advanceDraftVersion(session, before.version, verifiedVersion);
-        session.execution.parts.operation(resolves, name, args, before, after);
+        session.execution.parts.operation(
+          resolves,
+          name,
+          args,
+          before,
+          after,
+          session.state.activeMessage?.id,
+        );
         if (after.version === before.version) return;
         const restored =
           name === 'discard_proposal' &&
@@ -2862,6 +2892,9 @@ export function textAssistantRoutes({
               operation.name,
               operation.arguments,
               session.state.review,
+              session.state.activeMessage?.continuation
+                ? session.state.activeMessage.id
+                : undefined,
             ),
           );
           if (operations.length) {
@@ -3249,32 +3282,46 @@ export function textAssistantRoutes({
             previousReview = current;
           }
           if (isSave) {
-            session.state.pendingSave ??= { operationId: randomUUID(), version, contentVersion };
-            Object.assign(args, session.state.pendingSave);
+            session.state.pendingSave ??= {
+              operationId: randomUUID(),
+              version,
+              contentVersion,
+              messageId: session.state.activeMessage?.id,
+              finishesRequest: wholeRequestComplete && !combined?.continueResponse,
+            };
+            Object.assign(args, {
+              operationId: session.state.pendingSave.operationId,
+              version: session.state.pendingSave.version,
+              contentVersion: session.state.pendingSave.contentVersion,
+            });
             if (observe)
               saveWork = {
                 operation: { ...session.state.pendingSave },
                 attempts: attempts.slice(),
               };
             if (action.name === 'save_draft')
-              await call(
-                session,
-                'prepare_save',
-                session.state.pendingSave,
-                currentSaveGuard(session, serial, guard),
-              );
+              await call(session, 'prepare_save', args, currentSaveGuard(session, serial, guard));
           }
           if (
-            combined &&
             !isSave &&
+            (combined || session.state.activeMessage?.continuation) &&
             !session.execution.parts.shouldRun(
-              combined.resolves,
+              combined?.resolves ?? [],
               action.name,
               args,
               session.state.review,
+              session.state.activeMessage?.continuation
+                ? session.state.activeMessage.id
+                : undefined,
             )
-          )
+          ) {
+            session.state.input.push({
+              type: 'function_call_output',
+              call_id: action.call_id,
+              output: JSON.stringify({ alreadyCompleted: true, review: draftFacts(session, text) }),
+            });
             continue;
+          }
           let value: Awaited<ReturnType<typeof call>>;
           if (!isSave && draftTools.some((tool) => tool.name === action.name)) {
             const { version: _version, contentVersion: _contentVersion, ...arguments_ } = args;
@@ -3858,6 +3905,50 @@ export function textAssistantRoutes({
       beginMessage(session, message);
     }
   }
+  function continueMessage(session: Session, original: Message, deliveryConnectionId?: string) {
+    const accepted = session.state.accepted.get(original.id);
+    if (!accepted) throw new MapError('assistant_turn_changed', 409);
+    const receivedAt = now();
+    const message: Message = {
+      ...original,
+      continuation:
+        original.continuation ||
+        session.state.unfinishedRequests.some((request) => request.id === original.id),
+      saveSuperseded: true,
+      receivedAt,
+      deadline: receivedAt + 30 * 60_000,
+    };
+    session.execution.mcp.acceptTask(message.deadline);
+    accepted.status = 'queued';
+    accepted.receivedAt = receivedAt;
+    accepted.deadline = message.deadline;
+    accepted.result = undefined;
+    session.execution.deliveries.get(message.id)?.stop();
+    session.execution.deliveries.set(
+      message.id,
+      deliveries.bind(deliveryConnectionId, message.id, message.deadline, () =>
+        messageAccess(session, message),
+      ),
+    );
+    session.execution.messageTimers.set(
+      message,
+      setTimeout(() => expireMessage(session, message), message.deadline - now()).unref(),
+    );
+    session.state.saveIntent = undefined;
+    session.state.saveIntentDeadline = undefined;
+    session.execution.reads.clear();
+    for (const queued of session.state.queue)
+      if (queued.id === original.id) {
+        clearTimeout(session.execution.messageTimers.get(queued));
+        session.execution.messageTimers.delete(queued);
+      }
+    session.state.queue = session.state.queue.filter((queued) => queued.id !== original.id);
+    for (const request of session.state.unfinishedRequests)
+      if (request.id === original.id) request.paused = false;
+    session.state.queue.push(message);
+    session.state.queue.sort((left, right) => left.sequence - right.sequence);
+    syncWork();
+  }
   function beginMessage(session: Session, message: Message, queued = false) {
     const accepted = session.state.accepted.get(message.id);
     if (!accepted) return;
@@ -3920,7 +4011,7 @@ export function textAssistantRoutes({
     session.state.selection = undefined;
     session.state.displayedSelection = undefined;
     session.state.displayedItem = undefined;
-    if (!message.resetDiscard) {
+    if (!message.resetDiscard && !message.continuation) {
       if (!message.voice) appendConversation(session, { role: 'user', text: message.text });
       session.state.userRequests = [...session.state.userRequests, message.text].slice(-24);
       session.state.unfinishedRequests.push({
@@ -3996,6 +4087,8 @@ export function textAssistantRoutes({
       }
       if (message.answerTo) session.execution.parts.validateReply(message.answerTo);
       if (conversationCommand(message.text)?.discard) {
+        if (message.continuation)
+          session.execution.parts.checkContinuation(message.id, session.state.review);
         await applyCheckedBatch(
           session,
           { ...expected, operations: [{ name: 'discard_draft', arguments: {} }] },
@@ -4026,10 +4119,12 @@ export function textAssistantRoutes({
         }
       } else {
         let checkTurnActions: CheckTurnActions | undefined;
+        let requestComplete = () => false;
         let readOnly = false;
-        await run(session, message.text, revision, task, expected, (check, mode) => {
+        await run(session, message.text, revision, task, expected, (check, mode, complete) => {
           checkTurnActions = check;
           readOnly = mode === 'read';
+          requestComplete = complete;
         });
         guard();
         const unregisteredQuestion = session.execution.parts
@@ -4091,9 +4186,13 @@ export function textAssistantRoutes({
               { name: 'save_draft', arguments: pendingSave },
             ]);
             saveGuard();
-            session.state.pendingSave = pendingSave;
-            await call(session, 'prepare_save', session.state.pendingSave, saveGuard);
-            const value = await call(session, 'save_draft', session.state.pendingSave, saveGuard);
+            session.state.pendingSave = {
+              ...pendingSave,
+              messageId: message.id,
+              finishesRequest: requestComplete(),
+            };
+            await call(session, 'prepare_save', pendingSave, saveGuard);
+            const value = await call(session, 'save_draft', pendingSave, saveGuard);
             verifyReceipt(session, value.receipt, session.state.pendingSave);
             saved(session, value.receipt, true);
             await refreshConfirmed(session, guard);
@@ -4104,12 +4203,22 @@ export function textAssistantRoutes({
             session,
             message.id,
             readOnly ||
-              (Boolean(session.state.result || session.state.receipt) &&
+              (Boolean(
+                session.state.result ||
+                  session.state.receipt ||
+                  (message.continuation && message.completedSaveOperationId),
+              ) &&
                 !session.execution.parts
                   .read()
                   .some((part) => part.status === 'waiting' || part.status === 'ready')),
           );
-        if (message.saveSuperseded && !session.state.pendingSave && !session.state.receipt) {
+        if (
+          message.saveSuperseded &&
+          requestsSave(message.text) &&
+          !message.completedSaveOperationId &&
+          !session.state.pendingSave &&
+          !session.state.receipt
+        ) {
           const notice = assistantFailureMessage('assistant_save_superseded');
           session.state.requiredNotice = notice;
           session.state.reply = [session.state.reply, notice].filter(Boolean).join('\n');
@@ -4408,6 +4517,49 @@ export function textAssistantRoutes({
     }
   }
   routes.get(base, (context) => context.json({ available: Boolean(config.openaiApiKey) }));
+  routes.get(`${base}/retained`, (context) => {
+    const conversations: RetainedConversation[] = storage
+      .list(context.get('actorId'), context.req.param('id'))
+      .filter(
+        (state): state is ConversationState & { expiresAt: number } =>
+          canRetainConversation(state) && state.expiresAt !== undefined,
+      )
+      .map((state) => ({
+        id: state.id,
+        title:
+          state.conversation.find((row) => row.role === 'user')?.text.slice(0, 100) ??
+          'Samtal utan meddelande',
+        expiresAt: state.expiresAt,
+        paused: sessions.has(state.id) ? Boolean(sessions.get(state.id)?.state.paused) : true,
+        modelChoice: state.modelChoice,
+      }));
+    return context.json({ conversations });
+  });
+  routes.post(`${base}/retained/:conversationId/open`, async (context) => {
+    const actorId = context.get('actorId');
+    const browserSessionId = context.get('browserSessionId');
+    const householdId = context.req.param('id');
+    const id = context.req.param('conversationId');
+    const binding = storage.binding(browserSessionId);
+    if (!binding) return context.json({ error: 'assistant_session_expired' }, 404);
+    const retained = storage.read(actorId, householdId, binding, id);
+    if (!retained || !canRetainConversation(retained))
+      return context.json({ error: 'assistant_session_expired' }, 404);
+    const current = sessions.get(id);
+    if (current) await stop(current, { conversation: 'pause', delivery: 'close' });
+    const session = await restoreSession(
+      actorId,
+      browserSessionId,
+      householdId,
+      context.req.raw.headers,
+      id,
+    );
+    if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    if (sessions.get(id) !== session || session.execution.browserSessionId !== browserSessionId)
+      return context.json({ error: 'assistant_turn_changed' }, 409);
+    storage.move(actorId, householdId, id, binding);
+    return context.json(view(session));
+  });
   routes.get(`${base}/restore`, async (context) => {
     const actorId = context.get('actorId');
     const browserSessionId = context.get('browserSessionId');
@@ -4656,7 +4808,10 @@ export function textAssistantRoutes({
         return context.json({ error: 'assistant_session_expired' }, 404);
       }
       if (preparation) checkPreparation(preparation);
-      if (context.req.method === 'POST' && /\/(messages|new|summarize)$/.test(context.req.path)) {
+      if (
+        context.req.method === 'POST' &&
+        /\/(messages|new|summarize|resume)$/.test(context.req.path)
+      ) {
         const body = await context.req.json().catch(() => null);
         try {
           currentConsent(session, body?.consent);
@@ -4735,6 +4890,91 @@ export function textAssistantRoutes({
     const session = sessions.get(context.req.param('sessionId'));
     if (session) await stop(session, { conversation: 'pause', delivery: 'close' });
     return context.json({ paused: true });
+  });
+  routes.post(`${base}/:sessionId/resume`, async (context) => {
+    const session = sessions.get(context.req.param('sessionId'));
+    if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    if (!session.state.paused) return context.json(view(session));
+    const guard = () => {
+      checkViewAccess(session);
+      if (sessions.get(session.state.id) !== session || !session.state.paused)
+        throw new MapError('assistant_turn_changed', 409);
+    };
+    guard();
+    const pendingBatch = session.state.pendingBatch;
+    if (pendingBatch) await recoverBatch(session);
+    guard();
+    let completedRequest =
+      pendingBatch?.finishesRequest &&
+      !session.state.pendingBatch &&
+      !session.state.error &&
+      !hasReadyPendingParts(session)
+        ? pendingBatch.messageId
+        : undefined;
+    const pendingSave = session.state.pendingSave;
+    const ids = [
+      ...new Set([
+        ...session.state.operations
+          .filter((operation) => operation.status === 'pending')
+          .map((operation) => operation.operationId),
+        ...(session.state.pendingSave ? [session.state.pendingSave.operationId] : []),
+      ]),
+    ];
+    if (ids.length) {
+      const checked = checkSaves(database, session.state.actorId, session.state.householdId, ids);
+      if (applyCheckedSave(session, checked))
+        appendConversation(session, { role: 'assistant', text: checked.reply });
+      if (
+        pendingSave?.messageId &&
+        pendingSave.finishesRequest &&
+        checked.receipt?.operationId === pendingSave.operationId &&
+        !hasReadyPendingParts(session)
+      ) {
+        verifyReceipt(session, checked.receipt, pendingSave);
+        completedRequest = pendingSave.messageId;
+      }
+    }
+    await refresh(session, guard);
+    guard();
+    if (
+      hasPendingOutcome(session) ||
+      session.state.operations.some((operation) => operation.status === 'pending')
+    )
+      return context.json(
+        {
+          error: session.state.pendingBatch ? 'assistant_batch_unknown' : 'assistant_save_unknown',
+        },
+        409,
+      );
+    const interrupted = session.state.activeMessage;
+    const queued = session.state.queue.slice();
+    session.state.activeMessage = undefined;
+    session.state.taskId = undefined;
+    session.state.taskSource = undefined;
+    session.state.paused = false;
+    session.state.saveIntent = undefined;
+    session.state.saveIntentDeadline = undefined;
+    session.state.expiresAt = now() + conversationLifetime;
+    for (const message of [interrupted, ...queued])
+      if (
+        message &&
+        message.id !== completedRequest &&
+        message.id !== session.state.failedWork?.message.id
+      )
+        continueMessage(session, message);
+    if (completedRequest) {
+      for (const request of session.state.unfinishedRequests)
+        if (request.id === completedRequest) request.paused = false;
+      settleRequests(session, completedRequest, true);
+      const accepted = session.state.accepted.get(completedRequest);
+      if (accepted) {
+        accepted.status = 'completed';
+        accepted.result = captureAssistantResult(view(session), 'prefix');
+      }
+    }
+    persist(session);
+    nextMessage(session);
+    return context.json(view(session));
   });
   routes.post(`${base}/:sessionId/messages`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
