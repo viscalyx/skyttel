@@ -21,6 +21,7 @@ import { liveProvider, voiceAnswerParts } from '../support/live-provider.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import {
   lastToolResult,
+  type ModelRequest,
   modelMessage,
   modelTool,
   pendingUpdate,
@@ -261,6 +262,24 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
   ];
   let call = 0;
   let usesType = '';
+  const authorization = (body: ModelRequest) => {
+    const input = JSON.parse(String(body.input[0].content));
+    return [
+      modelMessage(
+        JSON.stringify(
+          body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? { mode: 'work', request: input.current, responseRequired: false }
+            : {
+                decision: 'allow',
+                complete: true,
+                fulfillsRequest: input.untrusted.operations.every(
+                  (operation: { name: string }) => operation.name === 'save_draft',
+                ),
+              },
+        ),
+      ),
+    ];
+  };
   const model = textModel((body) => {
     const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     const lo = turn.draft.changes.find((change: { id: string }) => change.id === 'lo');
@@ -338,7 +357,7 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
         operationId: 'clarified-conversation',
       }),
     ];
-  });
+  }, authorization);
   const { app, live, path } = await fixture(page, model);
   try {
     const read = async (): Promise<MapState> => (await page.request.get(path)).json();

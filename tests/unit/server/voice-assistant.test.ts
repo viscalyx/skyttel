@@ -571,50 +571,143 @@ test('a verified voice save retains requested saved-change report details before
   expect(spoken).toContain(assistant.result.message);
 });
 
-test('a verified voice save retains the failure of its remaining requested explanation', async () => {
-  const model = textModel((body) => {
-    const { draft } = JSON.parse(
-      String(body.input.findLast((item) => item.role === 'user')?.content),
-    );
-    return [
-      modelTool('save_draft', {
-        version: draft.version,
-        contentVersion: draft.contentVersion,
-        operationId: 'controlled-save',
-      }),
-    ];
-  }, saveExplanationAuthorization);
-  const voice = await setupVoice(async (input, init) => {
+function failExplanation(model: ReturnType<typeof textModel>, failure: Response): typeof fetch {
+  return (input, init) => {
     const body = JSON.parse(String(init?.body));
-    if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length)
-      return Response.json(
-        { error: { message: 'Controlled explanation failure.' } },
-        { status: 400 },
+    return !body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length
+      ? Promise.resolve(failure.clone())
+      : model.provider(input, init);
+  };
+}
+
+for (const { question, fails } of [
+  { question: undefined, fails: true },
+  { question: 'Vilket år gäller beskrivningen?', fails: true },
+  { question: 'Vilket år gäller beskrivningen?', fails: false },
+])
+  test(
+    !fails
+      ? 'a verified voice save retains its independent information question after its requested explanation'
+      : question
+        ? 'a verified voice save retains its independent information question when the required explanation fails'
+        : 'a verified voice save retains the failure of its remaining requested explanation',
+    async () => {
+      const explanation = 'Beskrivningen hör till de sparade personerna.';
+      const model = textModel(
+        (body) => {
+          if (model.requests.length > 1) return [modelMessage(explanation)];
+          const { draft } = JSON.parse(
+            String(body.input.findLast((item) => item.role === 'user')?.content),
+          );
+          return [
+            modelTool(question ? 'submit_changes' : 'save_draft', {
+              version: draft.version,
+              contentVersion: draft.contentVersion,
+              ...(question
+                ? {
+                    completion: 'save',
+                    questions: [
+                      {
+                        kind: 'information',
+                        request: 'Beskriv vilket år uppgifterna gäller.',
+                        question,
+                        dependsOnDraft: false,
+                      },
+                    ],
+                    operations: [
+                      {
+                        name: 'propose_object',
+                        arguments: {
+                          id: 'kim',
+                          baseRevision: null,
+                          value: { typeId: draft.changes[0].after.typeId, name: 'Kim' },
+                        },
+                      },
+                    ],
+                  }
+                : { operationId: 'controlled-save' }),
+            }),
+          ];
+        },
+        (body) =>
+          question && !body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? [
+                modelMessage(
+                  JSON.stringify({ decision: 'allow', complete: true, fulfillsRequest: false }),
+                ),
+              ]
+            : saveExplanationAuthorization(body),
       );
-    return model.provider(input, init);
-  });
-  await proposal(voice.path);
-  await voice.poll();
-  voice.transcript('Beskriv de sparade objekten. Spara hela utkastet.');
-  voice.delegate();
-  await expect
-    .poll(() => voiceAnswerParts(voice.live.sent).join('\n'))
-    .toContain('Modellen och resonemangsnivån stöds inte');
-  const { assistant } = await voice.poll();
-  expect(assistant).toMatchObject({
-    phase: 'error',
-    error: 'assistant_model_unsupported',
-    receipt: {
-      changes: [
-        expect.objectContaining({ after: expect.objectContaining({ name: 'Formulärförslag' }) }),
-      ],
+      const voice = await setupVoice(
+        fails
+          ? failExplanation(
+              model,
+              Response.json(
+                { error: { message: 'Controlled explanation failure.' } },
+                { status: 400 },
+              ),
+            )
+          : model.provider,
+      );
+      await proposal(voice.path);
+      await voice.poll();
+      voice.transcript(
+        question
+          ? 'Lägg till Kim med samma objekttyp som Formulärförslag. Beskriv de sparade objekten och vilket år uppgifterna gäller. Spara hela utkastet.'
+          : 'Beskriv de sparade objekten. Spara hela utkastet.',
+      );
+      voice.delegate();
+      await expect
+        .poll(() => voiceAnswerParts(voice.live.sent).join('\n'))
+        .toContain(fails ? 'Modellen och resonemangsnivån stöds inte' : explanation);
+      const { assistant } = await voice.poll();
+      expect(assistant).toMatchObject({
+        phase: fails ? 'error' : 'ready',
+        receipt: {
+          changes: expect.arrayContaining([
+            expect.objectContaining({
+              after: expect.objectContaining({ name: 'Formulärförslag' }),
+            }),
+          ]),
+        },
+      });
+      expect(assistant.error).toBe(fails ? 'assistant_model_unsupported' : undefined);
+      expect(assistant.review.changes).toEqual([]);
+      if (question) {
+        expect(assistant.questionPending).toBe(true);
+        expect(assistant.newQuestions).toEqual([question]);
+        expect(assistant.pendingParts).toContainEqual(
+          expect.objectContaining({ question, status: 'waiting', kind: 'information' }),
+        );
+        if (fails) expect(assistant.modelReply).toBeUndefined();
+        else expect(assistant.modelReply).toContain(explanation);
+      }
+      const mapPath = voice.path.replace('/text-assistant', '/map');
+      const map = await (await browser.get(mapPath)).json();
+      expect(map.objects.map((object: { name: string }) => object.name).sort()).toEqual(
+        question ? ['Formulärförslag', 'Kim'] : ['Formulärförslag'],
+      );
+      expect(map.draft.changes).toEqual([]);
+      expect((await (await browser.get(`${mapPath}/history`)).json()).history).toEqual([
+        assistant.receipt,
+      ]);
+      if (question) {
+        const spoken = voiceAnswerParts(voice.live.sent).join('\n');
+        expect(spoken).toContain(
+          `Nödvändig fråga (samtalsdata): ${JSON.stringify(fails ? question : assistant.modelReply)}`,
+        );
+        if (fails)
+          expect(spoken).toContain(`Obligatoriskt besked från Skyttel: ${assistant.reply}`);
+        else expect(spoken).not.toContain('Obligatoriskt besked');
+        const { voice: current } = await voice.poll();
+        expect(current.response.text).toContain(question);
+        expect(current.response.questionPending).toBe(true);
+      }
+      expect(voiceAnswerParts(voice.live.sent).join('\n')).toContain(
+        'Skyttels resultat (verifierat): Sparat.',
+      );
     },
-  });
-  expect(assistant.review.changes).toEqual([]);
-  expect(voiceAnswerParts(voice.live.sent).join('\n')).toContain(
-    'Skyttels resultat (verifierat): Sparat.',
   );
-});
 
 for (const question of [undefined, 'Vad heter kollegan?'])
   test(
@@ -654,15 +747,12 @@ for (const question of [undefined, 'Vad heter kollegan?'])
           }),
         ];
       }, saveExplanationAuthorization);
-      const voice = await setupVoice(async (input, init) => {
-        const body = JSON.parse(String(init?.body));
-        if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length)
-          return Response.json(
-            { error: { message: 'Controlled explanation outage.' } },
-            { status: 503 },
-          );
-        return model.provider(input, init);
-      });
+      const voice = await setupVoice(
+        failExplanation(
+          model,
+          Response.json({ error: { message: 'Controlled explanation outage.' } }, { status: 503 }),
+        ),
+      );
       await proposal(voice.path);
       await voice.poll();
       voice.transcript(

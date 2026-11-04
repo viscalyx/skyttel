@@ -234,12 +234,12 @@ TEXT-17.
     "spec": "tests/integration/text-assistant.spec.ts",
     "caseId": "TEXT-17"
   },
-  "reference": "Dator; riktig server och databas med kontrollerade leverantörer. Enkelt textuppdrag, textuppdrag med förklaring och talad sparbegäran med förklaring. Separata nya installationer prövar skrivna uppdrag med mikrofonen på där förklaringen misslyckas efter verkligt sparande respektive en osparad utkaständring med en separat väntande fråga.",
+  "reference": "Dator; riktig server och databas med kontrollerade leverantörer. Enkelt textuppdrag, textuppdrag med förklaring och talad sparbegäran med förklaring. Separata nya installationer prövar skrivna uppdrag med mikrofonen på där förklaringen misslyckas efter verkligt sparande med en oberoende informationsfråga respektive en osparad utkaständring med en separat väntande ändringsfråga.",
   "outcomes": [
     "Ett verifierat enkelt uppdrag ger kort slutbesked utan att förslagen sparas.",
     "En beställd förklaring finns kvar efter utkaständringen och efter sparande med röst.",
     "Sparandet bekräftas med tomt utkast, verkliga objekt och ett gemensamt kvitto.",
-    "Ett verkligt sparande och felet i en återstående förklaring finns båda med i text och kontrollerad röstleverans.",
+    "Ett verkligt sparande, dess oberoende väntande informationsfråga och felet i en återstående förklaring finns med i text och kontrollerad röstleverans.",
     "En genomförd osparad ändring, dess separata väntande fråga och den uteblivna förklaringens felbesked finns med i text och kontrollerad röstleverans utan sparbesked."
   ],
   "evidence": [
@@ -280,6 +280,14 @@ TEXT-17.
       "runner": "vitest",
       "suite": "server",
       "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "a report after a partial batch beside an older waiting question keeps unfinished work active",
+      "purpose": "En äldre väntande fråga får inte avsluta en ny begäran efter enbart en självständig del."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
       "title": "a report with a ready pending change keeps unfinished work active",
       "purpose": "En felaktig kontrolluppgift om slutförande får inte avsluta en känd återstående ändringsdel som är redo att utföras."
     },
@@ -290,6 +298,22 @@ TEXT-17.
       "spec": "tests/unit/server/voice-assistant.test.ts",
       "title": "a verified voice save retains requested saved-change report details before its final response",
       "purpose": "Begärda verifierade detaljer från samma sparande måste nå rösten tillsammans med det fullständiga svaret."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified voice save retains its independent information question after its requested explanation",
+      "purpose": "En lyckad beställd förklaring får inte tappa en separat väntande informationsfråga efter verkligt sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified voice save retains its independent information question when the required explanation fails",
+      "purpose": "En oberoende informationsfråga får inte försvinna ur röstleveransen när sparandet lyckas men den återstående förklaringen misslyckas."
     },
     {
       "kind": "technical",
@@ -348,13 +372,16 @@ TEXT-17.
    objekten i samma sparande.
 5. Följ förberedelsens separata felvariant i en ny installation med
    enbart Lo Exempel osparad. Starta text och slå på mikrofonen.
-6. Skriv **Beskriv de sparade objekten. Spara hela utkastet.**
-   Operatören släpper sparandet och avbryter därefter den begärda
-   förklaringen. Läs både **Sparat.** och felbeskedet. Kontrollera samma
-   besked i den kontrollerade röstleveransen enligt förberedelsen.
-7. Läs ett tomt utkast och Lo Exempel av typen Person i Tabell. Öppna
-   **Rapporter → Ändringshistorik** och kontrollera att ett sparande
-   innehåller Lo Exempel.
+6. Skriv **Beskriv de sparade objekten och vilket år uppgifterna gäller.
+   Lägg till Kim som person. Spara hela utkastet.**
+   Operatören släpper tillägget och sparandet och avbryter därefter
+   förklaringen. Läs **Sparat.**, **Vilket år gäller beskrivningen?** och
+   felbeskedet. Kontrollera samma besked i den kontrollerade
+   röstleveransen enligt förberedelsen.
+7. Läs ett tomt utkast samt Lo Exempel och Kim av typen Person i Tabell.
+   Öppna **Rapporter → Ändringshistorik** och kontrollera att ett sparande
+   innehåller båda objekten. Informationsfrågan väntar fortfarande;
+   den gör inget osparat ändringsförslag.
 8. Följ förberedelsens osparade felvariant i ytterligare en ny
    installation med enbart Lo Exempel osparad. Starta text och slå på
    mikrofonen. Skriv **Lägg till Kim och en kollega med samma objekttyp
@@ -376,8 +403,9 @@ TEXT-17.
   inte. Text och den kontrollerade röstleveransen ger samma sakliga
   sparresultat och förklaring.
 - Om förklaringen misslyckas efter verkligt sparande behåller båda
-  leveranssätten sparbeskedet och det aktuella felbeskedet. Sparandet
-  ersätter inte den uteblivna förklaringen.
+  leveranssätten sparbeskedet, den oberoende informationsfrågan och det
+  aktuella felbeskedet. Sparandet ersätter inte den uteblivna
+  förklaringen och informationsdelen väntar fortfarande.
 - Om förklaringen misslyckas efter en osparad ändring behåller båda
   leveranssätten den genomförda ändringens detaljer, frågan om kollegan
   och det aktuella felet. Den väntande delen framstår inte som färdig.

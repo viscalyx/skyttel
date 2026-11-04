@@ -167,12 +167,20 @@ export function voiceWork({
       .filter(Boolean)
       .join('\n');
   }
+  function pendingQuestion(view: VoiceCompletionView) {
+    return view.questionPending
+      ? (view.modelReply ?? (view.newQuestions ?? view.questions)?.join('\n'))
+      : undefined;
+  }
   function receiptParts(view: VoiceCompletionView): Exclude<VoiceAnswer, string> {
     return [
       { kind: 'result' as const, text: 'Sparat.' },
       { kind: 'result' as const, text: resultText(view) },
       ...notices(view),
-      { kind: 'conversation' as const, text: view.modelReply ?? '' },
+      {
+        kind: view.questionPending ? ('question' as const) : ('conversation' as const),
+        text: pendingQuestion(view) ?? view.modelReply ?? '',
+      },
     ].filter(({ text }) => text);
   }
   function append(delegationId: string | null, answer: VoiceAnswer, view?: VoiceCompletionView) {
@@ -218,8 +226,8 @@ export function voiceWork({
       const parts = receiptParts(view);
       return parts.length > 1 ? parts : 'Sparat.';
     }
-    const question = view.modelReply ?? (view.newQuestions ?? view.questions)?.join('\n');
-    if (view.questionPending && question)
+    const question = pendingQuestion(view);
+    if (question)
       return [
         ...notices(view),
         { kind: 'result', text: resultText(view) },

@@ -160,24 +160,29 @@ hold-check on
 ```
 
 Vid det skrivna uppdragets `held` kopieras aktuella V och C från
-`draft`. Släpp sparandet och granska den hållna kontrollen av hela utkastet
-innan godkännandet. Vänta sedan på nästa arbetsbegäran för förklaringen
-och avbryt just den:
+`draft` och TYPE från Lo-förslagets `after.typeId`. Släpp tillägget med
+sin oberoende informationsfråga. Godkänn den självständiga batchen och
+kontrollera därefter hela utkastet inför sparandet. Frågan gäller en
+separat informationsdel; uppdraget är ännu inte helt uppfyllt. Vänta
+sedan på nästa arbetsbegäran för förklaringen och avbryt just den:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-tool REQUEST save_draft {"version":V,"contentVersion":C,"operationId":"controlled-save"}
-reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+tool REQUEST submit_changes {"version":V,"contentVersion":C,"completion":"save","questions":[{"kind":"information","request":"Beskriv vilket år uppgifterna gäller.","question":"Vilket år gäller beskrivningen?","dependsOnDraft":false}],"operations":[{"name":"propose_object","arguments":{"id":"kim","baseRevision":null,"value":{"typeId":"TYPE","name":"Kim"}}}]}
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":false}
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":false}
 fail REQUEST
 ```
 <!-- markdownlint-enable MD013 -->
 
 Sparandet måste vara klart innan förklaringen avbryts. Läs ett tomt
-utkast, Lo i Tabell och ett verkligt sparande i ändringshistoriken.
-Samtalstextens felbesked ska finnas tillsammans med **Sparat.** också i
-den kontrollerade röstleveransen. Operatören jämför leveransens faktiska
-innehåll i terminalen före ett eventuellt `assistant`-transkript med
-samma besked. Ett sådant transkript bevisar inte fysisk uppläsning.
+utkast, Lo och Kim i Tabell och båda i samma verkliga sparande i
+ändringshistoriken.
+Samtalstextens felbesked ska finnas tillsammans med **Sparat.** och
+**Vilket år gäller beskrivningen?** också i den kontrollerade
+röstleveransen. Operatören jämför leveransens faktiska innehåll i terminalen
+före ett eventuellt `assistant`-transkript med samma besked. Ett sådant
+transkript bevisar inte fysisk uppläsning.
 Avsluta även felvariantens installation med `quit`.
 
 För den osparade felvarianten startas ytterligare en ny röstinstallation

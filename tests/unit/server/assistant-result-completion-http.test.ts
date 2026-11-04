@@ -16,9 +16,11 @@ import {
 for (const situation of [
   'before requested changes',
   'after a partial batch',
+  'after a partial batch beside an older waiting question',
   'with a ready pending change',
 ])
   test(`a report ${situation} keeps unfinished work active`, async () => {
+    const olderWaiting = situation.includes('older waiting');
     const readyPart = situation === 'with a ready pending change';
     const partialBatch = situation !== 'before requested changes';
     const question = 'Vad heter kollegan?';
@@ -33,6 +35,19 @@ for (const situation of [
         const input = JSON.parse(
           String(body.input.findLast((item) => item.role === 'user')?.content),
         );
+        if (input.message === 'Beskriv vilket år lampan köptes.')
+          return [
+            modelTool('ask_questions', {
+              questions: [
+                {
+                  kind: 'information',
+                  request: input.message,
+                  question: 'Vilken lampa menar du?',
+                  dependsOnDraft: false,
+                },
+              ],
+            }),
+          ];
         if (input.message === 'Beskriv hela utkastet.')
           return [modelTool('report_result', { source: 'draft' })];
         const step = workStep++ - (readyPart ? 2 : 0);
@@ -146,8 +161,21 @@ for (const situation of [
           ).status(),
         ).toBe(202);
       }
+      let starting = started;
+      if (olderWaiting) {
+        await send(started, 'Beskriv vilket år lampan köptes.');
+        await expect
+          .poll(async () => {
+            starting = await (await browser.get(`${path}/${started.id}`)).json();
+            return starting.phase;
+          })
+          .toBe('ready');
+        expect(starting.pendingParts).toContainEqual(
+          expect.objectContaining({ status: 'waiting', question: 'Vilken lampa menar du?' }),
+        );
+      }
       await send(
-        started,
+        starting,
         readyPart
           ? 'Lägg till Kim och en kollega som personer utan att spara.'
           : 'Lägg till Kim och Lo som personer utan att spara.',
@@ -186,7 +214,7 @@ for (const situation of [
         expect(await (await browser.get(mapPath)).json()).toEqual(before);
         await send(information, 'Fortsätt med Kim och kollegan Lo utan att spara.');
       }
-      const preceding = (readyPart ? 3 : 0) + (partialBatch ? 2 : 1);
+      const preceding = (olderWaiting ? 1 : 0) + (readyPart ? 3 : 0) + (partialBatch ? 2 : 1);
       await expect.poll(() => model.requests.length).toBeGreaterThanOrEqual(preceding);
       const reported: TextAssistantView = await (await browser.get(`${path}/${started.id}`)).json();
       expect(reported.error).toBeUndefined();
@@ -216,6 +244,10 @@ for (const situation of [
         })
         .toBe('ready');
       expect(finished.error).toBeUndefined();
+      if (olderWaiting)
+        expect(finished.pendingParts).toContainEqual(
+          expect.objectContaining({ status: 'waiting', question: 'Vilken lampa menar du?' }),
+        );
       expect(finished.review.changes.map((change) => change.after?.name).sort()).toEqual([
         'Kim',
         'Lo',

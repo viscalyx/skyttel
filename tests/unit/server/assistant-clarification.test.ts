@@ -143,11 +143,25 @@ test('controlled clarification preserves the request, independent work and prope
             JSON.stringify({
               mode: current.startsWith('Förklara ordet') ? 'read' : 'work',
               request: current,
+              responseRequired: false,
             }),
           ),
         ];
       }
-      return [modelMessage('{"decision":"allow","complete":true}')];
+      const { untrusted } = JSON.parse(String(request.input[0].content));
+      return [
+        modelMessage(
+          JSON.stringify({
+            decision: 'allow',
+            complete: true,
+            // The phone batch is independent and complete; the original request
+            // still waits for data type, property and person clarification.
+            fulfillsRequest: untrusted.operations.every(
+              (operation: { name: string }) => operation.name === 'save_draft',
+            ),
+          }),
+        ),
+      ];
     },
   );
   app = await createInstallation(undefined, { modelFetch: model.provider });
@@ -234,6 +248,13 @@ test('controlled clarification preserves the request, independent work and prope
   );
   expect(session.questions).toEqual(questions);
   expect(session.questionPending).toBe(true);
+  expect(model.requests).toHaveLength(1);
+  expect(session.result).toMatchObject({ kind: 'draft' });
+  const waiting = session.pendingParts;
+  expect(waiting).toHaveLength(3);
+  expect(waiting?.map((part) => ({ question: part.question, status: part.status }))).toEqual(
+    questions.map((question) => ({ question, status: 'waiting' })),
+  );
   let state = await read();
   expect(state.objects).toEqual([]);
   expect(state.draft.relationships ?? []).toEqual([]);
@@ -250,9 +271,13 @@ test('controlled clarification preserves the request, independent work and prope
     await message(`Förklara ordet utkast, del ${index + 1}.`);
     expect(session.modelReply).toBe('Ett utkast innehåller osparade förslag.');
     expect(session.questions).toEqual(questions);
+    expect(session.pendingParts).toEqual(waiting);
   }
   await message('Kod ska vara text. Töm Hem. Använd Alex i Umeå och Betalkonto. Spara inte.');
   expect(session.questionPending).not.toBe(true);
+  expect(session.pendingParts?.map(({ id, status }) => ({ id, status }))).toEqual(
+    waiting?.map(({ id }) => ({ id, status: 'completed' })),
+  );
   state = await read();
   const corrected = state.draft.changes.find((change: { id: string }) => change.id === 'lo').after
     .properties;

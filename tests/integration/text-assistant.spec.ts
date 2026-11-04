@@ -275,39 +275,83 @@ async function verifyTypedUnsavedExplanationFailure(page: Page) {
 }
 
 async function verifyTypedSaveExplanationFailure(page: Page) {
-  const model = textModel((body) => {
-    const { draft } = JSON.parse(
-      String(body.input.findLast((item) => item.role === 'user')?.content),
-    );
-    return [
-      modelTool('save_draft', {
-        version: draft.version,
-        contentVersion: draft.contentVersion,
-        operationId: 'controlled-save',
-      }),
-    ];
-  }, completionAuthorization);
+  const question = 'Vilket år gäller beskrivningen?';
+  let personType = '';
+  const model = textModel(
+    (body) => {
+      const { draft } = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          completion: 'save',
+          questions: [
+            {
+              kind: 'information',
+              request: 'Beskriv vilket år uppgifterna gäller.',
+              question,
+              dependsOnDraft: false,
+            },
+          ],
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'kim',
+                baseRevision: null,
+                value: { typeId: personType, name: 'Kim' },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (body) =>
+      body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+        ? completionAuthorization(body)
+        : [
+            modelMessage(
+              JSON.stringify({ decision: 'allow', complete: true, fulfillsRequest: false }),
+            ),
+          ],
+  );
   const { app, live, explanationFailures } = await createExplanationFailureInstallation(model);
   try {
-    await arrange(page, app);
+    const { path, value } = await arrange(page, app);
+    personType = value.typeId;
+    const prepared = await (await page.request.get(path)).json();
+    expect(prepared.types.find((type: { id: string }) => type.id === personType)).toMatchObject({
+      name: 'Person',
+    });
     await consent(page);
     await turnMicrophoneOn(page);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
-    await send(page, 'Beskriv de sparade objekten. Spara hela utkastet.');
+    await send(
+      page,
+      'Beskriv de sparade objekten och vilket år uppgifterna gäller. Lägg till Kim som person. Spara hela utkastet.',
+    );
     const failure =
       'Modellen är tillfälligt otillgänglig. Valet är kvar. Försök igen genom en egen handling när felet är löst.';
     await expect(transcript(page)).toContainText(failure);
     await expect(transcript(page)).toContainText('Sparat.');
+    await expect(transcript(page)).toContainText(question);
     await expect(await showDraft(page)).toContainText('Utkastet är tomt.');
     await expect(await readTableObject(page, 'Lo Exempel')).toContainText('Person');
+    await expect(await readTableObject(page, 'Kim')).toContainText('Person');
     const history = await openSavedHistory(page);
     await expect(history.getByRole('article')).toHaveCount(1);
     await history.getByText('Visa ändringarna', { exact: true }).click();
     await expect(history.locator('.history-changes')).toContainText('Lo Exempel');
+    await expect(history.locator('.history-changes')).toContainText('Kim');
     expect(explanationFailures()).toBe(1);
     expect(model.requests).toHaveLength(1);
     await expect.poll(() => voiceAnswerParts(live.sent).join('\n')).toContain('Sparat.');
-    expect(voiceAnswerParts(live.sent).join('\n')).toContain(failure);
+    const spoken = voiceAnswerParts(live.sent).join('\n');
+    expect(spoken).toContain(`Obligatoriskt besked från Skyttel: ${failure}`);
+    expect(spoken).toContain(`Nödvändig fråga (samtalsdata): ${JSON.stringify(question)}`);
+    expect(spoken).not.toContain('Lo Exempel lades till.');
   } finally {
     await app.close();
   }
