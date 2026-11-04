@@ -488,13 +488,15 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   med röst när mikrofonen är på, text när den är av, ordnad överlämning av
   långa svar, kvarvarande samtalstext och artig uppläsning bara av nya
   textlevererade Skyttel-rader. Obekräftad text ger inget sparkvitto.
-- [Samtalets kontext](conversation-context.md): samma tillfälliga samtal
+- [Samtalets kontext](conversation-context.md): samma samtal
   genom utkast, sparande, avbrott, fel, mikrofon av och på samt byte mellan
   röst och text. Äldre sparbesked ger inget nytt sparande. Skrivna och
   talade kommandon börjar om samtalet och kastar hela utkastet.
   Kontextmätaren följer serverns procenttal, röstrutan visar procent från
   85 och ger en enda artig uppläsning, även på smal pekskärm. Nytt samtal
   återställer mätaren och gamla mätningar ignoreras.
+  Omladdning återställer bevarad text och modellval med arbetet pausat;
+  utgångstid visas och uttryckligt avslut lämnar utkastet kvar.
   Full kontext sammanfattas automatiskt med kvarvarande samtalstext,
   aktuellt utkast, mikrofonläge och tidigare inspelat tal. Misslyckad
   sammanfattning blockerar nya uppdrag tills Nytt samtal. Pågående

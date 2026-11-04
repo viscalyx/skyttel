@@ -9,6 +9,7 @@ import type { Auth } from './auth.js';
 import { stageAuthCallback } from './auth-callback-transaction.js';
 import { installationAuthority } from './installation-authority.js';
 import { linkingAttempt } from './login-methods.js';
+import { transferConversationBinding } from './conversation-storage.js';
 
 const attemptLifetime = 10 * 60_000;
 type Binding = {
@@ -368,6 +369,8 @@ export function browserBindings(
     if (database.inTransaction) return context.json({ error: 'binding_busy' }, 409);
     const candidate = randomBytes(32).toString('hex');
     database.transaction(() => {
+      if (expired) transferConversationBinding(database, recorded.id, key(candidate));
+      if (previous && current) transferConversationBinding(database, previous.id, key(candidate));
       if (expired) database.prepare('DELETE FROM browser_binding WHERE id = ?').run(recorded.id);
       if (expired)
         database

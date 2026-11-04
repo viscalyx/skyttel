@@ -126,6 +126,7 @@ export function TextView({
   }, [stop]);
   const blocked =
     conversation.inputBlocked ||
+    session?.paused ||
     pending ||
     unknown ||
     session?.phase === 'recovery' ||
@@ -192,6 +193,27 @@ export function TextView({
               <WorkspaceIcon name="close" />
             </button>
           </header>
+          {session?.expiresAt && (
+            <p role="status" aria-label="Samtalets livslängd">
+              {session.paused && 'Samtalet är pausat. '}
+              Löper ut{' '}
+              <time dateTime={new Date(session.expiresAt).toISOString()}>
+                {new Date(session.expiresAt).toLocaleString('sv-SE')}
+              </time>{' '}
+              efter sju dygn utan ditt meddelande eller uttrycklig återupptagning.
+              {session.paused &&
+                ' Nytt samtal tar bort det tidigare samtalet; utkastet ligger kvar.'}
+            </p>
+          )}
+          {session && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => void conversation.endConversation()}
+            >
+              Avsluta samtalet
+            </button>
+          )}
           {widthPreferences?.widthFeedback &&
             !widthPreferences.widthFeedback.includes('återställda') && (
               <p role="status">{widthPreferences.widthFeedback}</p>
