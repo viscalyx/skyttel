@@ -560,15 +560,11 @@ test('a failed typed completion delivers its own question before a later task qu
     failExplanation(
       model,
       () =>
-        Response.json(
-          { error: { message: 'Controlled explanation outage.' } },
-          { status: 503 },
-        ),
+        Response.json({ error: { message: 'Controlled explanation outage.' } }, { status: 503 }),
       (body) =>
         model.requests.length === 1 &&
-        JSON.parse(
-          String(body.input.findLast((item) => item.role === 'user')?.content),
-        ).message === firstRequest,
+        JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content)).message ===
+          firstRequest,
     ),
   );
   const failed = await send(firstRequest, 'failed-partial');
