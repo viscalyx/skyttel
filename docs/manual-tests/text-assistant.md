@@ -509,7 +509,7 @@ som stöd, skilt från hela det ordinarie fallet.
       "suite": "server",
       "spec": "tests/unit/server/voice-typed-delivery.test.ts",
       "title": "a failed typed completion delivers its own question before a later task question",
-      "purpose": "En senare begärans fråga får inte ersätta en tidigare slutförd begärans väntande fråga i röstleveransen."
+      "purpose": "En misslyckad begärans resultat, fel och fråga levereras en gång före nästa köade begärans fråga efter uttryckligt avstående."
     },
     {
       "kind": "technical",
