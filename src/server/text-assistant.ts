@@ -58,11 +58,11 @@ import {
 } from './conversation-model.js';
 import type { ConversationMessage, ConversationState } from './conversation-state.js';
 import {
+  conversationBatchPending,
   conversationLifetime,
+  conversationSaveBlocked,
   conversationStorage,
   conversationStorageConsentVersion,
-  conversationSaveBlocked,
-  conversationBatchPending,
 } from './conversation-storage.js';
 import {
   contextSummaryMessage,
@@ -182,14 +182,16 @@ export function textAssistantRoutes({
     session.execution.approvedVersion = version;
     if (version >= conversationStorageConsentVersion) session.state.storageConsentVersion = version;
   }
+  function pauseState(state: ConversationState, recovery: boolean) {
+    state.paused = true;
+    state.phase = recovery ? 'recovery' : 'ready';
+    state.voiceInputPending = false;
+    state.saveIntent = undefined;
+    state.saveIntentDeadline = undefined;
+    if (state.contextSummaryState === 'summarizing') state.contextSummaryState = 'needed';
+  }
   function checkpointPause(session: Session) {
-    session.state.paused = true;
-    session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'ready';
-    session.state.voiceInputPending = false;
-    session.state.saveIntent = undefined;
-    session.state.saveIntentDeadline = undefined;
-    if (session.state.contextSummaryState === 'summarizing')
-      session.state.contextSummaryState = 'needed';
+    pauseState(session.state, hasPendingOutcome(session));
     persist(session);
   }
   let messageSequence = 0;
@@ -358,6 +360,7 @@ export function textAssistantRoutes({
     }
   }
   const unsubscribeDiscards = draftDiscards(database).subscribe((event) => {
+    storage.discardDraftParts(event.userId, event.householdId, event.version);
     for (const session of sessions.values()) {
       if (session.state.householdId !== event.householdId || session.state.owner !== event.userId)
         continue;
@@ -365,6 +368,7 @@ export function textAssistantRoutes({
       syncQuestions(session);
       session.state.saveIntent = undefined;
       if (!session.execution.task) session.state.workVersion = event.version;
+      persist(session);
     }
   });
   const pausedSessions = new Set<string>();
@@ -490,9 +494,15 @@ export function textAssistantRoutes({
     for (const timer of session.execution.messageTimers.values()) clearTimeout(timer);
     session.execution.messageTimers.clear();
   }
-  async function stop(session: Session, retireDelivery = true, preserve = false) {
+  async function stop(
+    session: Session,
+    {
+      conversation = 'end',
+      delivery = 'retire',
+    }: { conversation?: 'pause' | 'end'; delivery?: 'retire' | 'close' } = {},
+  ) {
     const task = ownedDraftTask(session);
-    if (preserve) checkpointPause(session);
+    if (conversation === 'pause') checkpointPause(session);
     else storage.erase(session.state.id);
     sessions.delete(session.state.id);
     retirePreparations(session);
@@ -500,7 +510,7 @@ export function textAssistantRoutes({
       latestAcceptedSequences.delete(draftKey(session));
     for (const [id, owner] of deliveryOwners) {
       if (owner !== session) continue;
-      if (retireDelivery) deliveries.retire(id);
+      if (delivery === 'retire') deliveries.retire(id);
       else deliveries.close(id);
       deliveryOwners.delete(id);
     }
@@ -3665,7 +3675,7 @@ export function textAssistantRoutes({
   }
   function expireConversation(session: Session) {
     if (session.state.expiresAt !== undefined) {
-      if (session.state.expiresAt <= now()) void stop(session, false);
+      if (session.state.expiresAt <= now()) void stop(session, { delivery: 'close' });
       else
         session.execution.timer = setTimeout(
           () => expireConversation(session),
@@ -3690,7 +3700,7 @@ export function textAssistantRoutes({
         () => expireConversation(session),
         activeUntil - now(),
       ).unref();
-    } else void stop(session, false);
+    } else void stop(session, { delivery: 'close' });
   }
   function expireVoiceWork(session: Session) {
     const task = session.state.taskSource === 'voice' ? session.execution.task : undefined;
@@ -4343,16 +4353,11 @@ export function textAssistantRoutes({
       };
       state.review = current;
       state.operations = householdMap(database, actorId, householdId).operations().operations;
-      state.paused = true;
-      state.phase =
+      pauseState(
+        state,
         hasPendingOutcome(session) ||
-        state.operations.some((operation) => operation.status === 'pending')
-          ? 'recovery'
-          : 'ready';
-      state.voiceInputPending = false;
-      state.saveIntent = undefined;
-      state.saveIntentDeadline = undefined;
-      if (state.contextSummaryState === 'summarizing') state.contextSummaryState = 'needed';
+          state.operations.some((operation) => operation.status === 'pending'),
+      );
       // Original sequence values remain ordered across later fresh conversations.
       messageSequence = Math.max(
         messageSequence,
@@ -4380,7 +4385,7 @@ export function textAssistantRoutes({
         session.state.householdId === householdId &&
         session.execution.browserSessionId === browserSessionId
       )
-        await stop(session, false, true);
+        await stop(session, { conversation: 'pause', delivery: 'close' });
     const restored = await restoreSession(
       actorId,
       browserSessionId,
@@ -4703,7 +4708,7 @@ export function textAssistantRoutes({
   });
   routes.post(`${base}/:sessionId/pause`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
-    if (session) await stop(session, false, true);
+    if (session) await stop(session, { conversation: 'pause', delivery: 'close' });
     return context.json({ paused: true });
   });
   routes.post(`${base}/:sessionId/messages`, async (context) => {
@@ -5429,7 +5434,7 @@ export function textAssistantRoutes({
               session.state.owner &&
             (loginDeadline(session.state.actorId, session.execution.browserSessionId) <= now() ||
               session.execution.mcp.expiresAt <= now());
-          void stop(session, true, canRetain);
+          void stop(session, { conversation: canRetain ? 'pause' : 'end' });
         }
         persist(session);
         for (const message of session.state.paused
@@ -5496,7 +5501,11 @@ export function textAssistantRoutes({
     close: async () => {
       unsubscribeDiscards();
       storage.close();
-      await Promise.all([...sessions.values()].map((session) => stop(session, false, true)));
+      await Promise.all(
+        [...sessions.values()].map((session) =>
+          stop(session, { conversation: 'pause', delivery: 'close' }),
+        ),
+      );
     },
   };
 }

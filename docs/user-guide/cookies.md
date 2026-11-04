@@ -141,8 +141,8 @@ inloggning. Den ger aldrig egen åtkomst. En utgången serverkoppling kan
 behålla den minimala hänvisningen till samtalets utgång, utan att
 förlänga inloggningen eller kakans livstid. Samtalstext läggs inte i
 localStorage eller sessionStorage. Detta ändrar inte valfria ändamål
-för webbläsarlagring; lagringssamtyckets informationsversion är fortsatt
-1. Läs [samtalets livslängd](text-assistant.md#återkomst-utgång-och-avslut).
+för webbläsarlagring; lagringssamtyckets informationsversion är
+fortsatt 1. Läs [samtalets livslängd](text-assistant.md#återkomst-utgång-och-avslut).
 
 ## Efter uppdaterad inloggningshantering
 

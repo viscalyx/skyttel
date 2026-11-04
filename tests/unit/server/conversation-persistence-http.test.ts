@@ -1,14 +1,14 @@
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, expect, test } from 'vitest';
-import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import type { AssistantObservation } from '../../../src/server/assistant-observation.js';
+import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { authorizeAssistant, callAssistantTool } from '../../support/assistant.js';
+import { controlledBatchDelivery } from '../../support/batch-response-delivery.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation, robin } from '../../support/installation.js';
-import { controlledBatchDelivery } from '../../support/batch-response-delivery.js';
 import { liveProvider } from '../../support/live-provider.js';
 import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
-import { authorizeAssistant, callAssistantTool } from '../../support/assistant.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
@@ -565,6 +565,130 @@ test('unloaded retained change parts block fresh manual and MCP saves after rest
   expect((await saved.json()).receipt.operationId).toBe('after-explicit-end');
   expect(model.requests).toHaveLength(1);
 });
+
+test.each([
+  ['pause', 'discard'],
+  ['restart', 'discard-review'],
+] as const)(
+  'an unloaded %s conversation records whole-draft %s before a new draft is saved',
+  async (unload, discard) => {
+    const model = textModel(() => [
+      modelTool('ask_questions', {
+        questions: [
+          {
+            kind: 'change',
+            request: 'Ange cykelns användare.',
+            question: 'Vem använder cykeln?',
+            dependsOnDraft: true,
+          },
+          {
+            kind: 'information',
+            request: 'Beskriv utkastet.',
+            question: 'Vilket förslag?',
+            dependsOnDraft: true,
+          },
+          {
+            kind: 'information',
+            request: 'Hitta hjälmen.',
+            question: 'Vilken hjälm?',
+            dependsOnDraft: false,
+          },
+        ],
+      }),
+    ]);
+    app = await createInstallation(undefined, { modelFetch: model.provider });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    const { household } = await (await createHousehold(browser, app.origin)).json();
+    const root = `${app.origin}/api/households/${household.id}`;
+    const path = `${root}/text-assistant`;
+    const post = (url: string, data: object = {}) =>
+      browser.post(url, { headers: { origin: app.origin }, data });
+    const initial = await (await browser.get(`${root}/map`)).json();
+    const proposal = {
+      id: 'lo',
+      baseRevision: null,
+      value: { typeId: initial.types[0].id, name: 'Lo Exempel' },
+    };
+    const proposed = await post(`${root}/map/draft`, {
+      ...proposal,
+      version: initial.draft.version,
+      contentVersion: initial.contentVersion,
+    });
+    expect(proposed.status(), await proposed.text()).toBe(200);
+    let state: TextAssistantView = await (await post(path, approvedForVisit)).json();
+    const sent = await post(`${path}/${state.id}/messages`, {
+      requestId: crypto.randomUUID(),
+      revision: state.revision,
+      draftVersion: state.review.version,
+      contentVersion: state.review.contentVersion,
+      text: 'Ange cykelns användare, beskriv utkastet och hitta hjälmen.',
+    });
+    expect(sent.status(), await sent.text()).toBe(202);
+    await expect
+      .poll(async () => {
+        state = await (await browser.get(`${path}/${state.id}`)).json();
+        return state.phase;
+      })
+      .toBe('ready');
+    expect(state.saveBlocked).toBe(true);
+    expect(state.pendingParts).toHaveLength(3);
+    const parts = state.pendingParts ?? [];
+    if (unload === 'restart') await restart();
+    else {
+      const paused = await post(`${path}/${state.id}/pause`);
+      expect(paused.status(), await paused.text()).toBe(200);
+    }
+    const command = {
+      version: state.review.version,
+      contentVersion: state.review.contentVersion,
+      ...(discard === 'discard-review' ? { kind: 'all' } : {}),
+    };
+    let discarded = await post(`${root}/map/${discard}`, command);
+    if (discard === 'discard-review') {
+      expect(discarded.status(), await discarded.text()).toBe(200);
+      discarded = await post(`${root}/map/${discard}`, {
+        ...command,
+        confirmation: (await discarded.json()).plan,
+      });
+    }
+    expect(discarded.status(), await discarded.text()).toBe(200);
+    const empty = await (await browser.get(`${root}/map`)).json();
+    expect(empty.draft.changes).toEqual([]);
+    const fresh = await post(`${root}/map/draft`, {
+      ...proposal,
+      value: { ...proposal.value, name: 'Nytt förslag' },
+      version: empty.draft.version,
+      contentVersion: empty.contentVersion,
+    });
+    expect(fresh.status(), await fresh.text()).toBe(200);
+    const current = await (await browser.get(`${root}/map`)).json();
+    // No conversation is loaded by discard, the new manual proposal or saving.
+    const saved = await post(`${root}/map/save`, {
+      operationId: 'after-unloaded-discard',
+      version: current.draft.version,
+      contentVersion: current.contentVersion,
+    });
+    expect(saved.status(), await saved.text()).toBe(200);
+    expect((await saved.json()).receipt.operationId).toBe('after-unloaded-discard');
+    await restart();
+    const restored = await browser.get(`${path}/${state.id}`);
+    expect(restored.status(), await restored.text()).toBe(200);
+    expect(await restored.json()).toMatchObject({
+      id: state.id,
+      paused: true,
+      phase: 'ready',
+      saveBlocked: false,
+      questions: ['Vilken hjälm?'],
+      pendingParts: [
+        { ...parts[0], status: 'discarded', revision: 1 },
+        { ...parts[1], status: 'discarded', revision: 1 },
+        parts[2],
+      ],
+    });
+    expect(model.requests).toHaveLength(1);
+  },
+);
 
 test('an unloaded unknown batch blocks fresh draft work after restart and status recovery keeps the exact unfinished request', async () => {
   const delivery = controlledBatchDelivery();

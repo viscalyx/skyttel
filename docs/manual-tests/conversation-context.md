@@ -2055,7 +2055,7 @@ KONTEXT-24. Provet använder riktig server, SQLite och kontrollerad modell.
   "reference": "Dator 1280 px, textläge och nödvändig webbläsarlagring. Riktig server med kontrollerad modell. HTTP-underlaget skiljer faktisk databasbeständighet från klientåterställning.",
   "outcomes": [
     "Efter omladdning, utloggning och verklig serveromstart visas den exakta instruktionen, frågan och Sol/låg, med pausat arbete och en utgångstid.",
-    "Avslut raderar samtalstext och fråga även efter en ny omladdning, medan Lo-förslaget ligger kvar osparat."
+    "Avslut raderar samtalstext och fråga även efter en ny omladdning, medan Lo-förslaget ligger kvar osparat. Tangentbordsfokus går till Nytt samtal."
   ],
   "evidence": [
     {
@@ -2115,8 +2115,9 @@ KONTEXT-24. Provet använder riktig server, SQLite och kontrollerad modell.
    fråga och pausbesked. Kör `restart` i förberedelseterminalen och invänta
    `restarted`. Ladda om sidan och läs samma innehåll igen.
 6. Öppna **Visa utkastet → Visa förslaget: Lo Exempel**. Läs Person och
-   Lo Exempel utan beskrivning; stäng dialogen. Välj **Avsluta samtalet**.
-   Den tidigare instruktionen och frågan ska försvinna.
+   Lo Exempel utan beskrivning; stäng dialogen. Flytta tangentbordsfokus
+   till **Avsluta samtalet** och tryck Enter. Den tidigare instruktionen
+   och frågan ska försvinna. Fokus ska gå till **Nytt samtal**.
 7. Ladda om igen och öppna textvyn. Den tidigare samtalstexten ska saknas.
    Läs Lo-förslaget på samma sätt igen; det ska vara kvar osparat.
 
@@ -2127,4 +2128,5 @@ KONTEXT-24. Provet använder riktig server, SQLite och kontrollerad modell.
   utloggning och omstart.
   Återkomsten visar pausat arbete och utgångstid, utan automatisk körning.
 - Uttryckligt avslut raderar samtalet. Omladdning återställer det inte.
-  Utkastet varken sparas eller kastas av avslutet.
+  Utkastet varken sparas eller kastas av avslutet. Tangentbordsfokus går
+  till **Nytt samtal** när den fokuserade avslutsknappen försvinner.
