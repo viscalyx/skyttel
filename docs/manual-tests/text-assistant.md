@@ -861,6 +861,70 @@ om samma server med samma databas vid det angivna steget.
       "kind": "technical",
       "runner": "vitest",
       "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a committed batch used while its lost reply and status remain unavailable",
+      "purpose": "Genomförd verklig batch räknas som använt modellarbete trots tappat svar och statusfel; samma leverantörsanrops token och kostnad bevaras medan nytt arbete spärras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential resolves unknown batch work only after status proves it was not committed",
+      "purpose": "Ett ännu okänt utfall räknas inte som oanvänt arbete förrän samma operations status visar att den inte genomförs; senaste klassificering kopplas till token en enda gång och tidigare klassificering bevaras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential accounts for a held committed batch reply after stop",
+      "purpose": "Stopp före ett verkligt genomfört ändringsbesked behåller använt modellarbete och spärren tills status kontrolleras utan nya ändringar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential accounts for a held committed batch reply after revoke",
+      "purpose": "Återkallad åtkomst före ändringsbeskedet ger okänd arbetsklassificering när bevis inte längre får läsas; statuskontroll får inte kringgå behörigheten."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a committed batch used while its lost reply and status remain unavailable",
+      "purpose": "Genomförd verklig batch räknas som använt modellarbete trots tappat svar och statusfel; samma leverantörsanrops token och kostnad bevaras medan nytt arbete spärras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap resolves unknown batch work only after status proves it was not committed",
+      "purpose": "Ett ännu okänt utfall räknas inte som oanvänt arbete förrän samma operations status visar att den inte genomförs; senaste klassificering kopplas till token en enda gång och tidigare klassificering bevaras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap accounts for a held committed batch reply after stop",
+      "purpose": "Stopp före ett verkligt genomfört ändringsbesked behåller använt modellarbete och spärren tills status kontrolleras utan nya ändringar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap accounts for a held committed batch reply after revoke",
+      "purpose": "Återkallad åtkomst före ändringsbeskedet ger okänd arbetsklassificering när bevis inte längre får läsas; statuskontroll får inte kringgå behörigheten."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
       "spec": "tests/unit/server/operation-recovery-http.test.ts",
       "title": "status-only recovery preserves unfinished requested explanation in voice",
       "purpose": "Tappat genomfört ändringsbesked och otillgänglig första statuskontroll får inte ersätta beställd förklaring med ett färdigt uppdrag; den ursprungliga instruktionen och felbeskedet följer även den accepterade begärans publika hämtning."

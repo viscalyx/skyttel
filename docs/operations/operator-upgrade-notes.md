@@ -34,6 +34,11 @@ not establish a performance gain or authorize billable evaluation. Use the
 [model activation guide](conversation-models.md#separat-försök-med-överlappning)
 to select the mode before restarting the server.
 
+For diagnostic consumers, use the latest work classification for each provider
+call. Keep earlier classifications as history and count its usage once.
+A lost reply does not prove unused work. Treat an unverified outcome as unknown
+until authorized evidence confirms whether the batch is committed.
+
 ### Check conversation model access and activation
 
 Before rollout, confirm that the installation's OpenAI project can use

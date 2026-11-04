@@ -1,7 +1,9 @@
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, expect, test } from 'vitest';
+import { observationDiagnostics } from '../../../scripts/model-evaluation/observations.js';
 import type { AssistantObservation } from '../../../src/server/assistant-observation.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { controlledBatchDelivery } from '../../support/batch-response-delivery.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
@@ -25,7 +27,12 @@ function held() {
   return { wait, release };
 }
 
-function proposeKim(request: ModelRequest, typeId: string, objectId: string) {
+function proposeKim(
+  request: ModelRequest,
+  typeId: string,
+  objectId: string,
+  continueResponse = false,
+) {
   const { draft } = JSON.parse(
     String(request.input.findLast((item) => item.role === 'user')?.content),
   );
@@ -34,6 +41,7 @@ function proposeKim(request: ModelRequest, typeId: string, objectId: string) {
       version: draft.version,
       contentVersion: draft.contentVersion,
       completion: 'draft',
+      ...(continueResponse ? { continueResponse: true } : {}),
       operations: [
         {
           name: 'propose_object',
@@ -106,6 +114,434 @@ async function start(
 }
 
 for (const mode of ['sequential', 'overlap'] as const) {
+  test(`${mode} resolves unknown batch work only after status proves it was not committed`, {
+    tags: ['technical'],
+  }, async () => {
+    const events: AssistantObservation[] = [];
+    const delivery = controlledBatchDelivery();
+    delivery.blockStatus(true);
+    const model = textModel((body) => proposeKim(body, flow.map.types[0].id, 'kim'));
+    const flow = await start(
+      model.provider,
+      mode,
+      events,
+      undefined,
+      async (incoming, dispatch) => {
+        const rpc = await incoming
+          .clone()
+          .json()
+          .catch(() => null);
+        if (rpc?.params?.name === 'apply_draft_batch')
+          throw new Error('Controlled lost batch before delivery');
+        return delivery.dispatch(incoming, dispatch);
+      },
+    );
+    await flow.submit('Lägg till Kim Lind utan att spara.');
+    await expect.poll(() => events.filter((event) => event.kind === 'work_result').length).toBe(1);
+    const pending = await flow.completed();
+    expect(pending.error).toBe('assistant_batch_unknown');
+    expect(pending.batchPending).toBe(true);
+    expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(flow.map);
+    const unknown = events.find((event) => event.kind === 'work_result');
+    expect(unknown).toMatchObject({
+      taskId: 'controlled',
+      status: 'incomplete',
+      data: { disposition: 'unknown', reason: 'batch_outcome_unknown' },
+    });
+    delivery.blockStatus(false);
+    const recovered = await client.post(`${flow.path}/text-assistant/${flow.session.id}/recover`, {
+      headers: { origin: app.origin },
+      data: {},
+    });
+    expect(recovered.status()).toBe(200);
+    expect(await recovered.json()).toMatchObject({
+      error: 'assistant_batch_not_committed',
+      batchPending: false,
+    });
+    const results = events.filter((event) => event.kind === 'work_result');
+    expect(results).toHaveLength(2);
+    expect(results[1]).toMatchObject({
+      taskId: 'controlled',
+      status: 'completed',
+      context: {
+        providerCallId: unknown?.context?.providerCallId,
+        requestId: unknown?.context?.requestId,
+        traceId: unknown?.context?.traceId,
+      },
+      data: {
+        providerCallId: unknown?.context?.providerCallId,
+        disposition: 'discarded',
+        reason: 'batch_outcome_verified',
+      },
+    });
+    const diagnostics = observationDiagnostics(events, events[0].at);
+    expect(diagnostics.workResults).toHaveLength(1);
+    expect(diagnostics.workResults[0]).toMatchObject({
+      providerCallId: unknown?.context?.providerCallId,
+      disposition: 'discarded',
+      usage: { input: 120, output: 30 },
+      classificationHistory: [{ disposition: 'unknown' }, { disposition: 'discarded' }],
+    });
+    expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(flow.map);
+    expect(model.requests).toHaveLength(1);
+  });
+
+  test(`${mode} keeps a committed batch used while its lost reply and status remain unavailable`, {
+    tags: ['technical'],
+  }, async () => {
+    const events: AssistantObservation[] = [];
+    const delivery = controlledBatchDelivery();
+    delivery.blockStatus(true);
+    const model = textModel((body) => proposeKim(body, flow.map.types[0].id, 'kim'));
+    const flow = await start(
+      async (url, init) => {
+        const response = await model.provider(url, init);
+        return Response.json(
+          { ...(await response.json()), service_tier: 'default' },
+          { headers: response.headers },
+        );
+      },
+      mode,
+      events,
+      undefined,
+      delivery.dispatch,
+    );
+    expect(
+      (
+        await client.post(`${flow.path}/text-assistant/${flow.session.id}/model-choice`, {
+          headers: { origin: app.origin },
+          data: { model: 'gpt-6.1-sol', effort: 'high' },
+        })
+      ).status(),
+    ).toBe(200);
+    delivery.arm();
+    await flow.submit('Lägg till Kim Lind utan att spara.');
+    await expect.poll(() => events.filter((event) => event.kind === 'work_result').length).toBe(1);
+    const pending = await flow.completed();
+    expect(pending.error).toBe('assistant_batch_unknown');
+    expect(pending.batchPending).toBe(true);
+    const committed = await (await client.get(`${flow.path}/map`)).json();
+    expect(committed.draft).toMatchObject({
+      version: 1,
+      changes: [{ id: 'kim', after: { name: 'Kim Lind' } }],
+    });
+    const result = events.find((event) => event.kind === 'work_result');
+    const action = events.find(
+      (event) =>
+        event.kind === 'model_action' && (event.data as { name: string }).name === 'submit_changes',
+    );
+    expect(action?.context?.providerCallId).toBeTruthy();
+    expect(result?.data).toMatchObject({
+      providerCallId: action?.context?.providerCallId,
+      executionMode: mode,
+      disposition: 'used',
+    });
+    const attempt = events.findLast(
+      (event) =>
+        event.kind === 'model_attempt' &&
+        event.context?.providerCallId === action?.context?.providerCallId,
+    );
+    expect(attempt?.data).toMatchObject({
+      outcome: 'completed',
+      usage: { input: 120, output: 30 },
+    });
+    const costPath = `${app.origin}/api/operator/costs?month=${new Date().toISOString().slice(0, 7)}`;
+    const cost = await (await client.get(costPath)).json();
+    expect(cost.terra).toMatchObject({
+      attempts: 3,
+      usage: { input: { known: 360 }, output: { known: 90 } },
+    });
+    expect(cost.terra.estimatedUsd).toBeGreaterThan(0);
+    const endpoint = `${flow.path}/text-assistant/${flow.session.id}`;
+    expect(
+      (
+        await client.post(`${endpoint}/messages`, {
+          headers: { origin: app.origin },
+          data: {
+            requestId: 'blocked',
+            revision: pending.revision,
+            draftVersion: 1,
+            contentVersion: 1,
+            text: 'Lägg till någon mer.',
+          },
+        })
+      ).status(),
+    ).toBe(409);
+    delivery.blockStatus(false);
+    const recovered = await client.post(`${endpoint}/recover`, {
+      headers: { origin: app.origin },
+      data: {},
+    });
+    expect(recovered.status()).toBe(200);
+    expect((await recovered.json()).batchPending).toBe(false);
+    expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(committed);
+    const recoveredCost = await (await client.get(costPath)).json();
+    expect(recoveredCost.terra).toEqual(cost.terra);
+    expect(recoveredCost.total).toEqual(cost.total);
+    expect(events.filter((event) => event.kind === 'work_result')).toHaveLength(1);
+    expect(model.requests).toHaveLength(1);
+  });
+
+  for (const ending of ['stop', 'revoke'] as const) {
+    test(`${mode} accounts for a held committed batch reply after ${ending}`, {
+      tags: ['technical'],
+    }, async () => {
+      const reply = held();
+      const events: AssistantObservation[] = [];
+      let committed = false;
+      const model = textModel((body) => proposeKim(body, flow.map.types[0].id, 'kim'));
+      const flow = await start(
+        model.provider,
+        mode,
+        events,
+        undefined,
+        async (incoming, dispatch) => {
+          const rpc = await incoming
+            .clone()
+            .json()
+            .catch(() => null);
+          const response = await dispatch(incoming);
+          if (rpc?.params?.name === 'apply_draft_batch') {
+            committed = true;
+            await reply.wait;
+          }
+          return response;
+        },
+      );
+      await flow.submit('Lägg till Kim Lind utan att spara.');
+      await expect.poll(() => committed).toBe(true);
+      const changed = await (await client.get(`${flow.path}/map`)).json();
+      expect(changed.draft).toMatchObject({
+        version: 1,
+        changes: [{ id: 'kim', after: { name: 'Kim Lind' } }],
+      });
+      const endpoint = `${flow.path}/text-assistant/${flow.session.id}`;
+      if (ending === 'stop') {
+        expect(
+          (
+            await client.post(`${endpoint}/cancel`, {
+              headers: { origin: app.origin },
+              data: { all: true },
+            })
+          ).status(),
+        ).toBe(200);
+        expect(await flow.current()).toMatchObject({
+          canceled: true,
+          batchPending: true,
+          phase: 'recovery',
+        });
+      } else {
+        const { connections } = await (
+          await client.get(`${app.origin}/api/assistants/context`)
+        ).json();
+        expect(connections).toHaveLength(1);
+        expect(
+          (
+            await client.post(`${app.origin}/api/assistants/${connections[0].id}/revoke`, {
+              headers: { origin: app.origin },
+              data: {},
+            })
+          ).status(),
+        ).toBe(200);
+      }
+      reply.release();
+      await expect
+        .poll(() => events.filter((event) => event.kind === 'work_result').length)
+        .toBe(1);
+      const result = events.find((event) => event.kind === 'work_result');
+      const action = events.find(
+        (event) =>
+          event.kind === 'model_action' &&
+          (event.data as { name: string }).name === 'submit_changes',
+      );
+      expect(result?.data).toMatchObject({
+        providerCallId: action?.context?.providerCallId,
+        executionMode: mode,
+        disposition: ending === 'stop' ? 'used' : 'unknown',
+      });
+      if (ending === 'stop') {
+        const recovered = await client.post(`${endpoint}/recover`, {
+          headers: { origin: app.origin },
+          data: {},
+        });
+        expect(recovered.status()).toBe(200);
+        expect((await recovered.json()).batchPending).toBe(false);
+      } else {
+        expect([403, 404]).toContain(
+          (
+            await client.post(`${endpoint}/recover`, { headers: { origin: app.origin }, data: {} })
+          ).status(),
+        );
+      }
+      expect(events.filter((event) => event.kind === 'work_result')).toHaveLength(1);
+      expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(changed);
+      expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual({ history: [] });
+      expect(await (await client.get(`${flow.path}/map/operations`)).json()).toEqual({
+        operations: [],
+      });
+      expect(model.requests).toHaveLength(1);
+    });
+  }
+
+  test(`${mode} keeps a rejected batch unused without claiming a draft effect`, {
+    tags: ['technical'],
+  }, async () => {
+    const events: AssistantObservation[] = [];
+    const delivery = controlledBatchDelivery();
+    const model = textModel((body) => proposeKim(body, 'missing-type', 'kim'));
+    const flow = await start(model.provider, mode, events, undefined, delivery.dispatch);
+    delivery.arm();
+    await flow.submit('Lägg till Kim Lind utan att spara.');
+    await expect.poll(() => events.filter((event) => event.kind === 'work_result').length).toBe(1);
+    expect(delivery.status().phase).toBe('not-committed');
+    expect((await flow.completed()).phase).toBe('error');
+    expect(events.find((event) => event.kind === 'work_result')?.data).toMatchObject({
+      executionMode: mode,
+      disposition: 'discarded',
+    });
+    expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(flow.map);
+    expect(model.requests).toHaveLength(1);
+  });
+
+  test(`${mode} cannot resolve unknown work after the conversation closes`, {
+    tags: ['technical'],
+  }, async () => {
+    const events: AssistantObservation[] = [];
+    const delivery = controlledBatchDelivery();
+    delivery.blockStatus(true);
+    const model = textModel((body) => proposeKim(body, flow.map.types[0].id, 'kim'));
+    const flow = await start(
+      model.provider,
+      mode,
+      events,
+      undefined,
+      async (incoming, dispatch) => {
+        const rpc = await incoming
+          .clone()
+          .json()
+          .catch(() => null);
+        if (rpc?.params?.name === 'apply_draft_batch')
+          throw new Error('Controlled undelivered batch');
+        return delivery.dispatch(incoming, dispatch);
+      },
+    );
+    await flow.submit('Lägg till Kim Lind utan att spara.');
+    await flow.completed();
+    const endpoint = `${flow.path}/text-assistant/${flow.session.id}`;
+    expect(
+      (
+        await client.post(`${endpoint}/stop`, { headers: { origin: app.origin }, data: {} })
+      ).status(),
+    ).toBe(200);
+    delivery.blockStatus(false);
+    expect(
+      (
+        await client.post(`${endpoint}/recover`, { headers: { origin: app.origin }, data: {} })
+      ).status(),
+    ).toBe(404);
+    expect(
+      events.filter((event) => event.kind === 'work_result').map((event) => event.data),
+    ).toMatchObject([{ disposition: 'unknown' }]);
+    expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(flow.map);
+    expect(model.requests).toHaveLength(1);
+  });
+
+  for (const ending of ['error', 'stop'] as const) {
+    test(`${mode} keeps a verified batch used and its failed explanation unused after ${ending}`, {
+      tags: ['technical'],
+    }, async () => {
+      const explanation = held();
+      const events: AssistantObservation[] = [];
+      const model = textModel(
+        async (body) => {
+          if (model.requests.length === 1)
+            return proposeKim(body, flow.map.types[0].id, 'kim', true);
+          await explanation.wait;
+          throw new Error('Controlled batch explanation failure');
+        },
+        (body) => [
+          modelMessage(
+            JSON.stringify(
+              body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+                ? {
+                    mode: 'work',
+                    request: 'Lägg till Kim Lind och förklara objekttypen Person. Spara inte.',
+                    responseRequired: true,
+                  }
+                : { decision: 'allow', complete: true, fulfillsRequest: true },
+            ),
+          ),
+        ],
+      );
+      const flow = await start(
+        async (url, init) => {
+          const response = await model.provider(url, init);
+          return Response.json(
+            { ...(await response.json()), service_tier: 'default' },
+            { headers: response.headers },
+          );
+        },
+        mode,
+        events,
+      );
+      expect(
+        (
+          await client.post(`${flow.path}/text-assistant/${flow.session.id}/model-choice`, {
+            headers: { origin: app.origin },
+            data: { model: 'gpt-6.1-sol', effort: 'high' },
+          })
+        ).status(),
+      ).toBe(200);
+      await flow.submit('Lägg till Kim Lind och förklara objekttypen Person. Spara inte.');
+      await expect.poll(() => model.requests.length).toBe(2);
+      const changed = await (await client.get(`${flow.path}/map`)).json();
+      expect(changed.draft).toMatchObject({
+        version: 1,
+        changes: [{ id: 'kim', after: { name: 'Kim Lind' } }],
+      });
+      if (ending === 'stop')
+        expect(
+          (
+            await client.post(`${flow.path}/text-assistant/${flow.session.id}/cancel`, {
+              headers: { origin: app.origin },
+              data: { all: true },
+            })
+          ).status(),
+        ).toBe(200);
+      explanation.release();
+      await expect
+        .poll(() => events.filter((event) => event.kind === 'work_result').length)
+        .toBe(2);
+      if (ending === 'error')
+        expect((await flow.completed()).error).toBe('assistant_model_temporary');
+      else expect((await flow.current()).canceled).toBe(true);
+      const diagnostics = observationDiagnostics(events, events[0].at);
+      expect(diagnostics.workResults).toMatchObject([
+        { disposition: 'used', outcome: 'completed', usage: { input: 120, output: 30 } },
+        {
+          disposition: 'discarded',
+          outcome: ending === 'error' ? 'failed' : 'aborted',
+          usage: { input: null, output: null },
+        },
+      ]);
+      expect(new Set(diagnostics.workResults.map((result) => result.providerCallId)).size).toBe(2);
+      const cost = await (
+        await client.get(
+          `${app.origin}/api/operator/costs?month=${new Date().toISOString().slice(0, 7)}`,
+        )
+      ).json();
+      expect(cost.terra).toMatchObject({
+        attempts: 4,
+        uncertainAttempts: 1,
+        usage: { input: { known: 360, missing: 1 }, output: { known: 90, missing: 1 } },
+      });
+      expect(cost.terra.estimatedUsd).toBeGreaterThan(0);
+      expect(await (await client.get(`${flow.path}/map`)).json()).toEqual(changed);
+      expect(await (await client.get(`${flow.path}/map/history`)).json()).toEqual({ history: [] });
+      expect(model.requests).toHaveLength(2);
+    });
+  }
+
   test(`${mode} keeps a registered save used when Stop precedes its transport reply`, async () => {
     const registration = held();
     const events: AssistantObservation[] = [];
