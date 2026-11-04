@@ -164,6 +164,75 @@ test('actual restart restores the exact conversation and choice without starting
   expect(await taskStatus.json()).toMatchObject({ paused: true, phase: 'ready' });
 });
 
+test('a model response after shutdown leaves restored work paused and never starts its queue', async () => {
+  let release!: (output: unknown[]) => void;
+  const held = new Promise<unknown[]>((resolve) => {
+    release = resolve;
+  });
+  const observations: AssistantObservation[] = [];
+  const model = textModel(() => held);
+  app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    observe: (event) => observations.push(event),
+  });
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  const { household } = await (await createHousehold(browser, app.origin)).json();
+  const path = `${app.origin}/api/households/${household.id}/text-assistant`;
+  let state: TextAssistantView = await (
+    await browser.post(path, { headers: { origin: app.origin }, data: approvedForVisit })
+  ).json();
+  const send = async (requestId: string, text: string) => {
+    const sent = await browser.post(`${path}/${state.id}/messages`, {
+      headers: { origin: app.origin },
+      data: {
+        requestId,
+        revision: state.revision,
+        draftVersion: state.review.version,
+        contentVersion: state.review.contentVersion,
+        text,
+      },
+    });
+    expect(sent.status(), await sent.text()).toBe(202);
+    state = await sent.json();
+  };
+  try {
+    await send('held-before-shutdown', 'Beskriv hushållets cyklar.');
+    await expect.poll(() => model.requests.length).toBe(1);
+    await send('queued-before-shutdown', 'Beskriv sedan garaget.');
+    expect(state.queuedMessages).toBe(1);
+    expect(state.tasks).toHaveLength(2);
+    const tasks = state.tasks?.map(({ id, status, receivedAt, deadline }) => ({
+      id,
+      status,
+      receivedAt,
+      deadline,
+    }));
+
+    await restart();
+    // The old provider deliberately ignores cancellation until the old
+    // installation and its database have completely closed.
+    release([modelMessage('Ett sent svar får inte återuppta samtalet.')]);
+    await expect
+      .poll(() => observations.some((event) => event.kind === 'task_completed'))
+      .toBe(true);
+    const restored = await browser.get(`${path}/${state.id}`);
+    expect(restored.status(), await restored.text()).toBe(200);
+    expect(await restored.json()).toMatchObject({
+      paused: true,
+      queuedMessages: 1,
+      tasks,
+      conversation: [{ role: 'user', text: 'Beskriv hushållets cyklar.' }],
+      queuedRequests: [
+        { id: 'queued-before-shutdown', text: 'Beskriv sedan garaget.', source: 'text' },
+      ],
+    });
+    expect(model.requests).toHaveLength(1);
+  } finally {
+    release([modelMessage('Släpp provet.')]);
+  }
+});
+
 test('seven-day expiry survives restart and ignores model completion, polling and restoration', async () => {
   let time = Date.now();
   let release!: (value: unknown[]) => void;
