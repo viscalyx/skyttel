@@ -144,6 +144,7 @@ export function textAssistantRoutes({
     session: Session;
     sequence: number;
     active: boolean;
+    advances: { before: number; after: number; contentVersion: number }[];
     body: Promise<unknown>;
     finished: Promise<void>;
     finish: () => void;
@@ -166,10 +167,11 @@ export function textAssistantRoutes({
     const finished = new Promise<void>((resolve) => {
       finish = resolve;
     });
-    const preparation = {
+    const preparation: Preparation = {
       session,
       sequence: messageSequence++,
       active: true,
+      advances: [],
       body,
       finished,
       finish,
@@ -228,6 +230,32 @@ export function textAssistantRoutes({
       if (draftKey(candidate) === draftKey(session))
         for (const message of candidate.state.queue)
           if (message.draftVersion === before) message.draftVersion = after;
+    const predecessor = session.state.activeMessage;
+    if (!predecessor) return;
+    for (const preparation of preparations)
+      if (
+        draftKey(preparation.session) === draftKey(session) &&
+        predecessor.sequence < preparation.sequence &&
+        predecessor.owner === preparation.session.state.owner
+      )
+        preparation.advances.push({ before, after, contentVersion: predecessor.contentVersion });
+  }
+  function preparedDraftVersion(preparation: Preparation, version: number, contentVersion: number) {
+    // Preserve the original request body/hash. Only a contiguous chain of
+    // verified earlier work can advance its admitted execution version.
+    if (
+      preparation.session.state.owner !==
+      contentOwner(
+        database,
+        preparation.session.state.householdId,
+        preparation.session.state.actorId,
+      )
+    )
+      return version;
+    for (const advance of preparation.advances)
+      if (advance.before === version && advance.contentVersion === contentVersion)
+        version = advance.after;
+    return version;
   }
   function supersedeSaves(session: Session, sequence: number) {
     for (const candidate of sessions.values()) {
@@ -3587,13 +3615,24 @@ export function textAssistantRoutes({
       session.state.phase !== 'working'
     )
       return context.json({ error: 'operation_pending' }, 409);
-    const current = await call(session, 'read_my_draft', {});
-    checkPreparation(preparation);
-    if (!currentTurn()) return context.json({ error: 'assistant_turn_changed' }, 409);
+    let current: TextAssistantReview;
+    let draftVersion: number;
+    do {
+      current = await call(session, 'read_my_draft', {});
+      checkPreparation(preparation);
+      if (!currentTurn()) return context.json({ error: 'assistant_turn_changed' }, 409);
+      draftVersion = preparedDraftVersion(preparation, body.draftVersion, body.contentVersion);
+      // A held read can itself straddle verified earlier work. Read current
+      // authorized evidence again only when that snapshot joins the same chain.
+    } while (
+      current.contentVersion === body.contentVersion &&
+      current.version !== draftVersion &&
+      preparedDraftVersion(preparation, current.version, current.contentVersion) === draftVersion
+    );
     if (answerTo.data) session.execution.parts.validateReply(answerTo.data);
     if (
       body.contentVersion !== current.contentVersion ||
-      (session.state.phase !== 'working' && body.draftVersion !== current.version)
+      (session.state.phase !== 'working' && draftVersion !== current.version)
     )
       return context.json({ error: 'assistant_draft_changed' }, 409);
     if (context.req.raw.signal.aborted) return context.json({ error: 'assistant_canceled' }, 409);
@@ -3631,7 +3670,7 @@ export function textAssistantRoutes({
       voice: body.voiceContext !== undefined,
       answerTo: answerTo.data,
       contentVersion: current.contentVersion,
-      draftVersion: body.draftVersion,
+      draftVersion,
       owner: contentOwner(database, session.state.householdId, session.state.actorId),
       receivedAt,
       deadline: receivedAt + 30 * 60_000,

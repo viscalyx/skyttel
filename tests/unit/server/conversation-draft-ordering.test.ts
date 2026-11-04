@@ -128,14 +128,14 @@ async function completed(value: Conversation, id: string) {
     .toBe('completed');
   return result;
 }
-async function seed(value: Conversation) {
+async function seed(value: Conversation, name = 'Stolen') {
   const state = await map(value);
   const response = await post(value.client, `${base}/map/draft`, {
     version: state.draft.version,
     contentVersion: state.contentVersion,
     id: 'chair',
     baseRevision: null,
-    value: { typeId: state.types[0].id, name: 'Stolen' },
+    value: { typeId: state.types[0].id, name },
   });
   expect(response.status()).toBe(200);
 }
@@ -205,6 +205,193 @@ test('an earlier message held in preparation keeps its position before another c
     { id: 'lamp-b', after: { name: 'Lampan B' } },
   ]);
 });
+
+test.each([
+  { preparing: true, manualChange: false },
+  { preparing: true, manualChange: true },
+  { preparing: false, manualChange: false },
+])(
+  'preparation accepts only verified predecessor advancement during its reservation (preparing=$preparing, manual=$manualChange)',
+  async ({ preparing, manualChange }) => {
+    const readGate = heldDraftRead();
+    const { pending: heldModel, release: releaseModel } = heldResponse();
+    let typeId = '';
+    const model = textModel(async (body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      await heldModel;
+      return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
+    });
+    const first = await arrange(model.provider, readGate.dispatch);
+    const second = await conversation();
+    await seed(first);
+    const state = await map(first);
+    typeId = state.types[0].id;
+    const running = await send(first, 'Lägg till Lampan.');
+    await expect.poll(() => model.requests.length).toBe(1);
+    const body = {
+      revision: second.initial.revision,
+      draftVersion: state.draft.version,
+      contentVersion: state.contentVersion,
+      requestId: crypto.randomUUID(),
+      text: 'Kasta utkastet.',
+    };
+    const prepare = () => post(second.client, `${second.path}/messages`, body);
+    let pending: ReturnType<typeof prepare> | undefined;
+    if (preparing) {
+      readGate.hold();
+      pending = prepare();
+      await expect.poll(() => readGate.held).toBe(true);
+    }
+    releaseModel();
+    expect((await completed(first, running)).error).toBeUndefined();
+    if (manualChange) {
+      await seed(second, 'Manuellt bevarad stol');
+    }
+    readGate.release();
+    const accepted = await (pending ?? prepare());
+    if (!preparing || manualChange) {
+      expect(accepted.status()).toBe(409);
+      expect(await accepted.json()).toEqual({ error: 'assistant_draft_changed' });
+      expect((await map(second)).draft.changes).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'lamp',
+            after: expect.objectContaining({ name: 'Lampan' }),
+          }),
+          expect.objectContaining({
+            id: 'chair',
+            after: expect.objectContaining({
+              name: manualChange ? 'Manuellt bevarad stol' : 'Stolen',
+            }),
+          }),
+        ]),
+      );
+      return;
+    }
+    expect(accepted.status(), await accepted.text()).toBe(202);
+    expect((await completed(second, body.requestId)).discarded).toBe(true);
+    expect((await map(second)).draft.changes).toEqual([]);
+    const retry = await post(second.client, `${second.path}/messages`, body);
+    expect(retry.status(), await retry.text()).toBe(202);
+    const changedRetry = await post(second.client, `${second.path}/messages`, {
+      ...body,
+      draftVersion: body.draftVersion + 1,
+    });
+    expect(changedRetry.status()).toBe(409);
+    expect(await changedRetry.json()).toEqual({ error: 'assistant_turn_changed' });
+  },
+);
+
+test.each([false, true])(
+  'admission rereads a held snapshot advanced by a verified predecessor (manual=%s)',
+  async (manualChange) => {
+    const middlewareGate = heldDraftRead();
+    const admissionGate = heldDraftRead();
+    const { pending: firstModel, release: releaseFirst } = heldResponse();
+    const { pending: secondModel, release: releaseSecond } = heldResponse();
+    let typeId = '';
+    const model = textModel(async (body) => {
+      const previous = lastToolResult(body);
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      await (previous ? secondModel : firstModel);
+      const draft = previous?.review ?? input.draft;
+      return [
+        modelTool('submit_changes', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          completion: 'draft',
+          continueResponse: !previous,
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: previous ? 'table' : 'lamp',
+                baseRevision: null,
+                value: { typeId, name: previous ? 'Bordet' : 'Lampan' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    const first = await arrange(model.provider, (incoming, dispatch) =>
+      middlewareGate.dispatch(incoming, (request) => admissionGate.dispatch(request, dispatch)),
+    );
+    const second = await conversation();
+    await seed(first);
+    const state = await map(first);
+    typeId = state.types[0].id;
+    const running = await send(first, 'Lägg till Lampan och Bordet.');
+    await expect.poll(() => model.requests.length).toBe(1);
+    const body = {
+      revision: second.initial.revision,
+      draftVersion: state.draft.version,
+      contentVersion: state.contentVersion,
+      requestId: crypto.randomUUID(),
+      text: 'Kasta utkastet.',
+    };
+    const cookies = (await second.client.storageState()).cookies
+      .map((cookie) => `${cookie.name}=${cookie.value}`)
+      .join('; ');
+    let finishBody!: () => void;
+    const controller = new AbortController();
+    releases.push(() => controller.abort());
+    middlewareGate.hold();
+    const preparing = fetch(`${second.path}/messages`, {
+      method: 'POST',
+      headers: {
+        Origin: app.origin,
+        Cookie: cookies,
+        'Content-Type': 'application/json',
+        'Content-Length': String(Buffer.byteLength(JSON.stringify(body))),
+      },
+      signal: controller.signal,
+      body: new ReadableStream({
+        start(stream) {
+          const encoder = new TextEncoder();
+          stream.enqueue(encoder.encode('{'));
+          finishBody = () => {
+            stream.enqueue(encoder.encode(JSON.stringify(body).slice(1)));
+            stream.close();
+          };
+        },
+      }),
+      duplex: 'half',
+    } as RequestInit);
+    void preparing.catch(() => undefined);
+    await expect.poll(() => middlewareGate.held).toBe(true);
+    middlewareGate.release();
+    releaseFirst();
+    await expect.poll(() => model.requests.length).toBe(2);
+    admissionGate.hold();
+    finishBody();
+    await expect.poll(() => admissionGate.held).toBe(true);
+    releaseSecond();
+    expect((await completed(first, running)).error).toBeUndefined();
+    if (manualChange) {
+      await seed(second, 'Manuellt bevarad stol');
+    }
+    admissionGate.release();
+    const accepted = await preparing;
+    if (manualChange) {
+      expect(accepted.status).toBe(409);
+      expect(await accepted.json()).toEqual({ error: 'assistant_draft_changed' });
+      const changes = (await map(second)).draft.changes;
+      expect(changes).toHaveLength(3);
+      expect(changes.find((change) => change.id === 'chair')?.after?.name).toBe(
+        'Manuellt bevarad stol',
+      );
+    } else {
+      expect(accepted.status, await accepted.text()).toBe(202);
+      expect((await completed(second, body.requestId)).discarded).toBe(true);
+      expect((await map(second)).draft.changes).toEqual([]);
+    }
+  },
+);
 
 test.each(['messages', 'new'] as const)(
   'a held %s reset discards before a later conversation proposal',
@@ -516,10 +703,8 @@ test.each(['rejected', 'stop', 'new reset', 'end', 'abort'] as const)(
 test.each(['messages', 'new'] as const)(
   'stop during a %s reset refresh prevents late discard and releases other conversation work',
   async (endpoint) => {
-    const { pending: heldRead, release: releaseRead } = heldResponse();
+    const readGate = heldDraftRead();
     const { pending: heldModel, release: releaseModel } = heldResponse();
-    let holdRead = false;
-    let readHeld = false;
     const model = textModel(async (body) => {
       const input = JSON.parse(
         String(body.input.findLast((item) => item.role === 'user')?.content),
@@ -527,25 +712,13 @@ test.each(['messages', 'new'] as const)(
       if (input.message === 'Beskriv Stolen.') await heldModel;
       return [modelMessage('Stolen finns kvar i utkastet.')];
     });
-    const first = await arrange(model.provider, async (incoming, dispatch) => {
-      const rpc = await incoming
-        .clone()
-        .json()
-        .catch(() => null);
-      const response = await dispatch(incoming);
-      if (holdRead && rpc?.params?.name === 'read_my_draft') {
-        holdRead = false;
-        readHeld = true;
-        await heldRead;
-      }
-      return response;
-    });
+    const first = await arrange(model.provider, readGate.dispatch);
     await seed(first);
     const second = await conversation();
     await send(first, 'Beskriv Stolen.');
     await expect.poll(() => model.requests.length).toBe(1);
     const current = await read(first);
-    holdRead = true;
+    readGate.hold();
     const resetting = post(
       first.client,
       `${first.path}/${endpoint}`,
@@ -559,13 +732,13 @@ test.each(['messages', 'new'] as const)(
             text: 'Nytt samtal och kasta utkastet.',
           },
     );
-    await expect.poll(() => readHeld).toBe(true);
+    await expect.poll(() => readGate.held).toBe(true);
     const queued = await send(second, 'Beskriv mitt utkast.');
     const stopped = await post(first.client, `${first.path}/cancel`, { all: true });
     expect(stopped.status()).toBe(200);
     expect((await stopped.json()).canceled).toBe(true);
     expect((await completed(second, queued)).modelReply).toBe('Stolen finns kvar i utkastet.');
-    releaseRead();
+    readGate.release();
     const superseded = await resetting;
     expect(superseded.status()).toBe(409);
     expect(await superseded.json()).toEqual({ error: 'assistant_turn_changed' });
@@ -581,36 +754,22 @@ test.each(['messages', 'new'] as const)(
 test.each(['new reset', 'session end'] as const)(
   '%s retires an older reset before its delayed discard can start',
   async (replacement) => {
-    const { pending: heldRead, release } = heldResponse();
-    let holdRead = false;
-    let readHeld = false;
+    const readGate = heldDraftRead();
     const model = textModel(() => [modelMessage('Stolen finns kvar i utkastet.')]);
-    const first = await arrange(model.provider, async (incoming, dispatch) => {
-      const rpc = await incoming
-        .clone()
-        .json()
-        .catch(() => null);
-      const response = await dispatch(incoming);
-      if (holdRead && rpc?.params?.name === 'read_my_draft') {
-        holdRead = false;
-        readHeld = true;
-        await heldRead;
-      }
-      return response;
-    });
+    const first = await arrange(model.provider, readGate.dispatch);
     await seed(first);
     await read(first);
     const second = await conversation();
-    holdRead = true;
+    readGate.hold();
     const resetting = post(first.client, `${first.path}/new`, { discard: true });
-    await expect.poll(() => readHeld).toBe(true);
+    await expect.poll(() => readGate.held).toBe(true);
     const replacing = await post(
       first.client,
       `${first.path}/${replacement === 'new reset' ? 'new' : 'stop'}`,
       {},
     );
     expect(replacing.status()).toBe(200);
-    release();
+    readGate.release();
     const superseded = await resetting;
     expect(superseded.status()).toBe(replacement === 'new reset' ? 409 : 404);
     expect(await superseded.json()).toEqual({
@@ -625,9 +784,7 @@ test.each(['new reset', 'session end'] as const)(
 
 test('a registered save status result does not revoke a reset waiting for its draft read', async () => {
   const { pending: heldSave, release: releaseSave } = heldResponse();
-  const { pending: heldRead, release: releaseRead } = heldResponse();
-  let holdRead = false;
-  let readHeld = false;
+  const readGate = heldDraftRead();
   let saveHeld = false;
   const model = textModel((body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
@@ -645,15 +802,10 @@ test('a registered save status result does not revoke a reset waiting for its dr
       .clone()
       .json()
       .catch(() => null);
-    const response = await dispatch(incoming);
+    const response = await readGate.dispatch(incoming, dispatch);
     if (rpc?.params?.name === 'prepare_save') {
       saveHeld = true;
       await heldSave;
-    }
-    if (holdRead && rpc?.params?.name === 'read_my_draft') {
-      holdRead = false;
-      readHeld = true;
-      await heldRead;
     }
     return response;
   });
@@ -663,13 +815,13 @@ test('a registered save status result does not revoke a reset waiting for its dr
   await expect.poll(() => saveHeld).toBe(true);
   const queued = await send(second, 'Beskriv mitt utkast.');
   await read(first);
-  holdRead = true;
+  readGate.hold();
   const resetting = post(first.client, `${first.path}/new`, { discard: true });
-  await expect.poll(() => readHeld).toBe(true);
+  await expect.poll(() => readGate.held).toBe(true);
   releaseSave();
   expect((await completed(second, queued)).error).toBeUndefined();
   expect((await map(second)).objects).toMatchObject([{ id: 'chair', name: 'Stolen' }]);
-  releaseRead();
+  readGate.release();
   const renewed = await resetting;
   expect(renewed.status(), await renewed.text()).toBe(200);
   await expect.poll(async () => (await read(first)).discarded).toBe(true);
@@ -679,39 +831,25 @@ test('a registered save status result does not revoke a reset waiting for its dr
 
 test('reset rereads the draft when an earlier batch completes during the reset refresh', async () => {
   const { pending: heldModel, release: releaseModel } = heldResponse();
-  const { pending: heldRead, release: releaseRead } = heldResponse();
-  let holdRead = false;
-  let readHeld = false;
+  const readGate = heldDraftRead();
   let typeId = '';
   const model = textModel(async (body) => {
     const input = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     await heldModel;
     return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
   });
-  const first = await arrange(model.provider, async (incoming, dispatch) => {
-    const rpc = await incoming
-      .clone()
-      .json()
-      .catch(() => null);
-    const response = await dispatch(incoming);
-    if (holdRead && rpc?.params?.name === 'read_my_draft') {
-      holdRead = false;
-      readHeld = true;
-      await heldRead;
-    }
-    return response;
-  });
+  const first = await arrange(model.provider, readGate.dispatch);
   typeId = (await map(first)).types[0].id;
   await seed(first);
   const second = await conversation();
   const firstId = await send(first, 'Lägg till Lampan.');
   await expect.poll(() => model.requests.length).toBe(1);
-  holdRead = true;
+  readGate.hold();
   const resetting = post(second.client, `${second.path}/new`, { discard: true });
-  await expect.poll(() => readHeld).toBe(true);
+  await expect.poll(() => readGate.held).toBe(true);
   releaseModel();
   expect((await completed(first, firstId)).error).toBeUndefined();
-  releaseRead();
+  readGate.release();
   expect((await resetting).status()).toBe(200);
   await expect.poll(async () => (await read(second)).phase).not.toBe('working');
   expect((await read(second)).error).toBeUndefined();

@@ -418,6 +418,9 @@ samma inloggning ersätter inte den andra profilen i detta prov.
 **Automatiskt motsvarande test (integration):**
 [conversation-queue.spec.ts](../../tests/integration/conversation-queue.spec.ts),
 KÖ-07. Leverantören är kontrollerad; server och SQLite är riktiga.
+Separat HTTP-underlag håller lässvaret under förberedelsen. Det prövar att
+tidigare verifierat arbete får slutföras före begärans köstart, medan en
+manuell ändring eller en redan inaktuell begäran fortfarande avvisas.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -451,6 +454,46 @@ KÖ-07. Leverantören är kontrollerad; server och SQLite är riktiga.
       "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
       "title": "an earlier message held in preparation keeps its position before another conversation",
       "purpose": "HTTP-bevis att en fördröjd läsning före köstart inte låter ett senare samtal gå före."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "preparation accepts only verified predecessor advancement during its reservation (preparing=true, manual=false)",
+      "purpose": "HTTP-bevis att en tidigare verifierad batch får slutföras under förberedelsen utan att avvisa nästa begäran; återförsök behåller ursprungligt innehåll."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "preparation accepts only verified predecessor advancement during its reservation (preparing=true, manual=true)",
+      "purpose": "HTTP-bevis att en ytterligare manuell ändring bevaras och att den förberedda begäran avvisas."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "preparation accepts only verified predecessor advancement during its reservation (preparing=false, manual=false)",
+      "purpose": "HTTP-bevis att en begäran som anländer efter batchen inte får använda ett äldre underlag."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "admission rereads a held snapshot advanced by a verified predecessor (manual=false)",
+      "purpose": "HTTP-bevis med fördröjd begärandetext att två tidigare verifierade batcher följs av en aktuell läsning före köstart."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-draft-ordering.test.ts",
+      "title": "admission rereads a held snapshot advanced by a verified predecessor (manual=true)",
+      "purpose": "HTTP-bevis att en ytterligare manuell ändring avvisar begäran även när det sista lässvaret är fördröjt."
     },
     {
       "kind": "technical",
