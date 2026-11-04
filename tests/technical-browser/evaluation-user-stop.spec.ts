@@ -4,6 +4,7 @@ import { overlapScenarios } from '../../scripts/model-evaluation/overlap.js';
 import profiles from '../../scripts/model-evaluation/profiles.json' with { type: 'json' };
 import { verifiedProfile } from '../../scripts/model-evaluation/provider.js';
 import { runVoiceScenario } from '../../scripts/model-evaluation/voice-runner.js';
+import { waitForAbortOrTimeout } from '../support/abort-wait.js';
 import { evaluationVoiceProvider } from '../support/evaluation-voice-provider.js';
 import { modelMessage, textModel } from '../support/text-model.js';
 
@@ -33,15 +34,8 @@ for (const { conversationWorkMode, fault } of stopCases) {
     let rendererClosed = false;
     let aborted = false;
     const model = textModel(async (_body, signal) => {
-      await new Promise<void>((resolve) => {
-        const timer = setTimeout(resolve, 30000);
-        const finish = () => {
-          clearTimeout(timer);
-          aborted = true;
-          resolve();
-        };
-        if (signal?.aborted) finish();
-        else signal?.addEventListener('abort', finish, { once: true });
+      await waitForAbortOrTimeout(30000, signal, () => {
+        aborted = true;
       });
       return [modelMessage('Ett för sent svar.')];
     });
