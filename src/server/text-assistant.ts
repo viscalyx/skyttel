@@ -226,6 +226,10 @@ export function textAssistantRoutes({
   const requestPreparations = new WeakMap<Request, Preparation>();
   const draftKey = (session: Session) =>
     JSON.stringify([session.state.actorId, session.state.householdId]);
+  const failedDraftWork = (session: Session) =>
+    [...sessions.values()].some(
+      (candidate) => draftKey(candidate) === draftKey(session) && candidate.state.failedWork,
+    );
   const hasPendingOutcome = (session: Session) =>
     Boolean(session.state.pendingSave || session.state.pendingBatch);
   const draftHasPendingBatch = (session: Session) =>
@@ -269,6 +273,7 @@ export function textAssistantRoutes({
       hasEarlierPreparation(session, sequence) ||
       draftExecutions.has(draftKey(session)) ||
       draftHasPendingBatch(session) ||
+      failedDraftWork(session) ||
       storage.pausedWork(
         session.state.actorId,
         session.state.householdId,
@@ -636,8 +641,31 @@ export function textAssistantRoutes({
       displayedSelection,
       displayedItem,
     } = session.state;
+    const failure = session.state.failedWork;
+    const workFailure =
+      failure &&
+      !hasPendingOutcome(session) &&
+      !operations.some((item) => item.status === 'pending')
+        ? {
+            requestId: failure.message.id,
+            request: failure.message.text,
+            code: failure.code,
+            message:
+              failure.code === 'assistant_draft_changed'
+                ? 'Utkastet har ändrats efter det genomförda arbetet. Hur vill du fortsätta med dina aktuella ändringar? Avstå från den gamla oavslutade delen innan du lämnar en ny instruktion. Det aktuella utkastet bevaras; borttagna förslag återskapas inte.'
+                : assistantFailureMessage(failure.code),
+            retry: ['assistant_model_temporary', 'assistant_provider_failed'].includes(failure.code)
+              ? 'Försök igen'
+              : ['assistant_model_access', 'assistant_model_unsupported'].includes(failure.code)
+                ? 'Fortsätt med valt alternativ'
+                : failure.code === 'assistant_request_unfinished'
+                  ? 'Fortsätt det oavslutade arbetet'
+                  : undefined,
+          }
+        : undefined;
     return {
       id,
+      workFailure,
       paused: session.state.paused,
       expiresAt: session.state.expiresAt,
       conversation: session.state.conversation.map(({ role, text, partial }) => ({
@@ -1572,6 +1600,14 @@ export function textAssistantRoutes({
       session.state.discarded = pending.discarded;
       session.state.pendingBatch = undefined;
       const unfinished = !pending.finishesRequest || hasReadyPendingParts(session);
+      const failed = session.state.failedWork;
+      if (failed && failed.message.id === pending.messageId) {
+        if (unfinished) failed.code = 'assistant_request_unfinished';
+        else {
+          session.state.failedWork = undefined;
+          if (pending.messageId) settleRequests(session, pending.messageId, true);
+        }
+      }
       session.state.error = unfinished ? 'assistant_request_unfinished' : undefined;
       if (unfinished) {
         const request = session.state.unfinishedRequests.find(
@@ -2022,6 +2058,7 @@ export function textAssistantRoutes({
     checked: ReturnType<typeof checkSaves>,
     verificationSession = session,
   ) {
+    const pending = session.state.pendingSave;
     if (checked.receipt) {
       const operation = checked.operations.find((item) => item.status === 'succeeded');
       if (!operation) throw new Error('invalid_receipt');
@@ -2052,6 +2089,19 @@ export function textAssistantRoutes({
     session.state.error = undefined;
     session.state.saveCheck = checked;
     session.state.reply = checked.reply;
+    const failed = session.state.failedWork;
+    if (pending && failed && (!pending.messageId || pending.messageId === failed.message.id)) {
+      if (pending.finishesRequest && checked.receipt && !hasReadyPendingParts(session)) {
+        settleRequests(session, failed.message.id, true);
+        session.state.failedWork = undefined;
+      } else {
+        failed.code = 'assistant_request_unfinished';
+        session.state.phase = 'error';
+        session.state.error = failed.code;
+        const request = session.state.unfinishedRequests.find(({ id }) => id === failed.message.id);
+        if (request) request.paused = true;
+      }
+    }
     return changed;
   }
   async function refreshConfirmed(session: Session, guard?: () => void) {
@@ -2145,6 +2195,7 @@ export function textAssistantRoutes({
     session.execution.task = undefined;
     session.state.activeMessage = undefined;
     clearWorkTimers(session);
+    session.state.failedWork = undefined;
     session.execution.summaryTask?.abort();
     session.execution.summaryTask = undefined;
     session.state.pendingSummaryChoice = undefined;
@@ -3652,6 +3703,7 @@ export function textAssistantRoutes({
     const key = draftKey(session);
     if (draftExecutions.has(key)) return;
     if (draftHasPendingBatch(session)) return;
+    if (failedDraftWork(session)) return;
     const queued = [...sessions.values()]
       .filter((candidate) => draftKey(candidate) === key)
       .flatMap((session) => session.state.queue.map((message) => ({ session, message })))
@@ -3931,9 +3983,10 @@ export function textAssistantRoutes({
     if (message.resetDiscard || waitsForDraft(session, message.sequence, current)) {
       session.state.queue.push(message);
       session.state.queue.sort((left, right) => left.sequence - right.sequence);
-      session.state.phase = 'working';
+      if (!session.state.failedWork) session.state.phase = 'working';
       session.state.canceled = undefined;
-      if (!session.execution.task) session.state.activity = 'Väntar på tidigare uppdrag';
+      if (!session.execution.task && !session.state.failedWork)
+        session.state.activity = 'Väntar på tidigare uppdrag';
       nextMessage(session);
     } else {
       session.state.review = current;
@@ -3941,7 +3994,12 @@ export function textAssistantRoutes({
       beginMessage(session, message);
     }
   }
-  function continueMessage(session: Session, original: Message, deliveryConnectionId?: string) {
+  function continueMessage(
+    session: Session,
+    original: Message,
+    deliveryConnectionId?: string,
+    deliveryAudio = false,
+  ) {
     const accepted = session.state.accepted.get(original.id);
     if (!accepted) throw new MapError('assistant_turn_changed', 409);
     const receivedAt = now();
@@ -3960,7 +4018,7 @@ export function textAssistantRoutes({
     accepted.deadline = message.deadline;
     accepted.result = undefined;
     session.execution.deliveries.get(message.id)?.stop();
-    bindMessageResources(session, message, deliveryConnectionId);
+    bindMessageResources(session, message, deliveryConnectionId, deliveryAudio);
     session.state.saveIntent = undefined;
     session.state.saveIntentDeadline = undefined;
     session.execution.reads.clear();
@@ -4281,7 +4339,22 @@ export function textAssistantRoutes({
         },
         async () => {
           try {
-            requireEnabledChoice(selectedModel, config.conversationModels);
+            try {
+              requireEnabledChoice(selectedModel, config.conversationModels);
+            } catch (error) {
+              if (error instanceof MapError && error.code === 'assistant_model_unsupported')
+                console.error(
+                  JSON.stringify({
+                    event: 'assistant_model_failed',
+                    reference: randomUUID(),
+                    at: new Date(now()).toISOString(),
+                    model: selectedModel.model,
+                    effort: selectedModel.effort,
+                    category: error.code,
+                  }),
+                );
+              throw error;
+            }
             await (message.voice ? execute() : textWork.run({ session, guard }, execute));
             // Capture the outcome before a queued or concurrent request can replace
             // the mutable conversation view. A stale execution has no known success.
@@ -4416,6 +4489,21 @@ export function textAssistantRoutes({
             failed: Boolean(session.state.error),
           });
         session.execution.task = undefined;
+        if (
+          (session.state.phase === 'recovery' && hasPendingOutcome(session)) ||
+          (session.state.phase === 'error' &&
+            (message.continuation ||
+              [
+                'assistant_model_temporary',
+                'assistant_model_access',
+                'assistant_model_unsupported',
+                'assistant_provider_failed',
+              ].includes(session.state.error ?? '')))
+        )
+          session.state.failedWork = {
+            message,
+            code: session.state.error ?? 'assistant_provider_failed',
+          };
         session.state.activeMessage = undefined;
         session.state.taskId = undefined;
         session.state.taskSource = undefined;
@@ -4841,7 +4929,7 @@ export function textAssistantRoutes({
       if (preparation) checkPreparation(preparation);
       if (
         context.req.method === 'POST' &&
-        /\/(messages|new|summarize|resume)$/.test(context.req.path)
+        /\/(messages|new|summarize|resume|retry-work|abandon-work)$/.test(context.req.path)
       ) {
         const body = await context.req.json().catch(() => null);
         try {
@@ -5216,6 +5304,15 @@ export function textAssistantRoutes({
     // Completed work can still await delivery. Limit this stop to tasks
     // accepted now, so work admitted during refresh keeps its delivery.
     const acceptedIds = new Set(session.state.accepted.keys());
+    const canceledIds = new Set(
+      [...session.state.accepted]
+        .filter(([, accepted]) => ['queued', 'working'].includes(accepted.status))
+        .map(([id]) => id),
+    );
+    if (session.state.failedWork) canceledIds.add(session.state.failedWork.message.id);
+    for (const request of session.state.unfinishedRequests)
+      if (canceledIds.has(request.id)) request.paused = true;
+    session.state.failedWork = undefined;
     session.execution.task?.abort();
     session.execution.task = undefined;
     session.state.activeMessage = undefined;
@@ -5348,6 +5445,70 @@ export function textAssistantRoutes({
       body,
     );
   });
+  for (const action of ['retry', 'abandon'] as const)
+    routes.post(`${base}/:sessionId/${action}-work`, async (context) => {
+      const session = sessions.get(context.req.param('sessionId'));
+      if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+      const failed = session.state.failedWork;
+      const body = await context.req.json().catch(() => null);
+      if (
+        !failed ||
+        session.execution.task ||
+        body?.revision !== session.state.revision ||
+        body?.requestId !== failed.message.id
+      )
+        return context.json({ error: 'assistant_turn_changed' }, 409);
+      if (session.state.paused) return context.json({ error: 'assistant_work_paused' }, 409);
+      const revision = session.state.revision;
+      const guard = () => {
+        checkViewAccess(session);
+        if (session.state.revision !== revision || session.state.failedWork !== failed)
+          throw new MapError('assistant_turn_changed', 409);
+      };
+      await refresh(session, guard);
+      guard();
+      if (
+        hasPendingOutcome(session) ||
+        session.state.operations.some((item) => item.status === 'pending')
+      )
+        return context.json({ error: 'operation_pending' }, 409);
+      if (
+        body?.deliveryConnectionId !== undefined &&
+        (typeof body.deliveryConnectionId !== 'string' ||
+          deliveryOwners.get(body.deliveryConnectionId) !== session ||
+          !deliveries.has(body.deliveryConnectionId))
+      )
+        return context.json({ error: 'assistant_delivery_unavailable' }, 409);
+      session.state.failedWork = undefined;
+      session.state.error = undefined;
+      session.state.phase = 'ready';
+      if (action === 'retry')
+        continueMessage(
+          session,
+          failed.message,
+          body.deliveryConnectionId,
+          body.deliveryAudio === true,
+        );
+      else {
+        session.state.revision++;
+        session.execution.parts.withdrawMessage(failed.message.id);
+        session.state.unfinishedRequests = session.state.unfinishedRequests.filter(
+          (request) => request.id !== failed.message.id,
+        );
+        session.state.saveIntent = undefined;
+        session.state.saveIntentDeadline = undefined;
+        session.state.modelReply = undefined;
+        session.state.requiredNotice = undefined;
+        session.state.result = undefined;
+        session.state.reply =
+          'Du har avstått från det oavslutade arbetet. Ditt aktuella utkast och tidigare sparresultat påverkas inte.';
+        syncQuestions(session);
+        appendConversation(session, { role: 'assistant', text: session.state.reply });
+      }
+      persist(session);
+      nextMessage(session);
+      return context.json(view(session), 202);
+    });
   routes.post(`${base}/:sessionId/retry`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);

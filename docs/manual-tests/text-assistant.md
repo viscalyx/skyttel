@@ -49,6 +49,93 @@ formuläret; befintliga förslag i utkastet påverkas inte.
 
 ## Samtal och samlat sparande
 
+### TEXT-18: återförsök och avstående fortsätter bara återstående arbete
+
+**Syfte:** Behålla genomförda förslag vid modellfel och själv välja hur
+oavslutat arbete och kö ska fortsätta i text och röst.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Lo Exempel av typen Person med beskrivningen
+Påhittad uppgift ligger osparad i utkastet. Mikrofonen är av.
+
+**Separat förberedelse:** Följ
+[återförsök efter modellfel](text-conversation-preparation.md#återförsök-efter-modellfel).
+Operatören håller nästa svar efter en genomförd ändring och släpper sedan
+ett tillfälligt fel. Kontrollerade rösthändelser används; fysisk mikrofon,
+hörbart tal och verklig modellförståelse bedöms separat.
+
+**Automatiskt motsvarande test:**
+[conversation-work-retry.spec.ts](../../tests/integration/conversation-work-retry.spec.ts),
+TEXT-18.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-work-retry.spec.ts",
+    "caseId": "TEXT-18"
+  },
+  "reference": "Dator med tangentbord; riktig server och databas, kontrollerade modell- och rösthändelser. Skrivet delvis slutfört uppdrag med återförsök, därefter talat delvis slutfört uppdrag med uttryckligt avstående. Verklig språkförståelse och fysisk uppläsning ingår inte.",
+  "outcomes": [
+    "Ett modellfel behåller genomförda förslag och pausar senare kö utan automatiskt modellarbete.",
+    "Modellbyte startar inget; uttryckligt återförsök fortsätter återstående arbete med det aktuella valet utan dubbla förslag eller återupplivat sparande.",
+    "Uttryckligt avstående efter ett talat uppdrag behåller genomförda förslag och låter senare kö fortsätta.",
+    "Tangentbord når nästa steg och fokus finns kvar på en synlig kontroll när felkontrollerna försvinner."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/conversation-work-clarification.spec.ts",
+      "title": "a concurrent draft discard asks a visible question and requires explicit abandonment before a fresh instruction and save",
+      "purpose": "Ändrat underlag ger en synlig fråga, bevarar oskickad instruktion och kräver avstående före ny instruktion och nytt sparande utan att återskapa kastade förslag."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj **Skriv till Skyttel → Nytt samtal** och godkänn medgivandet om
+   det behövs. Skicka **Ändra Lo Exempel till Lo Lind och lägg till Mira.
+   Spara hela utkastet.** Operatören ändrar Lo först och håller nästa svar.
+2. Skicka **Beskriv vad ett utkast är.** medan arbetet pågår. Operatören
+   släpper nu felet. Läs att modellen är tillfälligt otillgänglig, att
+   återstående arbete och kö väntar och att utkastet finns kvar. Öppna
+   utkastet och läs Lo Lind med oförändrad beskrivning.
+3. Öppna **Modell och resonemang**, välj **GPT-6.1 Sol** och **Medium**,
+   och stäng dialogerna. Läs det nya valet. Inget arbete startar av valet.
+4. Nå **Försök igen** med tangentbord och aktivera knappen. Operatören
+   lämnar först samma Lo-förslag tillsammans med Mira och släpper sedan
+   kösvaret. Läs Lo Lind och Mira i utkastet samt beskedet att en ny
+   sparbegäran behövs. Ingen ändring finns i den gemensamma kartan.
+5. Slå på mikrofonen. Operatören ger det kontrollerade talade uppdraget
+   **Ändra Mira till Mira Lind. Beskriv sedan hushållets typer.** och
+   genomför namnändringen före nästa hållna svar.
+6. Skicka **Beskriv kartan.** som text medan arbetet pågår. Operatören
+   släpper felet. Läs det kvarvarande Mira Lind-förslaget och felbeskedet.
+7. Nå **Avstå från det oavslutade arbetet** med tangentbord. Aktivera
+   knappen och låt operatören släppa kösvaret. Läs svaret och kontrollera
+   att Lo Lind och Mira Lind fortfarande är osparade förslag.
+
+**Förväntat resultat:**
+
+- Samma samtal och utkast används för text och röst. Senare kö väntar vid
+  modellfel tills Alex uttryckligen försöker igen eller avstår.
+- Återförsök använder aktuellt modellval och fortsätter bara återstående
+  arbete. Genomförda ändringar upprepas inte och gammal sparbegäran ger
+  inget nytt sparande.
+- Avstående tar bort den oavslutade delen, bevarar genomförda förslag och
+  släpper fram kön. Kontrollerna går att nå med tangentbord och fokus
+  återgår till samtalets synliga kontroll efter handlingen.
+
 ### TEXT-SCOPE-01: stoppad åtgärd visar felreferens och behåller utkastet
 
 **Syfte:** Läsa en stoppnotis utan att förlora befintliga förslag.
