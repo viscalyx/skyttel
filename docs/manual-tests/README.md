@@ -505,6 +505,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   mål vid köstart, med fortsatt rättelse eller förtydligande.
   KONTEXT-23 läser aktuellt förslag i text och röst efter manuell rättelse;
   teknisk evidens skiljer återanvända läsningar från modellens promptcache.
+  Den täcker även indirekta hänvisningar, tvetydiga personnamn, aktuella
+  rättelser och återkallad åtkomst.
   [Separat samtalsförberedelse](conversation-preparation.md) beskriver
   versionsvärden, paket, oberoende kontroll av köade mål, registrerat
   sparande och PCM genom hållen start.

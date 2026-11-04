@@ -1684,6 +1684,86 @@ frågan om du provar med syntetisk mikrofon. Faktiskt hört ljud ingår inte.
       "kind": "technical",
       "runner": "vitest",
       "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "superseding a duplicate relationship draft picture preserves its real existing identity",
+      "purpose": "Ett verkligt återanvänt sambands identitet bevaras när dess gamla utkastbild ersätts efter en senare rättelse."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "plural follow-ups retain both bounded saved candidates and singular ambiguity asks which person",
+      "purpose": "En plural hänvisning får båda aktuella sparade kandidaterna; en senare oklar singular hänvisning ger en fråga utan ändring."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "plural follow-ups retain both bounded draft candidates and singular ambiguity asks which person",
+      "purpose": "Motsvarande kandidater i utkastet bevaras utan att en av personerna väljs vid oklar hänvisning."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "an indirect saved follow-up preserves two people with the same name for clarification",
+      "purpose": "Två sparade personer med samma namn behåller skilda identiteter och ger en riktad fråga."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "an indirect draft follow-up preserves two people with the same name for clarification",
+      "purpose": "Två personer med samma namn i utkastet ger en riktad fråga utan gissning eller ändring."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "an initial human reference without a prior target cannot select an unrelated sole proposal",
+      "purpose": "Hon utan tidigare mål väljer inte ett orelaterat ensamt förslag; samtalet frågar vilken person som avses."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "an indirect follow-up after a saved revision uses the new date and never the obsolete cached value",
+      "purpose": "En sparad rättelse kräver aktuell läsning och gamla egenskapsvärden återförs inte till nästa arbetsanrop."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "an indirect follow-up after a draft revision uses the new date and never the obsolete cached value",
+      "purpose": "En manuell rättelse i utkastet ger aktuellt relevant startunderlag utan gammalt värde eller extra läsomgång."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "grant revocation rejects a held indirect cached-fact reply and a new conversation inherits no prior referent",
+      "purpose": "Återkallad verklig MCP-behörighet stoppar ett väntande svar byggt på tidigare läsning och ett nytt samtal ärver ingen hänvisning."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "content replacement rejects a held indirect cached-fact reply and a new conversation inherits no prior referent",
+      "purpose": "Verklig återimport ersätter innehållsägaren, stoppar gammalt väntande svar och förhindrar återanvändning av dess hänvisning."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
       "spec": "tests/unit/server/text-assistant.test.ts",
       "title": "independent reads overlap and identical concurrent reads share one authorized result",
       "purpose": "Publik MCP och kontrollerad leverantör visar överlappande oberoende läsningar och ett gemensamt resultat för identiska anrop."

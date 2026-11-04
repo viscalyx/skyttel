@@ -6,7 +6,13 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider } from '../../support/live-provider.js';
-import { modelMessage, modelTool, pendingUpdate, textModel } from '../../support/text-model.js';
+import {
+  type ModelRequest,
+  modelMessage,
+  modelTool,
+  pendingUpdate,
+  textModel,
+} from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
@@ -77,6 +83,67 @@ async function settled(session: TextAssistantView) {
     .not.toBe('working');
   return view;
 }
+
+async function seedPeople(session: TextAssistantView, source: string, names = ['Lo', 'Lina']) {
+  for (const [index, id, date] of [
+    [0, 'lo', '1980-01-01'],
+    [1, 'lina', '1990-02-03'],
+  ] as const) {
+    const map = await readMap();
+    const response = await post(`${base}/map/draft`, {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      id,
+      baseRevision: null,
+      value: {
+        typeId: map.types[0].id,
+        name: names[index],
+        properties: [{ id: `${id}-date`, label: 'Födelsedatum', kind: 'date', value: date }],
+      },
+    });
+    expect(response.status(), await response.text()).toBe(200);
+  }
+  if (source === 'saved') await saveMap('seed-people');
+  return (
+    await browser.get(`${base}/text-assistant/${session.id}`)
+  ).json() as Promise<TextAssistantView>;
+}
+
+async function saveMap(operationId: string) {
+  const map = await readMap();
+  const response = await post(`${base}/map/save`, {
+    version: map.draft.version,
+    contentVersion: map.contentVersion,
+    operationId,
+  });
+  expect(response.status(), await response.text()).toBe(200);
+}
+
+function startEnvelope(request: ModelRequest) {
+  return JSON.parse(String(request.input.findLast((item) => item.role === 'user')?.content));
+}
+
+function suppliedObjects(request: ModelRequest, source: string) {
+  const current = startEnvelope(request);
+  const outputs = request.input
+    .filter((item) => item.type === 'function_call_output')
+    .map((item) => JSON.parse(String(item.output)));
+  return source === 'draft'
+    ? [current.draft, ...outputs].flatMap((value) =>
+        (value.changes ?? []).flatMap((change: { id: string; after: object | null }) =>
+          change.after ? [{ ...change.after, id: change.id }] : [],
+        ),
+      )
+    : [...current.verifiedReads.map((fact: { value: unknown }) => fact.value), ...outputs].flatMap(
+        (value) => value.objects ?? [],
+      );
+}
+
+const readScope = () => [
+  modelMessage(
+    JSON.stringify({ mode: 'read', request: 'Besvara den aktuella frågan utan ändringar.' }),
+  ),
+];
 
 test('ordinary conversation requests select the 30-minute minimum prompt lifetime without persistent provider state', async () => {
   const model = textModel(() => [modelMessage('Utkastet ligger kvar osparat.')]);
@@ -454,73 +521,39 @@ test('successive single corrections supersede obsolete draft pictures and preser
 test.each(['saved', 'draft'])(
   'a completed human follow-up starts with bounded current %s facts without another read round',
   async (source) => {
-    const model = textModel(
-      (request) => {
-        const current = JSON.parse(
-          String(request.input.findLast((item) => item.role === 'user')?.content),
-        );
-        const target = current.message.startsWith('Finns Lo') ? 'Lo' : 'Lina';
-        const last = request.input.findLast((item) => item.type === 'function_call_output');
-        const read = last && JSON.parse(String(last.output));
-        const objects =
-          source === 'draft'
-            ? (read?.changes ?? current.draft.changes).map(
-                (change: { after: unknown }) => change.after,
-              )
-            : current.verifiedReads
-                .flatMap((fact: { value: { objects: unknown[] } }) => fact.value.objects)
-                .concat(read?.objects ?? []);
-        const person = objects.find((object: { name: string }) => object?.name === target);
-        if (!person)
-          return [
-            modelTool(
-              source === 'saved' ? 'read_map' : 'read_my_draft',
-              source === 'saved' ? { query: target } : {},
-            ),
-          ];
+    const model = textModel((request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      const target = current.message.startsWith('Finns Lo') ? 'Lo' : 'Lina';
+      const last = request.input.findLast((item) => item.type === 'function_call_output');
+      const read = last && JSON.parse(String(last.output));
+      const objects =
+        source === 'draft'
+          ? (read?.changes ?? current.draft.changes).map(
+              (change: { after: unknown }) => change.after,
+            )
+          : current.verifiedReads
+              .flatMap((fact: { value: { objects: unknown[] } }) => fact.value.objects)
+              .concat(read?.objects ?? []);
+      const person = objects.find((object: { name: string }) => object?.name === target);
+      if (!person)
         return [
-          modelMessage(
-            current.message.startsWith('Finns')
-              ? `${target} finns.`
-              : `Födelsedatum är ${person.properties.find((property: { label: string }) => property.label === 'Födelsedatum').value}.`,
+          modelTool(
+            source === 'saved' ? 'read_map' : 'read_my_draft',
+            source === 'saved' ? { query: target } : {},
           ),
         ];
-      },
-      () => [
+      return [
         modelMessage(
-          JSON.stringify({ mode: 'read', request: 'Besvara den aktuella frågan utan ändringar.' }),
+          current.message.startsWith('Finns')
+            ? `${target} finns.`
+            : `Födelsedatum är ${person.properties.find((property: { label: string }) => property.label === 'Födelsedatum').value}.`,
         ),
-      ],
-    );
+      ];
+    }, readScope);
     const session = await setup({ modelFetch: model.provider });
-    for (const [id, name, date] of [
-      ['lo', 'Lo', '1980-01-01'],
-      ['lina', 'Lina', '1990-02-03'],
-    ]) {
-      const map = await readMap();
-      const response = await post(`${base}/map/draft`, {
-        version: map.draft.version,
-        contentVersion: map.contentVersion,
-        id,
-        baseRevision: null,
-        value: {
-          typeId: map.types[0].id,
-          name,
-          properties: [{ id: `${id}-date`, label: 'Födelsedatum', kind: 'date', value: date }],
-        },
-      });
-      expect(response.status(), await response.text()).toBe(200);
-    }
-    if (source === 'saved') {
-      const map = await readMap();
-      const response = await post(`${base}/map/save`, {
-        version: map.draft.version,
-        contentVersion: map.contentVersion,
-        operationId: 'seed-people',
-      });
-      expect(response.status(), await response.text()).toBe(200);
-    }
-    const fresh = await (await browser.get(`${base}/text-assistant/${session.id}`)).json();
+    const fresh = await seedPeople(session, source);
     const first = await settled(await send(fresh, 'Finns Lo?'));
     expect(first).toMatchObject({ phase: 'ready', modelReply: 'Lo finns.' });
     const second = await settled(await send(first, 'Finns Lina?'));
@@ -539,6 +572,328 @@ test.each(['saved', 'draft'])(
       '1980-01-01',
     );
     expect((await readMap()).draft.changes).toHaveLength(source === 'draft' ? 3 : 0);
+  },
+);
+
+test('superseding a duplicate relationship draft picture preserves its real existing identity', async () => {
+  let typeId = '';
+  const model = textModel((request) => {
+    const current = startEnvelope(request);
+    if (model.requests.length === 1)
+      return [
+        modelTool('propose_relationship', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          id: 'duplicate-link',
+          baseRevision: null,
+          value: { typeId, sourceId: 'private-chair', targetId: 'lo', properties: [] },
+        }),
+      ];
+    if (model.requests.length === 2)
+      return [
+        modelTool('propose_object', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          id: 'private-chair',
+          baseRevision: null,
+          value: {
+            ...current.draft.changes.find((change: { id: string }) => change.id === 'private-chair')
+              .after,
+            name: 'Slutlig stol',
+          },
+        }),
+      ];
+    return [modelMessage('Den befintliga kopplingen finns kvar och stolen är rättad.')];
+  });
+  const initial = await setup({ modelFetch: model.provider });
+  const fresh = await seedPeople(initial, 'draft');
+  const map = await readMap();
+  typeId = map.relationshipTypes[0].id;
+  const linked = await post(`${base}/map/relationship`, {
+    version: map.draft.version,
+    contentVersion: map.contentVersion,
+    id: 'chair-lo',
+    baseRevision: null,
+    value: { typeId, sourceId: 'private-chair', targetId: 'lo', properties: [] },
+  });
+  expect(linked.status(), await linked.text()).toBe(200);
+  const current = await (await browser.get(`${base}/text-assistant/${fresh.id}`)).json();
+  const before = await readMap();
+  const final = await settled(
+    await send(
+      current,
+      'Kontrollera den befintliga kopplingen mellan Min stol och Lo, och rätta Min stol till Slutlig stol. Spara inte.',
+    ),
+  );
+  expect(final).toMatchObject({
+    phase: 'ready',
+    modelReply: 'Den befintliga kopplingen finns kvar och stolen är rättad.',
+  });
+  expect(model.requests).toHaveLength(3);
+  const results = model.requests[2].input
+    .filter((item) => item.type === 'function_call_output')
+    .map((item) => JSON.parse(String(item.output)));
+  expect(results[0]).toEqual({
+    version: before.draft.version,
+    contentVersion: 1,
+    existingId: 'chair-lo',
+    superseded: true,
+  });
+  expect(results[1]).toMatchObject({
+    version: before.draft.version + 1,
+    changes: expect.arrayContaining([
+      expect.objectContaining({
+        id: 'private-chair',
+        after: expect.objectContaining({ name: 'Slutlig stol' }),
+      }),
+    ]),
+  });
+  const after = await readMap();
+  expect(after.draft.relationships).toEqual(before.draft.relationships);
+  expect(after.draft.relationships).toHaveLength(1);
+  expect(after.objects).toEqual([]);
+  expect(model.authorizationRequests).toHaveLength(3);
+});
+
+test.each(['saved', 'draft'])(
+  'plural follow-ups retain both bounded %s candidates and singular ambiguity asks which person',
+  async (source) => {
+    const question = 'Menar du Lina eller Lo?';
+    const model = textModel((request) => {
+      const current = startEnvelope(request);
+      const objects = suppliedObjects(request, source);
+      if (!['lo', 'lina'].every((id) => objects.some((object) => object.id === id)))
+        return source === 'saved'
+          ? [modelTool('read_map', { query: 'Lina' }), modelTool('read_map', { query: 'Lo' })]
+          : [modelTool('read_my_draft', {})];
+      if (current.message.startsWith('Finns')) return [modelMessage('Lina och Lo finns.')];
+      if (current.message.includes('hon'))
+        return [modelTool('ask_questions', { questions: [question] })];
+      return [modelMessage('Lo är född 1980-01-01 och Lina är född 1990-02-03.')];
+    }, readScope);
+    const fresh = await seedPeople(await setup({ modelFetch: model.provider }), source);
+    const initial = await settled(await send(fresh, 'Finns Lina och Lo?'));
+    expect(initial).toMatchObject({ phase: 'ready', modelReply: 'Lina och Lo finns.' });
+    let next = model.requests.length;
+    const plural = await settled(await send(initial, 'Vilka födelsedatum har de?'));
+    expect(plural).toMatchObject({
+      phase: 'ready',
+      modelReply: 'Lo är född 1980-01-01 och Lina är född 1990-02-03.',
+    });
+    expect(model.requests).toHaveLength(next + 1);
+    const pluralFacts = startEnvelope(model.requests[next]);
+    expect(
+      JSON.stringify({ draft: pluralFacts.draft, reads: pluralFacts.verifiedReads }),
+    ).toContain('1980-01-01');
+    expect(
+      JSON.stringify({ draft: pluralFacts.draft, reads: pluralFacts.verifiedReads }),
+    ).toContain('1990-02-03');
+    expect(
+      JSON.stringify({ draft: pluralFacts.draft, reads: pluralFacts.verifiedReads }),
+    ).not.toContain('Privat förslag');
+    next = model.requests.length;
+    const before = await readMap();
+    const ambiguous = await settled(await send(plural, 'Vilket födelsedatum har hon?'));
+    expect(ambiguous).toMatchObject({
+      phase: 'ready',
+      questionPending: true,
+      questions: [question],
+    });
+    expect(model.requests).toHaveLength(next + 1);
+    const candidates = suppliedObjects(model.requests[next], source);
+    expect(candidates.map((object) => object.id).sort()).toEqual(['lina', 'lo']);
+    expect(ambiguous.receipt).toBeUndefined();
+    expect(await readMap()).toEqual(before);
+  },
+);
+
+test.each(['saved', 'draft'])(
+  'an indirect %s follow-up preserves two people with the same name for clarification',
+  async (source) => {
+    const question = 'Menar du Lina född 1980-01-01 eller Lina född 1990-02-03?';
+    const model = textModel((request) => {
+      const current = startEnvelope(request);
+      if (suppliedObjects(request, source).length < 2)
+        return [
+          modelTool(
+            source === 'saved' ? 'read_map' : 'read_my_draft',
+            source === 'saved' ? { query: 'Lina' } : {},
+          ),
+        ];
+      return current.message.startsWith('Finns')
+        ? [modelMessage('Det finns två personer som heter Lina.')]
+        : [modelTool('ask_questions', { questions: [question] })];
+    }, readScope);
+    const fresh = await seedPeople(await setup({ modelFetch: model.provider }), source, [
+      'Lina',
+      'Lina',
+    ]);
+    const initial = await settled(await send(fresh, 'Finns Lina?'));
+    expect(initial).toMatchObject({
+      phase: 'ready',
+      modelReply: 'Det finns två personer som heter Lina.',
+    });
+    const next = model.requests.length;
+    const before = await readMap();
+    const final = await settled(await send(initial, 'Vilket födelsedatum har hon?'));
+    expect(final).toMatchObject({ phase: 'ready', questionPending: true, questions: [question] });
+    expect(model.requests).toHaveLength(next + 1);
+    expect(
+      suppliedObjects(model.requests[next], source)
+        .map((object) => object.id)
+        .sort(),
+    ).toEqual(['lina', 'lo']);
+    expect(final.receipt).toBeUndefined();
+    expect(await readMap()).toEqual(before);
+  },
+);
+
+test('an initial human reference without a prior target cannot select an unrelated sole proposal', async () => {
+  const question = 'Vilken person menar du?';
+  const model = textModel(() => [modelTool('ask_questions', { questions: [question] })], readScope);
+  const session = await setup({ modelFetch: model.provider });
+  const before = await readMap();
+  const final = await settled(await send(session, 'Vilket födelsedatum har hon?'));
+  expect(final).toMatchObject({ phase: 'ready', questionPending: true, questions: [question] });
+  expect(model.requests).toHaveLength(1);
+  expect(startEnvelope(model.requests[0])).toMatchObject({
+    draft: { complete: false, totals: { changes: 1 }, changes: [] },
+    verifiedReads: [],
+  });
+  expect(JSON.stringify(model.requests[0].input)).not.toContain('Privat förslag');
+  expect(await readMap()).toEqual(before);
+});
+
+test.each(['saved', 'draft'])(
+  'an indirect follow-up after a %s revision uses the new date and never the obsolete cached value',
+  async (source) => {
+    const model = textModel((request) => {
+      const current = startEnvelope(request);
+      const person = suppliedObjects(request, source).find((object) => object.id === 'lina');
+      if (!person)
+        return [
+          modelTool(
+            source === 'saved' ? 'read_map' : 'read_my_draft',
+            source === 'saved' ? { query: 'Lina' } : {},
+          ),
+        ];
+      return [
+        modelMessage(
+          current.message.startsWith('Finns')
+            ? 'Lina finns.'
+            : `Födelsedatum är ${person.properties.find((property: { label: string }) => property.label === 'Födelsedatum').value}.`,
+        ),
+      ];
+    }, readScope);
+    const fresh = await seedPeople(await setup({ modelFetch: model.provider }), source);
+    const initial = await settled(await send(fresh, 'Finns Lina?'));
+    expect(initial).toMatchObject({ phase: 'ready', modelReply: 'Lina finns.' });
+    const map = await readMap();
+    const object =
+      source === 'saved'
+        ? map.objects.find((object) => object.id === 'lina')
+        : map.draft.changes.find((change) => change.id === 'lina')?.after;
+    expect(object).toBeDefined();
+    const changed = await post(`${base}/map/draft`, {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      id: 'lina',
+      baseRevision:
+        source === 'saved' ? map.objects.find((object) => object.id === 'lina')?.revision : null,
+      value: {
+        typeId: object?.typeId,
+        name: object?.name,
+        properties: object?.properties?.map((property) => ({ ...property, value: '2001-04-05' })),
+      },
+    });
+    expect(changed.status(), await changed.text()).toBe(200);
+    if (source === 'saved') await saveMap('change-birthday');
+    const current = await (await browser.get(`${base}/text-assistant/${initial.id}`)).json();
+    const next = model.requests.length;
+    const before = await readMap();
+    const final = await settled(await send(current, 'Vilket födelsedatum har hon?'));
+    expect(final).toMatchObject({ phase: 'ready', modelReply: 'Födelsedatum är 2001-04-05.' });
+    expect(model.requests).toHaveLength(next + (source === 'saved' ? 2 : 1));
+    expect(JSON.stringify(model.requests.slice(next))).not.toContain('1990-02-03');
+    if (source === 'saved') expect(startEnvelope(model.requests[next]).verifiedReads).toEqual([]);
+    else expect(JSON.stringify(startEnvelope(model.requests[next]).draft)).toContain('2001-04-05');
+    expect(await readMap()).toEqual(before);
+  },
+);
+
+test.each(['grant revocation', 'content replacement'])(
+  '%s rejects a held indirect cached-fact reply and a new conversation inherits no prior referent',
+  async (change) => {
+    let entered = false;
+    const held = new Promise<unknown[]>((resolve) => {
+      release = () => resolve([modelMessage('Födelsedatum är 1990-02-03. Ett inaktuellt svar.')]);
+    });
+    const model = textModel((request) => {
+      const current = startEnvelope(request);
+      if (current.message.startsWith('Finns'))
+        return suppliedObjects(request, 'saved').length
+          ? [modelMessage('Lina finns.')]
+          : [modelTool('read_map', { query: 'Lina' })];
+      if (model.requests.length === 3) {
+        entered = true;
+        return held;
+      }
+      return [modelTool('ask_questions', { questions: ['Vilken person menar du?'] })];
+    }, readScope);
+    const fresh = await seedPeople(await setup({ modelFetch: model.provider }), 'saved');
+    const initial = await settled(await send(fresh, 'Finns Lina?'));
+    expect(initial).toMatchObject({ phase: 'ready', modelReply: 'Lina finns.' });
+    expect(model.requests).toHaveLength(2);
+    const working = await send(initial, 'Vilket födelsedatum har hon?');
+    await expect.poll(() => entered).toBe(true);
+    expect(JSON.stringify(startEnvelope(model.requests[2]).verifiedReads)).toContain('1990-02-03');
+    if (change === 'grant revocation') {
+      const { connections } = await (
+        await browser.get(`${app.origin}/api/assistants/context`)
+      ).json();
+      const revoked = await post(`${app.origin}/api/assistants/${connections[0].id}/revoke`, {});
+      expect(revoked.status(), await revoked.text()).toBe(200);
+    } else {
+      const prepared = await (await post(`${base}/exports`, {})).json();
+      const archive = await (await browser.get(`${base}/exports/${prepared.id}`)).body();
+      const uploaded = await browser.post(`${base}/imports`, {
+        headers: {
+          origin: app.origin,
+          'content-type': 'application/zip',
+          'X-Skyttel-Content-Version': '1',
+        },
+        data: archive,
+      });
+      expect(uploaded.status(), await uploaded.text()).toBe(201);
+      const ready = await uploaded.json();
+      const confirmed = await post(`${base}/imports/${ready.id}/confirm`, {
+        confirmed: true,
+        contentVersion: 1,
+      });
+      expect(confirmed.status(), await confirmed.text()).toBe(200);
+      expect(await confirmed.json()).toMatchObject({ status: 'completed' });
+    }
+    release();
+    await expect
+      .poll(async () => (await browser.get(`${base}/text-assistant/${working.id}`)).status())
+      .toBe(404);
+    const stopped = await browser.get(`${base}/text-assistant/${working.id}`);
+    expect(await stopped.text()).not.toContain('1990-02-03');
+    expect(model.requests).toHaveLength(3);
+    const started = await post(`${base}/text-assistant`, approvedForVisit);
+    expect(started.status(), await started.text()).toBe(201);
+    const final = await settled(await send(await started.json(), 'Vilket födelsedatum har hon?'));
+    expect(final).toMatchObject({
+      phase: 'ready',
+      questionPending: true,
+      questions: ['Vilken person menar du?'],
+    });
+    expect(model.requests).toHaveLength(4);
+    expect(startEnvelope(model.requests[3])).toMatchObject({
+      draft: { changes: [] },
+      verifiedReads: [],
+    });
+    expect(JSON.stringify(model.requests[3].input)).not.toContain('1990-02-03');
   },
 );
 
