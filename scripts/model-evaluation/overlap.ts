@@ -7,7 +7,8 @@ import { scriptedDialogTiming } from './dialog-timing.js';
 import type { EvaluationPlan } from './evaluate.js';
 import plan from './overlap-comparison-plan.json' with { type: 'json' };
 import type { ProviderCall } from './provider.js';
-import type { Attempt, Catalog, Expected, Scenario } from './types.js';
+import { summarizeProfile } from './report.js';
+import type { Attempt, Catalog, Expected, Scenario, ScenarioStep } from './types.js';
 import { validVoiceStopEvidence } from './user-stop.js';
 
 export type ScenarioVoiceUsage = {
@@ -112,6 +113,28 @@ function distribution(values: (number | null | undefined)[]) {
   };
 }
 
+/** Recheck the approved selection's complete source-specific waiting proof.
+ * A matching reply name alone never certifies necessity or safe waiting. */
+function approvedQuestion(parent: Attempt, step: ScenarioStep) {
+  const reply = step.followUps?.find((item) => item.id === parent.followUpSelection?.selected);
+  const matches = parent.followUpSelection?.candidates.filter((item) => !item.fixed.length);
+  if (!reply || matches?.length !== 1 || matches[0].id !== reply.id) return false;
+  const required = (parent.modality === 'voice' ? ['backend', 'voice'] : ['backend']).flatMap(
+    (source) => [
+      `${source}-follow-up`,
+      `${source}-necessary`,
+      ...reply.waiting.requirements.map((_text, index) => `${source}-waiting-${index}`),
+    ],
+  );
+  const evidence = matches[0].content;
+  return (
+    evidence?.length === required.length &&
+    required.every(
+      (id) => evidence.filter((item) => item.id === id && item.outcome === 'pass').length === 1,
+    )
+  );
+}
+
 /** Cancellation remains aborted in ordinary qualification. This report alone
  * assesses the separately declared Stop endpoint, retaining every raw attempt
  * and per-outcome cost. Extra work cannot be inferred from ordinary scope/work
@@ -134,33 +157,79 @@ export function compareOverlap(
       const repetitions = run.plan.repetitions.map((repetition) => {
         const selected = values.filter((attempt) => attempt.repetition === repetition);
         const scripted = outcome === 'early_stop';
-        const expectedSteps = overlapScenarios().find((item) => item.id === scenario)?.steps ?? [];
+        const scenarioDefinition = overlapScenarios().find((item) => item.id === scenario);
+        const expectedSteps = scenarioDefinition?.steps ?? [];
+        const qualification = summarizeProfile(
+          selected,
+          scenarioDefinition ? [scenarioDefinition] : [],
+          run.voiceProfile?.id ?? run.profile.id,
+          run.plan.modality,
+          [repetition],
+        );
+        const ordered: Attempt[] = [];
+        const verifiedQuestions: Attempt[] = [];
+        let directSteps = 0;
         const correctnessValid = expectedSteps.every((step) => {
           const matches = selected.filter(
             (attempt) => attempt.step === step.id && !attempt.followUpFor,
           );
-          return (
-            matches.length === 1 &&
-            matches[0].comparisonContract === run.contractId &&
-            matches[0].applicationCommit === version.commit &&
-            (scripted
-              ? matches[0].outcome === 'aborted' &&
-                matches[0].scriptedStop?.verdict === 'pass' &&
-                matches[0].scriptedStop?.endpointMs !== null &&
-                (run.plan.modality !== 'voice' || validVoiceStopEvidence(matches[0]))
-              : matches[0].outcome === 'pass' &&
-                matches[0].elapsedMs !== null &&
-                matches[0].timing?.successfulCompletionMs === matches[0].elapsedMs &&
-                (run.plan.modality === 'voice'
-                  ? validVoicePlayback(matches[0])
-                  : matches[0].timing?.contract === 'text-delivery-v2'))
-          );
+          if (matches.length !== 1) return false;
+          const parent = matches[0];
+          ordered.push(parent);
+          if (scripted)
+            return (
+              parent.comparisonContract === run.contractId &&
+              parent.applicationCommit === version.commit &&
+              parent.outcome === 'aborted' &&
+              parent.scriptedStop?.verdict === 'pass' &&
+              parent.scriptedStop?.endpointMs !== null &&
+              (run.plan.modality !== 'voice' || validVoiceStopEvidence(parent))
+            );
+          if (parent.outcome === 'pass') directSteps++;
+          else {
+            const completed = qualification.assistance.completedSteps.some(
+              (item) => item.step === step.id,
+            );
+            const replies = selected.filter(
+              (attempt) =>
+                attempt.followUpFor === parent.step &&
+                attempt.step === parent.followUpSelection?.selected,
+            );
+            if (!completed || !approvedQuestion(parent, step) || replies.length !== 1) return false;
+            verifiedQuestions.push(parent);
+            ordered.push(replies[0]);
+          }
+          return true;
         });
-        const ordered = expectedSteps.flatMap((step) =>
-          selected.filter((attempt) => attempt.step === step.id && !attempt.followUpFor),
+        const deliveryValid = ordered.every(
+          (attempt) =>
+            attempt.comparisonContract === run.contractId &&
+            attempt.applicationCommit === version.commit &&
+            (run.plan.modality === 'voice'
+              ? validVoicePlayback(attempt)
+              : attempt.timing?.contract === 'text-delivery-v2'),
         );
-        const dialogTiming = scripted ? undefined : scriptedDialogTiming(ordered);
-        const valid = correctnessValid && (scripted || dialogTiming?.status === 'complete');
+        const correctnessFailures = selected.filter(
+          (attempt) =>
+            attempt.scriptedStop?.verdict === 'fail' ||
+            qualification.correctnessFailures.some((failure) => failure.step === attempt.step) ||
+            (attempt.outcome === 'fail' && !verifiedQuestions.includes(attempt)),
+        );
+        const assistanceValid = selected.every(
+          (attempt) =>
+            !attempt.followUpFor || attempt.outcome === 'not_run' || ordered.includes(attempt),
+        );
+        const dialogTiming = scripted
+          ? undefined
+          : scriptedDialogTiming(ordered, verifiedQuestions);
+        const valid =
+          correctnessValid &&
+          !correctnessFailures.length &&
+          (scripted ||
+            (qualification.fullCatalogQualified &&
+              assistanceValid &&
+              deliveryValid &&
+              dialogTiming?.status === 'complete'));
         const endpointMs = valid
           ? scripted
             ? (ordered[0]?.scriptedStop?.endpointMs ?? null)
@@ -169,6 +238,16 @@ export function compareOverlap(
         return {
           repetition,
           valid,
+          completion: valid
+            ? scripted
+              ? 'stopped'
+              : verifiedQuestions.length
+                ? 'assisted'
+                : 'direct'
+            : null,
+          directSteps,
+          assistedSteps: verifiedQuestions.length,
+          correctnessFailures,
           endpointMs,
           endpointBounds: valid
             ? scripted && endpointMs !== null
@@ -228,6 +307,18 @@ export function compareOverlap(
         version: version.id,
         repetitions,
         timing: distribution(repetitions.map((item) => item.endpointMs)),
+        completionTiming: {
+          direct: distribution(
+            repetitions
+              .filter((item) => item.completion === 'direct')
+              .map((item) => item.endpointMs),
+          ),
+          assisted: distribution(
+            repetitions
+              .filter((item) => item.completion === 'assisted')
+              .map((item) => item.endpointMs),
+          ),
+        },
         timingBounds: {
           lower: distribution(repetitions.map((item) => item.endpointBounds?.lower)),
           upper: distribution(repetitions.map((item) => item.endpointBounds?.upper)),
@@ -291,11 +382,7 @@ export function compareOverlap(
   });
   const failures = rows.flatMap((row) =>
     row.versions.flatMap((version) =>
-      version.repetitions.flatMap((repetition) =>
-        repetition.attempts.filter(
-          (attempt) => attempt.outcome === 'fail' || attempt.scriptedStop?.verdict === 'fail',
-        ),
-      ),
+      version.repetitions.flatMap((repetition) => repetition.correctnessFailures),
     ),
   );
   const incomplete = rows.some(

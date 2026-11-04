@@ -33,7 +33,10 @@ export type ScriptedDialogTiming = {
  * Interval arithmetic retains device uncertainty; the upper application-wait
  * bound is the conservative reported endpoint. No timing is reconstructed
  * from token counts, sample counts or a sum of response durations. */
-export function scriptedDialogTiming(attempts: Attempt[]): ScriptedDialogTiming {
+export function scriptedDialogTiming(
+  attempts: Attempt[],
+  verifiedQuestions: readonly Attempt[] = [],
+): ScriptedDialogTiming {
   const result: ScriptedDialogTiming = {
     contract: 'scripted-dialog-wait-v1',
     status: 'inconclusive',
@@ -53,17 +56,24 @@ export function scriptedDialogTiming(attempts: Attempt[]): ScriptedDialogTiming 
   const turns: { inputStart: TimeInterval; inputEnd: TimeInterval; completed: TimeInterval }[] = [];
   for (const attempt of attempts) {
     const timing = attempt.timing;
+    // The caller certifies a necessary question and its completed approved
+    // reply. This is a delivered question boundary, never a successful target
+    // completion or a replacement for the parent's immutable raw verdict.
+    const question = verifiedQuestions.includes(attempt);
+    const responseMs = question ? timing?.observedResponseEndMs : attempt.elapsedMs;
     if (
-      attempt.outcome !== 'pass' ||
+      (question ? attempt.outcome !== 'fail' : attempt.outcome !== 'pass') ||
       !timing ||
-      attempt.elapsedMs === null ||
-      !Number.isFinite(attempt.elapsedMs) ||
-      attempt.elapsedMs < 0 ||
+      responseMs == null ||
+      !Number.isFinite(responseMs) ||
+      responseMs < 0 ||
       !Number.isFinite(timing.submittedAt) ||
-      timing.successfulCompletionMs !== attempt.elapsedMs
+      (question
+        ? attempt.elapsedMs !== null || timing.successfulCompletionMs !== null
+        : timing.successfulCompletionMs !== attempt.elapsedMs)
     )
       return incomplete('dialog_completion_boundary_missing');
-    const completedAt = timing.submittedAt + attempt.elapsedMs;
+    const completedAt = timing.submittedAt + responseMs;
     if (attempt.modality === 'text') {
       if (timing.contract !== 'text-delivery-v2')
         return incomplete('dialog_clock_contract_mismatch');
@@ -104,7 +114,11 @@ export function scriptedDialogTiming(attempts: Attempt[]): ScriptedDialogTiming 
     });
   }
   result.cumulativeResponseWaitMs = attempts.reduce(
-    (total, attempt) => total + (attempt.elapsedMs ?? 0),
+    (total, attempt) =>
+      total +
+      (verifiedQuestions.includes(attempt)
+        ? (attempt.timing?.observedResponseEndMs ?? 0)
+        : (attempt.elapsedMs ?? 0)),
     0,
   );
   const replyInputs: TimeInterval[] = [];
