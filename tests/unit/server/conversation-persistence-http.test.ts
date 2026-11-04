@@ -309,6 +309,86 @@ test('seven-day expiry survives restart and ignores model completion, polling an
   }
 });
 
+test('non-delegated speech renews the seven-day lifetime across restart without renewal by other voice activity', async () => {
+  let time = Date.now();
+  const live = liveProvider();
+  const model = textModel(() => [modelMessage('Inget uppdrag behövs.')]);
+  app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    liveFetch: live.provider,
+    liveSideband: live.attach,
+    now: () => time,
+  });
+  browser = await request.newContext();
+  await signIn(browser, app.origin);
+  const { household } = await (await createHousehold(browser, app.origin)).json();
+  const path = `${app.origin}/api/households/${household.id}/text-assistant`;
+  const post = (url: string, data: object = {}) =>
+    browser.post(url, { headers: { origin: app.origin }, data });
+  const state: TextAssistantView = await (await post(path, approvedForVisit)).json();
+  const voice = await post(`${path}/${state.id}/voice`, {
+    sdp: 'synthetic-offer',
+    revision: state.revision,
+    draftVersion: state.review.version,
+    contentVersion: state.review.contentVersion,
+    microphoneOn: true,
+  });
+  expect(voice.status(), await voice.text()).toBe(201);
+  const connected = await voice.json();
+  const providerId = [...live.channels.keys()][0];
+  const transcript = (role: 'input' | 'output', delta: string) =>
+    live.emit(providerId, {
+      type: `session.${role}_transcript.delta`,
+      event_id: crypto.randomUUID(),
+      delta,
+      start_ms: 0,
+      end_ms: 100,
+    });
+  time += 60_000;
+  const deadline = time + 604_800_000;
+  transcript('input', 'Tack för hjälpen.');
+  const spoken = await browser.get(`${path}/${state.id}`);
+  expect(spoken.status(), await spoken.text()).toBe(200);
+  expect(await spoken.json()).toMatchObject({
+    expiresAt: deadline,
+    conversation: [{ role: 'user', text: 'Tack för hjälpen.' }],
+  });
+
+  time += 300_000;
+  transcript('output', 'Varsågod!');
+  transcript('input', '   ');
+  const polled = await post(`${path}/${state.id}/voice/${connected.voice.id}/poll`, {
+    revision: state.revision,
+    draftVersion: state.review.version,
+    contentVersion: state.review.contentVersion,
+    microphoneOn: true,
+    microphoneActive: true,
+    speakerActive: true,
+  });
+  expect(polled.status(), await polled.text()).toBe(200);
+  expect((await (await browser.get(`${path}/${state.id}`)).json()).expiresAt).toBe(deadline);
+  expect(model.requests).toHaveLength(0);
+  await restart();
+  time = deadline - 1;
+  await signIn(browser, app.origin);
+  const restored = await browser.get(`${path}/restore`);
+  expect(restored.status(), await restored.text()).toBe(200);
+  expect((await restored.json()).conversation).toMatchObject({
+    id: state.id,
+    paused: true,
+    expiresAt: deadline,
+    conversation: expect.arrayContaining([
+      expect.objectContaining({ role: 'user', text: 'Tack för hjälpen.' }),
+    ]),
+  });
+  time = deadline;
+  expect((await browser.get(`${path}/${state.id}`)).status()).toBe(404);
+  await restart();
+  expect((await browser.get(`${path}/${state.id}`)).status()).toBe(404);
+  expect(model.requests).toHaveLength(0);
+  expect(live.requests).toHaveLength(1);
+});
+
 test.each([false, true])(
   'updated consent gates new work and durable old text (approved=%s)',
   async (approved) => {
@@ -1095,12 +1175,14 @@ test('queued work waits for updated consent and retains its exact wording throug
 });
 
 test('spoken instructions and pending parts survive actual restart with voice paused and no provider reconnect', async () => {
+  let time = Date.now();
   const live = liveProvider();
   const model = textModel(() => [modelTool('ask_questions', { questions: ['Vilken cykel?'] })]);
   app = await createInstallation(undefined, {
     modelFetch: model.provider,
     liveFetch: live.provider,
     liveSideband: live.attach,
+    now: () => time,
   });
   browser = await request.newContext();
   await signIn(browser, app.origin);
@@ -1119,6 +1201,8 @@ test('spoken instructions and pending parts survive actual restart with voice pa
   expect(voice.status(), await voice.text()).toBe(201);
   const providerId = [...live.channels.keys()][0];
   const instruction = 'Byt cykelns namn till Blå men behåll ägaren.';
+  time += 60_000;
+  const deadline = time + 604_800_000;
   live.emit(providerId, {
     type: 'session.input_transcript.delta',
     event_id: crypto.randomUUID(),
@@ -1126,6 +1210,8 @@ test('spoken instructions and pending parts survive actual restart with voice pa
     start_ms: 0,
     end_ms: 100,
   });
+  // Live can delegate after the utterance has already been received.
+  time += 3000;
   live.emit(providerId, {
     type: 'session.delegation.created',
     event_id: crypto.randomUUID(),
@@ -1141,12 +1227,14 @@ test('spoken instructions and pending parts survive actual restart with voice pa
     .toBe('ready');
   const parts = state.pendingParts;
   expect(parts).toHaveLength(1);
+  expect(state.expiresAt).toBe(deadline);
   await restart();
   const response = await browser.get(`${path}/${state.id}`);
   expect(response.status(), await response.text()).toBe(200);
   expect(await response.json()).toMatchObject({
     paused: true,
     pendingParts: parts,
+    expiresAt: deadline,
     saveBlocked: true,
     conversation: expect.arrayContaining([
       expect.objectContaining({ role: 'user', text: instruction }),

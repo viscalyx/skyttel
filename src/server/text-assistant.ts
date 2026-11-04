@@ -3802,7 +3802,9 @@ export function textAssistantRoutes({
     // and retries retain this original receipt.
     authorize(session.state.actorId, session.execution.browserSessionId, session.state.householdId);
     if (session.state.paused) throw new MapError('assistant_work_paused', 409);
-    session.state.expiresAt = now() + conversationLifetime;
+    // Speech already renews retention when its transcript arrives. A delayed
+    // delegation starts backend work without moving that user-message anchor.
+    if (!message.voice) session.state.expiresAt = now() + conversationLifetime;
     session.execution.mcp.acceptTask(message.deadline);
     session.state.accepted.set(message.id, {
       hash: requestHash,
@@ -5378,7 +5380,10 @@ export function textAssistantRoutes({
     },
     transcript: (sessionId: string, role: 'user' | 'assistant', text: string) => {
       const session = sessions.get(sessionId);
-      if (session) appendConversation(session, { role, text, partial: true });
+      if (session) {
+        if (role === 'user' && text.trim()) session.state.expiresAt = now() + conversationLifetime;
+        appendConversation(session, { role, text, partial: true });
+      }
     },
     // Interrupt current in-memory work synchronously. The normal HTTP cancel
     // route refreshes status; durable operations remain available for recovery.
