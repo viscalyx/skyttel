@@ -164,6 +164,10 @@ export function textAssistantRoutes({
     JSON.stringify([session.state.actorId, session.state.householdId]);
   const hasPendingOutcome = (session: Session) =>
     Boolean(session.state.pendingSave || session.state.pendingBatch);
+  const draftHasPendingBatch = (session: Session) =>
+    [...sessions.values()].some(
+      (candidate) => draftKey(candidate) === draftKey(session) && candidate.state.pendingBatch,
+    );
   function ownedDraftTask(session: Session) {
     const claim = draftExecutions.get(draftKey(session));
     // Reset clears its executor before awaited preparation has retired the
@@ -199,6 +203,7 @@ export function textAssistantRoutes({
     return (
       hasEarlierPreparation(session, sequence) ||
       draftExecutions.has(draftKey(session)) ||
+      draftHasPendingBatch(session) ||
       current.pendingOperations.length > 0 ||
       [...sessions.values()].some(
         (candidate) => draftKey(candidate) === draftKey(session) && candidate.state.queue.length,
@@ -1330,7 +1335,15 @@ export function textAssistantRoutes({
       value.status !== 'committed'
     )
       throw new MapError('assistant_batch_unknown', 409);
-    const after = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
+    await call(session, 'read_my_draft', {}, guard);
+    guard?.();
+    checkViewAccess(session);
+    // A real read response can be delayed after its snapshot is taken. Use
+    // the same synchronous authoritative snapshot as admission before
+    // installing recovery evidence or allowing later work to continue.
+    const after = assistantDraftReview(
+      householdMap(database, session.state.actorId, session.state.householdId),
+    );
     if (after.contentVersion !== contentVersion) throw new MapError('content_conflict', 409);
     session.state.review = after;
     if (!value.currentDraft || after.version !== value.version) {
@@ -3134,12 +3147,7 @@ export function textAssistantRoutes({
   function nextMessage(session: Session) {
     const key = draftKey(session);
     if (draftExecutions.has(key)) return;
-    if (
-      [...sessions.values()].some(
-        (candidate) => draftKey(candidate) === key && candidate.state.pendingBatch,
-      )
-    )
-      return;
+    if (draftHasPendingBatch(session)) return;
     const queued = [...sessions.values()]
       .filter((candidate) => draftKey(candidate) === key)
       .flatMap((session) => session.state.queue.map((message) => ({ session, message })))
@@ -4386,6 +4394,7 @@ export function textAssistantRoutes({
         if (session.state.pendingBatch) {
           await recoverBatch(session, body.checkId);
           finish(session.state.pendingBatch ? 'failed' : 'completed', observationResult(session));
+          nextMessage(session);
           return context.json(view(session));
         }
         if (
