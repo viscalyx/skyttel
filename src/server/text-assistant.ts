@@ -2081,6 +2081,12 @@ export function textAssistantRoutes({
     let admitted = false;
     let workContextStarted = false;
     const attempts: { id?: string; used?: boolean; verified?: boolean }[] = [];
+    let saveWork:
+      | {
+          operation: { operationId: string; version: number; contentVersion: number };
+          attempts: typeof attempts;
+        }
+      | undefined;
     let discardReason = 'failed';
     const guard = () => {
       if (
@@ -3061,6 +3067,11 @@ export function textAssistantRoutes({
           if (isSave) {
             session.state.pendingSave ??= { operationId: randomUUID(), version, contentVersion };
             Object.assign(args, session.state.pendingSave);
+            if (observe)
+              saveWork = {
+                operation: { ...session.state.pendingSave },
+                attempts: attempts.slice(),
+              };
             if (action.name === 'save_draft')
               await call(
                 session,
@@ -3127,6 +3138,7 @@ export function textAssistantRoutes({
           if (action.name === 'save_draft') {
             if (!session.state.pendingSave) throw new Error('invalid_receipt');
             verifyReceipt(session, value.receipt, session.state.pendingSave);
+            for (const attempt of attempts) attempt.verified = true;
             saved(session, value.receipt, true);
             if (!wholeRequestComplete || combined?.continueResponse)
               session.state.phase = 'working';
@@ -3271,6 +3283,30 @@ export function textAssistantRoutes({
       // Retain actual attempt/usage endings even when one branch fails early.
       // No new model call or tool execution is started by this cleanup.
       await scopeJob;
+      if (saveWork?.attempts.some((attempt) => !attempt.verified)) {
+        const { operation: expectedSave, attempts: saveAttempts } = saveWork;
+        try {
+          // Registration can commit before a delayed transport reply reaches
+          // the task. Verify that durable effect without reviving stopped work.
+          const operation = textWork.exit(() => {
+            checkViewAccess(session);
+            return householdMap(
+              database,
+              session.state.actorId,
+              session.state.householdId,
+            ).operation(expectedSave.operationId).operation;
+          });
+          if (
+            operation &&
+            operation.userId === session.state.owner &&
+            operation.draftVersion === expectedSave.version &&
+            operation.contentVersion === expectedSave.contentVersion
+          )
+            for (const attempt of saveAttempts) attempt.verified = true;
+        } catch {
+          // Diagnostic access/read failures cannot replace the task's outcome.
+        }
+      }
       for (const attempt of attempts) {
         if (!attempt.id) continue;
         const observed = observationWork.getStore();

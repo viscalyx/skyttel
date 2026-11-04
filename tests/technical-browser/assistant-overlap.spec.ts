@@ -42,7 +42,9 @@ for (const mode of ['sequential', 'overlap'] as const) {
           events.slice(after).some((event) => event.event === 'held' && event.kind === kind),
         )
         .toBe(true);
-      const found = events.slice(after).find((event) => event.event === 'held' && event.kind === kind);
+      const found = events
+        .slice(after)
+        .find((event) => event.event === 'held' && event.kind === kind);
       if (!found?.id) throw new Error('Missing held request.');
       return found;
     }
@@ -94,7 +96,7 @@ for (const mode of ['sequential', 'overlap'] as const) {
       }
       const mutation = (item: Event | undefined, id = 'kim', name = 'Kim Lind') => {
         if (!item?.draft || !item.id) throw new Error('Missing current work envelope.');
-        return         `tool ${item.id} submit_changes ${JSON.stringify({
+        return `tool ${item.id} submit_changes ${JSON.stringify({
           version: item.draft.version,
           contentVersion: item.draft.contentVersion,
           completion: 'draft',
@@ -150,22 +152,22 @@ for (const mode of ['sequential', 'overlap'] as const) {
       failure = error;
     } finally {
       try {
-      command('quit');
-      await expect.poll(() => child.exitCode).not.toBeNull();
-      expect(child.exitCode, diagnostics).toBe(0);
-      if (directory) {
-        const removedDirectory = directory;
-        await expect
-          .poll(async () => {
-            try {
-              await stat(removedDirectory);
-              return true;
-            } catch {
-              return false;
-            }
-          })
-          .toBe(false);
-      }
+        command('quit');
+        await expect.poll(() => child.exitCode).not.toBeNull();
+        expect(child.exitCode, diagnostics).toBe(0);
+        if (directory) {
+          const removedDirectory = directory;
+          await expect
+            .poll(async () => {
+              try {
+                await stat(removedDirectory);
+                return true;
+              } catch {
+                return false;
+              }
+            })
+            .toBe(false);
+        }
       } catch (error) {
         if (failure) console.error('Overlap fixture cleanup failed:', diagnostics, error);
         else failure = error;

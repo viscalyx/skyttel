@@ -362,6 +362,38 @@ som stöd, skilt från hela det ordinarie fallet.
     },
     {
       "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a verified existing-draft save used after explanation error",
+      "purpose": "Ett verkligt sparande av ett tidigare utkast räknas som använt modellarbete även när förklaringen misslyckas; senare oanvänt arbete och okänd kostnad bevaras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a verified existing-draft save used after explanation error",
+      "purpose": "Försöksvarianten behåller samma verkliga sparkvitto, karta och historik samt skiljer använt modellarbete för sparandet från senare oanvänt arbete och okänd kostnad."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a verified existing-draft save used after explanation stop",
+      "purpose": "Stopp efter verifierat sparande behåller det använda modellarbetet, kartan och historiken utan att räkna senare avbrutet arbete som använt eller okänd kostnad som noll."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a verified existing-draft save used after explanation stop",
+      "purpose": "Försöksvarianten behåller samma verifierade sparresultat efter stopp och redovisar senare avbrutet arbete och okänd kostnad separat."
+    },
+    {
+      "kind": "technical",
       "runner": "playwright",
       "suite": "technical-browser",
       "spec": "tests/technical-browser/assistant-overlap.spec.ts",
@@ -703,6 +735,22 @@ dubbelt sparande”.
     "Återfinna ett genomfört sparande när webbläsaren saknar svaret."
   ],
   "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a registered save used when Stop precedes its transport reply",
+      "purpose": "Ett verkligt registrerat sparförsök före stopp räknas som använt modellarbete när samma försök kontrolleras till kvitto, karta och en enda historikpost; sent transportsvar upprepar inget sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a registered save used when Stop precedes its transport reply",
+      "purpose": "Försöksvarianten behåller samma registrerade försök efter stopp, verifierar dess verkliga sparkvitto och skiljer detta använda modellarbete från oanvända resultat."
+    },
     {
       "kind": "technical",
       "runner": "playwright",
