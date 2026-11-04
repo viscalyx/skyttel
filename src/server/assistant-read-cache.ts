@@ -130,47 +130,59 @@ export function assistantReadCache(
       invalidated.clear();
       bytes = 0;
     },
-    async read<T>(name: string, args: Record<string, unknown>, load: () => Promise<T>): Promise<T> {
-      const before = snapshot(name);
-      if (before === undefined) return load();
-      track(name, before);
-      const epoch = generation;
-      const key = assistantReadKey(name, args);
-      const cached = entries.get(key);
-      if (cached?.stamp === before) return structuredClone(cached.value) as T;
-      // Errors and reads that straddle a content change never become cached facts.
-      let loading = pending.get(key);
-      if (loading?.stamp !== before || loading.epoch !== epoch) {
-        loading = { stamp: before, epoch, result: load() };
-        pending.set(key, loading);
+    async read<T>(
+      name: string,
+      args: Record<string, unknown>,
+      load: () => Promise<T>,
+      policy: 'shared' | 'lifecycle' = 'shared',
+    ): Promise<T> {
+      // Lifecycle requests can retire the work that owns an outstanding read.
+      // Reuse completed facts, but never wait for that work's transport response.
+      // A changed snapshot gets one fresh attempt; it cannot become model facts.
+      for (let attempt = 0; ; attempt++) {
+        const before = snapshot(name);
+        if (before === undefined) return load();
+        track(name, before);
+        const epoch = generation;
+        const key = assistantReadKey(name, args);
+        const cached = entries.get(key);
+        if (cached?.stamp === before) return structuredClone(cached.value) as T;
+        // Errors and reads that straddle a content change never become cached facts.
+        let loading = policy === 'lifecycle' ? undefined : pending.get(key);
+        if (loading?.stamp !== before || loading.epoch !== epoch) {
+          loading = { stamp: before, epoch, result: load() };
+          if (policy === 'shared') pending.set(key, loading);
+        }
+        let value: T;
+        try {
+          value = structuredClone(await loading.result) as T;
+        } finally {
+          if (pending.get(key) === loading) pending.delete(key);
+        }
+        if (epoch !== generation || before !== snapshot(name)) {
+          if (policy === 'lifecycle' && attempt === 0) continue;
+          throw new MapError('assistant_draft_changed', 409);
+        }
+        const size =
+          Buffer.byteLength(JSON.stringify(value)) +
+          Buffer.byteLength(before) +
+          Buffer.byteLength(key);
+        if (size > 4 * 1024 * 1024) return value;
+        const previous = entries.get(key);
+        if (previous) {
+          entries.delete(key);
+          bytes -= previous.bytes;
+        }
+        while (entries.size && (entries.size >= 128 || bytes + size > 4 * 1024 * 1024)) {
+          const oldest = entries.entries().next().value;
+          if (!oldest) break;
+          bytes -= oldest[1].bytes;
+          entries.delete(oldest[0]);
+        }
+        entries.set(key, { stamp: before, value: structuredClone(value), bytes: size });
+        bytes += size;
+        return value;
       }
-      let value: T;
-      try {
-        value = structuredClone(await loading.result) as T;
-      } finally {
-        if (pending.get(key) === loading) pending.delete(key);
-      }
-      if (epoch !== generation || before !== snapshot(name))
-        throw new MapError('assistant_draft_changed', 409);
-      const size =
-        Buffer.byteLength(JSON.stringify(value)) +
-        Buffer.byteLength(before) +
-        Buffer.byteLength(key);
-      if (size > 4 * 1024 * 1024) return value;
-      const previous = entries.get(key);
-      if (previous) {
-        entries.delete(key);
-        bytes -= previous.bytes;
-      }
-      while (entries.size && (entries.size >= 128 || bytes + size > 4 * 1024 * 1024)) {
-        const oldest = entries.entries().next().value;
-        if (!oldest) break;
-        bytes -= oldest[1].bytes;
-        entries.delete(oldest[0]);
-      }
-      entries.set(key, { stamp: before, value: structuredClone(value), bytes: size });
-      bytes += size;
-      return value;
     },
   };
 }

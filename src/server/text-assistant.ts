@@ -1137,12 +1137,16 @@ export function textAssistantRoutes({
     name: string,
     args: Record<string, unknown>,
     guard?: () => void,
+    readPolicy: 'shared' | 'lifecycle' = 'shared',
   ) {
     guard?.();
     checkViewAccess(session);
     const work = textWork.getStore();
     if (work?.session === session) work.guard();
-    const value = await session.execution.reads.read(name, args, async () => {
+    const load = async () => {
+      guard?.();
+      checkViewAccess(session);
+      if (work?.session === session) work.guard();
       const at = now();
       const observed = observationWork.getStore();
       const parent = observed?.session === session ? observed.context : undefined;
@@ -1232,7 +1236,8 @@ export function textAssistantRoutes({
           409,
         );
       return value;
-    });
+    };
+    const value = await session.execution.reads.read(name, args, load, readPolicy);
     guard?.();
     checkViewAccess(session);
     if (work?.session === session) work.guard();
@@ -1428,10 +1433,10 @@ export function textAssistantRoutes({
     };
   }
   async function refresh(session: Session, guard?: () => void) {
-    const review = await call(session, 'read_my_draft', {}, guard);
+    const review = await call(session, 'read_my_draft', {}, guard, 'lifecycle');
     guard?.();
     session.state.review = review;
-    const { operations } = await call(session, 'read_my_save_operations', {}, guard);
+    const { operations } = await call(session, 'read_my_save_operations', {}, guard, 'lifecycle');
     guard?.();
     session.state.operations = operations;
     if (
@@ -1445,6 +1450,7 @@ export function textAssistantRoutes({
         'read_save_operation',
         { operationId: session.state.pendingSave.operationId },
         guard,
+        'lifecycle',
       );
       guard?.();
       if (operation) session.state.operations.push(operation);
@@ -3700,10 +3706,14 @@ export function textAssistantRoutes({
         if (context.req.method === 'GET' && now() >= session.execution.mcp.expiresAt) {
           checkViewAccess(session);
         } else if (context.req.method === 'GET') await refreshConfirmed(session);
-        else await call(session, 'read_my_draft', {});
-      } catch {
+        else await call(session, 'read_my_draft', {}, undefined, 'lifecycle');
+      } catch (error) {
         if (preparation && !preparation.active) {
           checkPreparation(preparation);
+        }
+        if (error instanceof MapError && error.code === 'assistant_draft_changed') {
+          checkViewAccess(session);
+          return context.json({ error: error.code }, 409);
         }
         await stop(session);
         return context.json({ error: 'assistant_session_expired' }, 404);
@@ -3737,7 +3747,11 @@ export function textAssistantRoutes({
       checkViewAccess(session);
       await waitForReset(session);
       checkViewAccess(session);
-    } catch {
+    } catch (error) {
+      if (error instanceof MapError && error.code === 'assistant_draft_changed') {
+        checkViewAccess(session);
+        return context.json({ error: error.code }, 409);
+      }
       await stop(session);
       return context.json({ error: 'assistant_session_expired' }, 404);
     }
@@ -3835,7 +3849,13 @@ export function textAssistantRoutes({
     let current: TextAssistantReview;
     let draftVersion: number;
     do {
-      current = await call(session, 'read_my_draft', {});
+      current = await call(
+        session,
+        'read_my_draft',
+        {},
+        () => checkPreparation(preparation),
+        'lifecycle',
+      );
       checkPreparation(preparation);
       if (!currentTurn()) return context.json({ error: 'assistant_turn_changed' }, 409);
       draftVersion = preparedDraftVersion(preparation, body.draftVersion, body.contentVersion);

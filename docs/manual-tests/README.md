@@ -477,6 +477,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   KÖ-05 avser verklig utrustning. KÖ-06 provar ett samlat slutbesked
   med utkaständringar, misslyckade uppdrag och kvarstående frågor.
   KÖ-07 provar ordning mellan enheter och samtalsavgränsat stopp.
+  Separat HTTP-evidens provar också att upprepade manuella ändringar
+  avvisar inaktuella begäranden och bevarar samtalets åtkomst till utkastet.
   KÖ-08 kräver förnyat uttryckligt sparande efter nytt köat meddelande.
   KÖ-09 köar kastande vid nytt samtal och provar stopp under väntan.
 - [Röst och text i samma samtal](conversation-voice-text.md): skrivna svar
