@@ -21,6 +21,7 @@ import {
   renderedResponseEnd,
   renderedResponseRequirement,
   renderedUsefulRequirement,
+  voicePlaybackInstrumentation,
 } from './playback.js';
 import type { RunOptions } from './runner.js';
 import {
@@ -32,6 +33,7 @@ import {
 import type { Attempt, JudgeInput, JudgeResult, Scenario, ScenarioStep } from './types.js';
 
 type PlaybackEvidence = NonNullable<Attempt['playback']>;
+type StateObserver = (status: VoiceAssistantResponse) => Promise<void>;
 
 function inputEvidence(audio: SourcePlayback): NonNullable<PlaybackEvidence['input']> {
   return {
@@ -135,7 +137,11 @@ export async function runVoiceScenario(
     previousResponseEndAt?: number;
     evaluationOverheadMs?: number;
   }[] = scenario.steps.map((step) => ({ step }));
-  async function judgeWithHeartbeat(input: JudgeInput, retain?: (result: JudgeResult) => void) {
+  async function judgeWithHeartbeat(
+    input: JudgeInput,
+    retain?: (result: JudgeResult) => void,
+    observeState?: StateObserver,
+  ) {
     const judge = options.judge;
     if (!judge) throw new Error('evaluation_judge_missing');
     return withHeartbeat(async () => {
@@ -144,9 +150,12 @@ export async function runVoiceScenario(
       // still propagates before any task-success or follow-up decision.
       retain?.(result);
       return result;
-    });
+    }, observeState);
   }
-  async function withHeartbeat<T>(work: () => Promise<T>): Promise<T> {
+  async function withHeartbeat<T>(
+    work: () => Promise<T>,
+    observeState?: StateObserver,
+  ): Promise<T> {
     const id = voiceId;
     if (!id) return work();
     let pending = Promise.resolve();
@@ -154,31 +163,35 @@ export async function runVoiceScenario(
     let failure: unknown;
     // The browser remains present while scoring; this is liveness, not a
     // processing deadline. Finish each poll before playing the next input.
-    const timer = setInterval(() => {
-      if (polling || failure || id !== voiceId) return;
-      polling = true;
-      pending = (async () => {
-        const view = await environment.get<VoiceAssistantResponse['assistant']>(environment.path);
-        if (id !== voiceId) return;
-        const status = await environment.post<VoiceAssistantResponse>(
-          `${environment.path}/voice/${id}/poll`,
-          {
-            revision: view.revision,
-            draftVersion: view.review.version,
-            contentVersion: view.review.contentVersion,
-            microphoneOn: true,
-            microphoneActive: false,
-          },
-        );
-        if (status.voice.error) throw new Error(status.voice.error);
-      })()
-        .catch((error) => {
-          failure = error;
-        })
-        .finally(() => {
-          polling = false;
-        });
-    }, 1000);
+    const timer = setInterval(
+      () => {
+        if (polling || failure || id !== voiceId) return;
+        polling = true;
+        pending = (async () => {
+          const view = await environment.get<VoiceAssistantResponse['assistant']>(environment.path);
+          if (id !== voiceId) return;
+          const status = await environment.post<VoiceAssistantResponse>(
+            `${environment.path}/voice/${id}/poll`,
+            {
+              revision: view.revision,
+              draftVersion: view.review.version,
+              contentVersion: view.review.contentVersion,
+              microphoneOn: true,
+              microphoneActive: false,
+            },
+          );
+          if (status.voice.error) throw new Error(status.voice.error);
+          await observeState?.(status);
+        })()
+          .catch((error) => {
+            failure = error;
+          })
+          .finally(() => {
+            polling = false;
+          });
+      },
+      observeState ? voicePlaybackInstrumentation.stateObservation.cadenceMs : 1000,
+    );
     try {
       const result = await work();
       await pending;
@@ -251,6 +264,7 @@ export async function runVoiceScenario(
       let partialChecks: string[] = [];
       let playbackAssessmentElapsedMs: number | undefined;
       const playbackRecognitionCosts: (number | null)[] = [];
+      let observeState: StateObserver | undefined;
       async function measurePlaybackAssessment<T>(work: () => Promise<T>): Promise<T> {
         const began = Date.now();
         try {
@@ -376,6 +390,36 @@ export async function runVoiceScenario(
             limitation:
               'Single negotiated WebRTC stream through one common WebAudio output graph. Device timestamps bracket rendered frames; ASR/semantic assessment is uncertain, not sample-exact or a physical audibility guarantee. Exact digital input trailing zeros are excluded. Useful time is a sampled conservative upper bound, not word onset.',
           };
+          const active = connection;
+          observeState = async (status) => {
+            view = status.assistant;
+            if (status.voice.error) throw new Error(status.voice.error);
+            if (view.taskStatus === 'canceled' || view.taskStatus === 'expired')
+              throw new Error(`evaluation_application_${view.taskStatus}`);
+            if (view.selection) {
+              const displayed =
+                view.selection.kind === 'object' && view.selection.id === scenario.selection;
+              await environment.post(`${environment.path}/selection`, {
+                ...view.selection,
+                displayed,
+              });
+              if (!displayed) result.fixed.push('unexpected_selection');
+            }
+            stateFailures = await environment.check(
+              entry.target ?? step,
+              view,
+              modelActions(events.slice(offset)),
+            );
+            fixed = [...stateFailures];
+            if (scenario.selection && view.displayedSelection !== scenario.selection)
+              fixed.push('selection_unconfirmed');
+            partialChecks = fixed;
+            // Keep the first still-valid observation on the same browser clock
+            // as rendered audio, including while offline assessment is pending.
+            if (!fixed.length && view.phase !== 'working' && !view.queuedMessages)
+              stateAt ??= await active.observedAt();
+            else stateAt = undefined;
+          };
           // Quiet finds candidates. Only independently assessed recording and
           // device-render evidence can certify the required response.
           for (;;) {
@@ -392,19 +436,7 @@ export async function runVoiceScenario(
                 microphoneActive: audioEnd === undefined,
               },
             );
-            view = status.assistant;
-            if (status.voice.error) throw new Error(status.voice.error);
-            if (view.taskStatus === 'canceled' || view.taskStatus === 'expired')
-              throw new Error(`evaluation_application_${view.taskStatus}`);
-            if (view.selection) {
-              const displayed =
-                view.selection.kind === 'object' && view.selection.id === scenario.selection;
-              await environment.post(`${environment.path}/selection`, {
-                ...view.selection,
-                displayed,
-              });
-              if (!displayed) result.fixed.push('unexpected_selection');
-            }
+            await observeState(status);
             const observed = events.slice(offset);
             recognizedRequest =
               observed
@@ -427,19 +459,10 @@ export async function runVoiceScenario(
             );
             output = outputs.map((event) => (event.data as { delta: string }).delta).join('');
             latestEvent = lastVoiceActivityAt(observed, startedAt);
-            const actions = modelActions(observed);
-            stateFailures = await environment.check(entry.target ?? step, view, actions);
-            fixed = [...stateFailures];
-            if (scenario.selection && view.displayedSelection !== scenario.selection)
-              fixed.push('selection_unconfirmed');
-            partialChecks = fixed;
             const idle =
               view.phase !== 'working' &&
               !view.queuedMessages &&
               status.voice.phase === 'listening';
-            if (!fixed.length && view.phase !== 'working' && !view.queuedMessages)
-              stateAt ??= await connection.observedAt();
-            else stateAt = undefined;
             const quiet =
               audioEnd !== undefined && Date.now() - Math.max(latestEvent, audioEnd) >= 2000;
             if (
@@ -496,7 +519,7 @@ export async function runVoiceScenario(
                     // heartbeat fails before semantic assessment can begin.
                     candidates.push(candidate);
                     return { recognition, candidate };
-                  }),
+                  }, observeState),
                 );
                 const end = renderedResponseEnd(recording, recognition);
                 if (!end) {
@@ -539,6 +562,7 @@ export async function runVoiceScenario(
                         ],
                       },
                       retainAssessment,
+                      observeState,
                     ),
                   );
                 else retainAssessment([]);
@@ -569,20 +593,7 @@ export async function runVoiceScenario(
                       microphoneActive: false,
                     },
                   );
-                  view = verified.assistant;
-                  if (verified.voice.error) throw new Error(verified.voice.error);
-                  if (view.taskStatus === 'canceled' || view.taskStatus === 'expired')
-                    throw new Error(`evaluation_application_${view.taskStatus}`);
-                  stateFailures = await environment.check(
-                    entry.target ?? step,
-                    view,
-                    modelActions(events.slice(offset)),
-                  );
-                  fixed = [...stateFailures];
-                  if (scenario.selection && view.displayedSelection !== scenario.selection)
-                    fixed.push('selection_unconfirmed');
-                  partialChecks = fixed;
-                  if (fixed.length) stateAt = undefined;
+                  await observeState(verified);
                   if (
                     view.phase === 'working' ||
                     view.queuedMessages ||
@@ -600,19 +611,16 @@ export async function runVoiceScenario(
                 }
               }
             }
-            await new Promise((resolve) => setTimeout(resolve, 25));
+            await new Promise((resolve) =>
+              setTimeout(resolve, voicePlaybackInstrumentation.stateObservation.cadenceMs),
+            );
           }
           const audio = await playback;
           startedAt = audio.endedAt;
           result.playback.input = inputEvidence(audio);
           output = assessedOutput;
+          const fixedBeforeJudge = new Set(fixed);
           result.fixed.push(...fixed);
-          result.observedEndMs = (await connection.observedAt()) - startedAt;
-          result.diagnostics = observationDiagnostics(events.slice(offset), startedAt);
-          const completionMs =
-            stateAt === undefined || !renderedEnd
-              ? null
-              : Math.max(0, Math.max(stateAt, renderedEnd.upper) - startedAt);
           result.content = await judge(
             {
               backend: { text: [view.reply, view.modelReply].filter(Boolean).join('\n'), complete },
@@ -620,6 +628,33 @@ export async function runVoiceScenario(
             },
             step.expected.requirements,
           );
+          if (complete) {
+            const verified = await environment.post<VoiceAssistantResponse>(
+              `${environment.path}/voice/${voiceId}/poll`,
+              {
+                revision: view.revision,
+                draftVersion: view.review.version,
+                contentVersion: view.review.contentVersion,
+                microphoneOn: true,
+                microphoneActive: false,
+              },
+            );
+            await observeState(verified);
+            if (verified.voice.phase !== 'listening') stateAt = undefined;
+          }
+          // Refresh state checks while preserving independent failures that
+          // arrive during judgment, such as an unexpected selection.
+          result.fixed = [
+            ...result.fixed.filter((failure) => !fixedBeforeJudge.has(failure)),
+            ...fixed,
+          ];
+          result.observedEndMs = (await connection.observedAt()) - startedAt;
+          result.diagnostics = observationDiagnostics(events.slice(offset), startedAt);
+          const completionMs =
+            stateAt === undefined || !renderedEnd
+              ? null
+              : Math.max(0, Math.max(stateAt, renderedEnd.upper) - startedAt);
+          observeState = undefined;
           concludeAttempt(result, completionMs);
           result.timing = {
             contract: 'voice-rendered-v1',
@@ -783,7 +818,7 @@ export async function runVoiceScenario(
           ),
         };
         return options.judge
-          ? judgeWithHeartbeat(input)
+          ? judgeWithHeartbeat(input, undefined, observeState)
           : input.requirements.map((item) => ({
               id: item.id,
               outcome: 'inconclusive' as const,

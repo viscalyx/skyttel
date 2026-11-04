@@ -8,7 +8,12 @@ import { liveProvider, voiceAnswerParts } from './live-provider.js';
  * The application, source recording, receiver and output renderer stay real. */
 export async function evaluationVoiceProvider(
   tailOffsetSeconds = 3,
-  options: { usefulPartial?: boolean; manual?: boolean } = {},
+  options: {
+    usefulPartial?: boolean;
+    manual?: boolean;
+    initialText?: string;
+    initialEndMs?: number;
+  } = {},
 ) {
   const server = createServer((_request, response) =>
     response.end('<!doctype html><title>Controlled speech provider</title>'),
@@ -127,14 +132,14 @@ export async function evaluationVoiceProvider(
       live.emit(args[1], {
         type: 'session.input_transcript.delta',
         event_id: randomUUID(),
-        delta: 'Spara hela utkastet.',
+        delta: options.initialText ?? 'Spara hela utkastet.',
         start_ms: 0,
-        end_ms: 2400,
+        end_ms: options.initialEndMs ?? 2400,
       });
       live.emit(args[1], {
         type: 'session.delegation.created',
         event_id: randomUUID(),
-        offset_ms: 2400,
+        offset_ms: options.initialEndMs ?? 2400,
         delegation: { id: randomUUID(), type: 'delegation', target: 'client' },
       });
     }, 3000);
@@ -143,6 +148,23 @@ export async function evaluationVoiceProvider(
   return {
     provider,
     attach,
+    delegate(text: string, startMs = 0, endMs = 2400) {
+      const sessionId = live.channels.keys().next().value;
+      if (!sessionId) throw new Error('voice_provider_session_missing');
+      live.emit(sessionId, {
+        type: 'session.input_transcript.delta',
+        event_id: randomUUID(),
+        delta: text,
+        start_ms: startMs,
+        end_ms: endMs,
+      });
+      live.emit(sessionId, {
+        type: 'session.delegation.created',
+        event_id: randomUUID(),
+        offset_ms: endMs,
+        delegation: { id: randomUUID(), type: 'delegation', target: 'client' },
+      });
+    },
     outputStarted: outputStartedSignal,
     get outputStartedAt() {
       return outputStartedAt;

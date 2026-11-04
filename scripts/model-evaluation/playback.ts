@@ -182,6 +182,12 @@ export const voicePlaybackInstrumentation = {
   workletSha256: createHash('sha256').update(outputRecordingWorklet).digest('hex'),
   inputEnd: 'unchanged-fixture-last-nonzero-pcm-frame-bracketed-on-browser-clock',
   outputEnd: 'device-clock-bracket-of-observed-recording-end-and-asr-alignment-margin',
+  stateObservation: {
+    contract: 'checked-state-browser-clock-v2',
+    cadenceMs: 25,
+    boundary:
+      'Earliest still-valid checked state on the browser clock, observed during outer polling and offline recognition/judgment; invalid observations reset it. Serialized polls and checks may exceed the cadence. Final current state is checked before success.',
+  },
   semanticRequirements: {
     complete: renderedResponseRequirement,
     useful: renderedUsefulRequirement,
@@ -189,5 +195,5 @@ export const voicePlaybackInstrumentation = {
   firstUseful:
     'Conservative rendered end of the first sampled candidate independently verified useful; an upper bound, not word onset. Earlier inconclusive candidates leave firstUsefulMs unknown while firstVerifiedUsefulMs retains the first certified boundary.',
   overhead:
-    'Common instrumented renderer replaces native element playout in both versions. Recording, WebAudio buffering and clock sampling can affect latency; their additional overhead is unquantified. This is the instrumented user-output path, not an uninstrumented production-latency estimate.',
+    'Common instrumented renderer replaces native element playout in both versions. Recording, WebAudio buffering, clock sampling and serialized application/state polling during offline assessment can affect latency; their additional overhead is unquantified. State observation uses the same cadence during outer polling and offline work, and retains a conservative observed upper boundary. This is the instrumented user-output path, not an uninstrumented production-latency estimate.',
 };
