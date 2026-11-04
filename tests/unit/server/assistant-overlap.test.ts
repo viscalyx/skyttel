@@ -6,7 +6,7 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
-import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import { type ModelRequest, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let client: APIRequestContext;
@@ -23,6 +23,29 @@ function held() {
   });
   releases.push(release);
   return { wait, release };
+}
+
+function proposeKim(request: ModelRequest, typeId: string, objectId: string) {
+  const { draft } = JSON.parse(
+    String(request.input.findLast((item) => item.role === 'user')?.content),
+  );
+  return [
+    modelTool('submit_changes', {
+      version: draft.version,
+      contentVersion: draft.contentVersion,
+      completion: 'draft',
+      operations: [
+        {
+          name: 'propose_object',
+          arguments: {
+            id: objectId,
+            baseRevision: null,
+            value: { typeId, name: 'Kim Lind', properties: [] },
+          },
+        },
+      ],
+    }),
+  ];
 }
 
 async function start(
@@ -403,28 +426,7 @@ for (const mode of ['sequential', 'overlap'] as const) {
       const live = liveProvider();
       let typeId = '';
       const model = textModel(
-        (body) => {
-          const input = JSON.parse(
-            String(body.input.findLast((item) => item.role === 'user')?.content),
-          );
-          return [
-            modelTool('submit_changes', {
-              version: input.draft.version,
-              contentVersion: input.draft.contentVersion,
-              completion: 'draft',
-              operations: [
-                {
-                  name: 'propose_object',
-                  arguments: {
-                    id: 'spoken-person',
-                    baseRevision: null,
-                    value: { typeId, name: 'Kim Lind', properties: [] },
-                  },
-                },
-              ],
-            }),
-          ];
-        },
+        (body) => proposeKim(body, typeId, 'spoken-person'),
         async (body) => {
           if (body.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
             await interpretation.wait;
@@ -609,28 +611,7 @@ for (const mode of ['sequential', 'overlap'] as const) {
       let typeId = '';
       const events: AssistantObservation[] = [];
       const model = textModel(
-        (body) => {
-          const current = JSON.parse(
-            String(body.input.findLast((item) => item.role === 'user')?.content),
-          );
-          return [
-            modelTool('submit_changes', {
-              version: current.draft.version,
-              contentVersion: current.draft.contentVersion,
-              completion: 'draft',
-              operations: [
-                {
-                  name: 'propose_object',
-                  arguments: {
-                    id: 'controlled-person',
-                    baseRevision: null,
-                    value: { typeId, name: 'Kim Lind', properties: [] },
-                  },
-                },
-              ],
-            }),
-          ];
-        },
+        (body) => proposeKim(body, typeId, 'controlled-person'),
         async (body) => {
           if (body.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
             await interpretation.wait;
@@ -740,26 +721,7 @@ test('overlap reads current facts while interpretation is held but changes await
     (input) => {
       if (!input.input.some((item) => item.type === 'function_call_output'))
         return [modelTool('read_map', {})];
-      const current = JSON.parse(
-        String(input.input.findLast((item) => item.role === 'user')?.content),
-      );
-      return [
-        modelTool('submit_changes', {
-          version: current.draft.version,
-          contentVersion: current.draft.contentVersion,
-          completion: 'draft',
-          operations: [
-            {
-              name: 'propose_object',
-              arguments: {
-                id: 'overlap-person',
-                baseRevision: null,
-                value: { name: 'Kim Lind', typeId, properties: [] },
-              },
-            },
-          ],
-        }),
-      ];
+      return proposeKim(input, typeId, 'overlap-person');
     },
     async (input) => {
       if (input.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
