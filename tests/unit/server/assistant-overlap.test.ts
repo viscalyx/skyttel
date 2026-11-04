@@ -8,7 +8,13 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
-import { type ModelRequest, modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import {
+  type ModelRequest,
+  modelMessage,
+  modelTool,
+  pricedProvider,
+  textModel,
+} from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let client: APIRequestContext;
@@ -25,16 +31,6 @@ function held() {
   });
   releases.push(release);
   return { wait, release };
-}
-
-function pricedProvider(provider: typeof fetch): typeof fetch {
-  return async (url, init) => {
-    const response = await provider(url, init);
-    return Response.json(
-      { ...(await response.json()), service_tier: 'default' },
-      { headers: response.headers },
-    );
-  };
 }
 
 async function selectPricedModel(flow: { path: string; session: TextAssistantView }) {
