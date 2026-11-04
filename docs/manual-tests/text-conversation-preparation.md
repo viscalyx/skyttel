@@ -81,8 +81,16 @@ Alex, skapa Textprov och lägg Lo Exempel av typen Person med beskrivningen
 Påhittad uppgift i utkastet genom det vanliga formuläret. Lämna mikrofonen
 av. Aktivera `hold-check on` före användarens första textmeddelande.
 
-Vid dess `held` kopieras V och C från `draft`, och TYPE från
-Lo-förslagets `after.typeId`. Släpp en ny person i en kombinerad begäran:
+Vid dess första `held` begär operatören hela aktuella utkastet:
+
+```text
+tool REQUEST read_my_draft {}
+```
+
+Invänta nästa `held` och kopiera V och C från `lastToolResult`, och TYPE
+från Lo-förslagets `after.typeId` där. Det första underlaget är avgränsat
+till användarens begäran och behöver inte innehålla Lo. Släpp en ny person
+i en kombinerad begäran med det nya anrops-ID:t:
 
 <!-- markdownlint-disable MD013 -->
 ```text

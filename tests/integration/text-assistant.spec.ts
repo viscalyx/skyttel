@@ -46,12 +46,16 @@ test('TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked
   });
   const model = textModel(
     (body) => {
-      const { message, draft } = JSON.parse(
+      const { message, draft: initialDraft } = JSON.parse(
         String(body.input.findLast((item) => item.role === 'user')?.content),
       );
       if (message === 'Vad finns i utkastet?')
         return [modelTool('report_result', { source: 'draft' })];
+      const read = lastToolResult(body);
+      const draft = read?.changes ? read : initialDraft;
       const previous = draft.changes.find((change: { id: string }) => change.id === 'kim');
+      const person = previous ?? draft.changes.find((change: { id: string }) => change.id === 'lo');
+      if (!person) return [modelTool('read_my_draft', {})];
       return [
         modelTool('submit_changes', {
           version: draft.version,
@@ -65,7 +69,7 @@ test('TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked
                 baseRevision: null,
                 value: previous
                   ? { ...previous.after, name: 'Kim Lind' }
-                  : { typeId: draft.changes[0].after.typeId, name: 'Kim' },
+                  : { typeId: person.after.typeId, name: 'Kim' },
               },
             },
           ],
@@ -125,7 +129,7 @@ test('TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked
     );
     await closeSupportDialog(page, 'Lo Exempel');
     await send(page, 'Vad finns i utkastet?');
-    await expect.poll(() => model.requests.length).toBe(2);
+    await expect.poll(() => model.requests.length).toBe(3);
     const report = transcript(page).getByRole('listitem').filter({ hasText: 'Utkast:' });
     await expect(report).toContainText('Lo Exempel');
     await expect(report).toContainText('Kim');
