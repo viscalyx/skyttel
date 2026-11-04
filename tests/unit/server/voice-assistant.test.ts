@@ -189,6 +189,22 @@ test('resuming interrupted output keeps historical context separate from new sav
       content: [{ type: 'output_text', text: 'Ett avbrutet svar.' }],
       status: 'incomplete',
     },
+    {
+      role: 'assistant',
+      content: [
+        {
+          type: 'output_text',
+          text: JSON.stringify({
+            currentDraft: beforeResume.review,
+            unfinishedRequests: [],
+            pendingParts: [],
+            saveOperations: [],
+            historical: true,
+          }),
+        },
+      ],
+      status: 'completed',
+    },
   ]);
   expect(JSON.stringify(retained)).not.toContain('Klientens påhittade historik.');
   expect(retained?.[2]).toEqual({
