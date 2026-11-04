@@ -123,7 +123,40 @@ export function observationDiagnostics(events: AssistantObservation[], origin: n
     (event) =>
       event.kind === 'voice_event' && (event.data as { role?: string }).role === 'assistant',
   );
+  const workResults = events
+    .filter((event) => event.kind === 'work_result')
+    .map((event) => {
+      const data = event.data as {
+        providerCallId?: string;
+        executionMode: string;
+        disposition: string;
+        reason?: string;
+      };
+      const attempt = events.findLast(
+        (candidate) =>
+          candidate.kind === 'model_attempt' &&
+          (candidate.data as { attemptId?: string }).attemptId === data.providerCallId &&
+          (candidate.data as { endedAt?: unknown }).endedAt != null,
+      )?.data as
+        | {
+            usage?: unknown;
+            outcome?: string;
+            responseId?: string;
+            providerRequestId?: string;
+          }
+        | undefined;
+      return {
+        atMs: event.at - origin,
+        taskId: event.taskId,
+        ...data,
+        usage: attempt?.usage ?? null,
+        outcome: attempt?.outcome ?? null,
+        responseId: attempt?.responseId ?? null,
+        providerRequestId: attempt?.providerRequestId ?? null,
+      };
+    });
   return {
+    workResults,
     eventCounts: Object.fromEntries(
       [...new Set(events.map((event) => event.kind))].map((kind) => [
         kind,

@@ -361,6 +361,7 @@ export function textAssistantRoutes({
   const consentKey = (actorId: string, householdId: string) =>
     JSON.stringify([householdId, actorId]);
   const modelWork = new AsyncLocalStorage<TextModelProfile>();
+  const workAttempt = new AsyncLocalStorage<{ id?: string }>();
   const respond = config.openaiApiKey
     ? textModel(
         config.openaiApiKey,
@@ -369,8 +370,9 @@ export function textAssistantRoutes({
         modelProfile,
         (attempt, content) => {
           if (!observe) return;
+          const attemptWork = workAttempt.getStore();
+          if (attemptWork) attemptWork.id = attempt.attemptId;
           const work = observationWork.getStore();
-          if (work) work.providerCallId = attempt.attemptId;
           observe({
             at: now(),
             sessionId: work?.session.state.id ?? '',
@@ -2067,6 +2069,19 @@ export function textAssistantRoutes({
         throw new MapError('assistant_discard_not_requested', 409);
     };
     let originalSaveIntent = Boolean(session.state.saveIntent);
+    const overlap = config.conversationWorkMode === 'overlap';
+    const interpretation = new AbortController();
+    const speculative = new AbortController();
+    const interpretationSignal = AbortSignal.any([task.signal, interpretation.signal]);
+    const workSignal = AbortSignal.any([task.signal, speculative.signal]);
+    type Scope = Awaited<ReturnType<typeof interpretTurnScope>>;
+    let scope!: Scope;
+    let scopeOutcome: { scope: Scope } | { error: unknown } | undefined;
+    let scopeJob: Promise<NonNullable<typeof scopeOutcome>> | undefined;
+    let admitted = false;
+    let workContextStarted = false;
+    const attempts: { id?: string; used?: boolean; verified?: boolean }[] = [];
+    let discardReason = 'failed';
     const guard = () => {
       if (
         task.signal.aborted ||
@@ -2083,7 +2098,7 @@ export function textAssistantRoutes({
     try {
       guard();
       if (!respond) throw new Error('assistant_unavailable');
-      const scope = await interpretTurnScope(
+      scopeJob = interpretTurnScope(
         respond,
         text,
         session.state.activeMessage?.restate
@@ -2096,21 +2111,49 @@ export function textAssistantRoutes({
                   .map((request) => request.text),
               ]),
             ],
-        task.signal,
+        interpretationSignal,
         session.state.activeMessage?.restate,
+      ).then(
+        (scope) => {
+          scopeOutcome = { scope };
+          if (scope.mode === 'clarify') speculative.abort();
+          return scopeOutcome;
+        },
+        (error: unknown) => {
+          scopeOutcome = { error };
+          speculative.abort();
+          return scopeOutcome;
+        },
       );
-      guard();
-      if (scope.mode === 'read') {
-        session.state.saveIntent = undefined;
-        originalSaveIntent = false;
-      }
-      if (scope.mode === 'clarify') {
-        session.state.saveIntent = undefined;
-        session.state.phase = 'ready';
-        session.state.questions = [...session.execution.parts.questions(), scope.request];
-        session.state.reply = scope.request;
-        appendConversation(session, { role: 'assistant', text: scope.request });
-        return;
+      async function admitScope() {
+        if (admitted) return true;
+        if (!scopeJob) throw new MapError('assistant_scope_unavailable', 409);
+        const outcome = await scopeJob;
+        guard();
+        if ('error' in outcome) {
+          discardReason = 'scope_failed';
+          throw outcome.error;
+        }
+        scope = outcome.scope;
+        if (scope.mode === 'read') {
+          session.state.saveIntent = undefined;
+          originalSaveIntent = false;
+        }
+        if (scope.mode === 'clarify') {
+          session.state.saveIntent = undefined;
+          session.state.phase = 'ready';
+          session.state.questions = [...session.execution.parts.questions(), scope.request];
+          session.state.newQuestions = [scope.request];
+          session.state.reply = scope.request;
+          appendConversation(session, { role: 'assistant', text: scope.request });
+          discardReason = 'clarification';
+          if (workContextStarted) rebuildContext(session);
+          return false;
+        }
+        admitted = true;
+        for (const attempt of attempts) attempt.used = true;
+        scopeReady(checkActions, scope.mode);
+        return true;
       }
       const rejectAction = (name: string, reason: 'read_only_turn' | 'outside_requested_work') => {
         const reference = randomUUID();
@@ -2201,7 +2244,7 @@ export function textAssistantRoutes({
         checkedWorkComplete = decision.decision === 'allow' && decision.fulfillsRequest;
         wholeRequestComplete = checkedWorkComplete && !scope.responseRequired;
       };
-      scopeReady(checkActions, scope.mode);
+      if (!overlap && !(await admitScope())) return;
       const [review, saveState] = await session.execution.reads.consistent(() =>
         Promise.all([
           call(session, 'read_my_draft', {}, guard) as Promise<TextAssistantReview>,
@@ -2222,7 +2265,10 @@ export function textAssistantRoutes({
         throw new MapError('operation_pending', 409);
       const summaryRequested = session.state.contextSummaryState === 'needed';
       rebuildContext(session);
-      if (summaryRequested || needsSummary(session)) await summarize(session, guard);
+      if (summaryRequested || needsSummary(session)) {
+        if (!(await admitScope())) return;
+        await summarize(session, guard);
+      }
       guard();
       if (session.state.contextSummaryState === 'failed') {
         session.state.phase = 'ready';
@@ -2238,6 +2284,7 @@ export function textAssistantRoutes({
         resolves: z.infer<typeof partReference>[] = [],
         verifiedVersion = after.version,
       ) {
+        for (const attempt of attempts) attempt.verified = true;
         advanceDraftVersion(session, before.version, verifiedVersion);
         session.execution.parts.operation(resolves, name, args, before, after);
         if (after.version === before.version) return;
@@ -2260,6 +2307,7 @@ export function textAssistantRoutes({
       const dialogue = session.state.conversation.slice(session.state.contextOffset);
       session.state.contextOffset = session.state.conversation.length;
       let turnStart = session.state.input.length;
+      workContextStarted = true;
       session.state.input.push({
         role: 'user',
         content: JSON.stringify({
@@ -2305,6 +2353,7 @@ export function textAssistantRoutes({
         if (!respond) throw new Error('assistant_unavailable');
         const outdatedReads = await refreshCurrentDraft();
         if (needsSummary(session)) {
+          if (!(await admitScope())) return;
           const continuation = session.state.input.slice(turnStart);
           await summarize(session, guard, continuation);
           guard();
@@ -2450,6 +2499,7 @@ export function textAssistantRoutes({
           });
         const instructions = `${session.execution.mcp.instructions}\n\n${textAssistantInstructions}`;
         if (exceedsRequestBudget(session, instructions, tools)) {
+          if (!(await admitScope())) return;
           const continuation = session.state.input.slice(turnStart);
           await summarize(session, guard, continuation);
           guard();
@@ -2474,8 +2524,24 @@ export function textAssistantRoutes({
           return;
         }
         checkViewAccess(session);
-        const response = await respond(instructions, session.state.input, tools, task.signal);
+        // Each concurrent call has its own provider identity. Only server-declared
+        // read contracts may run before the independent interpretation resolves.
+        if (scopeOutcome && !(await admitScope())) return;
+        const attempt: (typeof attempts)[number] = {};
+        attempts.push(attempt);
+        const observedCall = observationWork.getStore();
+        let response: Awaited<ReturnType<typeof respond>>;
+        try {
+          const perform = () => respond(instructions, session.state.input, tools, workSignal);
+          response = await workAttempt.run(attempt, () =>
+            observedCall ? observationWork.run({ ...observedCall }, perform) : perform(),
+          );
+        } catch (error) {
+          if (scopeOutcome && !(await admitScope())) return;
+          throw error;
+        }
         guard();
+        if (observedCall) observedCall.providerCallId = attempt.id;
         // Recheck the actual MCP grant and content owner after provider await,
         // including plain text replies that would otherwise call no tool.
         const afterProvider = (await call(
@@ -2491,9 +2557,24 @@ export function textAssistantRoutes({
         )
           throw new MapError('assistant_draft_changed', 409);
         if (response.status !== 'completed') throw new Error('assistant_incomplete');
+        let calls = response.output.filter((item) => item.type === 'function_call');
+        const onlyReads =
+          calls.length > 0 &&
+          calls.every((action) =>
+            session.execution.mcp.tools.some(
+              (tool) => tool.name === action.name && tool.annotations?.readOnlyHint === true,
+            ),
+          );
+        if (!admitted && (scopeOutcome || !onlyReads)) {
+          if (!(await admitScope())) return;
+          await refreshCurrentDraft();
+          guard();
+        }
+        // Speculative reads are inputs to this work, never authority. Their
+        // results and any proposal are discarded if interpretation cannot admit it.
+        attempt.used = admitted;
         session.state.input.push(...toResponseInputItems(response.output));
         session.execution.capacity.text(response.usage, contextBytes(session));
-        let calls = response.output.filter((item) => item.type === 'function_call');
         wholeRequestComplete = false;
         const observed = observationWork.getStore();
         for (const action of calls)
@@ -3129,12 +3210,18 @@ export function textAssistantRoutes({
       }
       throw new Error('assistant_step_limit');
     } catch (error) {
+      if (!admitted && workContextStarted && session.state.revision === revision)
+        rebuildContext(session);
+      if (error instanceof MapError && error.code === 'assistant_draft_changed')
+        discardReason = 'stale';
       if (
         task.signal.aborted ||
         session.state.revision !== revision ||
         !sessions.has(session.state.id)
-      )
+      ) {
+        discardReason = 'stopped';
         return;
+      }
       if (authorityLost(error)) {
         if (stopExpiredVoice(session)) return;
         await stop(session);
@@ -3177,6 +3264,44 @@ export function textAssistantRoutes({
           return;
         }
         await stop(session);
+      }
+    } finally {
+      interpretation.abort();
+      speculative.abort();
+      // Retain actual attempt/usage endings even when one branch fails early.
+      // No new model call or tool execution is started by this cleanup.
+      await scopeJob;
+      for (const attempt of attempts) {
+        if (!attempt.id) continue;
+        const observed = observationWork.getStore();
+        const used = Boolean(
+          attempt.verified ||
+            (attempt.used &&
+              !session.state.error &&
+              !task.signal.aborted &&
+              discardReason !== 'stale'),
+        );
+        observe?.({
+          at: now(),
+          sessionId: session.state.id,
+          taskId: observationWork.getStore()?.context.requestId,
+          revision,
+          consentTextVersion: session.state.consentTextVersion,
+          context: observed && {
+            ...observed.context,
+            spanId: randomUUID(),
+            parentSpanId: observed.context.spanId,
+            providerCallId: attempt.id,
+          },
+          kind: 'work_result',
+          status: 'completed',
+          data: {
+            providerCallId: attempt.id,
+            executionMode: overlap ? 'overlap' : 'sequential',
+            disposition: used ? 'used' : 'discarded',
+            ...(used ? {} : { reason: discardReason }),
+          },
+        });
       }
     }
   }
@@ -3522,6 +3647,7 @@ export function textAssistantRoutes({
       status: 'incomplete',
       data: {
         source: message.voice ? 'voice' : 'text',
+        executionMode: config.conversationWorkMode ?? 'sequential',
         startedAt,
         request: {
           text: message.text,
@@ -3794,6 +3920,7 @@ export function textAssistantRoutes({
           ...(observationStatus === 'incomplete' ? { evidenceGap: 'missing_end' as const } : {}),
           data: {
             source: message.voice ? 'voice' : 'text',
+            executionMode: config.conversationWorkMode ?? 'sequential',
             startedAt,
             endedAt: now(),
             ...(session.execution.task === task && session.state.revision === revision

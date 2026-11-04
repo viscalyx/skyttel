@@ -56,6 +56,59 @@ export function createApp(options: Parameters<typeof original>[0]) {
   }) as typeof app.fetch;
   return app;
 }
+
+test('committed application modes retain comparable actual work and usage through public evaluation', {
+  tags: ['technical'], timeout: 30_000,
+}, async () => {
+  const version = await applicationVersion('Overlap-capable');
+  try {
+    for (const conversationWorkMode of ['sequential', 'overlap'] as const) {
+      let releaseScope = () => {};
+      const scope = new Promise<void>((resolve) => { releaseScope = resolve; });
+      const model = textModel(() => [modelMessage('Hela svaret.')], async () => {
+        await scope;
+        return [modelMessage(JSON.stringify({ mode: 'read', request: 'Besvara frågan.' }))];
+      });
+      const executing = runTextScenario({
+        id: 'overlap-comparison', title: 'Same bounded request', voice: false,
+        steps: [{ id: 'read', text: 'Vad vet du?', expected: { requirements: ['Ge hela svaret.'] } }],
+      }, {
+        modelProfile: verifiedProfile('sol-high'),
+        modelFetch: async (url, init) => {
+          const response = await model.provider(url, init);
+          return Response.json({ ...(await response.json()), service_tier: 'default' }, { headers: response.headers });
+        },
+      }, {
+        profile: 'local', repetition: 1,
+        application: { ...version, id: conversationWorkMode, conversationWorkMode },
+        judge: async (input) => {
+          expect(input.sources.backend?.text).toBe('Overlap-capable Hela svaret.');
+          return input.requirements.map(({ id }) => ({
+            id, outcome: 'pass', reason: 'The complete controlled answer is delivered.',
+          }));
+        },
+      });
+      try {
+        await expect.poll(() => model.authorizationRequests.length, { timeout: 5000 }).toBe(1);
+        if (conversationWorkMode === 'overlap') await expect.poll(() => model.requests.length).toBe(1);
+        else expect(model.requests).toHaveLength(0);
+      } finally {
+        releaseScope();
+      }
+      const result = await executing;
+      expect(result.attempts[0].outcome).toBe('pass');
+      expect(result.attempts[0].diagnostics?.workResults).toMatchObject([{
+        executionMode: conversationWorkMode, disposition: 'used',
+        usage: { input: 120, output: 30, cached: 20, reasoning: 10 }, outcome: 'completed',
+      }]);
+      expect(model.requests).toHaveLength(1);
+      expect(model.authorizationRequests).toHaveLength(1);
+      expect(model.requests[0]).toMatchObject({ model: 'gpt-6.1-sol', reasoning: { effort: 'high' } });
+    }
+  } finally {
+    await rm(version.directory, { recursive: true, force: true });
+  }
+});
 `,
   );
   const git = (...args: string[]) =>
