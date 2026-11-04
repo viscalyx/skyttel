@@ -37,7 +37,12 @@ import {
   speechConnection,
 } from './speech.js';
 import type { Attempt, JudgeInput, JudgeResult, Scenario } from './types.js';
-import { executeUserStop, missedUserStop, validateUserStop } from './user-stop.js';
+import {
+  executeUserStop,
+  missedUserStop,
+  validateUserStop,
+  validVoiceStopEvidence,
+} from './user-stop.js';
 
 type PlaybackEvidence = NonNullable<Attempt['playback']>;
 type StateObserver = (status: VoiceAssistantResponse) => Promise<void>;
@@ -491,27 +496,29 @@ export async function runVoiceScenario(
                 correlatedRequest
               ) {
                 const stoppedRequest = correlatedRequest;
-                const recording = await connection.recording();
-                options.recordPlayback?.(recording);
-                Object.assign(result.playback, recordingEvidence(recording));
+                try {
+                  const recording = await connection.recording();
+                  options.recordPlayback?.(recording);
+                  Object.assign(result.playback, recordingEvidence(recording));
+                } catch (error) {
+                  result.playback.error = error instanceof Error ? error.message : String(error);
+                }
                 const stopped = await executeUserStop({
                   step,
                   view,
-                  origin: result.playback.input?.ended.lower ?? startedAt,
-                  cancel: () =>
-                    environment.post(`${environment.path}/cancel`, {
-                      revision: view.revision,
-                      contextRevision: view.contextRevision,
-                      all: true,
-                    }),
-                  status: () => environment.get(`${environment.path}/messages/${stoppedRequest}`),
-                  check: (current, expected) =>
-                    environment.check(step, current, modelActions(events.slice(offset)), expected),
+                  origin: result.playback.input?.ended ?? startedAt,
+                  environment,
+                  requestId: stoppedRequest,
                   events: () => events.slice(offset),
-                  readState: environment.read,
                   quiesceAudio: () => closeVoice(true),
                 });
                 result.scriptedStop = stopped.proof;
+                if (stopped.proof.verdict === 'pass' && !validVoiceStopEvidence(result)) {
+                  stopped.proof.verdict = 'inconclusive';
+                  stopped.proof.reason = 'voice_stop_capture_incomplete';
+                  stopped.proof.endpointMs = null;
+                  delete stopped.proof.endpointBounds;
+                }
                 throw new Error('evaluation_scripted_user_stop');
               }
               if (task?.status === 'completed') {
@@ -803,7 +810,11 @@ export async function runVoiceScenario(
         const partial = [...new Set([...result.fixed, ...partialChecks])];
         if (result.scriptedStop) {
           result.outcome =
-            result.scriptedStop.verdict === 'pass' ? 'aborted' : result.scriptedStop.verdict;
+            result.scriptedStop.verdict === 'fail'
+              ? 'fail'
+              : result.scriptedStop.terminalStatus === 'canceled'
+                ? 'aborted'
+                : result.scriptedStop.verdict;
           result.reason = 'evaluation_scripted_user_stop';
           result.fixed = result.scriptedStop.stateFailures;
           result.observedEndMs = Date.now() - startedAt;

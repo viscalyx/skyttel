@@ -158,22 +158,9 @@ export async function runTextScenario(
                     step,
                     view,
                     origin: startedAt,
-                    cancel: () =>
-                      environment.post(`${environment.path}/cancel`, {
-                        revision: view.revision,
-                        contextRevision: view.contextRevision,
-                        all: true,
-                      }),
-                    status: () => environment.get(`${environment.path}/messages/${requestId}`),
-                    check: (current, expected) =>
-                      environment.check(
-                        step,
-                        current,
-                        modelActions(events.slice(offset)),
-                        expected,
-                      ),
+                    environment,
+                    requestId,
                     events: () => events.slice(offset),
-                    readState: environment.read,
                   });
                   result.scriptedStop = stopped.proof;
                   view = stopped.view;

@@ -98,6 +98,14 @@ avbryter bara i textvyn”.
       "kind": "technical",
       "runner": "vitest",
       "suite": "server",
+      "spec": "tests/unit/server/evaluation-user-stop.test.ts",
+      "title": "proven task work after Stop remains a correctness failure alongside unattributed registered effects",
+      "purpose": "Ett verkligt nytt HTTP-uppdrag efter stoppets bekräftelse förblir ett korrekthetsfel även när en annan registrerad effekt saknar säker attribution. Jämförelserapporten förkastar felet."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
       "spec": "tests/unit/server/text-assistant-deadlines.test.ts",
       "title": "queue time and identical retries consume the original deadline instead of renewing it",
       "purpose": "Separat HTTP- och databasbevis för köns fasta uppgiftsfrist; verifierar inte manuellt förlopp eller faktisk leverans."
@@ -264,6 +272,30 @@ utan att ändra utkastet”.
       "spec": "tests/technical-browser/evaluation-user-stop.spec.ts",
       "title": "voice scripted Stop closes the actual renderer after full approved input (overlap)",
       "purpose": "Försöksvarianten med överlappning följer samma stoppgräns och bevarar avbrutet uppdrag skilt från ett färdigt svar."
+    },
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/evaluation-user-stop.spec.ts",
+      "title": "voice scripted Stop retains cancellation but cannot qualify pause capture",
+      "purpose": "Pausad verklig ljudrenderare får inte godkänd stoppmätning. Appens avbrott och den partiella inspelningen bevaras."
+    },
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/evaluation-user-stop.spec.ts",
+      "title": "voice scripted Stop retains cancellation but cannot qualify error capture",
+      "purpose": "Fel i den verkliga ljudgrafen gör stoppmätningen inkonklusiv även när appens avbrott lyckas."
+    },
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/evaluation-user-stop.spec.ts",
+      "title": "voice scripted Stop retains cancellation but cannot qualify missing-capture capture",
+      "purpose": "Saknad inspelning hindrar inte appens publika stopp men kan inte styrka röstprestanda."
     }
   ]
 }
