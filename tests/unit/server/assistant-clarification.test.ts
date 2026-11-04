@@ -29,7 +29,8 @@ test('controlled clarification preserves the request, independent work and prope
       );
       if (input.message.startsWith('Förklara ordet'))
         return [modelMessage('Ett utkast innehåller osparade förslag.')];
-      if (turn >= 3)
+      if (turn >= 4) {
+        expect(input.message).toBe('Spara hela utkastet nu.');
         return [
           modelTool('save_draft', {
             version: input.draft.version,
@@ -37,6 +38,7 @@ test('controlled clarification preserves the request, independent work and prope
             operationId: 'clarified-whole-draft',
           }),
         ];
+      }
       const change = input.draft.changes.find((item: { id: string }) => item.id === 'lo');
       const value = change.after;
       const properties = value.properties;
@@ -69,6 +71,15 @@ test('controlled clarification preserves the request, independent work and prope
         ];
       }
       if (turn === 2) {
+        expect(input.message).toBe(
+          'Lägg till telefon 0700123456 på Lo. Lägg till Kod 0012. Töm Notering. Alex använder Molnmusik och betalningen kommer från ett konto. Spara hela utkastet.',
+        );
+        return [modelTool('ask_questions', { questions })];
+      }
+      if (turn === 3) {
+        expect(input.message).toBe(
+          'Kod ska vara text. Töm Hem. Använd Alex i Umeå och Betalkonto. Spara inte.',
+        );
         // The actual provider conversation retains both the original request and
         // the focused questions; the fixture supplies the interpretation itself.
         expect(JSON.stringify(body.input)).toContain('Kod 0012');
@@ -129,7 +140,7 @@ test('controlled clarification preserves the request, independent work and prope
           }),
         ];
       }
-      if (turn === 3)
+      if (turn === 4)
         return [
           modelTool('ask_questions', { questions: [], updates: verifiedAnswers(body, questions) }),
         ];
@@ -248,7 +259,7 @@ test('controlled clarification preserves the request, independent work and prope
   );
   expect(session.questions).toEqual(questions);
   expect(session.questionPending).toBe(true);
-  expect(model.requests).toHaveLength(1);
+  expect(model.requests).toHaveLength(2);
   expect(session.result).toMatchObject({ kind: 'draft' });
   const waiting = session.pendingParts;
   expect(waiting).toHaveLength(3);

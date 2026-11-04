@@ -13,16 +13,169 @@ import {
   textModel,
 } from '../../support/text-model.js';
 
-for (const situation of [
-  'before requested changes',
-  'after a partial batch',
-  'after a partial batch beside an older waiting question',
-  'with a ready pending change',
+test('a new clarification cannot skip a second independent requested change', async () => {
+  const instruction = 'Lägg till Mira, Nils och en kollega som personer utan att spara.';
+  const question = 'Vad heter kollegan?';
+  let personType = '';
+  let releaseSecondBatch = () => {};
+  const secondBatchReady = new Promise<void>((resolve) => {
+    releaseSecondBatch = resolve;
+  });
+  const model = textModel(
+    async (body) => {
+      const input = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      expect(input.message).toBe(instruction);
+      const step = model.requests.length;
+      const result = lastToolResult(body);
+      if (step > 1) {
+        expect(result?.pendingParts).toEqual([
+          expect.objectContaining({ question, status: 'waiting' }),
+        ]);
+        expect(JSON.stringify(body.input)).toContain(instruction);
+      }
+      if (step === 3) return [modelTool('ask_questions', { questions: [question] })];
+      if (step === 2) await secondBatchReady;
+      if (step > 3) throw new Error('Unexpected independent-work round');
+      const draft = result?.review ?? input.draft;
+      return [
+        modelTool('submit_changes', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          completion: 'draft',
+          questions:
+            step === 1
+              ? [
+                  {
+                    kind: 'change',
+                    request: 'Lägg till en kollega som person.',
+                    question,
+                    dependsOnDraft: false,
+                  },
+                ]
+              : [],
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: step === 1 ? 'partial-mira' : 'partial-nils',
+                baseRevision: null,
+                value: { typeId: personType, name: step === 1 ? 'Mira' : 'Nils' },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (body) => [
+      modelMessage(
+        JSON.stringify(
+          body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? { mode: 'work', request: instruction, responseRequired: false }
+            : { decision: 'allow', complete: true, fulfillsRequest: false },
+        ),
+      ),
+    ],
+  );
+  const app = await createInstallation(undefined, { modelFetch: model.provider });
+  const browser = await request.newContext();
+  try {
+    await signIn(browser, app.origin);
+    const { household } = await (await createHousehold(browser, app.origin)).json();
+    const mapPath = `${app.origin}/api/households/${household.id}/map`;
+    const before = await (await browser.get(mapPath)).json();
+    personType = before.types.find((type: { name: string }) => type.name === 'Person').id;
+    const path = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const started: TextAssistantView = await (
+      await browser.post(path, { headers: { origin: app.origin }, data: approvedForVisit })
+    ).json();
+    expect(
+      (
+        await browser.post(`${path}/${started.id}/messages`, {
+          headers: { origin: app.origin },
+          data: {
+            requestId: crypto.randomUUID(),
+            revision: started.revision,
+            draftVersion: started.review.version,
+            contentVersion: started.review.contentVersion,
+            text: instruction,
+          },
+        })
+      ).status(),
+    ).toBe(202);
+    let partial!: TextAssistantView;
+    await expect
+      .poll(async () => {
+        partial = await (await browser.get(`${path}/${started.id}`)).json();
+        return partial.questions;
+      })
+      .toEqual([question]);
+    expect(partial.review.changes).toMatchObject([{ id: 'partial-mira', after: { name: 'Mira' } }]);
+    expect(partial.pendingParts).toHaveLength(1);
+    expect(partial.pendingParts?.[0]).toMatchObject({ question, status: 'waiting' });
+    expect(partial.error).toBeUndefined();
+    expect(partial.receipt).toBeUndefined();
+    await expect.poll(() => model.requests.length).toBe(2);
+    expect((await (await browser.get(`${path}/${started.id}`)).json()).phase).toBe('working');
+    releaseSecondBatch();
+    let finished!: TextAssistantView;
+    await expect
+      .poll(async () => {
+        finished = await (await browser.get(`${path}/${started.id}`)).json();
+        return finished.phase;
+      })
+      .toBe('ready');
+    expect(finished.error).toBeUndefined();
+    expect(finished.questions).toEqual([question]);
+    expect(finished.questionPending).toBe(true);
+    expect(finished.pendingParts).toEqual(partial.pendingParts);
+    expect(finished.review.version).toBe(started.review.version + 2);
+    expect(finished.review.changes).toMatchObject([
+      { id: 'partial-mira', after: { name: 'Mira' } },
+      { id: 'partial-nils', after: { name: 'Nils' } },
+    ]);
+    expect(finished.modelReply).toContain(question);
+    expect(finished.receipt).toBeUndefined();
+    expect(finished.operations).toEqual([]);
+    expect(model.requests).toHaveLength(3);
+    expect(
+      model.authorizationRequests.filter(
+        (body) => !body.instructions.startsWith('SKYTTEL_TURN_SCOPE'),
+      ),
+    ).toHaveLength(2);
+    expect((await (await browser.get(mapPath)).json()).objects).toEqual(before.objects);
+    expect((await (await browser.get(`${mapPath}/history`)).json()).history).toEqual([]);
+    expect((await (await browser.get(`${mapPath}/operations`)).json()).operations).toEqual([]);
+  } finally {
+    releaseSecondBatch();
+    await browser.dispose();
+    await app.close();
+  }
+});
+
+for (const { situation, olderWaiting, readyPart, partialBatch } of [
+  {
+    situation: 'before requested changes',
+    olderWaiting: false,
+    readyPart: false,
+    partialBatch: false,
+  },
+  { situation: 'after a partial batch', olderWaiting: false, readyPart: false, partialBatch: true },
+  {
+    situation: 'after a partial batch beside an older waiting question',
+    olderWaiting: true,
+    readyPart: false,
+    partialBatch: true,
+  },
+  {
+    situation: 'with a ready pending change',
+    olderWaiting: false,
+    readyPart: true,
+    partialBatch: true,
+  },
 ])
   test(`a report ${situation} keeps unfinished work active`, async () => {
-    const olderWaiting = situation.includes('older waiting');
-    const readyPart = situation === 'with a ready pending change';
-    const partialBatch = situation !== 'before requested changes';
     const question = 'Vad heter kollegan?';
     let personType = '';
     let workStep = 0;
@@ -267,24 +420,61 @@ for (const situation of [
     }
   });
 
+const missingScope = {
+  title: 'missing scope',
+  missingScope: true,
+  missingResult: false,
+  responseRequired: false,
+  readAfterSave: false,
+};
+const missingResult = {
+  title: 'missing result',
+  missingScope: false,
+  missingResult: true,
+  responseRequired: false,
+  readAfterSave: false,
+};
+const contradictoryResponse = {
+  title: 'contradictory response',
+  missingScope: false,
+  missingResult: false,
+  responseRequired: true,
+  readAfterSave: false,
+};
+const followingCatalogRead = {
+  title: 'following catalog read',
+  missingScope: false,
+  missingResult: false,
+  responseRequired: true,
+  readAfterSave: true,
+};
+const ordinaryCertificates = [missingScope, missingResult, contradictoryResponse];
+
 for (const boundary of [
-  'direct draft',
-  'combined draft',
-  'direct save',
-  'combined save',
-  'automatic save',
-  'report',
+  { title: 'direct draft', mode: 'direct', saving: false, certificates: ordinaryCertificates },
+  { title: 'combined draft', mode: 'combined', saving: false, certificates: ordinaryCertificates },
+  {
+    title: 'direct save',
+    mode: 'save',
+    saving: true,
+    certificates: [...ordinaryCertificates, followingCatalogRead],
+  },
+  { title: 'combined save', mode: 'combined', saving: true, certificates: ordinaryCertificates },
+  { title: 'automatic save', mode: 'direct', saving: true, certificates: ordinaryCertificates },
+  {
+    title: 'report',
+    mode: 'report',
+    saving: false,
+    certificates: [missingScope, contradictoryResponse],
+  },
 ])
-  for (const certificate of boundary === 'report'
-    ? ['missing scope', 'contradictory response']
-    : boundary === 'direct save'
-      ? ['missing scope', 'missing result', 'contradictory response', 'following catalog read']
-      : ['missing scope', 'missing result', 'contradictory response'])
-    test(`${boundary} continues requested explanation with ${certificate} certification`, async () => {
+  for (const certificate of boundary.certificates)
+    test(`${boundary.title} continues requested explanation with ${certificate.title} certification`, async () => {
       const explanation = 'Person är en objekttyp. Förslagen hör till ditt utkast före sparande.';
-      const saving = boundary.endsWith('save');
-      const readAfterSave = certificate === 'following catalog read';
-      const holdResponse = boundary === 'direct save' && certificate === 'contradictory response';
+      const { saving } = boundary;
+      const { readAfterSave } = certificate;
+      const holdResponse =
+        boundary.mode === 'save' && certificate.responseRequired && !readAfterSave;
       let releaseResponse = () => {};
       const responseReady = new Promise<void>((resolve) => {
         releaseResponse = resolve;
@@ -300,8 +490,8 @@ for (const boundary of [
           const { draft: initialDraft } = JSON.parse(
             String(body.input.findLast((item) => item.role === 'user')?.content),
           );
-          if (boundary === 'report') return [modelTool('report_result', { source: 'draft' })];
-          if (boundary === 'direct save')
+          if (boundary.mode === 'report') return [modelTool('report_result', { source: 'draft' })];
+          if (boundary.mode === 'save')
             return [
               modelTool('save_draft', {
                 version: initialDraft.version,
@@ -325,7 +515,7 @@ for (const boundary of [
             },
           };
           return [
-            boundary.startsWith('combined')
+            boundary.mode === 'combined'
               ? modelTool('submit_changes', {
                   version: draft.version,
                   contentVersion: draft.contentVersion,
@@ -344,19 +534,18 @@ for (const boundary of [
             JSON.stringify(
               body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
                 ? {
-                    mode: boundary === 'report' ? 'read' : 'work',
+                    mode: boundary.mode === 'report' ? 'read' : 'work',
                     request: JSON.parse(String(body.input[0].content)).current,
-                    ...(certificate === 'missing scope'
+                    ...(certificate.missingScope
                       ? {}
                       : {
-                          responseRequired:
-                            certificate === 'contradictory response' || readAfterSave,
+                          responseRequired: certificate.responseRequired,
                         }),
                   }
                 : {
                     decision: 'allow',
                     complete: true,
-                    ...(certificate === 'missing result' ? {} : { fulfillsRequest: true }),
+                    ...(certificate.missingResult ? {} : { fulfillsRequest: true }),
                   },
             ),
           ),
@@ -397,9 +586,9 @@ for (const boundary of [
                 draftVersion: started.review.version,
                 contentVersion: started.review.contentVersion,
                 text:
-                  boundary === 'report'
+                  boundary.mode === 'report'
                     ? 'Beskriv utkastet och förklara vad objekttypen Person betyder.'
-                    : boundary === 'direct save'
+                    : boundary.mode === 'save'
                       ? 'Beskriv skillnaden mellan objekttypen Person och ett objekt. Spara hela utkastet.'
                       : saving
                         ? 'Lägg till Kim som person. Beskriv skillnaden mellan objekttypen Person och ett objekt. Spara hela utkastet.'
@@ -429,7 +618,7 @@ for (const boundary of [
           .not.toBe('working');
         expect(finished.error).toBeUndefined();
         expect(finished.modelReply).toBe(explanation);
-        const setupReads = boundary === 'report' || boundary === 'direct save' ? 0 : 1;
+        const setupReads = boundary.mode === 'report' || boundary.mode === 'save' ? 0 : 1;
         expect(model.requests).toHaveLength(setupReads + 2);
         if (saving) {
           expect(finished.receipt?.operationId).toBeTruthy();
@@ -454,7 +643,7 @@ for (const boundary of [
             expect.arrayContaining([
               expect.objectContaining({
                 after: expect.objectContaining({
-                  name: boundary === 'report' ? 'Lo Exempel' : 'Kim',
+                  name: boundary.mode === 'report' ? 'Lo Exempel' : 'Kim',
                 }),
               }),
             ]),

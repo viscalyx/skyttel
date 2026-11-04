@@ -2817,22 +2817,7 @@ export function textAssistantRoutes({
             appendConversation(session, { role: 'assistant', text: session.state.reply });
           if (session.state.modelReply)
             appendConversation(session, { role: 'assistant', text: session.state.modelReply });
-          // A complete independent batch can pause for its own new questions
-          // without claiming the whole request is fulfilled. Older waiting
-          // questions cannot finish a new partial request; ready work and a
-          // required explanation must still continue.
-          const awaitingClarification =
-            !scope.responseRequired &&
-            combined.questions.some((question) =>
-              session.state.newQuestions?.includes(
-                typeof question === 'string' ? question : question.question,
-              ),
-            );
-          if (
-            combined.continueResponse ||
-            (!wholeRequestComplete && !awaitingClarification) ||
-            hasReadyPendingParts(session)
-          ) {
+          if (combined.continueResponse || !wholeRequestComplete || hasReadyPendingParts(session)) {
             session.state.phase = 'working';
             continue;
           }

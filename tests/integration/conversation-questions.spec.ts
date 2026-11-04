@@ -310,7 +310,14 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
           ],
         }),
       ];
-    if (call === 2)
+    if (call === 2) {
+      expect(turn.message).toBe(
+        'Lägg till telefon 0700123456 på Lo. Lägg till Kod 0012. Töm Notering. Alex använder Molnmusik. Spara hela utkastet.',
+      );
+      return [modelTool('ask_questions', { questions })];
+    }
+    if (call === 3) {
+      expect(turn.message).toBe('Kod ska vara text. Töm Hem. Det är Alex i Umeå. Spara inte.');
       return [
         modelTool('submit_changes', {
           version: turn.draft.version,
@@ -346,10 +353,12 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
           ],
         }),
       ];
-    if (call === 3)
+    }
+    if (call === 4)
       return [
         modelTool('ask_questions', { questions: [], updates: verifiedAnswers(body, questions) }),
       ];
+    expect(turn.message).toBe('Spara hela utkastet nu.');
     return [
       modelTool('save_draft', {
         version: turn.draft.version,

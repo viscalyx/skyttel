@@ -11,6 +11,7 @@ import {
   modelMessage,
   modelTool,
   pendingUpdate,
+  readOnlyScope,
   textModel,
 } from '../../support/text-model.js';
 
@@ -1921,12 +1922,15 @@ test('a provider cannot resolve a question it just asked before the user has ano
 test.each(['latest_save', 'save'])(
   'a %s report without a durable receipt cannot invent a saved result',
   async (source) => {
-    const model = textModel(() => [
-      modelTool('report_result', {
-        source,
-        ...(source === 'save' ? { operationId: 'never-saved', userId: 'unknown-owner' } : {}),
-      }),
-    ]);
+    const model = textModel(
+      () => [
+        modelTool('report_result', {
+          source,
+          ...(source === 'save' ? { operationId: 'never-saved', userId: 'unknown-owner' } : {}),
+        }),
+      ],
+      readOnlyScope,
+    );
     const session = await setup({ modelFetch: model.provider });
     const before = await readMap();
     const result = await settled(await send(session, 'Vad sparades tidigare?'));
@@ -1953,10 +1957,25 @@ test.each([
 ])(
   'a malformed checked-tool response with $label fails privately and preserves work',
   async ({ result }) => {
-    const model = textModel(() =>
-      model.requests.length === 1
-        ? [modelTool('read_type_catalog', {})]
-        : [modelTool('report_result', { source: 'last_failure' })],
+    const model = textModel(
+      () =>
+        model.requests.length === 1
+          ? [modelTool('read_type_catalog', {})]
+          : [modelTool('report_result', { source: 'last_failure' })],
+      (body) => {
+        const { current } = JSON.parse(String(body.input[0].content));
+        if (body.instructions.startsWith('SKYTTEL_TURN_SCOPE') && current === 'Vad var felet?')
+          return readOnlyScope();
+        return [
+          modelMessage(
+            JSON.stringify(
+              body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+                ? { mode: 'work', request: current, responseRequired: false }
+                : { decision: 'allow', complete: true, fulfillsRequest: false },
+            ),
+          ),
+        ];
+      },
     );
     const session = await setup({
       modelFetch: model.provider,
