@@ -4,7 +4,199 @@ import {
   runApplicationContextLimit,
   runContextLimit,
 } from '../../../scripts/model-evaluation/context-limit.js';
-import { modelMessage, pricedProvider, textModel } from '../../support/text-model.js';
+import type { ProviderCall } from '../../../scripts/model-evaluation/provider.js';
+import type { AssistantObservation } from '../../../src/server/assistant-observation.js';
+import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import {
+  lastToolResult,
+  modelMessage,
+  modelTool,
+  pricedProvider,
+  textModel,
+} from '../../support/text-model.js';
+
+const postAsClient = (request: Request, url: string, data: unknown) =>
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      cookie: request.headers.get('cookie') ?? '',
+      origin: new URL(request.url).origin,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+test.each(['canceled', 'expired', 'http-error'] as const)(
+  'context growth retains %s terminal evidence after a committed draft batch',
+  { tags: ['technical'], timeout: 30_000 },
+  async (terminal) => {
+    let clock = Date.now();
+    let committed!: () => void;
+    const batchCommitted = new Promise<void>((resolve) => {
+      committed = resolve;
+    });
+    let releaseBatch!: () => void;
+    const heldBatch = new Promise<void>((resolve) => {
+      releaseBatch = resolve;
+    });
+    let work = 0;
+    const model = textModel((body) => {
+      if (work++ === 0) return [modelTool('read_my_draft', {})];
+      if (work > 2) return [modelMessage('Ett senare svar.')];
+      const draft = lastToolResult(body);
+      const change = draft.changes.find((item: { id: string }) => item.id === 'lo');
+      return [
+        modelTool('submit_changes', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'lo',
+                baseRevision: change.before?.revision ?? null,
+                value: { ...change.after, name: 'Lo med nytt namn' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    const records: ProviderCall[] = [];
+    const provider = pricedProvider(model.provider);
+    const privateEvents: AssistantObservation[] = [];
+    const installationEvents: AssistantObservation[] = [];
+    let terminalPolls = 0;
+    let arranged = false;
+    const result = await runApplicationContextLimit(
+      {
+        now: () => clock,
+        modelFetch: async (url, init) => {
+          const body = JSON.parse(String(init?.body));
+          const record: ProviderCall = {
+            id: `controlled-${records.length}`,
+            startedAt: Date.now(),
+            kind: 'backend',
+            profile: 'controlled',
+            model: body.model,
+            request: body,
+            costUsd: 0,
+            reservationUsd: 0,
+            outcome: 'started',
+          };
+          records.push(record);
+          const response = await provider(url, init);
+          record.response = await response.clone().json();
+          record.endedAt = Date.now();
+          record.outcome = 'completed';
+          return response;
+        },
+        observe: (event) => {
+          installationEvents.push(event);
+          if (event.kind === 'task_completed') committed();
+        },
+        assistantDispatch: async (request, dispatch) => {
+          const rpc = await request
+            .clone()
+            .json()
+            .catch(() => null);
+          const response = await dispatch(request);
+          if (rpc?.params?.name === 'apply_draft_batch') {
+            committed();
+            await heldBatch;
+          }
+          return response;
+        },
+        deliverResponse: async (request, response) => {
+          const path = new URL(request.url).pathname;
+          if (request.method === 'POST' && path.endsWith('/messages') && !arranged) {
+            arranged = true;
+            await batchCommitted;
+            if (terminal === 'expired') {
+              const view = (await response.clone().json()) as TextAssistantView;
+              // Keep the original terminal result accessible after its own deadline.
+              clock += 60_000;
+              const later = await postAsClient(request, request.url, {
+                requestId: 'later-accepted-request',
+                revision: view.revision,
+                draftVersion: view.review.version,
+                contentVersion: view.review.contentVersion,
+                text: 'Beskriv sedan mitt utkast.',
+              });
+              expect(later.status).toBe(202);
+              await later.arrayBuffer();
+              clock += 29 * 60_000;
+            } else {
+              const canceled = await postAsClient(
+                request,
+                request.url.replace(/\/messages$/, '/cancel'),
+                { all: true },
+              );
+              expect(canceled.status).toBe(200);
+              await canceled.arrayBuffer();
+            }
+            releaseBatch();
+          }
+          if (request.method === 'GET' && /\/messages\/[^/]+$/.test(path)) {
+            terminalPolls++;
+            if (terminal === 'http-error')
+              return Response.json({ error: 'controlled_reply_lost' }, { status: 503 });
+          }
+          return response;
+        },
+      },
+      {
+        origin: 'controlled',
+        contextTokens: 1_050_000,
+        maximumTurns: 2,
+        profile: 'controlled',
+        repetition: 1,
+        providerRecords: () => records,
+        recordObservation: (event) => privateEvents.push(event),
+      },
+    );
+    expect(result.turns).toHaveLength(1);
+    expect(result.turns[0]).toMatchObject({
+      outcome: terminal === 'canceled' ? 'aborted' : 'error',
+      reason:
+        terminal === 'http-error' ? 'evaluation_http_503' : `evaluation_application_${terminal}`,
+      ...(terminal === 'http-error' ? {} : { taskStatus: terminal }),
+      inputTokens: 120,
+      summary: false,
+      callIds: expect.arrayContaining(['controlled-0', 'controlled-1']),
+      fixed: expect.arrayContaining(['effective_objects']),
+      observedEndMs: expect.any(Number),
+      successfulCompletionMs: null,
+      state: {
+        draft: {
+          changes: expect.arrayContaining([
+            expect.objectContaining({
+              id: 'lo',
+              after: expect.objectContaining({ name: 'Lo med nytt namn' }),
+            }),
+          ]),
+        },
+        saved: {
+          objects: expect.arrayContaining([expect.objectContaining({ id: 'lo', name: 'Lo Berg' })]),
+        },
+        historyChanges: 0,
+        saveOperations: [],
+      },
+    });
+    expect(terminalPolls).toBe(1);
+    expect(result.boundary).toBe('inconclusive');
+    expect(result.physicalProviderMaximum).toBe('unverified');
+    expect(result.successfulCompletionMs).toBeNull();
+    const batchEvent = privateEvents.find(
+      (event) =>
+        event.kind === 'mcp_started' &&
+        (event.data as { name: string }).name === 'apply_draft_batch',
+    );
+    expect(batchEvent?.data).toMatchObject({ args: { operations: expect.any(Array) } });
+    expect(installationEvents).toContainEqual(batchEvent);
+  },
+);
 
 test.each(['pass', 'fail', 'error', 'aborted', 'inconclusive', 'not_run'] as const)(
   'ordinary growth stops at its first low-usage transition after one %s recall',
