@@ -674,15 +674,23 @@ export function textAssistantRoutes({
       .filter((request) => !request.paused)
       .map(({ id, text }) => ({ id, text }));
   }
-  function draftFacts(session: Session, message: string, review = session.state.review) {
-    return assistantStartDraft(review, message, session.state.userRequests.slice(0, -1), [
+  function unfinishedFactReferences(session: Session) {
+    return [
       ...activeRequests(session)
         .filter((request) => request.id !== session.state.activeMessage?.id)
         .map((request) => request.text),
       ...contextParts(session)
         .filter((part) => ['waiting', 'ready'].includes(part.status))
         .flatMap((part) => [part.request, part.question]),
-    ]);
+    ];
+  }
+  function draftFacts(session: Session, message: string, review = session.state.review) {
+    return assistantStartDraft(
+      review,
+      message,
+      session.state.userRequests.slice(0, -1),
+      unfinishedFactReferences(session),
+    );
   }
   function pauseCapacity(session: Session) {
     session.state.capacityPaused = true;
@@ -859,6 +867,7 @@ export function textAssistantRoutes({
           verifiedReads: session.execution.reads.facts(
             value.message,
             session.state.userRequests.slice(0, -1),
+            unfinishedFactReferences(session),
           ),
           pendingParts: contextParts(session),
         });
@@ -1998,6 +2007,7 @@ export function textAssistantRoutes({
           verifiedReads: session.execution.reads.facts(
             text,
             session.state.userRequests.slice(0, -1),
+            unfinishedFactReferences(session),
           ),
           saveOperations: session.state.operations.map(
             ({ operationId, status, draftVersion, contentVersion }) => ({

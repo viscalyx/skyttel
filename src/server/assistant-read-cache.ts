@@ -79,8 +79,8 @@ export function assistantReadCache(
     sources.set(name, current);
   }
   return {
-    facts(message: string, earlier: readonly string[] = []) {
-      const text = [message, ...assistantFactReferences(message, earlier)]
+    facts(message: string, earlier: readonly string[] = [], references: readonly string[] = []) {
+      const text = [message, ...references, ...assistantFactReferences(message, earlier)]
         .join(' ')
         .toLocaleLowerCase('sv');
       const facts: { name: string; args: Record<string, unknown>; value: unknown }[] = [];

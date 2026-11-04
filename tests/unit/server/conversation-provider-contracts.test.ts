@@ -119,6 +119,35 @@ async function saveMap(operationId: string) {
   expect(response.status(), await response.text()).toBe(200);
 }
 
+async function invalidateConversation(change: string) {
+  if (change === 'grant revocation') {
+    const { connections } = await (
+      await browser.get(`${app.origin}/api/assistants/context`)
+    ).json();
+    const revoked = await post(`${app.origin}/api/assistants/${connections[0].id}/revoke`, {});
+    expect(revoked.status(), await revoked.text()).toBe(200);
+  } else {
+    const prepared = await (await post(`${base}/exports`, {})).json();
+    const archive = await (await browser.get(`${base}/exports/${prepared.id}`)).body();
+    const uploaded = await browser.post(`${base}/imports`, {
+      headers: {
+        origin: app.origin,
+        'content-type': 'application/zip',
+        'X-Skyttel-Content-Version': '1',
+      },
+      data: archive,
+    });
+    expect(uploaded.status(), await uploaded.text()).toBe(201);
+    const ready = await uploaded.json();
+    const confirmed = await post(`${base}/imports/${ready.id}/confirm`, {
+      confirmed: true,
+      contentVersion: 1,
+    });
+    expect(confirmed.status(), await confirmed.text()).toBe(200);
+    expect(await confirmed.json()).toMatchObject({ status: 'completed' });
+  }
+}
+
 function startEnvelope(request: ModelRequest) {
   return JSON.parse(String(request.input.findLast((item) => item.role === 'user')?.content));
 }
@@ -655,6 +684,297 @@ test('superseding a duplicate relationship draft picture preserves its real exis
   expect(model.authorizationRequests).toHaveLength(3);
 });
 
+test('a bare pending answer reuses verified saved facts after unrelated completed questions', async () => {
+  const question = 'Vilket telefonnummer vill du jämföra?';
+  const exact = 'Jämför ett telefonnummer med uppgifterna för Lina utan att ändra något.';
+  const answer = 'Lina är född 1990-02-03. Telefonnumret finns inte bland hennes uppgifter.';
+  const model = textModel((request) => {
+    const current = startEnvelope(request);
+    if (current.message === 'Tack.') return [modelMessage('Varsågod.')];
+    const target = current.message.startsWith('Finns') ? 'lo' : 'lina';
+    if (!suppliedObjects(request, 'saved').some((object) => object.id === target))
+      return [modelTool('read_map', { query: target === 'lo' ? 'Lo' : 'Lina' })];
+    if (current.message.startsWith('Finns')) return [modelMessage('Lo finns.')];
+    if (current.message === exact)
+      return [
+        modelTool('ask_questions', {
+          questions: [{ kind: 'information', request: exact, question, dependsOnDraft: false }],
+        }),
+      ];
+    if (current.pendingParts.some((part: { status: string }) => part.status === 'waiting'))
+      return [
+        modelTool('ask_questions', {
+          questions: [],
+          updates: [pendingUpdate(request, question, { answer })],
+          continueResponse: true,
+        }),
+      ];
+    return [modelMessage(answer)];
+  }, readScope);
+  const fresh = await seedPeople(await setup({ modelFetch: model.provider }), 'saved');
+  let view = await settled(await send(fresh, exact));
+  expect(view).toMatchObject({ phase: 'ready', questionPending: true, questions: [question] });
+  const pending = view.pendingParts?.find((part) => part.question === question);
+  expect(pending).toMatchObject({ request: exact, status: 'waiting', revision: 0 });
+  for (let turn = 0; turn < 3; turn++) {
+    view = await settled(await send(view, 'Finns Lo?'));
+    expect(view).toMatchObject({ phase: 'ready', questionPending: true, modelReply: 'Lo finns.' });
+  }
+  const next = model.requests.length;
+  const before = await readMap();
+  const final = await settled(await send(view, '0700123456'));
+  expect(final).toMatchObject({ phase: 'ready', questionPending: false, modelReply: answer });
+  expect(model.requests).toHaveLength(next + 2);
+  for (const request of model.requests.slice(next)) {
+    const current = startEnvelope(request);
+    expect(current.verifiedReads).toEqual([
+      expect.objectContaining({
+        name: 'read_map',
+        args: { query: 'Lina' },
+        value: expect.objectContaining({
+          objects: [expect.objectContaining({ id: 'lina', revision: 1 })],
+        }),
+      }),
+    ]);
+    expect(JSON.stringify(current.verifiedReads)).not.toContain('1980-01-01');
+    expect(JSON.stringify(current.verifiedReads)).not.toContain('Privat förslag');
+  }
+  expect(final.pendingParts).toContainEqual(
+    expect.objectContaining({ id: pending?.id, request: exact, status: 'completed', revision: 1 }),
+  );
+  expect(final.receipt).toBeUndefined();
+  expect(await readMap()).toEqual(before);
+  const completed = model.requests.length;
+  const thanks = await settled(await send(final, 'Tack.'));
+  expect(thanks).toMatchObject({ phase: 'ready', modelReply: 'Varsågod.' });
+  expect(model.requests).toHaveLength(completed + 1);
+  expect(startEnvelope(model.requests[completed]).verifiedReads).toEqual([]);
+  expect(await readMap()).toEqual(before);
+});
+
+test.each(['saved revision', 'duplicate name'])(
+  'a bare pending answer preserves current saved candidates after a %s',
+  async (change) => {
+    const exact = 'Jämför ett datum med födelsedatum för Lina utan att ändra något.';
+    const question = 'Vilket datum vill du jämföra?';
+    const ambiguity = 'Menar du Lina född 1980-01-01 eller Lina född 1990-02-03?';
+    const answer = 'Lina är född 2001-04-05.';
+    const model = textModel((request) => {
+      const current = startEnvelope(request);
+      const objects = [
+        ...new Map(suppliedObjects(request, 'saved').map((object) => [object.id, object])).values(),
+      ];
+      if (!objects.length) return [modelTool('read_map', { query: 'Lina' })];
+      if (current.message === exact)
+        return [
+          modelTool('ask_questions', {
+            questions: [{ kind: 'information', request: exact, question, dependsOnDraft: false }],
+          }),
+        ];
+      return [
+        modelTool('ask_questions', {
+          questions: [],
+          updates: [
+            pendingUpdate(
+              request,
+              question,
+              objects.length > 1 ? { action: 'rephrase', question: ambiguity } : { answer },
+            ),
+          ],
+        }),
+      ];
+    }, readScope);
+    const fresh = await seedPeople(
+      await setup({ modelFetch: model.provider }),
+      'saved',
+      change === 'duplicate name' ? ['Lina', 'Lina'] : undefined,
+    );
+    let view = await settled(await send(fresh, exact));
+    expect(view).toMatchObject({ phase: 'ready', questionPending: true, questions: [question] });
+    const pending = view.pendingParts?.find((part) => part.question === question);
+    if (change === 'saved revision') {
+      const map = await readMap();
+      const person = map.objects.find((object) => object.id === 'lina');
+      const changed = await post(`${base}/map/draft`, {
+        version: map.draft.version,
+        contentVersion: map.contentVersion,
+        id: 'lina',
+        baseRevision: person?.revision,
+        value: {
+          typeId: person?.typeId,
+          name: 'Lina',
+          properties: [
+            { id: 'lina-date', label: 'Födelsedatum', kind: 'date', value: '2001-04-05' },
+          ],
+        },
+      });
+      expect(changed.status(), await changed.text()).toBe(200);
+      await saveMap('pending-birthday');
+      view = await (await browser.get(`${base}/text-assistant/${view.id}`)).json();
+    }
+    const next = model.requests.length;
+    const before = await readMap();
+    const final = await settled(await send(view, '2001-04-05'));
+    expect(model.requests).toHaveLength(next + (change === 'saved revision' ? 2 : 1));
+    if (change === 'saved revision') {
+      expect(startEnvelope(model.requests[next]).verifiedReads).toEqual([]);
+      expect(JSON.stringify(model.requests.slice(next))).not.toContain('1990-02-03');
+      expect(final).toMatchObject({ phase: 'ready', questionPending: false, modelReply: answer });
+      expect(final.pendingParts).toContainEqual(
+        expect.objectContaining({
+          id: pending?.id,
+          request: exact,
+          status: 'completed',
+          revision: 1,
+        }),
+      );
+    } else {
+      expect(
+        suppliedObjects(model.requests[next], 'saved')
+          .map((object) => object.id)
+          .sort(),
+      ).toEqual(['lina', 'lo']);
+      expect(final).toMatchObject({
+        phase: 'ready',
+        questionPending: true,
+        questions: [ambiguity],
+      });
+      expect(final.pendingParts).toContainEqual(
+        expect.objectContaining({
+          id: pending?.id,
+          request: exact,
+          status: 'waiting',
+          revision: 1,
+        }),
+      );
+    }
+    expect(final.receipt).toBeUndefined();
+    expect(await readMap()).toEqual(before);
+  },
+);
+
+test.each(['count', 'bytes'])(
+  'a bare pending answer keeps the %s limit and excludes a cached whole map',
+  async (limit) => {
+    const names = Array.from({ length: 17 }, (_, index) => `Person${index}`);
+    const exact = `Jämför ett telefonnummer med ${names.join(', ')} utan att ändra något.`;
+    const question = 'Vilket telefonnummer vill du jämföra?';
+    const model = textModel((request) => {
+      const current = startEnvelope(request);
+      if (current.message !== exact) return [modelMessage('Ingen uppgift ändras.')];
+      if (!request.input.some((item) => item.type === 'function_call_output'))
+        return [
+          modelTool('read_map', {}),
+          ...names.map((query) => modelTool('read_map', { query })),
+        ];
+      return [
+        modelTool('ask_questions', {
+          questions: [{ kind: 'information', request: exact, question, dependsOnDraft: false }],
+        }),
+      ];
+    }, readScope);
+    let view = await setup({ modelFetch: model.provider });
+    for (const name of names) {
+      const map = await readMap();
+      const added = await post(`${base}/map/draft`, {
+        version: map.draft.version,
+        contentVersion: map.contentVersion,
+        id: name,
+        baseRevision: null,
+        value: {
+          typeId: map.types[0].id,
+          name,
+          properties: [
+            {
+              id: 'detail',
+              label: 'Beskrivning',
+              kind: 'text',
+              value: limit === 'bytes' ? 'x'.repeat(3000) : 'Kort uppgift',
+            },
+          ],
+        },
+      });
+      expect(added.status(), await added.text()).toBe(200);
+    }
+    await saveMap(`seed-${limit}`);
+    view = await (await browser.get(`${base}/text-assistant/${view.id}`)).json();
+    const asked = await settled(await send(view, exact));
+    expect(asked).toMatchObject({ phase: 'ready', questionPending: true, questions: [question] });
+    const next = model.requests.length;
+    const before = await readMap();
+    const final = await settled(await send(asked, '0700123456'));
+    expect(final).toMatchObject({
+      phase: 'ready',
+      questionPending: true,
+      modelReply: 'Ingen uppgift ändras.',
+    });
+    expect(model.requests).toHaveLength(next + 1);
+    const facts = startEnvelope(model.requests[next]).verifiedReads;
+    expect(facts.length).toBeGreaterThan(0);
+    if (limit === 'count') expect(facts).toHaveLength(16);
+    else expect(facts.length).toBeLessThan(16);
+    expect(
+      facts.reduce(
+        (bytes: number, fact: unknown) => bytes + Buffer.byteLength(JSON.stringify(fact)),
+        0,
+      ),
+    ).toBeLessThanOrEqual(32_768);
+    expect(
+      facts.every((fact: { args: { query?: string } }) => names.includes(fact.args.query ?? '')),
+    ).toBe(true);
+    expect(JSON.stringify(facts)).not.toContain('Privat förslag');
+    expect(final.receipt).toBeUndefined();
+    expect(await readMap()).toEqual(before);
+  },
+);
+
+test.each(['grant revocation', 'content replacement'])(
+  'a bare pending answer rejects verified saved facts after %s',
+  async (change) => {
+    const exact = 'Jämför ett telefonnummer med uppgifterna för Lina utan att ändra något.';
+    const question = 'Vilket telefonnummer vill du jämföra?';
+    let entered = false;
+    const held = new Promise<unknown[]>((resolve) => {
+      release = () => resolve([modelMessage('Lina är född 1990-02-03. Ett inaktuellt svar.')]);
+    });
+    const model = textModel((request) => {
+      const current = startEnvelope(request);
+      if (current.message !== exact) {
+        entered = true;
+        return held;
+      }
+      if (!suppliedObjects(request, 'saved').length)
+        return [modelTool('read_map', { query: 'Lina' })];
+      return [
+        modelTool('ask_questions', {
+          questions: [{ kind: 'information', request: exact, question, dependsOnDraft: false }],
+        }),
+      ];
+    }, readScope);
+    const fresh = await seedPeople(await setup({ modelFetch: model.provider }), 'saved');
+    const asked = await settled(await send(fresh, exact));
+    expect(asked).toMatchObject({ phase: 'ready', questionPending: true, questions: [question] });
+    const next = model.requests.length;
+    const working = await send(asked, '0700123456');
+    await expect.poll(() => entered).toBe(true);
+    expect(JSON.stringify(startEnvelope(model.requests[next]).verifiedReads)).toContain(
+      '1990-02-03',
+    );
+    await invalidateConversation(change);
+    release();
+    await expect
+      .poll(async () => (await browser.get(`${base}/text-assistant/${working.id}`)).status())
+      .toBe(404);
+    expect(await (await browser.get(`${base}/text-assistant/${working.id}`)).text()).not.toContain(
+      '1990-02-03',
+    );
+    expect(model.requests).toHaveLength(next + 1);
+    const started = await post(`${base}/text-assistant`, approvedForVisit);
+    expect(started.status(), await started.text()).toBe(201);
+    expect(await started.json()).toMatchObject({ pendingParts: [] });
+  },
+);
+
 test.each(['saved', 'draft'])(
   'plural follow-ups retain both bounded %s candidates and singular ambiguity asks which person',
   async (source) => {
@@ -847,32 +1167,7 @@ test.each(['grant revocation', 'content replacement'])(
     const working = await send(initial, 'Vilket födelsedatum har hon?');
     await expect.poll(() => entered).toBe(true);
     expect(JSON.stringify(startEnvelope(model.requests[2]).verifiedReads)).toContain('1990-02-03');
-    if (change === 'grant revocation') {
-      const { connections } = await (
-        await browser.get(`${app.origin}/api/assistants/context`)
-      ).json();
-      const revoked = await post(`${app.origin}/api/assistants/${connections[0].id}/revoke`, {});
-      expect(revoked.status(), await revoked.text()).toBe(200);
-    } else {
-      const prepared = await (await post(`${base}/exports`, {})).json();
-      const archive = await (await browser.get(`${base}/exports/${prepared.id}`)).body();
-      const uploaded = await browser.post(`${base}/imports`, {
-        headers: {
-          origin: app.origin,
-          'content-type': 'application/zip',
-          'X-Skyttel-Content-Version': '1',
-        },
-        data: archive,
-      });
-      expect(uploaded.status(), await uploaded.text()).toBe(201);
-      const ready = await uploaded.json();
-      const confirmed = await post(`${base}/imports/${ready.id}/confirm`, {
-        confirmed: true,
-        contentVersion: 1,
-      });
-      expect(confirmed.status(), await confirmed.text()).toBe(200);
-      expect(await confirmed.json()).toMatchObject({ status: 'completed' });
-    }
+    await invalidateConversation(change);
     release();
     await expect
       .poll(async () => (await browser.get(`${base}/text-assistant/${working.id}`)).status())

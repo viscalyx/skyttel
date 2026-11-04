@@ -1677,6 +1677,62 @@ frågan om du provar med syntetisk mikrofon. Faktiskt hört ljud ingår inte.
       "runner": "vitest",
       "suite": "server",
       "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a bare pending answer reuses verified saved facts after unrelated completed questions",
+      "purpose": "Ett svar med enbart telefonnummer återanvänder aktuella sparade fakta för den exakta väntande begäran efter oberoende frågor; avslutade delar väljer inga fakta."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a bare pending answer preserves current saved candidates after a saved revision",
+      "purpose": "Ett svar med enbart datum kräver en ny läsning efter en sparad rättelse och återför inte gamla värden."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a bare pending answer preserves current saved candidates after a duplicate name",
+      "purpose": "Ett kort svar bevarar båda sparade kandidaternas identiteter vid samma namn och omformulerar samma väntande fråga utan att välja person."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a bare pending answer keeps the count limit and excludes a cached whole map",
+      "purpose": "Sjutton relevanta sparade läsningar ger högst sexton startfakta; en tillgänglig hel karta skickas inte automatiskt."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a bare pending answer keeps the bytes limit and excludes a cached whole map",
+      "purpose": "Stora relevanta läsningar håller startunderlaget inom 32 KiB och lämnar orelaterade uppgifter utanför."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a bare pending answer rejects verified saved facts after grant revocation",
+      "purpose": "Verkligt återkallad MCP-behörighet stoppar ett hållet svar för den väntande begäran även när fakta redan finns tillgängliga."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a bare pending answer rejects verified saved facts after content replacement",
+      "purpose": "Verklig återimport byter innehållsägare och stoppar ett hållet svar med tidigare verifierade fakta för en väntande begäran."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
       "title": "successive single corrections supersede obsolete draft pictures and preserve checked batch evidence",
       "purpose": "Efter flera rättelser ser nästa arbetsanrop aktuell utkastbild och bevarade kontrollerade ändringsbesked."
     },

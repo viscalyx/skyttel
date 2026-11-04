@@ -506,7 +506,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   KONTEXT-23 läser aktuellt förslag i text och röst efter manuell rättelse;
   teknisk evidens skiljer återanvända läsningar från modellens promptcache.
   Den täcker även indirekta hänvisningar, tvetydiga personnamn, aktuella
-  rättelser och återkallad åtkomst.
+  rättelser och återkallad åtkomst. Korta svar på väntande frågor bevarar
+  relevant aktuellt underlag inom mängdgränser utan att välja en tvetydig
+  person eller återanvända inaktuella uppgifter.
   [Separat samtalsförberedelse](conversation-preparation.md) beskriver
   versionsvärden, paket, oberoende kontroll av köade mål, registrerat
   sparande och PCM genom hållen start.
