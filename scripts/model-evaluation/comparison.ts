@@ -280,7 +280,7 @@ export function compareApplicationVersions(
   };
 }
 
-function validVoicePlayback(attempt: Attempt) {
+export function validVoicePlayback(attempt: Attempt) {
   const proof = attempt.playback;
   const input = proof?.input;
   const end = proof?.renderedEnd;

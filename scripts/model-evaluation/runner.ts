@@ -23,6 +23,7 @@ import {
 } from './observations.js';
 import type { ProviderCall } from './provider.js';
 import type { Attempt, JudgeInput, JudgeResult, Scenario } from './types.js';
+import { executeUserStop, missedUserStop, validateUserStop } from './user-stop.js';
 
 export type RunOptions = {
   profile: string;
@@ -48,6 +49,7 @@ export async function runTextScenario(
   options: RunOptions,
 ) {
   scenarioUtterances(scenario, options.followUps);
+  scenario.steps.forEach(validateUserStop);
   const events: AssistantObservation[] = [];
   const environment = await evaluationEnvironment(
     scenario,
@@ -150,6 +152,38 @@ export async function runTextScenario(
               view = await environment.get<TextAssistantView>(
                 `${environment.path}/messages/${requestId}`,
               );
+              if (step.userStop && !options.stopped?.()) {
+                if (view.taskStatus === 'working') {
+                  const stopped = await executeUserStop({
+                    step,
+                    view,
+                    origin: startedAt,
+                    cancel: () =>
+                      environment.post(`${environment.path}/cancel`, {
+                        revision: view.revision,
+                        contextRevision: view.contextRevision,
+                        all: true,
+                      }),
+                    status: () => environment.get(`${environment.path}/messages/${requestId}`),
+                    check: (current, expected) =>
+                      environment.check(
+                        step,
+                        current,
+                        modelActions(events.slice(offset)),
+                        expected,
+                      ),
+                    events: () => events.slice(offset),
+                    readState: environment.read,
+                  });
+                  result.scriptedStop = stopped.proof;
+                  view = stopped.view;
+                  throw new Error('evaluation_scripted_user_stop');
+                }
+                if (view.taskStatus === 'completed') {
+                  result.scriptedStop = missedUserStop();
+                  throw new Error('evaluation_scripted_user_stop');
+                }
+              }
               if (view.taskStatus === 'canceled' || view.taskStatus === 'expired') {
                 applicationTerminalStatus = view.taskStatus;
                 throw new Error(`evaluation_application_${view.taskStatus}`);
@@ -307,7 +341,14 @@ export async function runTextScenario(
               : (options.judgeCosts() ?? 0) - judgeBefore
             : 0;
         } catch (error) {
-          if (applicationTerminalStatus) {
+          if (result.scriptedStop) {
+            result.outcome =
+              result.scriptedStop.verdict === 'pass' ? 'aborted' : result.scriptedStop.verdict;
+            result.fixed = result.scriptedStop.stateFailures;
+            result.reason = 'evaluation_scripted_user_stop';
+            result.observedEndMs = Date.now() - startedAt;
+            result.diagnostics = observationDiagnostics(events.slice(offset), startedAt);
+          } else if (applicationTerminalStatus) {
             result.outcome = applicationTerminalStatus === 'canceled' ? 'aborted' : 'error';
             result.reason = `evaluation_application_${applicationTerminalStatus}`;
             result.observedEndMs = Date.now() - startedAt;
