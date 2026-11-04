@@ -345,11 +345,12 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    kontrollen. Kör `restart` i terminalen.
 4. Ta bort nätblockeringen och ladda om webbläsaren. Skyttel kontrollerar och
    slutför själv det registrerade försöket, innan något nytt samtal startas
-   eller något medgivande ges. Välj sedan **Skriv till Skyttel → Nytt samtal**
-   och godkänn medgivandet om det behövs. Kräv förklaringen
+   eller något medgivande ges. Öppna **Skriv till Skyttel**. Kräv det pausade
+   samtalet med utgångstid och förklaringen
 **Kontrollen visar att hela utkastet
    sparades. Ändringarna finns i hushållets karta.**
-   i samtalstexten. Slå på mikrofonen för resten av fallet.
+   i samtalstexten. Välj därefter **Nytt samtal**, godkänn medgivandet om det
+   behövs och slå på mikrofonen för resten av fallet.
 5. Kontrollera ett genomfört kvitto med samma operation-ID och Lo i kartan. Kör
    `drop` efter sparandet; kontrollera att det genomförda kvittot finns kvar
    även om ett ljudsvar inte hördes. Vänta på avstängd röst, ladda om och välj

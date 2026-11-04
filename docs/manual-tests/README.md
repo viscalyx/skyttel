@@ -431,7 +431,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   faktisk markering, exakt sparåterhämtning och tydlig skillnad mellan
   samtalstext och verifierade resultat, löpande dialog och
   raden Skyttel arbetar. TAL-03 skyddar läsbar beskrivning i korta
-  uppgiftsfönster även efter hela svaret som text. Kontrollerat
+  uppgiftsfönster även efter hela svaret som text och läser sparutfallet i
+  det pausade samtalet efter omstart före ett uttryckligt nytt samtal. Kontrollerat
   familjeunderlag och verkligt tal redovisas separat. TAL-18/19 skiljer mikrofonlägena;
   TAL-20–22 skiljer placeringarna och TAL-17/23–26 kräver verkliga
   mikrofon-, ljud-, system- eller skärmläsarobservationer. TAL-24 behåller
