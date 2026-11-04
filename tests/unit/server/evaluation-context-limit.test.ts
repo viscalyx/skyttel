@@ -6,26 +6,94 @@ import {
 } from '../../../scripts/model-evaluation/context-limit.js';
 import { modelMessage, pricedProvider, textModel } from '../../support/text-model.js';
 
-test('ordinary bounded conversation growth cannot claim a model boundary from a forced or low-usage summary', {
-  tags: ['technical'],
-}, async () => {
-  const fixture = contextLimitFixture(3);
-  const submitted: string[] = [];
-  const result = await runContextLimit(fixture, {
-    origin: 'provider',
-    contextTokens: 1_050_000,
-    submit: async (text) => {
-      submitted.push(text);
-      return { outcome: 'pass', generation: 1, inputTokens: 120, summary: true };
-    },
-  });
-  expect(result.boundary).toBe('inconclusive');
-  expect(result.reason).toBe('growth_bound_reached_without_measured_boundary');
-  expect(submitted).toHaveLength(4);
-  expect(result.turns).toHaveLength(4);
-  expect(result.successfulCompletionMs).toBeNull();
-  expect(fixture.growth.every((text) => text.length <= 4000)).toBe(true);
-});
+test.each(['pass', 'fail', 'error', 'aborted', 'inconclusive', 'not_run'] as const)(
+  'ordinary growth stops at its first low-usage transition after one %s recall',
+  {
+    tags: ['technical'],
+  },
+  async (recallOutcome) => {
+    const fixture = contextLimitFixture(3);
+    const submitted: string[] = [];
+    const result = await runContextLimit(fixture, {
+      origin: 'provider',
+      contextTokens: 1_050_000,
+      submit: async (text, stage) => {
+        submitted.push(text);
+        return {
+          outcome: stage === 'recall' ? recallOutcome : 'pass',
+          generation: stage === 'seed' ? 0 : 1,
+          inputTokens: stage === 'seed' ? 120 : stage === 'growth' ? 140 : 160,
+          summary: stage === 'growth',
+          callIds: stage === 'growth' ? ['summary', 'growth'] : [stage],
+        };
+      },
+    });
+    expect(submitted).toEqual([fixture.seed, fixture.growth[0], fixture.recall]);
+    expect(result.boundary).toBe(
+      recallOutcome === 'pass' ? 'configuration_limited' : 'inconclusive',
+    );
+    expect(result.reason).toBe(
+      recallOutcome === 'pass'
+        ? 'natural_application_transition_before_measured_capacity'
+        : 'recall_not_verified_after_application_transition',
+    );
+    expect(result.physicalProviderMaximum).toBe('unverified');
+    expect(result.turns).toEqual([
+      {
+        stage: 'seed',
+        outcome: 'pass',
+        generation: 0,
+        inputTokens: 120,
+        summary: false,
+        callIds: ['seed'],
+      },
+      {
+        stage: 'growth',
+        outcome: 'pass',
+        generation: 1,
+        inputTokens: 140,
+        summary: true,
+        callIds: ['summary', 'growth'],
+      },
+      {
+        stage: 'recall',
+        outcome: recallOutcome,
+        generation: 1,
+        inputTokens: 160,
+        summary: false,
+        callIds: ['recall'],
+      },
+    ]);
+    expect(result.successfulCompletionMs).toBeNull();
+    expect(fixture.growth.every((text) => text.length <= 4000)).toBe(true);
+  },
+);
+
+test.each(['seed-summary', 'generation-only'] as const)(
+  'an observed %s transition stops growth even without both transition signals',
+  { tags: ['technical'] },
+  async (signal) => {
+    const stages: string[] = [];
+    const result = await runContextLimit(contextLimitFixture(4), {
+      origin: 'provider',
+      contextTokens: 1_050_000,
+      submit: async (_text, stage) => {
+        stages.push(stage);
+        return {
+          outcome: 'pass',
+          generation: signal === 'generation-only' && stage !== 'seed' ? 1 : 0,
+          inputTokens: null,
+          summary: signal === 'seed-summary' && stage === 'seed',
+        };
+      },
+    });
+    expect(stages).toEqual(
+      signal === 'seed-summary' ? ['seed', 'recall'] : ['seed', 'growth', 'recall'],
+    );
+    expect(result.boundary).toBe('configuration_limited');
+    expect(result.physicalProviderMaximum).toBe('unverified');
+  },
+);
 
 test('bounded growth uses ordinary authenticated application messages and real state checks without a summary hook', {
   tags: ['technical'],
@@ -64,43 +132,67 @@ test('bounded growth uses ordinary authenticated application messages and real s
   ).toBe(true);
 });
 
-test('growth stops at its first terminal failure without inventing successful time or dependent turns', {
-  tags: ['technical'],
-}, async () => {
-  let calls = 0;
-  const result = await runContextLimit(contextLimitFixture(4), {
-    origin: 'controlled',
-    contextTokens: 1_050_000,
-    submit: async () => {
-      calls++;
-      return { outcome: 'error', generation: 0, inputTokens: null, summary: false };
-    },
-  });
-  expect(calls).toBe(1);
-  expect(result.turns).toHaveLength(1);
-  expect(result.reason).toBe('terminal_turn_error');
-  expect(result.successfulCompletionMs).toBeNull();
-});
+test.each(['fail', 'error', 'aborted', 'inconclusive', 'not_run'] as const)(
+  'a terminal %s growth turn prevents recall even when it observes a transition',
+  {
+    tags: ['technical'],
+  },
+  async (outcome) => {
+    const stages: string[] = [];
+    const result = await runContextLimit(contextLimitFixture(4), {
+      origin: 'controlled',
+      contextTokens: 1_050_000,
+      submit: async (_text, stage) => {
+        stages.push(stage);
+        return {
+          outcome: stage === 'seed' ? 'pass' : outcome,
+          generation: stage === 'seed' ? 0 : 1,
+          inputTokens: 120,
+          summary: stage === 'growth',
+          callIds: [stage],
+        };
+      },
+    });
+    expect(stages).toEqual(['seed', 'growth']);
+    expect(result.turns).toHaveLength(2);
+    expect(result.turns[1]).toEqual({
+      stage: 'growth',
+      outcome,
+      generation: 1,
+      inputTokens: 120,
+      summary: true,
+      callIds: ['growth'],
+    });
+    expect(result.reason).toBe(`terminal_turn_${outcome}`);
+    expect(result.boundary).toBe('inconclusive');
+    expect(result.physicalProviderMaximum).toBe('unverified');
+    expect(result.successfulCompletionMs).toBeNull();
+  },
+);
 
-test('measured natural application boundary still requires verified recall and cannot prove the provider maximum', {
-  tags: ['technical'],
-}, async () => {
-  const stages: string[] = [];
-  const result = await runContextLimit(contextLimitFixture(4), {
-    origin: 'provider',
-    contextTokens: 1_050_000,
-    submit: async (_text, stage) => {
-      stages.push(stage);
-      return {
-        outcome: 'pass',
-        generation: stage === 'seed' ? 0 : 1,
-        inputTokens: stage === 'seed' ? 1_000_000 : 500,
-        summary: stage === 'growth',
-      };
-    },
-  });
-  expect(stages).toEqual(['seed', 'growth', 'recall']);
-  expect(result.boundary).toBe('application_boundary');
-  expect(result.physicalProviderMaximum).toBe('unverified');
-  expect(result.reason).toBe('natural_application_transition_after_measured_growth');
-});
+test.each(['seed', 'growth'] as const)(
+  'measured %s usage can establish only an application boundary after verified recall',
+  {
+    tags: ['technical'],
+  },
+  async (measuredStage) => {
+    const stages: string[] = [];
+    const result = await runContextLimit(contextLimitFixture(4), {
+      origin: 'provider',
+      contextTokens: 1_050_000,
+      submit: async (_text, stage) => {
+        stages.push(stage);
+        return {
+          outcome: 'pass',
+          generation: stage === 'seed' ? 0 : 1,
+          inputTokens: stage === measuredStage ? 1_000_000 : 500,
+          summary: stage === 'growth',
+        };
+      },
+    });
+    expect(stages).toEqual(['seed', 'growth', 'recall']);
+    expect(result.boundary).toBe('application_boundary');
+    expect(result.physicalProviderMaximum).toBe('unverified');
+    expect(result.reason).toBe('natural_application_transition_after_measured_growth');
+  },
+);

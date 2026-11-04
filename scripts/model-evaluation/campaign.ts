@@ -144,7 +144,8 @@ export async function prepareOptimizationCampaign(options: {
     counting: 'disabled; whole-context reservations',
     contextLimitSupplement: {
       status: 'not_run',
-      ordinaryGrowth: 'contextLimitFixture(2048); natural application boundary only',
+      ordinaryGrowth:
+        'contextLimitFixture(2048); stop at first summary or generation increase; at most one recall',
       providerBoundary: 'bounded captured-request probe; explicit context_length_exceeded only',
       physicalVoiceBoundary:
         'unrun; ordinary summary or text-backend boundary cannot establish Live context limit',

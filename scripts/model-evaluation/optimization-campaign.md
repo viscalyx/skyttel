@@ -96,12 +96,17 @@ behavior. They do not establish an actual model boundary.
 and concrete authenticated application adapter. It preserves real SQLite/MCP,
 uses at most 2,048 growth messages of at most 3,900 characters each, and tests
 recall of a declared early sentinel after a natural context transition. Every
-turn checks unchanged state and saving safety. It stops on the first terminal
-failure. This supplement records provider-measured input, request identities,
-natural summary calls and context generation. Byte estimates, low-usage
-summaries and controlled usage never establish a physical provider boundary.
-Even a measured natural transition is an application boundary; the physical
-maximum stays unverified.
+turn checks unchanged state and saving safety. Growth stops at the first
+observed summary or context-generation increase, including during the seed,
+and attempts at most one recall. A terminal failure stops immediately without
+dependent turns. Failed or unverified recall remains inconclusive. With
+verified recall, input usage below 95 percent of capacity or missing usage is
+configuration-limited; usage at or above that threshold establishes only an
+application boundary. Classification includes usage observed during the
+transition turn. This supplement retains all outcomes, provider-measured input,
+request identities, natural summary calls and context generation. Byte
+estimates, low-usage summaries and controlled usage never establish a physical
+provider boundary. The physical maximum stays unverified.
 
 The separate provider capability probe preserves a captured full application
 request and appends deterministic bounded history. It requires an exact count
