@@ -104,11 +104,14 @@ function server({
       saved = { textVersion: body.textVersion, savedAt: '2026-10-01T08:00:00.000Z' };
       return Response.json({ saved });
     }
-    if (!body) return Response.json(url === path ? { available: true } : current);
+    if (!body) {
+      if (url === path || url === `${path}/restore`) return Response.json({ available: true });
+      return Response.json(current);
+    }
     commands.push(url.slice(path.length) || '/');
     if (url === path) {
       starts.push(body);
-      if (saved?.textVersion !== 3 && body.consent?.textVersion !== 3)
+      if (saved?.textVersion !== 4 && body.consent?.textVersion !== 4)
         return Response.json({ error: 'conversation_consent_required' }, { status: 403 });
     }
     if (url.includes('/voice'))
@@ -372,7 +375,7 @@ test('a new conversation that is answered after the user has left the map change
   expect(result.current.transcript).toEqual([]);
 });
 
-test('the conversation waits for the map and ends when the map is lost', async () => {
+test('the conversation waits for the map and pauses when the map is lost', async () => {
   const { commands } = server();
   const fetched = vi.spyOn(globalThis, 'fetch');
   const { result, rerender } = renderHook(
@@ -391,7 +394,7 @@ test('the conversation waits for the map and ends when the map is lost', async (
   expect(result.current.session).toBeNull();
   expect(result.current.text).toBe('');
   expect(result.current.available).toBeNull();
-  expect(commands).toEqual(['/', '/session/stop']);
+  expect(commands).toEqual(['/', '/session/pause']);
 
   // A consent that is not saved ends when the user leaves the household's map.
   rerender({ enabled: true });
@@ -399,7 +402,7 @@ test('the conversation waits for the map and ends when the map is lost', async (
   expect(result.current.consent).toMatchObject({ visit: false, valid: false });
   act(() => result.current.begin('text'));
   await waitFor(() => expect(result.current.consent.asking).toBe('text'));
-  expect(commands).toEqual(['/', '/session/stop']);
+  expect(commands).toEqual(['/', '/session/pause']);
 });
 
 test('without a valid consent the consent box asks first, and the chosen button decides how the conversation starts', async () => {

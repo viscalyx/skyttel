@@ -89,6 +89,7 @@ test('the consent box states the consent text word for word and offers to rememb
     'P',
     'P',
     'P',
+    'P',
   ]);
   expect([...(text?.children ?? [])].map((paragraph) => paragraph.textContent)).toEqual(
     specifiedConsentText,
