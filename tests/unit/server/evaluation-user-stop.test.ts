@@ -179,18 +179,7 @@ async function lateStateChange(
   const model = textModel(async (_request, signal) => {
     if (requests++ > 0) {
       lateStarted();
-      if (holdLateTask)
-        await new Promise<void>((resolve) => {
-          const timer = setTimeout(resolve, 1500);
-          signal?.addEventListener(
-            'abort',
-            () => {
-              clearTimeout(timer);
-              resolve();
-            },
-            { once: true },
-          );
-        });
+      if (holdLateTask) await waitForAbortOrTimeout(1500, signal);
       return [modelMessage('Ett nytt arbete efter stopp.')];
     }
     await waitForAbortOrTimeout(1500, signal);
