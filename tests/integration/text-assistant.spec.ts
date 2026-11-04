@@ -246,9 +246,9 @@ test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext'
   });
   const model = textModel(async (body) => {
     await heldModel;
-    const current = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content))
-      .draft as TextAssistantReview;
-    if (step++ === 0)
+    if (step === 0 && !lastToolResult(body)) return [modelTool('read_my_draft', {})];
+    if (step++ === 0) {
+      const current = lastToolResult(body) as TextAssistantReview;
       return [
         modelTool('resolve_conflict', {
           version: current.version,
@@ -257,6 +257,7 @@ test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext'
           choice: 'proposed',
         }),
       ];
+    }
     if (step === 2) {
       version = lastToolResult(body).version;
       return [modelTool('read_map', { query: 'Familjens Molnmusik' })];
@@ -358,7 +359,7 @@ test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext'
       ),
     ).toBe(true);
     expect(JSON.stringify(map.relationships)).toContain('Osäkert uppgivet');
-    expect(model.requests).toHaveLength(4);
+    expect(model.requests).toHaveLength(5);
   } finally {
     releaseModel();
     await app.close();

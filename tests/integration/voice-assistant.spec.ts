@@ -584,9 +584,9 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
   let step = 0;
   let version = 0;
   const model = textModel((body) => {
-    const current = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content))
-      .draft as TextAssistantReview;
-    if (step++ === 0)
+    if (step === 0 && !lastToolResult(body)) return [modelTool('read_my_draft', {})];
+    if (step++ === 0) {
+      const current = lastToolResult(body) as TextAssistantReview;
       return [
         modelTool('resolve_conflict', {
           version: current.version,
@@ -595,6 +595,7 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
           choice: 'proposed',
         }),
       ];
+    }
     if (step === 2) {
       version = lastToolResult(body).version;
       return [modelTool('read_map', { query: 'Familjens Molnmusik' })];
@@ -732,7 +733,7 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
           objectIds.has(edge.sourceId) && objectIds.has(edge.targetId),
       ),
     ).toBe(true);
-    expect(model.requests).toHaveLength(4);
+    expect(model.requests).toHaveLength(5);
     await expect
       .poll(() => live.sent.some(({ event }) => event.type === 'session.commentary.append'))
       .toBe(true);
@@ -751,7 +752,7 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
     expect(
       await (await page.request.get(`${app.origin}/api/households/${household.id}/map`)).json(),
     ).toEqual(map);
-    expect(model.requests).toHaveLength(4);
+    expect(model.requests).toHaveLength(5);
     await signOut(page);
     await expect.poll(() => openVoiceConnections(page)).toBe(0);
     expect(

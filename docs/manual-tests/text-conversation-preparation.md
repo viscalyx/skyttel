@@ -39,9 +39,17 @@ Lo-förslaget och en verklig
 samtidig rättelse från Robin Demo. Behåll första modellbegäran tills
 användaren har skrivit den oskickade beskrivningen i Kim-formuläret.
 
-Släpp sedan `resolve_conflict` med `version`, `contentVersion` och det
-första fullständiga konfliktobjektet från `held.draft.conflicts`, samt
-`choice:"proposed"`. Kopiera den nya versionen ur nästa `lastToolResult`.
+Första `held.draft` är ett urval, inte hela utkastet. Läs hela utkastet med
+det hållna anropets ID:
+
+```text
+tool REQUEST read_my_draft {}
+```
+
+Släpp sedan `resolve_conflict` med det nya anropets ID, `version`,
+`contentVersion` och det första fullständiga konfliktobjektet från
+`held.lastToolResult.conflicts`, samt `choice:"proposed"`.
+Kopiera den nya versionen ur nästa `lastToolResult`.
 Släpp `read_map` med `{"query":"Familjens Molnmusik"}`. Nästa resultat
 innehåller abonnemangets objekt. Kopiera hela dess värde, ta bort
 `id`, `householdId`, `revision`, och behåll dem separat som `id` och
