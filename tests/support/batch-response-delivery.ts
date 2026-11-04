@@ -2,11 +2,13 @@ type Status = {
   phase: 'idle' | 'armed' | 'not-committed' | 'dropped-after-commit';
   operationId?: string;
   version?: number;
+  statusUnavailable?: boolean;
 };
 
 /** Disposable provider fixture control, never installed in the production app. */
 export function controlledBatchDelivery(changed: (status: Status) => void = () => {}) {
   let status: Status = { phase: 'idle' };
+  let statusUnavailable = false;
   function set(next: Status) {
     status = next;
     changed({ ...status });
@@ -17,9 +19,14 @@ export function controlledBatchDelivery(changed: (status: Status) => void = () =
       set({ phase: 'armed' });
     },
     clear() {
+      statusUnavailable = false;
       set({ phase: 'idle' });
     },
-    status: () => ({ ...status }),
+    blockStatus(blocked: boolean) {
+      statusUnavailable = blocked;
+      changed({ ...status, statusUnavailable });
+    },
+    status: () => ({ ...status, statusUnavailable }),
     async dispatch(
       incoming: Request,
       dispatch: (request: Request) => Response | Promise<Response>,
@@ -31,6 +38,8 @@ export function controlledBatchDelivery(changed: (status: Status) => void = () =
               .json()
               .catch(() => null)
           : null;
+      if (rpc?.params?.name === 'read_draft_batch' && statusUnavailable)
+        throw new Error('Controlled unavailable batch status transport');
       const response = await dispatch(incoming);
       if (status.phase !== 'armed' || rpc?.params?.name !== 'apply_draft_batch') return response;
       const envelope = await response

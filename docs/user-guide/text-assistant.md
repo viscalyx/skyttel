@@ -745,8 +745,12 @@ Om instruktionen redan är mottagen men anslutningen sedan bryts får du
 ett leveransfel. Redan lagrat utkast och sparresultat finns kvar; kontrollera
 dem innan du ber om samma arbete igen.
 
-Under pågående arbete kontrollerar Skyttel ett tappat ändringsbesked innan
-arbetet fortsätter. Kontrollen lägger inte till förslagen en gång till.
+Om ett ändringsbesked saknas kontrollerar Skyttel samma ändringar innan
+arbetet fortsätter. När även kontrollen är tillfälligt otillgänglig visar
+notisen **Det är oklart om ändringarna genomfördes. Skyttel kontrollerar
+det.** Du kan skriva men inte skicka ett nytt uppdrag under kontrollen.
+Oskickad text finns kvar när resultatet kan verifieras. Kontrollen lägger
+inte till förslagen en gång till och startar inget nytt modellarbete.
 Om utkastet ändras under tiden får du veta att ändringarna genomförs men
 att aktuellt utkast behöver granskas. Läs ditt utkast och förtydliga hur
 du vill fortsätta. Ett registrerat sparförsök följs upp separat, även när

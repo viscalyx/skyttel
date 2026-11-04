@@ -91,6 +91,7 @@ async function main() {
               'fail REQUEST',
               'restart',
               'drop-batch',
+              'block-batch-status on|off',
               'batch-delivery',
               'scope-read | scope-work',
               'quit',
@@ -108,6 +109,9 @@ async function main() {
           emit('restarted', { origin: app.origin });
         } else if (command === 'drop-batch') {
           batchDelivery.arm();
+        } else if (command === 'block-batch-status') {
+          if (id !== 'on' && id !== 'off') throw new Error('Use block-batch-status on or off.');
+          batchDelivery.blockStatus(id === 'on');
         } else if (command === 'batch-delivery') {
           emit('batch-delivery', batchDelivery.status());
         } else {

@@ -46,6 +46,8 @@ export function assistantFailureMessage(code: string): string {
       return 'Ändringarna genomfördes i utkastet. Utkastet har därefter ändrats. Granska det aktuella utkastet och förtydliga hur arbetet ska fortsätta.';
     case 'assistant_batch_not_committed':
       return 'De senaste ändringarna genomfördes inte. Granska ditt aktuella utkast innan du fortsätter.';
+    case 'assistant_batch_unknown':
+      return 'Resultatet av de senaste ändringarna är inte bekräftat. Samma ändringar behöver kontrolleras innan arbetet kan fortsätta.';
     case 'content_conflict':
       return 'Hushållets innehåll har ersatts. Det nya underlaget behöver läsas innan arbetet kan fortsätta.';
     case 'operation_pending':

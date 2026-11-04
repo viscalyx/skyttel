@@ -16,7 +16,9 @@ save request or model work.
 
 Assistant clients that retry a draft batch must retain its operation identity
 and submitted versions. A committed result confirms the earlier operation;
-clients must read the current draft before further work. Batch recovery
+clients must read the current draft before further work. If the status check
+fails, keep later work blocked and repeat the check with the same identity.
+Batch recovery
 records contain identities, versions, counts and digests, without private
 draft values. Household exports do not include these records. Content
 replacement removes the records and retains opaque identities to prevent

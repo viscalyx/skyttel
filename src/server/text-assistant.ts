@@ -13,6 +13,7 @@ import {
   conversationConsentRevoked,
 } from '../shared/conversation-consent.js';
 import { sameModelChoice } from '../shared/conversation-model.js';
+import type { DraftBatchRequest } from '../shared/draft-batch.js';
 import { draftChangeCount } from '../shared/map.js';
 import { assistantSaveState, completeAssistantText } from '../shared/task-delivery.js';
 import type {
@@ -161,6 +162,8 @@ export function textAssistantRoutes({
   const requestPreparations = new WeakMap<Request, Preparation>();
   const draftKey = (session: Session) =>
     JSON.stringify([session.state.actorId, session.state.householdId]);
+  const hasPendingOutcome = (session: Session) =>
+    Boolean(session.state.pendingSave || session.state.pendingBatch);
   function ownedDraftTask(session: Session) {
     const claim = draftExecutions.get(draftKey(session));
     // Reset clears its executor before awaited preparation has retired the
@@ -584,6 +587,7 @@ export function textAssistantRoutes({
             session.state.pendingSave.operationId,
           ).operation?.status === 'pending',
       ),
+      batchPending: Boolean(session.state.pendingBatch && !session.execution.task),
       phase,
       activity: phase === 'working' ? session.state.activity : undefined,
       activitySteps: session.state.canceled ? undefined : session.state.activitySteps,
@@ -736,7 +740,7 @@ export function textAssistantRoutes({
       ...entry,
       // Raw voice fragments have no authenticated task provenance. Retain them
       // conservatively rather than assigning them to whichever task is active.
-      requestId: entry.partial ? undefined : session.state.activeMessage?.id,
+      requestId: entry.partial ? undefined : (entry.requestId ?? session.state.activeMessage?.id),
       ...(entry.role === 'assistant' && !entry.partial
         ? {
             result: session.state.result && structuredClone(session.state.result),
@@ -1249,55 +1253,196 @@ export function textAssistantRoutes({
 
   async function applyCheckedBatch(
     session: Session,
-    operations: { name: string; arguments: Record<string, unknown> }[],
-    version: number,
-    contentVersion: number,
+    batch: DraftBatchRequest,
     guard: () => void,
+    resolves: z.infer<typeof partReference>[] = [],
   ) {
-    const operationId = randomUUID();
+    if (session.state.pendingBatch) throw new MapError('assistant_batch_unknown', 409);
+    const request = structuredClone({ ...batch, operationId: batch.operationId ?? randomUUID() });
+    session.state.pendingBatch = {
+      request,
+      owner: session.state.owner,
+      before: structuredClone(session.state.review),
+      resolves: structuredClone(resolves),
+      messageId: session.state.activeMessage?.id,
+      discarded: request.operations.length === 1 && request.operations[0].name === 'discard_draft',
+    };
+    session.state.batchCheckId = undefined;
     let value: Awaited<ReturnType<typeof call>>;
     try {
-      value = await call(
-        session,
-        'apply_draft_batch',
-        {
-          operationId,
-          version,
-          contentVersion,
-          operations,
-        },
-        guard,
-      );
+      value = await call(session, 'apply_draft_batch', request, guard);
     } catch (error) {
       // Inspect this exact identity after a missing response. Never submit
       // a replacement mutation or start new model work.
       guard();
-      if (error instanceof MapError && error.code !== 'result_unknown') throw error;
-      const recovered = await call(
-        session,
-        'read_draft_batch',
-        { operationId, contentVersion },
-        guard,
-      );
-      if (!recovered.batch) throw new MapError('assistant_batch_not_committed', 409);
-      value = recovered.batch;
+      if (error instanceof MapError && error.code !== 'result_unknown') {
+        session.state.pendingBatch = undefined;
+        throw error;
+      }
+      try {
+        value = await readBatchOutcome(session, session.state.pendingBatch, guard);
+      } catch (statusError) {
+        guard();
+        if (statusError instanceof MapError && statusError.code !== 'result_unknown') {
+          session.state.pendingBatch = undefined;
+          throw statusError;
+        }
+        throw new MapError('assistant_batch_unknown', 409);
+      }
     }
-    guard();
+    await verifyBatchOutcome(session, session.state.pendingBatch, value, guard);
+    session.state.pendingBatch = undefined;
+    return value;
+  }
+  async function readBatchOutcome(
+    session: Session,
+    pending: NonNullable<ConversationState['pendingBatch']>,
+    guard?: () => void,
+  ) {
+    const { operationId, contentVersion } = pending.request;
+    const { batch } = await call(
+      session,
+      'read_draft_batch',
+      { operationId, contentVersion },
+      guard,
+    );
+    if (!batch) {
+      session.state.pendingBatch = undefined;
+      throw new MapError('assistant_batch_not_committed', 409);
+    }
+    return batch;
+  }
+  async function verifyBatchOutcome(
+    session: Session,
+    pending: NonNullable<ConversationState['pendingBatch']>,
+    value: Awaited<ReturnType<typeof call>>,
+    guard?: () => void,
+  ) {
+    guard?.();
+    checkViewAccess(session);
+    const { operationId, version, contentVersion, operations } = pending.request;
     if (
+      pending.owner !== contentOwner(database, session.state.householdId, session.state.actorId) ||
       value.operationId !== operationId ||
       value.contentVersion !== contentVersion ||
       value.fromVersion !== version ||
       value.appliedCount !== operations.length ||
       value.status !== 'committed'
     )
-      throw new MapError('assistant_draft_changed', 409);
+      throw new MapError('assistant_batch_unknown', 409);
     const after = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
+    if (after.contentVersion !== contentVersion) throw new MapError('content_conflict', 409);
     session.state.review = after;
     if (!value.currentDraft || after.version !== value.version) {
+      session.state.pendingBatch = undefined;
       session.state.result = { kind: 'draft', message: 'Ändringarna genomfördes i utkastet.' };
       throw new MapError('assistant_batch_committed_changed', 409);
     }
-    return value;
+    return after;
+  }
+  async function recoverBatch(session: Session, checkId?: string) {
+    const pending = session.state.pendingBatch;
+    if (!pending) return;
+    const guard = () => {
+      if (sessions.get(session.state.id) !== session)
+        throw new MapError('assistant_session_expired', 404);
+      checkViewAccess(session);
+      if (session.state.pendingBatch !== pending) throw new MapError('assistant_turn_changed', 409);
+    };
+    try {
+      guard();
+      const batch = await readBatchOutcome(session, pending, guard);
+      const after = await verifyBatchOutcome(session, pending, batch, guard);
+      guard();
+      const currentParts = session.execution.parts.read();
+      const resolves = pending.resolves.filter((reference) =>
+        currentParts.some(
+          (part) =>
+            part.id === reference.id &&
+            part.revision === reference.revision &&
+            part.status === 'ready',
+        ),
+      );
+      for (const operation of pending.request.operations)
+        session.execution.parts.operation(
+          resolves,
+          operation.name,
+          operation.arguments,
+          pending.before,
+          after,
+        );
+      session.execution.parts.complete(resolves);
+      advanceDraftVersion(session, pending.request.version, after.version);
+      session.state.workVersion = after.version;
+      session.state.result = {
+        kind: 'draft',
+        message: pending.discarded ? 'Utkastet är kastat.' : 'Ändringarna genomfördes i utkastet.',
+        changes: [
+          ...(session.state.result?.changes ?? []),
+          ...draftUpdateDetails(pending.before, after),
+        ],
+      };
+      session.state.discarded = pending.discarded;
+      session.state.pendingBatch = undefined;
+      session.state.error = undefined;
+      session.state.reply = session.state.result.message;
+      session.state.phase =
+        session.state.pendingSave || after.pendingOperations.length ? 'recovery' : 'ready';
+      session.state.modelReply = undefined;
+      session.state.requiredNotice = undefined;
+      session.state.saveIntent = undefined;
+      syncQuestions(session);
+    } catch (error) {
+      if (sessions.get(session.state.id) !== session)
+        throw new MapError('assistant_session_expired', 404);
+      // A closed SDK request can wrap the guard's denial. Report current
+      // authority, never an uncertain operation, after revocation.
+      checkViewAccess(session);
+      if (authorityLost(error)) throw error;
+      if (
+        session.state.pendingBatch !== pending &&
+        !(
+          error instanceof MapError &&
+          [
+            'assistant_batch_not_committed',
+            'assistant_batch_committed_changed',
+            'content_conflict',
+          ].includes(error.code)
+        )
+      )
+        return;
+      if (error instanceof MapError && error.code === 'content_conflict')
+        session.state.pendingBatch = undefined;
+      session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'error';
+      session.state.error = session.state.pendingBatch
+        ? 'assistant_batch_unknown'
+        : error instanceof MapError
+          ? error.code
+          : 'assistant_batch_unknown';
+      session.state.reply = assistantFailureMessage(session.state.error);
+      session.state.modelReply = undefined;
+      session.state.saveIntent = undefined;
+    }
+    if (!session.state.pendingBatch) {
+      session.state.batchCheckId = checkId;
+      session.state.revision++;
+      session.state.completedReplies?.push({
+        id: `batch-${pending.request.operationId}`,
+        source: 'text',
+        revision: session.state.revision,
+        text: '',
+        reply: session.state.reply,
+        result: session.state.result,
+        failed: Boolean(session.state.error),
+      });
+      appendConversation(session, {
+        role: 'assistant',
+        text: session.state.reply ?? '',
+        requestId: pending.messageId,
+      });
+      const accepted = pending.messageId && session.state.accepted.get(pending.messageId);
+      if (accepted) accepted.result = captureAssistantResult(view(session), 'live');
+    }
   }
 
   // This deliberately narrow command check is not general language
@@ -1797,7 +1942,7 @@ export function textAssistantRoutes({
     try {
       await refresh(session, checkReset);
       checkReset();
-      session.state.phase = session.state.pendingSave ? 'recovery' : 'ready';
+      session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'ready';
       session.state.workVersion = session.state.review.version;
       session.state.input = [];
       session.state.conversation = [];
@@ -1825,7 +1970,7 @@ export function textAssistantRoutes({
       session.state.saveCheck = undefined;
       session.state.discarded = undefined;
       session.state.phase =
-        session.state.pendingSave ||
+        hasPendingOutcome(session) ||
         session.state.operations.some((item) => item.status === 'pending')
           ? 'recovery'
           : 'ready';
@@ -2410,10 +2555,9 @@ export function textAssistantRoutes({
             const beforeBatch = session.state.review;
             const value = await applyCheckedBatch(
               session,
-              operations,
-              version,
-              contentVersion,
+              { operations, version, contentVersion },
               guard,
+              batch.resolves,
             );
             const afterBatch = session.state.review;
             // No operation is recorded as completed until the whole batch has
@@ -2459,7 +2603,7 @@ export function textAssistantRoutes({
           session.state.reply =
             verifiedReply(session) ??
             (session.state.displayedSelection ? 'Markerat i kartan.' : undefined);
-          session.state.phase = session.state.pendingSave ? 'recovery' : 'ready';
+          session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'ready';
           return;
         }
         if (!combined) {
@@ -2813,9 +2957,11 @@ export function textAssistantRoutes({
             const { version: _version, contentVersion: _contentVersion, ...arguments_ } = args;
             const batch = await applyCheckedBatch(
               session,
-              [{ name: action.name, arguments: arguments_ }],
-              version,
-              contentVersion,
+              {
+                operations: [{ name: action.name, arguments: arguments_ }],
+                version,
+                contentVersion,
+              },
               guard,
             );
             value = batch.applied?.[0]?.result ?? { ...session.state.review };
@@ -2946,11 +3092,15 @@ export function textAssistantRoutes({
         return;
       }
       session.state.phase =
-        session.state.pendingSave ||
+        hasPendingOutcome(session) ||
         (error instanceof MapError && error.code === 'operation_pending')
           ? 'recovery'
           : 'error';
-      session.state.error = error instanceof MapError ? error.code : 'assistant_provider_failed';
+      session.state.error = session.state.pendingBatch
+        ? 'assistant_batch_unknown'
+        : error instanceof MapError
+          ? error.code
+          : 'assistant_provider_failed';
       if (session.state.error === 'assistant_context_capacity') pauseCapacity(session);
       const messages = failureMessages(session, session.state.error);
       session.state.previousFailure = messages.ordinary;
@@ -2966,13 +3116,17 @@ export function textAssistantRoutes({
       if (error instanceof MapError && error.code === 'assistant_task_expired') return;
       try {
         await refresh(session, guard);
-      } catch {
+      } catch (refreshError) {
         if (
           task.signal.aborted ||
           session.state.revision !== revision ||
           !sessions.has(session.state.id)
         )
           return;
+        if (session.state.pendingBatch && !authorityLost(refreshError)) {
+          checkViewAccess(session);
+          return;
+        }
         await stop(session);
       }
     }
@@ -2980,6 +3134,12 @@ export function textAssistantRoutes({
   function nextMessage(session: Session) {
     const key = draftKey(session);
     if (draftExecutions.has(key)) return;
+    if (
+      [...sessions.values()].some(
+        (candidate) => draftKey(candidate) === key && candidate.state.pendingBatch,
+      )
+    )
+      return;
     const queued = [...sessions.values()]
       .filter((candidate) => draftKey(candidate) === key)
       .flatMap((session) => session.state.queue.map((message) => ({ session, message })))
@@ -3065,7 +3225,7 @@ export function textAssistantRoutes({
       session.state.taskId = undefined;
       session.state.taskSource = undefined;
       session.state.saveIntent = undefined;
-      session.state.phase = session.state.pendingSave ? 'recovery' : 'error';
+      session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'error';
       session.state.error = 'assistant_task_expired';
       session.state.reply =
         'Uppgiftens tid är slut. Redan lagrat arbete finns kvar i ditt utkast eller sparresultat.';
@@ -3126,7 +3286,7 @@ export function textAssistantRoutes({
       session.state.taskId = undefined;
       session.state.taskSource = undefined;
       session.state.saveIntent = undefined;
-      session.state.phase = session.state.pendingSave ? 'recovery' : 'ready';
+      session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'ready';
       if (accepted) {
         accepted.status = 'canceled';
         session.execution.deliveries.get(messageId || '')?.stop();
@@ -3235,6 +3395,7 @@ export function textAssistantRoutes({
   function beginMessage(session: Session, message: Message, queued = false) {
     const accepted = session.state.accepted.get(message.id);
     if (!accepted) return;
+    session.state.batchCheckId = undefined;
     accepted.status = 'working';
     const task = new AbortController();
     draftExecutions.set(draftKey(session), { session, task });
@@ -3364,9 +3525,7 @@ export function textAssistantRoutes({
       if (conversationCommand(message.text)?.discard) {
         await applyCheckedBatch(
           session,
-          [{ name: 'discard_draft', arguments: {} }],
-          expected.version,
-          expected.contentVersion,
+          { ...expected, operations: [{ name: 'discard_draft', arguments: {} }] },
           guard,
         );
         guard();
@@ -3535,26 +3694,28 @@ export function textAssistantRoutes({
     void executing
       .catch((error) => {
         if (task.signal.aborted || session.state.revision !== revision) return;
-        session.state.phase = session.state.pendingSave ? 'recovery' : 'error';
-        session.state.error = session.state.pendingSave
-          ? 'assistant_save_unknown'
-          : error instanceof MapError &&
-              [
-                'assistant_task_expired',
-                'assistant_pending_part_changed',
-                'assistant_action_out_of_scope',
-                'assistant_scope_unclear',
-                'assistant_scope_unavailable',
-                'assistant_batch_incomplete',
-                'assistant_batch_committed_changed',
-                'assistant_batch_not_committed',
-                'assistant_model_unsupported',
-                'assistant_model_access',
-                'assistant_model_temporary',
-                'assistant_context_capacity',
-              ].includes(error.code)
-            ? error.code
-            : 'assistant_draft_changed';
+        session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'error';
+        session.state.error = session.state.pendingBatch
+          ? 'assistant_batch_unknown'
+          : session.state.pendingSave
+            ? 'assistant_save_unknown'
+            : error instanceof MapError &&
+                [
+                  'assistant_task_expired',
+                  'assistant_pending_part_changed',
+                  'assistant_action_out_of_scope',
+                  'assistant_scope_unclear',
+                  'assistant_scope_unavailable',
+                  'assistant_batch_incomplete',
+                  'assistant_batch_committed_changed',
+                  'assistant_batch_not_committed',
+                  'assistant_model_unsupported',
+                  'assistant_model_access',
+                  'assistant_model_temporary',
+                  'assistant_context_capacity',
+                ].includes(error.code)
+              ? error.code
+              : 'assistant_draft_changed';
         if (session.state.error === 'assistant_context_capacity') pauseCapacity(session);
         const messages = failureMessages(session, session.state.error);
         session.state.reply = messages.ordinary;
@@ -3988,7 +4149,7 @@ export function textAssistantRoutes({
         body.revision < session.state.revision);
     if (!currentTurn()) return context.json({ error: 'assistant_turn_changed' }, 409);
     if (
-      (session.state.pendingSave || session.state.phase === 'recovery') &&
+      (hasPendingOutcome(session) || session.state.phase === 'recovery') &&
       session.state.phase !== 'working'
     )
       return context.json({ error: 'operation_pending' }, 409);
@@ -4158,7 +4319,7 @@ export function textAssistantRoutes({
     session.state.newQuestions = [];
     session.state.answers = [];
     session.state.requiredNotice = undefined;
-    session.state.phase = session.state.pendingSave ? 'recovery' : 'ready';
+    session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'ready';
     // Aborted work has no remaining mutation authority. Retire its claim before
     // an awaited refresh can overlap a new conversation or other queued work.
     retirePreparations(session);
@@ -4194,7 +4355,10 @@ export function textAssistantRoutes({
   routes.post(`${base}/:sessionId/recover`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
-    if (session.state.phase === 'working')
+    if (
+      session.state.phase === 'working' &&
+      (session.execution.task || !session.state.pendingBatch)
+    )
       return observedOperation(session, 'recover', async (finish) => {
         finish('completed', observationResult(session), 'already_working');
         return context.json(view(session));
@@ -4205,7 +4369,7 @@ export function textAssistantRoutes({
       (typeof body.checkId !== 'string' || !/^[a-f0-9-]{36}$/.test(body.checkId))
     )
       return context.json({ error: 'invalid_request' }, 400);
-    if (body.checkId && session.state.saveCheck?.id === body.checkId)
+    if (body.checkId && session.state.saveCheck?.id === body.checkId && !session.state.pendingBatch)
       return observedOperation(
         session,
         'recover',
@@ -4219,6 +4383,19 @@ export function textAssistantRoutes({
       session,
       'recover',
       async (finish) => {
+        if (session.state.pendingBatch) {
+          await recoverBatch(session, body.checkId);
+          finish(session.state.pendingBatch ? 'failed' : 'completed', observationResult(session));
+          return context.json(view(session));
+        }
+        if (
+          body.checkId &&
+          session.state.batchCheckId === body.checkId &&
+          !session.state.pendingSave
+        ) {
+          finish('completed', observationResult(session), 'already_checked');
+          return context.json(view(session));
+        }
         const ids = session.state.pendingSave
           ? [session.state.pendingSave.operationId]
           : session.state.receipt
