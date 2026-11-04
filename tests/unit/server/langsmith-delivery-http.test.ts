@@ -2898,18 +2898,26 @@ test.each([
   'ingestion $status suspends durably without backlog until explicit operator recovery',
   async ({ status, reason }) => {
     let failing = true;
-    const { path, session } = await setup({}, (_request, response) =>
+    let turn = 0;
+    const model = textModel(
+      () =>
+        turn++ === 0 ? [modelTool('read_map', { query: 'Lina' })] : [modelMessage('Lina är läst.')],
+      readOnlyScope,
+    );
+    const { path, session } = await setup({ modelFetch: model.provider }, (_request, response) =>
       response
         .writeHead(failing ? status : 204)
         .end(failing ? 'synthetic-secret-error' : undefined),
     );
-    expect(await send(path, session)).toMatchObject({ phase: 'ready' });
+    expect(await send(path, session)).toMatchObject({ phase: 'ready', unfinishedRequests: [] });
     const health = async () => (await client.get(`${app.origin}/api/operator/tracing`)).json();
     await expect.poll(async () => (await health()).state).toBe('suspended');
     expect(await health()).toMatchObject({ suspension: reason, lastError: reason });
     expect(endpoint.received).toHaveLength(1);
     const oldRoot = endpoint.received[0].body.id;
+    const modelCalls = model.requests.length + model.authorizationRequests.length;
     await restart();
+    expect(model.requests.length + model.authorizationRequests.length).toBe(modelCalls);
     expect(await health()).toMatchObject({
       state: 'suspended',
       suspension: reason,
@@ -3354,13 +3362,20 @@ test.each(['deliver', 'discard'])(
   async (ending) => {
     const held: ServerResponse[] = [];
     let blocked = true;
-    const { path, session } = await setup({}, (_request, response) => {
+    let turn = 0;
+    const model = textModel(
+      () =>
+        turn++ === 0 ? [modelTool('read_map', { query: 'Lina' })] : [modelMessage('Lina är läst.')],
+      readOnlyScope,
+    );
+    const { path, session } = await setup({ modelFetch: model.provider }, (_request, response) => {
       if (blocked) held.push(response);
       else response.writeHead(204).end();
     });
-    expect(await send(path, session)).toMatchObject({ phase: 'ready' });
+    expect(await send(path, session)).toMatchObject({ phase: 'ready', unfinishedRequests: [] });
     await expect.poll(() => endpoint.received.length).toBe(1);
     const rootId = endpoint.received[0].body.id;
+    const modelCalls = model.requests.length + model.authorizationRequests.length;
     const started = performance.now();
     await restart(() => {
       if (ending === 'deliver') {
@@ -3369,6 +3384,7 @@ test.each(['deliver', 'discard'])(
       }
     });
     expect(performance.now() - started).toBeLessThan(2500);
+    expect(model.requests.length + model.authorizationRequests.length).toBe(modelCalls);
     await expect.poll(() => endpoint.received[0].closed).toBe(true);
     expect((endpoint.received[0].closedAt ?? Infinity) - started).toBeLessThan(2500);
     expect(endpoint.received.filter((item) => item.path === `/runs/${rootId}`)).toHaveLength(
