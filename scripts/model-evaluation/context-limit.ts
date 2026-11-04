@@ -3,7 +3,7 @@ import type { AssistantObservation } from '../../src/server/assistant-observatio
 import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import type { createInstallation } from '../../tests/support/installation.js';
 import { evaluationEnvironment } from './environment.js';
-import { modelActions } from './observations.js';
+import { modelActions, retainedObservation } from './observations.js';
 import type { RunOptions } from './runner.js';
 
 export type ContextTurn = {
@@ -13,6 +13,13 @@ export type ContextTurn = {
   summary: boolean;
   callIds?: string[];
   fixed?: string[];
+  taskStatus?: TextAssistantView['taskStatus'] | null;
+  reason?: string;
+  error?: string;
+  observedEndMs?: number | null;
+  successfulCompletionMs?: number | null;
+  state?: Record<string, unknown>;
+  stateUnavailable?: string;
 };
 
 /** Ordinary messages, each within the public 4,000-character input limit.
@@ -68,8 +75,7 @@ export async function runApplicationContextLimit(
     {
       ...installationOptions,
       observe: (event) => {
-        events.push(event);
-        options.recordObservation?.(event);
+        events.push(retainedObservation(event, options.recordObservation));
         installationOptions?.observe?.(event);
       },
     },
@@ -82,8 +88,19 @@ export async function runApplicationContextLimit(
       contextTokens: options.contextTokens,
       submit: async (text, stage) => {
         if (options.stopped?.())
-          return { outcome: 'not_run', generation: 0, inputTokens: null, summary: false };
+          return {
+            outcome: 'not_run',
+            reason: options.stopReason?.() ?? 'evaluation_stopped',
+            generation: 0,
+            inputTokens: null,
+            summary: false,
+            callIds: [],
+            observedEndMs: null,
+            successfulCompletionMs: null,
+            stateUnavailable: 'evaluation_context_turn_not_submitted',
+          };
         const before = new Set(options.providerRecords?.().map((call) => call.id) ?? []);
+        const callsBefore = options.providerCalls?.() ?? 0;
         const offset = events.length;
         const step = {
           id: `context-${stage}-${sequence++}`,
@@ -92,16 +109,26 @@ export async function runApplicationContextLimit(
             requirements: stage === 'recall' ? ['Svaret anger hela kodordet björklöv 731.'] : [],
           },
         };
-        options.beginStep?.(0, {
-          scenario: scenario.id,
-          step: step.id,
-          modality: 'text',
-          repetition: options.repetition,
-          applicationVersion: options.application?.id,
-        });
+        let startedAt = Date.now();
+        let view: TextAssistantView | undefined;
+        let requestId: string | undefined;
+        let outcome: ContextTurn['outcome'] = 'pass';
+        let reason: string | undefined;
+        let error: string | undefined;
+        let observedEndMs: number | null = null;
+        let taskStatus: ContextTurn['taskStatus'] = null;
+        let terminalView = false;
         try {
-          let view = await environment.get<TextAssistantView>(environment.path);
-          const requestId = randomUUID();
+          options.beginStep?.(0, {
+            scenario: scenario.id,
+            step: step.id,
+            modality: 'text',
+            repetition: options.repetition,
+            applicationVersion: options.application?.id,
+          });
+          view = await environment.get<TextAssistantView>(environment.path);
+          requestId = randomUUID();
+          startedAt = Date.now();
           await environment.post(`${environment.path}/messages`, {
             requestId,
             revision: view.revision,
@@ -113,29 +140,63 @@ export async function runApplicationContextLimit(
             view = await environment.get<TextAssistantView>(
               `${environment.path}/messages/${requestId}`,
             );
-            if (view.taskStatus === 'completed' || view.error) break;
-            if (['canceled', 'expired'].includes(view.taskStatus ?? '') || options.stopped?.()) {
-              await environment.post(`${environment.path}/cancel`, {
+            taskStatus = view.taskStatus ?? null;
+            if (taskStatus === 'canceled' || taskStatus === 'expired') {
+              outcome = taskStatus === 'canceled' ? 'aborted' : 'error';
+              reason = `evaluation_application_${taskStatus}`;
+              error = view.error;
+              terminalView = true;
+              break;
+            }
+            if (view.taskStatus === 'completed' || view.error) {
+              outcome = view.error ? 'fail' : 'pass';
+              reason = view.error;
+              error = view.error;
+              terminalView = true;
+              break;
+            }
+            if (options.stopped?.()) {
+              outcome = 'aborted';
+              reason = options.stopReason?.() ?? 'evaluation_stopped';
+              observedEndMs = Date.now() - startedAt;
+              view = await environment.post<TextAssistantView>(`${environment.path}/cancel`, {
                 revision: view.revision,
                 all: true,
               });
-              return {
-                outcome: 'aborted',
-                generation: view.contextGeneration ?? 0,
-                inputTokens: null,
-                summary: false,
-              };
+              taskStatus = view.tasks?.find((task) => task.id === requestId)?.status ?? null;
+              terminalView = true;
+              break;
             }
             await new Promise((resolve) => setTimeout(resolve, 20));
           }
-          const fixed = await environment.check(step, view, modelActions(events.slice(offset)));
-          const calls = options.providerRecords?.().filter((call) => !before.has(call.id)) ?? [];
-          const inputs = calls.flatMap((call) => {
-            const input = (call.response?.usage as { input_tokens?: number } | undefined)
-              ?.input_tokens;
-            return Number.isSafeInteger(input) && Number(input) >= 0 ? [Number(input)] : [];
-          });
-          let outcome: ContextTurn['outcome'] = fixed.length || view.error ? 'fail' : 'pass';
+          observedEndMs ??= Date.now() - startedAt;
+        } catch (caught) {
+          observedEndMs ??= Date.now() - startedAt;
+          error = caught instanceof Error ? caught.message : String(caught);
+          reason ??= options.stopped?.() ? (options.stopReason?.() ?? error) : error;
+          outcome = options.stopped?.() ? 'aborted' : 'error';
+        }
+
+        // Collect state even after cancellation, expiry or a lost HTTP reply.
+        // A failed read is an evidence gap, never an empty successful check.
+        let fixed: string[] | undefined;
+        let state: Record<string, unknown> | undefined;
+        let stateUnavailable: string | undefined;
+        try {
+          if (!terminalView) {
+            view = await environment.get<TextAssistantView>(environment.path);
+            taskStatus = view.tasks?.find((task) => task.id === requestId)?.status ?? taskStatus;
+          }
+          if (!view) throw new Error('evaluation_context_view_unavailable');
+          fixed = await environment.check(step, view, modelActions(events.slice(offset)));
+          state = environment.stateEvidence();
+          if (!state) throw new Error('evaluation_state_evidence_missing');
+          if (outcome === 'pass' && fixed.length) outcome = 'fail';
+          if (outcome === 'pass' && options.stopped?.()) {
+            outcome = 'aborted';
+            reason = options.stopReason?.() ?? 'evaluation_stopped';
+            observedEndMs = Date.now() - startedAt;
+          }
           if (stage === 'recall' && outcome === 'pass') {
             const content = await options.judge?.({
               context: environment.judgeContext(step, fixed),
@@ -157,23 +218,53 @@ export async function runApplicationContextLimit(
                     ? 'fail'
                     : 'inconclusive'
                 : 'inconclusive';
+            if (options.stopped?.()) {
+              outcome = 'aborted';
+              reason = options.stopReason?.() ?? 'evaluation_stopped';
+              observedEndMs = Date.now() - startedAt;
+            }
           }
-          return {
-            outcome,
-            generation: view.contextGeneration ?? 0,
-            inputTokens: inputs.length ? Math.max(...inputs) : null,
-            summary: calls.some((call) => call.kind === 'summary'),
-            callIds: calls.map((call) => call.id),
-            fixed,
-          };
-        } catch {
-          return {
-            outcome: options.stopped?.() ? 'aborted' : 'error',
-            generation: 0,
-            inputTokens: null,
-            summary: false,
-          };
+        } catch (caught) {
+          const cause = caught instanceof Error ? caught.message : String(caught);
+          if (!state) stateUnavailable = cause;
+          if (outcome === 'pass') {
+            outcome = options.stopped?.() ? 'aborted' : 'error';
+            reason = cause;
+            error = cause;
+            observedEndMs = Date.now() - startedAt;
+          }
         }
+        const calls = options.providerRecords?.().filter((call) => !before.has(call.id)) ?? [];
+        const attempted =
+          calls.length > 0 ||
+          (options.providerCalls?.() ?? 0) > callsBefore ||
+          events.slice(offset).some((event) => event.kind === 'model_attempt');
+        if (outcome === 'aborted' && options.stopped?.() && !attempted) {
+          outcome = 'not_run';
+          observedEndMs = null;
+        }
+        const inputs = calls.flatMap((call) => {
+          const input = (call.response?.usage as { input_tokens?: number } | undefined)
+            ?.input_tokens;
+          return call.kind !== 'judge' && Number.isSafeInteger(input) && Number(input) >= 0
+            ? [Number(input)]
+            : [];
+        });
+        return {
+          outcome,
+          reason,
+          error,
+          taskStatus,
+          observedEndMs,
+          successfulCompletionMs: outcome === 'pass' ? observedEndMs : null,
+          generation: view?.contextGeneration ?? 0,
+          inputTokens: inputs.length ? Math.max(...inputs) : null,
+          summary: calls.some((call) => call.kind === 'summary'),
+          callIds: calls.map((call) => call.id),
+          fixed,
+          state,
+          stateUnavailable,
+        };
       },
     });
   } finally {

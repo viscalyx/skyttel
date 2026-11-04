@@ -221,6 +221,9 @@ export async function evaluationEnvironment(
       get,
       post,
       read,
+      stateEvidence() {
+        return observedState ? structuredClone(observedState) : undefined;
+      },
       judgeContext(
         step: Scenario['steps'][number],
         failures: string[],
