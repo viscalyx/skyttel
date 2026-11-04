@@ -63,7 +63,17 @@ async function main() {
   );
   const app = await createInstallation(undefined, {
     modelFetch: async (input, init) => {
-      const response = await model.provider(input, init);
+      let response: Response;
+      try {
+        response = await model.provider(input, init);
+      } catch (error) {
+        if (!(error instanceof Error) || error.message !== 'controlled_context_capacity')
+          throw error;
+        return Response.json(
+          { error: { code: 'context_length_exceeded', message: error.message } },
+          { status: 400 },
+        );
+      }
       if (textContextPercent === undefined) return response;
       const body = await response.json();
       body.usage.output_tokens = textContextPercent === 0 ? 0 : 30;
@@ -155,7 +165,7 @@ async function main() {
               'pending',
               'tool REQUEST TOOL JSON',
               'reply REQUEST TEXT',
-              'fail REQUEST',
+              'fail REQUEST [capacity]',
               'available on|off',
               'restart',
               'quit',
@@ -297,7 +307,13 @@ async function main() {
           if (!item) throw new Error('Use a held request ID from this terminal.');
           if (command === 'fail') {
             pending.delete(id);
-            item.reject(new Error('controlled_provider_failure'));
+            item.reject(
+              new Error(
+                line.split(/\s+/)[2] === 'capacity'
+                  ? 'controlled_context_capacity'
+                  : 'controlled_provider_failure',
+              ),
+            );
           } else if (command === 'reply') {
             const text = line.replace(/^reply\s+\S+\s*/, '');
             if (!text) throw new Error('Supply a synthetic reply.');

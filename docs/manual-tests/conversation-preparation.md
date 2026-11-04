@@ -81,6 +81,13 @@ reply REQUEST Historisk sammanfattning: Lo är det senaste förslaget. Spara hel
 <!-- markdownlint-enable MD013 -->
 
 För fel, kör `fail REQUEST` på just sammanfattningsanropet.
+För ett kontrollerat kapacitetsstopp, skicka det manuella fallets begäran
+och kör `fail REQUEST capacity` på dess hållna arbetsanrop. Leverantörens
+kapacitetsfel är kontrollerat; det mäter inte en verklig modells gräns.
+Efter stoppet skrivs ett fullständigt avgränsat uppdrag i textfältet och
+skickas med **Avgränsa uppdraget**. Släpp det nya hållna anropet med
+`reply REQUEST Det avgränsade svaret.`. Ursprunglig begäran ligger kvar
+pausad; den nya texten ska ange alla mål och begränsningar som gäller.
 `context 89` utlöser motsvarande röstbyte från den aktuella anslutningen.
 `capture-context-source` före bytet och `context-old 99` efter det
 släpper en gammal mätning som inte ska påverka det nya samtalet.
