@@ -37,7 +37,8 @@ to select the mode before restarting the server.
 For diagnostic consumers, use the latest work classification for each provider
 call. Keep earlier classifications as history and count its usage once.
 A lost reply does not prove unused work. Treat an unverified outcome as unknown
-until authorized evidence confirms whether the batch is committed.
+until authorized evidence confirms whether the batch is committed or the save
+request is registered.
 
 ### Check conversation model access and activation
 
