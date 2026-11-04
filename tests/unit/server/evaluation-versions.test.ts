@@ -8,7 +8,7 @@ import catalog from '../../../scripts/model-evaluation/catalog.json' with { type
 import profiles from '../../../scripts/model-evaluation/profiles.json' with { type: 'json' };
 import { verifiedProfile } from '../../../scripts/model-evaluation/provider.js';
 import { runTextScenario } from '../../../scripts/model-evaluation/runner.js';
-import { modelMessage, textModel } from '../../support/text-model.js';
+import { modelMessage, pricedProvider, textModel } from '../../support/text-model.js';
 
 async function applicationVersion(label: string, evaluator = false, sequentialOnly = false) {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-evaluation-version-'));
@@ -116,13 +116,7 @@ test('committed application modes retain comparable actual work and usage throug
         },
         {
           modelProfile: verifiedProfile('sol-high'),
-          modelFetch: async (url, init) => {
-            const response = await model.provider(url, init);
-            return Response.json(
-              { ...(await response.json()), service_tier: 'default' },
-              { headers: response.headers },
-            );
-          },
+          modelFetch: pricedProvider(model.provider),
         },
         {
           profile: 'local',
@@ -217,13 +211,7 @@ test('explicit application versions execute their own committed server with the 
         },
         {
           modelProfile: verifiedProfile('sol-high'),
-          modelFetch: async (url, init) => {
-            const response = await model.provider(url, init);
-            return Response.json(
-              { ...(await response.json()), service_tier: 'default' },
-              { headers: response.headers },
-            );
-          },
+          modelFetch: pricedProvider(model.provider),
         },
         {
           profile: 'local',
