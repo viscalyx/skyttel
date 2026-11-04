@@ -503,6 +503,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   ange en fullständig ny avgränsning medan tidigare arbete och kö väntar.
   KONTEXT-21/22 skiljer aktuell oberoende uppgift från ett manuellt ändrat
   mål vid köstart, med fortsatt rättelse eller förtydligande.
+  KONTEXT-23 läser aktuellt förslag i text och röst efter manuell rättelse;
+  teknisk evidens skiljer återanvända läsningar från modellens promptcache.
   [Separat samtalsförberedelse](conversation-preparation.md) beskriver
   versionsvärden, paket, oberoende kontroll av köade mål, registrerat
   sparande och PCM genom hållen start.

@@ -1619,6 +1619,130 @@ Detta mäter inte en verklig modells kontextgräns.
 - Namnet är Lo Manuell och Beskrivning är Påhittad uppgift. Ingenting sparas.
 - Den ursprungliga köade begäran finns kvar i samtalstexten.
 
+### KONTEXT-23: text och röst läser aktuellt förslag efter en manuell rättelse
+
+**Syfte:** Besvara en fråga med aktuella uppgifter och bevara en manuell
+rättelse samt tidigare synlig samtalstext vid byte till röst.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Lo Exempel ligger osparad med Beskrivning som
+Påhittad uppgift enligt områdets allmänna förberedelse. Återställ
+installation, hushåll och samtal mellan fallen.
+
+**Separat förberedelse:** Låt terminalen hålla varje arbetsanrop. Läs det
+aktuella Lo-förslaget i `held.draft`. Släpp det första svaret med
+`reply REQUEST Lo-förslaget heter Lo Exempel.` och det andra med
+`reply REQUEST Lo-förslaget heter Lo Manuell.`, där REQUEST är respektive
+verkligt anrops-ID. Använd startguidens `user` och `delegate` för den andra
+frågan om du provar med syntetisk mikrofon. Faktiskt hört ljud ingår inte.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-context.spec.ts",
+    "caseId": "KONTEXT-23"
+  },
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "verified relevant start facts answer directly while unrelated draft details remain unread",
+      "purpose": "Relevant verifierat startunderlag ger ett svar utan extra arbetsomgång medan orelaterade utkastdetaljer inte skickas."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/text-assistant.test.ts",
+      "title": "independent reads overlap and identical concurrent reads share one authorized result",
+      "purpose": "Publik MCP och kontrollerad leverantör visar överlappande oberoende läsningar och ett gemensamt resultat för identiska anrop."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/text-assistant.test.ts",
+      "title": "parallel reads that cross a manual draft change cannot supply a mixed snapshot to the model",
+      "purpose": "En manuell ändring under asynkron läsning stoppar blandat underlag före nästa arbetsanrop och bevarar den manuella ändringen."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/text-assistant.test.ts",
+      "title": "a relevant verified map read answers a follow-up without another tool round and refreshes after saving",
+      "purpose": "En relevant aktuell läsning återanvänds vid begärans start, medan ett senare sparande kräver aktuella uppgifter."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "continued batch work and renewed Live context retain current relevant facts without unrelated draft details",
+      "purpose": "Fortsatt batcharbete och förnyad röstanslutning använder aktuella relevanta fakta utan orelaterade utkastdetaljer."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "continued single work and renewed Live context retain current relevant facts without unrelated draft details",
+      "purpose": "Även en enskild ändrings fortsättning och förnyad röstanslutning bevarar urvalet av relevanta fakta."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "a manual edit during summary prevents another work request with the older draft snapshot",
+      "purpose": "En manuell ändring under asynkron sammanfattning stoppar en ny arbetsomgång med gamla utkastuppgifter och bevarar den exakta begäran."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-provider-contracts.test.ts",
+      "title": "ordinary conversation requests select the 30-minute minimum prompt lifetime without persistent provider state",
+      "purpose": "Kontrollerade leverantörer verifierar begärans 30-minutersinställning och store:false, inte verklig lagringstid eller snabbare svar."
+    }
+  ],
+  "reference": "Chromium, riktig server och SQLite, kontrollerade text- och röstleverantörer. Teknisk evidens mäter anropsantal och giltighet, inte verklig modellförståelse eller kortare väntetid.",
+  "outcomes": [
+    "Textfrågan besvaras med Lo Exempel och den senare röstfrågan med det manuella namnet Lo Manuell.",
+    "Tidigare fråga och svar finns kvar i samtalstexten; hela Lo Manuell finns kvar osparad med oförändrad beskrivning."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Skriv ”Vad heter Lo Exempel i förslaget?”. Släpp det första svaret och
+   läs ”Lo-förslaget heter Lo Exempel.”. Öppna förslaget och läs namn,
+   Person och Beskrivning. Stäng läsningen.
+2. Öppna **Tabell → Redigera Lo Exempel**. Sätt **Namn** till ”Lo Manuell”
+   och välj **Lägg i utkastet och stäng**. Öppna textvyn och läs hela
+   Lo Manuell i utkastet. Stäng läsningen.
+3. Slå på mikrofonen. Säg ”Vad heter Lo Manuell i förslaget nu?” och släpp
+   det andra svaret. Läs ”Lo-förslaget heter Lo Manuell.” i samtalstexten.
+   Kontrollera att den första frågan och det första svaret finns kvar.
+4. Slå av mikrofonen. Läs hela Lo Manuell i utkastet igen. Ingenting
+   ska vara sparat i hushållets karta.
+
+**Förväntat resultat:**
+
+- Det senare svaret använder det manuella namnet Lo Manuell.
+- Namn, typ och beskrivning finns kvar i utkastet, utan nytt sparande.
+- Den tidigare synliga samtalstexten ändras inte.
+
 ### KONTEXT-16: kontextens verkliga uppläsning
 
 **Syfte:** Bedöma den verkliga observationen separat från Chromium-emulering.

@@ -5,6 +5,7 @@ import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
+import { liveProvider } from '../../support/live-provider.js';
 import { modelMessage, modelTool, pendingUpdate, textModel } from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
@@ -76,6 +77,213 @@ async function settled(session: TextAssistantView) {
     .not.toBe('working');
   return view;
 }
+
+test('ordinary conversation requests select the 30-minute minimum prompt lifetime without persistent provider state', async () => {
+  const model = textModel(() => [modelMessage('Utkastet ligger kvar osparat.')]);
+  const session = await setup({ modelFetch: model.provider });
+  const final = await settled(await send(session));
+  expect(final.modelReply).toBe('Utkastet ligger kvar osparat.');
+  expect(model.requests).toHaveLength(1);
+  expect(model.authorizationRequests).toHaveLength(1);
+  for (const request of [...model.requests, ...model.authorizationRequests]) {
+    expect(request).toMatchObject({
+      store: false,
+      prompt_cache_options: { ttl: '30m' },
+    });
+    expect(request).not.toHaveProperty('prompt_cache_retention');
+    expect(request).not.toHaveProperty('conversation');
+    expect(request).not.toHaveProperty('previous_response_id');
+  }
+  expect((await readMap()).objects).toEqual([]);
+});
+
+test('a manual edit during summary prevents another work request with the older draft snapshot', async () => {
+  let releaseSummary = () => {};
+  let summarizing = false;
+  const held = new Promise<unknown[]>((resolve) => {
+    releaseSummary = () => resolve([modelMessage('Avslutad diskussion är sammanfattad.')]);
+  });
+  const model = textModel((request) => {
+    if (!request.tools.length) {
+      summarizing = true;
+      return held;
+    }
+    return model.requests.filter((request) => request.tools.length).length === 1
+      ? [modelTool('read_map', {})]
+      : [modelMessage('Ett svar utifrån äldre utkastuppgifter.')];
+  });
+  const session = await setup({
+    modelFetch: async (input, init) => {
+      const response = await model.provider(input, init);
+      const value = await response.json();
+      const request = JSON.parse(String(init?.body));
+      if (
+        request.tools.length &&
+        model.requests.filter((request) => request.tools.length).length === 1
+      )
+        value.usage.input_tokens = 1_040_000;
+      return Response.json(value);
+    },
+  });
+  const exact =
+    'Beskriv Min stol och vilka personer som är sparade i kartan. Spara inte och behåll beskrivningen oförändrad.';
+  const working = await send(session, exact);
+  try {
+    await expect.poll(() => summarizing, { timeout: 5000 }).toBe(true);
+    const current = await readMap();
+    const edited = await post(`${base}/map/draft`, {
+      version: current.draft.version,
+      contentVersion: current.contentVersion,
+      id: 'private-chair',
+      baseRevision: null,
+      value: { ...current.draft.changes[0].after, name: 'Manuell efter sammanfattning' },
+    });
+    expect(edited.status(), await edited.text()).toBe(200);
+    releaseSummary();
+    const final = await settled(working);
+    expect(final).toMatchObject({ phase: 'error', error: 'assistant_draft_changed' });
+    expect(final.completedReplies?.at(-1)?.request).toBe(exact);
+    expect(model.requests.filter((request) => request.tools.length)).toHaveLength(1);
+    expect((await readMap()).draft.changes[0].after?.name).toBe('Manuell efter sammanfattning');
+    expect((await readMap()).objects).toEqual([]);
+  } finally {
+    releaseSummary();
+  }
+});
+
+test('verified relevant start facts answer directly while unrelated draft details remain unread', async () => {
+  const model = textModel((request) => {
+    const current = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    const chair = current.draft.changes.find(
+      (change: { id: string }) => change.id === 'private-chair',
+    );
+    return chair
+      ? [modelMessage(`Stolen heter ${chair.after.name}.`)]
+      : [modelTool('read_my_draft', {})];
+  });
+  const session = await setup({ modelFetch: model.provider });
+  const before = await readMap();
+  const added = await post(`${base}/map/draft`, {
+    version: before.draft.version,
+    contentVersion: before.contentVersion,
+    id: 'a',
+    baseRevision: null,
+    value: {
+      typeId: before.types[0].id,
+      name: 'Annat bord',
+      properties: [
+        {
+          id: 'private-detail',
+          label: 'Beskrivning',
+          kind: 'text',
+          value: 'Orelaterad bordsuppgift',
+        },
+      ],
+    },
+  });
+  expect(added.status(), await added.text()).toBe(200);
+  const fresh = await (await browser.get(`${base}/text-assistant/${session.id}`)).json();
+  const final = await settled(await send(fresh, 'Vad heter Min stol i mitt utkast?'));
+  expect(final).toMatchObject({ phase: 'ready', modelReply: 'Stolen heter Min stol.' });
+  expect(model.requests).toHaveLength(1);
+  expect(JSON.stringify(model.requests[0].input)).not.toContain('Orelaterad bordsuppgift');
+  expect((await readMap()).draft.changes).toHaveLength(2);
+  expect((await readMap()).objects).toEqual([]);
+});
+
+test.each(['batch', 'single'])(
+  'continued %s work and renewed Live context retain current relevant facts without unrelated draft details',
+  async (mode) => {
+    const live = liveProvider();
+    const model = textModel((request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (model.requests.length > 1) return [modelMessage('Stolen är rättad.')];
+      if (mode === 'single')
+        return [
+          modelTool('propose_object', {
+            version: current.draft.version,
+            contentVersion: current.draft.contentVersion,
+            id: 'private-chair',
+            baseRevision: null,
+            value: { ...current.draft.changes[0].after, name: 'Min stol Klar' },
+          }),
+        ];
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          continueResponse: true,
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'private-chair',
+                baseRevision: null,
+                value: { ...current.draft.changes[0].after, name: 'Min stol Klar' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    const session = await setup({
+      modelFetch: model.provider,
+      liveFetch: live.provider,
+      liveSideband: live.attach,
+    });
+    const before = await readMap();
+    const added = await post(`${base}/map/draft`, {
+      version: before.draft.version,
+      contentVersion: before.contentVersion,
+      id: 'a',
+      baseRevision: null,
+      value: {
+        typeId: before.types[0].id,
+        name: 'Annat bord',
+        properties: [
+          {
+            id: 'private-detail',
+            label: 'Beskrivning',
+            kind: 'text',
+            value: 'Orelaterad bordsuppgift',
+          },
+        ],
+      },
+    });
+    expect(added.status()).toBe(200);
+    const fresh = await (await browser.get(`${base}/text-assistant/${session.id}`)).json();
+    const final = await settled(
+      await send(fresh, 'Rätta Min stol till Min stol Klar och beskriv resultatet. Spara inte.'),
+    );
+    expect(final).toMatchObject({ phase: 'ready', modelReply: 'Stolen är rättad.' });
+    expect.soft(JSON.stringify(model.requests[1].input)).not.toContain('Orelaterad bordsuppgift');
+    for (let index = 0; index < 2; index++) {
+      const started = await post(`${base}/text-assistant/${session.id}/voice`, {
+        sdp: 'synthetic-offer',
+        revision: final.revision,
+        draftVersion: final.review.version,
+        contentVersion: final.review.contentVersion,
+      });
+      expect(started.status(), await started.text()).toBe(201);
+      const { voice } = await started.json();
+      const stopped = await post(`${base}/text-assistant/${session.id}/voice/${voice.id}/stop`, {});
+      expect(stopped.status()).toBe(200);
+    }
+    expect(live.requests).toHaveLength(2);
+    expect.soft(JSON.stringify(live.requests)).not.toContain('Orelaterad bordsuppgift');
+    expect(JSON.stringify(live.requests[1].session.input)).toContain('Min stol Klar');
+    expect(
+      (await readMap()).draft.changes.find((change) => change.id === 'private-chair')?.after?.name,
+    ).toBe('Min stol Klar');
+    expect((await readMap()).draft.changes).toHaveLength(2);
+    expect((await readMap()).objects).toEqual([]);
+  },
+);
 
 test('a new selected model reconstructs fresh draft context without stale read results or draft snapshots', async () => {
   const model = textModel((request) => {
