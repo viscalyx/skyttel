@@ -20,6 +20,13 @@ const catalog = rawCatalog as Catalog;
 const sorted = <T>(values: T[]) =>
   values.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 
+function normalDefaults<T extends Record<string, unknown>>(value: T): T {
+  const result = { ...value };
+  if (result.lifecycle === 'active') delete result.lifecycle;
+  if (Array.isArray(result.properties) && !result.properties.length) delete result.properties;
+  return result;
+}
+
 /** A fresh SQLite installation for every independent scenario. Only external
  * authentication and provider transports can be substituted. */
 export async function evaluationEnvironment(
@@ -242,12 +249,12 @@ export async function evaluationEnvironment(
           delete clean.householdId;
           delete clean.revision;
           if (object.properties) clean.properties = normalProperties(object.properties);
-          return {
+          return normalDefaults({
             id: objectAliases.get(id) ?? id,
             type: type?.name ?? typeId,
             name: object.name,
             ...clean,
-          };
+          });
         }),
       );
     }
@@ -276,13 +283,13 @@ export async function evaluationEnvironment(
           delete clean.householdId;
           delete clean.revision;
           if (rest.properties) clean.properties = normalProperties(rest.properties);
-          return {
+          return normalDefaults({
             ...(preserveIds.has(id) ? { id } : {}),
             source: objectAliases.get(sourceId) ?? sourceId,
             type: definitions.find((item) => item.id === typeId)?.name ?? typeId,
             target: objectAliases.get(targetId) ?? targetId,
             ...clean,
-          };
+          });
         }),
       );
     }
@@ -295,7 +302,9 @@ export async function evaluationEnvironment(
       for (const [id, changes] of Object.entries(expected.objects ?? {}))
         target.objects.set(id, { ...target.objects.get(id), id, ...changes });
       for (const edge of expected.removeRelationships ?? []) {
-        const index = target.relationships.findIndex((item) => isDeepStrictEqual(item, edge));
+        const index = target.relationships.findIndex((item) =>
+          isDeepStrictEqual(normalDefaults({ ...item }), normalDefaults({ ...edge })),
+        );
         if (index < 0) throw new Error('evaluation_invalid_expected_removal');
         target.relationships.splice(index, 1);
       }
@@ -321,6 +330,10 @@ export async function evaluationEnvironment(
         ),
         ...(expected.semanticRelationships ?? []),
       ];
+      target.objects = new Map(
+        [...target.objects].map(([id, object]) => [id, normalDefaults(object)]),
+      );
+      target.relationships = target.relationships.map((edge) => normalDefaults({ ...edge }));
       return target;
     }
     return {
