@@ -12,6 +12,7 @@ export type CheckTurnActions = (operations: Operation[]) => Promise<void>;
 export function turnActionData(
   map: Pick<MapState, 'objects' | 'relationships' | 'types' | 'relationshipTypes'>,
   operations: readonly Operation[],
+  catalog: Pick<MapState, 'types' | 'relationshipTypes'>,
 ) {
   const ids = new Set<unknown>();
   const deletedTypes = new Set(
@@ -42,11 +43,18 @@ export function turnActionData(
   }
   const objects = map.objects.filter((item) => ids.has(item.id) || deletedTypes.has(item.typeId));
   for (const item of objects) ids.add(item.typeId);
+  function referencedTypes<T extends { id: string }>(saved: readonly T[], available: readonly T[]) {
+    // read_map carries definitions used by saved content. The catalog also
+    // supplies unused and newly proposed types referenced by this operation.
+    return [...new Map([...available, ...saved].map((type) => [type.id, type])).values()].filter(
+      (type) => ids.has(type.id),
+    );
+  }
   return {
     objects,
     relationships,
-    types: map.types.filter((item) => ids.has(item.id)),
-    relationshipTypes: map.relationshipTypes.filter((item) => ids.has(item.id)),
+    types: referencedTypes(map.types, catalog.types),
+    relationshipTypes: referencedTypes(map.relationshipTypes, catalog.relationshipTypes),
   };
 }
 const scopeSchema = z

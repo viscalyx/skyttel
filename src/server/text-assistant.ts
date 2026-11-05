@@ -2492,7 +2492,12 @@ export function textAssistantRoutes({
         const wholeDraft = operations.every((operation) =>
           ['save_draft', 'prepare_save'].includes(operation.name),
         );
-        const map = await call(session, 'read_map', {}, guard);
+        const [map, catalog] = await session.execution.reads.consistent(() =>
+          Promise.all([
+            call(session, 'read_map', {}, guard),
+            call(session, 'read_type_catalog', {}, guard),
+          ]),
+        );
         guard();
         const decision = await compareTurnActions(
           respond,
@@ -2522,6 +2527,7 @@ export function textAssistantRoutes({
                     ),
                   ]
                 : operations,
+              catalog,
             ),
             draft: session.state.review,
             ...(wholeDraft ? { wholeDraft: true } : {}),
@@ -3194,6 +3200,10 @@ export function textAssistantRoutes({
             return;
           }
           if (action.name === 'report_result') {
+            const withSelection =
+              calls.length === 2 &&
+              calls.filter((call) => call.name === 'report_result').length === 1 &&
+              calls.some((call) => ['show_map_object', 'show_map_item'].includes(call.name));
             const continuation = { continueResponse: z.boolean().default(false) };
             const parsed = z
               .discriminatedUnion('source', [
@@ -3210,7 +3220,8 @@ export function textAssistantRoutes({
                   .strict(),
               ])
               .safeParse(args);
-            if (!parsed.success || calls.length !== 1) throw new MapError('invalid_request', 400);
+            if (!parsed.success || (calls.length !== 1 && !withSelection))
+              throw new MapError('invalid_request', 400);
             const report = parsed.data;
             if (report.source === 'last_failure' && mutations.size)
               throw new MapError('invalid_request', 400);
@@ -3248,6 +3259,10 @@ export function textAssistantRoutes({
               call_id: action.call_id,
               output: JSON.stringify(session.state.result),
             });
+            if (withSelection && calls.indexOf(action) < calls.length - 1) {
+              session.state.phase = 'working';
+              continue;
+            }
             if (
               report.continueResponse ||
               scope.responseRequired ||
