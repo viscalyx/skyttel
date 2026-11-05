@@ -130,29 +130,27 @@ export async function evaluationEnvironment(
     state = await read();
     const assistant = await post<TextAssistantView>('text-assistant', adapter.approval);
     const path = `text-assistant/${assistant.id}`;
-    let expectedObjects = new Map(
-      initialObjects.map((object) => {
-        return [object.id, { ...object, ...draftObjects[object.id] } as Record<string, unknown>];
-      }),
-    );
-    let expectedRelationships: NamedRelationship[] = structuredClone(originalRelationships);
-    let expectedTypes: { name: string }[] = [];
-    let expectedSaves = 0;
+    type ExpectedState = {
+      objects: Map<string, Record<string, unknown>>;
+      relationships: NamedRelationship[];
+      types: { name: string }[];
+      saves: number;
+      semanticObjects: NonNullable<Expected['semanticObjects']>;
+      semanticRelationships: NonNullable<Expected['semanticRelationships']>;
+    };
+    let expectedState: ExpectedState = {
+      objects: new Map(
+        initialObjects.map((object) => [object.id, { ...object, ...draftObjects[object.id] }]),
+      ),
+      relationships: structuredClone(originalRelationships),
+      types: [],
+      saves: 0,
+      semanticObjects: {},
+      semanticRelationships: [],
+    };
     const initialHistory = (await get<{ history: unknown[] }>('map/history')).history.length;
     const initialIds = new Set(initialObjects.map((item) => item.id));
-    let semanticObjects: NonNullable<Expected['semanticObjects']> = {};
-    let semanticRelationships: NonNullable<Expected['semanticRelationships']> = [];
-    const appliedSteps = new Map<
-      string,
-      {
-        objects: typeof expectedObjects;
-        relationships: NamedRelationship[];
-        types: typeof expectedTypes;
-        saves: number;
-        semanticObjects: typeof semanticObjects;
-        semanticRelationships: typeof semanticRelationships;
-      }
-    >();
+    const appliedSteps = new Map<string, ExpectedState>();
     let observedState: Record<string, unknown> | undefined;
     const seededPropertyIds = new Set(
       initialObjects.flatMap(
@@ -284,23 +282,6 @@ export async function evaluationEnvironment(
         }),
       );
     }
-    type ExpectedState = {
-      objects: typeof expectedObjects;
-      relationships: NamedRelationship[];
-      types: typeof expectedTypes;
-      saves: number;
-      semanticObjects: typeof semanticObjects;
-      semanticRelationships: typeof semanticRelationships;
-    };
-    const snapshot = (): ExpectedState =>
-      structuredClone({
-        objects: expectedObjects,
-        relationships: expectedRelationships,
-        types: expectedTypes,
-        saves: expectedSaves,
-        semanticObjects,
-        semanticRelationships,
-      });
     function applyExpected(previous: ExpectedState, expected: Expected): ExpectedState {
       const target = structuredClone(previous);
       for (const id of expected.removeObjects ?? []) {
@@ -376,7 +357,7 @@ export async function evaluationEnvironment(
         actions: { name: string; completion?: string }[],
         waiting?: Expected,
       ) {
-        if (!appliedSteps.has(step.id)) appliedSteps.set(step.id, snapshot());
+        if (!appliedSteps.has(step.id)) appliedSteps.set(step.id, structuredClone(expectedState));
         const previous = appliedSteps.get(step.id);
         if (!previous) throw new Error('evaluation_expected_state_missing');
         const expectation = waiting ?? step.expected;
@@ -609,15 +590,7 @@ export async function evaluationEnvironment(
         if (matches.length > 1) throw new Error('evaluation_state_identity_ambiguous');
         const selected = matches[0] ?? 0;
         observedState = results[selected].evidence;
-        if (!waiting) {
-          const target = targets[selected];
-          expectedObjects = target.objects;
-          expectedRelationships = target.relationships;
-          expectedTypes = target.types;
-          expectedSaves = target.saves;
-          semanticObjects = target.semanticObjects;
-          semanticRelationships = target.semanticRelationships;
-        }
+        if (!waiting) expectedState = targets[selected];
         return matches.length ? [] : [...new Set(results.flatMap((result) => result.failures))];
       },
       async close() {
