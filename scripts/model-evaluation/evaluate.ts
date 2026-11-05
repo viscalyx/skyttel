@@ -234,37 +234,54 @@ export async function evaluateModels(plan: EvaluationPlan) {
   const directory = plan.directory;
   if (plan.continuation && (!comparisonRun || plan.voice))
     throw new Error('evaluation_continuation_text_comparison_required');
+  const sharedManifest = {
+    applicationComparison: comparisonManifest,
+    catalog: {
+      source: rawCatalog.source,
+      decision: rawCatalog.decision,
+      sha256: createHash('sha256').update(JSON.stringify(catalog)).digest('hex'),
+      scope: plan.scenarioSet ? 'explicit_scenario_set' : 'full_catalog',
+      scenarioSet: plan.scenarioSet,
+      scenarios: catalog.scenarios.map((scenario) => ({
+        id: scenario.id,
+        title: scenario.title,
+        group: scenario.group,
+        dimensions: scenario.dimensions,
+        history: scenario.history
+          ? { id: scenario.history, posts: catalog.histories?.[scenario.history]?.length }
+          : null,
+        steps: scenario.steps.map((step) => step.id),
+        voice: scenario.voice,
+      })),
+      fixtureObjects: catalog.base.objects.length,
+      fixtureRelationships: catalog.base.relationships.length,
+    },
+    measurementContracts: {
+      text: 'text-delivery-v2',
+      voice: 'voice-rendered-v1',
+      summary: 'summary-execution-v1',
+    },
+    assistanceTimingPolicy: 'immediate-scripted-reply-excluding-evaluator-gaps-v1',
+    textProfiles: plan.textProfiles,
+    selectedBackendProfiles: [
+      ...plan.textProfiles,
+      ...(plan.voiceProfile ? [plan.voiceProfile.backend] : []),
+    ].map(backendProfile),
+    judgeProfile,
+    judgeSha256,
+    repetitions,
+    voice: plan.voice ?? false,
+    followUps: plan.followUps ?? false,
+    referenceVoice: plan.referenceVoice ?? 'marin',
+    audio: audioManifest,
+    counting: plan.counting
+      ? { source: plan.counting.source, feeUsd: plan.counting.feeUsd }
+      : registry.counting,
+  };
   const continuation = plan.continuation
     ? await prepareContinuation(
         plan.continuation,
-        {
-          applicationComparison: comparisonManifest,
-          catalog: {
-            sha256: createHash('sha256').update(JSON.stringify(catalog)).digest('hex'),
-            scenarios: catalog.scenarios.map((scenario) => ({
-              id: scenario.id,
-              steps: scenario.steps.map((step) => step.id),
-            })),
-          },
-          measurementContracts: {
-            text: 'text-delivery-v2',
-            voice: 'voice-rendered-v1',
-            summary: 'summary-execution-v1',
-          },
-          assistanceTimingPolicy: 'immediate-scripted-reply-excluding-evaluator-gaps-v1',
-          textProfiles: plan.textProfiles,
-          selectedBackendProfiles: plan.textProfiles.map(backendProfile),
-          judgeProfile,
-          judgeSha256,
-          repetitions,
-          voice: false,
-          followUps: plan.followUps ?? false,
-          referenceVoice: plan.referenceVoice ?? 'marin',
-          audio: audioManifest,
-          counting: plan.counting
-            ? { source: plan.counting.source, feeUsd: plan.counting.feeUsd }
-            : registry.counting,
-        },
+        sharedManifest,
         plan.priorUsd,
         directory,
         plan.limitUsd,
@@ -365,15 +382,10 @@ export async function evaluateModels(plan: EvaluationPlan) {
     : 0;
   try {
     await emit('manifest', 'Utvärderingskörning', {
+      ...sharedManifest,
       commit: plan.commit,
-      applicationComparison: comparisonManifest,
       evaluator,
       continuation: continuation?.manifest,
-      measurementContracts: {
-        text: 'text-delivery-v2',
-        voice: 'voice-rendered-v1',
-        summary: 'summary-execution-v1',
-      },
       playback: voiceSelection
         ? {
             assessor: voiceSelection.assessor,
@@ -401,30 +413,8 @@ export async function evaluateModels(plan: EvaluationPlan) {
         assistedEvaluationOverheadMs:
           'Measured gaps between response delivery and the next scripted submission, including scoring and harness bookkeeping.',
       },
-      assistanceTimingPolicy: 'immediate-scripted-reply-excluding-evaluator-gaps-v1',
-      catalog: {
-        source: rawCatalog.source,
-        decision: rawCatalog.decision,
-        sha256: createHash('sha256').update(JSON.stringify(catalog)).digest('hex'),
-        scope: plan.scenarioSet ? 'explicit_scenario_set' : 'full_catalog',
-        scenarioSet: plan.scenarioSet,
-        scenarios: catalog.scenarios.map((scenario) => ({
-          id: scenario.id,
-          title: scenario.title,
-          group: scenario.group,
-          dimensions: scenario.dimensions,
-          history: scenario.history
-            ? { id: scenario.history, posts: catalog.histories?.[scenario.history]?.length }
-            : null,
-          steps: scenario.steps.map((step) => step.id),
-          voice: scenario.voice,
-        })),
-        fixtureObjects: catalog.base.objects.length,
-        fixtureRelationships: catalog.base.relationships.length,
-      },
       controls: controls.source,
       profiles: registry,
-      repetitions,
       qualification: {
         minimumRepetitions: 1,
         allPlannedChecksRequired: true,
@@ -433,24 +423,11 @@ export async function evaluateModels(plan: EvaluationPlan) {
         groups: scenarioGroups,
         correctnessRequiredAcrossAllGroups: true,
       },
-      textProfiles: profiles,
-      selectedBackendProfiles: [...profiles, ...(voiceProfile ? [voiceProfile.backend] : [])].map(
-        backendProfile,
-      ),
-      judgeProfile,
-      judgeSha256,
       baselineProfiles: plan.baselineProfiles,
-      voice: plan.voice ?? false,
       voiceProfile,
-      referenceVoice: plan.referenceVoice ?? 'marin',
-      followUps: plan.followUps ?? false,
-      audio: audioManifest,
       frames: audio.reduce((sum, item) => sum + item.clip.frames, 0),
       budget: budget.snapshot(),
       priorSource: plan.priorSource,
-      counting: plan.counting
-        ? { source: plan.counting.source, feeUsd: plan.counting.feeUsd }
-        : registry.counting,
       maxima: {
         backendPerStep: 48,
         backendOutput: Object.fromEntries(
@@ -791,12 +768,23 @@ export async function evaluateModels(plan: EvaluationPlan) {
     );
     const catalogSha256 = createHash('sha256').update(JSON.stringify(catalog)).digest('hex');
     const applicationResult = comparisonRun
-      ? compareApplicationVersions(attempts, catalog.scenarios, comparisonRun)
+      ? compareApplicationVersions(
+          attempts,
+          catalog.scenarios,
+          comparisonRun,
+          Boolean(continuation),
+        )
       : undefined;
     const overlapResult =
       comparisonRun &&
       comparisonRun.plan.id === `overlap-public-stop-v1-${comparisonRun.plan.modality}`
-        ? compareOverlap(attempts, comparisonRun, scenarioVoiceUsage, [...calls.values()])
+        ? compareOverlap(
+            attempts,
+            comparisonRun,
+            scenarioVoiceUsage,
+            [...calls.values()],
+            Boolean(continuation),
+          )
         : undefined;
     const { comparisons, historicalComparisons, recommendation, recommendationBasis } =
       comparisonRun
@@ -868,6 +856,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
       preliminary: Boolean(comparisonRun),
       qualificationScope: plan.scenarioSet ? 'explicit_scenario_set' : 'everyday',
       fullCatalogQualified:
+        !continuation &&
         !plan.scenarioSet &&
         calibrated &&
         (applicationResult
@@ -875,6 +864,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
           : summaries.every((candidate) => candidate.fullCatalogQualified)) &&
         (!plan.voice || voice.fullCatalogQualified),
       qualificationComplete:
+        !continuation &&
         calibrated &&
         (applicationResult
           ? applicationResult.versions.every((version) => version.summary.finalQualified)
@@ -965,7 +955,12 @@ export async function evaluateModels(plan: EvaluationPlan) {
       attempts,
       budget: budget.snapshot(),
       applicationComparison: comparisonRun
-        ? compareApplicationVersions(attempts, catalog.scenarios, comparisonRun)
+        ? compareApplicationVersions(
+            attempts,
+            catalog.scenarios,
+            comparisonRun,
+            Boolean(continuation),
+          )
         : undefined,
     };
   } finally {

@@ -144,6 +144,7 @@ export function compareOverlap(
   run: ComparisonRun,
   voiceUsage: ScenarioVoiceUsage[] = [],
   providerCalls: ProviderCall[] = [],
+  separateSegment = false,
 ) {
   const rows = Object.entries(plan.outcomes).map(([scenario, outcome]) => {
     const versions = run.versions.map((version) => {
@@ -385,22 +386,26 @@ export function compareOverlap(
       version.repetitions.flatMap((repetition) => repetition.correctnessFailures),
     ),
   );
-  const incomplete = rows.some(
-    (row) =>
-      row.ratio === null ||
-      row.ratioBounds === null ||
-      row.versions.some(
-        (version) =>
-          version.repetitions.some((repetition) => !repetition.valid) ||
-          version.timing?.relativeRange == null ||
-          version.timing.relativeRange > plan.maximumRelativeRange ||
-          Object.values(version.costs).some((cost) => cost === null),
-      ),
-  );
+  const incomplete =
+    separateSegment ||
+    rows.some(
+      (row) =>
+        row.ratio === null ||
+        row.ratioBounds === null ||
+        row.versions.some(
+          (version) =>
+            version.repetitions.some((repetition) => !repetition.valid) ||
+            version.timing?.relativeRange == null ||
+            version.timing.relativeRange > plan.maximumRelativeRange ||
+            Object.values(version.costs).some((cost) => cost === null),
+        ),
+    );
   return {
     contract: 'overlap-outcomes-v1',
     comparisonContract: run.contractId,
-    scope: 'three declared scenarios only; no full-catalog qualification',
+    scope: separateSegment
+      ? 'continuation segment only; complete comparison requires validated aggregation'
+      : 'three declared scenarios only; no full-catalog qualification',
     model: run.profile.model,
     effort: run.profile.effort,
     modality: run.plan.modality,
