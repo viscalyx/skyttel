@@ -222,7 +222,7 @@ test('the catalog ordinary two-ambiguities exchange reaches its answer and reque
     correctnessFailures: [],
     unresolvedAssessments: [],
     groups: {
-      complex: {
+      everyday: {
         completedScenarios: 1,
         scenarioTimes: [{ scenario: 'two-ambiguities', medianMs: expect.any(Number) }],
       },
