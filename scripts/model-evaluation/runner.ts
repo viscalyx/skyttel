@@ -22,6 +22,11 @@ import {
   retainedObservation,
 } from './observations.js';
 import type { ProviderCall } from './provider.js';
+import {
+  checkedContentVerdicts,
+  contentRequirements,
+  retainWaitingTiming,
+} from './retained-work.js';
 import type { Attempt, JudgeInput, JudgeResult, Scenario } from './types.js';
 import {
   concludeUserStop,
@@ -227,27 +232,30 @@ export async function runTextScenario(
           result.diagnostics = observationDiagnostics(observed, startedAt);
           const stateFailures = await environment.check(entry.target ?? step, view, actions);
           result.fixed.push(...stateFailures);
-          if (step.expected.requirements.length) {
-            result.content = options.judge
+          const sources: JudgeInput['sources'] = {
+            backend: {
+              text: responseText,
+              complete: !view.error && view.taskStatus !== 'canceled',
+            },
+          };
+          const requirements = contentRequirements(
+            sources,
+            step.expected.requirements,
+            (entry.target ?? step).expected,
+          );
+          if (requirements.length) {
+            const verdicts: JudgeResult = options.judge
               ? await options.judge({
                   context: environment.judgeContext(step, result.fixed, summaryText),
-                  sources: {
-                    backend: {
-                      text: responseText,
-                      complete: !view.error && view.taskStatus !== 'canceled',
-                    },
-                  },
-                  requirements: step.expected.requirements.map((text, index) => ({
-                    id: `backend-${index}`,
-                    source: 'backend',
-                    text,
-                  })),
+                  sources,
+                  requirements,
                 })
-              : step.expected.requirements.map((_text, index) => ({
-                  id: `backend-${index}`,
+              : requirements.map(({ id }) => ({
+                  id,
                   outcome: 'inconclusive',
                   reason: 'No content judge supplied.',
                 }));
+            result.content = checkedContentVerdicts(requirements, verdicts);
           }
           if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
           concludeAttempt(result, finishedAt - startedAt);
@@ -274,6 +282,7 @@ export async function runTextScenario(
               outcome: result.outcome,
             }),
           );
+          retainWaitingTiming(result, entry.target ?? step, Boolean(view.questionPending));
           if (!options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,

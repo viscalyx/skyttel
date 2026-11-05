@@ -29,6 +29,11 @@ import {
   renderedUsefulRequirement,
   voicePlaybackInstrumentation,
 } from './playback.js';
+import {
+  checkedContentVerdicts,
+  contentRequirements,
+  retainWaitingTiming,
+} from './retained-work.js';
 import type { RunOptions } from './runner.js';
 import {
   type ReferenceVoice,
@@ -326,6 +331,7 @@ export async function runVoiceScenario(
             observedResponseEndMs: result.observedEndMs,
             successfulCompletionMs: result.elapsedMs,
           };
+          retainWaitingTiming(result, entry.target ?? step, Boolean(summary.view.questionPending));
         } else {
           const reference = await referenceSpeech(step.id, step.text, options.referenceVoice);
           if (!connection) {
@@ -738,6 +744,7 @@ export async function runVoiceScenario(
               outcome: result.outcome,
             }),
           );
+          retainWaitingTiming(result, entry.target ?? step, Boolean(view.questionPending));
           if (!options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,
@@ -870,25 +877,25 @@ export async function runVoiceScenario(
       }
       async function judge(sources: JudgeInput['sources'], requirements: string[]) {
         if (options.stopped?.()) throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
-        if (!requirements.length) return [];
+        const declared = contentRequirements(
+          sources,
+          requirements,
+          (entry.target ?? step).expected,
+        );
+        if (!declared.length) return [];
         const input: JudgeInput = {
           context: environment.judgeContext(step, result.fixed, '', recognizedRequest),
           sources,
-          requirements: Object.keys(sources).flatMap((source) =>
-            requirements.map((text, i) => ({
-              id: `${source}-${i}`,
-              source: source as 'backend' | 'voice',
-              text,
-            })),
-          ),
+          requirements: declared,
         };
-        return options.judge
-          ? judgeWithHeartbeat(input, undefined, observeState)
+        const verdicts = options.judge
+          ? await judgeWithHeartbeat(input, undefined, observeState)
           : input.requirements.map((item) => ({
               id: item.id,
               outcome: 'inconclusive' as const,
               reason: 'No content judge supplied.',
             }));
+        return checkedContentVerdicts(declared, verdicts);
       }
     }
     return { attempts, events, finalMap: await environment.read() };
