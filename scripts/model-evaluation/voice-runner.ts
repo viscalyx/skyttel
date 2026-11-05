@@ -796,7 +796,10 @@ export async function runVoiceScenario(
         // The stopped state still prevents every later step from starting.
         if (
           options.stopped?.() &&
-          !(result.outcome === 'fail' && (result.followUpSelection || result.assessment))
+          !(
+            ['pass', 'fail'].includes(result.outcome) &&
+            (result.followUpSelection || result.assessment)
+          )
         )
           throw new Error(options.stopReason?.() ?? 'evaluation_stopped');
       } catch (error) {
@@ -861,8 +864,8 @@ export async function runVoiceScenario(
       }
       attempts.push(result);
       await options.record?.(result);
-      if (result.outcome !== 'pass' && !continuing) {
-        blocked = `${step.id}: ${result.outcome}`;
+      if ((result.outcome !== 'pass' || result.elapsedMs === null) && !continuing) {
+        blocked = `${step.id}: ${result.outcome === 'pass' ? 'unfinished' : result.outcome}`;
         await closeVoice(result.outcome === 'error' || result.outcome === 'aborted');
       }
       async function judge(sources: JudgeInput['sources'], requirements: string[]) {

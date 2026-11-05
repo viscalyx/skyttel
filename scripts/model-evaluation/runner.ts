@@ -377,7 +377,8 @@ export async function runTextScenario(
             .find((event) => event.kind === 'task_started' && event.taskId === requestId);
           result.timing.queueMs = taskStarted ? Math.max(0, taskStarted.at - startedAt) : null;
         }
-        if (result.outcome !== 'pass' && !continuing) blocked = `${step.id}: ${result.outcome}`;
+        if ((result.outcome !== 'pass' || result.elapsedMs === null) && !continuing)
+          blocked = `${step.id}: ${result.outcome === 'pass' ? 'unfinished' : result.outcome}`;
         result.providerCalls = options.providerCalls
           ? options.providerCalls() - callsBefore
           : undefined;
