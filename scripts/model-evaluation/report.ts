@@ -154,6 +154,7 @@ export function summarizeProfile(
         scenarios.find((scenario) => scenario.id === attempt.scenario)?.group ?? 'everyday';
       return (
         hardFailure ||
+        attempt.assessment?.kind === 'correctness_failure' ||
         attempt.assessment?.kind === 'unnecessary_clarification' ||
         (attempt.outcome === 'fail' &&
           !(

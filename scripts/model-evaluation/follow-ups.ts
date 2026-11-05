@@ -127,6 +127,7 @@ export async function selectFollowUp({
 
   const candidates: NonNullable<Attempt['followUpSelection']>['candidates'] = [];
   const matched: typeof candidates = [];
+  let originalRequestLost = false;
   let verifiedQuestions: {
     id: string;
     kind: 'necessary_clarification' | 'unnecessary_clarification';
@@ -156,6 +157,13 @@ export async function selectFollowUp({
       continue;
     }
     const fixed = await checkWaiting(waiting);
+    if (
+      !reply &&
+      step.text &&
+      waiting.preservedRequests?.includes(step.text) &&
+      fixed.includes('unfinished_instructions')
+    )
+      originalRequestLost = true;
     if (!reply && (!step.text || !waiting.preservedRequests?.includes(step.text)))
       fixed.push('unfinished_instructions');
     if (fixed.length) {
@@ -260,6 +268,13 @@ export async function selectFollowUp({
         .join(' '),
       stateFailures: [],
       evidence: assessment.evidence,
+    };
+  } else if (originalRequestLost) {
+    attempt.assessment = {
+      kind: 'correctness_failure',
+      reason: 'The declared waiting state does not retain the exact original unfinished request.',
+      stateFailures: ['unfinished_instructions'],
+      evidence: [],
     };
   }
   return step.followUps?.find((reply) => reply.id === selected);

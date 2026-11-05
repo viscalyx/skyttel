@@ -220,6 +220,7 @@ export type Attempt = {
       | 'necessary_clarification'
       | 'unnecessary_clarification'
       | 'safe_inability'
+      | 'correctness_failure'
       | 'inconclusive';
     reason: string;
     stateFailures: string[];
