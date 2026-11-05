@@ -12,6 +12,7 @@ import {
   compareApplicationVersions,
   prepareComparison,
 } from './comparison.js';
+import { type EvaluationContinuation, prepareContinuation } from './continuation.js';
 import { scenarioUtterances } from './follow-ups.js';
 import { contentJudge, judgeInstructions, verifyJudge } from './judge.js';
 import controls from './judge-controls.json' with { type: 'json' };
@@ -76,6 +77,9 @@ export type EvaluationPlan = {
   /** Versioned explicit experiment scope. The full catalog's fixture remains
    * unchanged; this selection never establishes full-catalog qualification. */
   scenarioSet?: Scenario[];
+  /** Explicit fresh segment for whole comparison dialogs left entirely unrun.
+   * Include every earlier segment; original records and contracts stay separate. */
+  continuation?: EvaluationContinuation;
   // Exact counting, including its verified billing, is supplied only by an
   // agent after checking the official endpoint/model/pricing documentation.
   counting?: {
@@ -228,6 +232,44 @@ export async function evaluateModels(plan: EvaluationPlan) {
       )
     : [];
   const directory = plan.directory;
+  if (plan.continuation && (!comparisonRun || plan.voice))
+    throw new Error('evaluation_continuation_text_comparison_required');
+  const continuation = plan.continuation
+    ? await prepareContinuation(
+        plan.continuation,
+        {
+          applicationComparison: comparisonManifest,
+          catalog: {
+            sha256: createHash('sha256').update(JSON.stringify(catalog)).digest('hex'),
+            scenarios: catalog.scenarios.map((scenario) => ({
+              id: scenario.id,
+              steps: scenario.steps.map((step) => step.id),
+            })),
+          },
+          measurementContracts: {
+            text: 'text-delivery-v2',
+            voice: 'voice-rendered-v1',
+            summary: 'summary-execution-v1',
+          },
+          assistanceTimingPolicy: 'immediate-scripted-reply-excluding-evaluator-gaps-v1',
+          textProfiles: plan.textProfiles,
+          selectedBackendProfiles: plan.textProfiles.map(backendProfile),
+          judgeProfile,
+          judgeSha256,
+          repetitions,
+          voice: false,
+          followUps: plan.followUps ?? false,
+          referenceVoice: plan.referenceVoice ?? 'marin',
+          audio: audioManifest,
+          counting: plan.counting
+            ? { source: plan.counting.source, feeUsd: plan.counting.feeUsd }
+            : registry.counting,
+        },
+        plan.priorUsd,
+        directory,
+        plan.limitUsd,
+      )
+    : undefined;
   await mkdir(directory, { recursive: true });
   const db = new Database(join(directory, 'budget.sqlite'));
   const budget = new EvaluationBudget(db, plan);
@@ -326,6 +368,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
       commit: plan.commit,
       applicationComparison: comparisonManifest,
       evaluator,
+      continuation: continuation?.manifest,
       measurementContracts: {
         text: 'text-delivery-v2',
         voice: 'voice-rendered-v1',
@@ -487,6 +530,25 @@ export async function evaluateModels(plan: EvaluationPlan) {
           const profile = backendProfile(id);
           const provider = budgetedProvider(profile, budget, { record, countInput: counted });
           for (const scenario of catalog.scenarios) {
+            if (
+              continuation &&
+              application &&
+              !continuation.includes({
+                applicationVersion: application.id,
+                repetition,
+                scenario: scenario.id,
+              })
+            ) {
+              await missing(
+                scenario,
+                id,
+                repetition,
+                'text',
+                'evaluation_continuation_source_segment',
+                application,
+              );
+              continue;
+            }
             if (budget.snapshot().stopped) {
               await missing(
                 scenario,
