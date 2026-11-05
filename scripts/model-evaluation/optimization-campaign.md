@@ -1,8 +1,8 @@
 # Application optimization evaluation preparation
 
 This contract is for evaluation maintainers preparing and reporting a paid
-comparison. Preparation does not authorize payment. All model, judge, voice,
-recognition and context-counting attempts remain unrun. Local controlled tests
+comparison. Preparation does not authorize payment. A run requires its own
+explicit authorization and recorded scope. Local controlled tests
 verify evaluator contracts; they do not establish model or voice quality.
 
 ## Versions and reproducibility
@@ -40,24 +40,64 @@ credentials by presence only; keep secrets out of manifests and reports.
 
 ## Ordinary comparison
 
-Use the unchanged catalog: 18 text scenarios with 26 ordinary steps; eight
-voice scenarios with 14 ordinary steps. Separate 11 everyday scenarios, two
-long-conversation scenarios and five complex scenarios. Use the same isolated
-start data, complete state, save receipts, history and assistance policy for
-both versions. Keep all mandatory correctness checks in advanced groups too.
+The catalog contains 70 text scenarios with 82 declared steps: 60 everyday
+entries, eight advanced diagnostic scenarios and two long-conversation
+scenarios. The everyday group includes 59 ordinary tasks and one public Stop
+interaction. Eight existing voice scenarios retain their 14 ordinary steps
+and approved audio; the new text examples have no voice qualification.
+Use the same isolated start data, complete state, save receipts, history and
+assistance policy for both versions. Keep all mandatory correctness checks
+in advanced groups too.
 
-For each model and modality, run five repetitions in this version order:
+`everyday-source.json` preserves all 60 numbered source entries, their exact
+utterances, conditional answers and scenario IDs. Its prompt-only SHA-256
+does not depend on an editable status document. Similar entries remain
+separate. The catalog embeds the mapping and source-file digest; campaign
+preparation also freezes the source file. Changed catalogs, grouping, targets
+or scoring contracts require fresh evidence; old timings are not comparable.
+
+Each new entry provides complete starting facts through the same authenticated
+map routes and real SQLite/MCP state as the shared fixture. Expected deltas
+are independent of generated model output. New object IDs bind to stated
+names and types, or a uniquely remaining new object of the declared type.
+Existing IDs stay stable. Explicit semantic fields allow equivalent names
+or property wording, with exact preserved properties, bounded counts, kinds
+and known values. The judge receives the complete observed map and independent
+state contract, including the declared meaning of these fields. Unlisted
+entities, properties, relationships, type changes and saves remain failures.
+Only independently enumerated whole-state alternatives are accepted; no
+match fails and ambiguous matches remain inconclusive.
+
+Necessary unanswered questions preserve the exact request and remain
+unfinished with no successful completion time. Only a uniquely necessary
+matching scripted answer may continue the task. No answer is invented.
+The Stop entry uses the existing cancellation proof and allowed atomic states:
+successful Stop handling retains the ordinary task outcome `aborted`, with
+no successful completion time. Report Stop control success separately, place
+it last when unknown canceled-provider billing can stop further payment, and
+exclude its interrupted task from ordinary wait comparisons.
+
+A separately authorized readiness round may select the proposed application,
+Sol/high/text and repetition `[1]`, preserving all 70 scenarios and placing
+Stop last. Stop after that first round: no retry, repetition or full campaign
+is implied. This checks readiness only and provides no version comparison,
+median speed claim or full text/voice qualification. Keep failed everyday
+cases in the everyday group and investigate their outcomes.
+
+For the full comparison, each model and modality uses five repetitions in this
+version order:
 original/proposed, proposed/original, original/proposed, proposed/original,
 original/proposed. Each combination uses one persistent ledger including its
-43 calibration controls and all repetitions of both versions. Across both
-models this plans 360 text scenario attempts and 160 voice scenario attempts,
-with 520 ordinary text step attempts and 280 ordinary voice step attempts.
-Conditional replies and separate context supplements are additional attempts.
+45 calibration controls and all repetitions of both versions. Derive planned
+attempt counts from the frozen scenario selection and repetition plan.
+Conditional replies and separate context supplements add attempts.
 Dependent work after failure remains unrun; planned counts are not successes.
 
 Text target scenarios are `everyday-question`, `everyday-change` and
-`everyday-follow-up`. Voice targets are `change-price-payment` and
-`relationship-direction`. Accept speed only after mandatory correctness passes.
+`everyday-follow-up`. The voice target is `change-price-payment` only.
+The technical wording of `relationship-direction`
+keeps it as an advanced diagnostic. Accept speed only after mandatory
+correctness passes.
 For each model and modality separately, target median ratios must be at most
 0.8 and other everyday ratios at most 1.1. Relative min/max range divided by
 median must be at most 0.2 in both versions. Missing evidence or excessive
@@ -131,7 +171,7 @@ do not turn ordinary summary evidence into a substitute claim.
 
 All prices are USD. For normal backend/summary requests, conservative maximum
 holds are $3.265 Terra and $6.53 Sol. The judge maximum is $4.67144 per call;
-43-control calibration has a $200.87192 maximum hold basis per independent
+45-control calibration has a $210.21480 maximum hold basis per independent
 run. These are conservative reservations, not expected or actual charges and
 not a user spending ceiling. Actual costs use verified provider usage. Calls
 vary with checking, clarification, summaries and partial failures; do not
