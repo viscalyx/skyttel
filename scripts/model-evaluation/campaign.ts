@@ -49,6 +49,7 @@ export async function prepareOptimizationCampaign(options: {
     throw new Error('evaluation_campaign_evaluator_required');
   const files = [
     'catalog.json',
+    'everyday-source.json',
     'judge-controls.json',
     'audio/manifest.json',
     'optimization-campaign-profiles.json',
@@ -156,8 +157,7 @@ export async function prepareOptimizationCampaign(options: {
       backendMaximumUsd: { 'terra-6.1-high-668': 3.265, 'sol-6.1-high-668': 6.53 },
       judgeMaximumUsd: 4.67144,
       calibrationMaximumHoldUsd: 4.67144 * controls.cases.length,
-      label:
-        'Conservative per-call/43-control holds; neither expected spending nor a user ceiling.',
+      label: `Conservative per-call/${controls.cases.length}-control holds; neither expected spending nor a user ceiling.`,
       layers: [
         'calibration',
         'backend',

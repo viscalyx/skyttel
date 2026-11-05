@@ -7,19 +7,59 @@ export type FixtureProperty = {
   value?: string | number | boolean;
 };
 export type NamedRelationship = {
+  id?: string;
   source: string;
   type: string;
   target: string;
   properties?: FixtureProperty[];
+  lifecycle?: 'active' | 'ended';
 };
 export type FixtureObject = {
   id: string;
   type: string;
   name: string;
   properties?: FixtureProperty[];
+  lifecycle?: 'active' | 'ended';
+};
+export type ScenarioFixture = {
+  objects: FixtureObject[];
+  relationships: NamedRelationship[];
+  relationshipTypes: {
+    name: string;
+    description: string;
+    forwardLabel: string;
+    reverseLabel: string;
+  }[];
+  draft: { objects: Record<string, Record<string, unknown>> };
+};
+export type SemanticPropertyRule = {
+  kinds?: PropertyKind[];
+  value?: string | number | boolean;
+  values?: Partial<Record<PropertyKind, string | number | boolean>>;
+  id?: string;
+  empty?: true;
+};
+export type SemanticProperties = {
+  /** Independently stated meaning, carried forward across later requests. */
+  meaning?: string;
+  /** Existing property identities and complete values that must survive. */
+  preserve: string[];
+  /** Exactly this many additional properties, with bounded kinds/values. */
+  additions?: SemanticPropertyRule[];
+  anyOf?: SemanticPropertyRule[][];
 };
 export type Expected = {
   objects?: Record<string, Record<string, unknown>>;
+  /** Only explicitly listed fields vary; independent requirements judge their
+   * meaning using the complete observed map, never a success claim. */
+  semanticObjects?: Record<string, { name?: true; properties?: SemanticProperties }>;
+  semanticRelationships?: (Omit<NamedRelationship, 'properties'> & {
+    properties: SemanticProperties;
+  })[];
+  /** Bounded alternative deltas on the same pre-step state. Exactly one whole
+   * state must match; neither the prompt nor model output generates a branch. */
+  anyOf?: Expected[];
+  removeObjects?: string[];
   addRelationships?: NamedRelationship[];
   removeRelationships?: NamedRelationship[];
   objectTypes?: { name: string }[];
@@ -70,20 +110,12 @@ export type Scenario = {
   history?: string;
   startVariant?: string;
   selection?: string;
+  /** Complete independent starting facts; never an extension inferred from output. */
+  fixture?: ScenarioFixture;
   steps: ScenarioStep[];
 };
 export type Catalog = {
-  base: {
-    objects: FixtureObject[];
-    relationships: NamedRelationship[];
-    relationshipTypes: {
-      name: string;
-      description: string;
-      forwardLabel: string;
-      reverseLabel: string;
-    }[];
-    draft: { objects: Record<string, Record<string, unknown>> };
-  };
+  base: ScenarioFixture;
   variants: Record<
     string,
     {

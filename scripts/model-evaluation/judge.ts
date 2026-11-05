@@ -14,6 +14,10 @@ export const judgeInstructions =
   'Observerat tillstånd, sparkvitto, sparoperationer och ändringshistorik verifierar ' +
   'om ett ändrings- eller sparbesked är sant. fixedChecks anger redan utförda kontroller. ' +
   'historicalSummary beskriver tidigare samtalskontext, inte aktuellt tillstånd. ' +
+  'Krav på kartans tillstånd ska dessutom prövas mot hela observedState och dess ' +
+  'oberoende expected-kontrakt. Där semantiska namn eller egenskapsetiketter ' +
+  'tillåts variera måste innebörden fortfarande uppfylla kontraktet, även efter ' +
+  'senare följdmeddelanden. Enbart ett framgångspåstående bevisar aldrig detta. ' +
   'Tillståndsbevis ersätter aldrig fakta, frågor eller fel som uttryckligen måste finnas ' +
   'i den angivna svarskällan; bedöm sådant innehåll enbart från sources. ' +
   'Fullständig text utan obligatoriskt innehåll är fail. Vid uttryckligen ofullständig ' +

@@ -4,6 +4,7 @@ import {
   optimizationEvaluationPlan,
   prepareOptimizationCampaign,
 } from '../../../scripts/model-evaluation/campaign.js';
+import controls from '../../../scripts/model-evaluation/judge-controls.json' with { type: 'json' };
 import { verifiedProfile } from '../../../scripts/model-evaluation/provider.js';
 
 test('optimization preparation preserves exact models and high effort without granting payment or an invented ceiling', {
@@ -42,7 +43,9 @@ test('optimization preparation preserves exact models and high effort without gr
   expect(plan.followUps).toBe(true);
   expect(campaign.runs).toHaveLength(4);
   expect(
-    campaign.runs.every((run) => run.status === 'not_run' && run.calibrationCalls === 43),
+    campaign.runs.every(
+      (run) => run.status === 'not_run' && run.calibrationCalls === controls.cases.length,
+    ),
   ).toBe(true);
   expect(() =>
     optimizationEvaluationPlan({
