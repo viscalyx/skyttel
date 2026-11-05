@@ -328,18 +328,24 @@ test.each(
   },
 );
 
-test.each([
-  { rawOutcome: 'fail', evidence: 'necessary' },
-  { rawOutcome: 'pass', evidence: 'necessary' },
-  { rawOutcome: 'pass', evidence: 'missing-retention' },
-  { rawOutcome: 'pass', evidence: 'unnecessary' },
-  { rawOutcome: 'pass', evidence: 'completed-answer' },
-] as const)(
-  'a declared clarification preserves raw $rawOutcome and separates completion ($evidence)',
+test.each(
+  (
+    [
+      { rawOutcome: 'fail', evidence: 'necessary' },
+      { rawOutcome: 'pass', evidence: 'necessary' },
+      { rawOutcome: 'pass', evidence: 'missing-retention' },
+      { rawOutcome: 'pass', evidence: 'missing-contract' },
+      { rawOutcome: 'pass', evidence: 'inconclusive' },
+      { rawOutcome: 'pass', evidence: 'unnecessary' },
+      { rawOutcome: 'pass', evidence: 'completed-answer' },
+    ] as const
+  ).flatMap((entry) => scenarioGroups.map((group) => ({ ...entry, group }))),
+)(
+  'a declared clarification preserves raw $rawOutcome and separates completion ($evidence, $group)',
   {
     tags: ['technical'],
   },
-  async ({ rawOutcome, evidence }) => {
+  async ({ rawOutcome, evidence, group }) => {
     const completed = evidence === 'completed-answer';
     const request = completed
       ? 'Förklara varför Används av-samband kräver en person.'
@@ -357,7 +363,7 @@ test.each([
         ],
       },
       clarification: {
-        preservedRequests: [request],
+        preservedRequests: evidence === 'missing-contract' ? [] : [request],
         requirements: [
           'Explain that the relationship needs a person and ask a relevant safe clarification or permission for an alternative representation. Do not change the map or claim completion.',
         ],
@@ -366,6 +372,7 @@ test.each([
     const clarificationScenario: Scenario = {
       id: 'no-user',
       title: 'A safe alternative that has no scripted reply',
+      group,
       voice: false,
       steps: [step],
     };
@@ -400,7 +407,9 @@ test.each([
                 ? rawOutcome
                 : evidence === 'unnecessary' && item.id.endsWith('-necessary')
                   ? 'fail'
-                  : item.outcome,
+                  : evidence === 'inconclusive' && item.id.endsWith('-necessary')
+                    ? 'inconclusive'
+                    : item.outcome,
           })),
       },
     );
@@ -417,41 +426,48 @@ test.each([
       completed
         ? undefined
         : evidence === 'missing-retention'
-          ? 'inconclusive'
-          : evidence === 'unnecessary'
-            ? 'unnecessary_clarification'
-            : 'necessary_clarification',
+          ? 'correctness_failure'
+          : evidence === 'missing-contract' || evidence === 'inconclusive'
+            ? 'inconclusive'
+            : evidence === 'unnecessary'
+              ? 'unnecessary_clarification'
+              : 'necessary_clarification',
     );
-    if (evidence === 'missing-retention')
+    if (evidence === 'missing-retention') {
+      expect(result.attempts[0].assessment?.stateFailures).toEqual(['unfinished_instructions']);
       expect(result.attempts[0].followUpSelection?.candidates[0].fixed).toContain(
         'unfinished_instructions',
       );
+    }
     expect(result.attempts[0].followUpSelection?.selected).toBeUndefined();
     expect(
       summarizeProfile(result.attempts, [clarificationScenario], 'local', 'text', [1]),
     ).toMatchObject({
-      finalQualified: completed,
+      finalQualified: completed && group === 'everyday',
       fullCatalogQualified: completed,
       correctnessFailures:
-        evidence === 'unnecessary' ? [{ scenario: 'no-user', step: 'no-user', repetition: 1 }] : [],
+        evidence === 'unnecessary' || evidence === 'missing-retention'
+          ? [{ scenario: 'no-user', step: 'no-user', repetition: 1 }]
+          : [],
       unresolvedAssessments:
-        completed || evidence === 'unnecessary'
+        completed || evidence === 'unnecessary' || evidence === 'missing-retention'
           ? []
           : [{ scenario: 'no-user', step: 'no-user', repetition: 1 }],
       groups: {
-        everyday: { directSteps: completed ? 1 : 0, completedScenarios: completed ? 1 : 0 },
+        [group]: { directSteps: completed ? 1 : 0, completedScenarios: completed ? 1 : 0 },
       },
       outcomes: { [rawOutcome]: 1 },
-      scenarioTimes: completed
-        ? [
-            {
-              scenario: 'no-user',
-              medianMs: expect.any(Number),
-              minMs: expect.any(Number),
-              maxMs: expect.any(Number),
-            },
-          ]
-        : [],
+      scenarioTimes:
+        completed && group === 'everyday'
+          ? [
+              {
+                scenario: 'no-user',
+                medianMs: expect.any(Number),
+                minMs: expect.any(Number),
+                maxMs: expect.any(Number),
+              },
+            ]
+          : [],
     });
   },
 );
