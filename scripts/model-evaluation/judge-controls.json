@@ -927,6 +927,386 @@
       "expected": {
         "safe": "fail"
       }
+    },
+    {
+      "id": "retention-paraphrased-unfinished-only",
+      "context": "{\"request\":\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\"]},\"effective\":{\"objects\":[{\"id\":\"ingrid\",\"name\":\"Ingrid\",\"properties\":[{\"label\":\"Beskrivning\",\"kind\":\"text\",\"value\":\"Spelar oboe\"}]}],\"relationships\":[]},\"pendingParts\":[{\"status\":\"waiting\",\"request\":\"Ange att David möjligen använder Nextcloud, med osäkerheten kvar och utan sparande.\"}],\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "pass"
+      }
+    },
+    {
+      "id": "retention-split-active-work",
+      "context": "{\"request\":\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\"]},\"effective\":{\"objects\":[{\"id\":\"ingrid\",\"name\":\"Ingrid\",\"properties\":[{\"label\":\"Beskrivning\",\"kind\":\"text\",\"value\":\"Spelar oboe\"}]}],\"relationships\":[]},\"pendingParts\":[{\"status\":\"ready\",\"request\":\"David kan använda Nextcloud; uppgiften är osäkert lämnad.\"},{\"status\":\"waiting\",\"request\":\"Arbetet ska ligga osparat.\"}],\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "pass"
+      }
+    },
+    {
+      "id": "retention-lost-uncertainty",
+      "context": "{\"request\":\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\"]},\"effective\":{\"objects\":[{\"id\":\"ingrid\",\"name\":\"Ingrid\",\"properties\":[{\"label\":\"Beskrivning\",\"kind\":\"text\",\"value\":\"Spelar oboe\"}]}],\"relationships\":[]},\"pendingParts\":[{\"status\":\"waiting\",\"request\":\"Ange att David använder Nextcloud. Spara inte.\"}],\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "fail"
+      }
+    },
+    {
+      "id": "retention-lost-save-prohibition",
+      "context": "{\"request\":\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\"]},\"effective\":{\"objects\":[{\"id\":\"ingrid\",\"name\":\"Ingrid\",\"properties\":[{\"label\":\"Beskrivning\",\"kind\":\"text\",\"value\":\"Spelar oboe\"}]}],\"relationships\":[]},\"pendingParts\":[{\"status\":\"waiting\",\"request\":\"Ange att David kanske använder Nextcloud.\"}],\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "fail"
+      }
+    },
+    {
+      "id": "retention-changed-target",
+      "context": "{\"request\":\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\"]},\"effective\":{\"objects\":[{\"id\":\"ingrid\",\"name\":\"Ingrid\",\"properties\":[{\"label\":\"Beskrivning\",\"kind\":\"text\",\"value\":\"Spelar oboe\"}]}],\"relationships\":[]},\"pendingParts\":[{\"status\":\"waiting\",\"request\":\"Ange att Daniel kanske använder Nextcloud. Spara inte.\"}],\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "fail"
+      }
+    },
+    {
+      "id": "retention-historical-only",
+      "context": "{\"request\":\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":false,\"failures\":[\"unfinished_instructions\"]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\"]},\"effective\":{\"objects\":[{\"id\":\"ingrid\",\"name\":\"Ingrid\",\"properties\":[{\"label\":\"Beskrivning\",\"kind\":\"text\",\"value\":\"Spelar oboe\"}]}],\"relationships\":[]},\"pendingParts\":[],\"saveReceipt\":null,\"historyChanges\":0},\"historicalSummary\":\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\"}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "fail"
+      }
+    },
+    {
+      "id": "retention-withdrawn-only",
+      "context": "{\"request\":\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":false,\"failures\":[\"unfinished_instructions\"]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Behåll Ingrids beskrivning Spelar oboe. Jag tror att David använder Nextcloud, men jag är osäker. Spara inte.\"]},\"effective\":{\"objects\":[{\"id\":\"ingrid\",\"name\":\"Ingrid\",\"properties\":[{\"label\":\"Beskrivning\",\"kind\":\"text\",\"value\":\"Spelar oboe\"}]}],\"relationships\":[]},\"pendingParts\":[{\"status\":\"withdrawn\",\"request\":\"Ange att David möjligen använder Nextcloud, med osäkerheten kvar och utan sparande.\"}],\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "fail"
+      }
+    },
+    {
+      "id": "retention-overwritten-amount",
+      "context": "{\"request\":\"Ändra simhallens avgift till 325 EUR per år, behåll betalaren och spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Ändra simhallens avgift till 325 EUR per år, behåll betalaren och spara inte.\"]},\"effective\":{\"objects\":[],\"relationships\":[]},\"pendingParts\":[{\"status\":\"waiting\",\"request\":\"Ange simhallens årsavgift till 300 EUR. Behåll betalaren och låt allt vara osparat.\"}]}}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "fail"
+      }
+    },
+    {
+      "id": "retention-latest-user-correction",
+      "context": "{\"request\":\"Ändra simhallens avgift till 325 EUR per år, behåll betalaren och spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Ändra simhallens avgift till 325 EUR per år, behåll betalaren och spara inte.\",\"Jag menade 350 EUR per år.\"]},\"effective\":{\"objects\":[],\"relationships\":[]},\"pendingParts\":[{\"status\":\"waiting\",\"request\":\"Ange simhallens årsavgift till 350 EUR. Behåll betalaren och låt allt vara osparat.\"}]},\"currentClarification\":\"Jag menade 350 EUR per år.\"}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "pass"
+      }
+    },
+    {
+      "id": "retention-stale-value-after-correction",
+      "context": "{\"request\":\"Ändra simhallens avgift till 325 EUR per år, behåll betalaren och spara inte.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"preservedRequests\":[\"Ändra simhallens avgift till 325 EUR per år, behåll betalaren och spara inte.\",\"Jag menade 350 EUR per år.\"]},\"effective\":{\"objects\":[],\"relationships\":[]},\"pendingParts\":[{\"status\":\"waiting\",\"request\":\"Ange simhallens årsavgift till 325 EUR. Behåll betalaren och låt allt vara osparat.\"}]},\"currentClarification\":\"Jag menade 350 EUR per år.\"}",
+      "sources": {
+        "backend": {
+          "text": "Vilken David menar du?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "backend-retention",
+          "source": "backend",
+          "text": "Bedöm den oavslutade begärans bevarade innebörd från observedState.expected.preservedRequests, verifierat slutförda kartdelar och aktiva waiting/ready pendingParts tillsammans. Exakt formulering och uppdelning får variera. Varje återstående handling, mål, värde, osäkerhet, förbud och sparbegränsning måste finnas kvar i aktivt arbete. Senaste uttryckliga rättelse från användaren ersätter tidigare värde eller val, men övriga begränsningar gäller. Historisk text ensam och avslutade eller återtagna delar räcker inte."
+        }
+      ],
+      "expected": {
+        "backend-retention": "fail"
+      }
+    },
+    {
+      "id": "quantity-label-monthly-sek",
+      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per månad.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":195}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "quantity-meaning",
+          "source": "backend",
+          "text": "Hela observerade kartan bevarar endast den begärda prisuppgiften: Abonnemanget kostar 195 SEK per månad. Belopp, valuta och betalningsintervall måste framgå entydigt av etiketter och värden tillsammans. Delade egenskaper och en fullständig textuppgift är också tillåtna. En allmän bekräftelse ersätter inte kartans sakuppgifter."
+        }
+      ],
+      "expected": {
+        "quantity-meaning": "pass"
+      }
+    },
+    {
+      "id": "quantity-label-annual-eur",
+      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Årsavgift (EUR)\",\"kind\":\"number\",\"value\":24.5}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "quantity-meaning",
+          "source": "backend",
+          "text": "Hela observerade kartan bevarar endast den begärda prisuppgiften: Abonnemanget kostar 24,50 EUR per år. Belopp, valuta och betalningsintervall måste framgå entydigt av etiketter och värden tillsammans. Delade egenskaper och en fullständig textuppgift är också tillåtna. En allmän bekräftelse ersätter inte kartans sakuppgifter."
+        }
+      ],
+      "expected": {
+        "quantity-meaning": "pass"
+      }
+    },
+    {
+      "id": "quantity-label-wrong-currency",
+      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Årsavgift (USD)\",\"kind\":\"number\",\"value\":24.5}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "quantity-meaning",
+          "source": "backend",
+          "text": "Hela observerade kartan bevarar endast den begärda prisuppgiften: Abonnemanget kostar 24,50 EUR per år. Belopp, valuta och betalningsintervall måste framgå entydigt av etiketter och värden tillsammans. Delade egenskaper och en fullständig textuppgift är också tillåtna. En allmän bekräftelse ersätter inte kartans sakuppgifter."
+        }
+      ],
+      "expected": {
+        "quantity-meaning": "fail"
+      }
+    },
+    {
+      "id": "quantity-label-wrong-period",
+      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per kvartal.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":195}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "quantity-meaning",
+          "source": "backend",
+          "text": "Hela observerade kartan bevarar endast den begärda prisuppgiften: Abonnemanget kostar 195 SEK per kvartal. Belopp, valuta och betalningsintervall måste framgå entydigt av etiketter och värden tillsammans. Delade egenskaper och en fullständig textuppgift är också tillåtna. En allmän bekräftelse ersätter inte kartans sakuppgifter."
+        }
+      ],
+      "expected": {
+        "quantity-meaning": "fail"
+      }
+    },
+    {
+      "id": "quantity-label-missing-units",
+      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris\",\"kind\":\"number\",\"value\":24.5}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "quantity-meaning",
+          "source": "backend",
+          "text": "Hela observerade kartan bevarar endast den begärda prisuppgiften: Abonnemanget kostar 24,50 EUR per år. Belopp, valuta och betalningsintervall måste framgå entydigt av etiketter och värden tillsammans. Delade egenskaper och en fullständig textuppgift är också tillåtna. En allmän bekräftelse ersätter inte kartans sakuppgifter."
+        }
+      ],
+      "expected": {
+        "quantity-meaning": "fail"
+      }
+    },
+    {
+      "id": "quantity-split-daily-usd",
+      "context": "{\"request\":\"Abonnemanget kostar 1,25 USD per dag.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris\",\"kind\":\"number\",\"value\":1.25},{\"label\":\"Valuta\",\"kind\":\"text\",\"value\":\"USD\"},{\"label\":\"Intervall\",\"kind\":\"text\",\"value\":\"dag\"}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "quantity-meaning",
+          "source": "backend",
+          "text": "Hela observerade kartan bevarar endast den begärda prisuppgiften: Abonnemanget kostar 1,25 USD per dag. Belopp, valuta och betalningsintervall måste framgå entydigt av etiketter och värden tillsammans. Delade egenskaper och en fullständig textuppgift är också tillåtna. En allmän bekräftelse ersätter inte kartans sakuppgifter."
+        }
+      ],
+      "expected": {
+        "quantity-meaning": "pass"
+      }
+    },
+    {
+      "id": "quantity-text-annual-eur",
+      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Kostnad\",\"kind\":\"text\",\"value\":\"24,50 EUR per år\"}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "quantity-meaning",
+          "source": "backend",
+          "text": "Hela observerade kartan bevarar endast den begärda prisuppgiften: Abonnemanget kostar 24,50 EUR per år. Belopp, valuta och betalningsintervall måste framgå entydigt av etiketter och värden tillsammans. Delade egenskaper och en fullständig textuppgift är också tillåtna. En allmän bekräftelse ersätter inte kartans sakuppgifter."
+        }
+      ],
+      "expected": {
+        "quantity-meaning": "pass"
+      }
+    },
+    {
+      "id": "quantity-label-wrong-amount",
+      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per månad.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":196}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "quantity-meaning",
+          "source": "backend",
+          "text": "Hela observerade kartan bevarar endast den begärda prisuppgiften: Abonnemanget kostar 195 SEK per månad. Belopp, valuta och betalningsintervall måste framgå entydigt av etiketter och värden tillsammans. Delade egenskaper och en fullständig textuppgift är också tillåtna. En allmän bekräftelse ersätter inte kartans sakuppgifter."
+        }
+      ],
+      "expected": {
+        "quantity-meaning": "fail"
+      }
+    },
+    {
+      "id": "quantity-unrelated-text-fact",
+      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per månad.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":195},{\"label\":\"Ort\",\"kind\":\"text\",\"value\":\"Visby\"}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "quantity-meaning",
+          "source": "backend",
+          "text": "Hela observerade kartan bevarar endast den begärda prisuppgiften: Abonnemanget kostar 195 SEK per månad. Belopp, valuta och betalningsintervall måste framgå entydigt av etiketter och värden tillsammans. Delade egenskaper och en fullständig textuppgift är också tillåtna. En allmän bekräftelse ersätter inte kartans sakuppgifter."
+        }
+      ],
+      "expected": {
+        "quantity-meaning": "fail"
+      }
     }
   ],
   "regressionSource": "https://github.com/viscalyx/skyttel/issues/373"

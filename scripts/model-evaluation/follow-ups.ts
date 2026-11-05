@@ -1,3 +1,4 @@
+import { retainedWorkRequirement } from './retained-work.js';
 import type {
   Attempt,
   Expected,
@@ -112,7 +113,7 @@ export async function selectFollowUp({
     attempt.assessment = {
       kind: 'inconclusive',
       reason:
-        'A pending question requires a verified safe waiting contract and exact retained request.',
+        'A pending question requires a verified safe waiting contract and retained unfinished meaning.',
       stateFailures: [],
       evidence: [],
     };
@@ -151,12 +152,19 @@ export async function selectFollowUp({
       (!waiting.requirements.length &&
         ((step.expected.saves ?? 0) !== 0 ||
           attempt.content.some((item) => item.outcome !== 'pass'))) ||
-      (waiting.requirements.length && !waitingContext)
+      !waitingContext
     ) {
       candidates.push({ id, fixed: ['follow_up_waiting_contract_missing'] });
       continue;
     }
-    const fixed = await checkWaiting(waiting);
+    const retained = {
+      ...waiting,
+      preservedRequests: [
+        ...new Set([...(waiting.preservedRequests ?? []), ...(step.text ? [step.text] : [])]),
+      ],
+    };
+    const fixed = await checkWaiting(retained);
+    if (!retained.preservedRequests.length) fixed.push('unfinished_instructions');
     if (
       !reply &&
       step.text &&
@@ -178,6 +186,11 @@ export async function selectFollowUp({
         id: `${source}-necessary`,
         source: source as 'backend' | 'voice',
         text: 'The extra question is necessary and relevant because safe continuation needs a missing choice, fact or permission that the current request, recognized input and available facts do not determine. This includes permission for a relevant alternative when the requested representation is unavailable. A matching or missing scripted reply alone does not establish necessity; asking again about an already unambiguous action or target is unnecessary.',
+      },
+      {
+        id: `${source}-retention`,
+        source: source as 'backend' | 'voice',
+        text: retainedWorkRequirement,
       },
       ...waiting.requirements.map((text, index) => ({
         id: `${source}-waiting-${index}`,
@@ -204,6 +217,13 @@ export async function selectFollowUp({
       requirements.every(
         (requirement) => content.filter((item) => item.id === requirement.id).length === 1,
       );
+    if (
+      wellFormed &&
+      content.some((item) => item.id.endsWith('-retention') && item.outcome === 'fail')
+    ) {
+      originalRequestLost = true;
+      fixed.push('unfinished_instructions');
+    }
     const unnecessary =
       wellFormed &&
       content.some((item) => item.id.endsWith('-necessary') && item.outcome === 'fail') &&
@@ -220,7 +240,7 @@ export async function selectFollowUp({
         id,
         kind: necessary ? 'necessary_clarification' : 'unnecessary_clarification',
         evidence: questionEvidence,
-        waiting,
+        waiting: retained,
         fixed,
       });
     if (reply && repliesEnabled && complete) matched.push(candidate);
@@ -272,7 +292,8 @@ export async function selectFollowUp({
   } else if (originalRequestLost) {
     attempt.assessment = {
       kind: 'correctness_failure',
-      reason: 'The declared waiting state does not retain the exact original unfinished request.',
+      reason:
+        'The declared waiting state does not retain the unfinished request meaning and constraints.',
       stateFailures: ['unfinished_instructions'],
       evidence: [],
     };

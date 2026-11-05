@@ -65,6 +65,8 @@ export type Expected = {
   objectTypes?: { name: string }[];
   saveAttempts?: number;
   saves?: number;
+  /** Independently declared requests whose unfinished meaning must remain in
+   * active pending work. Presence is fixed-checked; preservation is judged. */
   preservedRequests?: string[];
   requirements: string[];
 };
@@ -87,7 +89,7 @@ export type ScenarioStep = {
   expected: Expected;
   followUps?: FollowUp[];
   /** Safe waiting contract for a valid question without a scripted answer.
-   * Preserve the original request; this never establishes task completion. */
+   * Preserve the original remaining meaning; never establishes task completion. */
   clarification?: Expected & { preservedRequests: string[] };
   /** Alternate safe state, never a successful completion of this step. */
   safeInability?: Expected;

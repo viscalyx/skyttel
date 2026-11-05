@@ -565,11 +565,9 @@ export async function evaluationEnvironment(
           if (view.error || view.phase === 'error' || view.phase === 'recovery')
             failures.push(view.error ?? view.phase);
           if (
-            (waiting ?? expectation).preservedRequests?.some(
-              (request) =>
-                !view.pendingParts?.some(
-                  (part) => ['waiting', 'ready'].includes(part.status) && part.request === request,
-                ),
+            expectation.preservedRequests?.length &&
+            !view.pendingParts?.some(
+              (part) => ['waiting', 'ready'].includes(part.status) && part.request.trim(),
             )
           )
             failures.push('unfinished_instructions');
@@ -579,6 +577,7 @@ export async function evaluationEnvironment(
               relationships: target.relationships,
               semanticObjects: target.semanticObjects,
               semanticRelationships: target.semanticRelationships,
+              preservedRequests: expectation.preservedRequests ?? [],
             },
             saved: {
               objects: normalObjects(map, false),

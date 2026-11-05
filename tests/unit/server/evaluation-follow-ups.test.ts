@@ -405,11 +405,13 @@ test.each(
             outcome:
               item.id === 'backend-0'
                 ? rawOutcome
-                : evidence === 'unnecessary' && item.id.endsWith('-necessary')
+                : evidence === 'missing-retention' && item.id.endsWith('-retention')
                   ? 'fail'
-                  : evidence === 'inconclusive' && item.id.endsWith('-necessary')
-                    ? 'inconclusive'
-                    : item.outcome,
+                  : evidence === 'unnecessary' && item.id.endsWith('-necessary')
+                    ? 'fail'
+                    : evidence === 'inconclusive' && item.id.endsWith('-necessary')
+                      ? 'inconclusive'
+                      : item.outcome,
           })),
       },
     );
@@ -643,19 +645,42 @@ test.each([
         ];
       return [
         modelTool('ask_questions', {
-          questions: [
-            {
-              kind: 'change',
-              request: first
-                ? request
-                : evidence === 'lost-constraints'
-                  ? 'Ändra beskrivningen.'
-                  : continued,
-              question: first ? question : 'Uppdraget ryms inte. Kan du avgränsa det?',
-              dependsOnDraft: true,
-            },
-          ],
-          ...(first ? {} : { updates: [pendingUpdate(body, question)] }),
+          questions:
+            !first && evidence === 'lost-constraints'
+              ? []
+              : [
+                  {
+                    kind: 'change',
+                    request: first
+                      ? request
+                      : evidence === 'lost-constraints'
+                        ? 'Ändra beskrivningen.'
+                        : continued,
+                    question: first ? question : 'Uppdraget ryms inte. Kan du avgränsa det?',
+                    dependsOnDraft: true,
+                  },
+                ],
+          ...(first
+            ? {}
+            : {
+                updates: [
+                  pendingUpdate(
+                    body,
+                    question,
+                    evidence === 'lost-constraints'
+                      ? {
+                          action: 'replace',
+                          replacement: {
+                            kind: 'change',
+                            request: 'Ändra beskrivningen.',
+                            question: 'Uppdraget ryms inte. Kan du avgränsa det?',
+                            dependsOnDraft: true,
+                          },
+                        }
+                      : {},
+                  ),
+                ],
+              }),
         }),
       ];
     });
@@ -764,12 +789,16 @@ test.each([
           }
           return input.requirements.map(({ id }) => ({
             id,
-            outcome:
-              id === 'voice-rendered-response' ||
-              id.includes('-inability-') ||
-              id.includes('-follow-up') ||
-              id.includes('-necessary') ||
-              id.includes('-waiting-')
+            outcome: id.endsWith('-retention')
+              ? evidence === 'lost-constraints' &&
+                input.requirements.some(({ id }) => id.includes('-inability-'))
+                ? 'fail'
+                : 'pass'
+              : id === 'voice-rendered-response' ||
+                  id.includes('-inability-') ||
+                  id.includes('-follow-up') ||
+                  id.includes('-necessary') ||
+                  id.includes('-waiting-')
                 ? 'pass'
                 : 'fail',
             reason: 'Controlled observation of incomplete work and retained intent.',
@@ -1094,6 +1123,7 @@ test.each([
       ...(mode === 'voice-omission' ? { voice: { text: 'No question.', complete: true } } : {}),
     },
     checkWaiting: async () => (mode === 'unsafe-state' ? ['unrequested_save_attempt'] : []),
+    waitingContext: () => 'Independently verified current state and active pending request.',
     judge,
   });
   expect(selected).toBeUndefined();
