@@ -2727,6 +2727,78 @@ test('a marking is confirmed only after the current browser acknowledges the act
   expect(view).toMatchObject({ reply: 'Markerat i kartan.', displayedSelection: 'web-object' });
 });
 
+test.each(['before', 'after'])(
+  'requested draft details and selection can share a response with the report %s selection',
+  async (order) => {
+    let first = true;
+    const model = textModel(() => {
+      if (!first) return [modelMessage('Objektet heter Redan från formuläret.')];
+      first = false;
+      const report = modelTool('report_result', { source: 'draft', continueResponse: true });
+      const selection = modelTool('show_map_object', { objectId: 'web-object' });
+      return order === 'before' ? [report, selection] : [selection, report];
+    });
+    await setup(model.provider);
+    await webProposal();
+    const session = await start();
+    const submitted = await browser.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data: {
+        revision: 0,
+        ...displayedVersion(session),
+        requestId: 'report-and-select',
+        text: 'Beskriv utkastet, markera objektet och berätta vad det heter.',
+      },
+    });
+    expect(submitted.status()).toBe(202);
+    let current: TextAssistantView = session;
+    await expect
+      .poll(async () => {
+        current = await (await browser.get(`${path}/${session.id}`)).json();
+        return current.selection?.objectId ?? current.error;
+      })
+      .toBe('web-object');
+    expect(current.phase).toBe('working');
+    expect(current.displayedSelection).toBeUndefined();
+    const acknowledged = await browser.post(`${path}/${session.id}/selection`, {
+      headers: { origin: app.origin },
+      data: { revision: 1, objectId: 'web-object', displayed: true },
+    });
+    expect(acknowledged.status()).toBe(200);
+    await expect
+      .poll(async () => {
+        current = await (await browser.get(`${path}/${session.id}`)).json();
+        return current.phase;
+      })
+      .toBe('ready');
+    expect(current.error).toBeUndefined();
+    expect(current.displayedSelection).toBe('web-object');
+    expect(current.reply).toContain('Redan från formuläret');
+    expect(current.review.changes).toMatchObject([
+      { id: 'web-object', after: { name: 'Redan från formuläret' } },
+    ]);
+    expect(current.modelReply).toContain('Objektet heter Redan från formuläret.');
+    expect(current.receipt).toBeUndefined();
+  },
+);
+
+test('a draft report cannot share a response with an unsolicited save', async () => {
+  const model = textModel(
+    () => [
+      modelTool('report_result', { source: 'draft' }),
+      modelTool('save_draft', { version: 1, contentVersion: 1 }),
+    ],
+    readOnlyScope,
+  );
+  await setup(model.provider);
+  await webProposal();
+  const result = await message(await start(), 'Beskriv mitt utkast.');
+  expect(result.error).toBe('assistant_action_out_of_scope');
+  expect(result.receipt).toBeUndefined();
+  expect(result.review.changes).toMatchObject([{ id: 'web-object' }]);
+  expect(result.operations).toEqual([]);
+});
+
 test.each([false, true])(
   'relationship selection requires a matching current display and rejects a changed draft: %s',
   async (changeDraft) => {

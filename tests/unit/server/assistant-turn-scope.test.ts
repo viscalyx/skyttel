@@ -773,3 +773,97 @@ test('answering a scope clarification with a read request clears the transient q
   expect(answered.questionPending).toBe(false);
   expect(answered.questions).toBeUndefined();
 });
+
+test('a requested relationship can use a saved type that no existing relationship uses', async () => {
+  const typeId = 'unused-delivery';
+  const model = textModel(
+    (request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_relationship',
+              arguments: {
+                id: 'delivery',
+                baseRevision: null,
+                typeRevision: 1,
+                value: { typeId, sourceId: 'source', targetId: 'target' },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => {
+      if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+        return [
+          modelMessage(
+            JSON.stringify({
+              mode: 'work',
+              request: 'Skapa Levererar till från Tjänsten till Motparten.',
+              responseRequired: false,
+            }),
+          ),
+        ];
+      const data = JSON.parse(String(request.input[0].content)).untrusted.data;
+      const definition = data.map.relationshipTypes.find(
+        (type: { id: string }) => type.id === typeId,
+      );
+      return [
+        modelMessage(
+          JSON.stringify(
+            definition?.name === 'Levererar till' &&
+              definition.forwardLabel === 'levererar till' &&
+              definition.reverseLabel === 'levereras av' &&
+              data.map.relationshipTypes.length === 1
+              ? { decision: 'allow', complete: true, fulfillsRequest: true }
+              : { decision: 'incomplete' },
+          ),
+        ),
+      ];
+    },
+  );
+  let session = await setup(model.provider);
+  await proposal(browser, 'source', 'Tjänsten');
+  await proposal(browser, 'target', 'Motparten');
+  const mapPath = path.replace('/text-assistant', '/map');
+  let state = await (await browser.get(mapPath)).json();
+  const type = await browser.post(`${mapPath}/relationship-type`, {
+    headers: { origin: app.origin },
+    data: {
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      id: typeId,
+      baseRevision: null,
+      value: {
+        name: 'Levererar till',
+        description: 'En tjänst levererar till en annan.',
+        forwardLabel: 'levererar till',
+        reverseLabel: 'levereras av',
+      },
+    },
+  });
+  expect(type.status(), await type.text()).toBe(200);
+  state = await (await browser.get(mapPath)).json();
+  const saved = await browser.post(`${mapPath}/save`, {
+    headers: { origin: app.origin },
+    data: {
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      operationId: 'relationship-fixture',
+    },
+  });
+  expect(saved.status(), await saved.text()).toBe(200);
+  session = await (await browser.get(`${path}/${session.id}`)).json();
+  const result = await send(session, 'Tjänsten ska leverera till Motparten.');
+  expect(result.error).toBeUndefined();
+  expect(result.review.relationships).toMatchObject([
+    { id: 'delivery', after: { typeId, sourceId: 'source', targetId: 'target' } },
+  ]);
+});
