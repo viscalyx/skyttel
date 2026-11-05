@@ -461,12 +461,17 @@ test('bounded representations preserve their actual branch across the next reque
   }
 });
 
-test.each(['service', 'subscription', 'service-and-subscription'])(
-  'the approved Disney+ request accepts a %s without invented details',
+test.each([
+  ['service', undefined],
+  ['subscription', undefined],
+  ['service-and-subscription', 'Gäller'],
+  ['service-and-subscription', 'Tillhör tjänsten'],
+])(
+  'the approved Disney+ request accepts a %s (%s) without invented details',
   {
     tags: ['technical'],
   },
-  async (representation) => {
+  async (representation, relationshipType) => {
     const scenario = (rawCatalog.scenarios as Scenario[]).find(
       (scenario) => scenario.id === 'everyday-01',
     );
@@ -505,7 +510,7 @@ test.each(['service', 'subscription', 'service-and-subscription'])(
           id: 'subscription-service',
           baseRevision: null,
           value: {
-            typeId: map.relationshipTypes.find((type) => type.name === 'Gäller')?.id,
+            typeId: map.relationshipTypes.find((type) => type.name === relationshipType)?.id,
             sourceId: 'disney-plus-abonnemang',
             targetId: 'disney-service',
           },
@@ -517,6 +522,51 @@ test.each(['service', 'subscription', 'service-and-subscription'])(
     }
   },
 );
+
+test('the approved Disney+ request rejects a reversed subscription-to-service link', {
+  tags: ['technical'],
+}, async () => {
+  const scenario = (rawCatalog.scenarios as Scenario[]).find(
+    (scenario) => scenario.id === 'everyday-01',
+  );
+  if (!scenario) throw new Error('Missing approved Disney+ scenario.');
+  const model = textModel(() => {
+    throw new Error('State verification must never call a model.');
+  });
+  const environment = await evaluationEnvironment(scenario, { modelFetch: model.provider });
+  try {
+    for (const [id, type] of [
+      ['disney-service', 'Tjänst'],
+      ['disney-subscription', 'Abonnemang'],
+    ]) {
+      const map = await environment.read();
+      await environment.post('map/draft', {
+        version: map.draft.version,
+        contentVersion: map.contentVersion,
+        id,
+        baseRevision: null,
+        value: { typeId: map.types.find((item) => item.name === type)?.id, name: 'Disney+' },
+      });
+    }
+    const map = await environment.read();
+    await environment.post('map/relationship', {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      id: 'reversed-service-link',
+      baseRevision: null,
+      value: {
+        typeId: map.relationshipTypes.find((type) => type.name === 'Tillhör tjänsten')?.id,
+        sourceId: 'disney-service',
+        targetId: 'disney-subscription',
+      },
+    });
+    expect(await environment.check(scenario.steps[0], environment.assistant, [])).toContain(
+      'effective_relationships',
+    );
+  } finally {
+    await environment.close();
+  }
+});
 
 test.each(['wrong-type', 'invented-price', 'extra-object', 'unrelated-change', 'saved'])(
   'the approved Disney+ request rejects a subscription with %s',
