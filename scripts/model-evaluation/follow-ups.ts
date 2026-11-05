@@ -98,6 +98,7 @@ export async function selectFollowUp({
   if (
     (!step.followUps?.length && !step.clarification) ||
     !['pass', 'fail'].includes(attempt.outcome) ||
+    (attempt.outcome === 'pass' && !step.clarification) ||
     !questionPending
   )
     return undefined;
@@ -126,10 +127,12 @@ export async function selectFollowUp({
 
   const candidates: NonNullable<Attempt['followUpSelection']>['candidates'] = [];
   const matched: typeof candidates = [];
-  const verifiedQuestions: {
+  let verifiedQuestions: {
     id: string;
     kind: 'necessary_clarification' | 'unnecessary_clarification';
     evidence: JudgeResult;
+    waiting: Expected;
+    fixed: string[];
   }[] = [];
   const waitingContracts = [
     ...(step.clarification
@@ -201,20 +204,40 @@ export async function selectFollowUp({
         .every((item) => item.outcome === 'pass');
     const questionEvidence = content.filter((item) => !item.id.endsWith('-follow-up'));
     const necessary = wellFormed && questionEvidence.every((item) => item.outcome === 'pass');
+    const complete = wellFormed && content.every((item) => item.outcome === 'pass');
+    const candidate = { id, fixed, content };
+    candidates.push(candidate);
     if (necessary || unnecessary)
       verifiedQuestions.push({
         id,
         kind: necessary ? 'necessary_clarification' : 'unnecessary_clarification',
         evidence: questionEvidence,
+        waiting,
+        fixed,
       });
-    const complete = wellFormed && content.every((item) => item.outcome === 'pass');
-    const candidate = { id, fixed, content };
-    candidates.push(candidate);
     if (reply && repliesEnabled && complete) matched.push(candidate);
     if (!complete)
       fixed.push(unnecessary ? 'unnecessary_question' : 'follow_up_question_not_matched');
   }
   const selected = matched.length === 1 ? matched[0].id : undefined;
+  // Without a unique supported reply, a safe map and relevant question alone
+  // cannot establish correctness: the active original request must survive.
+  if (!selected) {
+    const retainedQuestions: typeof verifiedQuestions = [];
+    for (const question of verifiedQuestions) {
+      const failures = step.text
+        ? await checkWaiting({
+            ...question.waiting,
+            preservedRequests: [
+              ...new Set([...(question.waiting.preservedRequests ?? []), step.text]),
+            ],
+          })
+        : ['unfinished_instructions'];
+      if (failures.length) question.fixed.push(...failures);
+      else retainedQuestions.push(question);
+    }
+    verifiedQuestions = retainedQuestions;
+  }
   attempt.followUpSelection = {
     selected,
     candidates,
