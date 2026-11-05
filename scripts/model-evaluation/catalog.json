@@ -1962,7 +1962,7 @@
       "steps": [
         {
           "id": "uncertain-user",
-          "text": "Uppgiften att Alex Lind använder Norrsken Molnlagring ska inte vara kvar. Ersätt den med den osäkra uppgiften att Mira Dahl använder tjänsten. Ange osäkerheten på det nya sambandet med den fria egenskapen Osäkert uppgivet, datatyp Ja/nej och värde Ja.",
+          "text": "Ersätt det befintliga Används av-sambandet från Norrsken Molnlagring till Alex Lind med ett Används av-samband från Norrsken Molnlagring till Mira Dahl. Uppgiften om Mira är osäker. Ange osäkerheten på det nya sambandet med den fria egenskapen Osäkert uppgivet, datatyp Ja/nej och värde Ja.",
           "expected": {
             "objects": {},
             "addRelationships": [
