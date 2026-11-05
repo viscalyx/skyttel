@@ -677,6 +677,44 @@
                   "disney": {
                     "type": "Tjänst",
                     "name": "Disney+"
+                  },
+                  "disney-sub": {
+                    "type": "Abonnemang",
+                    "name": "Disney+-abonnemang"
+                  }
+                },
+                "addRelationships": [
+                  {
+                    "source": "disney-sub",
+                    "type": "Tillhör tjänsten",
+                    "target": "disney"
+                  }
+                ],
+                "semanticObjects": {
+                  "disney": {
+                    "name": true,
+                    "properties": {
+                      "preserve": [],
+                      "additions": [],
+                      "meaning": "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga. Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till. Disney+ är tillagt som tjänst, som abonnemang eller som en tjänst med ett tillhörande abonnemang. Inga andra nya objekt eller påhittade egenskaper är tillåtna."
+                    }
+                  },
+                  "disney-sub": {
+                    "name": true,
+                    "properties": {
+                      "preserve": [],
+                      "additions": [],
+                      "meaning": "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga. Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till. Disney+ är tillagt som tjänst, som abonnemang eller som en tjänst med ett tillhörande abonnemang. Inga andra nya objekt eller påhittade egenskaper är tillåtna."
+                    }
+                  }
+                }
+              },
+              {
+                "requirements": [],
+                "objects": {
+                  "disney": {
+                    "type": "Tjänst",
+                    "name": "Disney+"
                   }
                 },
                 "semanticObjects": {
