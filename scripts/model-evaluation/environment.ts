@@ -68,12 +68,16 @@ export async function evaluationEnvironment(
     }
     for (const [index, definition] of [
       ...fixture.relationshipTypes,
-      {
-        name: 'Hör till',
-        description: '',
-        forwardLabel: 'hör till',
-        reverseLabel: 'har tjänstekonto',
-      },
+      ...(fixture.relationshipTypes.some((definition) => definition.name === 'Hör till')
+        ? []
+        : [
+            {
+              name: 'Hör till',
+              description: '',
+              forwardLabel: 'hör till',
+              reverseLabel: 'har tjänstekonto',
+            },
+          ]),
     ].entries())
       await propose('relationship-type', {
         id: `evaluation-type-${index}`,

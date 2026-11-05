@@ -71,6 +71,18 @@ test.each(rawCatalog.scenarios as Scenario[])(
       ).toEqual([]);
       expect(model.requests).toEqual([]);
       expect(model.authorizationRequests).toEqual([]);
+      const map = await environment.read();
+      for (const definitions of [map.types, map.relationshipTypes]) {
+        const names = definitions.map((type) => type.name);
+        expect(new Set(names).size).toBe(names.length);
+      }
+      expect(map.relationshipTypes.find((type) => type.name === 'Hör till')).toMatchObject(
+        scenario.fixture?.relationshipTypes.find((type) => type.name === 'Hör till') ?? {
+          description: '',
+          forwardLabel: 'hör till',
+          reverseLabel: 'har tjänstekonto',
+        },
+      );
     } finally {
       await environment.close();
     }
