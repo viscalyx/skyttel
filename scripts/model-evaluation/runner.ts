@@ -282,7 +282,10 @@ export async function runTextScenario(
               outcome: result.outcome,
             }),
           );
-          retainWaitingTiming(result, entry.target ?? step, Boolean(view.questionPending));
+          retainWaitingTiming(result, (entry.target ?? step).expected, view.pendingParts, [
+            ...(entry.requestIds ?? []),
+            ...(requestId ? [requestId] : []),
+          ]);
           if (!options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,
@@ -305,6 +308,7 @@ export async function runTextScenario(
                 step: followUpStep(step, followUp),
                 parent: step.id,
                 target: step,
+                requestIds: [...(entry.requestIds ?? []), ...(requestId ? [requestId] : [])],
                 startedAt: entry.startedAt ?? startedAt,
                 previousResponseEndAt: finishedAt,
                 evaluationOverheadMs: result.assistedEvaluationOverheadMs ?? 0,

@@ -1,4 +1,5 @@
-import type { Attempt, Expected, JudgeInput, JudgeResult, ScenarioStep } from './types.js';
+import type { PendingPart } from '../../src/shared/text-assistant.js';
+import type { Attempt, Expected, JudgeInput, JudgeResult } from './types.js';
 
 /** Independent semantic obligation; structural pending-state checks alone
  * cannot establish that an unfinished request can safely be continued. */
@@ -70,10 +71,23 @@ export function checkedContentVerdicts(
   });
 }
 
-/** An explicit catalog declaration that this request remains pending verifies
- * preservation, not completion. Older unrelated work does not affect timing. */
-export function retainWaitingTiming(result: Attempt, step: ScenarioStep, questionPending: boolean) {
-  if (!questionPending || !step.text || !step.expected.preservedRequests?.includes(step.text))
+/** Declared retention verifies preservation, not completion of active work
+ * belonging to this request or its clarifications. Wording is not identity. */
+export function retainWaitingTiming(
+  result: Attempt,
+  expected: Expected,
+  pendingParts: PendingPart[] | undefined,
+  requestIds: string[],
+) {
+  if (
+    !expected.preservedRequests?.length ||
+    !pendingParts?.some(
+      (part) =>
+        ['waiting', 'ready'].includes(part.status) &&
+        (requestIds.includes(part.messageId) ||
+          (part.evidence && requestIds.includes(part.evidence.messageId))),
+    )
+  )
     return;
   result.elapsedMs = null;
   if (result.timing) {

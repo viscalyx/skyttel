@@ -331,7 +331,8 @@ export async function runVoiceScenario(
             observedResponseEndMs: result.observedEndMs,
             successfulCompletionMs: result.elapsedMs,
           };
-          retainWaitingTiming(result, entry.target ?? step, Boolean(summary.view.questionPending));
+          // This times the summary operation, which submits no user request.
+          // Retention above does not certify completion of earlier pending work.
         } else {
           const reference = await referenceSpeech(step.id, step.text, options.referenceVoice);
           if (!connection) {
@@ -744,7 +745,21 @@ export async function runVoiceScenario(
               outcome: result.outcome,
             }),
           );
-          retainWaitingTiming(result, entry.target ?? step, Boolean(view.questionPending));
+          // A completed voice handoff can clear view.taskId before final polling.
+          // Keep the authenticated delegations accepted during this utterance.
+          const requestIds = [
+            ...(entry.requestIds ?? []),
+            ...events
+              .slice(offset)
+              .filter((event) => event.kind === 'backend_request')
+              .map((event) => (event.data as { requestId: string }).requestId),
+          ];
+          retainWaitingTiming(
+            result,
+            (entry.target ?? step).expected,
+            view.pendingParts,
+            requestIds,
+          );
           if (!options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,
@@ -769,6 +784,7 @@ export async function runVoiceScenario(
                 step: followUpStep(step, followUp),
                 parent: step.id,
                 target: step,
+                requestIds,
                 startedAt: entry.startedAt ?? startedAt,
                 previousResponseEndAt: renderedEnd?.upper,
                 evaluationOverheadMs: result.assistedEvaluationOverheadMs ?? 0,
