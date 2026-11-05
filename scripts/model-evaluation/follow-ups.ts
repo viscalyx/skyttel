@@ -13,6 +13,8 @@ export type ScenarioExchange = {
   step: ScenarioStep;
   parent?: string;
   target?: ScenarioStep;
+  /** Authenticated requests belonging to the target and its clarifications. */
+  requestIds?: string[];
   startedAt?: number;
   previousResponseEndAt?: number;
   evaluationOverheadMs?: number;

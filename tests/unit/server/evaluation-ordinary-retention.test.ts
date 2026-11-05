@@ -280,6 +280,58 @@ test('retaining an older request does not remove a completed current information
   });
 });
 
+test('a partial retained declaration cannot certify a pending current request as complete', {
+  tags: ['technical'],
+}, async () => {
+  const scenario: Scenario = {
+    id: 'partial-current-retention',
+    title: 'Current pending work keeps its request identity through paraphrases',
+    voice: false,
+    fixture: { objects: [], relationships: [], relationshipTypes: [], draft: { objects: {} } },
+    steps: [
+      {
+        id: 'current',
+        text: 'Ändra biblioteksavgiften till 325 SEK per år. Behåll betalaren och spara inte.',
+        expected: {
+          requirements: [],
+          preservedRequests: ['Ändra biblioteksavgiften till 325 SEK per år.'],
+        },
+      },
+    ],
+  };
+  const model = textModel(() => [
+    modelTool('ask_questions', {
+      questions: [
+        {
+          kind: 'change',
+          request: 'Sätt biblioteksavgiften till 325 SEK årsvis. Behåll betalaren. Spara inte.',
+          question: 'Vilket biblioteksabonnemang avser du?',
+          dependsOnDraft: true,
+        },
+      ],
+    }),
+  ]);
+  const run = await runTextScenario(
+    scenario,
+    { modelFetch: model.provider },
+    {
+      profile: 'controlled',
+      repetition: 1,
+      judge: async (input) =>
+        input.requirements.map(({ id }) => ({
+          id,
+          outcome: 'pass',
+          reason: 'The active part retains the declared unfinished action.',
+        })),
+    },
+  );
+  expect(run.attempts[0]).toMatchObject({
+    outcome: 'pass',
+    elapsedMs: null,
+    timing: { successfulCompletionMs: null, firstVerifiedUsefulMs: null },
+  });
+});
+
 test('a short follow-up retains the original target contract semantic obligation', {
   tags: ['technical'],
 }, async () => {
@@ -384,9 +436,110 @@ test('a short follow-up retains the original target contract semantic obligation
   ).toBe(true);
 });
 
-test.each(['pass', 'fail', 'missing'] as const)(
-  'ordinary voice retention verifies both sources with empty content requirements (%s)',
+test.each(['unchanged', 'clarified', 'ready', 'replaced'] as const)(
+  'a retained clarification cannot complete its still-active target (%s)',
   { tags: ['technical'] },
+  async (continuation) => {
+    const original =
+      'Ändra biblioteksavgiften till 325 SEK per år. Behåll betalaren och spara inte.';
+    const question = 'Vilket abonnemang avser du?';
+    const reply = 'Jag menar Bibliotek Plus.';
+    const retained = 'Sätt biblioteksavgiften till 325 SEK årsvis utan att spara.';
+    const separateStep = continuation === 'clarified' || continuation === 'ready';
+    const scenario: Scenario = {
+      id: 'retained-target-lineage',
+      title: 'Pending target identity survives a short clarification',
+      voice: false,
+      fixture: { objects: [], relationships: [], relationshipTypes: [], draft: { objects: {} } },
+      steps: [
+        {
+          id: 'request',
+          text: original,
+          expected: { requirements: ['Bekräfta ändringen.'], preservedRequests: [retained] },
+          followUps: [
+            {
+              id: 'reply',
+              text: reply,
+              when: 'Frågan ber om abonnemangets identitet.',
+              waiting: { requirements: ['Fråga vilket abonnemang som avses.'] },
+              requirements: [],
+            },
+          ],
+        },
+      ],
+    };
+    if (separateStep) {
+      // Explicit later catalog steps have their own request identity. Their
+      // update evidence must correlate retained work without a follow-up parent.
+      scenario.steps[0].expected = { requirements: [] };
+      scenario.steps[0].followUps = undefined;
+      scenario.steps.push({
+        id: 'reply',
+        text: reply,
+        expected: { requirements: [], preservedRequests: [retained] },
+      });
+    }
+    let turn = 0;
+    const model = textModel((body) => {
+      if (turn++ === 0)
+        return [
+          modelTool('ask_questions', {
+            questions: [{ kind: 'change', request: original, question, dependsOnDraft: true }],
+          }),
+        ];
+      if (continuation === 'unchanged') return [modelMessage('Jag behöver mer information.')];
+      return [
+        modelTool('ask_questions', {
+          questions: [],
+          updates: [
+            pendingUpdate(body, question, {
+              ...(continuation === 'replaced'
+                ? {
+                    action: 'replace',
+                    replacement: {
+                      kind: 'change',
+                      request:
+                        'Sätt Bibliotek Plus årsavgift till 325 SEK. Behåll betalaren. Spara inte.',
+                      question: 'Vilken av de två Bibliotek Plus-posterna avser du?',
+                      dependsOnDraft: true,
+                    },
+                  }
+                : continuation === 'clarified'
+                  ? { question: 'Vilken av de två Bibliotek Plus-posterna avser du?' }
+                  : {}),
+            }),
+          ],
+        }),
+      ];
+    });
+    const run = await runTextScenario(
+      scenario,
+      { modelFetch: model.provider },
+      {
+        profile: 'controlled',
+        repetition: 1,
+        followUps: true,
+        judge: async (input) =>
+          input.requirements.map(({ id }) => ({
+            id,
+            outcome: id === 'backend-0' ? 'fail' : 'pass',
+            reason: 'The request remains safely retained and has not completed.',
+          })),
+      },
+    );
+    expect(run.attempts).toHaveLength(2);
+    expect(run.attempts[1]).toMatchObject({
+      outcome: 'pass',
+      elapsedMs: null,
+      ...(separateStep ? {} : { assistedElapsedMs: null }),
+      timing: { successfulCompletionMs: null, firstVerifiedUsefulMs: null },
+    });
+  },
+);
+
+test.each(['pass', 'partial', 'older', 'follow-up', 'fail', 'missing'] as const)(
+  'ordinary voice retention keeps preservation separate from completion (%s)',
+  { tags: ['technical'], timeout: 15000 },
   async (verdict) => {
     const original = manifest.voices.marin.clips['kontext-forsta-andring'].text;
     const scenario: Scenario = {
@@ -397,27 +550,70 @@ test.each(['pass', 'fail', 'missing'] as const)(
         {
           id: 'kontext-forsta-andring',
           text: original,
-          expected: { requirements: [], preservedRequests: [original] },
+          expected: {
+            requirements: [],
+            preservedRequests: [
+              verdict === 'partial'
+                ? 'Månadspriset för abonnemanget ska vara 189 kronor.'
+                : original,
+            ],
+          },
         },
       ],
     };
-    const model = textModel(() => [
-      modelTool('ask_questions', {
-        questions: [
-          {
-            kind: 'change',
-            request:
-              verdict === 'pass'
-                ? 'Sätt Spotify Premium Familys månadspris till 189 kronor.'
-                : 'Ändra priset.',
-            question: 'Vilket abonnemang avser du?',
-            dependsOnDraft: true,
-          },
-        ],
-      }),
-    ]);
+    const answer = 'Spotify Premium Family kostar 179 kronor per månad enligt den sparade kartan.';
+    if (verdict === 'follow-up') {
+      scenario.steps[0].expected.requirements = ['Bekräfta prisändringen.'];
+      scenario.steps[0].followUps = [
+        {
+          id: 'kontext-pris-foljdsvar',
+          text: 'Jag menar Spotify Premium Family.',
+          when: 'Frågan ber om abonnemangets identitet.',
+          waiting: { requirements: ['Fråga efter identiteten och behåll begäran.'] },
+          requirements: [],
+        },
+      ];
+    }
+    if (verdict === 'older') {
+      scenario.steps[0].expected = { requirements: [] };
+      scenario.steps.push({
+        id: 'kontext-sista-andring',
+        text: 'Vad kostar Spotify Premium Family enligt den sparade kartan?',
+        expected: { requirements: [], preservedRequests: [original] },
+      });
+    }
+    if (verdict === 'older' || verdict === 'follow-up') {
+      // The simulated media boundary supplies these custom inputs. Reuse only
+      // the clip shape; no acoustic or reference-transcription claim is made.
+      const reference = speech.referenceSpeech;
+      vi.spyOn(speech, 'referenceSpeech').mockImplementation(async (id, text, voice) => {
+        const audio = await reference(id, undefined, voice);
+        return { ...audio, clip: { ...audio.clip, text: text ?? audio.clip.text } };
+      });
+    }
+    let turn = 0;
+    const model = textModel(() =>
+      turn++ > 0
+        ? [modelMessage(verdict === 'follow-up' ? 'Jag behöver mer information.' : answer)]
+        : [
+            modelTool('ask_questions', {
+              questions: [
+                {
+                  kind: 'change',
+                  request:
+                    verdict !== 'fail' && verdict !== 'missing'
+                      ? 'Sätt Spotify Premium Familys månadspris till 189 kronor.'
+                      : 'Ändra priset.',
+                  question: 'Vilket abonnemang avser du?',
+                  dependsOnDraft: true,
+                },
+              ],
+            }),
+          ],
+    );
     const live = liveProvider();
     let offset = 0;
+    let playbackIndex = 0;
     // This substitutes only the external media adapter. The authenticated voice
     // routes, application state, work model transport and retention check are real.
     // It supplies controlled recording evidence, not an acoustic-quality claim.
@@ -443,7 +639,12 @@ test.each(['pass', 'fail', 'missing'] as const)(
             live.emit(id, {
               type: 'session.input_transcript.delta',
               event_id: crypto.randomUUID(),
-              delta: original,
+              delta:
+                playbackIndex++ === 0
+                  ? original
+                  : verdict === 'follow-up'
+                    ? scenario.steps[0].followUps?.[0].text
+                    : scenario.steps[1].text,
               start_ms: offset,
               end_ms: ++offset,
             });
@@ -503,9 +704,15 @@ test.each(['pass', 'fail', 'missing'] as const)(
       {
         profile: 'controlled',
         repetition: 1,
+        followUps: verdict === 'follow-up',
         assessPlayback: async () => ({
           outcome: 'recognized',
-          text: 'Vilket abonnemang avser du?',
+          text:
+            playbackIndex > 1
+              ? verdict === 'follow-up'
+                ? 'Jag behöver mer information.'
+                : answer
+              : 'Vilket abonnemang avser du?',
           lastWordEndSeconds: 0.1,
           alignmentMarginMs: 100,
           profile: 'controlled-state-only',
@@ -518,23 +725,50 @@ test.each(['pass', 'fail', 'missing'] as const)(
             .filter(({ id }) => verdict !== 'missing' || !id.endsWith('-retention'))
             .map(({ id }) => ({
               id,
-              outcome: verdict === 'fail' && id.endsWith('-retention') ? 'fail' : 'pass',
+              outcome:
+                (verdict === 'fail' && id.endsWith('-retention')) ||
+                (verdict === 'follow-up' && ['backend-0', 'voice-0'].includes(id))
+                  ? 'fail'
+                  : 'pass',
               reason: 'Independent controlled rendering and retention evidence.',
             }));
         },
       },
     );
     expect(run.attempts[0]).toMatchObject({
-      outcome: verdict === 'missing' ? 'inconclusive' : verdict,
-      elapsedMs: null,
-      timing: { successfulCompletionMs: null },
+      outcome:
+        verdict === 'missing'
+          ? 'inconclusive'
+          : verdict === 'fail' || verdict === 'follow-up'
+            ? 'fail'
+            : 'pass',
+      elapsedMs: verdict === 'older' ? expect.any(Number) : null,
+      timing: { successfulCompletionMs: verdict === 'older' ? expect.any(Number) : null },
     });
+    if (verdict === 'older')
+      expect(run.attempts[1]).toMatchObject({
+        outcome: 'pass',
+        elapsedMs: expect.any(Number),
+        timing: { successfulCompletionMs: expect.any(Number) },
+      });
+    if (verdict === 'follow-up')
+      expect(run.attempts[1]).toMatchObject({
+        outcome: 'pass',
+        elapsedMs: null,
+        assistedElapsedMs: null,
+        timing: { successfulCompletionMs: null, firstVerifiedUsefulMs: null },
+      });
     const final = inputs.find((input) =>
       input.requirements.some(({ id }) => id === 'backend-retention'),
     );
-    expect(final?.requirements.map(({ id }) => id)).toEqual([
-      'backend-retention',
-      'voice-retention',
-    ]);
+    if (verdict === 'older')
+      expect(JSON.parse(final?.context ?? '{}').observedState.pendingParts).toEqual(
+        expect.arrayContaining([expect.objectContaining({ kind: 'change', status: 'waiting' })]),
+      );
+    expect(final?.requirements.map(({ id }) => id)).toEqual(
+      verdict === 'follow-up'
+        ? ['backend-0', 'backend-retention', 'voice-0', 'voice-retention']
+        : ['backend-retention', 'voice-retention'],
+    );
   },
 );
