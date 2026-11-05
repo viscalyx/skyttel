@@ -237,7 +237,7 @@ test.each(
     ),
   ),
 )(
-  'an unanswered conditional question requires the exact request: $group, replies=$replyMode, retained=$retained',
+  'an unanswered conditional question requires retained meaning: $group, replies=$replyMode, retained=$retained',
   {
     tags: ['technical'],
   },
@@ -298,6 +298,7 @@ test.each(
             ...item,
             outcome:
               item.id === 'backend-0' ||
+              (!retained && item.id.endsWith('-retention')) ||
               (replyMode === 'unmatched' && item.id.endsWith('-follow-up'))
                 ? 'fail'
                 : 'pass',
@@ -308,7 +309,7 @@ test.each(
     expect(result.attempts[0]).toMatchObject({ outcome: 'fail', fixed: [], elapsedMs: null });
     expect(result.attempts[0].followUpSelection?.selected).toBeUndefined();
     expect(result.attempts[0].assessment?.kind).toBe(
-      retained ? 'necessary_clarification' : undefined,
+      retained ? 'necessary_clarification' : 'correctness_failure',
     );
     if (!retained)
       expect(result.attempts[0].followUpSelection?.candidates[0].fixed).toContain(
