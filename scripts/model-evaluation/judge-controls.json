@@ -1130,7 +1130,7 @@
     },
     {
       "id": "quantity-label-monthly-sek",
-      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per månad.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":195}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per månad.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[],\"semanticObjects\":{\"membership\":{\"properties\":{\"preserve\":[],\"anyOf\":[[{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":195}],[{\"kinds\":[\"number\"],\"value\":195},{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":195},{\"kinds\":[\"text\"],\"value\":\"SEK\"},{\"kinds\":[\"text\"],\"value\":\"månad\"}]],\"meaning\":\"Abonnemanget kostar 195 SEK per månad.\"}}},\"semanticRelationships\":[],\"preservedRequests\":[]},\"saved\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[]},\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":195}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
       "sources": {
         "backend": {
           "text": "Utkastet är uppdaterat.",
@@ -1150,7 +1150,7 @@
     },
     {
       "id": "quantity-label-annual-eur",
-      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Årsavgift (EUR)\",\"kind\":\"number\",\"value\":24.5}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[],\"semanticObjects\":{\"membership\":{\"properties\":{\"preserve\":[],\"anyOf\":[[{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":24.5}],[{\"kinds\":[\"number\"],\"value\":24.5},{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":24.5},{\"kinds\":[\"text\"],\"value\":\"EUR\"},{\"kinds\":[\"text\"],\"value\":\"år\"}]],\"meaning\":\"Abonnemanget kostar 24,50 EUR per år.\"}}},\"semanticRelationships\":[],\"preservedRequests\":[]},\"saved\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[]},\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Årsavgift (EUR)\",\"kind\":\"number\",\"value\":24.5}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
       "sources": {
         "backend": {
           "text": "Utkastet är uppdaterat.",
@@ -1170,7 +1170,7 @@
     },
     {
       "id": "quantity-label-wrong-currency",
-      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Årsavgift (USD)\",\"kind\":\"number\",\"value\":24.5}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[],\"semanticObjects\":{\"membership\":{\"properties\":{\"preserve\":[],\"anyOf\":[[{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":24.5}],[{\"kinds\":[\"number\"],\"value\":24.5},{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":24.5},{\"kinds\":[\"text\"],\"value\":\"EUR\"},{\"kinds\":[\"text\"],\"value\":\"år\"}]],\"meaning\":\"Abonnemanget kostar 24,50 EUR per år.\"}}},\"semanticRelationships\":[],\"preservedRequests\":[]},\"saved\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[]},\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Årsavgift (USD)\",\"kind\":\"number\",\"value\":24.5}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
       "sources": {
         "backend": {
           "text": "Utkastet är uppdaterat.",
@@ -1190,7 +1190,7 @@
     },
     {
       "id": "quantity-label-wrong-period",
-      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per kvartal.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":195}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per kvartal.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[],\"semanticObjects\":{\"membership\":{\"properties\":{\"preserve\":[],\"anyOf\":[[{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":195}],[{\"kinds\":[\"number\"],\"value\":195},{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":195},{\"kinds\":[\"text\"],\"value\":\"SEK\"},{\"kinds\":[\"text\"],\"value\":\"kvartal\"}]],\"meaning\":\"Abonnemanget kostar 195 SEK per kvartal.\"}}},\"semanticRelationships\":[],\"preservedRequests\":[]},\"saved\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[]},\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":195}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
       "sources": {
         "backend": {
           "text": "Utkastet är uppdaterat.",
@@ -1210,7 +1210,7 @@
     },
     {
       "id": "quantity-label-missing-units",
-      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris\",\"kind\":\"number\",\"value\":24.5}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[],\"semanticObjects\":{\"membership\":{\"properties\":{\"preserve\":[],\"anyOf\":[[{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":24.5}],[{\"kinds\":[\"number\"],\"value\":24.5},{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":24.5},{\"kinds\":[\"text\"],\"value\":\"EUR\"},{\"kinds\":[\"text\"],\"value\":\"år\"}]],\"meaning\":\"Abonnemanget kostar 24,50 EUR per år.\"}}},\"semanticRelationships\":[],\"preservedRequests\":[]},\"saved\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[]},\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris\",\"kind\":\"number\",\"value\":24.5}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
       "sources": {
         "backend": {
           "text": "Utkastet är uppdaterat.",
@@ -1230,7 +1230,7 @@
     },
     {
       "id": "quantity-split-daily-usd",
-      "context": "{\"request\":\"Abonnemanget kostar 1,25 USD per dag.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris\",\"kind\":\"number\",\"value\":1.25},{\"label\":\"Valuta\",\"kind\":\"text\",\"value\":\"USD\"},{\"label\":\"Intervall\",\"kind\":\"text\",\"value\":\"dag\"}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "context": "{\"request\":\"Abonnemanget kostar 1,25 USD per dag.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[],\"semanticObjects\":{\"membership\":{\"properties\":{\"preserve\":[],\"anyOf\":[[{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":1.25}],[{\"kinds\":[\"number\"],\"value\":1.25},{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":1.25},{\"kinds\":[\"text\"],\"value\":\"USD\"},{\"kinds\":[\"text\"],\"value\":\"dag\"}]],\"meaning\":\"Abonnemanget kostar 1,25 USD per dag.\"}}},\"semanticRelationships\":[],\"preservedRequests\":[]},\"saved\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[]},\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris\",\"kind\":\"number\",\"value\":1.25},{\"label\":\"Valuta\",\"kind\":\"text\",\"value\":\"USD\"},{\"label\":\"Intervall\",\"kind\":\"text\",\"value\":\"dag\"}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
       "sources": {
         "backend": {
           "text": "Utkastet är uppdaterat.",
@@ -1250,7 +1250,7 @@
     },
     {
       "id": "quantity-text-annual-eur",
-      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Kostnad\",\"kind\":\"text\",\"value\":\"24,50 EUR per år\"}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "context": "{\"request\":\"Abonnemanget kostar 24,50 EUR per år.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[],\"semanticObjects\":{\"membership\":{\"properties\":{\"preserve\":[],\"anyOf\":[[{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":24.5}],[{\"kinds\":[\"number\"],\"value\":24.5},{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":24.5},{\"kinds\":[\"text\"],\"value\":\"EUR\"},{\"kinds\":[\"text\"],\"value\":\"år\"}]],\"meaning\":\"Abonnemanget kostar 24,50 EUR per år.\"}}},\"semanticRelationships\":[],\"preservedRequests\":[]},\"saved\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[]},\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Kostnad\",\"kind\":\"text\",\"value\":\"24,50 EUR per år\"}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
       "sources": {
         "backend": {
           "text": "Utkastet är uppdaterat.",
@@ -1270,7 +1270,7 @@
     },
     {
       "id": "quantity-label-wrong-amount",
-      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per månad.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":196}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per månad.\",\"fixedChecks\":{\"checked\":true,\"passed\":false,\"failures\":[\"effective_objects\"]},\"observedState\":{\"expected\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[],\"semanticObjects\":{\"membership\":{\"properties\":{\"preserve\":[],\"anyOf\":[[{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":195}],[{\"kinds\":[\"number\"],\"value\":195},{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":195},{\"kinds\":[\"text\"],\"value\":\"SEK\"},{\"kinds\":[\"text\"],\"value\":\"månad\"}]],\"meaning\":\"Abonnemanget kostar 195 SEK per månad.\"}}},\"semanticRelationships\":[],\"preservedRequests\":[]},\"saved\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[]},\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":196}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
       "sources": {
         "backend": {
           "text": "Utkastet är uppdaterat.",
@@ -1290,7 +1290,7 @@
     },
     {
       "id": "quantity-unrelated-text-fact",
-      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per månad.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":195},{\"label\":\"Ort\",\"kind\":\"text\",\"value\":\"Visby\"}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
+      "context": "{\"request\":\"Abonnemanget kostar 195 SEK per månad.\",\"fixedChecks\":{\"checked\":true,\"passed\":true,\"failures\":[]},\"observedState\":{\"expected\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[],\"semanticObjects\":{\"membership\":{\"properties\":{\"preserve\":[],\"anyOf\":[[{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":195}],[{\"kinds\":[\"number\"],\"value\":195},{\"kinds\":[\"text\"]}],[{\"kinds\":[\"number\"],\"value\":195},{\"kinds\":[\"text\"],\"value\":\"SEK\"},{\"kinds\":[\"text\"],\"value\":\"månad\"}]],\"meaning\":\"Abonnemanget kostar 195 SEK per månad.\"}}},\"semanticRelationships\":[],\"preservedRequests\":[]},\"saved\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\"}],\"relationships\":[]},\"effective\":{\"objects\":[{\"id\":\"membership\",\"type\":\"Abonnemang\",\"name\":\"Simhallen\",\"properties\":[{\"label\":\"Pris per månad (SEK)\",\"kind\":\"number\",\"value\":195},{\"label\":\"Ort\",\"kind\":\"text\",\"value\":\"Visby\"}]}],\"relationships\":[]},\"saveReceipt\":null,\"historyChanges\":0}}",
       "sources": {
         "backend": {
           "text": "Utkastet är uppdaterat.",
