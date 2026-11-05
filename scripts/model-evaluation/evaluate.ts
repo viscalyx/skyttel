@@ -369,7 +369,7 @@ export async function evaluateModels(plan: EvaluationPlan) {
   const maximumFollowUpCandidates = Math.max(
     0,
     ...catalog.scenarios.flatMap((scenario) =>
-      scenario.steps.map((step) => step.followUps?.length ?? 0),
+      scenario.steps.map((step) => (step.followUps?.length ?? 0) + (step.clarification ? 1 : 0)),
     ),
   );
   const judgeMaximumCalls =

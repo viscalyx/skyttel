@@ -274,7 +274,7 @@ export async function runTextScenario(
               outcome: result.outcome,
             }),
           );
-          if (options.followUps && !options.stopped?.()) {
+          if (!options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,
               attempt: result,
@@ -289,6 +289,7 @@ export async function runTextScenario(
               checkWaiting: (waiting) => environment.check(step, view, actions, waiting),
               waitingContext: () => environment.judgeContext(step, [], summaryText),
               judge: options.judge,
+              repliesEnabled: options.followUps ?? false,
             });
             if (followUp && !options.stopped?.()) {
               queue.splice(index + 1, 0, {

@@ -738,7 +738,7 @@ export async function runVoiceScenario(
               outcome: result.outcome,
             }),
           );
-          if (options.followUps && !options.stopped?.()) {
+          if (!options.stopped?.()) {
             const followUp = await selectFollowUp({
               step,
               attempt: result,
@@ -755,6 +755,7 @@ export async function runVoiceScenario(
                 environment.check(step, view, modelActions(events.slice(offset)), waiting),
               waitingContext: () => environment.judgeContext(step, [], '', recognizedRequest),
               judge: options.judge ? judgeWithHeartbeat : undefined,
+              repliesEnabled: options.followUps ?? false,
             });
             if (followUp && !options.stopped?.()) {
               queue.splice(index + 1, 0, {

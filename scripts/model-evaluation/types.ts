@@ -46,6 +46,9 @@ export type ScenarioStep = {
   transition?: string;
   expected: Expected;
   followUps?: FollowUp[];
+  /** Safe waiting contract for a valid question without a scripted answer.
+   * Preserve the original request; this never establishes task completion. */
+  clarification?: Expected & { preservedRequests: string[] };
   /** Alternate safe state, never a successful completion of this step. */
   safeInability?: Expected;
   /** A declared public Stop experiment, never an ordinary successful mutation. */

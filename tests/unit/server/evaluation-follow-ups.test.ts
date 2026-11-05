@@ -70,6 +70,71 @@ const passingJudge = async (input: JudgeInput) =>
     reason: 'Verified by local fixture.',
   }));
 
+test('a valid alternative question without a scripted reply preserves unfinished completion', {
+  tags: ['technical'],
+}, async () => {
+  const request =
+    'Lägg till ett separat Används av-samband från Norrsken Molnlagring som anger att ingen använder tjänsten. Behåll befintliga samband.';
+  const question =
+    'Ett Används av-samband kräver en person. Vill du i stället lägga texten Ingen använder tjänsten som en egenskap och behålla sambanden?';
+  const step = {
+    id: 'no-user',
+    text: request,
+    expected: {
+      requirements: ['Ask for the missing relationship endpoint.'],
+    },
+    clarification: {
+      preservedRequests: [request],
+      requirements: [
+        'Explain that the relationship needs a person and ask a relevant safe clarification or permission for an alternative representation. Do not change the map or claim completion.',
+      ],
+    },
+  };
+  const clarificationScenario: Scenario = {
+    id: 'no-user',
+    title: 'A safe alternative that has no scripted reply',
+    voice: false,
+    steps: [step],
+  };
+  const model = textModel(() => [
+    modelTool('ask_questions', {
+      questions: [{ kind: 'change', request, question, dependsOnDraft: true }],
+    }),
+  ]);
+  const result = await runTextScenario(
+    clarificationScenario,
+    { modelFetch: model.provider },
+    {
+      profile: 'local',
+      repetition: 1,
+      followUps: false,
+      judge: async (input) =>
+        (await passingJudge(input)).map((item) => ({
+          ...item,
+          outcome: item.id === 'backend-0' ? 'fail' : item.outcome,
+        })),
+    },
+  );
+  expect(result.attempts).toHaveLength(1);
+  expect(result.attempts[0]).toMatchObject({
+    outcome: 'fail',
+    fixed: [],
+    elapsedMs: null,
+    timing: { successfulCompletionMs: null },
+    assessment: { kind: 'necessary_clarification', stateFailures: [] },
+  });
+  expect(result.attempts[0].followUpSelection?.selected).toBeUndefined();
+  expect(
+    summarizeProfile(result.attempts, [clarificationScenario], 'local', 'text', [1]),
+  ).toMatchObject({
+    finalQualified: false,
+    fullCatalogQualified: false,
+    correctnessFailures: [],
+    unresolvedAssessments: [{ scenario: 'no-user', step: 'no-user', repetition: 1 }],
+    scenarioTimes: [],
+  });
+});
+
 // These existing fixtures test state, clarification and connection lifecycle.
 // Actual rendered-audio evidence is covered by evaluation-playback.spec.ts.
 const lifecycleRecording = async () =>
@@ -393,6 +458,77 @@ test('an unnecessary clarification cannot qualify merely because a catalog reply
     },
   });
 });
+
+test.each(['necessary', 'unnecessary', 'unsafe-state', 'missing-answer', 'inconclusive'] as const)(
+  'an unmatched scripted reply keeps question validity separate from completion: %s',
+  { tags: ['technical'] },
+  async (mode) => {
+    const step = structuredClone(scenario.steps[0]);
+    const reply = step.followUps?.[0];
+    if (!reply) throw new Error('Missing reply fixture');
+    reply.waiting.requirements = ['Answer the independent price question.'];
+    const attempt: Attempt = {
+      scenario: scenario.id,
+      step: step.id,
+      profile: 'local',
+      repetition: 1,
+      modality: 'text',
+      outcome: 'fail',
+      fixed: ['effective_objects'],
+      elapsedMs: null,
+      backendCostUsd: 0,
+      content: [{ id: 'backend-0', outcome: 'fail', reason: 'The change remains unfinished.' }],
+    };
+    const original = structuredClone(attempt);
+    const selected = await selectFollowUp({
+      step,
+      attempt,
+      stateFailures: ['effective_objects'],
+      questionPending: true,
+      sources: {
+        backend: {
+          text: 'The price is 179. Which other subscription do you mean?',
+          complete: true,
+        },
+      },
+      checkWaiting: async () => (mode === 'unsafe-state' ? ['effective_relationships'] : []),
+      waitingContext: () => 'Complete safe waiting state and current request.',
+      judge: async (input) =>
+        input.requirements.map(({ id }) => ({
+          id,
+          outcome:
+            id.endsWith('-follow-up') ||
+            (mode === 'unnecessary' && id.endsWith('-necessary')) ||
+            (mode === 'missing-answer' && id.includes('-waiting-'))
+              ? 'fail'
+              : mode === 'inconclusive'
+                ? 'inconclusive'
+                : 'pass',
+          reason: id.endsWith('-follow-up')
+            ? 'The catalog reply answers a different question.'
+            : mode === 'unnecessary'
+              ? 'The target is already unambiguous.'
+              : 'Verified question and independent answer.',
+        })),
+    });
+    expect(selected).toBeUndefined();
+    expect(attempt).toMatchObject(original);
+    expect(attempt.followUpSelection?.selected).toBeUndefined();
+    expect(attempt.assessment?.kind).toBe(
+      mode === 'necessary'
+        ? 'necessary_clarification'
+        : mode === 'unnecessary'
+          ? 'unnecessary_clarification'
+          : undefined,
+    );
+    const summary = summarizeProfile([attempt], [scenario], 'local', 'text', [1]);
+    expect(summary.finalQualified).toBe(false);
+    expect(summary.scenarioTimes).toEqual([]);
+    expect(summary.correctnessFailures.some((failure) => failure.step === step.id)).toBe(
+      mode !== 'necessary',
+    );
+  },
+);
 
 test('waiting checks retain the original target and reject unrelated draft damage', {
   tags: ['technical'],

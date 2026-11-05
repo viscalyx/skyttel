@@ -843,6 +843,52 @@
       }
     },
     {
+      "id": "necessary-alternative-without-scripted-reply",
+      "context": "Begäran gäller ett Används av-samband som anger att ingen använder tjänsten, med befintliga samband bevarade. Ett samband behöver två objekt och ingen är inget objekt. Kartan och utkastet är oförändrade; den exakta begäran finns kvar som väntande arbete. Katalogen saknar ett följdsvar för en fråga om en alternativ representation.",
+      "sources": {
+        "backend": {
+          "text": "Ett Används av-samband måste koppla tjänsten till en person, så ingen kan inte vara motpart. Vill du i stället lägga texten Ingen använder tjänsten som en egenskap och lämna befintliga samband orörda?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "necessary",
+          "source": "backend",
+          "text": "Frågan gäller ett nödvändigt val eller medgivande för att säkert fortsätta den aktuella begäran. En relevant alternativ representation får föreslås när den begärda inte kan uttryckas; att katalogen saknar följdsvar gör inte frågan felaktig."
+        },
+        {
+          "id": "waiting",
+          "source": "backend",
+          "text": "Förklara begränsningen och ställ en relevant fråga utan att påstå att något redan är ändrat, slutfört eller sparat."
+        }
+      ],
+      "expected": {
+        "necessary": "pass",
+        "waiting": "pass"
+      }
+    },
+    {
+      "id": "unnecessary-alternative-without-scripted-reply",
+      "context": "Begäran är att sätta priset för det unika abonnemanget Molnlagring Plus till 229 kronor per månad. Abonnemanget har redan en numerisk prisegenskap och alla uppgifter behövs för ändringen. Ingen ändring görs. Katalogen saknar ett följdsvar för frågan nedan.",
+      "sources": {
+        "backend": {
+          "text": "Vill du i stället lägga texten 229 kronor som en ny beskrivning på abonnemanget?",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "necessary",
+          "source": "backend",
+          "text": "Frågan gäller ett nödvändigt val eller medgivande för att säkert fortsätta den aktuella begäran. En relevant alternativ representation får föreslås när den begärda inte kan uttryckas; att katalogen saknar följdsvar gör inte frågan felaktig."
+        }
+      ],
+      "expected": {
+        "necessary": "fail"
+      }
+    },
+    {
       "id": "safe-inability",
       "context": "Utkast och karta är oförändrade. Exakt hela den oavslutade begäran och alla begränsningar finns i aktivt väntande tillstånd. Inga sparförsök finns.",
       "sources": {
