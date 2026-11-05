@@ -6366,6 +6366,27 @@
             ],
             "requirements": [
               "Ställ en nödvändig relevant följdfråga om något som varken begäran eller kartans fakta avgör. Bevara den exakta oavslutade begäran. Hitta inte på ett svar, ändra inga andra uppgifter och påstå inte att uppdraget är slutfört eller sparat."
+            ],
+            "anyOf": [
+              { "requirements": [] },
+              {
+                "objects": {
+                  "netflix-sub": {
+                    "properties": [
+                      { "id": "price", "label": "Pris", "kind": "number", "value": 189 },
+                      { "id": "currency", "label": "Valuta", "kind": "text", "value": "SEK" },
+                      {
+                        "id": "interval",
+                        "label": "Betalningsintervall",
+                        "kind": "text",
+                        "value": "månad"
+                      }
+                    ]
+                  }
+                },
+                "saves": 0,
+                "requirements": []
+              }
             ]
           }
         }

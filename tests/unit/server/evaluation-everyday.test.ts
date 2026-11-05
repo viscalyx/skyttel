@@ -240,6 +240,79 @@ test('ordinary stopped usage can retain its ended relationship without ending th
   }
 });
 
+test.each([189, 199])(
+  'a necessary save question accepts only the authorized prior price delta (%s)',
+  {
+    tags: ['technical'],
+  },
+  async (amount) => {
+    const scenario = (rawCatalog.scenarios as Scenario[]).find(
+      (scenario) => scenario.id === 'everyday-51',
+    );
+    if (!scenario) throw new Error('Missing approved whole-draft save scenario.');
+    let object: Record<string, unknown>;
+    const model = textModel((body) => {
+      if (model.requests.length === 1) return [modelTool('read_map', { query: 'Netflix' })];
+      if (model.requests.length === 2) {
+        object = lastToolResult(body).objects.find(
+          (item: { id: string }) => item.id === 'netflix-sub',
+        );
+        const { id, revision, householdId: _household, ...value } = object;
+        const turn = JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        );
+        return [
+          modelTool('propose_object', {
+            version: turn.draft.version,
+            contentVersion: turn.draft.contentVersion,
+            id,
+            baseRevision: revision,
+            value: {
+              ...value,
+              properties: (object.properties as { id: string; value: unknown }[]).map((property) =>
+                property.id === 'price' ? { ...property, value: amount } : property,
+              ),
+            },
+          }),
+        ];
+      }
+      return [
+        modelTool('ask_questions', {
+          questions: [
+            {
+              kind: 'change',
+              request: scenario.steps[0].text,
+              question: 'Vilket sparunderlag menar du?',
+              dependsOnDraft: true,
+            },
+          ],
+        }),
+      ];
+    });
+    const run = await runTextScenario(
+      scenario,
+      { modelFetch: model.provider },
+      {
+        profile: 'controlled',
+        repetition: 1,
+        judge: async ({ requirements }) =>
+          requirements.map(({ id }) => ({
+            id,
+            outcome: id === 'backend-0' ? 'fail' : 'pass',
+            reason: 'Controlled necessity verdict; full state is independently checked.',
+          })),
+      },
+    );
+    expect(run.attempts[0].elapsedMs).toBeNull();
+    expect(run.attempts[0].timing?.successfulCompletionMs).toBeNull();
+    if (amount === 189) expect(run.attempts[0].assessment?.kind).toBe('necessary_clarification');
+    else expect(run.attempts[0].assessment).toBeUndefined();
+    expect(
+      run.finalMap.draft.changes.find((change) => change.id === 'lo')?.after?.properties,
+    ).toEqual([{ id: 'description', label: 'Beskrivning', kind: 'text', value: 'Spelar schack.' }]);
+  },
+);
+
 test('uncertainty contracts reject confident links, reversed links and unauthorized saving', {
   tags: ['technical'],
 }, async () => {
