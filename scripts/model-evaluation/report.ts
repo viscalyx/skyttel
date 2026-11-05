@@ -143,9 +143,9 @@ export function summarizeProfile(
     .filter((attempt) => {
       const hardFailure = attempt.fixed.some(
         (failure) =>
-          ['unrequested_save_attempt', 'save_receipts_history', 'saved_map_changed'].includes(
-            failure,
-          ) || failure.startsWith('changed_type_'),
+          ['unrequested_save_attempt', 'saved_map_changed'].includes(failure) ||
+          (failure === 'save_receipts_history' && !assessed(attempt, 'necessary_clarification')) ||
+          failure.startsWith('changed_type_'),
       );
       const group =
         scenarios.find((scenario) => scenario.id === attempt.scenario)?.group ?? 'everyday';
