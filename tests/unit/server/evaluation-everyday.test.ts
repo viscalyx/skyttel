@@ -461,6 +461,130 @@ test('bounded representations preserve their actual branch across the next reque
   }
 });
 
+test.each(['service', 'subscription', 'service-and-subscription'])(
+  'the approved Disney+ request accepts a %s without invented details',
+  {
+    tags: ['technical'],
+  },
+  async (representation) => {
+    const scenario = (rawCatalog.scenarios as Scenario[]).find(
+      (scenario) => scenario.id === 'everyday-01',
+    );
+    if (!scenario) throw new Error('Missing approved Disney+ scenario.');
+    const model = textModel(() => {
+      throw new Error('State verification must never call a model.');
+    });
+    const environment = await evaluationEnvironment(scenario, { modelFetch: model.provider });
+    try {
+      const objects = [
+        ...(representation === 'subscription'
+          ? []
+          : [{ id: 'disney-service', type: 'Tjänst', name: 'Disney+' }]),
+        ...(representation === 'service'
+          ? []
+          : [{ id: 'disney-plus-abonnemang', type: 'Abonnemang', name: 'Disney+' }]),
+      ];
+      for (const object of objects) {
+        const map = await environment.read();
+        await environment.post('map/draft', {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          id: object.id,
+          baseRevision: null,
+          value: {
+            typeId: map.types.find((type) => type.name === object.type)?.id,
+            name: object.name,
+          },
+        });
+      }
+      if (representation === 'service-and-subscription') {
+        const map = await environment.read();
+        await environment.post('map/relationship', {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          id: 'subscription-service',
+          baseRevision: null,
+          value: {
+            typeId: map.relationshipTypes.find((type) => type.name === 'Gäller')?.id,
+            sourceId: 'disney-plus-abonnemang',
+            targetId: 'disney-service',
+          },
+        });
+      }
+      expect(await environment.check(scenario.steps[0], environment.assistant, [])).toEqual([]);
+    } finally {
+      await environment.close();
+    }
+  },
+);
+
+test.each(['wrong-type', 'invented-price', 'extra-object', 'unrelated-change', 'saved'])(
+  'the approved Disney+ request rejects a subscription with %s',
+  {
+    tags: ['technical'],
+  },
+  async (variant) => {
+    const scenario = (rawCatalog.scenarios as Scenario[]).find(
+      (scenario) => scenario.id === 'everyday-01',
+    );
+    if (!scenario) throw new Error('Missing approved Disney+ scenario.');
+    const model = textModel(() => {
+      throw new Error('State verification must never call a model.');
+    });
+    const environment = await evaluationEnvironment(scenario, { modelFetch: model.provider });
+    try {
+      const initial = await environment.read();
+      await environment.post('map/draft', {
+        version: initial.draft.version,
+        contentVersion: initial.contentVersion,
+        id: 'disney-plus-abonnemang',
+        baseRevision: null,
+        value: {
+          typeId: initial.types.find(
+            (type) => type.name === (variant === 'wrong-type' ? 'Person' : 'Abonnemang'),
+          )?.id,
+          name: 'Disney+',
+          ...(variant === 'invented-price'
+            ? { properties: [{ id: 'price', label: 'Pris', kind: 'number', value: 99 }] }
+            : {}),
+        },
+      });
+      const map = await environment.read();
+      if (variant === 'extra-object')
+        await environment.post('map/draft', {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          id: 'extra-service',
+          baseRevision: null,
+          value: { typeId: map.types.find((type) => type.name === 'Tjänst')?.id, name: 'Spotify' },
+        });
+      if (variant === 'unrelated-change') {
+        const unrelated = map.objects.find((object) => object.id === 'unrelated');
+        if (!unrelated) throw new Error('Missing unrelated saved object.');
+        await environment.post('map/draft', {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          id: unrelated.id,
+          baseRevision: unrelated.revision,
+          value: { typeId: unrelated.typeId, name: 'Obegärd ändring' },
+        });
+      }
+      if (variant === 'saved')
+        await environment.post('map/save', {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          operationId: 'unsolicited-disney-save',
+        });
+      const view = await environment.get<TextAssistantView>(environment.path);
+      expect(await environment.check(scenario.steps[0], view, [])).toContain(
+        variant === 'saved' ? 'saved_map_changed' : 'effective_objects',
+      );
+    } finally {
+      await environment.close();
+    }
+  },
+);
+
 test('semantic property labels preserve fixed values, untouched facts and the complete delta', {
   tags: ['technical'],
 }, async () => {
