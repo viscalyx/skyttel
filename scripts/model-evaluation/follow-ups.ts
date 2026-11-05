@@ -97,9 +97,27 @@ export async function selectFollowUp({
 }) {
   if (
     (!step.followUps?.length && !step.clarification) ||
-    attempt.outcome !== 'fail' ||
+    !['pass', 'fail'].includes(attempt.outcome) ||
+    !questionPending
+  )
+    return undefined;
+
+  // A passing waiting-state contract is still an unanswered request. Keep
+  // the raw verdict and observed response boundary, never successful timing.
+  if (attempt.outcome === 'pass') {
+    attempt.elapsedMs = null;
+    if (attempt.timing) attempt.timing.successfulCompletionMs = null;
+    if (attempt.assistedElapsedMs !== undefined) attempt.assistedElapsedMs = null;
+    attempt.assessment = {
+      kind: 'inconclusive',
+      reason:
+        'A pending question requires a verified safe waiting contract and exact retained request.',
+      stateFailures: [],
+      evidence: [],
+    };
+  }
+  if (
     attempt.fixed.some((failure) => !stateFailures.includes(failure)) ||
-    !questionPending ||
     !judge ||
     !attempt.content?.length ||
     Object.values(sources).some((source) => !source.complete)

@@ -70,69 +70,191 @@ const passingJudge = async (input: JudgeInput) =>
     reason: 'Verified by local fixture.',
   }));
 
-test('a valid alternative question without a scripted reply preserves unfinished completion', {
+test.each([
+  { rawOutcome: 'fail', evidence: 'necessary' },
+  { rawOutcome: 'pass', evidence: 'necessary' },
+  { rawOutcome: 'pass', evidence: 'missing-retention' },
+  { rawOutcome: 'pass', evidence: 'unnecessary' },
+  { rawOutcome: 'pass', evidence: 'completed-answer' },
+] as const)(
+  'a declared clarification preserves raw $rawOutcome and separates completion ($evidence)',
+  {
+    tags: ['technical'],
+  },
+  async ({ rawOutcome, evidence }) => {
+    const completed = evidence === 'completed-answer';
+    const request = completed
+      ? 'Förklara varför Används av-samband kräver en person.'
+      : 'Lägg till ett separat Används av-samband från Norrsken Molnlagring som anger att ingen använder tjänsten. Behåll befintliga samband.';
+    const question =
+      'Ett Används av-samband kräver en person. Vill du i stället lägga texten Ingen använder tjänsten som en egenskap och behålla sambanden?';
+    const step = {
+      id: 'no-user',
+      text: request,
+      expected: {
+        requirements: [
+          completed
+            ? 'Explain why the relationship needs a person.'
+            : 'Ask for the missing relationship endpoint.',
+        ],
+      },
+      clarification: {
+        preservedRequests: [request],
+        requirements: [
+          'Explain that the relationship needs a person and ask a relevant safe clarification or permission for an alternative representation. Do not change the map or claim completion.',
+        ],
+      },
+    };
+    const clarificationScenario: Scenario = {
+      id: 'no-user',
+      title: 'A safe alternative that has no scripted reply',
+      voice: false,
+      steps: [step],
+    };
+    const model = textModel(() =>
+      completed
+        ? [modelMessage('Ett Används av-samband kopplar en tjänst till en person.')]
+        : [
+            modelTool('ask_questions', {
+              questions: [
+                {
+                  kind: 'change',
+                  request: evidence === 'missing-retention' ? 'Lägg till ett samband.' : request,
+                  question,
+                  dependsOnDraft: true,
+                },
+              ],
+            }),
+          ],
+    );
+    const result = await runTextScenario(
+      clarificationScenario,
+      { modelFetch: model.provider },
+      {
+        profile: 'local',
+        repetition: 1,
+        followUps: false,
+        judge: async (input) =>
+          (await passingJudge(input)).map((item) => ({
+            ...item,
+            outcome:
+              item.id === 'backend-0'
+                ? rawOutcome
+                : evidence === 'unnecessary' && item.id.endsWith('-necessary')
+                  ? 'fail'
+                  : item.outcome,
+          })),
+      },
+    );
+    expect(result.attempts).toHaveLength(1);
+    expect(result.attempts[0]).toMatchObject({
+      outcome: rawOutcome,
+      fixed: [],
+      content: [{ id: 'backend-0', outcome: rawOutcome }],
+      elapsedMs: completed ? expect.any(Number) : null,
+      timing: { successfulCompletionMs: completed ? expect.any(Number) : null },
+    });
+    expect(result.attempts[0].observedEndMs).toEqual(expect.any(Number));
+    expect(result.attempts[0].assessment?.kind).toBe(
+      completed
+        ? undefined
+        : evidence === 'missing-retention'
+          ? 'inconclusive'
+          : evidence === 'unnecessary'
+            ? 'unnecessary_clarification'
+            : 'necessary_clarification',
+    );
+    if (evidence === 'missing-retention')
+      expect(result.attempts[0].followUpSelection?.candidates[0].fixed).toContain(
+        'unfinished_instructions',
+      );
+    expect(result.attempts[0].followUpSelection?.selected).toBeUndefined();
+    expect(
+      summarizeProfile(result.attempts, [clarificationScenario], 'local', 'text', [1]),
+    ).toMatchObject({
+      finalQualified: completed,
+      fullCatalogQualified: completed,
+      correctnessFailures:
+        evidence === 'unnecessary' ? [{ scenario: 'no-user', step: 'no-user', repetition: 1 }] : [],
+      unresolvedAssessments:
+        completed || evidence === 'unnecessary'
+          ? []
+          : [{ scenario: 'no-user', step: 'no-user', repetition: 1 }],
+      groups: {
+        everyday: { directSteps: completed ? 1 : 0, completedScenarios: completed ? 1 : 0 },
+      },
+      outcomes: { [rawOutcome]: 1 },
+      scenarioTimes: completed
+        ? [
+            {
+              scenario: 'no-user',
+              medianMs: expect.any(Number),
+              minMs: expect.any(Number),
+              maxMs: expect.any(Number),
+            },
+          ]
+        : [],
+    });
+  },
+);
+
+test('an unanswered declared question does not submit the next dependent operation', {
   tags: ['technical'],
 }, async () => {
-  const request =
-    'Lägg till ett separat Används av-samband från Norrsken Molnlagring som anger att ingen använder tjänsten. Behåll befintliga samband.';
-  const question =
-    'Ett Används av-samband kräver en person. Vill du i stället lägga texten Ingen använder tjänsten som en egenskap och behålla sambanden?';
-  const step = {
-    id: 'no-user',
-    text: request,
-    expected: {
-      requirements: ['Ask for the missing relationship endpoint.'],
-    },
-    clarification: {
-      preservedRequests: [request],
-      requirements: [
-        'Explain that the relationship needs a person and ask a relevant safe clarification or permission for an alternative representation. Do not change the map or claim completion.',
-      ],
-    },
-  };
-  const clarificationScenario: Scenario = {
-    id: 'no-user',
-    title: 'A safe alternative that has no scripted reply',
+  const request = 'Lägg till ett samband som anger att ingen använder tjänsten.';
+  const waitingScenario: Scenario = {
+    id: 'dependent-work',
+    title: 'Dependent work waits for a real answer',
     voice: false,
-    steps: [step],
+    steps: [
+      {
+        id: 'question',
+        text: request,
+        expected: { requirements: ['Ask for a safe alternative.'] },
+        clarification: {
+          preservedRequests: [request],
+          requirements: ['Ask permission for an alternative without changing the map.'],
+        },
+      },
+      {
+        id: 'dependent-save',
+        text: 'Spara det färdiga sambandet.',
+        expected: { requirements: [] },
+      },
+    ],
   };
   const model = textModel(() => [
     modelTool('ask_questions', {
-      questions: [{ kind: 'change', request, question, dependsOnDraft: true }],
+      questions: [
+        {
+          kind: 'change',
+          request,
+          question: 'Vill du lägga uppgiften som en egenskap i stället?',
+          dependsOnDraft: true,
+        },
+      ],
     }),
   ]);
   const result = await runTextScenario(
-    clarificationScenario,
+    waitingScenario,
     { modelFetch: model.provider },
     {
       profile: 'local',
       repetition: 1,
       followUps: false,
-      judge: async (input) =>
-        (await passingJudge(input)).map((item) => ({
-          ...item,
-          outcome: item.id === 'backend-0' ? 'fail' : item.outcome,
-        })),
+      judge: passingJudge,
     },
   );
-  expect(result.attempts).toHaveLength(1);
-  expect(result.attempts[0]).toMatchObject({
-    outcome: 'fail',
-    fixed: [],
-    elapsedMs: null,
-    timing: { successfulCompletionMs: null },
-    assessment: { kind: 'necessary_clarification', stateFailures: [] },
-  });
-  expect(result.attempts[0].followUpSelection?.selected).toBeUndefined();
-  expect(
-    summarizeProfile(result.attempts, [clarificationScenario], 'local', 'text', [1]),
-  ).toMatchObject({
-    finalQualified: false,
-    fullCatalogQualified: false,
-    correctnessFailures: [],
-    unresolvedAssessments: [{ scenario: 'no-user', step: 'no-user', repetition: 1 }],
-    scenarioTimes: [],
-  });
+  expect(result.attempts).toMatchObject([
+    {
+      step: 'question',
+      outcome: 'pass',
+      elapsedMs: null,
+      assessment: { kind: 'necessary_clarification' },
+    },
+    { step: 'dependent-save', outcome: 'not_run', elapsedMs: null },
+  ]);
+  expect(model.requests).toHaveLength(1);
 });
 
 // These existing fixtures test state, clarification and connection lifecycle.
