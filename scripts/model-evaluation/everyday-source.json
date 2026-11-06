@@ -1,6 +1,6 @@
 {
   "contract": "approved-everyday-source-v1",
-  "approvedPromptTextSha256": "55bf6a304030d99a8c9650ce1f8134e70b39dfea481167b470b32ae239129d68",
+  "approvedPromptTextSha256": "73f92626d732e6e2c0a1ac9333e8a72811857866acf82a7ab510786ecc317459",
   "entries": [
     {
       "number": 1,
@@ -172,7 +172,7 @@
     {
       "number": 34,
       "scenario": "everyday-34",
-      "prompts": ["Lägg till Johans Spotify-konto och koppla det till Johan och Spotify."]
+      "prompts": ["Lägg till Johans Spotify-konto. Johan använder kontot och det hör till Spotify."]
     },
     {
       "number": 35,
@@ -219,7 +219,7 @@
       "number": 42,
       "scenario": "everyday-42",
       "prompts": [
-        "Vi har bytt från Spotify till Apple Music. Markera Spotify-abonnemanget som avslutat och lägg till Apple Music för Johan och Sonja."
+        "Markera Spotify-abonnemanget som avslutat. Lägg till tjänsten Apple Music och ange att Johan och Sonja använder den."
       ]
     },
     {
@@ -255,7 +255,7 @@
       "number": 48,
       "scenario": "everyday-48",
       "prompts": ["Koppla Alex till Microsoft 365."],
-      "conditionalPrompts": ["Jag menar Alex Lind."]
+      "conditionalPrompts": ["Jag menar Alex Lind. Han använder Microsoft 365."]
     },
     {
       "number": 49,
