@@ -1755,11 +1755,26 @@
               "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga.",
               "Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till."
             ],
-            "addRelationships": [
+            "anyOf": [
               {
-                "source": "netflix-sub",
-                "type": "Gäller",
-                "target": "netflix"
+                "requirements": [],
+                "addRelationships": [
+                  {
+                    "source": "netflix-sub",
+                    "type": "Gäller",
+                    "target": "netflix"
+                  }
+                ]
+              },
+              {
+                "requirements": [],
+                "addRelationships": [
+                  {
+                    "source": "netflix-sub",
+                    "type": "Tillhör tjänsten",
+                    "target": "netflix"
+                  }
+                ]
               }
             ]
           },
@@ -3871,14 +3886,31 @@
             },
             "addRelationships": [
               {
-                "source": "disney-sub",
-                "type": "Gäller",
-                "target": "disney"
-              },
-              {
                 "source": "sonja",
                 "type": "Betalar",
                 "target": "disney-sub"
+              }
+            ],
+            "anyOf": [
+              {
+                "requirements": [],
+                "addRelationships": [
+                  {
+                    "source": "disney-sub",
+                    "type": "Gäller",
+                    "target": "disney"
+                  }
+                ]
+              },
+              {
+                "requirements": [],
+                "addRelationships": [
+                  {
+                    "source": "disney-sub",
+                    "type": "Tillhör tjänsten",
+                    "target": "disney"
+                  }
+                ]
               }
             ],
             "semanticObjects": {
@@ -5480,13 +5512,30 @@
             "addRelationships": [
               {
                 "source": "bahnhof-sub",
-                "type": "Gäller",
-                "target": "bahnhof"
-              },
-              {
-                "source": "bahnhof-sub",
                 "type": "Hör till",
                 "target": "home"
+              }
+            ],
+            "anyOf": [
+              {
+                "requirements": [],
+                "addRelationships": [
+                  {
+                    "source": "bahnhof-sub",
+                    "type": "Gäller",
+                    "target": "bahnhof"
+                  }
+                ]
+              },
+              {
+                "requirements": [],
+                "addRelationships": [
+                  {
+                    "source": "bahnhof-sub",
+                    "type": "Tillhör tjänsten",
+                    "target": "bahnhof"
+                  }
+                ]
               }
             ],
             "semanticObjects": {
