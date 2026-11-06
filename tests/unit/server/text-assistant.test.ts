@@ -1071,6 +1071,126 @@ test.each(['discard', 'delete'])(
   },
 );
 
+test.each(['delete', 'restore'])(
+  'object %s with dependent relationship proposals keeps the checked property source honest',
+  async (transition) => {
+    let objectType = '';
+    let relationshipType = '';
+    const savedProperties = [
+      { id: 'detail', label: 'Anmärkning', kind: 'text', value: 'Sparad anmärkning' },
+    ];
+    const draftProperties = [
+      { id: 'detail', label: 'Anmärkning', kind: 'text', value: 'Rättad anmärkning' },
+    ];
+    const relationship = (sourceId: string) => ({
+      typeId: relationshipType,
+      sourceId,
+      targetId: 'phone',
+    });
+    const model = textModel(
+      (request) => {
+        const current = JSON.parse(
+          String(request.input.findLast((item) => item.role === 'user')?.content),
+        );
+        return [
+          modelTool('submit_changes', {
+            version: current.draft.version,
+            contentVersion: current.draft.contentVersion,
+            completion: 'draft',
+            operations: [
+              {
+                name: 'propose_object',
+                arguments: {
+                  id: 'person',
+                  baseRevision: 1,
+                  value: transition === 'delete' ? null : { typeId: objectType, name: 'Lo' },
+                },
+              },
+              {
+                name: 'propose_relationship',
+                arguments: {
+                  id: 'usage',
+                  baseRevision: 1,
+                  value: relationship(transition === 'delete' ? 'other-person' : 'person'),
+                },
+              },
+            ],
+          }),
+        ];
+      },
+      (request) => {
+        if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+          return [
+            modelMessage(
+              JSON.stringify({
+                mode: 'work',
+                request: 'Rätta personen och användningen enligt begäran.',
+                responseRequired: false,
+              }),
+            ),
+          ];
+        const { operations } = JSON.parse(String(request.input[0].content)).untrusted;
+        return [
+          modelMessage(
+            JSON.stringify(
+              !('properties' in operations[1].arguments.value)
+                ? { decision: 'allow', complete: true, fulfillsRequest: true }
+                : { decision: 'deny', operation: 1 },
+            ),
+          ),
+        ];
+      },
+    );
+    await setup(model.provider);
+    objectType = (await webProposal('Lo', 'person')).typeId;
+    await webProposal('Telefonen', 'phone');
+    await webProposal('Mira', 'other-person');
+    const mapPath = path.replace('/text-assistant', '/map');
+    let map = await (await browser.get(mapPath)).json();
+    relationshipType = map.relationshipTypes.find(
+      (type: { name: string }) => type.name === 'Använder',
+    ).id;
+    async function write(endpoint: string, data: Record<string, unknown>) {
+      map = await (await browser.get(mapPath)).json();
+      const response = await browser.post(`${mapPath}/${endpoint}`, {
+        headers: { origin: app.origin },
+        data: { version: map.draft.version, contentVersion: map.contentVersion, ...data },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    }
+    await write('relationship', {
+      id: 'usage',
+      baseRevision: null,
+      value: { ...relationship('person'), properties: savedProperties },
+    });
+    await write('save', { operationId: 'seed-people-usage' });
+    await write('relationship', {
+      id: 'usage',
+      baseRevision: 1,
+      value: { ...relationship('person'), properties: draftProperties },
+    });
+    if (transition === 'restore')
+      await write('draft', { id: 'person', baseRevision: 1, value: null });
+    const result = await message(
+      await start(),
+      transition === 'delete'
+        ? 'Ta bort Lo och flytta telefonanvändningen till Mira. Spara inte.'
+        : 'Återta borttagningen av Lo och behåll den rättade telefonanvändningen. Spara inte.',
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.review.relationships).toMatchObject([
+      {
+        id: 'usage',
+        after: {
+          sourceId: transition === 'delete' ? 'other-person' : 'person',
+          properties: transition === 'delete' ? savedProperties : draftProperties,
+        },
+      },
+    ]);
+    expect(result.receipt).toBeUndefined();
+  },
+);
+
 test.each([
   ['Rätta namnet till Rättat namn och spara.', { name: 'Rättat namn' }],
   [

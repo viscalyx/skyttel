@@ -29,7 +29,10 @@ export function turnActionOperations(
           'propose_object_type',
           'propose_relationship_type',
         ].includes(name) ||
-        (name.endsWith('_type') && args.value === null),
+        (name.endsWith('_type') && args.value === null) ||
+        (name === 'propose_object' &&
+          (args.value === null ||
+            draft.changes.some((change) => change.id === args.id && change.after === null))),
     )
   )
     return operations;
