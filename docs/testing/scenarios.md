@@ -793,9 +793,9 @@ tjänster.
 - Befintligt samband: Alex Lind → Använder → Spotify.
 - Befintligt samband: Alex Lind → Använder → Microsoft 365.
 
-**Avgränsning i kontrollen:** Svarskontrollen kräver dessutom besked om att Alex
-inte använder Netflix. Det är ett ytterligare krav utöver att räkna upp
-tjänsterna i frågan.
+**Avgränsning i kontrollen:** Svaret ska ange båda tjänsterna som Alex använder
+enligt kartan. Uppgifter om tjänster utan användningssamband med Alex krävs
+inte. Korrekt kompletterande information från kartan är tillåten.
 
 **Steg 1:**
 
@@ -803,8 +803,11 @@ tjänsterna i frågan.
 
 **Förväntat svar och resultat:**
 
-- Alex använder Spotify och Microsoft 365. Netflix används inte av Alex enligt
-  kartan. Besvara frågan utan att ändra eller spara något.
+- Alex använder Spotify och Microsoft 365 enligt kartan. Påstå inte att Alex
+  använder andra tjänster.
+- Det krävs inget besked om tjänster utan användningssamband med Alex.
+  Korrekt kompletterande information från kartan är tillåten.
+- Besvara frågan utan att ändra eller spara något och utan påhittade fakta.
 
 **Om en annan nödvändig fråga behövs:** Ställ en nödvändig relevant följdfråga
 om något som varken begäran eller kartans fakta avgör. Bevara den exakta
@@ -828,9 +831,9 @@ gemensamma bankkonto (Bankkonto).
 - Befintligt samband: Spotify-abonnemang → Betalas med → Vårt gemensamma
   bankkonto.
 
-**Avgränsning i kontrollen:** Svarskontrollen kräver dessutom besked om att
-Spotify-abonnemanget betalas från Vårt gemensamma bankkonto. Det är ett
-ytterligare krav utöver frågan om abonnemang på Hushållskortet.
+**Avgränsning i kontrollen:** Svaret ska ange det enda abonnemanget som enligt
+kartan betalas med Hushållskortet. Uppgifter om andra betalningsmedel krävs
+inte. Korrekt kompletterande information från kartan är tillåten.
 
 **Steg 1:**
 
@@ -839,7 +842,9 @@ ytterligare krav utöver frågan om abonnemang på Hushållskortet.
 **Förväntat svar och resultat:**
 
 - Netflix-abonnemanget är det enda abonnemanget som betalas med Hushållskortet.
-  Spotify-abonnemanget betalas från bankkontot. Ändra eller spara inget.
+- Uppgifter om andra betalningsmedel krävs inte. Korrekt kompletterande
+  information från kartan är tillåten.
+- Ändra eller spara inget och hitta inte på fakta.
 
 **Om en annan nödvändig fråga behövs:** Ställ en nödvändig relevant följdfråga
 om något som varken begäran eller kartans fakta avgör. Bevara den exakta

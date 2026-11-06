@@ -3194,7 +3194,7 @@
           "text": "Vilka tjänster använder Alex?",
           "expected": {
             "requirements": [
-              "Alex använder Spotify och Microsoft 365. Netflix används inte av Alex enligt kartan. Besvara frågan utan att ändra eller spara något."
+              "Svara att Alex enligt kartan använder Spotify och Microsoft 365. Påstå inte att Alex använder andra tjänster. Uppgifter om tjänster som saknar användningssamband med Alex krävs inte; korrekt kompletterande information från kartan är tillåten. Besvara frågan utan att ändra eller spara något och utan påhittade fakta."
             ]
           },
           "clarification": {
@@ -3327,7 +3327,7 @@
           "text": "Vilka abonnemang betalas med Hushållskortet?",
           "expected": {
             "requirements": [
-              "Netflix-abonnemanget är det enda abonnemanget som betalas med Hushållskortet. Spotify-abonnemanget betalas från bankkontot. Ändra eller spara inget."
+              "Ange att Netflix-abonnemanget enligt kartan är det enda abonnemanget som betalas med Hushållskortet. Uppgifter om andra betalningsmedel krävs inte; korrekt kompletterande information från kartan är tillåten. Ändra eller spara inget och hitta inte på fakta."
             ]
           },
           "clarification": {
