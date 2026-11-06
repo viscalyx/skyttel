@@ -23,13 +23,7 @@ export function turnActionOperations(
   if (
     operations.some(
       ({ name, arguments: args }) =>
-        ![
-          'propose_object',
-          'propose_relationship',
-          'propose_object_type',
-          'propose_relationship_type',
-        ].includes(name) ||
-        (name.endsWith('_type') && args.value === null) ||
+        !['propose_object', 'propose_relationship'].includes(name) ||
         (name === 'propose_object' &&
           (args.value === null ||
             draft.changes.some((change) => change.id === args.id && change.after === null))),
@@ -56,7 +50,6 @@ export function turnActionOperations(
   return operations.map((operation) => {
     const args = operation.arguments;
     const value = args.value as Record<string, unknown> | null | undefined;
-    if (!['propose_object', 'propose_relationship'].includes(operation.name)) return operation;
     const object = operation.name === 'propose_object';
     const proposed = object ? objects : relationships;
     const id = args.id as string;
