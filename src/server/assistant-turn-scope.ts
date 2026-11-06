@@ -62,6 +62,7 @@ const scopeSchema = z
     mode: z.enum(['read', 'work', 'clarify']),
     request: z.string().min(1).max(4000),
     responseRequired: z.boolean().default(true),
+    clarificationKind: z.enum(['change', 'information']).optional(),
   })
   .strict();
 
@@ -83,6 +84,9 @@ and draft. Return only JSON:
 read permits information and display only. work permits requested draft
 changes, including supplied or corrected household facts, and explicitly
 requested saving. clarify means the request itself is unclear.
+For clarify, also include clarificationKind: "information" only for a pure
+information/display request, otherwise "change". It identifies the unfinished
+request to preserve while the user answers; it grants no edit or save authority.
 The household map is the implicit destination for edits and new household
 items. Ordinary declarative updates are work; an imperative is not required.
 Preserve uncertainty and distinguish a fact ceasing to apply

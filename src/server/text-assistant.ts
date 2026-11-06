@@ -2434,8 +2434,19 @@ export function textAssistantRoutes({
         if (scope.mode === 'clarify') {
           session.state.saveIntent = undefined;
           session.state.phase = 'ready';
-          session.state.questions = [...session.execution.parts.questions(), scope.request];
-          session.state.newQuestions = [scope.request];
+          updateParts(
+            session,
+            [
+              {
+                kind: scope.clarificationKind ?? 'change',
+                request: text,
+                question: scope.request,
+                dependsOnDraft: true,
+              },
+            ],
+            [],
+            'turn-scope',
+          );
           session.state.reply = scope.request;
           appendConversation(session, { role: 'assistant', text: scope.request });
           discardReason = 'clarification';

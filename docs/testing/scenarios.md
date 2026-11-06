@@ -2359,9 +2359,12 @@ Varianten har dessutom sambandet Norrsken Molnlagring → Används av → Alex L
 
 **Förväntat svar och resultat:**
 
-- Be användaren precisera ändpunkten eller vilken befintlig koppling som ska
-  rättas. Behåll begäran i samtalet utan att skapa ett samband, objekt eller en
-  ersättningsegenskap och utan att ändra kartan.
+- Förklara att sambandet behöver en giltig ändpunkt och fråga hur uppgiften
+  ska uttryckas. Frågan får gälla medgivande till en lämplig alternativ
+  representation, exempelvis en fri egenskap.
+- Bevara begäran och befintliga uppgifter. Ändra ingenting utan svar och
+  påstå inte att uppdraget är slutfört eller sparat. En korrekt fråga är
+  ett vänteläge; fortsatt ändringsarbete är ännu inte verifierat.
 
 **Om en annan nödvändig fråga behövs:** Förklara att sambandet behöver en giltig
 ändpunkt och ställ en relevant fråga om hur uppgiften ska uttryckas. Frågan får
