@@ -754,6 +754,326 @@ async function webProposal(name = 'Redan från formuläret', id = 'web-object') 
   return value;
 }
 
+test.each([false, true])(
+  'object removal explains its incident-link effects and preserves unrelated work: new=%s',
+  async (newObject) => {
+    const model = textModel((request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: { id: 'phone', baseRevision: newObject ? null : 1, value: null },
+            },
+          ],
+        }),
+      ];
+    });
+    await setup(model.provider);
+    await webProposal('Telefonen', 'phone');
+    await webProposal('Mira', 'person');
+    await webProposal('Reservtelefonen', 'spare');
+    const mapPath = path.replace('/text-assistant', '/map');
+    const proposeLink = async (id: string, sourceId: string, targetId: string, ended = false) => {
+      const state = await (await browser.get(mapPath)).json();
+      const response = await browser.post(`${mapPath}/relationship`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id,
+          baseRevision: null,
+          value: {
+            typeId: state.relationshipTypes[0].id,
+            sourceId,
+            targetId,
+            ...(ended ? { lifecycle: 'ended' } : {}),
+          },
+        },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    };
+    await proposeLink('active', 'person', 'phone');
+    await proposeLink('ended', 'phone', 'person', true);
+    await proposeLink('unrelated', 'person', 'spare');
+    if (!newObject) {
+      const state = await (await browser.get(mapPath)).json();
+      const saved = await browser.post(`${mapPath}/save`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          operationId: 'seed-phone',
+        },
+      });
+      expect(saved.status()).toBe(200);
+    }
+    await webProposal('Ny laddare', 'charger');
+    await proposeLink('draft-link', 'phone', 'charger');
+    const before = await (await browser.get(mapPath)).json();
+    const result = await message(await start(), 'Ta bort telefonen. Spara inte.');
+    expect(result.error).toBeUndefined();
+    expect(result.receipt).toBeUndefined();
+    expect(result.review.changes.find((change: { id: string }) => change.id === 'phone')).toEqual(
+      newObject ? undefined : expect.objectContaining({ after: null }),
+    );
+    expect(result.review.changes).toContainEqual(
+      expect.objectContaining({
+        id: 'charger',
+        after: expect.objectContaining({ name: 'Ny laddare' }),
+      }),
+    );
+    const after = await (await browser.get(mapPath)).json();
+    expect(after.objects).toEqual(before.objects);
+    expect(after.relationships).toEqual(before.relationships);
+    if (newObject) {
+      expect(result.review.relationships).toMatchObject([
+        { id: 'unrelated', after: { sourceId: 'person', targetId: 'spare' } },
+      ]);
+    } else {
+      expect(result.review.relationships).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'active', after: null }),
+          expect.objectContaining({ id: 'ended', after: null }),
+        ]),
+      );
+      expect(result.review.relationships).toContainEqual(
+        expect.objectContaining({ id: 'draft-link', after: null }),
+      );
+    }
+    const comparison = model.authorizationRequests.find((request) =>
+      request.instructions.startsWith('SKYTTEL_TURN_ACTIONS'),
+    );
+    expect(comparison?.instructions).toContain(
+      'Removing an object also removes its incident relationships in the same draft transaction',
+    );
+    expect(JSON.parse(String(comparison?.input[0].content)).untrusted.operations).toEqual([
+      {
+        name: 'propose_object',
+        arguments: { id: 'phone', baseRevision: newObject ? null : 1, value: null },
+      },
+    ]);
+  },
+);
+
+test('a requested description replaces its current draft value while existing unrelated proposals remain', async () => {
+  let typeId = '';
+  const description = (value: string) => [
+    { id: 'description', label: 'Beskrivning', kind: 'text', value },
+  ];
+  const model = textModel(
+    (request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'mira',
+                baseRevision: 1,
+                value: { typeId, name: 'Mira', properties: description('Odlar tomater.') },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => [
+      modelMessage(
+        JSON.stringify(
+          request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? {
+                mode: 'work',
+                request: 'Ändra Miras beskrivning till ”Odlar tomater”. Spara inte.',
+                responseRequired: false,
+              }
+            : { decision: 'allow', complete: true, fulfillsRequest: true },
+        ),
+      ),
+    ],
+  );
+  await setup(model.provider);
+  typeId = (await webProposal('Mira', 'mira')).typeId;
+  const mapPath = path.replace('/text-assistant', '/map');
+  let state = await (await browser.get(mapPath)).json();
+  expect(
+    (
+      await browser.post(`${mapPath}/save`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          operationId: 'seed-mira',
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  state = await (await browser.get(mapPath)).json();
+  expect(
+    (
+      await browser.post(`${mapPath}/draft`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id: 'mira',
+          baseRevision: 1,
+          value: { typeId, name: 'Mira', properties: description('Spelar flöjt.') },
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  await webProposal('Växthuset', 'greenhouse');
+  const result = await message(
+    await start(),
+    'Ändra Miras beskrivning till Odlar tomater. Spara inte.',
+  );
+  expect(result.error).toBeUndefined();
+  expect(result.receipt).toBeUndefined();
+  expect(result.review.changes).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: 'mira',
+        after: expect.objectContaining({ properties: description('Odlar tomater.') }),
+      }),
+      expect.objectContaining({
+        id: 'greenhouse',
+        after: expect.objectContaining({ name: 'Växthuset' }),
+      }),
+    ]),
+  );
+  const comparison = model.authorizationRequests.find((request) =>
+    request.instructions.startsWith('SKYTTEL_TURN_ACTIONS'),
+  );
+  const input = JSON.parse(String(comparison?.input[0].content));
+  expect(input.authority.current).toBe('Ändra Miras beskrivning till Odlar tomater. Spara inte.');
+  expect(input.untrusted.data.draft.changes).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: 'mira',
+        after: expect.objectContaining({ properties: description('Spelar flöjt.') }),
+      }),
+      expect.objectContaining({ id: 'greenhouse' }),
+    ]),
+  );
+  expect(comparison?.instructions).toContain(
+    'Existing draft proposals are the before-state, not new operations',
+  );
+  expect(comparison?.instructions).toContain(
+    "A scope paraphrase must not change the current user's supplied literal value",
+  );
+  expect(comparison?.instructions).toContain('When data.wholeDraft is true');
+});
+
+test.each([false, true])(
+  'relationship guidance uses current meanings and preserves an explicit type choice: explicit=%s',
+  async (explicit) => {
+    let step = 0;
+    const chosenType = explicit ? 'connected' : 'stored';
+    const model = textModel((request) => {
+      if (step++ === 0) return [modelTool('read_type_catalog', {})];
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_relationship',
+              arguments: {
+                id: 'location',
+                baseRevision: null,
+                typeRevision: 1,
+                value: { typeId: chosenType, sourceId: 'toolbox', targetId: 'garage' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    await setup(model.provider);
+    await webProposal('Verktygslådan', 'toolbox');
+    await webProposal('Garaget', 'garage');
+    const mapPath = path.replace('/text-assistant', '/map');
+    for (const [id, name, description, forwardLabel, reverseLabel] of [
+      [
+        'connected',
+        'Kopplad till',
+        'En allmän koppling mellan två objekt.',
+        'kopplad till',
+        'kopplad till',
+      ],
+      [
+        'stored',
+        'Placering',
+        'Från föremål till platsen där det förvaras.',
+        'förvaras i',
+        'förvarar',
+      ],
+    ]) {
+      const state = await (await browser.get(mapPath)).json();
+      const response = await browser.post(`${mapPath}/relationship-type`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id,
+          baseRevision: null,
+          value: { name, description, forwardLabel, reverseLabel },
+        },
+      });
+      expect(response.status()).toBe(200);
+    }
+    const result = await message(
+      await start(),
+      explicit
+        ? 'Koppla verktygslådan till garaget med sambandstypen Kopplad till. Spara inte.'
+        : 'Verktygslådan förvaras i garaget. Spara inte.',
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.receipt).toBeUndefined();
+    expect(result.review.relationships).toMatchObject([
+      {
+        id: 'location',
+        type: { id: chosenType },
+        after: { sourceId: 'toolbox', targetId: 'garage' },
+      },
+    ]);
+    const catalog = lastToolResult(model.requests[1]);
+    expect(catalog.relationshipTypes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'connected',
+          description: 'En allmän koppling mellan två objekt.',
+        }),
+        expect.objectContaining({
+          id: 'stored',
+          description: 'Från föremål till platsen där det förvaras.',
+        }),
+      ]),
+    );
+    expect(model.requests[0].instructions).toContain(
+      'Välj den mest precisa befintliga typ vars beskrivning',
+    );
+    expect(model.requests[0].instructions).toContain('Respektera en uttryckligen vald sambandstyp');
+  },
+);
+
 test('ending a saved object checks its preserved properties before applying the update', async () => {
   let typeId = '';
   const properties = [

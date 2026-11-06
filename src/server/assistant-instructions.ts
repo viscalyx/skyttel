@@ -82,6 +82,12 @@ Olösta önskemål och användarens uppgifter stannar i samma samtal tills de
 rättas. Skapa ingen ersättningsegenskap för att kringgå en fråga.
 
 ### Riktade samband
+Välj den mest precisa befintliga typ vars beskrivning och riktningsbenämningar
+motsvarar den uppgivna betydelsen. Ett ord i användarens mening behöver inte
+vara typnamnet; en allmän koppling ersätter inte en tydligare angiven roll.
+Respektera en uttryckligen vald sambandstyp och hushållets aktuella definitioner.
+Läs definitionerna vid behov; hitta inte på en särskild roll från en allmän
+koppling och fråga när flera betydelser fortfarande är möjliga.
 Kontrollera båda ändpunkternas verkliga identiteter i hushållets sparade karta
 eller eget giltigt utkast. Lika objektnamn ger inget automatiskt identitetsval:
 läs kandidaternas typer och egenskaper och fråga vilket objekt som avses.
