@@ -1596,6 +1596,76 @@ test.each(['duplicate', 'waiting', 'information'])(
   },
 );
 
+test.each(['before', 'after'])(
+  'clarification updates can accompany trusted reads %s the update without losing pending work',
+  async (order) => {
+    let turn = 0;
+    let typeId = '';
+    let companionCalls: ReturnType<typeof modelTool>[] = [];
+    const model = textModel((request) => {
+      const input = JSON.parse(
+        String(request.input.findLast((row) => row.role === 'user')?.content),
+      );
+      const part = input.pendingParts[0];
+      if (turn++ === 0)
+        return [modelTool('ask_questions', { questions: ['Vilket namn ska cykeln ha?'] })];
+      if (turn === 2) {
+        const update = modelTool('ask_questions', {
+          questions: [],
+          updates: [
+            {
+              id: part.id,
+              revision: part.revision,
+              action: 'clarify',
+              messageId: input.messageId,
+              evidence: input.message,
+            },
+          ],
+          continueResponse: true,
+        });
+        const read = modelTool('read_type_catalog', {});
+        companionCalls = order === 'before' ? [read, update] : [update, read];
+        return companionCalls;
+      }
+      for (const call of companionCalls)
+        expect(
+          request.input.filter(
+            (row) => row.type === 'function_call_output' && row.call_id === call.call_id,
+          ),
+        ).toHaveLength(1);
+      const current = lastToolResult(request).pendingParts[0];
+      return [
+        modelTool('submit_changes', {
+          version: input.draft.version,
+          contentVersion: input.draft.contentVersion,
+          completion: 'draft',
+          resolves: [{ id: current.id, revision: current.revision }],
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: { id: 'bike', baseRevision: null, value: { typeId, name: 'Blå cykeln' } },
+            },
+          ],
+        }),
+      ];
+    });
+    await setup(model.provider);
+    typeId = (await webProposal()).typeId;
+    const waiting = await message(await start(), 'Lägg till en cykel.');
+    const completed = await message(waiting, 'Den ska heta Blå cykeln.');
+    expect(completed.error).toBeUndefined();
+    expect(completed.pendingParts).toMatchObject([
+      { id: waiting.pendingParts?.[0].id, status: 'completed' },
+    ]);
+    expect(completed.questionPending).toBe(false);
+    expect(completed.review.changes).toMatchObject([
+      { id: 'web-object' },
+      { id: 'bike', after: { name: 'Blå cykeln' } },
+    ]);
+    expect(completed.receipt).toBeUndefined();
+  },
+);
+
 test('repeated shorthand questions retain identity and partial answers keep the remaining question visible', async () => {
   let turn = 0;
   const model = textModel((request) => {
@@ -2799,6 +2869,92 @@ test.each(['before', 'after'])(
   },
 );
 
+test.each(['before', 'after'])(
+  'a verified draft report can accompany reads %s the report and continue with their facts',
+  async (order) => {
+    let calls: ReturnType<typeof modelTool>[] = [];
+    const model = textModel((request) => {
+      if (!calls.length) {
+        const report = modelTool('report_result', { source: 'draft', continueResponse: true });
+        const reads = [modelTool('read_map', {}), modelTool('read_my_draft', {})];
+        calls = order === 'before' ? [...reads, report] : [report, ...reads];
+        return calls;
+      }
+      for (const call of calls)
+        expect(
+          request.input.filter(
+            (row) => row.type === 'function_call_output' && row.call_id === call.call_id,
+          ),
+        ).toHaveLength(1);
+      const mapCall = calls.find((call) => call.name === 'read_map');
+      const mapOutput = request.input.find(
+        (row) => row.type === 'function_call_output' && row.call_id === mapCall?.call_id,
+      );
+      expect(JSON.parse(String(mapOutput?.output)).objects).toEqual([]);
+      return [modelMessage('Det finns inga sparade objekt i kartan.')];
+    }, readOnlyScope);
+    await setup(model.provider);
+    await webProposal();
+    const result = await message(
+      await start(),
+      'Beskriv mitt utkast och hur många objekt som är sparade.',
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.reply).toContain('Redan från formuläret');
+    expect(result.modelReply).toBe('Det finns inga sparade objekt i kartan.');
+    expect(result.review.changes).toMatchObject([{ id: 'web-object' }]);
+    expect(result.receipt).toBeUndefined();
+    expect(result.operations).toEqual([]);
+  },
+);
+
+test.each(['ask_questions', 'report_result'])(
+  '%s cannot finalize from a companion read spanning a manual draft change',
+  async (terminal) => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let reading = false;
+    const model = textModel(() => [
+      modelTool(
+        terminal,
+        terminal === 'ask_questions' ? { questions: ['Vilken cykel?'] } : { source: 'draft' },
+      ),
+      modelTool('read_map', { query: 'Lina' }),
+    ]);
+    await setup(model.provider, undefined, async (request, dispatch) => {
+      const rpc =
+        request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+          ? await request.clone().json()
+          : null;
+      const response = await dispatch(request);
+      if (rpc?.method === 'tools/call' && rpc.params.name === 'read_map') {
+        reading = true;
+        await held;
+      }
+      return response;
+    });
+    await webProposal('Lina');
+    const completion = message(await start(), 'Läs Lina och beskriv mitt utkast.');
+    try {
+      await expect.poll(() => reading).toBe(true);
+      await webProposal('Lina Manuell');
+      release();
+      const rejected = await completion;
+      expect(rejected.error).toBe('assistant_draft_changed');
+      expect(rejected.questionPending).toBe(false);
+      expect(rejected.reply ?? '').not.toContain('Lina');
+      expect(rejected.receipt).toBeUndefined();
+      const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
+      expect(map.draft.changes[0].after.name).toBe('Lina Manuell');
+    } finally {
+      release();
+      await completion;
+    }
+  },
+);
+
 test('a draft report cannot share a response with an unsolicited save', async () => {
   const model = textModel(
     () => [
@@ -2815,6 +2971,52 @@ test('a draft report cannot share a response with an unsolicited save', async ()
   expect(result.review.changes).toMatchObject([{ id: 'web-object' }]);
   expect(result.operations).toEqual([]);
 });
+
+test.each(['ask_questions', 'report_result'])(
+  '%s cannot accompany a draft mutation even when that mutation is allowed',
+  async (terminal) => {
+    let typeId = '';
+    const model = textModel(() => [
+      modelTool(
+        terminal,
+        terminal === 'ask_questions' ? { questions: ['Vilken färg?'] } : { source: 'draft' },
+      ),
+      modelTool('propose_object', {
+        version: 1,
+        contentVersion: 1,
+        id: 'bike',
+        baseRevision: null,
+        value: { typeId, name: 'Cykeln' },
+      }),
+    ]);
+    await setup(model.provider);
+    typeId = (await webProposal()).typeId;
+    const before = await start();
+    const rejected = await message(before, 'Lägg till cykeln och beskriv utkastet.');
+    expect(rejected.error).toBe('invalid_request');
+    expect(rejected.review).toEqual(before.review);
+    expect(rejected.questionPending).toBe(false);
+    expect(rejected.receipt).toBeUndefined();
+  },
+);
+
+test.each(['before', 'after'])(
+  'an invalid report %s selection fails before any display request',
+  async (order) => {
+    const model = textModel(() => {
+      const report = modelTool('report_result', { source: 'save' });
+      const selection = modelTool('show_map_object', { objectId: 'web-object' });
+      return order === 'before' ? [report, selection] : [selection, report];
+    });
+    await setup(model.provider);
+    await webProposal();
+    const rejected = await message(await start(), 'Visa objektet och beskriv senaste sparandet.');
+    expect(rejected.error).toBe('invalid_request');
+    expect(rejected.selection).toBeUndefined();
+    expect(rejected.displayedSelection).toBeUndefined();
+    expect(rejected.receipt).toBeUndefined();
+  },
+);
 
 test.each([false, true])(
   'relationship selection requires a matching current display and rejects a changed draft: %s',
