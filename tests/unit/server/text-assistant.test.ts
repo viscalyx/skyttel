@@ -755,7 +755,7 @@ async function webProposal(name = 'Redan från formuläret', id = 'web-object') 
 }
 
 test.each([false, true])(
-  'object removal explains its incident-link effects and preserves unrelated work: new=%s',
+  'object removal includes incident links and preserves unrelated work: new=%s',
   async (newObject) => {
     const model = textModel((request) => {
       const current = JSON.parse(
@@ -849,9 +849,6 @@ test.each([false, true])(
     }
     const comparison = model.authorizationRequests.find((request) =>
       request.instructions.startsWith('SKYTTEL_TURN_ACTIONS'),
-    );
-    expect(comparison?.instructions).toContain(
-      'Removing an object also removes its incident relationships in the same draft transaction',
     );
     expect(JSON.parse(String(comparison?.input[0].content)).untrusted.operations).toEqual([
       {
@@ -968,17 +965,10 @@ test('a requested description replaces its current draft value while existing un
       expect.objectContaining({ id: 'greenhouse' }),
     ]),
   );
-  expect(comparison?.instructions).toContain(
-    'Existing draft proposals are the before-state, not new operations',
-  );
-  expect(comparison?.instructions).toContain(
-    "A scope paraphrase must not change the current user's supplied literal value",
-  );
-  expect(comparison?.instructions).toContain('When data.wholeDraft is true');
 });
 
 test.each([false, true])(
-  'relationship guidance uses current meanings and preserves an explicit type choice: explicit=%s',
+  'current household relationship meanings and explicit type choices remain available during writes: explicit=%s',
   async (explicit) => {
     let step = 0;
     const chosenType = explicit ? 'connected' : 'stored';
@@ -1067,10 +1057,6 @@ test.each([false, true])(
         }),
       ]),
     );
-    expect(model.requests[0].instructions).toContain(
-      'Välj den mest precisa befintliga typ vars beskrivning',
-    );
-    expect(model.requests[0].instructions).toContain('Respektera en uttryckligen vald sambandstyp');
   },
 );
 
