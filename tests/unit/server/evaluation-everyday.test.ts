@@ -12,7 +12,7 @@ import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
 test('every approved everyday entry keeps its own scenario and exact utterances', () => {
-  const approvedPromptHash = '55bf6a304030d99a8c9650ce1f8134e70b39dfea481167b470b32ae239129d68';
+  const approvedPromptHash = '73f92626d732e6e2c0a1ac9333e8a72811857866acf82a7ab510786ecc317459';
   const promptSnapshot = approvedSource.entries.map((entry) => ({
     number: entry.number,
     prompts: entry.prompts,

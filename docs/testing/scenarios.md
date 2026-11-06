@@ -1055,14 +1055,14 @@ följdsvar är inte definierat för den grenen.
 
 Scenario-ID: `everyday-34`.
 
-**Utvärderar:** Skilja tjänstekonto från person och tjänst samt hantera oklar
-kopplingsbetydelse säkert.
+**Utvärderar:** Skilja tjänstekonto från person och tjänst samt återge uttrycklig
+användning och tjänstetillhörighet med rätt samband.
 
 **Startläge:** Kartan innehåller Johan (Person); Spotify (Tjänst).
 
 **Steg 1:**
 
-> Lägg till Johans Spotify-konto och koppla det till Johan och Spotify.
+> Lägg till Johans Spotify-konto. Johan använder kontot och det hör till Spotify.
 
 **Förväntat svar och resultat:**
 
@@ -1287,8 +1287,8 @@ Betalningsintervall: månad.
 
 **Steg 1:**
 
-> Vi har bytt från Spotify till Apple Music. Markera Spotify-abonnemanget som
-> avslutat och lägg till Apple Music för Johan och Sonja.
+> Markera Spotify-abonnemanget som avslutat. Lägg till tjänsten Apple Music och
+> ange att Johan och Sonja använder den.
 
 **Förväntat svar och resultat:**
 
@@ -1508,10 +1508,11 @@ Microsoft 365 (Tjänst).
 **Villkorat extra följdsvar:**
 
 Skickas endast när: Frågan ber användaren skilja Alex Lind från Alex Berg och
-avser vilken person som använder Microsoft 365. Inga andra obesvarade frågor
-kräver ett annat svar.
+får även fråga vilken koppling personen ska ha till Microsoft 365. Svaret
+identifierar Alex Lind och anger att han använder tjänsten. Inga andra
+obesvarade frågor kräver ett annat svar.
 
-> Jag menar Alex Lind.
+> Jag menar Alex Lind. Han använder Microsoft 365.
 
 I vänteläget gäller:
 

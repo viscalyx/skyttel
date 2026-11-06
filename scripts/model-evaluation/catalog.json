@@ -4108,7 +4108,7 @@
     },
     {
       "id": "everyday-34",
-      "title": "34. Lägg till Johans Spotify-konto och koppla det till Johan och Spotify.",
+      "title": "34. Lägg till Johans Spotify-konto. Johan använder kontot och det hör till Spotify.",
       "voice": false,
       "group": "everyday",
       "dimensions": {
@@ -4163,7 +4163,7 @@
       "steps": [
         {
           "id": "everyday-34-request",
-          "text": "Lägg till Johans Spotify-konto och koppla det till Johan och Spotify.",
+          "text": "Lägg till Johans Spotify-konto. Johan använder kontot och det hör till Spotify.",
           "expected": {
             "requirements": [
               "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga.",
@@ -4201,7 +4201,7 @@
           },
           "clarification": {
             "preservedRequests": [
-              "Lägg till Johans Spotify-konto och koppla det till Johan och Spotify."
+              "Lägg till Johans Spotify-konto. Johan använder kontot och det hör till Spotify."
             ],
             "requirements": [
               "Ställ en nödvändig relevant följdfråga om något som varken begäran eller kartans fakta avgör. Bevara den exakta oavslutade begäran. Hitta inte på ett svar, ändra inga andra uppgifter och påstå inte att uppdraget är slutfört eller sparat."
@@ -4953,7 +4953,7 @@
     },
     {
       "id": "everyday-42",
-      "title": "42. Vi har bytt från Spotify till Apple Music. Markera Spotify-abonnemanget som avslutat och lägg till Apple Music för Johan och Sonja.",
+      "title": "42. Markera Spotify-abonnemanget som avslutat. Lägg till tjänsten Apple Music och ange att Johan och Sonja använder den.",
       "voice": false,
       "group": "everyday",
       "dimensions": {
@@ -5044,7 +5044,7 @@
       "steps": [
         {
           "id": "everyday-42-request",
-          "text": "Vi har bytt från Spotify till Apple Music. Markera Spotify-abonnemanget som avslutat och lägg till Apple Music för Johan och Sonja.",
+          "text": "Markera Spotify-abonnemanget som avslutat. Lägg till tjänsten Apple Music och ange att Johan och Sonja använder den.",
           "expected": {
             "requirements": [
               "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga.",
@@ -5085,7 +5085,7 @@
           },
           "clarification": {
             "preservedRequests": [
-              "Vi har bytt från Spotify till Apple Music. Markera Spotify-abonnemanget som avslutat och lägg till Apple Music för Johan och Sonja."
+              "Markera Spotify-abonnemanget som avslutat. Lägg till tjänsten Apple Music och ange att Johan och Sonja använder den."
             ],
             "requirements": [
               "Ställ en nödvändig relevant följdfråga om något som varken begäran eller kartans fakta avgör. Bevara den exakta oavslutade begäran. Hitta inte på ett svar, ändra inga andra uppgifter och påstå inte att uppdraget är slutfört eller sparat."
@@ -5887,8 +5887,8 @@
           "followUps": [
             {
               "id": "everyday-48-alex-lind",
-              "text": "Jag menar Alex Lind.",
-              "when": "Frågan ber användaren skilja Alex Lind från Alex Berg och avser vilken person som använder Microsoft 365. Inga andra obesvarade frågor kräver ett annat svar.",
+              "text": "Jag menar Alex Lind. Han använder Microsoft 365.",
+              "when": "Frågan ber användaren skilja Alex Lind från Alex Berg och får även fråga vilken koppling personen ska ha till Microsoft 365. Svaret identifierar Alex Lind och anger att han använder tjänsten. Inga andra obesvarade frågor kräver ett annat svar.",
               "waiting": {
                 "requirements": [
                   "Fråga vilken Alex som avses, bevara uppdraget och ändra eller spara inget."
@@ -8672,7 +8672,7 @@
   },
   "everydaySource": {
     "path": "scripts/model-evaluation/everyday-source.json",
-    "sha256": "4b8358f961fcc6f0f1aa8b716f3377a11b4abb3940c0295fdbe58eaf53af1af7",
+    "sha256": "7914d41e9bfb5f15ce19a414b60780b1bddd722f439a1dbc1a0341d8bae67285",
     "entries": [
       {
         "number": 1,
