@@ -1809,7 +1809,7 @@ export function textAssistantRoutes({
     const command =
       correction && !/\?|\b(spara|sparar|vänta)\b/u.test(correction[1]) ? correction[2] : plain;
     const suffix =
-      '(?:\\s+(?:nu|direkt|allt|allting|det|detta|det här|hela utkastet|utkastet|ändringarna|alla ändringar|förslaget|förslagen))*(?:\\s+med alla de här ändringarna)?';
+      '(?:\\s+(?:nu|direkt|allt|allting|det|detta|det här|hela utkastet|utkastet|ändringarna|(?:alla|mina|våra) ändringar|förslaget|förslagen))*(?:\\s+med alla de här ändringarna)?';
     return (
       !/\b(inte|ej|ingenting|aldrig|utan|vänta|om|när|kanske|skulle|exempel|citat|förklara)\b/u.test(
         command,
