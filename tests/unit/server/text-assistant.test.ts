@@ -1071,11 +1071,12 @@ test.each(['discard', 'delete'])(
   },
 );
 
-test.each(['delete', 'restore'])(
-  'object %s with dependent relationship proposals keeps the checked property source honest',
+test.each(['delete', 'restore', 'restore-object-type', 'restore-relationship-type'])(
+  'a %s transition keeps the property source of dependent relationship proposals honest',
   async (transition) => {
     let objectType = '';
     let relationshipType = '';
+    let typeRestoration: { name: string; arguments: Record<string, unknown> } | undefined;
     const savedProperties = [
       { id: 'detail', label: 'Anmärkning', kind: 'text', value: 'Sparad anmärkning' },
     ];
@@ -1098,7 +1099,7 @@ test.each(['delete', 'restore'])(
             contentVersion: current.draft.contentVersion,
             completion: 'draft',
             operations: [
-              {
+              typeRestoration ?? {
                 name: 'propose_object',
                 arguments: {
                   id: 'person',
@@ -1158,6 +1159,19 @@ test.each(['delete', 'restore'])(
       });
       expect(response.status(), await response.text()).toBe(200);
     }
+    if (transition === 'restore-relationship-type') {
+      relationshipType = 'local-usage-type';
+      await write('relationship-type', {
+        id: relationshipType,
+        baseRevision: null,
+        value: {
+          name: 'Användning i testet',
+          description: 'Ett samband med uttryckliga benämningar.',
+          forwardLabel: 'Använder',
+          reverseLabel: 'Används av',
+        },
+      });
+    }
     await write('relationship', {
       id: 'usage',
       baseRevision: null,
@@ -1171,11 +1185,39 @@ test.each(['delete', 'restore'])(
     });
     if (transition === 'restore')
       await write('draft', { id: 'person', baseRevision: 1, value: null });
+    if (transition.endsWith('-type')) {
+      const object = transition === 'restore-object-type';
+      const definition = object
+        ? map.types.find((type: { id: string }) => type.id === objectType)
+        : map.relationshipTypes.find((type: { id: string }) => type.id === relationshipType);
+      const { id, revision, name, description } = definition;
+      const value = {
+        name,
+        description,
+        ...(object
+          ? {}
+          : {
+              forwardLabel: definition.forwardLabel,
+              reverseLabel: definition.reverseLabel,
+            }),
+      };
+      typeRestoration = {
+        name: object ? 'propose_object_type' : 'propose_relationship_type',
+        arguments: { id, baseRevision: revision, value },
+      };
+      await write(object ? 'object-type' : 'relationship-type', {
+        id,
+        baseRevision: revision,
+        value: null,
+      });
+    }
     const result = await message(
       await start(),
       transition === 'delete'
         ? 'Ta bort Lo och flytta telefonanvändningen till Mira. Spara inte.'
-        : 'Återta borttagningen av Lo och behåll den rättade telefonanvändningen. Spara inte.',
+        : transition === 'restore'
+          ? 'Återta borttagningen av Lo och behåll den rättade telefonanvändningen. Spara inte.'
+          : 'Återta borttagningen av typen och behåll den rättade telefonanvändningen. Spara inte.',
     );
     expect(result.error).toBeUndefined();
     expect(result.review.relationships).toMatchObject([
