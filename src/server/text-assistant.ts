@@ -43,6 +43,7 @@ import {
   interpretTurnScope,
   matchClarification,
   turnActionData,
+  turnActionOperations,
 } from './assistant-turn-scope.js';
 import { assistantDraftReview } from './assistant-work.js';
 import type { Auth } from './auth.js';
@@ -2554,7 +2555,7 @@ export function textAssistantRoutes({
         const decision = await compareTurnActions(
           respond,
           { current: text, scope },
-          operations,
+          turnActionOperations(map, session.state.review, operations),
           {
             map: turnActionData(
               map,
