@@ -37,7 +37,11 @@ async function setup(provider: typeof fetch, live?: ReturnType<typeof liveProvid
   ).json() as Promise<TextAssistantView>;
 }
 
-async function send(session: TextAssistantView, text: string) {
+async function send(
+  session: TextAssistantView,
+  text: string,
+  answerTo?: { id: string; revision: number }[],
+) {
   const response = await browser.post(`${path}/${session.id}/messages`, {
     headers: { origin: app.origin },
     data: {
@@ -46,6 +50,7 @@ async function send(session: TextAssistantView, text: string) {
       draftVersion: session.review.version,
       contentVersion: session.review.contentVersion,
       text,
+      answerTo,
     },
   });
   expect(response.status()).toBe(202);
@@ -788,7 +793,7 @@ test('the automatic save fallback cannot expand a literal-name edit into saving'
 });
 
 test('answering a scope clarification with a read request completes its retained information part', async () => {
-  let interpreted = false;
+  let interpreted = 0;
   const model = textModel(
     (input) => {
       const current = JSON.parse(
@@ -812,14 +817,15 @@ test('answering a scope clarification with a read request completes its retained
       ];
     },
     () => {
-      const scope = interpreted
-        ? { mode: 'read', request: 'Read the bicycle.' }
-        : {
-            mode: 'clarify',
-            request: 'Vilket objekt vill du läsa?',
-            clarificationKind: 'information',
-          };
-      interpreted = true;
+      const scope =
+        interpreted > 1
+          ? { mode: 'read', request: 'Read the bicycle.' }
+          : {
+              mode: 'clarify',
+              request: interpreted ? 'Vilken cykel vill du läsa?' : 'Vilket objekt vill du läsa?',
+              clarificationKind: 'information',
+            };
+      interpreted++;
       return [modelMessage(JSON.stringify(scope))];
     },
   );
@@ -830,7 +836,18 @@ test('answering a scope clarification with a read request completes its retained
     request: 'Läs det där.',
     status: 'waiting',
   });
-  const answered = await send(asked, 'Läs cykeln.');
+  const originalPart = asked.pendingParts?.[0];
+  if (!originalPart) throw new Error('Expected the original pending information request.');
+  const rephrased = await send(asked, 'Cykeln.', [
+    { id: originalPart.id, revision: originalPart.revision },
+  ]);
+  expect(rephrased.pendingParts).toHaveLength(1);
+  expect(rephrased.questions).toEqual(['Vilken cykel vill du läsa?']);
+  const currentPart = rephrased.pendingParts?.[0];
+  if (!currentPart) throw new Error('Expected the rephrased pending information request.');
+  const answered = await send(rephrased, 'Läs den blå cykeln.', [
+    { id: currentPart.id, revision: currentPart.revision },
+  ]);
   expect(answered.error).toBeUndefined();
   expect(answered.questionPending).toBe(false);
   expect(answered.questions).toBeUndefined();
@@ -839,6 +856,72 @@ test('answering a scope clarification with a read request completes its retained
     status: 'completed',
   });
 });
+
+test.each(['change', 'information'] as const)(
+  'a repeated scope %s clarification preserves the original pending identity and rejects stale replies',
+  { tags: ['technical'] },
+  async (kind) => {
+    const original = `Hantera den uppgift som jag menar. ${'Bevara tidigare uppgifter. '.repeat(45)}`;
+    let interpreted = 0;
+    const model = textModel(
+      () => {
+        throw new Error('An unresolved scope question must not execute work.');
+      },
+      () => [
+        modelMessage(
+          JSON.stringify({
+            mode: 'clarify',
+            request:
+              interpreted++ === 0 ? 'Vilken uppgift menar du?' : 'Vilken av de två menar du?',
+            clarificationKind:
+              interpreted === 1 ? kind : kind === 'change' ? 'information' : 'change',
+          }),
+        ),
+      ],
+    );
+    const first = await send(await setup(model.provider), original);
+    const part = first.pendingParts?.[0];
+    if (!part) throw new Error('Expected the original pending request.');
+    const second = await send(first, 'Den andra.', [{ id: part.id, revision: part.revision }]);
+    expect(second.error).toBeUndefined();
+    expect(second.pendingParts).toHaveLength(1);
+    expect(second.pendingParts?.[0]).toMatchObject({
+      id: part.id,
+      revision: part.revision + 1,
+      messageId: part.messageId,
+      kind,
+      request: original,
+      question: 'Vilken av de två menar du?',
+      dependsOnDraft: part.dependsOnDraft,
+      status: 'waiting',
+    });
+    expect(second.questions).toEqual(['Vilken av de två menar du?']);
+    expect(second.saveBlocked).toBe(kind === 'change');
+    expect(second.review).toEqual(first.review);
+    expect(second.operations).toEqual([]);
+    for (const reference of [
+      { id: part.id, revision: part.revision },
+      { id: 'missing-part', revision: 0 },
+    ]) {
+      const response = await browser.post(`${path}/${second.id}/messages`, {
+        headers: { origin: app.origin },
+        data: {
+          requestId: crypto.randomUUID(),
+          revision: second.revision,
+          draftVersion: second.review.version,
+          contentVersion: second.review.contentVersion,
+          text: 'Den här.',
+          answerTo: [reference],
+        },
+      });
+      expect(response.status()).toBe(409);
+      expect(await response.json()).toMatchObject({ error: 'assistant_pending_part_changed' });
+    }
+    const retained = await (await browser.get(`${path}/${second.id}`)).json();
+    expect(retained.pendingParts).toEqual(second.pendingParts);
+    expect(interpreted).toBe(2);
+  },
+);
 
 test.each(['change', 'information'] as const)(
   'a retained scope %s clarification preserves the exact long request and enforces its save boundary',
