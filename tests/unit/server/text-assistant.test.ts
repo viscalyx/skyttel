@@ -1191,6 +1191,106 @@ test.each(['delete', 'restore'])(
   },
 );
 
+test('a duplicate relationship addition cannot supply projected properties to a later proposal', async () => {
+  let typeId = '';
+  const properties = [
+    { id: 'detail', label: 'Anmärkning', kind: 'text', value: 'Får inte återanvändas' },
+  ];
+  const value = (sourceId: string) => ({ typeId, sourceId, targetId: 'phone' });
+  const model = textModel(
+    (request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_relationship',
+              arguments: {
+                id: 'new-usage',
+                baseRevision: null,
+                value: { ...value('person'), properties },
+              },
+            },
+            {
+              name: 'propose_relationship',
+              arguments: { id: 'new-usage', baseRevision: null, value: value('other-person') },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => {
+      if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+        return [
+          modelMessage(
+            JSON.stringify({
+              mode: 'work',
+              request: 'Behåll befintlig användning och lägg till Mira utan egenskaper.',
+              responseRequired: false,
+            }),
+          ),
+        ];
+      const { operations } = JSON.parse(String(request.input[0].content)).untrusted;
+      return [
+        modelMessage(
+          JSON.stringify(
+            !('properties' in operations[1].arguments.value)
+              ? { decision: 'allow', complete: true, fulfillsRequest: true }
+              : { decision: 'deny', operation: 1 },
+          ),
+        ),
+      ];
+    },
+  );
+  await setup(model.provider);
+  await webProposal('Lo', 'person');
+  await webProposal('Telefonen', 'phone');
+  await webProposal('Mira', 'other-person');
+  const mapPath = path.replace('/text-assistant', '/map');
+  let map = await (await browser.get(mapPath)).json();
+  typeId = map.relationshipTypes.find((type: { name: string }) => type.name === 'Använder').id;
+  const existing = await browser.post(`${mapPath}/relationship`, {
+    headers: { origin: app.origin },
+    data: {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      id: 'existing-usage',
+      baseRevision: null,
+      value: value('person'),
+    },
+  });
+  expect(existing.status()).toBe(200);
+  map = await (await browser.get(mapPath)).json();
+  const saved = await browser.post(`${mapPath}/save`, {
+    headers: { origin: app.origin },
+    data: {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      operationId: 'seed-existing-usage',
+    },
+  });
+  expect(saved.status()).toBe(200);
+  const result = await message(
+    await start(),
+    'Behåll Los användning och lägg till att Mira använder telefonen utan extra egenskaper. Spara inte.',
+  );
+  expect(result.error).toBeUndefined();
+  expect(result.review.relationships).toMatchObject([
+    { id: 'new-usage', after: { sourceId: 'other-person' } },
+  ]);
+  expect(result.review.relationships[0].after.properties).toBeUndefined();
+  map = await (await browser.get(mapPath)).json();
+  expect(
+    map.relationships.find((item: { id: string }) => item.id === 'existing-usage'),
+  ).toMatchObject(value('person'));
+  expect(result.receipt).toBeUndefined();
+});
+
 test.each([
   ['Rätta namnet till Rättat namn och spara.', { name: 'Rättat namn' }],
   [

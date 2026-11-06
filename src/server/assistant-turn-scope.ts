@@ -36,6 +36,12 @@ export function turnActionOperations(
     )
   )
     return operations;
+  // A duplicate relationship add can be a successful no-op. A later proposal
+  // under that same ID must not inherit facts from a value never written.
+  const relationshipIds = operations
+    .filter((operation) => operation.name === 'propose_relationship')
+    .map((operation) => operation.arguments.id);
+  if (new Set(relationshipIds).size !== relationshipIds.length) return operations;
   type PropertySource = { properties?: unknown } | null;
   const objects = new Map<string, PropertySource>(
     draft.changes.map((change) => [change.id, change.after]),
