@@ -123,6 +123,7 @@ function approvedQuestion(parent: Attempt, step: ScenarioStep) {
     (source) => [
       `${source}-follow-up`,
       `${source}-necessary`,
+      `${source}-retention`,
       ...reply.waiting.requirements.map((_text, index) => `${source}-waiting-${index}`),
     ],
   );
