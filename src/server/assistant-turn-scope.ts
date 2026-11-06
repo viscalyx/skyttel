@@ -1,13 +1,73 @@
 import { z } from 'zod';
-import type { MapState } from '../shared/map.js';
+import type { MapDraft, MapState } from '../shared/map.js';
 import type { PendingPart } from '../shared/text-assistant.js';
 import { MapError } from './map.js';
 import { partReference } from './pending-parts.js';
+import { readProperties } from './properties.js';
 import type { textModel } from './text-assistant-model.js';
 
 type Respond = ReturnType<typeof textModel>;
 type Operation = { name: string; arguments: Record<string, unknown> };
 export type CheckTurnActions = (operations: Operation[]) => Promise<void>;
+
+/** Show the independent checker the property values the MCP update preserves.
+ * Keep raw dispatch arguments separate; this grants no extra edit authority. */
+export function turnActionOperations(
+  map: Pick<MapState, 'objects' | 'relationships'>,
+  draft: MapDraft,
+  operations: readonly Operation[],
+) {
+  // Only ordinary proposal sets have known property effects here. Resolutions,
+  // discards, type removals and future tools keep their original checker input
+  // rather than predict the dependent proposals they may restore or remove.
+  if (
+    operations.some(
+      ({ name, arguments: args }) =>
+        ![
+          'propose_object',
+          'propose_relationship',
+          'propose_object_type',
+          'propose_relationship_type',
+        ].includes(name) ||
+        (name.endsWith('_type') && args.value === null),
+    )
+  )
+    return operations;
+  type PropertySource = { properties?: unknown } | null;
+  const objects = new Map<string, PropertySource>(
+    draft.changes.map((change) => [change.id, change.after]),
+  );
+  const relationships = new Map<string, PropertySource>(
+    draft.relationships?.map((change) => [change.id, change.after]),
+  );
+  const relationshipBefore = new Map<string, PropertySource>(
+    map.relationships.map((value) => [value.id, value]),
+  );
+  for (const change of draft.relationships ?? []) relationshipBefore.set(change.id, change.before);
+  return operations.map((operation) => {
+    const args = operation.arguments;
+    const value = args.value as Record<string, unknown> | null | undefined;
+    if (!['propose_object', 'propose_relationship'].includes(operation.name)) return operation;
+    const object = operation.name === 'propose_object';
+    const proposed = object ? objects : relationships;
+    const id = args.id as string;
+    const previous = object
+      ? proposed.has(id)
+        ? proposed.get(id)
+        : map.objects.find((item) => item.id === id)
+      : (proposed.get(id) ?? relationshipBefore.get(id));
+    const properties = readProperties(
+      undefined,
+      previous?.properties as Parameters<typeof readProperties>[1],
+    );
+    const effective =
+      value && !('properties' in value) && properties ? { ...value, properties } : value;
+    proposed.set(id, effective ?? null);
+    return effective !== value
+      ? { ...operation, arguments: { ...args, value: effective } }
+      : operation;
+  });
+}
 
 /** Only target records and their direct relationships are supporting data for
  * the comparison. Unrelated saved properties need not reach another model call. */
