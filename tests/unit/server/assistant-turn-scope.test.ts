@@ -6,7 +6,7 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation, type Identity } from '../../support/installation.js';
 import { liveProvider } from '../../support/live-provider.js';
-import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
@@ -365,6 +365,15 @@ test.each(['clarify', 'malformed', 'tool', 'stale', 'invalid'] as const)(
     expect(events.mock.calls).toEqual([]);
     if (kind === 'clarify') {
       expect(ended.questions).toEqual(['Vilka uppgifter menar du?']);
+      expect(ended.pendingParts).toEqual([
+        expect.objectContaining({
+          kind: 'change',
+          request: 'Det där.',
+          question: 'Vilka uppgifter menar du?',
+          status: 'waiting',
+          dependsOnDraft: true,
+        }),
+      ]);
       expect(model.requests).toEqual([]);
     } else
       expect(ended.error).toBe(
@@ -387,11 +396,35 @@ test('literal instruction text, mixed edits, clarification and a later save pres
         String(input.input.findLast((item) => item.role === 'user')?.content),
       );
       if (current.message === 'Spara hela utkastet.') return [modelMessage('Sparar utkastet.')];
+      const parts = lastToolResult(input)?.pendingParts ?? current.pendingParts;
+      const waiting = parts.find((part: { status: string }) => part.status === 'waiting');
+      if (waiting)
+        return [
+          modelTool('ask_questions', {
+            questions: [],
+            updates: [
+              {
+                id: waiting.id,
+                revision: waiting.revision,
+                action: 'clarify',
+                messageId: current.messageId,
+                evidence: current.message,
+              },
+            ],
+            continueResponse: true,
+          }),
+        ];
       return [
         modelTool('submit_changes', {
           version: current.draft.version,
           contentVersion: current.draft.contentVersion,
           completion: 'draft',
+          resolves: parts
+            .filter((part: { status: string }) => part.status === 'ready')
+            .map((part: { id: string; revision: number }) => ({
+              id: part.id,
+              revision: part.revision,
+            })),
           operations: [
             {
               name: 'propose_object',
@@ -754,25 +787,118 @@ test('the automatic save fallback cannot expand a literal-name edit into saving'
   expect(map.objects).toEqual([]);
 });
 
-test('answering a scope clarification with a read request clears the transient question', async () => {
+test('answering a scope clarification with a read request completes its retained information part', async () => {
   let interpreted = false;
   const model = textModel(
-    () => [modelMessage('Cykeln finns i kartan.')],
+    (input) => {
+      const current = JSON.parse(
+        String(input.input.findLast((item) => item.role === 'user')?.content),
+      );
+      const part = current.pendingParts[0];
+      return [
+        modelTool('ask_questions', {
+          questions: [],
+          updates: [
+            {
+              id: part.id,
+              revision: part.revision,
+              action: 'clarify',
+              messageId: current.messageId,
+              evidence: current.message,
+              answer: 'Cykeln finns i kartan.',
+            },
+          ],
+        }),
+      ];
+    },
     () => {
       const scope = interpreted
         ? { mode: 'read', request: 'Read the bicycle.' }
-        : { mode: 'clarify', request: 'Vilket objekt vill du läsa?' };
+        : {
+            mode: 'clarify',
+            request: 'Vilket objekt vill du läsa?',
+            clarificationKind: 'information',
+          };
       interpreted = true;
       return [modelMessage(JSON.stringify(scope))];
     },
   );
   const asked = await send(await setup(model.provider), 'Läs det där.');
   expect(asked.questionPending).toBe(true);
+  expect(asked.pendingParts?.[0]).toMatchObject({
+    kind: 'information',
+    request: 'Läs det där.',
+    status: 'waiting',
+  });
   const answered = await send(asked, 'Läs cykeln.');
   expect(answered.error).toBeUndefined();
   expect(answered.questionPending).toBe(false);
   expect(answered.questions).toBeUndefined();
+  expect(answered.pendingParts?.[0]).toMatchObject({
+    id: asked.pendingParts?.[0].id,
+    status: 'completed',
+  });
 });
+
+test.each(['change', 'information'] as const)(
+  'a retained scope %s clarification preserves the exact long request and enforces its save boundary',
+  { tags: ['technical'] },
+  async (kind) => {
+    const original = `Hantera uppgiften när rätt objekt är identifierat. ${'Behåll uppgifterna och deras historik. '.repeat(35)}`;
+    const model = textModel(
+      (input) => {
+        const current = JSON.parse(
+          String(input.input.findLast((item) => item.role === 'user')?.content),
+        );
+        return [
+          modelTool('save_draft', {
+            version: current.draft.version,
+            contentVersion: current.draft.contentVersion,
+          }),
+        ];
+      },
+      (input) => {
+        if (!input.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+          return [modelMessage('{"decision":"allow","complete":true,"fulfillsRequest":true}')];
+        const { current } = JSON.parse(String(input.input[0].content));
+        return [
+          modelMessage(
+            JSON.stringify(
+              current === original
+                ? { mode: 'clarify', request: 'Vilket objekt menar du?', clarificationKind: kind }
+                : { mode: 'work', request: current, responseRequired: false },
+            ),
+          ),
+        ];
+      },
+    );
+    const started = await setup(model.provider);
+    await proposal(browser, 'manual', 'Manuellt utkast');
+    const before = await (await browser.get(`${path}/${started.id}`)).json();
+    const asked = await send(before, original);
+    expect(asked.pendingParts?.[0]).toMatchObject({
+      kind,
+      request: original,
+      question: 'Vilket objekt menar du?',
+      status: 'waiting',
+    });
+    expect(asked.saveBlocked).toBe(kind === 'change');
+    expect(asked.review).toEqual(before.review);
+    const saved = await send(asked, 'Spara hela utkastet.');
+    expect(saved.pendingParts?.[0]).toMatchObject({
+      id: asked.pendingParts?.[0].id,
+      status: 'waiting',
+    });
+    if (kind === 'information') {
+      expect(saved.receipt?.changes).toHaveLength(1);
+      expect(saved.review.changes).toEqual([]);
+    } else {
+      expect(saved.receipt).toBeUndefined();
+      expect(saved.review.changes).toEqual(asked.review.changes);
+      expect(saved.operations).toEqual([]);
+    }
+  },
+);
 
 test('a requested relationship can use a saved type that no existing relationship uses', async () => {
   const typeId = 'unused-delivery';
