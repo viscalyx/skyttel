@@ -3687,7 +3687,7 @@
     },
     {
       "id": "everyday-31",
-      "title": "31. Jag vill lägga till tjänsten Spotify och koppla den till Johan och Sonja.",
+      "title": "31. Jag vill lägga till tjänsten Spotify som Johan, Lo och Sonja använder.",
       "voice": false,
       "group": "everyday",
       "dimensions": {
@@ -3700,6 +3700,11 @@
             "id": "johan",
             "type": "Person",
             "name": "Johan"
+          },
+          {
+            "id": "lo",
+            "type": "Person",
+            "name": "Lo"
           },
           {
             "id": "sonja",
@@ -3742,12 +3747,12 @@
       "steps": [
         {
           "id": "everyday-31-request",
-          "text": "Jag vill lägga till tjänsten Spotify och koppla den till Johan och Sonja.",
+          "text": "Jag vill lägga till tjänsten Spotify som Johan, Lo och Sonja använder.",
           "expected": {
             "requirements": [
               "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga.",
               "Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till.",
-              "Spotify är den nya tjänsten som både Johan och Sonja använder. Inga abonnemang, pris eller betalare hittas på."
+              "Spotify är den nya tjänsten som Johan, Lo och Sonja använder. Inga abonnemang, pris eller betalare hittas på."
             ],
             "objects": {
               "spotify": {
@@ -3758,6 +3763,11 @@
             "addRelationships": [
               {
                 "source": "johan",
+                "type": "Använder",
+                "target": "spotify"
+              },
+              {
+                "source": "lo",
                 "type": "Använder",
                 "target": "spotify"
               },
@@ -3773,14 +3783,14 @@
                 "properties": {
                   "preserve": [],
                   "additions": [],
-                  "meaning": "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga. Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till. Spotify är den nya tjänsten som både Johan och Sonja använder. Inga abonnemang, pris eller betalare hittas på."
+                  "meaning": "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga. Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till. Spotify är den nya tjänsten som Johan, Lo och Sonja använder. Inga abonnemang, pris eller betalare hittas på."
                 }
               }
             }
           },
           "clarification": {
             "preservedRequests": [
-              "Jag vill lägga till tjänsten Spotify och koppla den till Johan och Sonja."
+              "Jag vill lägga till tjänsten Spotify som Johan, Lo och Sonja använder."
             ],
             "requirements": [
               "Ställ en nödvändig relevant följdfråga om något som varken begäran eller kartans fakta avgör. Bevara den exakta oavslutade begäran. Hitta inte på ett svar, ändra inga andra uppgifter och påstå inte att uppdraget är slutfört eller sparat."
@@ -8613,7 +8623,7 @@
   },
   "everydaySource": {
     "path": "scripts/model-evaluation/everyday-source.json",
-    "sha256": "208c4c803019276ce7b53da1d0c0be76d42665b201e8cf802358babf6a31ae58",
+    "sha256": "4b8358f961fcc6f0f1aa8b716f3377a11b4abb3940c0295fdbe58eaf53af1af7",
     "entries": [
       {
         "number": 1,
