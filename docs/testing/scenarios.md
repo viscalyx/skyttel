@@ -827,8 +827,8 @@ gemensamma bankkonto (Bankkonto).
   bankkonto.
 
 **Avgränsning i kontrollen:** Svarskontrollen kräver dessutom besked om att
-Spotify Premium Family betalas från Bankkonto Hushåll. Det är ett ytterligare
-krav utöver frågan om abonnemang på Hushållskortet.
+Spotify-abonnemanget betalas från Vårt gemensamma bankkonto. Det är ett
+ytterligare krav utöver frågan om abonnemang på Hushållskortet.
 
 **Steg 1:**
 
@@ -1390,8 +1390,9 @@ okänt pris.
 (Tjänst).
 
 **Avgränsning i kontrollen:** Kontrollens tillståndskrav använder sambandstypen
-Gäller mellan abonnemanget och bostaden. Den räknar inte automatiskt andra
-semantiskt närliggande samband som samma utfall.
+Gäller från abonnemanget till Bahnhofs bredband och Hör till från abonnemanget
+till Storgatan 12. Den räknar inte automatiskt andra semantiskt närliggande
+samband som samma utfall.
 
 **Steg 1:**
 
