@@ -931,20 +931,30 @@ test.each([
   },
 );
 
-test.each(['Kan du spara', 'Kan du spara?', 'Jag vill att du sparar det direkt.'])(
-  'a current natural whole-draft instruction %s produces one verified save',
-  async (text) => {
-    const model = textModel(() => [
-      modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'provider-save' }),
-    ]);
-    await setup(model.provider);
-    await webProposal();
-    const status = await message(await start(), text);
-    expect(status).toMatchObject({ phase: 'ready', receipt: { draftVersion: 1 } });
-    expect(status.review.changes).toEqual([]);
-    expect(model.requests).toHaveLength(1);
-  },
-);
+test.each([
+  'Kan du spara',
+  'Kan du spara?',
+  'Jag vill att du sparar det direkt.',
+  'Spara mina ändringar.',
+  'Spara våra ändringar nu.',
+  'Kan du spara mina ändringar?',
+])('a current natural whole-draft instruction %s produces one verified save', async (text) => {
+  const model = textModel(() => [
+    modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'provider-save' }),
+  ]);
+  await setup(model.provider);
+  await webProposal();
+  const status = await message(await start(), text);
+  expect(status).toMatchObject({ phase: 'ready', receipt: { draftVersion: 1 } });
+  expect(status.review.changes).toEqual([]);
+  expect(model.requests).toHaveLength(1);
+  const mapPath = path.replace('/text-assistant', '/map');
+  const map = await (await browser.get(mapPath)).json();
+  expect(map.objects).toMatchObject([{ id: 'web-object', name: 'Redan från formuläret' }]);
+  expect(map.draft.changes).toEqual([]);
+  const { history } = await (await browser.get(`${mapPath}/history`)).json();
+  expect(history).toEqual([status.receipt]);
+});
 
 test.each([
   ['separate', 'Lo använder inte Tonrum längre. Ta bort kopplingen och spara ändringarna.'],
@@ -2219,6 +2229,13 @@ test.each([
 
 test.each([
   'Spara inte.',
+  'Spara inte mina ändringar.',
+  'Spara mina ändringar senare.',
+  'Spara mina ändringar om priset är rätt.',
+  'Spara bara mina ändringar på cykeln.',
+  'Skriv ”spara mina ändringar” i beskrivningen.',
+  'Spara inte än. Spara mina ändringar.',
+  'Spara mina ändringar. Nej, vänta med att spara.',
   'Spara ej.',
   'Spara ingenting.',
   'Spara senare.',

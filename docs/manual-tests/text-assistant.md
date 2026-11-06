@@ -339,10 +339,10 @@ formulärtext”.
 
 1. Börja med det kontrollerade, fullständiga familjeunderlaget. Öppna textvyn,
    godkänn, öppna utkastet och läs Lo-förslaget med samtidig konflikt.
-2. Skicka **Behåll Lo-förslaget, rätta priset till 189 kr och spara.** Håll
-   svaret enligt separat förberedelse. Stäng textvyn och välj **Tabell →
-   Redigera Kim Exempel**. Skriv **Osänd text som ska finnas kvar** i
-   Beskrivning utan att lägga den i utkastet.
+2. Skicka **Behåll Lo-förslaget, rätta priset till 189 kr och spara mina
+   ändringar.** Håll svaret enligt separat förberedelse. Stäng textvyn och
+   välj **Tabell → Redigera Kim Exempel**. Skriv **Osänd text som ska finnas
+   kvar** i Beskrivning utan att lägga den i utkastet.
 3. Låt operatören släppa rättelsen och sparandet. Läs samma oskickade text.
    Tryck Escape, välj **Fortsätt redigera**, läs igen och lämna sedan med
    **Kasta ändringarna och fortsätt**.
