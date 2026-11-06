@@ -857,6 +857,167 @@ test('answering a scope clarification with a read request completes its retained
   });
 });
 
+test('ordinary text clarification retains the selected task and leaves unrelated work separate', {
+  tags: ['technical'],
+}, async () => {
+  let interpreted = 0;
+  const model = textModel(
+    () => {
+      throw new Error('An unresolved scope question must not execute work.');
+    },
+    (input) => {
+      if (input.instructions.startsWith('SKYTTEL_TURN_CLARIFICATION')) {
+        const { current, untrusted } = JSON.parse(String(input.input[0].content));
+        if (current === 'Den andra.') {
+          const part = untrusted.parts.find(
+            (part: { request: string }) => part.request === 'Läs den där.',
+          );
+          return [
+            modelMessage(
+              JSON.stringify({
+                decision: 'rephrase',
+                parts: [{ id: part.id, revision: part.revision }],
+              }),
+            ),
+          ];
+        }
+        return [modelMessage('{"decision":"new"}')];
+      }
+      return [
+        modelMessage(
+          JSON.stringify({
+            mode: 'clarify',
+            request: [
+              'Vilket objekt vill du läsa?',
+              'Vilken uppgift vill du ändra?',
+              'Vilken av de två vill du läsa?',
+            ][interpreted++],
+            clarificationKind: interpreted === 1 ? 'information' : 'change',
+          }),
+        ),
+      ];
+    },
+  );
+  const first = await send(await setup(model.provider), 'Läs den där.');
+  const original = first.pendingParts?.[0];
+  if (!original) throw new Error('Expected a retained information request.');
+  const separate = await send(first, 'Ändra den där andra uppgiften.');
+  expect(separate.pendingParts).toHaveLength(2);
+  const unrelated = separate.pendingParts?.[1];
+  const repeated = await send(separate, 'Den andra.');
+  expect(repeated.error).toBeUndefined();
+  expect(repeated.pendingParts).toHaveLength(2);
+  expect(repeated.pendingParts?.[0]).toMatchObject({
+    id: original.id,
+    revision: original.revision + 1,
+    messageId: original.messageId,
+    request: 'Läs den där.',
+    kind: 'information',
+    dependsOnDraft: original.dependsOnDraft,
+    question: 'Vilken av de två vill du läsa?',
+    status: 'waiting',
+  });
+  expect(repeated.pendingParts?.[1]).toEqual(unrelated);
+  expect(repeated.questions).toEqual([
+    'Vilken av de två vill du läsa?',
+    'Vilken uppgift vill du ändra?',
+  ]);
+  expect(repeated.review).toEqual(first.review);
+  expect(repeated.operations).toEqual([]);
+});
+
+test('an ambiguous ordinary text reply preserves pending identities and asks which request is meant', {
+  tags: ['technical'],
+}, async () => {
+  let interpreted = 0;
+  let beginMatching!: () => void;
+  const matching = new Promise<void>((resolve) => {
+    beginMatching = resolve;
+  });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const model = textModel(
+    () => {
+      throw new Error('An unresolved question must not execute work.');
+    },
+    (input) => {
+      if (input.instructions.startsWith('SKYTTEL_TURN_CLARIFICATION')) {
+        beginMatching();
+        return held.then(() => [
+          modelMessage(
+            '{"decision":"unclear","question":"Vilken av dina väntande uppgifter menar du?"}',
+          ),
+        ]);
+      }
+      return [
+        modelMessage(
+          JSON.stringify({
+            mode: 'clarify',
+            request: interpreted++ ? 'Vilken menar du?' : 'Vilket objekt vill du läsa?',
+            clarificationKind: 'information',
+          }),
+        ),
+      ];
+    },
+  );
+  const first = await send(await setup(model.provider), 'Läs den där.');
+  const followup = send(first, 'Den andra.');
+  await matching;
+  const working = await (await browser.get(`${path}/${first.id}`)).json();
+  release();
+  expect(working.phase).toBe('working');
+  expect(working.pendingParts).toEqual(first.pendingParts);
+  const second = await followup;
+  expect(second.error).toBeUndefined();
+  expect(second.pendingParts).toEqual(first.pendingParts);
+  expect(second.reply).toContain('Vilken av dina väntande uppgifter menar du?');
+  expect(second.questionPending).toBe(true);
+  expect(second.review).toEqual(first.review);
+});
+
+test.each(['malformed', 'stale', 'missing', 'duplicate', 'empty'] as const)(
+  'an invalid %s clarification association leaves existing pending work unchanged',
+  { tags: ['technical'] },
+  async (failure) => {
+    const model = textModel(
+      () => {
+        throw new Error('An unresolved question must not execute work.');
+      },
+      (input) => {
+        if (input.instructions.startsWith('SKYTTEL_TURN_CLARIFICATION')) {
+          if (failure === 'malformed') return [modelMessage('{"decision":"complete"}')];
+          const { untrusted } = JSON.parse(String(input.input[0].content));
+          const { id, revision } = untrusted.parts[0];
+          const valid = { id, revision };
+          const parts =
+            failure === 'stale'
+              ? [{ id, revision: revision + 1 }]
+              : failure === 'missing'
+                ? [{ id: 'missing', revision }]
+                : failure === 'duplicate'
+                  ? [valid, valid]
+                  : [];
+          return [modelMessage(JSON.stringify({ decision: 'rephrase', parts }))];
+        }
+        return [modelMessage('{"mode":"clarify","request":"Vilket objekt menar du?"}')];
+      },
+    );
+    const first = await send(await setup(model.provider), 'Ändra den där.');
+    const second = await send(first, 'Den andra.');
+    expect(second.error).toBe(
+      ['malformed', 'empty'].includes(failure)
+        ? 'assistant_scope_unavailable'
+        : 'assistant_pending_part_changed',
+    );
+    expect(second.pendingParts).toEqual(first.pendingParts);
+    expect(second.review).toEqual(first.review);
+    expect(second.saveBlocked).toBe(true);
+    expect(second.operations).toEqual([]);
+  },
+);
+
 test.each(['change', 'information'] as const)(
   'a repeated scope %s clarification preserves the original pending identity and rejects stale replies',
   { tags: ['technical'] },
