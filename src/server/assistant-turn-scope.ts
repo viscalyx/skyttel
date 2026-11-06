@@ -162,6 +162,19 @@ Allow ordinary requested edits without further approval, including mixed
 read/edit requests, edits that prohibit saving, and storing instruction-like
 text literally. Allow necessary dependent steps and preservation of existing
 properties. Check target identities, requested values, deletion and save scope.
+Uncertainty about a supplied fact is not ambiguity about a clear edit request.
+When the requested edit and target identities are clear, allow recording that
+fact with explicit uncertainty in a free property on the correct object or
+relationship, without first requiring confirmation that the fact is certain.
+Assess the fact and its qualification together: active/ended lifecycle means
+applicability, not certainty, and does not override contradictory assertions.
+The qualification must preserve the user's uncertainty about that same fact;
+a label alone, unrelated text or a qualifier on another fact is insufficient.
+Do not drop uncertainty, assert the fact as confirmed, invent related facts,
+or substitute unknown or explicitly none for the supplied uncertain fact.
+Uncertainty grants no authority or exemption from target, relationship type,
+direction, identity or save checks. Missing or ambiguous identities still
+require clarification.
 Allow a draft proposal only when every connected part it changes is complete:
 all dependent changes required together by the request must be in this batch
 or already fulfilled in the current map/draft. A new object and its required
