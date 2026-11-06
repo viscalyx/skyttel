@@ -41,6 +41,7 @@ import {
   type CheckTurnActions,
   compareTurnActions,
   interpretTurnScope,
+  matchClarification,
   turnActionData,
 } from './assistant-turn-scope.js';
 import { assistantDraftReview } from './assistant-work.js';
@@ -2417,7 +2418,7 @@ export function textAssistantRoutes({
           return scopeOutcome;
         },
       );
-      async function admitScope() {
+      const admitScope = async () => {
         if (admitted) return true;
         if (!scopeJob) throw new MapError('assistant_scope_unavailable', 409);
         const outcome = await scopeJob;
@@ -2433,33 +2434,48 @@ export function textAssistantRoutes({
         }
         if (scope.mode === 'clarify') {
           session.state.saveIntent = undefined;
-          session.state.phase = 'ready';
           const message = session.state.activeMessage;
           if (!message) throw new MapError('invalid_request', 400);
-          const answers = message.answerProgress ?? message.answerTo;
+          let answers = message.answerProgress ?? message.answerTo;
+          let question = scope.request;
+          const pending = [...session.execution.parts.values()]
+            .filter((part) => part.status === 'waiting' || part.status === 'ready')
+            .map(({ id, revision, request, question }) => ({ id, revision, request, question }));
+          let create = !answers;
+          if (!answers && pending.length && !message.restate) {
+            const target = await matchClarification(respond, text, pending, interpretationSignal);
+            guard();
+            create = target.decision === 'new';
+            if (target.decision === 'rephrase') answers = target.parts;
+            if (target.decision === 'unclear') {
+              question = target.question;
+              session.state.newQuestions = [...(session.state.newQuestions ?? []), question];
+            }
+          }
           updateParts(
             session,
-            answers
-              ? []
-              : [
+            create
+              ? [
                   {
                     kind: scope.clarificationKind ?? 'change',
                     request: text,
-                    question: scope.request,
+                    question,
                     dependsOnDraft: true,
                   },
-                ],
+                ]
+              : [],
             answers?.map((part) => ({
               ...part,
               action: 'rephrase' as const,
               messageId: message.id,
               evidence: text,
-              question: scope.request,
+              question,
             })) ?? [],
             'turn-scope',
           );
-          session.state.reply = scope.request;
-          appendConversation(session, { role: 'assistant', text: scope.request });
+          session.state.phase = 'ready';
+          session.state.reply = question;
+          appendConversation(session, { role: 'assistant', text: question });
           discardReason = 'clarification';
           if (workContextStarted) rebuildContext(session);
           return false;
@@ -2468,7 +2484,7 @@ export function textAssistantRoutes({
         for (const attempt of attempts) attempt.used = true;
         scopeReady(checkActions, scope.mode, () => wholeRequestComplete);
         return true;
-      }
+      };
       const rejectAction = (name: string, reason: 'read_only_turn' | 'outside_requested_work') => {
         const reference = randomUUID();
         session.state.securityReference = reference;
