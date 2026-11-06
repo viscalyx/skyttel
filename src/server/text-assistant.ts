@@ -2434,17 +2434,28 @@ export function textAssistantRoutes({
         if (scope.mode === 'clarify') {
           session.state.saveIntent = undefined;
           session.state.phase = 'ready';
+          const message = session.state.activeMessage;
+          if (!message) throw new MapError('invalid_request', 400);
+          const answers = message.answerProgress ?? message.answerTo;
           updateParts(
             session,
-            [
-              {
-                kind: scope.clarificationKind ?? 'change',
-                request: text,
-                question: scope.request,
-                dependsOnDraft: true,
-              },
-            ],
-            [],
+            answers
+              ? []
+              : [
+                  {
+                    kind: scope.clarificationKind ?? 'change',
+                    request: text,
+                    question: scope.request,
+                    dependsOnDraft: true,
+                  },
+                ],
+            answers?.map((part) => ({
+              ...part,
+              action: 'rephrase' as const,
+              messageId: message.id,
+              evidence: text,
+              question: scope.request,
+            })) ?? [],
             'turn-scope',
           );
           session.state.reply = scope.request;
