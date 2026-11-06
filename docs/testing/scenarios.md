@@ -427,8 +427,9 @@ koppling.
 Valuta: SEK, Betalningsintervall: månad; Netflix (Tjänst).
 
 **Avgränsning i kontrollen:** Kontrollens tillståndskrav använder sambandstypen
-Gäller mellan abonnemanget och tjänsten. Den räknar inte automatiskt andra
-semantiskt närliggande samband som samma utfall.
+Gäller eller Tillhör tjänsten från abonnemanget till tjänsten. Exakt ett av
+sambanden ska läggas till, med rätt riktning och samma befintliga objekt som
+ändpunkter.
 
 **Steg 1:**
 
@@ -436,7 +437,8 @@ semantiskt närliggande samband som samma utfall.
 
 **Förväntat svar och resultat:**
 
-- Tillagt samband: Netflix-abonnemang → Gäller → Netflix.
+- Tillagt samband från Netflix-abonnemang till Netflix, med sambandstypen
+  Gäller eller Tillhör tjänsten.
 
 **Om en annan nödvändig fråga behövs:** Ställ en nödvändig relevant följdfråga
 om något som varken begäran eller kartans fakta avgör. Bevara den exakta
@@ -977,9 +979,10 @@ hitta på tjänsteanvändning.
 **Startläge:** Kartan innehåller Disney+ (Tjänst); Sonja (Person).
 
 **Avgränsning i kontrollen:** Kontrollens tillståndskrav använder sambandstypen
-Gäller mellan abonnemang och tjänst. Belopp, valuta och månad får uttryckas med
-den avgränsade numeriska eller textbaserade prisrepresentation som katalogen
-tillåter.
+Gäller eller Tillhör tjänsten från abonnemanget till Disney+. Exakt ett av
+sambanden ska läggas till. Sonjas betalningssamband krävs i båda alternativen.
+Belopp, valuta och månad får uttryckas med den avgränsade numeriska eller
+textbaserade prisrepresentation som katalogen tillåter.
 
 **Steg 1:**
 
@@ -993,7 +996,8 @@ tillåter.
   tillsammans, i en eller flera egenskaper. Sonja betalar; hon är inte därmed
   avtalspart eller ägare.
 - Disney+-abonnemang: namn Disney+-abonnemang; typ Abonnemang.
-- Tillagt samband: Disney+-abonnemang → Gäller → Disney+.
+- Tillagt samband från Disney+-abonnemang till Disney+, med sambandstypen
+  Gäller eller Tillhör tjänsten.
 - Tillagt samband: Sonja → Betalar → Disney+-abonnemang.
 
 **Om en annan nödvändig fråga behövs:** Ställ en nödvändig relevant följdfråga
@@ -1390,9 +1394,9 @@ okänt pris.
 (Tjänst).
 
 **Avgränsning i kontrollen:** Kontrollens tillståndskrav använder sambandstypen
-Gäller från abonnemanget till Bahnhofs bredband och Hör till från abonnemanget
-till Storgatan 12. Den räknar inte automatiskt andra semantiskt närliggande
-samband som samma utfall.
+Gäller eller Tillhör tjänsten från abonnemanget till Bahnhofs bredband. Exakt
+ett av dessa samband ska läggas till. Båda alternativen kräver dessutom Hör
+till från abonnemanget till Storgatan 12; tjänst och bostad är skilda ändpunkter.
 
 **Steg 1:**
 
@@ -1406,7 +1410,8 @@ samband som samma utfall.
   egenskap får läggas till. Priset får inte hittas på eller kopieras från ett
   annat abonnemang. Ingen fråga om pris behövs för att lägga till det.
 - Bredband från Bahnhof: namn Bredband från Bahnhof; typ Abonnemang.
-- Tillagt samband: Bredband från Bahnhof → Gäller → Bahnhofs bredband.
+- Tillagt samband från Bredband från Bahnhof till Bahnhofs bredband, med
+  sambandstypen Gäller eller Tillhör tjänsten.
 - Tillagt samband: Bredband från Bahnhof → Hör till → Storgatan 12.
 
 **Om en annan nödvändig fråga behövs:** Ställ en nödvändig relevant följdfråga
