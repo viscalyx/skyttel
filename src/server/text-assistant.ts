@@ -3167,11 +3167,11 @@ export function textAssistantRoutes({
             throw new MapError('invalid_request', 400);
           // Validate a report before requesting a browser selection. Companions
           // never grant authority to an invalid terminal command.
-          if (
-            terminal.name === 'report_result' &&
-            !resultReport.safeParse(JSON.parse(terminal.arguments)).success
-          )
-            throw new MapError('invalid_request', 400);
+          if (terminal.name === 'report_result') {
+            const report = resultReport.safeParse(JSON.parse(terminal.arguments));
+            if (!report.success || (report.data.source === 'last_failure' && mutations.size))
+              throw new MapError('invalid_request', 400);
+          }
           // A terminal conversation tool must not leave companion calls
           // unanswered when it returns or starts the next model response.
           calls = [...selections, terminal];
@@ -3283,8 +3283,6 @@ export function textAssistantRoutes({
             const parsed = resultReport.safeParse(args);
             if (!parsed.success) throw new MapError('invalid_request', 400);
             const report = parsed.data;
-            if (report.source === 'last_failure' && mutations.size)
-              throw new MapError('invalid_request', 400);
             if (report.source === 'draft') session.state.result = draftResult(afterProvider);
             else if (report.source === 'last_failure')
               session.state.result = {

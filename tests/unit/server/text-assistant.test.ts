@@ -3000,6 +3000,64 @@ test.each(['ask_questions', 'report_result'])(
   },
 );
 
+test('a semantically invalid failure report cannot display a selection after earlier batch work', async () => {
+  let turn = 0;
+  let typeId = '';
+  const model = textModel((request) => {
+    const input = JSON.parse(String(request.input.findLast((row) => row.role === 'user')?.content));
+    if (turn++ === 0)
+      return [
+        modelTool('submit_changes', {
+          version: input.draft.version,
+          contentVersion: input.draft.contentVersion,
+          completion: 'draft',
+          continueResponse: true,
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'bike',
+                baseRevision: null,
+                value: { typeId, name: 'Cykeln' },
+              },
+            },
+          ],
+        }),
+      ];
+    return [
+      modelTool('report_result', { source: 'last_failure' }),
+      modelTool('show_map_object', { objectId: 'bike' }),
+    ];
+  });
+  await setup(model.provider);
+  typeId = (await webProposal()).typeId;
+  const session = await start();
+  const submitted = await browser.post(`${path}/${session.id}/messages`, {
+    headers: { origin: app.origin },
+    data: {
+      revision: 0,
+      ...displayedVersion(session),
+      requestId: 'invalid-after-batch',
+      text: 'Lägg till cykeln och visa den. Beskriv senaste felet.',
+    },
+  });
+  expect(submitted.status()).toBe(202);
+  let current: TextAssistantView = session;
+  await expect
+    .poll(async () => {
+      current = await (await browser.get(`${path}/${session.id}`)).json();
+      return current.error ?? current.selection?.id;
+    })
+    .toBe('invalid_request');
+  expect(current.selection).toBeUndefined();
+  expect(current.displayedSelection).toBeUndefined();
+  expect(current.review.changes).toMatchObject([
+    { id: 'web-object' },
+    { id: 'bike', after: { name: 'Cykeln' } },
+  ]);
+  expect(current.receipt).toBeUndefined();
+});
+
 test.each(['before', 'after'])(
   'an invalid report %s selection fails before any display request',
   async (order) => {
