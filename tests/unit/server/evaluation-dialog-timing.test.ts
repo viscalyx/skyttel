@@ -136,6 +136,11 @@ function assistedDialog(modality: 'text' | 'voice', uncertainty = 0) {
     evidence: (modality === 'voice' ? ['backend', 'voice'] : ['backend']).flatMap((source) => [
       { id: `${source}-follow-up`, outcome: 'pass' as const, reason: 'Approved price question.' },
       { id: `${source}-necessary`, outcome: 'pass' as const, reason: 'Price is missing.' },
+      {
+        id: `${source}-retention`,
+        outcome: 'pass' as const,
+        reason: 'The original price request remains available while waiting.',
+      },
     ]),
   };
   parent.followUpSelection = {
@@ -307,6 +312,8 @@ test.each(['text', 'voice'] as const)(
       'unapproved-reply',
       'ambiguous-selection',
       'missing-required-proof',
+      'failed-retention',
+      'duplicated-retention',
       'failed-reply',
       'independent-reply-state',
     ]) {
@@ -328,6 +335,11 @@ test.each(['text', 'voice'] as const)(
         });
       } else if (fault === 'missing-required-proof') {
         fixture.parent.followUpSelection!.candidates[0].content!.pop();
+      } else if (fault === 'failed-retention' || fault === 'duplicated-retention') {
+        const evidence = fixture.parent.followUpSelection!.candidates[0].content!;
+        const retention = evidence.find((item) => item.id === 'backend-retention')!;
+        if (fault === 'failed-retention') retention.outcome = 'fail';
+        else evidence.push(structuredClone(retention));
       } else if (fault === 'independent-reply-state') {
         fixture.reply.fixed.push('saved_map_changed');
       } else fixture.reply.outcome = 'fail';
