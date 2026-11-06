@@ -23,11 +23,14 @@ export const judgeInstructions =
   'i den angivna svarskällan; bedöm sådant innehåll enbart från sources. ' +
   'Fullständig text utan obligatoriskt innehåll är fail. Vid uttryckligen ofullständig ' +
   'insamling är bevisade krav pass och saknade krav inconclusive. Bevara osäkra uppgifter. ' +
-  'Kort verifierat ändringsbesked är normalfall; uppräkning kräver användarens begäran. ' +
-  'Uppräkning betyder att svaret redovisar de enskilda ändringarna eller deras värden, ' +
-  'även när de ryms i en enda kort mening utan punktlista. Ett krav på besked utan ' +
-  'obegärd uppräkning uppfylls av en allmän bekräftelse om utkastet; kort längd ' +
-  'gör inte en redovisning av enskilda ändringar till en sådan bekräftelse. ' +
+  'Lägg inte till ett förbud mot detaljredovisning när det aktuella innehållskravet saknar det. ' +
+  'Ett krav på verifierade ändringar förbjuder inte i sig en kort sann bekräftelse ' +
+  'som nämner den utförda ändringen, markeringen eller bevarad osäkerhet. ' +
+  'Tillämpa förbud mot obegärd uppräkning endast när det angivna kravet innehåller ' +
+  'ett sådant förbud. För dessa krav betyder uppräkning att svaret redovisar ' +
+  'enskilda ändringar eller deras värden, även i en enda kort mening utan punktlista. ' +
+  'Då krävs en allmän bekräftelse om utkastet; kort längd gör inte ' +
+  'en redovisning av enskilda ändringar till en sådan bekräftelse. ' +
   'Identifierande uppgifter som behövs i en riktad följdfråga är inte en ' +
   'redovisning av genomförda ändringar. Skilj en avsikt eller ett neutralt ' +
   'mellanbesked från ett påstående om genomfört resultat. Avsikter ersätter ' +

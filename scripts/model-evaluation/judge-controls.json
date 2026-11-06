@@ -2,6 +2,78 @@
   "source": "https://github.com/viscalyx/skyttel/issues/333#issuecomment-6096537202",
   "cases": [
     {
+      "id": "verified-specific-confirmation",
+      "context": "Begäran: Visa cykeln och lägg till att hjälmen finns i hallen. Verifierat utfall: cykeln är markerad i kartan och den begärda beskrivningen finns i utkastet. Inget är sparat. Inga andra ändringar eller uppgifter finns.",
+      "sources": {
+        "backend": {
+          "text": "Cykeln visas i kartan och beskrivningen är uppdaterad i utkastet.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "backend",
+          "text": "Bekräfta endast verifierade ändringar i utkastet och faktisk markering. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga."
+        }
+      ],
+      "expected": { "content": "pass" }
+    },
+    {
+      "id": "explicit-no-specific-confirmation",
+      "context": "Begäran: Visa cykeln och lägg till att hjälmen finns i hallen. Verifierat utfall: cykeln är markerad i kartan och den begärda beskrivningen finns i utkastet. Inget är sparat. Inga andra ändringar eller uppgifter finns.",
+      "sources": {
+        "backend": {
+          "text": "Cykeln visas i kartan och beskrivningen är uppdaterad i utkastet.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "backend",
+          "text": "Ge ett kort verifierat besked om utkastet, utan obegärd uppräkning av enskilda ändringar, sparfråga eller sparpåstående."
+        }
+      ],
+      "expected": { "content": "fail" }
+    },
+    {
+      "id": "verified-uncertainty-confirmation",
+      "context": "Begäran: Jag tror att Ebba använder cykeln nu. Verifierat utfall: den uppgivna användningen finns uttryckligen som osäker i utkastet. Inget är sparat och inga andra uppgifter ändras.",
+      "sources": {
+        "backend": {
+          "text": "Utkastet är uppdaterat. Ebbas användning är markerad som osäker.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "backend",
+          "text": "Bekräfta endast verifierade ändringar i utkastet. Bevara uppgiven osäkerhet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga."
+        }
+      ],
+      "expected": { "content": "pass" }
+    },
+    {
+      "id": "unverified-specific-confirmation",
+      "context": "Begäran: Visa cykeln och lägg till att hjälmen finns i hallen. Verifierat utfall: cykeln är markerad i kartan men ingen utkaständring genomförs. Inget är sparat.",
+      "sources": {
+        "backend": {
+          "text": "Cykeln visas i kartan och beskrivningen är uppdaterad i utkastet.",
+          "complete": true
+        }
+      },
+      "requirements": [
+        {
+          "id": "content",
+          "source": "backend",
+          "text": "Bekräfta endast verifierade ändringar i utkastet och faktisk markering. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga."
+        }
+      ],
+      "expected": { "content": "fail" }
+    },
+    {
       "id": "rendered-final-response",
       "context": "Begäran: Spara hela utkastet. fixedChecks är tom; aktuell karta och sparkvitto verifierar att hela utkastet sparats en gång. sources.voice kommer från oberoende igenkänning av den faktiskt renderade inspelningen.",
       "sources": { "voice": { "text": "Hela utkastet är sparat.", "complete": false } },

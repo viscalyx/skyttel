@@ -127,6 +127,20 @@ const modelFailureRecovery = new Map([
   ['assistant_model_access', 'Fortsätt med valt alternativ'],
   ['assistant_model_unsupported', 'Fortsätt med valt alternativ'],
 ]);
+const reportContinuation = { continueResponse: z.boolean().default(false) };
+const resultReport = z.discriminatedUnion('source', [
+  z.object({ source: z.literal('draft'), ...reportContinuation }).strict(),
+  z.object({ source: z.literal('latest_save'), ...reportContinuation }).strict(),
+  z.object({ source: z.literal('last_failure'), ...reportContinuation }).strict(),
+  z
+    .object({
+      source: z.literal('save'),
+      ...reportContinuation,
+      operationId: z.string().regex(/^[\w-]{1,128}$/),
+      userId: z.string().min(1).max(200),
+    })
+    .strict(),
+]);
 
 export function textAssistantRoutes({
   database,
@@ -3136,38 +3150,66 @@ export function textAssistantRoutes({
             ),
           );
         }
-        // Only trusted read contracts can overlap. Mixed sets retain their
-        // checked execution order; mutations still require their atomic batch.
-        if (
-          calls.length > 1 &&
-          calls.every((action) =>
-            session.execution.mcp.tools.some(
-              (tool) => tool.name === action.name && tool.annotations?.readOnlyHint === true,
-            ),
+        const readCalls = calls.filter((action) =>
+          session.execution.mcp.tools.some(
+            (tool) => tool.name === action.name && tool.annotations?.readOnlyHint === true,
+          ),
+        );
+        const terminal = calls.find((action) =>
+          ['ask_questions', 'report_result'].includes(action.name),
+        );
+        if (terminal) {
+          const selections =
+            terminal.name === 'report_result'
+              ? calls.filter((action) => ['show_map_object', 'show_map_item'].includes(action.name))
+              : [];
+          if (selections.length > 1 || readCalls.length + selections.length + 1 !== calls.length)
+            throw new MapError('invalid_request', 400);
+          // Validate a report before requesting a browser selection. Companions
+          // never grant authority to an invalid terminal command.
+          if (
+            terminal.name === 'report_result' &&
+            !resultReport.safeParse(JSON.parse(terminal.arguments)).success
           )
+            throw new MapError('invalid_request', 400);
+          // A terminal conversation tool must not leave companion calls
+          // unanswered when it returns or starts the next model response.
+          calls = [...selections, terminal];
+        }
+        // Only trusted read contracts can overlap. Terminal companions finish
+        // in one consistent snapshot before any question, selection or report.
+        if (
+          (terminal && readCalls.length > 0) ||
+          (calls.length > 1 && readCalls.length === calls.length)
         ) {
           const results = await session.execution.reads.consistent(() =>
             Promise.all(
-              calls.map((action) =>
+              readCalls.map((action) =>
                 call(session, action.name, JSON.parse(action.arguments), guard),
               ),
             ),
           );
           guard();
-          for (const [index, action] of calls.entries())
+          for (const [index, action] of readCalls.entries())
             session.state.input.push({
               type: 'function_call_output',
               call_id: action.call_id,
               output: JSON.stringify(results[index]),
             });
-          continue;
+          if (!terminal) continue;
+          const current = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
+          if (
+            current.version !== version ||
+            current.contentVersion !== contentVersion ||
+            session.execution.reads.outdated().length
+          )
+            throw new MapError('assistant_draft_changed', 409);
         }
         for (const action of calls) {
           guard();
           const args = JSON.parse(action.arguments) as Record<string, unknown>;
           if (combined) Object.assign(args, { version, contentVersion });
           if (action.name === 'ask_questions') {
-            if (calls.length !== 1) throw new MapError('invalid_request', 400);
             const value = z
               .object({
                 questions: pendingQuestions,
@@ -3238,28 +3280,8 @@ export function textAssistantRoutes({
             return;
           }
           if (action.name === 'report_result') {
-            const withSelection =
-              calls.length === 2 &&
-              calls.filter((call) => call.name === 'report_result').length === 1 &&
-              calls.some((call) => ['show_map_object', 'show_map_item'].includes(call.name));
-            const continuation = { continueResponse: z.boolean().default(false) };
-            const parsed = z
-              .discriminatedUnion('source', [
-                z.object({ source: z.literal('draft'), ...continuation }).strict(),
-                z.object({ source: z.literal('latest_save'), ...continuation }).strict(),
-                z.object({ source: z.literal('last_failure'), ...continuation }).strict(),
-                z
-                  .object({
-                    source: z.literal('save'),
-                    ...continuation,
-                    operationId: z.string().regex(/^[\w-]{1,128}$/),
-                    userId: z.string().min(1).max(200),
-                  })
-                  .strict(),
-              ])
-              .safeParse(args);
-            if (!parsed.success || (calls.length !== 1 && !withSelection))
-              throw new MapError('invalid_request', 400);
+            const parsed = resultReport.safeParse(args);
+            if (!parsed.success) throw new MapError('invalid_request', 400);
             const report = parsed.data;
             if (report.source === 'last_failure' && mutations.size)
               throw new MapError('invalid_request', 400);
@@ -3297,10 +3319,6 @@ export function textAssistantRoutes({
               call_id: action.call_id,
               output: JSON.stringify(session.state.result),
             });
-            if (withSelection && calls.indexOf(action) < calls.length - 1) {
-              session.state.phase = 'working';
-              continue;
-            }
             if (
               report.continueResponse ||
               scope.responseRequired ||
