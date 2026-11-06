@@ -847,7 +847,7 @@
       "context": "Begäran gäller ett Används av-samband som anger att ingen använder tjänsten, med befintliga samband bevarade. Ett samband behöver två objekt och ingen är inget objekt. Kartan och utkastet är oförändrade; den exakta begäran finns kvar som väntande arbete. Katalogen saknar ett följdsvar för en fråga om en alternativ representation.",
       "sources": {
         "backend": {
-          "text": "Ett Används av-samband måste koppla tjänsten till en person, så ingen kan inte vara motpart. Vill du i stället lägga texten Ingen använder tjänsten som en egenskap och lämna befintliga samband orörda?",
+          "text": "Ett samband behöver två identifierade objekt, så ”ingen” kan inte vara motpart. Vill du i stället lägga texten Ingen använder tjänsten som en egenskap och lämna befintliga samband orörda?",
           "complete": true
         }
       },
