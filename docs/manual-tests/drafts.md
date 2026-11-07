@@ -4966,8 +4966,12 @@ granskning. Ladda om och läs samma fullständiga privata förslag och oberoende
 arbete.
 3. Öppna konflikten på nytt. Välj och bekräfta hela den föreslagna
 definitionen på aktuellt underlag. Läs åter hela definitionen i utkastet.
-4. Spara separat och starta om. Läs den sparade sambandstypens namn,
-beskrivning och riktningar samt det oberoende objektet.
+4. Spara separat och starta om. Läs den sparade sambandstypens namn och
+beskrivning i Inställningar → Typer samt det oberoende objektet i Tabell.
+Typen är en gruppering; verb anges på varje enskilt samband. De äldre
+riktningarna läser du i det historiska förslaget före sparandet enligt
+steg 1–3. Automationen kontrollerar dessutom att båda riktningarna och
+typens identitet bevaras i sparade uppgifter och sparkvitto efter omstart.
 
 **Förväntat resultat:**
 
@@ -7872,9 +7876,13 @@ UTKAST-140.
 1. Utför UTKAST-67:s fyra steg en gång med denna förberedelse. I steg 1–3
 läser du sambandstypen, inte objekttypen: **Min privata typbenämning**, **Min
 tidigare definition**, **Framåtriktning: förvaras i** och
-**Omvänd riktning: förvarar**. Typen består av namn, beskrivning och riktningar.
-2. I steg 4 läser både Robin och Alex dessa namn, beskrivning och riktningar i
-sambandstypens ordinarie formulär samt det sparade oberoende objektet.
+**Omvänd riktning: förvarar**. Riktningarna hör till den historiska
+definitionen som återställs.
+2. I steg 4 läser både Robin och Alex namn och beskrivning i sambandstypens
+ordinarie formulär samt det sparade oberoende objektet. Typen är en
+gruppering; verb anges på varje enskilt samband. Automationen kontrollerar
+dessutom att båda historiska riktningarna och typens identitet bevaras i
+sparade uppgifter och sparkvitto efter omstart för båda användarna.
 
 **Förväntat resultat:**
 

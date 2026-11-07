@@ -200,6 +200,11 @@ Spara först Gemensamt objekt.
 medlem.
 
 **Förutsättningar:** Alex och Robin delar ett tomt hushåll i separata profiler.
+Förberedaren kör den separata
+[förberedelsen för äldre riktningsuppgifter](historical-definition-preparation.md#äldre-riktningsuppgifter-i-sty-04)
+i båda profilerna före stegen. Den skapar äldre typmetadata genom publika
+anrop. Dagens typformulär ändrar namn och beskrivning; sambandets verb och
+valfria omvända benämning hör till det enskilda sambandet.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -214,7 +219,7 @@ medlem.
   "reference": "Chromium på dator; riktig lokal server och SQLite.",
   "outcomes": [
     "Konflikten stoppar hela sparandet fram till uttryckligt val.",
-    "Plats och har sparas med Robins oberoende beskrivning Los nya förklaring och sambandet."
+    "Plats sparas med Robins oberoende beskrivning Los nya förklaring och sambandet. Den äldre typbenämningen ”har” bevaras i de historiska uppgifterna."
   ]
 }
 ```
@@ -223,23 +228,26 @@ medlem.
 
 **Steg:**
 
-1. Spara Förvaring med förvaras i och innehåller. Alex föreslår namnet Plats
-   och omvänd
-   benämning har. Lägg också Cykeln, Garaget och ett Förvaring-samband i Alex
-utkast.
-2. Robin ändrar samma sparade typs beskrivning till Los nya förklaring och
-   omvänd
-   benämning till rymmer och sparar.
-3. Alex försöker spara, öppnar Granska konflikter och väljer sina föreslagna
-   motstridiga
-   värden. Lägg valen i utkastet och granska typen Plats.
-4. Spara hela utkastet. Starta om och läs sparandet i historiken.
+1. Alex laddar om och öppnar **Granska konflikter**. Läs typförslagets namn
+   **Plats** och den äldre omvända benämningen **har** mot det sparade
+   värdet **rymmer**. Den gemensamma kartan innehåller ännu inte Cykeln,
+   Garaget eller deras samband.
+2. Välj Alex föreslagna motstridiga värden och **Lägg valen i utkastet**.
+   Läs resultatet, stäng och granska hela typförslaget **Plats** i utkastet.
+   Robins oberoende beskrivning **Los nya förklaring** finns kvar. Läs också
+   Cykeln, Garaget och sambandsförslaget **Cykeln → förvaras i → Garaget**.
+3. Spara hela utkastet separat. Starta om och läs sparandet i historiken:
+   typen **Plats**, beskrivningen **Los nya förklaring** och sambandet finns
+   med. De äldre typbenämningarna granskar du i konflikten och förslaget
+   före sparandet. Förberedaren kontrollerar deras bevarande i det sparade
+   underlaget och kvittot enligt den separata förberedelsen.
 
 **Förväntat resultat:**
 
 - Konflikten stoppar hela sparandet fram till uttryckligt val.
-- Plats och har sparas med Robins oberoende beskrivning Los nya förklaring och
-  sambandet.
+- Plats sparas med Robins oberoende beskrivning Los nya förklaring och
+  sambandet. Den äldre typbenämningen **har** bevaras som historiska uppgifter;
+  sambandets egna ordval förvaras i och innehåller är oförändrade.
 
 ### STY-05: Dubblett och samtidig sparning ger inget delsparande
 

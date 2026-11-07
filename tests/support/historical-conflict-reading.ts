@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { closeSupportDialog, closeTextView, openDraftReview } from './client.js';
 import { expectConflictDraftValues, expectConflictReadValue } from './current-conflict-reading.js';
 import { openTypeDefinitions, readDraftProposal } from './domain-work.js';
@@ -60,10 +61,6 @@ export async function readSavedHistoricalDefinition(
       exact: true,
     }),
   ).toHaveValue(description);
-  if (relationship) {
-    await expect(definition.getByLabel('Benämning från startobjektet')).toHaveValue('förvaras i');
-    await expect(definition.getByLabel('Benämning från målobjektet')).toHaveValue('förvarar');
-  }
   await expect(definition.getByLabel('Fältets namn', { exact: true })).toHaveCount(0);
   await page
     .getByRole('button', {
@@ -74,6 +71,34 @@ export async function readSavedHistoricalDefinition(
     })
     .click();
   await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+}
+
+/** Legacy definition wording survives in saved data and receipts, independently of the editor. */
+export async function expectSavedHistoricalRelationshipMetadata(
+  page: Page,
+  mapPath: string,
+  id: string,
+) {
+  const response = await page.request.get(mapPath);
+  expect(response.status()).toBe(200);
+  const state = (await response.json()) as MapState;
+  const definition = state.relationshipTypes.find((type) => type.id === id);
+  expect(definition).toMatchObject({
+    id,
+    revision: 3,
+    name: 'Min privata typbenämning',
+    description: 'Min tidigare definition',
+    forwardLabel: 'förvaras i',
+    reverseLabel: 'förvarar',
+  });
+  const historyResponse = await page.request.get(`${mapPath}/history`);
+  expect(historyResponse.status()).toBe(200);
+  const { history } = (await historyResponse.json()) as { history: SaveReceipt[] };
+  expect(history[0].relationshipTypes?.find((change) => change.id === id)).toEqual({
+    id,
+    before: null,
+    after: definition,
+  });
 }
 
 export async function expectHistoricalProposalAbsent(page: Page, name: string) {

@@ -20,6 +20,7 @@ import {
 import { openTypeDefinitions } from '../support/domain-work.js';
 import {
   expectHistoricalProposalAbsent,
+  expectSavedHistoricalRelationshipMetadata,
   readHistoricalDefinitionProposal,
   readIndependentHistoricalProposal,
   readSavedHistoricalDefinition,
@@ -256,8 +257,12 @@ for (const kind of ['object', 'relationship'] as const)
       expect(savedState.objects.find((object) => object.id === 'independent')).toBeDefined();
       await app.installation.restart();
       await readRestoredHousehold(page, app.installation.origin, kind === 'relationship');
+      if (kind === 'relationship')
+        await expectSavedHistoricalRelationshipMetadata(page, app.path, app.typeId);
       const reader = await administrator.newPage();
       await readRestoredHousehold(reader, app.installation.origin, kind === 'relationship');
+      if (kind === 'relationship')
+        await expectSavedHistoricalRelationshipMetadata(reader, app.path, app.typeId);
     } finally {
       await administrator.close();
       await app.installation.close();
@@ -499,6 +504,7 @@ test('UTKAST-69: importing a private restoration requires a fresh explicit revie
     ).toBe(3);
     await app.installation.restart();
     await readRestoredHousehold(page, app.installation.origin, true);
+    await expectSavedHistoricalRelationshipMetadata(page, app.path, app.typeId);
   } finally {
     await administrator.close();
     await app.installation.close();
