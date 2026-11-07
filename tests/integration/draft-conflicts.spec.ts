@@ -214,7 +214,12 @@ for (const { width, height } of [
         ],
       };
       await app.propose(page.request, 'draft', 'lo', original);
-      const edge: RelationshipValue = { typeId: edgeType.id, sourceId: 'lo', targetId: 'service' };
+      const edge: RelationshipValue = {
+        typeId: edgeType.id,
+        verb: 'Använder',
+        sourceId: 'lo',
+        targetId: 'service',
+      };
       await app.propose(page.request, 'relationship', 'edge', edge);
       expect((await app.save(page.request, 'base-values')).status()).toBe(200);
       await proposeType(page.request, 'object-type', {
@@ -1961,6 +1966,7 @@ test('UTKAST-02: a stale discard preserves newer object and relationship proposa
     await relationship
       .getByLabel('Sambandstyp', { exact: true })
       .selectOption(initial.relationshipTypes[0].id);
+    await relationship.getByLabel('Verb', { exact: true }).fill('Använder');
     await relationship.getByLabel('Till objekt', { exact: true }).selectOption('service');
     await stageRelationshipAndClose(newer);
     await expect(await openDraftReview(newer)).toContainText('Lo Lind → Använder → Molnmusik');
