@@ -154,8 +154,8 @@ for (const { seeded, viewport } of references)
       expect(await (await page.request.get(path)).json()).toEqual(before);
       expect(await (await page.request.get(`${path}/history`)).json()).toEqual(history);
 
-      // The exact admitted transport must close before a replacement assistant.
-      // Reload alone leaves its server session alive.
+      // Verify cleanup of this exact transport before ending the retained
+      // conversation for the next independent preparation.
       const stoppedVoice = await page.request.post(`${admittedVoice.url()}/${firstVoice.id}/stop`, {
         headers: { origin: ready.origin },
         data: {},
