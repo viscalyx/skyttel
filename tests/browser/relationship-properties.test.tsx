@@ -132,7 +132,7 @@ test('relationship invalid property input blocks staging, preserves dirty work a
   expect(staged[0].value).toEqual({
     ...value,
     typeId: 'owns',
-
+    verb: 'har samband med',
     properties: [{ id: 'two', label: 'Pris', kind: 'boolean' }],
   });
   expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(innerWidth);
