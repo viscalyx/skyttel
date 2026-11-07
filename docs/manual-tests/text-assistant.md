@@ -285,8 +285,9 @@ utkast, sparade uppgifter och historik samt loggens begränsade innehåll.
    åter släppa ett felaktigt kastande enligt förberedelsen. En ny stoppnotis
    ska visas med en annan felreferens. Stäng notisen.
 7. Skicka **Prova ett vanligt fel.** Låt operatören neka svaret.
-   Läs uppdragsfelets notis och stäng den. Upprepa en gång; båda felen
-   ska visas trots det tidigare mikrofonhindret.
+   Läs modellfelets notis och välj **Avstå från det oavslutade arbetet**.
+   Upprepa en gång; båda felen ska visas trots det tidigare mikrofonhindret.
+   Avståendet startar inget nytt modellarbete.
 8. Skriv och skicka **Mitt nästa uppdrag**. Låt operatören släppa svaret.
    Läs **Ett nytt svar.** och kontrollera att ingen gammal notis visas.
 
@@ -857,9 +858,9 @@ tillgängligt”.
 
 - Ingen av de nekade, hypotetiska, uppskjutna eller citerade begärandena
   sparar kartan, även när ersättaren försöker anropa sparverktyget.
-- Felnotisen visar att uppdraget inte slutförs. Samtalstexten förklarar att
-  modellen är tillfälligt otillgänglig, att valet är kvar och att återförsök
-  kräver en egen handling när felet är löst.
+- Vid leverantörsfelet visar både felnotisen och samtalstexten att modellen
+  är tillfälligt otillgänglig, att valet är kvar och att återförsök kräver en
+  egen handling när felet är löst. Oavslutat arbete och senare kö väntar.
 - Utkastet och vanligt formulärarbete finns kvar. Provet är ett kontrollerat
   verktygsprov, inte bevis på språkförståelse.
 

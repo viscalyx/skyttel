@@ -738,6 +738,9 @@ TEXTMOBIL-03: före användarens stopp aktiverar operatören
 `window.skyttelVoiceFixture.setSound('remote', true)`; därefter körs
 `fail REQUEST` vid textfelet. Återställ ljudsignalen till `false` efter
 stoppkontrollen. TEXTMOBIL-04 får `fail REQUEST` vid första meddelandet.
+I båda fallen inväntar operatören användarens uttryckliga avstående; det
+startar inget nytt modellarbete. TEXTMOBIL-04 får ett nytt `fail REQUEST`
+för **Fortsätt med text.** efter avståendet, med fältets fokus kvar.
 TEXTMOBIL-05: kör `user Beskriv utkastet.` och `delegate`, håll svaret för
 arbetsstatusen, släpp `reply REQUEST Lo-förslaget ligger kvar i utkastet.`.
 Håll nästa skrivna uppdrag genom alla tre storleksbyten; släpp det efteråt.

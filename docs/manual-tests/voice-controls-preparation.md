@@ -533,7 +533,10 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    ska inte skapa ett nytt nödvändigt svarskrav.
 5. Öppna textvyn, skicka **Berätta mer.**, stäng panelerna med kryssen och kör
    `fail REQUEST`. Kräv samtalsnotisen
-   **Skyttel kunde inte slutföra uppdraget. Försök igen.**
+   **Modellen är tillfälligt otillgänglig. Valet är kvar.** Läs att oavslutat
+   arbete och senare kö väntar och att genomförda ändringar finns kvar.
+   Notisen erbjuder **Försök igen**, **Oavslutad begäran**,
+   **Avstå från det oavslutade arbetet** och **Stoppa allt**.
 6. Öppna textvyn och välj **Nytt samtal**. Beskrivningen
    **Förslag väntar på svar** ska fortfarande finnas i utkastet.
 
@@ -994,7 +997,8 @@ efter fallet och avsluta med `quit`.
 3. Fokusera **Prata med Skyttel**. Tabba genom samtalskontrollerna och läs dem
    i dokumentordning med hjälpmedlet.
 4. Stäng textvyn, upprepa ordningen, öppna textvyn och upprepa igen.
-5. Fokusera **Stäng notisen** och tryck Retur.
+5. Fokusera **Avstå från det oavslutade arbetet** och tryck Retur. Läs att
+   notisen försvinner och att meddelandefältet får fokus utan ett nytt `held`.
 
 ### Tidslinje HJALP-03
 
