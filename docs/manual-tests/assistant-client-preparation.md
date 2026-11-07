@@ -310,7 +310,8 @@ utan egenskaper. Skapa sambandstypen `stored` med följande värde:
 ```
 
 Föreslå `parking` med typ `stored`, `verb: "förvaras i"`,
-`reverseVerb: "innehåller"`, `sourceId: "bike"` och `targetId: "garage"`. Föreslå samma fulla värde med nytt ID `duplicate`;
+`reverseVerb: "innehåller"`, `sourceId: "bike"` och `targetId: "garage"`.
+Föreslå samma fulla värde med nytt ID `duplicate`;
 befintligt samband ska återanvändas. Föreslå också `second-kind` mellan
 samma objekt med en annan aktuell sambandstyp, `verb: "Använder"` och
 `reverseVerb: "Används av"`. Granska och spara.
