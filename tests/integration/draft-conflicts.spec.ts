@@ -591,6 +591,7 @@ for (const width of [1440, 390]) {
       const state = await app.read();
       const edge: RelationshipValue = {
         typeId: state.relationshipTypes[0].id,
+        verb: 'Använder',
         sourceId: 'lo',
         targetId: 'service',
         properties: [
@@ -1339,6 +1340,7 @@ test('UTKAST-07: overlapping relationship proposals show meanings and can accept
     const state = await app.read();
     const value: RelationshipValue = {
       typeId: state.relationshipTypes[0].id,
+      verb: 'Använder',
       sourceId: 'lo',
       targetId: 'service',
     };
@@ -1405,6 +1407,7 @@ test('UTKAST-10: relationship choices preserve independent status and preserve o
     const state = await app.read();
     const value: RelationshipValue = {
       typeId: state.relationshipTypes[0].id,
+      verb: 'Använder',
       sourceId: 'lo',
       targetId: 'service',
     };
@@ -1764,6 +1767,7 @@ test('UTKAST-09: a deleted relationship endpoint has an explicit recovery choice
     const state = await app.read();
     await app.propose(page.request, 'relationship', 'pending-edge', {
       typeId: state.relationshipTypes[0].id,
+      verb: 'Använder',
       sourceId: 'lo',
       targetId: 'service',
       properties: [

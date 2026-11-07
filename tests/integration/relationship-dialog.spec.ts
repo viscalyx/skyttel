@@ -703,6 +703,7 @@ test('SAMBAND-01: separate complete objects connect and remain independently edi
         (await read()).draft.changes.find((change) => change.after?.name === 'Blå cykeln')?.id ??
           '',
       );
+    await dialog.getByLabel('Verb', { exact: true }).fill('använder');
     await expect(dialog.getByRole('region', { name: 'Sambandet före inskickning' })).toContainText(
       'Alex använder Blå cykeln',
     );

@@ -33,6 +33,11 @@ samband** eller **Nytt samband**. Välj **Lägg i utkastet** och
 krysset. Definitioner öppnas i **Inställningar → Typer**;
 välj **Tillbaka till kartan** före granskning.
 
+Sambandets **Verb** anger dess eget ordval. När ett fall benämner sambandet
+Använder eller anger ett annat verb, fyll det i Verb när sambandet skapas.
+Typvalet väljer endast gruppering. Bevara ordvalet vid senare typrättning
+om fallet inte uttryckligen ber om ett ändrat verb.
+
 Granska genom **Skriv till Skyttel → Visa utkastet**. Välj radens
 **Visa förslaget: [namn]** för fullständigt tidigare underlag och förslag.
 Stäng läsningen med krysset. Utkastets sparikon öppnar **Spara utkastet**
