@@ -552,6 +552,7 @@ for (const seeded of [false, true]) {
         .click();
       command('release-save');
       command('hold-save off');
+      await expect(page.getByText('Medgivandet är återkallat', { exact: true })).toBeVisible();
       await expect
         .poll(
           async () =>
