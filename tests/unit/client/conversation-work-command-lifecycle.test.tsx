@@ -5,6 +5,7 @@ import {
   commandConversation,
   conversationCommands,
   deferredResponse,
+  requiredCommand,
 } from '../../support/conversation-hook.js';
 
 afterEach(() => {
@@ -41,8 +42,8 @@ test.each(['retry', 'abandon'] as const)(
     );
     act(() => result.current.setText('Ett separat oskickat ärende.'));
     await act(async () => {
-      if (action === 'retry') await result.current.retryWork!();
-      else await result.current.abandonWork!();
+      if (action === 'retry') await requiredCommand(result.current.retryWork)();
+      else await requiredCommand(result.current.abandonWork)();
     });
     expect(commands).toEqual([
       {
@@ -62,8 +63,8 @@ test.each(['no failed work', 'paused'] as const)(
     const view = situation === 'paused' ? { ...failed, paused: true } : commandConversation;
     const { result, commands } = await conversationCommands(() => undefined, view);
     await act(async () => {
-      await result.current.retryWork!();
-      await result.current.abandonWork!();
+      await requiredCommand(result.current.retryWork)();
+      await requiredCommand(result.current.abandonWork)();
     });
     expect(commands).toEqual([]);
     expect(result.current.session).toEqual(view);
@@ -74,7 +75,7 @@ test('retry refuses to start when authenticated result delivery cannot connect',
   const delivery = { connect: vi.fn(async () => undefined), received: vi.fn() };
   const { result, commands } = await conversationCommands(() => undefined, failed, true, delivery);
   delivery.connect.mockClear();
-  await act(async () => result.current.retryWork!());
+  await act(async () => requiredCommand(result.current.retryWork)());
   expect(delivery.connect).toHaveBeenCalledExactlyOnceWith(
     '/api/households/linden/text-assistant/original',
   );
@@ -82,7 +83,7 @@ test('retry refuses to start when authenticated result delivery cannot connect',
   expect(result.current.error).toContain('anslut');
   expect(result.current.session?.workFailure).toEqual(failed.workFailure);
   expect(result.current.pending).toBe(false);
-  await act(async () => result.current.abandonWork!());
+  await act(async () => requiredCommand(result.current.abandonWork)());
   expect(delivery.connect).toHaveBeenCalledOnce();
   expect(commands.map((entry) => entry.path.split('/').at(-1))).toEqual(['abandon-work']);
 });
@@ -104,14 +105,14 @@ test('retry acknowledges only the admitted task delivery and prevents repeat com
   );
   let retrying!: Promise<void>;
   act(() => {
-    retrying = result.current.retryWork!();
+    retrying = requiredCommand(result.current.retryWork)();
   });
   await act(async () => {
     await Promise.resolve();
   });
   await act(async () => {
-    await result.current.retryWork!();
-    await result.current.abandonWork!();
+    await requiredCommand(result.current.retryWork)();
+    await requiredCommand(result.current.abandonWork)();
   });
   expect(commands).toHaveLength(1);
   expect(commands[0].body).toMatchObject({
@@ -153,8 +154,8 @@ test.each(['retry', 'abandon'] as const)(
       failed,
     );
     await act(async () => {
-      if (action === 'retry') await result.current.retryWork!();
-      else await result.current.abandonWork!();
+      if (action === 'retry') await requiredCommand(result.current.retryWork)();
+      else await requiredCommand(result.current.abandonWork)();
     });
     expect(result.current.session?.workFailure).toEqual(failed.workFailure);
     expect(result.current.transcript.map((row) => row.text)).toEqual(['Tidigare privat samtal.']);
@@ -177,7 +178,7 @@ test('a late delivery connection cannot submit failed work after leaving the hou
   );
   let retrying!: Promise<void>;
   act(() => {
-    retrying = result.current.retryWork!();
+    retrying = requiredCommand(result.current.retryWork)();
   });
   rerender({ householdId: 'other-household' });
   await act(async () => {
@@ -198,7 +199,10 @@ test.each(['retry', 'abandon'] as const)(
     );
     let resolving!: Promise<void>;
     act(() => {
-      resolving = action === 'retry' ? result.current.retryWork!() : result.current.abandonWork!();
+      resolving =
+        action === 'retry'
+          ? requiredCommand(result.current.retryWork)()
+          : requiredCommand(result.current.abandonWork)();
     });
     await act(async () => {
       await Promise.resolve();
