@@ -254,8 +254,8 @@ Identitet.
 
 **Steg:**
 
-1. Öppna Samband för Familjemusik och Nytt samband. Välj Betalas med och
-   Betalkonto som verkligt Till objekt. Lägg till Uppgiftens säkerhet (Text,
+1. Öppna Samband för Familjemusik och Nytt samband. Välj typen Betalas med,
+   skriv **Betalas med** i **Verb** och välj Betalkonto som verkligt Till objekt. Lägg till Uppgiftens säkerhet (Text,
    Obesvarad fråga), lägg i utkastet och stäng sambandet. Ladda om.
 2. Öppna Visa utkastet. Läs **Identiteten är olöst. Rätta objektet i det
    ordinarie flödet.** för Betalkonto och kontrollera

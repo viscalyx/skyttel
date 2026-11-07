@@ -487,7 +487,7 @@ förslaget. Faktisk uppläsning provas i LIVSCYKEL-09.
 **Steg:**
 
 1. Redigera sambandet från Lo till Familjemusik. Ändra Från objekt till
-   Molnmusik, välj typen **Betalar** och
+   Molnmusik, välj typen **Betalar**, skriv **Betalar** i **Verb** och välj
    status **Gäller fortfarande**. Lägg sambandet i ditt utkast med Enter och
    välj Stäng samband utan att spara. Öppna Utkast → Visa förslaget för
    Molnmusik → Betalar → Familjemusik. Läs båda värdesidorna:
@@ -551,7 +551,8 @@ connected edge and preserves history”.
 **Steg:**
 
 1. Öppna **Lo Exempel → Använder → Familjemusik**, välj **Betalar** som
-   sambandstyp och lägg sambandet i utkastet utan att spara. Välj
+   sambandstyp, skriv **Betalar** i **Verb** och lägg sambandet i utkastet
+   utan att spara. Välj
    **Stäng samband**.
 2. Välj den röda papperskorgen **Ta bort Familjemusik** på tabellraden.
    Granska **Visa utkastet**
