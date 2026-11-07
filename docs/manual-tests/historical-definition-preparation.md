@@ -132,7 +132,8 @@ bevarar revision 2 och rymmer; sambandets typsnapshot bevarar revision 3
 och har. Kör från repositoryts rot:
 
 ```bash
-npm run test:integration:ci -- tests/integration/relationship-types.spec.ts --grep 'STY-04:'
+npm run test:integration:ci -- \
+  tests/integration/relationship-types.spec.ts --grep 'STY-04:'
 ```
 
 Detta är separat automatiserat underlag från en egen tillfällig installation,
