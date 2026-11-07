@@ -12,8 +12,10 @@ inte
 
 Starta en ny installation. Skapa Tryckprov, välj **Skriv till Skyttel** och
 **Nytt samtal**, markera **Fråga inte igen för det här hushållet** och välj
-**Godkänn och starta**. Ladda om sidan så
-att inget samtal ännu pågår. Öppna Console och kör hela blocket:
+**Godkänn och starta**. Ladda om sidan. Öppna textvyn och kontrollera att
+det återställda samtalet är pausat. Välj **Avsluta samtalet** och stäng
+textvyn så att nästa mikrofontryck startar ett nytt samtal. Utkastet
+behålls. Öppna Console och kör hela blocket:
 
 <!-- markdownlint-disable MD013 -->
 ```javascript
@@ -138,8 +140,10 @@ await fetch('VOICE-ADRESS/VOICE-ID/stop', {
 
 Kräv status 200 och `voice.phase: 'closed'` innan omladdning. Omladdning ensam
 avslutar inte serverns gamla röstsession; en ny samtalsstart kan annars stänga
-den som förlorad åtkomst. Installera därefter blocken på nytt. Avsluta launchern
-med `quit` och kontrollera borttagen katalog enligt röstguiden.
+den som förlorad åtkomst. Efter omladdningen: öppna textvyn, läs att samtalet
+är pausat, välj **Avsluta samtalet** och stäng textvyn före nästa fristående
+startprov. Installera därefter blocken på nytt. Avsluta launchern med `quit`
+och kontrollera borttagen katalog enligt röstguiden.
 
 De två separata tekniska proven för publika kontroller i
 [voice-controls-preparation.spec.ts](../../tests/technical-browser/voice-controls-preparation.spec.ts)
