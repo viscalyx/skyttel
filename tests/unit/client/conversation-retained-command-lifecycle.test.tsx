@@ -4,6 +4,7 @@ import {
   commandConversation,
   conversationCommands,
   deferredResponse,
+  requiredCommand,
 } from '../../support/conversation-hook.js';
 
 afterEach(() => {
@@ -40,10 +41,10 @@ test('the retained list prevents concurrent opening and rejects unsent text befo
   });
   let reading!: Promise<void>;
   act(() => {
-    reading = result.current.listRetained!();
+    reading = requiredCommand(result.current.listRetained)();
   });
-  await act(async () => result.current.listRetained!());
-  expect(await result.current.openRetained!('earlier')).toBe(false);
+  await act(async () => requiredCommand(result.current.listRetained)());
+  expect(await requiredCommand(result.current.openRetained)('earlier')).toBe(false);
   expect(reads).toBe(1);
   await act(async () => {
     waiting.resolve(Response.json({ conversations: retained }));
@@ -53,7 +54,7 @@ test('the retained list prevents concurrent opening and rejects unsent text befo
   act(() => result.current.setText('Jag har inte skickat detta.'));
   let opened!: boolean;
   await act(async () => {
-    opened = await result.current.openRetained!('earlier');
+    opened = await requiredCommand(result.current.openRetained)('earlier');
   });
   expect(opened).toBe(false);
   expect(result.current.error).toContain('Skicka eller töm meddelandefältet');
@@ -61,7 +62,7 @@ test('the retained list prevents concurrent opening and rejects unsent text befo
   expect(commands).toEqual([]);
   act(() => result.current.setText(''));
   await act(async () => {
-    opened = await result.current.openRetained!('earlier');
+    opened = await requiredCommand(result.current.openRetained)('earlier');
   });
   expect(opened).toBe(true);
   expect(commands.map((entry) => entry.path.split('/').at(-1))).toEqual(['pause', 'open']);
@@ -81,13 +82,13 @@ test('a rejected retained-list read can be explicitly retried without erasing th
         ? Response.json({ error: 'request_failed' }, { status: 503 })
         : Response.json({ conversations: retained });
   });
-  await act(async () => result.current.listRetained!());
+  await act(async () => requiredCommand(result.current.listRetained)());
   expect(result.current.unknown).toBe(true);
   expect(result.current.pending).toBe(false);
   expect(result.current.retainedConversations).toBeUndefined();
   expect(result.current.session?.id).toBe('original');
   failed = false;
-  await act(async () => result.current.listRetained!());
+  await act(async () => requiredCommand(result.current.listRetained)());
   expect(result.current.retainedConversations).toEqual(retained);
   expect(result.current.transcript.map((row) => row.text)).toEqual(['Tidigare privat samtal.']);
 });
@@ -99,7 +100,7 @@ test('a retained-list response from a departed household cannot expose its priva
   );
   let reading!: Promise<void>;
   act(() => {
-    reading = result.current.listRetained!();
+    reading = requiredCommand(result.current.listRetained)();
   });
   rerender({ householdId: 'other-household' });
   await act(async () => {
@@ -117,7 +118,7 @@ test.each([403, 404])(
     );
     let opened!: boolean;
     await act(async () => {
-      opened = await result.current.openRetained!('earlier');
+      opened = await requiredCommand(result.current.openRetained)('earlier');
     });
     expect(opened).toBe(false);
     expect(result.current.session).toBeNull();
@@ -134,7 +135,7 @@ test('a delayed retained opening cannot insert the previous household transcript
   );
   let opening!: Promise<boolean>;
   act(() => {
-    opening = result.current.openRetained!('earlier');
+    opening = requiredCommand(result.current.openRetained)('earlier');
   });
   await act(async () => {
     await Promise.resolve();
@@ -162,7 +163,7 @@ test('resuming a paused conversation waits for explicit consent and resumes only
     { ...commandConversation, paused: true },
     false,
   );
-  await act(async () => result.current.resumeConversation!());
+  await act(async () => requiredCommand(result.current.resumeConversation)());
   expect(result.current.consent.asking).toBe('text');
   expect(commands).toEqual([]);
   await act(async () => result.current.approve(false));
@@ -184,7 +185,7 @@ test('a server rejection of stale consent asks again while retaining the paused 
         : undefined,
     { ...commandConversation, paused: true },
   );
-  await act(async () => result.current.resumeConversation!());
+  await act(async () => requiredCommand(result.current.resumeConversation)());
   expect(result.current.session?.paused).toBe(true);
   expect(result.current.consent.asking).toBe('text');
   expect(result.current.consent.valid).toBe(false);
@@ -199,9 +200,9 @@ test('a paused resume ignores repeat presses and a late result after household d
   );
   let resuming!: Promise<void>;
   act(() => {
-    resuming = result.current.resumeConversation!();
+    resuming = requiredCommand(result.current.resumeConversation)();
   });
-  await act(async () => result.current.resumeConversation!());
+  await act(async () => requiredCommand(result.current.resumeConversation)());
   expect(commands).toHaveLength(1);
   rerender({ householdId: 'other-household' });
   await act(async () => {
