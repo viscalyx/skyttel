@@ -59,7 +59,7 @@ test.each([
         return state.phase;
       })
       .toBe('ready');
-  const authorizations = model.authorizationRequests.length;
+    const authorizations = model.authorizationRequests.length;
     const before = await (await browser.get(`${root}/map`)).json();
     const paused = await post(`${path}/${state.id}/pause`);
     expect(paused.status(), await paused.text()).toBe(200);
@@ -121,7 +121,7 @@ test.each([
     expect((await (await browser.get(`${path}/restore`)).json()).conversation).toBeUndefined();
     expect(await (await browser.get(`${root}/map`)).json()).toEqual(before);
     expect(model.requests).toHaveLength(1);
-  expect(model.authorizationRequests).toHaveLength(authorizations);
+    expect(model.authorizationRequests).toHaveLength(authorizations);
 
     const fresh = await post(path, approvedForVisit);
     expect(fresh.status(), await fresh.text()).toBe(201);
@@ -129,7 +129,7 @@ test.each([
     expect(next.id).not.toBe(state.id);
     expect(next).toMatchObject({ conversation: [], pendingParts: [], queuedMessages: 0 });
     expect(model.requests).toHaveLength(1);
-  expect(model.authorizationRequests).toHaveLength(authorizations);
+    expect(model.authorizationRequests).toHaveLength(authorizations);
   },
 );
 
