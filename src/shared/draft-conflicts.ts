@@ -13,6 +13,7 @@ import type {
 } from './map.js';
 import { proposedObjectTypes, proposedRelationships, proposedRelationshipTypes } from './map.js';
 import { resolvedProperties } from './property-merge.js';
+import { relationshipVerb } from './relationship-verb.js';
 import { resolveTypeDefinition } from './type-definition.js';
 
 export type DraftConflict = {
@@ -73,6 +74,9 @@ export function resolvedRelationshipValue(
   const meaning = ['typeId', 'sourceId', 'targetId'] as const;
   const value = meaning.every((key) => after[key] === before[key]) ? current : after;
   const lifecycle = after.lifecycle === before.lifecycle ? current.lifecycle : after.lifecycle;
+  const verb = after.verb === before.verb ? current.verb : after.verb;
+  const reverseVerb =
+    after.reverseVerb === before.reverseVerb ? current.reverseVerb : after.reverseVerb;
   const properties =
     before.properties || current.properties || after.properties
       ? resolvedProperties(before.properties, current.properties, after.properties)
@@ -82,6 +86,8 @@ export function resolvedRelationshipValue(
     typeId: value.typeId,
     sourceId: value.sourceId,
     targetId: value.targetId,
+    ...(verb !== undefined ? { verb } : {}),
+    ...(reverseVerb !== undefined ? { reverseVerb } : {}),
     ...(lifecycle ? { lifecycle } : {}),
   };
 }
@@ -163,7 +169,11 @@ export function draftConflicts(state: MapState): DraftConflict[] {
             edge.id !== change.id &&
             edge.typeId === after.typeId &&
             edge.sourceId === after.sourceId &&
-            edge.targetId === after.targetId,
+            edge.targetId === after.targetId &&
+            relationshipVerb(
+              edge,
+              edgeTypes.find((type) => type.id === edge.typeId),
+            ) === relationshipVerb(after, type ?? undefined),
         )
       : [];
     const missingEndpoints = after

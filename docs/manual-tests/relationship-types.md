@@ -25,6 +25,10 @@ annat arbete. Typdefinitioner finns under **Inställningar → Typer**;
 **Objekttyper** och **Sambandstyper och riktning** visar respektive lista.
 Välj **Tillbaka till kartan** före objekt- och sambandsarbete.
 
+Verb hör till det enskilda sambandet. När ett fall anger ett ordval,
+fyll även fältet **Verb**; ett typval väljer bara gruppering. Om ingen
+omvänd benämning finns visas den ursprungliga riktningen från båda objekten.
+
 Granska utkastet genom **Skriv till Skyttel → Visa utkastet → Visa förslaget:
 [namn]**.
 Stäng läsningen med krysset. Spara hela utkastet separat och invänta
@@ -66,16 +70,14 @@ medlem.
 
 **Steg:**
 
-1. Skapa sambandstypen Förvaring i Typer. Försök skicka före varje
-   obligatoriskt värde
-   och kontrollera fokus. Ange namnet, beskrivningen Var hushållets saker
-finns och
-   benämningarna förvaras i och innehåller. Lägg typförslaget i utkastet.
+1. Skapa sambandstypen Förvaring i Typer. Försök skicka före det
+   obligatoriska namnet och kontrollera fokus. Ange namnet och beskrivningen
+   Var hushållets saker finns. Lägg typförslaget i utkastet.
 2. Skapa Alex blå cykel som Fordon och Garaget som Bostad. Lägg båda i
    utkastet. Öppna
    Samband för Alex blå cykel, Nytt samband och välj Förvaring till Garaget.
-Lägg till
-   Anteckning (Text, Låst skåp). Lägg i utkastet och stäng sambandet.
+   Ange förvaras i som Verb. Lägg till Anteckning (Text, Låst skåp).
+   Lägg i utkastet och stäng sambandet.
 3. Starta om installationen, ladda om och granska sambandsförslaget. Spara hela
    utkastet. Starta om igen och läs sambandet.
 
@@ -120,28 +122,24 @@ och Garaget.
 **Steg:**
 
 1. Skapa Alex blå cykel och Garaget i utkastet. Skapa Förvaring med
-   beskrivningen Var
-   hushållets saker finns och benämningarna förvaras i och innehåller.
-2. Öppna Nytt samband från cykeln och välj Garaget. Försök skicka utan typ,
-   välj sedan
-   Förvaring och lägg i utkastet. Läs typens omvända benämning i förslaget.
-3. Försök lägga till samma typ och ändpunkter igen. Läs Sambandet finns redan
-   och avbryt
-   formuläret med bekräftad förlust. Spara hela utkastet.
+   beskrivningen Var hushållets saker finns.
+2. Öppna Nytt samband från cykeln och välj Garaget. Ange verbet förvaras i
+   och den valfria omvända benämningen innehåller på sambandet. Välj
+   Förvaring som gruppering och lägg i utkastet. Läs förslaget.
+3. Försök lägga till samma typ, verb och ändpunkter igen. Läs Sambandet finns
+   redan och avbryt formuläret med bekräftad förlust. Spara hela utkastet.
 4. Läs sambandet från cykeln och från Garaget. Öppna redigering från Garaget och
    kontrollera att cykeln fortfarande är frånobjektet. Stäng utan ändring.
 5. Ändra typens namn till Plats, beskrivningen till Hushållets
-   förvaringsplatser och
-   benämningen från startobjektet till finns i. Granska definitionens gamla
-och nya
-   beskrivning, spara och läs sambandet igen.
+   förvaringsplatser. Granska definitionens gamla och nya beskrivning, spara
+   och läs sambandet igen.
 
 **Förväntat resultat:**
 
 - Båda benämningarna avser samma riktade samband med oförändrade objekt och
   identitet.
 - Dubblett ger begripligt besked och typens namnändring visas efter samlat
-  sparande.
+  sparande. Sambandets ordval förvaras i och innehåller behålls.
 
 ### STY-03: Vanlig medlem redigerar delad typ med privat förslag
 
@@ -178,15 +176,14 @@ Spara först Gemensamt objekt.
 **Steg:**
 
 1. Robin öppnar Typer, Sambandstyper och riktning och ändrar hushållets första
-   sambandstyp, Använder. Ange Medlemmens förklaring som beskrivning och
-   **används av** i det obligatoriska fältet **Benämning från målobjektet**.
-   Behåll namnet och benämningen från startobjektet. Lägg typförslaget i
+   sambandstyp, Använder. Ange Medlemmens förklaring som beskrivning.
+   Behåll namnet. Lägg typförslaget i
    utkastet och kontrollera att förslaget finns i Robins utkast.
 2. Alex kontrollerar att Robins förslag inte finns i Alex utkast och att den
    sparade
    typen fortfarande har sin gamla beskrivning.
 3. Robin sparar hela utkastet. Alex laddar om, öppnar samma typ och läser
-   beskrivningen och benämningen **används av** från målobjektet.
+   beskrivningen.
 
 **Förväntat resultat:**
 

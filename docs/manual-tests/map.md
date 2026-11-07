@@ -446,10 +446,11 @@ i ljust tema; behåll samma databas vid omstart.
 4. Skapa Batteriet av samma typ med Ospecificerat objekt och utan fria
    egenskaper. Lägg i utkastet.
 5. Öppna Typer igen och skapa Komplettering med beskrivningen Delar som
-   används ihop och benämningarna kompletteras av och kompletterar. Lägg typen
+   används ihop. Lägg typen
    i utkastet och återgå till kartan.
 6. Öppna Samband för Paneler på taket och Nytt samband. Välj Komplettering och
-   Batteriet som verkligt mål. Lägg till Uppgiftens säkerhet (Text, Osäkert
+   Batteriet som verkligt mål. Ange kompletteras av i Verb. Lägg till
+   Uppgiftens säkerhet (Text, Osäkert
    uppgivet). Lägg i utkastet och stäng sambandet.
 7. Granska de fem förslagen i Visa utkastet. Läs båda objektens hela förslag
    och sambandet. Panelernas Reserv är Nej; Batteriet saknar egenskapsrader.

@@ -1,6 +1,7 @@
 import { isDeepStrictEqual } from 'node:util';
 import { type APIRequestContext, request } from '@playwright/test';
 import type { MapState, ObjectValue, RelationshipValue } from '../../src/shared/map.js';
+import { relationshipVerb } from '../../src/shared/relationship-verb.js';
 import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../tests/support/client.js';
 import type { createInstallation } from '../../tests/support/installation.js';
@@ -25,6 +26,40 @@ function normalDefaults<T extends Record<string, unknown>>(value: T): T {
   if (result.lifecycle === 'active') delete result.lifecycle;
   if (Array.isArray(result.properties) && !result.properties.length) delete result.properties;
   return result;
+}
+
+function expectedRelationshipVerb(value: Pick<NamedRelationship, 'verb' | 'type'>) {
+  return (value.verb ?? value.type).toLocaleLowerCase('sv');
+}
+
+function sameRelationshipMeaning(
+  actual: Pick<NamedRelationship, 'source' | 'target' | 'verb' | 'type' | 'category'>,
+  expected: Pick<
+    NamedRelationship,
+    'source' | 'target' | 'verb' | 'type' | 'category' | 'verbMeaning' | 'direction'
+  >,
+) {
+  const endpoints = actual.source === expected.source && actual.target === expected.target;
+  const reversed =
+    expected.direction === 'either' &&
+    expected.verbMeaning !== undefined &&
+    actual.source === expected.target &&
+    actual.target === expected.source;
+  return (
+    (endpoints || reversed) &&
+    (expected.verbMeaning !== undefined
+      ? Boolean(actual.verb?.trim())
+      : expectedRelationshipVerb(actual) === expectedRelationshipVerb(expected)) &&
+    (expected.category === undefined || actual.type === expected.category)
+  );
+}
+
+function relationshipMeaning(value: NamedRelationship) {
+  const { type: _type, verb: _verb, verbMeaning, direction: _direction, ...rest } = value;
+  return {
+    ...rest,
+    verb: verbMeaning === undefined ? expectedRelationshipVerb(value) : '<semantic wording>',
+  };
 }
 
 /** A fresh SQLite installation for every independent scenario. Only external
@@ -118,6 +153,8 @@ export async function evaluationEnvironment(
           typeId,
           sourceId: edge.source,
           targetId: edge.target,
+          verb: edge.verb ?? edge.type,
+          ...(edge.reverseVerb !== undefined ? { reverseVerb: edge.reverseVerb } : {}),
           ...(edge.properties ? { properties: edge.properties } : {}),
         },
       });
@@ -287,6 +324,10 @@ export async function evaluationEnvironment(
             ...(preserveIds.has(id) ? { id } : {}),
             source: objectAliases.get(sourceId) ?? sourceId,
             type: definitions.find((item) => item.id === typeId)?.name ?? typeId,
+            verb: relationshipVerb(
+              { ...rest, typeId, sourceId, targetId },
+              definitions.find((item) => item.id === typeId),
+            ),
             target: objectAliases.get(targetId) ?? targetId,
             ...clean,
           });
@@ -303,7 +344,10 @@ export async function evaluationEnvironment(
         target.objects.set(id, { ...target.objects.get(id), id, ...changes });
       for (const edge of expected.removeRelationships ?? []) {
         const index = target.relationships.findIndex((item) =>
-          isDeepStrictEqual(normalDefaults({ ...item }), normalDefaults({ ...edge })),
+          isDeepStrictEqual(
+            relationshipMeaning(normalDefaults({ ...item })),
+            relationshipMeaning(normalDefaults({ ...edge })),
+          ),
         );
         if (index < 0) throw new Error('evaluation_invalid_expected_removal');
         target.relationships.splice(index, 1);
@@ -315,18 +359,8 @@ export async function evaluationEnvironment(
       target.semanticRelationships = [
         ...target.semanticRelationships.filter(
           (rule) =>
-            !expected.removeRelationships?.some(
-              (edge) =>
-                edge.source === rule.source &&
-                edge.type === rule.type &&
-                edge.target === rule.target,
-            ) &&
-            !expected.semanticRelationships?.some(
-              (edge) =>
-                edge.source === rule.source &&
-                edge.type === rule.type &&
-                edge.target === rule.target,
-            ),
+            !expected.removeRelationships?.some((edge) => sameRelationshipMeaning(edge, rule)) &&
+            !expected.semanticRelationships?.some((edge) => sameRelationshipMeaning(edge, rule)),
         ),
         ...(expected.semanticRelationships ?? []),
       ];
@@ -386,7 +420,9 @@ export async function evaluationEnvironment(
           !expectation.requirements.length &&
           targets.some(
             (target) =>
-              Object.keys(target.semanticObjects).length || target.semanticRelationships.length,
+              Object.keys(target.semanticObjects).length ||
+              target.semanticRelationships.length ||
+              target.relationships.some((edge) => edge.verbMeaning !== undefined),
           )
         )
           throw new Error('evaluation_semantic_requirement_missing');
@@ -454,24 +490,25 @@ export async function evaluationEnvironment(
             objectAliases,
             new Set(target.relationships.flatMap((edge) => (edge.id ? [edge.id] : []))),
           ).map((edge) => {
-            const rule = target.semanticRelationships.find(
-              (rule) =>
-                rule.source === edge.source &&
-                rule.type === edge.type &&
-                rule.target === edge.target,
+            const rule = target.semanticRelationships.find((rule) =>
+              sameRelationshipMeaning(edge, rule),
             );
-            const expected = target.relationships.find(
-              (value) =>
-                value.source === edge.source &&
-                value.type === edge.type &&
-                value.target === edge.target,
+            const expected = target.relationships.find((value) =>
+              sameRelationshipMeaning(edge, value),
             );
-            if (!rule || !expected) return edge;
+            const comparable = { ...edge };
+            if (expected?.verbMeaning !== undefined) {
+              comparable.verbMeaning = expected.verbMeaning;
+              comparable.source = expected.source;
+              comparable.target = expected.target;
+            }
+            if (expected?.category !== undefined) comparable.category = edge.type;
+            if (expected?.reverseVerb === undefined) delete comparable.reverseVerb;
+            if (!rule || !expected) return comparable;
             if (!matchesProperties(edge.properties, expected.properties, rule.properties)) {
               failures.push('effective_relationships');
-              return edge;
+              return comparable;
             }
-            const comparable = { ...edge };
             if (expected.properties === undefined) delete comparable.properties;
             else comparable.properties = expected.properties;
             return comparable;
@@ -482,15 +519,13 @@ export async function evaluationEnvironment(
                 expected.id &&
                 !comparableRelationships.some(
                   (actual) =>
-                    actual.id === expected.id &&
-                    actual.source === expected.source &&
-                    actual.type === expected.type &&
-                    actual.target === expected.target,
+                    actual.id === expected.id && sameRelationshipMeaning(actual, expected),
                 ),
             )
           )
             failures.push('relationship_identity');
-          const withoutIdentity = ({ id: _id, ...edge }: NamedRelationship) => edge;
+          const withoutIdentity = ({ id: _id, ...edge }: NamedRelationship) =>
+            relationshipMeaning(edge);
           if (
             !isDeepStrictEqual(
               sorted(comparableRelationships.map(withoutIdentity)),
@@ -522,9 +557,27 @@ export async function evaluationEnvironment(
             )
               failures.push(`changed_type_${original.name}`);
           }
+          const originalRelationshipTypes = map.relationshipTypes.filter((type) =>
+            savedBaseline.relationshipTypes.some((original) => original.id === type.id),
+          );
+          const extraRelationshipTypes = [
+            ...map.relationshipTypes.filter(
+              (type) =>
+                !savedBaseline.relationshipTypes.some((original) => original.id === type.id),
+            ),
+            ...(map.draft.relationshipTypes?.flatMap((change) =>
+              change.after && !change.before ? [change.after] : [],
+            ) ?? []),
+          ];
+          const neutralCategory = (type: MapState['relationshipTypes'][number]) =>
+            type.name === 'Samband' &&
+            type.description === 'Hushållets samband utan särskilt vald gruppering.' &&
+            type.forwardLabel === undefined &&
+            type.reverseLabel === undefined;
           if (
-            !isDeepStrictEqual(map.relationshipTypes, savedBaseline.relationshipTypes) ||
-            map.draft.relationshipTypes?.length
+            !isDeepStrictEqual(originalRelationshipTypes, savedBaseline.relationshipTypes) ||
+            map.draft.relationshipTypes?.some((change) => change.before || !change.after) ||
+            extraRelationshipTypes.some((type) => !neutralCategory(type))
           )
             failures.push('relationship_types');
           const saves = (waiting ?? expectation).saves ?? 0;

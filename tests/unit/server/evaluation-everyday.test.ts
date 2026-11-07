@@ -377,6 +377,7 @@ test('uncertainty contracts reject confident links, reversed links and unauthori
           typeId: map.relationshipTypes.find((type) => type.name === 'Använder')?.id,
           sourceId: variant === 'reversed' ? 'dropbox' : 'mira',
           targetId: variant === 'reversed' ? 'mira' : 'dropbox',
+          verb: 'använder',
           properties:
             variant === 'confident'
               ? []

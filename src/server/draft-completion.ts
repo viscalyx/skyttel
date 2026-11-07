@@ -1,6 +1,7 @@
 import { hasEnded } from '../shared/lifecycle.js';
 import { objectIconLabel } from '../shared/object-icons.js';
 import { type Property, propertyKindLabels } from '../shared/properties.js';
+import { relationshipVerb } from '../shared/relationship-verb.js';
 import type { TextAssistantChange, TextAssistantReview } from '../shared/text-assistant.js';
 
 /** Plain-language statements from checked changes, never from provider success claims. */
@@ -68,12 +69,12 @@ export function draftUpdateDetails(before: TextAssistantReview, after: TextAssis
     };
     const source = name(edge.sourceId);
     const target = name(edge.targetId);
-    const label = change.type.forwardLabel ?? change.type.name;
+    const label = relationshipVerb(edge, change.type);
     const subject = `Sambandet ”${source} ${label} ${target}”`;
     if (!old && next)
       say(
         source,
-        change.type.forwardLabel
+        edge.verb || change.type.forwardLabel
           ? `${label[0].toLocaleLowerCase('sv')}${label.slice(1)} ${target}`
           : `fick sambandet ”${change.type.name}” till ${target}`,
       );
@@ -81,7 +82,9 @@ export function draftUpdateDetails(before: TextAssistantReview, after: TextAssis
     else if (
       old?.sourceId !== next?.sourceId ||
       old?.targetId !== next?.targetId ||
-      old?.typeId !== next?.typeId
+      old?.typeId !== next?.typeId ||
+      old?.verb !== next?.verb ||
+      old?.reverseVerb !== next?.reverseVerb
     )
       say(subject, 'uppdaterades');
     if (next) {
@@ -122,7 +125,7 @@ export function draftUpdateDetails(before: TextAssistantReview, after: TextAssis
       const edge = item.after ?? item.before;
       if (edge)
         say(
-          `Förslaget om sambandet ”${item.objectNames?.[edge.sourceId] ?? 'objektet'} ${item.type.forwardLabel ?? item.type.name} ${item.objectNames?.[edge.targetId] ?? 'objektet'}”`,
+          `Förslaget om sambandet ”${item.objectNames?.[edge.sourceId] ?? 'objektet'} ${relationshipVerb(edge, item.type)} ${item.objectNames?.[edge.targetId] ?? 'objektet'}”`,
           'togs bort ur utkastet',
         );
     }

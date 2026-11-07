@@ -181,8 +181,6 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
     await page
       .getByLabel('Sambandstypens beskrivning', { exact: true })
       .fill('Ny faktisk definition');
-    await page.getByLabel('Benämning från startobjektet', { exact: true }).fill('förvaras i');
-    await page.getByLabel('Benämning från målobjektet', { exact: true }).fill('förvarar');
     await page
       .getByRole('button', { name: 'Lägg sambandstypen i mitt utkast', exact: true })
       .click();
@@ -201,6 +199,7 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
     const dialog = page.getByRole('dialog', { name: 'Samband för Lo Exempel', exact: true });
     await dialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
     await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption(definition?.id ?? '');
+    await dialog.getByLabel('Verb', { exact: true }).fill('förvaras i');
     await expect(
       propertyRow(dialog, 'Installationsår').getByLabel('Värde', { exact: true }),
     ).toHaveValue('Våren 2021');

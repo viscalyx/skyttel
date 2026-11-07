@@ -6,6 +6,7 @@ import { objectIconLabel } from './object-icons.js';
 import { type Property, propertiesSchema, propertyValueText } from './properties.js';
 import { mergedPropertyOrder, propertyMergeSide, propertyOrderSide } from './property-merge.js';
 import { relationshipLabel } from './relationship-label.js';
+import { relationshipVerb } from './relationship-verb.js';
 
 export type ConflictSide = 'saved' | 'proposed';
 export type ConflictChoices = Record<string, ConflictSide>;
@@ -97,6 +98,8 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
             ['typeId', 'Sambandstyp'],
             ['sourceId', 'Från objekt'],
             ['targetId', 'Till objekt'],
+            ['verb', 'Verb'],
+            ['reverseVerb', 'Omvänd benämning'],
             ['lifecycle', 'Giltighet'],
           ]
         : [
@@ -287,7 +290,15 @@ export function conflictCombinationError(
           edge.id !== conflict.id &&
           edge.typeId === relationship.typeId &&
           edge.sourceId === relationship.sourceId &&
-          edge.targetId === relationship.targetId,
+          edge.targetId === relationship.targetId &&
+          relationshipVerb(
+            edge,
+            state.relationshipTypes.find((type) => type.id === edge.typeId),
+          ) ===
+            relationshipVerb(
+              relationship,
+              state.relationshipTypes.find((type) => type.id === relationship.typeId),
+            ),
       )
     )
       return 'Det valda sambandet finns redan i kartan.';

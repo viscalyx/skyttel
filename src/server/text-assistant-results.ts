@@ -8,6 +8,7 @@ import type {
 } from '../shared/map.js';
 import { objectIconLabel } from '../shared/object-icons.js';
 import { propertyDifferences } from '../shared/properties.js';
+import { relationshipVerb } from '../shared/relationship-verb.js';
 import type { TextAssistantResult, TextAssistantReview } from '../shared/text-assistant.js';
 
 function lifecycle(value: RelationshipValue['lifecycle']) {
@@ -122,7 +123,7 @@ function details(
       };
       const source = objectName(relationship.sourceId);
       const target = objectName(relationship.targetId);
-      return `${source} ${type?.forwardLabel ?? type?.name ?? 'okänd sambandstyp'} ${target}`;
+      return `${source} ${relationshipVerb(relationship, type)} ${target}`;
     };
     const beforeDescription = change.before ? describe(change.before, beforeType, 'before') : '';
     const afterDescription = change.after

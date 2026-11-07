@@ -4768,11 +4768,12 @@ Alex gör separat teknisk förberedelse. Behåll databasen vid omstart.
    Exempel, Molnmusik och Installationsår: Våren 2021 i det bevarade
    förslaget. Stäng med Escape.
 2. Öppna Inställningar → Typer → Ny sambandstyp. Ange Förvaras i,
-   beskrivningen Ny faktisk definition och benämningarna förvaras i och
-   förvarar. Lägg typen i utkastet och återgå till kartan. Läs att konflikten
+   beskrivningen Ny faktisk definition. Lägg typen i utkastet och återgå
+   till kartan. Läs att konflikten
    fortfarande finns trots samma typnamn.
 3. Öppna Tabell → Samband för Lo Exempel → Redigera samband och välj den nya
-   typen. Läs samma individuella textegenskap Installationsår med Våren 2021.
+   typen. Ange förvaras i som Verb. Läs samma individuella textegenskap
+   Installationsår med Våren 2021.
    Lägg sambandet i utkastet och stäng.
 4. Läs det rättade hela sambandsförslaget och det oberoende förslaget. Spara
    hela utkastet separat. Starta om och läs det sparade sambandet och det

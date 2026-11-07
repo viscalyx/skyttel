@@ -86,13 +86,14 @@ async function checkObservedSubscription(
       source: example.subscriptionId,
       type: relationshipType,
       target: example.serviceId,
+      verb: 'har samband med',
     };
     if (variant === 'reversed') {
       serviceLink.source = example.serviceId;
       serviceLink.target = example.subscriptionId;
     }
     if (variant === 'wrong-target') serviceLink.target = 'unrelated';
-    if (variant === 'wrong-type') serviceLink.type = 'Använder';
+    if (variant === 'wrong-verb') serviceLink.verb = 'använder';
     const relationships = [
       ...(variant === 'missing-service' ? [] : [serviceLink]),
       ...example.otherRelationships
@@ -118,6 +119,12 @@ async function checkObservedSubscription(
         baseRevision: null,
         value: {
           typeId: map.relationshipTypes.find((item) => item.name === relationship.type)?.id,
+          verb:
+            'verb' in relationship
+              ? relationship.verb
+              : (scenario.steps[0].expected.addRelationships?.find(
+                  (edge) => edge.type === relationship.type,
+                )?.verb ?? relationship.type),
           sourceId: relationship.source,
           targetId: relationship.target,
         },
@@ -157,7 +164,10 @@ async function checkObservedSubscription(
 
 test.each(
   cases.flatMap((example) =>
-    ['Gäller', 'Tillhör tjänsten'].map((relationshipType) => ({ ...example, relationshipType })),
+    ['Gäller', 'Tillhör tjänsten', 'Samband'].map((relationshipType) => ({
+      ...example,
+      relationshipType,
+    })),
   ),
 )(
   '$scenarioId accepts $relationshipType from subscription to service',
@@ -172,7 +182,7 @@ test.each(
     [
       ['reversed', 'effective_relationships'],
       ['wrong-target', 'effective_relationships'],
-      ['wrong-type', 'effective_relationships'],
+      ['wrong-verb', 'effective_relationships'],
       ['missing-service', 'effective_relationships'],
       ['both-types', 'effective_relationships'],
       ['extra-edge', 'effective_relationships'],

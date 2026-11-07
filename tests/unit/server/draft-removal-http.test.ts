@@ -59,6 +59,7 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
               sourceId: 'draft-bike',
               targetId: 'draft-bike',
               typeId: 'discard-type',
+              verb: 'har samband med',
             },
       );
       expect(after.draft.changes.filter(({ id }) => id !== 'typed-proposal')).toEqual(

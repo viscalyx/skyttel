@@ -568,6 +568,7 @@ test.each([
       expect(context.observedState.effective.relationships).toContainEqual({
         source: 'cloud',
         type: 'Används av',
+        verb: 'används av',
         target: target ?? 'alex',
         ...(target === null
           ? {}

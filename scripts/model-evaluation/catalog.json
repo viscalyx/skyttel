@@ -348,102 +348,122 @@
       {
         "source": "spotify-ab",
         "type": "Erbjuder",
-        "target": "spotify"
+        "target": "spotify",
+        "verb": "erbjuder"
       },
       {
         "source": "microsoft-ab",
         "type": "Erbjuder",
-        "target": "m365"
+        "target": "m365",
+        "verb": "erbjuder"
       },
       {
         "source": "cloud-ab",
         "type": "Erbjuder",
-        "target": "cloud"
+        "target": "cloud",
+        "verb": "erbjuder"
       },
       {
         "source": "spotify-sub",
         "type": "Gäller",
-        "target": "spotify"
+        "target": "spotify",
+        "verb": "gäller"
       },
       {
         "source": "cloud-sub",
         "type": "Gäller",
-        "target": "cloud"
+        "target": "cloud",
+        "verb": "gäller"
       },
       {
         "source": "alex-work",
         "type": "Hör till",
-        "target": "m365"
+        "target": "m365",
+        "verb": "hör till"
       },
       {
         "source": "lo-work",
         "type": "Hör till",
-        "target": "m365"
+        "target": "m365",
+        "verb": "hör till"
       },
       {
         "source": "mira",
         "type": "Använder",
-        "target": "spotify"
+        "target": "spotify",
+        "verb": "använder"
       },
       {
         "source": "lo",
         "type": "Använder",
-        "target": "m365"
+        "target": "m365",
+        "verb": "använder"
       },
       {
         "source": "spotify-sub",
         "type": "Står på avtalet",
-        "target": "alex"
+        "target": "alex",
+        "verb": "står på avtalet"
       },
       {
         "source": "mira",
         "type": "Betalar",
-        "target": "spotify-sub"
+        "target": "spotify-sub",
+        "verb": "betalar"
       },
       {
         "source": "spotify-sub",
         "type": "Betalas med",
-        "target": "reserve"
+        "target": "reserve",
+        "verb": "betalas med"
       },
       {
         "source": "cloud-sub",
         "type": "Står på avtalet",
-        "target": "mira"
+        "target": "mira",
+        "verb": "står på avtalet"
       },
       {
         "source": "alex",
         "type": "Betalar",
-        "target": "cloud-sub"
+        "target": "cloud-sub",
+        "verb": "betalar"
       },
       {
         "source": "cloud-sub",
         "type": "Betalas med",
-        "target": "card"
+        "target": "card",
+        "verb": "betalas med"
       },
       {
         "source": "alex-work",
         "type": "Inloggningsadress",
-        "target": "shared-email"
+        "target": "shared-email",
+        "verb": "inloggningsadress"
       },
       {
         "source": "alex-work",
         "type": "Kontaktadress",
-        "target": "shared-email"
+        "target": "shared-email",
+        "verb": "kontaktadress"
       },
       {
         "source": "lo-work",
         "type": "Inloggningsadress",
-        "target": "shared-email"
+        "target": "shared-email",
+        "verb": "inloggningsadress"
       },
       {
         "source": "lo-work",
         "type": "Kontaktadress",
-        "target": "shared-email"
+        "target": "shared-email",
+        "verb": "kontaktadress"
       },
       {
         "source": "card",
         "type": "Kontokoppling",
-        "target": "bank"
+        "target": "bank",
+        "verb": "kontokoppling"
       }
     ],
     "relationshipTypes": [
@@ -518,24 +538,28 @@
         {
           "source": "spotify-sub",
           "type": "Står på avtalet",
-          "target": "lo"
+          "target": "lo",
+          "verb": "står på avtalet"
         },
         {
           "source": "spotify-sub",
           "type": "Betalas med",
-          "target": "card"
+          "target": "card",
+          "verb": "betalas med"
         }
       ],
       "removeRelationships": [
         {
           "source": "spotify-sub",
           "type": "Står på avtalet",
-          "target": "alex"
+          "target": "alex",
+          "verb": "står på avtalet"
         },
         {
           "source": "spotify-sub",
           "type": "Betalas med",
-          "target": "reserve"
+          "target": "reserve",
+          "verb": "betalas med"
         }
       ]
     },
@@ -544,7 +568,8 @@
         {
           "source": "cloud",
           "type": "Används av",
-          "target": "alex"
+          "target": "alex",
+          "verb": "används av"
         }
       ]
     },
@@ -687,7 +712,8 @@
                   {
                     "source": "disney-sub",
                     "type": "Tillhör tjänsten",
-                    "target": "disney"
+                    "target": "disney",
+                    "verb": "har samband med"
                   }
                 ],
                 "semanticObjects": {
@@ -719,44 +745,6 @@
                 },
                 "semanticObjects": {
                   "disney": {
-                    "name": true,
-                    "properties": {
-                      "preserve": [],
-                      "additions": [],
-                      "meaning": "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga. Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till. Disney+ är tillagt som tjänst, som abonnemang eller som en tjänst med ett tillhörande abonnemang. Inga andra nya objekt eller påhittade egenskaper är tillåtna."
-                    }
-                  }
-                }
-              },
-              {
-                "requirements": [],
-                "objects": {
-                  "disney": {
-                    "type": "Tjänst",
-                    "name": "Disney+"
-                  },
-                  "disney-sub": {
-                    "type": "Abonnemang",
-                    "name": "Disney+-abonnemang"
-                  }
-                },
-                "addRelationships": [
-                  {
-                    "source": "disney-sub",
-                    "type": "Gäller",
-                    "target": "disney"
-                  }
-                ],
-                "semanticObjects": {
-                  "disney": {
-                    "name": true,
-                    "properties": {
-                      "preserve": [],
-                      "additions": [],
-                      "meaning": "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga. Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till. Disney+ är tillagt som tjänst, som abonnemang eller som en tjänst med ett tillhörande abonnemang. Inga andra nya objekt eller påhittade egenskaper är tillåtna."
-                    }
-                  },
-                  "disney-sub": {
                     "name": true,
                     "properties": {
                       "preserve": [],
@@ -865,7 +853,9 @@
               {
                 "source": "savings",
                 "type": "Finns hos",
-                "target": "nordea"
+                "target": "nordea",
+                "verbMeaning": "Sparkontot savings tillhandahålls av banken nordea. Ordval och riktning får variera men bankens roll ska framgå.",
+                "direction": "either"
               }
             ],
             "semanticObjects": {
@@ -1156,7 +1146,8 @@
           {
             "source": "dropbox-account",
             "type": "Tillhör tjänsten",
-            "target": "dropbox"
+            "target": "dropbox",
+            "verb": "tillhör tjänsten"
           }
         ],
         "relationshipTypes": [
@@ -1263,7 +1254,8 @@
           {
             "source": "netflix-sub",
             "type": "Gäller",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -1356,7 +1348,8 @@
           {
             "source": "lo",
             "type": "Använder",
-            "target": "spotify"
+            "target": "spotify",
+            "verb": "använder"
           }
         ],
         "relationshipTypes": [
@@ -1545,7 +1538,8 @@
           {
             "source": "alex",
             "type": "Använder",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "använder"
           }
         ],
         "relationshipTypes": [
@@ -1659,7 +1653,8 @@
               {
                 "source": "spotify-account",
                 "type": "Tillhör tjänsten",
-                "target": "spotify"
+                "target": "spotify",
+                "verb": "har samband med"
               }
             ]
           },
@@ -1762,17 +1757,8 @@
                   {
                     "source": "netflix-sub",
                     "type": "Gäller",
-                    "target": "netflix"
-                  }
-                ]
-              },
-              {
-                "requirements": [],
-                "addRelationships": [
-                  {
-                    "source": "netflix-sub",
-                    "type": "Tillhör tjänsten",
-                    "target": "netflix"
+                    "target": "netflix",
+                    "verb": "har samband med"
                   }
                 ]
               }
@@ -1851,7 +1837,8 @@
           {
             "source": "disney-sub",
             "type": "Gäller",
-            "target": "disney"
+            "target": "disney",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -1962,7 +1949,8 @@
           {
             "source": "netflix-sub",
             "type": "Gäller",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -2076,7 +2064,8 @@
               {
                 "source": "card",
                 "type": "Kontokoppling",
-                "target": "bank"
+                "target": "bank",
+                "verb": "har samband med"
               }
             ]
           },
@@ -2262,9 +2251,10 @@
             ],
             "addRelationships": [
               {
-                "source": "car",
+                "source": "alex",
                 "type": "Äger",
-                "target": "alex"
+                "target": "car",
+                "verb": "äger"
               }
             ]
           },
@@ -2329,7 +2319,8 @@
           {
             "source": "insurance",
             "type": "Står på avtalet",
-            "target": "folksam"
+            "target": "folksam",
+            "verb": "står på avtalet"
           }
         ],
         "relationshipTypes": [
@@ -2363,7 +2354,8 @@
               {
                 "source": "insurance",
                 "type": "Försäkrar",
-                "target": "car"
+                "target": "car",
+                "verb": "gäller"
               }
             ]
           },
@@ -2435,7 +2427,8 @@
           {
             "source": "netflix-sub",
             "type": "Gäller",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -2558,7 +2551,8 @@
           {
             "source": "disney-sub",
             "type": "Gäller",
-            "target": "disney"
+            "target": "disney",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -3074,7 +3068,8 @@
           {
             "source": "spotify-sub",
             "type": "Gäller",
-            "target": "spotify"
+            "target": "spotify",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -3162,12 +3157,14 @@
           {
             "source": "alex",
             "type": "Använder",
-            "target": "spotify"
+            "target": "spotify",
+            "verb": "använder"
           },
           {
             "source": "alex",
             "type": "Använder",
-            "target": "m365"
+            "target": "m365",
+            "verb": "använder"
           }
         ],
         "relationshipTypes": [
@@ -3295,12 +3292,14 @@
           {
             "source": "netflix-sub",
             "type": "Betalas med",
-            "target": "card"
+            "target": "card",
+            "verb": "betalas med"
           },
           {
             "source": "spotify-sub",
             "type": "Betalas med",
-            "target": "bank"
+            "target": "bank",
+            "verb": "betalas med"
           }
         ],
         "relationshipTypes": [
@@ -3398,7 +3397,8 @@
           {
             "source": "netflix-sub",
             "type": "Gäller",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -3898,17 +3898,8 @@
                   {
                     "source": "disney-sub",
                     "type": "Gäller",
-                    "target": "disney"
-                  }
-                ]
-              },
-              {
-                "requirements": [],
-                "addRelationships": [
-                  {
-                    "source": "disney-sub",
-                    "type": "Tillhör tjänsten",
-                    "target": "disney"
+                    "target": "disney",
+                    "verb": "har samband med"
                   }
                 ]
               }
@@ -4027,7 +4018,8 @@
           {
             "source": "lo",
             "type": "Använder",
-            "target": "spotify"
+            "target": "spotify",
+            "verb": "använder"
           }
         ],
         "relationshipTypes": [
@@ -4185,7 +4177,8 @@
               {
                 "source": "johan-account",
                 "type": "Tillhör tjänsten",
-                "target": "spotify"
+                "target": "spotify",
+                "verb": "hör till"
               }
             ],
             "semanticObjects": {
@@ -4282,12 +4275,16 @@
               {
                 "source": "johan-account",
                 "type": "Inloggningsadress",
-                "target": "johan-email"
+                "target": "johan-email",
+                "verbMeaning": "johan-email är inloggningsadress för johan-account. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                "direction": "either"
               },
               {
                 "source": "johan-account",
                 "type": "Kontaktadress",
-                "target": "sonja-email"
+                "target": "sonja-email",
+                "verbMeaning": "sonja-email är kontaktadress för johan-account. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                "direction": "either"
               }
             ]
           },
@@ -4371,7 +4368,8 @@
               {
                 "source": "visa",
                 "type": "Kontokoppling",
-                "target": "nordea-bank"
+                "target": "nordea-bank",
+                "verb": "har samband med"
               }
             ],
             "semanticObjects": {
@@ -4465,12 +4463,14 @@
           {
             "source": "netflix-sub",
             "type": "Gäller",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "gäller"
           },
           {
             "source": "netflix-sub",
             "type": "Betalas med",
-            "target": "card"
+            "target": "card",
+            "verb": "betalas med"
           }
         ],
         "relationshipTypes": [
@@ -4570,7 +4570,8 @@
           {
             "source": "insurance",
             "type": "Står på avtalet",
-            "target": "folksam"
+            "target": "folksam",
+            "verb": "står på avtalet"
           }
         ],
         "relationshipTypes": [
@@ -4599,7 +4600,7 @@
             "requirements": [
               "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga.",
               "Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till.",
-              "Det nya fordonet är Volvo V60. Johan äger det och den befintliga bilförsäkringen hos Folksam försäkrar det."
+              "Det nya fordonet är Volvo V60. Johan äger det och bilen är försäkrad hos Folksam. Den befintliga bilförsäkringen lämnas oförändrad."
             ],
             "objects": {
               "car": {
@@ -4609,14 +4610,16 @@
             },
             "addRelationships": [
               {
-                "source": "car",
+                "source": "johan",
                 "type": "Äger",
-                "target": "johan"
+                "target": "car",
+                "verb": "äger"
               },
               {
-                "source": "insurance",
+                "source": "car",
                 "type": "Försäkrar",
-                "target": "car"
+                "target": "folksam",
+                "verb": "är försäkrad hos"
               }
             ],
             "semanticObjects": {
@@ -4625,7 +4628,7 @@
                 "properties": {
                   "preserve": [],
                   "additions": [],
-                  "meaning": "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga. Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till. Det nya fordonet är Volvo V60. Johan äger det och den befintliga bilförsäkringen hos Folksam försäkrar det."
+                  "meaning": "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga. Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till. Det nya fordonet är Volvo V60. Johan äger det och bilen är försäkrad hos Folksam. Den befintliga bilförsäkringen lämnas oförändrad."
                 }
               }
             }
@@ -4718,7 +4721,7 @@
             "requirements": [
               "Bekräfta endast verifierade ändringar i utkastet. Påstå inte att något är sparat, hitta inte på fakta och ställ ingen obegärd sparfråga.",
               "Bedöm hela observerade kartan och utkastet, inte bara svarstexten. Bevara alla andra objekt, egenskaper och samband. Inga nya fakta utöver begäran får läggas till.",
-              "Den nya bostaden är Storgatan 12 och det befintliga Telia-bredbandet hör till den."
+              "Den nya bostaden är Storgatan 12 och det befintliga Telia-bredbandet kopplas till den med det neutrala verbet har samband med."
             ],
             "objects": {
               "home": {
@@ -4730,7 +4733,8 @@
               {
                 "source": "telia",
                 "type": "Hör till",
-                "target": "home"
+                "target": "home",
+                "verb": "har samband med"
               }
             ],
             "semanticObjects": {
@@ -4814,7 +4818,8 @@
           {
             "source": "gym",
             "type": "Står på avtalet",
-            "target": "johan"
+            "target": "johan",
+            "verb": "står på avtalet"
           }
         ],
         "relationshipTypes": [
@@ -4901,7 +4906,8 @@
           {
             "source": "nordvpn-account",
             "type": "Tillhör tjänsten",
-            "target": "nordvpn"
+            "target": "nordvpn",
+            "verb": "tillhör tjänsten"
           }
         ],
         "relationshipTypes": [
@@ -5020,7 +5026,8 @@
           {
             "source": "spotify-sub",
             "type": "Gäller",
-            "target": "spotify"
+            "target": "spotify",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -5153,7 +5160,8 @@
           {
             "source": "netflix-sub",
             "type": "Gäller",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -5278,7 +5286,8 @@
           {
             "source": "netflix-sub",
             "type": "Gäller",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -5513,7 +5522,8 @@
               {
                 "source": "bahnhof-sub",
                 "type": "Hör till",
-                "target": "home"
+                "target": "home",
+                "verb": "har samband med"
               }
             ],
             "anyOf": [
@@ -5523,17 +5533,8 @@
                   {
                     "source": "bahnhof-sub",
                     "type": "Gäller",
-                    "target": "bahnhof"
-                  }
-                ]
-              },
-              {
-                "requirements": [],
-                "addRelationships": [
-                  {
-                    "source": "bahnhof-sub",
-                    "type": "Tillhör tjänsten",
-                    "target": "bahnhof"
+                    "target": "bahnhof",
+                    "verb": "har samband med"
                   }
                 ]
               }
@@ -5616,7 +5617,8 @@
           {
             "source": "alex",
             "type": "Använder",
-            "target": "dropbox"
+            "target": "dropbox",
+            "verb": "använder"
           }
         ],
         "relationshipTypes": [
@@ -5880,7 +5882,8 @@
               {
                 "source": "alex",
                 "type": "Använder",
-                "target": "m365"
+                "target": "m365",
+                "verb": "använder"
               }
             ]
           },
@@ -6085,7 +6088,8 @@
                   {
                     "source": "disney-sub",
                     "type": "Gäller",
-                    "target": "disney"
+                    "target": "disney",
+                    "verb": "har samband med"
                   }
                 ],
                 "semanticObjects": {
@@ -6234,12 +6238,14 @@
           {
             "source": "netflix-sub",
             "type": "Gäller",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "gäller"
           },
           {
             "source": "disney-sub",
             "type": "Gäller",
-            "target": "disney"
+            "target": "disney",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -6439,7 +6445,8 @@
           {
             "source": "netflix-sub",
             "type": "Gäller",
-            "target": "netflix"
+            "target": "netflix",
+            "verb": "gäller"
           }
         ],
         "relationshipTypes": [
@@ -6514,13 +6521,25 @@
               "Ställ en nödvändig relevant följdfråga om något som varken begäran eller kartans fakta avgör. Bevara den exakta oavslutade begäran. Hitta inte på ett svar, ändra inga andra uppgifter och påstå inte att uppdraget är slutfört eller sparat."
             ],
             "anyOf": [
-              { "requirements": [] },
+              {
+                "requirements": []
+              },
               {
                 "objects": {
                   "netflix-sub": {
                     "properties": [
-                      { "id": "price", "label": "Pris", "kind": "number", "value": 189 },
-                      { "id": "currency", "label": "Valuta", "kind": "text", "value": "SEK" },
+                      {
+                        "id": "price",
+                        "label": "Pris",
+                        "kind": "number",
+                        "value": 189
+                      },
+                      {
+                        "id": "currency",
+                        "label": "Valuta",
+                        "kind": "text",
+                        "value": "SEK"
+                      },
                       {
                         "id": "interval",
                         "label": "Betalningsintervall",
@@ -6846,7 +6865,8 @@
               {
                 "source": "spotify-sub",
                 "type": "Betalas med",
-                "target": "reserve"
+                "target": "reserve",
+                "verb": "betalas från"
               }
             ],
             "removeRelationships": [
@@ -7217,17 +7237,22 @@
               {
                 "source": "alex-work",
                 "type": "Inloggningsadress",
-                "target": "alex-email"
+                "target": "alex-email",
+                "verbMeaning": "alex-email är inloggningsadress för alex-work. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                "direction": "either"
               },
               {
                 "source": "alex-work",
                 "type": "Kontaktadress",
-                "target": "house-email"
+                "target": "house-email",
+                "verbMeaning": "house-email är kontaktadress för alex-work. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                "direction": "either"
               },
               {
                 "source": "cloud-sub",
                 "type": "Betalas med",
-                "target": "bank"
+                "target": "bank",
+                "verb": "betalas från"
               },
               {
                 "source": "lo",
@@ -7452,17 +7477,22 @@
               {
                 "source": "alex-work",
                 "type": "Inloggningsadress",
-                "target": "alex-email"
+                "target": "alex-email",
+                "verbMeaning": "alex-email är inloggningsadress för alex-work. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                "direction": "either"
               },
               {
                 "source": "alex-work",
                 "type": "Kontaktadress",
-                "target": "house-email"
+                "target": "house-email",
+                "verbMeaning": "house-email är kontaktadress för alex-work. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                "direction": "either"
               },
               {
                 "source": "cloud-sub",
                 "type": "Betalas med",
-                "target": "bank"
+                "target": "bank",
+                "verb": "betalas från"
               },
               {
                 "source": "lo",
@@ -7654,7 +7684,9 @@
               {
                 "source": "m365",
                 "type": "Levererar till",
-                "target": "tenant"
+                "target": "tenant",
+                "verb": "levererar till",
+                "category": "Levererar till"
               }
             ],
             "removeRelationships": [],
@@ -7757,17 +7789,22 @@
               {
                 "source": "alex-work",
                 "type": "Inloggningsadress",
-                "target": "alex-email"
+                "target": "alex-email",
+                "verbMeaning": "alex-email är inloggningsadress för alex-work. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                "direction": "either"
               },
               {
                 "source": "alex-work",
                 "type": "Kontaktadress",
-                "target": "house-email"
+                "target": "house-email",
+                "verbMeaning": "house-email är kontaktadress för alex-work. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                "direction": "either"
               },
               {
                 "source": "cloud-sub",
                 "type": "Betalas med",
-                "target": "bank"
+                "target": "bank",
+                "verb": "betalas från"
               },
               {
                 "source": "lo",
@@ -7873,12 +7910,16 @@
                   {
                     "source": "alex-work",
                     "type": "Inloggningsadress",
-                    "target": "alex-email"
+                    "target": "alex-email",
+                    "verbMeaning": "alex-email är inloggningsadress för alex-work. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                    "direction": "either"
                   },
                   {
                     "source": "alex-work",
                     "type": "Kontaktadress",
-                    "target": "house-email"
+                    "target": "house-email",
+                    "verbMeaning": "house-email är kontaktadress för alex-work. Ordval och riktning får variera men den rollen och de två objekten ska framgå.",
+                    "direction": "either"
                   },
                   {
                     "source": "cloud-sub",

@@ -31,6 +31,11 @@ const relationshipType = z
   .strict();
 const iconId = z.string().refine(isObjectIconId);
 const lifecycle = z.enum(['active', 'ended']);
+const relationshipVerb = z
+  .string()
+  .min(1)
+  .max(200)
+  .refine((value) => Boolean(value.trim()));
 const objectValue = z
   .object({
     properties: propertiesSchema.optional(),
@@ -45,6 +50,8 @@ const objectValue = z
 const object = objectValue.extend({ id, ...scope, revision: positive });
 const relationshipValue = z
   .object({
+    verb: relationshipVerb.optional(),
+    reverseVerb: relationshipVerb.optional(),
     properties: propertiesSchema.optional(),
     typeId: id,
     sourceId: id,
@@ -210,6 +217,8 @@ export const importContentSchema = z
     relationships: z.array(
       z
         .object({
+          verb: relationshipVerb.nullable().optional(),
+          reverseVerb: relationshipVerb.nullable().optional(),
           properties: propertiesSchema.nullable().optional(),
           id,
           ...scope,
@@ -314,7 +323,7 @@ export const importManifestSchema = z
     version: z.literal(2),
     createdAt: text,
     householdId: id,
-    schemaVersion: z.union([z.literal(37), z.literal(38)]),
+    schemaVersion: z.union([z.literal(37), z.literal(38), z.literal(39)]),
     parts: z
       .array(
         z

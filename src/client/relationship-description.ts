@@ -14,5 +14,5 @@ export function relationshipDetails(
 ) {
   const source = objectNames[value.sourceId] ?? value.sourceId;
   const target = relationshipTarget(value, objectNames);
-  return `${source} → ${forwardLabel} → ${target}`;
+  return `${source} → ${value.verb ?? forwardLabel} → ${target}`;
 }

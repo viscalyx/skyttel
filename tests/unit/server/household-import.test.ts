@@ -33,6 +33,163 @@ beforeEach(async () => {
 });
 afterEach(() => fixture.close());
 
+test('free relationship verbs round-trip saved values, draft proposals and history without category binding', async () => {
+  const read = async () => (await client.request(`${path}/map`)).json();
+  let state = await read();
+  await client.json(`${path}/map/draft`, {
+    version: state.draft.version,
+    id: 'room',
+    baseRevision: null,
+    value: { typeId: state.types[0].id, name: 'Rummet' },
+  });
+  for (const [id, verb] of [
+    ['placement', 'lyser i'],
+    ['control', 'styrs från'],
+  ]) {
+    state = await read();
+    expect(
+      (
+        await client.json(`${path}/map/relationship`, {
+          version: state.draft.version,
+          id,
+          baseRevision: null,
+          value: {
+            typeId: state.relationshipTypes[0].id,
+            sourceId: 'lamp',
+            targetId: 'room',
+            verb,
+          },
+        })
+      ).status,
+    ).toBe(200);
+  }
+  state = await read();
+  const saved = await (
+    await client.json(`${path}/map/save`, {
+      version: state.draft.version,
+      operationId: 'free-verb-save',
+    })
+  ).json();
+  state = await read();
+  expect(
+    (
+      await client.json(`${path}/map/relationship`, {
+        version: state.draft.version,
+        id: 'pending-link',
+        baseRevision: null,
+        value: {
+          typeId: state.relationshipTypes[0].id,
+          sourceId: 'lamp',
+          targetId: 'room',
+          verb: 'hör hemma i',
+        },
+      })
+    ).status,
+  ).toBe(200);
+  const prepared = await (await client.json(`${path}/exports`, {})).json();
+  const bytes = new Uint8Array(
+    await (await client.request(`${path}/exports/${prepared.id}`)).arrayBuffer(),
+  );
+  const ready = await (await upload(bytes)).json();
+  expect(
+    (
+      await client.json(`${path}/imports/${ready.id}/confirm`, {
+        contentVersion: 1,
+        confirmed: true,
+      })
+    ).status,
+  ).toBe(200);
+  state = await read();
+  expect(state.relationships.map((edge: { verb: string }) => edge.verb).sort()).toEqual([
+    'lyser i',
+    'styrs från',
+  ]);
+  expect(
+    state.relationships.every((edge: { reverseVerb?: string }) => edge.reverseVerb === undefined),
+  ).toBe(true);
+  expect(state.draft.relationships[0].after.verb).toBe('hör hemma i');
+  const history = await (await client.request(`${path}/map/history`)).json();
+  const retained = history.history.find(
+    (receipt: { operationId: string }) => receipt.operationId === saved.receipt.operationId,
+  );
+  expect(
+    retained.relationships.map((change: { after: { verb: string } }) => change.after.verb).sort(),
+  ).toEqual(['lyser i', 'styrs från']);
+  await fixture.restart();
+  expect((await read()).draft.relationships[0].after.verb).toBe('hör hemma i');
+});
+
+test.each([38, 39])(
+  'schema%i missing edge wording uses explicit archive-version compatibility',
+  async (schemaVersion) => {
+    const read = async () => (await client.request(`${path}/map`)).json();
+    let state = await read();
+    expect(
+      (
+        await client.json(`${path}/map/relationship-type`, {
+          version: state.draft.version,
+          id: 'legacy-group',
+          baseRevision: null,
+          value: {
+            name: 'Arbetsgrupp',
+            description: '',
+            forwardLabel: 'driver',
+            reverseLabel: 'drivs av',
+          },
+        })
+      ).status,
+    ).toBe(200);
+    state = await read();
+    expect(
+      (
+        await client.json(`${path}/map/relationship`, {
+          version: state.draft.version,
+          id: 'edge',
+          baseRevision: null,
+          value: { typeId: 'legacy-group', sourceId: 'lamp', targetId: 'lamp', verb: 'lyser på' },
+        })
+      ).status,
+    ).toBe(200);
+    state = await read();
+    expect(
+      (
+        await client.json(`${path}/map/save`, {
+          version: state.draft.version,
+          operationId: 'archive-wording',
+        })
+      ).status,
+    ).toBe(200);
+    const exported = await (await client.json(`${path}/exports`, {})).json();
+    archive = new Uint8Array(
+      await (await client.request(`${path}/exports/${exported.id}`)).arrayBuffer(),
+    );
+    const withoutWords = changedContent((content) => {
+      for (const edge of content.relationships as Record<string, unknown>[]) {
+        delete edge.verb;
+        delete edge.reverseVerb;
+      }
+    });
+    const parts = unzipSync(withoutWords);
+    const manifest = JSON.parse(new TextDecoder().decode(parts['manifest.json']));
+    manifest.schemaVersion = schemaVersion;
+    parts['manifest.json'] = new TextEncoder().encode(JSON.stringify(manifest));
+    const readyResponse = await upload(zipSync(parts));
+    expect(readyResponse.status, await readyResponse.clone().text()).toBe(201);
+    const ready = await readyResponse.json();
+    expect(
+      (
+        await client.json(`${path}/imports/${ready.id}/confirm`, {
+          contentVersion: 1,
+          confirmed: true,
+        })
+      ).status,
+    ).toBe(200);
+    state = await read();
+    expect(state.relationships[0].verb).toBe(schemaVersion === 38 ? 'driver' : 'har samband med');
+    expect(state.relationships[0].reverseVerb).toBe(schemaVersion === 38 ? 'drivs av' : undefined);
+  },
+);
+
 test('zero-reference choices round-trip and schema37 archives receive only missing defaults', async () => {
   const preferences = {
     ...defaultViewSettings,
@@ -112,7 +269,7 @@ test('household archives exclude personal conversation choices and import preser
     await (await client.request(`${path}/exports/${prepared.id}`)).arrayBuffer(),
   );
   const parts = unzipSync(bytes);
-  expect(JSON.parse(new TextDecoder().decode(parts['manifest.json'])).schemaVersion).toBe(38);
+  expect(JSON.parse(new TextDecoder().decode(parts['manifest.json'])).schemaVersion).toBe(39);
   const encoded = new TextDecoder().decode(parts['content.json']);
   for (const field of [
     'showDraftOnStart',

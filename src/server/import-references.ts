@@ -46,7 +46,15 @@ export function validateImportReferences(
       );
   unique(
     content.relationships.filter((row) => !row.deleted),
-    (row) => JSON.stringify([row.typeId, row.sourceId, row.targetId]),
+    (row) =>
+      JSON.stringify([
+        row.typeId,
+        row.sourceId,
+        row.targetId,
+        row.verb ??
+          content.relationshipTypeLabels.find((type) => type.typeId === row.typeId)?.forwardLabel ??
+          content.relationshipTypes.find((type) => type.id === row.typeId)?.name,
+      ]),
   );
   const objectTypes = new Map(content.objectTypes.map((row) => [row.id, row]));
   const relationshipTypes = new Map(content.relationshipTypes.map((row) => [row.id, row]));

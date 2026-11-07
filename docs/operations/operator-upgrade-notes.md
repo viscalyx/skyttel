@@ -6,6 +6,23 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Preserve each relationship's chosen wording
+
+Back up the installation database before rollout. Existing relationship
+wording is retained on each relationship. Category edits no longer change
+that wording. Household-authored type definitions and historical records
+remain intact. New relationships can use any chosen verb with any kinds of
+objects; a reverse wording and a category choice are optional.
+
+Update API and assistant clients to send the intended wording for each new
+relationship. A category no longer selects a verb. New requests without
+wording use a neutral connection phrase; edits preserve existing wording.
+
+Coordinate archive consumers before rollout. New household archives use
+format schema 39. This release also accepts the supported schema 37 and 38
+archives. Older releases cannot import the new schema. Use a pre-upgrade
+backup if rollback requires an older release.
+
 ### Preserve consented conversations during upgrade
 
 Before rollout, stop new conversation requests to the old release. Let

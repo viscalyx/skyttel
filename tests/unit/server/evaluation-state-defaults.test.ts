@@ -61,6 +61,7 @@ async function checkHouseholdFacts(
         typeId: map.relationshipTypes.find((type) => type.name === 'Använder')?.id,
         sourceId: 'lo',
         targetId: 'spotify',
+        verb: 'använder',
         ...relationship,
       },
     });

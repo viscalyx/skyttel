@@ -105,6 +105,12 @@ export function relationshipDifferences(change: DraftRelationshipChange) {
     ),
     ...difference('Sambandstyp', (change.beforeType ?? change.type).name, change.type.name),
     ...difference('Till', target(change.before), target(change.after)),
+    ...difference('Verb', change.before.verb ?? '', change.after.verb ?? ''),
+    ...difference(
+      'Omvänd benämning',
+      change.before.reverseVerb ?? '',
+      change.after.reverseVerb ?? '',
+    ),
     ...propertyDifferences(change.before.properties, change.after.properties),
     ...lifecycleDifferences(change.before, change.after),
   ];

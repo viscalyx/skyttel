@@ -141,6 +141,9 @@ export type SaveOperation = SaveOperationIdentity &
 
 export interface RelationshipValue {
   properties?: Property[];
+  /** The user's wording belongs to this relationship, independently of its category. */
+  verb?: string;
+  reverseVerb?: string;
   typeId: string;
   sourceId: string;
   targetId: string;

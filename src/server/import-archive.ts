@@ -83,6 +83,19 @@ export async function validateImportArchive(directory: string, signal: AbortSign
   );
   if (!parsed.success) throw new MapError('invalid_archive', 400);
   const content = parsed.data;
+  // Old archives store current wording only on categories. New archives carry
+  // it on each edge; a missing new value must never select a verb by category.
+  for (const edge of content.relationships) {
+    if (edge.verb !== undefined && edge.verb !== null) continue;
+    if (manifest.data.schemaVersion < 39) {
+      const labels = content.relationshipTypeLabels.find((type) => type.typeId === edge.typeId);
+      edge.verb =
+        labels?.forwardLabel ??
+        content.relationshipTypes.find((type) => type.id === edge.typeId)?.name ??
+        'har samband med';
+      edge.reverseVerb ??= labels?.reverseLabel ?? null;
+    } else edge.verb = 'har samband med';
+  }
   if (content.household.id !== manifest.data.householdId)
     throw new MapError('invalid_archive', 400);
   try {

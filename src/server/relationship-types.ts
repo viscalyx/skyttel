@@ -48,27 +48,27 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       type.name.length > 200 ||
       typeof type.description !== 'string' ||
       type.description.length > 2000 ||
-      typeof type.forwardLabel !== 'string' ||
-      !type.forwardLabel.trim() ||
-      type.forwardLabel.length > 200 ||
-      typeof type.reverseLabel !== 'string' ||
-      !type.reverseLabel.trim() ||
-      type.reverseLabel.length > 200
+      [type.forwardLabel, type.reverseLabel].some(
+        (label) =>
+          label !== undefined && (typeof label !== 'string' || !label.trim() || label.length > 200),
+      )
     )
       throw new MapError('invalid_relationship_type', 400);
     return {
       name: type.name.trim(),
       description: type.description,
-      forwardLabel: type.forwardLabel.trim(),
-      reverseLabel: type.reverseLabel.trim(),
+      ...(type.forwardLabel !== undefined ? { forwardLabel: type.forwardLabel.trim() } : {}),
+      ...(type.reverseLabel !== undefined ? { reverseLabel: type.reverseLabel.trim() } : {}),
     };
   }
   function validateDefinition(type: RelationshipType) {
+    if ((type.forwardLabel === undefined) !== (type.reverseLabel === undefined))
+      throw new MapError('invalid_relationship_type', 400);
     return validate({
       name: type.name,
       description: type.description,
-      forwardLabel: type.forwardLabel ?? type.name,
-      reverseLabel: type.reverseLabel ?? type.name,
+      ...(type.forwardLabel !== undefined ? { forwardLabel: type.forwardLabel } : {}),
+      ...(type.reverseLabel !== undefined ? { reverseLabel: type.reverseLabel } : {}),
     });
   }
   return {
@@ -151,8 +151,15 @@ export function relationshipTypes(database: Database.Database, householdId: stri
         id: body.id,
         householdId,
         revision: (existing?.restoration?.definition.revision ?? before?.revision ?? 0) + 1,
+        ...((existing?.after?.forwardLabel ?? before?.forwardLabel)
+          ? { forwardLabel: existing?.after?.forwardLabel ?? before?.forwardLabel }
+          : {}),
+        ...((existing?.after?.reverseLabel ?? before?.reverseLabel)
+          ? { reverseLabel: existing?.after?.reverseLabel ?? before?.reverseLabel }
+          : {}),
         ...validate(body.value),
       };
+      validateDefinition(after);
 
       draft.relationshipTypes = [
         ...(draft.relationshipTypes ?? []).filter((item) => item.id !== body.id),

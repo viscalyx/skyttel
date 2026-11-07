@@ -967,6 +967,84 @@ test('a requested description replaces its current draft value while existing un
   );
 });
 
+test('a checked first-party batch keeps a free verb without requiring a relationship category', async () => {
+  const phrase = 'Familjens webbplats använder Driftplattformen. Spara inte.';
+  const model = textModel(
+    (request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_relationship',
+              arguments: {
+                id: 'free-site-link',
+                baseRevision: null,
+                value: { sourceId: 'site', targetId: 'hosting', verb: 'använder' },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => {
+      if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+        return [
+          modelMessage(JSON.stringify({ mode: 'work', request: phrase, responseRequired: false })),
+        ];
+      const input = JSON.parse(String(request.input[0].content));
+      expect(input.untrusted.operations[0].arguments.value).toEqual({
+        sourceId: 'site',
+        targetId: 'hosting',
+        verb: 'använder',
+      });
+      return [
+        modelMessage(JSON.stringify({ decision: 'allow', complete: true, fulfillsRequest: true })),
+      ];
+    },
+  );
+  await setup(model.provider);
+  const mapPath = path.replace('/text-assistant', '/map');
+  for (const [id, name, kind] of [
+    ['site', 'Familjens webbplats', 'Tjänst'],
+    ['hosting', 'Driftplattformen', 'Företag'],
+  ]) {
+    const map = await (await browser.get(mapPath)).json();
+    const response = await browser.post(`${mapPath}/draft`, {
+      headers: { origin: app.origin },
+      data: {
+        version: map.draft.version,
+        contentVersion: map.contentVersion,
+        id,
+        baseRevision: null,
+        value: { name, typeId: map.types.find((type: { name: string }) => type.name === kind).id },
+      },
+    });
+    expect(response.status()).toBe(200);
+  }
+  const result = await message(await start(), phrase);
+  expect(result.error).toBeUndefined();
+  expect(result.review.relationships).toMatchObject([
+    {
+      id: 'free-site-link',
+      type: { name: 'Samband' },
+      after: { sourceId: 'site', targetId: 'hosting', verb: 'använder' },
+    },
+  ]);
+  expect(result.review.relationships?.[0].after?.reverseVerb).toBeUndefined();
+  expect(result.receipt).toBeUndefined();
+  expect(
+    model.authorizationRequests.some((request) =>
+      request.instructions.startsWith('SKYTTEL_TURN_ACTIONS'),
+    ),
+  ).toBe(true);
+});
+
 test.each([false, true])(
   'current household relationship meanings and explicit type choices remain available during writes: explicit=%s',
   async (explicit) => {
@@ -3065,7 +3143,7 @@ test.each(['draft', 'latest_save'])(
     await propose('relationship', {
       id: 'alex-tonrum',
       baseRevision: null,
-      value: { ...relationship, typeId: usageType.id },
+      value: { ...relationship, typeId: usageType.id, verb: 'Använder' },
     });
     await propose('save', { operationId: 'baseline' });
     await propose('draft', {
@@ -3076,7 +3154,7 @@ test.each(['draft', 'latest_save'])(
     await propose('relationship', {
       id: 'alex-tonrum',
       baseRevision: 1,
-      value: { ...relationship, typeId: paymentType.id },
+      value: { ...relationship, typeId: paymentType.id, verb: 'Betalar' },
     });
     if (source === 'latest_save') await propose('save', { operationId: 'correction' });
 

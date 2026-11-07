@@ -9,7 +9,17 @@ export type FixtureProperty = {
 export type NamedRelationship = {
   id?: string;
   source: string;
+  /** Fixture category and legacy expectation wording; expected verb takes precedence. */
   type: string;
+  verb?: string;
+  /** Expected-only meaning when the request names a role without choosing a verb.
+   * A mandatory content judgment checks the observed wording against this meaning. */
+  verbMeaning?: string;
+  /** Only a semantic role expectation may accept both endpoint orientations. */
+  direction?: 'either';
+  reverseVerb?: string;
+  /** Assert a category only when the user explicitly asks for that grouping. */
+  category?: string;
   target: string;
   properties?: FixtureProperty[];
   lifecycle?: 'active' | 'ended';

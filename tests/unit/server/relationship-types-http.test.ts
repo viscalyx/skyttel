@@ -67,6 +67,43 @@ beforeEach(async () => {
 });
 afterEach(() => fixture.close());
 
+test('categories need no wording and partial legacy label edits cannot silently lose metadata', async () => {
+  const before = await read();
+  expect((await define({ name: 'Neutral gruppering', description: '' })).status).toBe(200);
+  expect((await save('neutral-category')).status).toBe(200);
+  expect(
+    (await read()).relationshipTypes.find((type) => type.id === 'storage')?.forwardLabel,
+  ).toBeUndefined();
+  const current = await read();
+  expect(
+    (
+      await define(
+        { name: 'Ofullständig äldre gruppering', description: '', forwardLabel: 'förvaras i' },
+        null,
+        client,
+        'partial',
+      )
+    ).status,
+  ).toBe(400);
+  expect((await read()).draft).toEqual(current.draft);
+  expect((await define(definition, 1)).status).toBe(200);
+  expect((await save('legacy-label-pair')).status).toBe(200);
+  expect(
+    (
+      await define(
+        { name: definition.name, description: definition.description, forwardLabel: 'finns i' },
+        2,
+      )
+    ).status,
+  ).toBe(200);
+  expect((await save('legacy-one-label-edit')).status).toBe(200);
+  expect((await read()).relationshipTypes.find((type) => type.id === 'storage')).toMatchObject({
+    forwardLabel: 'finns i',
+    reverseLabel: 'innehåller',
+  });
+  expect((await read()).objects).toEqual(before.objects);
+});
+
 test('type and label validation keeps the private draft unchanged and rejects malformed fields', async () => {
   const unchanged = await read();
   for (const value of [

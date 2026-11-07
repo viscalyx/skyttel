@@ -906,7 +906,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   TYP-08/09/13/14 är avvecklade typavsnittsfall och får inte återanvändas.
 - [Sambandsarbete](relationships.md): skapa objekt separat, koppla dem i den
   gemensamma dialogen och rätta objekt och samband oberoende. Fullständiga
-  egna värden, typbyte och riktning behåller sin betydelse. Osäkerhet kan
+  egna värden, typbyte och riktning behåller sin betydelse. Fria verb hör
+  till varje enskilt samband oavsett gruppering och slags objekt;
+  SAMBAND-22 bevarar två ordval efter omstart. Osäkerhet kan
   anges som en vanlig egenskap utan särskild sparverkan.
   Validering, dubbletter, borttagning, oklara utfall och förlustvarning
   bevarar tidigare förslag. Ett gammalt obekräftat försök efter en senare

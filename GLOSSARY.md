@@ -21,10 +21,14 @@ En enskild koppling mellan två objekt, exempelvis att Alex använder
 Alex blå cykel.
 
 **Sambandstyp**:
-Betydelsen hos en koppling mellan två objekt, exempelvis äger eller
-förvaras i.
+Hushållets gruppering av samband, skild från verbet på ett enskilt samband.
+Grupperingen begränsar inte verbet eller vilka slags objekt som kopplas.
 
 _Undvik_: Relationstyp som en separat term för samma begrepp.
+
+**Sambandsverb**:
+Hushållets fritt valda verb eller verbfras för ett enskilt riktat samband,
+exempelvis använder, förvaras i eller körs hos.
 
 **Egen typ**:
 En objekt- eller sambandstyp som hushållet själv definierar och delar
@@ -196,13 +200,12 @@ Flera personer kan betala, utan att därmed äga det som avtalet gäller eller
 stå på avtalet.
 
 **Äger**:
-Sambandet mellan ett objekt och den person som anges som dess ägare.
-Ett objekt kan ha flera ägare.
+Ett exempel på sambandsverb från en ägare till det som ägs.
+Ett objekt kan ha flera ägare, oberoende av ägarnas objekttyper.
 
 **Använder**:
-Sambandet mellan en person och exempelvis en tjänst eller ett fordon som
-personen använder.
-Flera personer kan använda samma objekt, oavsett om de använder Skyttel.
+Ett exempel på sambandsverb mellan ett objekt och det som objektet använder.
+Både personer, tjänster och andra slags objekt kan använda något.
 
 **Finansierar**:
 Sambandet mellan ett avtal och det som avtalet finansierar, exempelvis
