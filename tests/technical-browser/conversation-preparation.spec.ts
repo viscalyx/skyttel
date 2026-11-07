@@ -550,9 +550,9 @@ for (const seeded of [false, true]) {
       await dialog
         .getByRole('button', { name: 'Återkalla och avsluta samtalet', exact: true })
         .click();
+      await expect(page.getByText('Medgivandet är återkallat', { exact: true })).toBeVisible();
       command('release-save');
       command('hold-save off');
-      await expect(page.getByText('Medgivandet är återkallat', { exact: true })).toBeVisible();
       await expect
         .poll(
           async () =>

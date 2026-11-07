@@ -201,9 +201,9 @@ utkastversion. Läs hela förslaget före nästa sparande.
 Kör `hold-save on` före **Spara hela utkastet nu.**.
 Släpp verktygsanropet `save_draft` enligt ovan och vänta på
 `save-registered` innan återkallanderutan öppnas. Anteckna dess
-`operationId` separat. Efter bekräftat återkallande körs `release-save`.
-Invänta **Medgivandet är återkallat** innan du kontrollerar att inget
-modellarbete väntar. Samtalet är då avslutat;
+`operationId` separat. Bekräfta återkallandet och invänta
+**Medgivandet är återkallat** innan `release-save` körs. Kontrollera därefter
+att inget modellarbete väntar. Samtalet är då avslutat;
 släpp inget efterföljande slutbesked. Under **Identifiera sparandet
 och användaren** kan detta råa ID jämföras som tekniskt underlag.
 Kör `hold-save off` efteråt, eller `quit` som även släpper en kvarvarande
