@@ -31,6 +31,13 @@ export function deferredResponse() {
   return { promise, resolve };
 }
 
+export function requiredCommand<T extends (...args: never[]) => unknown>(
+  command: T | undefined,
+): T {
+  if (!command) throw new Error('Expected the concrete conversation command');
+  return command;
+}
+
 /** Exercise public hook commands with responses at the browser HTTP boundary. */
 export async function conversationCommands(
   respond: (

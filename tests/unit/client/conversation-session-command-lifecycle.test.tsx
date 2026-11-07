@@ -4,6 +4,7 @@ import {
   commandConversation,
   conversationCommands,
   deferredResponse,
+  requiredCommand,
 } from '../../support/conversation-hook.js';
 
 afterEach(() => {
@@ -26,14 +27,14 @@ test('a rejected model choice preserves the current conversation and a later con
   act(() => result.current.setText('Behåll mitt oskickade meddelande.'));
   let changed!: boolean;
   await act(async () => {
-    changed = await result.current.configureModel!(choice);
+    changed = await requiredCommand(result.current.configureModel)(choice);
   });
   expect(changed).toBe(false);
   expect(result.current.session?.modelChoice).toBeUndefined();
   expect(result.current.text).toBe('Behåll mitt oskickade meddelande.');
   accepted = true;
   await act(async () => {
-    changed = await result.current.configureModel!(choice);
+    changed = await requiredCommand(result.current.configureModel)(choice);
   });
   expect(changed).toBe(true);
   expect(result.current.session?.modelChoice).toEqual(choice);
@@ -48,7 +49,7 @@ test('a model choice response cannot replace a conversation after leaving its ho
   );
   let changing!: Promise<boolean>;
   act(() => {
-    changing = result.current.configureModel!(choice);
+    changing = requiredCommand(result.current.configureModel)(choice);
   });
   rerender({ householdId: 'other-household' });
   await act(async () => {
@@ -82,7 +83,7 @@ test('ending a conversation waits for confirmation, ignores repeat presses and c
   expect(onMapChange).toHaveBeenCalledOnce();
   await act(async () => result.current.endConversation());
   expect(commands.filter((entry) => entry.path.endsWith('/stop'))).toHaveLength(1);
-  expect(await result.current.configureModel!(choice)).toBe(false);
+  expect(await requiredCommand(result.current.configureModel)(choice)).toBe(false);
 });
 
 test('a failed end retains the private conversation for an explicit retry', async () => {
