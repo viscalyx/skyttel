@@ -961,14 +961,14 @@ export function textAssistantRoutes({
     ];
     session.execution.capacity.resetText();
   }
-  function refreshContext(session: Session, outdated: { name: string }[]) {
+  function refreshContext(session: Session, outdated: { name: string; currentCalls?: string[] }[]) {
     const rereadable = new Set([
       'read_map',
       'read_type_catalog',
       'read_my_draft',
       'search_object_icons',
     ]);
-    const changed = new Set(outdated.map((read) => read.name));
+    const changed = new Map(outdated.map((read) => [read.name, new Set(read.currentCalls ?? [])]));
     const latest = new Map<string, string>();
     const removed = new Set<string>();
     for (const item of session.state.input) {
@@ -984,7 +984,8 @@ export function textAssistantRoutes({
       latest.set(key, item.call_id);
       // Invalid facts are removed together with their call association. The
       // current envelope or an explicit new read supplies their replacement.
-      if (changed.has(item.name)) removed.add(item.call_id);
+      if (changed.has(item.name) && !changed.get(item.name)?.has(item.call_id))
+        removed.add(item.call_id);
     }
     session.state.input = session.state.input.filter(
       (item) =>
@@ -1329,6 +1330,7 @@ export function textAssistantRoutes({
     args: Record<string, unknown>,
     guard?: () => void,
     readPolicy: 'shared' | 'lifecycle' = 'shared',
+    contextCallId?: string,
   ) {
     if (name === 'prepare_save' || name === 'save_draft') persist(session);
     guard?.();
@@ -1436,7 +1438,7 @@ export function textAssistantRoutes({
         );
       return value;
     };
-    const value = await session.execution.reads.read(name, args, load, readPolicy);
+    const value = await session.execution.reads.read(name, args, load, readPolicy, contextCallId);
     guard?.();
     checkViewAccess(session);
     if (work?.session === session) work.guard();
@@ -2695,7 +2697,7 @@ export function textAssistantRoutes({
               contentVersion,
             }),
           ),
-          outdatedReads: session.execution.reads.outdated(),
+          outdatedReads: session.execution.reads.outdated().map(({ name }) => ({ name })),
           voiceContext: dialogue.length ? JSON.stringify(dialogue) : undefined,
           previousFailure: session.state.previousFailure
             ? { message: session.state.previousFailure, historical: true }
@@ -2709,7 +2711,7 @@ export function textAssistantRoutes({
         session.state.review = current;
         const outdated = session.execution.reads.outdated();
         refreshContext(session, outdated);
-        return outdated;
+        return outdated.map(({ name }) => ({ name }));
       }
       for (let step = 0; step < 48; step++) {
         guard();
@@ -3186,7 +3188,14 @@ export function textAssistantRoutes({
           const results = await session.execution.reads.consistent(() =>
             Promise.all(
               readCalls.map((action) =>
-                call(session, action.name, JSON.parse(action.arguments), guard),
+                call(
+                  session,
+                  action.name,
+                  JSON.parse(action.arguments),
+                  guard,
+                  'shared',
+                  action.call_id,
+                ),
               ),
             ),
           );
@@ -3522,6 +3531,8 @@ export function textAssistantRoutes({
               action.name,
               args,
               isSave ? currentSaveGuard(session, serial, guard) : guard,
+              'shared',
+              action.call_id,
             );
           guard();
           if (action.name === 'save_draft') {
