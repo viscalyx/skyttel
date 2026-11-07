@@ -2094,7 +2094,7 @@ UTKAST-01.
     "Före konfliktvalet visar fullständig förslagsläsning ursprungsnamnet Lo Exempel och förslaget Lo Lind. Konflikten visar aktuellt sparat Lo Berg. Sparförsöket avvisas utan ändrad karta, utkast eller historik. Konflikten och adressförslaget finns kvar efter omladdning och omstart.",
     "Konfliktvalet ger inget sparkvitto. Dialogens status visar att valen finns i utkastet. Förslaget innehåller Lo Lind och den oberoende sparade beskrivningen “Spelar piano i musikföreningen.” Adressförslaget finns kvar.",
     "Sambandets tidigare underlag visar Familjens musikkonto och `familjen@example.test`. Förslaget visar Familjens rättade konto och `musik@example.test`, med samma ändpunktsidentiteter.",
-    "Det uttryckliga sparandet ger ett lyckat sparkvitto. **Utkastet är tomt** även efter omladdning. Det sparade sambandet visar **Familjens rättade konto → Inloggningsadress** → `musik@example.test`."
+    "Det uttryckliga sparandet ger ett lyckat sparkvitto. **Utkastet är tomt** även efter omladdning. Det sparade sambandet visar **Familjens rättade konto → har inloggningsadressen** → `musik@example.test`."
   ]
 }
 ```
@@ -2134,7 +2134,7 @@ UTKAST-01.
   `musik@example.test`, med samma ändpunktsidentiteter.
 - Det uttryckliga sparandet ger ett lyckat sparkvitto. **Utkastet är tomt**
   även efter omladdning. Det sparade sambandet visar **Familjens rättade
-  konto → Inloggningsadress** → `musik@example.test`.
+  konto → har inloggningsadressen** → `musik@example.test`.
 
 ## Aktuellt underlag och borttagning
 

@@ -248,7 +248,7 @@ test('UTKAST-01: demo seed resumes a conflict and preserves independent proposal
     const reviewedLo = await readDraftProposal(page, 'Lo Lind');
     await expect(reviewedLo).toContainText('Spelar piano i musikföreningen.');
     await closeSupportDialog(page, 'Lo Lind');
-    const emailProposalName = 'Familjens musikkonto → Inloggningsadress → musik@example.test';
+    const emailProposalName = 'Familjens musikkonto → har inloggningsadressen → musik@example.test';
     const emailProposal = await readDraftProposal(page, emailProposalName);
     await expect(emailProposal).toContainText('familjen@example.test');
     await expect(emailProposal).toContainText('musik@example.test');
@@ -257,7 +257,8 @@ test('UTKAST-01: demo seed resumes a conflict and preserves independent proposal
     await editTableObject(page, 'Familjens musikkonto');
     await page.getByLabel('Namn', { exact: true }).fill('Familjens rättade konto');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    const renamedProposalName = 'Familjens rättade konto → Inloggningsadress → musik@example.test';
+    const renamedProposalName =
+      'Familjens rättade konto → har inloggningsadressen → musik@example.test';
     const relationshipReview = await readDraftProposal(page, renamedProposalName);
     await expect(relationshipReview).toContainText('Familjens musikkonto');
     await expect(relationshipReview).toContainText('familjen@example.test');
@@ -273,7 +274,7 @@ test('UTKAST-01: demo seed resumes a conflict and preserves independent proposal
     await expect(review).toContainText('Utkastet är tomt.');
     await closeTextView(page);
     await expect(await openObjectRelationships(page, 'Familjens rättade konto')).toContainText(
-      'Familjens rättade konto → Inloggningsadress → musik@example.test',
+      'Familjens rättade konto → har inloggningsadressen → musik@example.test',
     );
   } finally {
     await installation.close();
