@@ -89,17 +89,26 @@ export function textModel(
           item && typeof item === 'object' && 'type' in item && item.type === 'function_call',
         ),
       );
-      const current = JSON.parse(
-        String(body.input.findLast((item) => item.role === 'user')?.content),
-      );
-      terminalWork.set(
-        current.message,
-        !calls.length ||
-          (calls.length === 1 &&
-            (calls[0].name === 'save_draft' ||
-              (calls[0].name === 'submit_changes' &&
-                JSON.parse(calls[0].arguments).continueResponse !== true))),
-      );
+      let message: unknown;
+      try {
+        const current: unknown = JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        );
+        if (current && typeof current === 'object' && 'message' in current)
+          message = current.message;
+      } catch {
+        // External MCP clients send plain text and do not use the first-party
+        // terminal-work certificate. Their scripted tool calls still run.
+      }
+      if (typeof message === 'string')
+        terminalWork.set(
+          message,
+          !calls.length ||
+            (calls.length === 1 &&
+              (calls[0].name === 'save_draft' ||
+                (calls[0].name === 'submit_changes' &&
+                  JSON.parse(calls[0].arguments).continueResponse !== true))),
+        );
     }
     return Response.json(
       {
