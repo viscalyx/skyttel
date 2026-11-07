@@ -8,6 +8,11 @@ modell eller kontrollerad ersättare samt godkänt eller underkänt resultat.
 De länkade integrationstesterna verifierar de kontrollerade flödena.
 Stegen här är stöd för felsökning; automatiken kräver ingen manuell upprepning.
 
+När förberedelsen anger ett samband som **A → verb → B**, skriv den
+angivna mittdelen i **Verb** på det enskilda sambandet. Välj den angivna
+sambandstypen separat. När ett steg ändrar både typen och formuleringen,
+ändra också **Verb** uttryckligen.
+
 ## Konfigurerade användare
 
 - Alex Exempel är administratör i det påhittade hushållet Textprov.

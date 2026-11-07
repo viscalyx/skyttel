@@ -138,6 +138,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await chooseRelationshipObject(page, 'Från objekt', 'Familjemusik');
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalas med' });
+    await page.getByLabel('Verb', { exact: true }).fill('Betalas med');
     await setProperty(page, 'Uppgiftens säkerhet', 'Obesvarad fråga');
     await chooseRelationshipObject(page, 'Till objekt', 'Betalkonto');
     await stageRelationshipAndClose(page);
@@ -301,6 +302,7 @@ test('KARTA-25: a concurrent duplicate refreshes the saved relationship and allo
         state.objects.find((object: { name: string }) => object.name === 'Kim Exempel').id,
       );
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Använder' });
+    await page.getByLabel('Verb', { exact: true }).fill('Använder');
     await page
       .getByLabel('Till objekt', { exact: true })
       .selectOption(
@@ -330,6 +332,7 @@ test('KARTA-25: a concurrent duplicate refreshes the saved relationship and allo
     await robinPage.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await chooseRelationshipObject(robinPage, 'Från objekt', 'Kim Exempel');
     await robinPage.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Använder' });
+    await robinPage.getByLabel('Verb', { exact: true }).fill('Använder');
     await chooseRelationshipObject(robinPage, 'Till objekt', 'Molnmusik');
     await stageRelationshipAndClose(robinPage);
     await saveReviewedConflictDraft(robinPage);

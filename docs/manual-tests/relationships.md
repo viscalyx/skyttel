@@ -862,13 +862,10 @@ typbenämning.
 **Steg:**
 
 1. Förbered Alex och ett fordonsobjekt med ett namn på 180 C. Skapa
-   sambandstypen Långa
-   provuppgifter med en benämning från startobjektet på 180 L och omvänd
-benämning
-   gäller för.
+   sambandstypen Långa provuppgifter.
 2. Vid 320 CSS-pixlar, öppna Samband för Alex, Nytt samband och välj den nya
-   typen och
-   fordonsobjektet.
+   typen och fordonsobjektet. Skriv 180 L i **Verb** och **gäller för**
+   i **Omvänd benämning (valfri)**.
 3. Lägg till en fri textegenskap med etiketten 180 F och värdet Bevara
    uppgiften. Läs
    meningen och hela formuläret utan att skicka.

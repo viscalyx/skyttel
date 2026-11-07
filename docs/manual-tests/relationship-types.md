@@ -340,7 +340,8 @@ medlem.
 
 1. Skapa Alex som Person och Blå cykeln som Fordon i utkastet. Öppna Samband
    för Alex
-   och Nytt samband. Välj Använder till Blå cykeln.
+   och Nytt samband. Välj typen Använder, skriv **Använder** i **Verb**
+   och välj Blå cykeln som Till objekt.
 2. Lägg till Anteckning (Text, Låst skåp), Belopp (Tal, 0), Startdatum (Datum,
    2026-09-27), Bekräftat (Ja/nej, Nej) och Obesvarat (Ja/nej, Tomt).
 3. Fokusera Flytta upp på Obesvarat och tryck Enter. Kontrollera fokus på dess
@@ -394,7 +395,8 @@ medlem.
 
 1. Skapa Alex som Person och Blå cykeln som Fordon i utkastet. Öppna Samband
    för Alex
-   och Nytt samband. Välj Använder till Blå cykeln.
+   och Nytt samband. Välj typen Använder, skriv **Använder** i **Verb**
+   och välj Blå cykeln som Till objekt.
 2. Lägg till Anteckning (Text, Låst skåp), Belopp (Tal, 0), Startdatum (Datum,
    2026-09-27), Bekräftat (Ja/nej, Nej) och Obesvarat (Ja/nej, Tomt).
 3. Fokusera Flytta upp på Obesvarat och tryck Enter. Kontrollera fokus på dess
@@ -445,10 +447,12 @@ medlem.
 
 **Steg:**
 
-1. Spara ett Använder-samband från Alex till Blå cykeln med Anteckning (Text,
+1. Spara ett samband med typen Använder och **Verb: Använder** från Alex
+   till Blå cykeln med Anteckning (Text,
    Behåll
    uppgiften) och Kontrollerat (Ja/nej, Nej).
-2. Redigera sambandet och välj typen Äger. Läs samma egenskapsvärden direkt.
+2. Redigera sambandet och välj typen Äger. Behåll **Verb: Använder**.
+   Läs samma egenskapsvärden direkt.
    Lägg i
    utkastet och spara.
 3. Starta om, ladda om och läs sambandet från Alex.

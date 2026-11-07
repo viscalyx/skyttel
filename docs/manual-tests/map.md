@@ -4,6 +4,11 @@ Testfallen gäller att skapa, söka, rätta och ta bort objekt och samband,
 att välja mellan objekt med lika namn och att bevara ofullständiga uppgifter.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
+När förberedelsen anger ett samband som **A → verb → B**, skriv den
+angivna mittdelen i **Verb** på det enskilda sambandet. Välj den angivna
+sambandstypen separat. När ett steg ändrar både typen och formuleringen,
+ändra också **Verb** uttryckligen.
+
 ## Konfigurerade användare
 
 Använd den administratör som anges av `SKYTTEL_FIRST_ADMIN_PROVIDER` och
@@ -620,7 +625,7 @@ Kasta hela utkastet** och den uttryckliga bekräftelsen. Bevara sparade fakta.
 **Steg:**
 
 1. Som Alex, öppna **Tabell → Samband för Kim Exempel → Nytt samband**.
-   Välj **Från objekt: Kim Exempel**, typen **Använder** och
+   Välj **Från objekt: Kim Exempel**, typen **Använder**, **Verb: Använder** och
    **Till objekt: Molnmusik**. Behåll formuläret öppet utan att skicka.
 2. Som Robin, öppna samma vanliga sambandsformulär och lägg det identiska
    kända sambandet i Robins utkast. Spara uttryckligen genom **Visa

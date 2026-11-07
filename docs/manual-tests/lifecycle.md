@@ -7,6 +7,11 @@ permanent radering; dess oåterkalleliga omfattning provas separat i
 [raderingsfallen](household-erasure.md).
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
+När förberedelsen anger ett samband som **A → verb → B**, skriv den
+angivna mittdelen i **Verb** på det enskilda sambandet. Välj den angivna
+sambandstypen separat. När ett steg ändrar både typen och formuleringen,
+ändra också **Verb** uttryckligen.
+
 ## Separat HTTP-underlag
 
 [lifecycle-http.test.ts](../../tests/unit/server/lifecycle-http.test.ts)
@@ -122,6 +127,7 @@ await lifecyclePost('relationship', {
   id: `previous-${lifecycleIncoming.id}`, baseRevision: null,
   value: { sourceId: lifecycleService.id, targetId: lifecycleLo.id,
     typeId: lifecycleState.relationshipTypes.find(x => x.name === 'Betalar').id,
+    verb: 'Betalar',
     lifecycle: 'active',
     properties: [{ id: 'endDate', label: 'Slutdatum',
       kind: 'date', value: '2000-01-01' }] }

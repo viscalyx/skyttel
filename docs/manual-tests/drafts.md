@@ -4,6 +4,12 @@ Testfallen gäller återupptagning, granskning, sparande, kastande och
 konflikthantering av ditt utkast. Förberedelser och testdata anges nedan.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
+När ett fall förbereder ett samband med en angiven formulering, skriv den i
+**Verb** på sambandet och välj typen separat. Förberedelsen för
+utkastläsning anger uttryckligen **granskar** och **granskas av** på
+sambanden, samt **Använder** och **Används av** på det separata
+användningssambandet. Typbyte bevarar orden tills du ändrar dem själv.
+
 ## Konfigurerade användare
 
 Logga in med den administratör som anges av
@@ -759,10 +765,11 @@ server-sviten i Vitest. Formulär och borttagningsbekräftelse provas i UTKAST-4
 
 **Förutsättningar:** Förbered provkommandot ovan och välj `new-base`. Skapa i
 Inställningar → Typer en ny sambandstyp Tillfällig typ,
-beskrivning Hela den tillfälliga typens betydelse, framåt granskar och bakåt
-granskas av. Lägg i utkastet. Gå tillbaka till Tabell och välj Samband för Alex
-blå cykel → Nytt samband. Välj Tillfällig typ och lägg till Uppgiftens
-säkerhet (Text, Okänt) som fri egenskap.
+beskrivning Hela den tillfälliga typens betydelse. Lägg i utkastet.
+Gå tillbaka till Tabell och välj Samband för Alex
+blå cykel → Nytt samband. Välj Tillfällig typ, skriv **granskar** i
+**Verb** och **granskas av** i **Omvänd benämning (valfri)**.
+Lägg till Uppgiftens säkerhet (Text, Okänt) som fri egenskap.
 Välj cykeln som Till objekt.
 Lägg i utkastet med Enter och välj Stäng samband. Spara inte.
 

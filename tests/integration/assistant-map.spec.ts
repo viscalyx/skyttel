@@ -83,6 +83,7 @@ for (const viewport of [
                 baseRevision: null,
                 value: {
                   typeId: initial.relationshipTypes[0].id,
+                  verb: 'Använder',
                   sourceId: 'lo',
                   targetId: 'music',
                 },

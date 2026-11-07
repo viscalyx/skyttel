@@ -65,6 +65,7 @@ test('KATALOG-04: canceling a type deletion restores inspectable unfinished obje
     await app.propose(page.request, 'draft', 'new-work', { typeId: type.id, name: 'Nytt arbete' });
     await app.propose(page.request, 'relationship', 'new-connection', {
       typeId: initial.relationshipTypes[0].id,
+      verb: 'Använder',
       sourceId: 'new-work',
       targetId: 'service',
       properties: [
@@ -166,6 +167,7 @@ test('KATALOG-01: type cascades and meaning corrections are reviewed, canceled a
       baseRevision: null,
       value: {
         typeId: edgeType.id,
+        verb: 'Använder',
         sourceId: 'solar-object',
         targetId: 'survivor',
         lifecycle: 'ended',
@@ -362,6 +364,7 @@ test('KATALOG-02: other drafts survive type deletion and recover through ordinar
             baseRevision: null,
             value: {
               typeId: edgeType.id,
+              verb: 'Använder',
               sourceId: 'private',
               targetId: 'target',
               lifecycle: 'ended',
