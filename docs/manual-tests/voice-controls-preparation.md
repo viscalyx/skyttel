@@ -138,12 +138,12 @@ await fetch('VOICE-ADRESS/VOICE-ID/stop', {
 }).then(async response => ({ status: response.status, ...await response.json() }))
 ```
 
-Kräv status 200 och `voice.phase: 'closed'` innan omladdning. Omladdning ensam
-avslutar inte serverns gamla röstsession; en ny samtalsstart kan annars stänga
-den som förlorad åtkomst. Efter omladdningen: öppna textvyn, läs att samtalet
-är pausat, välj **Avsluta samtalet** och stäng textvyn före nästa fristående
-startprov. Installera därefter blocken på nytt. Avsluta launchern med `quit`
-och kontrollera borttagen katalog enligt röstguiden.
+Kräv status 200 och `voice.phase: 'closed'` innan omladdning så att just
+provets transport har verifierad städning. Omladdningen återställer samtalet
+pausat. Öppna textvyn, läs dess pausade status, välj **Avsluta samtalet** och
+stäng textvyn före nästa fristående startprov. Installera därefter blocken på
+nytt. Avsluta launchern med `quit` och kontrollera borttagen katalog enligt
+röstguiden.
 
 De två separata tekniska proven för publika kontroller i
 [voice-controls-preparation.spec.ts](../../tests/technical-browser/voice-controls-preparation.spec.ts)
