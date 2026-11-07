@@ -1266,6 +1266,7 @@ test('UTKAST-06: deleting an object requires reviewing newly saved relationships
     ).toBeEnabled();
     await app.propose(other.request, 'relationship', 'new-edge', {
       typeId: state.relationshipTypes[0].id,
+      verb: 'Använder',
       sourceId: 'lo',
       targetId: 'service',
       properties: [
@@ -1556,6 +1557,7 @@ for (const side of ['proposed', 'saved'] as const) {
       const state = await app.read();
       const value: RelationshipValue = {
         typeId: state.relationshipTypes[0].id,
+        verb: 'Använder',
         sourceId: 'lo',
         targetId: 'service',
       };
@@ -1569,6 +1571,7 @@ for (const side of ['proposed', 'saved'] as const) {
       await app.propose(other.request, 'relationship', 'edge', {
         ...value,
         typeId: state.relationshipTypes[1].id,
+        verb: 'Används av',
       });
       expect((await app.save(other.request, 'changed-types')).status()).toBe(200);
       const comparison = await app.read();

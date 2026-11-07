@@ -2592,8 +2592,9 @@ UTKAST-11.
 2. Som medlemmen: välj **Redigera Lo Exempel**, byt objekttyp till
    **Abonnemang** och lägg ändringen i utkastet.
 3. Öppna **Samband för Lo Exempel** och redigera sambandet. Byt typen
-   från **Använder** till **Används av**, behåll ändpunkterna och spara
-   hela medlemmens utkast separat.
+   från **Använder** till **Används av** och ändra separat **Verb** till
+   **Används av**. Behåll ändpunkterna och spara hela medlemmens utkast
+   separat.
 4. Ladda om administratörens sida och öppna **Granska konflikter**.
    Läs de aktuella typerna. Välj föreslagen borttagning på objektraden
    och **Lägg valen i utkastet**.
