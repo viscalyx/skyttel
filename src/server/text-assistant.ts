@@ -41,7 +41,9 @@ import {
   type CheckTurnActions,
   compareTurnActions,
   interpretTurnScope,
+  matchClarification,
   turnActionData,
+  turnActionOperations,
 } from './assistant-turn-scope.js';
 import { assistantDraftReview } from './assistant-work.js';
 import type { Auth } from './auth.js';
@@ -125,6 +127,20 @@ const modelFailureRecovery = new Map([
   ['assistant_scope_unavailable', 'Försök igen'],
   ['assistant_model_access', 'Fortsätt med valt alternativ'],
   ['assistant_model_unsupported', 'Fortsätt med valt alternativ'],
+]);
+const reportContinuation = { continueResponse: z.boolean().default(false) };
+const resultReport = z.discriminatedUnion('source', [
+  z.object({ source: z.literal('draft'), ...reportContinuation }).strict(),
+  z.object({ source: z.literal('latest_save'), ...reportContinuation }).strict(),
+  z.object({ source: z.literal('last_failure'), ...reportContinuation }).strict(),
+  z
+    .object({
+      source: z.literal('save'),
+      ...reportContinuation,
+      operationId: z.string().regex(/^[\w-]{1,128}$/),
+      userId: z.string().min(1).max(200),
+    })
+    .strict(),
 ]);
 
 export function textAssistantRoutes({
@@ -1809,7 +1825,7 @@ export function textAssistantRoutes({
     const command =
       correction && !/\?|\b(spara|sparar|vänta)\b/u.test(correction[1]) ? correction[2] : plain;
     const suffix =
-      '(?:\\s+(?:nu|direkt|allt|allting|det|detta|det här|hela utkastet|utkastet|ändringarna|alla ändringar|förslaget|förslagen))*(?:\\s+med alla de här ändringarna)?';
+      '(?:\\s+(?:nu|direkt|allt|allting|det|detta|det här|hela utkastet|utkastet|ändringarna|(?:alla|mina|våra) ändringar|förslaget|förslagen))*(?:\\s+med alla de här ändringarna)?';
     return (
       !/\b(inte|ej|ingenting|aldrig|utan|vänta|om|när|kanske|skulle|exempel|citat|förklara)\b/u.test(
         command,
@@ -2417,7 +2433,7 @@ export function textAssistantRoutes({
           return scopeOutcome;
         },
       );
-      async function admitScope() {
+      const admitScope = async () => {
         if (admitted) return true;
         if (!scopeJob) throw new MapError('assistant_scope_unavailable', 409);
         const outcome = await scopeJob;
@@ -2433,11 +2449,48 @@ export function textAssistantRoutes({
         }
         if (scope.mode === 'clarify') {
           session.state.saveIntent = undefined;
+          const message = session.state.activeMessage;
+          if (!message) throw new MapError('invalid_request', 400);
+          let answers = message.answerProgress ?? message.answerTo;
+          let question = scope.request;
+          const pending = [...session.execution.parts.values()]
+            .filter((part) => part.status === 'waiting' || part.status === 'ready')
+            .map(({ id, revision, request, question }) => ({ id, revision, request, question }));
+          let create = !answers;
+          if (!answers && pending.length && !message.restate) {
+            const target = await matchClarification(respond, text, pending, interpretationSignal);
+            guard();
+            create = target.decision === 'new';
+            if (target.decision === 'rephrase') answers = target.parts;
+            if (target.decision === 'unclear') {
+              question = target.question;
+              session.state.newQuestions = [...(session.state.newQuestions ?? []), question];
+            }
+          }
+          updateParts(
+            session,
+            create
+              ? [
+                  {
+                    kind: scope.clarificationKind ?? 'change',
+                    request: text,
+                    question,
+                    dependsOnDraft: true,
+                  },
+                ]
+              : [],
+            answers?.map((part) => ({
+              ...part,
+              action: 'rephrase' as const,
+              messageId: message.id,
+              evidence: text,
+              question,
+            })) ?? [],
+            'turn-scope',
+          );
           session.state.phase = 'ready';
-          session.state.questions = [...session.execution.parts.questions(), scope.request];
-          session.state.newQuestions = [scope.request];
-          session.state.reply = scope.request;
-          appendConversation(session, { role: 'assistant', text: scope.request });
+          session.state.reply = question;
+          appendConversation(session, { role: 'assistant', text: question });
           discardReason = 'clarification';
           if (workContextStarted) rebuildContext(session);
           return false;
@@ -2446,7 +2499,7 @@ export function textAssistantRoutes({
         for (const attempt of attempts) attempt.used = true;
         scopeReady(checkActions, scope.mode, () => wholeRequestComplete);
         return true;
-      }
+      };
       const rejectAction = (name: string, reason: 'read_only_turn' | 'outside_requested_work') => {
         const reference = randomUUID();
         session.state.securityReference = reference;
@@ -2492,12 +2545,17 @@ export function textAssistantRoutes({
         const wholeDraft = operations.every((operation) =>
           ['save_draft', 'prepare_save'].includes(operation.name),
         );
-        const map = await call(session, 'read_map', {}, guard);
+        const [map, catalog] = await session.execution.reads.consistent(() =>
+          Promise.all([
+            call(session, 'read_map', {}, guard),
+            call(session, 'read_type_catalog', {}, guard),
+          ]),
+        );
         guard();
         const decision = await compareTurnActions(
           respond,
           { current: text, scope },
-          operations,
+          turnActionOperations(map, session.state.review, operations),
           {
             map: turnActionData(
               map,
@@ -2522,6 +2580,7 @@ export function textAssistantRoutes({
                     ),
                   ]
                 : operations,
+              catalog,
             ),
             draft: session.state.review,
             ...(wholeDraft ? { wholeDraft: true } : {}),
@@ -3092,38 +3151,66 @@ export function textAssistantRoutes({
             ),
           );
         }
-        // Only trusted read contracts can overlap. Mixed sets retain their
-        // checked execution order; mutations still require their atomic batch.
+        const readCalls = calls.filter((action) =>
+          session.execution.mcp.tools.some(
+            (tool) => tool.name === action.name && tool.annotations?.readOnlyHint === true,
+          ),
+        );
+        const terminal = calls.find((action) =>
+          ['ask_questions', 'report_result'].includes(action.name),
+        );
+        if (terminal) {
+          const selections =
+            terminal.name === 'report_result'
+              ? calls.filter((action) => ['show_map_object', 'show_map_item'].includes(action.name))
+              : [];
+          if (selections.length > 1 || readCalls.length + selections.length + 1 !== calls.length)
+            throw new MapError('invalid_request', 400);
+          // Validate a report before requesting a browser selection. Companions
+          // never grant authority to an invalid terminal command.
+          if (terminal.name === 'report_result') {
+            const report = resultReport.safeParse(JSON.parse(terminal.arguments));
+            if (!report.success || (report.data.source === 'last_failure' && mutations.size))
+              throw new MapError('invalid_request', 400);
+          }
+          // A terminal conversation tool must not leave companion calls
+          // unanswered when it returns or starts the next model response.
+          calls = [...selections, terminal];
+        }
+        // Only trusted read contracts can overlap. Terminal companions finish
+        // in one consistent snapshot before any question, selection or report.
         if (
-          calls.length > 1 &&
-          calls.every((action) =>
-            session.execution.mcp.tools.some(
-              (tool) => tool.name === action.name && tool.annotations?.readOnlyHint === true,
-            ),
-          )
+          (terminal && readCalls.length > 0) ||
+          (calls.length > 1 && readCalls.length === calls.length)
         ) {
           const results = await session.execution.reads.consistent(() =>
             Promise.all(
-              calls.map((action) =>
+              readCalls.map((action) =>
                 call(session, action.name, JSON.parse(action.arguments), guard),
               ),
             ),
           );
           guard();
-          for (const [index, action] of calls.entries())
+          for (const [index, action] of readCalls.entries())
             session.state.input.push({
               type: 'function_call_output',
               call_id: action.call_id,
               output: JSON.stringify(results[index]),
             });
-          continue;
+          if (!terminal) continue;
+          const current = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
+          if (
+            current.version !== version ||
+            current.contentVersion !== contentVersion ||
+            session.execution.reads.outdated().length
+          )
+            throw new MapError('assistant_draft_changed', 409);
         }
         for (const action of calls) {
           guard();
           const args = JSON.parse(action.arguments) as Record<string, unknown>;
           if (combined) Object.assign(args, { version, contentVersion });
           if (action.name === 'ask_questions') {
-            if (calls.length !== 1) throw new MapError('invalid_request', 400);
             const value = z
               .object({
                 questions: pendingQuestions,
@@ -3194,26 +3281,9 @@ export function textAssistantRoutes({
             return;
           }
           if (action.name === 'report_result') {
-            const continuation = { continueResponse: z.boolean().default(false) };
-            const parsed = z
-              .discriminatedUnion('source', [
-                z.object({ source: z.literal('draft'), ...continuation }).strict(),
-                z.object({ source: z.literal('latest_save'), ...continuation }).strict(),
-                z.object({ source: z.literal('last_failure'), ...continuation }).strict(),
-                z
-                  .object({
-                    source: z.literal('save'),
-                    ...continuation,
-                    operationId: z.string().regex(/^[\w-]{1,128}$/),
-                    userId: z.string().min(1).max(200),
-                  })
-                  .strict(),
-              ])
-              .safeParse(args);
-            if (!parsed.success || calls.length !== 1) throw new MapError('invalid_request', 400);
+            const parsed = resultReport.safeParse(args);
+            if (!parsed.success) throw new MapError('invalid_request', 400);
             const report = parsed.data;
-            if (report.source === 'last_failure' && mutations.size)
-              throw new MapError('invalid_request', 400);
             if (report.source === 'draft') session.state.result = draftResult(afterProvider);
             else if (report.source === 'last_failure')
               session.state.result = {
