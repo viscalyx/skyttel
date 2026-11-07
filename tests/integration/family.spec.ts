@@ -65,6 +65,7 @@ test('KARTA-07: native family forms save eight separate objects and one directed
     await page
       .getByLabel('Sambandstyp', { exact: true })
       .selectOption({ label: 'Gäller tjänstekontot' });
+    await page.getByLabel('Verb', { exact: true }).fill('Gäller tjänstekontot');
     await chooseRelationshipObject(page, 'Till objekt', 'Familjens konto');
     await stageRelationshipAndClose(page);
     const proposed = await read();
@@ -76,6 +77,7 @@ test('KARTA-07: native family forms save eight separate objects and one directed
     await duplicate
       .getByLabel('Sambandstyp', { exact: true })
       .selectOption({ label: 'Gäller tjänstekontot' });
+    await duplicate.getByLabel('Verb', { exact: true }).fill('Gäller tjänstekontot');
     await chooseRelationshipObject(page, 'Till objekt', 'Familjens konto');
     await duplicate.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
     await expect(duplicate.getByRole('alert')).toContainText('Sambandet finns redan');

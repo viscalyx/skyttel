@@ -576,8 +576,11 @@ testinstallationen med samma databas.
    personen **Lo**, e-postadressen `familj@example.test`, kortet
    **Familjekort**, bankkontot **Hushållskonto** och företaget **Moln AB**.
 2. Skapa sambandet
-   **Familjemusik → Gäller tjänstekontot → Familjens konto**.
-3. Försök lägga till exakt samma samband igen. Läs **Sambandet finns redan**.
+   **Familjemusik → Gäller tjänstekontot → Familjens konto**. Välj
+   **Gäller tjänstekontot** under **Sambandstyp** och skriv
+   **Gäller tjänstekontot** i **Verb**.
+3. Försök lägga till exakt samma samband igen med samma typ, ändpunkter och
+   **Verb: Gäller tjänstekontot**. Läs **Sambandet finns redan**.
    Välj **Avbryt redigeringen**, kasta endast det oskickade tillägget och
    stäng samband. Granska hela utkastet: åtta objekt och ett samband.
 4. Spara hela utkastet. Starta om applikationen med samma databas,
