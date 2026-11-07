@@ -3,6 +3,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { conversationCompletion } from '../../../src/client/conversation-completion.js';
 import type { TextModelAttempt, TextModelUsage } from '../../../src/server/text-assistant-model.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { controlledBatchDelivery } from '../../support/batch-response-delivery.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation, robin } from '../../support/installation.js';
@@ -1614,6 +1615,123 @@ test.each(['delete', 'restore', 'restore-object-type', 'restore-relationship-typ
       },
     ]);
     expect(result.receipt).toBeUndefined();
+  },
+);
+
+test.each([
+  ['omitted', 'draft', 'delivered'],
+  ['omitted', 'saved', 'delivered'],
+  ['explicit', 'draft', 'delivered'],
+  ['explicit', 'saved', 'delivered'],
+  ['omitted', 'saved', 'lost'],
+  ['explicit', 'saved', 'lost'],
+  ['omitted', 'saved', 'wrong-identity'],
+  ['explicit', 'saved', 'wrong-identity'],
+])(
+  'a repeated relationship with %s grouping selects its own verb in the %s with %s delivery',
+  async (grouping, location, deliveryMode) => {
+    let typeId: string | undefined;
+    let expectedToolResult: Record<string, unknown> | undefined;
+    let toolResult: unknown;
+    const model = textModel((request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (!lastToolResult(request)) {
+        expectedToolResult = { ...current.draft, existingId: 'z-depends' };
+        return [
+          modelTool('propose_relationship', {
+            id: 'repeated-depends',
+            baseRevision: null,
+            version: current.draft.version,
+            contentVersion: current.draft.contentVersion,
+            value: {
+              ...(typeId ? { typeId } : {}),
+              sourceId: 'vehicle',
+              targetId: 'charger',
+              verb: 'är beroende av',
+            },
+          }),
+        ];
+      }
+      toolResult = lastToolResult(request);
+      return [modelMessage('Sambandet finns redan.')];
+    });
+    const delivery = controlledBatchDelivery();
+    await setup(model.provider, undefined, async (incoming, dispatch) => {
+      if (deliveryMode === 'lost') return delivery.dispatch(incoming, dispatch);
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      const response = await dispatch(incoming);
+      if (deliveryMode !== 'wrong-identity' || rpc?.params?.name !== 'apply_draft_batch')
+        return response;
+      const envelope = await response.json();
+      const value = JSON.parse(envelope.result.content[0].text);
+      value.applied[0].result.existingId = 'a-uses';
+      envelope.result.content[0].text = JSON.stringify(value);
+      return Response.json(envelope, { status: response.status, headers: response.headers });
+    });
+    await webProposal('Bilen', 'vehicle');
+    await webProposal('Laddtjänsten', 'charger');
+    const mapPath = path.replace('/text-assistant', '/map');
+    let map = await (await browser.get(mapPath)).json();
+    if (grouping === 'explicit') typeId = map.relationshipTypes[0].id;
+    for (const [id, verb] of [
+      ['a-uses', 'använder'],
+      ['z-depends', 'är beroende av'],
+    ]) {
+      const response = await browser.post(`${mapPath}/relationship`, {
+        headers: { origin: app.origin },
+        data: {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          id,
+          baseRevision: null,
+          value: {
+            ...(typeId ? { typeId } : {}),
+            sourceId: 'vehicle',
+            targetId: 'charger',
+            verb,
+          },
+        },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+      map = await (await browser.get(mapPath)).json();
+    }
+    if (location === 'saved') {
+      const saved = await browser.post(`${mapPath}/save`, {
+        headers: { origin: app.origin },
+        data: {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          operationId: 'seed-relationships',
+        },
+      });
+      expect(saved.status(), await saved.text()).toBe(200);
+    }
+    const before = await (await browser.get(mapPath)).json();
+    if (deliveryMode === 'lost') delivery.arm();
+    const result = await message(
+      await start(),
+      'Bilen är beroende av Laddtjänsten. Behåll det sambandet och spara inte.',
+    );
+    if (deliveryMode === 'wrong-identity') {
+      expect(result.error).toBe('assistant_batch_committed_changed');
+      expect(model.requests).toHaveLength(1);
+    } else {
+      expect(result.error).toBeUndefined();
+      expect(result.phase).toBe('ready');
+      expect(model.requests).toHaveLength(2);
+      expect(expectedToolResult).toBeDefined();
+      expect(toolResult).toEqual(expectedToolResult);
+    }
+    expect(result.review.version).toBe(before.draft.version);
+    expect(result.receipt).toBeUndefined();
+    const after = await (await browser.get(mapPath)).json();
+    expect(after.draft).toEqual(before.draft);
+    expect(after.relationships).toEqual(before.relationships);
   },
 );
 

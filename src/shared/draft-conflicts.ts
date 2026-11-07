@@ -13,7 +13,7 @@ import type {
 } from './map.js';
 import { proposedObjectTypes, proposedRelationships, proposedRelationshipTypes } from './map.js';
 import { resolvedProperties } from './property-merge.js';
-import { relationshipVerb } from './relationship-verb.js';
+import { equivalentRelationships } from './relationship-identity.js';
 import { resolveTypeDefinition } from './type-definition.js';
 
 export type DraftConflict = {
@@ -165,15 +165,7 @@ export function draftConflicts(state: MapState): DraftConflict[] {
     const changedType = type?.id !== change.type.id || type?.revision !== change.type.revision;
     const duplicates = after
       ? [...proposedRelationships(state.relationships, state.draft.relationships).values()].filter(
-          (edge) =>
-            edge.id !== change.id &&
-            edge.typeId === after.typeId &&
-            edge.sourceId === after.sourceId &&
-            edge.targetId === after.targetId &&
-            relationshipVerb(
-              edge,
-              edgeTypes.find((type) => type.id === edge.typeId),
-            ) === relationshipVerb(after, type ?? undefined),
+          (edge) => edge.id !== change.id && equivalentRelationships(edge, after, edgeTypes),
         )
       : [];
     const missingEndpoints = after

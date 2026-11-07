@@ -11,7 +11,10 @@ import type {
   SaveReceipt,
 } from '../shared/map.js';
 import { proposedRelationships } from '../shared/map.js';
-import { relationshipVerb } from '../shared/relationship-verb.js';
+import {
+  equivalentRelationships,
+  ungroupedRelationshipType,
+} from '../shared/relationship-identity.js';
 import { reconcileDraftRemovals } from '../shared/type-removal.js';
 import { readLifecycle } from './lifecycle.js';
 import { MapError } from './map-error.js';
@@ -73,21 +76,6 @@ export function relationships(database: Database.Database, householdId: string) 
     }
     return savedEndpoint(id);
   }
-  function sameEndpoints(left: RelationshipValue, right: RelationshipValue) {
-    return (
-      left.typeId === right.typeId &&
-      left.sourceId === right.sourceId &&
-      left.targetId === right.targetId &&
-      relationshipVerb(
-        left,
-        definitions.read().find((type) => type.id === left.typeId),
-      ) ===
-        relationshipVerb(
-          right,
-          definitions.read().find((type) => type.id === right.typeId),
-        )
-    );
-  }
   function assertEndpoints(draft: MapDraft, value: RelationshipValue) {
     if (
       !value.sourceId ||
@@ -142,7 +130,12 @@ export function relationships(database: Database.Database, householdId: string) 
   }
   function assertValid(draft: MapDraft, value: RelationshipValue, id: string) {
     assertEndpoints(draft, value);
-    if (effective(draft).some((other) => other.id !== id && sameEndpoints(other, value)))
+    const effectiveTypes = definitions.effective(draft);
+    if (
+      effective(draft).some(
+        (other) => other.id !== id && equivalentRelationships(other, value, effectiveTypes),
+      )
+    )
       throw new MapError('duplicate_relationship');
   }
   function objectNames(
@@ -241,15 +234,7 @@ export function relationships(database: Database.Database, householdId: string) 
         const lifecycle = readLifecycle(value.lifecycle);
         let typeId: string | undefined = value.typeId ?? existing?.after?.typeId ?? before?.typeId;
         if (!typeId) {
-          let neutral = definitions
-            .effective(draft)
-            .find(
-              (type) =>
-                type.name === 'Samband' &&
-                type.description === 'Hushållets samband utan särskilt vald gruppering.' &&
-                type.forwardLabel === undefined &&
-                type.reverseLabel === undefined,
-            );
+          let neutral = ungroupedRelationshipType(definitions.effective(draft));
           if (!neutral) {
             const id = randomUUID();
             const updated = definitions.propose(draft, {
@@ -293,8 +278,9 @@ export function relationships(database: Database.Database, householdId: string) 
       if (body.typeRevision !== undefined && body.typeRevision !== type.revision)
         throw new MapError('type_conflict');
       if (after) {
+        const effectiveTypes = definitions.effective(draft);
         const duplicate = effective(draft).find(
-          (value) => value.id !== body.id && sameEndpoints(value, after),
+          (value) => value.id !== body.id && equivalentRelationships(value, after, effectiveTypes),
         );
         if (duplicate) {
           // An add selects the existing relationship; an edit must not erase another one.
@@ -331,8 +317,13 @@ export function relationships(database: Database.Database, householdId: string) 
         if (source.identity === 'unresolved' || target?.identity === 'unresolved')
           throw new MapError('unresolved_identity');
       }
+      const savedTypes = types();
       for (let index = 0; index < final.length; index++) {
-        if (final.slice(index + 1).some((value) => sameEndpoints(final[index], value)))
+        if (
+          final
+            .slice(index + 1)
+            .some((value) => equivalentRelationships(final[index], value, savedTypes))
+        )
           throw new MapError('duplicate_relationship');
       }
       for (const change of changes) {

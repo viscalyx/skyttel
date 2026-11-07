@@ -5,8 +5,8 @@ import { proposedObjectTypes, proposedRelationships, proposedRelationshipTypes }
 import { objectIconLabel } from './object-icons.js';
 import { type Property, propertiesSchema, propertyValueText } from './properties.js';
 import { mergedPropertyOrder, propertyMergeSide, propertyOrderSide } from './property-merge.js';
+import { equivalentRelationships } from './relationship-identity.js';
 import { relationshipLabel } from './relationship-label.js';
-import { relationshipVerb } from './relationship-verb.js';
 
 export type ConflictSide = 'saved' | 'proposed';
 export type ConflictChoices = Record<string, ConflictSide>;
@@ -275,6 +275,7 @@ export function conflictCombinationError(
   }
   if (conflict.kind === 'relationship') {
     const relationship = value as unknown as RelationshipValue;
+    const types = proposedRelationshipTypes(state.relationshipTypes, state.draft.relationshipTypes);
     if (!relationship.sourceId || !relationship.targetId)
       return 'Välj både frånobjekt och tillobjekt för sambandet.';
     const objects = new Map(state.objects.map((object) => [object.id, object]));
@@ -286,19 +287,7 @@ export function conflictCombinationError(
       return 'Ett valt objekt finns inte i kartan eller ditt utkast.';
     if (
       [...proposedRelationships(state.relationships, state.draft.relationships).values()].some(
-        (edge) =>
-          edge.id !== conflict.id &&
-          edge.typeId === relationship.typeId &&
-          edge.sourceId === relationship.sourceId &&
-          edge.targetId === relationship.targetId &&
-          relationshipVerb(
-            edge,
-            state.relationshipTypes.find((type) => type.id === edge.typeId),
-          ) ===
-            relationshipVerb(
-              relationship,
-              state.relationshipTypes.find((type) => type.id === relationship.typeId),
-            ),
+        (edge) => edge.id !== conflict.id && equivalentRelationships(edge, relationship, types),
       )
     )
       return 'Det valda sambandet finns redan i kartan.';

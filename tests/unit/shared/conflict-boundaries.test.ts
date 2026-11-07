@@ -366,7 +366,7 @@ test('own removal explains actual actor or new incident edges and keeps unnamed 
       current: bike,
       connections: [edge],
     })[1].saved,
-  ).toBe('alex har samband med Ej uppgivet');
+  ).toBe('alex okänd sambandstyp Ej uppgivet');
   expect(
     conflictRemovalProperties(
       { ...missingNames, relationshipTypes: [{ ...edgeType, forwardLabel: undefined }] },
