@@ -7,14 +7,30 @@ export function renderedToneWindows(recording: PlaybackRecording, frequency: num
   const windowFrames = Math.round(recording.sampleRate / 10);
   let matching = 0;
   for (let start = 0; start + windowFrames < recording.frames; start += windowFrames) {
-    let crossings = 0;
+    const cycleFrames: number[] = [];
+    let previousCrossing: number | undefined;
     let peak = 0;
     for (let frame = start + 1; frame < start + windowFrames; frame++) {
       const value = pcm.readInt16LE(frame * 2);
       peak = Math.max(peak, Math.abs(value));
-      if (value > 0 && pcm.readInt16LE((frame - 1) * 2) <= 0) crossings++;
+      if (value > 0 && pcm.readInt16LE((frame - 1) * 2) <= 0) {
+        if (previousCrossing !== undefined) cycleFrames.push(frame - previousCrossing);
+        previousCrossing = frame;
+      }
     }
-    if (peak > 100 && Math.abs(crossings - frequency / 10) < 5) matching++;
+    // Silent edges shorten a tone's presence in a window, not its period.
+    // Counting crossings over the whole window can call a partial 880 Hz
+    // tone 400 Hz. The median complete cycle also ignores gaps between bursts.
+    cycleFrames.sort((a, b) => a - b);
+    const period = cycleFrames[Math.floor(cycleFrames.length / 2)];
+    const crossings = cycleFrames.length + 1;
+    if (
+      peak > 100 &&
+      Math.abs(crossings - frequency / 10) < 5 &&
+      period &&
+      Math.abs(recording.sampleRate / period - frequency) < 50
+    )
+      matching++;
   }
   return matching;
 }
