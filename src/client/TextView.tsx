@@ -295,6 +295,45 @@ export function TextView({
               follow.current = scrollHeight - scrollTop - clientHeight < 80;
             }}
           >
+            {session && (
+              <div className="text-view-lifetime">
+                {session.expiresAt && (
+                  <p role="status" aria-label="Samtalets livslängd">
+                    {session.paused && 'Samtalet är pausat. '}
+                    Löper ut{' '}
+                    <time dateTime={new Date(session.expiresAt).toISOString()}>
+                      {new Date(session.expiresAt).toLocaleString('sv-SE')}
+                    </time>{' '}
+                    efter sju dygn utan ditt meddelande eller uttrycklig återupptagning.
+                    {session.paused &&
+                      ' Nytt samtal tar bort det tidigare samtalet; utkastet ligger kvar.'}
+                  </p>
+                )}
+                {session.paused && conversation.resumeConversation && (
+                  <button
+                    ref={resume}
+                    type="button"
+                    disabled={pending}
+                    onClick={(event) => {
+                      resumeFocused.current = document.activeElement === event.currentTarget;
+                      void conversation.resumeConversation?.();
+                    }}
+                  >
+                    Återuppta samtalet
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={(event) => {
+                    endFocused.current = document.activeElement === event.currentTarget;
+                    void conversation.endConversation();
+                  }}
+                >
+                  Avsluta samtalet
+                </button>
+              </div>
+            )}
             {conversation.listRetained && (
               <div className="text-view-lifetime">
                 <button
@@ -343,45 +382,6 @@ export function TextView({
                     )}
                   </section>
                 )}
-              </div>
-            )}
-            {session && (
-              <div className="text-view-lifetime">
-                {session.expiresAt && (
-                  <p role="status" aria-label="Samtalets livslängd">
-                    {session.paused && 'Samtalet är pausat. '}
-                    Löper ut{' '}
-                    <time dateTime={new Date(session.expiresAt).toISOString()}>
-                      {new Date(session.expiresAt).toLocaleString('sv-SE')}
-                    </time>{' '}
-                    efter sju dygn utan ditt meddelande eller uttrycklig återupptagning.
-                    {session.paused &&
-                      ' Nytt samtal tar bort det tidigare samtalet; utkastet ligger kvar.'}
-                  </p>
-                )}
-                {session.paused && conversation.resumeConversation && (
-                  <button
-                    ref={resume}
-                    type="button"
-                    disabled={pending}
-                    onClick={(event) => {
-                      resumeFocused.current = document.activeElement === event.currentTarget;
-                      void conversation.resumeConversation?.();
-                    }}
-                  >
-                    Återuppta samtalet
-                  </button>
-                )}
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={(event) => {
-                    endFocused.current = document.activeElement === event.currentTarget;
-                    void conversation.endConversation();
-                  }}
-                >
-                  Avsluta samtalet
-                </button>
               </div>
             )}
             {children}
