@@ -165,8 +165,9 @@ test.each(['retry', 'abandon'] as const)(
 );
 
 test('a late delivery connection cannot submit failed work after leaving the household', async () => {
-  let release!: (value: undefined) => void;
-  const connection = new Promise<undefined>((resolve) => {
+  const connected = { id: 'late-valid-delivery', observeAccepted: vi.fn() };
+  let release!: (value: typeof connected) => void;
+  const connection = new Promise<typeof connected>((resolve) => {
     release = resolve;
   });
   const delivery = { connect: vi.fn(() => connection), received: vi.fn() };
@@ -182,7 +183,7 @@ test('a late delivery connection cannot submit failed work after leaving the hou
   });
   rerender({ householdId: 'other-household' });
   await act(async () => {
-    release(undefined);
+    release(connected);
     await retrying;
   });
   expect(commands.filter((entry) => entry.path.endsWith('/retry-work'))).toEqual([]);
