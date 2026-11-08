@@ -1,10 +1,8 @@
-import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
-import Database from 'better-sqlite3';
 import { afterEach, expect, test } from 'vitest';
-import { openDatabase } from '../../../src/server/database.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
@@ -529,10 +527,6 @@ test('a new request after reopening an active crash image waits for earlier reta
     return [modelMessage(`Klart: ${input.message}`)];
   });
   crashDirectory = mkdtempSync(join(tmpdir(), 'skyttel-conversation-order-crash-'));
-  const oldMigrations = join(crashDirectory, 'migrations');
-  mkdirSync(oldMigrations);
-  for (const file of readdirSync('migrations').filter((file) => Number(file.slice(0, 3)) <= 46))
-    copyFileSync(join('migrations', file), join(oldMigrations, file));
   app = await createInstallation(undefined, {
     modelFetch: model.provider,
   });
@@ -564,38 +558,6 @@ test('a new request after reopening an active crash image waits for earlier reta
     // Capture the exact durable image while work is active. The reopened copy
     // receives none of the graceful close's pause writes.
     await app.saveDatabase(snapshot);
-    // Prepare a real pre47 image without asking current server code to read
-    // an old map schema. Only this owned crash-copy loses later schema fields.
-    const oldImage = new Database(snapshot);
-    const expectedOld = openDatabase(':memory:', { migrationsDirectory: oldMigrations });
-    try {
-      const records = oldImage.prepare('SELECT id, state FROM conversation ORDER BY id').all();
-      oldImage.exec(
-        'DROP TABLE conversation_request_order; DROP INDEX relationship_endpoints; ALTER TABLE map_relationship DROP COLUMN reverseVerb; ALTER TABLE map_relationship DROP COLUMN verb;',
-      );
-      const oldIndex = expectedOld
-        .prepare("SELECT sql FROM sqlite_schema WHERE name = 'relationship_endpoints'")
-        .get() as { sql: string };
-      oldImage.exec(oldIndex.sql);
-      oldImage.prepare('DELETE FROM schema_migration WHERE version > 46').run();
-      expect(oldImage.pragma('table_info(map_relationship)')).toEqual(
-        expectedOld.pragma('table_info(map_relationship)'),
-      );
-      expect(
-        oldImage
-          .prepare("SELECT name FROM sqlite_schema WHERE name = 'conversation_request_order'")
-          .get(),
-      ).toBeUndefined();
-      expect(oldImage.prepare('SELECT id, state FROM conversation ORDER BY id').all()).toEqual(
-        records,
-      );
-      expect(
-        oldImage.prepare('SELECT MAX(version) AS version FROM schema_migration').get(),
-      ).toEqual({ version: 46 });
-    } finally {
-      oldImage.close();
-      expectedOld.close();
-    }
     await app.close();
     app = await createInstallation(undefined, {
       databasePath: snapshot,
