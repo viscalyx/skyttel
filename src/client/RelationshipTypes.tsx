@@ -24,9 +24,7 @@ export function RelationshipTypeEditor({
   disabled: boolean;
   stale: boolean;
   onDirty: () => void;
-  onSubmit: (
-    value: Pick<RelationshipType, 'name' | 'description' | 'forwardLabel' | 'reverseLabel'> | null,
-  ) => void;
+  onSubmit: (value: Pick<RelationshipType, 'name' | 'description'> | null) => void;
   onClose: () => void;
 }) {
   const [value, setValue] = useState({

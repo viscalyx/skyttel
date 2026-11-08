@@ -72,12 +72,6 @@ export function definitionPropertyValues(
   return [
     property('name', 'Namn', value.name),
     property('description', 'Beskrivning', text(value.description)),
-    ...(value.forwardLabel !== undefined
-      ? [property('forward', 'Framåtriktning', text(value.forwardLabel))]
-      : []),
-    ...(value.reverseLabel !== undefined
-      ? [property('reverse', 'Omvänd riktning', text(value.reverseLabel))]
-      : []),
   ];
 }
 /** Uses the proposal's historical type snapshots, independently of current map filters. */

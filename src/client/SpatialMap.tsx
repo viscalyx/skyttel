@@ -930,9 +930,8 @@ export function SpatialMap({
   );
   function placeEdges(candidates: typeof labelEdges) {
     return candidates.flatMap((edge) => {
-      const type = state.relationshipTypes.find((type) => type.id === edge.edge.typeId);
       const size = labelSize(`relationship-${edge.key}`, {
-        width: Math.min(230, relationshipVerb(edge.edge, type).length * 7 + 24),
+        width: Math.min(230, relationshipVerb(edge.edge).length * 7 + 24),
         height: 44,
       });
       const positions = [0, 22, -22, 44, -44, 66, -66, 88, -88, 110, -110, 132, -132].flatMap(
@@ -1728,11 +1727,7 @@ export function SpatialMap({
                           }
                     }
                   />{' '}
-                  →{' '}
-                  {relationshipVerb(
-                    edge,
-                    state.relationshipTypes.find((type) => type.id === edge.typeId),
-                  )}
+                  → {relationshipVerb(edge)}
                 </span>
                 <LifecycleStatus value={edge} />
               </span>

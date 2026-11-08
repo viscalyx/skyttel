@@ -160,10 +160,10 @@ function EdgeDetails({
       <p>{relationshipLabel(value, { relationshipTypes: [type] }, names)}</p>
       <p>Sambandstyp: {type.name}.</p>
       <p>Typens beskrivning: {type.description || 'Ingen beskrivning'}</p>
-      <p>Benämning från startobjektet: {relationshipVerb(value, type)}</p>
+      <p>Benämning från startobjektet: {relationshipVerb(value)}</p>
       <p>
         Benämning från målobjektet:{' '}
-        {relationshipReverseVerb(value, type) || 'Visar den ursprungliga riktningen'}
+        {relationshipReverseVerb(value) || 'Visar den ursprungliga riktningen'}
       </p>
       <details>
         <summary>Sambandets objektidentiteter</summary>

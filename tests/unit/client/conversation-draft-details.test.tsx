@@ -93,8 +93,6 @@ test('the whole draft names additions, removals and changed relationship and typ
     revision: 1,
     name: 'Använder',
     description: '',
-    forwardLabel: 'använder',
-    reverseLabel: 'används av',
   };
   const review: MapDraft = {
     version: 2,
@@ -133,6 +131,8 @@ test('the whole draft names additions, removals and changed relationship and typ
           sourceId: 'alex',
           typeId: 'uses',
           targetId: 'bike',
+          verb: 'använder',
+          reverseVerb: 'används av',
 
           lifecycle: 'active',
 
@@ -145,6 +145,7 @@ test('the whole draft names additions, removals and changed relationship and typ
           sourceId: 'alex',
           typeId: 'uses',
           targetId: 'bike',
+          verb: 'lånar',
 
           lifecycle: 'ended',
 
@@ -155,12 +156,12 @@ test('the whole draft names additions, removals and changed relationship and typ
         id: 'new-relation',
         type: relationshipType,
         before: null,
-        after: { sourceId: 'alex', typeId: 'uses', targetId: 'bike' },
+        after: { sourceId: 'alex', typeId: 'uses', targetId: 'bike', verb: 'använder' },
         objectNames: { alex: 'Alex' },
       },
       {
         id: 'removed-relation',
-        type: { ...relationshipType, forwardLabel: undefined },
+        type: { ...relationshipType },
         before: {
           id: 'removed-relation',
           householdId: 'linden',
@@ -189,8 +190,6 @@ test('the whole draft names additions, removals and changed relationship and typ
         after: {
           ...relationshipType,
           description: 'Rättat samband',
-          forwardLabel: 'ny framåtriktning',
-          reverseLabel: undefined,
         },
       },
     ],
@@ -209,11 +208,11 @@ test('the whole draft names additions, removals and changed relationship and typ
     'old: Tas bort (Text) → Saknas',
     'shared: Nej (Ja/nej) → shared: Ja (Ja/nej)',
     'Alex → använder → bike',
-    'Alex → Använder → bike',
+    'Alex → har samband med → bike',
     'Beskrivning: Ej uppgivet → Ny typbeskrivning',
     'Beskrivning: Ej uppgivet → Rättat samband',
-    'Framåtriktning: använder → ny framåtriktning',
-    'Omvänd riktning: används av → Ej uppgivet',
+    'Verb: använder → lånar',
+    'Omvänd benämning: används av → ',
   ])
     expect(table.textContent).toContain(detail);
   const summary = screen.getByRole('list', { name: 'Alla föreslagna ändringar' });

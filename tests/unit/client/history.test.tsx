@@ -96,8 +96,6 @@ async function prepareRemovedHistory() {
         value: {
           name: 'Stödjer',
           description: 'Stöd',
-          forwardLabel: 'stödjer',
-          reverseLabel: 'stöds av',
         },
       })
     ).status,
@@ -156,8 +154,6 @@ async function prepareRemovedHistory() {
         value: {
           name: 'Hjälper',
           description: '',
-          forwardLabel: 'hjälper',
-          reverseLabel: 'hjälps av',
         },
       })
     ).status,

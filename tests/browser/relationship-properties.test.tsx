@@ -44,8 +44,6 @@ test('relationship invalid property input blocks staging, preserves dirty work a
       revision: 1,
       name: id,
       description: 'Typens förklaring',
-      forwardLabel: id,
-      reverseLabel: `omvänd ${id}`,
     })),
     relationships: [],
     draft: { version: 0, changes: [] },

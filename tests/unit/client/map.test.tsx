@@ -509,8 +509,6 @@ test('relationship type conflict review offers merged independent corrections an
   const definition = {
     name: 'Förvaring',
     description: 'Förvaringsplats',
-    forwardLabel: 'förvaras i',
-    reverseLabel: 'innehåller',
   };
   await client.json(`${path}/relationship-type`, {
     version: 0,
@@ -537,14 +535,13 @@ test('relationship type conflict review offers merged independent corrections an
     version: 0,
     id: 'storage',
     baseRevision: 1,
-    value: { ...definition, description: 'Ny förklaring', reverseLabel: 'rymmer' },
+    value: { ...definition, description: 'Ny förklaring' },
   });
   await other.json(`${path}/save`, { version: 1, operationId: 'other' });
   await open();
   await resolveProperties([
     ['Namn', 'Ditt förslag', 'Plats'],
     ['Beskrivning', 'Sparat i kartan nu', 'Ny förklaring'],
-    ['Omvänd benämning', 'Sparat i kartan nu', 'rymmer'],
   ]);
   const proposal = await readDraftProposal('Plats');
   expect(

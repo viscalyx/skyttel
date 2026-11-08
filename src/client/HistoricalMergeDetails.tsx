@@ -47,10 +47,10 @@ export function HistoricalMergeDetails({
               )}
             </p>
             <p>Typens beskrivning: {type?.description || 'Ingen beskrivning'}</p>
-            <p>Benämning från startobjektet: {relationshipVerb(edge, type)}</p>
+            <p>Benämning från startobjektet: {relationshipVerb(edge)}</p>
             <p>
               Benämning från målobjektet:{' '}
-              {relationshipReverseVerb(edge, type) || 'Visar den ursprungliga riktningen'}
+              {relationshipReverseVerb(edge) || 'Visar den ursprungliga riktningen'}
             </p>
             <p>
               Identitet: {edge.id}. Från {edge.sourceId} till {edge.targetId}.

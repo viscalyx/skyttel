@@ -22,10 +22,10 @@ export function relationshipPropertyValues(
           'Objektet finns inte längre',
       },
     ],
-    ['direction', { label: 'Riktning', value: relationshipVerb(value, type) }],
+    ['direction', { label: 'Riktning', value: relationshipVerb(value) }],
     [
       'reverse',
-      { label: 'Omvänd riktning', value: relationshipReverseVerb(value, type) || 'Ej uppgivet' },
+      { label: 'Omvänd riktning', value: relationshipReverseVerb(value) || 'Ej uppgivet' },
     ],
     [
       'target',

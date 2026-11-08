@@ -112,7 +112,6 @@ export function RelationshipForm({
     setErrors(problems);
     return !problems.length;
   }
-  const type = state.relationshipTypes.find((type) => type.id === value.typeId);
   const choices = [...objects.values()].filter(
     (object) => !state.draft.changes.some((change) => change.id === object.id && !change.after),
   );
@@ -187,7 +186,7 @@ export function RelationshipForm({
         (!submitted.typeId || existing.typeId === submitted.typeId) &&
         existing.sourceId === submitted.sourceId &&
         existing.targetId === submitted.targetId &&
-        relationshipVerb(existing, type) === relationshipVerb(submitted, type)
+        relationshipVerb(existing) === relationshipVerb(submitted)
       ) {
         setDuplicateId(outcome.relationshipId);
         setError('Sambandet finns redan');
@@ -279,7 +278,7 @@ export function RelationshipForm({
         edge.typeId === value.typeId &&
         edge.sourceId === value.sourceId &&
         edge.targetId === value.targetId &&
-        relationshipVerb(edge, type) === (value.verb?.trim() || 'har samband med'),
+        relationshipVerb(edge) === (value.verb?.trim() || 'har samband med'),
     );
   async function check() {
     const current = attempt.current;
