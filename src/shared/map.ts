@@ -14,10 +14,7 @@ export interface ObjectTypeChange {
   before: ObjectType | null;
   after: ObjectType | null;
 }
-export interface RelationshipType extends TypeDefinition {
-  forwardLabel?: string;
-  reverseLabel?: string;
-}
+export interface RelationshipType extends TypeDefinition {}
 export interface RelationshipTypeChange {
   id: string;
   before: RelationshipType | null;

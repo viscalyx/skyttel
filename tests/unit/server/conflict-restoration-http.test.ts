@@ -119,10 +119,6 @@ function value(kind: Kind, name: string) {
   return {
     name,
     description: 'Definition med historiska fält',
-
-    ...(kind === 'relationshipType'
-      ? { forwardLabel: 'förvaras i', reverseLabel: 'förvarar' }
-      : {}),
   };
 }
 /** Combine earlier owned drafts with lawful newer saved facts through the archive boundary. */

@@ -44,7 +44,6 @@ export function conflictRemovalProperties(
       proposed: 'Föreslagen borttagning',
     },
     ...(conflict.connections ?? []).map((edge) => {
-      const type = state.relationshipTypes.find((type) => type.id === edge.typeId);
       const source =
         state.objects.find((object) => object.id === edge.sourceId)?.name ?? edge.sourceId;
       const target =
@@ -53,7 +52,7 @@ export function conflictRemovalProperties(
         key: `relationship:${edge.id}`,
         label: 'Samband',
         before: 'Inga',
-        saved: `${source} ${relationshipVerb(edge, type)} ${target}`,
+        saved: `${source} ${relationshipVerb(edge)} ${target}`,
         proposed: 'Föreslagen borttagning av sambandet',
       };
     }),

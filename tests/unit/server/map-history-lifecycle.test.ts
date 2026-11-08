@@ -277,10 +277,7 @@ test.each(['object', 'relationship', 'objectType', 'relationshipType'] as const)
             ? current.types[0]
             : current.relationshipTypes[0];
     if (!entity) throw new Error('Missing test entity');
-    const valueBase =
-      kind === 'relationshipType'
-        ? { ...entity, forwardLabel: 'Connects', reverseLabel: 'Connected by' }
-        : entity;
+    const valueBase = entity;
     const property =
       kind === 'relationship' ? 'lifecycle' : kind === 'object' ? 'name' : 'description';
     if (kind !== 'object')

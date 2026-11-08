@@ -69,15 +69,9 @@ export function draftUpdateDetails(before: TextAssistantReview, after: TextAssis
     };
     const source = name(edge.sourceId);
     const target = name(edge.targetId);
-    const label = relationshipVerb(edge, change.type);
+    const label = relationshipVerb(edge);
     const subject = `Sambandet ”${source} ${label} ${target}”`;
-    if (!old && next)
-      say(
-        source,
-        edge.verb || change.type.forwardLabel
-          ? `${label[0].toLocaleLowerCase('sv')}${label.slice(1)} ${target}`
-          : `fick sambandet ”${change.type.name}” till ${target}`,
-      );
+    if (!old && next) say(source, `${label[0].toLocaleLowerCase('sv')}${label.slice(1)} ${target}`);
     else if (old && !next) say(subject, 'togs bort');
     else if (
       old?.sourceId !== next?.sourceId ||
@@ -125,7 +119,7 @@ export function draftUpdateDetails(before: TextAssistantReview, after: TextAssis
       const edge = item.after ?? item.before;
       if (edge)
         say(
-          `Förslaget om sambandet ”${item.objectNames?.[edge.sourceId] ?? 'objektet'} ${relationshipVerb(edge, item.type)} ${item.objectNames?.[edge.targetId] ?? 'objektet'}”`,
+          `Förslaget om sambandet ”${item.objectNames?.[edge.sourceId] ?? 'objektet'} ${relationshipVerb(edge)} ${item.objectNames?.[edge.targetId] ?? 'objektet'}”`,
           'togs bort ur utkastet',
         );
     }

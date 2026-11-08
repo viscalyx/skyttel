@@ -100,8 +100,6 @@ test('chosen relationship verbs survive saving independently of endpoint kinds a
         value: {
           name: 'Tekniska kopplingar',
           description: 'Hushållets gruppering.',
-          forwardLabel: 'gammal typbenämning',
-          reverseLabel: 'annan gammal typbenämning',
         },
       })
     ).status,
@@ -136,8 +134,6 @@ test('a category never selects wording for a new relationship without a chosen v
     type: { name: 'Tekniska kopplingar' },
     after: { verb: 'har samband med' },
   });
-  expect(state.draft.relationshipTypes?.[0].after?.forwardLabel).toBeUndefined();
-  expect(state.draft.relationshipTypes?.[0].after?.reverseLabel).toBeUndefined();
   const named = state.relationshipTypes.find((type) => type.name === 'Använder');
   expect(named).toBeDefined();
   expect((await edge('unworded-in-named-category', { typeId: named?.id })).status).toBe(200);
@@ -355,7 +351,7 @@ test('deleting an endpoint after a private type change retains the saved relatio
 });
 
 test.each(['before', 'after'] as const)(
-  'editing the retained definition %s an endpoint deletion saves labels with the deletion atomically',
+  'editing the retained definition %s an endpoint deletion saves category metadata with the deletion atomically',
   async (timing) => {
     await object('a');
     await object('b');
@@ -366,8 +362,6 @@ test.each(['before', 'after'] as const)(
     const definition = {
       name: 'Användning',
       description: 'Användning i hushållet',
-      forwardLabel: 'använder',
-      reverseLabel: 'används av',
     };
     const define = async () =>
       client.json(`${path}/relationship-type`, {
@@ -419,8 +413,6 @@ test('cascade deletion preserves the reviewed definition revision when the relat
         value: {
           name: 'Ändrad betydelse',
           description: '',
-          forwardLabel: 'kopplar till',
-          reverseLabel: 'kopplas från',
         },
       })
     ).status,

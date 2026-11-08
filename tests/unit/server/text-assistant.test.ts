@@ -1079,7 +1079,7 @@ test.each([false, true])(
     await webProposal('Verktygslådan', 'toolbox');
     await webProposal('Garaget', 'garage');
     const mapPath = path.replace('/text-assistant', '/map');
-    for (const [id, name, description, forwardLabel, reverseLabel] of [
+    for (const [id, name, description] of [
       [
         'connected',
         'Kopplad till',
@@ -1103,7 +1103,7 @@ test.each([false, true])(
           contentVersion: state.contentVersion,
           id,
           baseRevision: null,
-          value: { name, description, forwardLabel, reverseLabel },
+          value: { name, description },
         },
       });
       expect(response.status()).toBe(200);
@@ -1552,8 +1552,6 @@ test.each(['delete', 'restore', 'restore-object-type', 'restore-relationship-typ
         value: {
           name: 'Användning i testet',
           description: 'Ett samband med uttryckliga benämningar.',
-          forwardLabel: 'Använder',
-          reverseLabel: 'Används av',
         },
       });
     }
@@ -1579,12 +1577,7 @@ test.each(['delete', 'restore', 'restore-object-type', 'restore-relationship-typ
       const value = {
         name,
         description,
-        ...(object
-          ? {}
-          : {
-              forwardLabel: definition.forwardLabel,
-              reverseLabel: definition.reverseLabel,
-            }),
+        ...(object ? {} : {}),
       };
       typeRestoration = {
         name: object ? 'propose_object_type' : 'propose_relationship_type',

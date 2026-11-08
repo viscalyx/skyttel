@@ -3544,9 +3544,7 @@ export function textAssistantRoutes({
               };
               const candidates = [...proposedRelationships(saved.relationships, changes).values()];
               const existing = candidates.find(
-                (candidate) =>
-                  candidate.id !== args.id &&
-                  equivalentRelationships(candidate, edge, catalog.relationshipTypes),
+                (candidate) => candidate.id !== args.id && equivalentRelationships(candidate, edge),
               );
               if (!existing || (value.existingId && value.existingId !== existing.id))
                 throw new MapError('assistant_batch_committed_changed', 409);

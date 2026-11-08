@@ -165,7 +165,7 @@ export function draftConflicts(state: MapState): DraftConflict[] {
     const changedType = type?.id !== change.type.id || type?.revision !== change.type.revision;
     const duplicates = after
       ? [...proposedRelationships(state.relationships, state.draft.relationships).values()].filter(
-          (edge) => edge.id !== change.id && equivalentRelationships(edge, after, edgeTypes),
+          (edge) => edge.id !== change.id && equivalentRelationships(edge, after),
         )
       : [];
     const missingEndpoints = after

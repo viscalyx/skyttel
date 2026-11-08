@@ -130,12 +130,7 @@ export function relationships(database: Database.Database, householdId: string) 
   }
   function assertValid(draft: MapDraft, value: RelationshipValue, id: string) {
     assertEndpoints(draft, value);
-    const effectiveTypes = definitions.effective(draft);
-    if (
-      effective(draft).some(
-        (other) => other.id !== id && equivalentRelationships(other, value, effectiveTypes),
-      )
-    )
+    if (effective(draft).some((other) => other.id !== id && equivalentRelationships(other, value)))
       throw new MapError('duplicate_relationship');
   }
   function objectNames(
@@ -278,9 +273,8 @@ export function relationships(database: Database.Database, householdId: string) 
       if (body.typeRevision !== undefined && body.typeRevision !== type.revision)
         throw new MapError('type_conflict');
       if (after) {
-        const effectiveTypes = definitions.effective(draft);
         const duplicate = effective(draft).find(
-          (value) => value.id !== body.id && equivalentRelationships(value, after, effectiveTypes),
+          (value) => value.id !== body.id && equivalentRelationships(value, after),
         );
         if (duplicate) {
           // An add selects the existing relationship; an edit must not erase another one.
@@ -317,13 +311,8 @@ export function relationships(database: Database.Database, householdId: string) 
         if (source.identity === 'unresolved' || target?.identity === 'unresolved')
           throw new MapError('unresolved_identity');
       }
-      const savedTypes = types();
       for (let index = 0; index < final.length; index++) {
-        if (
-          final
-            .slice(index + 1)
-            .some((value) => equivalentRelationships(final[index], value, savedTypes))
-        )
+        if (final.slice(index + 1).some((value) => equivalentRelationships(final[index], value)))
           throw new MapError('duplicate_relationship');
       }
       for (const change of changes) {

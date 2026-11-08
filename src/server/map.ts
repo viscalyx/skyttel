@@ -37,7 +37,6 @@ import type {
   RelationshipFormOutcome,
   RelationshipFormResult,
 } from '../shared/relationship-form.js';
-import { withDraftRelationshipVerbs } from '../shared/relationship-verb.js';
 import { reconcileDraftRemovals, stageTypeRemoval } from '../shared/type-removal.js';
 import { assistantTaskAccess } from './assistant-auth.js';
 import { contentOwner } from './content-identities.js';
@@ -107,9 +106,7 @@ export function householdMap(
           changes: JSON.parse(row.changes),
           ...(row.relationships !== '[]'
             ? {
-                relationships: (JSON.parse(row.relationships) as DraftRelationshipChange[]).map(
-                  withDraftRelationshipVerbs,
-                ),
+                relationships: JSON.parse(row.relationships) as DraftRelationshipChange[],
               }
             : {}),
           ...(row.objectTypes !== '[]' ? { objectTypes: JSON.parse(row.objectTypes) } : {}),

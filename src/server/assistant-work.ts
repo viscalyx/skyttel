@@ -293,7 +293,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     'propose_relationship_type',
     {
       description:
-        'Föreslå en ny eller ändrad gruppering av samband med namn och gemensam beskrivning. Verb hör till varje enskilt samband, aldrig till en bestämd typ eller objekttyp. Äldre forwardLabel/reverseLabel är valfria kompatibilitetsuppgifter och ska inte anges för nya grupperingar. Behåll stabila typ-ID. Fria egenskaper hör till enskilda samband och bevaras vid typbyte. value null föreslår borttagning av typen och dess samband, även upphörda, i en samlad granskning. Ändpunkternas objekt behålls. Andras utkast hindrar inte borttagning. Hela ditt utkast returneras.',
+        'Föreslå en ny eller ändrad gruppering av samband med namn och gemensam beskrivning. Verb hör till varje enskilt samband, aldrig till en bestämd typ eller objekttyp. Behåll stabila typ-ID. Fria egenskaper hör till enskilda samband och bevaras vid typbyte. value null föreslår borttagning av typen och dess samband, även upphörda, i en samlad granskning. Ändpunkternas objekt behålls. Andras utkast hindrar inte borttagning. Hela ditt utkast returneras.',
       inputSchema: z
         .object({
           ...versionFields,
@@ -303,8 +303,6 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
             .object({
               name: z.string().min(1).max(200),
               description: z.string().max(2000),
-              forwardLabel: z.string().min(1).max(200).optional(),
-              reverseLabel: z.string().min(1).max(200).optional(),
             })
             .strict()
             .nullable(),

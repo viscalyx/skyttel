@@ -105,8 +105,6 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
         : [
             ['name', 'Namn'],
             ['description', 'Beskrivning'],
-            ['forwardLabel', 'Framåtriktad benämning'],
-            ['reverseLabel', 'Omvänd benämning'],
           ];
   const labels = new Map<string, Record<ConflictSide, string>>();
   const propertyFields: ConflictProperty[] = [];
@@ -275,7 +273,6 @@ export function conflictCombinationError(
   }
   if (conflict.kind === 'relationship') {
     const relationship = value as unknown as RelationshipValue;
-    const types = proposedRelationshipTypes(state.relationshipTypes, state.draft.relationshipTypes);
     if (!relationship.sourceId || !relationship.targetId)
       return 'Välj både frånobjekt och tillobjekt för sambandet.';
     const objects = new Map(state.objects.map((object) => [object.id, object]));
@@ -287,7 +284,7 @@ export function conflictCombinationError(
       return 'Ett valt objekt finns inte i kartan eller ditt utkast.';
     if (
       [...proposedRelationships(state.relationships, state.draft.relationships).values()].some(
-        (edge) => edge.id !== conflict.id && equivalentRelationships(edge, relationship, types),
+        (edge) => edge.id !== conflict.id && equivalentRelationships(edge, relationship),
       )
     )
       return 'Det valda sambandet finns redan i kartan.';
