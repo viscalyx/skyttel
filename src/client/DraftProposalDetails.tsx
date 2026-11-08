@@ -7,6 +7,7 @@ import type {
   RelationshipValue,
 } from '../shared/map.js';
 import { propertyValueText } from '../shared/properties.js';
+import { relationshipReverseVerb, relationshipVerb } from '../shared/relationship-verb.js';
 import {
   draftProposalDescriptors,
   proposedRelationshipNames,
@@ -57,6 +58,8 @@ function relationship(
   return [
     property('source', 'Från', names[value.sourceId] ?? value.sourceId),
     property('type', 'Sambandstyp', type.name),
+    property('verb', 'Verb', relationshipVerb(value)),
+    property('reverseVerb', 'Omvänd benämning', text(relationshipReverseVerb(value))),
     property('target', 'Till', names[value.targetId] ?? value.targetId),
     property('applies', 'Gäller', hasEnded(value) ? 'Upphört' : 'Aktuellt'),
     property('lifecycle', 'Status', lifecycleText(value.lifecycle)),

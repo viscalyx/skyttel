@@ -503,9 +503,10 @@ med Escape. Läs cykelns båda beskrivningar, **SPARAT-17** och
 **FÖRESLAGET-42**, skuld **Uttryckligen inget → Okänt**, osäkert
 kreditutrymme **500 SEK**, uppgiftsdatum **2026-01-01** och identiteterna
 **Ospecificerat objekt** och **Identiteten behöver redas ut**. Läs varje
-sambands riktning, fria säkerhetsuppgift och hela **Hela uppgiften …**. Läs båda
-typförslagens namn och förklaringar, inklusive
-**Föreslagen sambandsbeskrivning**. I ett reducerat utkast läser du bara
+sambands eget **Verb**, **Omvänd benämning**, riktning, fria säkerhetsuppgift
+och hela **Hela uppgiften …** på varje sida. Saknad omvänd benämning
+visas som **Ej uppgivet**. Läs båda typförslagens namn och förklaringar,
+inklusive **Föreslagen sambandsbeskrivning**. I ett reducerat utkast läser du bara
 överlevande rader.
 
 När ett fall anger slutlig gemensam kontroll: stäng textvyn, välj

@@ -379,7 +379,7 @@ test('historical merge reading preserves missing type snapshots, exact object id
   await userEvent.click(screen.getByText('Granskade objekt före sammanslagningen'));
   expect(screen.getByText('Lo · Identitet: lo')).toBeTruthy();
   expect(
-    screen.getByText(/Lo vid granskningen → okänd sambandstyp → Det andra objektet/),
+    screen.getByText(/Lo vid granskningen → har samband med → Det andra objektet/),
   ).toBeTruthy();
   expect(screen.getAllByText('Typens beskrivning: Ingen beskrivning')).toHaveLength(2);
   expect(
