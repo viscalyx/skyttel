@@ -184,7 +184,6 @@ test('zero-reference choices round-trip in current archives', async () => {
     zeroReferenceAlwaysVisible: true,
     zeroReferenceOnMovement: true,
     zeroReferenceTint: 85,
-    zeroReferenceKeepSize: true,
   };
   expect(
     (await client.json(`${path}/map/view/settings`, { version: 0, settings: preferences })).status,

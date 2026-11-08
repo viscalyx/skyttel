@@ -39,7 +39,6 @@ const referenceDefaults = {
   zeroReferenceAlwaysVisible: false,
   zeroReferenceOnMovement: false,
   zeroReferenceTint: 0,
-  zeroReferenceKeepSize: false,
 };
 let directory: string;
 let path: string;
