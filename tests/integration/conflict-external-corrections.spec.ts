@@ -55,17 +55,12 @@ async function readSavedCorrection(
 ) {
   await refreshConflictReader(page, origin);
   if (relationship)
-    await expectSavedConflictRelationship(
-      page,
-      'Lo Exempel',
-      `Lo Exempel → ${verb} → Molnmusik`,
-      {
-        Typ: typeName,
-        'Från objekt': 'Lo Exempel',
-        'Till objekt': 'Molnmusik',
-        ...(year ? { Installationsår: year } : {}),
-      },
-    );
+    await expectSavedConflictRelationship(page, 'Lo Exempel', `Lo Exempel → ${verb} → Molnmusik`, {
+      Typ: typeName,
+      'Från objekt': 'Lo Exempel',
+      'Till objekt': 'Molnmusik',
+      ...(year ? { Installationsår: year } : {}),
+    });
   else {
     const details = await expectSavedConflictObject(
       page,

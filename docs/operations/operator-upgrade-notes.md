@@ -25,6 +25,8 @@ format schema 40 and this release accepts only that schema. Export any
 required household archives again after upgrade. Earlier archives cannot be
 imported into this release. Older releases cannot import the new schema. Keep
 the pre-upgrade database backup if recovery requires an older release.
+The upgrade also removes the unused reference-size preference while
+preserving active personal view settings and their versions.
 
 ### Preserve consented conversations during upgrade
 

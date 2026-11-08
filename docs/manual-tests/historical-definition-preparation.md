@@ -109,7 +109,8 @@ körning och ladda om Alex innan UI-fallet börjar.
     if (type?.revision !== 1) throw new Error('Kör Alex fas först');
     await post('relationship-type', {
       id: 'storage', baseRevision: 1,
-      value: { ...value, name: 'Los plats', description: 'Los nya förklaring' } });
+      value: { ...value, name: 'Los plats', description: 'Los nya förklaring' }
+    });
     await post('save', { operationId: crypto.randomUUID() });
   }
   console.log(`STY-04: ${phase} är förberedd`);

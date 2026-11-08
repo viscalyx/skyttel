@@ -220,11 +220,10 @@ test('KATALOG-01: type cascades and meaning corrections are reviewed, canceled a
       Beskrivning: edgeType.description || 'Ej uppgivet',
     });
     await readRemovalProposal(page, 'Soltaket', { Namn: 'Soltaket', Typ: 'Solcellsanläggning' });
-    await readRemovalProposal(
-      page,
-      `Soltaket → Använder → Huset`,
-      { Från: 'Soltaket', Till: 'Huset' },
-    );
+    await readRemovalProposal(page, `Soltaket → Använder → Huset`, {
+      Från: 'Soltaket',
+      Till: 'Huset',
+    });
     const draft = await openDraftReview(page);
     await draft.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
     await page
@@ -384,16 +383,12 @@ test('KATALOG-02: other drafts survive type deletion and recover through ordinar
         Status: 'Manuellt upphört',
         Serienummer: 'PRIVAT-PROVVÄRDE',
       });
-      await expectConflictDraftValues(
-        memberPage,
-        `Privat provnamn → Använder → Garaget`,
-        {
-          Från: 'Privat provnamn',
-          Till: 'Garaget',
-          Sambandstyp: edgeType.name,
-          Gäller: 'Upphört',
-        },
-      );
+      await expectConflictDraftValues(memberPage, `Privat provnamn → Använder → Garaget`, {
+        Från: 'Privat provnamn',
+        Till: 'Garaget',
+        Sambandstyp: edgeType.name,
+        Gäller: 'Upphört',
+      });
       await closeTextView(memberPage);
     };
     await readPrivate();

@@ -79,9 +79,9 @@ test('removing the obsolete reference preference preserves accounts, active pref
     for (let restart = 0; restart < 2; restart++) {
       const database = openDatabase(path);
       try {
-        expect(retainedTables.map((table) => database.prepare(`SELECT * FROM ${table}`).all())).toEqual(
-          retained,
-        );
+        expect(
+          retainedTables.map((table) => database.prepare(`SELECT * FROM ${table}`).all()),
+        ).toEqual(retained);
         expect(
           database
             .prepare('SELECT * FROM schema_migration WHERE version <= 49 ORDER BY version')

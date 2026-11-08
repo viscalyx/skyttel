@@ -505,7 +505,8 @@ kreditutrymme **500 SEK**, uppgiftsdatum **2026-01-01** och identiteterna
 **Ospecificerat objekt** och **Identiteten behöver redas ut**. Läs varje
 sambands riktning, fria säkerhetsuppgift och hela **Hela uppgiften …**. Läs båda
 typförslagens namn och förklaringar, inklusive
-**Föreslagen sambandsbeskrivning**. I ett reducerat utkast läser du bara överlevande rader.
+**Föreslagen sambandsbeskrivning**. I ett reducerat utkast läser du bara
+överlevande rader.
 
 När ett fall anger slutlig gemensam kontroll: stäng textvyn, välj
 **Rapporter → Ändringshistorik → Visa ändringarna**. Det enda sparandet
@@ -7883,8 +7884,8 @@ sparade uppgifter och sparkvitto efter omstart för båda användarna.
 
 **Förväntat resultat:**
 
-- Hela sambandstypen med namn och beskrivning är läsbar vid 1280 och 320 pixlar i
-varje granskningsfas.
+- Hela sambandstypen med namn och beskrivning är läsbar vid 1280 och
+320 pixlar i varje granskningsfas.
 - Privat bekräftelse ändrar inte den gemensamma kartan. Separat sparande och
 omstart gör den återställda definitionen läsbar för båda användarna.
 

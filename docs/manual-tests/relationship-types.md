@@ -229,8 +229,8 @@ valfria omvända benämning hör till det enskilda sambandet.
 **Steg:**
 
 1. Alex laddar om och öppnar **Granska konflikter**. Läs typförslagets namn
-   **Plats** mot det sparade namnet **Los plats**. Den gemensamma kartan innehåller ännu inte Cykeln,
-   Garaget eller deras samband.
+   **Plats** mot det sparade namnet **Los plats**. Den gemensamma kartan
+   innehåller ännu inte Cykeln, Garaget eller deras samband.
 2. Välj Alex föreslagna motstridiga värden och **Lägg valen i utkastet**.
    Läs resultatet, stäng och granska hela typförslaget **Plats** i utkastet.
    Robins oberoende beskrivning **Los nya förklaring** finns kvar. Läs också

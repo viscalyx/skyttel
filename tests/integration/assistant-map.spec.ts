@@ -251,9 +251,7 @@ for (const viewport of [
         expect(acknowledgements[1]).toMatchObject({
           displayed: true,
           kind: 'relationship',
-          inspector: expect.stringContaining(
-            `Lo Exempel → Använder → Molnmusik`,
-          ),
+          inspector: expect.stringContaining(`Lo Exempel → Använder → Molnmusik`),
           inspectorVisible: true,
           endpointsVisible: true,
           visible: true,
