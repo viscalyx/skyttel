@@ -1335,7 +1335,7 @@ som Företag. Inga samband finns mellan dem. Använd ett nytt provhushåll.
 
 **Automatiskt motsvarande test:**
 [relationship-verbs.spec.ts](../../tests/integration/relationship-verbs.spec.ts),
-SAMBAND-22. HTTP-, MCP- och arkivprov ger separat tekniskt stöd.
+SAMBAND-22. HTTP-, MCP-, arkiv- och migreringsprov ger separat tekniskt stöd.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -1389,9 +1389,17 @@ SAMBAND-22. HTTP-, MCP- och arkivprov ger separat tekniskt stöd.
       "kind": "technical",
       "runner": "vitest",
       "suite": "server",
-      "spec": "tests/unit/server/relationship-verbs-upgrade.test.ts",
-      "title": "upgrade pins legacy saved and retained draft wording without changing household definitions",
-      "purpose": "Uppgradering bevarar hushållets äldre ordval och definitioner."
+      "spec": "tests/unit/server/relationship-format-migration.test.ts",
+      "title": "upgrade preserves installation and household data with existing objects: true",
+      "purpose": "Engångsmigreringen bevarar installationens och hushållets data samt ordval i sparade samband, utkast och historik när objekt finns."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/relationship-format-migration.test.ts",
+      "title": "upgrade preserves installation and household data with existing objects: false",
+      "purpose": "Engångsmigreringen bevarar installationens och hushållets data även utan objekt och lämnar samband och utkast tomma."
     }
   ]
 }
