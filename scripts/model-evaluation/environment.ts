@@ -1,7 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 import { type APIRequestContext, request } from '@playwright/test';
 import type { MapState, ObjectValue, RelationshipValue } from '../../src/shared/map.js';
-import { relationshipVerb } from '../../src/shared/relationship-verb.js';
 import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../tests/support/client.js';
 import type { createInstallation } from '../../tests/support/installation.js';
@@ -28,8 +27,9 @@ function normalDefaults<T extends Record<string, unknown>>(value: T): T {
   return result;
 }
 
-function expectedRelationshipVerb(value: Pick<NamedRelationship, 'verb' | 'type'>) {
-  return (value.verb ?? value.type).toLocaleLowerCase('sv');
+function expectedRelationshipVerb(value: Pick<NamedRelationship, 'verb'>) {
+  if (!value.verb?.trim()) throw new Error('evaluation_relationship_verb_missing');
+  return value.verb.toLocaleLowerCase('sv');
 }
 
 function sameRelationshipMeaning(
@@ -108,19 +108,7 @@ export async function evaluationEnvironment(
         ...(value as object),
       });
     }
-    for (const [index, definition] of [
-      ...fixture.relationshipTypes,
-      ...(fixture.relationshipTypes.some((definition) => definition.name === 'Hör till')
-        ? []
-        : [
-            {
-              name: 'Hör till',
-              description: '',
-              forwardLabel: 'hör till',
-              reverseLabel: 'har tjänstekonto',
-            },
-          ]),
-    ].entries())
+    for (const [index, definition] of fixture.relationshipTypes.entries())
       await propose('relationship-type', {
         id: `evaluation-type-${index}`,
         baseRevision: null,
@@ -144,6 +132,7 @@ export async function evaluationEnvironment(
       ) ?? []),
     ];
     for (const [index, edge] of originalRelationships.entries()) {
+      if (!edge.verb?.trim()) throw new Error('evaluation_relationship_verb_missing');
       const typeId = relationshipTypes.find((item) => item.name === edge.type)?.id;
       if (!typeId) throw new Error(`evaluation_relationship_type_missing_${edge.type}`);
       await propose('relationship', {
@@ -153,9 +142,10 @@ export async function evaluationEnvironment(
           typeId,
           sourceId: edge.source,
           targetId: edge.target,
-          verb: edge.verb ?? edge.type,
+          verb: edge.verb,
           ...(edge.reverseVerb !== undefined ? { reverseVerb: edge.reverseVerb } : {}),
           ...(edge.properties ? { properties: edge.properties } : {}),
+          ...(edge.lifecycle ? { lifecycle: edge.lifecycle } : {}),
         },
       });
     }
@@ -165,7 +155,8 @@ export async function evaluationEnvironment(
       contentVersion: state.contentVersion,
       operationId: 'evaluation-start',
     };
-    await post('map/save', seedSave);
+    if (initialObjects.length || originalRelationships.length || fixture.relationshipTypes.length)
+      await post('map/save', seedSave);
     state = await read();
     const savedBaseline = structuredClone(state);
     const draftObjects = { ...fixture.draft.objects, ...variant?.draftObjects };
@@ -324,10 +315,7 @@ export async function evaluationEnvironment(
             ...(preserveIds.has(id) ? { id } : {}),
             source: objectAliases.get(sourceId) ?? sourceId,
             type: definitions.find((item) => item.id === typeId)?.name ?? typeId,
-            verb: relationshipVerb(
-              { ...rest, typeId, sourceId, targetId },
-              definitions.find((item) => item.id === typeId),
-            ),
+            verb: rest.verb,
             target: objectAliases.get(targetId) ?? targetId,
             ...clean,
           });
@@ -571,9 +559,7 @@ export async function evaluationEnvironment(
           ];
           const neutralCategory = (type: MapState['relationshipTypes'][number]) =>
             type.name === 'Samband' &&
-            type.description === 'Hushållets samband utan särskilt vald gruppering.' &&
-            type.forwardLabel === undefined &&
-            type.reverseLabel === undefined;
+            type.description === 'Hushållets samband utan särskilt vald gruppering.';
           if (
             !isDeepStrictEqual(originalRelationshipTypes, savedBaseline.relationshipTypes) ||
             map.draft.relationshipTypes?.some((change) => change.before || !change.after) ||

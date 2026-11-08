@@ -3,8 +3,8 @@ import rawCatalog from '../../../scripts/model-evaluation/catalog.json' with { t
 import { evaluationEnvironment } from '../../../scripts/model-evaluation/environment.js';
 import type {
   FixtureObject,
-  NamedRelationship,
   Scenario,
+  ScenarioFixture,
 } from '../../../scripts/model-evaluation/types.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { textModel } from '../../support/text-model.js';
@@ -14,7 +14,7 @@ type SubscriptionCase = {
   subscriptionId: string;
   serviceId: string;
   newSubscription?: FixtureObject;
-  otherRelationships: NamedRelationship[];
+  otherRelationships: ScenarioFixture['relationships'];
 };
 
 const cases: SubscriptionCase[] = [
@@ -36,7 +36,9 @@ const cases: SubscriptionCase[] = [
         { id: 'monthly-price', label: 'Månadskostnad (SEK)', kind: 'number', value: 99 },
       ],
     },
-    otherRelationships: [{ source: 'sonja', type: 'Betalar', target: 'new-disney-subscription' }],
+    otherRelationships: [
+      { source: 'sonja', type: 'Betalar', verb: 'betalar', target: 'new-disney-subscription' },
+    ],
   },
   {
     scenarioId: 'everyday-46',
@@ -48,7 +50,12 @@ const cases: SubscriptionCase[] = [
       name: 'Bredband från Bahnhof',
     },
     otherRelationships: [
-      { source: 'new-broadband-subscription', type: 'Hör till', target: 'home' },
+      {
+        source: 'new-broadband-subscription',
+        type: 'Hör till',
+        verb: 'har samband med',
+        target: 'home',
+      },
     ],
   },
 ];
@@ -107,7 +114,7 @@ async function checkObservedSubscription(
         })),
       ...(variant === 'both-types' ? [{ ...serviceLink, type: 'Gäller' }] : []),
       ...(variant === 'extra-edge'
-        ? [{ source: 'unrelated', type: 'Använder', target: example.serviceId }]
+        ? [{ source: 'unrelated', type: 'Använder', verb: 'använder', target: example.serviceId }]
         : []),
     ];
     for (const [index, relationship] of relationships.entries()) {
@@ -119,12 +126,7 @@ async function checkObservedSubscription(
         baseRevision: null,
         value: {
           typeId: map.relationshipTypes.find((item) => item.name === relationship.type)?.id,
-          verb:
-            'verb' in relationship
-              ? relationship.verb
-              : (scenario.steps[0].expected.addRelationships?.find(
-                  (edge) => edge.type === relationship.type,
-                )?.verb ?? relationship.type),
+          verb: relationship.verb,
           sourceId: relationship.source,
           targetId: relationship.target,
         },

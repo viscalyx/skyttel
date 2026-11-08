@@ -8,6 +8,77 @@ import {
 import type { Attempt, Scenario } from '../../../scripts/model-evaluation/types.js';
 import { textModel } from '../../support/text-model.js';
 
+test('fixture verbs preserve directed facts independently of their shared category', {
+  tags: ['technical'],
+}, async () => {
+  const scenario: Scenario = {
+    id: 'authored-fixture-verbs',
+    title: 'Preserve authored relationship wording',
+    voice: false,
+    fixture: {
+      objects: [
+        { id: 'bike', type: 'Fordon', name: 'Cykeln' },
+        { id: 'owner', type: 'Person', name: 'Alex' },
+        { id: 'storage', type: 'Tjänst', name: 'Cykelförvaringen' },
+      ],
+      relationships: [
+        {
+          source: 'bike',
+          type: 'Cykeluppgifter',
+          target: 'owner',
+          verb: 'ägs av',
+          reverseVerb: 'äger',
+        },
+        {
+          source: 'bike',
+          type: 'Cykeluppgifter',
+          target: 'storage',
+          verb: 'förvaras hos',
+          lifecycle: 'ended',
+        },
+      ],
+      relationshipTypes: [{ name: 'Cykeluppgifter', description: 'Valfri gruppering.' }],
+      draft: { objects: {} },
+    },
+    steps: [],
+  };
+  const model = textModel(() => {
+    throw new Error('Fixture verification must not call a provider');
+  });
+  const environment = await evaluationEnvironment(scenario, { modelFetch: model.provider });
+  try {
+    const map = await environment.read();
+    expect(map.relationshipTypes.some(({ name }) => name === 'Hör till')).toBe(false);
+    const category = map.relationshipTypes.find(({ name }) => name === 'Cykeluppgifter');
+    expect(map.relationships).toEqual([
+      expect.objectContaining({
+        sourceId: 'bike',
+        targetId: 'owner',
+        typeId: category?.id,
+        verb: 'ägs av',
+        reverseVerb: 'äger',
+      }),
+      expect.objectContaining({
+        sourceId: 'bike',
+        targetId: 'storage',
+        typeId: category?.id,
+        verb: 'förvaras hos',
+        lifecycle: 'ended',
+      }),
+    ]);
+    expect(
+      await environment.check(
+        { id: 'no-op', expected: { requirements: [] } },
+        environment.assistant,
+        [],
+      ),
+    ).toEqual([]);
+    expect(model.requests).toEqual([]);
+  } finally {
+    await environment.close();
+  }
+});
+
 test.each([
   ['forward phrase', 'account', 'email', 'har kontaktadressen', 'pass'],
   ['reverse phrase', 'email', 'account', 'är kontaktadress för', 'pass'],

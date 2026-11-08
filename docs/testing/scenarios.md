@@ -34,6 +34,11 @@ verb. En begäran om en allmän koppling använder **har samband med**; den
 behöver inget extra typval eller en omvänd benämning. Historiska råresultat
 gäller kontraktet vid deras egen revision och skrivs inte om av dessa regler.
 
+Även förberedda samband har uttryckliga verb på varje enskild koppling.
+Förberedda sambandstyper innehåller namn och beskrivning; de väljer inga
+verb åt sambanden. Startläget lägger bara till de extra sambandstyper som
+scenariots förberedelse anger.
+
 När begäran anger en roll som inloggningsadress utan att välja sambandsverb
 får en naturlig formulering uttrycka samma roll från endera objektet. Då
 kontrolleras objekten strukturellt och ordvalets innebörd bedöms separat mot

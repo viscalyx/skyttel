@@ -9,7 +9,7 @@ export type FixtureProperty = {
 export type NamedRelationship = {
   id?: string;
   source: string;
-  /** Fixture category and legacy expectation wording; expected verb takes precedence. */
+  /** Fixture category; expectations assert grouping only through category. */
   type: string;
   verb?: string;
   /** Expected-only meaning when the request names a role without choosing a verb.
@@ -33,12 +33,10 @@ export type FixtureObject = {
 };
 export type ScenarioFixture = {
   objects: FixtureObject[];
-  relationships: NamedRelationship[];
+  relationships: (NamedRelationship & { verb: string })[];
   relationshipTypes: {
     name: string;
     description: string;
-    forwardLabel: string;
-    reverseLabel: string;
   }[];
   draft: { objects: Record<string, Record<string, unknown>> };
 };
@@ -132,7 +130,7 @@ export type Catalog = {
     string,
     {
       addObjects?: FixtureObject[];
-      addRelationships?: NamedRelationship[];
+      addRelationships?: (NamedRelationship & { verb: string })[];
       removeRelationships?: NamedRelationship[];
       draftObjects?: Record<string, Record<string, unknown>>;
     }

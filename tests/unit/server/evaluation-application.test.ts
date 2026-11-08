@@ -535,6 +535,7 @@ test.each([
             typeId: type.id,
             sourceId: 'cloud',
             targetId: target,
+            verb: 'används av',
             properties: [{ label: 'Osäkert uppgivet', kind: 'boolean', value: true }],
           },
         }),
