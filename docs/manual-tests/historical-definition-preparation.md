@@ -46,7 +46,7 @@ sambandet. Gamla
 egenskapsidentiteter, typidentiteter, revisioner och arkivkontrollsummor är
 tekniskt underlag, inte uppgifter som användaren ska läsa i UI-fallet.
 
-## Äldre riktningsuppgifter i STY-04
+## Typkonflikt i STY-04
 
 Denna förberedelse gäller förberedaren av
 [STY-04](relationship-types.md#sty-04-typkonflikt-bevarar-oberoende-definitionsändring).
@@ -90,15 +90,14 @@ körning och ladda om Alex innan UI-fallet börjar.
       ['changes', 'relationships', 'objectTypes', 'relationshipTypes']
         .some(key => initial.draft[key]?.length))
     throw new Error('Använd tom karta och tomt eget utkast');
-  const value = { name: 'Förvaring', description: 'Förvaringsplats',
-    forwardLabel: 'förvaras i', reverseLabel: 'innehåller' };
+  const value = { name: 'Förvaring', description: 'Förvaringsplats' };
   if (phase === 'alex') {
     await post('relationship-type', {
       id: 'storage', baseRevision: null, value });
     await post('save', { operationId: crypto.randomUUID() });
     await post('relationship-type', {
       id: 'storage', baseRevision: 1,
-      value: { ...value, name: 'Plats', reverseLabel: 'har' } });
+      value: { ...value, name: 'Plats' } });
     for (const [id, name] of [['bike', 'Cykeln'], ['garage', 'Garaget']])
       await post('draft', { id, baseRevision: null,
         value: { typeId: initial.types[0].id, name, properties: [] } });
@@ -110,8 +109,7 @@ körning och ladda om Alex innan UI-fallet börjar.
     if (type?.revision !== 1) throw new Error('Kör Alex fas först');
     await post('relationship-type', {
       id: 'storage', baseRevision: 1,
-      value: { ...value, description: 'Los nya förklaring',
-        reverseLabel: 'rymmer' } });
+      value: { ...value, name: 'Los plats', description: 'Los nya förklaring' } });
     await post('save', { operationId: crypto.randomUUID() });
   }
   console.log(`STY-04: ${phase} är förberedd`);
@@ -119,17 +117,16 @@ körning och ladda om Alex innan UI-fallet börjar.
 ```
 
 Alex har nu ett privat typförslag och två nya objekt med ett eget riktat
-samband. Robin har sparat en nyare definition. Bara den äldre omvända
-typbenämningen är motstridig; Robins beskrivning är en oberoende ändring.
-Det enskilda sambandet behåller sina uttryckliga ordval förvaras i och
-innehåller. Typens historiska benämningar väljer inte sambandets verb.
+samband. Robin har sparat en nyare definition. Namnen Plats och Los plats
+är motstridiga; Robins beskrivning är en oberoende ändring. Det enskilda
+sambandet behåller sina uttryckliga ordval förvaras i och innehåller.
 
 Efter UI-fallet och omstarten kontrollerar förberedaren det tekniska
 underlaget genom det befintliga integrationsprovet. Det jämför exakt
 typidentitet `storage`, revision 3, namnet Plats, beskrivningen Los nya
-förklaring och den äldre omvända benämningen har. Kvittots före-värde
-bevarar revision 2 och rymmer; sambandets typsnapshot bevarar revision 3
-och har. Kör från repositoryts rot:
+förklaring. Kvittots före-värde bevarar revision 2 och Los plats;
+sambandets typsnapshot bevarar revision 3 och Plats. Sambandets verb och
+omvända benämning behålls separat. Kör från repositoryts rot:
 
 ```bash
 npm run test:integration:ci -- \

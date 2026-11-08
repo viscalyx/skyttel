@@ -29,8 +29,6 @@ export async function prepareDraftReview(client: APIRequestContext, origin: stri
     value: {
       name: 'Granskar',
       description: 'Samband för granskning',
-      forwardLabel: 'granskar',
-      reverseLabel: 'granskas av',
     },
   });
   await post('draft', {
@@ -157,9 +155,7 @@ export async function prepareDraftReview(client: APIRequestContext, origin: stri
     baseRevision: relationshipType.revision,
     value: {
       name: relationshipType.name,
-      description: relationshipType.description,
-      forwardLabel: relationshipType.forwardLabel,
-      reverseLabel: 'kontrolleras av',
+      description: 'Föreslagen sambandsbeskrivning',
     },
   });
   return { household, path, read, post };

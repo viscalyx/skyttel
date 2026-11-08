@@ -25,8 +25,6 @@ test('SAMBAND-12: long relationship names and field labels reflow without horizo
       value: {
         name: 'Långa provuppgifter',
         description: '',
-        forwardLabel: label,
-        reverseLabel: 'gäller för',
       },
     });
     const before = await read();

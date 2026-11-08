@@ -306,7 +306,7 @@ Föreslå `garage`, Garaget, med en annan aktuell typ från katalogen och
 utan egenskaper. Skapa sambandstypen `stored` med följande värde:
 
 ```json
-{"name":"Förvaring","description":"Sakens plats","forwardLabel":"förvaras i","reverseLabel":"innehåller"}
+{"name":"Förvaring","description":"Sakens plats"}
 ```
 
 Föreslå `parking` med typ `stored`, `verb: "förvaras i"`,

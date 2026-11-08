@@ -133,7 +133,7 @@ for (const [id, kind, title, reason, warning, action] of [
       const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
       const proposal = before.draft.relationships?.find((change) => change.id === 'mine');
       if (!proposal) throw new Error('Missing relationship fixture proposal');
-      const retainedName = `Lo Exempel → ${proposal.type.forwardLabel ?? proposal.type.name} → Molnmusik`;
+      const retainedName = `Lo Exempel → ${proposal.after?.verb} → Molnmusik`;
       await expect(dialog.getByRole('heading', { name: retainedName, exact: true })).toBeVisible();
       await expect(
         dialog

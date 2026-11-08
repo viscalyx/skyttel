@@ -255,12 +255,6 @@ try {
           baseRevision: null,
           value: {
             name: 'Förfalskat återställningsförslag',
-            ...('forwardLabel' in historicalDefinition
-              ? {
-                  forwardLabel: historicalDefinition.forwardLabel,
-                  reverseLabel: historicalDefinition.reverseLabel,
-                }
-              : {}),
           },
           restoration: { contentVersion: state.contentVersion, definition: historicalDefinition },
         },

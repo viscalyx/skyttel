@@ -28,8 +28,6 @@ export async function prepareObjectSearch(client: APIRequestContext, origin: str
     value: {
       name: 'Endast i sambandet',
       description: '',
-      forwardLabel: 'går till',
-      reverseLabel: 'kommer från',
     },
   });
   await prepared.post('relationship', {

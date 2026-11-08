@@ -29,19 +29,13 @@ import { createPreparedContext, expect, test } from '../support/test.js';
 
 async function expectSeparateDefinitionProperties(
   container: Locator,
-  kind: 'object' | 'relationship',
+  _kind: 'object' | 'relationship',
 ) {
   const properties = container.locator('.cp-definition-property');
-  await expect(properties).toHaveText(
-    kind === 'object'
-      ? ['Namn: Min privata typbenämning', 'Beskrivning: Min tidigare definition']
-      : [
-          'Namn: Min privata typbenämning',
-          'Beskrivning: Min tidigare definition',
-          'Framåtriktning: förvaras i',
-          'Omvänd riktning: förvarar',
-        ],
-  );
+  await expect(properties).toHaveText([
+    'Namn: Min privata typbenämning',
+    'Beskrivning: Min tidigare definition',
+  ]);
   const bounds = await properties.evaluateAll((elements) =>
     elements.map((element) => {
       const rect = element.getBoundingClientRect();
@@ -158,11 +152,6 @@ for (const kind of ['object', 'relationship'] as const)
       ).toBeEnabled();
       await expect(proposed).toContainText('Min privata typbenämning');
       await expect(proposed).toContainText('Min tidigare definition');
-      if (kind === 'object') {
-      } else {
-        await expect(proposed).toContainText('Framåtriktning: förvaras i');
-        await expect(proposed).toContainText('Omvänd riktning: förvarar');
-      }
       const apply = dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true });
       await expect(apply).toBeDisabled();
       await expect(dialog).toContainText('1 av 1 egenskaper återstår att välja.');

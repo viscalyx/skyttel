@@ -20,12 +20,12 @@ async function readCorrectedProposal(
   page: Page,
   relationship: boolean,
   typeName: string,
-  forwardLabel: string,
+  verb: string,
   year?: string,
 ) {
   await expectConflictDraftValues(
     page,
-    relationship ? `Lo Exempel → ${forwardLabel} → Molnmusik` : 'Solcellsanläggningen',
+    relationship ? `Lo Exempel → ${verb} → Molnmusik` : 'Solcellsanläggningen',
     relationship
       ? {
           Från: 'Lo Exempel',
@@ -50,7 +50,7 @@ async function readSavedCorrection(
   origin: string,
   relationship: boolean,
   typeName: string,
-  forwardLabel: string,
+  verb: string,
   year?: string,
 ) {
   await refreshConflictReader(page, origin);
@@ -58,7 +58,7 @@ async function readSavedCorrection(
     await expectSavedConflictRelationship(
       page,
       'Lo Exempel',
-      `Lo Exempel → ${forwardLabel} → Molnmusik`,
+      `Lo Exempel → ${verb} → Molnmusik`,
       {
         Typ: typeName,
         'Från objekt': 'Lo Exempel',

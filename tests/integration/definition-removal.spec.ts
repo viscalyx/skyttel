@@ -105,7 +105,7 @@ test('KATALOG-04: canceling a type deletion restores inspectable unfinished obje
     await expectConflictDraftValues(page, 'Nytt arbete', { Namn: 'Nytt arbete' });
     const restoredRelationship = await readDraftProposal(
       page,
-      `Nytt arbete → ${initial.relationshipTypes[0].forwardLabel ?? initial.relationshipTypes[0].name} → Molnmusik`,
+      `Nytt arbete → Använder → Molnmusik`,
     );
     await expect(restoredRelationship).toContainText('Bevarat samband');
     await expect(restoredRelationship).toContainText('Läggs till');
@@ -222,7 +222,7 @@ test('KATALOG-01: type cascades and meaning corrections are reviewed, canceled a
     await readRemovalProposal(page, 'Soltaket', { Namn: 'Soltaket', Typ: 'Solcellsanläggning' });
     await readRemovalProposal(
       page,
-      `Soltaket → ${edgeType.forwardLabel ?? edgeType.name} → Huset`,
+      `Soltaket → Använder → Huset`,
       { Från: 'Soltaket', Till: 'Huset' },
     );
     const draft = await openDraftReview(page);
@@ -386,7 +386,7 @@ test('KATALOG-02: other drafts survive type deletion and recover through ordinar
       });
       await expectConflictDraftValues(
         memberPage,
-        `Privat provnamn → ${edgeType.forwardLabel ?? edgeType.name} → Garaget`,
+        `Privat provnamn → Använder → Garaget`,
         {
           Från: 'Privat provnamn',
           Till: 'Garaget',
@@ -445,7 +445,7 @@ test('KATALOG-02: other drafts survive type deletion and recover through ordinar
     const relationshipEditor = await editObjectRelationship(
       memberPage,
       'Privat provnamn',
-      `Privat provnamn → ${edgeType.forwardLabel ?? edgeType.name} → Garaget`,
+      `Privat provnamn → Använder → Garaget`,
     );
     await relationshipEditor
       .getByLabel('Sambandstyp', { exact: true })

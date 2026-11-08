@@ -504,8 +504,8 @@ med Escape. Läs cykelns båda beskrivningar, **SPARAT-17** och
 kreditutrymme **500 SEK**, uppgiftsdatum **2026-01-01** och identiteterna
 **Ospecificerat objekt** och **Identiteten behöver redas ut**. Läs varje
 sambands riktning, fria säkerhetsuppgift och hela **Hela uppgiften …**. Läs båda
-typförslagens namn, förklaringar och
-**kontrolleras av**. I ett reducerat utkast läser du bara överlevande rader.
+typförslagens namn och förklaringar, inklusive
+**Föreslagen sambandsbeskrivning**. I ett reducerat utkast läser du bara överlevande rader.
 
 När ett fall anger slutlig gemensam kontroll: stäng textvyn, välj
 **Rapporter → Ändringshistorik → Visa ändringarna**. Det enda sparandet
@@ -4960,8 +4960,7 @@ UTKAST-69.
 **Steg:**
 
 1. Öppna konflikten och bekräfta den föreslagna definitionen. Stäng och läs
-hela förslaget med namn, beskrivning och båda riktningarna samt det oberoende
-förslaget.
+hela förslaget med namn och beskrivning samt det oberoende förslaget.
 2. Invänta förberedarens återimport och tekniska försök till sparande före ny
 granskning. Ladda om och läs samma fullständiga privata förslag och oberoende
 arbete.
@@ -4969,10 +4968,9 @@ arbete.
 definitionen på aktuellt underlag. Läs åter hela definitionen i utkastet.
 4. Spara separat och starta om. Läs den sparade sambandstypens namn och
 beskrivning i Inställningar → Typer samt det oberoende objektet i Tabell.
-Typen är en gruppering; verb anges på varje enskilt samband. De äldre
-riktningarna läser du i det historiska förslaget före sparandet enligt
-steg 1–3. Automationen kontrollerar dessutom att båda riktningarna och
-typens identitet bevaras i sparade uppgifter och sparkvitto efter omstart.
+Typen är en gruppering; verb anges på varje enskilt samband. Automationen
+kontrollerar dessutom att namn, beskrivning och typens identitet bevaras i
+sparade uppgifter och sparkvitto efter omstart.
 
 **Förväntat resultat:**
 
@@ -7827,9 +7825,8 @@ UTKAST-139.
 **Steg:**
 
 1. Utför UTKAST-76:s tre steg en gång med denna förberedelse. I steg 1 läser
-du sambandstypens **Min privata typbenämning**, **Min tidigare definition**
-samt riktningarna **förvaras i** och **förvarar**. Typen består av namn,
-beskrivning och riktningar.
+du sambandstypens **Min privata typbenämning** och **Min tidigare definition**.
+Typen består av namn och beskrivning.
 
 **Förväntat resultat:**
 
@@ -7838,9 +7835,9 @@ beskrivning och riktningar.
 - Kastvalet påverkar enbart det egna sambandstypsförslaget; oberoende arbete,
 gemensamma typer och historik består.
 
-### UTKAST-140: återställ en borttagen sambandstyp med läsbara riktningar
+### UTKAST-140: återställ en borttagen sambandstyp med läsbar definition
 
-**Syfte:** Hela sambandstypen med båda riktningarna är läsbar vid 1280 och 320
+**Syfte:** Hela sambandstypen med namn och beskrivning är läsbar vid 1280 och 320
 pixlar i varje granskningsfas.
 
 **Användare:** Robin; Alex utför separat teknisk förberedelse.
@@ -7862,9 +7859,9 @@ UTKAST-140.
     "spec": "tests/integration/conflict-definition-restoration.spec.ts",
     "caseId": "UTKAST-140"
   },
-  "reference": "Sambandstyp; 1280 och 320 × 900. Riktningarnas historiska betydelser har en egen counterpart och kompletterar objekttypens namn och beskrivning.",
+  "reference": "Sambandstyp; 1280 och 320 × 900. Sambandstypens historiska namn och beskrivning har en egen counterpart.",
   "outcomes": [
-    "Hela sambandstypen med båda riktningarna är läsbar vid 1280 och 320 pixlar i varje granskningsfas.",
+    "Hela sambandstypen med namn och beskrivning är läsbar vid 1280 och 320 pixlar i varje granskningsfas.",
     "Privat bekräftelse ändrar inte den gemensamma kartan. Separat sparande och omstart gör den återställda definitionen läsbar för båda användarna."
   ]
 }
@@ -7876,18 +7873,17 @@ UTKAST-140.
 
 1. Utför UTKAST-67:s fyra steg en gång med denna förberedelse. I steg 1–3
 läser du sambandstypen, inte objekttypen: **Min privata typbenämning**, **Min
-tidigare definition**, **Framåtriktning: förvaras i** och
-**Omvänd riktning: förvarar**. Riktningarna hör till den historiska
-definitionen som återställs.
+tidigare definition**. Dessa är uppgifterna i den historiska definitionen
+som återställs.
 2. I steg 4 läser både Robin och Alex namn och beskrivning i sambandstypens
 ordinarie formulär samt det sparade oberoende objektet. Typen är en
 gruppering; verb anges på varje enskilt samband. Automationen kontrollerar
-dessutom att båda historiska riktningarna och typens identitet bevaras i
+dessutom att namn, beskrivning och typens identitet bevaras i
 sparade uppgifter och sparkvitto efter omstart för båda användarna.
 
 **Förväntat resultat:**
 
-- Hela sambandstypen med båda riktningarna är läsbar vid 1280 och 320 pixlar i
+- Hela sambandstypen med namn och beskrivning är läsbar vid 1280 och 320 pixlar i
 varje granskningsfas.
 - Privat bekräftelse ändrar inte den gemensamma kartan. Separat sparande och
 omstart gör den återställda definitionen läsbar för båda användarna.

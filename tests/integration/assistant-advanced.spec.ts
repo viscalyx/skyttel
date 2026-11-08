@@ -316,8 +316,6 @@ test('MCP-03: typbyte bevarar riktade samband och äldre typers läsbara histori
       value: {
         name: 'Förvaring',
         description: 'Sakens plats',
-        forwardLabel: 'förvaras i',
-        reverseLabel: 'innehåller',
       },
     });
     const edge = {

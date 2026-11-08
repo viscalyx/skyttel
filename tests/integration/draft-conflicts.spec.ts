@@ -165,8 +165,6 @@ for (const { width, height } of [
       const edgeDefinition = {
         name: edgeType.name,
         description: edgeType.description,
-        forwardLabel: edgeType.forwardLabel ?? edgeType.name,
-        reverseLabel: edgeType.reverseLabel ?? edgeType.name,
       };
       const definition = { ...objectType, description: 'Sparad ekonomi' };
       async function proposeType(
@@ -230,8 +228,6 @@ for (const { width, height } of [
       await proposeType(page.request, 'relationship-type', {
         ...edgeDefinition,
         name: 'Min sambandstyp',
-        forwardLabel: 'använder enligt mig',
-        reverseLabel: 'används av mig',
       });
       await app.propose(page.request, 'draft', 'lo', {
         ...original,
@@ -725,12 +721,6 @@ for (const kind of ['object-type', 'relationship-type'] as const) {
         const definition = {
           name: type.name,
           description: type.description,
-          ...(isObjectType
-            ? {}
-            : {
-                forwardLabel: initial.relationshipTypes[0].forwardLabel ?? type.name,
-                reverseLabel: initial.relationshipTypes[0].reverseLabel ?? type.name,
-              }),
         };
         for (const [client, name, description] of [
           [page.request, 'Min typ', definition.description],

@@ -173,8 +173,6 @@ test('STY-04: stale definitions stop the whole save and explicit resolution pres
     const value = {
       name: 'Förvaring',
       description: 'Förvaringsplats',
-      forwardLabel: 'förvaras i',
-      reverseLabel: 'innehåller',
     };
     expect(
       (
@@ -188,7 +186,7 @@ test('STY-04: stale definitions stop the whole save and explicit resolution pres
           version: 2,
           id: 'storage',
           baseRevision: 1,
-          value: { ...value, name: 'Plats', reverseLabel: 'har' },
+          value: { ...value, name: 'Plats' },
         })
       ).status(),
     ).toBe(200);
@@ -237,7 +235,7 @@ test('STY-04: stale definitions stop the whole save and explicit resolution pres
             version: 0,
             id: 'storage',
             baseRevision: 1,
-            value: { ...value, description: 'Los nya förklaring', reverseLabel: 'rymmer' },
+            value: { ...value, name: 'Los plats', description: 'Los nya förklaring' },
           },
           member.request,
         )
@@ -268,20 +266,22 @@ test('STY-04: stale definitions stop the whole save and explicit resolution pres
     ).toMatchObject({
       name: 'Plats',
       description: 'Los nya förklaring',
-      reverseLabel: 'har',
       revision: 3,
     });
     expect(current.relationships).toHaveLength(1);
+    expect(current.relationships[0]).toMatchObject({
+      verb: 'förvaras i',
+      reverseVerb: 'innehåller',
+    });
     const { history } = await (await page.request.get(`${path}/history`)).json();
     expect(history[0].relationshipTypes[0].before).toMatchObject({
+      name: 'Los plats',
       description: 'Los nya förklaring',
-      reverseLabel: 'rymmer',
       revision: 2,
     });
     expect(history[0].relationships[0].type).toMatchObject({
       name: 'Plats',
       description: 'Los nya förklaring',
-      reverseLabel: 'har',
       revision: 3,
     });
   } finally {
@@ -442,8 +442,6 @@ test('STY-05: duplicate adds, edits and concurrent saves preserve identity and r
     const value = {
       name: 'Förvaring',
       description: 'Förvaringsplats',
-      forwardLabel: 'förvaras i',
-      reverseLabel: 'innehåller',
     };
     const propose = async (
       route: string,

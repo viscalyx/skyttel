@@ -114,8 +114,6 @@ export async function prepareConversationReview({
     value: {
       name: 'Förvaras',
       description: '',
-      forwardLabel: 'förvaras i',
-      reverseLabel: 'innehåller',
     },
   });
 }

@@ -13,7 +13,7 @@ export async function readIndependentHistoricalProposal(page: Page) {
 
 export async function readHistoricalDefinitionProposal(
   page: Page,
-  relationship: boolean,
+  _relationship: boolean,
   name = 'Min privata typbenämning',
   description = 'Min tidigare definition',
   side: 'Sparade värden' | 'Föreslagna värden' = 'Föreslagna värden',
@@ -22,10 +22,6 @@ export async function readHistoricalDefinitionProposal(
   const values = proposal.getByRole('heading', { name: side, exact: true }).locator('..');
   await expectConflictReadValue(values, 'Namn', name);
   await expectConflictReadValue(values, 'Beskrivning', description);
-  if (relationship) {
-    await expectConflictReadValue(values, 'Framåtriktning', 'förvaras i');
-    await expectConflictReadValue(values, 'Omvänd riktning', 'förvarar');
-  }
   await closeSupportDialog(page, name);
   await closeTextView(page);
 }
@@ -73,7 +69,7 @@ export async function readSavedHistoricalDefinition(
   await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
 }
 
-/** Legacy definition wording survives in saved data and receipts, independently of the editor. */
+/** Restored grouping metadata survives in saved data and receipts. */
 export async function expectSavedHistoricalRelationshipMetadata(
   page: Page,
   mapPath: string,
@@ -83,13 +79,12 @@ export async function expectSavedHistoricalRelationshipMetadata(
   expect(response.status()).toBe(200);
   const state = (await response.json()) as MapState;
   const definition = state.relationshipTypes.find((type) => type.id === id);
-  expect(definition).toMatchObject({
+  expect(definition).toEqual({
     id,
+    householdId: expect.any(String),
     revision: 3,
     name: 'Min privata typbenämning',
     description: 'Min tidigare definition',
-    forwardLabel: 'förvaras i',
-    reverseLabel: 'förvarar',
   });
   const historyResponse = await page.request.get(`${mapPath}/history`);
   expect(historyResponse.status()).toBe(200);

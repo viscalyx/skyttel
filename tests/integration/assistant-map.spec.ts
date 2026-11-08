@@ -252,7 +252,7 @@ for (const viewport of [
           displayed: true,
           kind: 'relationship',
           inspector: expect.stringContaining(
-            `Lo Exempel → ${initial.relationshipTypes[0].forwardLabel ?? initial.relationshipTypes[0].name} → Molnmusik`,
+            `Lo Exempel → Använder → Molnmusik`,
           ),
           inspectorVisible: true,
           endpointsVisible: true,
