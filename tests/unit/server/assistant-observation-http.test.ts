@@ -187,7 +187,7 @@ test('a failed model task has a failed observed ending without its provider erro
   );
   expect(await send(path, session)).toMatchObject({
     phase: 'error',
-    error: 'assistant_provider_failed',
+    error: 'assistant_model_temporary',
   });
   expect(events.filter((event) => event.kind === 'task_completed')).toMatchObject([
     { status: 'failed', data: { error: 'task_failed' } },
@@ -397,12 +397,20 @@ test.each(['canceled', 'incomplete'] as const)(
     expect(modelCalls).toBe(1);
     expect(await (await client.get(`${path}/map`)).json()).toEqual(before);
     const current = await client.get(`${path}/text-assistant/${session.id}/messages/read-lina`);
+    expect(current.status()).toBe(200);
     if (status === 'canceled') {
-      expect(current.status()).toBe(200);
       expect(await current.json()).toMatchObject({ taskStatus: 'canceled' });
     } else {
-      expect(current.status()).toBe(404);
-      expect(await current.json()).toEqual({ error: 'assistant_session_expired' });
+      // The task's thirty-minute deadline does not end the retained conversation.
+      const retained = await current.json();
+      expect(retained).toMatchObject({
+        taskStatus: 'expired',
+        phase: 'ready',
+        paused: true,
+        error: 'assistant_task_expired',
+      });
+      expect(retained.conversation).toContainEqual({ role: 'user', text: 'Läs bara Lina.' });
+      expect(retained.expiresAt).toBeGreaterThan(clock);
     }
   },
 );

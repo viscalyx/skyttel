@@ -12,8 +12,10 @@ inte
 
 Starta en ny installation. Skapa Tryckprov, välj **Skriv till Skyttel** och
 **Nytt samtal**, markera **Fråga inte igen för det här hushållet** och välj
-**Godkänn och starta**. Ladda om sidan så
-att inget samtal ännu pågår. Öppna Console och kör hela blocket:
+**Godkänn och starta**. Ladda om sidan. Öppna textvyn och kontrollera att
+det återställda samtalet är pausat. Välj **Avsluta samtalet** och stäng
+textvyn så att nästa mikrofontryck startar ett nytt samtal. Utkastet
+behålls. Öppna Console och kör hela blocket:
 
 <!-- markdownlint-disable MD013 -->
 ```javascript
@@ -136,10 +138,12 @@ await fetch('VOICE-ADRESS/VOICE-ID/stop', {
 }).then(async response => ({ status: response.status, ...await response.json() }))
 ```
 
-Kräv status 200 och `voice.phase: 'closed'` innan omladdning. Omladdning ensam
-avslutar inte serverns gamla röstsession; en ny samtalsstart kan annars stänga
-den som förlorad åtkomst. Installera därefter blocken på nytt. Avsluta launchern
-med `quit` och kontrollera borttagen katalog enligt röstguiden.
+Kräv status 200 och `voice.phase: 'closed'` innan omladdning så att just
+provets transport har verifierad städning. Omladdningen återställer samtalet
+pausat. Öppna textvyn, läs dess pausade status, välj **Avsluta samtalet** och
+stäng textvyn före nästa fristående startprov. Installera därefter blocken på
+nytt. Avsluta launchern med `quit` och kontrollera borttagen katalog enligt
+röstguiden.
 
 De två separata tekniska proven för publika kontroller i
 [voice-controls-preparation.spec.ts](../../tests/technical-browser/voice-controls-preparation.spec.ts)
@@ -158,7 +162,10 @@ med `seed-family`-underlag vid 320 × 250 respektive tomt underlag vid
 samtyckesstarter,
 återställningar, status 201/200, oförändrad karta/utkast/historik och borttagen
 provkatalog. Serverns förväntade säkerhetshändelser för lyckade
-åtkomständringar valideras separat; övriga diagnostikutdata ska vara tomma.
+åtkomständringar valideras separat. Det avsiktliga modellfelet ska ge en enda
+diagnostikhändelse med modell, resonemangsnivå, felkategori, tidpunkt och
+UUID-referens utan samtalsinnehåll eller inloggningsuppgifter. Övriga
+diagnostikutdata ska vara tomma även efter återhämtning och avslut.
 Okända fält, misslyckade säkerhetshändelser och råa fel godtas inte.
 Proven delar inte tidsbudget med
 blockens och runnerns fullständiga prov.
@@ -222,9 +229,17 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    för egenskapen **Beskrivning** utan att lägga den i utkastet.
    Mikrofonen fortsätter medan formuläret är öppet.
 3. Skriv `user Behåll Lo-förslaget, rätta priset till 189 kr och spara.` och
-   sedan `delegate`. Från `held.draft` kopieras `version`, `contentVersion`
-   och hela första objektet i `conflicts`. Ersätt markörerna nedan; `CONFLICT`
-   ska vara det kopierade JSON-objektet, utan extra citattecken:
+   sedan `delegate`. Första `held.draft` är ett urval, inte hela utkastet.
+   Läs hela utkastet med det hållna anropets ID:
+
+   ```text
+   tool REQUEST read_my_draft {}
+   ```
+
+   Från nästa `held.lastToolResult` kopieras `version`, `contentVersion`
+   och hela första objektet i `conflicts`. Ersätt markörerna nedan och använd
+   det nya anropets ID; `CONFLICT` ska vara det kopierade JSON-objektet, utan
+   extra citattecken:
 
    <!-- markdownlint-disable MD013 -->
    ```text
@@ -334,11 +349,12 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    kontrollen. Kör `restart` i terminalen.
 4. Ta bort nätblockeringen och ladda om webbläsaren. Skyttel kontrollerar och
    slutför själv det registrerade försöket, innan något nytt samtal startas
-   eller något medgivande ges. Välj sedan **Skriv till Skyttel → Nytt samtal**
-   och godkänn medgivandet om det behövs. Kräv förklaringen
+   eller något medgivande ges. Öppna **Skriv till Skyttel**. Kräv det pausade
+   samtalet med utgångstid och förklaringen
 **Kontrollen visar att hela utkastet
    sparades. Ändringarna finns i hushållets karta.**
-   i samtalstexten. Slå på mikrofonen för resten av fallet.
+   i samtalstexten. Välj därefter **Nytt samtal**, godkänn medgivandet om det
+   behövs och slå på mikrofonen för resten av fallet.
 5. Kontrollera ett genomfört kvitto med samma operation-ID och Lo i kartan. Kör
    `drop` efter sparandet; kontrollera att det genomförda kvittot finns kvar
    även om ett ljudsvar inte hördes. Vänta på avstängd röst, ladda om och välj
@@ -517,7 +533,10 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    ska inte skapa ett nytt nödvändigt svarskrav.
 5. Öppna textvyn, skicka **Berätta mer.**, stäng panelerna med kryssen och kör
    `fail REQUEST`. Kräv samtalsnotisen
-   **Skyttel kunde inte slutföra uppdraget. Försök igen.**
+   **Modellen är tillfälligt otillgänglig. Valet är kvar.** Läs att oavslutat
+   arbete och senare kö väntar och att genomförda ändringar finns kvar.
+   Notisen erbjuder **Försök igen**, **Oavslutad begäran**,
+   **Avstå från det oavslutade arbetet** och **Stoppa allt**.
 6. Öppna textvyn och välj **Nytt samtal**. Beskrivningen
    **Förslag väntar på svar** ska fortfarande finnas i utkastet.
 
@@ -643,7 +662,8 @@ läsbarhet och nåbara kontroller.
    .
 4. Kör `user Beskriv utkastet.`, `delegate`, släpp anropet med ett svar och
    kör `setSound('remote', true)`.
-5. Gå med Tab från **Prata med Skyttel**.
+5. Gå med Tab från **Prata med Skyttel** via **Skriv till Skyttel** och
+   **Modell och resonemang** till **Avbryt** och **Utkast**.
 6. Välj **Prata med Skyttel**, flytta fokus till **Återställ vy** och kör
    `setSound('remote', false)`.
 7. Slå på mikrofonen igen och öppna **Inställningar**. Kör
@@ -823,15 +843,15 @@ samtal → Godkänn och starta** före uppdraget. Lo Exempel, Person och
   Vid steg 3 sätt **Network → Offline**, läs kontaktfelet, återställ
   **No throttling**, läs åter otillgängligheten och skriv sedan `available on`.
 - NOT-05: efter uppdraget i UI-steg 1, läs `held` och skriv `fail REQUEST`
-  med aktuellt ID. Gör samma sak för det nya anropet efter UI-steg 3.
-  I UI-steg 4 behåll det nya anropet hållet tills den borttagna notisen lästs;
-  släpp sedan med `reply REQUEST Ett nytt svar.`.
+  med aktuellt ID. Gör samma sak efter det uttryckliga återförsöket i
+  UI-steg 2. I UI-steg 3 behåll det nya anropet hållet tills den borttagna
+  notisen lästs; släpp sedan med `reply REQUEST Ett nytt svar.`.
 - NOT-06: sätt **Network → Offline** före UI-steg 1. Efter att testaren
   fokuserat stängknappen vid steg 2 återställ **No throttling**. Bryt före
   steg 3 igen; efter uttrycklig stängning återställ nätverket vid steg 4.
 - NOT-08 och dess placeringsvarianter NOT-21/22: efter **Ge ett förslag.**
   i UI-steg 1 läs `held` och skriv `fail REQUEST` med aktuellt ID. Behåll
-  det valda visningsmåttet och mikrofon på genom stängningen.
+  det valda visningsmåttet och mikrofon på genom avståendet.
 - NOT-09/23: före UI-steg 1 skriv `available off`; vid UI-steg 2 skriv
   `available on`. Före mikrofontrycket i UI-steg 3 kör följande i Console:
 
@@ -977,7 +997,8 @@ efter fallet och avsluta med `quit`.
 3. Fokusera **Prata med Skyttel**. Tabba genom samtalskontrollerna och läs dem
    i dokumentordning med hjälpmedlet.
 4. Stäng textvyn, upprepa ordningen, öppna textvyn och upprepa igen.
-5. Fokusera **Stäng notisen** och tryck Retur.
+5. Fokusera **Avstå från det oavslutade arbetet** och tryck Retur. Läs att
+   notisen försvinner och att meddelandefältet får fokus utan ett nytt `held`.
 
 ### Tidslinje HJALP-03
 
@@ -992,7 +1013,8 @@ efter fallet och avsluta med `quit`.
 
 1. Kör `window.skyttelVoiceFixture.setPlayback('blocked')` i konsolen. Tryck
    **Prata med Skyttel**.
-2. Fokusera mikrofonknappen och tabba via **Skriv till Skyttel** till
+2. Fokusera mikrofonknappen och tabba via **Skriv till Skyttel** och
+   röstrutans **Modell och resonemang** till
    **Starta ljudet**.
 3. Kör `window.skyttelVoiceFixture.setPlayback('allow')`. Tryck Retur medan
    **Starta ljudet** är fokuserad.

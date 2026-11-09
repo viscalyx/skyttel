@@ -57,6 +57,77 @@ async function post(route: string, data: unknown) {
   return response.json();
 }
 
+test('MCP stores a chosen verb between non-person objects without category or inverse wording', async () => {
+  const token = await connect();
+  let state = await (await browser.get(path)).json();
+  for (const [id, name, kind] of [
+    ['project', 'Familjens webbplats', 'Tjänst'],
+    ['hosting', 'Molndrift', 'Företag'],
+  ]) {
+    await post('draft', {
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      id,
+      baseRevision: null,
+      value: { typeId: state.types.find((type: { name: string }) => type.name === kind).id, name },
+    });
+    state = await (await browser.get(path)).json();
+  }
+  const originalDraft = structuredClone(state.draft);
+  const rolledBack = await tool(token, 'apply_draft_batch', {
+    operationId: 'free-verb-rollback',
+    version: state.draft.version,
+    contentVersion: state.contentVersion,
+    operations: [
+      {
+        name: 'propose_relationship',
+        arguments: {
+          id: 'rollback-link',
+          baseRevision: null,
+          value: { sourceId: 'project', targetId: 'hosting', verb: 'körs hos' },
+        },
+      },
+      {
+        name: 'propose_relationship',
+        arguments: {
+          id: 'invalid-link',
+          baseRevision: null,
+          value: { sourceId: 'project', targetId: 'missing', verb: 'använder' },
+        },
+      },
+    ],
+  });
+  expect(rolledBack.error).toBe(true);
+  expect((await (await browser.get(path)).json()).draft).toEqual(originalDraft);
+  const proposed = await tool(token, 'propose_relationship', {
+    version: state.draft.version,
+    contentVersion: state.contentVersion,
+    id: 'hosting-link',
+    baseRevision: null,
+    value: { sourceId: 'project', targetId: 'hosting', verb: 'körs hos' },
+  });
+  expect(proposed.error).toBe(false);
+  expect(proposed.value.relationships[0].after).toMatchObject({
+    sourceId: 'project',
+    targetId: 'hosting',
+    verb: 'körs hos',
+  });
+  expect(proposed.value.relationships[0].after.reverseVerb).toBeUndefined();
+  expect(proposed.value.relationships[0].type.name).toBe('Samband');
+  const saved = await tool(token, 'save_draft', {
+    version: proposed.value.version,
+    contentVersion: proposed.value.contentVersion,
+    operationId: 'save-free-verb',
+  });
+  expect(saved.error).toBe(false);
+  expect(saved.value.receipt.relationships[0].after.verb).toBe('körs hos');
+  const history = await tool(token, 'read_history', {
+    operationId: 'save-free-verb',
+    userId: saved.value.receipt.userId,
+  });
+  expect(history.value.receipt.relationships[0].after.verb).toBe('körs hos');
+});
+
 test('retired historical mutations are absent from HTTP and MCP while ordinary saving and history remain available', async () => {
   const token = await connect();
   const sdk = new Client({ name: 'Historikläsare', version: '1' });
@@ -341,6 +412,74 @@ test('write authorization requires separate map consent and signed requested sco
   expect(
     (await (await browser.get(`${app.origin}/api/assistants/context`)).json()).connections,
   ).toEqual([]);
+});
+
+test('atomic MCP batches validate the whole request, preserve write grants and apply object dependencies in order', async () => {
+  const token = await connect();
+  const initial = await (await browser.get(path)).json();
+  const object = {
+    name: 'propose_object',
+    arguments: {
+      id: 'source',
+      baseRevision: null,
+      value: { typeId: initial.types[0].id, name: 'Lo' },
+    },
+  };
+  const body = { version: 0, contentVersion: initial.contentVersion };
+  for (const operation of [
+    { name: 'apply_draft_batch', arguments: { operations: [object] } },
+    { name: 'save_draft', arguments: { operationId: 'forbidden-save' } },
+    { ...object, arguments: { ...object.arguments, version: 1 } },
+    { name: 'read_map', arguments: {} },
+  ]) {
+    expect(
+      await tool(token, 'apply_draft_batch', { ...body, operations: [object, operation] }),
+    ).toMatchObject({ error: true, value: { error: 'invalid_request' } });
+    expect(await (await browser.get(path)).json()).toEqual(initial);
+  }
+  const readToken = await connect(false);
+  const denied = await callAssistant(app.origin, readToken, 'apply_draft_batch', {
+    ...body,
+    operations: [object],
+  });
+  const deniedBody = await denied.json();
+  expect(deniedBody.result?.isError || deniedBody.error).toBeTruthy();
+  expect(await (await browser.get(path)).json()).toEqual(initial);
+  const success = await tool(token, 'apply_draft_batch', {
+    ...body,
+    operations: [
+      object,
+      {
+        name: 'propose_object',
+        arguments: {
+          ...object.arguments,
+          id: 'target',
+          value: { ...object.arguments.value, name: 'Cykeln' },
+        },
+      },
+      {
+        name: 'propose_relationship',
+        arguments: {
+          id: 'uses',
+          baseRevision: null,
+          value: {
+            typeId: initial.relationshipTypes[0].id,
+            sourceId: 'source',
+            targetId: 'target',
+          },
+        },
+      },
+    ],
+  });
+  expect(success.error).toBe(false);
+  expect(success.value.changes.map(({ id }: { id: string }) => id)).toEqual(['source', 'target']);
+  expect(success.value.relationships).toEqual([expect.objectContaining({ id: 'uses' })]);
+  const beforeStale = await (await browser.get(path)).json();
+  expect(await tool(token, 'apply_draft_batch', { ...body, operations: [object] })).toMatchObject({
+    error: true,
+    value: { error: 'draft_conflict' },
+  });
+  expect(await (await browser.get(path)).json()).toEqual(beforeStale);
 });
 
 test('whole-draft reviews keep changed saved facts but project untouched endpoints without expanding their graph', async () => {

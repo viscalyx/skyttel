@@ -3,8 +3,47 @@ import rawCatalog from '../../../scripts/model-evaluation/catalog.json' with { t
 import { evaluationEnvironment } from '../../../scripts/model-evaluation/environment.js';
 import { runTextScenario } from '../../../scripts/model-evaluation/runner.js';
 import type { Catalog } from '../../../scripts/model-evaluation/types.js';
+import type { SaveOperation } from '../../../src/shared/map.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
+
+test('a short request after extensive conversation uses the declared history and keeps its group', {
+  tags: ['technical'],
+}, async () => {
+  const scenario = rawCatalog.scenarios.find(
+    (item) => item.id === 'long-conversation-question',
+  ) as Catalog['scenarios'][number];
+  const model = textModel((body) => {
+    if (!body.tools.length) {
+      const source = JSON.parse(String(body.input[0].content)).source;
+      expect(source).toContain('Vandringsanteckning 1:');
+      expect(source).toContain('Vandringsanteckning 40:');
+      return [
+        modelMessage('Den avslutade diskussionen gäller en påhittad vandring utan kartändringar.'),
+      ];
+    }
+    return [modelMessage('Spotify Premium Family kostar 179 kronor per månad.')];
+  });
+  const result = await runTextScenario(
+    scenario,
+    { modelFetch: model.provider },
+    {
+      profile: 'local',
+      repetition: 1,
+      judge: async (input) =>
+        input.requirements.map(({ id }) => ({
+          id,
+          outcome: 'pass',
+          reason: 'Controlled answer verified.',
+        })),
+    },
+  );
+  expect(result.attempts.map(({ group, outcome }) => ({ group, outcome }))).toEqual([
+    { group: 'long_conversation', outcome: 'pass' },
+    { group: 'long_conversation', outcome: 'pass' },
+  ]);
+  expect(scenario.dimensions).toEqual({ conversation: 'long', instruction: 'short' });
+});
 
 test('the scenario runner executes an ordinary summary without a counting adapter', {
   tags: ['technical'],
@@ -34,20 +73,43 @@ test('the evaluation summary uses real price turns and atomically installs ordin
   const scenario = catalog.scenarios.find((item) => item.id === 'summary-last-price');
   if (!scenario) throw new Error('Missing summary scenario');
   let environment: Awaited<ReturnType<typeof evaluationEnvironment>>;
+  let seededOperation: SaveOperation;
   let source = '';
+  let reconstructedTurn = false;
+  let reconstructedReceipt = false;
   const model = textModel(async (body) => {
     if (!body.tools.length) {
       source = JSON.parse(String(body.input[0].content)).source;
       return [
         modelMessage(
-          'En äldre sparoperation för startkartan är verifierad. Spotify ändrades först till 189 kronor per månad. Den senaste ändringen är Molnlagring Plus till 229 kronor per månad. Dessa ändringar är osparade.',
+          'Spotify ändrades först till 189 kronor per månad. Den senaste ändringen är Molnlagring Plus till 229 kronor per månad. Dessa ändringar är osparade.',
         ),
       ];
     }
-    if (body.input.findLast((item) => item.role !== 'developer')?.type !== 'function_call_output')
-      return [modelTool('read_my_save_operations', {})];
-    if (!lastToolResult(body)?.operations) return [modelMessage('Utkastet är uppdaterat.')];
     const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    if (body.input.findLast((item) => item.role !== 'developer')?.type !== 'function_call_output') {
+      if (turn.message.includes('239')) {
+        expect(turn.saveOperations).toContainEqual({
+          operationId: 'evaluation-start',
+          status: 'succeeded',
+          draftVersion: seededOperation.draftVersion,
+          contentVersion: seededOperation.contentVersion,
+        });
+        expect(turn.draft.version).not.toBe(seededOperation.draftVersion);
+        expect(
+          turn.draft.changes
+            .find((change: { id: string }) => change.id === 'cloud-sub')
+            .after.properties.find((property: { id: string }) => property.id === 'price').value,
+        ).toBe(229);
+        reconstructedTurn = true;
+      }
+      return [modelTool('read_my_save_operations', {})];
+    }
+    if (!lastToolResult(body)?.operations) return [modelMessage('Utkastet är uppdaterat.')];
+    if (turn.message.includes('239')) {
+      expect(lastToolResult(body).operations).toContainEqual(seededOperation);
+      reconstructedReceipt = true;
+    }
     const first = turn.message.includes('Spotify');
     const id = first ? 'spotify-sub' : 'cloud-sub';
     const state = await environment.read();
@@ -73,6 +135,14 @@ test('the evaluation summary uses real price turns and atomically installs ordin
   });
   environment = await evaluationEnvironment(scenario, { modelFetch: model.provider });
   try {
+    ({ operation: seededOperation } = await environment.get<{ operation: SaveOperation }>(
+      'map/operations/evaluation-start',
+    ));
+    expect(seededOperation).toMatchObject({
+      operationId: 'evaluation-start',
+      status: 'succeeded',
+      receipt: { savedAt: expect.any(String) },
+    });
     for (const step of scenario.steps.slice(0, 2)) {
       const view = await environment.get<TextAssistantView>(environment.path);
       await environment.post(`${environment.path}/messages`, {
@@ -102,8 +172,6 @@ test('the evaluation summary uses real price turns and atomically installs ordin
     expect(summary.source).toBe(source);
     expect(source).toContain('Spotify Premium Family till 189');
     expect(source).toContain('Molnlagring Plus till 229');
-    expect(source).toContain('evaluation-start');
-    expect(source).toContain('savedAt');
     expect(source.length).toBeLessThanOrEqual(240_000);
     expect(model.requests.filter((body) => !body.tools.length)).toHaveLength(1);
     expect(summary.view.contextGeneration).toBe(1);
@@ -127,6 +195,8 @@ test('the evaluation summary uses real price turns and atomically installs ordin
       )
       .toBe('completed');
     const corrected = await environment.get<TextAssistantView>(environment.path);
+    expect(reconstructedTurn).toBe(true);
+    expect(reconstructedReceipt).toBe(true);
     const failures = await environment.check(correction, corrected, []);
     expect(failures).toEqual([]);
     const context = JSON.parse(environment.judgeContext(correction, failures, summary.summary));
@@ -139,13 +209,7 @@ test('the evaluation summary uses real price turns and atomically installs ordin
     ).toBe(239);
     expect(context.observedState.saveReceipt).toBeNull();
     expect(context.observedState.saveOperations).toEqual([]);
-    expect(context.observedState.historicalSaveOperations).toEqual([
-      expect.objectContaining({
-        operationId: 'evaluation-start',
-        status: 'succeeded',
-        receipt: expect.objectContaining({ savedAt: expect.any(String) }),
-      }),
-    ]);
+    expect(context.observedState.historicalSaveOperations).toEqual([seededOperation]);
     expect(context.observedState.historyChanges).toBe(0);
   } finally {
     await environment.close();

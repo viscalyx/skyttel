@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { readFile, stat } from 'node:fs/promises';
-import { chromium } from '@playwright/test';
+import { chromium, type Page } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
 import {
   closeConversationText,
@@ -20,6 +20,19 @@ const references = [
   { seeded: true, viewport: { width: 320, height: 250 } },
   { seeded: false, viewport: { width: 1280, height: 900 } },
 ];
+
+async function endRestoredConversation(page: Page) {
+  await openConversationText(page);
+  await expect(
+    page.getByRole('status', { name: 'Samtalets livslängd', exact: true }),
+  ).toContainText('Samtalet är pausat.');
+  await page.getByRole('button', { name: 'Avsluta samtalet', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
+    'data-session-active',
+    'false',
+  );
+  await closeConversationText(page);
+}
 
 for (const { seeded, viewport } of references)
   test(`voice preparation controls the public launcher on ${seeded ? 'seeded' : 'empty'} content at ${viewport.width}x${viewport.height}`, {
@@ -84,6 +97,7 @@ for (const { seeded, viewport } of references)
       const history = await (await page.request.get(`${path}/history`)).json();
       await startConversationWithText(page, { remember: true });
       await page.reload();
+      await endRestoredConversation(page);
       await expect(microphoneButton(page)).toBeVisible();
       await page.evaluate(() => {
         Object.assign(window, { voiceOriginalFetch: window.fetch });
@@ -140,8 +154,8 @@ for (const { seeded, viewport } of references)
       expect(await (await page.request.get(path)).json()).toEqual(before);
       expect(await (await page.request.get(`${path}/history`)).json()).toEqual(history);
 
-      // The exact admitted transport must close before a replacement assistant.
-      // Reload alone leaves its server session alive.
+      // Verify cleanup of this exact transport before ending the retained
+      // conversation for the next independent preparation.
       const stoppedVoice = await page.request.post(`${admittedVoice.url()}/${firstVoice.id}/stop`, {
         headers: { origin: ready.origin },
         data: {},
@@ -154,6 +168,7 @@ for (const { seeded, viewport } of references)
         'before deliberate first-page reload',
       ).toBe('');
       await page.reload();
+      await endRestoredConversation(page);
       expect(
         unexpectedPreparationDiagnostics(diagnostics),
         'after deliberate first-page reload',
@@ -538,6 +553,7 @@ for (const { seeded, viewport } of references)
       await startConversationWithText(page, { remember: true });
       // Execute the moved ROSTFEL/NOT recipes at their documented boundaries.
       await page.reload();
+      await endRestoredConversation(page);
       await openConversationText(page);
       await page.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
       await expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
@@ -581,6 +597,7 @@ for (const { seeded, viewport } of references)
       expect(stoppedPlayback.status()).toBe(200);
       expect((await stoppedPlayback.json()).voice.phase).toBe('closed');
       await page.reload();
+      await endRestoredConversation(page);
       child.stdin.write(`${unavailable}\n`);
       await expect(microphoneButton(page)).toHaveAccessibleDescription(
         /Inte tillgängligt just nu\./,
@@ -598,6 +615,7 @@ for (const { seeded, viewport } of references)
       // These are separate documented cases; reset the denied voice attempt
       // before the text task, so its failure is not masked by the old notice.
       await page.reload();
+      await endRestoredConversation(page);
       await openConversationText(page);
       await page.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
       await expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
@@ -613,16 +631,42 @@ for (const { seeded, viewport } of references)
       await expect.poll(() => events.filter(({ event }) => event === 'held').length).toBe(1);
       const rejected = events.find(({ event }) => event === 'held')?.id;
       if (!rejected) throw new Error('Missing literal notice request');
+      expect(
+        unexpectedPreparationDiagnostics(diagnostics),
+        'before deliberately failing the literal notice request',
+      ).toBe('');
       child.stdin.write(`${failed.replace('REQUEST', rejected)}\n`);
-      await expect(notice).toContainText('Skyttel kunde inte slutföra uppdraget.');
+      await expect(notice).toContainText(
+        'Modellen är tillfälligt otillgänglig. Valet är kvar. Försök igen genom en egen handling när felet är löst.',
+      );
+      await expect(notice).toContainText(
+        'Det oavslutade arbetet och senare kö väntar. Genomförda ändringar finns kvar.',
+      );
+      // This deliberate model failure emits one content-free operator diagnostic.
+      // Exact fields reject transcripts, provider details and credentials; keep
+      // the captured output unchanged through recovery and launcher shutdown.
+      await expect.poll(() => unexpectedPreparationDiagnostics(diagnostics)).toMatch(/\n$/u);
+      const expectedFailureDiagnostics = unexpectedPreparationDiagnostics(diagnostics);
+      const failureDiagnostic = JSON.parse(expectedFailureDiagnostics);
+      expect(failureDiagnostic).toEqual({
+        event: 'assistant_model_failed',
+        reference: expect.stringMatching(
+          /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u,
+        ),
+        at: expect.any(String),
+        model: 'gpt-6.1-terra',
+        effort: 'high',
+        category: 'assistant_model_temporary',
+      });
+      expect(new Date(failureDiagnostic.at).toISOString()).toBe(failureDiagnostic.at);
       await expect(field).toBeFocused();
-      await notice.getByRole('button', { name: 'Stäng notisen', exact: true }).focus();
+      await notice.getByText('Oavslutad begäran', { exact: true }).click();
+      await expect(notice).toContainText('Ge ett förslag.');
+      await notice.getByRole('button', { name: 'Försök igen', exact: true }).focus();
       await page.keyboard.press('Enter');
-      await expect(microphoneButton(page)).toBeFocused();
-      await field.fill('Ett nytt försök.');
-      await send.click();
       await expect.poll(() => events.filter(({ event }) => event === 'held').length).toBe(2);
       await expect(notice).toHaveCount(0);
+      await expect(field).toBeFocused();
       const recovered = events.filter(({ event }) => event === 'held').at(-1)?.id;
       if (!recovered) throw new Error('Missing literal recovery request');
       child.stdin.write(`${answered.replace('REQUEST', recovered)}\n`);
@@ -635,7 +679,7 @@ for (const { seeded, viewport } of references)
       expect(
         unexpectedPreparationDiagnostics(diagnostics),
         'after literal playback/notice preparation and reset',
-      ).toBe('');
+      ).toBe(expectedFailureDiagnostics);
       expect(events.filter(({ event }) => event === 'held')).toHaveLength(2);
       expect(events.filter(({ event }) => event === 'released')).toHaveLength(4);
       expect(
@@ -654,7 +698,7 @@ for (const { seeded, viewport } of references)
       expect(
         unexpectedPreparationDiagnostics(diagnostics),
         'before literal-proof launcher quit',
-      ).toBe('');
+      ).toBe(expectedFailureDiagnostics);
       child.stdin.write('quit\n');
       await expect.poll(() => child.exitCode).toBe(0);
       expect(events.filter(({ event }) => event === 'closed')).toHaveLength(1);
@@ -668,7 +712,7 @@ for (const { seeded, viewport } of references)
       expect(
         unexpectedPreparationDiagnostics(diagnostics),
         'after literal-proof launcher quit',
-      ).toBe('');
+      ).toBe(expectedFailureDiagnostics);
       await expect(stat(ready.directory)).rejects.toMatchObject({ code: 'ENOENT' });
     } finally {
       if (child.exitCode === null) {

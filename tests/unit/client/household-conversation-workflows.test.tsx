@@ -356,7 +356,7 @@ test('contact loss stops capture and sending while text remains editable and ret
   expect(home.model.requests).toHaveLength(0);
 });
 
-test('a failed typed task exposes a dismissible notice and preserves both the private draft and a newer unsent message', async () => {
+test('abandoning failed typed work preserves the private draft and a newer unsent message', async () => {
   const home = await household({
     reply: () => {
       throw new Error('Synthetic provider outage');
@@ -370,9 +370,15 @@ test('a failed typed task exposes a dismissible notice and preserves both the pr
   await waitFor(() => expect((field as HTMLTextAreaElement).value).toBe(''));
   await userEvent.type(field, 'En ny oskickad tanke');
   const notice = await screen.findByRole('region', { name: 'Samtalsnotis' });
-  expect(notice.textContent).toContain('Skyttel kunde inte slutföra uppdraget. Försök igen.');
-  await userEvent.click(within(notice).getByRole('button', { name: 'Stäng notisen' }));
+  expect(notice.textContent).toContain('Modellen är tillfälligt otillgänglig. Valet är kvar.');
+  expect(home.model.requests).toHaveLength(1);
+  await userEvent.click(
+    within(notice).getByRole('button', { name: 'Avstå från det oavslutade arbetet' }),
+  );
+  await waitFor(() => expect(screen.queryByRole('region', { name: 'Samtalsnotis' })).toBeNull());
   expect((field as HTMLTextAreaElement).value).toBe('En ny oskickad tanke');
+  expect(document.activeElement).toBe(field);
+  expect(home.model.requests).toHaveLength(1);
   expect((await home.read()).draft.changes).toEqual([]);
   expect(home.media.getUserMedia).not.toHaveBeenCalled();
 });
@@ -731,7 +737,7 @@ test('stopping a pending task from Settings restores Settings focus and cannot d
   expect((await home.read()).draft.changes).toEqual([]);
 });
 
-test('the context failure notice resets the conversation without submitting unsent text or losing its private draft', async () => {
+test('the temporary summary failure notice resets the conversation without submitting unsent text or losing its private draft', async () => {
   const home = await household({
     textUsage: 1_040_000,
     reply: (request) => {
@@ -748,8 +754,13 @@ test('the context failure notice resets the conversation without submitting unse
   await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
   await waitFor(() =>
     expect(screen.getByRole('region', { name: 'Samtalsnotis' }).textContent).toContain(
-      'Kontexten är full',
+      'Skyttel kunde inte sammanfatta samtalet. Modellen är tillfälligt otillgänglig.',
     ),
+  );
+  const notice = screen.getByRole('region', { name: 'Samtalsnotis' });
+  expect(notice.textContent).not.toContain('Kontexten är full');
+  expect(notice.textContent).toContain(
+    'Det löser inte modellfelet och ändrar inte kontots åtkomst.',
   );
   await userEvent.type(field, 'Oskickat under återställning');
   expect(screen.getByRole('button', { name: 'Skicka' }).hasAttribute('disabled')).toBe(true);

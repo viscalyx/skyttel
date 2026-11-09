@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import Database from 'better-sqlite3';
+import { controlledBatchDelivery } from '../tests/support/batch-response-delivery.js';
 import { alex, createInstallation, robin } from '../tests/support/installation.js';
 import { liveBrowserFixtureSource } from '../tests/support/live-browser.js';
 import { liveProvider } from '../tests/support/live-provider.js';
@@ -25,11 +26,19 @@ async function main() {
     throw new Error('Run without arguments in the development environment.');
   process.umask(0o077);
   const pending = new Map<string, Pending>();
+  const conversationWorkMode = process.env.SKYTTEL_CONVERSATION_WORK_MODE ?? 'sequential';
+  if (conversationWorkMode !== 'sequential' && conversationWorkMode !== 'overlap')
+    throw new Error('Use sequential or overlap for SKYTTEL_CONVERSATION_WORK_MODE.');
+  let holdScope = false;
+  let holdCheck = false;
+  let scopeMode: 'read' | 'work' | undefined;
+  let responseRequired = true;
   let holdSave = false;
   let releaseSave: (() => void) | undefined;
   let sequence = 0;
   let offset = 0;
   let textContextPercent: number | undefined;
+  const batchDelivery = controlledBatchDelivery((status) => emit('batch-delivery', status));
   const live = liveProvider();
   let retiredContextSource:
     | (typeof live.channels extends Map<string, infer Channel> ? Channel : never)
@@ -40,7 +49,16 @@ async function main() {
     const current = user && typeof user.content === 'string' ? JSON.parse(user.content) : {};
     return {
       id,
-      kind: item.request.tools.length ? 'work' : 'context-summary',
+      kind: item.request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+        ? 'scope'
+        : item.request.instructions.startsWith('SKYTTEL_TURN_ACTIONS')
+          ? 'action-check'
+          : item.request.tools.length
+            ? 'work'
+            : 'context-summary',
+      comparison: item.request.instructions.startsWith('SKYTTEL_TURN_ACTIONS')
+        ? current
+        : undefined,
       message: current.message,
       messageId: current.messageId,
       pendingParts: lastToolResult(item.request)?.pendingParts ?? current.pendingParts,
@@ -50,20 +68,50 @@ async function main() {
       tools: item.request.tools.map((tool) => tool.name),
     };
   }
-  const model = textModel(
-    (request) =>
-      new Promise<unknown[]>((resolve, reject) => {
-        const id = String(++sequence);
-        const item = { request, resolve, reject };
-        pending.set(id, item);
-        emit('held', describe(id, item));
-        // Delayed external results remain releasable after cancellation. The real
-        // application's task/version checks, not this fixture, must reject them.
-      }),
-  );
+  const holdRequest = (request: ModelRequest) =>
+    new Promise<unknown[]>((resolve, reject) => {
+      const id = String(++sequence);
+      const item = { request, resolve, reject };
+      pending.set(id, item);
+      emit('held', describe(id, item));
+      // Delayed external results remain releasable after cancellation. The real
+      // application's task/version checks, not this fixture, must reject them.
+    });
+  const model = textModel(holdRequest, (request) => {
+    if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE') && holdScope)
+      return holdRequest(request);
+    if (request.instructions.startsWith('SKYTTEL_TURN_ACTIONS') && holdCheck)
+      return holdRequest(request);
+    return [
+      modelMessage(
+        JSON.stringify(
+          request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? {
+                mode: scopeMode ?? 'work',
+                request: scopeMode
+                  ? JSON.parse(String(request.input[0].content)).current
+                  : 'Perform the controlled test request.',
+                responseRequired,
+              }
+            : { decision: 'allow', complete: true },
+        ),
+      ),
+    ];
+  });
   const app = await createInstallation(undefined, {
+    conversationWorkMode,
     modelFetch: async (input, init) => {
-      const response = await model.provider(input, init);
+      let response: Response;
+      try {
+        response = await model.provider(input, init);
+      } catch (error) {
+        if (!(error instanceof Error) || error.message !== 'controlled_context_capacity')
+          throw error;
+        return Response.json(
+          { error: { code: 'context_length_exceeded', message: error.message } },
+          { status: 400 },
+        );
+      }
       if (textContextPercent === undefined) return response;
       const body = await response.json();
       body.usage.output_tokens = textContextPercent === 0 ? 0 : 30;
@@ -92,7 +140,7 @@ async function main() {
               .json()
               .catch(() => null)
           : null;
-      const response = await dispatch(request);
+      const response = await batchDelivery.dispatch(request, dispatch);
       if (holdSave && body?.method === 'tools/call' && body.params?.name === 'prepare_save') {
         emit('save-registered', { operationId: body.params.arguments.operationId });
         await new Promise<void>((resolve) => {
@@ -121,6 +169,7 @@ async function main() {
   }
   try {
     emit('ready', {
+      executionMode: conversationWorkMode,
       origin: app.origin,
       directory: app.directory,
       message:
@@ -150,17 +199,47 @@ async function main() {
               'final SECONDS',
               'finalize on|off',
               'drop',
+              'drop-batch',
+              'block-batch-status on|off',
+              'batch-delivery',
               'hold-save on|off',
+              'hold-check on|off',
+              'hold-scope on|off',
+              'scope-read | scope-work',
+              'response-required on|off',
               'release-save',
               'pending',
               'tool REQUEST TOOL JSON',
               'reply REQUEST TEXT',
-              'fail REQUEST',
+              'fail REQUEST [capacity]',
               'available on|off',
               'restart',
               'quit',
             ],
           });
+          continue;
+        }
+        if (command === 'hold-scope') {
+          if (id !== 'on' && id !== 'off') throw new Error('Use hold-scope on or off.');
+          holdScope = id === 'on';
+          emit('scope-hold', { active: holdScope });
+          continue;
+        }
+        if (command === 'hold-check') {
+          if (id !== 'on' && id !== 'off') throw new Error('Use hold-check on or off.');
+          holdCheck = id === 'on';
+          emit('check-hold', { enabled: holdCheck });
+          continue;
+        }
+        if (command === 'scope-read' || command === 'scope-work') {
+          scopeMode = command === 'scope-read' ? 'read' : 'work';
+          emit('scope', { mode: scopeMode });
+          continue;
+        }
+        if (command === 'response-required') {
+          if (id !== 'on' && id !== 'off') throw new Error('Use response-required on or off.');
+          responseRequired = id === 'on';
+          emit('response-required', { enabled: responseRequired });
           continue;
         }
         if (command === 'hold-save') {
@@ -213,8 +292,22 @@ async function main() {
           emit('pending', { requests: [...pending].map(([key, item]) => describe(key, item)) });
           continue;
         }
+        if (command === 'drop-batch') {
+          batchDelivery.arm();
+          continue;
+        }
+        if (command === 'block-batch-status') {
+          if (id !== 'on' && id !== 'off') throw new Error('Use block-batch-status on or off.');
+          batchDelivery.blockStatus(id === 'on');
+          continue;
+        }
+        if (command === 'batch-delivery') {
+          emit('batch-delivery', batchDelivery.status());
+          continue;
+        }
         if (command === 'restart') {
           releaseAll();
+          batchDelivery.clear();
           await app.restart();
           emit('restarted', { origin: app.origin });
           continue;
@@ -297,7 +390,13 @@ async function main() {
           if (!item) throw new Error('Use a held request ID from this terminal.');
           if (command === 'fail') {
             pending.delete(id);
-            item.reject(new Error('controlled_provider_failure'));
+            item.reject(
+              new Error(
+                line.split(/\s+/)[2] === 'capacity'
+                  ? 'controlled_context_capacity'
+                  : 'controlled_provider_failure',
+              ),
+            );
           } else if (command === 'reply') {
             const text = line.replace(/^reply\s+\S+\s*/, '');
             if (!text) throw new Error('Supply a synthetic reply.');

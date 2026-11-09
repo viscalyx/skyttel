@@ -7,6 +7,14 @@ export function blockedActionMessage(reference: string) {
 /** Only server-owned wording may describe failures to the model or the person. */
 export function assistantFailureMessage(code: string): string {
   switch (code) {
+    case 'assistant_context_capacity':
+      return 'Det nödvändiga underlaget ryms inte i samtalets modellkontext. Avgränsa uppdraget innan du fortsätter. Samtalstexten, utkastet och oavslutade begäranden finns kvar.';
+    case 'assistant_model_access':
+      return 'Installationens konto saknar åtkomst till den valda modellen. Valet är kvar. Välj en annan modell eller kontakta installationsansvarig.';
+    case 'assistant_model_unsupported':
+      return 'Modellen och resonemangsnivån stöds inte eller är inte aktiverade på installationen. Valet är kvar. Välj ett aktiverat alternativ eller kontakta installationsansvarig.';
+    case 'assistant_model_temporary':
+      return 'Modellen är tillfälligt otillgänglig. Valet är kvar. Försök igen genom en egen handling när felet är löst.';
     case 'assistant_scope_unclear':
       return 'Förtydliga vilka ändringar du vill göra. Den oklara åtgärden har inte utförts.';
     case 'assistant_scope_unavailable':
@@ -15,10 +23,16 @@ export function assistantFailureMessage(code: string): string {
       return 'Skyttel stoppade en åtgärd utanför din begäran.';
     case 'assistant_pending_part_changed':
       return 'Den väntande delen har ändrats. Läs aktuellt samtal och fortsätt bara det arbete som återstår.';
+    case 'assistant_batch_required':
+      return 'De sammanhängande ändringarna kunde inte genomföras tillsammans. Inget i förslaget har ändrats. Be Skyttel försöka igen.';
+    case 'assistant_batch_incomplete':
+      return 'Förslaget är ofullständigt. De sammanhängande ändringarna har inte genomförts. Be Skyttel försöka igen.';
     case 'assistant_task_expired':
       return 'Uppgiftens tid är slut. Kontrollera ditt utkast och tidigare sparresultat innan du lämnar en ny instruktion.';
     case 'assistant_save_not_requested':
       return 'Inget nytt sparande är bekräftat. Det saknas ett tydligt aktuellt besked om att spara hela utkastet.';
+    case 'assistant_save_superseded':
+      return 'Nyare uppgifter har upphävt sparbegäran. Ändringarna ligger kvar i ditt utkast. Be om sparande igen när uppgifterna är klara.';
     case 'assistant_discard_not_requested':
       return 'Hela utkastet har inte kastats. För att kasta det, säg eller skriv ”Kasta utkastet” som ett eget meddelande.';
     case 'unresolved_identity':
@@ -28,6 +42,14 @@ export function assistantFailureMessage(code: string): string {
     case 'draft_conflict':
     case 'version_conflict':
       return 'Utkastet eller kartan har ändrats. Det aktuella underlaget och eventuella konflikter behöver kontrolleras.';
+    case 'assistant_batch_committed_changed':
+      return 'Ändringarna genomfördes i utkastet. Utkastet har därefter ändrats. Granska det aktuella utkastet och förtydliga hur arbetet ska fortsätta.';
+    case 'assistant_batch_not_committed':
+      return 'De senaste ändringarna genomfördes inte. Granska ditt aktuella utkast innan du fortsätter.';
+    case 'assistant_batch_unknown':
+      return 'Resultatet av de senaste ändringarna är inte bekräftat. Samma ändringar behöver kontrolleras innan arbetet kan fortsätta.';
+    case 'assistant_request_unfinished':
+      return 'Uppdraget är inte slutfört. Återstående arbete är pausat och din ursprungliga instruktion finns kvar.';
     case 'content_conflict':
       return 'Hushållets innehåll har ersatts. Det nya underlaget behöver läsas innan arbetet kan fortsätta.';
     case 'operation_pending':

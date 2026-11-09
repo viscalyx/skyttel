@@ -9,12 +9,75 @@ Första **Skicka** eller **Nytt samtal** börjar samtalet med text; utan
 giltigt medgivande visas först [medgivanderutan](#medgivande).
 Utkastets granskning och kartans formulär fungerar även när samtal saknas.
 
+## Modell och resonemang
+
+I ett pågående samtal öppnar ikonen **Modell och resonemang** ovanför
+meddelandefältet och till höger om röstindikatorn samma val. Dialogens
+slider har stegen **Låg**, **Medium** och **Hög**. Använd piltangenterna
+eller de tre knapparna för att välja utan att dra. Modellnamnet öppnar
+ett separat val mellan **GPT-6.1 Terra** och **GPT-6.1 Sol**. Modellbyte
+behåller resonemangsnivån. Escape eller **Stäng** återför fokus till
+kontrollen som öppnar dialogen utan att avbryta pågående eller köat arbete.
+
+Utan sparat personligt val används Terra och hög nivå. Ditt senaste
+uttryckliga val sparas för nya samtal i alla dina hushåll och på andra
+enheter. Ett annat redan pågående samtal behåller sitt eget val. Vanligt
+arbete i ett äldre samtal ändrar inte det personliga valet.
+
+Valet gäller uppdragstolkning, arbete, oberoende kontroll av föreslagna
+ändringar och sammanfattning. GPT-Live 1 lyssnar och talar även när du
+väljer en annan arbetsmodell. Text och röst delar val och samtalsarbete.
+Pågående begäran behåller valet från sin start. Nästa begäran, även en
+redan köad, använder det nya valet utan att utkast eller samtalstext töms.
+
+Installationsansvarig avgör vilka kombinationer som är aktiverade.
+Aktivering garanterar inte kontoåtkomst. Ett otillgängligt sparat val
+visas och behålls tills du själv väljer ett annat. Om både modell och
+nivå behöver ändras kan du välja en namngiven aktiverad kombination i
+dialogen. Det är ett uttryckligt val av båda inställningarna.
+Felbesked skiljer tillfälligt fel, saknad åtkomst och ett alternativ som
+inte stöds eller inte är aktiverat. Inget modellbyte eller återförsök sker
+automatiskt.
+Kostnadsöversikten kan sakna prisuppgift för en modell; saknade priser
+visas som okända och betyder inte noll kostnad.
+
+## Fortsätt efter modellfel
+
+När modellen inte kan slutföra ett uppdrag visar samtalsnotisen vilken
+begäran som har oavslutat arbete. Genomförda förslag och tidigare
+sparresultat finns kvar. Senare meddelanden i kön väntar. Modellbyte och
+återställd kontoåtkomst startar inget arbete.
+
+Vid tillfälligt fel väljer du **Försök igen**. Vid saknad kontoåtkomst
+eller ett alternativ som inte stöds, välj först en tillgänglig modell och
+nivå och sedan **Fortsätt med valt alternativ**. Samma ursprungliga
+begäran fortsätter med valet som gäller när återförsöket börjar. Skyttel
+läser aktuellt underlag och fortsätter bara det som återstår. En gammal
+upphävd sparbegäran gäller fortfarande inte; lämna en ny sparbegäran när
+du har läst det aktuella utkastet.
+
+Om genomförda förslag har ändrats eller kastats frågar Skyttel hur du
+vill fortsätta. Dina manuella ändringar bevaras. Välj **Avstå från det
+oavslutade arbetet** för att lämna just den gamla återstående delen, och
+skriv sedan en ny fullständig instruktion. Det redan genomförda arbetet
+och ditt aktuella utkast ligger kvar. Senare kö fortsätter i sin ordning.
+**Stoppa allt** avbryter återstående arbete och hela kön, med samma
+bevarande av förslag och väntande delar som **Avbryt**.
+
+Om det är oklart om en ändring eller ett sparande genomfördes måste
+utfallet först kontrolleras. Använd notisens kontrollknapp. Kontrollen
+startar inget modellarbete och ger ingen ny sparbehörighet. När utfallet
+är känt kan notisen erbjuda **Fortsätt det oavslutade arbetet** för en
+kvarvarande del, till exempel en beställd förklaring. Samma val gäller
+skrivna och talade uppdrag.
+
 ## Medgivande
 
-Skyttel behöver ditt medgivande innan ett samtal startar. Textversion 3
-beskriver även felsökning hos LangSmith när installationens sändning är
-aktiv. Ett sparat medgivande eller ett besöksmedgivande för version 1
-eller 2 räcker inte; du behöver godkänna den aktuella informationen.
+Skyttel behöver ditt medgivande innan ett samtal startar. Textversion 4
+beskriver installationens lagring av samtalet, dess livslängd och
+felsökning hos LangSmith när installationens sändning är aktiv. Ett
+medgivande för en tidigare version räcker inte; du behöver godkänna den
+aktuella informationen innan nytt arbete eller beständigt bevarande.
 Samma medgivande
 gäller röst och text. Medgivanderutan **Samtal med Skyttel** visas när du
 väljer **Prata med Skyttel** eller börjar använda samtalet i textvyn.
@@ -23,8 +86,8 @@ Att bara öppna textvyn eller läsa utkastet kräver inget medgivande.
 tangentkombinationen och hur uppgifterna behandlas.
 
 1. Läs texten i rutan. Den beskriver OpenAI:s behandling, eventuell
-   felsökning hos LangSmith och att Skyttel sparar ändringar först när du
-   ber om det.
+   felsökning hos LangSmith, installationens lagring och att Skyttel
+   sparar ändringar i kartan först när du ber om det.
 2. Markera **Fråga inte igen för det här hushållet** om du vill spara
    medgivandet. Det gäller då dig i det här hushållet, på alla dina enheter.
 3. Välj **Godkänn och starta**. Samtalet startar med röst eller text, efter
@@ -81,8 +144,61 @@ Medgivandet är skilt från cookieval och från andra klienters medgivanden
 under **Assistentanslutningar**, och från installationsansvarigs beslut
 om sändning till LangSmith. Ett samtal behåller den informationsversion
 som godkändes när det började. Ett senare godkännande gör inte äldre
-samtalsinnehåll tillgängligt för sändning. Vid uppdateringen avslutas
-pågående samtal; börja ett nytt och godkänn den aktuella informationen.
+samtalsinnehåll tillgängligt för sändning. Pågående arbete får slutföras
+under sina ursprungliga villkor. Nytt arbete väntar på det uppdaterade
+medgivandet. Äldre tillfällig samtalstext kopieras inte till beständig
+lagring före godkännandet. Du kan fortsätta arbeta manuellt i kartan om du
+avstår.
+
+## Återkomst, utgång och avslut
+
+Efter ditt medgivande bevarar installationen samtalstext, exakta
+oavslutade instruktioner och begränsningar, väntande delar, kö, status och
+samtalets modellval. Uppgifterna hålls åtskilda för varje
+Skyttel-användare och hushåll. De ingår inte i hushållets karta eller
+fullständiga export. Leverantörernas lagring och webbläsarens
+lagringssamtycke är separata från detta bevarande.
+
+Vid omladdning och serveromstart kan samma webbläsare återfå samtalet med
+arbetet pausat. Öppna **Skriv till Skyttel** och läs texten, frågorna och
+modellvalet. **Samtalet är pausat** betyder att återkomsten inte startar
+modellarbete eller nya sparförsök. Inloggning, hushållsåtkomst och aktuellt
+innehåll kontrolleras på nytt. Pausat arbete och dess kö fortsätter inte
+automatiskt. **Nytt samtal** tar bort det tidigare samtalet och behåller
+utkastet; ett nytt samtal kan kräva medgivande igen.
+Köade skrivna meddelanden visas ordagrant i den återställda samtalstexten.
+
+Välj **Återuppta samtalet** när du vill fortsätta. Du behöver godkänna
+aktuell information igen om medgivandet bara gällde ett tidigare besök.
+Skyttel kontrollerar aktuellt utkast och tidigare operationers faktiska
+utfall före fortsatt arbete. Bara oavslutat arbete och kvarvarande kö
+fortsätter. Genomförda ändringar upprepas inte, och en tidigare upphävd
+sparbegäran kräver en ny uttrycklig sparbegäran. Ett okänt sparutfall
+måste kontrolleras innan nya ändringar kan börja.
+
+På samma eller en annan enhet väljer du **Bevarade samtal** i textvyn.
+Listan visar dina samtal i det aktuella hushållet, deras modellval och
+utgångstid. Välj **Öppna** vid rätt samtal och läs dess pausade läge innan
+du väljer **Återuppta samtalet**. Om ett annat samtal är öppet pausas det
+separat; texterna slås inte ihop. Skicka eller töm oskickad text innan du
+öppnar ett annat samtal. Vid öppning på en annan enhet stannar den tidigare
+enhetens arbete. Det äldre samtalets modellval ändrar inte ditt senaste
+personliga val för nya samtal. Efter återupptagning kan du skriva eller
+slå på mikrofonen i samma samtal.
+
+**Löper ut** visar den bestämda tidpunkten. Samtalet raderas efter sju
+dygn utan ett meddelande från dig eller uttrycklig återupptagning.
+Modellarbete, visning och statuskontroller förlänger inte tiden.
+Serveromstart flyttar inte tidpunkten. Inloggningens tidsgränser kan
+kräva ny inloggning innan samtalet löper ut.
+
+**Avbryt** avbryter återstående arbete och kön men behåller samtalstext,
+väntande delar och genomförda utkaständringar. **Logga ut** pausar
+samtalet. **Avsluta samtalet** raderar texten, kön och oavslutade delar
+med deras sparhinder. Utgång gör samma sak. Varken avslut eller utgång
+sparar eller kastar utkastet. Registrerade sparförsök och sparkvitton
+består separat; ett okänt sparutfall blockerar fortfarande ändringar
+tills det klarläggs. Kontrollera utfallet före ett nytt försök.
 
 ## Håll in för att tala
 
@@ -206,6 +322,13 @@ Skyttel återanvänder hämtade uppgifter mellan meddelanden i samma samtal.
 När underlaget ändras, även från en annan klient, hämtas berörda uppgifter
 på nytt vid behov. **Nytt samtal** börjar med ny samtalskontext.
 
+En köad begäran läser aktuellt underlag när den börjar. En oberoende
+manuell uppgift kan bevaras medan samma entydiga rättelse fortsätter.
+Om det avsedda målet ändras, blir tvetydigt eller inte kan fastställas
+ber Skyttel dig förtydliga begäran. Ett gammalt modellresultat ska inte
+ersätta din manuella ändring. Om det ändrade utkastet ska sparas behöver
+du lämna en ny sparbegäran.
+
 Under rubriken i textvyn visar **Kontext** hur många procent av samtalets
 kontext som är fylld. Beskrivningen är **Så mycket av samtalets kontext
 som är fylld. Nytt samtal tömmer den.** Procenttalet bygger på
@@ -222,18 +345,37 @@ inte upp automatiskt; du kan läsa det aktuella talet i röstrutan.
 När kontexten behöver mer plats sammanfattar Skyttel samtalet automatiskt,
 för både text och röst. Raden **Skyttel har sammanfattat samtalet för att
 få plats i kontexten.** visas och procenttalet sjunker. Samtalstexten och
-ditt utkast ligger kvar. Skyttel behåller en sammanfattning och de senaste
-replikerna för fortsatt arbete, och läser ditt aktuella utkast på nytt.
-Äldre detaljer kan saknas i sammanfattningen; skriv dem igen om de behövs.
+ditt utkast ligger kvar. Skyttel behåller oavslutade begäranden och dina
+begränsningar ordagrant, separat från sammanfattningen av avslutad diskussion.
+Det gäller också när du byter modell eller växlar mellan text och röst.
+Aktuellt utkast och tidigare sparresultat kontrolleras på nytt inför arbete.
+Äldre detaljer från avslutad diskussion kan saknas i sammanfattningen;
+skriv dem igen om de behövs.
 Rösten pausar inspelningen under bytet och behåller mikrofonens läge.
 Tal som redan spelades in före släpp kan fortfarande skickas efteråt.
 
-Om sammanfattningen misslyckas visas **Kontexten är full, och Skyttel
-kunde inte sammanfatta samtalet. Inget har gått förlorat, och utkastet
-ligger kvar.** Det ursprungliga samtalet ligger kvar i textvyn, och
-**Skicka** och mikrofonen är avstängda. Välj **Nytt samtal** i notisen
-för att tömma samtalstexten och kontexten. Utkastet ligger kvar, och
-du kan fortsätta med det i det nya samtalet.
+Om nödvändiga instruktioner ändå inte får plats stannar arbetet.
+Samtalstexten, utkastet och de exakta oavslutade instruktionerna finns kvar.
+Skriv ett nytt avgränsat uppdrag och välj **Avgränsa uppdraget**.
+Det nya uppdraget måste stå för sig självt: ange mål och alla begränsningar
+som gäller. ”Gör första delen” räcker inte när den kräver det för stora
+underlaget. Den ursprungliga begäran och tidigare kö ligger kvar pausade.
+En tidigare sparbegäran gäller inte för det nya uppdraget.
+Medan tidigare arbete ligger pausat ska varje ny avgränsad begäran vara
+fullständig. **Nytt samtal** tömmer samtalstexten och kontexten enligt
+de vanliga reglerna; gör det bara när du vill lämna det gamla samtalet.
+
+Om sammanfattningen misslyckas visas ett hinderbesked. Vid modellfel
+förklarar notisen om modellen är tillfälligt otillgänglig, om kontot
+saknar åtkomst eller om kombinationen inte stöds. Följ det angivna nästa
+steget. Det ursprungliga samtalet och utkastet ligger kvar. **Skicka** och
+mikrofonen är avstängda; ett modellbyte startar inget arbete automatiskt.
+
+Du kan uttryckligen välja **Nytt samtal** i notisen för att tömma
+samtalstexten och kontexten. Det nya samtalet använder ditt senaste
+personliga modellval. Detta löser inte modellfelet och ger inte ny
+kontoåtkomst. Utkastet ligger kvar för fortsatt arbete när modellen
+är tillgänglig.
 
 Skyttel har med sig hela det pågående samtalet, också efter att ett förslag
 har lagts i utkastet, efter sparande, avbrott eller fel. Du kan exempelvis
@@ -246,6 +388,11 @@ Du kan också säga eller skriva **Nytt samtal**. Det gör samma sak som
 knappen och frågar inte om medgivande igen. Vill du kasta hela det
 osparade utkastet, säg eller skriv **Kasta utkastet**, eller
 **Nytt samtal och kasta utkastet** för att också börja om samtalet.
+Samtalet börjar om direkt. Kastandet väntar på tidigare uppdrag mot ditt
+utkast, även från andra samtal och enheter, och på kontroll av redan
+påbörjat sparande. Under väntan finns förslagen kvar. Stoppar du det nya
+samtalet innan kastandet genomförs, ligger utkastet kvar och andra
+samtals köade uppdrag fortsätter.
 Redan sparade uppgifter påverkas inte av att utkastet kastas.
 Skicka kommandot som ett eget meddelande. En begäran att läsa, ändra,
 spara eller ta bort ett enskilt förslag ger inte tillåtelse att kasta
@@ -314,10 +461,11 @@ att du behöver vänta eller kontakta administratören; Skicka är avstängd
 Utan pågående samtal ser båda samtalsknapparna avstängda ut vid ett sådant
 hinder, men ett tryck visar förklaringen. Textvyn öppnas inte. Notisen går
 att stänga och försvinner också när hindret upphör. I ett pågående samtal
-står hinder kvar tills de är borta. **Skyttel kunde inte slutföra
-uppdraget. Försök igen.** kan stängas med **Stäng notisen** och försvinner
-också vid nästa försök. Att stänga notisen avslutar inte samtalet och
-ändrar inte utkastet.
+står hinder kvar tills de är borta. Felbesked utan kvarvarande
+modellarbete kan stängas med **Stäng notisen**. Det avslutar inte samtalet
+eller ändrar utkastet. När modellarbete återstår visar notisen den gamla
+begäran och uttryckliga val för att försöka igen, avstå eller stoppa allt.
+Notisen ligger kvar tills du väljer hur arbetet ska fortsätta.
 
 Beskriv vad du vill hitta, lägga till eller rätta. Skyttel använder
 hushållets egna typer och ditt befintliga privata utkast. Förslag från
@@ -406,6 +554,22 @@ uppdaterat** eller **Sparat**, utan att läsa upp ändringarna efter varje steg.
 Be om detaljer när du vill höra dem. Nödvändiga följdfrågor och felbesked
 ges även när vanliga bekräftelser är korta.
 
+Ett enkelt färdigt uppdrag får ett kort besked från det verifierade
+resultatet. **Utkastet är uppdaterat** betyder att ändringen ligger
+osparad i ditt utkast. **Sparat** betyder att ett beständigt kvitto
+bekräftar sparandet i hushållets karta. Återstår fler beställda ändringar,
+en förklaring, jämförelse eller annan information arbetar Skyttel vidare
+med den delen. Ett statusbesked ersätter inte det återstående arbetet.
+Samma sakliga resultat och hela den beställda
+förklaringen gäller i text och med röst.
+Om sparandet är klart men förklaringen misslyckas får du både
+sparbeskedet och felbeskedet. Sparandet finns kvar i ändringshistoriken;
+en saknad förklaring betyder inte att sparandet saknas.
+Om förklaringen misslyckas efter en ändring som inte ska sparas får du
+ändringens detaljer och felbeskedet i både text och röst. Finns också
+en väntande del får du dess fråga, så att du vet vad som återstår.
+Ändringen ligger kvar osparad i ditt utkast.
+
 I textvyn läser du svar, följdfrågor och sparbesked. Välj **Visa utkastet**
 för att läsa föreslagna ändringar.
 
@@ -426,8 +590,14 @@ sparbesked ger inte tillåtelse för ett nytt sparande. Vid oklarheter
 behövs ett nytt tydligt besked. Kvittot och kartans verkliga markering
 är bekräftelsen även när du använder röst.
 
-Nya talade och skrivna uppdrag köas medan Skyttel arbetar. Vid bruten
-anslutning stängs
+Nya talade och skrivna uppdrag köas medan Skyttel arbetar. Samma ordning
+gäller dina samtal på olika enheter när de arbetar mot ditt utkast i samma
+hushåll. Ett väntande samtal visar **Väntar på tidigare uppdrag** och läser
+aktuellt utkast när det får börja. Samtalstexterna hålls separata.
+Ett nytt köat meddelande upphäver ett tidigare avsett sparande som ännu
+inte är registrerat, även om meddelandet kommer från ett annat samtal.
+Be då uttryckligen om sparande igen när uppgifterna är klara.
+Vid bruten anslutning stängs
 mikrofonen av medan anslutningen kontrolleras. Efter en längre störning
 slår du själv på den igen. Ett ljudsvar som inte hördes betyder inte att ett
 sparande misslyckades. Skyttel kontrollerar själv ett oklart resultat innan
@@ -436,6 +606,13 @@ Genomförda sparanden och deras kvitton finns kvar efter avstängning,
 omladdning och omstart.
 
 ## Granska, rätta och spara
+
+Sammanhängande utkaständringar genomförs tillsammans. Om ett nytt objekt
+behöver ett samband och sambandet inte kan läggas till, lämnar hela den
+ändringsgruppen utkastet oförändrat. Tidigare slutförda ändringar ligger
+kvar. Läs utkastet och red ut eventuella frågor innan du försöker igen.
+En kvarstående ändringsfråga hindrar sparande av hela utkastet; ett
+förtydligande avslutar inte frågan förrän ändringen också lyckas.
 
 **Visa utkastet** i textvyn visar de samlade förslagen för objekt,
 samband och typer. Rättelser visar tidigare och föreslagna värden, exempelvis
@@ -486,6 +663,10 @@ att rättelsen ändrar utkastversionen. Vid konflikt eller samtidig ändring
 visas aktuellt underlag och ett nytt besked behövs. Nekade, citerade,
 hypotetiska och uppskjutna sparkommandon ger inte tillåtelse att spara.
 Om formuleringen är oklar kan du behöva skriva **Spara hela utkastet nu**.
+Skyttel kontrollerar hela det resulterande utkastet före sparandet, även
+tidigare förslag. Om sparandet avvisas ligger genomförda ändringar kvar
+osparade i ditt utkast. Läs beskedet och granska utkastet innan du ber om
+sparande igen.
 
 Statusen **Sparat** kommer från ett beständigt kvitto. **Visa kvittot**
 visar vad sparandet omfattar. Fråga **Vad sparades senast?** för att få
@@ -520,8 +701,10 @@ ett smalt datorfönster. När stoppikonen finns i textvyn visar röstrutan
 bara statusordet.
 
 Stoppikonen i röstrutan avbryter också. Alla avbrott stoppar pågående
-arbete, tystar rösten och tömmer kön, oavsett om uppdragen kom med tal
-eller text. Genomförda förslag finns kvar i utkastet. Ett genomfört
+arbete i det valda samtalet, tystar dess röst och tömmer dess kö, oavsett
+om uppdragen kom med tal eller text. Dina andra samtals köade uppdrag
+finns kvar och kan fortsätta när tidigare arbete inte längre kan ändra
+utkastet. Genomförda förslag finns kvar i utkastet. Ett genomfört
 sparande blir inte ångrat. Textvyn visar **Avbrutet. Föreslagna ändringar
 ligger kvar i utkastet.** tills nästa uppdrag börjar eller du väljer
 **Nytt samtal**. Nytt samtal tömmer också kön.
@@ -552,8 +735,9 @@ uppdrag kan börja.
 
 En avstängd mikrofon behåller samtalstexten i det pågående samtalet.
 **Nytt samtal** tömmer samtalstexten och kontexten.
-Samtalet avslutas när du lämnar hushållets karta, laddar om sidan eller
-när åtkomsten upphör.
+När du lämnar hushållets karta, laddar om sidan eller loggar ut bevaras
+ett medgivet samtal med arbetet pausat till sin utgångstid. Återkallad
+hushållsåtkomst avslutar tillgången till samtalet.
 En skriven instruktion som servern tar emot medan du är inloggad får bli
 klar inom 30 minuter från mottagandet, även om inloggningen går ut under
 tiden. Köväntan ingår i tiden. Nya instruktioner och nya sparbegäranden
@@ -564,7 +748,7 @@ Utloggning, återkallat medgivande eller återkallad åtkomst stoppar fortsatt
 arbete. Återimport eller byte av innehållsägare kräver en ny anslutning.
 Redan lagrade förslag finns i ditt utkast efter ny inloggning. Sparade
 uppgifter och kvitton finns också kvar. Vid serveromstart fortsätter inget
-modellarbete, och den lokala samtalstexten försvinner. Uppgifter som redan
+modellarbete; medgiven samtalstext återställs pausad. Uppgifter som redan
 skickats till LangSmith kan finnas kvar där. Ett svar som servern gör klart
 är ingen bekräftelse på att det har nått din webbläsare.
 
@@ -572,10 +756,11 @@ skickats till LangSmith kan finnas kvar där. Ett svar som servern gör klart
 
 Med ditt medgivande behandlar OpenAI ljud som spelas in medan mikrofonen
 är på, det du skriver, hela ditt utkast och de uppgifter i hushållets karta
-som behövs. Samtalets tillfälliga text ingår också, så att Skyttel kan svara
+som behövs. Samtalets text ingår också, så att Skyttel kan svara
 i samma sammanhang. Tal från starten kan vänta i webbläsaren och skickas
 efter släpp, medan ny inspelning stängs av direkt. Bilder skickas inte till
-OpenAI. Skyttel har inget lokalt samtalsarkiv. Säg eller skriv inga lösenord,
+OpenAI. Skyttel bevarar samtalet på installationen enligt den beskrivna
+sjudygnsgränsen. Säg eller skriv inga lösenord,
 koder eller fullständiga konto- och kortnummer.
 
 Skyttel begär att OpenAI inte lagrar samtalet. OpenAI kan ändå behålla
@@ -585,6 +770,20 @@ inte behandling enbart i EU eller omedelbar radering av alla kopior hos
 leverantören. Återkallat medgivande
 tar inte tillbaka uppgifter som redan har skickats. Läs
 [OpenAI:s datavillkor](https://developers.openai.com/api/docs/guides/your-data).
+
+För arbetsmodellens promptcache begär Skyttel 30 minuters minsta livslängd.
+Det är ingen raderingsfrist: OpenAI kan behålla cacheuppgifter längre.
+Inställningen ändrar inte leverantörens övriga lagringsvillkor.
+Skyttels begäran `store:false` innebär inget löfte om noll lagring hos
+OpenAI. Läs [OpenAI:s beskrivning av promptcache](https://developers.openai.com/api/docs/guides/prompt-caching).
+
+Samtalstexten du ser, arbetsmodellens kontext, Skyttels tillfälligt
+återanvända läsningar inom samma samtal och OpenAI:s promptcache är olika
+saker. Skyttel
+kontrollerar åtkomst och aktuella versioner innan en tidigare läsning
+återanvänds. En återanvänd läsning visar inte i sig att modellens kontext
+är kortare, att OpenAI använder cachade token eller att svaret går fortare.
+
 Hushållets administratör hanterar användare, export, återimport och
 permanent radering i Skyttels egna administrationsvyer.
 
@@ -633,6 +832,23 @@ Om instruktionen redan är mottagen men anslutningen sedan bryts får du
 ett leveransfel. Redan lagrat utkast och sparresultat finns kvar; kontrollera
 dem innan du ber om samma arbete igen.
 
+Om ett ändringsbesked saknas kontrollerar Skyttel samma ändringar innan
+arbetet fortsätter. När även kontrollen är tillfälligt otillgänglig visar
+notisen **Det är oklart om ändringarna genomfördes. Skyttel kontrollerar
+det.** Du kan skriva men inte skicka ett nytt uppdrag under kontrollen.
+Oskickad text finns kvar när resultatet kan verifieras. Kontrollen lägger
+inte till förslagen en gång till och startar inget nytt modellarbete.
+Ett genomfört förslag betyder inte att hela uppdraget är klart. Om en
+beställd förklaring, ett sparande eller annat arbete återstår visas
+**Uppdraget är inte slutfört. Återstående arbete är pausat** tillsammans
+med ändringsbeskedet. Din ursprungliga instruktion finns kvar. Kontrollen
+fortsätter inte det återstående arbetet automatiskt.
+Om utkastet ändras under tiden får du veta att ändringarna genomförs men
+att aktuellt utkast behöver granskas. Läs ditt utkast och förtydliga hur
+du vill fortsätta. Ett registrerat sparförsök följs upp separat, även när
+samtalet avslutas eller servern startas om. Ett fortsatt okänt sparutfall
+hindrar nya ändringar tills samma försök kan kontrolleras igen.
+
 Under samtalet visas svaren i textvyn **Skriv till Skyttel**. Långa svar
 rullas i textvyn.
 
@@ -653,6 +869,6 @@ En redan mottagen skriven instruktion kan få sitt svar där efter att
 inloggningen går ut, om samma anslutning fortfarande är öppen. Uppgiftens
 ursprungliga gräns på 30 minuter gäller även leveransen. Ett avbrott,
 utebliven mottagning eller omstart ger ett leveransfel. För ett nytt försök
-lämnar du instruktionen igen. Samtalstexten är tillfällig. Redan lagrat
-utkast och sparresultat finns kvar. Kontrollera dem efter ny inloggning
-innan du ber om ett nytt sparande.
+ska du först läsa det bevarade pausade arbetet och kontrollera tidigare
+utfall. Redan lagrat utkast och sparresultat finns kvar. Kontrollera dem
+efter ny inloggning innan du ber om ett nytt sparande.

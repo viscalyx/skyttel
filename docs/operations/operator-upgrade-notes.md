@@ -6,6 +6,114 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Preserve each relationship's chosen wording
+
+Back up the installation database before rollout. The upgrade preserves objects,
+accounts, configuration, and historical records. It keeps relationship wording
+in saved records and drafts before it removes obsolete category wording.
+Household-authored type names and descriptions remain intact. Only unchanged
+default category descriptions receive neutral explanations. Category edits no
+longer change relationship wording. New relationships can use any chosen verb
+with any kinds of objects; reverse wording and a category choice are optional.
+
+Update API and assistant clients to send the intended wording for each new
+relationship. A category no longer selects a verb. New requests without
+wording use a neutral connection phrase; edits preserve existing wording.
+
+Coordinate archive consumers before rollout. New household archives use
+format schema 40 and this release accepts only that schema. Export any
+required household archives again after upgrade. Earlier archives cannot be
+imported into this release. Older releases cannot import the new schema. Keep
+the pre-upgrade database backup if recovery requires an older release.
+The upgrade also removes the unused reference-size preference while
+preserving active personal view settings and their versions.
+
+### Preserve consented conversations during upgrade
+
+Before rollout, stop new conversation requests to the old release. Let
+accepted work finish under its original terms. Users must approve the
+updated conversation information before new work or conversation storage.
+Old temporary text is not copied before that approval. Manual map work
+remains available when a user declines.
+
+Preserve and protect the installation database and its backups. Consented
+conversation text and unfinished work now remain on the installation for
+seven days after the last user message or explicit resume. Background work
+does not renew this period. Verify the original deadline and expiry after
+a restart with synthetic data. After explicit resume, check that earlier
+unfinished work runs before later requests from another device. Apply the
+existing backup deletion limits to conversation content as well.
+
+Restored work is paused. A restart or restored provider access must not
+start new model work or a new save. Logout pauses the conversation; explicit
+end and expiry remove its text and unfinished work. Draft proposals and
+registered save attempts remain separate. Verify an unknown save outcome
+before further changes; conversation deletion does not clear its barrier.
+
+### Keep failed conversation work paused
+
+After rollout, use synthetic data to verify that a model failure keeps
+later requests queued, including after a restart and on another device.
+Changing the selected model or restoring provider access must not start
+work. The user must choose retry or abandon for the unfinished request.
+A retry uses current facts and the selected model. It must preserve
+completed changes and must not renew an earlier revoked save request.
+
+Keep unknown operation outcomes blocked until status recovery confirms
+the original operation. A known result can leave an explanation or other
+work unfinished; status recovery must not start that work. Use diagnostic
+references, model, effort, category and time for support. Do not collect
+conversation content or credentials in these diagnostics.
+
+### Preserve operation recovery state
+
+Preserve the installation database during rollout. After rollout, use
+synthetic data to check recovery after a lost assistant reply and a server
+restart. Registered save attempts must continue to block changes until their
+outcome is verified. Recovery can complete the same attempt without a new
+save request or model work.
+
+Assistant clients that retry a draft batch must retain its operation identity
+and submitted versions. A committed result confirms the earlier operation;
+clients must read the current draft before further work. If the status check
+fails, keep later work blocked and repeat the check with the same identity.
+Batch recovery
+records contain identities, versions, counts and digests, without private
+draft values. Household exports do not include these records. Content
+replacement removes the records and retains opaque identities to prevent
+old operations from changing replacement content.
+
+### Keep the sequential conversation baseline
+
+Conversation work uses sequential execution by default. Enable overlapping
+interpretation and work only for an explicit experiment. Keep model choices,
+reasoning levels and starting data equal when comparing the two modes.
+Include discarded work and unknown usage in cost review. This option does
+not establish a performance gain or authorize billable evaluation. Use the
+[model activation guide](conversation-models.md#separat-försök-med-överlappning)
+to select the mode before restarting the server.
+
+For diagnostic consumers, use the latest work classification for each provider
+call. Keep earlier classifications as history and count its usage once.
+A lost reply does not prove unused work. Treat an unverified outcome as unknown
+until authorized evidence confirms whether the batch is committed or the save
+request is registered.
+
+### Check conversation model access and activation
+
+Before rollout, confirm that the installation's OpenAI project can use
+GPT-6.1 Terra and GPT-6.1 Sol at the enabled reasoning levels. Users without
+a saved personal choice start with Terra at high reasoning. Set the enabled
+combinations before opening access; an unavailable default stays selected
+until the user chooses another option. Activation does not prove account
+access. Use the [model activation guide](conversation-models.md).
+
+Personal model choices now persist across devices and households. Preserve
+the installation database during rollout. Check model access errors with
+synthetic work and retain the content-free diagnostic references. Model
+access recovery does not restart work. Cost estimates can remain unknown
+when the price list does not cover the selected model.
+
 ### Apply container filesystem and resource limits
 
 Recreate the Compose service during rollout to apply the read-only root and
@@ -177,16 +285,15 @@ discards buffers and cancels delivery where possible. It cannot recall
 accepted requests or delete cloud data. Stop sending before recovery and
 repair forward; an older image against upgraded data is unsupported.
 
-### Renew conversation consent before diagnostic sending
+### Verify conversation consent before diagnostic sending
 
-End active conversations when deploying this update. Users must accept the
-current conversation information before they can start again. Previous
-saved or visit-only acceptance does not cover LangSmith processing. Keep
+Before the first enabled release, verify that the accepted conversation
+information covers LangSmith processing. Earlier information that does
+not cover this processing cannot authorize diagnostic sending. Keep
 existing household data and saved changes.
 
-Verify the current information before the first enabled release. Each
-conversation keeps its original information version. Later acceptance
-does not authorize export of an older conversation. Opening voice can
+Each running request keeps its accepted information version. Later
+acceptance does not authorize export of earlier work. Opening voice can
 send identifiers and lifecycle evidence before context preparation or
 any transcript. Complete the rollout checks before opening it.
 
@@ -466,8 +573,9 @@ Check the complete text fallback and its audio notice with keyboard and
 screen reader users. Receipt confirms that the complete text reaches
 the browser; it does not confirm audio playback, reading or understanding.
 A lost connection, missing receipt or restart ends delivery without
-automatic replay. Check existing drafts and save results after login;
-temporary conversation text does not become stored conversation history.
+automatic replay. Check existing drafts and save results after login.
+Consented conversation history returns paused; delivery receipts do not
+authorize replay or new work.
 
 ### Conversation model
 

@@ -1,13 +1,13 @@
 # Text evaluation
 
-Evaluate the supplied backend model and effort against the complete text
-catalog. Apply the shared execution and reporting rules in
-[run support](run-support.md).
+Evaluate the supplied backend model and effort against the text catalog.
+Apply [qualification by scenario group](qualification.md) and the shared
+execution rules in [run support](run-support.md).
 
 ## Configure and verify
 
 Supply one selected profile ID in `EvaluationPlan.textProfiles`, leave `voice`
-false and omit `voiceProfile`. Run all 14 text scenarios through the
+false and omit `voiceProfile`. Run the selected catalog through the
 application's text path, including summary scenarios. Use the catalog's ordered
 utterances and score the application's collected text answer.
 
@@ -25,5 +25,8 @@ and budget stops provide no basis for escalation or retries.
 
 ## Timing
 
-Start response timing at text submission. Use the shared completion boundary
-and report call durations alongside correctness and cost.
+Use the delivered-response boundary in
+[application-version comparison](application-comparison.md) for text timing,
+including queue and assisted exchanges. Report successful completion only
+after required state and the entire required response are verified. Keep
+first-useful response and observed failure times separate.

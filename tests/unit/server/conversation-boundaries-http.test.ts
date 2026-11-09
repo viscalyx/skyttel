@@ -3,6 +3,7 @@ import { afterEach, expect, test } from 'vitest';
 import { assistantFailureMessage } from '../../../src/server/assistant-feedback.js';
 import type { MapState } from '../../../src/shared/map.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { beginAssistant, callAssistant } from '../../support/assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
@@ -11,6 +12,7 @@ import {
   type ModelRequest,
   modelMessage,
   modelTool,
+  readOnlyScope,
   textModel,
 } from '../../support/text-model.js';
 
@@ -187,16 +189,23 @@ test('recovery validates its durable request even without a conversation or AI a
 
 test.each([
   ['unknown tool', [modelTool('merge_objects', {})], 'assistant_unknown_tool'],
+  ['executor batch', [modelTool('apply_draft_batch', {})], 'assistant_unknown_tool'],
   ['mixed batch', [modelTool('submit_changes', {}), modelTool('read_map', {})], 'invalid_request'],
   ['malformed batch', [modelTool('submit_changes', { operations: [] })], 'invalid_request'],
   [
-    'mixed questions',
-    [modelTool('ask_questions', { questions: ['Vem?'] }), modelTool('read_map', {})],
+    'multiple question commands',
+    [
+      modelTool('ask_questions', { questions: ['Vem?'] }),
+      modelTool('ask_questions', { questions: ['Vilken?'] }),
+    ],
     'invalid_request',
   ],
   [
-    'mixed report',
-    [modelTool('report_result', { source: 'draft' }), modelTool('read_map', {})],
+    'multiple result reports',
+    [
+      modelTool('report_result', { source: 'draft' }),
+      modelTool('report_result', { source: 'draft' }),
+    ],
     'invalid_request',
   ],
   [
@@ -239,6 +248,53 @@ test.each([
     expect(await map()).toEqual(before);
     expect((await (await client.get(`${path}/map/history`)).json()).history).toEqual([]);
     expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each(['ask_questions', 'report_result'])(
+  '%s can accompany a trusted read without mutating the household or inventing a save',
+  async (terminal) => {
+    const calls = [
+      modelTool(terminal, {
+        ...(terminal === 'ask_questions' ? { questions: ['Vem?'] } : { source: 'draft' }),
+        continueResponse: true,
+      }),
+      modelTool('read_map', {}),
+    ];
+    const model = textModel((request) => {
+      if (model.requests.length === 1) return calls;
+      for (const call of calls)
+        expect(
+          request.input.filter(
+            (item) => item.type === 'function_call_output' && item.call_id === call.call_id,
+          ),
+        ).toHaveLength(1);
+      const readOutput = request.input.find(
+        (item) => item.type === 'function_call_output' && item.call_id === calls[1].call_id,
+      );
+      expect(JSON.parse(String(readOutput?.output)).objects).toEqual([]);
+      return [modelMessage('Läsningen är klar.')];
+    }, readOnlyScope);
+    await setup(model.provider);
+    await object();
+    const before = await map();
+    const result = await message('Läs mitt utkast.');
+    expect(result.phase).toBe('ready');
+    expect(result.error).toBeUndefined();
+    expect(result.modelReply).toBe(
+      terminal === 'ask_questions' ? 'Läsningen är klar.\nVem?' : 'Läsningen är klar.',
+    );
+    if (terminal === 'ask_questions') expect(result.questions).toEqual(['Vem?']);
+    else {
+      expect(result.result).toMatchObject({ kind: 'draft' });
+      expect(result.reply).toContain('Lampan');
+    }
+    expect(result.receipt).toBeUndefined();
+    expect(result.selection).toBeUndefined();
+    expect(result.operations).toEqual([]);
+    expect(await map()).toEqual(before);
+    expect((await (await client.get(`${path}/map/history`)).json()).history).toEqual([]);
+    expect(model.requests).toHaveLength(2);
   },
 );
 
@@ -314,6 +370,320 @@ test.each(['draft version', 'content generation', 'save with questions', 'save w
     expect(model.requests).toHaveLength(1);
   },
 );
+
+test('a failed dependent batch rolls back its object and retains an earlier independent batch and pending changes', async () => {
+  let turn = 0;
+  let typeId = '';
+  let relationshipTypeId = '';
+  const model = textModel((request) => {
+    const { draft } = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    const first = turn++ === 0;
+    return [
+      modelTool('submit_changes', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        completion: 'draft',
+        questions: first ? [] : ['Vilket kort ska användas?'],
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: first ? 'independent' : 'dependent',
+              baseRevision: null,
+              value: { typeId, name: first ? 'Stolen' : 'Lampan' },
+            },
+          },
+          ...(first
+            ? []
+            : [
+                {
+                  name: 'propose_relationship',
+                  arguments: {
+                    id: 'required-link',
+                    baseRevision: null,
+                    value: {
+                      typeId: relationshipTypeId,
+                      sourceId: 'dependent',
+                      targetId: 'missing-endpoint',
+                    },
+                  },
+                },
+              ]),
+        ],
+      }),
+    ];
+  });
+  await setup(model.provider);
+  const initial = await map();
+  typeId = initial.types[0].id;
+  relationshipTypeId = initial.relationshipTypes[0].id;
+  expect(await message('Lägg Stolen i utkastet.')).toMatchObject({ phase: 'ready' });
+  const before = await map();
+  const result = await message(
+    'Lägg Lampan och dess nödvändiga samband i utkastet. Fråga om kortet.',
+  );
+  expect(result).toMatchObject({ phase: 'error', error: 'invalid_endpoint' });
+  expect(await map()).toEqual(before);
+  expect(result.review.changes.map(({ id }) => id)).toEqual(['independent']);
+  expect(result.pendingParts).toEqual([
+    expect.objectContaining({
+      kind: 'change',
+      status: 'waiting',
+      question: 'Vilket kort ska användas?',
+    }),
+  ]);
+  expect(result.receipt).toBeUndefined();
+  expect(model.authorizationRequests).toHaveLength(4);
+});
+
+test('an unchecked connected proposal cannot commit before its later dependent operation', async () => {
+  let typeId = '';
+  let relationshipTypeId = '';
+  let round = 0;
+  const text = 'Lägg till Lampan och dess nödvändiga samband tillsammans. Spara hela utkastet.';
+  const model = textModel(
+    (request) => {
+      const { draft } = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      const versions = { version: draft.version, contentVersion: draft.contentVersion };
+      return [
+        round++ === 0
+          ? modelTool('propose_object', {
+              ...versions,
+              id: 'dependent',
+              baseRevision: null,
+              value: { typeId, name: 'Lampan' },
+            })
+          : modelTool('propose_relationship', {
+              ...versions,
+              id: 'required-link',
+              baseRevision: null,
+              value: {
+                typeId: relationshipTypeId,
+                sourceId: 'dependent',
+                targetId: 'missing-endpoint',
+              },
+            }),
+      ];
+    },
+    (request) => [
+      modelMessage(
+        JSON.stringify(
+          request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? { mode: 'work', request: text }
+            : { decision: 'allow' },
+        ),
+      ),
+    ],
+  );
+  await setup(model.provider);
+  const before = await map();
+  typeId = before.types[0].id;
+  relationshipTypeId = before.relationshipTypes[0].id;
+  const result = await message(text);
+  expect(await map()).toEqual(before);
+  expect(result).toMatchObject({ phase: 'error', error: 'assistant_scope_unavailable' });
+  expect(result.receipt).toBeUndefined();
+  expect(result.reply).toContain('sparbegäran gäller inte längre');
+  expect(model.requests).toHaveLength(1);
+});
+
+test.each(['direct', 'batch'] as const)(
+  'an incomplete %s proposal preserves complete independent work and pending parts',
+  async (mode) => {
+    let typeId = '';
+    let round = 0;
+    const model = textModel(
+      (request) => {
+        const { draft } = JSON.parse(
+          String(request.input.findLast((item) => item.role === 'user')?.content),
+        );
+        const versions = { version: draft.version, contentVersion: draft.contentVersion };
+        const operation = {
+          name: 'propose_object',
+          arguments: {
+            id: round === 0 ? 'independent' : 'dependent',
+            baseRevision: null,
+            value: { typeId, name: round === 0 ? 'Stolen' : 'Lampan' },
+          },
+        };
+        if (round++ > 1) return [modelMessage('Den oberoende kortfrågan återstår.')];
+        if (round === 2 && mode === 'direct')
+          return [modelTool(operation.name, { ...versions, ...operation.arguments })];
+        return [
+          modelTool('submit_changes', {
+            ...versions,
+            completion: 'draft',
+            questions:
+              round === 1
+                ? [
+                    {
+                      kind: 'change',
+                      request: 'Ändra kortet',
+                      question: 'Vilket kort?',
+                      dependsOnDraft: true,
+                    },
+                  ]
+                : [],
+            operations: [operation],
+          }),
+        ];
+      },
+      (request) => {
+        const input = JSON.parse(String(request.input[0].content));
+        return [
+          modelMessage(
+            JSON.stringify(
+              request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+                ? { mode: 'work', request: input.current, responseRequired: false }
+                : input.authority.current.includes('Lampan')
+                  ? { decision: 'incomplete' }
+                  : { decision: 'allow', complete: true, fulfillsRequest: true },
+            ),
+          ),
+        ];
+      },
+    );
+    await setup(model.provider);
+    typeId = (await map()).types[0].id;
+    expect(
+      await message('Lägg till Stolen. Ändra också kortet men fråga vilket kort.'),
+    ).toMatchObject({
+      phase: 'ready',
+    });
+    const before = await map();
+    const pending = session.pendingParts;
+    expect(before.draft.changes.map(({ id }) => id)).toEqual(['independent']);
+    expect(pending).toEqual([
+      expect.objectContaining({ status: 'waiting', question: 'Vilket kort?' }),
+    ]);
+    const result = await message(
+      'Lägg till Lampan och dess nödvändiga samband tillsammans. Spara hela utkastet.',
+    );
+    expect(await map()).toEqual(before);
+    expect(result).toMatchObject({ phase: 'error', error: 'assistant_batch_incomplete' });
+    expect(result.pendingParts).toEqual(pending);
+    expect(result.reply).toContain('Förslaget är ofullständigt');
+    expect(result.reply).toContain('sparbegäran gäller inte längre');
+    expect(result.receipt).toBeUndefined();
+    expect(model.requests).toHaveLength(2);
+  },
+);
+
+test('multiple direct draft mutations require an atomic batch before either can change the draft', async () => {
+  let typeId = '';
+  const model = textModel((request) => {
+    const { draft } = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return ['one', 'two'].map((id) =>
+      modelTool('propose_object', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        id,
+        baseRevision: null,
+        value: { typeId, name: id },
+      }),
+    );
+  });
+  await setup(model.provider);
+  const before = await map();
+  typeId = before.types[0].id;
+  expect(await message('Lägg till de två sakerna i utkastet.')).toMatchObject({
+    phase: 'error',
+    error: 'assistant_batch_required',
+  });
+  expect(await map()).toEqual(before);
+});
+
+test('an unlisted dependent mutation is rejected before a preceding valid direct draft mutation', async () => {
+  let typeId = '';
+  const model = textModel((request) => {
+    const { draft } = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('propose_object', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        id: 'dependent',
+        baseRevision: null,
+        value: { typeId, name: 'Lampan' },
+      }),
+      modelTool('connect_missing_endpoint', {}),
+    ];
+  });
+  await setup(model.provider);
+  const before = await map();
+  typeId = before.types[0].id;
+  expect(await message('Lägg till Lampan med dess nödvändiga samband.')).toMatchObject({
+    phase: 'error',
+    error: 'assistant_unknown_tool',
+  });
+  expect(await map()).toEqual(before);
+});
+
+test('a rolled-back MCP batch cannot discard pending parts, and a committed discard retains independent information', async () => {
+  await setup(
+    textModel(() => [
+      modelTool('ask_questions', {
+        questions: [
+          { kind: 'change', request: 'Ange kort', question: 'Vilket kort?', dependsOnDraft: true },
+          {
+            kind: 'information',
+            request: 'Hitta hjälmen',
+            question: 'Vilken hjälm?',
+            dependsOnDraft: false,
+          },
+        ],
+      }),
+    ]).provider,
+  );
+  await object();
+  const waiting = await message('Ange kort och hitta hjälmen.');
+  const before = await map();
+  const flow = await beginAssistant(client, fixture.origin, 'skyttel:read skyttel:write');
+  const grant = await flow.consent(path.split('/').at(-1) ?? '');
+  expect(grant.status()).toBe(200);
+  const exchanged = await flow.exchange((await grant.json()).url);
+  expect(exchanged.status).toBe(200);
+  const { access_token: token } = await exchanged.json();
+  const invoke = async (operations: { name: string; arguments: Record<string, unknown> }[]) => {
+    const response = await callAssistant(fixture.origin, token, 'apply_draft_batch', {
+      version: before.draft.version,
+      contentVersion: before.contentVersion,
+      operations,
+    });
+    expect(response.status).toBe(200);
+    return (await response.json()).result;
+  };
+  const discarded = { name: 'discard_draft', arguments: {} };
+  const failed = await invoke([
+    discarded,
+    {
+      name: 'propose_object',
+      arguments: { id: 'new', baseRevision: null, value: { typeId: 'missing-type', name: 'Nytt' } },
+    },
+  ]);
+  expect(failed.isError).toBe(true);
+  expect(JSON.parse(failed.content[0].text).error).toBe('invalid_type');
+  expect(await map()).toEqual(before);
+  expect((await read()).pendingParts).toEqual(waiting.pendingParts);
+  const committed = await invoke([discarded]);
+  expect(committed.isError).not.toBe(true);
+  expect((await map()).draft.changes).toEqual([]);
+  expect(await read()).toMatchObject({
+    saveBlocked: false,
+    questions: ['Vilken hjälm?'],
+    pendingParts: [
+      { status: 'discarded', kind: 'change' },
+      { status: 'waiting', kind: 'information' },
+    ],
+  });
+});
 
 test.each(
   (['direct', 'batch'] as const).flatMap((mode) =>
@@ -478,7 +848,7 @@ test.each(['cancel', 'concurrent edit'])(
 
 test('unknown prior failures and empty history produce server wording without creating a save', async () => {
   let source = 'last_failure';
-  const model = textModel(() => [modelTool('report_result', { source })]);
+  const model = textModel(() => [modelTool('report_result', { source })], readOnlyScope);
   await setup(model.provider);
   await object();
   const before = await map();
@@ -506,20 +876,39 @@ test.each([
   'a real %s refusal is preserved and reported from server facts without applying the requested type mutation',
   async (error, _fields, reason) => {
     let reporting = false;
-    const model = textModel((request) => {
-      if (reporting) return [modelTool('report_result', { source: 'last_failure' })];
-      const input = request.input.findLast((item) => item.role === 'user');
-      const { draft } = JSON.parse(String(input?.content));
-      return [
-        modelTool('propose_object_type', {
-          version: draft.version,
-          contentVersion: draft.contentVersion,
-          id: 'field-type',
-          baseRevision: 2,
-          value: null,
-        }),
-      ];
-    });
+    const model = textModel(
+      (request) => {
+        if (reporting) return [modelTool('report_result', { source: 'last_failure' })];
+        const input = request.input.findLast((item) => item.role === 'user');
+        const { draft } = JSON.parse(String(input?.content));
+        return [
+          modelTool('propose_object_type', {
+            version: draft.version,
+            contentVersion: draft.contentVersion,
+            id: 'field-type',
+            baseRevision: 2,
+            value: null,
+          }),
+        ];
+      },
+      (request) => {
+        const scope = request.instructions.startsWith('SKYTTEL_TURN_SCOPE');
+        if (scope && reporting) return readOnlyScope();
+        return [
+          modelMessage(
+            JSON.stringify(
+              scope
+                ? {
+                    mode: 'work',
+                    request: JSON.parse(String(request.input[0].content)).current,
+                    responseRequired: false,
+                  }
+                : { decision: 'allow', complete: true, fulfillsRequest: false },
+            ),
+          ),
+        ];
+      },
+    );
     await setup(model.provider);
     await checked(
       await post('map/object-type', {
@@ -803,7 +1192,7 @@ test.each(['object', 'relationship', 'objectType', 'relationshipType'] as const)
   },
 );
 
-test('a mutation followed by a historical failure request retains only its verified draft change and never invents a failure report', async () => {
+test('a mutation followed by a historical failure request is rejected before changing the draft or inventing a failure report', async () => {
   let typeId = '';
   const model = textModel((request) => {
     const input = request.input.findLast((item) => item.role === 'user');
@@ -826,13 +1215,11 @@ test('a mutation followed by a historical failure request retains only its verif
   const result = await message('Lägg till mitt förslag och berätta om ett tidigare fel.');
   expect(result).toMatchObject({ phase: 'error', error: 'invalid_request' });
   expect(result.reply).toBe(assistantFailureMessage(result.error ?? 'assistant_provider_failed'));
-  const after = await map();
-  expect(after.objects).toEqual(before.objects);
-  expect(after.draft.changes[0]).toEqual(before.draft.changes[0]);
-  expect(after.draft.changes[1]).toMatchObject({
-    id: 'new-object',
-    after: { name: 'Nytt förslag' },
-  });
-  expect(after.draft.version).toBe(before.draft.version + 1);
+  expect(result.result?.kind).not.toBe('failure');
+  expect(result.receipt).toBeUndefined();
+  expect(result.operations).toEqual([]);
+  expect(result.selection).toBeUndefined();
+  expect(await map()).toEqual(before);
   expect((await (await client.get(`${path}/map/history`)).json()).history).toEqual([]);
+  expect(model.requests).toHaveLength(1);
 });

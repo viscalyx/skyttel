@@ -23,6 +23,15 @@ test('current household archives reimport without replacing or transferring inst
         data: approvedForVisit,
       })
     ).json();
+    // Generate the priced Sol example before checking archive isolation.
+    expect(
+      (
+        await owner.post(`${path}/text-assistant/${assistant.id}/model-choice`, {
+          headers,
+          data: { model: 'gpt-6.1-sol', effort: 'high' },
+        })
+      ).status(),
+    ).toBe(200);
     expect(
       (
         await owner.post(`${path}/text-assistant/${assistant.id}/messages`, {
@@ -52,7 +61,7 @@ test('current household archives reimport without replacing or transferring inst
     const parts = unzipSync(archive);
     expect(Object.keys(parts).sort()).toEqual(['content.json', 'images.bin', 'manifest.json']);
     const manifest = JSON.parse(new TextDecoder().decode(parts['manifest.json']));
-    expect(manifest.schemaVersion).toBe(38);
+    expect(manifest.schemaVersion).toBe(40);
     const serialized = new TextDecoder().decode(parts['content.json']);
     expect(serialized).not.toMatch(
       /cost_attempt|cost_assumptions|cost_coverage|ratesJSON|gpt-5\.6-terra/,

@@ -18,12 +18,15 @@ Use the user's models, intended text or voice use, and payment authorization.
 Ask for missing models or payment authorization before making paid calls.
 Apply a spending limit only when the user specifies one, using its stated
 scope. An authorized run without a specified budget has no cost ceiling.
+For application changes within one model, load
+[application-version comparison](references/application-comparison.md) and
+record its shared contract and acceptance plan before selecting runs.
 Resolve the provider for each supplied model; ask the user when it is unclear.
 Confirm that the selected providers are supported and their required credentials
 are available to this session. If a key or token is missing, stop paid execution
 and explain how to configure it using the credential guidance in
 [run support](references/run-support.md).
-Identify the model currently used by the application from its effective
+For model selection, identify the model used by the application from its effective
 configuration. Its corresponding result in a `model-evaluation` issue is the
 baseline for comparison. Reuse that result; run the application model or any
 previously tested model again only when the user explicitly supplies it.
@@ -46,12 +49,12 @@ evidence to select a voice backend requires only the voice reference.
 Search open and closed `model-evaluation` issues in `viscalyx/skyttel`,
 including corrections. Identify comparable results by catalog, fixture, commit,
 profile, scoring configuration, modality, limits and repetitions. Explain gaps
-that prevent a comparison. One complete passing repetition qualifies a model
-for its evaluated modality. Run additional repetitions only when the user
-requests them; every planned requirement must be verified under the modality's
-acceptance policy. Reuse earlier complete passing
-results under this rule, preserving original records and linking a policy
-correction when their recorded qualification changes.
+that prevent a comparison. Apply [qualification by scenario group](references/qualification.md)
+before selecting scenarios, interpreting outcomes or recommending a model.
+Use the explicit application-comparison plan when comparing revisions.
+Otherwise use one repetition unless the user specifies another plan; require
+every planned repetition within the declared qualification scope. Preserve original
+records and link a policy correction when their interpretation changes.
 
 ## Gather evidence
 
@@ -81,7 +84,8 @@ authorized scope.
 
 Publish each model's versioned results on its issue, using
 the publication guidance in [run support](references/run-support.md). Compare
-qualified models with the application's recorded baseline.
+qualified models with the application's recorded baseline. For application
+comparisons, apply the selected revisions' shared acceptance plan instead.
 Recommend a model when correctness and the comparison rules support it;
 otherwise explain which evidence is missing. Report regressions and costs
 alongside any response-time improvement. Leave production model selection to

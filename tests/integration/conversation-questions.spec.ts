@@ -21,6 +21,7 @@ import { liveProvider, voiceAnswerParts } from '../support/live-provider.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import {
   lastToolResult,
+  type ModelRequest,
   modelMessage,
   modelTool,
   pendingUpdate,
@@ -165,6 +166,91 @@ test('FRAGA-10: en väntande fråga bevarar oberoende svar och besked om nytt sp
   }
 });
 
+for (const mode of ['text', 'voice'] as const) {
+  test(`${mode === 'text' ? 'FRAGA-13' : 'FRAGA-14'}: en misslyckad beroende batch från ${mode} bevarar tidigare utkast och väntande fråga`, async ({
+    page,
+  }) => {
+    let turn = 0;
+    let relationshipTypeId = '';
+    const pending = 'Vilket kort ska användas?';
+    const model = textModel((request) => {
+      const input = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      const read = lastToolResult(request);
+      const draft = read?.changes ? read : input.draft;
+      const lo = draft.changes.find((change: { id: string }) => change.id === 'lo');
+      if (!lo) return [modelTool('read_my_draft', {})];
+      const first = turn++ === 0;
+      return [
+        modelTool('submit_changes', {
+          version: draft.version,
+          contentVersion: draft.contentVersion,
+          completion: 'draft',
+          questions: first ? [] : [pending],
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: first ? 'lo' : 'lamp',
+                baseRevision: null,
+                value: { typeId: lo.after.typeId, name: first ? 'Lo Lind' : 'Lampan' },
+              },
+            },
+            ...(first
+              ? []
+              : [
+                  {
+                    name: 'propose_relationship',
+                    arguments: {
+                      id: 'required-link',
+                      baseRevision: null,
+                      value: {
+                        typeId: relationshipTypeId,
+                        sourceId: 'lamp',
+                        targetId: 'missing-endpoint',
+                      },
+                    },
+                  },
+                ]),
+          ],
+        }),
+      ];
+    });
+    const { app, live, path } = await fixture(page, model);
+    try {
+      const state: MapState = await (await page.request.get(path)).json();
+      relationshipTypeId = state.relationshipTypes[0].id;
+      await startConversationWithText(page);
+      await send(page, 'Ändra namnet på Lo till Lo Lind i utkastet.');
+      const transcript = page.getByRole('log', { name: 'Samtalstext' });
+      await readVoiceProposal(page, 'Lo Lind', null);
+      await page.getByRole('button', { name: 'Dölj utkastet (1)', exact: true }).click();
+      const instruction = 'Lägg Lampan och dess nödvändiga samband i utkastet. Fråga om kortet.';
+      if (mode === 'voice') {
+        await microphoneButton(page).click();
+        await expect(voiceBox(page)).toHaveText('Lyssnar');
+        speak(live, instruction);
+      } else await send(page, instruction);
+      await expect(transcript).toContainText('Uppdraget kunde inte slutföras.');
+      await expect(transcript).toContainText(pending);
+      const draft = await openConversationDraft(page);
+      await expect(
+        draft.getByRole('button', { name: 'Visa förslaget: Lo Lind', exact: true }),
+      ).toBeVisible();
+      await expect(
+        draft.getByRole('button', { name: 'Visa förslaget: Lampan', exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      ).toBeDisabled();
+      await readVoiceProposal(page, 'Lo Lind', null);
+    } finally {
+      await app.close();
+    }
+  });
+}
+
 test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsamtal', async ({
   page,
 }) => {
@@ -176,6 +262,24 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
   ];
   let call = 0;
   let usesType = '';
+  const authorization = (body: ModelRequest) => {
+    const input = JSON.parse(String(body.input[0].content));
+    return [
+      modelMessage(
+        JSON.stringify(
+          body.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? { mode: 'work', request: input.current, responseRequired: false }
+            : {
+                decision: 'allow',
+                complete: true,
+                fulfillsRequest: input.untrusted.operations.every(
+                  (operation: { name: string }) => operation.name === 'save_draft',
+                ),
+              },
+        ),
+      ),
+    ];
+  };
   const model = textModel((body) => {
     const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
     const lo = turn.draft.changes.find((change: { id: string }) => change.id === 'lo');
@@ -206,7 +310,14 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
           ],
         }),
       ];
-    if (call === 2)
+    if (call === 2) {
+      expect(turn.message).toBe(
+        'Lägg till telefon 0700123456 på Lo. Lägg till Kod 0012. Töm Notering. Alex använder Molnmusik. Spara hela utkastet.',
+      );
+      return [modelTool('ask_questions', { questions })];
+    }
+    if (call === 3) {
+      expect(turn.message).toBe('Kod ska vara text. Töm Hem. Det är Alex i Umeå. Spara inte.');
       return [
         modelTool('submit_changes', {
           version: turn.draft.version,
@@ -242,10 +353,12 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
           ],
         }),
       ];
-    if (call === 3)
+    }
+    if (call === 4)
       return [
         modelTool('ask_questions', { questions: [], updates: verifiedAnswers(body, questions) }),
       ];
+    expect(turn.message).toBe('Spara hela utkastet nu.');
     return [
       modelTool('save_draft', {
         version: turn.draft.version,
@@ -253,7 +366,7 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
         operationId: 'clarified-conversation',
       }),
     ];
-  });
+  }, authorization);
   const { app, live, path } = await fixture(page, model);
   try {
     const read = async (): Promise<MapState> => (await page.request.get(path)).json();
@@ -476,7 +589,22 @@ test('FRAGA-02: Skyttel frågar om en verklig konflikt i samtalet utan en genere
 }) => {
   const conflictQuestion =
     'Lo hette Lo Exempel. Vill du behålla ditt förslag Lo Lind eller det sparade namnet Lo Berg?';
-  const model = textModel(() => [modelTool('ask_questions', { questions: [conflictQuestion] })]);
+  const model = textModel((request) => {
+    const draft = lastToolResult(request);
+    if (!draft?.conflicts) return [modelTool('read_my_draft', {})];
+    expect(draft.conflicts).toHaveLength(1);
+    expect(draft.conflicts[0]).toMatchObject({
+      id: 'lo',
+      kind: 'object',
+      current: { name: 'Lo Berg' },
+    });
+    expect(draft.changes[0]).toMatchObject({
+      id: 'lo',
+      before: { name: 'Lo Exempel' },
+      after: { name: 'Lo Lind' },
+    });
+    return [modelTool('ask_questions', { questions: [conflictQuestion] })];
+  });
   const { app, path, value } = await fixture(page, model);
   const other = await createPreparedContext(browser);
   const post = (client: typeof page.request, action: string, data: unknown) =>
@@ -532,10 +660,7 @@ test('FRAGA-02: Skyttel frågar om en verklig konflikt i samtalet utan en genere
     await startConversationWithText(page);
     await send(page, 'Hjälp mig välja vilket namn vi ska behålla.');
     await expect(textView(page)).toContainText(conflictQuestion);
-    const current = JSON.parse(
-      String(model.requests[0].input.findLast((row) => row.role === 'user')?.content),
-    );
-    expect(current.draft.conflicts).toHaveLength(1);
+    expect(lastToolResult(model.requests[1]).conflicts).toHaveLength(1);
     await expect(page.getByText('Utkastet har konflikter', { exact: false })).toHaveCount(0);
     await expect(voiceBox(page)).toHaveCount(0);
     expect((await (await page.request.get(path)).json()).objects[0].name).toBe('Lo Berg');
