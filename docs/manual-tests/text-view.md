@@ -314,6 +314,7 @@ testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”
   },
   "reference": "1280 × 900, mus; bred datorreferens med sidofält och automatiskt fältfokus.",
   "outcomes": [
+    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
     "Läsa, skriva och öppna utkastet på telefon, surfplatta och dator."
   ]
 }
@@ -331,11 +332,17 @@ testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”
    öppet läge. Öppna **Visa förslaget: Lo Exempel**, läs **Person** och
    **Påhittad uppgift** och stäng uppgifterna. Hela sidan ryms utan
    horisontell sidrullning.
+4. Dölj utkastet och ladda om. Öppna **Skriv till Skyttel** och läs
+   **Samtalet är pausat** samt utgångstiden överst i samtalets rullbara del.
+   Rulla vid behov till **Avsluta samtalet** och välj knappen.
+   Kontrollera att svaret tas bort och fokus hamnar på **Nytt samtal**.
 
 **Förväntat resultat:**
 
 - På bred dator syns sidofält och karta bredvid; fältet får startfokus.
 - Skicka behåller fältfokus, svaret syns och hela Lo-utkastet går att öppna.
+- Återkomsten visar paus och utgångstid. Avslut går att nå även i korta
+  fönster och flyttar fokus till **Nytt samtal**.
 - Ingen horisontell sidrullning behövs. Kvarvarande smala/pekade/
   korta konfigurationer har egna identiteter nedan.
 
@@ -415,7 +422,7 @@ testfallet “TEXTMOBIL-03: röstrutan och notisen lämnar kartans nederkant fri
     "spec": "tests/integration/mobile-conversation.spec.ts",
     "caseId": "TEXTMOBIL-03"
   },
-  "reference": "390 × 844 emulerad pekare; hörntryck, stopp och notisstängning utan överlapp.",
+  "reference": "390 × 844 emulerad pekare; hörntryck, stopp och uttryckligt avstående utan överlapp.",
   "outcomes": [
     "Nå kartans kontroller och samtalets kontroller utan överlapp."
   ]
@@ -431,21 +438,23 @@ testfallet “TEXTMOBIL-03: röstrutan och notisen lämnar kartans nederkant fri
 2. Låt operatören förbereda syntetisk fjärrljudaktivitet. Aktivera Avbryt
    nära stoppikonens övre kant. Stoppkontrollen försvinner.
 3. Öppna textvyn, skicka **Ett kontrollerat fel.** och låt operatören ge
-   leverantörsfel. Läs felnotisen. Aktivera Stäng notisen nära dess övre kant.
-   Notisen stängs och fältet finns kvar.
+   leverantörsfel. Läs felnotisen. Aktivera
+   **Avstå från det oavslutade arbetet** nära knappens övre kant. Notisen
+   försvinner och meddelandefältet får fokus.
 
 **Förväntat resultat:**
 
 - Röstrutan står ovanför kartans nedersta synliga kontroller och
   återkoppling när textvyn är stängd. Med textvyn öppen står röstrutan
-  ovanför fältet, utan att täcka notisens stängknapp.
-- Stoppikonens tryckyta och notisens stängknapp är 44×44 px på mobil
-  enhet. Stoppikonens synliga cirkel behåller sitt utseende.
-  Automation mäter tryckytorna och trycker utanför cirkelns synliga kant.
+  ovanför fältet, utan att täcka notisens återhämtningsknappar.
+- Stoppikonens tryckyta är 44×44 px på mobil enhet. Avståendets tryckyta är
+  minst 44 px i båda riktningarna. Stoppikonens synliga cirkel behåller sitt
+  utseende. Automation mäter tryckytorna och trycker utanför kontrollernas
+  synliga övre kant.
 
-### TEXTMOBIL-04: en lång notis rullar och kan stängas i kort fönster
+### TEXTMOBIL-04: en lång notis rullar och tillåter avstående i kort fönster
 
-**Syfte:** Nå notisens innehåll och stängknapp utan att tappa fältet.
+**Syfte:** Nå notisens innehåll och avstående utan att tappa fältet.
 
 **Användare:** Alex.
 
@@ -454,7 +463,7 @@ Lo-förslag. Använd fallets exakta emulerade konfiguration.
 
 **Integrationstest:**
 [mobile-conversation.spec.ts](../../tests/integration/mobile-conversation.spec.ts),
-testfallet “TEXTMOBIL-04: en lång notis rullar och kan stängas i kort fönster”.
+testfallet “TEXTMOBIL-04: en lång notis rullar och tillåter avstående i kort fönster”.
 
 **Separat förberedelse:**
 [Hållna svar, syntetiska medier och tekniska jämförelser](text-conversation-preparation.md).
@@ -467,9 +476,9 @@ testfallet “TEXTMOBIL-04: en lång notis rullar och kan stängas i kort fönst
     "spec": "tests/integration/mobile-conversation.spec.ts",
     "caseId": "TEXTMOBIL-04"
   },
-  "reference": "844 × 190 emulerad pekare; intern notisrullning, tangentbordsstängning och fortsatt text.",
+  "reference": "844 × 190 emulerad pekare; intern notisrullning, uttryckligt avstående med tangentbord och fortsatt text.",
   "outcomes": [
-    "Nå notisens innehåll och stängknapp utan att tappa fältet."
+    "Nå notisens innehåll och avstående utan att tappa fältet."
   ]
 }
 ```
@@ -480,14 +489,15 @@ testfallet “TEXTMOBIL-04: en lång notis rullar och kan stängas i kort fönst
 
 1. Vid 844 × 190 med emulerad pekare: starta med text, skicka
    **Ett kontrollerat fel.** och låt operatören ge leverantörsfel.
-2. Läs notisen och rulla inuti den till slutet. Nå **Stäng notisen**
-   med Tab och välj Enter. Notisen stängs trots rullningen.
+2. Läs notisen och rulla inuti den till slutet. Nå
+   **Avstå från det oavslutade arbetet** med Tab och välj Enter. Notisen
+   försvinner och fältet får fokus trots rullningen.
 3. Skriv **Fortsätt med text.** och välj Skicka. Fältet behåller fokus.
 
 **Förväntat resultat:**
 
 - Notisen rullar inom sin begränsade yta och flyttar inte bort fältet.
-  Stängknappen går att nå och har kvar sin tryckyta på 44×44 px.
+  Avståendet går att nå och har en tryckyta på minst 44 px i båda riktningarna.
 - Automation provar detta vid 844×190 px. Faktisk förstoring, fokus
   och VoiceOver med verkligt tangentbord provas separat.
 
@@ -889,6 +899,7 @@ TEXTMOBIL-06.
   },
   "reference": "390 × 844, emulerad pekare CSS-pixlar; smal stående vy.",
   "outcomes": [
+    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
     "Fältet får inget automatiskt startfokus; textvyn fyller bredden.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -935,6 +946,7 @@ TEXTMOBIL-07.
   },
   "reference": "844 × 390, emulerad pekare CSS-pixlar; kort liggande vy.",
   "outcomes": [
+    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
     "Kompakt rad och fält på en rad; sidofält med karta bredvid.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -981,6 +993,7 @@ TEXTMOBIL-08.
   },
   "reference": "820 × 1180, emulerad pekare CSS-pixlar; bred stående pekare.",
   "outcomes": [
+    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
     "Fast sidofält och inget automatiskt startfokus.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -1027,6 +1040,7 @@ TEXTMOBIL-09.
   },
   "reference": "320 × 250, mus CSS-pixlar; ytterst kort smal dator.",
   "outcomes": [
+    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
     "Kompakt rad och fält på en rad; inget automatiskt startfokus.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -1073,6 +1087,7 @@ TEXTMOBIL-10.
   },
   "reference": "700 × 500, mus CSS-pixlar; smal kort dator.",
   "outcomes": [
+    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
     "Kompakt rad, full bredd och inget automatiskt startfokus.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -1145,6 +1160,12 @@ TEXTMOBIL-11.
 ### TEXTMOBIL-12: textarbete i den angivna kvarvarande storleken
 
 **Syfte:** Skydda ytterst kort liggande pekare.
+
+Vid den minskade höjden, öppna textvyns **Modell och resonemang** före
+skickandet. Läs dialogrubriken, tryck Escape och kontrollera fokus på
+öppningsikonen. Välj meddelandefältet igen och kontrollera att den
+oskickade texten ligger kvar. Ikonen delar den kompakta rubrikraden så
+att meddelandefält och Skicka ryms på höjden.
 
 **Användare:** Alex.
 

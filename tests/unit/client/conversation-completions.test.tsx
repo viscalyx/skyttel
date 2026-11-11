@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { approvedForVisit } from '../../support/conversation.js';
 import { startConversationWithText } from '../../support/conversation-dom.js';
 import { StandaloneConversation } from '../../support/conversation-harness.js';
 
@@ -63,6 +64,35 @@ async function send(text: string) {
   fireEvent.change(field(), { target: { value: text } });
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Skicka' })));
 }
+
+test('a failed task keeps its prompt but produces no duplicate error or model rows', async () => {
+  await arrange((url) => {
+    if (!url.endsWith('/messages')) return Response.json(initial);
+    const message = 'Skyttel stoppade en åtgärd utanför din begäran.';
+    return Response.json({
+      ...initial,
+      revision: 1,
+      phase: 'error',
+      error: 'assistant_action_out_of_scope',
+      reply: message,
+      requiredNotice: message,
+      modelReply: message,
+      completedReplies: [
+        {
+          id: 'failed',
+          revision: 1,
+          request: 'Läs bara.',
+          text: message,
+          reply: message,
+          requiredNotice: message,
+          failed: true,
+        },
+      ],
+    });
+  });
+  await send('Läs bara.');
+  expect(rows()).toEqual(['Du: Läs bara.']);
+});
 
 test('completed FIFO replies keep their separate checked outcomes while another typed task works, without duplicate rows', async () => {
   let current = initial;
@@ -236,7 +266,7 @@ test.each([
     expect(field().value).toBe('');
     expect(
       commands.filter((request) => request.url.endsWith('/new')).map((request) => request.body),
-    ).toEqual([{ discard }]);
+    ).toEqual([{ discard, ...approvedForVisit }]);
     expect(commands.filter((request) => request.url.endsWith('/messages'))).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: /^Visa utkastet/ }));
     const draft = screen.getByRole('region', { name: 'Utkastet' });

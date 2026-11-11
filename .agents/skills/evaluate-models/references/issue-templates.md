@@ -59,6 +59,9 @@ with the application's recorded model. Correctness comes before time and cost.
 ## Reproducibility
 
 - Code: <commit>
+- Application comparison: <baseline/candidate commits, common evaluator,
+  comparison-contract identifier, target scenarios and alternating repetition
+  plan; not applicable for a model-only evaluation>
 - Catalog and fixtures: <source and hashes; audio hashes for voice>
 - Scoring: <judge provider/model/effort, configuration hash and controls>
 - Provider verification: <official model, limits, pricing and counting sources>
@@ -92,10 +95,14 @@ with the application's recorded model. Correctness comes before time and cost.
   reference and recognized wording, actual backend/spoken question, blocked
   work, justification, selected reply and outcome; recurring questions and
   potential additional replies>
-- Qualification: <qualified, accepted with clarifications, failed or incomplete;
-  one fully verified round qualifies under the modality's acceptance policy,
-  every explicitly requested round must meet it>
+- Qualification scope: <everyday, long conversation and complex tasks;
+  raw unassisted outcome, completed assisted dialogs, safe capability limits,
+  correctness failures, incomplete or untested parts per group>
+- Full catalog qualification: <all required dialogs complete, or explicit gaps>
 - Response time and costs: <comparable results and regressions, or unavailable>
+- Application-change acceptance: <per-version individual outcomes, direct and
+  assisted full-response wait, queue/first-useful times, medians/ranges,
+  correctness gates and declared threshold result; not applicable otherwise>
 - Recommendation: pending
 - Evidence: <links to versioned records in comments>
 - Limitations and remaining work: <missing evidence and specific follow-up>

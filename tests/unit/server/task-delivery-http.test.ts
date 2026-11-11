@@ -6,7 +6,7 @@ import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
 import { advanceActiveLogin } from '../../support/session-time.js';
-import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import { modelMessage, modelTool, readOnlyScope, textModel } from '../../support/text-model.js';
 
 type Socket = {
   on(event: 'message' | 'open' | 'error' | 'close', callback: (data: unknown) => void): void;
@@ -123,6 +123,62 @@ async function arrange(
   };
 }
 
+test.each([
+  { source: 'text', deliveryAudio: true },
+  { source: 'voice', deliveryAudio: false },
+] as const)(
+  'explicit retry of $source input uses current deliveryAudio=$deliveryAudio without repeating model work',
+  async ({ source, deliveryAudio }) => {
+    const model = textModel(() => {
+      if (model.requests.length === 1) throw new Error('Controlled initial failure');
+      return [modelMessage('Det fullständiga återförsökssvaret.')];
+    }, readOnlyScope);
+    const fixture = await arrange(model);
+    const requestId = 'retry-current-delivery';
+    expect(
+      (
+        await fixture.post(
+          requestId,
+          source === 'voice' ? { voiceContext: 'Beskriv hela svaret.' } : {},
+        )
+      ).status(),
+    ).toBe(202);
+    await expect
+      .poll(async () => (await (await browser.get(fixture.endpoint)).json()).workFailure?.requestId)
+      .toBe(requestId);
+    const before = fixture.channel.messages.length;
+    const view = await (await browser.get(fixture.endpoint)).json();
+    expect(model.requests).toHaveLength(1);
+    const retried = await browser.post(`${fixture.endpoint}/retry-work`, {
+      headers: { origin: app.origin },
+      data: {
+        ...approvedForVisit,
+        revision: view.revision,
+        requestId,
+        deliveryConnectionId: fixture.channel.id,
+        deliveryAudio,
+      },
+    });
+    expect(retried.status(), await retried.text()).toBe(202);
+    await expect
+      .poll(() =>
+        fixture.channel.messages
+          .slice(before)
+          .find((item) => item.taskId === requestId && item.state === 'awaiting-receipt'),
+      )
+      .toBeTruthy();
+    const delivered = fixture.channel.messages
+      .slice(before)
+      .find((item) => item.taskId === requestId && item.state === 'awaiting-receipt');
+    expect(delivered?.audio).toBe(deliveryAudio);
+    expect(delivered?.text).toContain('Det fullständiga återförsökssvaret.');
+    expect(model.requests).toHaveLength(2);
+    fixture.channel.socket.send(
+      JSON.stringify({ type: 'received', taskId: requestId, text: delivered?.text }),
+    );
+  },
+);
+
 test.each(['text', 'voice'] as const)(
   'a completed %s result and its frozen delivery survive the next FIFO task before polling',
   async (source) => {
@@ -160,10 +216,21 @@ test.each(['text', 'voice'] as const)(
     held[1]([modelMessage('Andra svaret.')]);
     await expect.poll(async () => (await readFirst()).tasks[1].status).toBe('completed');
     const later = await readFirst();
-    expect(later).toEqual({ ...first, tasks: later.tasks });
+    expect(later.taskStatus).toBe('completed');
+    expect(later.phase).toBe('ready');
+    expect(later.modelReply).toBe(first.modelReply);
+    expect(later.reply).toBe(first.reply);
+    expect(later.result).toEqual(first.result);
+    expect(later.receipt).toEqual(first.receipt);
+    expect(later.completedReplies).toEqual(first.completedReplies);
     expect(later.completedReplies).toHaveLength(1);
+    expect(later.tasks[0]).toEqual(first.tasks[0]);
     expect(later.tasks[0].delivery.text).toBe(delivery?.text);
     expect(later.tasks[1].delivery.text).toContain('Andra svaret.');
+    expect(later.conversation).toEqual([
+      ...first.conversation,
+      { role: 'assistant', text: 'Andra svaret.' },
+    ]);
   },
 );
 
@@ -263,6 +330,49 @@ test('an incomplete provider answer fails delivery and never presents its prefix
       (item) => item.state === 'awaiting-receipt' || item.state === 'received',
     ),
   ).toBe(false);
+});
+
+test('an incomplete model result pauses the later queue until explicit recovery instead of reporting draft drift', async () => {
+  let release = () => {};
+  let entered = () => {};
+  const started = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const model = textModel(async () => {
+    if (model.requests.length === 1) {
+      entered();
+      await held;
+    }
+    return [modelMessage('Ett ännu inte fullständigt svar.')];
+  }, readOnlyScope);
+  const fixture = await arrange({
+    ...model,
+    provider: async (input, init) => {
+      const body = JSON.parse(String(init?.body));
+      const response = await model.provider(input, init);
+      if (!body.instructions.startsWith('SKYTTEL_TURN_') && model.requests.length === 1)
+        return Response.json({ ...(await response.json()), status: 'incomplete' });
+      return response;
+    },
+  });
+  try {
+    expect((await fixture.post('incomplete-first')).status()).toBe(202);
+    await started;
+    expect((await fixture.post('later-queued')).status()).toBe(202);
+    release();
+    await expect
+      .poll(async () => {
+        const view = await (await browser.get(fixture.endpoint)).json();
+        return [view.phase, view.queuedMessages, view.workFailure?.code];
+      })
+      .toEqual(['error', 1, 'assistant_provider_failed']);
+    expect(model.requests).toHaveLength(1);
+  } finally {
+    release();
+  }
 });
 
 test('the complete frozen fallback contains every follow-up, conversation part and verified draft/save status', async () => {
@@ -420,7 +530,7 @@ test('delivery channel capacity is bounded and explicit conversation reset retir
   expect((await connect(`${fixture.endpoint}/delivery`)).id).not.toBe(fixture.channel.id);
 });
 
-test('the original task timer ends accepted work without a model reply or browser traffic and late model output cannot revive it', async () => {
+test('the original task timer expires accepted work without browser traffic while the retained conversation rejects late model output', async () => {
   let release: (output: unknown[]) => void = () => {};
   const model = textModel(
     () =>
@@ -440,7 +550,23 @@ test('the original task timer ends accepted work without a model reply or browse
   vi.useRealTimers();
   await signIn(browser, app.origin);
   release([modelMessage('Ett svar efter uppgiftens slut.')]);
-  expect((await browser.get(fixture.endpoint)).status()).toBe(404);
+  const restored = await browser.get(fixture.endpoint);
+  expect(restored.status()).toBe(200);
+  expect(await restored.json()).toMatchObject({
+    paused: true,
+    phase: 'ready',
+    error: 'assistant_task_expired',
+    tasks: [{ id: 'answer', status: 'expired' }],
+    completedReplies: [],
+    conversation: [{ role: 'user', text: 'Beskriv hela svaret.' }],
+  });
+  const task = await browser.get(`${fixture.endpoint}/messages/answer`);
+  expect(task.status()).toBe(200);
+  const expired = await task.json();
+  expect(expired).toMatchObject({ taskStatus: 'expired', error: 'assistant_task_expired' });
+  expect(expired.modelReply).toBeUndefined();
+  expect(expired.result).toBeUndefined();
+  expect(expired.receipt).toBeUndefined();
   expect(model.requests).toHaveLength(1);
   expect(
     fixture.channel.messages.some(
@@ -560,7 +686,7 @@ test('later queued work does not replace frozen text or revoke the earlier task�
     .toBe(2);
 });
 
-test('delivery failure and restart preserve the actual stored draft without stored conversation text', async () => {
+test('delivery failure and restart restore the conversation paused while its stored draft survives explicit end', async () => {
   let typeId = '';
   const fixture = await arrange(
     textModel(() => [
@@ -591,6 +717,7 @@ test('delivery failure and restart preserve the actual stored draft without stor
   await expect
     .poll(async () => (await (await browser.get(fixture.endpoint)).json()).tasks[0].delivery.state)
     .toBe('failed');
+  const before = await (await browser.get(fixture.endpoint)).json();
   expect((await (await browser.get(mapPath)).json()).draft.changes).toMatchObject([
     { id: 'retained-delivery', after: { name: 'Bevarat leveransförslag' } },
   ]);
@@ -598,7 +725,26 @@ test('delivery failure and restart preserve the actual stored draft without stor
   expect((await (await browser.get(mapPath)).json()).draft.changes).toMatchObject([
     { id: 'retained-delivery', after: { name: 'Bevarat leveransförslag' } },
   ]);
+  const restored = await browser.get(fixture.endpoint);
+  expect(restored.status()).toBe(200);
+  const current = await restored.json();
+  expect(current).toMatchObject({
+    paused: true,
+    phase: 'ready',
+    conversation: before.conversation,
+    result: before.result,
+    tasks: [{ id: 'answer', status: 'completed' }],
+  });
+  expect(current.tasks[0].delivery).toBeUndefined();
+  expect(
+    (
+      await browser.post(`${fixture.endpoint}/stop`, { headers: { origin: app.origin }, data: {} })
+    ).status(),
+  ).toBe(200);
   expect((await browser.get(fixture.endpoint)).status()).toBe(404);
+  expect((await (await browser.get(mapPath)).json()).draft.changes).toMatchObject([
+    { id: 'retained-delivery', after: { name: 'Bevarat leveransförslag' } },
+  ]);
 });
 
 test('a task with no already open delivery channel fails delivery immediately and does not wait for one', async () => {
@@ -612,16 +758,40 @@ test('a task with no already open delivery channel fails delivery immediately an
   expect(fixture.channel.messages.some((item) => item.type === 'delivery')).toBe(false);
 });
 
-test('restart retires the connection and cannot recover old task IDs or replay model work', async () => {
-  const model = textModel(() => [modelMessage('Ett tillfälligt svar.')]);
+test('restart retires the delivery connection and restores completed task results paused without replaying model work', async () => {
+  const model = textModel(() => [modelMessage('Ett bevarat svar.')]);
   const fixture = await arrange(model);
   expect((await fixture.post()).status()).toBe(202);
   await expect
     .poll(() => fixture.channel.messages.find((item) => item.state === 'awaiting-receipt'))
     .toBeTruthy();
+  const before = await (await browser.get(fixture.endpoint)).json();
+  let closed = false;
+  fixture.channel.socket.on('close', () => {
+    closed = true;
+  });
   browser = await restartWithSession(browser, () => app.restart());
+  await expect.poll(() => closed).toBe(true);
   await rejectedConnection(`${fixture.endpoint}/delivery`);
-  expect((await browser.get(fixture.endpoint)).status()).toBe(404);
+  const restored = await browser.get(fixture.endpoint);
+  expect(restored.status()).toBe(200);
+  const current = await restored.json();
+  expect(current).toMatchObject({
+    paused: true,
+    phase: 'ready',
+    conversation: before.conversation,
+    completedReplies: before.completedReplies,
+    tasks: [{ id: 'answer', status: 'completed' }],
+  });
+  expect(current.tasks[0].delivery).toBeUndefined();
+  const task = await browser.get(`${fixture.endpoint}/messages/answer`);
+  expect(task.status()).toBe(200);
+  expect(await task.json()).toMatchObject({
+    paused: true,
+    taskStatus: 'completed',
+    modelReply: 'Ett bevarat svar.',
+    completedReplies: before.completedReplies,
+  });
   expect(model.requests).toHaveLength(1);
 });
 

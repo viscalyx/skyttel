@@ -1,3 +1,4 @@
+import type { ConversationModelChoice } from './conversation-model.js';
 import type { DraftConflict } from './draft-conflicts.js';
 import type { MapDraft, ObjectType, RelationshipType, SaveOperation, SaveReceipt } from './map.js';
 import type { SaveCheck } from './save-check.js';
@@ -30,7 +31,7 @@ export type TextAssistantResult = {
   kind: 'draft' | 'restored' | 'history' | 'failure';
   /** Server-produced text grounded in checked MCP results or recorded failures. */
   message: string;
-  /** Checked proposal changes made by this task, for the text conversation's final summary. */
+  /** Checked proposal changes made by this task, for its text and voice completion. */
   changes?: TextAssistantChange[];
 };
 /** Ephemeral FIFO completion, including its delivery origin and checked outcome. */
@@ -40,6 +41,8 @@ export type ConversationReply = {
   request?: string;
   text: string;
   revision?: number;
+  /** The reset whose queued discard completes; shares its startup transcript row. */
+  resetContextRevision?: number;
   source?: 'voice' | 'text';
   /** Voice poll handoff disposition; absent until that connection consumes the reply. */
   voiced?: boolean;
@@ -56,7 +59,39 @@ export type ConversationReply = {
   failed?: boolean;
   saveCheck?: SaveCheck;
 };
+export type RetainedConversation = {
+  id: string;
+  title: string;
+  expiresAt: number;
+  paused: boolean;
+  modelChoice: ConversationModelChoice;
+};
 export interface TextAssistantView {
+  /** Deliberate next steps for retained failed work, separate from unknown outcomes. */
+  workFailure?: {
+    requestId: string;
+    request: string;
+    code: string;
+    message: string;
+    retry?: string;
+  };
+  /** Restored work never starts automatically. */
+  paused?: boolean;
+  expiresAt?: number;
+  conversation?: {
+    role: 'user' | 'assistant';
+    text: string;
+    partial?: boolean;
+    /** Automatic failure shown in the notice; retained as model context only. */
+    notice?: boolean;
+  }[];
+  /** Authenticated original wording, distinct from model summaries. */
+  unfinishedRequests?: { id: string; text: string; paused?: boolean }[];
+  queuedRequests?: { id: string; text: string; source?: 'text' | 'voice' }[];
+  modelChoice?: ConversationModelChoice;
+  modelChoiceRevision?: number;
+  enabledModelChoices?: ConversationModelChoice[];
+  modelChoiceUnavailable?: boolean;
   /** Information accepted when this conversation began; later acceptance cannot replace it. */
   readonly consentTextVersion?: number;
   id: string;
@@ -67,10 +102,16 @@ export interface TextAssistantView {
   contextPercentage?: number;
   /** A provider handoff is separate from clearing the visible conversation. */
   contextSummaryState?: 'needed' | 'summarizing' | 'failed';
+  /** Only a new standalone scope may run; earlier work and its queue stay paused. */
+  capacityPaused?: boolean;
+  /** A summary failure does not change the verified outcome of completed work. */
+  contextSummaryFailure?: { code: string; message: string };
   contextGeneration?: number;
   contextSummaries?: { id: string; text: string }[];
   /** Origin of the explicit reset; pre-release spoken work still gets its voice reply. */
   resetSource?: 'voice' | 'text';
+  /** This context's explicit reset is waiting for its queued discard to finish. */
+  resetDiscardPending?: boolean;
   /** Startup handoff disposition for the reset statement. */
   replyVoiced?: boolean;
   /** Verified whole-draft discard, shown as conversation text. */
@@ -94,6 +135,8 @@ export interface TextAssistantView {
   canceled?: boolean;
   /** An explicitly authorized immutable save is durably registered and unfinished. */
   saving?: boolean;
+  /** A submitted draft batch has an outcome still awaiting status verification. */
+  batchPending?: boolean;
   phase: 'ready' | 'working' | 'error' | 'recovery';
   /** Current public executor stage and recent actual MCP steps in this task. */
   activity?: string;

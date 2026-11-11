@@ -5,7 +5,13 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
-import { modelMessage, modelTool, pendingUpdate, textModel } from '../../support/text-model.js';
+import {
+  failExplanation,
+  modelMessage,
+  modelTool,
+  pendingUpdate,
+  textModel,
+} from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
@@ -458,6 +464,18 @@ test('delegated old-question speech cannot resolve a replacement queued ahead of
   }
 });
 
+const sharesTypeProposal = {
+  name: 'propose_relationship_type',
+  arguments: {
+    id: 'shares',
+    baseRevision: null,
+    value: {
+      name: 'Delar',
+      description: '',
+    },
+  },
+};
+
 test('a typed partial change delivers its verified result and full follow-up to voice once', {
   tags: ['technical'],
 }, async () => {
@@ -469,21 +487,7 @@ test('a typed partial change delivers its verified result and full follow-up to 
         contentVersion: 1,
         completion: 'draft',
         questions: [question],
-        operations: [
-          {
-            name: 'propose_relationship_type',
-            arguments: {
-              id: 'shares',
-              baseRevision: null,
-              value: {
-                name: 'Delar',
-                description: '',
-                forwardLabel: 'delar med',
-                reverseLabel: 'delar med',
-              },
-            },
-          },
-        ],
+        operations: [sharesTypeProposal],
       }),
     ]).provider,
   );
@@ -505,13 +509,126 @@ test('a typed partial change delivers its verified result and full follow-up to 
   const parts = () => voiceAnswerParts(live.sent);
   const content = parts().join('');
   expect(content).toBe(
-    `Obligatoriskt besked från Skyttel: ${current.requiredNotice}\nSkyttels resultat (verifierat): Utkastet är uppdaterat.\nNödvändig fråga (samtalsdata): ${JSON.stringify(current.modelReply)}`,
+    `Obligatoriskt besked från Skyttel: ${current.requiredNotice}\nSkyttels resultat (verifierat): Utkastet är uppdaterat.\nSambandstypen Delar lades till.\nNödvändig fråga (samtalsdata): ${JSON.stringify(current.modelReply)}`,
   );
   expect(result.voice.response).toMatchObject({
-    text: `${current.reply}\n${current.modelReply}`,
+    text: `${current.requiredNotice}\nUtkastet är uppdaterat.\nSambandstypen Delar lades till.\n${current.modelReply}`,
     questionPending: true,
   });
   await poll(true);
   expect(parts().join('')).toBe(content);
+  expect((await (await browser.get(`${householdPath}/map/history`)).json()).history).toEqual([]);
+});
+
+test('a failed typed completion delivers its own question before a later task question', {
+  tags: ['technical'],
+}, async () => {
+  const question = 'Vilken cykel menar du?';
+  const laterQuestion = 'Vilken hjälm menar du?';
+  const firstRequest =
+    'Lägg till sambandstypen Delar, rätta cykeln och förklara typen. Spara inte.';
+  const model = textModel(() =>
+    model.requests.length === 1
+      ? [
+          modelTool('submit_changes', {
+            version: 0,
+            contentVersion: 1,
+            completion: 'draft',
+            continueResponse: true,
+            questions: [
+              { kind: 'change', request: 'Rätta cykeln.', question, dependsOnDraft: false },
+            ],
+            operations: [sharesTypeProposal],
+          }),
+        ]
+      : [
+          modelTool('ask_questions', {
+            questions: [
+              {
+                kind: 'change',
+                request: 'Lägg till hjälmen.',
+                question: laterQuestion,
+                dependsOnDraft: false,
+              },
+            ],
+          }),
+        ],
+  );
+  const provider = failExplanation(
+    model,
+    () => Response.json({ error: { message: 'Controlled explanation outage.' } }, { status: 503 }),
+    (body) =>
+      model.requests.length === 1 &&
+      JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content)).message ===
+        firstRequest,
+  );
+  let providerCalls = 0;
+  const { live, path, householdPath, post, send, poll } = await arrange(async (input, init) => {
+    providerCalls++;
+    return provider(input, init);
+  });
+  const failed = await send(firstRequest, 'failed-partial');
+  expect(failed).toMatchObject({
+    phase: 'error',
+    error: 'assistant_model_temporary',
+    questionPending: true,
+    newQuestions: [question],
+    result: { kind: 'draft', changes: [{ subject: 'Sambandstypen Delar', action: 'lades till' }] },
+  });
+  expect(failed.modelReply).toBeUndefined();
+  expect(failed.receipt).toBeUndefined();
+  const failedCalls = providerCalls;
+  const queued = await send('Lägg till hjälmen utan att spara.', 'later-question');
+  expect(queued).toMatchObject({
+    phase: 'error',
+    workFailure: { requestId: 'failed-partial', code: 'assistant_model_temporary' },
+    queuedMessages: 1,
+    queuedRequests: [{ id: 'later-question', text: 'Lägg till hjälmen utan att spara.' }],
+    newQuestions: [question],
+  });
+  expect(queued.completedReplies).toContainEqual(
+    expect.objectContaining({ id: 'failed-partial', failed: true, newQuestions: [question] }),
+  );
+  const delivered = await poll(true);
+  expect(delivered.voice.replyDelivery).toContainEqual({ id: 'failed-partial', voiced: true });
+  const firstSpoken = voiceAnswerParts(live.sent).join('');
+  expect(firstSpoken).toContain('Sambandstypen Delar lades till.');
+  expect(firstSpoken).toContain(`Obligatoriskt besked från Skyttel: ${failed.reply}`);
+  expect(firstSpoken).toContain(`Nödvändig fråga (samtalsdata): ${JSON.stringify(question)}`);
+  expect(firstSpoken).not.toContain(laterQuestion);
+  await poll(true);
+  expect(voiceAnswerParts(live.sent).join('')).toBe(firstSpoken);
+  expect(providerCalls).toBe(failedCalls);
+
+  const current: TextAssistantView = await (await browser.get(path)).json();
+  const abandoned = await post(`${path}/abandon-work`, {
+    revision: current.revision,
+    requestId: 'failed-partial',
+  });
+  expect(abandoned.status(), await abandoned.text()).toBe(202);
+  await expect
+    .poll(async () => {
+      const view: TextAssistantView = await (await browser.get(path)).json();
+      return [view.phase, view.queuedMessages];
+    })
+    .toEqual(['ready', 0]);
+  const later: TextAssistantView = await (await browser.get(path)).json();
+  expect(later.workFailure).toBeUndefined();
+  expect(later.questions).toEqual([laterQuestion]);
+  expect(later.newQuestions).toEqual([laterQuestion]);
+  expect(later.review).toEqual(failed.review);
+  expect(later.receipt).toBeUndefined();
+  expect(model.requests).toHaveLength(2);
+  const next = await poll(true);
+  expect(next.voice.replyDelivery).toContainEqual({ id: 'later-question', voiced: true });
+  const spoken = voiceAnswerParts(live.sent).join('');
+  expect(spoken.startsWith(firstSpoken)).toBe(true);
+  expect(spoken).toContain(`Nödvändig fråga (samtalsdata): ${JSON.stringify(laterQuestion)}`);
+  expect(spoken.split('Sambandstypen Delar lades till.')).toHaveLength(2);
+  expect(spoken.split(`Obligatoriskt besked från Skyttel: ${failed.reply}`)).toHaveLength(2);
+  expect(spoken.split(JSON.stringify(question))).toHaveLength(2);
+  expect(spoken.split(JSON.stringify(laterQuestion))).toHaveLength(2);
+  await poll(true);
+  expect(voiceAnswerParts(live.sent).join('')).toBe(spoken);
   expect((await (await browser.get(`${householdPath}/map/history`)).json()).history).toEqual([]);
 });

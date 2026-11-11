@@ -1,9 +1,11 @@
 import { type ReactNode, useEffect, useId, useLayoutEffect, useRef } from 'react';
+import { conversationModels, reasoningLabels } from '../shared/conversation-model.js';
 import {
   conversationWidths,
   defaultConversationPreferences,
 } from '../shared/conversation-preferences.js';
 import { ContextMeter } from './ConversationContext.js';
+import { ConversationModel } from './ConversationModel.js';
 import { ConversationTranscript } from './ConversationTranscript.js';
 import { ConversationWidthHandle } from './ConversationWidthHandle.js';
 import type { Conversation } from './use-conversation.js';
@@ -51,7 +53,9 @@ export function TextView({
 }) {
   const { session, transcript, text, pending, unknown, working } = conversation;
   const viewport = useConversationViewport();
-  const { computer, mobile, short } = viewport;
+  const { computer, mobile } = viewport;
+  // A short desktop window needs the same room for composing as a touch view.
+  const short = viewport.height < 520;
   const root = useRef<HTMLElement>(null);
   const widths = conversationWidths(
     widthPreferences?.preferences ?? defaultConversationPreferences,
@@ -66,11 +70,26 @@ export function TextView({
   const initialComputer = useRef(computer);
   const stop = working && !computer;
   const stopFocused = useRef(false);
+  const endFocused = useRef(false);
+  const retainedOpening = useRef<string | null>(null);
+  const resumeFocused = useRef(false);
+  const resume = useRef<HTMLButtonElement>(null);
+  const newConversation = useRef<HTMLButtonElement>(null);
   const id = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
+  useLayoutEffect(() => {
+    if (retainedOpening.current === session?.id && session?.paused) {
+      retainedOpening.current = null;
+      resume.current?.focus();
+    }
+    if (resumeFocused.current && !session?.paused) {
+      resumeFocused.current = false;
+      field.current?.focus();
+    }
+  }, [session]);
   const firstMessage = useRef<{ text: string; asked: boolean } | null>(null);
   useEffect(() => {
     const first = firstMessage.current;
@@ -118,13 +137,26 @@ export function TextView({
     if (body.current && follow.current) body.current.scrollTop = body.current.scrollHeight;
   }, [transcript, working, session?.activity, session?.activitySteps?.length]);
   useLayoutEffect(() => {
+    // Present the paused state and deadline on return, above the retained text.
+    if (session?.paused && body.current) body.current.scrollTop = 0;
+    follow.current = !session?.paused;
+  }, [session?.paused]);
+  useLayoutEffect(() => {
     if (!stop && stopFocused.current) {
       stopFocused.current = false;
       field.current?.focus();
     }
   }, [stop]);
+  useLayoutEffect(() => {
+    if (pending) return;
+    if (!session && endFocused.current && document.activeElement === document.body)
+      newConversation.current?.focus();
+    endFocused.current = false;
+  }, [session, pending]);
   const blocked =
     conversation.inputBlocked ||
+    session?.paused ||
+    session?.workFailure?.code === 'assistant_draft_changed' ||
     pending ||
     unknown ||
     session?.phase === 'recovery' ||
@@ -174,6 +206,7 @@ export function TextView({
               <ContextMeter percentage={session?.contextPercentage} />
             </div>
             <button
+              ref={newConversation}
               type="button"
               className="text-view-new"
               disabled={conversation.inputBlocked || pending}
@@ -265,6 +298,95 @@ export function TextView({
               follow.current = scrollHeight - scrollTop - clientHeight < 80;
             }}
           >
+            {session && (
+              <div className="text-view-lifetime">
+                {session.expiresAt && (
+                  <p role="status" aria-label="Samtalets livslängd">
+                    {session.paused && 'Samtalet är pausat. '}
+                    Löper ut{' '}
+                    <time dateTime={new Date(session.expiresAt).toISOString()}>
+                      {new Date(session.expiresAt).toLocaleString('sv-SE')}
+                    </time>{' '}
+                    efter sju dygn utan ditt meddelande eller uttrycklig återupptagning.
+                    {session.paused &&
+                      ' Nytt samtal tar bort det tidigare samtalet; utkastet ligger kvar.'}
+                  </p>
+                )}
+                {session.paused && conversation.resumeConversation && (
+                  <button
+                    ref={resume}
+                    type="button"
+                    disabled={pending}
+                    onClick={(event) => {
+                      resumeFocused.current = document.activeElement === event.currentTarget;
+                      void conversation.resumeConversation?.();
+                    }}
+                  >
+                    Återuppta samtalet
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={(event) => {
+                    endFocused.current = document.activeElement === event.currentTarget;
+                    void conversation.endConversation();
+                  }}
+                >
+                  Avsluta samtalet
+                </button>
+              </div>
+            )}
+            {conversation.listRetained && (
+              <div className="text-view-lifetime">
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => void conversation.listRetained?.()}
+                >
+                  Bevarade samtal
+                </button>
+                {conversation.retainedConversations && (
+                  <section aria-label="Bevarade samtal">
+                    {conversation.retainedConversations.length ? (
+                      <ul>
+                        {conversation.retainedConversations.map((retained) => (
+                          <li key={retained.id}>
+                            <p>
+                              {retained.paused ? 'Pausat samtal.' : 'Pågående samtal.'}{' '}
+                              {
+                                conversationModels.find(
+                                  (model) => model.id === retained.modelChoice.model,
+                                )?.name
+                              }
+                              , {reasoningLabels[retained.modelChoice.effort]}. Löper ut{' '}
+                              <time dateTime={new Date(retained.expiresAt).toISOString()}>
+                                {new Date(retained.expiresAt).toLocaleString('sv-SE')}
+                              </time>
+                              .
+                            </p>
+                            <button
+                              type="button"
+                              disabled={pending}
+                              onClick={() => {
+                                retainedOpening.current = retained.id;
+                                void conversation.openRetained?.(retained.id).then((opened) => {
+                                  if (!opened) retainedOpening.current = null;
+                                });
+                              }}
+                            >
+                              Öppna {retained.title}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>Inga bevarade samtal.</p>
+                    )}
+                  </section>
+                )}
+              </div>
+            )}
             {children}
             <ConversationTranscript
               rows={transcript}
@@ -279,11 +401,20 @@ export function TextView({
               announce={!hidden}
               announceWorking={false}
             />
+            {session?.capacityPaused && (
+              <p id={`${id}-scope-help`}>
+                Skriv ett nytt avgränsat uppdrag som står för sig självt. Ange mål och alla
+                begränsningar som gäller. Tidigare oavslutat arbete och kön ligger kvar pausade.
+              </p>
+            )}
           </div>
           <p className="text-view-canceled" aria-live="polite" aria-atomic="true">
             {session?.canceled ? 'Avbrutet. Föreslagna ändringar ligger kvar i utkastet.' : ''}
           </p>
           {notice}
+          <div className="text-view-model">
+            <ConversationModel conversation={conversation} />
+          </div>
           <form
             className="text-view-message"
             onSubmit={(event) => {
@@ -297,6 +428,7 @@ export function TextView({
               id={`${id}-message`}
               rows={short ? 1 : 2}
               maxLength={4000}
+              aria-describedby={session?.capacityPaused ? `${id}-scope-help` : undefined}
               placeholder="Berätta vad du vill göra…"
               value={text}
               onChange={(event) => conversation.setText(event.target.value)}
@@ -328,7 +460,7 @@ export function TextView({
               </button>
             ) : (
               <button type="submit" className="primary" disabled={blocked}>
-                Skicka
+                {session?.capacityPaused ? 'Avgränsa uppdraget' : 'Skicka'}
               </button>
             )}
           </form>

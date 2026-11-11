@@ -107,6 +107,8 @@ installation's unique generation stable across ordinary restarts.
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Credentials for the installation's Google web application. |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` | Credentials for the installation's Microsoft web application. |
 | `OPENAI_API_KEY` | Optional server-only project key for Skyttel's text and voice assistants. Without it, manual map work remains available. |
+| `SKYTTEL_CONVERSATION_MODELS` | Optional JSON list of enabled model and reasoning combinations. See [model activation](conversation-models.md). Missing enables Terra and Sol at low, medium and high; an empty list disables model work. |
+| `SKYTTEL_CONVERSATION_WORK_MODE` | Optional `sequential` (default) or experimental `overlap`. See [separate overlap experiment](conversation-models.md#separat-försök-med-överlappning). Keep the baseline until a separately authorized comparison supports a change. |
 | `PORT` | Optional; defaults to `3000`. Compose uses port `3000`. |
 | `HOST` | Optional; defaults to `0.0.0.0`. |
 <!-- markdownlint-enable MD013 -->
@@ -244,9 +246,22 @@ audio or household content.
 A denied microphone, blocked audio or broken voice connection leaves text
 and forms usable. Check browser permissions, secure origin and network
 access, then start a fresh voice connection. Voice does not reconnect
-automatically. After an application restart, start a new assistant session.
-A saved conversation consent remains. A consent given only for the visit
-lasts until the page is reloaded.
+automatically. After an application restart, consented conversation text and
+unfinished work remain paused in installation storage until their original
+seven-day inactivity deadline. A new authenticated visit checks household
+access, ownership and current content before showing this material. No
+model work or new save starts during restoration. A saved conversation
+consent remains; new conversation work can require approval again when
+the earlier approval only covered a visit or the information changes.
+
+Logout pauses the conversation. Explicit end and expiry remove conversation
+text, queued work, pending parts and their save blockers. They do not save
+or discard draft proposals. Pending changes in retained conversations
+block new saves of the same draft even before restoration loads the old
+conversation. Existing registered save attempts retain their independent
+recovery and precedence. Preserve the database and apply the backup limits
+to consented conversation content. Background work and status checks do
+not renew its lifetime.
 
 Stopping a session or losing a connection does not undo a completed save.
 Skyttel automatically checks uncertain saves when contact returns. It

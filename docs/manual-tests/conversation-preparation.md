@@ -7,6 +7,74 @@ verkliga leverantörsanrop eller fysiska ljudprov ingår här.
 
 ## Utkastbatch och sparande
 
+### Återuppta samtal på två enheter
+
+För KONTEXT-25 används två separata webbläsarprofiler eller enheter,
+inloggade som Alex i samma kontrollerade installation. Börja med ett tomt
+utkast. Lämna installationen igång mellan profilerna.
+
+Efter **Beskriv garaget utan att ändra något.** skickas följande till
+det nya REQUEST som `held` visar:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST ask_questions {"questions":[{"kind":"information","request":"Beskriv garaget utan att ändra något.","question":"Vilket garage?","dependsOnDraft":false}]}
+```
+<!-- markdownlint-enable MD013 -->
+
+Omladdning och **Återuppta samtalet** ska inte skapa ett nytt modelluppdrag
+när bara frågan väntar. Kör `scope-read` innan det andra samtalets
+uppdrag skickas. Efter det uppdraget används dess nya REQUEST:
+
+```text
+reply REQUEST Det andra samtalet gäller cykeln.
+```
+
+Kör `scope-work` när svaret är klart, före garagets förtydligande.
+Efter **Återuppta samtalet** slår användaren på mikrofonen. Ange den
+kontrollerade repliken med `user Det västra garaget.` följt av `delegate`
+i terminalen.
+
+Efter **Det västra garaget.** kopieras PART och REVISION från
+`held.pendingParts` för frågan **Vilket garage?**. MESSAGE är det nya
+meddelandets `messageId`, inte det tidigare uppdragets identitet.
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST ask_questions {"questions":[],"updates":[{"id":"PART","revision":REVISION,"action":"clarify","messageId":"MESSAGE","evidence":"Det västra garaget.","answer":"Garaget heter Västra."}],"continueResponse":true}
+```
+<!-- markdownlint-enable MD013 -->
+
+Om ett nytt `held` visas släpps dess slutbesked med
+`reply REQUEST Garaget heter Västra.`. Avsluta båda profilerna och kör
+`quit` efter fallet. Inga verkliga leverantörsanrop eller hörbart tal ingår.
+
+### Fråga före omladdning
+
+För KONTEXT-24: använd det nya REQUEST från `held` efter meddelandet
+**Byt cykelns namn till Blå, men ändra inte ägaren.**. Skicka följande
+kontrollerade svar och invänta att frågan visas före omladdning:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST ask_questions {"questions":[{"kind":"change","request":"Byt cykelns namn till Blå, men ändra inte ägaren.","question":"Vilken cykel?","dependsOnDraft":true}]}
+```
+<!-- markdownlint-enable MD013 -->
+
+Efter omladdningen ska inget nytt `held` visas. Avsluta med `quit` efter
+UI-proceduren; provkatalogen tas bort. Vid omstart använder du det
+befintliga kommandot `restart` och inväntar `restarted` innan omladdning.
+Exakta tidsgränser verifieras separat genom de publika HTTP-kontrollerna.
+
+Lämna svaret på **Beskriv garaget utan att ändra.** hållet före
+omladdningen. Det följande köade meddelandet ska inte skapa ett nytt
+modelluppdrag. Återleverera inte det tidigare verktygsanropet eller
+skapa ett nytt uppdrag för att återställa samtalet. `restart` släpper
+kvarvarande gamla leverantörssvar och startar samma databas på nytt;
+pausat arbete och kön ska fortfarande inte starta.
+
+### Aktuella värden för ändringar
+
 Vid ett angivet släpp i ett vanligt fall: kopiera `id`, `draft.version`,
 `draft.contentVersion`, Lo-förslagets `id` och hela `after` från aktuellt
 `held`. Vid nästa uppdrag används dess nya `id` och aktuella `draft`.
@@ -24,9 +92,16 @@ tool REQUEST submit_changes {"version":V,"contentVersion":C,"completion":"draft"
 <!-- markdownlint-enable MD013 -->
 
 `baseRevision:null` gäller det nya, ännu osparade Lo-förslaget. För ett
-sparat objekt används dess verkliga tidigare revision. `submit_changes`
-avslutar uppdraget direkt. Invänta att arbetsraden försvinner och läs
-ändringen genom **Utkast → Visa förslaget** innan nästa uppdrag börjar.
+sparat objekt används dess verkliga tidigare revision. Provleverantörens
+vanliga inställning kräver även ett slutbesked. Efter en lyckad batch,
+invänta nästa `held` med `kind:"work"` och använd dess nya REQUEST:
+
+```text
+reply REQUEST Ändringen finns i ditt utkast.
+```
+
+Invänta att arbetsraden försvinner och läs ändringen genom
+**Utkast → Visa förslaget** innan nästa uppdrag börjar.
 
 För ett uttryckligen begärt sparande används aktuella V och C:
 
@@ -34,15 +109,48 @@ För ett uttryckligen begärt sparande används aktuella V och C:
 tool REQUEST save_draft {"version":V,"contentVersion":C,"operationId":"prov"}
 ```
 
-Ett lyckat `save_draft` avslutar uppdraget direkt: vänta på
-**Utkastet är sparat**, tomt utkast och sparad Lo, inte ett nytt `held`.
+Efter ett lyckat `save_draft`, invänta nästa `held` med `kind:"work"`
+och använd dess nya REQUEST:
+
+```text
+reply REQUEST Utkastet är sparat.
+```
+
+Vänta på slutbeskedet, tomt utkast och sparad Lo.
 I KONTEXT-01 och KONTEXT-08 prövas samma verktyg avsiktligt efter
 **Vad gjorde vi?**, utan ny sparbegäran. Det ska avvisas direkt med
 **Skyttel kunde inte slutföra uppdraget. Försök igen.**. Inget
-efterföljande modelluppdrag ska släppas i dessa tre gränser.
+efterföljande modelluppdrag ska släppas vid dessa avvisningar.
 Röstkommentarer, råa operations-ID:n, exakta kvitton, anropsordning,
 `store:false`, filinnehåll och resursantal är tekniskt underlag i
 automationen, separat från de synliga vanliga arbetsstegen.
+
+## Fel i en beroende ändringsbatch
+
+För FRAGA-13/14: börja med ett identifierat, osparat **Lo Exempel**
+utan egenskaper. Släpp första uppdraget enligt **Utkastbatch och
+sparande**, med namnet **Lo Lind**. Det är en egen slutförd batch.
+
+Vid nästa uppdrag, läs hela utkastet med
+`tool REQUEST read_my_draft {}`. Det inledande underlaget kan utelämna
+Lo eftersom den nya begäran gäller Lampan. Kopiera TYPE från
+Lo-förslagets `after.typeId` i nästa `held.lastToolResult.changes`.
+Läs sedan sambandstyperna med
+`tool REQUEST read_type_catalog {}`. Kopiera ett verkligt ID till REL
+från nästa `held.lastToolResult.relationshipTypes`, och V/C från
+aktuellt `held.draft`.
+Släpp sedan följande, med aktuellt REQUEST. Den andra operationens
+avsiktligt saknade ändpunkt provar fel efter ett giltigt objektförslag:
+
+<!-- markdownlint-disable MD013 -->
+```text
+tool REQUEST submit_changes {"version":V,"contentVersion":C,"completion":"draft","questions":["Vilket kort ska användas?"],"operations":[{"name":"propose_object","arguments":{"id":"lamp","baseRevision":null,"value":{"typeId":"TYPE","name":"Lampan"}}},{"name":"propose_relationship","arguments":{"id":"required-link","baseRevision":null,"value":{"typeId":"REL","sourceId":"lamp","targetId":"missing-endpoint"}}}]}
+```
+<!-- markdownlint-enable MD013 -->
+
+Inget steg från den misslyckade batchen får finnas i utkastet. Läs
+resultatet enligt det manuella fallet. Starta om provinstallationen
+efter fallet; använd inte riktiga hushållsdata för denna felinjektion.
 
 ## Sammanfattning och mätning
 
@@ -58,12 +166,74 @@ reply REQUEST Historisk sammanfattning: Lo är det senaste förslaget. Spara hel
 <!-- markdownlint-enable MD013 -->
 
 För fel, kör `fail REQUEST` på just sammanfattningsanropet.
+För ett kontrollerat kapacitetsstopp, skicka det manuella fallets begäran
+och kör `fail REQUEST capacity` på dess hållna arbetsanrop. Leverantörens
+kapacitetsfel är kontrollerat; det mäter inte en verklig modells gräns.
+Efter stoppet skrivs ett fullständigt avgränsat uppdrag i textfältet och
+skickas med **Avgränsa uppdraget**. Släpp det nya hållna anropet med
+`reply REQUEST Det avgränsade svaret.`. Ursprunglig begäran ligger kvar
+pausad; den nya texten ska ange alla mål och begränsningar som gäller.
 `context 89` utlöser motsvarande röstbyte från den aktuella anslutningen.
 `capture-context-source` före bytet och `context-old 99` efter det
 släpper en gammal mätning som inte ska påverka det nya samtalet.
 `context-invalid` provar fel format. För det separata tekniska underlaget
 provar automationen även negativt, saknat och null-värde samt en
 klientförfalskad mätning; de hör inte till vanliga UI-steg.
+
+## Köad rättelse och oberoende kontroll
+
+För KONTEXT-21 och KONTEXT-22 håller terminalen även svaret från den
+oberoende ändringskontrollen. Aktivera kontrollen före första läsningen:
+
+```text
+hold-check on
+scope-read
+text-context 99
+```
+
+Skicka och köa de två texterna enligt fallet. Släpp läsningens `held` med
+`reply REQUEST Den första läsningen är klar.`. Håll nästa `held`, vars
+`kind` är `context-summary`, medan den manuella ändringen görs. Kör
+`scope-work`, `response-required off` och `text-context 0` innan
+sammanfattningen släpps med
+`reply REQUEST Avslutad historisk läsning.`.
+
+Nästa arbetsanrop innehåller den köade rättelsen och aktuellt utkast.
+Släpp en batch enligt **Utkastbatch och sparande**: behåll hela det
+aktuella Lo-förslaget och ändra endast namnet till Lo Klar. Den oberoende
+kontrollen ger nu ett separat `held` med `kind:"action-check"` och
+`comparison`. Kontrollera att `authority.current` och `authority.scope`
+återger rättelsen med förbudet att spara. Under
+`untrusted.data.queuedReference.draft` finns det ursprungliga målet Lo Exempel;
+`untrusted.data.draft` visar det aktuella utkastet. Under
+`untrusted.operations` finns förslaget som kontrollen ska jämföra.
+Ersätt CHECK med detta kontrollanrops eget `id`.
+
+I KONTEXT-21 har bara beskrivningen ändrats manuellt. Släpp kontrollens
+svar som tillåter samma tydliga mål och åtgärd:
+
+```text
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+```
+
+Här är `response-required off` och hela uppdraget verifierat. Batchen
+avslutas direkt med sitt resultatbesked; något extra `reply` släpps inte.
+
+I KONTEXT-22 har målets namn ändrats till Lo Manuell. Släpp i stället
+kontrollens svar som kräver förtydligande:
+
+<!-- markdownlint-disable MD013 -->
+```text
+reply CHECK {"decision":"clarify","operation":0,"question":"Menar du Lo Manuell?"}
+```
+<!-- markdownlint-enable MD013 -->
+
+Detta styr den kontrollerade leverantörens verkliga kontrollsvar;
+det verifierar inte en verklig modells bedömningsförmåga. Serverns egna
+behörighets-, versions- och sparregler gäller fortfarande. Utan
+`hold-check on` tillåter provleverantören ändringskontroller automatiskt.
+Kör `hold-check off` efter fallet, eller avsluta med `quit` och börja med
+en ny installation före nästa fall.
 
 ## Sparande som redan är registrerat
 
@@ -73,9 +243,12 @@ ett tidigare misslyckat sparförsök, avsluta det samtalet först. Gör nästa
 förslag i det vanliga objektformuläret, så att textvyn har dess aktuella
 utkastversion. Läs hela förslaget före nästa sparande.
 Kör `hold-save on` före **Spara hela utkastet nu.**.
-Släpp `save_draft` enligt ovan och vänta på `save-registered` innan
-återkallanderutan öppnas. Anteckna dess `operationId` separat. Efter
-bekräftat återkallande körs `release-save`. Under **Identifiera sparandet
+Släpp verktygsanropet `save_draft` enligt ovan och vänta på
+`save-registered` innan återkallanderutan öppnas. Anteckna dess
+`operationId` separat. Bekräfta återkallandet och invänta
+**Medgivandet är återkallat** innan `release-save` körs. Kontrollera därefter
+att inget modellarbete väntar. Samtalet är då avslutat;
+släpp inget efterföljande slutbesked. Under **Identifiera sparandet
 och användaren** kan detta råa ID jämföras som tekniskt underlag.
 Kör `hold-save off` efteråt, eller `quit` som även släpper en kvarvarande
 hållning. Denna kontroll håller ett registrerat sparande; vanligt offline
@@ -207,9 +380,34 @@ sammanfattningen tills signalen både har börjat och avslutats.
 Återställ alltid signalen till `false`. Faktiskt hört svenskt tal och
 hjälpmedlens röst har separata mänskliga observationsfall.
 
-KONTEXT-11: använd sparkommandot ovan med det hållna uppdragets aktuella
-versioner. Det inmatade `operationId` är provdata; servern väljer sitt
-verkliga ID. Läs sparade Lo-värden före ljudet. Kör därefter
+KONTEXT-11 begär bara sparande och får sitt korta besked från verifierat
+resultat. Före `user Spara hela utkastet nu.` och `delegate`, kör:
+
+```text
+response-required off
+hold-check on
+```
+
+Behåll det accepterade sparuppdraget medan `context 89` levereras enligt
+fallet. Använd sedan sparkommandot ovan med det hållna uppdragets aktuella
+versioner. Den oberoende kontrollens `held` har `kind:"action-check"`;
+kontrollera hela det aktuella utkastet och släpp dess eget CHECK:
+
+```text
+reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+```
+
+Här verifieras hela den enkla sparbegäran utan ytterligare förklaring.
+Släpp inget extra `reply REQUEST` efter sparandet. Återställ före nästa
+användarmeddelande:
+
+```text
+response-required on
+hold-check off
+```
+
+Det inmatade `operationId` är provdata; servern väljer sitt verkliga ID.
+Läs sparade Lo-värden före ljudet. Kör därefter
 `assistant Sparat.` i terminalen för serverns fragment. Den tysta
 transporten skickar inte detta paket till webbläsarens mottagna ljudspår.
 Kopiera därför även följande paket i Console innan ljudet:
@@ -262,8 +460,10 @@ verkliga ID:t. Kör följande hela Console-paket för varje egen anslutning:
 })()
 ```
 
-Läs status 200 och `voice.phase:"closed"` för varje ID. Ladda därefter
-om sidan och öppna **Skriv till Skyttel**. Kontrollera noll kontext,
+Läs status 200 och `voice.phase:"closed"` för varje ID. Transportstoppet
+bevarar samtalet, som återställs pausat vid omladdning. Välj därför
+**Avsluta samtalet** i textvyn innan nästa självständiga fall.
+Ladda därefter om sidan och öppna **Skriv till Skyttel**. Kontrollera noll kontext,
 borttagen tidigare samtalstext och samma hela sparade karta, historik
 och Robins privata förslag. Gör nästa rättelse i det vanliga
 objektformuläret och läs hela förslaget. Välj därefter **Nytt samtal**,

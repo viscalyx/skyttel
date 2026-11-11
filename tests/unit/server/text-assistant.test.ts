@@ -3,10 +3,18 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { conversationCompletion } from '../../../src/client/conversation-completion.js';
 import type { TextModelAttempt, TextModelUsage } from '../../../src/server/text-assistant-model.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { controlledBatchDelivery } from '../../support/batch-response-delivery.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation, robin } from '../../support/installation.js';
-import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import {
+  lastToolResult,
+  type ModelRequest,
+  modelMessage,
+  modelTool,
+  readOnlyScope,
+  textModel,
+} from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
@@ -171,6 +179,187 @@ test('a conversation reuses identical MCP reads across messages and refreshes ch
   expect(counts.get('read_map')).toBe(3);
 });
 
+test('a relevant verified map read answers a follow-up without another tool round and refreshes after saving', async () => {
+  const model = textModel((request) => {
+    const current = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    const known =
+      current.verifiedReads?.find((read: { name: string }) => read.name === 'read_map')?.value ??
+      lastToolResult(request);
+    return known?.objects?.length
+      ? [modelMessage(`Personen heter ${known.objects[0].name}.`)]
+      : [modelTool('read_map', { query: 'Lina' })];
+  });
+  await setup(model.provider);
+  await webProposal('Lina');
+  const mapPath = path.replace('/text-assistant', '/map');
+  async function save(operationId: string) {
+    const map = await (await browser.get(mapPath)).json();
+    const response = await browser.post(`${mapPath}/save`, {
+      headers: { origin: app.origin },
+      data: { version: map.draft.version, contentVersion: map.contentVersion, operationId },
+    });
+    expect(response.status(), await response.text()).toBe(200);
+  }
+  await save('seed-lina');
+  let session = await message(await start(), 'Läs Lina.');
+  expect(session.modelReply).toBe('Personen heter Lina.');
+  expect(model.requests).toHaveLength(2);
+  session = await message(session, 'Vad vet du om Lina?');
+  expect(session.modelReply).toBe('Personen heter Lina.');
+  expect(model.requests).toHaveLength(3);
+  const map = await (await browser.get(mapPath)).json();
+  const lina = map.objects[0];
+  const edited = await browser.post(`${mapPath}/draft`, {
+    headers: { origin: app.origin },
+    data: {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      id: lina.id,
+      baseRevision: lina.revision,
+      value: { typeId: lina.typeId, name: 'Lina Ny', properties: lina.properties },
+    },
+  });
+  expect(edited.status(), await edited.text()).toBe(200);
+  await save('rename-lina');
+  session = await (await browser.get(`${path}/${session.id}`)).json();
+  session = await message(session, 'Vad vet du om Lina nu?');
+  expect(session.modelReply).toBe('Personen heter Lina Ny.');
+  expect(model.requests).toHaveLength(5);
+});
+
+test('independent reads overlap and identical concurrent reads share one authorized result', async () => {
+  const entered = new Map<string, number>();
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const model = textModel((request) => {
+    if (model.requests.length === 1)
+      return [
+        modelTool('read_map', { query: 'Lina' }),
+        modelTool('read_map', { query: 'Lina' }),
+        modelTool('read_type_catalog', {}),
+      ];
+    const result = (name: string) => {
+      const call = request.input.find(
+        (item) => item.type === 'function_call' && item.name === name,
+      );
+      return JSON.parse(
+        String(
+          request.input.find(
+            (item) => item.type === 'function_call_output' && item.call_id === call?.call_id,
+          )?.output,
+        ),
+      );
+    };
+    const lina = result('read_map').objects[0];
+    const type = result('read_type_catalog').types.find(
+      (item: { id: string }) => item.id === lina.typeId,
+    );
+    return [modelMessage(`${lina.name} är ${type.name}.`)];
+  });
+  await setup(model.provider, undefined, async (request, dispatch) => {
+    const rpc =
+      request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+        ? await request.clone().json()
+        : null;
+    if (
+      rpc?.method === 'tools/call' &&
+      ['read_map', 'read_type_catalog'].includes(rpc.params.name)
+    ) {
+      entered.set(rpc.params.name, (entered.get(rpc.params.name) ?? 0) + 1);
+      await held;
+    }
+    return dispatch(request);
+  });
+  await webProposal('Lina');
+  const mapPath = path.replace('/text-assistant', '/map');
+  const map = await (await browser.get(mapPath)).json();
+  const saved = await browser.post(`${mapPath}/save`, {
+    headers: { origin: app.origin },
+    data: {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      operationId: 'seed-parallel-lina',
+    },
+  });
+  expect(saved.status(), await saved.text()).toBe(200);
+  const session = await start();
+  const response = await browser.post(`${path}/${session.id}/messages`, {
+    headers: { origin: app.origin },
+    data: {
+      revision: session.revision,
+      ...displayedVersion(session),
+      requestId: crypto.randomUUID(),
+      text: 'Läs Lina och typerna. Ändra ingenting.',
+    },
+  });
+  expect(response.status()).toBe(202);
+  try {
+    await expect
+      .poll(() => [...entered.keys()].sort(), { timeout: 1000 })
+      .toEqual(['read_map', 'read_type_catalog']);
+    release();
+    await expect
+      .poll(async () => (await (await browser.get(`${path}/${session.id}`)).json()).phase)
+      .toBe('ready');
+    const final = await (await browser.get(`${path}/${session.id}`)).json();
+    expect(final.modelReply).toBe('Lina är Person.');
+    expect(entered.get('read_map')).toBe(1);
+    expect(entered.get('read_type_catalog')).toBe(1);
+    expect(model.requests).toHaveLength(2);
+    expect(model.requests[0]).toMatchObject({ parallel_tool_calls: true });
+    expect(final.review).toEqual(session.review);
+  } finally {
+    release();
+  }
+});
+
+test('parallel reads that cross a manual draft change cannot supply a mixed snapshot to the model', async () => {
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let readStarted = false;
+  const model = textModel(() =>
+    model.requests.length === 1
+      ? [modelTool('read_map', { query: 'Lina' }), modelTool('read_type_catalog', {})]
+      : [modelMessage('Ett gammalt blandat svar.')],
+  );
+  await setup(model.provider, undefined, async (request, dispatch) => {
+    const rpc =
+      request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+        ? await request.clone().json()
+        : null;
+    const response = await dispatch(request);
+    if (rpc?.method === 'tools/call' && rpc.params.name === 'read_type_catalog') {
+      readStarted = true;
+      await held;
+    }
+    return response;
+  });
+  await webProposal('Lina');
+  const session = await start();
+  const completion = message(session, 'Läs Lina och typerna. Ändra ingenting.');
+  try {
+    await expect.poll(() => readStarted).toBe(true);
+    await webProposal('Lina Manuell');
+    release();
+    const final = await completion;
+    expect(final).toMatchObject({ phase: 'error', error: 'assistant_draft_changed' });
+    expect(final.modelReply).toBeUndefined();
+    expect(model.requests).toHaveLength(1);
+    const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
+    expect(map.draft.changes[0].after.name).toBe('Lina Manuell');
+    expect(map.objects).toEqual([]);
+  } finally {
+    release();
+    await completion;
+  }
+});
+
 test('public activity follows the model and actual MCP work without exposing tool arguments', async () => {
   let releaseModel: (value: unknown[]) => void = () => {};
   let releaseTool: () => void = () => {};
@@ -258,7 +447,11 @@ test.each([
 function displayedVersion(session: Pick<TextAssistantView, 'review'>) {
   return { draftVersion: session.review.version, contentVersion: session.review.contentVersion };
 }
-async function message(session: TextAssistantView, text: string) {
+async function message(
+  session: TextAssistantView,
+  text: string,
+  answerTo?: { id: string; revision: number }[],
+) {
   const result = await browser.post(`${path}/${session.id}/messages`, {
     headers: { origin: app.origin },
     data: {
@@ -266,6 +459,7 @@ async function message(session: TextAssistantView, text: string) {
       ...displayedVersion(session),
       requestId: crypto.randomUUID(),
       text,
+      answerTo,
     },
   });
   expect(result.status(), await result.text()).toBe(202);
@@ -319,7 +513,15 @@ test('old completed polls retain their original results and reply prefixes after
       const result = await (
         await browser.get(`${path}/${session.id}/messages/turn-${turn}`)
       ).json();
-      expect(result).toEqual({ ...original, tasks: session.tasks });
+      expect(result).toEqual({
+        ...original,
+        tasks: session.tasks,
+        paused: session.paused,
+        expiresAt: session.expiresAt,
+        conversation: session.conversation,
+        queuedRequests: session.queuedRequests,
+        unfinishedRequests: session.unfinishedRequests,
+      });
       expect(result.completedReplies).toHaveLength(turn);
       expect(result.modelReply).toBe(`Svar ${turn}.`);
     }
@@ -343,18 +545,30 @@ test('old completed polls retain their original results and reply prefixes after
 
 test('a question about the previous failure reports its verified reason without repeating or authorizing the failed save', async () => {
   let step = 0;
-  const model = textModel(() => {
-    if (step++ === 0)
-      return [
-        modelTool('save_draft', {
-          version: 1,
-          contentVersion: 1,
-          operationId: 'unrequested-save',
-        }),
-      ];
-    if (step === 2) return [modelMessage('Vad vill du veta?')];
-    return [modelTool('report_result', { source: 'last_failure' })];
-  });
+  const model = textModel(
+    () => {
+      if (step++ === 0)
+        return [
+          modelTool('save_draft', {
+            version: 1,
+            contentVersion: 1,
+            operationId: 'unrequested-save',
+          }),
+        ];
+      if (step === 2) return [modelMessage('Vad vill du veta?')];
+      return [modelTool('report_result', { source: 'last_failure' })];
+    },
+    (body) => {
+      const current = JSON.parse(String(body.input[0].content)).current;
+      return current === 'Läs mitt utkast.'
+        ? [
+            modelMessage(
+              JSON.stringify({ mode: 'work', request: current, responseRequired: false }),
+            ),
+          ]
+        : readOnlyScope();
+    },
+  );
   await setup(model.provider);
   await webProposal();
   const mapPath = path.replace('/text-assistant', '/map');
@@ -402,10 +616,12 @@ test.each(['private error: spara hela utkastet', 'constructor'])(
   'an unknown tool failure %s is sanitized before it becomes later model context or a spoken result',
   async (rawFailure) => {
     let step = 0;
-    const model = textModel(() =>
-      step++ === 0
-        ? [modelTool('read_type_catalog', {})]
-        : [modelTool('report_result', { source: 'last_failure' })],
+    const model = textModel(
+      () =>
+        step++ === 0
+          ? [modelTool('read_type_catalog', {})]
+          : [modelTool('report_result', { source: 'last_failure' })],
+      readOnlyScope,
     );
     await setup(model.provider, undefined, async (request, dispatch) => {
       const rpc =
@@ -505,7 +721,7 @@ test('a provider discovers the actual MCP catalog and makes a persistent proposa
   );
   for (const call of model.requests) {
     expect(call).toMatchObject({
-      model: 'gpt-6.1-sol',
+      model: 'gpt-6.1-terra',
       reasoning: { effort: 'high' },
       store: false,
     });
@@ -543,6 +759,1286 @@ async function webProposal(name = 'Redan från formuläret', id = 'web-object') 
   expect(response.status(), await response.text()).toBe(200);
   return value;
 }
+
+test.each([false, true])(
+  'object removal includes incident links and preserves unrelated work: new=%s',
+  async (newObject) => {
+    const model = textModel((request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: { id: 'phone', baseRevision: newObject ? null : 1, value: null },
+            },
+          ],
+        }),
+      ];
+    });
+    await setup(model.provider);
+    await webProposal('Telefonen', 'phone');
+    await webProposal('Mira', 'person');
+    await webProposal('Reservtelefonen', 'spare');
+    const mapPath = path.replace('/text-assistant', '/map');
+    const proposeLink = async (id: string, sourceId: string, targetId: string, ended = false) => {
+      const state = await (await browser.get(mapPath)).json();
+      const response = await browser.post(`${mapPath}/relationship`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id,
+          baseRevision: null,
+          value: {
+            typeId: state.relationshipTypes[0].id,
+            sourceId,
+            targetId,
+            ...(ended ? { lifecycle: 'ended' } : {}),
+          },
+        },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    };
+    await proposeLink('active', 'person', 'phone');
+    await proposeLink('ended', 'phone', 'person', true);
+    await proposeLink('unrelated', 'person', 'spare');
+    if (!newObject) {
+      const state = await (await browser.get(mapPath)).json();
+      const saved = await browser.post(`${mapPath}/save`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          operationId: 'seed-phone',
+        },
+      });
+      expect(saved.status()).toBe(200);
+    }
+    await webProposal('Ny laddare', 'charger');
+    await proposeLink('draft-link', 'phone', 'charger');
+    const before = await (await browser.get(mapPath)).json();
+    const result = await message(await start(), 'Ta bort telefonen. Spara inte.');
+    expect(result.error).toBeUndefined();
+    expect(result.receipt).toBeUndefined();
+    expect(result.review.changes.find((change: { id: string }) => change.id === 'phone')).toEqual(
+      newObject ? undefined : expect.objectContaining({ after: null }),
+    );
+    expect(result.review.changes).toContainEqual(
+      expect.objectContaining({
+        id: 'charger',
+        after: expect.objectContaining({ name: 'Ny laddare' }),
+      }),
+    );
+    const after = await (await browser.get(mapPath)).json();
+    expect(after.objects).toEqual(before.objects);
+    expect(after.relationships).toEqual(before.relationships);
+    if (newObject) {
+      expect(result.review.relationships).toMatchObject([
+        { id: 'unrelated', after: { sourceId: 'person', targetId: 'spare' } },
+      ]);
+    } else {
+      expect(result.review.relationships).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'active', after: null }),
+          expect.objectContaining({ id: 'ended', after: null }),
+        ]),
+      );
+      expect(result.review.relationships).toContainEqual(
+        expect.objectContaining({ id: 'draft-link', after: null }),
+      );
+    }
+    const comparison = model.authorizationRequests.find((request) =>
+      request.instructions.startsWith('SKYTTEL_TURN_ACTIONS'),
+    );
+    expect(JSON.parse(String(comparison?.input[0].content)).untrusted.operations).toEqual([
+      {
+        name: 'propose_object',
+        arguments: { id: 'phone', baseRevision: newObject ? null : 1, value: null },
+      },
+    ]);
+  },
+);
+
+test('a requested description replaces its current draft value while existing unrelated proposals remain', async () => {
+  let typeId = '';
+  const description = (value: string) => [
+    { id: 'description', label: 'Beskrivning', kind: 'text', value },
+  ];
+  const model = textModel(
+    (request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'mira',
+                baseRevision: 1,
+                value: { typeId, name: 'Mira', properties: description('Odlar tomater.') },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => [
+      modelMessage(
+        JSON.stringify(
+          request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+            ? {
+                mode: 'work',
+                request: 'Ändra Miras beskrivning till ”Odlar tomater”. Spara inte.',
+                responseRequired: false,
+              }
+            : { decision: 'allow', complete: true, fulfillsRequest: true },
+        ),
+      ),
+    ],
+  );
+  await setup(model.provider);
+  typeId = (await webProposal('Mira', 'mira')).typeId;
+  const mapPath = path.replace('/text-assistant', '/map');
+  let state = await (await browser.get(mapPath)).json();
+  expect(
+    (
+      await browser.post(`${mapPath}/save`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          operationId: 'seed-mira',
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  state = await (await browser.get(mapPath)).json();
+  expect(
+    (
+      await browser.post(`${mapPath}/draft`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id: 'mira',
+          baseRevision: 1,
+          value: { typeId, name: 'Mira', properties: description('Spelar flöjt.') },
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  await webProposal('Växthuset', 'greenhouse');
+  const result = await message(
+    await start(),
+    'Ändra Miras beskrivning till Odlar tomater. Spara inte.',
+  );
+  expect(result.error).toBeUndefined();
+  expect(result.receipt).toBeUndefined();
+  expect(result.review.changes).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: 'mira',
+        after: expect.objectContaining({ properties: description('Odlar tomater.') }),
+      }),
+      expect.objectContaining({
+        id: 'greenhouse',
+        after: expect.objectContaining({ name: 'Växthuset' }),
+      }),
+    ]),
+  );
+  const comparison = model.authorizationRequests.find((request) =>
+    request.instructions.startsWith('SKYTTEL_TURN_ACTIONS'),
+  );
+  const input = JSON.parse(String(comparison?.input[0].content));
+  expect(input.authority.current).toBe('Ändra Miras beskrivning till Odlar tomater. Spara inte.');
+  expect(input.untrusted.data.draft.changes).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: 'mira',
+        after: expect.objectContaining({ properties: description('Spelar flöjt.') }),
+      }),
+      expect.objectContaining({ id: 'greenhouse' }),
+    ]),
+  );
+});
+
+test('a checked first-party batch keeps a free verb without requiring a relationship category', async () => {
+  const phrase = 'Familjens webbplats använder Driftplattformen. Spara inte.';
+  const model = textModel(
+    (request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_relationship',
+              arguments: {
+                id: 'free-site-link',
+                baseRevision: null,
+                value: { sourceId: 'site', targetId: 'hosting', verb: 'använder' },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => {
+      if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+        return [
+          modelMessage(JSON.stringify({ mode: 'work', request: phrase, responseRequired: false })),
+        ];
+      const input = JSON.parse(String(request.input[0].content));
+      expect(input.untrusted.operations[0].arguments.value).toEqual({
+        sourceId: 'site',
+        targetId: 'hosting',
+        verb: 'använder',
+      });
+      return [
+        modelMessage(JSON.stringify({ decision: 'allow', complete: true, fulfillsRequest: true })),
+      ];
+    },
+  );
+  await setup(model.provider);
+  const mapPath = path.replace('/text-assistant', '/map');
+  for (const [id, name, kind] of [
+    ['site', 'Familjens webbplats', 'Tjänst'],
+    ['hosting', 'Driftplattformen', 'Företag'],
+  ]) {
+    const map = await (await browser.get(mapPath)).json();
+    const response = await browser.post(`${mapPath}/draft`, {
+      headers: { origin: app.origin },
+      data: {
+        version: map.draft.version,
+        contentVersion: map.contentVersion,
+        id,
+        baseRevision: null,
+        value: { name, typeId: map.types.find((type: { name: string }) => type.name === kind).id },
+      },
+    });
+    expect(response.status()).toBe(200);
+  }
+  const result = await message(await start(), phrase);
+  expect(result.error).toBeUndefined();
+  expect(result.review.relationships).toMatchObject([
+    {
+      id: 'free-site-link',
+      type: { name: 'Samband' },
+      after: { sourceId: 'site', targetId: 'hosting', verb: 'använder' },
+    },
+  ]);
+  expect(result.review.relationships?.[0].after?.reverseVerb).toBeUndefined();
+  expect(result.receipt).toBeUndefined();
+  expect(
+    model.authorizationRequests.some((request) =>
+      request.instructions.startsWith('SKYTTEL_TURN_ACTIONS'),
+    ),
+  ).toBe(true);
+});
+
+test.each([false, true])(
+  'current household relationship meanings and explicit type choices remain available during writes: explicit=%s',
+  async (explicit) => {
+    let step = 0;
+    const chosenType = explicit ? 'connected' : 'stored';
+    const model = textModel((request) => {
+      if (step++ === 0) return [modelTool('read_type_catalog', {})];
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_relationship',
+              arguments: {
+                id: 'location',
+                baseRevision: null,
+                typeRevision: 1,
+                value: { typeId: chosenType, sourceId: 'toolbox', targetId: 'garage' },
+              },
+            },
+          ],
+        }),
+      ];
+    });
+    await setup(model.provider);
+    await webProposal('Verktygslådan', 'toolbox');
+    await webProposal('Garaget', 'garage');
+    const mapPath = path.replace('/text-assistant', '/map');
+    for (const [id, name, description] of [
+      [
+        'connected',
+        'Kopplad till',
+        'En allmän koppling mellan två objekt.',
+        'kopplad till',
+        'kopplad till',
+      ],
+      [
+        'stored',
+        'Placering',
+        'Från föremål till platsen där det förvaras.',
+        'förvaras i',
+        'förvarar',
+      ],
+    ]) {
+      const state = await (await browser.get(mapPath)).json();
+      const response = await browser.post(`${mapPath}/relationship-type`, {
+        headers: { origin: app.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id,
+          baseRevision: null,
+          value: { name, description },
+        },
+      });
+      expect(response.status()).toBe(200);
+    }
+    const result = await message(
+      await start(),
+      explicit
+        ? 'Koppla verktygslådan till garaget med sambandstypen Kopplad till. Spara inte.'
+        : 'Verktygslådan förvaras i garaget. Spara inte.',
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.receipt).toBeUndefined();
+    expect(result.review.relationships).toMatchObject([
+      {
+        id: 'location',
+        type: { id: chosenType },
+        after: { sourceId: 'toolbox', targetId: 'garage' },
+      },
+    ]);
+    const catalog = lastToolResult(model.requests[1]);
+    expect(catalog.relationshipTypes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'connected',
+          description: 'En allmän koppling mellan två objekt.',
+        }),
+        expect.objectContaining({
+          id: 'stored',
+          description: 'Från föremål till platsen där det förvaras.',
+        }),
+      ]),
+    );
+  },
+);
+
+test('ending a saved object checks its preserved properties before applying the update', async () => {
+  let typeId = '';
+  const properties = [
+    { id: 'amount', label: 'Pris', kind: 'number', value: 89 },
+    { id: 'interval', label: 'Intervall', kind: 'text', value: 'månad' },
+  ];
+  const model = textModel(
+    (request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'agreement',
+                baseRevision: 1,
+                value: { typeId, name: 'Ljudboksavtalet', lifecycle: 'ended' },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => {
+      if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+        return [
+          modelMessage(
+            JSON.stringify({ mode: 'work', request: 'Avsluta avtalet.', responseRequired: false }),
+          ),
+        ];
+      const { operations } = JSON.parse(String(request.input[0].content)).untrusted;
+      const preservesFacts =
+        JSON.stringify(operations[0].arguments.value.properties) === JSON.stringify(properties);
+      return [
+        modelMessage(
+          JSON.stringify(
+            preservesFacts
+              ? { decision: 'allow', complete: true, fulfillsRequest: true }
+              : { decision: 'deny', operation: 0 },
+          ),
+        ),
+      ];
+    },
+  );
+  await setup(model.provider);
+  const mapPath = path.replace('/text-assistant', '/map');
+  let map = await (await browser.get(mapPath)).json();
+  typeId = map.types[0].id;
+  const proposed = await browser.post(`${mapPath}/draft`, {
+    headers: { origin: app.origin },
+    data: {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      id: 'agreement',
+      baseRevision: null,
+      value: { typeId, name: 'Ljudboksavtalet', properties },
+    },
+  });
+  expect(proposed.status()).toBe(200);
+  map = await (await browser.get(mapPath)).json();
+  const saved = await browser.post(`${mapPath}/save`, {
+    headers: { origin: app.origin },
+    data: {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      operationId: 'seed-agreement',
+    },
+  });
+  expect(saved.status()).toBe(200);
+  const result = await message(await start(), 'Ljudboksavtalet gäller inte längre. Spara inte.');
+  expect(result.error).toBeUndefined();
+  expect(result.review.changes).toMatchObject([
+    { id: 'agreement', after: { lifecycle: 'ended', properties } },
+  ]);
+  expect(result.receipt).toBeUndefined();
+  const after = await (await browser.get(mapPath)).json();
+  expect(after.objects[0]).toMatchObject({ properties });
+  expect(after.objects[0].lifecycle).toBeUndefined();
+});
+
+test.each([
+  { replacement: [{ id: 'description', label: 'Beskrivning', kind: 'text', value: 'Punktering' }] },
+  { replacement: [] },
+])(
+  'ordered updates check the latest property replacement in the same batch: %j',
+  async ({ replacement }) => {
+    let typeId = '';
+    const model = textModel(
+      (request) => {
+        const current = JSON.parse(
+          String(request.input.findLast((item) => item.role === 'user')?.content),
+        );
+        return [
+          modelTool('submit_changes', {
+            version: current.draft.version,
+            contentVersion: current.draft.contentVersion,
+            completion: 'draft',
+            operations: [
+              {
+                name: 'propose_object',
+                arguments: {
+                  id: 'bike',
+                  baseRevision: null,
+                  value: { typeId, name: 'Cykeln', properties: replacement },
+                },
+              },
+              {
+                name: 'propose_object',
+                arguments: {
+                  id: 'bike',
+                  baseRevision: null,
+                  value: { typeId, name: 'Cykeln', lifecycle: 'ended' },
+                },
+              },
+            ],
+          }),
+        ];
+      },
+      (request) => {
+        if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+          return [
+            modelMessage(
+              JSON.stringify({
+                mode: 'work',
+                request: 'Rätta egenskaperna och avsluta cykeln.',
+                responseRequired: false,
+              }),
+            ),
+          ];
+        const { operations } = JSON.parse(String(request.input[0].content)).untrusted;
+        const latest =
+          JSON.stringify(operations[1].arguments.value.properties) === JSON.stringify(replacement);
+        return [
+          modelMessage(
+            JSON.stringify(
+              latest
+                ? { decision: 'allow', complete: true, fulfillsRequest: true }
+                : { decision: 'deny', operation: 1 },
+            ),
+          ),
+        ];
+      },
+    );
+    await setup(model.provider);
+    typeId = (await webProposal('Cykeln', 'bike')).typeId;
+    const result = await message(
+      await start(),
+      'Rätta egenskaperna och markera cykeln som upphörd. Spara inte.',
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.review.changes).toMatchObject([
+      { id: 'bike', after: { lifecycle: 'ended', properties: replacement } },
+    ]);
+    expect(result.receipt).toBeUndefined();
+  },
+);
+
+test('ending a relationship checks the current draft properties that its update preserves', async () => {
+  let typeId = '';
+  const properties = [{ id: 'detail', label: 'Anmärkning', kind: 'text', value: 'Lånad telefon' }];
+  const value = () => ({ typeId, sourceId: 'person', targetId: 'phone' });
+  const model = textModel(
+    (request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_relationship',
+              arguments: {
+                id: 'usage',
+                baseRevision: null,
+                value: { ...value(), lifecycle: 'ended' },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => {
+      if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+        return [
+          modelMessage(
+            JSON.stringify({
+              mode: 'work',
+              request: 'Användningen gäller inte längre.',
+              responseRequired: false,
+            }),
+          ),
+        ];
+      const { operations } = JSON.parse(String(request.input[0].content)).untrusted;
+      const preserved =
+        JSON.stringify(operations[0].arguments.value.properties) === JSON.stringify(properties);
+      return [
+        modelMessage(
+          JSON.stringify(
+            preserved
+              ? { decision: 'allow', complete: true, fulfillsRequest: true }
+              : { decision: 'deny', operation: 0 },
+          ),
+        ),
+      ];
+    },
+  );
+  await setup(model.provider);
+  await webProposal('Mira', 'person');
+  await webProposal('Telefonen', 'phone');
+  const mapPath = path.replace('/text-assistant', '/map');
+  const map = await (await browser.get(mapPath)).json();
+  typeId = map.relationshipTypes.find((type: { name: string }) => type.name === 'Använder').id;
+  const proposed = await browser.post(`${mapPath}/relationship`, {
+    headers: { origin: app.origin },
+    data: {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      id: 'usage',
+      baseRevision: null,
+      value: { ...value(), properties },
+    },
+  });
+  expect(proposed.status()).toBe(200);
+  const result = await message(await start(), 'Mira använder inte telefonen längre. Spara inte.');
+  expect(result.error).toBeUndefined();
+  expect(result.review.relationships).toMatchObject([
+    { id: 'usage', after: { lifecycle: 'ended', properties } },
+  ]);
+  expect(result.receipt).toBeUndefined();
+});
+
+test.each(['discard', 'delete'])(
+  '%s resets the checked property source before a fresh object proposal',
+  async (removal) => {
+    let typeId = '';
+    const baseRevision = removal === 'delete' ? 1 : null;
+    const requestText =
+      removal === 'delete'
+        ? 'Ta bort cykeln och gör ett nytt förslag utan egenskaper.'
+        : 'Kasta cykelförslaget och gör ett nytt utan egenskaper.';
+    const model = textModel(
+      (request) => {
+        const current = JSON.parse(
+          String(request.input.findLast((item) => item.role === 'user')?.content),
+        );
+        return [
+          modelTool('submit_changes', {
+            version: current.draft.version,
+            contentVersion: current.draft.contentVersion,
+            completion: 'draft',
+            operations: [
+              removal === 'discard'
+                ? { name: 'discard_proposal', arguments: { kind: 'object', id: 'bike' } }
+                : { name: 'propose_object', arguments: { id: 'bike', baseRevision, value: null } },
+              {
+                name: 'propose_object',
+                arguments: { id: 'bike', baseRevision, value: { typeId, name: 'Ny cykel' } },
+              },
+            ],
+          }),
+        ];
+      },
+      (request) => {
+        if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+          return [
+            modelMessage(
+              JSON.stringify({
+                mode: 'work',
+                request: requestText,
+                responseRequired: false,
+              }),
+            ),
+          ];
+        const { operations } = JSON.parse(String(request.input[0].content)).untrusted;
+        return [
+          modelMessage(
+            JSON.stringify(
+              !('properties' in operations[1].arguments.value)
+                ? { decision: 'allow', complete: true, fulfillsRequest: true }
+                : { decision: 'deny', operation: 1 },
+            ),
+          ),
+        ];
+      },
+    );
+    await setup(model.provider);
+    typeId = (await webProposal('Cykeln', 'bike')).typeId;
+    if (removal === 'delete') {
+      const mapPath = path.replace('/text-assistant', '/map');
+      const map = await (await browser.get(mapPath)).json();
+      const saved = await browser.post(`${mapPath}/save`, {
+        headers: { origin: app.origin },
+        data: {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          operationId: 'seed-bike',
+        },
+      });
+      expect(saved.status()).toBe(200);
+    }
+    const result = await message(await start(), `${requestText} Spara inte.`);
+    expect(result.error).toBeUndefined();
+    expect(result.review.changes).toMatchObject([{ id: 'bike', after: { name: 'Ny cykel' } }]);
+    expect(result.review.changes[0].after.properties).toBeUndefined();
+    expect(result.receipt).toBeUndefined();
+  },
+);
+
+test.each(['delete', 'restore', 'restore-object-type', 'restore-relationship-type'])(
+  'a %s transition keeps the property source of dependent relationship proposals honest',
+  async (transition) => {
+    let objectType = '';
+    let relationshipType = '';
+    let typeRestoration: { name: string; arguments: Record<string, unknown> } | undefined;
+    const savedProperties = [
+      { id: 'detail', label: 'Anmärkning', kind: 'text', value: 'Sparad anmärkning' },
+    ];
+    const draftProperties = [
+      { id: 'detail', label: 'Anmärkning', kind: 'text', value: 'Rättad anmärkning' },
+    ];
+    const relationship = (sourceId: string) => ({
+      typeId: relationshipType,
+      sourceId,
+      targetId: 'phone',
+    });
+    const model = textModel(
+      (request) => {
+        const current = JSON.parse(
+          String(request.input.findLast((item) => item.role === 'user')?.content),
+        );
+        return [
+          modelTool('submit_changes', {
+            version: current.draft.version,
+            contentVersion: current.draft.contentVersion,
+            completion: 'draft',
+            operations: [
+              typeRestoration ?? {
+                name: 'propose_object',
+                arguments: {
+                  id: 'person',
+                  baseRevision: 1,
+                  value: transition === 'delete' ? null : { typeId: objectType, name: 'Lo' },
+                },
+              },
+              {
+                name: 'propose_relationship',
+                arguments: {
+                  id: 'usage',
+                  baseRevision: 1,
+                  value: relationship(transition === 'delete' ? 'other-person' : 'person'),
+                },
+              },
+            ],
+          }),
+        ];
+      },
+      (request) => {
+        if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+          return [
+            modelMessage(
+              JSON.stringify({
+                mode: 'work',
+                request: 'Rätta personen och användningen enligt begäran.',
+                responseRequired: false,
+              }),
+            ),
+          ];
+        const { operations } = JSON.parse(String(request.input[0].content)).untrusted;
+        return [
+          modelMessage(
+            JSON.stringify(
+              !('properties' in operations[1].arguments.value)
+                ? { decision: 'allow', complete: true, fulfillsRequest: true }
+                : { decision: 'deny', operation: 1 },
+            ),
+          ),
+        ];
+      },
+    );
+    await setup(model.provider);
+    objectType = (await webProposal('Lo', 'person')).typeId;
+    await webProposal('Telefonen', 'phone');
+    await webProposal('Mira', 'other-person');
+    const mapPath = path.replace('/text-assistant', '/map');
+    let map = await (await browser.get(mapPath)).json();
+    relationshipType = map.relationshipTypes.find(
+      (type: { name: string }) => type.name === 'Använder',
+    ).id;
+    async function write(endpoint: string, data: Record<string, unknown>) {
+      map = await (await browser.get(mapPath)).json();
+      const response = await browser.post(`${mapPath}/${endpoint}`, {
+        headers: { origin: app.origin },
+        data: { version: map.draft.version, contentVersion: map.contentVersion, ...data },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    }
+    if (transition === 'restore-relationship-type') {
+      relationshipType = 'local-usage-type';
+      await write('relationship-type', {
+        id: relationshipType,
+        baseRevision: null,
+        value: {
+          name: 'Användning i testet',
+          description: 'Ett samband med uttryckliga benämningar.',
+        },
+      });
+    }
+    await write('relationship', {
+      id: 'usage',
+      baseRevision: null,
+      value: { ...relationship('person'), properties: savedProperties },
+    });
+    await write('save', { operationId: 'seed-people-usage' });
+    await write('relationship', {
+      id: 'usage',
+      baseRevision: 1,
+      value: { ...relationship('person'), properties: draftProperties },
+    });
+    if (transition === 'restore')
+      await write('draft', { id: 'person', baseRevision: 1, value: null });
+    if (transition.endsWith('-type')) {
+      const object = transition === 'restore-object-type';
+      const definition = object
+        ? map.types.find((type: { id: string }) => type.id === objectType)
+        : map.relationshipTypes.find((type: { id: string }) => type.id === relationshipType);
+      const { id, revision, name, description } = definition;
+      const value = {
+        name,
+        description,
+        ...(object ? {} : {}),
+      };
+      typeRestoration = {
+        name: object ? 'propose_object_type' : 'propose_relationship_type',
+        arguments: { id, baseRevision: revision, value },
+      };
+      await write(object ? 'object-type' : 'relationship-type', {
+        id,
+        baseRevision: revision,
+        value: null,
+      });
+    }
+    const result = await message(
+      await start(),
+      transition === 'delete'
+        ? 'Ta bort Lo och flytta telefonanvändningen till Mira. Spara inte.'
+        : transition === 'restore'
+          ? 'Återta borttagningen av Lo och behåll den rättade telefonanvändningen. Spara inte.'
+          : 'Återta borttagningen av typen och behåll den rättade telefonanvändningen. Spara inte.',
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.review.relationships).toMatchObject([
+      {
+        id: 'usage',
+        after: {
+          sourceId: transition === 'delete' ? 'other-person' : 'person',
+          properties: transition === 'delete' ? savedProperties : draftProperties,
+        },
+      },
+    ]);
+    expect(result.receipt).toBeUndefined();
+  },
+);
+
+test.each([
+  ['omitted', 'draft', 'delivered'],
+  ['omitted', 'saved', 'delivered'],
+  ['explicit', 'draft', 'delivered'],
+  ['explicit', 'saved', 'delivered'],
+  ['omitted', 'saved', 'lost'],
+  ['explicit', 'saved', 'lost'],
+  ['omitted', 'saved', 'wrong-identity'],
+  ['explicit', 'saved', 'wrong-identity'],
+])(
+  'a repeated relationship with %s grouping selects its own verb in the %s with %s delivery',
+  async (grouping, location, deliveryMode) => {
+    let typeId: string | undefined;
+    let expectedToolResult: Record<string, unknown> | undefined;
+    let toolResult: unknown;
+    const model = textModel((request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (!lastToolResult(request)) {
+        expectedToolResult = { ...current.draft, existingId: 'z-depends' };
+        return [
+          modelTool('propose_relationship', {
+            id: 'repeated-depends',
+            baseRevision: null,
+            version: current.draft.version,
+            contentVersion: current.draft.contentVersion,
+            value: {
+              ...(typeId ? { typeId } : {}),
+              sourceId: 'vehicle',
+              targetId: 'charger',
+              verb: 'är beroende av',
+            },
+          }),
+        ];
+      }
+      toolResult = lastToolResult(request);
+      return [modelMessage('Sambandet finns redan.')];
+    });
+    const delivery = controlledBatchDelivery();
+    await setup(model.provider, undefined, async (incoming, dispatch) => {
+      if (deliveryMode === 'lost') return delivery.dispatch(incoming, dispatch);
+      const rpc = await incoming
+        .clone()
+        .json()
+        .catch(() => null);
+      const response = await dispatch(incoming);
+      if (deliveryMode !== 'wrong-identity' || rpc?.params?.name !== 'apply_draft_batch')
+        return response;
+      const envelope = await response.json();
+      const value = JSON.parse(envelope.result.content[0].text);
+      value.applied[0].result.existingId = 'a-uses';
+      envelope.result.content[0].text = JSON.stringify(value);
+      return Response.json(envelope, { status: response.status, headers: response.headers });
+    });
+    await webProposal('Bilen', 'vehicle');
+    await webProposal('Laddtjänsten', 'charger');
+    const mapPath = path.replace('/text-assistant', '/map');
+    let map = await (await browser.get(mapPath)).json();
+    if (grouping === 'explicit') typeId = map.relationshipTypes[0].id;
+    for (const [id, verb] of [
+      ['a-uses', 'använder'],
+      ['z-depends', 'är beroende av'],
+    ]) {
+      const response = await browser.post(`${mapPath}/relationship`, {
+        headers: { origin: app.origin },
+        data: {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          id,
+          baseRevision: null,
+          value: {
+            ...(typeId ? { typeId } : {}),
+            sourceId: 'vehicle',
+            targetId: 'charger',
+            verb,
+          },
+        },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+      map = await (await browser.get(mapPath)).json();
+    }
+    if (location === 'saved') {
+      const saved = await browser.post(`${mapPath}/save`, {
+        headers: { origin: app.origin },
+        data: {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          operationId: 'seed-relationships',
+        },
+      });
+      expect(saved.status(), await saved.text()).toBe(200);
+    }
+    const before = await (await browser.get(mapPath)).json();
+    if (deliveryMode === 'lost') delivery.arm();
+    const result = await message(
+      await start(),
+      'Bilen är beroende av Laddtjänsten. Behåll det sambandet och spara inte.',
+    );
+    if (deliveryMode === 'wrong-identity') {
+      expect(result.error).toBe('assistant_batch_committed_changed');
+      expect(model.requests).toHaveLength(1);
+    } else {
+      expect(result.error).toBeUndefined();
+      expect(result.phase).toBe('ready');
+      expect(model.requests).toHaveLength(2);
+      expect(expectedToolResult).toBeDefined();
+      expect(toolResult).toEqual(expectedToolResult);
+    }
+    expect(result.review.version).toBe(before.draft.version);
+    expect(result.receipt).toBeUndefined();
+    const after = await (await browser.get(mapPath)).json();
+    expect(after.draft).toEqual(before.draft);
+    expect(after.relationships).toEqual(before.relationships);
+  },
+);
+
+for (const endpoint of ['source', 'target'] as const) {
+  test.each(['update', 'replace', 'incomplete', 'add', 'wrong-verb', 'verb-only'] as const)(
+    `relationship ${endpoint} edits preserve requested wording and unrelated work: %s`,
+    async (mode) => {
+      let connection: {
+        typeId: string;
+        sourceId: string;
+        targetId: string;
+        verb: string;
+        properties: { id: string; label: string; kind: 'text'; value: string }[];
+      };
+      const requested = {
+        sourceId:
+          endpoint === 'target' ? 'service' : mode === 'verb-only' ? 'supplier' : 'platform',
+        targetId:
+          endpoint === 'source' ? 'service' : mode === 'verb-only' ? 'supplier' : 'platform',
+        verb: endpoint === 'source' ? 'levererar till' : 'hämtar från',
+      };
+      const phrase =
+        mode === 'verb-only'
+          ? `Ändra bara verbet på Nordverks samband med Rapportflödet till ”${requested.verb}”. Spara inte.`
+          : `${
+              endpoint === 'source'
+                ? 'Reservplattformen levererar till Rapportflödet.'
+                : 'Rapportflödet hämtar från Reservplattformen.'
+            } ${
+              mode === 'add'
+                ? 'Lägg till den kopplingen och behåll Nordverks koppling.'
+                : 'Det är den aktuella uppgiften för kopplingen som nu går via Nordverk.'
+            } Behåll övriga uppgifter. Spara inte.`;
+      const updatesExisting = ['update', 'verb-only', 'wrong-verb'].includes(mode);
+      const model = textModel(
+        (request) => {
+          const current = JSON.parse(
+            String(request.input.findLast((item) => item.role === 'user')?.content),
+          );
+          return [
+            modelTool('submit_changes', {
+              version: current.draft.version,
+              contentVersion: current.draft.contentVersion,
+              completion: 'draft',
+              operations: [
+                ...(mode === 'replace'
+                  ? [
+                      {
+                        name: 'propose_relationship',
+                        arguments: { id: 'connection', baseRevision: 1, value: null },
+                      },
+                    ]
+                  : []),
+                {
+                  name: 'propose_relationship',
+                  arguments: {
+                    id: updatesExisting ? 'connection' : 'new-connection',
+                    baseRevision: updatesExisting ? 1 : null,
+                    typeRevision: 1,
+                    value: {
+                      ...connection,
+                      ...requested,
+                      ...(mode === 'wrong-verb' ? { verb: connection.verb } : {}),
+                    },
+                  },
+                },
+              ],
+            }),
+          ];
+        },
+        (request) => {
+          if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+            return [
+              modelMessage(
+                JSON.stringify({ mode: 'work', request: phrase, responseRequired: false }),
+              ),
+            ];
+          const { authority, untrusted } = JSON.parse(String(request.input[0].content));
+          expect(authority.current).toBe(phrase);
+          expect(untrusted.data.map.relationships).toEqual(
+            expect.arrayContaining([expect.objectContaining({ id: 'connection', ...connection })]),
+          );
+          expect(untrusted.data.draft.changes).toEqual(
+            expect.arrayContaining([expect.objectContaining({ id: 'earlier' })]),
+          );
+          expect(untrusted.operations.at(-1).arguments.value).toEqual({
+            ...connection,
+            ...requested,
+            ...(mode === 'wrong-verb' ? { verb: connection.verb } : {}),
+          });
+          // Control the provider verdict, not its semantic reasoning. Verify
+          // that the checker receives the original requested wording and the
+          // actual old/proposed endpoints and verb, then enforce its decision.
+          return [
+            modelMessage(
+              JSON.stringify(
+                mode === 'incomplete'
+                  ? { decision: 'incomplete' }
+                  : mode === 'wrong-verb'
+                    ? { decision: 'deny', operation: 0 }
+                    : { decision: 'allow', complete: true, fulfillsRequest: true },
+              ),
+            ),
+          ];
+        },
+      );
+      await setup(model.provider);
+      const mapPath = path.replace('/text-assistant', '/map');
+      for (const [id, name, kind] of [
+        ['supplier', 'Nordverk', 'Företag'],
+        ['platform', 'Reservplattformen', 'Tjänst'],
+        ['service', 'Rapportflödet', 'Tjänst'],
+      ]) {
+        const state = await (await browser.get(mapPath)).json();
+        const response = await browser.post(`${mapPath}/draft`, {
+          headers: { origin: app.origin },
+          data: {
+            version: state.draft.version,
+            contentVersion: state.contentVersion,
+            id,
+            baseRevision: null,
+            value: {
+              name,
+              typeId: state.types.find((type: { name: string }) => type.name === kind).id,
+            },
+          },
+        });
+        expect(response.status(), await response.text()).toBe(200);
+      }
+      let map = await (await browser.get(mapPath)).json();
+      connection = {
+        typeId: map.relationshipTypes.find((type: { name: string }) => type.name === 'Använder').id,
+        sourceId: endpoint === 'source' ? 'supplier' : 'service',
+        targetId: endpoint === 'source' ? 'service' : 'supplier',
+        verb: endpoint === 'source' ? 'levererar åt' : 'hämtar via',
+        properties: [{ id: 'note', label: 'Anmärkning', kind: 'text', value: 'Varje månad' }],
+      };
+      const unrelated = { ...connection, sourceId: 'platform', targetId: 'supplier' };
+      for (const [id, value] of [
+        ['connection', connection],
+        ['unrelated-connection', unrelated],
+      ] as const) {
+        map = await (await browser.get(mapPath)).json();
+        const proposed = await browser.post(`${mapPath}/relationship`, {
+          headers: { origin: app.origin },
+          data: {
+            version: map.draft.version,
+            contentVersion: map.contentVersion,
+            id,
+            baseRevision: null,
+            value,
+          },
+        });
+        expect(proposed.status(), await proposed.text()).toBe(200);
+      }
+      map = await (await browser.get(mapPath)).json();
+      const saved = await browser.post(`${mapPath}/save`, {
+        headers: { origin: app.origin },
+        data: {
+          version: map.draft.version,
+          contentVersion: map.contentVersion,
+          operationId: 'seed-connection',
+        },
+      });
+      expect(saved.status(), await saved.text()).toBe(200);
+      await webProposal('Tidigare förslag', 'earlier');
+      const before = await start();
+      const result = await message(before, phrase);
+      expect(result.receipt).toBeUndefined();
+      expect(result.review.changes).toEqual(before.review.changes);
+      expect(model.requests).toHaveLength(1);
+      if (mode === 'incomplete' || mode === 'wrong-verb') {
+        expect(result.error).toBe(
+          mode === 'incomplete' ? 'assistant_batch_incomplete' : 'assistant_action_out_of_scope',
+        );
+        expect(result.review).toEqual(before.review);
+      } else {
+        expect(result.error).toBeUndefined();
+        expect(result.review.relationships).toHaveLength(mode === 'replace' ? 2 : 1);
+        expect(result.review.relationships).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: updatesExisting ? 'connection' : 'new-connection',
+              after: { ...connection, ...requested },
+            }),
+          ]),
+        );
+        if (mode === 'replace')
+          expect(result.review.relationships).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: 'connection',
+                before: expect.objectContaining(connection),
+                after: null,
+              }),
+            ]),
+          );
+      }
+      map = await (await browser.get(mapPath)).json();
+      expect(map.relationships).toHaveLength(2);
+      expect(map.relationships).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'connection', ...connection }),
+          expect.objectContaining({ id: 'unrelated-connection', ...unrelated }),
+        ]),
+      );
+    },
+  );
+}
+
+test('a duplicate relationship addition cannot supply projected properties to a later proposal', async () => {
+  let typeId = '';
+  const properties = [
+    { id: 'detail', label: 'Anmärkning', kind: 'text', value: 'Får inte återanvändas' },
+  ];
+  const value = (sourceId: string) => ({ typeId, sourceId, targetId: 'phone' });
+  const model = textModel(
+    (request) => {
+      const current = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('submit_changes', {
+          version: current.draft.version,
+          contentVersion: current.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_relationship',
+              arguments: {
+                id: 'new-usage',
+                baseRevision: null,
+                value: { ...value('person'), properties },
+              },
+            },
+            {
+              name: 'propose_relationship',
+              arguments: { id: 'new-usage', baseRevision: null, value: value('other-person') },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => {
+      if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+        return [
+          modelMessage(
+            JSON.stringify({
+              mode: 'work',
+              request: 'Behåll befintlig användning och lägg till Mira utan egenskaper.',
+              responseRequired: false,
+            }),
+          ),
+        ];
+      const { operations } = JSON.parse(String(request.input[0].content)).untrusted;
+      return [
+        modelMessage(
+          JSON.stringify(
+            !('properties' in operations[1].arguments.value)
+              ? { decision: 'allow', complete: true, fulfillsRequest: true }
+              : { decision: 'deny', operation: 1 },
+          ),
+        ),
+      ];
+    },
+  );
+  await setup(model.provider);
+  await webProposal('Lo', 'person');
+  await webProposal('Telefonen', 'phone');
+  await webProposal('Mira', 'other-person');
+  const mapPath = path.replace('/text-assistant', '/map');
+  let map = await (await browser.get(mapPath)).json();
+  typeId = map.relationshipTypes.find((type: { name: string }) => type.name === 'Använder').id;
+  const existing = await browser.post(`${mapPath}/relationship`, {
+    headers: { origin: app.origin },
+    data: {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      id: 'existing-usage',
+      baseRevision: null,
+      value: value('person'),
+    },
+  });
+  expect(existing.status()).toBe(200);
+  map = await (await browser.get(mapPath)).json();
+  const saved = await browser.post(`${mapPath}/save`, {
+    headers: { origin: app.origin },
+    data: {
+      version: map.draft.version,
+      contentVersion: map.contentVersion,
+      operationId: 'seed-existing-usage',
+    },
+  });
+  expect(saved.status()).toBe(200);
+  const result = await message(
+    await start(),
+    'Behåll Los användning och lägg till att Mira använder telefonen utan extra egenskaper. Spara inte.',
+  );
+  expect(result.error).toBeUndefined();
+  expect(result.review.relationships).toMatchObject([
+    { id: 'new-usage', after: { sourceId: 'other-person' } },
+  ]);
+  expect(result.review.relationships[0].after.properties).toBeUndefined();
+  map = await (await browser.get(mapPath)).json();
+  expect(
+    map.relationships.find((item: { id: string }) => item.id === 'existing-usage'),
+  ).toMatchObject(value('person'));
+  expect(result.receipt).toBeUndefined();
+});
 
 test.each([
   ['Rätta namnet till Rättat namn och spara.', { name: 'Rättat namn' }],
@@ -721,20 +2217,30 @@ test.each([
   },
 );
 
-test.each(['Kan du spara', 'Kan du spara?', 'Jag vill att du sparar det direkt.'])(
-  'a current natural whole-draft instruction %s produces one verified save',
-  async (text) => {
-    const model = textModel(() => [
-      modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'provider-save' }),
-    ]);
-    await setup(model.provider);
-    await webProposal();
-    const status = await message(await start(), text);
-    expect(status).toMatchObject({ phase: 'ready', receipt: { draftVersion: 1 } });
-    expect(status.review.changes).toEqual([]);
-    expect(model.requests).toHaveLength(1);
-  },
-);
+test.each([
+  'Kan du spara',
+  'Kan du spara?',
+  'Jag vill att du sparar det direkt.',
+  'Spara mina ändringar.',
+  'Spara våra ändringar nu.',
+  'Kan du spara mina ändringar?',
+])('a current natural whole-draft instruction %s produces one verified save', async (text) => {
+  const model = textModel(() => [
+    modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'provider-save' }),
+  ]);
+  await setup(model.provider);
+  await webProposal();
+  const status = await message(await start(), text);
+  expect(status).toMatchObject({ phase: 'ready', receipt: { draftVersion: 1 } });
+  expect(status.review.changes).toEqual([]);
+  expect(model.requests).toHaveLength(1);
+  const mapPath = path.replace('/text-assistant', '/map');
+  const map = await (await browser.get(mapPath)).json();
+  expect(map.objects).toMatchObject([{ id: 'web-object', name: 'Redan från formuläret' }]);
+  expect(map.draft.changes).toEqual([]);
+  const { history } = await (await browser.get(`${mapPath}/history`)).json();
+  expect(history).toEqual([status.receipt]);
+});
 
 test.each([
   ['separate', 'Lo använder inte Tonrum längre. Ta bort kopplingen och spara ändringarna.'],
@@ -977,10 +2483,13 @@ test('beginMessage retains unanswered questions through a queued draft update an
   ]);
   let final = working;
   await expect
-    .poll(async () => {
-      final = await (await browser.get(`${path}/${session.id}`)).json();
-      return final.phase;
-    })
+    .poll(
+      async () => {
+        final = await (await browser.get(`${path}/${session.id}`)).json();
+        return final.phase;
+      },
+      { timeout: 5_000 },
+    )
     .toBe('ready');
   expect(final).toMatchObject({ questionPending: true, questions: [question] });
   expect(final.completedReplies).toHaveLength(2);
@@ -1169,7 +2678,7 @@ test('the owning browser cannot save pending changes and a verified external dis
 });
 
 test.each([false, true])(
-  'retrying a partial batch skips successful operations, including overlapping effects: %s',
+  'retrying an atomic batch repeats its rolled-back operations, including overlapping effects: %s',
   async (overlap) => {
     let step = 0;
     let typeId = '';
@@ -1236,11 +2745,12 @@ test.each([false, true])(
     const waiting = await message(await start(), 'Lägg till två saker.');
     const failed = await message(waiting, 'Cykeln och hjälmen.');
     expect(failed.phase).toBe('error');
-    expect(failed.pendingParts?.[0].operations).toHaveLength(overlap ? 2 : 1);
-    expect(failed.review.changes.map((item: { id: string }) => item.id)).toContain('bike');
+    expect(failed.pendingParts?.[0].operations).toEqual([]);
+    expect(failed.pendingParts?.[0].status).toBe('ready');
+    expect(failed.review.changes.map((item: { id: string }) => item.id)).toEqual(['web-object']);
     const retried = await message(failed, 'Fortsätt med det som återstår.');
     expect(retried.error).toBeUndefined();
-    expect(retried.review.version).toBe(failed.review.version + 1);
+    expect(retried.review.version).toBe(failed.review.version + (overlap ? 3 : 2));
     expect(retried.pendingParts?.[0].status).toBe('completed');
     expect(retried.review.changes.map((item: { id: string }) => item.id)).toEqual([
       'web-object',
@@ -1327,6 +2837,7 @@ test.each(['duplicate', 'waiting', 'information'])(
   'an invalid batch resolution (%s) cannot change the draft or close a part',
   async (invalid) => {
     let turn = 0;
+    let typeId = '';
     const model = textModel((request) => {
       const input = JSON.parse(
         String(request.input.findLast((row) => row.role === 'user')?.content),
@@ -1357,7 +2868,7 @@ test.each(['duplicate', 'waiting', 'information'])(
               arguments: {
                 id: 'unexpected',
                 baseRevision: null,
-                value: { typeId: input.draft.changes[0].after.typeId, name: 'Oväntat' },
+                value: { typeId, name: 'Oväntat' },
               },
             },
           ],
@@ -1365,12 +2876,218 @@ test.each(['duplicate', 'waiting', 'information'])(
       ];
     });
     await setup(model.provider);
-    await webProposal();
+    typeId = (await webProposal()).typeId;
     const waiting = await message(await start(), 'Beskriv cykeln.');
     const rejected = await message(waiting, 'Jag vet inte.');
     expect(rejected.error).toBe('invalid_request');
     expect(rejected.pendingParts).toEqual(waiting.pendingParts);
     expect(rejected.review).toEqual(waiting.review);
+  },
+);
+
+test.each(['before', 'after'])(
+  'clarification updates can accompany trusted reads %s the update without losing pending work',
+  async (order) => {
+    let turn = 0;
+    let typeId = '';
+    let companionCalls: ReturnType<typeof modelTool>[] = [];
+    const model = textModel((request) => {
+      const input = JSON.parse(
+        String(request.input.findLast((row) => row.role === 'user')?.content),
+      );
+      const part = input.pendingParts[0];
+      if (turn++ === 0)
+        return [modelTool('ask_questions', { questions: ['Vilket namn ska cykeln ha?'] })];
+      if (turn === 2) {
+        const update = modelTool('ask_questions', {
+          questions: [],
+          updates: [
+            {
+              id: part.id,
+              revision: part.revision,
+              action: 'clarify',
+              messageId: input.messageId,
+              evidence: input.message,
+            },
+          ],
+          continueResponse: true,
+        });
+        const read = modelTool('read_type_catalog', {});
+        companionCalls = order === 'before' ? [read, update] : [update, read];
+        return companionCalls;
+      }
+      for (const call of companionCalls)
+        expect(
+          request.input.filter(
+            (row) => row.type === 'function_call_output' && row.call_id === call.call_id,
+          ),
+        ).toHaveLength(1);
+      const current = lastToolResult(request).pendingParts[0];
+      return [
+        modelTool('submit_changes', {
+          version: input.draft.version,
+          contentVersion: input.draft.contentVersion,
+          completion: 'draft',
+          resolves: [{ id: current.id, revision: current.revision }],
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: { id: 'bike', baseRevision: null, value: { typeId, name: 'Blå cykeln' } },
+            },
+          ],
+        }),
+      ];
+    });
+    await setup(model.provider);
+    typeId = (await webProposal()).typeId;
+    const waiting = await message(await start(), 'Lägg till en cykel.');
+    const completed = await message(waiting, 'Den ska heta Blå cykeln.');
+    expect(completed.error).toBeUndefined();
+    expect(completed.pendingParts).toMatchObject([
+      { id: waiting.pendingParts?.[0].id, status: 'completed' },
+    ]);
+    expect(completed.questionPending).toBe(false);
+    expect(completed.review.changes).toMatchObject([
+      { id: 'web-object' },
+      { id: 'bike', after: { name: 'Blå cykeln' } },
+    ]);
+    expect(completed.receipt).toBeUndefined();
+  },
+);
+
+test.each(['rephrase', 'unclear', 'new', 'stale', 'unrelated', 'multiple'] as const)(
+  'an action clarification (%s) preserves unrelated waiting and ready parts',
+  async (association) => {
+    let turn = 0;
+    let typeId = '';
+    let beforeCheck: TextAssistantView['pendingParts'];
+    const question = 'Vilken av de gröna cyklarna menar du?';
+    const model = textModel(
+      (request) => {
+        const input = JSON.parse(
+          String(request.input.findLast((row) => row.role === 'user')?.content),
+        );
+        if (turn++ === 0)
+          return [
+            modelTool('ask_questions', {
+              questions: ['Vilken hjälm?', 'Vilken cykel?', 'Vilken bil?'],
+            }),
+          ];
+        if (turn === 2)
+          return [
+            modelTool('ask_questions', {
+              questions: [],
+              updates: input.pendingParts
+                .slice(0, 2)
+                .map((part: { id: string; revision: number }) => ({
+                  id: part.id,
+                  revision: part.revision,
+                  action: 'clarify',
+                  messageId: input.messageId,
+                  evidence: input.message,
+                })),
+              continueResponse: true,
+            }),
+          ];
+        beforeCheck = lastToolResult(request).pendingParts;
+        return [
+          modelTool('submit_changes', {
+            version: input.draft.version,
+            contentVersion: input.draft.contentVersion,
+            completion: 'draft',
+            operations: ['helmet', 'bike'].map((id) => ({
+              name: 'propose_object',
+              arguments: { id, baseRevision: null, value: { typeId, name: id } },
+            })),
+          }),
+        ];
+      },
+      (request) => {
+        if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+          return [modelMessage(JSON.stringify({ mode: 'work', request: 'Uppdatera föremålen.' }))];
+        if (request.instructions.startsWith('SKYTTEL_TURN_CLARIFICATION')) {
+          const { untrusted } = JSON.parse(String(request.input[0].content));
+          expect(untrusted.checked).toEqual({
+            operation: {
+              name: 'propose_object',
+              arguments: { id: 'bike', baseRevision: null, value: { typeId, name: 'bike' } },
+            },
+            question,
+          });
+          const { id, revision } = untrusted.parts[1];
+          return [
+            modelMessage(
+              JSON.stringify(
+                association === 'unclear'
+                  ? { decision: 'unclear', question: 'Vilken uppgift menar du?' }
+                  : association === 'new'
+                    ? { decision: 'new' }
+                    : {
+                        decision: 'rephrase',
+                        parts:
+                          association === 'multiple'
+                            ? untrusted.parts.map(
+                                ({ id, revision }: { id: string; revision: number }) => ({
+                                  id,
+                                  revision,
+                                }),
+                              )
+                            : [
+                                {
+                                  id: association === 'unrelated' ? 'unrelated-part' : id,
+                                  revision: association === 'stale' ? revision - 1 : revision,
+                                },
+                              ],
+                      },
+              ),
+            ),
+          ];
+        }
+        return [modelMessage(JSON.stringify({ decision: 'clarify', operation: 1, question }))];
+      },
+    );
+    await setup(model.provider);
+    typeId = (await webProposal()).typeId;
+    const waiting = await message(await start(), 'Uppdatera hjälmen, cykeln och bilen.');
+    const result = await message(
+      waiting,
+      'Den blå hjälmen och den gröna cykeln. Bilen vet jag inte.',
+      waiting.pendingParts.map(({ id, revision }: { id: string; revision: number }) => ({
+        id,
+        revision,
+      })),
+    );
+    expect(beforeCheck).toMatchObject([
+      { status: 'ready' },
+      { status: 'ready' },
+      { status: 'waiting' },
+    ]);
+    expect(result.pendingParts[0]).toEqual(beforeCheck?.[0]);
+    expect(result.pendingParts[2]).toEqual(beforeCheck?.[2]);
+    if (association === 'rephrase') {
+      expect(result.pendingParts).toHaveLength(3);
+      expect(result.pendingParts[1]).toMatchObject({
+        id: beforeCheck?.[1].id,
+        revision: 2,
+        question,
+        status: 'waiting',
+      });
+      expect(result.questions).toEqual([question, 'Vilken bil?']);
+    } else {
+      expect(result.pendingParts.slice(0, 3)).toEqual(beforeCheck);
+      if (association === 'new') {
+        expect(result.pendingParts).toHaveLength(4);
+        expect(result.pendingParts[3]).toMatchObject({ question, status: 'waiting' });
+      } else expect(result.pendingParts).toHaveLength(3);
+    }
+    expect(result.error).toBe(
+      ['stale', 'unrelated', 'multiple'].includes(association)
+        ? 'assistant_pending_part_changed'
+        : 'assistant_scope_unclear',
+    );
+    if (association === 'unclear') expect(result.reply).toContain('Vilken uppgift menar du?');
+    expect(result.review).toEqual(waiting.review);
+    expect(result.receipt).toBeUndefined();
   },
 );
 
@@ -1647,7 +3364,7 @@ test.each(['plain', 'report', 'echo'])(
               ),
             ];
       return [modelMessage('Nästa oberoende svar.')];
-    });
+    }, readOnlyScope);
     await setup(model.provider);
     await webProposal();
     const waiting = await message(await start(), 'Hitta hjälmen och beskriv cykeln.');
@@ -1857,10 +3574,13 @@ test.each(['prepare_save', 'save_draft', 'submit_changes'])(
 test.each(['draft', 'latest_save'])(
   'requested %s details report object status and the old relationship meaning through the public assistant',
   async (source) => {
-    const model = textModel(() => [
-      modelMessage('En påhittad sammanfattning från leverantören.'),
-      modelTool('report_result', { source }),
-    ]);
+    const model = textModel(
+      () => [
+        modelMessage('En påhittad sammanfattning från leverantören.'),
+        modelTool('report_result', { source }),
+      ],
+      readOnlyScope,
+    );
     await setup(model.provider);
     const mapPath = path.replace('/text-assistant', '/map');
     async function propose(endpoint: string, data: Record<string, unknown>) {
@@ -1885,7 +3605,7 @@ test.each(['draft', 'latest_save'])(
     await propose('relationship', {
       id: 'alex-tonrum',
       baseRevision: null,
-      value: { ...relationship, typeId: usageType.id },
+      value: { ...relationship, typeId: usageType.id, verb: 'Använder' },
     });
     await propose('save', { operationId: 'baseline' });
     await propose('draft', {
@@ -1896,7 +3616,7 @@ test.each(['draft', 'latest_save'])(
     await propose('relationship', {
       id: 'alex-tonrum',
       baseRevision: 1,
-      value: { ...relationship, typeId: paymentType.id },
+      value: { ...relationship, typeId: paymentType.id, verb: 'Betalar' },
     });
     if (source === 'latest_save') await propose('save', { operationId: 'correction' });
 
@@ -1923,7 +3643,10 @@ test.each(['draft', 'latest_save'])(
 );
 
 test('latest-save details are grounded in the actual receipt and preserve unrelated proposals', async () => {
-  const model = textModel(() => [modelTool('report_result', { source: 'latest_save' })]);
+  const model = textModel(
+    () => [modelTool('report_result', { source: 'latest_save' })],
+    readOnlyScope,
+  );
   await setup(model.provider);
   await webProposal('Cykeln', 'bike');
   const mapPath = path.replace('/text-assistant', '/map');
@@ -2001,6 +3724,13 @@ test.each([
 
 test.each([
   'Spara inte.',
+  'Spara inte mina ändringar.',
+  'Spara mina ändringar senare.',
+  'Spara mina ändringar om priset är rätt.',
+  'Spara bara mina ändringar på cykeln.',
+  'Skriv ”spara mina ändringar” i beskrivningen.',
+  'Spara inte än. Spara mina ändringar.',
+  'Spara mina ändringar. Nej, vänta med att spara.',
   'Spara ej.',
   'Spara ingenting.',
   'Spara senare.',
@@ -2509,6 +4239,268 @@ test('a marking is confirmed only after the current browser acknowledges the act
   expect(view).toMatchObject({ reply: 'Markerat i kartan.', displayedSelection: 'web-object' });
 });
 
+test.each(['before', 'after'])(
+  'requested draft details and selection can share a response with the report %s selection',
+  async (order) => {
+    let first = true;
+    const model = textModel(() => {
+      if (!first) return [modelMessage('Objektet heter Redan från formuläret.')];
+      first = false;
+      const report = modelTool('report_result', { source: 'draft', continueResponse: true });
+      const selection = modelTool('show_map_object', { objectId: 'web-object' });
+      return order === 'before' ? [report, selection] : [selection, report];
+    });
+    await setup(model.provider);
+    await webProposal();
+    const session = await start();
+    const submitted = await browser.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data: {
+        revision: 0,
+        ...displayedVersion(session),
+        requestId: 'report-and-select',
+        text: 'Beskriv utkastet, markera objektet och berätta vad det heter.',
+      },
+    });
+    expect(submitted.status()).toBe(202);
+    let current: TextAssistantView = session;
+    await expect
+      .poll(async () => {
+        current = await (await browser.get(`${path}/${session.id}`)).json();
+        return current.selection?.objectId ?? current.error;
+      })
+      .toBe('web-object');
+    expect(current.phase).toBe('working');
+    expect(current.displayedSelection).toBeUndefined();
+    const acknowledged = await browser.post(`${path}/${session.id}/selection`, {
+      headers: { origin: app.origin },
+      data: { revision: 1, objectId: 'web-object', displayed: true },
+    });
+    expect(acknowledged.status()).toBe(200);
+    await expect
+      .poll(async () => {
+        current = await (await browser.get(`${path}/${session.id}`)).json();
+        return current.phase;
+      })
+      .toBe('ready');
+    expect(current.error).toBeUndefined();
+    expect(current.displayedSelection).toBe('web-object');
+    expect(current.reply).toContain('Redan från formuläret');
+    expect(current.review.changes).toMatchObject([
+      { id: 'web-object', after: { name: 'Redan från formuläret' } },
+    ]);
+    expect(current.modelReply).toContain('Objektet heter Redan från formuläret.');
+    expect(current.receipt).toBeUndefined();
+  },
+);
+
+test.each(['before', 'after'])(
+  'a verified draft report can accompany reads %s the report and continue with their facts',
+  async (order) => {
+    let calls: ReturnType<typeof modelTool>[] = [];
+    const model = textModel((request) => {
+      if (!calls.length) {
+        const report = modelTool('report_result', { source: 'draft', continueResponse: true });
+        const reads = [modelTool('read_map', {}), modelTool('read_my_draft', {})];
+        calls = order === 'before' ? [...reads, report] : [report, ...reads];
+        return calls;
+      }
+      for (const call of calls)
+        expect(
+          request.input.filter(
+            (row) => row.type === 'function_call_output' && row.call_id === call.call_id,
+          ),
+        ).toHaveLength(1);
+      const mapCall = calls.find((call) => call.name === 'read_map');
+      const mapOutput = request.input.find(
+        (row) => row.type === 'function_call_output' && row.call_id === mapCall?.call_id,
+      );
+      expect(JSON.parse(String(mapOutput?.output)).objects).toEqual([]);
+      return [modelMessage('Det finns inga sparade objekt i kartan.')];
+    }, readOnlyScope);
+    await setup(model.provider);
+    await webProposal();
+    const result = await message(
+      await start(),
+      'Beskriv mitt utkast och hur många objekt som är sparade.',
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.reply).toContain('Redan från formuläret');
+    expect(result.modelReply).toBe('Det finns inga sparade objekt i kartan.');
+    expect(result.review.changes).toMatchObject([{ id: 'web-object' }]);
+    expect(result.receipt).toBeUndefined();
+    expect(result.operations).toEqual([]);
+  },
+);
+
+test.each(['ask_questions', 'report_result'])(
+  '%s cannot finalize from a companion read spanning a manual draft change',
+  async (terminal) => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let reading = false;
+    const model = textModel(() => [
+      modelTool(
+        terminal,
+        terminal === 'ask_questions' ? { questions: ['Vilken cykel?'] } : { source: 'draft' },
+      ),
+      modelTool('read_map', { query: 'Lina' }),
+    ]);
+    await setup(model.provider, undefined, async (request, dispatch) => {
+      const rpc =
+        request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+          ? await request.clone().json()
+          : null;
+      const response = await dispatch(request);
+      if (rpc?.method === 'tools/call' && rpc.params.name === 'read_map') {
+        reading = true;
+        await held;
+      }
+      return response;
+    });
+    await webProposal('Lina');
+    const completion = message(await start(), 'Läs Lina och beskriv mitt utkast.');
+    try {
+      await expect.poll(() => reading).toBe(true);
+      await webProposal('Lina Manuell');
+      release();
+      const rejected = await completion;
+      expect(rejected.error).toBe('assistant_draft_changed');
+      expect(rejected.questionPending).toBe(false);
+      expect(rejected.reply ?? '').not.toContain('Lina');
+      expect(rejected.receipt).toBeUndefined();
+      const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
+      expect(map.draft.changes[0].after.name).toBe('Lina Manuell');
+    } finally {
+      release();
+      await completion;
+    }
+  },
+);
+
+test('a draft report cannot share a response with an unsolicited save', async () => {
+  const model = textModel(
+    () => [
+      modelTool('report_result', { source: 'draft' }),
+      modelTool('save_draft', { version: 1, contentVersion: 1 }),
+    ],
+    readOnlyScope,
+  );
+  await setup(model.provider);
+  await webProposal();
+  const result = await message(await start(), 'Beskriv mitt utkast.');
+  expect(result.error).toBe('assistant_action_out_of_scope');
+  expect(result.receipt).toBeUndefined();
+  expect(result.review.changes).toMatchObject([{ id: 'web-object' }]);
+  expect(result.operations).toEqual([]);
+});
+
+test.each(['ask_questions', 'report_result'])(
+  '%s cannot accompany a draft mutation even when that mutation is allowed',
+  async (terminal) => {
+    let typeId = '';
+    const model = textModel(() => [
+      modelTool(
+        terminal,
+        terminal === 'ask_questions' ? { questions: ['Vilken färg?'] } : { source: 'draft' },
+      ),
+      modelTool('propose_object', {
+        version: 1,
+        contentVersion: 1,
+        id: 'bike',
+        baseRevision: null,
+        value: { typeId, name: 'Cykeln' },
+      }),
+    ]);
+    await setup(model.provider);
+    typeId = (await webProposal()).typeId;
+    const before = await start();
+    const rejected = await message(before, 'Lägg till cykeln och beskriv utkastet.');
+    expect(rejected.error).toBe('invalid_request');
+    expect(rejected.review).toEqual(before.review);
+    expect(rejected.questionPending).toBe(false);
+    expect(rejected.receipt).toBeUndefined();
+  },
+);
+
+test('a semantically invalid failure report cannot display a selection after earlier batch work', async () => {
+  let turn = 0;
+  let typeId = '';
+  const model = textModel((request) => {
+    const input = JSON.parse(String(request.input.findLast((row) => row.role === 'user')?.content));
+    if (turn++ === 0)
+      return [
+        modelTool('submit_changes', {
+          version: input.draft.version,
+          contentVersion: input.draft.contentVersion,
+          completion: 'draft',
+          continueResponse: true,
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'bike',
+                baseRevision: null,
+                value: { typeId, name: 'Cykeln' },
+              },
+            },
+          ],
+        }),
+      ];
+    return [
+      modelTool('report_result', { source: 'last_failure' }),
+      modelTool('show_map_object', { objectId: 'bike' }),
+    ];
+  });
+  await setup(model.provider);
+  typeId = (await webProposal()).typeId;
+  const session = await start();
+  const submitted = await browser.post(`${path}/${session.id}/messages`, {
+    headers: { origin: app.origin },
+    data: {
+      revision: 0,
+      ...displayedVersion(session),
+      requestId: 'invalid-after-batch',
+      text: 'Lägg till cykeln och visa den. Beskriv senaste felet.',
+    },
+  });
+  expect(submitted.status()).toBe(202);
+  let current: TextAssistantView = session;
+  await expect
+    .poll(async () => {
+      current = await (await browser.get(`${path}/${session.id}`)).json();
+      return current.error ?? current.selection?.id;
+    })
+    .toBe('invalid_request');
+  expect(current.selection).toBeUndefined();
+  expect(current.displayedSelection).toBeUndefined();
+  expect(current.review.changes).toMatchObject([
+    { id: 'web-object' },
+    { id: 'bike', after: { name: 'Cykeln' } },
+  ]);
+  expect(current.receipt).toBeUndefined();
+});
+
+test.each(['before', 'after'])(
+  'an invalid report %s selection fails before any display request',
+  async (order) => {
+    const model = textModel(() => {
+      const report = modelTool('report_result', { source: 'save' });
+      const selection = modelTool('show_map_object', { objectId: 'web-object' });
+      return order === 'before' ? [report, selection] : [selection, report];
+    });
+    await setup(model.provider);
+    await webProposal();
+    const rejected = await message(await start(), 'Visa objektet och beskriv senaste sparandet.');
+    expect(rejected.error).toBe('invalid_request');
+    expect(rejected.selection).toBeUndefined();
+    expect(rejected.displayedSelection).toBeUndefined();
+    expect(rejected.receipt).toBeUndefined();
+  },
+);
+
 test.each([false, true])(
   'relationship selection requires a matching current display and rejects a changed draft: %s',
   async (changeDraft) => {
@@ -2630,7 +4622,7 @@ test('provider failure preserves the draft, emits unknown usage, and allows norm
   const status = await message(await start(), 'Hitta abonnemanget.');
   expect(status).toMatchObject({
     phase: 'error',
-    error: 'assistant_provider_failed',
+    error: 'assistant_model_temporary',
     review: { changes: [{ id: 'web-object' }] },
   });
   expect(attempts.at(-1)).toMatchObject({
@@ -2802,7 +4794,7 @@ test('an incomplete provider response cannot execute a save and retains only kno
           object: 'response',
           created_at: 1,
           status: 'incomplete',
-          model: 'gpt-6.1-sol',
+          model: 'gpt-6.1-terra',
           output: [
             modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'partial-save' }),
           ],
@@ -2907,20 +4899,34 @@ test('HTTP authorization and exact turn retries prevent duplicate provider work 
   }
 });
 
+function completeSaveAuthorization(request: ModelRequest) {
+  return [
+    modelMessage(
+      JSON.stringify(
+        request.instructions.startsWith('SKYTTEL_TURN_SCOPE')
+          ? { mode: 'work', request: 'Spara hela utkastet.', responseRequired: false }
+          : { decision: 'allow', complete: true, fulfillsRequest: true },
+      ),
+    ),
+  ];
+}
+
 test.each(['retry', 'completed elsewhere'] as const)(
   'an automatically completed prepared save returns one durable receipt via %s',
   async (mode) => {
     let step = 0;
-    const model = textModel(() =>
-      step++ === 0
-        ? [
-            modelTool('prepare_save', {
-              version: 1,
-              contentVersion: 1,
-              operationId: 'provider-chosen',
-            }),
-          ]
-        : [modelMessage('Sparförsöket är förberett.')],
+    const model = textModel(
+      () =>
+        step++ === 0
+          ? [
+              modelTool('prepare_save', {
+                version: 1,
+                contentVersion: 1,
+                operationId: 'provider-chosen',
+              }),
+            ]
+          : [modelMessage('Sparförsöket är förberett.')],
+      completeSaveAuthorization,
     );
     await setup(model.provider);
     await webProposal();
@@ -3005,7 +5011,8 @@ test('an unresolved identity rejects the whole save and recovery requires a fres
     data: {},
   });
   expect(await recovery.json()).toMatchObject({
-    phase: 'ready',
+    phase: 'error',
+    error: 'assistant_request_unfinished',
     saveCheck: {
       reply: 'Kontrollen visar att utkastet inte sparades. Dina osparade ändringar ligger kvar.',
     },
@@ -3126,7 +5133,7 @@ test('an HTTP provider refusal records its request identity without exposing its
     (attempt) => attempts.push(structuredClone(attempt)),
   );
   const view = await message(await start(), 'Läs mitt utkast.');
-  expect(view).toMatchObject({ phase: 'error', error: 'assistant_provider_failed' });
+  expect(view).toMatchObject({ phase: 'error', error: 'assistant_model_temporary' });
   expect(JSON.stringify(view)).not.toContain('Private provider body');
   expect(attempts.at(-1)).toMatchObject({
     outcome: 'failed',
@@ -3154,10 +5161,12 @@ test('an idle assistant shows current web proposals before the next instruction'
 
 test('recovery checks its exact save receipt even after it leaves the recent operations list', async () => {
   let step = 0;
-  const model = textModel(() =>
-    step++ === 0
-      ? [modelTool('prepare_save', { version: 1, contentVersion: 1, operationId: 'held-save' })]
-      : [modelMessage('Försöket är förberett.')],
+  const model = textModel(
+    () =>
+      step++ === 0
+        ? [modelTool('prepare_save', { version: 1, contentVersion: 1, operationId: 'held-save' })]
+        : [modelMessage('Försöket är förberett.')],
+    completeSaveAuthorization,
   );
   await setup(model.provider);
   await webProposal();

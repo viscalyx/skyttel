@@ -19,7 +19,11 @@ export function evaluationPublication(markdown: string): string[] {
     ...(value.type === 'attempt'
       ? {
           profile: value.data.profile,
+          applicationVersion: value.data.applicationVersion,
+          applicationCommit: value.data.applicationCommit,
+          comparisonContract: value.data.comparisonContract,
           scenario: value.data.scenario,
+          group: value.data.group,
           step: value.data.step,
           modality: value.data.modality,
           repetition: value.data.repetition,
@@ -27,9 +31,18 @@ export function evaluationPublication(markdown: string): string[] {
           fixed: value.data.fixed,
           content: value.data.content,
           elapsedMs: value.data.elapsedMs,
+          assistedElapsedMs: value.data.assistedElapsedMs,
+          assistedWallElapsedMs: value.data.assistedWallElapsedMs,
+          assistedEvaluationOverheadMs: value.data.assistedEvaluationOverheadMs,
+          timing: value.data.timing,
+          metrics: value.data.metrics,
           backendCostUsd: value.data.backendCostUsd,
           judgeCostUsd: value.data.judgeCostUsd,
           voiceCostUsd: value.data.voiceCostUsd,
+          playbackAssessmentCostUsd: value.data.playbackAssessmentCostUsd,
+          playbackAssessmentElapsedMs: value.data.playbackAssessmentElapsedMs,
+          playback: value.data.playback,
+          assessment: value.data.assessment,
         }
       : {}),
   };

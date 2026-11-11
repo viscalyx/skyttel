@@ -44,7 +44,45 @@ test('one final summary covers every queued update and is not repeated by pollin
   );
 });
 
-test('partial changes, failed instructions and outstanding questions stay distinct', () => {
+test('hydrated completion stays quiet while a continued original request can publish a new revision', () => {
+  const historical: ConversationReply = {
+    id: 'original-request',
+    revision: 1,
+    text: 'Vilket garage?',
+    questionPending: true,
+    questions: ['Vilket garage?'],
+    newQuestions: ['Vilket garage?'],
+  };
+  const hydrated: TextAssistantView = {
+    ...view,
+    paused: true,
+    completedReplies: [historical],
+    questionPending: true,
+    questions: ['Vilket garage?'],
+    newQuestions: ['Vilket garage?'],
+  };
+  const complete = conversationCompletion(hydrated);
+  expect(complete({ ...hydrated, paused: false })).toBeUndefined();
+  const continued: ConversationReply = {
+    ...historical,
+    revision: 2,
+    text: 'Vilken cykel?',
+    questions: ['Vilken cykel?'],
+    newQuestions: ['Vilken cykel?'],
+  };
+  expect(
+    complete({
+      ...view,
+      revision: 2,
+      completedReplies: [historical, continued],
+      questionPending: true,
+      questions: ['Vilken cykel?'],
+      newQuestions: ['Vilken cykel?'],
+    })?.text,
+  ).toBe('Vilken cykel?');
+});
+
+test('partial changes and questions remain in the transcript while errors belong to the notice', () => {
   const complete = conversationCompletion();
   const first = updated(1, 'Spotify');
   const failed = {
@@ -59,12 +97,18 @@ test('partial changes, failed instructions and outstanding questions stay distin
   const result = complete({
     ...view,
     revision: 3,
+    workFailure: {
+      requestId: failed.id,
+      request: failed.request,
+      code: 'assistant_model_temporary',
+      message: failed.reply,
+    },
     questionPending: true,
     questions: ['Ska Sonja läggas till som en ny person?'],
     completedReplies: [first, failed],
   });
   expect(result?.text).toBe(
-    'Spotify lades till. Abonnemanget ändrades till Premium. ”Byt abonnemang och koppla Johan.”: Anslutningen till modellen bröts innan kopplingen kunde göras. Ska Sonja läggas till som en ny person?',
+    'Spotify lades till. Abonnemanget ändrades till Premium. Ska Sonja läggas till som en ny person?',
   );
   expect(result?.voiced).toBe(false);
 });

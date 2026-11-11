@@ -422,9 +422,7 @@ subagents. Start a new thread after changing these defaults. Explicit spawn
 settings and custom-agent configuration can override them; check the
 runtime model and effort when diagnosing a different selection.
 Run the two AI sync skills directly with their bundled scripts and preserve
-their output verification. The
-[agent routing evaluation](../research/codex-agent-routing.md) records the
-measurements, limitations, and conditions for reconsidering delegation.
+their output verification.
 
 Creation and rebuilding also install the latest Claude Code release in
 `~/.local/bin`. If you use it, run `claude` in the container and sign in.
@@ -455,6 +453,10 @@ outside the disposable container filesystem before rebuilding.
 Setup replaces managed configuration blocks and applies the repository's
 approval policy, default permissions, workspace trust, and disabled plugins
 and skills. Keep unrelated personal settings outside managed blocks.
+The disabled skills are listed by name in `.devcontainer/codex-config.toml`,
+including the plugin prefix, so plugin version updates retain the exclusions.
+Creation and rebuilding reapply these rules to the user configuration;
+per-skill rules in the project's `.codex/config.toml` are not applied by Codex.
 
 Rebuild after changing `.node-version` or the npm pin in `package.json`.
 Keep the private environment file and authentication secret when rebuilding.

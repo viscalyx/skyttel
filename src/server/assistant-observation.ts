@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { createHash } from 'node:crypto';
+import type { ConversationConsentProvenance } from './conversation-consent.js';
 import { TraceJsonFailure, traceJson } from './trace-json.js';
 
 /** Reviewed, opt-in, in-memory observations shared by evaluation and live export.
@@ -100,12 +101,11 @@ function observationId(parts: string[]) {
 
 export type ObservationStatus = 'incomplete' | 'completed' | 'failed' | 'canceled' | 'disconnected';
 
-export type AssistantObservation = {
+export type AssistantObservation = Partial<ConversationConsentProvenance> & {
   at: number;
   sessionId: string;
   taskId?: string;
   revision?: number;
-  consentTextVersion?: number;
   context?: AssistantObservationContext;
   status?: ObservationStatus;
   evidenceGap?: 'unknown_parent' | 'missing_end' | 'excluded_content';
@@ -114,6 +114,7 @@ export type AssistantObservation = {
     | 'task_completed'
     | 'model_attempt'
     | 'model_action'
+    | 'work_result'
     | 'mcp_started'
     | 'mcp_completed'
     | 'mcp_failed'
@@ -284,6 +285,8 @@ function modelExchange(value: unknown, project: ProjectArray, input: boolean) {
       : ['id', 'status', 'model', 'service_tier'],
   );
   if (input && source?.reasoning) admitted.reasoning = fields(source.reasoning, ['effort']);
+  if (input && source?.prompt_cache_options)
+    admitted.prompt_cache_options = fields(source.prompt_cache_options, ['ttl']);
   const items = source?.[input ? 'input' : 'output'];
   if (Array.isArray(items))
     admitted[input ? 'input' : 'output'] = project(items, (item) => {
@@ -350,7 +353,7 @@ function data(event: AssistantObservation, project: ProjectArray) {
   switch (event.kind) {
     case 'task_started':
       return {
-        ...errorFields(event.data, ['source', 'startedAt']),
+        ...errorFields(event.data, ['source', 'startedAt', 'executionMode']),
         request: fields((event.data as { request?: unknown })?.request, [
           'text',
           'draftVersion',
@@ -361,7 +364,7 @@ function data(event: AssistantObservation, project: ProjectArray) {
         ]),
       };
     case 'task_completed': {
-      const admitted = errorFields(event.data, ['source', 'startedAt', 'endedAt']);
+      const admitted = errorFields(event.data, ['source', 'startedAt', 'endedAt', 'executionMode']);
       const noOp = (event.data as { noOp?: unknown })?.noOp;
       if (noOp === 'already_working' || noOp === 'already_checked') admitted.noOp = noOp;
       const view = (event.data as { view?: unknown })?.view;
@@ -386,6 +389,8 @@ function data(event: AssistantObservation, project: ProjectArray) {
     }
     case 'mcp_failed':
       return errorFields(event.data, ['name', 'startedAt']);
+    case 'work_result':
+      return fields(event.data, ['providerCallId', 'executionMode', 'disposition', 'reason']);
     case 'model_action':
       return fields(event.data, ['name', 'arguments', 'callId']);
     case 'model_attempt':
@@ -527,6 +532,7 @@ export function assistantObservationBoundary(
           'taskId',
           'revision',
           'consentTextVersion',
+          'conversationConsentTextVersion',
           'status',
           'evidenceGap',
           'kind',

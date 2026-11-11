@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, expect, test, vi } from 'vitest';
 import {
+  type AssistantObservation,
   backendTaskObservationContext,
   type ObserveAssistant,
 } from '../../../src/server/assistant-observation.js';
@@ -14,7 +15,7 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider } from '../../support/live-provider.js';
-import { modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import { modelMessage, modelTool, readOnlyScope, textModel } from '../../support/text-model.js';
 
 type Ingested = {
   method: string;
@@ -146,6 +147,21 @@ async function setup(
   });
   expect(start.status(), await start.text()).toBe(201);
   return { path, session: await start.json() };
+}
+
+async function independentDraft(browser: APIRequestContext) {
+  await signIn(browser, app.origin);
+  // One actor's work in one household shares a FIFO draft across devices.
+  // Another household gives these concurrent tasks independent drafts.
+  const bootstrap = await (await browser.get(`${app.origin}/api/bootstrap`)).json();
+  app.seedMembership(bootstrap.user.id, 'other-home', 'Det andra hushållet', 'administrator');
+  const path = `${app.origin}/api/households/other-home`;
+  const started = await browser.post(`${path}/text-assistant`, {
+    headers: { origin: app.origin },
+    data: approvedForVisit,
+  });
+  expect(started.status(), await started.text()).toBe(201);
+  return { path, session: await started.json() };
 }
 
 async function send(
@@ -636,7 +652,7 @@ test.each(['concurrent text', 'voice stopped'])(
   15000,
 );
 
-test('concurrent voice sessions keep overlapping delegation and late results under their own roots', async () => {
+test('concurrent voice sessions on independent drafts keep overlapping delegation and late results under their own roots', async () => {
   const live = liveProvider();
   const releases = new Map<string, () => void>();
   const signals = new Map<string, AbortSignal | null | undefined>();
@@ -654,8 +670,12 @@ test('concurrent voice sessions keep overlapping delegation and late results und
     liveSideband: live.attach,
   });
   const other = await request.newContext();
-  const connect = async (browser: APIRequestContext, current: typeof session) => {
-    const response = await browser.post(`${path}/text-assistant/${current.id}/voice`, {
+  const connect = async (
+    browser: APIRequestContext,
+    current: typeof session,
+    householdPath = path,
+  ) => {
+    const response = await browser.post(`${householdPath}/text-assistant/${current.id}/voice`, {
       headers: { origin: app.origin },
       data: {
         sdp: 'synthetic-offer',
@@ -668,15 +688,9 @@ test('concurrent voice sessions keep overlapping delegation and late results und
     return { voice: (await response.json()).voice, providerId: [...live.channels.keys()].at(-1)! };
   };
   try {
-    await signIn(other, app.origin);
-    const second = await (
-      await other.post(`${path}/text-assistant`, {
-        headers: { origin: app.origin },
-        data: approvedForVisit,
-      })
-    ).json();
+    const { path: otherPath, session: second } = await independentDraft(other);
     const alpha = await connect(client, session);
-    const beta = await connect(other, second);
+    const beta = await connect(other, second, otherPath);
     for (const [voice, text] of [
       [alpha, 'Alfa'],
       [beta, 'Beta'],
@@ -721,7 +735,7 @@ test('concurrent voice sessions keep overlapping delegation and late results und
     await expect
       .poll(
         async () =>
-          (await (await other.get(`${path}/text-assistant/${second.id}`)).json()).modelReply,
+          (await (await other.get(`${otherPath}/text-assistant/${second.id}`)).json()).modelReply,
       )
       .toBe('Svar för Beta');
     releases.get('Alfa')!();
@@ -753,7 +767,7 @@ test('concurrent voice sessions keep overlapping delegation and late results und
     expect(
       JSON.stringify(live.sent.filter((item) => item.sessionId === alpha.providerId)),
     ).not.toContain('Svar för Alfa');
-    await other.post(`${path}/text-assistant/${second.id}/voice/${beta.voice.id}/stop`, {
+    await other.post(`${otherPath}/text-assistant/${second.id}/voice/${beta.voice.id}/stop`, {
       headers: { origin: app.origin },
       data: {},
     });
@@ -1596,11 +1610,16 @@ test('voice context preparation owns its summary once in an explicitly linked ba
   const held = new Promise<void>((resolve) => {
     release = resolve;
   });
-  const model = textModel(async (body) => {
-    if (body.tools.length) return [modelMessage('Påhittat historiskt sammanhang. '.repeat(110))];
-    await held;
-    return [modelMessage('Kort historiskt sammanhang.')];
-  });
+  const model = textModel(
+    async (body) => {
+      if (body.tools.length) return [modelMessage('Påhittat historiskt sammanhang. '.repeat(110))];
+      await held;
+      return [modelMessage('Kort historiskt sammanhang.')];
+    },
+    // Completed read-only discussion can be summarized. A work scope with
+    // narrative alone must preserve its unfinished requests verbatim.
+    readOnlyScope,
+  );
   const { path, session } = await setup({
     modelFetch: model.provider,
     liveFetch: live.provider,
@@ -1971,7 +1990,7 @@ test('voice startup and exact transcripts reach a separate trace without transpo
         owner: 'voice',
         conversation_id: session.id,
         voice_session_id: voice.id,
-        consent_text_version: 3,
+        consent_text_version: 4,
         status: 'incomplete',
       },
     },
@@ -2125,7 +2144,7 @@ test('complete text evidence preserves the exact model exchange and all actions 
 
 test('later current acceptance never makes an old conversation eligible for live evidence', async () => {
   const live = liveProvider();
-  const observed: { consentTextVersion?: number }[] = [];
+  const observed: AssistantObservation[] = [];
   const { path, session } = await setup({
     consentTextVersion: 2,
     liveFetch: live.provider,
@@ -2134,10 +2153,14 @@ test('later current acceptance never makes an old conversation eligible for live
   });
   const current = await send(path, session, 'old-before');
   expect(endpoint.received).toEqual([]);
-  const { user, household } = await (await client.get(`${app.origin}/api/bootstrap`)).json();
-  app.seedConversationConsent(user.id, household.id, 3);
+  app.setConversationConsentTextVersion(4);
+  const approved = await client.post(`${path}/conversation-consent`, {
+    headers: { origin: app.origin },
+    data: { textVersion: 4 },
+  });
+  expect(approved.status(), await approved.text()).toBe(200);
   expect(await (await client.get(`${path}/conversation-consent`)).json()).toMatchObject({
-    saved: { textVersion: 3 },
+    saved: { textVersion: 4 },
   });
   const after = await send(path, current, 'old-after');
   const connected = await client.post(`${path}/text-assistant/${session.id}/voice`, {
@@ -2164,7 +2187,40 @@ test('later current acceptance never makes an old conversation eligible for live
   });
   expect(endpoint.received).toEqual([]);
   expect(observed.length).toBeGreaterThan(0);
-  expect(observed.every((event) => event.consentTextVersion === 2)).toBe(true);
+  expect(observed.filter((event) => event.taskId === 'old-before')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ kind: 'task_completed', consentTextVersion: 2 }),
+    ]),
+  );
+  expect(observed.filter((event) => event.taskId === 'old-after')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ kind: 'task_completed', consentTextVersion: 4 }),
+    ]),
+  );
+  const laterWork = observed.filter((event) => event.taskId === 'old-after');
+  expect(laterWork.some((event) => event.kind === 'work_result')).toBe(true);
+  expect(laterWork.every((event) => event.consentTextVersion === 4)).toBe(true);
+  expect(laterWork.every((event) => event.conversationConsentTextVersion === 2)).toBe(true);
+  expect(
+    observed
+      .filter((event) => event.context?.owner === 'voice')
+      .every((event) => event.consentTextVersion === 4),
+  ).toBe(true);
+  const reset = await client.post(`${path}/text-assistant/${session.id}/new`, {
+    headers: { origin: app.origin },
+    data: {},
+  });
+  expect(reset.status(), await reset.text()).toBe(200);
+  await send(path, await reset.json(), 'current-context');
+  await expect
+    .poll(() =>
+      endpoint.received.some(
+        (item) =>
+          (item.body.extra as { metadata?: { consent_text_version?: number } })?.metadata
+            ?.consent_text_version === 4,
+      ),
+    )
+    .toBe(true);
 });
 
 test.each(['large text', 'many content parts'])(
@@ -2375,7 +2431,7 @@ test.each(['healthy', 'disabled', 'failing'])(
   20000,
 );
 
-test('overlapping devices keep separate task evidence and a canceled late model cannot finish another task', async () => {
+test('overlapping devices on independent drafts keep separate task evidence and a canceled late model cannot finish another task', async () => {
   const reached: string[] = [];
   const releases = new Map<string, () => void>();
   const model = textModel(async (request) => {
@@ -2390,13 +2446,7 @@ test('overlapping devices keep separate task evidence and a canceled late model 
   const other = await request.newContext();
   let beta: ReturnType<typeof send> | undefined;
   try {
-    await signIn(other, app.origin);
-    const started = await other.post(`${path}/text-assistant`, {
-      headers: { origin: app.origin },
-      data: approvedForVisit,
-    });
-    expect(started.status(), await started.text()).toBe(201);
-    const second = await started.json();
+    const { path: otherPath, session: second } = await independentDraft(other);
     const submitted = await client.post(`${path}/text-assistant/${session.id}/messages`, {
       headers: { origin: app.origin },
       data: {
@@ -2408,7 +2458,7 @@ test('overlapping devices keep separate task evidence and a canceled late model 
       },
     });
     expect(submitted.status()).toBe(202);
-    beta = send(path, second, 'same-request', 'Beta', other);
+    beta = send(otherPath, second, 'same-request', 'Beta', other);
     await expect.poll(() => reached.length).toBe(2);
     await expect
       .poll(
@@ -2848,18 +2898,26 @@ test.each([
   'ingestion $status suspends durably without backlog until explicit operator recovery',
   async ({ status, reason }) => {
     let failing = true;
-    const { path, session } = await setup({}, (_request, response) =>
+    let turn = 0;
+    const model = textModel(
+      () =>
+        turn++ === 0 ? [modelTool('read_map', { query: 'Lina' })] : [modelMessage('Lina är läst.')],
+      readOnlyScope,
+    );
+    const { path, session } = await setup({ modelFetch: model.provider }, (_request, response) =>
       response
         .writeHead(failing ? status : 204)
         .end(failing ? 'synthetic-secret-error' : undefined),
     );
-    expect(await send(path, session)).toMatchObject({ phase: 'ready' });
+    expect(await send(path, session)).toMatchObject({ phase: 'ready', unfinishedRequests: [] });
     const health = async () => (await client.get(`${app.origin}/api/operator/tracing`)).json();
     await expect.poll(async () => (await health()).state).toBe('suspended');
     expect(await health()).toMatchObject({ suspension: reason, lastError: reason });
     expect(endpoint.received).toHaveLength(1);
     const oldRoot = endpoint.received[0].body.id;
+    const modelCalls = model.requests.length + model.authorizationRequests.length;
     await restart();
+    expect(model.requests.length + model.authorizationRequests.length).toBe(modelCalls);
     expect(await health()).toMatchObject({
       state: 'suspended',
       suspension: reason,
@@ -3070,7 +3128,8 @@ test('streaming ingestion response content is canceled without collecting or log
         ).length,
     )
     .toBe(3);
-  expect(endpoint.received.every((item) => item.closed)).toBe(true);
+  // Request arrival precedes response cancellation and the receiver's close event.
+  await expect.poll(() => endpoint.received.every((item) => item.closed)).toBe(true);
   expect(endpoint.maximumActive).toBe(1);
   expect(
     JSON.stringify(await (await client.get(`${app.origin}/api/operator/tracing`)).json()),
@@ -3143,7 +3202,7 @@ test('a failed provider task ends its own SDK span as failed without exposing pr
     await (
       await client.get(`${path}/text-assistant/${session.id}/messages/failed-provider`)
     ).json(),
-  ).toMatchObject({ taskStatus: 'completed', phase: 'error', error: 'assistant_provider_failed' });
+  ).toMatchObject({ taskStatus: 'completed', phase: 'error', error: 'assistant_model_temporary' });
   expect(await (await client.get(`${path}/map`)).json()).toEqual(before);
   expect(JSON.stringify(endpoint.received)).not.toContain('synthetic-provider-failure-secret');
   const attempt = endpoint.received.find(
@@ -3304,13 +3363,20 @@ test.each(['deliver', 'discard'])(
   async (ending) => {
     const held: ServerResponse[] = [];
     let blocked = true;
-    const { path, session } = await setup({}, (_request, response) => {
+    let turn = 0;
+    const model = textModel(
+      () =>
+        turn++ === 0 ? [modelTool('read_map', { query: 'Lina' })] : [modelMessage('Lina är läst.')],
+      readOnlyScope,
+    );
+    const { path, session } = await setup({ modelFetch: model.provider }, (_request, response) => {
       if (blocked) held.push(response);
       else response.writeHead(204).end();
     });
-    expect(await send(path, session)).toMatchObject({ phase: 'ready' });
+    expect(await send(path, session)).toMatchObject({ phase: 'ready', unfinishedRequests: [] });
     await expect.poll(() => endpoint.received.length).toBe(1);
     const rootId = endpoint.received[0].body.id;
+    const modelCalls = model.requests.length + model.authorizationRequests.length;
     const started = performance.now();
     await restart(() => {
       if (ending === 'deliver') {
@@ -3319,6 +3385,7 @@ test.each(['deliver', 'discard'])(
       }
     });
     expect(performance.now() - started).toBeLessThan(2500);
+    expect(model.requests.length + model.authorizationRequests.length).toBe(modelCalls);
     await expect.poll(() => endpoint.received[0].closed).toBe(true);
     expect((endpoint.received[0].closedAt ?? Infinity) - started).toBeLessThan(2500);
     expect(endpoint.received.filter((item) => item.path === `/runs/${rootId}`)).toHaveLength(
@@ -3541,6 +3608,7 @@ test.each([
               'task_started',
               'task_completed',
               'model_attempt',
+              'work_result',
               'mcp_started',
               'mcp_completed',
               'mcp_failed',

@@ -3,6 +3,7 @@ import { closeSupportDialog, createHousehold, signIn } from '../support/client.j
 import {
   closeConversationText,
   microphoneButton,
+  openConversationText,
   startConversationWithText,
   turnMicrophoneOn,
   voiceBox,
@@ -19,6 +20,16 @@ async function bounds(element: Locator) {
   const box = await element.boundingBox();
   if (!box) throw new Error('Missing public UI element');
   return { ...box, right: box.x + box.width, bottom: box.y + box.height };
+}
+async function hitArea(element: Locator) {
+  return element.evaluate((node) => {
+    const box = node.getBoundingClientRect();
+    const area = getComputedStyle(node, '::after');
+    return {
+      width: box.width - Number.parseFloat(area.left) - Number.parseFloat(area.right),
+      height: box.height - Number.parseFloat(area.top) - Number.parseFloat(area.bottom),
+    };
+  });
 }
 async function setup(
   page: Page,
@@ -138,6 +149,22 @@ for (const size of [
         await expect(fullProposal).toContainText('Person');
         await expect(fullProposal).toContainText('Påhittad uppgift');
         await closeSupportDialog(page, 'Lo Exempel');
+        await view(page).getByRole('button', { name: 'Dölj utkastet (1)', exact: true }).click();
+        await page.reload();
+        await openConversationText(page);
+        const lifetime = view(page).getByRole('status', { name: 'Samtalets livslängd' });
+        await expect(lifetime).toContainText('Samtalet är pausat. Löper ut');
+        const deadline = await bounds(lifetime.locator('time'));
+        const restoredBody = await bounds(view(page).locator('.text-view-body'));
+        expect(deadline.y).toBeGreaterThanOrEqual(restoredBody.y);
+        expect(deadline.bottom).toBeLessThanOrEqual(restoredBody.bottom);
+        const end = view(page).getByRole('button', { name: 'Avsluta samtalet', exact: true });
+        await end.scrollIntoViewIfNeeded();
+        await end.click();
+        await expect(
+          view(page).getByRole('button', { name: 'Nytt samtal', exact: true }),
+        ).toBeFocused();
+        await expect(view(page).getByRole('log')).not.toContainText('Ett synligt provsvar.');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );
@@ -181,6 +208,17 @@ for (const size of [
         const body = await bounds(view(page).locator('.text-view-body'));
         expect(body.height).toBeGreaterThanOrEqual(18);
         expect((await bounds(voiceBox(page))).height).toBe(36);
+        if (size.visible === 190) {
+          const model = view(page).getByRole('button', { name: /^Modell och resonemang:/ });
+          await model.click();
+          await expect(
+            page.getByRole('dialog').getByRole('heading', { name: 'Resonemangsnivå' }),
+          ).toBeVisible();
+          await page.keyboard.press('Escape');
+          await expect(model).toBeFocused();
+          await field(page).click();
+          await expect(field(page)).toHaveValue('Ett vanligt uppdrag.');
+        }
         if (size.width > 700)
           expect((await bounds(voiceBox(page))).bottom).toBeLessThanOrEqual(surface.y);
         else
@@ -216,14 +254,7 @@ test.describe('smal mobil med återkoppling', () => {
       await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', true));
       const stop = voiceBox(page).getByRole('button', { name: 'Avbryt', exact: true });
       await expect(stop).toBeVisible();
-      const target = await stop.evaluate((element) => {
-        const box = element.getBoundingClientRect();
-        const hit = getComputedStyle(element, '::after');
-        return {
-          width: box.width - Number.parseFloat(hit.left) - Number.parseFloat(hit.right),
-          height: box.height - Number.parseFloat(hit.top) - Number.parseFloat(hit.bottom),
-        };
-      });
+      const target = await hitArea(stop);
       expect(target).toEqual({ width: 44, height: 44 });
       const stopBox = await bounds(stop);
       // Hit the extended area outside the unchanged 26px visible circle.
@@ -253,24 +284,19 @@ test.describe('smal mobil med återkoppling', () => {
         .click();
       await field(page).fill('Ett kontrollerat fel.');
       await view(page).getByRole('button', { name: 'Skicka', exact: true }).click();
-      const close = page
+      const abandon = page
         .getByRole('region', { name: 'Samtalsnotis', exact: true })
-        .getByRole('button', { name: 'Stäng notisen', exact: true });
-      await expect(close).toBeVisible();
-      const closeBox = await bounds(close);
-      expect(closeBox.width).toBe(28);
-      expect(closeBox.height).toBe(28);
-      const hit = await close.evaluate((element) => {
-        const box = element.getBoundingClientRect();
-        const area = getComputedStyle(element, '::after');
-        return {
-          width: box.width - Number.parseFloat(area.left) - Number.parseFloat(area.right),
-          height: box.height - Number.parseFloat(area.top) - Number.parseFloat(area.bottom),
-        };
-      });
-      expect(hit).toEqual({ width: 44, height: 44 });
-      await page.mouse.click(closeBox.x + closeBox.width / 2, closeBox.y - 6);
-      await expect(close).toHaveCount(0);
+        .getByRole('button', { name: 'Avstå från det oavslutade arbetet', exact: true });
+      await expect(abandon).toBeVisible();
+      await abandon.scrollIntoViewIfNeeded();
+      const abandonBox = await bounds(abandon);
+      expect(abandonBox.height).toBeGreaterThanOrEqual(36);
+      const hit = await hitArea(abandon);
+      expect(hit.width).toBeGreaterThanOrEqual(44);
+      expect(hit.height).toBeGreaterThanOrEqual(44);
+      await page.mouse.click(abandonBox.x + abandonBox.width / 2, abandonBox.y - 2);
+      await expect(abandon).toHaveCount(0);
+      await expect(field(page)).toBeFocused();
     } finally {
       await app.close();
     }
@@ -279,7 +305,9 @@ test.describe('smal mobil med återkoppling', () => {
 
 test.describe('kort mobil med lång notis', () => {
   test.use({ viewport: { width: 844, height: 190 }, isMobile: true, hasTouch: true });
-  test('TEXTMOBIL-04: en lång notis rullar och kan stängas i kort fönster', async ({ page }) => {
+  test('TEXTMOBIL-04: en lång notis rullar och tillåter avstående i kort fönster', async ({
+    page,
+  }) => {
     const { app } = await setup(page, () => {
       throw new Error('Synthetic provider failure');
     });
@@ -288,19 +316,26 @@ test.describe('kort mobil med lång notis', () => {
       await field(page).fill('Ett kontrollerat fel.');
       await view(page).getByRole('button', { name: 'Skicka', exact: true }).click();
       const notice = page.getByRole('region', { name: 'Samtalsnotis', exact: true });
-      await expect(notice).toContainText('Skyttel kunde inte slutföra uppdraget. Försök igen.');
-      const close = notice.getByRole('button', { name: 'Stäng notisen', exact: true });
-      const closeBox = await bounds(close);
-      expect(closeBox.height).toBe(28);
-      expect(closeBox.width).toBe(28);
-      expect(closeBox.bottom).toBeLessThanOrEqual(190);
+      await expect(notice).toContainText('Modellen är tillfälligt otillgänglig. Valet är kvar.');
       expect(await notice.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
       await notice.evaluate((node) => {
         node.scrollTop = node.scrollHeight;
       });
-      await close.focus();
+      const abandon = notice.getByRole('button', {
+        name: 'Avstå från det oavslutade arbetet',
+        exact: true,
+      });
+      await abandon.scrollIntoViewIfNeeded();
+      const abandonBox = await bounds(abandon);
+      expect(abandonBox.height).toBeGreaterThanOrEqual(36);
+      expect(abandonBox.bottom).toBeLessThanOrEqual(190);
+      const hit = await hitArea(abandon);
+      expect(hit.width).toBeGreaterThanOrEqual(44);
+      expect(hit.height).toBeGreaterThanOrEqual(44);
+      await abandon.focus();
       await page.keyboard.press('Enter');
       await expect(notice).toHaveCount(0);
+      await expect(field(page)).toBeFocused();
       await field(page).fill('Fortsätt med text.');
       await view(page).getByRole('button', { name: 'Skicka', exact: true }).click();
       await expect(field(page)).toBeFocused();

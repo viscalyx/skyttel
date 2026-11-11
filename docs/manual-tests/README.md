@@ -3,7 +3,10 @@
 Testfallen är grupperade efter område i applikationen. Varje områdesfil
 beskriver användare, förberedelser, steg och förväntat resultat samt länkar
 till motsvarande automatiserade prov i integrations- eller Chromium-sviten.
-Tekniskt stödjande prov anges separat från ett falls motsvarighet. Fall som
+Tekniskt stödjande prov anges separat från ett falls motsvarighet.
+[Textförberedelsen](text-conversation-preparation.md#separat-överlappningsförsök)
+ger även ett separat försök med överlappning och sekventiell baslinje
+för ändringar, frågor och avbrott. Fall som
 kräver mänskliga observationer anger vad som behöver kontrolleras på riktigt;
 automatik ersätter inte de observationerna.
 HTTP- och processprov körs i server-sviten. Tekniska prov av kakleverans och
@@ -25,6 +28,11 @@ Separata automatiska [modellprov](real-model-tests.md) och
 De körs uttryckligen med privat konfiguration och redovisas separat från CI.
 
 ## Ansvar och delade resultat
+
+[Modellval](conversation-model-choice.md) provar gemensamma modell- och
+resonemangsval i text och röst, otillgängliga och åtskilda aktiverade par,
+tangentbord och fokusåtergång medan samtalets arbete fortsätter. Verklig
+skärmläsare, förstoring och visuell UX bedöms separat.
 
 Använd områdesfallen för steg och förväntade resultat:
 
@@ -381,7 +389,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   faktiska skärmläsning, beröring och förstoring samt MEDGIVANDE-21:s
   enda hörda fjärråterkallandebesked.
 - [Samtalsnotiser](conversation-notices.md): bruten kontakt, otillgängligt
-  samtal och uppdragsfel; en gemensam ordning, bara ett besked, stängning och
+  samtal och uppdragsfel; en gemensam ordning, bara ett besked, uttryckliga
+  nästa steg för oavslutat modellarbete, stängning av andra händelser och
   automatisk återkomst, textåtkomst utan tillgängligt samtal, bevarad text
   med stoppad sändning och mikrofon,
   hjälpmedel utan dubbel uppläsning, fokus och placering vid röstrutan
@@ -400,6 +409,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   återtagande, oberoende mellanturer, identiteter,
   konflikter, datatyper, upprepade egenskapsetiketter och lika objektnamn,
   oberoende svar under väntande frågor, förnyad sparbegäran,
+  atomiska ändringsbatcher med bevarat tidigare arbete vid fel,
   väntan med mikrofonen av, beständigt kvitto och fyra
   sekunders sparbesked efter ljud eller stopp. Talad och skriven ingång
   har skilda vanliga fall; uppläsning och faktiskt ljud har FRAGA-08/09.
@@ -422,7 +432,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   faktisk markering, exakt sparåterhämtning och tydlig skillnad mellan
   samtalstext och verifierade resultat, löpande dialog och
   raden Skyttel arbetar. TAL-03 skyddar läsbar beskrivning i korta
-  uppgiftsfönster även efter hela svaret som text. Kontrollerat
+  uppgiftsfönster även efter hela svaret som text och läser sparutfallet i
+  det pausade samtalet efter omstart före ett uttryckligt nytt samtal. Kontrollerat
   familjeunderlag och verkligt tal redovisas separat. TAL-18/19 skiljer mikrofonlägena;
   TAL-20–22 skiljer placeringarna och TAL-17/23–26 kräver verkliga
   mikrofon-, ljud-, system- eller skärmläsarobservationer. TAL-24 behåller
@@ -454,9 +465,10 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   en enda artig uppläsning, fasta mått och minskad rörelse. Kommentarspaket
   och faktiskt hört tal provas separat. Mobilfallen har separata ID för
   varje kvarvarande emulerad konfiguration, fast sidofält på bred pekare,
-  kompakt rad vid kort synlig höjd,
-  bibehållet fokus, 190 px synlig höjd med rösten på, fria kartkontroller
-  och långa rullbara notiser. Datorfallen provar oberoende breddhandtag
+  kompakt rad vid kort synlig höjd, paus och utgångstid vid återkomst,
+  nåbart avslut med fokusåtergång, bibehållet fokus, 190 px synlig höjd med
+  rösten på, fria kartkontroller och långa rullbara notiser. Datorfallen
+  provar oberoende breddhandtag
   med mus och piltangenter, personliga bredder mellan hushåll och enheter,
   visningsbegränsning utan ändrat sparat val samt återställning även utan
   tillgängligt samtal. Mobil enhet och smal skärm behåller sina bredder.
@@ -470,17 +482,28 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   uppdrag samt kvarvarande utkast, oskickad text och återkoppling.
   KÖ-05 avser verklig utrustning. KÖ-06 provar ett samlat slutbesked
   med utkaständringar, misslyckade uppdrag och kvarstående frågor.
+  KÖ-07 provar ordning mellan enheter och samtalsavgränsat stopp.
+  Separat HTTP-evidens provar också att upprepade manuella ändringar
+  avvisar inaktuella begäranden och bevarar samtalets åtkomst till utkastet.
+  KÖ-08 kräver förnyat uttryckligt sparande efter nytt köat meddelande.
+  KÖ-09 köar kastande vid nytt samtal och provar stopp under väntan.
 - [Röst och text i samma samtal](conversation-voice-text.md): skrivna svar
   med röst när mikrofonen är på, text när den är av, ordnad överlämning av
   långa svar, kvarvarande samtalstext och artig uppläsning bara av nya
   textlevererade Skyttel-rader. Obekräftad text ger inget sparkvitto.
-- [Samtalets kontext](conversation-context.md): samma tillfälliga samtal
+- [Samtalets kontext](conversation-context.md): samma samtal
   genom utkast, sparande, avbrott, fel, mikrofon av och på samt byte mellan
   röst och text. Äldre sparbesked ger inget nytt sparande. Skrivna och
   talade kommandon börjar om samtalet och kastar hela utkastet.
   Kontextmätaren följer serverns procenttal, röstrutan visar procent från
   85 och ger en enda artig uppläsning, även på smal pekskärm. Nytt samtal
   återställer mätaren och gamla mätningar ignoreras.
+  Omladdning återställer bevarad text och modellval med arbetet pausat;
+  utgångstid visas och uttryckligt avslut lämnar utkastet kvar.
+  Egna talade repliker förnyar tiden från mottagandet; senare modellarbete
+  och kontroller flyttar inte gränsen.
+  KONTEXT-25 hittar och återupptar ett valt samtal på samma och annan
+  enhet utan att blanda separata samtal eller skriva över personligt modellval.
   Full kontext sammanfattas automatiskt med kvarvarande samtalstext,
   aktuellt utkast, mikrofonläge och tidigare inspelat tal. Misslyckad
   sammanfattning blockerar nya uppdrag tills Nytt samtal. Pågående
@@ -488,14 +511,26 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   Mikrofonval, felingång och emulerade pekbredder har skilda identiteter;
   KONTEXT-16/17 avser verklig uppläsning, mikrofon och beröring;
   KONTEXT-18 bevarar hört hinderbesked vid textens och röstens
-  sammanfattningsfel.
+  sammanfattningsfel. KONTEXT-19 bevarar exakta väntande instruktioner
+  genom sammanfattning, modellbyte och ny röstanslutning.
+  KONTEXT-20 bevarar originalet vid kapacitetsstopp och låter användaren
+  ange en fullständig ny avgränsning medan tidigare arbete och kö väntar.
+  KONTEXT-21/22 skiljer aktuell oberoende uppgift från ett manuellt ändrat
+  mål vid köstart, med fortsatt rättelse eller förtydligande.
+  KONTEXT-23 läser aktuellt förslag i text och röst efter manuell rättelse;
+  teknisk evidens skiljer återanvända läsningar från modellens promptcache.
+  Den täcker även indirekta hänvisningar, tvetydiga personnamn, aktuella
+  rättelser och återkallad åtkomst. Korta svar på väntande frågor bevarar
+  relevant aktuellt underlag inom mängdgränser utan att välja en tvetydig
+  person eller återanvända inaktuella uppgifter.
   [Separat samtalsförberedelse](conversation-preparation.md) beskriver
-  versionsvärden, paket, registrerat sparande och PCM genom hållen start.
+  versionsvärden, paket med slutbesked, oberoende kontroll av köade mål,
+  registrerat sparande och PCM genom hållen start.
   PCM-receptets tekniska referens är fylld installation med oförändrad
   karta, utkast och historik; separat körning från tomt hushåll ingår inte.
   Båda huvudreceptproven finns kvar, inklusive fylld konfliktlösning.
 - [Samtal med Skyttel](text-assistant.md): hela utkast,
-  stoppade obeställda åtgärder med gemensam felreferens och bevarat utkast,
+  stoppade obeställda åtgärder med kopierbar felrapport och bevarat utkast,
   rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
   samtidigt synliga objekt och samband i karta och detaljpanel även på
   telefon, med skyddad formulärtext samt obekräftad samtalstext
@@ -504,6 +539,23 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   TEXT-07 är pensionerat till SAMTALSUTKAST-01 utan återanvänt ID.
   TEXT-04 återfinner den verkliga sparidentifieraren efter genomfört
   sparande med tappat svar och omstart. Varje TEXT-08-storlek har eget ID.
+  TEXT-16 återfinner osparade ändringar efter tappat verktygssvar och
+  bevarar tidigare förslag utan dubbletter även efter omstart.
+  Ett ofärdigt uppdrag behåller sin instruktion, sin väntande informationsfråga
+  och ett besked om pausat återstående arbete i text och kontrollerad
+  röstleverans.
+  TEXT-19 visar en konkret kontrollfråga och kräver en ny sparbegäran
+  efter svaret. TEXT-15 bevarar tidigare och nya förslag efter avvisat
+  sparande och kräver ett nytt uttryckligt talat ändra-och-spara-besked.
+  TEXT-17 behåller även en väntande informationsfråga efter sparande när
+  förklaringen misslyckas och skiljer enkelt verifierat slutbesked från
+  beställd förklaring. Hela förklaringen behålls vid lyckat sparande med
+  röst. Ett fel efter sparandet behåller sparkvittot och felbeskedet i
+  text och röst.
+  TEXT-18 prövar uttryckligt återförsök med aktuellt modellval och avstående
+  efter fel i text och röst, med bevarade genomförda förslag och pausad kö.
+  Ett fel efter osparad ändring behåller ändringens detaljer, den
+  separata väntande frågan och felbeskedet utan att påstå sparande.
   På smal skärm provas även tangentbordsåtkomst till kartans sammanhang
   efter ett nytt urval medan svaret finns kvar i textvyn.
   [Operatörsförberedelsen](text-conversation-preparation.md) skiljer
@@ -806,7 +858,10 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   aktiva val, återställa endast deras historiska identitet med fortsatt
   revisionsföljd, avvisa inaktuellt sparande atomiskt, ompröva privat
   återställning efter import och kontrollera dess fullständiga privata
-  utfall utan dubblerad mutation; behålla ändrade fakta när nya samband
+  utfall utan dubblerad mutation; läsa äldre riktningsuppgifter i
+  återställningsförslaget och namn och beskrivning i typens aktuella
+  formulär, med separat teknisk kontroll av bevarad historik efter omstart;
+  behålla ändrade fakta när nya samband
   försvinner, visa samtidiga typ- och ändpunktshinder, läsa historiska
   egenskapsnamn även när den historiska typen saknas, kasta ägda
   definitionsförslag utan faktisk borttagningsrevision och kontrollera
@@ -855,7 +910,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   TYP-08/09/13/14 är avvecklade typavsnittsfall och får inte återanvändas.
 - [Sambandsarbete](relationships.md): skapa objekt separat, koppla dem i den
   gemensamma dialogen och rätta objekt och samband oberoende. Fullständiga
-  egna värden, typbyte och riktning behåller sin betydelse. Osäkerhet kan
+  egna värden, typbyte och riktning behåller sin betydelse. Fria verb hör
+  till varje enskilt samband oavsett gruppering och slags objekt;
+  SAMBAND-22 bevarar två ordval efter omstart. Osäkerhet kan
   anges som en vanlig egenskap utan särskild sparverkan.
   Validering, dubbletter, borttagning, oklara utfall och förlustvarning
   bevarar tidigare förslag. Ett gammalt obekräftat försök efter en senare
@@ -867,7 +924,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   separata mänskliga observationsfall. Exakta dekorativa värden i
   SAMBAND-12 ingår inte i skyddet.
 - [Sambandstyper och riktning](relationship-types.md): redigerbara
-  namn, förklaringar och benämningar från båda verkliga ändpunkterna.
+  grupperingsnamn och förklaringar, med verb och valfria omvända benämningar
+  på varje enskilt samband. STY-04 granskar separat förberedda äldre
+  riktningsuppgifter i en definitionskonflikt.
   Sambandens fria egenskaper behåller etiketter, identiteter, datatyper
   och ordning genom typbyte, omstart och samtidig granskning.
   Dubbletter och samtidiga sparanden ger inget delsparande.

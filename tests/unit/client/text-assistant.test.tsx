@@ -11,6 +11,7 @@ import type {
 } from '../../../src/shared/map.js';
 import { defaultViewSettings } from '../../../src/shared/personal-view.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
+import { approvedForVisit } from '../../support/conversation.js';
 import {
   closeConversationText,
   findConsentBox,
@@ -81,6 +82,38 @@ function showAssistant(onMapChange = vi.fn(), onAccessLost = vi.fn()) {
   );
 }
 
+test('keyboard focus moves to a surviving control after successfully ending the conversation', async () => {
+  let release!: (response: Response) => void;
+  const ending = new Promise<Response>((resolve) => {
+    release = resolve;
+  });
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (url.endsWith('/stop')) return ending;
+    if (url === path && init?.method !== 'POST') return Response.json({ available: true });
+    return Response.json(session());
+  });
+  showAssistant();
+  await startConversationWithText();
+  const end = screen.getByRole('button', { name: 'Avsluta samtalet' });
+  const next = screen.getByRole('button', { name: 'Nytt samtal' });
+  next.focus();
+  await userEvent.tab(); // Close text view.
+  await userEvent.tab(); // Draft toggle.
+  await userEvent.tab(); // End conversation.
+  expect(document.activeElement).toBe(end);
+  await userEvent.tab(); // Retained conversations follow the current session.
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Bevarade samtal' }));
+  await userEvent.tab({ shift: true });
+  expect(document.activeElement).toBe(end);
+  await userEvent.keyboard('{Enter}');
+  expect(screen.getByRole('button', { name: 'Avsluta samtalet' })).toBe(end);
+  await act(async () => release(Response.json({ stopped: true })));
+  await waitFor(() =>
+    expect(screen.queryByRole('button', { name: 'Avsluta samtalet' })).toBeNull(),
+  );
+  expect(document.activeElement).toBe(next);
+});
+
 test('the shared workspace keeps the map available before consent', async () => {
   const requests: string[] = [];
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
@@ -138,6 +171,7 @@ test('the text view shows empty conversation text, the message field and a colla
   expect(field.getAttribute('placeholder')).toBe('Berätta vad du vill göra…');
   // On a computer the message field has the focus when the text view opens.
   expect(document.activeElement).toBe(field);
+  expect(textView.getByRole('button', { name: 'Avsluta samtalet' })).toBeDefined();
   const draftButton = textView.getByRole('button', { name: /^Visa utkastet/ });
   expect(draftButton.getAttribute('aria-expanded')).toBe('false');
   await userEvent.click(draftButton);
@@ -149,7 +183,6 @@ test('the text view shows empty conversation text, the message field and a colla
     'Öppna samtalet',
     'Tala eller skriv',
     'Fortsätt skriva',
-    'Avsluta samtalet',
     'Samtalstexten kan innehålla fel',
   ])
     expect(screen.queryByText(removed, { exact: false })).toBeNull();
@@ -333,7 +366,10 @@ test('recovery retains the pending operation until its durable receipt replaces 
     'Nästa ändring',
   );
   expect(screen.queryByText('Visa kvittot')).toBeNull();
-  expect(requests.at(-1)).toEqual({ url: `${path}/session/new`, body: { discard: false } });
+  expect(requests.at(-1)).toEqual({
+    url: `${path}/session/new`,
+    body: { discard: false, ...approvedForVisit },
+  });
 });
 
 test.each([
@@ -440,9 +476,9 @@ test('closing the panel during connection creation stops the late session', asyn
   let release!: (response: Response) => void;
   const stopped = vi.fn();
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
-    if (url.endsWith('/stop')) {
+    if (url.endsWith('/pause') || url.endsWith('/stop')) {
       stopped(url);
-      return Response.json({ stopped: true });
+      return Response.json({ paused: true });
     }
     if (init?.method === 'POST')
       return new Promise<Response>((resolve) => {
@@ -458,7 +494,8 @@ test('closing the panel during connection creation stops the late session', asyn
   );
   panel.unmount();
   await act(async () => release(Response.json(session())));
-  expect(stopped).toHaveBeenCalledExactlyOnceWith(`${path}/session/stop`);
+  // Abandoning the view stops work while retaining the consented conversation.
+  expect(stopped).toHaveBeenCalledExactlyOnceWith(`${path}/session/pause`);
 });
 
 test.each(['Escape', 'Nytt samtal'])(
@@ -651,8 +688,6 @@ test('the draft table exposes every change, free properties, type edits and rela
     revision: 1,
     name: 'Använder',
     description: 'Användning',
-    forwardLabel: 'använder',
-    reverseLabel: 'används av',
   };
   const old: MapObject = {
     id: 'bike',
@@ -683,6 +718,8 @@ test('the draft table exposes every change, free properties, type edits and rela
     typeId: edgeType.id,
     sourceId: 'alex',
     targetId: 'bike',
+    verb: 'använder',
+    reverseVerb: 'används av',
   };
   const current = session();
   current.review = {

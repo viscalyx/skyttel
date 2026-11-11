@@ -1,4 +1,6 @@
-import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type ReactNode, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { TextAssistantView } from '../shared/text-assistant.js';
+import { ConversationDiagnostic } from './ConversationDiagnostic.js';
 import {
   type ConversationNotice,
   type ConversationNoticeConditions,
@@ -29,6 +31,9 @@ export function useConversationNotice({
   eventKey,
   diagnostic,
   securityReference,
+  contextSummaryFailure,
+  batchPending,
+  workFailure,
 }: {
   conditions: ConversationNoticeConditions;
   ongoing: boolean;
@@ -36,12 +41,15 @@ export function useConversationNotice({
   eventKey: string;
   diagnostic?: { noticeId: ConversationNotice['id']; reference?: string; eventKey?: string };
   securityReference?: string;
+  contextSummaryFailure?: TextAssistantView['contextSummaryFailure'];
+  batchPending?: boolean;
+  workFailure?: TextAssistantView['workFailure'];
 }) {
   const voiceSession = useContext(VoiceSessionContext);
   const [dismissed, setDismissed] = useState<Partial<Record<ConversationNotice['id'], string>>>({});
   const [usedRequest, setUsedRequest] = useState(0);
   const identityFor = (notice: ConversationNotice) =>
-    `${notice.id}:${
+    `${notice.id}:${notice.id.startsWith('saveCheck') && batchPending ? 'batch:' : ''}${
       notice.id === 'actionBlocked' && securityReference
         ? securityReference
         : notice.kind === 'event'
@@ -54,9 +62,36 @@ export function useConversationNotice({
   // retains at most one identity per known notice kind, rather than a history.
   const visibleConditions = { ...conditions };
   for (const definition of conversationNoticeDefinitions)
-    if (dismissed[definition.id] === identityFor(definition))
+    if (
+      !(definition.id === 'taskFailed' && workFailure) &&
+      dismissed[definition.id] === identityFor(definition)
+    )
       visibleConditions[definition.id] = false;
-  const definition = firstConversationNotice(visibleConditions);
+  const selected = firstConversationNotice(visibleConditions);
+  const definition =
+    selected?.id === 'saveChecking' && batchPending
+      ? { ...selected, text: 'Det är oklart om ändringarna genomfördes. Skyttel kontrollerar det.' }
+      : selected?.id === 'saveCheckFailed' && batchPending
+        ? {
+            ...selected,
+            text: 'Skyttel kunde inte kontrollera om ändringarna genomfördes.',
+            action: 'Kontrollera ändringarnas resultat',
+          }
+        : selected?.id === 'contextFull' && contextSummaryFailure
+          ? {
+              ...selected,
+              text:
+                contextSummaryFailure.code === 'assistant_context_capacity'
+                  ? contextSummaryFailure.message
+                  : `Skyttel kunde inte sammanfatta samtalet. ${contextSummaryFailure.message} Samtalstexten och utkastet ligger kvar. Ett nytt samtal tömmer samtalstexten och kontexten och använder ditt senaste personliga modellval. Det löser inte modellfelet och ändrar inte kontots åtkomst.`,
+            }
+          : selected?.id === 'taskFailed' && workFailure
+            ? {
+                ...selected,
+                text: `${workFailure.message} Det oavslutade arbetet och senare kö väntar. Genomförda ändringar finns kvar.`,
+                action: workFailure.retry,
+              }
+            : selected;
   const reference =
     definition?.id === 'actionBlocked'
       ? securityReference
@@ -75,7 +110,9 @@ export function useConversationNotice({
   useEffect(() => {
     if (!candidate) setUsedRequest(requested);
   }, [candidate, requested]);
-  const closable = Boolean(notice && (notice.kind === 'event' || !ongoing));
+  const closable = Boolean(
+    notice && !(notice.id === 'taskFailed' && workFailure) && (notice.kind === 'event' || !ongoing),
+  );
   const before = useRef<{ notice: ConversationNotice | null; identity: string }>({
     notice: null,
     identity: '',
@@ -144,6 +181,10 @@ export function ConversationNoticeCard({
   onAction,
   focusAfterRemoval,
   inline = false,
+  actionPending = false,
+  restoreActionFocus = false,
+  diagnosticReport,
+  children,
 }: {
   notice: ConversationNotice;
   closable: boolean;
@@ -152,15 +193,35 @@ export function ConversationNoticeCard({
   focusAfterRemoval: () => HTMLElement | null;
   /** Visual placement changes; the reading order and card identity stay put. */
   inline?: boolean;
+  actionPending?: boolean;
+  /** Recovery actions can disable their focused button before removing the card. */
+  restoreActionFocus?: boolean;
+  diagnosticReport?: string;
+  children?: ReactNode;
 }) {
   const element = useRef<HTMLElement>(null);
   const restore = useRef(focusAfterRemoval);
+  const actionRestore = useRef<(() => HTMLElement | null) | undefined>(undefined);
   restore.current = focusAfterRemoval;
-  useLayoutEffect(
-    () => () => {
-      if (element.current?.contains(document.activeElement)) restore.current()?.focus();
-    },
-    [],
+  useLayoutEffect(() => {
+    const card = element.current;
+    return () => {
+      if (
+        card?.contains(document.activeElement) ||
+        (actionRestore.current && document.activeElement === document.body)
+      )
+        (actionRestore.current ?? restore.current)()?.focus();
+    };
+  }, []);
+  const actions = (
+    <>
+      {notice.action && (
+        <button type="button" onClick={onAction} disabled={actionPending}>
+          {notice.action}
+        </button>
+      )}
+      {children}
+    </>
   );
   return (
     <section
@@ -169,6 +230,10 @@ export function ConversationNoticeCard({
       aria-label="Samtalsnotis"
       data-kind={notice.kind}
       data-inline={inline || undefined}
+      onClickCapture={() => {
+        if (restoreActionFocus && element.current?.contains(document.activeElement))
+          actionRestore.current = focusAfterRemoval;
+      }}
     >
       <span className="conversation-notice-symbol" aria-hidden="true">
         <svg
@@ -183,14 +248,16 @@ export function ConversationNoticeCard({
           <path d={icons[notice.icon]} />
         </svg>
       </span>
-      <div className="conversation-notice-content">
-        <p>{notice.text}</p>
-        {notice.action && (
-          <button type="button" onClick={onAction}>
-            {notice.action}
-          </button>
-        )}
-      </div>
+      {diagnosticReport ? (
+        <ConversationDiagnostic key={diagnosticReport} report={diagnosticReport} text={notice.text}>
+          {actions}
+        </ConversationDiagnostic>
+      ) : (
+        <div className="conversation-notice-content">
+          <p>{notice.text}</p>
+          {actions}
+        </div>
+      )}
       {closable && (
         <button
           type="button"

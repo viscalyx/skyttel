@@ -118,6 +118,25 @@ const lifecycle = z.enum(['active', 'ended']).optional();
 const saveFields = z.object({ ...versionFields, operationId: id }).strict();
 
 export function registerAssistantWork(server: McpServer, map: () => HouseholdMap) {
+  const mutations = new Map<
+    string,
+    { schema: z.ZodType; apply: (domain: HouseholdMap, body: unknown) => unknown }
+  >();
+  function registerDraftTool<T>(
+    name: string,
+    config: {
+      description: string;
+      inputSchema: z.ZodType<T>;
+      annotations: { readOnlyHint: boolean; destructiveHint: boolean; openWorldHint: boolean };
+    },
+    apply: (domain: HouseholdMap, body: T) => unknown,
+  ) {
+    mutations.set(name, {
+      schema: config.inputSchema,
+      apply: (domain, body) => apply(domain, config.inputSchema.parse(body)),
+    });
+    server.registerTool(name, config, async (body) => run((domain) => apply(domain, body)));
+  }
   function run(action: (domain: HouseholdMap) => unknown) {
     try {
       return assistantResult(action(map()));
@@ -130,7 +149,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
         invalid_endpoint:
           'Ändpunkten saknas eller är ogiltig. Läs verkliga objekt och fråga vilken ändpunkt som avses före ett nytt förslag. Hitta inte på motpart eller ersättningsobjekt. Ditt övriga utkast finns kvar.',
         unresolved_identity:
-          'Identiteten är olöst. Fråga vilken person eller sak som avses, eller låt användaren uttryckligen välja ospecificerat objekt. Inget sparades.',
+          'Identiteten är olöst. Fråga vilket objekt som avses, eller låt användaren uttryckligen välja ospecificerat objekt. Inget sparades.',
         operation_pending:
           'Kontrollera det väntande sparförsöket innan nya ändringar. Återförsök endast samma ID och innehåll när resultatet är känt.',
         operation_conflict:
@@ -209,7 +228,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
         };
       }),
   );
-  server.registerTool(
+  registerDraftTool(
     'propose_object_type',
     {
       description:
@@ -230,20 +249,19 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
         .strict(),
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    async (body) =>
-      run((domain) => {
-        domain.proposeObjectType({
-          ...body,
-          value: body.value,
-        });
-        return assistantDraftReview(domain);
-      }),
+    (domain, body) => {
+      domain.proposeObjectType({
+        ...body,
+        value: body.value,
+      });
+      return assistantDraftReview(domain);
+    },
   );
-  server.registerTool(
+  registerDraftTool(
     'propose_object',
     {
       description:
-        'Föreslå ett nytt objekt, ersätt hela dess förslagsvärde eller föreslå vanlig borttagning med value null. Behåll alla fakta som inte ska ändras. Använd aktuella typ-ID, typrevision och stabila objekt-ID. Bara eget utkast ändras; hela utkastet returneras. properties är hela den ordnade listan fria egenskaper: behåll returnerade egenskaps-ID vid rättelser, töm genom att utelämna value, ta bort genom att utesluta posten, ordna genom listans ordning. Utelämna id på nya egenskaper så tilldelas och returneras identiteten. Etiketter får upprepas och har ingen automatisk ekonomisk eller datumstyrd betydelse. Utelämnad properties behåller listan, [] tar bort alla. kind är text, number, date eller boolean; utelämnat kind tillåts bara utan value. 0, false och tom text är värden. Respektera uttrycklig datatyp. Härled bara entydig datatyp, exempelvis telefonnummer som text; fråga före tillägg vid oklar datatyp. Fråga före rättelse eller borttagning när samma etikett har flera möjliga identiteter. Typbyte kräver giltigt eller tomt värde. iconId väljs från search_object_icons: ett ID sätter ikonen, null återgår till typens standardikon och utelämnat fält behåller valet. Bildbyte och typbyte behåller ikonen. Olöst identitet måste anges som unresolved; unspecified kräver användarens uttryckliga val.',
+        'Föreslå ett nytt objekt, ersätt hela dess förslagsvärde eller föreslå vanlig borttagning med value null. Objektborttagning tar samtidigt bort dess sparade samband, även upphörda, och undertrycker eller tar bort egna sambandsförslag som berör objektet; separata sambandsborttagningar behövs inte. Andra ändpunktsobjekt och orelaterade samband behålls. Behåll alla fakta som inte ska ändras. Använd aktuella typ-ID, typrevision och stabila objekt-ID. Bara eget utkast ändras; hela utkastet returneras. properties är hela den ordnade listan fria egenskaper: behåll returnerade egenskaps-ID vid rättelser, töm genom att utelämna value, ta bort genom att utesluta posten, ordna genom listans ordning. Utelämna id på nya egenskaper så tilldelas och returneras identiteten. Etiketter får upprepas och har ingen automatisk ekonomisk eller datumstyrd betydelse. Utelämnad properties behåller listan, [] tar bort alla. kind är text, number, date eller boolean; utelämnat kind tillåts bara utan value. 0, false och tom text är värden. Respektera uttrycklig datatyp. Härled bara entydig datatyp, exempelvis telefonnummer som text; fråga före tillägg vid oklar datatyp. Fråga före rättelse eller borttagning när samma etikett har flera möjliga identiteter. Typbyte kräver giltigt eller tomt värde. iconId väljs från search_object_icons: ett ID sätter ikonen, null återgår till typens standardikon och utelämnat fält behåller valet. Bildbyte och typbyte behåller ikonen. Olöst identitet måste anges som unresolved; unspecified kräver användarens uttryckliga val.',
       inputSchema: z
         .object({
           ...proposalFields,
@@ -263,20 +281,19 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
         .strict(),
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    async (body) =>
-      run((domain) => {
-        domain.propose({
-          ...body,
-          value: body.value,
-        });
-        return assistantDraftReview(domain);
-      }),
+    (domain, body) => {
+      domain.propose({
+        ...body,
+        value: body.value,
+      });
+      return assistantDraftReview(domain);
+    },
   );
-  server.registerTool(
+  registerDraftTool(
     'propose_relationship_type',
     {
       description:
-        'Föreslå en ny eller ändrad sambandstyp med namn, gemensam beskrivning och benämning i båda riktningarna. Behåll stabila typ-ID. Fria egenskaper hör till enskilda samband och bevaras vid typbyte. value null föreslår borttagning av typen och dess samband, även upphörda, i en samlad granskning. Ändpunkternas objekt behålls. Andras utkast hindrar inte borttagning. Hela ditt utkast returneras.',
+        'Föreslå en ny eller ändrad gruppering av samband med namn och gemensam beskrivning. Verb hör till varje enskilt samband, aldrig till en bestämd typ eller objekttyp. Behåll stabila typ-ID. Fria egenskaper hör till enskilda samband och bevaras vid typbyte. value null föreslår borttagning av typen och dess samband, även upphörda, i en samlad granskning. Ändpunkternas objekt behålls. Andras utkast hindrar inte borttagning. Hela ditt utkast returneras.',
       inputSchema: z
         .object({
           ...versionFields,
@@ -286,8 +303,6 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
             .object({
               name: z.string().min(1).max(200),
               description: z.string().max(2000),
-              forwardLabel: z.string().min(1).max(200),
-              reverseLabel: z.string().min(1).max(200),
             })
             .strict()
             .nullable(),
@@ -295,23 +310,25 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
         .strict(),
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    async (body) =>
-      run((domain) => {
-        domain.proposeRelationshipType(body);
-        return assistantDraftReview(domain);
-      }),
+    (domain, body) => {
+      domain.proposeRelationshipType(body);
+      return assistantDraftReview(domain);
+    },
   );
-  server.registerTool(
+  registerDraftTool(
     'propose_relationship',
     {
       description:
+        'verb är användarens fria ordval för just sambandet, oberoende av objekttyper och gruppering. Ifrågasätt aldrig verbet utifrån typbeskrivningar. typeId är valfri gruppering: utelämnat på ett nytt samband använder eller föreslår neutral Samband i samma utkast. reverseVerb är valfri uttrycklig omvänd benämning, aldrig ett krav. Utelämnade verb vid rättelse behåller tidigare ordval. ' +
         'Föreslå eller rätta ett riktat samband med aktuell typ, stabila ändpunkter och typrevision. value null föreslår vanlig borttagning. Både sourceId och targetId kräver verkliga objekt i samma hushåll eller det egna giltiga utkastet. Saknad ändpunkt måste rättas före skapande; hitta inte på någon motpart. Hela privata utkastet returneras. properties är hela den ordnade listan fria egenskaper: behåll returnerade egenskaps-ID vid rättelser, utelämna id på nya poster, töm genom att utelämna value, ta bort genom att utesluta posten och ordna genom listans ordning. Etiketter får upprepas och har ingen särskild verkan på datum, ekonomi eller status. Utelämnad properties behåller listan, [] tar bort alla. kind är text, number, date eller boolean; utelämnat kind tillåts bara utan value. 0, false och tom text är värden. Respektera uttrycklig datatyp; fråga före tillägg vid oklar datatyp och före rättelse eller borttagning vid flera möjliga egenskapsidentiteter. Typbyte kräver giltigt eller tomt värde och bevarar fria egenskaper. Ett upprepat tillägg anger befintligt samband i existingId.',
       inputSchema: z
         .object({
           ...proposalFields,
           value: z
             .object({
-              typeId: z.string(),
+              typeId: z.string().optional(),
+              verb: z.string().min(1).max(200).optional(),
+              reverseVerb: z.string().min(1).max(200).optional(),
               properties: z.array(propertyInputSchema).optional(),
               sourceId: id,
               targetId: id,
@@ -323,17 +340,16 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
         .strict(),
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    async (body) =>
-      run((domain) => {
-        const result = domain.proposeRelationship({
-          ...body,
-          value: body.value,
-        });
-        return {
-          ...assistantDraftReview(domain),
-          ...(result.existingId ? { existingId: result.existingId } : {}),
-        };
-      }),
+    (domain, body) => {
+      const result = domain.proposeRelationship({
+        ...body,
+        value: body.value,
+      });
+      return {
+        ...assistantDraftReview(domain),
+        ...(result.existingId ? { existingId: result.existingId } : {}),
+      };
+    },
   );
   server.registerTool(
     'read_history',
@@ -436,7 +452,7 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
     },
     async () => run((domain) => domain.operations()),
   );
-  server.registerTool(
+  registerDraftTool(
     'discard_proposal',
     {
       description:
@@ -450,13 +466,12 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
         .strict(),
       annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
     },
-    async (body) =>
-      run((domain) => {
-        domain.discardChange(body);
-        return assistantDraftReview(domain);
-      }),
+    (domain, body) => {
+      domain.discardChange(body);
+      return assistantDraftReview(domain);
+    },
   );
-  server.registerTool(
+  registerDraftTool(
     'resolve_conflict',
     {
       description:
@@ -472,13 +487,12 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
         .strict(),
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    async (body) =>
-      run((domain) => {
-        domain.resolve(body);
-        return assistantDraftReview(domain);
-      }),
+    (domain, body) => {
+      domain.resolve(body);
+      return assistantDraftReview(domain);
+    },
   );
-  server.registerTool(
+  registerDraftTool(
     'discard_draft',
     {
       description:
@@ -486,11 +500,82 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
       inputSchema: z.object(versionFields).strict(),
       annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
     },
+    (domain, body) => {
+      domain.discard(body.version, body.contentVersion);
+      return assistantDraftReview(domain);
+    },
+  );
+  server.registerTool(
+    'apply_draft_batch',
+    {
+      description:
+        'Genomför en sammanhängande ordnad batch av utkaständringar atomiskt. Ange aktuella versioner en gång; operationerna använder de verifierade versionerna i beroendeordning. Ett fel lämnar hela utkastet oförändrat. Ange stabilt operationId för återhämtning: samma identitet och begäran återger verifierade genomförandemetadata utan nya ändringar. Läs aktuellt utkast före fortsatt arbete. Sparande ingår inte i batchen.',
+      inputSchema: z
+        .object({
+          ...versionFields,
+          operationId: id.optional(),
+          operations: z
+            .array(
+              z.object({ name: z.string(), arguments: z.record(z.string(), z.unknown()) }).strict(),
+            )
+            .min(1)
+            .max(24),
+        })
+        .strict(),
+      annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
+    },
     async (body) =>
-      run((domain) => {
-        domain.discard(body.version, body.contentVersion);
-        return assistantDraftReview(domain);
-      }),
+      run((domain) =>
+        domain.applyDraftBatch(body, () => {
+          let review = assistantDraftReview(domain);
+          if (review.version !== body.version || review.contentVersion !== body.contentVersion)
+            throw new MapError('draft_conflict');
+          // Validate the whole request before its first mutation; domain checks
+          // still run for every operation inside this same SQLite transaction.
+          for (const operation of body.operations) {
+            const tool = mutations.get(operation.name);
+            if (
+              !tool ||
+              'version' in operation.arguments ||
+              'contentVersion' in operation.arguments ||
+              !tool.schema.safeParse({
+                ...operation.arguments,
+                version: body.version,
+                contentVersion: body.contentVersion,
+              }).success
+            )
+              throw new MapError('invalid_request', 400);
+          }
+          const applied = [];
+          for (const operation of body.operations) {
+            const tool = mutations.get(operation.name);
+            if (!tool) throw new MapError('invalid_request', 400);
+            const before = review;
+            const args = {
+              ...operation.arguments,
+              version: review.version,
+              contentVersion: review.contentVersion,
+            };
+            const result = tool.apply(domain, args);
+            review = assistantDraftReview(domain);
+            applied.push({ ...operation, before, after: review, result });
+          }
+          return { ...review, applied };
+        }),
+      ),
+  );
+  server.registerTool(
+    'read_draft_batch',
+    {
+      description:
+        'Återfinn en genomförd utkastbatch efter avbrott utan nya ändringar. Samma användare, hushåll och innehållsversion krävs. currentDraft anger om resultatets utkast fortfarande är aktuellt; läs alltid aktuellt utkast före fortsatt arbete.',
+      inputSchema: z
+        .object({ operationId: id, contentVersion: versionFields.contentVersion })
+        .strict(),
+      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    },
+    async ({ operationId, contentVersion }) =>
+      run((domain) => domain.draftBatch(operationId, contentVersion)),
   );
   server.registerTool(
     'read_save_operation',

@@ -24,13 +24,20 @@ for (const seeded of [false, true]) {
   }, async ({ page, browser }) => {
     const document = await readFile('docs/manual-tests/conversation-preparation.md', 'utf8');
     const questions = await readFile('docs/manual-tests/conversation-questions.md', 'utf8');
+    const heardSavePreparation = document.split('## Ljudfragment och tid för sparbesked')[1];
+    const allowSave = heardSavePreparation?.match(/^reply CHECK .*"decision":"allow".*$/mu)?.[0];
+    const heardSaveScope = heardSavePreparation?.match(/^response-required off$/mu)?.[0];
+    const restoreScope = heardSavePreparation?.match(/^response-required on$/mu)?.[0];
     const batch = document.match(/^tool REQUEST submit_changes .+$/mu)?.[0];
     const save = document.match(/^tool REQUEST save_draft .+$/mu)?.[0];
+    const draftReply = document.match(/^reply REQUEST Ändringen finns i ditt utkast\.$/mu)?.[0];
     const question = questions.match(/^\s*tool REQUEST ask_questions [^\n]+$/mu)?.[0].trim();
     const answeredQuestion = questions
       .match(/^\s*tool REQUEST ask_questions [^\n]*"updates"[^\n]+$/mu)?.[0]
       .trim();
     const summaryReply = document.match(/^reply REQUEST Historisk sammanfattning:.+$/mu)?.[0];
+    const capacityFailure = document.match(/`(fail REQUEST capacity)`/u)?.[1];
+    const narrowedReply = document.match(/`(reply REQUEST Det avgränsade svaret\.)`/u)?.[1];
     const clientTranscript = [...document.matchAll(/```javascript\n([\s\S]*?)\n```/gu)]
       .map((match) => match[1])
       .find((source) => source.includes("delta: 'Sparat.'"));
@@ -39,10 +46,16 @@ for (const seeded of [false, true]) {
       .find((source) => source.includes('VOICE_STOP_URL'));
     if (
       !batch ||
+      !allowSave ||
+      !heardSaveScope ||
+      !restoreScope ||
       !save ||
+      !draftReply ||
       !question ||
       !answeredQuestion ||
       !summaryReply ||
+      !capacityFailure ||
+      !narrowedReply ||
       !clientTranscript ||
       !stopVoice
     )
@@ -66,6 +79,10 @@ for (const seeded of [false, true]) {
       message?: string;
       messageId?: string;
       pendingParts?: PendingPart[];
+      comparison?: {
+        authority: { current: string; scope: { mode: string; responseRequired: boolean } };
+        untrusted: { data: { wholeDraft?: boolean; draft: TextAssistantReview } };
+      };
       requests?: Event[];
     };
     const events: Event[] = [];
@@ -319,7 +336,12 @@ for (const seeded of [false, true]) {
       if (!lo?.after) throw new Error('Missing complete public Lo proposal');
       const value = { ...lo.after, name: 'Lo Senaste' } as Record<string, unknown>;
       for (const key of ['id', 'householdId', 'revision']) delete value[key];
+      const batchAt = events.length;
       command(render(batch, item, { LO: lo.id, VALUE: JSON.stringify(value) }));
+      const afterBatch = await held(batchAt);
+      expect(afterBatch.id).not.toBe(item.id);
+      command(render(draftReply, afterBatch));
+      await expect(log).toContainText('Ändringen finns i ditt utkast.');
       await expect(log.locator('.working')).toHaveCount(0);
       await expect
         .poll(
@@ -336,6 +358,7 @@ for (const seeded of [false, true]) {
       expect((await (await member.request.get(path)).json()).draft).toEqual(privateDraft);
       await turnMicrophoneOn(page);
       let at = events.length;
+      command(heardSaveScope);
       command('user Spara hela utkastet nu.');
       command('delegate');
       item = await held(at);
@@ -344,7 +367,27 @@ for (const seeded of [false, true]) {
         'value',
         '89',
       );
+      command('hold-check on');
       command(render(save, item));
+      const saveCheck = await held(at, 'action-check');
+      expect(saveCheck.comparison?.authority).toMatchObject({
+        current: 'Spara hela utkastet nu.',
+        scope: { mode: 'work', responseRequired: false },
+      });
+      expect(saveCheck.comparison?.untrusted.data.wholeDraft).toBe(true);
+      expect(saveCheck.comparison?.untrusted.data.draft).toEqual(
+        expect.objectContaining({
+          version: item.draft?.version,
+          changes: expect.arrayContaining([
+            expect.objectContaining({
+              id: lo.id,
+              after: expect.objectContaining({ name: 'Lo Senaste' }),
+            }),
+          ]),
+        }),
+      );
+      command(allowSave.replace('CHECK', String(saveCheck.id)));
+      command('hold-check off');
       await expect
         .poll(
           async () =>
@@ -353,7 +396,9 @@ for (const seeded of [false, true]) {
             )?.name,
         )
         .toBe('Lo Senaste');
+      await expect(log.locator('.working')).toHaveCount(0);
       await noPending();
+      command(restoreScope);
       command('assistant Sparat.');
       await expect(log).toContainText('Sparat.');
       await page.evaluate(clientTranscript);
@@ -390,8 +435,8 @@ for (const seeded of [false, true]) {
       expect(await (await page.request.get(path)).json()).toEqual(savedState);
       expect(await (await page.request.get(`${path}/history`)).json()).toEqual(savedHistory);
       // Individual manual cases start afresh. Retire every actual owned voice
-      // transport before reloading this combined proof into a text-only case.
-      // A microphone-off or a browser reload alone retains its server transport.
+      // transport, then explicitly end the retained conversation before the
+      // next text-only case. Transport stop alone preserves its conversation.
       expect(voiceStarts.length).toBeGreaterThan(0);
       const retired = [];
       for (const response of voiceStarts) {
@@ -409,6 +454,8 @@ for (const seeded of [false, true]) {
         body: JSON.stringify(retired, null, 2),
         contentType: 'application/json',
       });
+      await page.getByRole('button', { name: 'Avsluta samtalet', exact: true }).click();
+      await expect(log).not.toContainText('Vad gjorde vi?');
       await page.reload();
       await openConversationText(page);
       await expect(log).not.toContainText('Vad gjorde vi?');
@@ -416,6 +463,23 @@ for (const seeded of [false, true]) {
         'value',
         '0',
       );
+      expect(await (await page.request.get(path)).json()).toEqual(savedState);
+      expect(await (await page.request.get(`${path}/history`)).json()).toEqual(savedHistory);
+      expect((await (await member.request.get(path)).json()).draft).toEqual(privateDraft);
+      await page.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+      await giveConversationConsent(page);
+      item = await send('Behåll den ursprungliga begäran vid kapacitetsstopp.');
+      command(render(capacityFailure, item));
+      await expect(
+        page.getByRole('button', { name: 'Avgränsa uppdraget', exact: true }),
+      ).toBeVisible();
+      at = events.length;
+      await field.fill('Beskriv enbart mitt aktuella utkast. Spara inte.');
+      await page.getByRole('button', { name: 'Avgränsa uppdraget', exact: true }).click();
+      item = await held(at);
+      command(render(narrowedReply, item));
+      await expect(log).toContainText('Det avgränsade svaret.');
+      await expect(log).toContainText('Behåll den ursprungliga begäran vid kapacitetsstopp.');
       expect(await (await page.request.get(path)).json()).toEqual(savedState);
       // This independent save case owns a newly edited browser draft. Editing
       // through the native form also updates the browser's current version.
@@ -457,7 +521,9 @@ for (const seeded of [false, true]) {
       // Prepare before starting, exactly as each independent manual case does.
       // The new text session therefore owns this prepared current draft.
       await page.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
-      await giveConversationConsent(page);
+      // This combined proof still has an active visit consent. Resetting that
+      // conversation completes directly, without another consent dialog.
+      await expect(log).toContainText('Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.');
       await expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
         'data-session-active',
         'true',
@@ -486,6 +552,7 @@ for (const seeded of [false, true]) {
       await dialog
         .getByRole('button', { name: 'Återkalla och avsluta samtalet', exact: true })
         .click();
+      await expect(page.getByText('Medgivandet är återkallat', { exact: true })).toBeVisible();
       command('release-save');
       command('hold-save off');
       await expect
@@ -510,7 +577,36 @@ for (const seeded of [false, true]) {
       await expect.poll(() => child.exitCode).toBe(0);
       await expect(stat(ready.directory)).rejects.toMatchObject({ code: 'ENOENT' });
       expect(events.filter((item) => item.event === 'error')).toEqual([]);
-      expect(unexpectedPreparationDiagnostics(diagnostics)).toBe('');
+      const diagnosticLines = diagnostics.split('\n');
+      const capacityDiagnostics = diagnosticLines.flatMap((line) => {
+        try {
+          const value = JSON.parse(line);
+          return value.event === 'assistant_model_failed' &&
+            value.category === 'assistant_context_capacity'
+            ? [value]
+            : [];
+        } catch {
+          return [];
+        }
+      });
+      expect(capacityDiagnostics).toHaveLength(1);
+      expect(capacityDiagnostics[0]).toEqual({
+        event: 'assistant_model_failed',
+        reference: expect.stringMatching(
+          /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u,
+        ),
+        at: expect.any(String),
+        model: 'gpt-6.1-terra',
+        effort: 'high',
+        category: 'assistant_context_capacity',
+      });
+      expect(Number.isFinite(Date.parse(capacityDiagnostics[0].at))).toBe(true);
+      const expectedDiagnostic = JSON.stringify(capacityDiagnostics[0]);
+      expect(
+        unexpectedPreparationDiagnostics(
+          diagnosticLines.filter((line) => line !== expectedDiagnostic).join('\n'),
+        ),
+      ).toBe('');
     } finally {
       if (child.exitCode === null) command('quit');
       await expect.poll(() => child.exitCode).toBe(0);

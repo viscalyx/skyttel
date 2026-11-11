@@ -6,6 +6,11 @@ visa en vald träff i kartan.
 Läsdialogerna låter användaren följa samband och gå tillbaka utan kartgrafik.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
+När förberedelsen anger ett samband som **A → verb → B**, skriv den
+angivna mittdelen i **Verb** på det enskilda sambandet. Välj den angivna
+sambandstypen separat. När ett steg ändrar både typen och formuleringen,
+ändra också **Verb** uttryckligen.
+
 ## Konfigurerade användare
 
 Använd **Alex Exempel** med tillgång till testhushållet. Provkartan och
@@ -192,8 +197,10 @@ ingen och Okänd koppling.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Hushållet från Förbered läskedjan, ett aktivt
-textsamtal och en andra inloggad flik i samma hushåll.
+**Förutsättningar:** Hushållet från Förbered läskedjan och två
+färdigladdade flikar med samma inloggning i hushållet. Öppna tabellen i
+andra fliken innan du startar textsamtalet i första fliken. Behåll det
+samtalet aktivt och stäng bara textvyn.
 
 **Integrationstest:**
 [household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
@@ -240,7 +247,9 @@ control after a real background update”.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Ett tomt provhushåll med två nya objekt A och B i
-utkastet, ett aktivt textsamtal och en andra inloggad flik.
+utkastet och två färdigladdade flikar med samma inloggning. Öppna tabellen
+i andra fliken innan du startar textsamtalet i första fliken. Behåll det
+samtalet aktivt och stäng bara textvyn.
 
 **Integrationstest:**
 [household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
@@ -334,8 +343,10 @@ sidantalet minskar under läsning.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Ett tomt provhushåll med 51 nya objekt i utkastet,
-namngivna Objekt 1 till Objekt 51. Ett aktivt textsamtal och en andra
-inloggad flik i samma hushåll. Använd sorteringen Namn A–Ö.
+namngivna Objekt 1 till Objekt 51 och två färdigladdade flikar med samma
+inloggning i hushållet. Öppna tabellen i andra fliken innan du startar
+textsamtalet i första fliken. Behåll det samtalet aktivt och stäng bara
+textvyn. Använd sorteringen Namn A–Ö.
 
 **Integrationstest:**
 [household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
@@ -1828,7 +1839,9 @@ skärmtangentbord och webbläsarens förstoring på både iPhone och iPad.
 **Användare:** Alex Exempel med tillgång till provhushållet.
 
 **Förutsättningar:** Tomt provhushåll med nya A och B i samma användares utkast.
-Starta ett textsamtal och öppna andra fliken med samma inloggning.
+Låt båda flikarna ladda samma hushåll med samma inloggning. Öppna tabellen
+i andra fliken innan du startar textsamtalet i första fliken. Behåll det
+samtalet aktivt och stäng bara textvyn.
 
 **Integrationstest:**
 [household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),

@@ -107,6 +107,11 @@ nya förslag i utkastet eller utföra ett extra sparande.
 testfallet “FRAGA-01: en nödvändig identitetsfråga finns i samtalstexten
 med serverns väntesignal”.
 
+**Separat försöksförberedelse:**
+[Överlappning och sekventiell baslinje](text-conversation-preparation.md#separat-överlappningsförsök)
+kan prövas med samma förväntade användarutfall. Tekniska prov redovisas
+som stöd, skilt från hela det ordinarie fallet.
+
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
@@ -118,6 +123,40 @@ med serverns väntesignal”.
   "reference": "Chromium, kontrollerad leverantör, riktig server och SQLite. Angiven talad eller skriven ingång skyddar nödvändig väntan och verifierat sparbesked.",
   "outcomes": [
     "Frågan står som Skyttels svar i samtalstexten. Ingen röstruta visas i ett samtal med enbart text och inget sparas."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential preserves actual unused work and costs on clarification before a fresh read",
+      "purpose": "En separat tolkningsfråga lämnar utkastet oförändrat, bevarar faktisk oanvänd tokenåtgång och kan följas av en ny läsbegäran utan gammalt förslag."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap preserves actual unused work and costs on clarification before a fresh read",
+      "purpose": "En separat tolkningsfråga lämnar utkastet oförändrat, bevarar faktisk oanvänd tokenåtgång och kan följas av en ny läsbegäran utan gammalt förslag."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential spoken clarify shares the guarded draft and real delivery flow",
+      "purpose": "Den tillfälliga frågan om begäran följer hela den kontrollerade röstleveransen och utkastet bevaras; fysisk hörbarhet ingår inte."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap spoken clarify shares the guarded draft and real delivery flow",
+      "purpose": "Den tillfälliga frågan om begäran följer hela den kontrollerade röstleveransen och utkastet bevaras; fysisk hörbarhet ingår inte."
+    }
   ]
 }
 ```
@@ -147,6 +186,13 @@ med serverns väntesignal”.
 [konfliktförberedelsen UTKAST-17](drafts.md#utkast-17-avbruten-formulärförlust-och-oberoende-utkast-består-vid-konflikt).
 Lo Exempel är sparad, Alex föreslår Lo Lind och Robin sparar Lo Berg.
 
+**Separat förberedelse:** Vid det hållna anropet efter Alex begäran,
+släpp `read_my_draft` med `{}` och läs konflikten i nästa
+`held.lastToolResult.conflicts`. Kontrollera Lo Exempel och Lo Lind
+i `held.lastToolResult.changes` och det sparade Lo Berg i konfliktens
+`current`. Släpp därefter en riktad `ask_questions`-fråga om dessa
+alternativ.
+
 **Integrationstest:**
 [conversation-questions.spec.ts](../../tests/integration/conversation-questions.spec.ts),
 testfallet “FRAGA-02: Skyttel frågar om en verklig konflikt i samtalet
@@ -174,8 +220,8 @@ utan en genererad frågeruta”.
 
 1. Alex väljer **Skriv till Skyttel → Nytt samtal → Godkänn och starta**
    och skickar **Hjälp mig välja vilket namn vi ska behålla.**
-2. Släpp en riktad `ask_questions`-fråga om Lo Exempel, Lo Lind och
-   Lo Berg. Läs frågan och kontrollera båda klienternas karta.
+2. Låt operatören släppa den riktade frågan enligt förberedelsen.
+   Läs frågan och kontrollera båda klienternas karta.
 
 **Förväntat resultat:**
 
@@ -255,6 +301,174 @@ efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
   är då nedtonade. Faktisk uppläsning provas i FRAGA-08.
 - Det skrivna svaret avlägsnar det gamla vänteläget; mikrofonen förblir av.
 
+### FRAGA-13: en beroende batch från text misslyckas utan delresultat
+
+**Syfte:** Ett fel i batchens nödvändiga samband lämnar inget nytt objekt.
+En tidigare slutförd batch och en väntande ändringsfråga finns kvar.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny kontrollerad installation med identifierad,
+osparad **Lo Exempel**, typ Person, utan egenskaper.
+
+**Separat förberedelse:** Följ
+[fel i en beroende ändringsbatch](conversation-preparation.md#fel-i-en-beroende-ändringsbatch).
+Operatören släpper den giltiga namnändringen först och den felaktiga
+sammanhängande batchen vid nästa uppdrag. Kör i Chromium med kontrollerad
+textleverantör, riktig server och SQLite. Fysisk
+mikrofon och faktisk modellförståelse verifieras separat.
+
+**Automatiskt motsvarande test:**
+[conversation-questions.spec.ts](../../tests/integration/conversation-questions.spec.ts),
+FRAGA-13.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-questions.spec.ts",
+    "caseId": "FRAGA-13"
+  },
+  "reference": "Chromium med kontrollerade leverantörer, riktig server, SQLite och skriven felutlösande begäran. Felet ligger i batchens andra beroende operation.",
+  "outcomes": [
+    "Den första batchens Lo Lind finns kvar med typ Person och utan egenskaper.",
+    "Efter felet finns varken Lampan eller dess nödvändiga samband i utkastet.",
+    "Samtalet visar fel och den kvarvarande kortfrågan. Sparande av hela utkastet är spärrat."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-boundaries-http.test.ts",
+      "title": "a failed dependent batch rolls back its object and retains an earlier independent batch and pending changes",
+      "purpose": "Jämför hela utkastet före och efter rollback och kontrollerar bevarad delstatus genom publika HTTP-vägar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-boundaries-http.test.ts",
+      "title": "an unchecked connected proposal cannot commit before its later dependent operation",
+      "purpose": "Kontrollerar att en oberoende bekräftelse utan uttrycklig kontroll av delens fullständighet inte tillåter ett första beroende steg genom publika HTTP-vägar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-boundaries-http.test.ts",
+      "title": "an incomplete batch proposal preserves complete independent work and pending parts",
+      "purpose": "Verifierar att ett ofullständigt sammanhängande förslag avvisas före ändring, med tidigare självständigt arbete och väntande delar kvar."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj **Skriv till Skyttel → Nytt samtal** och godkänn samtalet.
+   Skriv **Ändra namnet på Lo till Lo Lind i utkastet.** och välj
+   **Skicka**. Låt operatören släppa första batchen.
+1. Öppna **Visa utkastet → Visa förslaget: Lo Lind**. Läs Person,
+   Lo Lind och att inga egenskaper finns. Stäng läsdialogen och välj
+   **Dölj utkastet (1)**.
+1. Skriv
+   **Lägg Lampan och dess nödvändiga samband i utkastet. Fråga om kortet.**
+   Välj **Skicka** och låt operatören släppa felbatchen.
+1. Välj **Läs mer** i **Samtalsnotis** och läs
+   **Uppdraget kunde inte slutföras.** Läs **Vilket kort ska användas?**
+   i samtalstexten. Öppna utkastet och kontrollera att bara Lo Lind finns.
+   **Spara hela utkastet** är spärrad. Öppna Lo Lind och läs samma
+   namn, typ och tomma egenskapslista som före felet.
+
+**Förväntat resultat:**
+
+- Varken Lampan eller sambandet blir kvar från den misslyckade batchen.
+  Lo Lind från den tidigare slutförda batchen är bevarad.
+- Samtalet visar felet och frågan. Uppdraget framställs inte som färdigt.
+  Den oavslutade ändringsdelen hindrar sparande av hela utkastet.
+
+### FRAGA-14: en beroende batch från röst misslyckas utan delresultat
+
+**Syfte:** Ett fel i batchens nödvändiga samband lämnar inget nytt objekt.
+En tidigare slutförd batch och en väntande ändringsfråga finns kvar.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ny kontrollerad installation med identifierad,
+osparad **Lo Exempel**, typ Person, utan egenskaper.
+
+**Separat förberedelse:** Följ
+[fel i en beroende ändringsbatch](conversation-preparation.md#fel-i-en-beroende-ändringsbatch).
+Operatören släpper den giltiga namnändringen först och den felaktiga
+sammanhängande batchen vid nästa uppdrag. Kör i Chromium med kontrollerad
+text- och rösttransport, riktig server och SQLite. Fysisk
+mikrofon och faktisk modellförståelse verifieras separat.
+
+**Automatiskt motsvarande test:**
+[conversation-questions.spec.ts](../../tests/integration/conversation-questions.spec.ts),
+FRAGA-14.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-questions.spec.ts",
+    "caseId": "FRAGA-14"
+  },
+  "reference": "Chromium med kontrollerade leverantörer, riktig server, SQLite och talad felutlösande begäran. Felet ligger i batchens andra beroende operation.",
+  "outcomes": [
+    "Den första batchens Lo Lind finns kvar med typ Person och utan egenskaper.",
+    "Efter felet finns varken Lampan eller dess nödvändiga samband i utkastet.",
+    "Samtalet visar fel och den kvarvarande kortfrågan. Sparande av hela utkastet är spärrat."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-boundaries-http.test.ts",
+      "title": "a failed dependent batch rolls back its object and retains an earlier independent batch and pending changes",
+      "purpose": "Jämför hela utkastet före och efter rollback och kontrollerar bevarad delstatus genom publika HTTP-vägar."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj **Skriv till Skyttel → Nytt samtal** och godkänn samtalet.
+   Skriv **Ändra namnet på Lo till Lo Lind i utkastet.** och välj
+   **Skicka**. Låt operatören släppa första batchen.
+1. Öppna **Visa utkastet → Visa förslaget: Lo Lind**. Läs Person,
+   Lo Lind och att inga egenskaper finns. Stäng läsdialogen och välj
+   **Dölj utkastet (1)**.
+1. Välj **Prata med Skyttel**, invänta **Lyssnar** och säg
+   **Lägg Lampan och dess nödvändiga samband i utkastet. Fråga om kortet.**
+   Låt operatören släppa felbatchen.
+1. Välj **Läs mer** i **Samtalsnotis** och läs
+   **Uppdraget kunde inte slutföras.** Läs **Vilket kort ska användas?**
+   i samtalstexten. Öppna utkastet och kontrollera att bara Lo Lind finns.
+   **Spara hela utkastet** är spärrad. Öppna Lo Lind och läs samma
+   namn, typ och tomma egenskapslista som före felet.
+
+**Förväntat resultat:**
+
+- Varken Lampan eller sambandet blir kvar från den misslyckade batchen.
+  Lo Lind från den tidigare slutförda batchen är bevarad.
+- Samtalet visar felet och frågan. Uppdraget framställs inte som färdigt.
+  Den oavslutade ändringsdelen hindrar sparande av hela utkastet.
+
 ### FRAGA-11: egenskapsfrågor och lika namn rättas i samma samtal
 
 **Syfte:** Ett tydligt telefonnummer läggs i utkastet medan oklar datatyp,
@@ -281,7 +495,12 @@ Fältet `questions` innehåller exakt dessa tre frågor:
 1. **Vilken Notering ska tömmas: Hem eller Arbete?**
 1. **Vilken Alex använder Molnmusik: personen i Lund eller personen i Umeå?**
 
-Vid nästa hållning släpps en ny `submit_changes`, `completion: draft`,
+Invänta nästa `held` innan användaren rättar uppgifterna. Släpp
+`ask_questions` med `questions` satt till samma tre frågetexter, utan
+`updates`. Telefonändringen är en slutförd självständig batch; hela
+uppdraget är ännu inte klart. Frågorna behåller sina väntande delar.
+
+Efter användarens rättning släpps en ny `submit_changes`, `completion: draft`,
 `questions: []` och `continueResponse: true`.
 Behåll samma Lo och alla returnerade egenskaps-ID; töm
 **Hem** genom att utelämna dess `value`, behåll **Arbete** och telefonnumret,
@@ -330,6 +549,14 @@ ljud- och skärmläsarobservationerna i FRAGA-08/09 kvarstår.
       "spec": "tests/unit/server/assistant-clarification.test.ts",
       "title": "controlled clarification preserves the request, independent work and property identities until correction and fresh whole-save intent",
       "purpose": "Kontrollerar bevarad leverantörskontext, verkliga egenskaps-ID, saknad betalningsändpunkt, uteblivet ogiltigt förslag och beständigt samlat sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "a new clarification cannot skip a second independent requested change",
+      "purpose": "En ny kollegafråga får inte avbryta en ännu ogjord självständig ändring; båda tydliga tilläggen görs en gång före frågepausen utan sparande."
     }
   ]
 }

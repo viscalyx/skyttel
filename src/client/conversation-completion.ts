@@ -1,3 +1,4 @@
+import { assistantChangeSummary } from '../shared/assistant-change-summary.js';
 import type { ConversationReply, TextAssistantView } from '../shared/text-assistant.js';
 import type { TranscriptRow } from './ConversationTranscript.js';
 
@@ -6,14 +7,18 @@ export function draftUpdated(reply: Pick<ConversationReply, 'result'>) {
 }
 
 /** Collect checked outcomes until the server has finished the whole run of messages. */
-export function conversationCompletion() {
-  let context = '';
-  const seen = new Set<string>();
+export function conversationCompletion(hydrated?: TextAssistantView) {
+  const contextKey = (view: TextAssistantView) => `${view.id}-${view.contextRevision ?? 0}`;
+  const replyKey = (reply: Pick<ConversationReply, 'id' | 'revision'>) =>
+    reply.revision === undefined ? reply.id : `revision-${reply.revision}`;
+  let context = hydrated ? contextKey(hydrated) : '';
+  const seen = new Set((hydrated?.completedReplies ?? []).map(replyKey));
+  if (hydrated) seen.add(`revision-${hydrated.revision}`);
   let pending: ConversationReply[] = [];
-  let questions: string[] = [];
+  let questions: string[] = hydrated?.questions?.slice() ?? [];
   let sequence = 0;
   return (view: TextAssistantView): TranscriptRow | undefined => {
-    const nextContext = `${view.id}-${view.contextRevision ?? 0}`;
+    const nextContext = contextKey(view);
     if (nextContext !== context) {
       context = nextContext;
       seen.clear();
@@ -41,7 +46,7 @@ export function conversationCompletion() {
         receipt: view.receipt,
       });
     for (const reply of replies) {
-      const key = reply.revision === undefined ? reply.id : `revision-${reply.revision}`;
+      const key = replyKey(reply);
       if (seen.has(key)) continue;
       seen.add(key);
       pending.push(reply);
@@ -58,16 +63,21 @@ export function conversationCompletion() {
     if (busy || !pending.length) return;
     const finished = pending;
     pending = [];
-    const changes = new Map<string, Set<string>>();
-    for (const { subject, action } of finished.flatMap((reply) => reply.result?.changes ?? [])) {
-      const subjects = changes.get(action) ?? new Set<string>();
-      subjects.add(subject);
-      changes.set(action, subjects);
-    }
+    const changes = assistantChangeSummary(
+      finished.flatMap((reply) => reply.result?.changes ?? []),
+    );
+    // Preserve earlier queued failures that no current notice can show. A
+    // blocked action or retained failed work already has its dedicated notice.
     const failures = [
       ...new Set(
         finished
-          .filter((reply) => reply.failed)
+          .filter(
+            (reply) =>
+              reply.failed &&
+              !reply.securityReference &&
+              reply.id !== view.workFailure?.requestId &&
+              !(view.error && reply.revision === view.revision),
+          )
           .map((reply) => {
             const message = reply.reply ?? reply.result?.message;
             return message && (reply.request ? `”${reply.request}”: ${message}` : message);
@@ -82,13 +92,11 @@ export function conversationCompletion() {
         .trim();
       return answer && answer !== reply.result?.message ? [answer] : [];
     });
-    if (!changes.size && !failures.length && !questions.length && !answers.length) return;
+    if (!changes.length && !failures.length && !questions.length && !answers.length) return;
     const sections: string[] = [];
     if (view.canceled) sections.push('Arbetet avbröts. Återstående uppgifter slutfördes inte.');
     else if (view.discarded) sections.push('Utkastet är kastat.');
-    if (!view.discarded)
-      for (const [action, subjects] of changes)
-        sections.push(`${new Intl.ListFormat('sv').format([...subjects])} ${action}.`);
+    if (!view.discarded) sections.push(...changes);
     sections.push(...answers, ...failures, ...questions);
     if (view.newQuestions !== undefined) questions = [];
     return {

@@ -56,7 +56,8 @@ for billable calls. Apply a dollar ceiling only when the user specifies a
 budget; otherwise execute the authorized scope without a cost ceiling.
 For a specified budget, record its scope: per model run or combined campaign.
 Include prior calls and outstanding holds within that scope. A per-run ceiling
-covers calibration, backend, summary, voice and counting for that model's entire
+covers calibration, backend, summary, voice, rendered-recording recognition and
+counting for that model's entire
 run, rather than a new allowance for each scenario. Report campaign spending
 separately; preserve historical ledgers when the authorization scope changes.
 Verify prior consumption from original usage evidence. Account for a documented
@@ -98,14 +99,27 @@ requests, observations, reports and the persistent atomic ledger in ignored
 `model-evaluation-results/<run-id>` artifacts. Keep raw transcripts and
 credentials private.
 
+For application revisions, use
+[application-version comparison](application-comparison.md). Keep both
+version selections in one model/effort/modality issue and one ledger. Record
+the common measurement contract, planned alternating order and individual
+version results; a model baseline from another contract cannot replace one
+of the selected application versions.
+
 The judge is a separate model that assesses semantic response requirements
 that fixed application-state checks cannot decide. Choose and record its model
 and effort in the run configuration. Its calibration must pass before its
 verdicts can support a comparison. Check recorded references against the current
 `judgeSha256`, which identifies the judge provider, model, effort, instructions
 and controls.
-The runner executes every checked-in judge control first, using one call to
-the selected judge per control and requiring all expected outcomes.
+Before dispatch, check retained original calibration evidence for reuse under
+[the testing guide](../../../../docs/development/testing.md#model-evaluation-history).
+Prepare and bind a valid reference in `EvaluationPlan.judgeCalibration`;
+record its source, freshness window and historical cost separately from new
+spending. If no eligible evidence exists, include fresh calibration in the
+authorized plan. Fresh calibration executes every checked-in judge control,
+using one call per control and requiring all expected outcomes.
+An invalid selected reference stops execution; resolve it before dispatch.
 A control deviation, missing usage or failed local gate stops comparison.
 
 Preserve the application, assistant, MCP, write guards and SQLite. Select one
@@ -118,6 +132,33 @@ Reserve complete request maxima before each paid call. Account for failures,
 interruptions, reasoning and cache writes. Unknown usage retains its hold and
 stops new calls. Any user-specified ceiling stays fixed within its ledger;
 a changed scope uses a separate ledger.
+
+### Continue unrun text comparisons
+
+After reconciling every unknown charge, use `EvaluationPlan.continuation` for
+an explicitly authorized fresh segment of an application text comparison.
+Supply `sourceDirectories` entries with each retained directory and the SHA-256
+of its original `0001-manifest.json`. Include the complete chain of earlier
+segments. Supply `scenarios` entries with `applicationVersion`, `repetition` and
+`scenario`; each selection starts the entire original dialog from its fixture.
+Only dialogs whose recorded steps are all `not_run` are eligible. Any attempted
+step, including cancellation or failure, prevents replay of that dialog.
+
+Use a new output directory, carry all source charges conservatively in
+`priorUsd`, preserve the ceiling, and select calibration evidence as above.
+The preflight reads
+source ledgers without changing them and refuses unsettled charges, omitted
+lineage, changed shared conditions or missing unrun evidence. Keep original
+records and reconciliation evidence available for publication.
+
+Publish every segment's records. Read `continuation.sameContract` before
+interpreting timing: a changed evaluator produces separate supplementary
+evidence. Prior attempts are never imported or relabeled. Each segment leaves
+unselected dialogs `not_run` with `evaluation_continuation_source_segment` and
+reports incomplete comparison coverage. Matching contracts permit a later
+explicit aggregation only after validating coverage, costs and every source;
+the runner does not aggregate segments or establish full comparison acceptance.
+Voice continuation is unsupported.
 
 ## Preserve and publish evidence
 
@@ -132,7 +173,10 @@ Admission refused before any provider call is `not_run`, with no behavior
 verdict or completion time. A stop after paid execution begins is `aborted`;
 retain its charges and observed error time.
 
-Judge each step once in one tool-free call covering all requirements.
+Judge each text step once in one tool-free call covering all requirements.
+For voice, apply the bounded rendered-recording candidate assessment in
+[voice evaluation](voice-evaluation.md#evidence-and-timing), then judge its
+collected answer requirements together. Reserve every candidate call separately.
 Score the application's collected answer. Provider prose discarded by the
 application is diagnostic evidence, not a delivered answer.
 Give the judge the actual state, receipt and history snapshot from the fixed
@@ -144,6 +188,14 @@ inconclusive outcomes, except for the declared clarification path below.
 Unrun steps have no judge result.
 
 ### Conditional clarification
+
+The runner assesses declared safe clarifications independently of automatic
+reply execution. A verified necessary question without a uniquely matching
+enabled reply remains valid clarification with untested continuation. Preserve
+its original records and report the assessment separately; no completion time
+or complete qualification follows from the question alone. See
+[qualification](qualification.md#clarification-and-completion) for the waiting
+contract and retained-work requirements.
 
 When requested, set `EvaluationPlan.followUps` to true. The catalog's optional
 replies are shared across models and selected by the meaning of an explicit
@@ -168,10 +220,9 @@ for a later run.
 Report unassisted outcomes and assisted completion separately, including the
 question, selected reply, additional calls, elapsed time and costs. A successful
 reply does not erase an unnecessary question or an independent failure.
-For justified voice clarification, apply the acceptance policy in
-[voice evaluation](voice-evaluation.md#behavioral-assessment). The runner's raw
-qualification remains the unassisted result; publish the evidence-based
-behavioral assessment alongside it, including accepted limitations and gaps.
+Apply [qualification by scenario group](qualification.md) to text and voice.
+Keep the runner's unassisted outcomes separate from evidence-based behavioral
+assessment, including accepted limitations and gaps.
 An accepted voice question does not require an optional reply; continuation
 testing and its existing safety gates remain separate from that assessment.
 Assess question necessity from recognized input and available facts. Include
@@ -225,11 +276,11 @@ records and charges for diagnosis and spending reconciliation. Report the
 required correction; start a new run only after the cause is resolved.
 Keep valid candidate failures in evaluation history.
 
-Present correctness first. Use one repetition by default. Qualification requires
-every required outcome to be verified in the complete selected catalog under
-the modality's acceptance policy; all
-repetitions requested by the user must pass. Report equally weighted scenario
-medians, min/max, each repetition's total, costs and regressions. Label
+Present correctness first. Use one repetition by default; apply every planned
+repetition within the explicit group qualification scope. Report everyday,
+long-conversation and complex-task results separately using the
+[group policy](qualification.md). Report equally weighted scenario medians,
+min/max, each repetition's total, costs and regressions within each group. Label
 comparisons in text as well as red/yellow/green. Show response-time differences
 and their costs so the user can decide whether the improvement warrants a switch.
 A failed reference and qualified candidate may support a correctness

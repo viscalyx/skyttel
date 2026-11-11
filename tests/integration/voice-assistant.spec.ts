@@ -1,5 +1,4 @@
 import type { Page } from '@playwright/test';
-import type { TextAssistantReview } from '../../src/shared/text-assistant.js';
 import {
   createHousehold,
   openMap,
@@ -27,6 +26,7 @@ import {
   openObjectRelationships,
   readTableObject,
 } from '../support/domain-work.js';
+import { familySaveSequence } from '../support/family-save-model.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider, voiceAnswerParts } from '../support/live-provider.js';
@@ -291,7 +291,7 @@ test('TAL-08: nödvändiga frågor finns i samtalet och fel visas i en samtalsno
     await panel.getByRole('button', { name: 'Skicka', exact: true }).click();
     await closeConversationText(page);
     await expect(page.getByRole('region', { name: 'Samtalsnotis' })).toContainText(
-      'Skyttel kunde inte slutföra uppdraget',
+      'Modellen är tillfälligt otillgänglig. Valet är kvar.',
     );
     await openConversationText(page);
     await panel.getByRole('button', { name: 'Nytt samtal' }).click();
@@ -581,52 +581,16 @@ test('TAL-04: samtalstext hålls isär från verifierade röstresultat', async (
 test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtext', async ({
   page,
 }) => {
-  let step = 0;
-  let version = 0;
-  const model = textModel((body) => {
-    const current = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content))
-      .draft as TextAssistantReview;
-    if (step++ === 0)
-      return [
-        modelTool('resolve_conflict', {
-          version: current.version,
-          contentVersion: current.contentVersion,
-          conflict: current.conflicts[0],
-          choice: 'proposed',
-        }),
-      ];
-    if (step === 2) {
-      version = lastToolResult(body).version;
-      return [modelTool('read_map', { query: 'Familjens Molnmusik' })];
-    }
-    if (step === 3) {
-      const { id, householdId: _household, revision, ...value } = lastToolResult(body).objects[0];
-      return [
-        modelTool('propose_object', {
-          version,
-          contentVersion: 1,
-          id,
-          baseRevision: revision,
-          value: {
-            ...value,
-            properties: value.properties.map((property: { label: string }) => {
-              if (property.label === 'Beskrivning')
-                return { ...property, kind: 'text', value: 'Familjeabonnemang 189 kr per månad.' };
-              if (property.label === 'Pris') return { ...property, kind: 'number', value: 189 };
-              return property;
-            }),
-          },
-        }),
-      ];
-    }
-    return [
-      modelTool('save_draft', {
-        version: lastToolResult(body).version,
-        contentVersion: 1,
-        operationId: 'family-request',
+  const model = textModel(
+    familySaveSequence((properties) =>
+      properties.map((property) => {
+        if (property.label === 'Beskrivning')
+          return { ...property, kind: 'text', value: 'Familjeabonnemang 189 kr per månad.' };
+        if (property.label === 'Pris') return { ...property, kind: 'number', value: 189 };
+        return property;
       }),
-    ];
-  });
+    ),
+  );
   const live = liveProvider();
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
@@ -732,7 +696,7 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
           objectIds.has(edge.sourceId) && objectIds.has(edge.targetId),
       ),
     ).toBe(true);
-    expect(model.requests).toHaveLength(4);
+    expect(model.requests).toHaveLength(5);
     await expect
       .poll(() => live.sent.some(({ event }) => event.type === 'session.commentary.append'))
       .toBe(true);
@@ -751,7 +715,7 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
     expect(
       await (await page.request.get(`${app.origin}/api/households/${household.id}/map`)).json(),
     ).toEqual(map);
-    expect(model.requests).toHaveLength(4);
+    expect(model.requests).toHaveLength(5);
     await signOut(page);
     await expect.poll(() => openVoiceConnections(page)).toBe(0);
     expect(
@@ -874,25 +838,25 @@ async function readFamily(page: Page) {
       await expect(relationships.locator('.household-read-relationships > li')).toHaveCount(2);
     const expected = {
       'Familjens musikkonto': [
-        ['Inloggningsadress', 'Familjens musikkonto', 'musik@example.test'],
-        ['Kontaktadress', 'Familjens musikkonto', 'familjen@example.test'],
+        ['har inloggningsadressen', 'Familjens musikkonto', 'musik@example.test'],
+        ['har kontaktadressen', 'Familjens musikkonto', 'familjen@example.test'],
       ],
       'Familjens Molnmusik': [
-        ['Står på avtalet', 'Familjens Molnmusik', 'Alex Exempel'],
-        ['Betalar', 'Kim Exempel', 'Familjens Molnmusik'],
-        ['Betalas med', 'Familjens Molnmusik', 'Familjens musikkort'],
+        ['har avtalsparten', 'Familjens Molnmusik', 'Alex Exempel'],
+        ['betalar', 'Kim Exempel', 'Familjens Molnmusik'],
+        ['betalas med', 'Familjens Molnmusik', 'Familjens musikkort'],
       ],
       Molnmusik: [
-        ['Använder', 'Lo Lind', 'Molnmusik'],
-        ['Används av', 'Molnmusik', 'Lo Lind'],
+        ['använder', 'Lo Lind', 'Molnmusik'],
+        ['används av', 'Molnmusik', 'Lo Lind'],
       ],
       'Familjens musikkort': [
-        ['Kontokoppling', 'Familjens musikkort', 'Kortets kontokoppling'],
-        ['Kortfakturan betalas från', 'Familjens musikkort', 'Hushållets betalkonto'],
+        ['är kopplat till', 'Familjens musikkort', 'Kortets kontokoppling'],
+        ['har kortfaktura som betalas från', 'Familjens musikkort', 'Hushållets betalkonto'],
       ],
       'Föreningens musikkonto': [
-        ['Tillhör tjänsten', 'Föreningens musikkonto', 'Molnmusik'],
-        ['Kontaktadress', 'Föreningens musikkonto', 'familjen@example.test'],
+        ['hör till', 'Föreningens musikkonto', 'Molnmusik'],
+        ['har kontaktadressen', 'Föreningens musikkonto', 'familjen@example.test'],
       ],
     }[name];
     for (const [direction, source, target] of expected ?? []) {
@@ -1073,7 +1037,12 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     liveSideband: live.attach,
   });
   try {
+    const conversationStarted = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/text-assistant') && response.request().method() === 'POST',
+    );
     const { path } = await simpleMap(page, app);
+    const originalConversation = await (await conversationStarted).json();
     speak(live, 'Markera Lo Exempel.');
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }),
@@ -1151,7 +1120,14 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
     await app.restart();
     await page.unroute('**/text-assistant/*/recover');
+    const conversationRestored = page.waitForResponse((response) =>
+      response.url().endsWith('/text-assistant/restore'),
+    );
     await page.reload();
+    expect((await (await conversationRestored).json()).conversation).toMatchObject({
+      id: originalConversation.id,
+      paused: true,
+    });
     await openTable(page);
     await expect
       .poll(
@@ -1160,8 +1136,10 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
       )
       .toBe('succeeded');
     await expect(microphoneButton(page)).toBeEnabled();
-    await consent(page);
-    await startVoice(page);
+    await openConversationText(page);
+    await expect(page.getByRole('status', { name: 'Samtalets livslängd' })).toContainText(
+      'Samtalet är pausat.',
+    );
     await expect(page.getByRole('log', { name: 'Samtalstext' })).toContainText(
       'Kontrollen visar att hela utkastet sparades. Ändringarna finns i hushållets karta.',
     );
@@ -1176,6 +1154,11 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     await expect(savedLo).toContainText('Person');
     await expect(savedLo).toContainText('Påhittad uppgift');
     expect(model.requests).toHaveLength(4);
+    expect(live.requests).toHaveLength(1);
+    // Reading the recovered result starts no work. Start the next conversation
+    // deliberately before testing a fresh provider connection.
+    await consent(page);
+    await startVoice(page);
     const providerId = [...live.channels.keys()].at(-1);
     if (!providerId) throw new Error('Missing active voice after saved receipt');
     live.channels.get(providerId)?.emit('close', 1006, '', []);

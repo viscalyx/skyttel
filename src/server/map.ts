@@ -12,6 +12,7 @@ import {
 import { conflictRemovalPlan } from '../shared/conflict-removal.js';
 import { specialConflict } from '../shared/conflict-special.js';
 import { removedConflictDefinition } from '../shared/definition-restoration.js';
+import type { DraftBatchRequest } from '../shared/draft-batch.js';
 import {
   draftConflicts,
   resolvedObjectValue,
@@ -23,6 +24,7 @@ import {
   draftProposalRefs,
 } from '../shared/draft-discard.js';
 import type {
+  DraftRelationshipChange,
   MapDraft,
   MapObject,
   MapState,
@@ -42,6 +44,7 @@ import { assertContentAvailable, assertContentVersion } from './content-maintena
 import { draftDiscards } from './draft-discards.js';
 import { householdAccess } from './households.js';
 import { readLifecycle } from './lifecycle.js';
+import { mapDraftBatches } from './map-draft-batches.js';
 import { MapError } from './map-error.js';
 import { mapOperations } from './map-operations.js';
 import { mapTombstones } from './map-tombstones.js';
@@ -73,6 +76,7 @@ export function householdMap(
   const types = objectTypes(database, householdId, userId);
   const edgeTypes = relationshipTypes(database, householdId, userId);
   const operations = mapOperations(database, userId, householdId);
+  const batches = mapDraftBatches(database, householdId, userId);
   const tombstones = mapTombstones(database, householdId);
   function authorize() {
     // Runs inside the same immediate transaction as a mutation or save registration.
@@ -100,7 +104,11 @@ export function householdMap(
       ? {
           version: row.version,
           changes: JSON.parse(row.changes),
-          ...(row.relationships !== '[]' ? { relationships: JSON.parse(row.relationships) } : {}),
+          ...(row.relationships !== '[]'
+            ? {
+                relationships: JSON.parse(row.relationships) as DraftRelationshipChange[],
+              }
+            : {}),
           ...(row.objectTypes !== '[]' ? { objectTypes: JSON.parse(row.objectTypes) } : {}),
           ...(row.relationshipTypes !== '[]'
             ? { relationshipTypes: JSON.parse(row.relationshipTypes) }
@@ -350,6 +358,20 @@ export function householdMap(
     return { current, id, existing, before };
   }
   return {
+    applyDraftBatch(body: DraftBatchRequest, apply: () => Record<string, unknown>) {
+      return draftDiscards(database).atomic(() =>
+        transaction(() => {
+          assertContentVersion(database, householdId, body.contentVersion);
+          return batches.apply(body, draft, apply);
+        }),
+      );
+    },
+    draftBatch(operationId: string, contentVersion: number) {
+      return transaction(() => {
+        assertContentVersion(database, householdId, contentVersion);
+        return { batch: batches.read(operationId, contentVersion, draft()) };
+      });
+    },
     image(id: string) {
       return transaction(() => images.read(id));
     },
@@ -681,7 +703,14 @@ export function householdMap(
       return transaction(() => {
         if (!Number.isSafeInteger(body.contentVersion) || (body.contentVersion as number) < 1)
           throw new MapError('invalid_request', 400);
-        if (!Number.isSafeInteger(body.typeRevision) || (body.typeRevision as number) < 0)
+        const selectedType =
+          body.value && typeof body.value === 'object'
+            ? (body.value as { typeId?: unknown }).typeId
+            : undefined;
+        if (
+          (body.typeRevision !== undefined || selectedType || body.value === null) &&
+          (!Number.isSafeInteger(body.typeRevision) || (body.typeRevision as number) < 0)
+        )
           throw new MapError('invalid_request', 400);
         assertContentVersion(database, householdId, body.contentVersion);
         const attempts = relationshipFormAttempts(

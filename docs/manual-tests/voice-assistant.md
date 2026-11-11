@@ -75,7 +75,8 @@ TAL-01.
   },
   "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
   "outcomes": [
-    "Utföra ett kontrollerat familjeärende med bevarad oskickad formulärtext, inklusive rättelse och samlat sparande med verifierat kvitto."
+    "Utföra ett kontrollerat familjeärende med bevarad oskickad formulärtext, inklusive rättelse och samlat sparande med verifierat kvitto.",
+    "Sambandens Riktning visar de förberedda fria verben, oberoende av sambandstypens namn."
   ],
   "evidence": [
     {
@@ -126,7 +127,8 @@ städning.
    musikkonto** och läs dess två samband: **Tillhör tjänsten** till Molnmusik
    och **Kontaktadress** till `familjen@example.test`. Öppna **Lindens
    musikförening**: föreningen saknar samband och finns kvar som fristående
-   objekt.
+   objekt. Kontrollera **Riktning**, **Från objekt** och **Till objekt**
+   enligt tabellen nedan; **Typ** visas separat.
 7. Slå av mikrofonen och välj Nytt samtal. Ingen ny medgivanderuta visas. Läs
    familjens kvitto igen; inget extra sparande tillkommer. Logga ut och avsluta
    provmiljön enligt tidslinjen.
@@ -142,6 +144,25 @@ Det verkliga talflödet har en egen mänsklig identitet, TAL-23.
 - Sparstatus bygger på ett riktigt kvitto. Osänd text blir inte sparad. Konto,
   adresser och roller behåller sin betydelse och sina fria egenskaper.
   Alla samband har två verkliga objekt; fristående objekt är tillåtna.
+- Sambandens **Riktning** bevarar de förberedda fria verben. Läs följande
+  värden i steg 6:
+
+  <!-- markdownlint-disable MD013 -->
+  | Från objekt | Riktning | Till objekt |
+  | --- | --- | --- |
+  | Familjens musikkonto | har inloggningsadressen | `musik@example.test` |
+  | Familjens musikkonto | har kontaktadressen | `familjen@example.test` |
+  | Familjens Molnmusik | har avtalsparten | Alex Exempel |
+  | Kim Exempel | betalar | Familjens Molnmusik |
+  | Familjens Molnmusik | betalas med | Familjens musikkort |
+  | Lo Lind | använder | Molnmusik |
+  | Molnmusik | används av | Lo Lind |
+  | Familjens musikkort | är kopplat till | Kortets kontokoppling |
+  | Familjens musikkort | har kortfaktura som betalas från | Hushållets betalkonto |
+  | Föreningens musikkonto | hör till | Molnmusik |
+  | Föreningens musikkonto | har kontaktadressen | `familjen@example.test` |
+  <!-- markdownlint-enable MD013 -->
+
 - Mikrofonavslag stoppar ny inspelning direkt. En tyst anslutning kan behålla
   mikrofonspåret för att låta Skyttel tala klart. När provmiljön avslutas
   frigörs resurserna. Inget verkligt plattformsresultat tillskrivs CI eller de
@@ -229,7 +250,7 @@ TAL-03.
     "spec": "tests/integration/voice-assistant.spec.ts",
     "caseId": "TAL-03"
   },
-  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse. Samtalet återkommer pausat efter faktisk serveromstart; sparutfallet läses före Nytt samtal. Faktisk röst eller uppläsning bedöms separat.",
   "outcomes": [
     "Bekräfta verklig markering och återhämta samma beständiga sparförsök.",
     "Beskrivningen går att läsa i korta uppgiftsfönster efter hela svaret."
@@ -260,11 +281,12 @@ till TAL-17/23/24.
    sparförsöket enligt tidslinjen. Läs Skyttel kunde inte kontrollera om
    utkastet sparades. Mikrofonen är av.
 3. Startoperatören behåller samma databas och startar om enligt tidslinjen.
-   Efter borttagen blockering, ladda om och välj Tabell. Starta sedan samtalet
-   med medgivande om det behövs.
+   Efter borttagen blockering, ladda om och välj Tabell. Öppna **Skriv till
+   Skyttel** och läs att samtalet är pausat och när det löper ut.
 4. Läs Kontrollen visar att hela utkastet sparades. Ändringarna finns i
    hushållets karta. Läs hela sparade Lo Exempel, typ Person och beskrivningen
-   Påhittad uppgift.
+   Påhittad uppgift. Välj därefter **Nytt samtal**, godkänn medgivandet om det
+   behövs och slå på mikrofonen.
 5. Bryt den kontrollerade leverantörskontakten efter sparandet. Ladda om och
    öppna Rapporter → Ändringshistorik. Öppna Identifiera sparandet och
    användaren och läs samma sparande.
@@ -277,8 +299,10 @@ till TAL-17/23/24.
 - Markering bekräftas först efter den verkliga webbläsarens återkoppling. Ett
   accepterat kommentarspaket är inte bevis för hörbart tal.
 - Beskrivningens text går att läsa även i det kortaste uppgiftsfönstret.
-- Omstart glömmer samtalet men bevarar utkast och sparförsök. Samma försök
-  slutförs exakt en gång; korta ja eller nya allmänna uppdrag ersätter det inte.
+- Omstart återställer samtalet pausat. Det registrerade sparförsöket
+  kontrolleras separat och slutförs exakt en gång. Läs dess utfall före ett
+  uttryckligt nytt samtal; korta ja eller nya allmänna uppdrag ersätter inte
+  försöket.
 - Avbrutet ljud återtar inget genomfört sparande. Saknad slutlig mätning förblir
   osäker: 12 följt av 15 är 15 kända sekunder, inte 27 eller säkert noll.
 
@@ -557,7 +581,8 @@ till TAL-17/23/24.
 2. Öppna textvyn, läs Vem använder tjänsten?, skicka Lo använder tjänsten. och
    håll svaret. Läs arbetsraden sist; inget rent textarbete visar röstrutan.
 3. Låt Vill du läsa vidare? tillkomma enligt tidslinjen. Skicka Berätta mer.,
-   stäng textvyn och läs uppdragsnotisen efter det förberedda felet.
+   stäng textvyn och läs modellfelsnotisen efter det förberedda felet. Valet
+   finns kvar och oavslutat arbete väntar på en uttrycklig handling.
 4. Öppna textvyn och välj Nytt samtal. Läs hela Lo Exempel-förslaget, Person och
    Förslag väntar på svar. Inget förslag försvinner vid samtalsbyte.
 
@@ -985,9 +1010,9 @@ till TAL-17/23/24.
 3. Låt egen aktivitet, tystnad, väntande arbete och inkommande aktivitet
    tillkomma enligt tidslinjen. Läs respektive statusord, namngiven Röstruta och
    Avbryt.
-4. Tabba från Prata med Skyttel genom Skriv till Skyttel, Avbryt och Utkast. Slå
-   av mikrofonen och fokusera Återställ vy medan svaret fortsätter; avsluta
-   inkommande aktivitet.
+4. Tabba från Prata med Skyttel genom Skriv till Skyttel, Modell och
+   resonemang, Avbryt och Utkast. Slå av mikrofonen och fokusera Återställ vy
+   medan svaret fortsätter; avsluta inkommande aktivitet.
 5. Slå på mikrofonen, öppna Inställningar och låt inkommande aktivitet börja.
    Fokusera Avbryt och tryck Enter. Fokus ska gå till Tillbaka till kartan.
    Faktiskt hört besked bedöms i TAL-24.
@@ -1003,7 +1028,8 @@ till TAL-17/23/24.
 - Steg 4: **Skyttel arbetar** finns som status för hjälpmedel. **Skyttel talar**
   erbjuds inte som DOM-status. Stoppikonen heter **Avbryt**.
 - Steg 4: ordningen är **Prata med Skyttel**, **Skriv till Skyttel**,
-  **Avbryt**, **Utkast** när utkastet innehåller förslag.
+  **Modell och resonemang**, **Avbryt**, **Utkast** när utkastet innehåller
+  förslag.
 - Steg 4: **Mikrofonen är av** finns som status för hjälpmedel när röstrutan
   försvinner.
 - Röstrutan är gruppen **Röstruta**, och vågformen läses inte. Alla

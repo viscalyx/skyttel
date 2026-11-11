@@ -8,6 +8,11 @@ modell eller kontrollerad ersättare samt godkänt eller underkänt resultat.
 De länkade integrationstesterna verifierar de kontrollerade flödena.
 Stegen här är stöd för felsökning; automatiken kräver ingen manuell upprepning.
 
+När förberedelsen anger ett samband som **A → verb → B**, skriv den
+angivna mittdelen i **Verb** på det enskilda sambandet. Välj den angivna
+sambandstypen separat. När ett steg ändrar både typen och formuleringen,
+ändra också **Verb** uttryckligen.
+
 ## Konfigurerade användare
 
 - Alex Exempel är administratör i det påhittade hushållet Textprov.
@@ -30,6 +35,8 @@ formuläret; befintliga förslag i utkastet påverkas inte.
 
 1. TEXT-01 använder familjeunderlaget i
    [separat förberedelse](text-conversation-preparation.md#familjerättelsen).
+   TEXT-15 och TEXT-17 använder röstinstallationen enligt sin separata
+   förberedelse.
    Övriga fall använder den
    [kontrollerade startguiden](#controlled-text-fixture).
    Den senare håller varje modellsvar tills du släpper det i terminalen.
@@ -47,9 +54,169 @@ formuläret; befintliga förslag i utkastet påverkas inte.
 
 ## Samtal och samlat sparande
 
+### TEXT-18: återförsök och avstående fortsätter bara återstående arbete
+
+**Syfte:** Behålla genomförda förslag vid modellfel och själv välja hur
+oavslutat arbete och kö ska fortsätta i text och röst.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Lo Exempel av typen Person med beskrivningen
+Påhittad uppgift ligger osparad i utkastet. Mikrofonen är av.
+
+**Separat förberedelse:** Följ
+[återförsök efter modellfel](text-conversation-preparation.md#återförsök-efter-modellfel).
+Operatören håller nästa svar efter en genomförd ändring och släpper sedan
+ett tillfälligt fel. Kontrollerade rösthändelser används; fysisk mikrofon,
+hörbart tal och verklig modellförståelse bedöms separat.
+
+**Automatiskt motsvarande test:**
+[conversation-work-retry.spec.ts](../../tests/integration/conversation-work-retry.spec.ts),
+TEXT-18.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/conversation-work-retry.spec.ts",
+    "caseId": "TEXT-18"
+  },
+  "reference": "Dator med tangentbord; riktig server och databas, kontrollerade modell- och rösthändelser. Skrivet delvis slutfört uppdrag med återförsök, därefter talat delvis slutfört uppdrag med uttryckligt avstående. Verklig språkförståelse och fysisk uppläsning ingår inte.",
+  "outcomes": [
+    "Ett modellfel behåller genomförda förslag och pausar senare kö utan automatiskt modellarbete.",
+    "Modellbyte startar inget; uttryckligt återförsök fortsätter återstående arbete med det aktuella valet utan dubbla förslag eller återupplivat sparande.",
+    "Uttryckligt avstående efter ett talat uppdrag behåller genomförda förslag och låter senare kö fortsätta.",
+    "Tangentbord når nästa steg och fokus finns kvar på en synlig kontroll när felkontrollerna försvinner."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/conversation-work-clarification.spec.ts",
+      "title": "a concurrent draft discard asks a visible question and requires explicit abandonment before a fresh instruction and save",
+      "purpose": "Ändrat underlag ger en synlig fråga, bevarar oskickad instruktion och kräver avstående före ny instruktion och nytt sparande utan att återskapa kastade förslag."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a spoken clarification retries only unfinished work after its own verified question and draft transitions: provider failure",
+      "purpose": "Ett uttryckligt återförsök efter ett talat förtydligande behåller samma begäran och genomförda förslag utan att upprepa dem."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a spoken clarification retries only unfinished work after its own verified question and draft transitions: lost batch status",
+      "purpose": "Statuskontroll av en genomförd ändring efter ett talat förtydligande bevarar frågans verifierade utveckling och kräver uttryckligt återförsök för återstående arbete."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a spoken clarification retries only unfinished work after its own verified question and draft transitions: manually discarded question",
+      "purpose": "Ett tidigare talat förtydligande kan inte fortsätta en väntande del som därefter avslutas genom manuellt kastande av utkastet."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a definitive absent batch status offers explicit retry without starting model work automatically",
+      "purpose": "En statuskontroll som bekräftar att ändringarna inte genomförs visar rätt nästa steg och startar nytt modellarbete först vid uttryckligt återförsök."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "a definitive absent batch status offers explicit abandon without starting model work automatically",
+      "purpose": "Ett bekräftat uteblivet resultat tillåter uttryckligt avstående utan nytt modellarbete; ett okänt utfall behåller spärren."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "an incomplete interpretation reply pauses the original request and queue until explicit retry",
+      "purpose": "Ett ofullständigt tolkningssvar pausar kön utan ändringar; uttryckligt återförsök behåller begäran och aktuellt modellval utan återupplivat sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "an invalid interpretation reply pauses the original request and queue until explicit abandon",
+      "purpose": "Ett ogiltigt tolkningssvar ändrar inget och kräver uttryckligt avstående innan senare kö fortsätter i ordning."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "an incomplete checking reply pauses the original request and queue until explicit abandon",
+      "purpose": "Ett ofullständigt kontrollsvar efter en genomförd batch lämnar nästa batch orörd och behåller den tidigare tills användaren uttryckligen avstår."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-work-retry-http.test.ts",
+      "title": "an invalid checking reply pauses the original request and queue until explicit retry",
+      "purpose": "Ett ogiltigt kontrollsvar pausar kön efter en genomförd batch; uttryckligt återförsök fortsätter bara återstående ändringar utan dubbla batcher eller gammalt sparande."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Välj **Skriv till Skyttel → Nytt samtal** och godkänn medgivandet om
+   det behövs. Skicka **Ändra Lo Exempel till Lo Lind och lägg till Mira.
+   Spara hela utkastet.** Operatören ändrar Lo först och håller nästa svar.
+2. Skicka **Beskriv vad ett utkast är.** medan arbetet pågår. Operatören
+   släpper nu felet. Läs att modellen är tillfälligt otillgänglig, att
+   återstående arbete och kö väntar och att utkastet finns kvar. Öppna
+   utkastet och läs Lo Lind med oförändrad beskrivning.
+3. Öppna **Modell och resonemang**, välj **GPT-6.1 Sol** och **Medium**,
+   och stäng dialogerna. Läs det nya valet. Inget arbete startar av valet.
+4. Nå **Försök igen** med tangentbord och aktivera knappen. Operatören
+   lämnar först samma Lo-förslag tillsammans med Mira och släpper sedan
+   kösvaret. Läs Lo Lind och Mira i utkastet samt beskedet att en ny
+   sparbegäran behövs. Ingen ändring finns i den gemensamma kartan.
+5. Slå på mikrofonen. Operatören ger det kontrollerade talade uppdraget
+   **Ändra Mira till Mira Lind. Beskriv sedan hushållets typer.** och
+   genomför namnändringen före nästa hållna svar.
+6. Skicka **Beskriv kartan.** som text medan arbetet pågår. Operatören
+   släpper felet. Läs det kvarvarande Mira Lind-förslaget och felbeskedet.
+7. Nå **Avstå från det oavslutade arbetet** med tangentbord. Aktivera
+   knappen och låt operatören släppa kösvaret. Läs svaret och kontrollera
+   att Lo Lind och Mira Lind fortfarande är osparade förslag.
+
+**Förväntat resultat:**
+
+- Samma samtal och utkast används för text och röst. Senare kö väntar vid
+  modellfel tills Alex uttryckligen försöker igen eller avstår.
+- Återförsök använder aktuellt modellval och fortsätter bara återstående
+  arbete. Genomförda ändringar upprepas inte och gammal sparbegäran ger
+  inget nytt sparande.
+- Avstående tar bort den oavslutade delen, bevarar genomförda förslag och
+  släpper fram kön. Kontrollerna går att nå med tangentbord och fokus
+  återgår till samtalets synliga kontroll efter handlingen.
+
 ### TEXT-SCOPE-01: stoppad åtgärd visar felreferens och behåller utkastet
 
-**Syfte:** Läsa en stoppnotis utan att förlora befintliga förslag.
+**Syfte:** Läsa och kopiera en stoppnotis med rätt begäran utan att
+förlora befintliga förslag eller få dubbla fel i samtalstexten.
 
 **Användare:** Alex i den kontrollerade installationen.
 
@@ -80,6 +247,17 @@ textuppdraget släpper operatören nästa hållna svar med
 `fail REQUEST` för respektive hållna svar. Återställ med `scope-work`; avsluta och
 städa med `quit` efter provet.
 
+Inför det andra kopieringsförsöket nekar operatören urklippsåtkomst
+genom att köra följande i webbläsarens konsol. Omladdning återställer
+webbläsarens vanliga kopiering efter provet:
+
+```javascript
+Object.defineProperty(navigator.clipboard, 'writeText', {
+  configurable: true,
+  value: async () => { throw new DOMException('Nekad', 'NotAllowedError'); }
+});
+```
+
 **Automatiskt motsvarande test:**
 [assistant-turn-scope.spec.ts](../../tests/integration/assistant-turn-scope.spec.ts),
 TEXT-SCOPE-01. Separata HTTP-prov verifierar två medlemmars bevarade
@@ -96,7 +274,7 @@ utkast, sparade uppgifter och historik samt loggens begränsade innehåll.
     "caseId": "TEXT-SCOPE-01"
   },
   "reference": "Kontrollerad läsomfattning och felaktigt kastande; ingen verklig leverantör.",
-  "outcomes": ["Notis och samtalstext visar samma felreferens, Lo ligger kvar och senare mikrofonnotiser och textuppdrag fungerar."],
+  "outcomes": ["Notisen visar felreferens utan dubbla fel i samtalstexten. Kopierad rapport och Läs mer innehåller samma fel och ursprungliga begäran. Nekad kopiering visar markerbar rapport. Lo ligger kvar och senare mikrofonnotiser och textuppdrag fungerar."],
   "evidence": [{
     "kind": "technical",
     "runner": "vitest",
@@ -115,23 +293,42 @@ utkast, sparade uppgifter och historik samt loggens begränsade innehåll.
 1. Starta samtalet med text och godkänn. Visa utkastet och läs **Lo Exempel**.
 2. Skicka **Sammanfatta kartan. Ändra ingenting.** Låt operatören släppa
    det felaktiga modellsvar som beskrivs ovan.
-3. Läs notisen om stoppad åtgärd. Jämför felreferensen med samtalstexten.
+3. Läs notisen om stoppad åtgärd. Felet ska inte upprepas i samtalstexten.
+   Välj **Läs mer** i slutet av feltexten. Samma text ska utökas utan
+   extra ruta eller upprepat felmeddelande. Hela felrapporten innehåller
+   felreferensen och den skickade begäran. Skriv **Oskickad text.** i
+   meddelandefältet utan att skicka. Välj **Kopiera felrapport** till höger
+   om texten, före stängningskrysset, och
+   klistra in i en textredigerare. Texten ska överensstämma med rapporten
+   i den expanderade texten, utan den oskickade texten. Välj **Visa mindre**
+   längst ned. Texten fälls ihop och länken blir **Läs mer** med fokus kvar.
 4. Kontrollera att **Lo Exempel** ligger kvar i utkastet.
 5. Stäng notisen. Låt operatören neka den simulerade mikrofonen.
    Tryck **Prata med Skyttel**, läs mikrofonnotisen och stäng den.
    Upprepa en gång; även det andra försöket ska visa samma mikrofonhinder.
 6. Skicka **Sammanfatta kartan igen. Ändra ingenting.** Låt operatören
    åter släppa ett felaktigt kastande enligt förberedelsen. En ny stoppnotis
-   ska visas med en annan felreferens. Stäng notisen.
+   ska visas med en annan felreferens. Den nya notisen ska ha stängd
+   **Läs mer** och inget gammalt kopieringsbesked. Låt operatören neka
+   urklippsåtkomst enligt förberedelsen.
+   Välj **Kopiera felrapport**. Ett besked ska förklara att kopieringen
+   misslyckades och feltexten expanderas med markerbar text för den nya
+   begäran och referensen. Stäng notisen.
 7. Skicka **Prova ett vanligt fel.** Låt operatören neka svaret.
-   Läs uppdragsfelets notis och stäng den. Upprepa en gång; båda felen
-   ska visas trots det tidigare mikrofonhindret.
+   Läs notisen **Modellen är tillfälligt otillgänglig** och kontrollera
+   att den oavslutade begäran visas. Välj **Avstå från det oavslutade
+   arbetet**. Kontrollera att notisen försvinner och att **Lo Exempel**
+   finns kvar i utkastet. Upprepa en gång; båda felen ska visas trots
+   det tidigare mikrofonhindret.
+   Avståendet startar inget nytt modellarbete.
 8. Skriv och skicka **Mitt nästa uppdrag**. Låt operatören släppa svaret.
    Läs **Ett nytt svar.** och kontrollera att ingen gammal notis visas.
 
-**Förväntat resultat:** Åtgärden stoppas, samma referens finns i notis och
-samtalstext och utkastet finns kvar. Senare fel kan visas på nytt och ett
+**Förväntat resultat:** Åtgärden stoppas, notisen och den kopierade
+rapporten visar samma referens och rätt begäran. Felet upprepas inte i
+samtalstexten och utkastet finns kvar. Senare fel kan visas på nytt och ett
 nytt textuppdrag kan slutföras.
+Avstående avslutar den oavslutade begäran och bevarar Lo-förslaget.
 Ingen automatisk upprepning eller extra godkännanderuta visas.
 
 ### TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext
@@ -173,10 +370,10 @@ formulärtext”.
 
 1. Börja med det kontrollerade, fullständiga familjeunderlaget. Öppna textvyn,
    godkänn, öppna utkastet och läs Lo-förslaget med samtidig konflikt.
-2. Skicka **Behåll Lo-förslaget, rätta priset till 189 kr och spara.** Håll
-   svaret enligt separat förberedelse. Stäng textvyn och välj **Tabell →
-   Redigera Kim Exempel**. Skriv **Osänd text som ska finnas kvar** i
-   Beskrivning utan att lägga den i utkastet.
+2. Skicka **Behåll Lo-förslaget, rätta priset till 189 kr och spara mina
+   ändringar.** Håll svaret enligt separat förberedelse. Stäng textvyn och
+   välj **Tabell → Redigera Kim Exempel**. Skriv **Osänd text som ska finnas
+   kvar** i Beskrivning utan att lägga den i utkastet.
 3. Låt operatören släppa rättelsen och sparandet. Läs samma oskickade text.
    Tryck Escape, välj **Fortsätt redigera**, läs igen och lämna sedan med
    **Kasta ändringarna och fortsätt**.
@@ -202,6 +399,434 @@ formulärtext”.
 
 ## Kontrollerade sena svar och fel
 
+### TEXT-17: verifierat slutbesked behåller beställd förklaring i text och röst
+
+**Syfte:** Få ett kort besked för ett färdigt enkelt uppdrag och hela den
+beställda förklaringen när samma slags uppdrag kräver mer än beskedet.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Lo Exempel av typen Person med beskrivningen
+Påhittad uppgift ligger osparad i utkastet. Mikrofonen är av.
+
+**Separat förberedelse:** Följ
+[verifierat slutbesked](text-conversation-preparation.md#verifierat-slutbesked).
+En kontrollerad leverantör lämnar svaren. Provet verifierar serverns och
+webbläsarens hantering; fysisk uppläsning och verklig modellförståelse
+ingår inte.
+
+**Automatiskt motsvarande test:**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+TEXT-17.
+
+**Separat försöksförberedelse:**
+[Överlappning och sekventiell baslinje](text-conversation-preparation.md#separat-överlappningsförsök)
+kan prövas med samma förväntade användarutfall. Tekniska prov redovisas
+som stöd, skilt från hela det ordinarie fallet.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-17"
+  },
+  "reference": "Dator; riktig server och databas med kontrollerade leverantörer. Enkelt textuppdrag, textuppdrag med förklaring och talad sparbegäran med förklaring. Separata nya installationer prövar skrivna uppdrag med mikrofonen på där förklaringen misslyckas efter verkligt sparande med en oberoende informationsfråga respektive en osparad utkaständring med en separat väntande ändringsfråga.",
+  "outcomes": [
+    "Ett verifierat enkelt uppdrag ger kort slutbesked utan att förslagen sparas.",
+    "En beställd förklaring finns kvar efter utkaständringen och efter sparande med röst.",
+    "Sparandet bekräftas med tomt utkast, verkliga objekt och ett gemensamt kvitto.",
+    "Ett verkligt sparande, dess oberoende väntande informationsfråga och felet i en återstående förklaring finns med i text och kontrollerad röstleverans.",
+    "En genomförd osparad ändring, dess separata väntande fråga och den uteblivna förklaringens felbesked finns med i text och kontrollerad röstleverans utan sparbesked."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "direct save continues requested explanation with missing result certification",
+      "purpose": "Saknad slutkontroll får inte avsluta uppdraget före den beställda förklaringen."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "direct save continues requested explanation with following catalog read certification",
+      "purpose": "Ett sparande får inte hoppa över en efterföljande beställd läsning i samma verktygsomgång innan förklaringen fortsätter."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "a report before requested changes keeps unfinished work active",
+      "purpose": "Ett statusbesked får inte avsluta ett ändringsuppdrag innan något av det begärda arbetet är genomfört."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "a report after a partial batch keeps unfinished work active",
+      "purpose": "En godkänd självständig del och ett statusbesked får inte ersätta återstående begärda ändringar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "a report after a partial batch beside an older waiting question keeps unfinished work active",
+      "purpose": "En äldre väntande fråga får inte avsluta en ny begäran efter enbart en självständig del."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-result-completion-http.test.ts",
+      "title": "a report with a ready pending change keeps unfinished work active",
+      "purpose": "En felaktig kontrolluppgift om slutförande får inte avsluta en känd återstående ändringsdel som är redo att utföras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified voice save retains requested saved-change report details before its final response",
+      "purpose": "Begärda verifierade detaljer från samma sparande måste nå rösten tillsammans med det fullständiga svaret."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified voice save retains its independent information question after its requested explanation",
+      "purpose": "En lyckad beställd förklaring får inte tappa en separat väntande informationsfråga efter verkligt sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified voice save retains its independent information question when the required explanation fails",
+      "purpose": "En oberoende informationsfråga får inte försvinna ur röstleveransen när sparandet lyckas men den återstående förklaringen misslyckas."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified voice save retains the failure of its remaining requested explanation",
+      "purpose": "Ett verkligt sparresultat får inte dölja felet när en beställd förklaring fortfarande saknas."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified unsaved voice change retains its details when the required explanation fails",
+      "purpose": "En talad begärans verifierade utkaständring och verkliga fel måste båda levereras utan att påstå sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-assistant.test.ts",
+      "title": "a verified unsaved voice change retains its pending question when the required explanation fails",
+      "purpose": "En talad begärans självständiga ändring, väntande fråga och senare förklaringsfel måste alla levereras med sina sakliga roller."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/voice-typed-delivery.test.ts",
+      "title": "a failed typed completion delivers its own question before a later task question",
+      "purpose": "En misslyckad begärans resultat, fel och fråga levereras en gång före nästa köade begärans fråga efter uttryckligt avstående."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap reads current facts while interpretation is held but changes await independent checking",
+      "purpose": "Överlappning läser aktuella fakta före tolkningens slut men ändrar först efter separat kontroll; samma modell och nivå används."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a verified existing-draft save used after explanation error",
+      "purpose": "Ett verkligt sparande av ett tidigare utkast räknas som använt modellarbete även när förklaringen misslyckas; senare oanvänt arbete och okänd kostnad bevaras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a verified existing-draft save used after explanation error",
+      "purpose": "Försöksvarianten behåller samma verkliga sparkvitto, karta och historik samt skiljer använt modellarbete för sparandet från senare oanvänt arbete och okänd kostnad."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a verified existing-draft save used after explanation stop",
+      "purpose": "Stopp efter verifierat sparande behåller det använda modellarbetet, kartan och historiken utan att räkna senare avbrutet arbete som använt eller okänd kostnad som noll."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a verified existing-draft save used after explanation stop",
+      "purpose": "Försöksvarianten behåller samma verifierade sparresultat efter stopp och redovisar senare avbrutet arbete och okänd kostnad separat."
+    },
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/assistant-overlap.spec.ts",
+      "title": "sequential public preparation gates edits, clarification and Escape in the real browser",
+      "purpose": "Publicerad försöksförberedelse med riktig webbläsare: enkelt förslag, separat fråga och avbrott bevarar samma utkast. Ersätter inte hela ordinarie resan."
+    },
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/assistant-overlap.spec.ts",
+      "title": "overlap public preparation gates edits, clarification and Escape in the real browser",
+      "purpose": "Publicerad försöksförberedelse med riktig webbläsare: enkelt förslag, separat fråga och avbrott bevarar samma utkast. Ersätter inte hela ordinarie resan."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential spoken allowed shares the guarded draft and real delivery flow",
+      "purpose": "Talad enkel ändring får ett verifierat osparat slutbesked genom verklig backendleverans med kontrollerad Live-leverantör."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap spoken allowed shares the guarded draft and real delivery flow",
+      "purpose": "Talad enkel ändring får ett verifierat osparat slutbesked genom verklig backendleverans med kontrollerad Live-leverantör."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Skriv **Lägg till Kim som person med samma objekttyp som Lo Exempel
+   utan att spara.** Läs **Kim lades
+   till.** när arbetet är klart. Öppna utkastet och läs Kim. Inget
+   sparbesked visas.
+2. Skriv **Ändra Kim till Kim Lind och förklara vad objekttypen Person
+   betyder. Spara inte.** Läs både namnändringen och **Person är en
+   objekttyp. Kim Lind är ett objekt av den typen.** Utkastet visar Kim
+   Lind och inget sparbesked.
+3. Slå på mikrofonen i samma samtal. Operatören lämnar det kontrollerade
+   talet **Beskriv efter sparandet vilka objekt som är sparade. Spara
+   hela utkastet.** Läs **Sparat.** och **Lo Exempel och Kim Lind
+   finns nu i hushållets karta.** från samma svar. Utkastet är tomt.
+4. Öppna Tabell och läs Person för både Lo Exempel och Kim Lind. Öppna
+   **Rapporter → Ändringshistorik → Visa ändringarna** och läs båda
+   objekten i samma sparande.
+5. Följ förberedelsens separata felvariant i en ny installation med
+   enbart Lo Exempel osparad. Starta text och slå på mikrofonen.
+6. Skriv **Beskriv de sparade objekten och vilket år uppgifterna gäller.
+   Lägg till Kim som person. Spara hela utkastet.**
+   Operatören släpper tillägget och sparandet och avbryter därefter
+   förklaringen. Läs **Sparat.** och **Vilket år gäller beskrivningen?**.
+   Välj **Läs mer** i **Samtalsnotis** och läs felbeskedet.
+   Kontrollera samma besked i den kontrollerade
+   röstleveransen enligt förberedelsen.
+7. Läs ett tomt utkast samt Lo Exempel och Kim av typen Person i Tabell.
+   Öppna **Rapporter → Ändringshistorik** och kontrollera att ett sparande
+   innehåller båda objekten. Informationsfrågan väntar fortfarande;
+   den gör inget osparat ändringsförslag.
+8. Följ förberedelsens osparade felvariant i ytterligare en ny
+   installation med enbart Lo Exempel osparad. Starta text och slå på
+   mikrofonen. Skriv **Lägg till Kim och en kollega med samma objekttyp
+   som Lo Exempel och förklara typen Person. Spara inte.**
+9. Operatören släpper utkaständringen och avbryter därefter förklaringen.
+   Läs **Kim lades till.** och **Vad heter kollegan?**. Välj **Läs mer**
+   i **Samtalsnotis** och läs felbeskedet.
+   Kontrollera samma sakliga innehåll i den kontrollerade
+   röstleveransen. Inget **Sparat.** ska finnas i text eller röstleverans.
+10. Läs Kim och Lo Exempel i utkastet. Öppna
+    **Rapporter → Ändringshistorik** och kontrollera att inget sparande
+    finns.
+
+**Förväntat resultat:**
+
+- Det enkla slutbeskedet gäller ett verifierat osparat förslag. Förslaget
+  blir sparat först när ett beständigt kvitto bekräftar sparandet.
+- En beställd förklaring kräver fortsatt arbete och kommer med i hela
+  svaret, även när resultatet sparas. Ett kort statusbesked ersätter den
+  inte. Text och den kontrollerade röstleveransen ger samma sakliga
+  sparresultat och förklaring.
+- Om förklaringen misslyckas efter verkligt sparande behåller båda
+  leveranssätten sparbeskedet, den oberoende informationsfrågan och det
+  aktuella felbeskedet. Sparandet ersätter inte den uteblivna
+  förklaringen och informationsdelen väntar fortfarande.
+- Om förklaringen misslyckas efter en osparad ändring behåller båda
+  leveranssätten den genomförda ändringens detaljer, frågan om kollegan
+  och det aktuella felet. Den väntande delen framstår inte som färdig.
+  Ändringen ligger kvar i utkastet; inget sparande påstås.
+
+### TEXT-19: kontrollens fråga besvaras före en ny sparbegäran
+
+**Syfte:** Visa en konkret fråga från kontrollen och behålla utkastet
+osparat när användaren besvarar den.
+
+**Användare:** Alex i Textprov.
+
+**Förutsättningar:** En ny kontrollerad röstinstallation med Lo Exempel
+av typen Person och beskrivningen Påhittad uppgift i utkastet. Använd
+textvyn och lämna mikrofonen av under hela fallet.
+
+**Separat förberedelse:** Följ
+[konkret kontrollfråga](text-conversation-preparation.md#konkret-kontrollfråga).
+Operatören styr kontrollens fråga och arbetsmodellens svar utan verkliga
+leverantörsanrop.
+
+**Automatiskt motsvarande test (integration eller webbläsare):**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+TEXT-19.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-19"
+  },
+  "reference": "Kontrollerad fråga vid sparandet i ett textsamtal; svaret bevarar utkastet och ett nytt uttryckligt sparbesked avslutar arbetet.",
+  "outcomes": [
+    "Kontrollens konkreta fråga och behovet av en ny sparbegäran visas.",
+    "Svaret bevarar Lo Exempel osparad med samma beskrivning.",
+    "En ny sparbegäran ger ett tomt utkast och Lo i den sparade tabellen."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna textvyn, börja samtalet och godkänn. Skicka **Spara hela
+   utkastet.**
+2. Välj **Läs mer** i **Samtalsnotis**. Läs frågan **Vilken beskrivning
+   ska Lo ha?** och beskedet om att be om sparande igen. Visa utkastet
+   och kontrollera att Lo Exempel finns kvar.
+3. Skicka **Behåll beskrivningen Påhittad uppgift.** Vänta tills arbetet
+   avslutas. Kontrollera att Lo finns kvar i utkastet och inget
+   **Sparat.** visas.
+4. Skicka **Spara hela utkastet.** Läs **Utkastet är sparat**, kontrollera
+   att utkastet är tomt och öppna Lo Exempel i Tabell. Läs beskrivningen.
+
+**Förväntat resultat:** Den konkreta frågan kan besvaras. Svaret sparar
+ingenting; den nya sparbegäran sparar Lo med Påhittad uppgift kvar.
+
+### TEXT-15: avvisat sparande bevarar utkastet före ett nytt talat sparbesked
+
+**Syfte:** Behålla både tidigare och nya förslag när sparandet inte kan
+godkännas, och sedan spara en uttryckligen begärd rättelse i samma samtal.
+
+**Användare:** Alex i Textprov.
+
+**Förutsättningar:** En ny kontrollerad röstinstallation med ett osparat
+Lo Exempel av typen Person och beskrivningen Påhittad uppgift. Mikrofonen
+är av från början. Inga verkliga leverantörer eller fysiska ljud används.
+
+**Separat förberedelse:** Följ
+[avvisad kontroll av hela utkastet](text-conversation-preparation.md#avvisad-kontroll-av-hela-utkastet).
+Operatören styr modellens svar och det simulerade talet där.
+
+**Automatiskt motsvarande test (integration eller webbläsare):**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+TEXT-15.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-15"
+  },
+  "reference": "Samma samtal med text och simulerat tal; hela utkastets kontroll avvisas efter en genomförd rättelse och nästa uttryckliga begäran tillåts. Kontrollerade leverantörer bevisar inte svensk talförståelse eller hörbart ljud.",
+  "outcomes": [
+    "Lo och Kim finns kvar osparade efter avvisat sparande, med tydligt besked.",
+    "En informationsfråga återupplivar inget sparande.",
+    "Ett nytt talat ändra-och-spara-besked sparar både Lo och Kim Lind med ett kvitto utan extra ja."
+  ],
+  "evidence": [{
+    "kind": "technical",
+    "runner": "vitest",
+    "suite": "server",
+    "spec": "tests/unit/server/conversation-whole-draft-save.test.ts",
+    "title": "a rejected whole-draft check preserves both earlier proposals and the applied edit without registering a save",
+    "purpose": "Avvisar den oberoende kontrollen av hela det resulterande utkastet före registrering och verifierar bevarat utkast genom publika HTTP-vägar."
+  }, {
+    "kind": "technical",
+    "runner": "vitest",
+    "suite": "server",
+    "spec": "tests/unit/server/conversation-whole-draft-save.test.ts",
+    "title": "an old whole-draft approval cannot save newer proposals and a rejected attempt needs fresh authority",
+    "purpose": "Ändrar utkastet medan den oberoende kontrollen hålls och verifierar beständig avvisning, återhämtning och krav på ny uttrycklig sparbegäran."
+  }, {
+    "kind": "technical",
+    "runner": "playwright",
+    "suite": "technical-browser",
+    "spec": "tests/technical-browser/whole-draft-preparation.spec.ts",
+    "title": "literal whole-draft preparation reads omitted proposals before a rejected combined save",
+    "purpose": "Kör publicerad läsning, batch, avvisning, informationsfråga och nytt talat sparande mot den disponibla installationen; hela utkastet hämtas innan Lo-förslagets typ används och omfattningen växlar uttryckligen mellan läsning och arbete."
+  }]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna textvyn, börja samtalet och godkänn. Visa utkastet och läs Lo.
+2. Skicka **Lägg till Kim som person och spara.** Låt operatören
+   släppa förslaget och avvisa sparandet enligt förberedelsen.
+3. Välj **Läs mer** i **Samtalsnotis**. Läs att ändringarna ligger kvar
+   osparade och att ett nytt sparbesked behövs. Läs både Lo Exempel och
+   Kim i utkastet. Öppna Lo och kontrollera att beskrivningen Påhittad
+   uppgift finns kvar. Stäng detaljen. Välj **Avstå från det oavslutade
+   arbetet** i Samtalsnotis; de genomförda förslagen ska finnas kvar.
+4. Skicka **Vad finns i utkastet?** Läs redovisningen av båda personerna.
+   Utkastet finns kvar och inget **Sparat.** visas.
+5. Slå på **Prata med Skyttel** i samma samtal. Låt operatören förmedla
+   **Ändra namnet på Kim till Kim Lind och spara.**
+6. Läs **Sparat.** och ett tomt utkast. Läs Lo Exempel och Kim Lind i
+   Tabell. Öppna **Rapporter → Ändringshistorik**, senaste sparandet och
+   **Visa ändringarna**. Båda personerna ingår i samma sparande.
+
+**Förväntat resultat:** Avvisat sparande lämnar genomförda förslag kvar
+osparade. Informationsfrågan sparar ingenting. Ett nytt uttryckligt
+talat besked kan både rätta och spara hela utkastet utan extra ja. Först
+ett verkligt sparkvitto ger sparbesked och en gemensam historikpost.
+
 ### TEXT-02: sena svar efter kastat utkast och avbrott ändrar inte nytt arbete
 
 **Syfte:** Ett äldre uppdrag får inte återinföra ett kastat förslag.
@@ -219,6 +844,11 @@ nytt arbete”.
 **Separat förberedelse:**
 [Operatörens exakta verktyg och felgränser](text-conversation-preparation.md).
 
+**Separat försöksförberedelse:**
+[Överlappning och sekventiell baslinje](text-conversation-preparation.md#separat-överlappningsförsök)
+kan prövas med samma förväntade användarutfall. Tekniska prov redovisas
+som stöd, skilt från hela det ordinarie fallet.
+
 <!-- markdownlint-disable MD013 -->
 <!--
 ```manual-mapping
@@ -230,6 +860,24 @@ nytt arbete”.
   "reference": "Dator; kontrollerad leverantör och den angivna motiverade felgränsen.",
   "outcomes": [
     "Ett äldre uppdrag får inte återinföra ett kastat förslag."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential stop cannot bypass interpretation and independent checking",
+      "purpose": "Stopp under hållen tolkning förkastar kvarvarande arbete utan att återuppliva ett förslag."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap stop cannot bypass interpretation and independent checking",
+      "purpose": "Stopp under hållen tolkning förkastar kvarvarande arbete utan att återuppliva ett förslag."
+    }
   ]
 }
 ```
@@ -281,7 +929,8 @@ tillgängligt”.
   },
   "reference": "Dator; kontrollerad leverantör och den angivna motiverade felgränsen.",
   "outcomes": [
-    "Det verkliga meddelandet styr tillåtelsen att spara och ett leverantörsfel förstör inte utkastet."
+    "Det verkliga meddelandet styr tillåtelsen att spara och ett leverantörsfel förstör inte utkastet.",
+    "Felnotisen förklarar att modellen är tillfälligt otillgänglig, att valet är kvar och att återförsök kräver en egen handling."
   ]
 }
 ```
@@ -295,7 +944,8 @@ tillgängligt”.
    Låt operatören försöka spara efter varje meddelande. Vänta på den
    uttryckliga felnotisen före nästa meddelande.
 2. Skicka **Beskriv mitt utkast.** och låt operatören ge leverantörsfel.
-   Läs felnotisen och kvarvarande Lo-förslag.
+   Välj **Läs mer** i felnotisen och läs modellens felbesked. Kontrollera
+   att Lo-förslaget finns kvar.
 3. Stäng textvyn, välj **Tabell → Redigera Lo Exempel**, rätta Namn till
    **Lo Lind** och välj **Lägg i utkastet och stäng**. Läs Lo Lind med
    oförändrad **Påhittad uppgift** i utkastets fullständiga uppgifter.
@@ -304,8 +954,11 @@ tillgängligt”.
 
 - Ingen av de nekade, hypotetiska, uppskjutna eller citerade begärandena
   sparar kartan, även när ersättaren försöker anropa sparverktyget.
-- Modellfelet visas begripligt. Utkastet och vanligt formulärarbete finns
-  kvar. Provet är ett kontrollerat verktygsprov, inte bevis på språkförståelse.
+- Vid leverantörsfelet visar felnotisen att modellen
+  är tillfälligt otillgänglig, att valet är kvar och att återförsök kräver en
+  egen handling när felet är löst. Oavslutat arbete och senare kö väntar.
+- Utkastet och vanligt formulärarbete finns kvar. Provet är ett kontrollerat
+  verktygsprov, inte bevis på språkförståelse.
 
 ## Kvitton och faktisk visning
 
@@ -340,11 +993,59 @@ dubbelt sparande”.
   "evidence": [
     {
       "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a registered save used when Stop precedes its transport reply",
+      "purpose": "Ett verkligt registrerat sparförsök före stopp räknas som använt modellarbete när samma försök kontrolleras till kvitto, karta och en enda historikpost; sent transportsvar upprepar inget sparande."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a registered save used when Stop precedes its transport reply",
+      "purpose": "Försöksvarianten behåller samma registrerade försök efter stopp, verifierar dess verkliga sparkvitto och skiljer detta använda modellarbete från oanvända resultat."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a registered save unknown after access revocation before its transport reply",
+      "purpose": "Registrerat sparförsök med fördröjt svar och återkallad assistentåtkomst klassificeras som okänt när underlaget inte längre får läsas; modellförbrukning räknas en gång och återställning utan åtkomst avvisas."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a registered save unknown after access revocation before its transport reply",
+      "purpose": "Försöksvarianten behåller samma okända klassificering efter fördröjt registreringssvar och återkallad åtkomst, utan extra modellförbrukning, kvitto eller historikpost."
+    },
+    {
+      "kind": "technical",
       "runner": "playwright",
       "suite": "technical-browser",
       "spec": "tests/technical-browser/text-assistant.spec.ts",
       "title": "manual text launcher public preparation seeded rejects an unaccepted delivery",
       "purpose": "Publik textstart med ett verkligt Lo-förslag: saknad session ger 404/not-accepted, oförändrat utkast, inga sparförsök, återställd leveranskontroll efter omladdning och borttagen provkatalog. Tomt utkast provas inte längre oberoende."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/save-operation-recovery-http.test.ts",
+      "title": "a lost registered save response survives conversation stop and restart with a repeatable known outcome",
+      "purpose": "Verklig registrering före tappat HTTP-svar, avslutat samtal och omstart; samma försök återfås utan nya modellbegäranden, kvitton eller historikposter."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/save-operation-recovery-http.test.ts",
+      "title": "a lost registered save response survives conversation stop and restart with a repeatable unknown outcome",
+      "purpose": "Bestående lagringsfel bevarar okänt utfall och spärr mot redigering och kastande vid upprepade kontroller; efter åtgärdat fel slutförs samma försök en gång utan modellarbete."
     }
   ]
 }
@@ -384,6 +1085,248 @@ behåller ett faktiskt Lo-förslag. Det provar saknad session, oförändrat
 utkast, inga sparförsök samt återställning och städning enligt
 [förberedelsens avvisningsgräns](text-conversation-preparation.md#avvisad-leverans-med-befintligt-utkast).
 Det oberoende avvisningsprovet från tomt utkast ingår inte längre.
+Separat serverevidens tappar också registreringssvaret före avslut och
+omstart. Den provar både verifierat utfall och ett verkligt lagringsfel
+med fortsatt okänt utfall, bevarad spärr och upprepade statuskontroller.
+
+### TEXT-16: tappat ändringsbesked återfinns utan dubbla förslag
+
+**Syfte:** Återfinna genomförda osparade ändringar efter ett tappat
+verktygssvar, med tidigare självständiga förslag kvar. Skilj genomförandet
+från ett slutfört uppdrag när återstående arbete inte är klart.
+
+**Användare:** Alex i den kontrollerade textinstallationen.
+
+**Förutsättningar:** Lo Exempel av typen Person med beskrivningen
+Påhittad uppgift finns i ditt utkast. Kim finns inte ännu.
+
+**Separat förberedelse:** Operatören följer
+[tappat ändringsbesked](text-conversation-preparation.md#tappat-ändringsbesked).
+Den förberedelsen tappar svaret efter verkligt genomförande och startar
+om samma server med samma databas vid det angivna steget.
+
+**Automatiskt motsvarande test (integration):**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+`TEXT-16`.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/text-assistant.spec.ts",
+    "caseId": "TEXT-16"
+  },
+  "reference": "Dator; kontrollerad leverantör, genomförda utkaständringar före tappat MCP-svar, tillfälligt otillgänglig statuskontroll och omstart med samma databas. Separat ny installation prövar ett skrivet uppdrag med beställd förklaring och mikrofonen på. Den enkla textvarianten saknar intyg om hela uppdragets slutförande; förklaringsvarianten har ett batchintyg men kräver fortfarande svar.",
+  "outcomes": [
+    "Ett verifierat ändringsbesked visas efter tappat verktygssvar.",
+    "Nytt arbete väntar tills samma ändringars utfall kan kontrolleras; notisen beskriver ändringar utan att påstå att något sparas.",
+    "Tidigare Lo-förslag och ett enda Kim-förslag ligger kvar osparade även efter omstart.",
+    "Genomförandet visas tillsammans med besked om pausat återstående arbete och ursprunglig instruktion när hela uppdraget inte är verifierat klart.",
+    "Beställd men utebliven förklaring blir inte ett lyckat slutbesked i text eller kontrollerad röstleverans; statuskontrollen startar inget nytt arbete.",
+    "Den oberoende väntande frågan om vilket år uppgifterna gäller finns kvar i både text och den återhämtade röstleveransen."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential keeps a committed batch used while its lost reply and status remain unavailable",
+      "purpose": "Genomförd verklig batch räknas som använt modellarbete trots tappat svar och statusfel; samma leverantörsanrops token och kostnad bevaras medan nytt arbete spärras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential resolves unknown batch work only after status proves it was not committed",
+      "purpose": "Ett ännu okänt utfall räknas inte som oanvänt arbete förrän samma operations status visar att den inte genomförs; senaste klassificering kopplas till token en enda gång och tidigare klassificering bevaras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential accounts for a held committed batch reply after stop",
+      "purpose": "Stopp före ett verkligt genomfört ändringsbesked behåller använt modellarbete och spärren tills status kontrolleras utan nya ändringar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "sequential accounts for a held committed batch reply after revoke",
+      "purpose": "Återkallad åtkomst före ändringsbeskedet ger okänd arbetsklassificering när bevis inte längre får läsas; statuskontroll får inte kringgå behörigheten."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap keeps a committed batch used while its lost reply and status remain unavailable",
+      "purpose": "Genomförd verklig batch räknas som använt modellarbete trots tappat svar och statusfel; samma leverantörsanrops token och kostnad bevaras medan nytt arbete spärras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap resolves unknown batch work only after status proves it was not committed",
+      "purpose": "Ett ännu okänt utfall räknas inte som oanvänt arbete förrän samma operations status visar att den inte genomförs; senaste klassificering kopplas till token en enda gång och tidigare klassificering bevaras."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap accounts for a held committed batch reply after stop",
+      "purpose": "Stopp före ett verkligt genomfört ändringsbesked behåller använt modellarbete och spärren tills status kontrolleras utan nya ändringar."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/assistant-overlap.test.ts",
+      "title": "overlap accounts for a held committed batch reply after revoke",
+      "purpose": "Återkallad åtkomst före ändringsbeskedet ger okänd arbetsklassificering när bevis inte längre får läsas; statuskontroll får inte kringgå behörigheten."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "status-only recovery preserves unfinished requested explanation in voice",
+      "purpose": "Tappat genomfört ändringsbesked och otillgänglig första statuskontroll får inte ersätta beställd förklaring med ett färdigt uppdrag; den ursprungliga instruktionen och felbeskedet följer även den accepterade begärans publika hämtning."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "status-only recovery checks pending changes after batch resolution with another ready change",
+      "purpose": "En batch slutför sin bevisade väntande del men får inte ge ett färdigt uppdrag när en annan förtydligad ändring återstår."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "an unresolved batch retains its identity through failed status reads and recovers without new work",
+      "purpose": "Genomförd batch, tappat svar och otillgänglig första statuskontroll bevarar operationens identitet och spärrar nytt arbete tills samma utfall återhämtas utan nya modell- eller ändringsanrop."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "a text request recovers its committed batch after lost MCP delivery without another model call",
+      "purpose": "Verkligt genomförande, tappad MCP-leverans, en arbetsbegäran, beständigt utfall och oförändrat utkast efter omstart."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "a committed batch changed during withheld delivery pauses with its verified outcome and the actual current draft",
+      "purpose": "En verklig manuell rättelse under hållen leverans behålls och tidigare genomförande skiljs från aktuellt utkast."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "a committed batch changed during withheld delivery pauses with its verified outcome and the actual current draft during a draft response race",
+      "purpose": "Ett redan läst men fördröjt utkastbesked får inte ersätta en senare manuell rättelse eller ge ett falskt färdigbesked."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "an unresolved batch blocks direct admission in a new conversation on another browser",
+      "purpose": "Ett uttryckligen skickat uppdrag i en annan webbläsare väntar på samma utkast tills den tidigare batchens utfall är verifierat och fortsätter sedan en gång med aktuellt underlag."
+    },
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/operation-recovery-http.test.ts",
+      "title": "an unresolved batch blocks direct admission in a previously opened conversation on another browser",
+      "purpose": "Ett redan öppet samtal i en annan webbläsare har samma spärr för nya uppdrag medan en tidigare batch har okänt utfall."
+    },
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/text-assistant.spec.ts",
+      "title": "literal text preparation drops a committed batch reply and preserves its proposals across restart",
+      "purpose": "Den publicerade operatörsförberedelsen kör verkliga kommandon mot textverktyget, tappar genomfört MCP-svar, startar om samma databas och städar provkatalogen."
+    },
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/text-assistant.spec.ts",
+      "title": "literal voice preparation drops a committed batch reply and preserves its proposals across restart",
+      "purpose": "Röstverktygets publicerade kommandon prövas med skrivet uppdrag och mikrofonen på: tappat genomfört MCP-svar återhämtas med Kim, pausat återstående arbete och väntande fråga i text och kontrollerad röstleverans utan nytt modellarbete eller sparande; utkastet bevaras vid omstart och provkatalogen städas."
+    }
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Starta med text. Skicka **Lägg till Kim utan att spara.** Låt operatören
+   leverera förslaget vid den förberedda felgränsen. Läs notisen att det är
+   oklart om ändringarna genomförs och att Skyttel kontrollerar dem.
+   Skriv **Vänta med nästa uppdrag.** utan att skicka. Kontrollera att
+   **Skicka** inte går att välja.
+   Låt operatören återställa statuskontrollen. Läs beskedet att Kim läggs
+   till i utkastet och att uppdraget inte är slutfört, med återstående
+   arbete pausat och ursprunglig instruktion kvar. Kontrollera att den
+   oskickade texten finns kvar och ta sedan bort den.
+2. Välj **Visa utkastet**. Läs det tidigare förslaget om Lo Exempel och ett
+   enda förslag om Kim. Öppna Kim-förslaget och kontrollera typen Person.
+   Stäng förslaget.
+3. Låt operatören starta om servern. Ladda om sidan, öppna tabellen och
+   starta med text igen. Välj **Visa utkastet** och läs samma Lo-förslag och
+   ett enda Kim-förslag.
+4. Upprepa i en ny kontrollerad röstinstallation med samma Lo-förslag.
+   Starta med text och slå på mikrofonen. Skriv **Lägg till Kim utan att
+   spara, förklara vad ett utkast betyder och beskriv vilket år uppgifterna
+   gäller.** Upprepa steg 1–3 med samma
+   leveransbortfall. Läs beskedet om genomfört förslag och pausat återstående
+   arbete i text och kontrollerad röstleverans. Kontrollera att hela din
+   instruktion finns kvar i samtalstexten.
+   Läs även **Vilket år gäller beskrivningen?** i text och i den återhämtade
+   röstleveransen. Lämna frågan obesvarad under kontrollen.
+
+**Förväntat resultat:**
+
+- Ändringsbeskedet bygger på det genomförda förslaget trots tappat
+  verktygssvar. Samma förslag utförs en gång.
+- Både Lo Exempel och Kim ligger kvar osparade före och efter omstart.
+  Inget sparbesked visas. Omstarten bevarar utkastet; ett nytt samtal får
+  sitt eget tillstånd.
+- Det genomförda förslaget betyder inte att den uteblivna förklaringen
+  är klar. Beskedet om pausat arbete finns kvar utan ny instruktion,
+  förklaring eller sparande genom statuskontrollen. Om hela det enkla
+  uppdraget har ett separat verifierat slutintyg räcker dess korta
+  ändringsbesked; den kontrollerade manuella textleverantören saknar det.
+
+Separat serverevidens kontrollerar nya och redan öppna samtal i andra
+webbläsare. Deras skickade uppdrag väntar på tidigare ändringars utfall och
+fortsätter sedan i ordning med aktuellt underlag. En manuell rättelse
+under fördröjd utkastläsning finns kvar och ger ett besked om att utkastet
+ändras efter det tidigare genomförandet.
+Ytterligare serverevidens skiljer en slutförd väntande del från en annan
+förtydligad ändring som återstår. Ett senare uttryckligen registrerat
+sparförsök kan kontrolleras även efter ett tidigare ändringsbesked.
 
 ### TEXT-05: markering kräver visning och skyddar oskickad text
 
@@ -573,8 +1516,8 @@ detaljer från kvittot efter ett kort sparbesked.
 **Användare:** Alex i den kontrollerade installationen.
 
 **Förutsättningar:** Lo och Tonrum (Tjänst, Gäller fortfarande) samt deras
-Använder-samband
-är samlat sparade. Terminalen håller modellsvar.
+samband med **Verb: Använder** och **Sambandstyp: Använder** är samlat
+sparade. Terminalen håller modellsvar.
 Datorfönstret är bredare än 700 px.
 Alla uppgifter är påhittade.
 
@@ -605,9 +1548,10 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 **Steg:**
 
 1. Redigera det sparade sambandet via **Tabell → Samband för Lo Exempel**.
-   Byt Använder till **Betalar**, välj **Lägg i utkastet**, läs bekräftelsen
-   och stäng samband. Redigera Tonrum och välj **Upphört** under
-   **Objektets status**, sedan **Lägg i utkastet och stäng**.
+   Välj **Betalar** under **Sambandstyp** och skriv **Betalar** i **Verb**.
+   Välj **Lägg i utkastet**, läs bekräftelsen och stäng samband. Redigera
+   Tonrum och välj **Upphört** under **Objektets status**, sedan
+   **Lägg i utkastet och stäng**.
 2. Öppna utkastet och läs båda rättelserna innan något senare uppdrag.
    Skicka **Läs upp hela utkastet.** Låt operatören leverera rapporten.
    Läs **Utkast:**, **Tonrum (Gäller: aktuellt → upphört)** och
@@ -624,7 +1568,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 
 - Både det osparade utkastet och det senaste kvittot beskriver den
   verkliga ändringen från aktuellt till upphört och från Använder till
-  Betalar. Förevärdet får inte beskrivas med den nya sambandstypen.
+  Betalar. Förevärdet ska behålla sitt ursprungliga verb och sin sambandstyp.
 - Begärda detaljer visas som Skyttels svar i samtalstexten. Granskningen kräver
   ingen kartmarkering och ändrar eller sparar inga uppgifter.
 - Själva sparandet bekräftas kort. Detaljer ges när de efterfrågas och

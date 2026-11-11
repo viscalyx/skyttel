@@ -1,5 +1,3 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { format } from 'node:util';
 import type { Page } from '@playwright/test';
 import type { TextAssistantReview } from '../../src/shared/text-assistant.js';
@@ -12,7 +10,7 @@ import {
   turnMicrophoneOff,
   turnMicrophoneOn,
 } from '../support/conversation-page.js';
-import { readTableObject } from '../support/domain-work.js';
+import { editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -108,15 +106,6 @@ function utterance(live: ReturnType<typeof liveProvider>, text: string) {
 }
 function speak(live: ReturnType<typeof liveProvider>, text: string) {
   utterance(live, text)();
-}
-function noPersistentConversation(
-  app: Awaited<ReturnType<typeof createInstallation>>,
-  marker: string,
-) {
-  for (const file of readdirSync(app.directory).filter((name) =>
-    /^skyttel\.db(?:-wal)?$/.test(name),
-  ))
-    expect(readFileSync(join(app.directory, file)).includes(Buffer.from(marker))).toBe(false);
 }
 
 test('KONTEXT-01: kontexten består efter utkast, sparande, avbrott och fel', async ({ page }) => {
@@ -242,7 +231,6 @@ test('KONTEXT-01: kontexten består efter utkast, sparande, avbrott och fel', as
     await expect(log(page)).toContainText('Samtalet finns kvar.');
     for (const request of model.requests)
       expect((request as ModelRequest & { store: boolean }).store).toBe(false);
-    noPersistentConversation(app, 'Kontrollera samtalets tillfälliga provord.');
     expect(messages.join('\n')).not.toContain('Kontrollera samtalets tillfälliga provord.');
   } finally {
     await app.close();
@@ -302,6 +290,7 @@ test('KONTEXT-02: röst och text delar kontext över avstängning och ny röstan
     await turnMicrophoneOn(page);
     expect(live.requests).toHaveLength(2);
     expect(JSON.stringify(live.requests[1].session.input)).toContain('Rätta Lo till Lo Lind.');
+    expect(JSON.stringify(live.requests[1].session.input)).toContain('bytte namn till Lo Senaste');
     speak(live, 'Ändra den sista.');
     await expect.poll(() => model.requests.length).toBe(4);
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
@@ -398,12 +387,51 @@ test('KONTEXT-03: skrivna och talade kommandon börjar om samtalet och kastar ut
     await expect.poll(() => model.requests.length).toBe(3);
     expect(model.requests[2].input).toHaveLength(1);
     expect(JSON.stringify(model.requests[2].input)).not.toContain('Ett tillfälligt samtalsord.');
-    noPersistentConversation(app, 'Ett tillfälligt samtalsord.');
-    // Leaving really ends the ephemeral context; the draft remains private data.
+    // Logout pauses the consented conversation; the draft remains independent.
     await openProfile(page);
     await page.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
     await page.getByRole('button', { name: 'Logga ut', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Välkommen till Skyttel' })).toBeVisible();
+  } finally {
+    await app.close();
+  }
+});
+
+test('KONTEXT-23: text och röst läser aktuellt förslag efter en manuell rättelse', async ({
+  page,
+}) => {
+  const model = textModel((request) => {
+    const { draft } = current(request);
+    const lo = draft.changes.find((change) => change.id === 'lo');
+    return lo
+      ? [modelMessage(`Lo-förslaget heter ${lo.after?.name}.`)]
+      : [modelTool('read_my_draft', {})];
+  });
+  const live = liveProvider();
+  const app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    liveFetch: live.provider,
+    liveSideband: live.attach,
+  });
+  try {
+    const { read } = await arrange(page, app);
+    await send(page, 'Vad heter Lo Exempel i förslaget?');
+    await expect(log(page)).toContainText('Lo-förslaget heter Lo Exempel.');
+    await readVoiceProposal(page, 'Lo Exempel');
+    const form = await editTableObject(page, 'Lo Exempel');
+    await form.getByLabel('Namn', { exact: true }).fill('Lo Manuell');
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(form).not.toBeVisible();
+    await openConversationText(page);
+    await readVoiceProposal(page, 'Lo Manuell');
+    await turnMicrophoneOn(page);
+    speak(live, 'Vad heter Lo Manuell i förslaget nu?');
+    await expect(log(page)).toContainText('Lo-förslaget heter Lo Manuell.');
+    await expect(log(page)).toContainText('Vad heter Lo Exempel i förslaget?');
+    await expect(log(page)).toContainText('Lo-förslaget heter Lo Exempel.');
+    await turnMicrophoneOff(page);
+    await readVoiceProposal(page, 'Lo Manuell');
+    expect((await read()).objects).toEqual([]);
   } finally {
     await app.close();
   }
