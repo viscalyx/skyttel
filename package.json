@@ -78,7 +78,7 @@
     "@biomejs/biome": "^2.6.6",
     "@cspell/dict-sv": "^2.3.4",
     "@devcontainers/cli": "0.89.0",
-    "@playwright/test": "^1.65.0",
+    "@playwright/test": "^1.65.1",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "^14.6.9",
     "@types/better-sqlite3": "9.6.0",
