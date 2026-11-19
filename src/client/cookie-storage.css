@@ -408,7 +408,7 @@ article.cookie-storage a {
   border: 0;
   background: transparent;
 }
-.cookie-storage-feedback .cookie-storage-toast button {
+.cookie-storage-feedback :is(.cookie-storage-toast, .cookie-storage-result) button {
   flex: none;
   display: grid;
   place-items: center;
@@ -423,7 +423,7 @@ article.cookie-storage a {
   font-size: 1.25rem;
   cursor: pointer;
 }
-.cookie-storage-feedback .cookie-storage-toast button:hover {
+.cookie-storage-feedback :is(.cookie-storage-toast, .cookie-storage-result) button:hover {
   background: var(--storage-subtle);
 }
 [data-theme="dark"] .cookie-storage-title svg {
@@ -441,4 +441,13 @@ article.cookie-storage a {
 .cookie-storage :is(button, input):focus-visible {
   outline: 2px solid var(--storage-blue);
   outline-offset: 3px;
+}
+
+.cookie-storage-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cookie-storage-result p {
+  margin: 0;
 }

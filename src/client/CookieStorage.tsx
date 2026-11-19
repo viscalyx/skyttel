@@ -357,7 +357,10 @@ function CookieStorageContents({ userId }: { userId?: string }) {
             <p role="alert">{exportError}</p>
           </div>
         )}
-        {(resultPlace === 'quick' || resultPlace === 'reset') && feedback}
+        {resultPlace === 'quick' && feedback}
+        {(resetOrigin || resultPlace === 'reset') && (
+          <ConsentFeedback paused={Boolean(resetOrigin)} retainConfirmation quietSuccess />
+        )}
       </section>
       <h2>Kakinställningar</h2>
       {manager.consent && (

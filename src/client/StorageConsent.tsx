@@ -148,22 +148,25 @@ export function StorageConsentProvider({
   const manager = useConsentManager(userId);
   const [bypassed, setBypassed] = useState(false);
   const show = !suppressBanner && !bypassed && (!manager.consent || manager.bannerPending);
+  const showNotice =
+    !suppressBanner &&
+    !show &&
+    ((userId && (manager.consent?.preferences || manager.preference.saved?.remembered)) ||
+      ['saving', 'checking', 'saved', 'unknown', 'rejected', 'restored'].includes(
+        manager.preference.state,
+      ) ||
+      manager.preference.recoveryMessage ||
+      manager.error ||
+      manager.message);
   return (
     <ConsentContext value={manager}>
       {children}
       {show && <ConsentBanner onLeave={() => setBypassed(true)} />}
-      {!suppressBanner &&
-        !show &&
-        (['saving', 'checking', 'saved', 'unknown', 'rejected', 'restored'].includes(
-          manager.preference.state,
-        ) ||
-          manager.preference.recoveryMessage ||
-          manager.error ||
-          manager.message) && (
-          <div className="cookie-storage storage-notice">
-            <ConsentFeedback />
-          </div>
-        )}
+      {showNotice && (
+        <div className="cookie-storage storage-notice">
+          <ConsentFeedback />
+        </div>
+      )}
       {userId && loginId && !show && <RememberedLoginOffer userId={userId} loginId={loginId} />}
     </ConsentContext>
   );
@@ -460,52 +463,26 @@ export function ConsentCategories({
   );
 }
 
-function ConsentToast({ message }: { message: string }) {
-  const [open, setOpen] = useState(true);
-  useEffect(() => {
-    if (!open) return;
-    const timer = window.setTimeout(() => setOpen(false), 10_000);
-    return () => window.clearTimeout(timer);
-  }, [open]);
-  if (!open) return null;
-  return (
-    <div className="cookie-storage-toast">
-      <p role="status">{message}</p>
-      <button type="button" aria-label="Stäng meddelandet" onClick={() => setOpen(false)}>
-        ×
-      </button>
-    </div>
-  );
-}
-
 export function ConsentFeedback({
   alwaysRender = false,
+  paused = false,
+  retainConfirmation = false,
   onLogin,
   quietSuccess = false,
   source = 'all',
 }: {
   alwaysRender?: boolean;
+  paused?: boolean;
+  retainConfirmation?: boolean;
   onLogin?: () => void;
   quietSuccess?: boolean;
   source?: 'all' | 'consent' | 'preference';
 }) {
   const manager = useContext(ConsentContext);
-  if (!manager) return null;
-  const preference = source === 'consent' ? null : manager.preference;
-  const error = source === 'preference' ? '' : manager.error;
-  const message = source === 'preference' ? '' : manager.message;
-  const saving = source !== 'preference' && manager.saving;
-  if (
-    !alwaysRender &&
-    !error &&
-    !message &&
-    !preference?.recoveryMessage &&
-    !['saving', 'checking', 'saved', 'unknown', 'rejected', 'unavailable', 'restored'].includes(
-      preference?.state ?? 'idle',
-    ) &&
-    !saving
-  )
-    return null;
+  const preference = paused || source === 'consent' ? null : manager?.preference;
+  const error = paused || source === 'preference' ? '' : (manager?.error ?? '');
+  const message = paused || source === 'preference' ? '' : (manager?.message ?? '');
+  const saving = !paused && source !== 'preference' && manager?.saving;
   const pending = saving || preference?.state === 'saving' || preference?.state === 'checking';
   const status = pending
     ? preference?.state === 'checking' && !saving
@@ -514,7 +491,7 @@ export function ConsentFeedback({
     : preference?.state === 'saved'
       ? `Ihågkommen inloggning är ${preference.confirmedRemembered ? 'aktiverad' : 'avstängd'}. ${preference.reauthenticated ? 'Resultatet gäller din tidigare begäran. Du har loggat in på nytt.' : preference.continued ? 'Du är fortfarande inloggad.' : 'Logga in igen för att fortsätta.'} ${message}`.trim()
       : message;
-  const toast =
+  const confirmation =
     status &&
     !pending &&
     !error &&
@@ -522,49 +499,98 @@ export function ConsentFeedback({
     !preference?.resultChecked &&
     !preference?.recoveryMessage &&
     (!preference || ['idle', 'saved'].includes(preference.state));
+  const confirmationText = confirmation ? status : '';
+  const [display, setDisplay] = useState({
+    text: confirmationText,
+    phase: 'toast' as 'toast' | 'inline' | 'dismissed',
+  });
+  if (display.text !== confirmationText) {
+    setDisplay({ text: confirmationText, phase: 'toast' });
+  }
+  useEffect(() => {
+    if (!display.text || display.phase !== 'toast') return;
+    const timer = window.setTimeout(() => {
+      setDisplay({ text: display.text, phase: retainConfirmation ? 'inline' : 'dismissed' });
+    }, 10_000);
+    return () => window.clearTimeout(timer);
+  }, [display, retainConfirmation]);
+
+  const toast = confirmation && display.phase === 'toast';
+  const dismissible = confirmation && display.phase !== 'dismissed';
+  const statusText =
+    confirmation && !dismissible
+      ? ''
+      : status +
+        (!quietSuccess && preference?.state === 'saved' && preference.recoveryMessage
+          ? ` ${preference.recoveryMessage}`
+          : '');
   return (
     <div
       className={`cookie-storage-feedback${quietSuccess ? ' cookie-storage-feedback-quiet' : ''}`}
     >
-      {toast ? (
-        <ConsentToast key={status} message={status} />
-      ) : (
+      <div
+        className={
+          toast ? 'cookie-storage-toast' : dismissible ? 'cookie-storage-result' : undefined
+        }
+      >
         <p
           role="status"
+          aria-atomic="true"
           className={
-            quietSuccess && !pending && !preference?.resultChecked && !preference?.requiresLogin
+            !statusText ||
+            (quietSuccess &&
+              !dismissible &&
+              !pending &&
+              !preference?.resultChecked &&
+              !preference?.requiresLogin &&
+              !confirmation)
               ? 'sr-only'
               : undefined
           }
         >
-          {status}
-          {!quietSuccess && preference?.state === 'saved' && preference.recoveryMessage
+          {statusText}
+        </p>
+        {dismissible && (
+          <button
+            type="button"
+            aria-label="Stäng meddelandet"
+            onClick={() => setDisplay({ text: confirmationText, phase: 'dismissed' })}
+          >
+            ×
+          </button>
+        )}
+      </div>
+      {(alwaysRender ||
+        error ||
+        pending ||
+        message ||
+        preference?.recoveryMessage ||
+        ['saved', 'unknown', 'rejected', 'unavailable', 'restored'].includes(
+          preference?.state ?? 'idle',
+        )) && (
+        <p role="alert">
+          {error}
+          {error ? ' ' : ''}
+          {preference?.state === 'unknown'
+            ? 'Sparstatus okänd. Vi kunde inte bekräfta om ändringen genomfördes. Åtgärdens referens bevaras. Att lämna vyn skickar inget nytt sparande.'
+            : preference?.state === 'rejected'
+              ? 'Ändringen kunde inte sparas. Försök igen.'
+              : preference?.state === 'unavailable'
+                ? preference.recoveryMessage ||
+                  'Aktuellt val kunde inte hämtas. Logga in igen för att fortsätta.'
+                : preference?.state === 'restored'
+                  ? preference.recoveryMessage
+                  : ''}
+          {preference?.state === 'unknown' && preference.recoveryMessage
+            ? ` ${preference.recoveryMessage}`
+            : ''}
+          {quietSuccess &&
+          ['saved', 'rejected'].includes(preference?.state ?? 'idle') &&
+          preference?.recoveryMessage
             ? ` ${preference.recoveryMessage}`
             : ''}
         </p>
       )}
-      <p role="alert">
-        {error}
-        {error ? ' ' : ''}
-        {preference?.state === 'unknown'
-          ? 'Sparstatus okänd. Vi kunde inte bekräfta om ändringen genomfördes. Åtgärdens referens bevaras. Att lämna vyn skickar inget nytt sparande.'
-          : preference?.state === 'rejected'
-            ? 'Ändringen kunde inte sparas. Försök igen.'
-            : preference?.state === 'unavailable'
-              ? preference.recoveryMessage ||
-                'Aktuellt val kunde inte hämtas. Logga in igen för att fortsätta.'
-              : preference?.state === 'restored'
-                ? preference.recoveryMessage
-                : ''}
-        {preference?.state === 'unknown' && preference.recoveryMessage
-          ? ` ${preference.recoveryMessage}`
-          : ''}
-        {quietSuccess &&
-        ['saved', 'rejected'].includes(preference?.state ?? 'idle') &&
-        preference?.recoveryMessage
-          ? ` ${preference.recoveryMessage}`
-          : ''}
-      </p>
       {preference?.requiresLogin && (
         <p>
           {quietSuccess &&
