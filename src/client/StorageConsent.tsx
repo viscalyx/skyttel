@@ -460,6 +460,24 @@ export function ConsentCategories({
   );
 }
 
+function ConsentToast({ message }: { message: string }) {
+  const [open, setOpen] = useState(true);
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => setOpen(false), 10_000);
+    return () => window.clearTimeout(timer);
+  }, [open]);
+  if (!open) return null;
+  return (
+    <div className="cookie-storage-toast">
+      <p role="status">{message}</p>
+      <button type="button" aria-label="Stäng meddelandet" onClick={() => setOpen(false)}>
+        ×
+      </button>
+    </div>
+  );
+}
+
 export function ConsentFeedback({
   alwaysRender = false,
   onLogin,
@@ -488,32 +506,43 @@ export function ConsentFeedback({
     !saving
   )
     return null;
+  const pending = saving || preference?.state === 'saving' || preference?.state === 'checking';
+  const status = pending
+    ? preference?.state === 'checking' && !saving
+      ? 'Kontrollerar samma åtgärd…'
+      : 'Sparar…'
+    : preference?.state === 'saved'
+      ? `Ihågkommen inloggning är ${preference.confirmedRemembered ? 'aktiverad' : 'avstängd'}. ${preference.reauthenticated ? 'Resultatet gäller din tidigare begäran. Du har loggat in på nytt.' : preference.continued ? 'Du är fortfarande inloggad.' : 'Logga in igen för att fortsätta.'} ${message}`.trim()
+      : message;
+  const toast =
+    status &&
+    !pending &&
+    !error &&
+    !preference?.requiresLogin &&
+    !preference?.resultChecked &&
+    !preference?.recoveryMessage &&
+    (!preference || ['idle', 'saved'].includes(preference.state));
   return (
     <div
       className={`cookie-storage-feedback${quietSuccess ? ' cookie-storage-feedback-quiet' : ''}`}
     >
-      <p
-        role="status"
-        className={
-          quietSuccess &&
-          !saving &&
-          !preference?.resultChecked &&
-          !['saving', 'checking'].includes(preference?.state ?? 'idle')
-            ? 'sr-only'
-            : undefined
-        }
-      >
-        {saving || preference?.state === 'saving'
-          ? 'Sparar…'
-          : preference?.state === 'checking'
-            ? 'Kontrollerar samma åtgärd…'
-            : preference?.state === 'saved'
-              ? `Ihågkommen inloggning är ${preference.confirmedRemembered ? 'aktiverad' : 'avstängd'}. ${preference.reauthenticated ? 'Resultatet gäller din tidigare begäran. Du har loggat in på nytt.' : preference.continued ? 'Du är fortfarande inloggad.' : 'Logga in igen för att fortsätta.'} ${message}`.trim()
-              : message}
-        {!quietSuccess && preference?.state === 'saved' && preference.recoveryMessage
-          ? ` ${preference.recoveryMessage}`
-          : ''}
-      </p>
+      {toast ? (
+        <ConsentToast key={status} message={status} />
+      ) : (
+        <p
+          role="status"
+          className={
+            quietSuccess && !pending && !preference?.resultChecked && !preference?.requiresLogin
+              ? 'sr-only'
+              : undefined
+          }
+        >
+          {status}
+          {!quietSuccess && preference?.state === 'saved' && preference.recoveryMessage
+            ? ` ${preference.recoveryMessage}`
+            : ''}
+        </p>
+      )}
       <p role="alert">
         {error}
         {error ? ' ' : ''}
