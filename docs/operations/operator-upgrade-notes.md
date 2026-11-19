@@ -14,14 +14,6 @@ request and available conversation and task identities. Restrict access and
 apply the installation's retention policy. Remove private text before sharing
 reports outside that process; use diagnostic references when sufficient.
 
-### Verify the production image monitoring runner
-
-Before rollout, confirm that scheduled production image monitoring can run
-on the GitHub-hosted `ubuntu-latest` runner with access to the production
-environment, container registry and deployment provider. After rollout, verify a completed
-monitoring run and its retained status. A queued or failed run does not
-establish the security status of the running or rollback image.
-
 ### Preserve each relationship's chosen wording
 
 Back up the installation database before rollout. The upgrade preserves objects,
