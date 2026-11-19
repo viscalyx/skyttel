@@ -94,10 +94,10 @@ article.cookie-storage a {
 }
 .cookie-storage-decision {
   padding: 16px;
-  border: 1px solid #bbf7d0;
+  border: 1px solid var(--space-line);
   border-radius: 8px;
-  background: var(--storage-success-bg);
-  color: var(--storage-success);
+  background: var(--storage-subtle);
+  color: var(--space-text);
 }
 .cookie-storage-card h3 {
   margin: 0;
