@@ -148,22 +148,21 @@ export function StorageConsentProvider({
   const manager = useConsentManager(userId);
   const [bypassed, setBypassed] = useState(false);
   const show = !suppressBanner && !bypassed && (!manager.consent || manager.bannerPending);
-  const showNotice =
-    !suppressBanner &&
-    !show &&
-    ((userId && (manager.consent?.preferences || manager.preference.saved?.remembered)) ||
-      ['saving', 'checking', 'saved', 'unknown', 'rejected', 'restored'].includes(
-        manager.preference.state,
-      ) ||
-      manager.preference.recoveryMessage ||
-      manager.error ||
-      manager.message);
+  const hasNotice =
+    ['saving', 'checking', 'saved', 'unknown', 'rejected', 'restored'].includes(
+      manager.preference.state,
+    ) ||
+    manager.preference.recoveryMessage ||
+    manager.error ||
+    manager.message;
+  const prepareNotice =
+    userId && (manager.consent?.preferences || manager.preference.saved?.remembered);
   return (
     <ConsentContext value={manager}>
       {children}
       {show && <ConsentBanner onLeave={() => setBypassed(true)} />}
-      {showNotice && (
-        <div className="cookie-storage storage-notice">
+      {!suppressBanner && !show && (prepareNotice || hasNotice) && (
+        <div className={hasNotice ? 'cookie-storage storage-notice' : 'cookie-storage'}>
           <ConsentFeedback />
         </div>
       )}
@@ -230,7 +229,7 @@ function RememberedLoginOffer({ userId, loginId }: { userId: string; loginId: st
         från den ursprungliga inloggningen. Detta ändrar inte ditt Google- eller Microsoft-konto.
         Välj bara detta på en egen enhet.
       </p>
-      <ConsentFeedback onLogin={() => setOpen(false)} />
+      <ConsentFeedback inlineOnly onLogin={() => setOpen(false)} />
       {error && <p role="alert">{error}</p>}
       <footer>
         <button
@@ -465,6 +464,7 @@ export function ConsentCategories({
 
 export function ConsentFeedback({
   alwaysRender = false,
+  inlineOnly = false,
   paused = false,
   retainConfirmation = false,
   onLogin,
@@ -472,6 +472,7 @@ export function ConsentFeedback({
   source = 'all',
 }: {
   alwaysRender?: boolean;
+  inlineOnly?: boolean;
   paused?: boolean;
   retainConfirmation?: boolean;
   onLogin?: () => void;
@@ -492,6 +493,7 @@ export function ConsentFeedback({
       ? `Ihågkommen inloggning är ${preference.confirmedRemembered ? 'aktiverad' : 'avstängd'}. ${preference.reauthenticated ? 'Resultatet gäller din tidigare begäran. Du har loggat in på nytt.' : preference.continued ? 'Du är fortfarande inloggad.' : 'Logga in igen för att fortsätta.'} ${message}`.trim()
       : message;
   const confirmation =
+    !inlineOnly &&
     status &&
     !pending &&
     !error &&
@@ -715,7 +717,7 @@ function ConsentBanner({ onLeave }: { onLeave: () => void }) {
             </div>
           </div>
         )}
-        <ConsentFeedback onLogin={onLeave} />
+        <ConsentFeedback inlineOnly onLogin={onLeave} />
         <div className="consent-banner-buttons">
           <button ref={reject} type="button" disabled={manager.blocked} onClick={() => save(false)}>
             Endast nödvändiga

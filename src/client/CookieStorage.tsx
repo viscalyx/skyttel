@@ -670,7 +670,7 @@ function StorageResetDialog({
           rensas inte. Google och Microsoft styr sin egen lagring.
         </p>
       </div>
-      <ConsentFeedback quietSuccess />
+      <ConsentFeedback inlineOnly quietSuccess />
       <footer>
         <button ref={cancel} type="button" disabled={pending} onClick={onCancel}>
           {unknown ? 'Lämna med okänt utfall' : 'Avbryt'}
