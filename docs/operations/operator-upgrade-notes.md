@@ -16,9 +16,9 @@ reports outside that process; use diagnostic references when sufficient.
 
 ### Verify the production image monitoring runner
 
-Before rollout, confirm that the configured Avrea runner can run scheduled
-production image monitoring with access to the production environment,
-container registry and deployment provider. After rollout, verify a completed
+Before rollout, confirm that scheduled production image monitoring can run
+on the GitHub-hosted `ubuntu-latest` runner with access to the production
+environment, container registry and deployment provider. After rollout, verify a completed
 monitoring run and its retained status. A queued or failed run does not
 establish the security status of the running or rollback image.
 
