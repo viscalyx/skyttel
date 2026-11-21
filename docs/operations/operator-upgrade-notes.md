@@ -10,9 +10,10 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 Complete the applicable upgrade preparation before you push a stable version
 tag for a revision on the main branch. Successful publication starts a
-production deployment even if that revision only changed tests or
-documentation. After rollout, confirm that production runs the published
-stable version.
+deployment check. If the main branch has newer production changes, the
+deployment is skipped even when publication succeeds. Check the deployment
+result and confirm that production runs the stable version before you mark
+the rollout complete.
 
 ### Protect copied conversation error reports
 

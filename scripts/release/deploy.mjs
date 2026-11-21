@@ -3,6 +3,7 @@ import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
+import { hasPublishedStableRelease } from './github-release.mjs';
 import { validateReleasePlan } from './plan.mjs';
 import { isProductionInput } from './production-inputs.mjs';
 import { stableDeploymentSource, validateStableIdentity } from './stable-deployment.mjs';
@@ -385,6 +386,14 @@ export async function deployRelease({
     requireState(!active.has(previous?.status), 'deployment_still_active');
     // A deploy that finished while we waited may have changed the saved reference.
     service = await render(servicePath);
+    if (identity.channel === 'preview') {
+      phase = 'check-published-stable-release';
+      if (await hasPublishedStableRelease(github, identity.repository, sourceCommit)) {
+        report.outcome = 'superseded';
+        report.skipReason = 'stable_release_published';
+        return report;
+      }
+    }
     if (await superseded()) {
       report.outcome = 'superseded';
       return report;
