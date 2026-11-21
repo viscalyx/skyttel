@@ -146,6 +146,34 @@ test('a verified release updates the saved image and running digest; retry verif
   assert.equal(state.deploys, 1, 'A retry must verify the already running image, not restart it');
 });
 
+test('a stable tag replaces a preview of the same source with the published stable digest', async () => {
+  const { state, run } = platform();
+  const sourceRef = 'refs/tags/v0.1.0';
+  const stableIdentity = {
+    ...createReleasePlan({
+      gitVersion: { Sha: commit, SemVer: '0.1.0', FullSemVer: '0.1.0' },
+      repository: identity.repository,
+      commit,
+      ref: sourceRef,
+      eventName: 'push',
+    }),
+    digest,
+  };
+  state.running = version;
+  state.nextIdentity = { ...version, version: stableIdentity.fullVersion };
+  const stableRelease = { identity: stableIdentity, sourceRef };
+  assert.equal((await run(stableRelease)).outcome, 'success');
+  assert.equal(state.savedImage, `${image}@${digest}`);
+  assert.equal(state.running.version, '0.1.0');
+  assert.equal((await run(stableRelease)).outcome, 'success');
+  assert.equal(state.deploys, 1);
+
+  state.main = 'e'.repeat(40);
+  assert.equal((await run(stableRelease)).outcome, 'superseded');
+  assert.equal(state.deploys, 1);
+  assert.equal(state.patches, 1);
+});
+
 test('image services deploy and retry regardless of the inapplicable autoDeploy field', async () => {
   for (const autoDeploy of ['yes', 'no', undefined]) {
     const { state, run } = platform();

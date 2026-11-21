@@ -8,9 +8,10 @@ explains those accounts and registrations from the beginning. Keep the
 deployment and authentication guides open while you work.
 
 Complete the first deployment while someone is available to check it. After
-setup, an approved merge to `main` publishes a verified image and deploys it
-automatically. No second approval is required. A stable tag publishes a
-release but does not replace production.
+setup, an approved merge to `main` that changes production inputs publishes
+and deploys a verified image. A stable tag on a commit already on `main`
+also publishes and deploys its verified image, even after a test-only or
+documentation-only merge. No second approval is required.
 
 If this installation already contains household data, start with
 [updating an existing installation](#updating-an-existing-installation).
@@ -779,6 +780,9 @@ installation authority and does not need that login transition.
    decision; see the [production input list](container-releases.md#triggers-and-version-identity).
 1. Wait for `deploy` to succeed, then inspect the deployment report using
    step 9. If it fails, follow the diagnosis procedure below before retrying.
+   For a stable tag, open **Actions → Stable production deployment** after
+   publication succeeds. Confirm that the report identifies the stable
+   release's digest and retry that run if deployment fails.
 1. Confirm application health, version, and existing household access using
    step 6. Perform any additional checks required by the upgrade notes.
 

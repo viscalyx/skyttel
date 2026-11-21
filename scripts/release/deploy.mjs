@@ -5,6 +5,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 import { validateReleasePlan } from './plan.mjs';
 import { isProductionInput } from './production-inputs.mjs';
+import { stableDeploymentSource, validateStableIdentity } from './stable-deployment.mjs';
 
 const active = new Set([
   'created',
@@ -173,6 +174,7 @@ function observedIdentity(value) {
 export async function deployRelease({
   identity,
   sourceCommit,
+  sourceRef = 'refs/heads/main',
   serviceId,
   origin,
   githubToken,
@@ -323,7 +325,7 @@ export async function deployRelease({
     validateReleasePlan(identity, {
       repository: 'viscalyx/skyttel',
       commit: sourceCommit,
-      ref: 'refs/heads/main',
+      ref: sourceRef,
       eventName: 'push',
     });
     requireState(digestPattern.test(identity.digest), 'invalid_digest');
@@ -517,16 +519,22 @@ export async function main(env = process.env) {
   let report;
   try {
     requireState(
-      env.GITHUB_EVENT_NAME === 'push' &&
+      ['push', 'workflow_run'].includes(env.GITHUB_EVENT_NAME) &&
         env.GITHUB_REF === 'refs/heads/main' &&
         env.GITHUB_REPOSITORY === 'viscalyx/skyttel',
       'untrusted_deployment_context',
     );
     const identity = JSON.parse(await readFile('release/release.json', 'utf8'));
-    requireState(identity.commit === env.GITHUB_SHA, 'release_commit_mismatch');
+    const source =
+      env.GITHUB_EVENT_NAME === 'workflow_run'
+        ? stableDeploymentSource(env)
+        : { ref: env.GITHUB_REF, commit: env.GITHUB_SHA };
+    requireState(identity.commit === source.commit, 'release_commit_mismatch');
+    if (env.GITHUB_EVENT_NAME === 'workflow_run') validateStableIdentity(identity, source);
     report = await deployRelease({
       identity,
-      sourceCommit: env.GITHUB_SHA,
+      sourceCommit: source.commit,
+      sourceRef: source.ref,
       serviceId: env.RENDER_SERVICE_ID,
       origin: env.SKYTTEL_ORIGIN,
       githubToken: env.GH_TOKEN,
