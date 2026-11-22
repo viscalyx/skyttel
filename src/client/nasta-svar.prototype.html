@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="sv">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nästa svar efter Avbryt · Prototyp</title>
+<style>
+  :root { color-scheme: light dark; font: 1.05rem/1.5 system-ui; }
+  body { max-width: 52rem; margin: 2rem auto; padding: 0 1rem; }
+  button { font: inherit; padding: .4rem .7rem; margin: .2rem; }
+  h1, h2 { line-height: 1.2; }
+  output { display: block; padding: .7rem; border-inline-start: .3rem solid #39877c; }
+  [aria-pressed=true] { font-weight: bold; text-decoration: underline; }
+</style>
+<main>
+<h1>När kan nästa svar höras?</h1>
+<p>Prototyp för GPT-Live. Kan Skyttel släppa fram första ordet efter Avbryt när
+det gamla svaret kan fortsätta efter en paus? Prova vad webbläsaren vet när båda
+svaren börjar med samma ord, till exempel ”Ja”.</p>
+<output id="state"></output>
+<h2>Prova själv</h2>
+<div id="actions"></div>
+<h2>Följ ett förlopp</h2>
+<div id="cases"></div>
+<p id="description"></p><button id="step"></button>
+<ol id="log"></ol>
+<h2>Mät med en lokal ljudanslutning</h2>
+<p>Två WebRTC-parter i den här fliken skickar ljud över ett enda spår.
+En ton motsvarar ett ord. Alla ord har samma ton. Provet anger vilket svar
+tonen tillhör. Mätaren läser ljudet efter volymkontrollen. Provet använder
+varken mikrofonen eller en rösttjänst. Som jämförelse får en separat
+spelare ett lokalt ljudklipp märkt med nästa svars id.</p>
+<button id="measure">Kör ljudprovet</button>
+<pre id="result" style="white-space:pre-wrap" role="status"></pre>
+</main>
+<script>
+const labels = {
+  reset: 'Börja om', stop: 'Avbryt', ack: 'Ta emot stoppkvittot',
+  old: 'Skicka en del av gamla svaret', pause: 'Lägg in en paus',
+  ready: 'Gör nästa svar klart på servern', open: 'Slå på högtalaren',
+  next: 'Skicka nästa svars första ord'
+};
+function initial() {
+  return { muted: false, acknowledged: false, ready: false, heard: [], signal: 'Tal' };
+}
+function advance(previous, action) {
+  const s = { ...previous, heard: [...previous.heard] };
+  switch (action) {
+    case 'reset': return initial();
+    case 'stop': s.muted = true; s.ready = false; s.acknowledged = false; break;
+    case 'ack': s.acknowledged = true; break;
+    case 'pause': s.signal = 'Tyst'; break;
+    case 'ready': s.ready = true; break;
+    case 'open': s.muted = false; break;
+    case 'old':
+    case 'next':
+      s.signal = 'Tal';
+      // Only the observer knows the origin. The gain decision never sees it.
+      if (!s.muted) s.heard.push(action === 'old' ? 'del av gamla svaret' : 'första ordet i nästa svar');
+      break;
+  }
+  return s;
+}
+</script>
+<script>
+const $ = id => document.getElementById(id);
+const paths = [
+  ['Gammalt ljud efter pausen', 'Öppna när det nya svaret är klart. Det gamla svaret har ytterligare ett ord kvar.',
+    ['stop','ack','old','pause','ready','open','old','next']],
+  ['Nytt ljud efter pausen', 'Före första ordet får spelaren samma besked som i förra förloppet. Här är ordet redan en del av nästa svar.',
+    ['stop','ack','old','pause','ready','open','next']],
+  ['Vänta med att öppna', 'Låt nästa svar börja medan högtalaren är tyst. Se vilka ord som går att höra i efterhand.',
+    ['stop','ack','old','pause','ready','next','open']]
+];
+let state = initial(), selected = 0, index = 0;
+function render() {
+  $('state').textContent = 'Mikrofonen kan ta emot tal. Högtalaren är ' + (state.muted ? 'tystad' : 'på') +
+    '. Stoppkvitto: ' + (state.acknowledged ? 'mottaget' : 'saknas') +
+    '. Nästa svar på servern: ' + (state.ready ? 'klart' : 'väntar') +
+    '. Ljudspåret: ' + state.signal + '. Hört sedan start: ' + (state.heard.join(', ') || 'inget ord i provet') + '.';
+  $('step').disabled = index >= paths[selected][2].length;
+  $('step').textContent = labels[paths[selected][2][index]] || 'Förloppet är klart';
+}
+function run(action) {
+  state = advance(state, action);
+  const row = document.createElement('li');
+  row.textContent = labels[action];
+  $('log').append(row);
+  render();
+}
+function select(i) {
+  selected = i; index = 0; state = initial();
+  $('description').textContent = paths[i][1];
+  $('log').replaceChildren();
+  Array.from($('cases').children).forEach((b, n) => b.setAttribute('aria-pressed', String(n === i)));
+  render();
+}
+function button(parent, title, onClick) {
+  const b = document.createElement('button');
+  b.textContent = title; b.onclick = onClick; $(parent).append(b);
+}
+for (const [action, title] of Object.entries(labels)) {
+  button('actions', title, () => action === 'reset' ? select(selected) : run(action));
+}
+paths.forEach(([title], i) => button('cases', title, () => select(i)));
+$('step').onclick = () => run(paths[selected][2][index++]);
+select(0);
+</script>
+<script>
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function offerWithCandidates(peer, description) {
+  await peer.setLocalDescription(description);
+  for (let i = 0; i < 100 && peer.iceGatheringState !== 'complete'; i++) await wait(50);
+  return peer.localDescription;
+}
+async function measure() {
+  const ctx = new AudioContext();
+  const sender = new RTCPeerConnection(), receiver = new RTCPeerConnection();
+  const out = ctx.createMediaStreamDestination();
+  const tone = ctx.createOscillator(), volume = ctx.createGain(), gate = ctx.createGain();
+  const before = ctx.createAnalyser(), after = ctx.createAnalyser();
+  const sink = ctx.createGain();
+  let tracks = 0, remote;
+  const player = new Audio();
+  player.muted = true;
+  sink.gain.value = 0;
+  volume.gain.value = 0;
+  tone.connect(volume).connect(out);
+  gate.connect(after).connect(sink).connect(ctx.destination);
+  const samples = new Float32Array(after.fftSize);
+  function active(meter) {
+    meter.getFloatTimeDomainData(samples);
+    return samples.some(sample => Math.abs(sample) > 0.015);
+  }
+  async function expectSignal(meter, expected) {
+    for (let i = 0; i < 100; i++) {
+      if (active(meter) === expected) return;
+      await wait(25);
+    }
+    throw new Error('Mätaren fick inte väntad ljudnivå i tid. ' + [sender.connectionState, tracks, ctx.state, meter === before ? 'före' : 'efter', expected ? 'ljud' : 'tyst'].join(', '));
+  }
+  const lines = [];
+  async function word(label, play) {
+    gate.gain.value = play ? 1 : 0;
+    volume.gain.value = 0.3;
+    await expectSignal(before, true);
+    await wait(100);
+    lines.push(label + ' → ' + (active(after) ? 'ljud' : 'tyst'));
+    volume.gain.value = 0;
+    await expectSignal(before, false);
+    await expectSignal(after, false);
+  }
+  try {
+    await ctx.resume();
+    tone.start();
+    sender.addTrack(out.stream.getAudioTracks()[0], out.stream);
+    receiver.ontrack = ({track}) => {
+      tracks++;
+      player.srcObject = new MediaStream([track]);
+      void player.play();
+      remote = ctx.createMediaStreamSource(player.srcObject);
+      remote.connect(before);
+      remote.connect(gate);
+    };
+    await receiver.setRemoteDescription(await offerWithCandidates(sender, await sender.createOffer()));
+    await sender.setRemoteDescription(await offerWithCandidates(receiver, await receiver.createAnswer()));
+    await word('Pågående uppläsning', true);
+    await word('Gammalt ord efter Avbryt och stoppkvitto', false);
+    await wait(450);
+    lines.push('450 ms extra tystnad, sedan är serverns nya svar klart (simulerat).');
+    await word('Öppna, gammalt ord efter pausen', true);
+    await word('Första ordet i nästa svar', true);
+    await word('Alternativt förlopp: håll tyst under nästa svars första ord', false);
+    // Comparison: an independent player gets an entire, explicitly identified clip.
+    // GPT-Live does not supply this clip. Generate its first word locally.
+    const clip = ctx.createBuffer(1, ctx.sampleRate / 4, ctx.sampleRate);
+    const pcm = clip.getChannelData(0);
+    for (let i = 0; i < pcm.length; i++) pcm[i] = 0.2 * Math.sin(2 * Math.PI * 440 * i / ctx.sampleRate);
+    const activeAnswer = 'svar-2';
+    function playClip(answerId, data) {
+      if (answerId !== activeAnswer) return;
+      const source = ctx.createBufferSource();
+      source.buffer = data;
+      source.connect(after);
+      source.start();
+    }
+    volume.gain.value = 0.3;
+    await expectSignal(before, true);
+    playClip('svar-1', clip);
+    await wait(100);
+    lines.push('Separat spelare: gammalt spår och inaktuellt klipp → ' + (active(after) ? 'ljud' : 'tyst'));
+    playClip(activeAnswer, clip);
+    await expectSignal(after, true);
+    lines.push('Separat spelare: spela det märkta klippet från början → ljud');
+    lines.push('Mottagna WebRTC-ljudspår: ' + tracks + '.');
+    return lines.join('\n');
+  } finally {
+    player.pause(); player.srcObject = null;
+    sender.close(); receiver.close();
+    out.stream.getTracks().forEach(track => track.stop());
+    await ctx.close();
+  }
+}
+$('measure').onclick = async () => {
+  $('measure').disabled = true; $('result').textContent = 'Mäter …';
+  try { $('result').textContent = await measure(); }
+  catch (error) { $('result').textContent = 'Provet avbröts. ' + error.message; }
+  finally { $('measure').disabled = false; }
+};
+</script>
+</html>
