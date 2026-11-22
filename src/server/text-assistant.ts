@@ -2627,7 +2627,9 @@ export function textAssistantRoutes({
         const reply = await askReceipt(
           session.state.id,
           receiptSdk,
-          text,
+          process.env.SKYTTEL_SAVE_LIVE === '1'
+            ? JSON.stringify({ fråga: text, granskatUtkast: review.changes })
+            : text,
           task.signal,
           async (toolName) => {
             const confirm = async (
