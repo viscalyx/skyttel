@@ -1,14 +1,13 @@
 ---
 name: implement-background
-description: Implement a spherical panorama for Skyttel’s spatial map or write its image prompt. Use only for this project.
+description: Create a panorama background for Skyttel’s spatial map or write its image prompt.
+disable-model-invocation: true
 ---
 
 # Implement a Skyttel panorama
 
-Apply this workflow only when the target is Skyttel’s spatial map. Every
-background it produces covers the full sphere around the observer. Read the
-scenario from the request or its background issue. If neither supplies an
-environment, ask for one.
+Read the scenario from the request or its background issue. If neither
+supplies an environment, ask for one.
 
 ## Place the observer
 
