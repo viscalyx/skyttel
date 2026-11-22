@@ -2105,7 +2105,7 @@ export function SpatialMap({
             href={skyCredit.url}
             target="_blank"
             rel="noreferrer"
-            aria-label={`${skyCredit.description} (öppnas i ny flik)`}
+            aria-label={`${skyCredit.name}. ${skyCredit.description} (öppnas i ny flik)`}
           >
             {skyCredit.name}
           </a>

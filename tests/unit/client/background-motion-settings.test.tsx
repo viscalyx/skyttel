@@ -19,7 +19,7 @@ test('Milky Way panoramas support zoom and retain the settings for other backgro
     <SpatialMap
       theme={theme}
       state={state}
-      active={false}
+      active
       objects={new Map()}
       relationships={new Map()}
       selection={null}
@@ -48,8 +48,15 @@ test('Milky Way panoramas support zoom and retain the settings for other backgro
 
     setRange(pan, '35');
     setRange(depth, '1.4');
-    for (const value of ['milky-way', 'milky-way-2']) {
+    for (const [value, credit, description] of [
+      ['milky-way', 'ESO/S. Brunier', 'Himmelsfoto av ESO/S. Brunier'],
+      ['milky-way-2', 'Källor till stjärnhimlen', 'Källor och licens för Vintergatan 2'],
+    ]) {
       fireEvent.change(choice, { target: { value } });
+      const creditLink = screen.getByRole('link', {
+        name: `${credit}. ${description} (öppnas i ny flik)`,
+      });
+      expect(creditLink.textContent).toBe(credit);
       expect(pan.disabled).toBe(true);
       expect(depth.disabled).toBe(true);
       expect(zoom.disabled).toBe(false);

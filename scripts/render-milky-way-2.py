@@ -30,8 +30,12 @@ def starlight_survey(directory):
     if not np.array_equal(sky["QSPIXEL"], flux["Pixel_no"]):
         raise ValueError("DIRBE intensity and coordinate pixel IDs differ")
     cells = hp.ang2pix(128, sky["GLON-CSC"], sky["GLAT-CSC"], lonlat=True)
-    counts = np.bincount(cells, minlength=hp.nside2npix(128))
-    totals = np.bincount(cells, weights=flux["Resid"], minlength=len(counts))
+    # The DIRBE FITS header flags residuals at or below -16375.
+    residuals = flux["Resid"]
+    valid = residuals > -16375
+    valid_cells = cells[valid]
+    counts = np.bincount(valid_cells, minlength=hp.nside2npix(128))
+    totals = np.bincount(valid_cells, weights=residuals[valid], minlength=len(counts))
     intensity = totals / np.maximum(counts, 1)
     empty = np.flatnonzero(counts == 0)
     neighbors = hp.get_all_neighbours(128, empty)
