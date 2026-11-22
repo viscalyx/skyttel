@@ -9,6 +9,12 @@ disable-model-invocation: true
 Read the scenario from the request or its background issue. If neither
 supplies an environment, ask for one.
 
+For an implementation, follow any test scope the user has already set.
+Otherwise, ask whether to leave writing and running unit and integration
+tests to the user for later, when they can choose a less expensive model.
+When deferred, use the manual camera review below and skip commands that
+run either suite.
+
 ## Place the observer
 
 - Establish the target theme, visual style, and observer’s fixed position.
@@ -61,3 +67,5 @@ view from inside the scene. Inspect the normal map on mobile and desktop.
 
 Report the directions and device sizes actually inspected, visible defects,
 and any checks that still need the generated asset or a running map.
+If tests were deferred, remind the user to implement the unit and integration
+tests they consider necessary.
