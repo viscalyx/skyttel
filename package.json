@@ -78,6 +78,8 @@
     "@biomejs/biome": "^2.6.8",
     "@cspell/dict-sv": "^2.3.4",
     "@devcontainers/cli": "0.90.0",
+    "@microsoft/copilot-sdk": "2.0.1",
+    "@openai/agents": "0.22.0",
     "@playwright/test": "^1.65.1",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "^14.6.13",
@@ -107,6 +109,7 @@
     "katex": "Pin 0.18.2 to fix GHSA-238p-pmpm-9mq7 (CVE-2026-103923) in markdownlint -> micromark-extension-math@3.1.0 -> katex; upstream still requires vulnerable ^0.16.0."
   },
   "allowScripts": {
+    "koffi@3.3.6": false,
     "better-sqlite3@13.2.0": true,
     "esbuild@0.28.2": true,
     "fsevents@2.3.3": true

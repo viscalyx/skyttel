@@ -2693,6 +2693,62 @@ export function textAssistantRoutes({
       session.state.operations = saveState.operations;
       if (session.state.operations.some((operation) => operation.status === 'pending'))
         throw new MapError('operation_pending', 409);
+      const prototype = process.env.NODE_ENV === 'test' && process.env.SKYTTEL_WHOLE_ASSIGNMENT;
+      if (prototype === 'openai' || prototype === 'copilot') {
+        if (!(await admitScope())) return;
+        const { askPrototype } = await import('./whole-assignment.prototype.js');
+        const reply = await askPrototype(
+          session.state.id,
+          prototype,
+          config.openaiApiKey!,
+          text,
+          task.signal,
+          async ({ names, typeId }) => {
+            guard();
+            const operations = names.map((name) => ({
+              name: 'propose_object',
+              arguments: { id: randomUUID(), baseRevision: null, value: { name, typeId } },
+            }));
+            await checkActions(operations);
+            const before = session.state.review;
+            await applyCheckedBatch(
+              session,
+              { ...expected, operations },
+              guard,
+              [],
+              wholeRequestComplete,
+              recordBatchWork,
+            );
+            const after = session.state.review;
+            advanceDraftVersion(session, before.version, after.version);
+            session.state.workVersion = after.version;
+            session.state.result = {
+              kind: 'draft',
+              message: 'Utkastet är uppdaterat.',
+              changes: draftUpdateDetails(before, after),
+            };
+            const objects = operations.map(({ arguments: { id } }) => {
+              const value = after.changes.find((change) => change.id === id)?.after;
+              if (!value) throw new Error('Objektet saknas i det verifierade utkastet');
+              return { id, name: value.name };
+            });
+            return JSON.stringify({ version: after.version, objects });
+          },
+        );
+        guard();
+        const current = await call(session, 'read_my_draft', {}, guard);
+        if (
+          current.version !== session.state.review.version ||
+          current.contentVersion !== expected.contentVersion
+        )
+          throw new MapError('assistant_draft_changed', 409);
+        checkViewAccess(session);
+        session.state.phase = 'ready';
+        session.state.modelReply = reply;
+        session.state.reply = reply;
+        appendConversation(session, { role: 'assistant', text: reply });
+        return;
+      }
       const summaryRequested = session.state.contextSummaryState === 'needed';
       rebuildContext(session);
       if (summaryRequested || needsSummary(session)) {

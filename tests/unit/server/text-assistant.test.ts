@@ -1,3 +1,4 @@
+import { channel } from 'node:diagnostics_channel';
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, expect, test, vi } from 'vitest';
 import { conversationCompletion } from '../../../src/client/conversation-completion.js';
@@ -23,8 +24,14 @@ async function setup(
   modelFetch?: typeof fetch,
   modelUsage?: TextModelUsage,
   assistantDispatch?: NonNullable<Parameters<typeof createInstallation>[1]>['assistantDispatch'],
+  providerApiKey?: string,
 ) {
-  app = await createInstallation(undefined, { modelFetch, modelUsage, assistantDispatch });
+  app = await createInstallation(undefined, {
+    modelFetch,
+    modelUsage,
+    assistantDispatch,
+    providerApiKey,
+  });
   browser = await request.newContext();
   await signIn(browser, app.origin);
   const { household } = await (await createHousehold(browser, app.origin)).json();
@@ -451,6 +458,7 @@ async function message(
   session: TextAssistantView,
   text: string,
   answerTo?: { id: string; revision: number }[],
+  timeout = 5_000,
 ) {
   const result = await browser.post(`${path}/${session.id}/messages`, {
     headers: { origin: app.origin },
@@ -470,7 +478,7 @@ async function message(
         status = await (await browser.get(`${path}/${session.id}`)).json();
         return status.phase;
       },
-      { timeout: 5_000 },
+      { timeout },
     )
     .not.toBe('working');
   return status;
@@ -5301,3 +5309,140 @@ test('household recovery ignores a working session whose other actor lost member
     await other.dispose();
   }
 });
+
+const comparison = process.env.SKYTTEL_WHOLE_ASSIGNMENT;
+test
+  .skipIf(!['baseline', 'openai', 'copilot'].includes(comparison ?? ''))
+  .each(['normal', 'avbrott'])(
+  'hela kartuppdraget med verklig modell: %s',
+  async (scenario) => {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || process.env.NODE_ENV !== 'test')
+      throw new Error('Provet kräver testmiljö och API-nyckel');
+    let turn = 'ändring';
+    let writes = 0;
+    let lookups = 0;
+    const wire = channel('undici:request:headers');
+    const report = (raw: unknown) => {
+      const { request, response } = raw as {
+        request: { origin: string; path: string };
+        response: { headers: Buffer[]; statusCode: number };
+      };
+      if (String(request.origin) !== 'https://api.openai.com' || request.path !== '/v1/responses')
+        return;
+      const i = response.headers.findIndex(
+        (h, index) => index % 2 === 0 && String(h).toLowerCase() === 'x-request-id',
+      );
+      console.info(
+        'HTTP-SVAR',
+        JSON.stringify({
+          turn,
+          status: response.statusCode,
+          requestId: i >= 0 ? String(response.headers[i + 1]) : null,
+        }),
+      );
+    };
+    const recordedFetch: typeof fetch = async (input, init) => {
+      const request = new Request(input, init);
+      if (request.url !== 'https://api.openai.com/v1/responses')
+        throw new Error('Oväntad modelladress');
+      const body = await request.clone().json();
+      const response = await fetch(request);
+      const result = await response.clone().json();
+      console.info(
+        'SKYTTEL-ANROP',
+        JSON.stringify({
+          turn,
+          role: body.instructions.split('\n')[0].startsWith('SKYTTEL_TURN_')
+            ? body.instructions.split('\n')[0]
+            : 'kartarbete',
+          model: result.model,
+          effort: body.reasoning.effort,
+          responseId: result.id,
+          status: response.status,
+        }),
+      );
+      return response;
+    };
+    const delivery = controlledBatchDelivery();
+    await setup(
+      recordedFetch,
+      undefined,
+      async (req, dispatch) => {
+        if (req.method === 'POST' && new URL(req.url).pathname === '/mcp') {
+          const rpc = await req.clone().json();
+          if (rpc.params?.name === 'apply_draft_batch') writes++;
+          if (rpc.params?.name === 'read_draft_batch') lookups++;
+        }
+        return delivery.dispatch(req, dispatch);
+      },
+      apiKey,
+    );
+    const pathToMap = path.replace('/text-assistant', '/map');
+    const readMap = async () => (await browser.get(pathToMap)).json();
+    const typeId = (await readMap()).types[0].id;
+    const initial = await start();
+    const complete = conversationCompletion(initial);
+    wire.subscribe(report);
+    try {
+      if (scenario === 'avbrott') delivery.arm();
+      const first = await message(
+        initial,
+        `Lägg till ett nytt objekt med namnet Månskenscykeln i mitt utkast. Använd objekttypen med id ${typeId}. Lämna ändringen i utkastet.`,
+        undefined,
+        115_000,
+      );
+      const firstText = complete(first)?.text ?? first.modelReply ?? first.reply;
+      const beforeFollowup = await readMap();
+      turn = 'följdfråga';
+      const second = await message(
+        first,
+        'Vad ändrade du precis? Ange objektets namn och id.',
+        undefined,
+        115_000,
+      );
+      const map = await readMap();
+      const objects = map.draft.changes.map((c: { id: string; after: { name: string } }) => ({
+        id: c.id,
+        name: c.after.name,
+      }));
+      const secondText = complete(second)?.text ?? second.modelReply ?? second.reply;
+      console.info(
+        'PROVRESULTAT',
+        JSON.stringify({
+          comparison,
+          scenario,
+          first: firstText,
+          firstError: first.error,
+          second: secondText,
+          secondError: second.error,
+          objects,
+          version: map.draft.version,
+          saved: map.objects.length,
+          writes,
+          lookups,
+          delivery: delivery.status().phase,
+        }),
+      );
+      expect(objects).toEqual([{ id: expect.any(String), name: 'Månskenscykeln' }]);
+      expect(beforeFollowup.draft).toEqual(map.draft);
+      expect(map.objects).toHaveLength(0);
+      expect(writes).toBe(1);
+      expect(first.error).toBeUndefined();
+      expect(second.error).toBeUndefined();
+      expect(secondText).toContain('Månskenscykeln');
+      expect(secondText).toContain(objects[0].id);
+      if (scenario === 'avbrott') {
+        expect(delivery.status().phase).toBe('dropped-after-commit');
+        expect(lookups).toBeGreaterThan(0);
+      }
+    } finally {
+      wire.unsubscribe(report);
+      if (comparison !== 'baseline')
+        await (await import('../../../src/server/whole-assignment.prototype.js')).closePrototype(
+          initial.id,
+        );
+    }
+  },
+  250_000,
+);

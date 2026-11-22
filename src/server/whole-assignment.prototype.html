@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="sv"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ett helt kartuppdrag i Skyttel</title>
+<style>
+*{box-sizing:border-box}body{max-width:58rem;margin:auto;padding:clamp(1rem,4vw,3rem);font:1rem/1.55 system-ui;color:#182a2b;background:#f9fbfa}
+h1,h2,h3{line-height:1.2}h3{font-size:1.05rem;margin:1.4rem 0 .35rem}p{margin:.35rem 0 1rem}
+fieldset{display:inline-flex;flex-wrap:wrap;gap:.7rem;border:1px solid #abbeb9;padding:.6rem .8rem;margin:0 .4rem 1rem 0}
+label,summary{cursor:pointer}article{padding:1rem clamp(.8rem,3vw,2rem);background:white;border:1px solid #abbeb9;border-radius:.5rem;margin-bottom:1rem}
+article p,td{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;font-size:.88rem;text-align:left}td,th{border-bottom:1px solid #abbeb9;padding:.4rem}td:last-child,code{font-family:ui-monospace,monospace}details p{margin-top:.6rem}
+</style>
+<main><h1>Ett helt kartuppdrag i Skyttel</h1>
+<p>Vem sköter modellanropen, och vem avgör om ändringen gick igenom? Jämför sex verkliga körningar av samma uppdrag. Användaren bad om att lägga Månskenscykeln i sitt utkast och frågade sedan vad som just hade ändrats.</p>
+<form><fieldset><legend>Lösning</legend><label><input type="radio" name="solution" value="baseline" checked> Dagens Skyttel</label><label><input type="radio" name="solution" value="openai" > OpenAI Agents SDK</label><label><input type="radio" name="solution" value="copilot" > GitHub Copilot SDK</label></fieldset><fieldset><legend>Verktygssvar</legend><label><input type="radio" name="scenario" value="normal" checked> Kom fram</label>
+<label><input type="radio" name="scenario" value="avbrott"> Bröts efter skrivningen</label></fieldset></form><article data-solution="baseline" data-case="normal">
+<h2>Dagens Skyttel · Vanlig körning</h2>
+<h3>Ändringen i utkastet</h3><p>Månskenscykeln lades till.</p>
+<h3>Vad ändrade du precis? Ange objektets namn och id.</h3><p>Jag lade till objektet Månskenscykeln i utkastet.
+
+ID: c8ee9f3a-b9f4-4675-bc46-5454a586c7ce</p>
+<h3>Vad Skyttel läste tillbaka</h3><p>Månskenscykeln med id <code>c8ee9f3a-b9f4-4675-bc46-5454a586c7ce</code>. Utkastet fick version 1. Hushållets sparade karta innehöll 0 objekt.</p>
+<p>Servern skickade skrivningen 1 gång. Verktygssvaret kom fram direkt.</p>
+<details><summary>Visa de 8 modellanropen</summary>
+<p>Alla anrop använde GPT-6.1 Terra med hög resonemangsnivå. Tabellen visar OpenAI:s svars-id där klienten gav ett sådant. För Copilots kartarbete visas i stället API-sökvägen och antalet utdata-token från motorns händelse för det enskilda svaret.</p>
+<table><thead><tr><th>Meddelande</th><th>Uppgift</th><th>Underlag från svaret</th></tr></thead>
+<tbody><tr><td>Ändring</td><td>Tolkning</td><td>resp_0db2f0ae721939fc016b03229960a087d299bd1036af251256</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>resp_0c77b8d43230b51f016b03229bb32c87d28436a13b902b0a21</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>resp_0c77b8d43230b51f016b03229e4a3887d2b9f06e09ee41f510</td></tr><tr><td>Ändring</td><td>Granskning</td><td>resp_0ffdd25b41aa9c76016b0322a13d2087d2995e567eb92727b0</td></tr><tr><td>Följdfråga</td><td>Tolkning</td><td>resp_0d3a7ffedcfeac88016b0322a24b3087d2b3e43a8defe037a1</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>resp_0e44b1f281898acf016b0322a485d887d28eced8c855b864cb</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>resp_0e44b1f281898acf016b0322a6fa0087d285030e7fbddadc2b</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>resp_0e44b1f281898acf016b0322a947b887d29bf6579768686eaf</td></tr></tbody></table></details></article>
+<article data-solution="baseline" data-case="avbrott">
+<h2>Dagens Skyttel · Brutet verktygssvar</h2>
+<h3>Ändringen i utkastet</h3><p>Månskenscykeln lades till.</p>
+<h3>Vad ändrade du precis? Ange objektets namn och id.</h3><p>Jag lade till Månskenscykeln i utkastet.
+
+Objektets id: a3ba0589-086c-45d0-8bba-542993c8cd80</p>
+<h3>Vad Skyttel läste tillbaka</h3><p>Månskenscykeln med id <code>a3ba0589-086c-45d0-8bba-542993c8cd80</code>. Utkastet fick version 1. Hushållets sparade karta innehöll 0 objekt.</p>
+<p>Servern skickade skrivningen 1 gång. Den slog upp den genomförda ändringen med samma operations-id sedan svaret försvunnit.</p>
+<details><summary>Visa de 8 modellanropen</summary>
+<p>Alla anrop använde GPT-6.1 Terra med hög resonemangsnivå. Tabellen visar OpenAI:s svars-id där klienten gav ett sådant. För Copilots kartarbete visas i stället API-sökvägen och antalet utdata-token från motorns händelse för det enskilda svaret.</p>
+<table><thead><tr><th>Meddelande</th><th>Uppgift</th><th>Underlag från svaret</th></tr></thead>
+<tbody><tr><td>Ändring</td><td>Tolkning</td><td>resp_0dd11628bb22f940016b0322ab581887d2bb5efbd7f9da798e</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>resp_0b8f98ff441ac4ad016b0322ad8b6887d291fa683d95386671</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>resp_0b8f98ff441ac4ad016b0322b0cef887d2a4fda1e2fd3c108a</td></tr><tr><td>Ändring</td><td>Granskning</td><td>resp_05379a867d1b622c016b0322b3ddbc87d2b9e7416d99c6aff3</td></tr><tr><td>Följdfråga</td><td>Tolkning</td><td>resp_05759065c36dd1bc016b0322b55a8c87d29ec9c6e8f8d95bd7</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>resp_0ac4b497b09efcaa016b0322b7464c87d29b32ac944952b0f8</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>resp_0ac4b497b09efcaa016b0322b9478887d2bc7ea815258fffa7</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>resp_0ac4b497b09efcaa016b0322baa84487d2825a9bc2d3b91cbd</td></tr></tbody></table></details></article>
+<article data-solution="openai" data-case="normal">
+<h2>OpenAI Agents SDK · Vanlig körning</h2>
+<h3>Ändringen i utkastet</h3><p>Månskenscykeln lades till.</p>
+<h3>Vad ändrade du precis? Ange objektets namn och id.</h3><p>Jag lade till objektet Månskenscykeln i utkastet.
+
+Objekt-id: 5ae23186-11e8-4948-91fc-8beacd910c82</p>
+<h3>Vad Skyttel läste tillbaka</h3><p>Månskenscykeln med id <code>5ae23186-11e8-4948-91fc-8beacd910c82</code>. Utkastet fick version 1. Hushållets sparade karta innehöll 0 objekt.</p>
+<p>Servern skickade skrivningen 1 gång. Verktygssvaret kom fram direkt.</p>
+<details><summary>Visa de 6 modellanropen</summary>
+<p>Alla anrop använde GPT-6.1 Terra med hög resonemangsnivå. Tabellen visar OpenAI:s svars-id där klienten gav ett sådant. För Copilots kartarbete visas i stället API-sökvägen och antalet utdata-token från motorns händelse för det enskilda svaret.</p>
+<table><thead><tr><th>Meddelande</th><th>Uppgift</th><th>Underlag från svaret</th></tr></thead>
+<tbody><tr><td>Ändring</td><td>Tolkning</td><td>resp_0126f9d5e73b3c4d016b032301f62887d294791d40e3f7ffbb</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>resp_02052d412ae2b4c1016b032304482c87d2afda678236666467</td></tr><tr><td>Ändring</td><td>Granskning</td><td>resp_09ebca7844305c28016b032306059c87d2998280ad8dd0fafb</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>resp_02052d412ae2b4c1016b032307507887d28c5885f6d9695647</td></tr><tr><td>Följdfråga</td><td>Tolkning</td><td>resp_0a324518873a72ab016b032308f4e087d2882fe5af187a526f</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>resp_02052d412ae2b4c1016b03230b74b087d2ac2ba87e9eeff3c4</td></tr></tbody></table></details></article>
+<article data-solution="openai" data-case="avbrott">
+<h2>OpenAI Agents SDK · Brutet verktygssvar</h2>
+<h3>Ändringen i utkastet</h3><p>Månskenscykeln lades till.</p>
+<h3>Vad ändrade du precis? Ange objektets namn och id.</h3><p>Jag lade till objektet i utkastet:
+
+- Namn: Månskenscykeln
+- Id: c8b465fc-e14a-4c14-becb-e909da5bfc5f</p>
+<h3>Vad Skyttel läste tillbaka</h3><p>Månskenscykeln med id <code>c8b465fc-e14a-4c14-becb-e909da5bfc5f</code>. Utkastet fick version 1. Hushållets sparade karta innehöll 0 objekt.</p>
+<p>Servern skickade skrivningen 1 gång. Den slog upp den genomförda ändringen med samma operations-id sedan svaret försvunnit.</p>
+<details><summary>Visa de 6 modellanropen</summary>
+<p>Alla anrop använde GPT-6.1 Terra med hög resonemangsnivå. Tabellen visar OpenAI:s svars-id där klienten gav ett sådant. För Copilots kartarbete visas i stället API-sökvägen och antalet utdata-token från motorns händelse för det enskilda svaret.</p>
+<table><thead><tr><th>Meddelande</th><th>Uppgift</th><th>Underlag från svaret</th></tr></thead>
+<tbody><tr><td>Ändring</td><td>Tolkning</td><td>resp_02146d739d6a3958016b03230dce0c87d29088a5a62a412763</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>resp_024e797545c50869016b032310b67887d29eba4033b0a98602</td></tr><tr><td>Ändring</td><td>Granskning</td><td>resp_0acfafcb03153a06016b032312449c87d2adbd00e19b0678f4</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>resp_024e797545c50869016b032313b22887d2bb80c34ad56b6162</td></tr><tr><td>Följdfråga</td><td>Tolkning</td><td>resp_07f4be0e9da6ac10016b032314d59c87d2abed61c0372bfbee</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>resp_024e797545c50869016b032316ddbc87d28485b1cd97bb9c7f</td></tr></tbody></table></details></article>
+<article data-solution="copilot" data-case="normal">
+<h2>GitHub Copilot SDK · Vanlig körning</h2>
+<h3>Ändringen i utkastet</h3><p>Månskenscykeln lades till.</p>
+<h3>Vad ändrade du precis? Ange objektets namn och id.</h3><p>Jag lade till Månskenscykeln i utkastet.
+
+ID: d9c89a02-c9ef-490c-b8b9-6fd946ea1942</p>
+<h3>Vad Skyttel läste tillbaka</h3><p>Månskenscykeln med id <code>d9c89a02-c9ef-490c-b8b9-6fd946ea1942</code>. Utkastet fick version 1. Hushållets sparade karta innehöll 0 objekt.</p>
+<p>Servern skickade skrivningen 1 gång. Verktygssvaret kom fram direkt.</p>
+<details><summary>Visa de 6 modellanropen</summary>
+<p>Alla anrop använde GPT-6.1 Terra med hög resonemangsnivå. Tabellen visar OpenAI:s svars-id där klienten gav ett sådant. För Copilots kartarbete visas i stället API-sökvägen och antalet utdata-token från motorns händelse för det enskilda svaret.</p>
+<table><thead><tr><th>Meddelande</th><th>Uppgift</th><th>Underlag från svaret</th></tr></thead>
+<tbody><tr><td>Ändring</td><td>Tolkning</td><td>resp_074df9601073241b016b0322be49c087d2a81f69c735c7bafb</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>/responses · 56 utdata-token</td></tr><tr><td>Ändring</td><td>Granskning</td><td>resp_0c639bf892c01719016b0322c2687c87d289accc13ac7f1f67</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>/responses · 20 utdata-token</td></tr><tr><td>Följdfråga</td><td>Tolkning</td><td>resp_0389f66a2a75565e016b0322c5554087d2a9cf449526dacfbe</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>/responses · 48 utdata-token</td></tr></tbody></table></details></article>
+<article data-solution="copilot" data-case="avbrott">
+<h2>GitHub Copilot SDK · Brutet verktygssvar</h2>
+<h3>Ändringen i utkastet</h3><p>Månskenscykeln lades till.</p>
+<h3>Vad ändrade du precis? Ange objektets namn och id.</h3><p>Jag lade till Månskenscykeln i utkastet.
+
+ID: d8ea9996-b1e1-4177-ab82-e58c80b2c912</p>
+<h3>Vad Skyttel läste tillbaka</h3><p>Månskenscykeln med id <code>d8ea9996-b1e1-4177-ab82-e58c80b2c912</code>. Utkastet fick version 1. Hushållets sparade karta innehöll 0 objekt.</p>
+<p>Servern skickade skrivningen 1 gång. Den slog upp den genomförda ändringen med samma operations-id sedan svaret försvunnit.</p>
+<details><summary>Visa de 6 modellanropen</summary>
+<p>Alla anrop använde GPT-6.1 Terra med hög resonemangsnivå. Tabellen visar OpenAI:s svars-id där klienten gav ett sådant. För Copilots kartarbete visas i stället API-sökvägen och antalet utdata-token från motorns händelse för det enskilda svaret.</p>
+<table><thead><tr><th>Meddelande</th><th>Uppgift</th><th>Underlag från svaret</th></tr></thead>
+<tbody><tr><td>Ändring</td><td>Tolkning</td><td>resp_0032acf79ba271f8016b0322d3879c87d28afdadae18101d90</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>/responses · 57 utdata-token</td></tr><tr><td>Ändring</td><td>Granskning</td><td>resp_034c5c36ce9d878d016b0322d7b99c87d28281cfe062639057</td></tr><tr><td>Ändring</td><td>Kartarbete</td><td>/responses · 20 utdata-token</td></tr><tr><td>Följdfråga</td><td>Tolkning</td><td>resp_0091ea6edb194901016b0322dab21087d2b711f1b63ec4d5c6</td></tr><tr><td>Följdfråga</td><td>Kartarbete</td><td>/responses · 47 utdata-token</td></tr></tbody></table></details></article></main><script>
+const form = document.querySelector('form');
+function selectRun(){
+  const choice = new FormData(form);
+  for (const run of document.querySelectorAll('article')) {
+    run.hidden = run.dataset.solution !== choice.get('solution') || run.dataset.case !== choice.get('scenario');
+  }
+}
+form.addEventListener('change',selectRun);
+selectRun();
+</script></html>
