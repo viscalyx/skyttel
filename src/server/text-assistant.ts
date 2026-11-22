@@ -3024,9 +3024,10 @@ export function textAssistantRoutes({
               terminal,
             ]
           : calls;
-        const checkSnapshot = guardReadSnapshot
-          ? session.execution.reads.snapshotGuard()
-          : undefined;
+        const checkSnapshot =
+          guardReadSnapshot || terminal?.name === 'ask_questions'
+            ? session.execution.reads.snapshotGuard()
+            : undefined;
         let terminalResult: boolean | undefined;
         function continueAfterResult(required: boolean) {
           terminalResult = !required;
@@ -3213,6 +3214,7 @@ export function textAssistantRoutes({
                   throw new MapError('assistant_draft_changed');
               }
             }
+            checkSnapshot?.();
             updateParts(session, value.questions, value.updates, action.call_id);
             session.state.reply = verifiedReply(session);
             session.state.phase = 'ready';
