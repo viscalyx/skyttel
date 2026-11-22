@@ -58,21 +58,33 @@ export async function runMapAgent(
           ],
         };
       finish = round.finish;
-      execute = round.execute;
+      execute = (call) => round.execute(call);
       // Only server-declared independent reads may share a snapshot in parallel.
       // Reports follow their companion reads and map selections in order.
       toolExecution.maxFunctionToolConcurrency = Math.max(1, round.parallelReadCount);
-      if (round.parallelReadCount > 1 && round.parallelReadCount < round.calls.length) {
+      if (round.parallelReadCount > 1) {
         const completed = new EventEmitter();
+        const siblings = new AbortController();
         let count = 0;
-        execute = async (call, signal) => {
+        execute = async (call, toolSignal) => {
           const index = round.calls.findIndex((action) => action.call_id === call.call_id);
           if (index >= round.parallelReadCount)
-            while (count < index) await once(completed, 'done', { signal });
-          const result = await round.execute(call, signal);
-          count++;
-          completed.emit('done');
-          return result;
+            while (count < index) await once(completed, 'done', { signal: toolSignal });
+          // A failed sibling releases outstanding reads. On user cancellation
+          // the task guard rejects the result after recording its MCP outcome.
+          const cancelSiblings = () => {
+            if (!signal.aborted) siblings.abort(toolSignal?.reason);
+          };
+          if (toolSignal?.aborted) cancelSiblings();
+          else toolSignal?.addEventListener('abort', cancelSiblings, { once: true });
+          try {
+            const result = await round.execute(call, siblings.signal);
+            count++;
+            completed.emit('done');
+            return result;
+          } finally {
+            toolSignal?.removeEventListener('abort', cancelSiblings);
+          }
         };
       }
       return {
