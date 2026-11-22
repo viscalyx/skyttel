@@ -39,8 +39,10 @@ export async function runCopilotCartToolPrototype(
     throw new Error('Det styrda svaret ska innehålla ett enda förslag');
 
   const args: unknown = JSON.parse(call.arguments);
+  const model = 'gpt-6.1-terra';
   const finalText = 'Den lokala modellen har tagit emot verktygsresultatet.';
   let rounds = 0;
+  const requestModels: unknown[] = [];
   let offeredTools: string[] = [];
   let returnedToModel = false;
   let accepted = false;
@@ -53,6 +55,7 @@ export async function runCopilotCartToolPrototype(
     let input = '';
     for await (const chunk of request) input += chunk;
     const body = JSON.parse(input);
+    requestModels.push(body.model);
     rounds++;
     if (rounds === 1)
       offeredTools =
@@ -123,7 +126,7 @@ export async function runCopilotCartToolPrototype(
     if (!address || typeof address === 'string') throw new Error('Lokal modelladress saknas');
 
     await using session = await client.createSession({
-      model: 'gpt-4o-mini',
+      model,
       github: { capi: { enabled: false }, telemetryEnabled: false },
       inference: {
         allowMultipleToolCalls: false,
@@ -177,8 +180,11 @@ export async function runCopilotCartToolPrototype(
       const evidence = {
         erbjudnaVerktyg: offeredTools,
         modellomgångar: rounds,
+        modellnamnIAnropen: requestModels,
         verifieratResultatIModellen: returnedToModel,
       };
+      if (requestModels.some((requestModel) => requestModel !== model))
+        throw new Error(`Oväntat modellnamn i Copilot-provet. ${JSON.stringify(evidence)}`);
       if (reply?.data.content !== finalText || !returnedToModel || rounds !== 2)
         throw new Error(`Oväntad följd av Copilot-anrop. ${JSON.stringify(evidence)}`);
       return evidence;
