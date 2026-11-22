@@ -2,9 +2,9 @@
 import { createServer } from 'node:http';
 import type { SaveReceipt } from '../../src/shared/map.js';
 
-export async function localReceiptModel() {
+export async function localReceiptModel(skipLookup = false) {
   const receipts: (SaveReceipt | undefined)[] = [];
-  const callId = 'call_spara_utkast';
+  const requested: string[] = [];
   const server = createServer(async (request, response) => {
     if (request.method !== 'POST' || request.url !== '/v1/chat/completions') {
       response.writeHead(404).end();
@@ -13,41 +13,55 @@ export async function localReceiptModel() {
     let input = '';
     for await (const chunk of request) input += chunk;
     const body = JSON.parse(input);
-    const output = body.messages.find(
-      (item: { role: string; tool_call_id?: string }) =>
-        item.role === 'tool' && item.tool_call_id === callId,
-    )?.content;
+    const messages = body.messages as { role: string; tool_call_id?: string; content?: string }[];
+    const toolOutputs = messages.filter((message) => message.role === 'tool');
+    const results = messages
+      .filter((item) => item.role !== 'assistant')
+      .flatMap((item) =>
+        Array.isArray(item.content)
+          ? item.content.map((block: { text?: string }) => block.text)
+          : [item.content],
+      );
     // Copilot kan lägga egen text före eller efter verktygets JSON.
     let receipt: SaveReceipt | undefined;
-    if (typeof output === 'string') {
+    for (const output of results) {
+      if (typeof output !== 'string') continue;
       const start = output.indexOf('{"receipt":');
       const end = output.lastIndexOf('}');
       if (start >= 0 && end >= start) receipt = JSON.parse(output.slice(start, end + 1)).receipt;
     }
     receipts.push(receipt);
     const round = receipts.length;
-    const message =
+    const missing =
+      toolOutputs.some((item) => item.tool_call_id === 'call_spara_utkast') && !receipt;
+    const name =
       round === 1
-        ? {
-            tool_calls: [
-              {
-                index: 0,
-                id: callId,
-                type: 'function',
-                function: { name: 'spara_utkast', arguments: '{}' },
-              },
-            ],
-          }
-        : {
-            content: !receipt
-              ? 'Underlag saknas.'
-              : round === 2
-                ? 'Sparandet är bekräftat.'
-                : receipt.operationId +
-                  ' ' +
-                  receipt.changes.map((change) => change.after?.name).join(', '),
-          };
-    const finish = round === 1 ? 'tool_calls' : 'stop';
+        ? 'spara_utkast'
+        : missing &&
+            !skipLookup &&
+            !toolOutputs.some((item) => item.tool_call_id === 'call_kontrollera_sparandet')
+          ? 'kontrollera_sparandet'
+          : undefined;
+    if (name) requested.push(name);
+    const followup = messages.some(
+      (item) => item.role === 'user' && JSON.stringify(item.content).includes('Vilket kvitto'),
+    );
+    const message = name
+      ? {
+          tool_calls: [
+            { index: 0, id: 'call_' + name, type: 'function', function: { name, arguments: '{}' } },
+          ],
+        }
+      : {
+          content: !receipt
+            ? 'Modellen påstår att cykeln är sparad utan kvitto.'
+            : !followup
+              ? 'Sparandet är bekräftat.'
+              : receipt.operationId +
+                ' ' +
+                receipt.changes.map((change) => change.after?.name).join(', '),
+        };
+    const finish = name ? 'tool_calls' : 'stop';
     const completion = { id: 'chatcmpl-prov-' + round, model: body.model, created: 1 };
     if (!body.stream) {
       response.writeHead(200, { 'content-type': 'application/json' }).end(
@@ -85,6 +99,7 @@ export async function localReceiptModel() {
   return {
     port: String(address.port),
     receipts,
+    requested,
     close: () => {
       server.closeAllConnections();
       return new Promise<void>((resolve) => server.close(() => resolve()));

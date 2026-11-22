@@ -2627,7 +2627,33 @@ export function textAssistantRoutes({
           receiptSdk,
           text,
           task.signal,
-          async () => {
+          async (toolName) => {
+            const confirm = async (
+              receipt: TextAssistantView['receipt'],
+              attempt: { operationId: string; version: number; contentVersion: number },
+            ) => {
+              verifyReceipt(session, receipt, attempt);
+              saved(session, receipt, true);
+              await refreshConfirmed(session, guard);
+              session.state.phase = 'working';
+              return JSON.stringify({ receipt });
+            };
+            if (toolName === 'kontrollera_sparandet') {
+              guard();
+              const attempt = session.state.pendingSave;
+              if (!attempt || attempt.messageId !== session.state.activeMessage?.id)
+                throw new MapError('assistant_save_unknown', 409);
+              const { operation } = await call(
+                session,
+                'read_save_operation',
+                { operationId: attempt.operationId },
+                guard,
+                'lifecycle',
+              );
+              if (operation?.status !== 'succeeded')
+                throw new MapError('assistant_save_unknown', 409);
+              return confirm(operation.receipt, attempt);
+            }
             if (!(await saveReady(session, serial, guard)) || session.state.pendingSave)
               throw new MapError('assistant_save_superseded', 409);
             const saveGuard = currentSaveGuard(session, serial, guard);
@@ -2650,27 +2676,8 @@ export function textAssistantRoutes({
               finishesRequest: wholeRequestComplete,
             };
             await call(session, 'prepare_save', attempt, saveGuard);
-            let receipt: TextAssistantView['receipt'];
-            try {
-              receipt = (await call(session, 'save_draft', attempt, saveGuard)).receipt;
-            } catch {
-              guard();
-              const { operation } = await call(
-                session,
-                'read_save_operation',
-                { operationId: attempt.operationId },
-                guard,
-                'lifecycle',
-              );
-              if (operation?.status !== 'succeeded')
-                throw new MapError('assistant_save_unknown', 409);
-              receipt = operation.receipt;
-            }
-            verifyReceipt(session, receipt, attempt);
-            saved(session, receipt, true);
-            await refreshConfirmed(session, guard);
-            session.state.phase = 'working';
-            return JSON.stringify({ receipt });
+            const { receipt } = await call(session, 'save_draft', attempt, saveGuard);
+            return confirm(receipt, attempt);
           },
         );
         guard();

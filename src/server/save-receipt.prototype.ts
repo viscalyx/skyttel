@@ -8,14 +8,20 @@ import { Agent, MemorySession, OpenAIChatCompletionsModel, Runner, tool } from '
 import OpenAI from 'openai';
 import { z } from 'zod';
 
-const name = 'spara_utkast';
-const description = 'Spara hela utkastet på användarens uttryckliga begäran.';
+const descriptions = {
+  spara_utkast: 'Spara hela utkastet på användarens uttryckliga begäran.',
+  kontrollera_sparandet: 'Läs det registrerade utfallet för sparförsöket i den här begäran.',
+};
+type Name = keyof typeof descriptions;
+const names = Object.keys(descriptions) as Name[];
 const parameters = z.object({}).strict();
-const instructions = 'Bekräfta bara det som Skyttel har verifierat.';
+const instructions =
+  'Bekräfta bara ett verifierat sparkvitto. Om ett sparsvar saknas, anropa kontrollera_sparandet. Skicka aldrig om en skrivning för att kontrollera utfallet.';
 const model = 'gpt-6.1-terra';
-type Execute = () => Promise<string>;
+type Execute = (name: Name) => Promise<string>;
 
 async function connect(kind: string, execute: Execute) {
+  const onFailure = process.env.SKYTTEL_RECEIPT_HOOK === 'true';
   const port = Number(process.env.SKYTTEL_RECEIPT_PORT);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error('Lokal modellport saknas');
   const baseURL = 'http://127.0.0.1:' + port + '/v1';
@@ -27,7 +33,17 @@ async function connect(kind: string, execute: Execute) {
       name: 'Skyttel',
       instructions,
       model: new OpenAIChatCompletionsModel(new OpenAI({ apiKey, baseURL, maxRetries: 0 }), model),
-      tools: [tool({ name, description, parameters, execute, errorFunction: null })],
+      tools: names.map((name) =>
+        tool({
+          name,
+          description: descriptions[name],
+          parameters,
+          execute: () => execute(name),
+          ...(onFailure && name === 'spara_utkast'
+            ? { errorFunction: () => execute('kontrollera_sparandet') }
+            : {}),
+        }),
+      ),
     });
     return {
       ask: async (text: string, signal: AbortSignal) =>
@@ -45,6 +61,16 @@ async function connect(kind: string, execute: Execute) {
   const session = await client.createSession({
     model,
     github: { capi: { enabled: false }, telemetryEnabled: false },
+    hooks: onFailure
+      ? {
+          handlers: {
+            onPostToolUseFailure: async (event) => {
+              if (event.toolName === 'spara_utkast')
+                return { additionalContext: await execute('kontrollera_sparandet') };
+            },
+          },
+        }
+      : undefined,
     systemMessage: { mode: 'replace', content: instructions },
     inference: {
       defaultProvider: 'local',
@@ -55,15 +81,19 @@ async function connect(kind: string, execute: Execute) {
     state: { infiniteSessions: { enabled: false } },
     permissions: {
       onRequest: (p) =>
-        p.kind === 'custom-tool' && p.toolName === name
+        p.kind === 'custom-tool' && names.some((name) => name === p.toolName)
           ? { kind: 'approved' }
           : { kind: 'denied-by-rules', rules: [] },
     },
     tools: {
-      availableTools: ['custom:' + name],
-      definitions: [
-        defineTool(name, { description, parameters: z.toJSONSchema(parameters), handler: execute }),
-      ],
+      availableTools: names.map((name) => 'custom:' + name),
+      definitions: names.map((name) =>
+        defineTool(name, {
+          description: descriptions[name],
+          parameters: z.toJSONSchema(parameters),
+          handler: () => execute(name),
+        }),
+      ),
     },
   });
   return {
@@ -97,16 +127,16 @@ export async function askReceipt(
   kind: string,
   text: string,
   signal: AbortSignal,
-  save: Execute,
+  execute: Execute,
 ) {
   const entry = sessions.get(id) ?? {};
   if (entry.turn) throw Error('En begäran pågår redan');
   sessions.set(id, entry);
-  entry.turn = AsyncResource.bind(save);
+  entry.turn = AsyncResource.bind(execute);
   try {
-    entry.sdk ??= await connect(kind, () => {
+    entry.sdk ??= await connect(kind, (name) => {
       if (!entry.turn) throw Error('Begäran är avslutad');
-      return entry.turn();
+      return entry.turn(name);
     });
     return await entry.sdk.ask(text, signal);
   } finally {

@@ -10,13 +10,19 @@ import { modelMessage, textModel } from '../../support/text-model.js';
 
 test.each(
   ['openai', 'copilot'].flatMap((sdk) =>
-    ['verktygssvar', 'webbläsarsvar'].map((avbrott) => ({ sdk, avbrott })),
+    ['verktygssvar', 'webbläsarsvar', 'uteblivet uppslag', 'felhanterare'].map((avbrott) => ({
+      sdk,
+      avbrott,
+    })),
   ),
 )(
   'sparkvitto med $sdk efter brutet $avbrott',
   async ({ sdk, avbrott }) => {
     vi.stubEnv('NODE_ENV', 'test');
-    const model = await localReceiptModel();
+    const skipLookup = avbrott === 'uteblivet uppslag';
+    const hook = avbrott === 'felhanterare';
+    vi.stubEnv('SKYTTEL_RECEIPT_HOOK', String(hook));
+    const model = await localReceiptModel(skipLookup || hook);
     vi.stubEnv('SKYTTEL_RECEIPT_PORT', model.port);
     vi.stubEnv('SKYTTEL_RECEIPT_SDK', sdk);
     const writes: string[] = [];
@@ -53,7 +59,7 @@ test.each(
           writes.push(rpc.params.arguments.operationId);
           original = JSON.parse((await result.clone().json()).result.content[0].text).receipt;
           await saveLaterDraft();
-          if (avbrott === 'verktygssvar')
+          if (avbrott !== 'webbläsarsvar')
             throw new TypeError('Svaret bröts efter att servern hade sparat');
         }
         if (rpc?.params?.name === 'read_save_operation')
@@ -124,6 +130,8 @@ test.each(
             await route.abort();
           } else await route.fulfill({ response });
         });
+      }
+      if (avbrott === 'webbläsarsvar' || skipLookup) {
         page.on('response', async (response) => {
           if (response.url().endsWith('/recover') && response.ok())
             checkedReceipt = (await response.json()).receipt;
@@ -137,10 +145,26 @@ test.each(
       await expect.poll(kind, { timeout: 20000 }).toContain('existing');
       expect(original?.changes[0].after?.name).toBe(name);
       expect(writes).toEqual([original!.operationId]);
-      expect(lookups).toEqual(avbrott === 'verktygssvar' ? writes : []);
+      expect(lookups).toEqual(avbrott === 'verktygssvar' || hook ? writes : []);
       if (avbrott === 'webbläsarsvar') {
         expect(dropped).toBe(true);
         await expect.poll(() => checkedReceipt, { timeout: 10000 }).toEqual(original);
+      }
+      if (skipLookup) {
+        // Kontrollera ett redan registrerat sparande genom Skyttels vanliga återhämtning.
+        const control = page.getByRole('button', {
+          name: 'Kontrollera om utkastet sparades',
+          exact: true,
+        });
+        if (await control.isVisible()) await control.click();
+        const recovered = await page.request.post(first.url().replace(/messages$/, 'recover'), {
+          headers,
+          data: {},
+        });
+        expect(recovered.status()).toBe(200);
+        const recovery = await recovered.json();
+        expect(recovery.receipt).toEqual(original);
+        expect(JSON.stringify(recovery)).not.toContain('Modellen påstår');
       }
       const repeated = await page.request.post(first.url(), {
         headers,
@@ -148,14 +172,30 @@ test.each(
       });
       expect(repeated.status()).toBe(202);
       expect((await repeated.json()).receipt).toEqual(original);
+      if (skipLookup) {
+        expect(model.requested).toEqual(['spara_utkast']);
+        expect(model.receipts).toEqual([undefined, undefined]);
+        const transcript = await page.getByRole('log', { name: 'Samtalstext' }).textContent();
+        expect(transcript).not.toContain('Modellen påstår');
+        expect(writes).toEqual([original!.operationId]);
+        expect((await read('/history')).history).toHaveLength(2);
+        return;
+      }
       await send('Vilket kvitto fick jag för cykeln?');
       const transcript = page.getByRole('log', { name: 'Samtalstext' });
       await expect
         .poll(() => transcript.textContent(), { timeout: 20000 })
         .toContain(original!.operationId + ' ' + name);
-      expect(model.receipts).toEqual([undefined, original, original]);
+      expect(model.receipts).toEqual(
+        avbrott === 'verktygssvar'
+          ? [undefined, undefined, original, original]
+          : [undefined, original, original],
+      );
+      expect(model.requested).toEqual(
+        avbrott === 'verktygssvar' ? ['spara_utkast', 'kontrollera_sparandet'] : ['spara_utkast'],
+      );
       expect(writes).toHaveLength(1);
-      expect(lookups).toEqual(avbrott === 'verktygssvar' ? writes : []);
+      expect(lookups).toEqual(avbrott === 'verktygssvar' || hook ? writes : []);
       expect(
         (await read('/history')).history.map((r: SaveReceipt) => r.operationId).sort(),
       ).toEqual([original!.operationId, 'senare-sparande'].sort());

@@ -18,7 +18,7 @@ button[aria-pressed=true],#next{background:#125b64;color:white}button:disabled{o
 <script>
 const initial = () => ({attempt:false, history:[], result:null, map:[], reply:'', notice:'Cykeln finns i ditt utkast.'});
 const names = {save:'Be att få spara cykeln', normal:'Ta emot kvittot', lose:'Bryt svaret efter sparandet',
-  browser:'Bryt svaret till webbläsaren', reconnect:'Låt webbläsaren kontrollera sparandet', lamp:'Spara lampan separat', check:'Slå upp cykelns sparförsök', ask:'Fråga vilket kvitto cykeln fick',reset:'Börja om'};
+  browser:'Bryt svaret till webbläsaren', reconnect:'Låt webbläsaren kontrollera sparandet', lamp:'Spara lampan separat', check:'Låt SDK:t begära cykelns kvitto', ask:'Fråga vilket kvitto cykeln fick',reset:'Börja om'};
 function step(before, action) {
   if(action==='reset') return initial();
   const s=structuredClone(before);
@@ -44,7 +44,7 @@ function step(before, action) {
       s.notice='Lampan har fått ett eget kvitto.';break;
     case 'check':
       s.result=s.attempt ? s.history.find(item=>item==='Cykeln · A') || null : null;
-      s.notice=s.result?'Skyttel kontrollerade cykelns kvitto och hämtade kartan.':'Cykelns sparande saknar ett bekräftat kvitto.';
+      s.notice=s.result?'SDK:t startade uppslaget. Skyttel kontrollerade kvittot och kartvyn hämtade kartan.':'Cykelns sparande saknar ett bekräftat kvitto.';
       if(s.result)s.map=[...s.history];
       break;
     case 'ask':
@@ -53,7 +53,7 @@ function step(before, action) {
   return s;
 }
 const examples=[
-  ['Brutet verktygssvar','Lampan sparas innan Skyttel hinner kontrollera cykelns kvitto.',['save','lose','lamp','check','ask']],
+  ['Brutet verktygssvar','SDK:ts felhanterare startar uppslaget direkt. När servern kontrollerar cykelns sparförsök har lampan redan fått ett eget kvitto.',['save','lose','lamp','check','ask']],
   ['Brutet webbläsarsvar','Samtalet får kvittot. Webbläsaren får det först när den har kontrollerat sparandet.',['save','browser','lamp','reconnect','ask']],
   ['Svar direkt','Följ kvittot när det kommer fram direkt.',['save','normal','ask']],
   ['Väntande försök','Se vad ett uppslag kan berätta innan servern har sparat.',['save','check','ask']]
