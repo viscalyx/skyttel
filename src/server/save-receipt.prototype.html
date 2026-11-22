@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="sv">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hitta rätt sparkvitto</title>
+<style>
+:root{font:1rem/1.5 system-ui;color:#202c32;background:#faf9f6}body{max-width:46rem;margin:2rem auto;padding:0 1rem}
+h1{line-height:1.1}dt{font-weight:650}dd{margin:0 0 .6rem}dl,fieldset{background:white;padding:1rem;border:1px solid #aeb9b9;border-radius:.5rem}
+button{font:inherit;margin:.2rem;padding:.45rem .7rem;color:inherit;background:white;border:1px solid #71878c;border-radius:.4rem;cursor:pointer}
+button[aria-pressed=true],#next{background:#125b64;color:white}button:disabled{opacity:.55}button:focus-visible{outline:3px solid #006d9a}
+</style>
+<h1>Hitta rätt sparkvitto</h1>
+<p>Vilket kvitto får användaren när Skyttel har sparat cykeln, svaret bryts och någon hinner spara en lampa? Här kan du pröva händelserna i olika ordning.</p>
+<dl aria-live="polite" id="state"></dl>
+<fieldset><legend>Pröva själv</legend><div id="buttons"></div></fieldset>
+<h2>Följ ett exempel</h2><div id="examples" role="group" aria-label="Välj exempel"></div>
+<p id="description"></p><button id="next"></button>
+<script>
+const initial = () => ({attempt:false, history:[], result:null, map:[], reply:'', notice:'Cykeln finns i ditt utkast.'});
+const names = {save:'Be att få spara cykeln', normal:'Ta emot kvittot', lose:'Bryt svaret efter sparandet',
+  browser:'Bryt svaret till webbläsaren', reconnect:'Låt webbläsaren kontrollera sparandet', lamp:'Spara lampan separat', check:'Slå upp cykelns sparförsök', ask:'Fråga vilket kvitto cykeln fick',reset:'Börja om'};
+function step(before, action) {
+  if(action==='reset') return initial();
+  const s=structuredClone(before);
+  switch(action){
+    case 'save':
+      if(s.attempt){s.notice='Samma sparförsök är redan registrerat.';break;}
+      s.attempt=true; s.notice='Skyttel har registrerat cykelns sparförsök.';break;
+    case 'normal': case 'lose': case 'browser':
+      if(!s.attempt){s.notice='Be först att få spara cykeln.';break;}
+      if(s.history.includes('Cykeln · A')){s.notice='Cykelns kvitto finns redan i historiken.';break;}
+      s.history.push('Cykeln · A');
+      if(action==='normal'){s.result='Cykeln · A';s.map=[...s.history];s.notice='Skyttel har kontrollerat kvittot och hämtat kartan.';}
+      else if(action==='browser'){s.result='Cykeln · A';s.notice='Samtalet har kvittot. Webbläsaren väntar på besked.';}
+      else s.notice='Servern har sparat. Svaret försvann på vägen tillbaka.';
+      break;
+    case 'reconnect':
+      if(s.result){s.map=[...s.history];s.notice='Webbläsaren fick samma kvitto från Skyttel och hämtade kartan.';}
+      else s.notice='Webbläsaren väntar på ett verifierat kvitto.';
+      break;
+    case 'lamp':
+      if(!s.history.includes('Cykeln · A')){s.notice='Spara cykeln först i det här exemplet.';break;}
+      if(!s.history.includes('Lampan · B'))s.history.push('Lampan · B');
+      s.notice='Lampan har fått ett eget kvitto.';break;
+    case 'check':
+      s.result=s.attempt ? s.history.find(item=>item==='Cykeln · A') || null : null;
+      s.notice=s.result?'Skyttel kontrollerade cykelns kvitto och hämtade kartan.':'Cykelns sparande saknar ett bekräftat kvitto.';
+      if(s.result)s.map=[...s.history];
+      break;
+    case 'ask':
+      s.reply=s.result || 'Sparandet har ännu inte bekräftats.';s.notice='Följdfrågan läser det som samtalet har fått från Skyttel.';break;
+  }
+  return s;
+}
+const examples=[
+  ['Brutet verktygssvar','Lampan sparas innan Skyttel hinner kontrollera cykelns kvitto.',['save','lose','lamp','check','ask']],
+  ['Brutet webbläsarsvar','Samtalet får kvittot. Webbläsaren får det först när den har kontrollerat sparandet.',['save','browser','lamp','reconnect','ask']],
+  ['Svar direkt','Följ kvittot när det kommer fram direkt.',['save','normal','ask']],
+  ['Väntande försök','Se vad ett uppslag kan berätta innan servern har sparat.',['save','check','ask']]
+];
+let state=initial(), selected=0, index=0;
+function render(){
+ const fields={'Sparförsöket för cykeln':state.attempt?'Registrerat med id A':'Inte registrerat',
+ 'Serverns ändringshistorik':state.history.join(', ')||'Tom','Verifierat kvitto i samtalet':state.result||'Saknas',
+ 'Kartvyn visar som sparat':state.map.map(v=>v.split(' · ')[0]).join(', ')||'Inget objekt',
+ 'Svar på följdfrågan':state.reply||'Frågan har inte ställts','Senaste händelsen':state.notice};
+ const panel=document.querySelector('#state');panel.replaceChildren();
+ for(const [term,value] of Object.entries(fields)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=term;dd.textContent=value;panel.append(dt,dd);}
+ document.querySelectorAll('#examples button').forEach((b,i)=>b.setAttribute('aria-pressed',String(i===selected)));
+ const scenario=examples[selected],next=document.querySelector('#next');
+ document.querySelector('#description').textContent=scenario[1];
+ next.textContent=index===scenario[2].length?'Spela exemplet igen':names[scenario[2][index]];
+}
+for(const [action,label] of Object.entries(names)){
+ const b=document.createElement('button');b.textContent=label;b.onclick=()=>{state=step(state,action);render();};document.querySelector('#buttons').append(b);}
+examples.forEach(([label],i)=>{const b=document.createElement('button');b.textContent=label;b.onclick=()=>{state=initial();selected=i;index=0;render();};document.querySelector('#examples').append(b);});
+document.querySelector('#next').onclick=()=>{const actions=examples[selected][2];if(index===actions.length){state=initial();index=0;}else state=step(state,actions[index++]);render();};render();
+</script>
+</html>

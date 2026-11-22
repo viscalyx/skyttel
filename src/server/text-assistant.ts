@@ -2618,6 +2618,69 @@ export function textAssistantRoutes({
       session.state.operations = saveState.operations;
       if (session.state.operations.some((operation) => operation.status === 'pending'))
         throw new MapError('operation_pending', 409);
+      const receiptSdk = process.env.NODE_ENV === 'test' && process.env.SKYTTEL_RECEIPT_SDK;
+      if (receiptSdk === 'openai' || receiptSdk === 'copilot') {
+        const { askReceipt } = await import('./save-receipt.prototype.js');
+        const serial = session.state.inputSerial ?? 0;
+        const reply = await askReceipt(
+          session.state.id,
+          receiptSdk,
+          text,
+          task.signal,
+          async () => {
+            if (!(await saveReady(session, serial, guard)) || session.state.pendingSave)
+              throw new MapError('assistant_save_superseded', 409);
+            const saveGuard = currentSaveGuard(session, serial, guard);
+            const current = await call(session, 'read_my_draft', {}, saveGuard);
+            if (
+              current.version !== expected.version ||
+              current.contentVersion !== expected.contentVersion
+            )
+              throw new MapError('assistant_draft_changed', 409);
+            if (current.conflicts.length) throw new MapError('assistant_conflict', 409);
+            if (!current.readyToSave) throw new MapError('assistant_save_not_requested', 409);
+            const attempt = { operationId: randomUUID(), ...expected };
+            await checkActions(
+              ['prepare_save', 'save_draft'].map((name) => ({ name, arguments: attempt })),
+            );
+            saveGuard();
+            session.state.pendingSave = {
+              ...attempt,
+              messageId: session.state.activeMessage?.id,
+              finishesRequest: wholeRequestComplete,
+            };
+            await call(session, 'prepare_save', attempt, saveGuard);
+            let receipt: TextAssistantView['receipt'];
+            try {
+              receipt = (await call(session, 'save_draft', attempt, saveGuard)).receipt;
+            } catch {
+              guard();
+              const { operation } = await call(
+                session,
+                'read_save_operation',
+                { operationId: attempt.operationId },
+                guard,
+                'lifecycle',
+              );
+              if (operation?.status !== 'succeeded')
+                throw new MapError('assistant_save_unknown', 409);
+              receipt = operation.receipt;
+            }
+            verifyReceipt(session, receipt, attempt);
+            saved(session, receipt, true);
+            await refreshConfirmed(session, guard);
+            session.state.phase = 'working';
+            return JSON.stringify({ receipt });
+          },
+        );
+        guard();
+        checkViewAccess(session);
+        if (session.state.pendingSave) throw new MapError('assistant_save_unknown', 409);
+        session.state.phase = 'ready';
+        session.state.reply = session.state.modelReply = reply;
+        appendConversation(session, { role: 'assistant', text: reply });
+        return;
+      }
       const prototype = process.env.NODE_ENV === 'test' && process.env.SKYTTEL_WHOLE_ASSIGNMENT;
       if (prototype === 'openai' || prototype === 'copilot') {
         const { askPrototype } = await import('./whole-assignment.prototype.js');
@@ -3244,13 +3307,9 @@ export function textAssistantRoutes({
           settleRequests(session, message.id, true);
         }
       } else {
-        let checkTurnActions: CheckTurnActions | undefined;
-        let requestComplete = () => false;
         let readOnly = false;
-        await run(session, message.text, revision, task, expected, (check, mode, complete) => {
-          checkTurnActions = check;
+        await run(session, message.text, revision, task, expected, (_check, mode) => {
           readOnly = mode === 'read';
-          requestComplete = complete;
         });
         guard();
         const unregisteredQuestion = session.execution.parts
@@ -3274,55 +3333,6 @@ export function textAssistantRoutes({
           session.state.requiredNotice = notice;
           session.state.reply = [session.state.reply, notice].filter(Boolean).join('\n');
           appendConversation(session, { role: 'assistant', text: notice });
-        } else if (
-          session.state.phase === 'ready' &&
-          session.state.saveIntent &&
-          !session.state.receipt &&
-          !session.state.pendingSave
-        ) {
-          const serial = session.state.inputSerial ?? 0;
-          if (await saveReady(session, serial, guard)) {
-            const saveGuard = currentSaveGuard(session, serial, guard);
-            const review = await call(session, 'read_my_draft', {}, saveGuard);
-            if (
-              review.version !== (session.state.workVersion ?? expected.version) ||
-              review.contentVersion !== expected.contentVersion
-            )
-              throw new MapError('assistant_draft_changed', 409);
-            if (review.conflicts.length) throw new MapError('assistant_conflict', 409);
-            if (
-              ![
-                review.changes,
-                review.relationships,
-                review.objectTypes,
-                review.relationshipTypes,
-              ].some((changes) => changes?.length)
-            ) {
-              session.state.saveIntent = undefined;
-              return;
-            }
-            const pendingSave = {
-              operationId: randomUUID(),
-              version: review.version,
-              contentVersion: review.contentVersion,
-            };
-            if (!checkTurnActions) throw new MapError('assistant_scope_unavailable', 409);
-            await checkTurnActions([
-              { name: 'prepare_save', arguments: pendingSave },
-              { name: 'save_draft', arguments: pendingSave },
-            ]);
-            saveGuard();
-            session.state.pendingSave = {
-              ...pendingSave,
-              messageId: message.id,
-              finishesRequest: requestComplete(),
-            };
-            await call(session, 'prepare_save', pendingSave, saveGuard);
-            const value = await call(session, 'save_draft', pendingSave, saveGuard);
-            verifyReceipt(session, value.receipt, session.state.pendingSave);
-            saved(session, value.receipt, true);
-            await refreshConfirmed(session, guard);
-          }
         }
         if (session.state.phase === 'ready' && !unregisteredQuestion)
           settleRequests(
