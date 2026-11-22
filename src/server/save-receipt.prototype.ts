@@ -20,7 +20,11 @@ const instructions =
 const model = 'gpt-6.1-terra';
 type Execute = (name: Name) => Promise<string>;
 
-async function connect(kind: string, execute: Execute) {
+type SavePolicy = {
+  needsSave: () => boolean;
+  finishInHook: boolean;
+};
+async function connect(kind: string, execute: Execute, policy: () => SavePolicy | undefined) {
   const onFailure = process.env.SKYTTEL_RECEIPT_HOOK === 'true';
   const port = Number(process.env.SKYTTEL_RECEIPT_PORT);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error('Lokal modellport saknas');
@@ -45,9 +49,26 @@ async function connect(kind: string, execute: Execute) {
         }),
       ),
     });
+    const savingAgent = agent.clone({
+      modelSettings: { toolChoice: 'spara_utkast' },
+      outputGuardrails: [
+        {
+          name: 'Fullfölj den aktuella sparbegäran',
+          execute: async () => {
+            const current = policy();
+            if (current?.finishInHook && current.needsSave()) await execute('spara_utkast');
+            return { tripwireTriggered: false, outputInfo: null };
+          },
+        },
+      ],
+    });
     return {
-      ask: async (text: string, signal: AbortSignal) =>
-        String((await runner.run(agent, text, { session, signal, maxTurns: 4 })).finalOutput),
+      ask: async (text: string, signal: AbortSignal) => {
+        const active = policy()?.needsSave() ? savingAgent : agent;
+        return String(
+          (await runner.run(active, text, { session, signal, maxTurns: 4 })).finalOutput,
+        );
+      },
       close: async () => {},
     };
   }
@@ -61,16 +82,26 @@ async function connect(kind: string, execute: Execute) {
   const session = await client.createSession({
     model,
     github: { capi: { enabled: false }, telemetryEnabled: false },
-    hooks: onFailure
-      ? {
-          handlers: {
-            onPostToolUseFailure: async (event) => {
-              if (event.toolName === 'spara_utkast')
-                return { additionalContext: await execute('kontrollera_sparandet') };
-            },
-          },
-        }
-      : undefined,
+    hooks: {
+      handlers: {
+        onAgentStop: async (event) => {
+          const current = policy();
+          if (!current?.needsSave()) return;
+          if (current.finishInHook) {
+            await execute('spara_utkast');
+          } else if (!event.stopHookActive) {
+            return {
+              decision: 'block',
+              reason: 'Anropa spara_utkast för den aktuella sparbegäran.',
+            };
+          }
+        },
+        onPostToolUseFailure: async (event) => {
+          if (onFailure && event.toolName === 'spara_utkast')
+            return { additionalContext: await execute('kontrollera_sparandet') };
+        },
+      },
+    },
     systemMessage: { mode: 'replace', content: instructions },
     inference: {
       defaultProvider: 'local',
@@ -120,7 +151,7 @@ async function connect(kind: string, execute: Execute) {
   };
 }
 
-type Entry = { turn?: Execute; sdk?: Awaited<ReturnType<typeof connect>> };
+type Entry = { policy?: SavePolicy; turn?: Execute; sdk?: Awaited<ReturnType<typeof connect>> };
 const sessions = new Map<string, Entry>();
 export async function askReceipt(
   id: string,
@@ -128,19 +159,26 @@ export async function askReceipt(
   text: string,
   signal: AbortSignal,
   execute: Execute,
+  policy?: SavePolicy,
 ) {
   const entry = sessions.get(id) ?? {};
   if (entry.turn) throw Error('En begäran pågår redan');
   sessions.set(id, entry);
   entry.turn = AsyncResource.bind(execute);
+  entry.policy = policy;
   try {
-    entry.sdk ??= await connect(kind, (name) => {
-      if (!entry.turn) throw Error('Begäran är avslutad');
-      return entry.turn(name);
-    });
+    entry.sdk ??= await connect(
+      kind,
+      (name) => {
+        if (!entry.turn) throw Error('Begäran är avslutad');
+        return entry.turn(name);
+      },
+      () => entry.policy,
+    );
     return await entry.sdk.ask(text, signal);
   } finally {
     entry.turn = undefined;
+    entry.policy = undefined;
   }
 }
 

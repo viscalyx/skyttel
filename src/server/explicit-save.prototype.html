@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="sv">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Når sparbegäran fram?</title>
+<style>
+:root{font:1rem/1.5 system-ui;color:#202c32;background:#faf9f6}body{max-width:46rem;margin:2rem auto;padding:0 1rem}
+h1{line-height:1.1}dt{font-weight:650}dd{margin:0 0 .6rem}dl,fieldset{background:white;padding:1rem;border:1px solid #aeb9b9;border-radius:.5rem}
+button{font:inherit;margin:.2rem;padding:.45rem .7rem;color:inherit;background:white;border:1px solid #71878c;border-radius:.4rem;cursor:pointer}
+button[aria-pressed=true],#next{background:#125b64;color:white}button:disabled{opacity:.55}button:focus-visible{outline:3px solid #006d9a}
+</style>
+<h1>Når sparbegäran fram?</h1>
+<p>Vad händer med cykeln om modellen svarar med enbart text när du ber Skyttel spara? Den här prototypen visar utfallen från lokala prov med ett färdiggranskat utkast.</p>
+<dl aria-live="polite" id="state"></dl>
+<fieldset><legend>Pröva själv</legend><div id="buttons"></div></fieldset>
+<h2>Följ ett exempel</h2><div id="examples" role="group" aria-label="Välj exempel"></div>
+<p id="description"></p><button id="next"></button>
+<script>
+const initial = () => ({request:'Ingen begäran', saved:false, notice:'Cykeln finns i ditt utkast.'});
+const names = {
+  save:'Be att få spara', read:'Fråga vad utkastet innehåller', text:'Låt modellen svara med bara text',
+  call:'Låt modellen anropa verktyget', retry:'Låt Copilot be modellen försöka igen',
+  hook:'Låt Skyttel kontrollera sparbegäran vid avslut', reset:'Börja om'
+};
+function step(before, action) {
+  if(action === 'reset') return initial();
+  const s = {...before};
+  if(action === 'save' || action === 'read') {
+    s.request = action === 'save' ? 'Spara hela utkastet' : 'Vad finns i mitt utkast?';
+    s.notice = 'Skyttel har tagit emot frågan.';
+  } else if (s.request === 'Ingen begäran') {
+    s.notice = 'Välj en fråga först.';
+  } else if (action === 'text') {
+    s.notice = 'Modellen svarade med ord. Kartan och historiken är oförändrade.';
+  } else if (action === 'retry') {
+    s.notice = s.request === 'Spara hela utkastet' && !s.saved
+      ? 'Copilot ber modellen använda sparverktyget. Modellen kan svara med enbart text igen.'
+      : 'Det finns ingen sparbegäran att fullfölja.';
+  } else if (s.saved) {
+    s.notice = 'Cykeln har redan ett sparkvitto.';
+  } else if (s.request !== 'Spara hela utkastet') {
+    s.notice = 'Frågan gäller bara läsning. Utkastet ligger kvar.';
+  } else {
+    s.saved = true;
+    s.notice = 'Skyttel kontrollerade begäran och utkastet. Sparverktyget sparade cykeln en gång.';
+  }
+  return s;
+}
+const examples = [
+  ['Bara text','Följ vad som händer när modellservern svarar med text trots att OpenAI har begärt sparverktyget.',['save','text']],
+  ['Ny påminnelse','Copilot kan ge modellen en chans till. Se vad som händer om svaret fortfarande bara innehåller text.',['save','text','retry','text']],
+  ['Skyttel fullföljer','Båda SDK:erna kan låta Skyttel fullfölja en aktuell sparbegäran när modellen vill avsluta.',['save','text','hook']],
+  ['Modellen sparar','Kontrollen vid avslut hittar ett redan genomfört sparande.',['save','call','hook']],
+  ['Vanlig läsfråga','Utkastet är redo att sparas även när du bara vill läsa det.',['read','text','hook']]
+];
+let state=initial(), selected=0, index=0;
+function render(){
+ const fields={'Din begäran':state.request, 'Ditt utkast':state.saved?'Tomt':'En blå cykel',
+ 'Hushållets karta':state.saved?'Cykeln är sparad':'Cykeln saknas',
+ 'Ändringshistorik':state.saved?'Ett sparkvitto för cykeln':'Tom','Senaste händelsen':state.notice};
+ const panel=document.querySelector('#state');panel.replaceChildren();
+ for(const [term,value] of Object.entries(fields)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=term;dd.textContent=value;panel.append(dt,dd);}
+ document.querySelectorAll('#examples button').forEach((b,i)=>b.setAttribute('aria-pressed',String(i===selected)));
+ const scenario=examples[selected],next=document.querySelector('#next');
+ document.querySelector('#description').textContent=scenario[1];
+ next.textContent=index===scenario[2].length?'Spela exemplet igen':names[scenario[2][index]];
+}
+for(const [action,label] of Object.entries(names)){
+ const b=document.createElement('button');b.textContent=label;b.onclick=()=>{state=step(state,action);render();};document.querySelector('#buttons').append(b);}
+examples.forEach(([label],i)=>{const b=document.createElement('button');b.textContent=label;b.onclick=()=>{state=initial();selected=i;index=0;render();};document.querySelector('#examples').append(b);});
+document.querySelector('#next').onclick=()=>{const actions=examples[selected][2];if(index===actions.length){state=initial();index=0;}else state=step(state,actions[index++]);render();};render();
+</script>
+</html>

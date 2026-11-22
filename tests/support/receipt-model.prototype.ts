@@ -2,7 +2,11 @@
 import { createServer } from 'node:http';
 import type { SaveReceipt } from '../../src/shared/map.js';
 
-export async function localReceiptModel(skipLookup = false) {
+export async function localReceiptModel(
+  skipLookup = false,
+  behavior?: 'text' | 'obey' | 'read' | 'call',
+) {
+  const choices: unknown[] = [];
   const receipts: (SaveReceipt | undefined)[] = [];
   const requested: string[] = [];
   const server = createServer(async (request, response) => {
@@ -13,6 +17,7 @@ export async function localReceiptModel(skipLookup = false) {
     let input = '';
     for await (const chunk of request) input += chunk;
     const body = JSON.parse(input);
+    choices.push(body.tool_choice ?? null);
     const messages = body.messages as { role: string; tool_call_id?: string; content?: string }[];
     const toolOutputs = messages.filter((message) => message.role === 'tool');
     const results = messages
@@ -34,7 +39,7 @@ export async function localReceiptModel(skipLookup = false) {
     const round = receipts.length;
     const missing =
       toolOutputs.some((item) => item.tool_call_id === 'call_spara_utkast') && !receipt;
-    const name =
+    const receiptTool =
       round === 1
         ? 'spara_utkast'
         : missing &&
@@ -42,6 +47,18 @@ export async function localReceiptModel(skipLookup = false) {
             !toolOutputs.some((item) => item.tool_call_id === 'call_kontrollera_sparandet')
           ? 'kontrollera_sparandet'
           : undefined;
+    const forced = body.tool_choice?.function?.name === 'spara_utkast';
+    const reminded = messages.some(
+      (m) => m.role === 'user' && JSON.stringify(m.content).includes('Anropa spara_utkast'),
+    );
+    const name =
+      behavior === undefined
+        ? receiptTool
+        : behavior === 'call' && round === 1
+          ? 'spara_utkast'
+          : behavior === 'obey' && !receipt && (forced || reminded)
+            ? 'spara_utkast'
+            : undefined;
     if (name) requested.push(name);
     const followup = messages.some(
       (item) => item.role === 'user' && JSON.stringify(item.content).includes('Vilket kvitto'),
@@ -53,13 +70,16 @@ export async function localReceiptModel(skipLookup = false) {
           ],
         }
       : {
-          content: !receipt
-            ? 'Modellen påstår att cykeln är sparad utan kvitto.'
-            : !followup
-              ? 'Sparandet är bekräftat.'
-              : receipt.operationId +
-                ' ' +
-                receipt.changes.map((change) => change.after?.name).join(', '),
+          content:
+            behavior === 'read'
+              ? 'Cykeln finns i utkastet.'
+              : !receipt
+                ? 'Modellen påstår att cykeln är sparad utan kvitto.'
+                : !followup
+                  ? 'Sparandet är bekräftat.'
+                  : receipt.operationId +
+                    ' ' +
+                    receipt.changes.map((change) => change.after?.name).join(', '),
         };
     const finish = name ? 'tool_calls' : 'stop';
     const completion = { id: 'chatcmpl-prov-' + round, model: body.model, created: 1 };
@@ -100,6 +120,7 @@ export async function localReceiptModel(skipLookup = false) {
     port: String(address.port),
     receipts,
     requested,
+    choices,
     close: () => {
       server.closeAllConnections();
       return new Promise<void>((resolve) => server.close(() => resolve()));

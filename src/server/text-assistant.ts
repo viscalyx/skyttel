@@ -2622,6 +2622,8 @@ export function textAssistantRoutes({
       if (receiptSdk === 'openai' || receiptSdk === 'copilot') {
         const { askReceipt } = await import('./save-receipt.prototype.js');
         const serial = session.state.inputSerial ?? 0;
+        const policy = process.env.SKYTTEL_SAVE_PROBE;
+        const requestedSave = Boolean(session.state.saveIntent && review.readyToSave);
         const reply = await askReceipt(
           session.state.id,
           receiptSdk,
@@ -2679,13 +2681,27 @@ export function textAssistantRoutes({
             const { receipt } = await call(session, 'save_draft', attempt, saveGuard);
             return confirm(receipt, attempt);
           },
+          policy
+            ? {
+                needsSave: () =>
+                  Boolean(requestedSave && session.state.saveIntent && !session.state.pendingSave),
+                finishInHook: policy === 'hook',
+              }
+            : undefined,
         );
         guard();
         checkViewAccess(session);
         if (session.state.pendingSave) throw new MapError('assistant_save_unknown', 409);
         session.state.phase = 'ready';
-        session.state.reply = session.state.modelReply = reply;
-        appendConversation(session, { role: 'assistant', text: reply });
+        if (policy && requestedSave) {
+          if (!session.state.activeMessage?.completedSaveOperationId)
+            throw new MapError('assistant_save_not_requested', 409);
+          session.state.modelReply = savedReply;
+          session.state.reply = savedReply;
+        } else {
+          session.state.reply = session.state.modelReply = reply;
+          appendConversation(session, { role: 'assistant', text: reply });
+        }
         return;
       }
       const prototype = process.env.NODE_ENV === 'test' && process.env.SKYTTEL_WHOLE_ASSIGNMENT;
