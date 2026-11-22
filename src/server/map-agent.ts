@@ -1,3 +1,4 @@
+import { EventEmitter, once } from 'node:events';
 import {
   Agent,
   type FunctionTool,
@@ -19,7 +20,7 @@ export type MapAgentCall = Pick<ResponseFunctionToolCall, 'name' | 'call_id' | '
 
 interface ToolRound {
   calls: MapAgentCall[];
-  independentReads: boolean;
+  parallelReadCount: number;
   usage?: ResponseUsage;
   execute: (action: MapAgentCall) => Promise<unknown>;
   finish: () => boolean;
@@ -38,7 +39,8 @@ export async function runMapAgent(
   next: () => Promise<ToolRound | { text: string; usage?: ResponseUsage } | undefined>,
 ) {
   const toolExecution = { maxFunctionToolConcurrency: 1 };
-  let execute: ToolRound['execute'];
+  let execute: (call: MapAgentCall, signal?: AbortSignal) => Promise<unknown>;
+  const callIds = new Set<string>();
   let finish: ToolRound['finish'];
   const model: Model = {
     async getResponse() {
@@ -57,12 +59,27 @@ export async function runMapAgent(
           ],
         };
       finish = round.finish;
+      for (const { call_id } of round.calls) {
+        if (callIds.has(call_id)) throw new MapError('invalid_request', 400);
+        callIds.add(call_id);
+      }
       execute = round.execute;
-      if (new Set(round.calls.map((call) => call.call_id)).size !== round.calls.length)
-        throw new MapError('invalid_request', 400);
       // Only server-declared independent reads may share a snapshot in parallel.
       // Reports follow their companion reads and map selections in order.
-      toolExecution.maxFunctionToolConcurrency = round.independentReads ? round.calls.length : 1;
+      toolExecution.maxFunctionToolConcurrency = Math.max(1, round.parallelReadCount);
+      if (round.parallelReadCount > 1 && round.parallelReadCount < round.calls.length) {
+        const completed = new EventEmitter();
+        let count = 0;
+        execute = async (call, signal) => {
+          const index = round.calls.findIndex((action) => action.call_id === call.call_id);
+          if (index >= round.parallelReadCount)
+            while (count < index) await once(completed, 'done', { signal });
+          const result = await round.execute(call);
+          count++;
+          completed.emit('done');
+          return result;
+        };
+      }
       return {
         usage,
         output: round.calls.map(({ name, arguments: args, call_id }) => ({
@@ -94,7 +111,7 @@ export async function runMapAgent(
       const callId = details?.toolCall?.callId;
       if (!callId) throw new MapError('invalid_request', 400);
       return JSON.stringify(
-        await execute({ name: definition.name, arguments: args, call_id: callId }),
+        await execute({ name: definition.name, arguments: args, call_id: callId }, details?.signal),
       );
     },
   }));

@@ -246,6 +246,55 @@ test('a follow-up identifies the blue bike from the checked change and leaves th
   expect(await readMap()).toMatchObject({ objects: initial.objects, draft: beforeQuestion.draft });
 });
 
+test('a repeated tool call identity stops work before another edit can run', async () => {
+  let typeId: string;
+  const read = modelTool('read_type_catalog', {});
+  const model = textModel((request) =>
+    lastToolResult(request)
+      ? [
+          {
+            ...modelTool('propose_object', {
+              version: 0,
+              contentVersion: 1,
+              id: 'bike',
+              baseRevision: null,
+              value: { typeId, name: 'Blå cykeln' },
+            }),
+            call_id: read.call_id,
+          },
+        ]
+      : [read],
+  );
+  await setup(model.provider);
+  const readMap = async () => (await browser.get(path.replace('/text-assistant', '/map'))).json();
+  const before = await readMap();
+  typeId = before.types[0].id;
+  const failed = await message(await start(), 'Lägg till Blå cykeln i utkastet.');
+  expect(failed.error).toBe('invalid_request');
+  expect((await readMap()).draft).toEqual(before.draft);
+});
+
+test('malformed selection arguments stop the proposed companion edit', async () => {
+  let typeId: string;
+  const model = textModel(() => [
+    { ...modelTool('show_map_item', {}), arguments: '{' },
+    modelTool('propose_object', {
+      version: 0,
+      contentVersion: 1,
+      id: 'bike',
+      baseRevision: null,
+      value: { name: 'Blå cykeln', typeId },
+    }),
+  ]);
+  await setup(model.provider);
+  const readMap = async () => (await browser.get(path.replace('/text-assistant', '/map'))).json();
+  const before = await readMap();
+  typeId = before.types[0].id;
+  const failed = await message(await start(), 'Lägg till och visa Blå cykeln i utkastet.');
+  expect(failed.phase).toBe('error');
+  expect((await readMap()).draft).toEqual(before.draft);
+});
+
 test('a relevant verified map read answers a follow-up without another tool round and refreshes after saving', async () => {
   const model = textModel((request) => {
     const current = JSON.parse(
@@ -296,7 +345,12 @@ test('a relevant verified map read answers a follow-up without another tool roun
   expect(model.requests).toHaveLength(5);
 });
 
-test('independent reads overlap and identical concurrent reads share one authorized result', async () => {
+test('independent reads overlap and identical concurrent reads share one authorized result', () =>
+  checkConcurrentReads(false));
+
+test('a draft report waits for its concurrent companion reads', () => checkConcurrentReads(true));
+
+async function checkConcurrentReads(report: boolean) {
   const entered = new Map<string, number>();
   let release = () => {};
   const held = new Promise<void>((resolve) => {
@@ -305,6 +359,9 @@ test('independent reads overlap and identical concurrent reads share one authori
   const model = textModel((request) => {
     if (model.requests.length === 1)
       return [
+        ...(report
+          ? [modelTool('report_result', { source: 'draft', continueResponse: true })]
+          : []),
         modelTool('read_map', { query: 'Lina' }),
         modelTool('read_map', { query: 'Lina' }),
         modelTool('read_type_catalog', {}),
@@ -382,7 +439,7 @@ test('independent reads overlap and identical concurrent reads share one authori
   } finally {
     release();
   }
-});
+}
 
 test('parallel reads that cross a manual draft change cannot supply a mixed snapshot to the model', async () => {
   let release = () => {};

@@ -2,6 +2,24 @@ import { z } from 'zod';
 import { partReference, partUpdates, pendingQuestions } from './pending-parts.js';
 import type { connectTextAssistant } from './text-assistant-mcp.js';
 
+export const submittedChanges = z
+  .object({
+    version: z.number().int().nonnegative(),
+    contentVersion: z.number().int().positive(),
+    completion: z.enum(['draft', 'save']),
+    continueResponse: z.boolean().default(false),
+    questions: pendingQuestions.default([]),
+    resolves: z.array(partReference).max(12).default([]),
+    operations: z
+      .array(z.object({ name: z.string(), arguments: z.record(z.string(), z.unknown()) }).strict())
+      .min(1)
+      .max(24),
+  })
+  .strict();
+
+const envelope = submittedChanges.toJSONSchema({ io: 'input' });
+const operationsSchema = submittedChanges.shape.operations.toJSONSchema({ io: 'input' });
+
 export function mapAgentTools(catalog: Awaited<ReturnType<typeof connectTextAssistant>>['tools']) {
   // The executor owns the atomic transport command. The work model
   // proposes submit_changes, which must pass independent batch review.
@@ -56,16 +74,9 @@ export function mapAgentTools(catalog: Awaited<ReturnType<typeof connectTextAssi
     parameters: {
       type: 'object',
       properties: {
-        version: { type: 'integer', minimum: 0 },
-        contentVersion: { type: 'integer', minimum: 1 },
-        completion: { type: 'string', enum: ['draft', 'save'] },
-        continueResponse: { type: 'boolean' },
-        questions: z.toJSONSchema(pendingQuestions),
-        resolves: z.toJSONSchema(z.array(partReference)),
+        ...envelope.properties,
         operations: {
-          type: 'array',
-          minItems: 1,
-          maxItems: 24,
+          ...operationsSchema,
           items: {
             anyOf: draftTools.map((tool) => ({
               type: 'object',
@@ -89,7 +100,7 @@ export function mapAgentTools(catalog: Awaited<ReturnType<typeof connectTextAssi
           },
         },
       },
-      required: ['version', 'contentVersion', 'completion', 'operations'],
+      required: envelope.required,
       additionalProperties: false,
     },
     strict: false,

@@ -104,6 +104,34 @@ For a single provider integration regression, use the real-model or real-voice
 suites below. Use `$evaluate-models` for catalog qualification and model
 comparison. Both workflows require explicit authorization for billable calls.
 
+### Measure map assignment and follow-up latency
+
+Compare the current commit on `f/issue-792` with the fixed baseline. Prepare
+and run each revision using the [worktree guide](devcontainer.md#prepare-an-additional-worktree).
+Use the same browser, installation settings, and model access for both
+runs. Obtain explicit approval for billable model calls before measuring.
+
+```sh
+baseline=713f4074a976d7865c0a7a6a3404c877faa487ce
+git worktree add --detach ../skyttel-baseline "$baseline"
+```
+
+1. Start a conversation in a fresh household with an empty map and draft.
+   Select GPT-6.1 Terra with high reasoning effort. Open the text view and
+   start a network recording in the browser's developer tools.
+2. Send “Lägg till ett objekt av typen Fordon med namnet Blå cykeln i
+   mitt utkast. Lämna det i utkastet.” Measure from the start of the
+   message POST to the end of the first status response containing its
+   completed result. Verify that the draft contains one blue bike and
+   record its ID from that response.
+3. Send “Vad ändrade du precis? Ange objektets namn och id.” Measure from
+   the start of this POST to the end of the first status response with the
+   completed answer. Check the name and ID against the first result.
+   Confirm that the draft version is the same and the saved map is empty.
+4. Record the commit, model, reasoning effort and elapsed milliseconds
+   for each request. Record a missing or incorrect result as a failure.
+   Use a fresh household for every repetition.
+
 ## CI font profile
 
 CI uses the bundled DejaVu Sans regular and bold fonts for system-font

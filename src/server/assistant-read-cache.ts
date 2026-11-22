@@ -81,7 +81,7 @@ export function assistantReadCache(
     if (previous !== undefined && previous !== current) invalidated.add(name);
     sources.set(name, current);
   }
-  function checkSnapshot() {
+  function snapshotGuard() {
     const before = combinedStamp();
     const epoch = generation;
     return () => {
@@ -114,9 +114,9 @@ export function assistantReadCache(
       }
       return facts;
     },
-    checkSnapshot,
+    snapshotGuard,
     async consistent<T>(load: () => Promise<T>): Promise<T> {
-      const check = checkSnapshot();
+      const check = snapshotGuard();
       const value = await load();
       check();
       return value;

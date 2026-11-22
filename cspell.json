@@ -4,7 +4,6 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
-    "gitrevision",
     "equirectangular",
     "Brunier",
     "Avrea",

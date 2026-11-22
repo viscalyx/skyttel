@@ -91,7 +91,7 @@ import { draftDiscards } from './draft-discards.js';
 import { householdAccess } from './households.js';
 import { householdMap, MapError } from './map.js';
 import { type MapAgentCall, runMapAgent } from './map-agent.js';
-import { mapAgentTools } from './map-agent-tools.js';
+import { mapAgentTools, submittedChanges } from './map-agent-tools.js';
 import {
   partReference,
   partUpdates,
@@ -150,21 +150,6 @@ const resultReport = z.discriminatedUnion('source', [
     })
     .strict(),
 ]);
-
-const submittedChanges = z
-  .object({
-    version: z.number().int().nonnegative(),
-    contentVersion: z.number().int().positive(),
-    completion: z.enum(['draft', 'save']),
-    continueResponse: z.boolean().default(false),
-    questions: pendingQuestions.default([]),
-    resolves: z.array(partReference).max(12).default([]),
-    operations: z
-      .array(z.object({ name: z.string(), arguments: z.record(z.string(), z.unknown()) }).strict())
-      .min(1)
-      .max(24),
-  })
-  .strict();
 
 export function textAssistantRoutes({
   database,
@@ -2939,14 +2924,19 @@ export function textAssistantRoutes({
         }
         const submits = calls.some((action) => action.name === 'submit_changes');
         if (submits && calls.length !== 1) throw new MapError('invalid_request', 400);
+        // Reject malformed work before the SDK can return a parse error to the model.
+        const submission = submits
+          ? submittedChanges.safeParse(JSON.parse(calls[0].arguments))
+          : undefined;
+        if (submission && !submission.success) throw new MapError('invalid_request', 400);
         if (!submits) {
           const operations = [];
           for (const action of calls) {
             if (!tools.some((tool) => tool.name === action.name))
               throw new MapError('assistant_unknown_tool', 409);
+            const args = JSON.parse(action.arguments) as Record<string, unknown>;
             const tool = session.execution.mcp.tools.find((tool) => tool.name === action.name);
             if (!tool) continue; // Local conversation/display tools do not mutate the draft.
-            const args = JSON.parse(action.arguments) as Record<string, unknown>;
             // Internal saving supplies its own operation identity at dispatch.
             // Validate the same server-owned field here without registering work.
             const checkedArgs = ['save_draft', 'prepare_save'].includes(action.name)
@@ -3011,7 +3001,7 @@ export function textAssistantRoutes({
               throw new MapError('invalid_request', 400);
           }
         }
-        const parallelReads = Boolean(
+        const guardReadSnapshot = Boolean(
           readCalls.length && (terminal || calls.length === readCalls.length),
         );
         const orderedCalls = terminal
@@ -3021,12 +3011,18 @@ export function textAssistantRoutes({
               terminal,
             ]
           : calls;
-        const checkSnapshot = parallelReads ? session.execution.reads.checkSnapshot() : undefined;
+        const checkSnapshot = guardReadSnapshot
+          ? session.execution.reads.snapshotGuard()
+          : undefined;
         let terminalResult: boolean | undefined;
-        const submitChanges = async (action: MapAgentCall) => {
-          const parsed = submittedChanges.safeParse(JSON.parse(action.arguments));
-          if (!parsed.success) throw new MapError('invalid_request', 400);
-          const batch = parsed.data;
+        function continueAfterResult(required: boolean) {
+          terminalResult = !required;
+          if (required) session.state.phase = 'working';
+        }
+        const submitChanges = async (
+          action: MapAgentCall,
+          batch: z.infer<typeof submittedChanges>,
+        ) => {
           if (batch.version !== version || batch.contentVersion !== contentVersion)
             throw new MapError('assistant_draft_changed', 409);
           if (
@@ -3144,10 +3140,9 @@ export function textAssistantRoutes({
             appendConversation(session, { role: 'assistant', text: session.state.reply });
           if (session.state.modelReply)
             appendConversation(session, { role: 'assistant', text: session.state.modelReply });
-          if (batch.continueResponse || !wholeRequestComplete || hasReadyPendingParts(session)) {
-            session.state.phase = 'working';
-            terminalResult = false;
-          } else terminalResult = true;
+          continueAfterResult(
+            batch.continueResponse || !wholeRequestComplete || hasReadyPendingParts(session),
+          );
           return result;
         };
 
@@ -3217,10 +3212,7 @@ export function textAssistantRoutes({
                 role: 'assistant',
                 text: session.state.modelReply,
               });
-            if (value.continueResponse) {
-              session.state.phase = 'working';
-              terminalResult = false;
-            } else terminalResult = true;
+            continueAfterResult(value.continueResponse);
             return result;
           }
           if (action.name === 'report_result') {
@@ -3256,14 +3248,11 @@ export function textAssistantRoutes({
             session.state.modelReply = turnReply(session);
             session.state.phase = 'ready';
             appendConversation(session, { role: 'assistant', text: session.state.reply });
-            if (
+            continueAfterResult(
               report.continueResponse ||
-              scope.responseRequired ||
-              (scope.mode === 'work' && (!checkedWorkComplete || hasReadyPendingParts(session)))
-            ) {
-              session.state.phase = 'working';
-              terminalResult = false;
-            } else terminalResult = true;
+                scope.responseRequired ||
+                (scope.mode === 'work' && (!checkedWorkComplete || hasReadyPendingParts(session))),
+            );
             return session.state.result;
           }
           if (action.name === 'show_map_object' || action.name === 'show_map_item') {
@@ -3334,16 +3323,10 @@ export function textAssistantRoutes({
             terminalResult = true;
             return { saved: false };
           }
-          if (isSave && session.state.activeMessage?.saveSuperseded) {
-            session.state.phase = 'ready';
-            session.state.modelReply = undefined;
-            session.state.reply = undefined;
-            terminalResult = true;
-            return { saved: false };
-          }
-          if (isSave && !session.state.saveIntent && !originalSaveIntent)
+          const superseded = session.state.activeMessage?.saveSuperseded;
+          if (isSave && !superseded && !session.state.saveIntent && !originalSaveIntent)
             throw new MapError('assistant_save_not_requested', 409);
-          if (isSave && !(await saveReady(session, serial, guard))) {
+          if (isSave && (superseded || !(await saveReady(session, serial, guard)))) {
             session.state.phase = 'ready';
             session.state.modelReply = undefined;
             session.state.reply = undefined;
@@ -3510,14 +3493,16 @@ export function textAssistantRoutes({
         };
         return {
           calls: orderedCalls,
-          independentReads: onlyReads,
+          parallelReadCount: guardReadSnapshot ? readCalls.length : 0,
           usage: response.usage,
           async execute(action: MapAgentCall) {
             guard();
             checkViewAccess(session);
             checkSnapshot?.();
             if (terminalResult) return { interrupted: true };
-            return action.name === 'submit_changes' ? submitChanges(action) : executeTool(action);
+            return submission?.success
+              ? submitChanges(action, submission.data)
+              : executeTool(action);
           },
           finish() {
             guard();
