@@ -1,12 +1,14 @@
 ---
 name: implement-background
-description: Implement a Skyttel spatial-map background from a scenario, or write its spherical panorama prompt.
+description: Implement a spherical panorama for Skyttel’s spatial map or write its image prompt. Use only for this project.
 ---
 
-# Implement a map background
+# Implement a Skyttel panorama
 
-Read the scenario from the request or its background issue. If neither
-supplies an environment, ask for one. Reuse details already given.
+Apply this workflow only when the target is Skyttel’s spatial map. Every
+background it produces covers the full sphere around the observer. Read the
+scenario from the request or its background issue. If neither supplies an
+environment, ask for one.
 
 ## Place the observer
 
@@ -24,15 +26,16 @@ supplies an environment, ask for one. Reuse details already given.
 
 ## Produce the requested result
 
-- For a panorama, fill the [prompt template](PANORAMA.md) with the scenario.
-  The same file shows a complete Milky Way example. For a prompt request,
-  return one standalone, paste-ready prompt in the scenario’s language,
-  followed by the map checks to perform once an image exists.
-- For an implementation, use the scene description to generate the texture
-  or render the environment using the requested medium. When using a source,
-  distinguish visual inspiration from reused imagery or data and carry any
-  required credit into the delivered background.
-- Connect the result to the existing themed background choice. Preserve a
+Fill the [panorama template](PANORAMA.md) for every scenario. It specifies
+the projection, seam and poles and includes a worked example.
+
+- For a prompt request, return one standalone, paste-ready prompt in the
+  scenario’s language, followed by the checks to perform once an image exists.
+- For an implementation, generate or render the scene as a 2:1
+  equirectangular texture covering 360° horizontally and 180° vertically.
+  Check that its width is twice its height before mapping it to the inside
+  of the sphere. Credit any source imagery or data used in the asset.
+  Connect the panorama to the existing themed background choice. Preserve a
   saved choice’s identifier when improving its appearance. For visibility,
   personal settings, camera response and reduced motion, follow
   [Ordna din personliga vy](../../../docs/user-guide/spatial-map.md#ordna-din-personliga-vy).
