@@ -319,6 +319,10 @@ export function SpatialMap({
   const settings = personal?.view?.settings ?? defaultViewSettings;
   const [localSettings, setLocalSettings] = useState(defaultViewSettings);
   const preferences = personal ? settings : localSettings;
+  const panoramaSelected =
+    theme === 'dark' &&
+    (preferences.darkBackground === 'milky-way' || preferences.darkBackground === 'milky-way-2');
+  const showPanoramaMotionHelp = preferences.background && panoramaSelected;
   const skyCredit =
     theme === 'dark' && preferences.background && skyCredits[preferences.darkBackground];
   const [hasUnsavedMotion, setHasUnsavedMotion] = useState(false);
@@ -1311,9 +1315,18 @@ export function SpatialMap({
             <fieldset
               disabled={backgroundMotionDisabled}
               aria-busy={personal?.pending || undefined}
+              aria-describedby={
+                showPanoramaMotionHelp ? `${labelPrefix}-panorama-motion-help` : undefined
+              }
               className="background-motion"
             >
               <legend>Bakgrundens rörelse</legend>
+              {showPanoramaMotionHelp && (
+                <p id={`${labelPrefix}-panorama-motion-help`}>
+                  Stjärnorna har fasta riktningar på himlen. Därför påverkar Panoreringsstyrka och
+                  Lageravstånd inte panoramat.
+                </p>
+              )}
               {(
                 [
                   ['panStrength', 'Panoreringsstyrka'],
@@ -1328,7 +1341,9 @@ export function SpatialMap({
                   value={preferences[key]}
                   percent={key !== 'layerDistance'}
                   busy={personal?.pending ?? false}
-                  disabled={backgroundMotionDisabled}
+                  disabled={
+                    backgroundMotionDisabled || (panoramaSelected && key !== 'zoomStrength')
+                  }
                   onCommit={(value) => configure({ [key]: value })}
                   onUnsavedChange={setHasUnsavedMotion}
                 />
@@ -1337,15 +1352,19 @@ export function SpatialMap({
                 type="button"
                 aria-disabled={personal?.pending || undefined}
                 onClick={() => {
-                  if (!personal?.pending)
-                    configure({
-                      panStrength: defaultViewSettings.panStrength,
-                      zoomStrength: defaultViewSettings.zoomStrength,
-                      layerDistance: defaultViewSettings.layerDistance,
-                    });
+                  if (personal?.pending) return;
+                  configure(
+                    panoramaSelected
+                      ? { zoomStrength: defaultViewSettings.zoomStrength }
+                      : {
+                          panStrength: defaultViewSettings.panStrength,
+                          zoomStrength: defaultViewSettings.zoomStrength,
+                          layerDistance: defaultViewSettings.layerDistance,
+                        },
+                  );
                 }}
               >
-                Återställ rörelse
+                {panoramaSelected ? 'Återställ zoomstyrka' : 'Återställ rörelse'}
               </button>
             </fieldset>
             {reducedMotion && <p>Bakgrunden är stilla eftersom minskad rörelse är aktiverad.</p>}
