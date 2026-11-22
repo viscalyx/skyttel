@@ -4733,43 +4733,52 @@ test('a relevant map lookup omits connected private details and saved text canno
   expect(JSON.stringify(model.requests)).toContain('Granne');
 });
 
-test('revoking the actual MCP grant during a plain model reply prevents returning cached private context', async () => {
-  let release!: (value: unknown[]) => void;
+test('serverns ansvar när behörigheten återkallas under SDK-svaret', async () => {
+  const sdk = await import('../../../src/server/whole-assignment.prototype.js');
+  vi.stubEnv('NODE_ENV', 'test');
+  vi.stubEnv('SKYTTEL_WHOLE_ASSIGNMENT', 'openai');
+  let release!: (value: string) => void;
   let held = false;
-  const model = textModel(
+  const stub = vi.spyOn(sdk, 'askPrototype').mockImplementation(
     () =>
-      new Promise<unknown[]>((resolve) => {
+      new Promise<string>((resolve) => {
         held = true;
         release = resolve;
       }),
   );
-  await setup(model.provider);
-  await webProposal();
-  const session = await start();
-  await browser.post(`${path}/${session.id}/messages`, {
-    headers: { origin: app.origin },
-    data: {
-      revision: 0,
-      ...displayedVersion(session),
-      requestId: 'held-revocation',
-      text: 'Läs mitt privata utkast.',
-    },
-  });
-  await expect.poll(() => held).toBe(true);
-  const connection = (await (await browser.get(`${app.origin}/api/assistants/context`)).json())
-    .connections[0];
-  expect(
-    (
-      await browser.post(`${app.origin}/api/assistants/${connection.id}/revoke`, {
-        headers: { origin: app.origin },
-        data: {},
-      })
-    ).status(),
-  ).toBe(200);
-  release([modelMessage('Det gamla privata innehållet ska inte visas.')]);
-  await expect.poll(async () => (await browser.get(`${path}/${session.id}`)).status()).toBe(404);
-  const result = await browser.get(`${path}/${session.id}`);
-  expect(await result.text()).not.toContain('privata innehållet');
+  const model = textModel(() => [], readOnlyScope);
+  try {
+    await setup(model.provider);
+    await webProposal();
+    const session = await start();
+    await browser.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data: {
+        revision: 0,
+        ...displayedVersion(session),
+        requestId: 'held-revocation',
+        text: 'Läs mitt privata utkast.',
+      },
+    });
+    await expect.poll(() => held).toBe(true);
+    const connection = (await (await browser.get(`${app.origin}/api/assistants/context`)).json())
+      .connections[0];
+    expect(
+      (
+        await browser.post(`${app.origin}/api/assistants/${connection.id}/revoke`, {
+          headers: { origin: app.origin },
+          data: {},
+        })
+      ).status(),
+    ).toBe(200);
+    release('Det gamla privata innehållet ska inte visas.');
+    await expect.poll(async () => (await browser.get(`${path}/${session.id}`)).status()).toBe(404);
+    const result = await browser.get(`${path}/${session.id}`);
+    expect(await result.text()).not.toContain('privata innehållet');
+  } finally {
+    stub.mockRestore();
+    vi.unstubAllEnvs();
+  }
 });
 
 test('provider debug environment does not enable conversation or credential logging', async () => {
@@ -5445,4 +5454,85 @@ test
     }
   },
   250_000,
+);
+
+test.each(['läsa', 'avslag', 'avbrott före skrivning'])(
+  'serverns ansvar när SDK:t begär en ändring: %s',
+  async (scenario) => {
+    const module = await import('../../../src/server/whole-assignment.prototype.js');
+    let typeId = '';
+    let writes = 0;
+    let lookups = 0;
+    const stub = vi
+      .spyOn(module, 'askPrototype')
+      .mockImplementation((_id, _kind, _key, _text, _signal, submit) =>
+        submit({
+          names: [scenario === 'avbrott före skrivning' ? 'Solcykeln' : 'Månskenscykeln'],
+          typeId,
+        }),
+      );
+    const model = textModel(
+      () => {
+        throw new Error('Den gamla arbetsloopen får inte köras');
+      },
+      (request) => {
+        if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+          return scenario === 'läsa'
+            ? readOnlyScope()
+            : [
+                modelMessage(
+                  JSON.stringify({
+                    mode: 'work',
+                    request: 'Lägg till Solcykeln',
+                    responseRequired: false,
+                  }),
+                ),
+              ];
+        return [
+          modelMessage(
+            JSON.stringify(
+              scenario === 'avslag'
+                ? { decision: 'deny', operation: 0 }
+                : { decision: 'allow', complete: true, fulfillsRequest: true },
+            ),
+          ),
+        ];
+      },
+    );
+    vi.stubEnv('NODE_ENV', 'test');
+    vi.stubEnv('SKYTTEL_WHOLE_ASSIGNMENT', 'openai');
+    try {
+      await setup(model.provider, undefined, async (req, dispatch) => {
+        if (req.method === 'POST' && new URL(req.url).pathname === '/mcp') {
+          const rpc = await req.clone().json();
+          if (rpc.params?.name === 'apply_draft_batch') {
+            writes++;
+            if (scenario === 'avbrott före skrivning') throw new Error('Brutet före skrivningen');
+          }
+          if (rpc.params?.name === 'read_draft_batch') lookups++;
+        }
+        return dispatch(req);
+      });
+      const mapPath = path.replace('/text-assistant', '/map');
+      typeId = (await (await browser.get(mapPath)).json()).types[0].id;
+      const result = await message(
+        await start(),
+        scenario === 'läsa' ? 'Vad finns i mitt utkast?' : 'Lägg till Solcykeln i utkastet.',
+      );
+      expect(stub).toHaveBeenCalledOnce();
+      expect(result.error).toBe(
+        scenario === 'avbrott före skrivning'
+          ? 'assistant_batch_not_committed'
+          : 'assistant_action_out_of_scope',
+      );
+      expect(writes).toBe(scenario === 'avbrott före skrivning' ? 1 : 0);
+      expect(lookups).toBe(scenario === 'avbrott före skrivning' ? 1 : 0);
+      const map = await (await browser.get(mapPath)).json();
+      expect(map.draft.changes).toEqual([]);
+      expect(map.objects).toEqual([]);
+    } finally {
+      stub.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  },
 );
