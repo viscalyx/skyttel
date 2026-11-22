@@ -1,0 +1,6 @@
+interface:
+  display_name: "Implement Background"
+  short_description: "Build a Skyttel map background from a scenario"
+  default_prompt: "Use $implement-background to implement the Skyttel map background described in my scenario."
+policy:
+  allow_implicit_invocation: false
