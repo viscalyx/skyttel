@@ -1,0 +1,241 @@
+{
+  "trackCount": 1,
+  "sampleRate": 16000,
+  "interrupted": true,
+  "clickMs": 13472,
+  "openMs": 14688,
+  "inputAfter": " Jag menar abonnemanget månadslagring plus",
+  "trace": [
+    {
+      "ms": 832,
+      "kind": "session.started"
+    },
+    {
+      "ms": 832,
+      "kind": "fråga"
+    },
+    {
+      "ms": 2144,
+      "kind": "session.input_transcript.delta",
+      "text": " Vad"
+    },
+    {
+      "ms": 2752,
+      "kind": "session.input_transcript.delta",
+      "text": " kostar"
+    },
+    {
+      "ms": 3360,
+      "kind": "session.input_transcript.delta",
+      "text": " Spotify"
+    },
+    {
+      "ms": 4064,
+      "kind": "session.delegation.created"
+    },
+    {
+      "ms": 4320,
+      "kind": "session.output_transcript.delta",
+      "text": " Det ska"
+    },
+    {
+      "ms": 4480,
+      "kind": "session.output_transcript.delta",
+      "text": " jag kontroll"
+    },
+    {
+      "ms": 4672,
+      "kind": "session.output_transcript.delta",
+      "text": "era."
+    },
+    {
+      "ms": 9856,
+      "kind": "serverns svar",
+      "text": "Enligt kartan kostar Spotify Premium Family 179 kronor per månad."
+    },
+    {
+      "ms": 12480,
+      "kind": "session.output_transcript.delta",
+      "text": " Enligt"
+    },
+    {
+      "ms": 12640,
+      "kind": "session.output_transcript.delta",
+      "text": " kartan"
+    },
+    {
+      "ms": 13024,
+      "kind": "session.output_transcript.delta",
+      "text": " kostar"
+    },
+    {
+      "ms": 13440,
+      "kind": "session.output_transcript.delta",
+      "text": " Spotify"
+    },
+    {
+      "ms": 13472,
+      "kind": "Avbryt och starta rättelsen"
+    },
+    {
+      "ms": 13984,
+      "kind": "session.output_transcript.delta",
+      "text": " Premium"
+    },
+    {
+      "ms": 14688,
+      "kind": "session.input_transcript.delta",
+      "text": " Jag"
+    },
+    {
+      "ms": 14688,
+      "kind": "högtalaren öppnar"
+    },
+    {
+      "ms": 15072,
+      "kind": "session.input_transcript.delta",
+      "text": " menar"
+    },
+    {
+      "ms": 15936,
+      "kind": "session.input_transcript.delta",
+      "text": " abonnemang"
+    },
+    {
+      "ms": 16064,
+      "kind": "session.input_transcript.delta",
+      "text": "et"
+    },
+    {
+      "ms": 16928,
+      "kind": "session.input_transcript.delta",
+      "text": " månadsl"
+    },
+    {
+      "ms": 17120,
+      "kind": "session.input_transcript.delta",
+      "text": "agring"
+    },
+    {
+      "ms": 17280,
+      "kind": "session.input_transcript.delta",
+      "text": " plus"
+    },
+    {
+      "ms": 17632,
+      "kind": "session.delegation.created"
+    },
+    {
+      "ms": 17824,
+      "kind": "session.output_transcript.delta",
+      "text": " Okej"
+    },
+    {
+      "ms": 18144,
+      "kind": "session.output_transcript.delta",
+      "text": ", då"
+    },
+    {
+      "ms": 18208,
+      "kind": "session.output_transcript.delta",
+      "text": " kollar"
+    },
+    {
+      "ms": 18592,
+      "kind": "session.output_transcript.delta",
+      "text": " jag det"
+    },
+    {
+      "ms": 18784,
+      "kind": "session.output_transcript.delta",
+      "text": "."
+    },
+    {
+      "ms": 26752,
+      "kind": "serverns svar",
+      "text": "Molnlagring Plus kostar enligt kartan 199 kronor per månad."
+    },
+    {
+      "ms": 28352,
+      "kind": "session.output_transcript.delta",
+      "text": " Moln"
+    },
+    {
+      "ms": 28544,
+      "kind": "session.output_transcript.delta",
+      "text": "lagring"
+    },
+    {
+      "ms": 28992,
+      "kind": "session.output_transcript.delta",
+      "text": " Plus"
+    },
+    {
+      "ms": 29120,
+      "kind": "session.output_transcript.delta",
+      "text": " kostar"
+    },
+    {
+      "ms": 29536,
+      "kind": "session.output_transcript.delta",
+      "text": " enligt"
+    },
+    {
+      "ms": 29696,
+      "kind": "session.output_transcript.delta",
+      "text": " kartan"
+    },
+    {
+      "ms": 30112,
+      "kind": "session.output_transcript.delta",
+      "text": " 199"
+    },
+    {
+      "ms": 30912,
+      "kind": "session.output_transcript.delta",
+      "text": " kronor"
+    },
+    {
+      "ms": 31360,
+      "kind": "session.output_transcript.delta",
+      "text": " per"
+    },
+    {
+      "ms": 31552,
+      "kind": "session.output_transcript.delta",
+      "text": " månad"
+    },
+    {
+      "ms": 31712,
+      "kind": "session.output_transcript.delta",
+      "text": "."
+    }
+  ],
+  "usage": [
+    {
+      "model": "gpt-live-1",
+      "seconds": null,
+      "final": false
+    },
+    {
+      "model": "gpt-live-1",
+      "seconds": null,
+      "final": false
+    },
+    {
+      "model": "gpt-live-1",
+      "seconds": 15,
+      "final": false
+    },
+    {
+      "model": "gpt-live-1",
+      "seconds": 28,
+      "final": false
+    },
+    {
+      "model": "gpt-live-1",
+      "seconds": 33,
+      "final": true
+    }
+  ]
+}

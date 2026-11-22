@@ -1,0 +1,241 @@
+{
+  "trackCount": 1,
+  "sampleRate": 16000,
+  "interrupted": true,
+  "clickMs": 12032,
+  "openMs": 13312,
+  "inputAfter": " Jag menar abonnemanget Månadlig Plus",
+  "trace": [
+    {
+      "ms": 832,
+      "kind": "session.started"
+    },
+    {
+      "ms": 832,
+      "kind": "fråga"
+    },
+    {
+      "ms": 2112,
+      "kind": "session.input_transcript.delta",
+      "text": " Vad"
+    },
+    {
+      "ms": 2720,
+      "kind": "session.input_transcript.delta",
+      "text": " kostar"
+    },
+    {
+      "ms": 3392,
+      "kind": "session.input_transcript.delta",
+      "text": " Spotify"
+    },
+    {
+      "ms": 4224,
+      "kind": "session.delegation.created"
+    },
+    {
+      "ms": 4448,
+      "kind": "session.output_transcript.delta",
+      "text": " Jag"
+    },
+    {
+      "ms": 4640,
+      "kind": "session.output_transcript.delta",
+      "text": " kollar"
+    },
+    {
+      "ms": 5024,
+      "kind": "session.output_transcript.delta",
+      "text": " det."
+    },
+    {
+      "ms": 9856,
+      "kind": "serverns svar",
+      "text": "Enligt kartan kostar Spotify Premium Family 179 kronor per månad."
+    },
+    {
+      "ms": 11040,
+      "kind": "session.output_transcript.delta",
+      "text": " Enligt"
+    },
+    {
+      "ms": 11232,
+      "kind": "session.output_transcript.delta",
+      "text": " kartan"
+    },
+    {
+      "ms": 11616,
+      "kind": "session.output_transcript.delta",
+      "text": " kostar"
+    },
+    {
+      "ms": 12032,
+      "kind": "session.output_transcript.delta",
+      "text": " Spotify"
+    },
+    {
+      "ms": 12032,
+      "kind": "Avbryt och starta rättelsen"
+    },
+    {
+      "ms": 13312,
+      "kind": "session.input_transcript.delta",
+      "text": " Jag"
+    },
+    {
+      "ms": 13312,
+      "kind": "högtalaren öppnar"
+    },
+    {
+      "ms": 13728,
+      "kind": "session.input_transcript.delta",
+      "text": " menar"
+    },
+    {
+      "ms": 14592,
+      "kind": "session.input_transcript.delta",
+      "text": " abonnemang"
+    },
+    {
+      "ms": 14720,
+      "kind": "session.input_transcript.delta",
+      "text": "et"
+    },
+    {
+      "ms": 15264,
+      "kind": "session.input_transcript.delta",
+      "text": " Månadlig"
+    },
+    {
+      "ms": 16128,
+      "kind": "session.input_transcript.delta",
+      "text": " Plus"
+    },
+    {
+      "ms": 16384,
+      "kind": "session.delegation.created"
+    },
+    {
+      "ms": 16608,
+      "kind": "session.output_transcript.delta",
+      "text": " Jag kont"
+    },
+    {
+      "ms": 16768,
+      "kind": "session.output_transcript.delta",
+      "text": "rollerar"
+    },
+    {
+      "ms": 17344,
+      "kind": "session.output_transcript.delta",
+      "text": " det."
+    },
+    {
+      "ms": 28768,
+      "kind": "serverns svar",
+      "text": "Jag hittar inget abonnemang som heter Månadlig Plus. Menar du Molnlagring Plus?"
+    },
+    {
+      "ms": 29952,
+      "kind": "session.output_transcript.delta",
+      "text": " Jag hittar"
+    },
+    {
+      "ms": 30368,
+      "kind": "session.output_transcript.delta",
+      "text": " inget"
+    },
+    {
+      "ms": 30560,
+      "kind": "session.output_transcript.delta",
+      "text": " abonnem"
+    },
+    {
+      "ms": 30720,
+      "kind": "session.output_transcript.delta",
+      "text": "ang"
+    },
+    {
+      "ms": 30912,
+      "kind": "session.output_transcript.delta",
+      "text": " som"
+    },
+    {
+      "ms": 31136,
+      "kind": "session.output_transcript.delta",
+      "text": " heter"
+    },
+    {
+      "ms": 31328,
+      "kind": "session.output_transcript.delta",
+      "text": " Månad"
+    },
+    {
+      "ms": 31488,
+      "kind": "session.output_transcript.delta",
+      "text": "lig"
+    },
+    {
+      "ms": 31936,
+      "kind": "session.output_transcript.delta",
+      "text": " Plus."
+    },
+    {
+      "ms": 32352,
+      "kind": "session.output_transcript.delta",
+      "text": " Menar"
+    },
+    {
+      "ms": 32512,
+      "kind": "session.output_transcript.delta",
+      "text": " du"
+    },
+    {
+      "ms": 32704,
+      "kind": "session.output_transcript.delta",
+      "text": " Moln"
+    },
+    {
+      "ms": 32896,
+      "kind": "session.output_transcript.delta",
+      "text": "lagring"
+    },
+    {
+      "ms": 33504,
+      "kind": "session.output_transcript.delta",
+      "text": " Plus?"
+    }
+  ],
+  "usage": [
+    {
+      "model": "gpt-live-1",
+      "seconds": null,
+      "final": false
+    },
+    {
+      "model": "gpt-live-1",
+      "seconds": null,
+      "final": false
+    },
+    {
+      "model": "gpt-live-1",
+      "seconds": 15,
+      "final": false
+    },
+    {
+      "model": "gpt-live-1",
+      "seconds": 28,
+      "final": false
+    },
+    {
+      "model": "gpt-live-1",
+      "seconds": 43,
+      "final": false
+    },
+    {
+      "model": "gpt-live-1",
+      "seconds": 46,
+      "final": true
+    }
+  ]
+}
