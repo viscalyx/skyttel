@@ -60,6 +60,7 @@ import {
   type WorkResponse,
 } from './cart-tool-copilot.prototype.js';
 import { runLiveCartToolPrototype } from './cart-tool-live.prototype.js';
+import { runCartToolPrototype } from './cart-tool-runner.prototype.js';
 import type { Config } from './config.js';
 import { contentOwner } from './content-identities.js';
 import { ConversationCapacity, voiceConversationModel } from './conversation-capacity.js';
@@ -2977,6 +2978,9 @@ export function textAssistantRoutes({
           const model = respond;
           const response = yield {
             tools,
+            linkWork(id: string) {
+              attempt.id = id;
+            },
             async respond() {
               try {
                 const perform = () => model(instructions, session.state.input, tools, workSignal);
@@ -3787,9 +3791,27 @@ export function textAssistantRoutes({
           });
           session.state.phase = 'ready';
           console.info('SDK-provet mot OpenAI Responses API', evidence);
+        } else if (!next.done && process.env.SKYTTEL_CART_TOOL_PROTOTYPE === 'openai') {
+          if (!modelFetch) throw new Error('Provet kräver lokala modellsvar');
+          const inTask = AsyncLocalStorage.snapshot();
+          await runCartToolPrototype(
+            next.value,
+            (response) => inTask(() => steps.next(response)),
+            (id) => {
+              const item = session.state.input.findLast(
+                (item) => item.type === 'function_call_output' && item.call_id === id,
+              );
+              if (item?.type === 'function_call_output' && typeof item.output === 'string')
+                return item.output;
+            },
+            workSignal,
+          );
         } else if (!next.done && process.env.SKYTTEL_CART_TOOL_PROTOTYPE === 'copilot') {
           if (!modelFetch) throw new Error('Provet kräver lokala modellsvar');
           const inTask = AsyncLocalStorage.snapshot();
+          const current = next.value;
+          const fixture = process.env.SKYTTEL_TRACE_FIXTURE;
+          const taskContext = observationWork.getStore()?.context;
           const evidence = await runCopilotCartToolPrototype(
             next.value,
             async (response) => {
@@ -3807,6 +3829,33 @@ export function textAssistantRoutes({
             },
             workSignal,
             text,
+            fixture && taskContext
+              ? {
+                  fixture: JSON.parse(fixture),
+                  record(id, outcome, data) {
+                    if (
+                      outcome === 'completed' &&
+                      (data.output as { output: { type: string }[] }).output.some(
+                        (item) => item.type === 'function_call',
+                      )
+                    )
+                      current.linkWork(id);
+                    observe?.({
+                      ...observationIdentity,
+                      at: now(),
+                      kind: 'model_attempt',
+                      context: {
+                        ...taskContext,
+                        spanId: id,
+                        parentSpanId: taskContext.spanId,
+                        providerCallId: id,
+                      },
+                      status: outcome === 'started' ? 'incomplete' : 'completed',
+                      data: { attemptId: id, outcome, ...data },
+                    });
+                  },
+                }
+              : undefined,
           ).catch((error: unknown) => {
             console.error('Copilot-provet avbröts', error);
             throw error;

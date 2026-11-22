@@ -13,6 +13,7 @@ export type WorkResponse = Pick<
   'status' | 'output' | 'output_text' | 'usage'
 >;
 export type WorkRequest = {
+  linkWork: (id: string) => void;
   tools: Tool[];
   respond: () => Promise<WorkResponse | undefined>;
 };
@@ -23,6 +24,10 @@ export async function runCopilotCartToolPrototype(
   readVerifiedOutput: (callId: string) => string | undefined,
   signal: AbortSignal,
   prompt: string,
+  trace?: {
+    fixture: WorkResponse;
+    record: (id: string, outcome: 'started' | 'completed', data: Record<string, unknown>) => void;
+  },
 ) {
   const submission = first.tools.find(
     (item) => item.type === 'function' && item.name === 'submit_changes',
@@ -31,7 +36,7 @@ export async function runCopilotCartToolPrototype(
     throw new Error('Provet kräver submit_changes');
 
   // Återanvänd den styrda instruktionen från jämförelseprovet som testdata.
-  const response = await first.respond();
+  const response = trace?.fixture ?? (await first.respond());
   const call = response?.output[0];
   if (
     response?.status !== 'completed' ||
@@ -157,7 +162,9 @@ export async function runCopilotCartToolPrototype(
           defineTool(submission.name, {
             description: submission.description ?? '',
             parameters: submission.parameters,
-            async handler(toolArgs) {
+            async handler(toolArgs, invocation) {
+              if (trace && invocation.toolCallId !== call.call_id)
+                throw new Error('Fel anrops-id i verktyget');
               signal.throwIfAborted();
               if (accepted || !isDeepStrictEqual(toolArgs, args))
                 throw new Error('Copilot lämnade ett oväntat verktygsanrop');
@@ -172,6 +179,32 @@ export async function runCopilotCartToolPrototype(
         ],
       },
     });
+    if (trace) {
+      const spans = new Map<string, string>();
+      session.on('assistant.turn_start', ({ id, data }) => {
+        spans.set(data.turnId, id);
+        trace.record(id, 'started', { model: data.model ?? model, completeness: 'unknown' });
+      });
+      session.on('assistant.message', ({ data }) => {
+        const span = data.turnId && spans.get(data.turnId);
+        if (!span) return;
+        const output = [
+          ...(data.toolRequests ?? []).map((request) => ({
+            type: 'function_call',
+            call_id: request.toolCallId,
+            name: request.name,
+            arguments: JSON.stringify(request.arguments),
+          })),
+          ...(data.content ? [{ type: 'message', role: 'assistant', content: data.content }] : []),
+        ];
+        trace.record(span, 'completed', {
+          model: data.model ?? model,
+          responseId: data.apiCallId,
+          completeness: 'partial',
+          output: { output },
+        });
+      });
+    }
     session.on('session.error', (event) => console.error(event.data));
     const stop = () => {
       void session.abort().catch(() => undefined);
