@@ -386,11 +386,17 @@ ovanför. Använd kartans vanliga lutning för att se planen och vattnet
 däremellan.
 Atmosfär har mjuka mörka ljusfält; Dis och ljuspunkter har mörkt dis och
 avlägsna ljuspunkter. Universum visar stjärnor, galaxer, nebulosor och
-stoft i mörkt tema. Vintergatan visar ett brett band av stjärnor med en
-varmt lysande kärna och mörka stoftstråk. Rotera kartan för att följa
-bandet över himlen.
+stoft i mörkt tema. Med Vintergatan ser du stjärnhimlen från jorden.
+Rotera kartan för att följa stjärnbandet från den ljusa galaxkärnan
+till de glesare delarna på motsatt sida. Om du vrider blicken bort från
+bandet ser du stjärnfälten ovanför eller under galaxens plan.
+Stjärnorna ligger så långt bort att de står still när du panorerar.
 Det aktiva temat, även systemtema, väljer vilken bakgrund som visas.
 Tema- och bakgrundsbyten behåller kamerans utsnitt och dina objektplaceringar.
+
+Himmelsfotot av [ESO/S. Brunier](https://www.eso.org/public/images/eso0932a/)
+används under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Skyttel visar en nedskalad WebP-version med dämpade högdagrar.
 
 Under världshavet i mörkt tema visar blågröna ljusformer i mörkt vatten:
 kronmanet, sifonofor, lanternfish, vampyrbläckfisk, musselkräftors ljusspår
