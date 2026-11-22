@@ -391,12 +391,18 @@ Rotera kartan för att följa stjärnbandet från den ljusa galaxkärnan
 till de glesare delarna på motsatt sida. Om du vrider blicken bort från
 bandet ser du stjärnfälten ovanför eller under galaxens plan.
 Stjärnorna ligger så långt bort att de står still när du panorerar.
+Vintergatan 2 visar en egen rendering av stjärnhimlen. Mätningar av
+galaxens ljus och stoftmoln ger stjärnbandet dess form. Stoftet dämpar
+ljuset bakom sig. De ljusstarkaste stjärnorna följer en stjärnkatalog.
+Länken **Källor till stjärnhimlen** i kartan visar källor och licens.
 Det aktiva temat, även systemtema, väljer vilken bakgrund som visas.
 Tema- och bakgrundsbyten behåller kamerans utsnitt och dina objektplaceringar.
 
 Himmelsfotot av [ESO/S. Brunier](https://www.eso.org/public/images/eso0932a/)
 används under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 Skyttel visar en nedskalad WebP-version med dämpade högdagrar.
+Renderingen i Vintergatan 2 används under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 
 Under världshavet i mörkt tema visar blågröna ljusformer i mörkt vatten:
 kronmanet, sifonofor, lanternfish, vampyrbläckfisk, musselkräftors ljusspår

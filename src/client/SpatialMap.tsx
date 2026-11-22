@@ -15,6 +15,7 @@ import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
 import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
 import { relationshipLabel } from '../shared/relationship-label.js';
 import { relationshipVerb } from '../shared/relationship-verb.js';
+import milkyWay2Credit from './assets/milky-way-2.LICENSE.txt?url&no-inline';
 import { BackgroundMotionSlider } from './BackgroundMotionSlider.js';
 import { LifecycleStatus } from './Lifecycle.js';
 import { formatCoordinate, MapNavigation } from './MapNavigation.js';
@@ -38,6 +39,21 @@ import { ZeroReferenceTint } from './ZeroReferenceTint.js';
 import { depthTintRegions, verticalCurveTints } from './zero-reference-depth.js';
 
 type LabelBox = { x: number; y: number; width: number; height: number };
+
+const skyCredits: Partial<
+  Record<ViewSettings['darkBackground'], { name: string; description: string; url: string }>
+> = {
+  'milky-way': {
+    name: 'ESO/S. Brunier',
+    description: 'Himmelsfoto av ESO/S. Brunier',
+    url: 'https://www.eso.org/public/images/eso0932a/',
+  },
+  'milky-way-2': {
+    name: 'Källor till stjärnhimlen',
+    description: 'Källor och licens för Vintergatan 2',
+    url: milkyWay2Credit,
+  },
+};
 
 export function ProposalSymbol({ change }: { change?: { before: unknown; after: unknown } }) {
   if (!change) return null;
@@ -303,6 +319,8 @@ export function SpatialMap({
   const settings = personal?.view?.settings ?? defaultViewSettings;
   const [localSettings, setLocalSettings] = useState(defaultViewSettings);
   const preferences = personal ? settings : localSettings;
+  const skyCredit =
+    theme === 'dark' && preferences.background && skyCredits[preferences.darkBackground];
   const [hasUnsavedMotion, setHasUnsavedMotion] = useState(false);
   const [hasUnsavedTint, setHasUnsavedTint] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(
@@ -1286,6 +1304,7 @@ export function SpatialMap({
                 <option value="mist">Dis och ljuspunkter</option>
                 <option value="universe">Universum</option>
                 <option value="milky-way">Vintergatan</option>
+                <option value="milky-way-2">Vintergatan 2</option>
                 <option value="ocean">Under världshavet</option>
               </select>
             </fieldset>
@@ -2061,22 +2080,17 @@ export function SpatialMap({
         {(moving || preferences.axisPinned) && (
           <SpatialOrientation orientation={orientation} corner={preferences.axisCorner} />
         )}
-        {active &&
-          !unavailable &&
-          !contextLost &&
-          preferences.background &&
-          theme === 'dark' &&
-          preferences.darkBackground === 'milky-way' && (
-            <a
-              className="spatial-photo-credit"
-              href="https://www.eso.org/public/images/eso0932a/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Himmelsfoto av ESO/S. Brunier (öppnas i ny flik)"
-            >
-              ESO/S. Brunier
-            </a>
-          )}
+        {active && !unavailable && !contextLost && skyCredit && (
+          <a
+            className="spatial-photo-credit"
+            href={skyCredit.url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${skyCredit.description} (öppnas i ny flik)`}
+          >
+            {skyCredit.name}
+          </a>
+        )}
       </div>
       <p
         className="spatial-movement-result"

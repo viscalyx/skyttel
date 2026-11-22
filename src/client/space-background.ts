@@ -251,8 +251,9 @@ export function spaceBackground(pixelRatio: number, redraw: () => void) {
   const ocean = lightOceanBackground();
   const deepOcean = darkOceanBackground();
   group.add(mesh, cosmic.group, ocean.mesh, deepOcean.mesh);
-  let panorama: Texture | undefined;
-  let showingMilkyWay = false;
+  const panoramas: Partial<Record<'milky-way' | 'milky-way-2', Texture>> = {};
+  const loadedPanoramas = new Set<Texture>();
+  let selectedPanorama: 'milky-way' | 'milky-way-2' | undefined;
   let disposed = false;
 
   return {
@@ -265,26 +266,39 @@ export function spaceBackground(pixelRatio: number, redraw: () => void) {
       const universe = theme === 'dark' && value.darkBackground === 'universe';
       deepOcean.mesh.visible = theme === 'dark' && value.darkBackground === 'ocean';
       mesh.visible = !ocean.mesh.visible && !deepOcean.mesh.visible && !universe;
-      showingMilkyWay = group.visible && theme === 'dark' && value.darkBackground === 'milky-way';
-      mesh.material =
-        showingMilkyWay && panoramaMaterial.uniforms.panorama.value ? panoramaMaterial : material;
-      if (showingMilkyWay && !panorama) {
-        panorama = new TextureLoader().load(
-          new URL('./assets/milky-way.webp', import.meta.url).href,
+      selectedPanorama =
+        group.visible &&
+        theme === 'dark' &&
+        (value.darkBackground === 'milky-way' || value.darkBackground === 'milky-way-2')
+          ? value.darkBackground
+          : undefined;
+      const selectedTexture = selectedPanorama ? panoramas[selectedPanorama] : undefined;
+      panoramaMaterial.uniforms.panorama.value =
+        selectedTexture && loadedPanoramas.has(selectedTexture) ? selectedTexture : null;
+      mesh.material = panoramaMaterial.uniforms.panorama.value ? panoramaMaterial : material;
+      if (selectedPanorama && !selectedTexture) {
+        const choice = selectedPanorama;
+        const url =
+          choice === 'milky-way'
+            ? new URL('./assets/milky-way.webp', import.meta.url).href
+            : new URL('./assets/milky-way-2.webp', import.meta.url).href;
+        panoramas[choice] = new TextureLoader().load(
+          url,
           (texture) => {
             if (disposed) return;
             texture.colorSpace = SRGBColorSpace;
             texture.wrapS = RepeatWrapping;
-            panoramaMaterial.uniforms.panorama.value = texture;
-            if (showingMilkyWay) {
+            loadedPanoramas.add(texture);
+            if (selectedPanorama === choice) {
+              panoramaMaterial.uniforms.panorama.value = texture;
               mesh.material = panoramaMaterial;
               redraw();
             }
           },
           undefined,
           () => {
-            panorama?.dispose();
-            panorama = undefined;
+            panoramas[choice]?.dispose();
+            delete panoramas[choice];
           },
         );
       }
@@ -357,7 +371,7 @@ export function spaceBackground(pixelRatio: number, redraw: () => void) {
     },
     dispose() {
       disposed = true;
-      panorama?.dispose();
+      for (const texture of Object.values(panoramas)) texture.dispose();
       panoramaMaterial.dispose();
       geometry.dispose();
       material.dispose();
