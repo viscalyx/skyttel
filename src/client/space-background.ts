@@ -1,9 +1,11 @@
 import {
   BufferGeometry,
   Color,
+  Euler,
   Float32BufferAttribute,
   Group,
   Matrix3,
+  Matrix4,
   Mesh,
   PerspectiveCamera,
   PlaneGeometry,
@@ -208,34 +210,33 @@ export function spaceBackground(pixelRatio: number, redraw: () => void) {
     depthWrite: false,
     uniforms: {
       rotation: material.uniforms.rotation,
-      offset: material.uniforms.offset,
       tangent: material.uniforms.tangent,
       aspect: material.uniforms.aspect,
       panorama: { value: null as Texture | null },
+      galacticRotation: {
+        value: new Matrix3()
+          .setFromMatrix4(new Matrix4().makeRotationFromEuler(new Euler(-0.16, 0.45, 0.8)))
+          .invert(),
+      },
     },
     vertexShader: material.vertexShader,
     fragmentShader: `
       #include <common>
       varying vec2 screen;
-      uniform mat3 rotation;
-      uniform vec3 offset;
+      uniform mat3 rotation, galacticRotation;
       uniform float tangent, aspect;
       uniform sampler2D panorama;
       void main() {
-        // A panoramic field of view keeps the band in frame without stretching
-        // the stars at the sides of a wide screen.
-        float halfHeight = atan(tangent * 5.0);
-        float latitude = screen.y * halfHeight;
-        float longitude = screen.x * min(PI, aspect * halfHeight);
-        vec3 ray = vec3(sin(longitude) * cos(latitude), sin(latitude),
-                        -cos(longitude) * cos(latitude));
-        vec3 d = normalize(rotation * ray + offset);
+        // Each pixel looks in one direction from inside the celestial sphere.
+        // The fixed galactic frame places its equator along the Milky Way band.
+        vec3 ray = vec3(screen.x * aspect * tangent, screen.y * tangent, -1.0);
+        vec3 d = normalize(galacticRotation * rotation * ray);
         vec2 uv = vec2(atan(d.x, -d.z) / (2.0 * PI), asin(clamp(d.y, -1.0, 1.0)) / PI) + 0.5;
-        // Keep mip selection continuous as longitude wraps from one to zero.
-        vec2 dx = dFdx(uv), dy = dFdy(uv);
-        dx.x -= round(dx.x);
-        dy.x -= round(dy.x);
-        vec3 sky = textureGrad(panorama, uv, dx, dy).rgb;
+        // Select detail from angular size, which stays finite at the poles
+        // and longitude seam where texture-coordinate derivatives diverge.
+        float footprint = max(length(dFdx(d)), length(dFdy(d)));
+        float lod = max(0.0, log2(footprint * float(textureSize(panorama, 0).y) / PI));
+        vec3 sky = textureLod(panorama, uv, lod).rgb;
         // Keep the contrast in the dust lanes while softening the brightest stars.
         float luminance = dot(sky, vec3(0.2126, 0.7152, 0.0722));
         gl_FragColor = vec4(sky * 0.78 / (1.0 + luminance * 0.65), 1.0);

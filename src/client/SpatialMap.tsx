@@ -239,7 +239,7 @@ export function SpatialMap({
     // The filter dialog overlays the map without reserving label space.
     const boxes = [
       ...root.querySelectorAll(
-        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .label-note, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
+        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .label-note, .spatial-view-actions, .spatial-photo-credit${revealRequest ? ', .map-selection-details' : ''}`,
       ),
     ].flatMap((element) => {
       if (element.closest('details:not([open])') && !element.matches('summary')) return [];
@@ -2061,6 +2061,22 @@ export function SpatialMap({
         {(moving || preferences.axisPinned) && (
           <SpatialOrientation orientation={orientation} corner={preferences.axisCorner} />
         )}
+        {active &&
+          !unavailable &&
+          !contextLost &&
+          preferences.background &&
+          theme === 'dark' &&
+          preferences.darkBackground === 'milky-way' && (
+            <a
+              className="spatial-photo-credit"
+              href="https://www.eso.org/public/images/eso0932a/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Himmelsfoto av ESO/S. Brunier (öppnas i ny flik)"
+            >
+              ESO/S. Brunier
+            </a>
+          )}
       </div>
       <p
         className="spatial-movement-result"
