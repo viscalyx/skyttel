@@ -2418,6 +2418,18 @@ test.each(['draft', 'save'])(
         'helmet',
       ]);
       expect(map.objects).toEqual([]);
+      if (process.env.SKYTTEL_CART_TOOL_PROTOTYPE) {
+        console.info({
+          koppling: process.env.SKYTTEL_CART_TOOL_PROTOTYPE,
+          arbetsmodellomgångar: model.requests.length,
+          separataKontrollomgångar: model.authorizationRequests.length,
+          verifieratSvar: status.result.message,
+          tillagdaIUtkastet: status.result.changes.map(
+            ({ subject }: { subject: string }) => subject,
+          ),
+          sparadeObjekt: map.objects.length,
+        });
+      }
     } else {
       expect(status.receipt.changes).toHaveLength(3);
       expect(status.reply).toBe('Sparat. Hela utkastet finns i hushållets karta.');
