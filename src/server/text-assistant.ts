@@ -109,6 +109,7 @@ import { connectTextAssistant, type LocalDispatch } from './text-assistant-mcp.j
 import { type TextModelProfile, type TextModelUsage, textModel } from './text-assistant-model.js';
 import { draftResult, historyResult } from './text-assistant-results.js';
 import { captureAssistantResult, restoreAssistantResult } from './text-assistant-snapshot.js';
+import { prototypeResponse, runVoiceTextPrototype } from './voice-text-copilot.prototype.js';
 
 type Mcp = Awaited<ReturnType<typeof connectTextAssistant>>;
 type Message = ConversationMessage;
@@ -3751,7 +3752,55 @@ export function textAssistantRoutes({
       const steps = work();
       try {
         let next = await steps.next();
-        if (!next.done && process.env.SKYTTEL_CART_TOOL_PROTOTYPE === 'copilot') {
+        if (!next.done && runVoiceTextPrototype) {
+          const inTask = AsyncLocalStorage.snapshot();
+          await runVoiceTextPrototype({
+            conversationId: session.state.id,
+            prompt: text,
+            signal: workSignal,
+            async readDraft(callId) {
+              const afterRead = await inTask(() =>
+                steps.next(
+                  prototypeResponse([
+                    {
+                      type: 'function_call',
+                      status: 'completed',
+                      name: 'read_my_draft',
+                      call_id: callId,
+                      arguments: '{}',
+                    },
+                  ]),
+                ),
+              );
+              const result = session.state.input.findLast(
+                (item) => item.type === 'function_call_output' && item.call_id === callId,
+              );
+              if (
+                afterRead.done ||
+                result?.type !== 'function_call_output' ||
+                typeof result.output !== 'string'
+              )
+                throw new Error('Skyttel lämnade inget verifierat utkast');
+              return result.output;
+            },
+            async reply(text) {
+              const completed = await inTask(() =>
+                steps.next(
+                  prototypeResponse([
+                    {
+                      id: randomUUID(),
+                      type: 'message',
+                      role: 'assistant',
+                      status: 'completed',
+                      content: [{ type: 'output_text', text, annotations: [] }],
+                    },
+                  ]),
+                ),
+              );
+              if (!completed.done) throw new Error('Skyttel förväntade sig en ny modellomgång');
+            },
+          });
+        } else if (!next.done && process.env.SKYTTEL_CART_TOOL_PROTOTYPE === 'copilot') {
           if (!modelFetch) throw new Error('Provet kräver lokala modellsvar');
           const inTask = AsyncLocalStorage.snapshot();
           const evidence = await runCopilotCartToolPrototype(
