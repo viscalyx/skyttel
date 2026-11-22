@@ -179,6 +179,73 @@ test('a conversation reuses identical MCP reads across messages and refreshes ch
   expect(counts.get('read_map')).toBe(3);
 });
 
+test('a follow-up identifies the blue bike from the checked change and leaves the draft intact', async () => {
+  const question = 'Vad ändrade du precis? Ange objektets namn och id.';
+  const bikeId = crypto.randomUUID();
+  let typeId: string;
+  const model = textModel(
+    (request) => {
+      const envelope = JSON.parse(
+        String(request.input.findLast((item) => item.role === 'user')?.content),
+      );
+      if (envelope.message === question) {
+        const history = request.input.find((item) => item.role === 'assistant');
+        const conversation = JSON.parse(String(history?.content)).recentConversation;
+        const change = conversation.findLast((entry: { result?: unknown }) => entry.result)?.result
+          .changes[0];
+        return [modelMessage(`${change?.subject} (${change?.objectId})`)];
+      }
+      return [
+        modelTool('submit_changes', {
+          version: envelope.draft.version,
+          contentVersion: envelope.draft.contentVersion,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: bikeId,
+                baseRevision: null,
+                value: { name: 'Blå cykeln', typeId, properties: [] },
+              },
+            },
+          ],
+        }),
+      ];
+    },
+    (request) => {
+      if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
+        const { current } = JSON.parse(String(request.input[0].content));
+        return current === question
+          ? readOnlyScope()
+          : [
+              modelMessage(
+                JSON.stringify({
+                  mode: 'work',
+                  request: current,
+                  responseRequired: false,
+                }),
+              ),
+            ];
+      }
+      return [modelMessage('{"decision":"allow","complete":true,"fulfillsRequest":true}')];
+    },
+  );
+  await setup(model.provider);
+  const readMap = async () => (await browser.get(path.replace('/text-assistant', '/map'))).json();
+  const initial = await readMap();
+  typeId = initial.types[0].id;
+  const proposed = await message(await start(), 'Lägg till Blå cykeln i mitt utkast.');
+  expect(proposed.error).toBeUndefined();
+  const beforeQuestion = await readMap();
+  expect(beforeQuestion.draft.changes).toMatchObject([
+    { id: bikeId, after: { name: 'Blå cykeln' } },
+  ]);
+  const answer = await message(proposed, question);
+  expect(answer.modelReply).toBe(`Blå cykeln (${bikeId})`);
+  expect(await readMap()).toMatchObject({ objects: initial.objects, draft: beforeQuestion.draft });
+});
+
 test('a relevant verified map read answers a follow-up without another tool round and refreshes after saving', async () => {
   const model = textModel((request) => {
     const current = JSON.parse(

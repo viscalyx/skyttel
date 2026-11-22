@@ -90,6 +90,8 @@ import { draftUpdateDetails } from './draft-completion.js';
 import { draftDiscards } from './draft-discards.js';
 import { householdAccess } from './households.js';
 import { householdMap, MapError } from './map.js';
+import { type MapAgentCall, runMapAgent } from './map-agent.js';
+import { mapAgentTools } from './map-agent-tools.js';
 import {
   partReference,
   partUpdates,
@@ -148,6 +150,21 @@ const resultReport = z.discriminatedUnion('source', [
     })
     .strict(),
 ]);
+
+const submittedChanges = z
+  .object({
+    version: z.number().int().nonnegative(),
+    contentVersion: z.number().int().positive(),
+    completion: z.enum(['draft', 'save']),
+    continueResponse: z.boolean().default(false),
+    questions: pendingQuestions.default([]),
+    resolves: z.array(partReference).max(12).default([]),
+    operations: z
+      .array(z.object({ name: z.string(), arguments: z.record(z.string(), z.unknown()) }).strict())
+      .min(1)
+      .max(24),
+  })
+  .strict();
 
 export function textAssistantRoutes({
   database,
@@ -2785,7 +2802,8 @@ export function textAssistantRoutes({
         refreshContext(session, outdated);
         return outdated.map(({ name }) => ({ name }));
       }
-      for (let step = 0; step < 48; step++) {
+      const { tools, draftTools } = mapAgentTools(session.execution.mcp.tools);
+      const nextRound = async () => {
         guard();
         if (!respond) throw new Error('assistant_unavailable');
         const outdatedReads = await refreshCurrentDraft();
@@ -2802,132 +2820,6 @@ export function textAssistantRoutes({
             return;
           }
         }
-        // The executor owns the atomic transport command. The work model
-        // proposes submit_changes, which must pass independent batch review.
-        const tools = session.execution.mcp.tools
-          .filter((tool) => !['apply_draft_batch', 'read_draft_batch'].includes(tool.name))
-          .map((tool) => ({
-            type: 'function' as const,
-            name: tool.name,
-            description: tool.description,
-            parameters: tool.inputSchema,
-            strict: false,
-          }));
-        tools.push({
-          type: 'function',
-          name: 'show_map_object',
-          description:
-            'Begär markering av ett specifikt tillåtet objekt i den öppna webbläsaren. Vänta på displayed:true innan du bekräftar markeringen. Detta är en visningsbegäran, inte en ändring av kartinnehåll.',
-          parameters: {
-            type: 'object',
-            properties: { objectId: { type: 'string' } },
-            required: ['objectId'],
-            additionalProperties: false,
-          },
-          strict: false,
-        });
-        tools.push({
-          type: 'function',
-          name: 'show_map_item',
-          description:
-            'Visa ett specifikt objekt eller samband i webbläsarens karta och inspektör. Bekräfta bara ett faktiskt displayed:true från aktuell kartvy.',
-          parameters: {
-            type: 'object',
-            properties: {
-              kind: { type: 'string', enum: ['object', 'relationship'] },
-              id: { type: 'string' },
-            },
-            required: ['kind', 'id'],
-            additionalProperties: false,
-          },
-          strict: false,
-        });
-        const draftTools = session.execution.mcp.tools.filter(
-          (tool) =>
-            tool.annotations?.readOnlyHint === false &&
-            !['save_draft', 'prepare_save', 'apply_draft_batch'].includes(tool.name),
-        );
-        tools.push({
-          type: 'function',
-          name: 'submit_changes',
-          description:
-            'Utför en sammanhängande ordnad ändringsbatch atomiskt med aktuella versioner. Ett nytt objekt och dess nödvändiga samband ska ingå i samma batch; ett fel lämnar hela batchen ogenomförd. Lägg självständiga delar i separata batcher. Behåll andra förslag. completion draft lämnar allt osparat; save kräver ett aktuellt uttryckligt besked om hela utkastet. questions registrerar nya väntande delar med kind, request, question och dependsOnDraft. resolves anger id och revision för förtydligade ändringsdelar som batchens återstående operationer slutför. Ofärdiga ändringsdelar hindrar sparande även efter förtydligande; oberoende informationsfrågor gör det inte. Sätt continueResponse true om ändringar, förklaring, jämförelse, faktasvar, detaljer eller markering återstår. Servern avslutar först när separat kontroll visar att ett kort verifierat besked räcker för hela uppdraget.',
-          parameters: {
-            type: 'object',
-            properties: {
-              version: { type: 'integer', minimum: 0 },
-              contentVersion: { type: 'integer', minimum: 1 },
-              completion: { type: 'string', enum: ['draft', 'save'] },
-              continueResponse: { type: 'boolean' },
-              questions: z.toJSONSchema(pendingQuestions),
-              resolves: z.toJSONSchema(z.array(partReference)),
-              operations: {
-                type: 'array',
-                minItems: 1,
-                maxItems: 24,
-                items: {
-                  anyOf: draftTools.map((tool) => ({
-                    type: 'object',
-                    properties: {
-                      name: { const: tool.name, type: 'string' },
-                      arguments: {
-                        ...tool.inputSchema,
-                        properties: Object.fromEntries(
-                          Object.entries(tool.inputSchema.properties ?? {}).filter(
-                            ([key]) => key !== 'version' && key !== 'contentVersion',
-                          ),
-                        ),
-                        required: tool.inputSchema.required?.filter(
-                          (key) => key !== 'version' && key !== 'contentVersion',
-                        ),
-                      },
-                    },
-                    required: ['name', 'arguments'],
-                    additionalProperties: false,
-                  })),
-                },
-              },
-            },
-            required: ['version', 'contentVersion', 'completion', 'operations'],
-            additionalProperties: false,
-          },
-          strict: false,
-        });
-        tools.push({
-          type: 'function',
-          name: 'ask_questions',
-          description:
-            'Registrera väntande delar i questions. Uppdatera endast angiven identitet och revision från pendingParts genom updates, med aktuellt messageId och ordagrant evidence ur message. clarify utan ny fråga gör en ändring redo för submit_changes.resolves; answer avslutar en informationsdel med sitt faktasvar. withdraw kräver uttryckligt återtagande; replace ersätter begäran. rephrase ändrar bara frågans formulering. Sätt continueResponse true när arbete återstår. Detta sparar ingenting.',
-          parameters: {
-            type: 'object',
-            properties: {
-              questions: z.toJSONSchema(pendingQuestions),
-              updates: z.toJSONSchema(partUpdates),
-              continueResponse: { type: 'boolean' },
-            },
-            required: ['questions'],
-            additionalProperties: false,
-          },
-          strict: false,
-        });
-        tools.push({
-          type: 'function',
-          name: 'report_result',
-          description:
-            'Ge detaljer från aktuellt utkast eller ett verkligt sparande. latest_save hämtar senaste kvittot; save kräver operationId och userId från historiken. last_failure återger det senaste registrerade felet i samtalet utan att upprepa uppdraget. Texten skapas av servern från faktiska poster och fel, inte av modellen. Sätt continueResponse true om andra beställda förklaringar, jämförelser, faktasvar eller markeringar återstår; serverns detaljer behålls och resten slutförs i nästa modellomgång. Servern avslutar direkt bara när uppdragstolkningen uttryckligen visar att rapporten räcker. Medföljande modelltext används inte.',
-          parameters: {
-            type: 'object',
-            properties: {
-              source: { type: 'string', enum: ['draft', 'latest_save', 'save', 'last_failure'] },
-              continueResponse: { type: 'boolean' },
-              operationId: { type: 'string' },
-              userId: { type: 'string' },
-            },
-            required: ['source'],
-            additionalProperties: false,
-          },
-          strict: false,
-        });
         session.state.activity = 'Bearbetar uppgiften';
         if (outdatedReads.length)
           session.state.input.push({
@@ -2994,7 +2886,7 @@ export function textAssistantRoutes({
         )
           throw new MapError('assistant_draft_changed', 409);
         if (response.status !== 'completed') throw new Error('assistant_incomplete');
-        let calls = response.output.filter((item) => item.type === 'function_call');
+        const calls = response.output.filter((item) => item.type === 'function_call');
         const onlyReads =
           calls.length > 0 &&
           calls.every((action) =>
@@ -3035,138 +2927,7 @@ export function textAssistantRoutes({
             kind: 'model_action',
             data: { name: action.name, arguments: action.arguments, callId: action.call_id },
           });
-        let combined:
-          | {
-              completion: 'draft' | 'save';
-              questions: z.infer<typeof pendingQuestions>;
-              resolves: z.infer<typeof partReference>[];
-              callId: string;
-              continueResponse: boolean;
-            }
-          | undefined;
-        if (calls.some((action) => action.name === 'submit_changes')) {
-          if (calls.length !== 1) throw new MapError('invalid_request', 400);
-          const parsed = z
-            .object({
-              version: z.number().int().nonnegative(),
-              contentVersion: z.number().int().positive(),
-              completion: z.enum(['draft', 'save']),
-              continueResponse: z.boolean().default(false),
-              questions: pendingQuestions.default([]),
-              resolves: z.array(partReference).max(12).default([]),
-              operations: z
-                .array(
-                  z
-                    .object({ name: z.string(), arguments: z.record(z.string(), z.unknown()) })
-                    .strict(),
-                )
-                .min(1)
-                .max(24),
-            })
-            .strict()
-            .safeParse(JSON.parse(calls[0].arguments));
-          if (!parsed.success) throw new MapError('invalid_request', 400);
-          const batch = parsed.data;
-          if (batch.version !== version || batch.contentVersion !== contentVersion)
-            throw new MapError('assistant_draft_changed', 409);
-          if (
-            batch.completion === 'save' &&
-            batch.questions.some(
-              (question) => typeof question === 'string' || question.kind === 'change',
-            )
-          )
-            throw new MapError('invalid_request', 400);
-          // Validate every ordinary tool's schema before the first mutation.
-          // MCP still validates domain state and authority on every operation.
-          for (const operation of batch.operations) {
-            const tool = draftTools.find((tool) => tool.name === operation.name);
-            if (
-              !tool ||
-              'version' in operation.arguments ||
-              'contentVersion' in operation.arguments ||
-              !z
-                .fromJSONSchema(tool.inputSchema as z.core.JSONSchema.JSONSchema)
-                .safeParse({ ...operation.arguments, version, contentVersion }).success
-            )
-              throw new MapError('invalid_request', 400);
-          }
-          // Check the entire batch before its first mutation, even when an
-          // otherwise requested edit precedes the whole-draft discard.
-          await checkActions(batch.operations);
-          if (
-            batch.completion === 'save' &&
-            !session.state.saveIntent &&
-            !originalSaveIntent &&
-            !session.state.activeMessage?.saveSuperseded
-          )
-            throw new MapError('assistant_save_not_requested', 409);
-          for (const operation of batch.operations) checkDiscard(operation.name);
-          const original = calls[0];
-          session.execution.parts.validateCompletion(batch.resolves);
-          updateParts(session, batch.questions, [], original.call_id);
-          combined = { ...batch, callId: original.call_id };
-          const operations = batch.operations.filter((operation) =>
-            session.execution.parts.shouldRun(
-              batch.resolves,
-              operation.name,
-              operation.arguments,
-              session.state.review,
-              session.state.activeMessage?.continuation
-                ? session.state.activeMessage.id
-                : undefined,
-            ),
-          );
-          if (operations.length) {
-            const beforeBatch = session.state.review;
-            const value = await applyCheckedBatch(
-              session,
-              { operations, version, contentVersion },
-              guard,
-              batch.resolves,
-              wholeRequestComplete &&
-                !batch.continueResponse &&
-                batch.completion === 'draft' &&
-                !session.state.saveIntent,
-              recordBatchWork,
-            );
-            const afterBatch = session.state.review;
-            // No operation is recorded as completed until the whole batch has
-            // committed. A failed batch preserves its pending parts unchanged.
-            const previousChanges = session.state.result?.changes ?? [];
-            for (const applied of (value.applied ??
-              operations.map((operation) => ({
-                ...operation,
-                before: beforeBatch,
-                after: afterBatch,
-              }))) as {
-              name: string;
-              arguments: Record<string, unknown>;
-              before: TextAssistantReview;
-              after: TextAssistantReview;
-            }[]) {
-              recordMutation(
-                applied.name,
-                applied.arguments,
-                applied.before,
-                applied.after,
-                batch.resolves,
-              );
-            }
-            if (!value.applied && session.state.result)
-              session.state.result.changes = [
-                ...previousChanges,
-                ...draftUpdateDetails(beforeBatch, afterBatch),
-              ];
-            session.state.workVersion = value.version;
-            version = session.state.review.version;
-            contentVersion = session.state.review.contentVersion;
-          }
-          calls =
-            batch.completion === 'save'
-              ? [{ ...original, name: 'save_draft', arguments: '{}' }]
-              : [];
-        }
-        if (!calls.length && !combined) {
+        if (!calls.length) {
           session.state.modelReply = turnReply(session, response.output_text, '\n');
           if (response.output_text)
             appendConversation(session, { role: 'assistant', text: response.output_text });
@@ -3174,9 +2935,11 @@ export function textAssistantRoutes({
             verifiedReply(session) ??
             (session.state.displayedSelection ? 'Markerat i kartan.' : undefined);
           session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'ready';
-          return;
+          return { text: response.output_text, usage: response.usage };
         }
-        if (!combined) {
+        const submits = calls.some((action) => action.name === 'submit_changes');
+        if (submits && calls.length !== 1) throw new MapError('invalid_request', 400);
+        if (!submits) {
           const operations = [];
           for (const action of calls) {
             if (!tools.some((tool) => tool.name === action.name))
@@ -3247,48 +3010,151 @@ export function textAssistantRoutes({
             if (!report.success || (report.data.source === 'last_failure' && mutations.size))
               throw new MapError('invalid_request', 400);
           }
-          // A terminal conversation tool must not leave companion calls
-          // unanswered when it returns or starts the next model response.
-          calls = [...selections, terminal];
         }
-        // Only trusted read contracts can overlap. Terminal companions finish
-        // in one consistent snapshot before any question, selection or report.
-        if (
-          (terminal && readCalls.length > 0) ||
-          (calls.length > 1 && readCalls.length === calls.length)
-        ) {
-          const results = await session.execution.reads.consistent(() =>
-            Promise.all(
-              readCalls.map((action) =>
-                call(
-                  session,
-                  action.name,
-                  JSON.parse(action.arguments),
-                  guard,
-                  'shared',
-                  action.call_id,
-                ),
-              ),
+        const parallelReads = Boolean(
+          readCalls.length && (terminal || calls.length === readCalls.length),
+        );
+        const orderedCalls = terminal
+          ? [
+              ...readCalls,
+              ...calls.filter((action) => action !== terminal && !readCalls.includes(action)),
+              terminal,
+            ]
+          : calls;
+        const checkSnapshot = parallelReads ? session.execution.reads.checkSnapshot() : undefined;
+        let terminalResult: boolean | undefined;
+        const submitChanges = async (action: MapAgentCall) => {
+          const parsed = submittedChanges.safeParse(JSON.parse(action.arguments));
+          if (!parsed.success) throw new MapError('invalid_request', 400);
+          const batch = parsed.data;
+          if (batch.version !== version || batch.contentVersion !== contentVersion)
+            throw new MapError('assistant_draft_changed', 409);
+          if (
+            batch.completion === 'save' &&
+            batch.questions.some(
+              (question) => typeof question === 'string' || question.kind === 'change',
+            )
+          )
+            throw new MapError('invalid_request', 400);
+          // Validate every ordinary tool's schema before the first mutation.
+          // MCP still validates domain state and authority on every operation.
+          for (const operation of batch.operations) {
+            const tool = draftTools.find((tool) => tool.name === operation.name);
+            if (
+              !tool ||
+              'version' in operation.arguments ||
+              'contentVersion' in operation.arguments ||
+              !z
+                .fromJSONSchema(tool.inputSchema as z.core.JSONSchema.JSONSchema)
+                .safeParse({ ...operation.arguments, version, contentVersion }).success
+            )
+              throw new MapError('invalid_request', 400);
+          }
+          // Check the entire batch before its first mutation, even when an
+          // otherwise requested edit precedes the whole-draft discard.
+          await checkActions(batch.operations);
+          if (
+            batch.completion === 'save' &&
+            !session.state.saveIntent &&
+            !originalSaveIntent &&
+            !session.state.activeMessage?.saveSuperseded
+          )
+            throw new MapError('assistant_save_not_requested', 409);
+          for (const operation of batch.operations) checkDiscard(operation.name);
+          session.execution.parts.validateCompletion(batch.resolves);
+          updateParts(session, batch.questions, [], action.call_id);
+          const operations = batch.operations.filter((operation) =>
+            session.execution.parts.shouldRun(
+              batch.resolves,
+              operation.name,
+              operation.arguments,
+              session.state.review,
+              session.state.activeMessage?.continuation
+                ? session.state.activeMessage.id
+                : undefined,
             ),
           );
-          guard();
-          for (const [index, action] of readCalls.entries())
-            session.state.input.push({
-              type: 'function_call_output',
-              call_id: action.call_id,
-              output: JSON.stringify(results[index]),
-            });
-          if (!terminal) continue;
-          const current = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
-          if (
-            current.version !== version ||
-            current.contentVersion !== contentVersion ||
-            session.execution.reads.outdated().length
-          )
-            throw new MapError('assistant_draft_changed', 409);
-        }
-        for (const action of calls) {
-          guard();
+          if (operations.length) {
+            const beforeBatch = session.state.review;
+            const value = await applyCheckedBatch(
+              session,
+              { operations, version, contentVersion },
+              guard,
+              batch.resolves,
+              wholeRequestComplete &&
+                !batch.continueResponse &&
+                batch.completion === 'draft' &&
+                !session.state.saveIntent,
+              recordBatchWork,
+            );
+            const afterBatch = session.state.review;
+            // No operation is recorded as completed until the whole batch has
+            // committed. A failed batch preserves its pending parts unchanged.
+            const previousChanges = session.state.result?.changes ?? [];
+            for (const applied of (value.applied ??
+              operations.map((operation) => ({
+                ...operation,
+                before: beforeBatch,
+                after: afterBatch,
+              }))) as {
+              name: string;
+              arguments: Record<string, unknown>;
+              before: TextAssistantReview;
+              after: TextAssistantReview;
+            }[]) {
+              recordMutation(
+                applied.name,
+                applied.arguments,
+                applied.before,
+                applied.after,
+                batch.resolves,
+              );
+            }
+            if (!value.applied && session.state.result)
+              session.state.result.changes = [
+                ...previousChanges,
+                ...draftUpdateDetails(beforeBatch, afterBatch),
+              ];
+            session.state.workVersion = value.version;
+            version = session.state.review.version;
+            contentVersion = session.state.review.contentVersion;
+          }
+
+          if (batch.completion === 'save') {
+            const save = await executeTool(
+              { ...action, name: 'save_draft', arguments: '{}' },
+              batch,
+            );
+            if (terminalResult) return save;
+          }
+          session.execution.parts.complete(batch.resolves);
+          recordReplyProgress(session, batch.resolves);
+          syncQuestions(session);
+          session.state.reply = verifiedReply(session);
+          session.state.phase = 'ready';
+          const result = {
+            result: session.state.result,
+            receipt: session.state.receipt,
+            reply: session.state.reply,
+            review: draftFacts(session, text),
+            questions: batch.questions,
+            pendingParts: session.execution.parts.read(),
+          };
+          if (session.state.reply)
+            appendConversation(session, { role: 'assistant', text: session.state.reply });
+          if (session.state.modelReply)
+            appendConversation(session, { role: 'assistant', text: session.state.modelReply });
+          if (batch.continueResponse || !wholeRequestComplete || hasReadyPendingParts(session)) {
+            session.state.phase = 'working';
+            terminalResult = false;
+          } else terminalResult = true;
+          return result;
+        };
+
+        const executeTool = async (
+          action: MapAgentCall,
+          combined?: z.infer<typeof submittedChanges>,
+        ): Promise<unknown> => {
           const args = JSON.parse(action.arguments) as Record<string, unknown>;
           if (combined) Object.assign(args, { version, contentVersion });
           if (action.name === 'ask_questions') {
@@ -3341,15 +3207,11 @@ export function textAssistantRoutes({
             updateParts(session, value.questions, value.updates, action.call_id);
             session.state.reply = verifiedReply(session);
             session.state.phase = 'ready';
-            session.state.input.push({
-              type: 'function_call_output',
-              call_id: action.call_id,
-              output: JSON.stringify({
-                questionPending: Boolean(session.state.questions?.length),
-                questions: session.state.questions ?? [],
-                pendingParts: session.execution.parts.read(),
-              }),
-            });
+            const result = {
+              questionPending: Boolean(session.state.questions?.length),
+              questions: session.state.questions ?? [],
+              pendingParts: session.execution.parts.read(),
+            };
             if (session.state.modelReply)
               appendConversation(session, {
                 role: 'assistant',
@@ -3357,9 +3219,9 @@ export function textAssistantRoutes({
               });
             if (value.continueResponse) {
               session.state.phase = 'working';
-              break;
-            }
-            return;
+              terminalResult = false;
+            } else terminalResult = true;
+            return result;
           }
           if (action.name === 'report_result') {
             const parsed = resultReport.safeParse(args);
@@ -3394,20 +3256,15 @@ export function textAssistantRoutes({
             session.state.modelReply = turnReply(session);
             session.state.phase = 'ready';
             appendConversation(session, { role: 'assistant', text: session.state.reply });
-            session.state.input.push({
-              type: 'function_call_output',
-              call_id: action.call_id,
-              output: JSON.stringify(session.state.result),
-            });
             if (
               report.continueResponse ||
               scope.responseRequired ||
               (scope.mode === 'work' && (!checkedWorkComplete || hasReadyPendingParts(session)))
             ) {
               session.state.phase = 'working';
-              break;
-            }
-            return;
+              terminalResult = false;
+            } else terminalResult = true;
+            return session.state.result;
           }
           if (action.name === 'show_map_object' || action.name === 'show_map_item') {
             const item =
@@ -3459,12 +3316,7 @@ export function textAssistantRoutes({
             session.state.selection = undefined;
             session.state.displayedSelection = displayed ? selection.id : undefined;
             session.state.displayedItem = displayed ? selection : undefined;
-            session.state.input.push({
-              type: 'function_call_output',
-              call_id: action.call_id,
-              output: JSON.stringify({ ...selection, displayed }),
-            });
-            continue;
+            return { ...selection, displayed };
           }
           const tool = session.execution.mcp.tools.find((tool) => tool.name === action.name);
           if (!tool) throw new MapError('assistant_unknown_tool', 409);
@@ -3479,13 +3331,15 @@ export function textAssistantRoutes({
           let previousReview: TextAssistantReview | undefined;
           if (isSave && session.execution.parts.blocked()) {
             session.state.phase = 'ready';
-            return;
+            terminalResult = true;
+            return { saved: false };
           }
           if (isSave && session.state.activeMessage?.saveSuperseded) {
             session.state.phase = 'ready';
             session.state.modelReply = undefined;
             session.state.reply = undefined;
-            return;
+            terminalResult = true;
+            return { saved: false };
           }
           if (isSave && !session.state.saveIntent && !originalSaveIntent)
             throw new MapError('assistant_save_not_requested', 409);
@@ -3493,7 +3347,8 @@ export function textAssistantRoutes({
             session.state.phase = 'ready';
             session.state.modelReply = undefined;
             session.state.reply = undefined;
-            return;
+            terminalResult = true;
+            return { saved: false };
           }
           if (tool.annotations?.readOnlyHint !== true) {
             const current = (await call(
@@ -3553,12 +3408,7 @@ export function textAssistantRoutes({
                 : undefined,
             )
           ) {
-            session.state.input.push({
-              type: 'function_call_output',
-              call_id: action.call_id,
-              output: JSON.stringify({ alreadyCompleted: true, review: draftFacts(session, text) }),
-            });
-            continue;
+            return { alreadyCompleted: true, review: draftFacts(session, text) };
           }
           let value: Awaited<ReturnType<typeof call>>;
           if (!isSave && draftTools.some((tool) => tool.name === action.name)) {
@@ -3636,36 +3486,18 @@ export function textAssistantRoutes({
               session.state.phase = 'working';
             await refreshConfirmed(session, guard);
             originalSaveIntent = false;
-            if (combined) {
-              version = session.state.review.version;
-              contentVersion = session.state.review.contentVersion;
-              continue;
-            }
-            session.state.input.push({
-              type: 'function_call_output',
-              call_id: action.call_id,
-              output: JSON.stringify(value),
-            });
             version = session.state.review.version;
             contentVersion = session.state.review.contentVersion;
             if (!wholeRequestComplete) session.state.phase = 'working';
-            continue;
+            return value;
           }
-          if (!combined)
-            session.state.input.push({
-              type: 'function_call_output',
-              call_id: action.call_id,
-              output: JSON.stringify(
-                tool.annotations?.readOnlyHint === false && Array.isArray(value.changes)
-                  ? {
-                      ...draftFacts(session, text, value),
-                      ...(typeof value.existingId === 'string'
-                        ? { existingId: value.existingId }
-                        : {}),
-                    }
-                  : value,
-              ),
-            });
+          const result =
+            tool.annotations?.readOnlyHint === false && Array.isArray(value.changes)
+              ? {
+                  ...draftFacts(session, text, value),
+                  ...(typeof value.existingId === 'string' ? { existingId: value.existingId } : {}),
+                }
+              : value;
           if (tool.annotations?.readOnlyHint !== true) {
             if (Number.isSafeInteger(value.version)) session.state.workVersion = value.version;
             const before = previousReview ?? session.state.review;
@@ -3674,46 +3506,45 @@ export function textAssistantRoutes({
             if (!isSave)
               recordMutation(action.name, args, before, session.state.review, [], value.version);
           }
-        }
-        if (combined) {
-          session.execution.parts.complete(combined.resolves);
-          recordReplyProgress(session, combined.resolves);
-          syncQuestions(session);
-          session.state.reply = verifiedReply(session);
-          session.state.phase = 'ready';
-          session.state.input.push({
-            type: 'function_call_output',
-            call_id: combined.callId,
-            output: JSON.stringify({
-              result: session.state.result,
-              receipt: session.state.receipt,
-              reply: session.state.reply,
-              review: draftFacts(session, text),
-              questions: combined.questions,
-              pendingParts: session.execution.parts.read(),
-            }),
-          });
-          if (session.state.reply)
-            appendConversation(session, { role: 'assistant', text: session.state.reply });
-          if (session.state.modelReply)
-            appendConversation(session, { role: 'assistant', text: session.state.modelReply });
-          if (combined.continueResponse || !wholeRequestComplete || hasReadyPendingParts(session)) {
-            session.state.phase = 'working';
-            continue;
-          }
-          return;
-        }
-        if (wholeRequestComplete && session.state.receipt && !hasReadyPendingParts(session)) return;
-        if (wholeRequestComplete && mutations.size && !hasReadyPendingParts(session)) {
-          session.state.reply = verifiedReply(session);
-          session.state.modelReply = turnReply(session);
-          session.state.phase = 'ready';
-          if (session.state.reply)
-            appendConversation(session, { role: 'assistant', text: session.state.reply });
-          return;
-        }
-      }
-      throw new Error('assistant_step_limit');
+          return result;
+        };
+        return {
+          calls: orderedCalls,
+          independentReads: onlyReads,
+          usage: response.usage,
+          async execute(action: MapAgentCall) {
+            guard();
+            checkViewAccess(session);
+            checkSnapshot?.();
+            if (terminalResult) return { interrupted: true };
+            return action.name === 'submit_changes' ? submitChanges(action) : executeTool(action);
+          },
+          finish() {
+            guard();
+            checkSnapshot?.();
+            if (terminalResult !== undefined) return terminalResult;
+            if (!wholeRequestComplete || hasReadyPendingParts(session)) return false;
+            if (session.state.receipt) return true;
+            if (!mutations.size) return false;
+            session.state.reply = verifiedReply(session);
+            session.state.modelReply = turnReply(session);
+            session.state.phase = 'ready';
+            if (session.state.reply)
+              appendConversation(session, { role: 'assistant', text: session.state.reply });
+            return true;
+          },
+        };
+      };
+      await runMapAgent(
+        tools,
+        task.signal,
+        (items) => {
+          guard();
+          checkViewAccess(session);
+          session.state.input.push(...items);
+        },
+        nextRound,
+      );
     } catch (error) {
       if (!admitted && workContextStarted && session.state.revision === revision)
         rebuildContext(session);

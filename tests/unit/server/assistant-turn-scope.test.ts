@@ -673,7 +673,9 @@ test('a later violation stops the turn while retaining its earlier confirmed dra
   const ended = await send(started, 'Lägg till Requested, inget annat.');
   expect(ended.error).toBe('assistant_action_out_of_scope');
   expect(ended.review.changes.map((change) => change.id)).toEqual(['Requested']);
-  expect(ended.result?.changes).toEqual([{ subject: 'Requested', action: 'lades till' }]);
+  expect(ended.result?.changes).toEqual([
+    { subject: 'Requested', action: 'lades till', objectId: 'Requested' },
+  ]);
   expect(ended.requiredNotice).toContain(ended.securityReference);
   expect(model.requests).toHaveLength(2);
 });

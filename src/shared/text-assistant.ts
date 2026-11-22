@@ -26,7 +26,7 @@ export type PendingPart = {
   operations: { name: string; arguments: Record<string, unknown> }[];
 };
 export type PendingPartReference = Pick<PendingPart, 'id' | 'revision'>;
-export type TextAssistantChange = { subject: string; action: string };
+export type TextAssistantChange = { subject: string; action: string; objectId?: string };
 export type TextAssistantResult = {
   kind: 'draft' | 'restored' | 'history' | 'failure';
   /** Server-produced text grounded in checked MCP results or recorded failures. */
