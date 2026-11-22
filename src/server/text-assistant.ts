@@ -59,6 +59,7 @@ import {
   type WorkRequest,
   type WorkResponse,
 } from './cart-tool-copilot.prototype.js';
+import { runLiveCartToolPrototype } from './cart-tool-live.prototype.js';
 import type { Config } from './config.js';
 import { contentOwner } from './content-identities.js';
 import { ConversationCapacity, voiceConversationModel } from './conversation-capacity.js';
@@ -3751,7 +3752,42 @@ export function textAssistantRoutes({
       const steps = work();
       try {
         let next = await steps.next();
-        if (!next.done && process.env.SKYTTEL_CART_TOOL_PROTOTYPE === 'copilot') {
+        const liveSdk = process.env.SKYTTEL_LIVE_SDK_PROTOTYPE;
+        if (!next.done && (liveSdk === 'openai' || liveSdk === 'copilot')) {
+          const apiKey = config.openaiApiKey;
+          if (process.env.NODE_ENV !== 'test' || modelFetch || !apiKey)
+            throw new Error('Det verkliga provet behöver testmiljö och OpenAI-nyckel');
+          const inTask = AsyncLocalStorage.snapshot();
+          const evidence = await runLiveCartToolPrototype({
+            sdk: liveSdk,
+            apiKey,
+            request: next.value,
+            prompt: text,
+            version,
+            contentVersion,
+            signal: workSignal,
+            async accept(response, callId) {
+              const step = await inTask(() => steps.next(response));
+              session.state.phase = 'working';
+              const result = session.state.input.findLast(
+                (item) => item.type === 'function_call_output' && item.call_id === callId,
+              );
+              if (
+                !step.done ||
+                result?.type !== 'function_call_output' ||
+                typeof result.output !== 'string'
+              )
+                throw new Error('Skyttel lämnade inget slutligt verifierat verktygsresultat');
+              return result.output;
+            },
+          }).catch((error: unknown) => {
+            const message = error instanceof Error ? error.message : String(error);
+            console.error('SDK-provet avbröts', message.replaceAll(apiKey, '[utelämnat]'));
+            throw error;
+          });
+          session.state.phase = 'ready';
+          console.info('SDK-provet mot OpenAI Responses API', evidence);
+        } else if (!next.done && process.env.SKYTTEL_CART_TOOL_PROTOTYPE === 'copilot') {
           if (!modelFetch) throw new Error('Provet kräver lokala modellsvar');
           const inTask = AsyncLocalStorage.snapshot();
           const evidence = await runCopilotCartToolPrototype(

@@ -23,8 +23,14 @@ async function setup(
   modelFetch?: typeof fetch,
   modelUsage?: TextModelUsage,
   assistantDispatch?: NonNullable<Parameters<typeof createInstallation>[1]>['assistantDispatch'],
+  providerApiKey?: string,
 ) {
-  app = await createInstallation(undefined, { modelFetch, modelUsage, assistantDispatch });
+  app = await createInstallation(undefined, {
+    modelFetch,
+    modelUsage,
+    assistantDispatch,
+    providerApiKey,
+  });
   browser = await request.newContext();
   await signIn(browser, app.origin);
   const { household } = await (await createHousehold(browser, app.origin)).json();
@@ -451,6 +457,7 @@ async function message(
   session: TextAssistantView,
   text: string,
   answerTo?: { id: string; revision: number }[],
+  timeout = 5_000,
 ) {
   const result = await browser.post(`${path}/${session.id}/messages`, {
     headers: { origin: app.origin },
@@ -470,7 +477,7 @@ async function message(
         status = await (await browser.get(`${path}/${session.id}`)).json();
         return status.phase;
       },
-      { timeout: 5_000 },
+      { timeout },
     )
     .not.toBe('working');
   return status;
@@ -2374,6 +2381,53 @@ test.each(['unavailable', 'disconnected'])(
     expect(revoked.status()).toBe(200);
     expect((await browser.get(`${path}/${status.id}`)).status()).toBe(404);
   },
+);
+
+test.skipIf(!['openai', 'copilot'].includes(process.env.SKYTTEL_LIVE_SDK_PROTOTYPE ?? ''))(
+  'the live SDK adapter forwards a GPT-6.1 Terra tool call to the verified draft',
+  async () => {
+    if (process.env.NODE_ENV !== 'test')
+      throw new Error('Sätt NODE_ENV=test före det verkliga provet');
+    const apiKey = process.env.OPENAI_API_KEY?.trim();
+    if (!apiKey) throw new Error('OPENAI_API_KEY saknas');
+    const controls: { model: string; outcome: string }[] = [];
+    await setup(
+      undefined,
+      (attempt) => {
+        if (attempt.outcome !== 'started')
+          controls.push({ model: attempt.model, outcome: attempt.outcome });
+      },
+      undefined,
+      apiKey,
+    );
+    const { typeId } = await webProposal();
+    const status = await message(
+      await start(),
+      `Lägg till två nya objekt med namnen Cykel och Hjälm i utkastet. Använd objekttypen med id ${typeId} för båda. Lämna ändringarna i utkastet.`,
+      undefined,
+      100_000,
+    );
+    console.info('Skyttels svar från SDK-provet', {
+      phase: status.phase,
+      error: status.error,
+      controls,
+    });
+    expect(status).toMatchObject({ phase: 'ready', reply: 'Utkastet är uppdaterat.' });
+    expect(controls).toEqual([
+      { model: 'gpt-6.1-terra', outcome: 'completed' },
+      { model: 'gpt-6.1-terra', outcome: 'completed' },
+    ]);
+    const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
+    const names = map.draft.changes.map((change: { after: { name: string } }) => change.after.name);
+    expect(names.sort()).toEqual(['Cykel', 'Hjälm', 'Redan från formuläret']);
+    expect(map.objects).toEqual([]);
+    console.info('Skyttels kontroller och utkast', {
+      controls,
+      names,
+      sparadeObjekt: map.objects.length,
+    });
+  },
+  115_000,
 );
 
 test.each(['draft', 'save'])(

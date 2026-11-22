@@ -8,7 +8,10 @@ import { CopilotClient, defineTool, RuntimeConnection } from '@microsoft/copilot
 import type { Tool } from 'openai/resources/responses/responses';
 import type { textModel } from './text-assistant-model.js';
 
-export type WorkResponse = Awaited<ReturnType<ReturnType<typeof textModel>>>;
+export type WorkResponse = Pick<
+  Awaited<ReturnType<ReturnType<typeof textModel>>>,
+  'status' | 'output' | 'output_text' | 'usage'
+>;
 export type WorkRequest = {
   tools: Tool[];
   respond: () => Promise<WorkResponse | undefined>;
