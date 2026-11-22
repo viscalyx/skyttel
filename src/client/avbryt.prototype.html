@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="sv">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fortsätta tala efter Avbryt</title>
+<style>
+:root { color-scheme:light dark; font:1rem/1.55 system-ui,sans-serif }
+body { max-width:46rem; margin:2rem auto; padding:0 1rem }
+button { font:inherit; padding:.4rem .75rem; margin:.15rem; cursor:pointer }
+button[aria-pressed=true] { outline:3px solid #5485b3 }
+section { margin-block:1.5rem }
+output { display:block; border-inline-start:.3rem solid #5485b3; padding:.6rem 1rem }
+</style>
+<main>
+<h1>Fortsätta tala efter Avbryt</h1>
+<p>Kan Skyttel ta emot hela rättelsen när du avbryter en uppläsning?
+Här simulerar du mikrofonen, högtalaren och tjänstens händelser steg för steg.</p>
+<section><h2>Välj röstanslutning</h2><div id="modes"></div><p id="description"></p></section>
+<output aria-live="polite" id="state"></output>
+<section><h2>Följ rättelsen</h2><button id="next"></button>
+<button id="reset">Börja om</button></section>
+<section><h2>Prova en annan ordning</h2><div id="free"></div></section>
+</main>
+<script>
+const descriptions = {
+  renew: ['Dagens GPT-Live', 'Mikrofonen är på före avbrottet. Den kan sända igen när den nya anslutningen är klar.'],
+  realtime: ['Realtime', 'Provet simulerar att tjänsten avbryter svaret och tömmer ljudkön. Mikrofonen har kvar sin anslutning.'],
+  local: ['GPT-Live med lokal ljudkontroll', 'Klienten tystar utljudet. Ett kvitto på stoppinstruktionen kan komma innan de sista ljudpaketen når högtalaren.']
+};
+const labels = {
+  stop: 'Avbryt uppläsningen', first: 'Säg början av rättelsen',
+  ack: 'Låt tjänsten bekräfta kommandot', late: 'Släpp fram sent ljud från det gamla svaret',
+  ready: 'Gör en ny anslutning klar', last: 'Säg slutet av rättelsen',
+  reply: 'Släpp fram nästa svar', unsafe: 'Öppna högtalaren redan vid instruktionskvittot'
+};
+function initial(mode) {
+  return {mode, stopped:false, input:true, speaker:true, ack:false, replaced:false,
+    received:[], heard:['Början av det gamla svaret'], note:'Skyttel läser upp ett svar.'};
+}
+function advance(previous, event) {
+  const s = structuredClone(previous);
+  if (event === 'stop') {
+    s.stopped = true;
+    s.speaker = false;
+    s.input = s.mode !== 'renew';
+    s.note = 'Uppspelningen har stoppats. Den lokala ljudkön är tom.';
+  } else if (event === 'first' || event === 'last') {
+    if (s.input) s.received.push(event);
+    s.note = s.input ? 'Ljudet från mikrofonen kom fram.' : 'Den här delen av rättelsen gick förlorad.';
+  } else if (event === 'ready' && s.mode === 'renew' && s.stopped) {
+    s.input = s.speaker = s.replaced = true;
+    s.note = 'Den nya anslutningen är klar.';
+  } else if (event === 'ack' && s.stopped && s.mode !== 'renew') {
+    s.ack = true;
+    if (s.mode === 'realtime') s.speaker = true;
+    s.note = s.mode === 'realtime' ? 'Tjänsten har tömt kön i simuleringen.' : 'Stoppinstruktionen är mottagen. Det kan finnas gammalt ljud kvar.';
+  } else if (event === 'unsafe' && s.mode === 'local' && s.ack) {
+    s.speaker = true;
+    s.note = 'Högtalaren är öppen. Släpp fram sent ljud för att höra vad som kan hända.';
+  } else if (event === 'late' || event === 'reply') {
+    const old = event === 'late';
+    const discarded = old && (s.replaced || (s.mode === 'realtime' && s.ack));
+    const plays = s.speaker && !discarded;
+    if (plays) s.heard.push(old ? 'Slutet av det gamla svaret' : 'Nästa svar');
+    s.note = plays ? 'Ljudet nådde högtalaren.' : 'Ljudet stoppades.';
+  } else s.note = 'Steget påverkar inte anslutningen i det här läget.';
+  return s;
+}
+function walkthrough(mode) {
+  const middle = mode === 'renew' ? ['ready','late'] : ['ack','late'];
+  return ['stop','first',...middle,'last','reply'];
+}
+let state;
+let index;
+function choose(mode) { state = initial(mode); index = 0; render(); }
+function render() {
+  for (const button of document.querySelectorAll('#modes button'))
+    button.setAttribute('aria-pressed', String(button.value === state.mode));
+  description.textContent = descriptions[state.mode][1];
+  document.querySelector('#state').replaceChildren(...[
+    'Mikrofonen kan sända: ' + (state.input ? 'ja' : 'nej'),
+    'Delar av rättelsen som kom fram: ' + (state.received.map(x => x === 'first' ? 'början' : 'slutet').join(', ') || 'inga ännu'),
+    'Det användaren hörde: ' + state.heard.join(' → '), state.note
+  ].map(text => Object.assign(document.createElement('div'), {textContent:text})));
+  const step = walkthrough(state.mode)[index];
+  next.textContent = step ? labels[step] : 'Genomgången är klar';
+  next.disabled = !step;
+}
+function button(parent, text, action, value) {
+  const b = document.createElement('button');
+  b.textContent = text; b.onclick = action; b.value = value; parent.append(b);
+}
+for (const [mode, [name]] of Object.entries(descriptions))
+  button(modes, name, () => choose(mode), mode);
+for (const [event, label] of Object.entries(labels))
+  button(free, label, () => { state = advance(state, event); render(); }, event);
+next.onclick = () => { state = advance(state, walkthrough(state.mode)[index++]); render(); };
+reset.onclick = () => choose(state.mode);
+choose('renew');
+</script>
+</html>
