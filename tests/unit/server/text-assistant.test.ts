@@ -350,6 +350,44 @@ test('independent reads overlap and identical concurrent reads share one authori
 
 test('a draft report waits for its concurrent companion reads', () => checkConcurrentReads(true));
 
+test('a failed read ends the assignment while a sibling MCP response is still held', async () => {
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let started = () => {};
+  const reading = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  const model = textModel(() => [
+    modelTool('read_map', { query: 'Lina' }),
+    modelTool('read_type_catalog', {}),
+  ]);
+  await setup(model.provider, undefined, async (request, dispatch) => {
+    const rpc =
+      request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+        ? await request.clone().json()
+        : null;
+    if (rpc?.method === 'tools/call' && rpc.params.name === 'read_map') {
+      await reading;
+      return new Response(null, { status: 503 });
+    }
+    const response = await dispatch(request);
+    if (rpc?.method === 'tools/call' && rpc.params.name === 'read_type_catalog') {
+      started();
+      await held;
+    }
+    return response;
+  });
+  try {
+    const result = await message(await start(), 'Läs Lina och typerna. Ändra ingenting.');
+    expect(result.phase).toBe('error');
+    expect(model.requests).toHaveLength(1);
+  } finally {
+    release();
+  }
+});
+
 async function checkConcurrentReads(report: boolean) {
   const entered = new Map<string, number>();
   let release = () => {};

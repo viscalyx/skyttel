@@ -22,7 +22,7 @@ interface ToolRound {
   calls: MapAgentCall[];
   parallelReadCount: number;
   usage?: ResponseUsage;
-  execute: (action: MapAgentCall) => Promise<unknown>;
+  execute: (action: MapAgentCall, signal?: AbortSignal) => Promise<unknown>;
   finish: () => boolean;
 }
 
@@ -40,7 +40,6 @@ export async function runMapAgent(
 ) {
   const toolExecution = { maxFunctionToolConcurrency: 1 };
   let execute: (call: MapAgentCall, signal?: AbortSignal) => Promise<unknown>;
-  const callIds = new Set<string>();
   let finish: ToolRound['finish'];
   const model: Model = {
     async getResponse() {
@@ -59,10 +58,6 @@ export async function runMapAgent(
           ],
         };
       finish = round.finish;
-      for (const { call_id } of round.calls) {
-        if (callIds.has(call_id)) throw new MapError('invalid_request', 400);
-        callIds.add(call_id);
-      }
       execute = round.execute;
       // Only server-declared independent reads may share a snapshot in parallel.
       // Reports follow their companion reads and map selections in order.
@@ -74,7 +69,7 @@ export async function runMapAgent(
           const index = round.calls.findIndex((action) => action.call_id === call.call_id);
           if (index >= round.parallelReadCount)
             while (count < index) await once(completed, 'done', { signal });
-          const result = await round.execute(call);
+          const result = await round.execute(call, signal);
           count++;
           completed.emit('done');
           return result;

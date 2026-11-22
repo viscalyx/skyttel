@@ -1359,6 +1359,7 @@ export function textAssistantRoutes({
     guard?: () => void,
     readPolicy: 'shared' | 'lifecycle' = 'shared',
     contextCallId?: string,
+    readSignal?: AbortSignal,
   ) {
     if (name === 'prepare_save' || name === 'save_draft') persist(session);
     guard?.();
@@ -1414,7 +1415,13 @@ export function textAssistantRoutes({
       });
       let result: Awaited<ReturnType<Mcp['call']>>;
       try {
-        result = await session.execution.mcp.call(name, args, guard, work?.session === session);
+        result = await session.execution.mcp.call(
+          name,
+          args,
+          guard,
+          work?.session === session,
+          readSignal,
+        );
       } catch (error) {
         // The MCP transport can wrap a task guard's error. Use the caller's
         // current authority for the observed ending, while preserving the
@@ -1427,7 +1434,8 @@ export function textAssistantRoutes({
           observedError = reason;
         }
         const canceled =
-          observedError instanceof MapError && observedError.code === 'assistant_canceled';
+          (observedError instanceof MapError && observedError.code === 'assistant_canceled') ||
+          readSignal?.aborted;
         // Expiry can also abort work; the original deadline takes precedence
         // over that signal, as it does for the task's observed ending.
         const expired =
@@ -2788,6 +2796,7 @@ export function textAssistantRoutes({
         return outdated.map(({ name }) => ({ name }));
       }
       const { tools, draftTools } = mapAgentTools(session.execution.mcp.tools);
+      const callIds = new Set<string>();
       const nextRound = async () => {
         guard();
         if (!respond) throw new Error('assistant_unavailable');
@@ -2872,6 +2881,10 @@ export function textAssistantRoutes({
           throw new MapError('assistant_draft_changed', 409);
         if (response.status !== 'completed') throw new Error('assistant_incomplete');
         const calls = response.output.filter((item) => item.type === 'function_call');
+        for (const { call_id } of calls) {
+          if (callIds.has(call_id)) throw new MapError('invalid_request', 400);
+          callIds.add(call_id);
+        }
         const onlyReads =
           calls.length > 0 &&
           calls.every((action) =>
@@ -3149,6 +3162,7 @@ export function textAssistantRoutes({
         const executeTool = async (
           action: MapAgentCall,
           combined?: z.infer<typeof submittedChanges>,
+          readSignal?: AbortSignal,
         ): Promise<unknown> => {
           const args = JSON.parse(action.arguments) as Record<string, unknown>;
           if (combined) Object.assign(args, { version, contentVersion });
@@ -3458,6 +3472,7 @@ export function textAssistantRoutes({
               isSave ? currentSaveGuard(session, serial, guard) : guard,
               'shared',
               action.call_id,
+              readSignal,
             );
           guard();
           if (action.name === 'save_draft') {
@@ -3495,18 +3510,21 @@ export function textAssistantRoutes({
           calls: orderedCalls,
           parallelReadCount: guardReadSnapshot ? readCalls.length : 0,
           usage: response.usage,
-          async execute(action: MapAgentCall) {
+          async execute(action: MapAgentCall, signal?: AbortSignal) {
             guard();
             checkViewAccess(session);
             checkSnapshot?.();
             if (terminalResult) return { interrupted: true };
-            return submission?.success
-              ? submitChanges(action, submission.data)
-              : executeTool(action);
+            if (submission?.success) return submitChanges(action, submission.data);
+            const companionRead =
+              guardReadSnapshot && readCalls.some((read) => read.call_id === action.call_id);
+            const value = await executeTool(action, undefined, companionRead ? signal : undefined);
+            if (companionRead) checkSnapshot?.();
+            return value;
           },
           finish() {
             guard();
-            checkSnapshot?.();
+            if (onlyReads) checkSnapshot?.();
             if (terminalResult !== undefined) return terminalResult;
             if (!wholeRequestComplete || hasReadyPendingParts(session)) return false;
             if (session.state.receipt) return true;

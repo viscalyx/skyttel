@@ -106,8 +106,11 @@ comparison. Both workflows require explicit authorization for billable calls.
 
 ### Measure map assignment and follow-up latency
 
-Compare the current commit on `f/issue-792` with the fixed baseline. Prepare
-and run each revision using the [worktree guide](devcontainer.md#prepare-an-additional-worktree).
+Choose and record the candidate commit before comparing it with the fixed
+baseline. Prepare each revision using the
+[worktree guide](devcontainer.md#prepare-an-additional-worktree).
+[Configure assistant access](devcontainer.md#optional-assistant-access)
+and [start the application](devcontainer.md#run-the-application).
 Use the same browser, installation settings, and model access for both
 runs. Obtain explicit approval for billable model calls before measuring.
 
