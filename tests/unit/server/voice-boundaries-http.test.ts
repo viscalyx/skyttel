@@ -1,4 +1,6 @@
+import { join } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
+import Database from 'better-sqlite3';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { MapState } from '../../../src/shared/map.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
@@ -85,6 +87,92 @@ async function poll(microphoneOn = true) {
 afterEach(async () => {
   await client?.dispose();
   await app?.close();
+});
+
+test('a spoken proposal reaches a retained draft when the request counter is missing', {
+  tags: ['technical'],
+  timeout: 15_000,
+}, async () => {
+  let typeId: string;
+  let delegatedStatus: number | undefined;
+  const model = textModel((body) => {
+    const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    if (turn.message === 'Vilka saker föreslog vi i utkastet?')
+      return [modelMessage('Cykeln och lampan finns i utkastet.')];
+    return [
+      modelTool('submit_changes', {
+        version: turn.draft.version,
+        contentVersion: turn.draft.contentVersion,
+        completion: 'draft',
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: 'spoken-bike',
+              baseRevision: null,
+              value: { typeId, name: 'Blå cykel' },
+            },
+          },
+        ],
+      }),
+    ];
+  });
+  await setup(model.provider, async (incoming, dispatch) => {
+    const result = await dispatch(incoming);
+    if (incoming.method === 'POST' && new URL(incoming.url).pathname.endsWith('/messages'))
+      delegatedStatus = result.status;
+    return result;
+  });
+  const before = await readMap();
+  typeId = before.types[0].id;
+  await start();
+  // Reproduce the database left by the development reset in an isolated fixture.
+  const fixture = new Database(join(app.directory, 'skyttel.db'));
+  try {
+    fixture.prepare('DELETE FROM conversation_request_order').run();
+  } finally {
+    fixture.close();
+  }
+  live.emit(providerId, {
+    type: 'session.input_transcript.delta',
+    event_id: 'proposal-fragment',
+    delta: 'Lägg till en blå cykel i utkastet.',
+    start_ms: 0,
+    end_ms: 1000,
+  });
+  live.emit(providerId, {
+    type: 'session.delegation.created',
+    offset_ms: 1000,
+    delegation: { id: 'proposal-task', target: 'client' },
+  });
+  await expect.poll(() => delegatedStatus).toBe(202);
+  await expect.poll(() => voiceAnswerParts(live.sent).join('')).toContain('Blå cykel');
+  const after = await readMap();
+  expect(after.draft.changes).toMatchObject([
+    { id: 'independent', after: { name: 'Privat lampa' } },
+    { id: 'spoken-bike', after: { name: 'Blå cykel' } },
+  ]);
+  expect(after.objects).toEqual(before.objects);
+
+  const endpoint = `text-assistant/${session.id}`;
+  const view: TextAssistantView = await (await client.get(`${path}/${endpoint}`)).json();
+  const followUp = await post(`${endpoint}/messages`, {
+    revision: view.revision,
+    draftVersion: view.review.version,
+    contentVersion: view.review.contentVersion,
+    requestId: 'read-the-draft',
+    text: 'Vilka saker föreslog vi i utkastet?',
+  });
+  expect(followUp.status(), await followUp.text()).toBe(202);
+  await expect
+    .poll(async () => {
+      const result: TextAssistantView = await (
+        await client.get(`${path}/${endpoint}/messages/read-the-draft`)
+      ).json();
+      return result.taskStatus;
+    })
+    .toBe('completed');
+  expect(await readMap()).toEqual(after);
 });
 
 test.each([false, true])(

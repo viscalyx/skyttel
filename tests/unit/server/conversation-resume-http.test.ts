@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
+import Database from 'better-sqlite3';
 import { afterEach, expect, test } from 'vitest';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
@@ -513,7 +514,7 @@ test('after actual restart an older retained question can be answered while a yo
   expect(await manualSave.json()).toEqual({ error: 'assistant_questions_pending' });
 });
 
-test('a new request after reopening an active crash image waits for earlier retained work before that conversation is loaded', async () => {
+async function verifyRetainedArrivalOrder(missingCounter: boolean) {
   let release!: (value: unknown[]) => void;
   const held = new Promise<unknown[]>((resolve) => {
     release = resolve;
@@ -550,7 +551,20 @@ test('a new request after reopening an active crash image waits for earlier reta
     expect(response.status(), await response.text()).toBe(202);
     return (await response.json()) as TextAssistantView;
   };
+  const changeCounter = (file: string, sql: string) => {
+    const fixture = new Database(file);
+    try {
+      fixture.prepare(sql).run();
+    } finally {
+      fixture.close();
+    }
+  };
   try {
+    if (missingCounter)
+      changeCounter(
+        join(app.directory, 'skyttel.db'),
+        'UPDATE conversation_request_order SET nextSequence = 80',
+      );
     original = await send(first, original, 'Först garaget, utan ändringar.');
     await expect.poll(() => model.requests.length).toBe(1);
     original = await send(first, original, 'Sedan cykeln, utan ändringar.');
@@ -558,6 +572,7 @@ test('a new request after reopening an active crash image waits for earlier reta
     // Capture the exact durable image while work is active. The reopened copy
     // receives none of the graceful close's pause writes.
     await app.saveDatabase(snapshot);
+    if (missingCounter) changeCounter(snapshot, 'DELETE FROM conversation_request_order');
     await app.close();
     app = await createInstallation(undefined, {
       databasePath: snapshot,
@@ -591,7 +606,18 @@ test('a new request after reopening an active crash image waits for earlier reta
   } finally {
     release([modelMessage('Det gamla svaret får inte användas.')]);
   }
-});
+}
+
+test('a new request after reopening an active crash image waits for earlier retained work before that conversation is loaded', () =>
+  verifyRetainedArrivalOrder(false));
+
+test(
+  'recovering a missing request counter preserves the arrival order of retained work',
+  {
+    tags: ['technical'],
+  },
+  () => verifyRetainedArrivalOrder(true),
+);
 
 test.each([false, true])(
   'a spoken clarification resumes only unfinished work after actual restart without renewing its old save request: lostBatchReply=%s',

@@ -74,6 +74,27 @@ export function conversationBatchPending(
   );
 }
 
+/** Restore a missing allocation row above every retained request with a known order. */
+export function initializeConversationRequestOrder(database: Database.Database) {
+  database
+    .prepare(`WITH valid_conversations AS (
+      SELECT state FROM conversation WHERE json_valid(state)
+    )
+    INSERT INTO conversation_request_order (id, nextSequence)
+    SELECT 1, COALESCE((
+      SELECT MAX(sequence) FROM (
+        SELECT json_extract(state, '$.activeMessage.sequence') AS sequence FROM valid_conversations
+        UNION ALL
+        SELECT json_extract(state, message.fullkey || '.sequence') AS sequence
+        FROM valid_conversations, json_each(state, '$.queue') AS message
+        UNION ALL
+        SELECT json_extract(state, '$.failedWork.message.sequence') AS sequence FROM valid_conversations
+      ) WHERE typeof(sequence) = 'integer' AND sequence BETWEEN 0 AND 9007199254740991
+    ), -1) + 1
+    WHERE NOT EXISTS (SELECT 1 FROM conversation_request_order WHERE id = 1)`)
+    .run();
+}
+
 /** Domain snapshots contain no process resources or provider-owned continuation. */
 export function conversationStorage(database: Database.Database, now: () => number) {
   clocks.set(database, now);
@@ -87,6 +108,10 @@ export function conversationStorage(database: Database.Database, now: () => numb
         )
         .get(),
     );
+  const reserveOrder = ordered
+    ? database.prepare<[], { sequence: number }>(`UPDATE conversation_request_order
+      SET nextSequence = nextSequence + 1 WHERE id = 1 RETURNING nextSequence - 1 AS sequence`)
+    : undefined;
   const erase = (id: string) =>
     enabled && database.prepare('DELETE FROM conversation WHERE id = ?').run(id);
   function sweep() {
@@ -96,12 +121,17 @@ export function conversationStorage(database: Database.Database, now: () => numb
   const timer = setInterval(sweep, 60_000).unref();
   const storage = {
     reserveMessageSequence() {
-      if (!ordered) return;
-      const next = database
-        .prepare(`UPDATE conversation_request_order SET nextSequence = nextSequence + 1
-        WHERE id = 1 RETURNING nextSequence - 1 AS sequence`)
-        .get() as { sequence: number } | undefined;
-      if (!next) throw new MapError('assistant_unavailable', 503);
+      if (!reserveOrder) return;
+      const next =
+        reserveOrder.get() ??
+        database
+          .transaction(() => {
+            initializeConversationRequestOrder(database);
+            return reserveOrder.get();
+          })
+          .immediate();
+      if (!next || !Number.isSafeInteger(next.sequence))
+        throw new MapError('assistant_unavailable', 503);
       return next.sequence;
     },
     erase,
