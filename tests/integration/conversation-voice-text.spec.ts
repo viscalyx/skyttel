@@ -459,14 +459,33 @@ async function observeInterruptedPlayback(page: Page) {
   };
 }
 
-test('RÖSTTEXT-07: ett skrivet förtydligande hörs efter Avbryt i samma röstanslutning', async ({
-  page,
-}) => {
-  const { app, held, live } = await arrange(page);
+async function holdWrittenSubmissionResponse(page: Page) {
   let releaseSubmission!: () => void;
   const submissionHeld = new Promise<void>((resolve) => {
     releaseSubmission = resolve;
   });
+  await page.route('**/messages', async (route) => {
+    const response = await route.fetch();
+    await submissionHeld;
+    await route.fulfill({ response });
+  });
+  return releaseSubmission;
+}
+
+async function expectSameVoiceConnection(page: Page, live: ReturnType<typeof liveProvider>) {
+  expect(live.requests).toHaveLength(1);
+  expect(await page.evaluate(() => window.skyttelVoiceFixture.stats())).toMatchObject({
+    peers: 1,
+    openPeers: 1,
+    microphoneRequests: 1,
+  });
+}
+
+test('RÖSTTEXT-07: ett skrivet förtydligande hörs efter Avbryt i samma röstanslutning', async ({
+  page,
+}) => {
+  const { app, held, live } = await arrange(page);
+  const releaseSubmission = await holdWrittenSubmissionResponse(page);
   try {
     await turnMicrophoneOn(page);
     const audio = await observeInterruptedPlayback(page);
@@ -476,11 +495,6 @@ test('RÖSTTEXT-07: ett skrivet förtydligande hörs efter Avbryt i samma rösta
     await expect(box).toHaveText('Lyssnar');
     await audio.expectOldAudioMuted();
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
-    await page.route('**/messages', async (route) => {
-      const response = await route.fetch();
-      await submissionHeld;
-      await route.fulfill({ response });
-    });
     await field(page).fill('Jag menar cykeln.');
     await region(page).getByRole('button', { name: 'Skicka', exact: true }).click();
     await expect.poll(() => held.length).toBe(1);
@@ -493,12 +507,7 @@ test('RÖSTTEXT-07: ett skrivet förtydligande hörs efter Avbryt i samma rösta
     await expect(log(page)).toContainText('Jag menar cykeln.');
     await expect(log(page)).toContainText(reply);
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
-    expect(live.requests).toHaveLength(1);
-    expect(await page.evaluate(() => window.skyttelVoiceFixture.stats())).toMatchObject({
-      peers: 1,
-      openPeers: 1,
-      microphoneRequests: 1,
-    });
+    await expectSameVoiceConnection(page, live);
   } finally {
     releaseSubmission();
     for (const release of held) release([]);
