@@ -15,7 +15,13 @@ import {
 } from '../shared/conversation-consent.js';
 import { sameModelChoice } from '../shared/conversation-model.js';
 import type { DraftBatchRequest } from '../shared/draft-batch.js';
-import type { MapRelationship, RelationshipType, RelationshipValue } from '../shared/map.js';
+import type {
+  MapDraft,
+  MapObject,
+  MapRelationship,
+  RelationshipType,
+  RelationshipValue,
+} from '../shared/map.js';
 import { draftChangeCount, proposedRelationships } from '../shared/map.js';
 import {
   equivalentRelationships,
@@ -28,6 +34,7 @@ import type {
   TextAssistantReview,
   TextAssistantView,
 } from '../shared/text-assistant.js';
+import { reconcileDraftRemovals } from '../shared/type-removal.js';
 import {
   assistantFailureMessage,
   blockedActionMessage,
@@ -178,6 +185,62 @@ function parseMapSelection(action: MapAgentCall): MapSelection {
   );
   if (!parsed.success) throw new MapError('invalid_request', 400);
   return parsed.data;
+}
+
+const draftChangeKeys = {
+  object: 'changes',
+  relationship: 'relationships',
+  objectType: 'objectTypes',
+  relationshipType: 'relationshipTypes',
+} as const;
+
+function selectionDraft(
+  review: TextAssistantReview,
+  selection: MapSelection,
+  preceding: DraftBatchRequest['operations'],
+): MapDraft {
+  if (
+    !preceding.length ||
+    !review[draftChangeKeys[selection.kind]]?.some(({ id, after }) => id === selection.id && !after)
+  )
+    return review;
+
+  for (const { name, arguments: args } of preceding) {
+    let { kind, id } = args;
+    switch (name) {
+      case 'discard_proposal':
+        break;
+      case 'resolve_conflict': {
+        if (args.choice !== 'saved' || args.choices !== undefined) continue;
+        const conflict = review.conflicts.find((item) => isDeepStrictEqual(item, args.conflict));
+        if (!conflict) continue;
+        ({ kind, id } = conflict);
+        break;
+      }
+      case 'propose_object':
+      case 'propose_object_type':
+      case 'propose_relationship_type':
+        if (!args.value) continue;
+        kind = {
+          propose_object: 'object',
+          propose_object_type: 'objectType',
+          propose_relationship_type: 'relationshipType',
+        }[name];
+        break;
+      default:
+        continue;
+    }
+    if (typeof kind !== 'string' || !Object.hasOwn(draftChangeKeys, kind)) continue;
+    const key = draftChangeKeys[kind as keyof typeof draftChangeKeys];
+    const index = review[key]?.findIndex((change) => change.id === id && !change.after) ?? -1;
+    if (index < 0) continue;
+    // Use the draft's cascade rules to see whether reversing this removal exposes the selection.
+    const draft: MapDraft = structuredClone(review);
+    draft[key]?.splice(index, 1);
+    reconcileDraftRemovals(draft);
+    return draft;
+  }
+  return review;
 }
 
 export function textAssistantRoutes({
@@ -2010,26 +2073,29 @@ export function textAssistantRoutes({
   async function selectedItem(
     session: Session,
     selection: MapSelection,
-    review: TextAssistantReview,
+    draft: MapDraft,
     guard?: () => void,
-    mayRestore = false,
   ) {
-    const changes = selection.kind === 'object' ? review.changes : review.relationships;
-    const change = changes?.find(({ id }) => id === selection.id);
-    if (change) {
-      if (change.after || !mayRestore) return change.after;
-      if (change.suppressed?.after) return change.suppressed.after;
+    const change = draft[draftChangeKeys[selection.kind]]?.find(({ id }) => id === selection.id);
+    let item = change?.after;
+    if (!change) {
+      const map: { objects: MapObject[]; relationships: MapRelationship[] } = await call(
+        session,
+        'read_map',
+        // The filtered read accepts shorter IDs than the map's proposal tools.
+        selection.kind === 'object' && selection.id.length <= 100 ? { objectId: selection.id } : {},
+        guard,
+      );
+      item = (selection.kind === 'object' ? map.objects : map.relationships).find(
+        ({ id }) => id === selection.id,
+      );
     }
-    const map = await call(
-      session,
-      'read_map',
-      // The filtered read accepts shorter IDs than the map's proposal tools.
-      selection.kind === 'object' && selection.id.length <= 100 ? { objectId: selection.id } : {},
-      guard,
-    );
-    return (selection.kind === 'object' ? map.objects : map.relationships).find(
-      (item: { id: string }) => item.id === selection.id,
-    );
+    if (item && 'sourceId' in item) {
+      const { sourceId, targetId } = item;
+      if (draft.changes.some(({ id, after }) => !after && (id === sourceId || id === targetId)))
+        return;
+    }
+    return item;
   }
   function verifiedReply(session: Session) {
     return session.state.result?.message ?? (session.state.receipt ? savedReply : undefined);
@@ -3124,7 +3190,7 @@ export function textAssistantRoutes({
         if (submission && !submission.success) throw new MapError('invalid_request', 400);
         const mapSelections = new Map<string, MapSelection>();
         if (!submits) {
-          const operations = [];
+          const operations: DraftBatchRequest['operations'] = [];
           for (const action of calls) {
             if (!tools.some((tool) => tool.name === action.name))
               throw new MapError('assistant_unknown_tool', 409);
@@ -3134,14 +3200,15 @@ export function textAssistantRoutes({
                 ({ name, arguments: args }) =>
                   name === `propose_${selection.kind}` && args.id === selection.id,
               );
-              // A preceding edit may introduce the target or restore a hidden item.
-              const mayRestore = operations.some(({ name }) =>
-                draftTools.some((tool) => tool.name === name),
-              );
               if (
                 proposal
                   ? proposal.arguments.value === null
-                  : !(await selectedItem(session, selection, afterProvider, guard, mayRestore))
+                  : !(await selectedItem(
+                      session,
+                      selection,
+                      selectionDraft(afterProvider, selection, operations),
+                      guard,
+                    ))
               )
                 throw new MissingMapSelection();
               mapSelections.set(action.call_id, selection);

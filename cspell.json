@@ -1125,7 +1125,9 @@
     "modellbegäranden",
     "batchsvaret",
     "delbatch",
-    "förtydligandereplik"
+    "förtydligandereplik",
+    "interestfor",
+    "Tauri"
   ],
   "overrides": [
     {

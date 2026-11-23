@@ -255,6 +255,110 @@ test.each([
   expect((await readMap()).draft).toEqual(before.draft);
 });
 
+test.each([
+  'restore',
+  'restore type',
+  'restore endpoint',
+  'unrelated proposal',
+  'unrelated discard',
+  'discard cascaded relationship with a removed endpoint',
+  'selection first',
+])('selecting a map item hidden by a draft removal with %s', async (scenario) => {
+  const relationship =
+    scenario === 'restore endpoint' ||
+    scenario === 'discard cascaded relationship with a removed endpoint';
+  const target = relationship
+    ? { kind: 'relationship', id: 'uses' }
+    : { kind: 'object', id: 'bike' };
+  let first = true;
+  let typeId: string;
+  let version: { version: number; contentVersion: number };
+  const model = textModel(() => {
+    if (!first) return [modelMessage('Visat.')];
+    first = false;
+    const selection = modelTool('show_map_item', target);
+    let discardTarget = { kind: 'object', id: scenario === 'unrelated discard' ? 'phone' : 'bike' };
+    if (scenario === 'restore type') discardTarget = { kind: 'objectType', id: typeId };
+    if (scenario === 'discard cascaded relationship with a removed endpoint')
+      discardTarget = target;
+    const edit =
+      scenario === 'unrelated proposal'
+        ? modelTool('propose_object', {
+            ...version,
+            id: 'new-object',
+            baseRevision: null,
+            value: { typeId, name: 'Hjälmen' },
+          })
+        : modelTool('discard_proposal', { ...version, ...discardTarget });
+    return scenario === 'selection first' ? [selection, edit] : [edit, selection];
+  });
+  await setup(model.provider);
+  ({ typeId } = await webProposal('Cykeln', 'bike'));
+  await webProposal('Telefonen', 'phone');
+  const mapPath = path.replace('/text-assistant', '/map');
+  const readMap = async () => (await browser.get(mapPath)).json();
+  async function write(endpoint: string, data: Record<string, unknown>) {
+    const map = await readMap();
+    const response = await browser.post(`${mapPath}/${endpoint}`, {
+      headers: { origin: app.origin },
+      data: { version: map.draft.version, contentVersion: map.contentVersion, ...data },
+    });
+    expect(response.status(), await response.text()).toBe(200);
+  }
+  if (relationship) {
+    const map = await readMap();
+    await write('relationship', {
+      id: target.id,
+      baseRevision: null,
+      value: { typeId: map.relationshipTypes[0].id, sourceId: 'phone', targetId: 'bike' },
+    });
+  }
+  await write('save', { operationId: 'seed-selection' });
+  if (!relationship) await write('draft', { id: 'phone', baseRevision: 1, value: null });
+  if (scenario === 'restore type')
+    await write('object-type', { id: typeId, baseRevision: 1, value: null });
+  else await write('draft', { id: 'bike', baseRevision: 1, value: null });
+  const before = await readMap();
+  version = { version: before.draft.version, contentVersion: before.contentVersion };
+  const session = await start();
+  const submitted = await browser.post(`${path}/${session.id}/messages`, {
+    headers: { origin: app.origin },
+    data: {
+      revision: session.revision,
+      ...displayedVersion(session),
+      requestId: 'select-hidden-item',
+      text: relationship ? 'Gör ändringen och visa sambandet.' : 'Gör ändringen och visa cykeln.',
+    },
+  });
+  expect(submitted.status()).toBe(202);
+  const read = async (): Promise<TextAssistantView> =>
+    (await browser.get(`${path}/${session.id}`)).json();
+  if (!scenario.startsWith('restore')) {
+    await expect.poll(async () => (await read()).phase).toBe('error');
+    expect(await read()).toMatchObject({ error: 'invalid_request' });
+    expect((await read()).selection).toBeUndefined();
+    expect((await readMap()).draft).toEqual(before.draft);
+    return;
+  }
+  await expect.poll(async () => (await read()).selection?.id).toBe(target.id);
+  const current = await read();
+  const acknowledged = await browser.post(`${path}/${session.id}/selection`, {
+    headers: { origin: app.origin },
+    data: {
+      revision: current.revision,
+      ...displayedVersion(current),
+      ...target,
+      displayed: true,
+    },
+  });
+  expect(acknowledged.status()).toBe(200);
+  await expect.poll(async () => (await read()).phase).toBe('ready');
+  expect(await read()).toMatchObject({ displayedItem: target });
+  expect((await readMap()).draft.changes).toEqual(
+    before.draft.changes.filter(({ id }: { id: string }) => id !== 'bike'),
+  );
+});
+
 test('a relevant verified map read answers a follow-up without another tool round and refreshes after saving', async () => {
   const model = textModel((request) => {
     const current = JSON.parse(
