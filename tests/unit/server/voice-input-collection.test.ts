@@ -178,7 +178,7 @@ test.each([true, false])(
   async (correction) => {
     const { work, fragment, delegate, messages } = arrange();
     fragment('old', 'Spara.', 0, 100);
-    delegate('task', 100);
+    delegate('correction', 190);
     await work.interruptSpeech(100);
     if (correction) fragment('new', 'Läs bara.', 120, 190);
     await vi.advanceTimersByTimeAsync(2100);
@@ -188,6 +188,84 @@ test.each([true, false])(
     work.retire();
   },
 );
+
+test.each([
+  { delegatedAt: 1500, delayedOld: false, dispatched: true },
+  { delegatedAt: 1500, delayedOld: true, dispatched: true },
+  { delegatedAt: 100, delayedOld: false, dispatched: false },
+  { delegatedAt: 1100, delayedOld: false, dispatched: false },
+])(
+  'a delegation reaches the sideband before interruption (offset $delegatedAt, delayed old delegation $delayedOld)',
+  { tags: ['technical'] },
+  async ({ delegatedAt, delayedOld, dispatched }) => {
+    const { work, fragment, delegate, messages, channel } = arrange(true);
+    fragment('old', 'Spara hela utkastet.', 0, 100);
+    delegate('old-task', 100);
+    delegate('before-transcript', delegatedAt);
+    if (delayedOld) delegate('delayed-old-task', 100);
+    delegate('before-transcript', delegatedAt);
+    await work.interruptSpeech(100);
+    fragment('first-word', 'Jag ', 1200, 1300);
+    fragment('correction', 'menar Lo.', 1300, 1500);
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(messages()).toEqual([]);
+    work.confirmInput(3);
+    await vi.advanceTimersByTimeAsync(100);
+    if (!dispatched) {
+      expect(messages()).toEqual([]);
+      delegate('corrected', 1500);
+      await vi.advanceTimersByTimeAsync(100);
+    }
+    expect(messages()).toHaveLength(1);
+    expect(messages()[0][1]).toMatchObject({ text: 'Jag menar Lo.' });
+    expect(channel.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'session.thinking.append',
+        delegation_id: dispatched ? 'before-transcript' : 'corrected',
+      }),
+    );
+    work.retire();
+  },
+);
+
+test('a delegation for a correction can arrive before any of its transcript deltas', {
+  tags: ['technical'],
+}, async () => {
+  const { work, fragment, delegate, messages } = arrange(true);
+  await work.interruptSpeech(100);
+  delegate('corrected', 1500);
+  await vi.advanceTimersByTimeAsync(300);
+  expect(messages()).toEqual([]);
+  expect(work.readyForSummary()).toBe(false);
+  fragment('first-word', 'Jag ', 1200, 1300);
+  fragment('correction', 'menar Lo.', 1300, 1500);
+  work.confirmInput(2);
+  await vi.advanceTimersByTimeAsync(2100);
+  expect(messages()).toHaveLength(1);
+  expect(messages()[0][1]).toMatchObject({ text: 'Jag menar Lo.' });
+  work.retire();
+});
+
+test('a correction delegation expires when its transcript does not arrive', {
+  tags: ['technical'],
+}, async () => {
+  const { work, fragment, delegate, messages } = arrange(true);
+  fragment('old', 'Rätta namnet.', 0, 100);
+  delegate('before-transcript', 1500);
+  await work.interruptSpeech(100);
+  expect(work.readyForSummary()).toBe(false);
+  await vi.advanceTimersByTimeAsync(2100);
+  expect(work.readyForSummary()).toBe(true);
+  fragment('new', 'Vad finns i utkastet?', 4000, 4600);
+  work.confirmInput(2);
+  await vi.advanceTimersByTimeAsync(2100);
+  expect(messages()).toEqual([]);
+  delegate('new-question', 4600);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(messages()).toHaveLength(1);
+  expect(messages()[0][1]).toMatchObject({ text: 'Vad finns i utkastet?' });
+  work.retire();
+});
 
 test('continued speech and repeated delegations form one complete task without reusing its approval', {
   tags: ['technical'],

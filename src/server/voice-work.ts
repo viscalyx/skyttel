@@ -11,7 +11,10 @@ import { type VoiceAnswer, voiceAnswerText, voiceCommentary } from './voice-comm
 
 type Anchor = { revision: number; draftVersion: number; contentVersion: number };
 type Fragment = { role: 'user' | 'assistant'; text: string; startMs: number; endMs: number };
+type Delegation = { id: string; offsetMs: number };
 type VoiceCompletionView = TextAssistantView & Pick<ConversationReply, 'failed'>;
+
+const speechSettleMs = 2000;
 
 /** One executor for delegated tasks and replies to pending server questions.
  * Only new user deltas can authorize a save; conversation context cannot. */
@@ -75,7 +78,7 @@ export function voiceWork({
   let interruptedThrough = -1;
   let lastInputAt = 0;
   let microphoneActive = false;
-  let collecting: { id: string | null } | undefined;
+  let collecting: { delegation: Delegation | null } | undefined;
   let stopped = false;
   let questionRevision = initial.revision;
   let questionPending = initial.phase === 'ready' && Boolean(initial.questionPending);
@@ -440,7 +443,7 @@ export function voiceWork({
       while (
         current() &&
         inputVersion === acceptedInput &&
-        (microphoneActive || now() - lastInputAt < 2000)
+        (microphoneActive || now() - lastInputAt < speechSettleMs)
       )
         await new Promise((resolve) => setTimeout(resolve, 50));
       if (!current()) return;
@@ -571,35 +574,48 @@ export function voiceWork({
     while (fragments.length > 40 || JSON.stringify(fragments).length > 8000) fragments.shift();
     if (role === 'user') collectReply();
   }
-  async function collect(id: string | null) {
-    const collection = { id };
+  async function collect(delegation: Delegation | null) {
+    const collection = { delegation };
     collecting = collection;
     const task = generation;
+    const awaitingTranscriptUntil = delegation && !anchor ? now() + speechSettleMs : 0;
     const current = () => !stopped && allowed() && generation === task && collecting === collection;
     // A delegation offset is not a completed utterance. Accumulate late deltas
     // before sending a task, including corrections made while still speaking.
     // Further delegations during collection share this input, consumed once.
     // A poll acknowledging this input was sent after it reached Skyttel. The
     // browser withholds that acknowledgement while its interrupt is in flight.
+    // A delegation received without any input gets the same settling window.
     while (
       current() &&
       (microphoneActive ||
-        now() - lastInputAt < 2000 ||
-        (confirmBrowserInput && confirmedInput < inputVersion))
+        now() < Math.max(lastInputAt + speechSettleMs, awaitingTranscriptUntil) ||
+        (confirmBrowserInput && anchor && confirmedInput < inputVersion))
     )
       await new Promise((resolve) => setTimeout(resolve, 50));
     if (!current()) return;
     collecting = undefined;
     // A typed answer or another task may have resolved the question while
     // the person was speaking. Unsolicited tasks still require delegation.
-    if (id === null && (!questionPending || inFlight.size)) return;
+    if (!delegation && (!questionPending || inFlight.size)) return;
+    // An interruption can remove all the input that preceded this delegation.
+    // Require some retained speech at its offset before collecting the suffix.
+    if (
+      delegation &&
+      !pending.some((item) => item.startMs <= delegation.offsetMs && item.text.trim())
+    ) {
+      collectReply();
+      return;
+    }
     // Speech preceding the question remains context, never authority for its
     // automatic reply. A normal delegation retains its original input batch.
-    const selected =
-      id === null ? pending.filter((item) => item.inputVersion > questionInputVersion) : pending;
+    const selected = !delegation
+      ? pending.filter((item) => item.inputVersion > questionInputVersion)
+      : pending;
     const text = selected.map((item) => item.text).join('');
-    const expected = id === null ? selected[0]?.anchor : anchor;
+    const expected = delegation ? anchor : selected[0]?.anchor;
     const answerTo = selected[0]?.answerTo?.length ? selected[0].answerTo : undefined;
+    const id = delegation?.id ?? null;
     pending = [];
     anchor = undefined;
     input?.(false);
@@ -646,6 +662,15 @@ export function voiceWork({
         type: event.delegation.type,
       },
     });
+    if (event.offset_ms <= interruptedThrough) return;
+    const delegation = { id: event.delegation.id, offsetMs: event.offset_ms };
+    const activeDelegation = collecting?.delegation;
+    if (activeDelegation && delegation.offsetMs < activeDelegation.offsetMs) return;
+    // The sideband can delegate the correction before sending its first delta.
+    if (interruptedThrough >= 0 && !pending.length) {
+      void collect(delegation);
+      return;
+    }
     const selected = pending.filter((item) => item.startMs <= event.offset_ms);
     if (!anchor || !selected.some((item) => item.text.trim())) {
       // Live can delegate after the application has already forwarded a reply.
@@ -660,7 +685,7 @@ export function voiceWork({
       );
       return;
     }
-    void collect(event.delegation.id);
+    void collect(delegation);
   });
   function retire(resetRequestId?: string) {
     commentary.close();
@@ -702,7 +727,9 @@ export function voiceWork({
         content:
           'Stop speaking immediately. Listen to the correction and handle it normally in Swedish.',
       });
-      if (collection) void collect(collection.id);
+      if (collection?.delegation && collection.delegation.offsetMs > interruptedThrough)
+        void collect(collection.delegation);
+      else collectReply();
       const canceled = await canceling;
       if (!canceled) throw new Error('voice_interruption_failed');
       answered.add(canceled.view.revision);
@@ -725,6 +752,7 @@ export function voiceWork({
       !microphoneActive &&
       owned === undefined &&
       inFlight.size === 0 &&
+      !collecting &&
       pending.length === 0 &&
       !commentary.pending(),
     /** Consume each typed FIFO completion once, including while the next task works. */
