@@ -419,8 +419,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   Ett kort statusbesked per svar bevarar fokus.
   Långa svar rullas med tangentbord i den utfällda svarsrutan.
   Saknad leveranskanal lämnar texten oskickad och hindrar röststart
-  tills användaren uttryckligen försöker igen. Efter en bruten
-  leveranskanal kan ett nytt talat uppdrag få svar i samma samtal.
+  tills användaren uttryckligen försöker igen. Om kanalen bryts före
+  mottagning ligger den oskickade texten kvar även när ett nytt talat
+  uppdrag får svar i samma samtal.
   Förlust före första uppgiftsnotisen ger tydligt leveransfel; lagrat
   utkast finns kvar efter utgång och ny inloggning utan återspelning.
   Verkligt ljud och skärmläsare bedöms separat.

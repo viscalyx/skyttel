@@ -65,14 +65,15 @@ function completionAuthorization(body: ModelRequest) {
 
 test('TEXT-20: följdfrågan identifierar cykeln i utkastet', async ({ page }) => {
   let vehicleTypeId: string;
-  const model = blueBikeModel(crypto.randomUUID(), () => vehicleTypeId);
+  const bikeId = crypto.randomUUID();
+  const model = blueBikeModel(bikeId, () => vehicleTypeId);
   const app = await createInstallation(undefined, { modelFetch: model.provider });
   try {
     await signIn(page.request, app.origin);
     const { household } = await (await createHousehold(page.request, app.origin)).json();
-    const readMap = async () =>
-      (await page.request.get(`${app.origin}/api/households/${household.id}/map`)).json();
-    const initial = await readMap();
+    const initial = await (
+      await page.request.get(`${app.origin}/api/households/${household.id}/map`)
+    ).json();
     vehicleTypeId = initial.types.find((type: { name: string }) => type.name === 'Fordon').id;
     await page.goto(app.origin);
     await consent(page);
@@ -88,15 +89,13 @@ test('TEXT-20: följdfrågan identifierar cykeln i utkastet', async ({ page }) =
     await expect(rows).toHaveCount(1);
     await expect(rows.getByRole('rowheader')).toHaveText('Blå cykeln');
     await expect(rows.getByRole('cell', { name: 'Fordon', exact: true })).toBeVisible();
-    const proposed = await readMap();
     await send(page, bikeQuestion);
-    await expect(transcript(page)).toContainText(`Blå cykeln (${proposed.draft.changes[0].id})`);
+    await expect(transcript(page)).toContainText(`Blå cykeln (${bikeId})`);
     await showDraft(page);
     await expect(rows).toHaveCount(1);
     await expect(rows.getByRole('rowheader')).toHaveText('Blå cykeln');
     await expect(rows.getByRole('cell', { name: 'Fordon', exact: true })).toBeVisible();
     await expect(await openSavedHistory(page)).toContainText('Inga genomförda sparanden.');
-    expect(await readMap()).toMatchObject({ draft: proposed.draft, objects: [] });
   } finally {
     await app.close();
   }

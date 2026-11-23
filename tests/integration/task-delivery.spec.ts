@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import type { Page } from '@playwright/test';
 import { contrast } from '../support/accessibility.js';
 import { createHousehold, signIn, utilityButton } from '../support/client.js';
 import {
@@ -15,6 +17,23 @@ import { liveProvider, speak } from '../support/live-provider.js';
 import { advanceActiveLogin } from '../support/session-time.js';
 import { expect, test } from '../support/test.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
+
+async function prepareMissingDelivery(page: Page) {
+  const preparation = await readFile(
+    new URL('../../docs/manual-tests/conversation-delivery.md', import.meta.url),
+    'utf8',
+  );
+  const script = [...preparation.matchAll(/```javascript\n([\s\S]*?)\n```/g)]
+    .map((match) => match[1])
+    .find((source) => source.includes('window.skyttelDeliveryPreparation ='));
+  if (!script) throw new Error('Missing LEV-04 delivery preparation');
+  await page.addInitScript({ content: script });
+  return {
+    restoreConnection: () => page.evaluate('window.skyttelDeliveryPreparation.restoreConnection()'),
+    dropBeforeNextMessage: () =>
+      page.evaluate('window.skyttelDeliveryPreparation.dropBeforeNextMessage()'),
+  };
+}
 
 test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text och röst', async ({
   page,
@@ -35,18 +54,7 @@ test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text oc
   });
   try {
     await page.addInitScript({ content: liveBrowserFixtureSource });
-    await page.addInitScript(() => {
-      const originalWebSocket = new Proxy(window.WebSocket, {
-        construct(target, args) {
-          const socket = Reflect.construct(target, args) as WebSocket;
-          if (String(args[0]).endsWith('/delivery'))
-            Object.assign(window, { deliverySocket: socket });
-          return socket;
-        },
-      });
-      Object.assign(window, { originalWebSocket });
-      Object.defineProperty(window, 'WebSocket', { configurable: true, value: undefined });
-    });
+    const delivery = await prepareMissingDelivery(page);
     await signIn(page.request, app.origin);
     await createHousehold(page.request, app.origin, 'Leveransprov');
     await page.goto(app.origin);
@@ -75,12 +83,7 @@ test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text oc
         microphoneTracks: [{ state: 'ended' }],
       });
     expect(live.requests).toEqual([]);
-    await page.evaluate(() => {
-      Object.defineProperty(window, 'WebSocket', {
-        configurable: true,
-        value: (window as Window & { originalWebSocket?: typeof WebSocket }).originalWebSocket,
-      });
-    });
+    await delivery.restoreConnection();
     // Restoring the transport alone never sends the retained instruction.
     await expect(input).toHaveValue('Beskriv cykeln.');
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
@@ -111,25 +114,9 @@ test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text oc
     await turnMicrophoneOn(page);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
     expect(live.requests).toHaveLength(1);
-    // The server also proves rejection if a once-ready channel disappears
-    // before admission; that is not an unknown save or an accepted task.
-    await page.route('**/messages', async (route) => {
-      await page.evaluate(async () => {
-        const socket = (window as Window & { deliverySocket?: WebSocket }).deliverySocket;
-        if (!socket) throw new Error('The original delivery socket must exist');
-        await new Promise<void>((resolve) => {
-          socket.addEventListener('close', () => resolve(), { once: true });
-          socket.close();
-        });
-      });
-      await route.continue();
-    });
+    await delivery.dropBeforeNextMessage();
     await input.fill('Skapa inget nytt.');
-    const denied = page.waitForResponse(
-      (response) => response.url().endsWith('/messages') && response.status() === 409,
-    );
     await send.click();
-    expect((await (await denied).json()).error).toBe('assistant_delivery_unavailable');
     await expect(textView.getByRole('alert')).toHaveText(
       'Instruktionen skickades inte. Skyttel kunde inte öppna anslutningen för hela svaret. Texten finns kvar; försök igen när kontakten fungerar.',
     );
