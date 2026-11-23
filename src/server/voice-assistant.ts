@@ -19,12 +19,13 @@ import {
 import type { Config } from './config.js';
 import { voiceConversationModel } from './conversation-capacity.js';
 import type { ConversationConsentProvenance } from './conversation-consent.js';
-import type {
-  LiveModelProfile,
-  LiveSideband,
-  LiveSidebandFactory,
-  LiveUsage,
-  LiveUsageAttempt,
+import {
+  boundedLiveHistory,
+  type LiveModelProfile,
+  type LiveSideband,
+  type LiveSidebandFactory,
+  type LiveUsage,
+  type LiveUsageAttempt,
 } from './live-provider.js';
 import { MapError } from './map.js';
 import type { LocalDispatch } from './text-assistant-mcp.js';
@@ -544,6 +545,7 @@ export function voiceAssistantRoutes({
       if (current.contextSummaryState === 'summarizing')
         return context.json({ error: 'assistant_busy' }, 409);
       const retained = conversation?.(context.req.param('sessionId'));
+      let currentHistoryItem: InitialItem | undefined;
       if (retained) {
         history = retained.length
           ? retained.map(({ role, text, partial }) =>
@@ -560,7 +562,10 @@ export function voiceAssistantRoutes({
                   },
             )
           : undefined;
+        currentHistoryItem = history?.pop();
       }
+      const initialHistory = boundedLiveHistory(history ?? [], currentHistoryItem);
+      if (!initialHistory) throw new MapError('voice_context_capacity', 409);
       stage = 'create';
       const liveSession: LiveCreateParams['session'] = {
         model: liveProfile.model,
@@ -570,7 +575,7 @@ export function voiceAssistantRoutes({
         instructions: voiceAssistantInstructions,
         // Historical rows only seed the provider. They never become voiceWork's
         // pending user fragments, which alone can authorize a fresh save.
-        ...(history ? { input: history } : {}),
+        ...(initialHistory.length ? { input: initialHistory } : {}),
         client: {
           data_channel: {
             allowed_client_events: ['session.close'],
@@ -920,7 +925,8 @@ export function voiceAssistantRoutes({
       report(usage);
       if (error instanceof MapError && error.code === conversationConsentRevoked)
         return context.json({ error: error.code }, 403);
-      const code = expired ? endReason : startupErrorCode(error);
+      const capacity = error instanceof MapError && error.code === 'voice_context_capacity';
+      const code = expired ? endReason : capacity ? error.code : startupErrorCode(error);
       console.error(
         JSON.stringify({
           event: 'voice_start_failed',
@@ -938,7 +944,7 @@ export function voiceAssistantRoutes({
       );
       return context.json(
         { error: code, voiceErrorGroup: voiceErrorGroup(code), diagnosticId: usage.attemptId },
-        expired ? 401 : 503,
+        expired ? 401 : capacity ? 409 : 503,
       );
     } finally {
       starting.delete(check);

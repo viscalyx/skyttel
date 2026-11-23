@@ -911,6 +911,17 @@ export function textAssistantRoutes({
   }
   function providerConversation(session: Session) {
     if (!session.state.conversation.length && !session.state.unfinishedRequests.length) return [];
+    const draft = draftFacts(
+      session,
+      session.state.activeMessage?.text ?? session.state.userRequests.at(-1) ?? '',
+    );
+    // Voice uses the draft as orientation. Its delegated read can retrieve
+    // the complete checked values where large properties would crowd out speech.
+    const { version, contentVersion, readyToSave } = draft;
+    const currentDraft =
+      Buffer.byteLength(JSON.stringify(draft)) <= 2500
+        ? draft
+        : { version, contentVersion, readyToSave, complete: false };
     return [
       ...(session.state.summary
         ? [
@@ -948,17 +959,34 @@ export function textAssistantRoutes({
       {
         role: 'assistant' as const,
         text: JSON.stringify({
-          currentDraft: draftFacts(
-            session,
-            session.state.activeMessage?.text ?? session.state.userRequests.at(-1) ?? '',
-          ),
+          currentDraft,
           unfinishedRequests: activeRequests(session),
-          pendingParts: contextParts(session),
-          saveOperations: session.state.operations,
+          pendingParts: contextParts(session)
+            .filter(({ status }) => status === 'waiting' || status === 'ready')
+            .map(({ id, revision, request, question, status }) => ({
+              id,
+              revision,
+              request,
+              question,
+              status,
+            })),
+          // Receipts can include both full before and after versions of objects.
+          // A voice restart needs the verified operation reference for lookup.
+          saveOperations: saveOperationReferences(session),
           historical: true,
         }),
       },
     ];
+  }
+  function saveOperationReferences(session: Session) {
+    return session.state.operations.map(
+      ({ operationId, status, draftVersion, contentVersion }) => ({
+        operationId,
+        status,
+        draftVersion,
+        contentVersion,
+      }),
+    );
   }
   function activeRequests(session: Session) {
     return session.state.unfinishedRequests
@@ -2939,14 +2967,7 @@ export function textAssistantRoutes({
           questionPending: contextParts(session).some((part) => part.status === 'waiting'),
           pendingParts: contextParts(session),
           ...envelopeFacts(session, text, review),
-          saveOperations: session.state.operations.map(
-            ({ operationId, status, draftVersion, contentVersion }) => ({
-              operationId,
-              status,
-              draftVersion,
-              contentVersion,
-            }),
-          ),
+          saveOperations: saveOperationReferences(session),
           outdatedReads: session.execution.reads.outdated().map(({ name }) => ({ name })),
           voiceContext: dialogue.length ? JSON.stringify(dialogue) : undefined,
           previousFailure: session.state.previousFailure

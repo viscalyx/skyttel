@@ -1,6 +1,9 @@
 import { join } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
 import Database from 'better-sqlite3';
+import { Tiktoken } from 'js-tiktoken/lite';
+import ranks from 'js-tiktoken/ranks/o200k_base';
+import type { LiveCreateParams } from 'openai/resources/live/live';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { MapState } from '../../../src/shared/map.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
@@ -29,11 +32,13 @@ const readMap = async (): Promise<MapState> => (await client.get(`${path}/map`))
 async function setup(
   provider = textModel(() => [modelMessage('Ett svar.')]).provider,
   assistantDispatch?: NonNullable<Parameters<typeof createInstallation>[1]>['assistantDispatch'],
+  inspectLiveRequest?: (request: LiveCreateParams) => Response | undefined,
 ) {
   live = liveProvider();
   app = await createInstallation(undefined, {
     modelFetch: provider,
-    liveFetch: live.provider,
+    liveFetch: async (input, init) =>
+      inspectLiveRequest?.(JSON.parse(String(init?.body))) ?? live.provider(input, init),
     liveSideband: live.attach,
     assistantDispatch,
   });
@@ -170,6 +175,89 @@ test('a voice request refused during save recovery leaves queued work intact', {
     releaseVoiceAdmission();
   }
 });
+
+test.each(['large receipt', 'many fragments'])(
+  'voice reconnects with recent conversation and verified save references after %s',
+  { tags: ['technical'], timeout: 12_000 },
+  async (condition) => {
+    // Enforce the visible provider limits. The real Live renderer's
+    // framing may add tokens beyond this offline count of its text.
+    const encoder = new Tiktoken(ranks);
+    await setup(undefined, undefined, ({ session }) => {
+      if (
+        (session.input?.length ?? 0) > 128 ||
+        (session.input ?? []).reduce(
+          (tokens, item) => tokens + encoder.encode(item.content[0].text).length,
+          0,
+        ) > 8192
+      )
+        return Response.json({ error: { message: 'Initial history too large.' } }, { status: 400 });
+    });
+    const map = await readMap();
+    const description =
+      condition === 'large receipt' ? 'Påhittad data, fält 42. '.repeat(410) : 'Kort beskrivning.';
+    expect(
+      (
+        await post('map/draft', {
+          version: map.draft.version,
+          id: 'archived-music-service',
+          baseRevision: null,
+          value: {
+            typeId: map.types[0].id,
+            name: 'Exempeltjänsten',
+            properties: Array.from({ length: 4 }, (_, index) => ({
+              id: `notes-${index}`,
+              label: `Anteckning ${index}`,
+              kind: 'text',
+              value: description,
+            })),
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    const proposal = await readMap();
+    expect(
+      (
+        await post('map/save', {
+          version: proposal.draft.version,
+          operationId: 'previous-map-save',
+        })
+      ).status(),
+    ).toBe(200);
+    session = await (await client.get(`${path}/text-assistant/${session.id}`)).json();
+    const operations = session.operations;
+    expect(operations).toMatchObject([{ operationId: 'previous-map-save', status: 'succeeded' }]);
+    await start();
+    for (let index = 0; index < (condition === 'many fragments' ? 140 : 0); index++)
+      live.emit(providerId, {
+        type: `session.${index % 2 === 0 ? 'input' : 'output'}_transcript.delta`,
+        event_id: `fragment-${index}`,
+        delta: index % 2 === 0 ? ' Fråga.' : ' Svar.',
+        start_ms: index * 100,
+        end_ms: index * 100 + 100,
+      });
+    const latest = 'Vilken musik vill du kunna spela i huset?';
+    live.emit(providerId, {
+      type: 'session.input_transcript.delta',
+      event_id: 'retained-last-question',
+      delta: latest,
+      start_ms: 15_000,
+      end_ms: 15_100,
+    });
+    expect((await post(`${voicePath}/stop`)).status()).toBe(200);
+    session = await (await client.get(`${path}/text-assistant/${session.id}`)).json();
+    await start();
+    const seeded = JSON.stringify(live.requests.at(-1)?.session.input);
+    expect(seeded).toContain(latest);
+    expect(seeded).toContain('previous-map-save');
+    expect(seeded).not.toContain(description);
+    if (condition === 'many fragments')
+      expect(seeded).toContain('Delegera frågor om äldre uppgifter');
+    speak(live, 'Vad finns i kartan?');
+    await expect.poll(() => voiceAnswerParts(live.sent).join('')).toContain('Ett svar.');
+    expect((await poll()).assistant.operations).toEqual(operations);
+  },
+);
 
 test('a spoken proposal reaches a retained draft when the request counter is missing', {
   tags: ['technical'],

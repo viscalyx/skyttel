@@ -78,6 +78,13 @@ export const conversationNoticeDefinitions = [
     live: 'assertive',
   },
   {
+    id: 'voiceContextCapacity',
+    text: 'Pågående uppdrag ryms inte i röstläget. Fortsätt i textvyn, där samtalet och utkastet finns kvar.',
+    kind: 'event',
+    icon: 'warning',
+    live: 'assertive',
+  },
+  {
     id: 'voiceStartFailed',
     text: 'Rösten kunde inte starta just nu. Försök igen om en stund.',
     kind: 'event',
