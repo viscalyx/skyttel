@@ -540,6 +540,9 @@ export function textAssistantRoutes({
   }
   const deliveries = taskDeliveries(now, syncWork);
   const deliveryOwners = new Map<string, Session>();
+  function availableDelivery(session: Session, id: unknown) {
+    return typeof id === 'string' && deliveryOwners.get(id) === session && deliveries.has(id);
+  }
   const textWork = new AsyncLocalStorage<{
     session: Session;
     guard: () => void;
@@ -5437,9 +5440,7 @@ export function textAssistantRoutes({
     const receivedAt = now();
     if (
       body.deliveryConnectionId !== undefined &&
-      (typeof body.deliveryConnectionId !== 'string' ||
-        deliveryOwners.get(body.deliveryConnectionId) !== session ||
-        !deliveries.has(body.deliveryConnectionId))
+      !availableDelivery(session, body.deliveryConnectionId)
     )
       return context.json({ error: 'assistant_delivery_unavailable' }, 409);
     const message: Message = {
@@ -5683,9 +5684,7 @@ export function textAssistantRoutes({
         return context.json({ error: 'operation_pending' }, 409);
       if (
         body?.deliveryConnectionId !== undefined &&
-        (typeof body.deliveryConnectionId !== 'string' ||
-          deliveryOwners.get(body.deliveryConnectionId) !== session ||
-          !deliveries.has(body.deliveryConnectionId))
+        !availableDelivery(session, body.deliveryConnectionId)
       )
         return context.json({ error: 'assistant_delivery_unavailable' }, 409);
       session.state.failedWork = undefined;
@@ -6011,6 +6010,10 @@ export function textAssistantRoutes({
     },
     /** Export eligibility belongs to the original conversation, never later saved consent. */
     consentVersion: (sessionId: string) => sessions.get(sessionId)?.state.consentTextVersion,
+    voiceDeliveryAvailable: (sessionId: string, connectionId: string) => {
+      const session = sessions.get(sessionId);
+      return session !== undefined && availableDelivery(session, connectionId);
+    },
     prepareVoiceContext: async (
       sessionId: string,
       signal?: AbortSignal,

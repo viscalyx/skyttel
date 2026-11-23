@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { once } from 'node:events';
 import { Hono } from 'hono';
 import OpenAI from 'openai';
 import type { InitialItem, LiveCreateParams } from 'openai/resources/live/live';
@@ -39,6 +40,7 @@ type Voice = Partial<ConversationConsentProvenance> & {
   assistant: TextAssistantView;
   channel: LiveSideband;
   heartbeat: number;
+  deliveryConnection: { id?: string; events: EventTarget };
   finalized: boolean;
   timer: NodeJS.Timeout;
   deadlineTimer?: NodeJS.Timeout;
@@ -65,6 +67,30 @@ function startupErrorCode(error: unknown) {
   return 'voice_connection_failed';
 }
 
+function validDeliveryConnectionId(value: unknown) {
+  return value === undefined || (typeof value === 'string' && /^[\w-]{1,128}$/.test(value));
+}
+
+async function waitForDeliveryConnection(
+  connection: Voice['deliveryConnection'],
+  refusedId: string,
+  signal?: AbortSignal,
+) {
+  // The browser can spend up to five seconds opening a replacement after its
+  // next poll. The refusal happened before admission, so wait once and retry
+  // the same request only when the browser has supplied a different ID.
+  const timeout = AbortSignal.timeout(6_000);
+  const until = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  while (connection.id === refusedId) {
+    try {
+      await once(connection.events, 'change', { signal: until });
+    } catch {
+      return;
+    }
+  }
+  if (!until.aborted) return connection.id;
+}
+
 export function voiceAssistantRoutes({
   config,
   dispatch,
@@ -83,6 +109,7 @@ export function voiceAssistantRoutes({
   liveProfile = voiceConversationModel,
   now = () => Date.now(),
   voiceAccess,
+  voiceDeliveryAvailable,
   expireVoiceWork,
 }: {
   now?: () => number;
@@ -92,6 +119,7 @@ export function voiceAssistantRoutes({
         guard: () => number;
       })
     | undefined;
+  voiceDeliveryAvailable: (sessionId: string, connectionId: string) => boolean;
   expireVoiceWork: (sessionId: string) => void;
   config: Config;
   dispatch: LocalDispatch;
@@ -274,7 +302,12 @@ export function voiceAssistantRoutes({
     if (!client)
       return context.json({ error: 'voice_unavailable', voiceErrorGroup: 'administration' }, 503);
     const body = await context.req.json().catch(() => null);
-    if (typeof body?.sdp !== 'string' || !body.sdp || body.sdp.length > 12000)
+    if (
+      typeof body?.sdp !== 'string' ||
+      !body.sdp ||
+      body.sdp.length > 12000 ||
+      !validDeliveryConnectionId(body.deliveryConnectionId)
+    )
       return context.json({ error: 'invalid_request' }, 400);
     if (
       (current.phase === 'working' &&
@@ -607,6 +640,7 @@ export function voiceAssistantRoutes({
         channel,
         usage,
         heartbeat: now(),
+        deliveryConnection: { id: body.deliveryConnectionId, events: new EventTarget() },
         finalized: false,
         timer: setInterval(() => {
           if (now() - voice.heartbeat > 10_000) void close(voice, 'voice_connection_lost');
@@ -734,7 +768,6 @@ export function voiceAssistantRoutes({
         void close(voice);
         voice.finish?.();
       });
-      const deliveryConnectionId = body.deliveryConnectionId;
       voice.work = voiceWork({
         now,
         confirmBrowserInput: body.confirmBrowserInput === true,
@@ -771,32 +804,47 @@ export function voiceAssistantRoutes({
         transcript: (role, text) => transcript?.(context.req.param('sessionId'), role, text),
         input: (pending, text) => voiceInput?.(context.req.param('sessionId'), pending, text),
         interrupt: (revision) => interrupt(context.req.param('sessionId'), revision),
-        request: async (action, body, signal, observation) => {
-          check();
-          const request = new Request(`${config.origin}${path}${action ? `/${action}` : ''}`, {
-            method: action && !action.startsWith('messages/') ? 'POST' : 'GET',
-            headers: requestHeaders,
-            body: action
-              ? JSON.stringify(
-                  action === 'messages'
-                    ? {
-                        ...(body as Record<string, unknown>),
-                        deliveryConnectionId,
-                      }
-                    : body,
+        request: async (action, body, signal, options) => {
+          const send = (deliveryConnectionId: string | undefined) => {
+            check();
+            const request = new Request(`${config.origin}${path}${action ? `/${action}` : ''}`, {
+              method: action && !action.startsWith('messages/') ? 'POST' : 'GET',
+              headers: requestHeaders,
+              body: action
+                ? JSON.stringify(
+                    action === 'messages'
+                      ? { ...(body as Record<string, unknown>), deliveryConnectionId }
+                      : body,
+                  )
+                : undefined,
+              signal,
+            });
+            return options?.requestId
+              ? withBackendObservationRequest(
+                  {
+                    requestId: options.requestId,
+                    voiceLink: { traceId: voiceId, spanId: voiceId },
+                  },
+                  () => dispatch(request),
                 )
-              : undefined,
-            signal,
-          });
-          const response = await (observation
-            ? withBackendObservationRequest(
-                {
-                  requestId: observation.requestId,
-                  voiceLink: { traceId: voiceId, spanId: voiceId },
-                },
-                () => dispatch(request),
-              )
-            : dispatch(request));
+              : dispatch(request);
+          };
+          const connectionId = voice.deliveryConnection.id;
+          let response = await send(connectionId);
+          if (action === 'messages' && connectionId && response.status === 409) {
+            const refusal = await response
+              .clone()
+              .json()
+              .catch(() => null);
+            if (refusal?.error === 'assistant_delivery_unavailable') {
+              const replacement = await waitForDeliveryConnection(
+                voice.deliveryConnection,
+                connectionId,
+                signal,
+              );
+              if (replacement && options?.canRetry?.()) response = await send(replacement);
+            }
+          }
           check();
           if (!response.ok) {
             const body = (await response.json().catch(() => null)) as { error?: unknown } | null;
@@ -974,9 +1022,18 @@ export function voiceAssistantRoutes({
         !Number.isSafeInteger(body?.draftVersion) ||
         body.draftVersion < 0 ||
         !Number.isSafeInteger(body?.contentVersion) ||
-        body.contentVersion < 1
+        body.contentVersion < 1 ||
+        !validDeliveryConnectionId(body.deliveryConnectionId)
       )
         return context.json({ error: 'invalid_request' }, 400);
+      if (
+        body.deliveryConnectionId !== undefined &&
+        body.deliveryConnectionId !== voice.deliveryConnection.id &&
+        voiceDeliveryAvailable(context.req.param('sessionId'), body.deliveryConnectionId)
+      ) {
+        voice.deliveryConnection.id = body.deliveryConnectionId;
+        voice.deliveryConnection.events.dispatchEvent(new Event('change'));
+      }
       voice.view.inputVersion = voice.work?.confirmInput(body.confirmedInputVersion);
       voice.work?.rendered(body);
       voice.work?.activity(body.microphoneActive === true && body.microphoneOn === true);

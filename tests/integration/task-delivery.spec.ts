@@ -11,7 +11,7 @@ import {
 } from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
-import { liveProvider } from '../support/live-provider.js';
+import { liveProvider, speak } from '../support/live-provider.js';
 import { advanceActiveLogin } from '../support/session-time.js';
 import { expect, test } from '../support/test.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
@@ -20,7 +20,8 @@ test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text oc
   page,
 }) => {
   const full = `${'Svaret efter ditt uttryckliga återförsök. '.repeat(80)}Sista raden i hela svaret.`;
-  const model = textModel(() => [modelMessage(full)]);
+  const voiceReply = 'Hela röstsvarstexten efter återanslutning.';
+  const model = textModel(() => [modelMessage(model.requests.length === 1 ? full : voiceReply)]);
   const live = liveProvider();
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
@@ -137,6 +138,12 @@ test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text oc
       'Skapa inget nytt.',
     );
     expect(model.requests).toHaveLength(1);
+    speak(live, 'Beskriv cykeln med rösten.');
+    await expect(delivered).toContainText(voiceReply);
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
+    await expect(input).toHaveValue('Skapa inget nytt.');
+    expect(model.requests).toHaveLength(2);
+    expect(live.requests).toHaveLength(1);
     await closeConversationText(page);
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
     await expect(tools).toBeInViewport({ ratio: 1 });

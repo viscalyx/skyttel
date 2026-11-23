@@ -472,6 +472,10 @@ export function useVoice(options: {
           return;
         }
         try {
+          // connect reuses the live socket and opens a new one if it closed.
+          const responseDelivery = await delivery?.connect(path.replace(/\/voice$/, ''));
+          if (!active()) return;
+          if (responseDelivery) attempt.delivery = responseDelivery;
           const result = await request<VoiceAssistantResponse>(
             `${path}/${attempt.voiceId}/poll`,
             {
@@ -480,6 +484,7 @@ export function useVoice(options: {
               microphoneActive: !offRef.current && activityRef.current.microphone,
               speakerActive: activityRef.current.speaker,
               confirmedInputVersion: attempt.interrupting ? undefined : attempt.inputVersion,
+              deliveryConnectionId: responseDelivery?.id,
             },
             attempt.controller.signal,
           );

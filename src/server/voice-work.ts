@@ -48,7 +48,7 @@ export function voiceWork({
     action?: string,
     body?: unknown,
     signal?: AbortSignal,
-    observation?: { requestId: string },
+    options?: { requestId?: string; canRetry?: () => boolean },
   ) => Promise<TextAssistantView>;
   interrupt: (revision?: number) => void;
   /** The conversation as the voice last saw it, and whether the voice has a task in progress. */
@@ -437,6 +437,7 @@ export function voiceWork({
             answerTo,
           },
           controller.signal,
+          { canRetry: () => current() && inputVersion === acceptedInput },
         );
         // A spoken reset retires this executor. Its new revision must not be
         // mistaken for stale work and cancelled after the reset completes.

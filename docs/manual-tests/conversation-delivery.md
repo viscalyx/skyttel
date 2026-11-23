@@ -180,17 +180,30 @@ const originalWebSocket = window.WebSocket;
 window.WebSocket = undefined;
 ```
 
-Återställ anslutningsstödet när stegen säger det genom att köra
-`window.WebSocket = originalWebSocket;` i samma konsol. Ladda om sidan
-efter provet för att återställa hela förberedelsen.
+Återställ anslutningsstödet när stegen säger det. Spara samtidigt den
+senast öppnade kanalen för hela svaret så att den kan stängas i steg 7.
+
+```javascript
+window.WebSocket = new Proxy(originalWebSocket, {
+  construct(target, args) {
+    const socket = Reflect.construct(target, args);
+    if (String(args[0]).endsWith('/delivery')) window.skyttelDeliverySocket = socket;
+    return socket;
+  },
+});
+```
+
+Stäng den öppna kanalen i steg 7 med `window.skyttelDeliverySocket.close();`.
+Ladda om sidan efter provet för att återställa hela förberedelsen.
 
 **Automatiskt motsvarande integrationstest:**
 [task-delivery.spec.ts](../../tests/integration/task-delivery.spec.ts), LEV-04.
 Riktig produktsida och HTTP med syntetiska medier och leverantörer provar
 avvisning före start samt verklig WebSocket vid uttryckligt återförsök.
 Automatiken stänger även en redan öppnad anslutning före serverns
-mottagning och kontrollerar samma tydliga avvisning. Fysisk mikrofon och
-skärmläsare ingår inte.
+mottagning av en skriven instruktion. Den kontrollerar avvisningen och
+att hela svaret på nästa talade uppdrag kommer efter återanslutningen.
+Fysisk mikrofon och skärmläsare bedöms separat.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -207,6 +220,7 @@ skärmläsare ingår inte.
     "Skriven instruktion skickas inte, texten finns kvar och ett tydligt fel visas utan att instruktionen hamnar i samtalstexten.",
     "Röststart misslyckas tydligt och mikrofonen stängs. Återställd anslutning skickar eller startar ingenting automatiskt.",
     "Uttryckligt återförsök skickar instruktionen en gång och ger hela svaret; uttrycklig röststart fungerar igen.",
+    "När anslutningen för hela svaret bryts under samtalet kan användaren ge ett nytt talat uppdrag och läsa hela svaret utan att starta om rösten.",
     "Hela svaret går att läsa i textvyn. Kartans storlek och verktygens placering består. Inställningarnas rubrik får fokus och är synlig."
   ]
 }
@@ -230,7 +244,9 @@ skärmläsare ingår inte.
    Välj **Tillbaka till kartan**. Upprepa steg 4:s läsning och steg 5 vid
    1280, 390 och 320 pixlars bredd utan att skicka instruktionen igen.
 6. Välj **Prata med Skyttel** och invänta **Lyssnar**.
-7. Stäng textvyn. Kartans verktyg ska behålla sin placering.
+7. Stäng den öppna kanalen enligt förberedelsen. Säg **Beskriv cykeln med
+   rösten.** Läs hela svaret i textvyn och kontrollera att mikrofonen är på.
+8. Stäng textvyn. Kartans verktyg ska behålla sin placering.
 
 **Förväntat resultat:**
 
@@ -241,6 +257,7 @@ skärmläsare ingår inte.
   återställningen.
 - Endast ett uttryckligt nytt försök skickar texten och tömmer fältet.
   Hela svaret kan läsas. Rösten kan startas med ett uttryckligt nytt val.
+- Det nya talade uppdraget får ett fullständigt svar. Mikrofonen förblir på.
 - Hela svaret läses i textvyn och kartans storlek och verktygens placering
   består. Inställningarnas rubrik får fokus och är synlig.
 
