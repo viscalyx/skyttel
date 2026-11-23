@@ -1639,13 +1639,13 @@ test('a refused spoken request is announced once without audio or a text panel',
       },
     });
   });
-  await userEvent.click(microphoneButton());
-  await waitFor(() => expect(Peer.all[0]?.channel.readyState).toBe('open'));
-  await act(async () =>
-    Peer.all[0].channel.emit({ type: 'session.started', session: { id: 'provider-session' } }),
-  );
   vi.useFakeTimers();
   await act(async () => {
+    fireEvent.click(microphoneButton());
+  });
+  expect(Peer.all[0]?.channel.readyState).toBe('open');
+  await act(async () => {
+    Peer.all[0].channel.emit({ type: 'session.started', session: { id: 'provider-session' } });
     await vi.advanceTimersByTimeAsync(1000);
   });
   expect(screen.getByRole('region', { name: 'Samtalsnotis' }).textContent).toContain(refusal.text);
