@@ -1138,6 +1138,7 @@ export function useConversation({
     const epoch = ++requestEpoch.current;
     const sent = text;
     const messageId = crypto.randomUUID();
+    const correction = voice.prepareTextCorrection?.();
     setPending(true);
     setError('');
     setTaskFailed(false);
@@ -1163,9 +1164,17 @@ export function useConversation({
         }
         return;
       }
+      // Wait for the stop to cancel the preceding work. Keep the draft versions
+      // that the person saw when they wrote the new message.
+      if (correction?.interruption) await correction.interruption;
+      const latest = active.current;
+      if (epoch !== requestEpoch.current || latest?.id !== current.id) return;
       showTranscript({ id: messageId, role: 'user', text: sent });
+      // The user's fresh submission arms the silence gate before any reply can
+      // reach Live, even if the response to this POST is delayed.
+      correction?.armPlayback?.();
       const result = await request<TextAssistantView>(`${path}/${current.id}/messages`, {
-        revision: current.revision,
+        revision: correction?.interruption ? latest.revision : current.revision,
         draftVersion: current.review.version,
         contentVersion: current.review.contentVersion,
         requestId: messageId,

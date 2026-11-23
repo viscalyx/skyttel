@@ -144,6 +144,12 @@ export function createVoiceTransport(
     row.partial = false;
     callbacks.onTranscript?.({ ...row });
   }
+  function startCorrection() {
+    if (closed || stopped || !muted || correctionStarted) return false;
+    correctionStarted = true;
+    output?.port.postMessage('correction');
+    return true;
+  }
   function transcript(
     role: TranscriptRow['role'],
     event: { delta: string; start_ms: number; end_ms: number },
@@ -151,11 +157,9 @@ export function createVoiceTransport(
     if (closed || stopped || !event.delta) return;
     const now = performance.now();
     if (role === 'user') {
-      if (muted && !correctionStarted && event.delta.trim() && event.end_ms > interruptedThrough) {
-        correctionStarted = true;
+      if (event.delta.trim() && event.end_ms > interruptedThrough && startCorrection()) {
         finish(userRow);
         userRow = undefined;
-        output?.port.postMessage('correction');
       }
       const gap =
         userEnd !== undefined && audioTime(event.start_ms) && event.start_ms >= userEnd
@@ -361,6 +365,13 @@ export function createVoiceTransport(
     live.close();
   }
   return {
+    prepareTextCorrection() {
+      if (!muted || correctionStarted) return undefined;
+      const interruption = interruptedThrough;
+      return () => {
+        if (interruption === interruptedThrough) startCorrection();
+      };
+    },
     interruptSpeech() {
       // Also check the current samples: the activity display updates at 10 Hz.
       if (!output || !playing || !measuring() || muted) return undefined;

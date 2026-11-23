@@ -496,6 +496,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   genom lägesbyte och ljudavbrott. Granska cykeln, avbryt en sparbegäran
   och följ ett nytt bekräftat sparande till kartan och ändringshistoriken.
   Läs sparkvittots tidpunkt, vem som sparade och uppgifterna om cykeln.
+  RÖSTTEXT-07 provar att nästa svar hörs från början efter Avbryt och en
+  skriven rättelse.
 - [Samtalets kontext](conversation-context.md): samma samtal
   genom utkast, sparande, avbrott, fel, mikrofon av och på samt byte mellan
   röst och text. Äldre sparbesked ger inget nytt sparande. Skrivna och

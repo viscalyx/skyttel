@@ -426,3 +426,82 @@ test('RÖSTTEXT-03: köns skrivna svar överlämnas till rösten en gång och sa
     await app.close();
   }
 });
+
+async function observeInterruptedPlayback(page: Page) {
+  await output(page, 'Det gamla svaret.');
+  const levels = await page.evaluateHandle(() => window.skyttelVoiceFixture.observeSpeaker());
+  await expect.poll(() => levels.evaluate((read) => read().speaker[440])).toBeGreaterThan(20);
+  return {
+    async expectOldAudioMuted() {
+      await page.evaluate(() => {
+        const fixture = window.skyttelVoiceFixture;
+        fixture.setSound('remote', false);
+        fixture.emit({
+          type: 'session.input_transcript.delta',
+          event_id: crypto.randomUUID(),
+          delta: 'Tidigare ord.',
+          start_ms: 0,
+          end_ms: 5,
+        });
+        fixture.remoteTone(800, 0.4, 0.15);
+      });
+      await expect.poll(() => levels.evaluate((read) => read().incoming[800])).toBeGreaterThan(100);
+      expect(await levels.evaluate((read) => read().speaker[800] ?? 0)).toBe(0);
+    },
+    async expectNewAudioFromStart() {
+      await page.evaluate(() => window.skyttelVoiceFixture.remoteTone(1200, 0, 0.2));
+      await expect
+        .poll(() => levels.evaluate((read) => read().speaker[1200] ?? 0))
+        .toBeGreaterThan(210);
+      const { incoming, speaker } = await levels.evaluate((read) => read());
+      expect(Math.abs(incoming[1200] - speaker[1200])).toBeLessThanOrEqual(2);
+    },
+  };
+}
+
+test('RÖSTTEXT-07: ett skrivet förtydligande hörs efter Avbryt i samma röstanslutning', async ({
+  page,
+}) => {
+  const { app, held, live } = await arrange(page);
+  let releaseSubmission!: () => void;
+  const submissionHeld = new Promise<void>((resolve) => {
+    releaseSubmission = resolve;
+  });
+  try {
+    await turnMicrophoneOn(page);
+    const audio = await observeInterruptedPlayback(page);
+    const box = voiceBox(page);
+    await expect(box).toHaveText('Skyttel talar');
+    await box.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await expect(box).toHaveText('Lyssnar');
+    await audio.expectOldAudioMuted();
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
+    await page.route('**/messages', async (route) => {
+      const response = await route.fetch();
+      await submissionHeld;
+      await route.fulfill({ response });
+    });
+    await field(page).fill('Jag menar cykeln.');
+    await region(page).getByRole('button', { name: 'Skicka', exact: true }).click();
+    await expect.poll(() => held.length).toBe(1);
+    const reply = 'Jag förstår att du menar cykeln.';
+    held[0]([modelMessage(reply)]);
+    await expectVoiceRelease(live, reply);
+    await audio.expectNewAudioFromStart();
+    releaseSubmission();
+    await expect(field(page)).toHaveValue('');
+    await expect(log(page)).toContainText('Jag menar cykeln.');
+    await expect(log(page)).toContainText(reply);
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
+    expect(live.requests).toHaveLength(1);
+    expect(await page.evaluate(() => window.skyttelVoiceFixture.stats())).toMatchObject({
+      peers: 1,
+      openPeers: 1,
+      microphoneRequests: 1,
+    });
+  } finally {
+    releaseSubmission();
+    for (const release of held) release([]);
+    await app.close();
+  }
+});

@@ -1207,6 +1207,21 @@ efter fallet och avsluta med `quit`.
 4. På verklig utrustning: använd skärmläsare och upprepa flödet. Lyssna på både
    Skyttels röst och skärmläsaren när varje rad tillkommer.
 
+### Tidslinje RÖSTTEXT-07
+
+1. Skicka **Det gamla svaret.** som utgående textfragment och börja en
+   inkommande ton på 440 Hz. Kontrollera att tonen når högtalaren.
+2. Efter att Alex väljer **Avbryt**, stoppa tonen. Förbered en ton på
+   800 Hz efter 400 ms med `remoteTone(800, 0.4, 0.15)`. Kontrollera
+   med `observeSpeaker()` enligt [TAL-06](#tidslinje-tal-06) att
+   den sena tonen kommer in men inte når högtalaren.
+3. Besvara Alex skrivna förtydligande med **Jag förstår att du menar
+   cykeln.** Vänta på nästa fullständiga uppspelningsbesked enligt
+   [TAL-04](#tidslinje-tal-04) och skicka en ton på 1200 Hz i 200 ms.
+   Hela tonen ska nå högtalaren. Kontrollera att samma röstanslutning och
+   mikrofon används. Det automatiska provet håller även svaret på
+   meddelandets begäran tills tonen har spelats upp.
+
 ### Tidslinje RÖSTTEXT-04
 
 1. Skicka **Berätta om utkastet.**. Släpp provsvaret med **Sparat.**, utan att

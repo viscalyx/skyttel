@@ -447,3 +447,54 @@ användarrader, redan talade svar eller gammal samtalstext.
 
 - Bara nya tysta Skyttel-svar hörs i hjälpmedlets tur.
 - Röst och skärmläsare dubblerar inte svar eller historiska rader.
+
+### RÖSTTEXT-07: ett skrivet förtydligande hörs efter Avbryt
+
+**Syfte:** Fortsätt i text efter att ha tystat en hörbar replik. Kontrollera
+att den öppna röstanslutningen spelar upp det nya svaret från början.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Dator, textvyn öppen och mikrofonen på.
+
+**Automatiskt motsvarande test:**
+[conversation-voice-text.spec.ts](../../tests/integration/conversation-voice-text.spec.ts),
+RÖSTTEXT-07.
+
+<!-- markdownlint-disable MD013 -->
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conversation-voice-text.spec.ts",
+    "caseId": "RÖSTTEXT-07"
+  },
+  "reference": "Chromium med styrt modellsvar och syntetiska toner på den verkliga ljudvägen.",
+  "outcomes": [
+    "Avbryt tystar uppläsningen. Ett sent ljud från den gamla repliken hörs inte innan förtydligandet.",
+    "Ett skrivet förtydligande ger ett nytt svar som hörs från början. Mikrofonen är på och samtalstexten visar förtydligandet och svaret."
+  ]
+}
+```
+-->
+<!-- markdownlint-enable MD013 -->
+
+**Separat förberedelse:** Följ
+[tidslinjen för RÖSTTEXT-07](voice-controls-preparation.md#tidslinje-rösttext-07)
+för de styrda ljuden och modellens svar.
+
+**Steg:**
+
+1. Låt Skyttel tala enligt tidslinjen. Välj **Avbryt** i röstrutan medan det
+   hörs. Läs **Lyssnar**.
+2. Låt den gamla replikens sena ljud komma enligt tidslinjen. Lyssna och
+   kontrollera att mikrofonen fortfarande är på.
+3. Skicka **Jag menar cykeln.** utan att tala. Lyssna från början av svaret
+   och läs förtydligandet och svaret i samtalstexten.
+
+**Förväntat resultat:**
+
+- Pågående ljud tystnar och det sena ljudet förblir tyst före förtydligandet.
+- Svaret på förtydligandet hörs från början i samma röstanslutning. Mikrofonen
+  är på. Samtalstexten visar **Jag menar cykeln.** och **Jag förstår att du
+  menar cykeln.**

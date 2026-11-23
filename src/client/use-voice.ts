@@ -60,6 +60,10 @@ export type Voice = {
   endConversation?: () => Promise<void>;
   /** Silences what Skyttel is saying. */
   silence: (cancelWork?: () => Promise<TextAssistantView | void>) => Promise<void>;
+  /** Captures the current audible interruption for a fresh written correction. */
+  prepareTextCorrection?: () =>
+    | { interruption?: Promise<void>; armPlayback?: () => void }
+    | undefined;
   /** Replace provider context and queued audio while keeping the authorized microphone. */
   newConversation: (reset: () => Promise<TextAssistantView>) => Promise<TextAssistantView>;
   playAudio: () => void;
@@ -1108,6 +1112,13 @@ export function useVoice(options: {
     stop: close,
     endConversation: () => stop(null, true),
     silence,
+    prepareTextCorrection: () => {
+      const attempt = current.current;
+      if (!attempt || offRef.current) return undefined;
+      const armPlayback = attempt.transport?.prepareTextCorrection();
+      if (armPlayback || attempt.interrupting)
+        return { interruption: attempt.interrupting, armPlayback };
+    },
     playAudio,
   };
 }
