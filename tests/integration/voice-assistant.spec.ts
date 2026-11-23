@@ -90,13 +90,18 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
 }) => {
   let release!: (output: unknown[]) => void;
   let held = false;
-  const model = textModel(
-    () =>
-      new Promise<unknown[]>((resolve) => {
-        held = true;
-        release = resolve;
-      }),
-  );
+  const correction = 'Jag menar Lo Exempel.';
+  const answer = 'Lo Exempel finns i ditt utkast.';
+  const model = textModel((request) => {
+    const input = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    if (input.message === correction) return [modelMessage(answer)];
+    return new Promise<unknown[]>((resolve) => {
+      held = true;
+      release = resolve;
+    });
+  });
   const live = liveProvider();
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
@@ -107,12 +112,86 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
     const { path, value } = await simpleMap(page, app);
     const before = await (await page.request.get(path)).json();
     await assistant(page).getByLabel('Meddelande till Skyttel').fill('Osänd rättelse');
+    await page.evaluate(() =>
+      window.skyttelVoiceFixture.emit({
+        type: 'session.input_transcript.delta',
+        event_id: crypto.randomUUID(),
+        delta: 'Rätta Lo.',
+        start_ms: 0,
+        end_ms: 100,
+      }),
+    );
     speak(live, 'Rätta Lo.');
     await expect.poll(() => held).toBe(true);
     await closeConversationText(page);
     await openMap(page);
     await expect(voiceBox(page)).toHaveText('Skyttel arbetar');
-    await voiceBox(page).getByRole('button', { name: 'Avbryt', exact: true }).click();
+    const session = [...live.channels.keys()][0];
+    const levels = await page.evaluateHandle(() => window.skyttelVoiceFixture.observeSpeaker());
+    await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', true));
+    await expect
+      .poll(() => levels.evaluate((read) => read().speaker[440] ?? 0))
+      .toBeGreaterThan(20);
+    const stop = voiceBox(page).getByRole('button', { name: 'Avbryt', exact: true });
+    await stop.evaluate((button) => {
+      button.addEventListener(
+        'click',
+        () => {
+          const fixture = window.skyttelVoiceFixture;
+          fixture.setMicrophoneTone(600);
+          setTimeout(() => fixture.setSound('microphone', false), 160);
+          // The original reply continues, pauses briefly, then delivers a late word.
+          fixture.remoteTone(640, 0.04, 0.08);
+          fixture.remoteTone(800, 0.22, 0.18);
+        },
+        { once: true },
+      );
+    });
+    // Deliver the correction to the sideband before the interrupt HTTP request.
+    // This ordering must preserve both its first fragment and its delegation.
+    let resumeInterrupt!: () => void;
+    const correctionReceived = new Promise<void>((resolve) => {
+      resumeInterrupt = resolve;
+    });
+    await page.route('**/voice/*/interrupt', async (route) => {
+      await correctionReceived;
+      await route.continue();
+    });
+    const captureBoundary = await page.evaluate(
+      () => window.skyttelVoiceFixture.captureChanges().length,
+    );
+    await stop.click();
+    await page.waitForFunction(() =>
+      window.skyttelVoiceFixture
+        .sentAudio()
+        .some(({ frequency }) => Math.abs(frequency - 600) < 40),
+    );
+    const fragment = {
+      type: 'session.input_transcript.delta',
+      event_id: crypto.randomUUID(),
+      delta: correction,
+      start_ms: 200,
+      end_ms: 350,
+    };
+    await page.evaluate((event) => window.skyttelVoiceFixture.emit(event), fragment);
+    live.emit(session, fragment);
+    live.emit(session, {
+      type: 'session.delegation.created',
+      event_id: crypto.randomUUID(),
+      offset_ms: 350,
+      delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
+    });
+    resumeInterrupt();
+    await expect
+      .poll(() =>
+        live.sent.some(
+          ({ event, sessionId }) =>
+            sessionId === session &&
+            event.type === 'session.instructions.append' &&
+            event.content.includes('Stop speaking'),
+        ),
+      )
+      .toBe(true);
     release([
       modelTool('propose_object', {
         version: before.draft.version,
@@ -129,6 +208,47 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
     await expect
       .poll(async () => (await (await page.request.get(path)).json()).draft)
       .toEqual(before.draft);
+    const log = assistant(page).getByRole('log');
+    await expect(log).toContainText('Rätta Lo.');
+    await expect(log).toContainText(correction);
+    await expect.poll(() => voiceAnswerParts(live.sent).join(' ')).toContain(answer);
+    // After a qualifying quiet gap an unlabelled, very late old word (1600 Hz)
+    // is indistinguishable from the first word of the new reply (1200 Hz).
+    const earlierCycles = await levels.evaluate((read) => read().speaker[440]);
+    await page.evaluate(() => {
+      const fixture = window.skyttelVoiceFixture;
+      fixture.remoteTone(1600, 0.04, 0.1);
+      fixture.remoteTone(1200, 0.2, 0.15);
+      fixture.remoteTone(440, 0.4, 0.15);
+    });
+    await expect
+      .poll(() => levels.evaluate((read) => read().speaker[440]))
+      .toBeGreaterThan(earlierCycles + 20);
+    const { incoming, speaker } = await levels.evaluate((read) => read());
+    expect(incoming[640]).toBeGreaterThan(40);
+    expect(speaker[640] ?? 0).toBe(0);
+    expect(incoming[800]).toBeGreaterThan(120);
+    expect(speaker[800] ?? 0).toBe(0);
+    expect(speaker[1600], JSON.stringify({ incoming, speaker })).toBeGreaterThan(100);
+    expect(incoming[1200]).toBeGreaterThan(170);
+    expect(Math.abs(incoming[1200] - speaker[1200])).toBeLessThanOrEqual(2);
+    expect(
+      await page.evaluate(
+        (from) =>
+          window.skyttelVoiceFixture
+            .captureChanges()
+            .slice(from)
+            .some(({ enabled }) => !enabled),
+        captureBoundary,
+      ),
+    ).toBe(false);
+    expect(live.requests).toHaveLength(1);
+    expect(await page.evaluate(() => window.skyttelVoiceFixture.stats())).toMatchObject({
+      peers: 1,
+      openPeers: 1,
+      microphoneRequests: 1,
+      microphoneTracks: [{ enabled: true, state: 'live' }],
+    });
     await turnMicrophoneOff(page);
     await openConversationText(page);
     await expect(assistant(page).getByLabel('Meddelande till Skyttel')).toHaveValue(

@@ -427,7 +427,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   start efter medgivande, mikrofonen på och av med **Prata med Skyttel**,
   röstrutans statusord, vågform, stoppikon, plats och uppläsning,
   ljudaktivitet, fördröjda svar med mikrofonen av och fokus efter avbrott
-  även i Inställningar samt avbrutet ljud som förblir stoppat över pauser,
+  även i Inställningar. TAL-06 provar en omedelbar rättelse, gamla ljud
+  på båda sidor om pausen och nästa repliks första ord. Övriga fall provar
   avbrott i långa samtal med bevarad kontext och mikrofonval,
   faktisk markering, exakt sparåterhämtning och tydlig skillnad mellan
   samtalstext och verifierade resultat, löpande dialog och

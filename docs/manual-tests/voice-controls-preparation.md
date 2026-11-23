@@ -495,17 +495,53 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
 
 1. Skriv **Osänd rättelse** i samtalets textfält utan att skicka. Kör
    `user Rätta Lo.` och `delegate` i startguiden. Håll modellanropet.
-2. Stäng textvyn och panelerna med deras kryss. Kräv **Skyttel arbetar** i
-   röstrutan och välj dess **Avbryt**.
-3. Släpp det gamla anropet med ett `propose_object` som försöker byta
+2. Stäng textvyn och öppna Karta. Kräv **Skyttel arbetar** i röstrutan.
+   Förbered ljudförloppet i Chromium med konsolen. Varje ton motsvarar ett ord.
+   Mätningen läser både inkommande ljud och ljudet från det spelande elementet.
+
+   ```javascript
+   const f = window.skyttelVoiceFixture;
+   const lasLjud = await f.observeSpeaker();
+   f.setSound('remote', true);
+   const knapp = document.querySelector('.voice-stop');
+   knapp.addEventListener('click', () => {
+     f.setMicrophoneTone(600);
+     setTimeout(() => f.setSound('microphone', false), 160);
+     f.remoteTone(640, 0.04, 0.08);
+     f.remoteTone(800, 0.22, 0.18);
+     setTimeout(() => f.emit({
+       type: 'session.input_transcript.delta',
+       event_id: crypto.randomUUID(),
+       delta: 'Jag menar Lo Exempel.', start_ms: 200, end_ms: 350
+     }), 100);
+   }, { once: true });
+   ```
+
+3. Kontrollera att `lasLjud().speaker[440]` ökar. Välj **Avbryt**. Kör
+   `user Jag menar Lo Exempel.` och `delegate` i startguiden. Kontrollera
+   att `sentAudio()` på testobjektet innehåller mikrofontonen runt 600 Hz.
+   `stats()` ska visa samma öppna anslutning och påslagna mikrofonspår.
+   I `sessions` finns en stoppinstruktion för samma röstsession.
+4. Släpp det gamla anropet med ett `propose_object` som försöker byta
    Lo-förslagets namn till **För sent**. Använd det hållna anropets version,
-   innehållsversion och hela tidigare objektvärde enligt TAL-01:s verktygssteg.
-4. Öppna textvyn med **Skriv till Skyttel**. Kräv
-   **Avbrutet. Föreslagna ändringar ligger kvar i utkastet.** och oförändrat
-   utkast. Stäng av mikrofonen med **Prata med Skyttel**. **Osänd rättelse**
-   ska finnas kvar.
-5. Välj **Nytt samtal**. Samtalstexten töms, **Osänd rättelse** och
-   Lo-förslaget finns kvar.
+   innehållsversion och tidigare objektvärde enligt TAL-01:s verktygssteg.
+   Besvara rättelsens anrop med `reply REQUEST Lo Exempel finns i ditt utkast.`
+   Öppna textvyn och kontrollera avbrottsbeskedet och hela rättelsen.
+5. Kör följande efter att svaret är klart. Den första tonen föreställer
+   ytterligare ett gammalt ord som kommer efter den kvalificerande pausen.
+   Den andra är första ordet i det nya svaret.
+
+   ```javascript
+   f.remoteTone(1600, 0.04, 0.1);
+   f.remoteTone(1200, 0.2, 0.15);
+   ```
+
+6. Läs `lasLjud()` efter tonerna. För 640 och 800 Hz finns perioder i
+   `incoming` men inga i `speaker`. För 1200 Hz ska antalen skilja högst två
+   perioder. Även 1600 Hz passerar: båda svaren delar samma omärkta ljudspår.
+7. Slå av mikrofonen. **Osänd rättelse** ska finnas kvar. Välj **Nytt samtal**.
+   Samtalstexten töms, medan **Osänd rättelse** och Lo-förslaget finns kvar.
+   Avsluta provinstallationen enligt den allmänna förberedelsen.
 
 ### Tidslinje TAL-07
 
@@ -626,15 +662,22 @@ Resurskontrollen vid UI-steg 2 och 4 använder
 2. Gå med Tab till **Avbryt** i röstrutan och tryck Enter.
 3. Släpp det gamla anropet med ett `propose_object` som byter namnet till
    **För sent**.
-4. Kör `setSound('remote', true)`. Välj **Avbryt** och kör `stats()`.
-5. Kör `setSound('remote', false)`, vänta mer än en sekund och kontrollera att
-   de gamla inkommande spåren fortfarande är avslutade. Kör sedan
-   `setSound('remote', true)` för ett nytt svar i den nya anslutningen.
+4. Kör `setSound('remote', true)` och välj **Avbryt** medan Skyttel talar.
+   Kör `setSound('remote', false)`. Vänta mer än en sekund. Jämför `stats()`
+   före och efter detta avbrott: samma mikrofon och inkommande spår lever,
+   antalet anslutningar är oförändrat och röstrutan visar **Lyssnar**.
+5. Skicka rättelsens textfragment i konsolen:
 
-Tidslinjens steg 1–2 hör till UI-steg 1, steg 3 till UI-steg 2,
-steg 4 till UI-steg 3 och steg 5 till UI-steg 4. Efter avbrottet ska
-`stats()` visa avslutade gamla inkommande spår men samma levande mikrofonspår;
-`sessions` ska sakna kommentarspaket för det avbrutna uppdraget.
+   ```javascript
+   window.skyttelVoiceFixture.emit({
+     type: 'session.input_transcript.delta', event_id: crypto.randomUUID(),
+     delta: 'Jag menar Lo.', start_ms: 2100, end_ms: 2300
+   });
+   ```
+
+6. Öppna textvyn och läs både **Rätta namnet.** och **Jag menar Lo.**
+   Kör `setSound('remote', true)` för nästa svar och läs **Skyttel talar**.
+   I terminalens `sessions` ska det avbrutna uppdraget sakna svarspaket.
 
 ### Tidslinje TAL-13
 

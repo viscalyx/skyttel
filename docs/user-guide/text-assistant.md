@@ -527,8 +527,11 @@ när du använder rösten:
   från avbrottet om du trycker **Avbryt** under beskedet.
 
 Medan Skyttel arbetar eller talar finns stoppikonen **Avbryt** i
-röstrutan. Den stoppar arbetet och tystar Skyttel. Förslag som redan
-ligger i utkastet finns kvar. Med minskad rörelse i systemet rör sig
+röstrutan. Den stoppar arbetet och tystar Skyttel. Om mikrofonen är på när
+Skyttel talar kan du börja rättelsen direkt. De första orden visas i
+samtalstexten. Förslag som redan ligger i utkastet finns kvar.
+
+Med minskad rörelse i systemet rör sig
 vågformen inte: den visar sju punkter när ingen hörs och sju stilla
 staplar när någon hörs. En skärmläsare får höra **Lyssnar** när mikrofonen slås
 på, **Skyttel arbetar**, **Sparat** och **Mikrofonen är av** när röstrutan

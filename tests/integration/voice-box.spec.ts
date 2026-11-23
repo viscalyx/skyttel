@@ -336,32 +336,32 @@ test('TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men behåll
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
     await expect.poll(async () => (await media(page)).silencedAudioElements).toBe(0);
 
-    // Skyttel talks: retire that output stream, even if it later resumes after a pause.
+    // During an audible reply the same connection carries the correction.
     await sound(page, 'remote', 0.2);
     await expect(voiceBox(page)).toHaveText('Skyttel talar');
     expect((await media(page)).silencedAudioElements).toBe(0);
-    const previousTracks = (await media(page)).remoteTracks.length;
+    const beforeInterruption = await media(page);
     await stopIcon(page).click();
-    await expect
-      .poll(async () => (await media(page)).remoteTracks[previousTracks - 1].state)
-      .toBe('ended');
     await expect(voiceBox(page)).toHaveText('Lyssnar');
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
     expect((await media(page)).microphoneTracks).toEqual([{ enabled: true, state: 'live' }]);
     await sound(page, 'remote', 0);
     await page.waitForTimeout(1500);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
-    // A new answer in the fresh connection is heard again.
-    expect(live.requests.at(-1)?.session?.input).toEqual(
-      expect.arrayContaining([
-        {
-          role: 'user',
-          content: [{ type: 'input_text', text: 'Rätta namnet.' }],
-          status: 'incomplete',
-        },
-      ]),
+    expect((await media(page)).peers).toBe(beforeInterruption.peers);
+    expect((await media(page)).remoteTracks).toEqual(beforeInterruption.remoteTracks);
+    await page.evaluate(() =>
+      window.skyttelVoiceFixture.emit({
+        type: 'session.input_transcript.delta',
+        event_id: crypto.randomUUID(),
+        delta: 'Jag menar Lo.',
+        start_ms: 2100,
+        end_ms: 2300,
+      }),
     );
-    expect(JSON.stringify(live.requests.at(-1)?.session?.input)).not.toContain('För sent');
+    await openConversationText(page);
+    await expect(panel(page).getByRole('log')).toContainText('Rätta namnet.');
+    await expect(panel(page).getByRole('log')).toContainText('Jag menar Lo.');
     await sound(page, 'remote', 0.2);
     await expect(voiceBox(page)).toHaveText('Skyttel talar');
     expect((await (await page.request.get(path)).json()).draft).toEqual(before.draft);

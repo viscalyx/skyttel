@@ -64,6 +64,11 @@ export function createVoiceTransport(
   const live = new OpenAILiveWebRTC();
   audio.autoplay = true;
   const remoteTracks = new Set<MediaStreamTrack>();
+  // Disable only the playback copies. The receiver must still expose incoming
+  // samples while the speaker is silent.
+  const speakerTracks = new Set<MediaStreamTrack>();
+  let checkInterruptedAudio: (() => void) | undefined;
+  let drainTimer: ReturnType<typeof setInterval> | undefined;
   let microphone: MediaStream | undefined;
   let connected = false;
   let started = false;
@@ -76,10 +81,13 @@ export function createVoiceTransport(
   const samples = new Uint8Array(256);
   let playing = false;
   let activity = { microphone: false, speaker: false };
+  // Web Audio requires a power of two, up to 32768 samples.
+  const quietWindowSize = () =>
+    Math.min(32768, 2 ** Math.ceil(Math.log2(audioContext.sampleRate * 0.2)));
   function meter(stream: MediaStream, input: boolean) {
     const source = audioContext.createMediaStreamSource(stream);
     const analyser = audioContext.createAnalyser();
-    analyser.fftSize = samples.length;
+    analyser.fftSize = input || !checkInterruptedAudio ? samples.length : quietWindowSize();
     source.connect(analyser);
     meters.push({ source, analyser, input });
   }
@@ -106,7 +114,7 @@ export function createVoiceTransport(
       for (const { analyser, input } of meters) {
         if (input ? paused : !playing) continue;
         if (input) next.microphone ||= audible(analyser);
-        else next.speaker ||= audible(analyser);
+        else next.speaker ||= !checkInterruptedAudio && audible(analyser);
       }
     }
     if (next.microphone !== activity.microphone || next.speaker !== activity.speaker) {
@@ -137,6 +145,12 @@ export function createVoiceTransport(
     if (closed || stopped || !event.delta) return;
     const now = performance.now();
     if (role === 'user') {
+      if (checkInterruptedAudio && event.delta.trim()) {
+        // The receiver may already have drained when the first word arrives.
+        checkInterruptedAudio();
+        if (checkInterruptedAudio && !drainTimer)
+          drainTimer = setInterval(checkInterruptedAudio, 10);
+      }
       const gap =
         userEnd !== undefined && audioTime(event.start_ms) && event.start_ms >= userEnd
           ? event.start_ms - userEnd
@@ -198,7 +212,10 @@ export function createVoiceTransport(
     remoteTracks.add(event.track);
     meter(new MediaStream([event.track]), false);
     audio.loop = false;
-    audio.srcObject = new MediaStream([...remoteTracks]);
+    const speaker = event.track.clone();
+    speaker.enabled = !checkInterruptedAudio;
+    speakerTracks.add(speaker);
+    audio.srcObject = new MediaStream([...speakerTracks]);
     void playAudio();
   };
   const audioFailed = () => {
@@ -294,6 +311,7 @@ export function createVoiceTransport(
     finish(assistantRow);
     stopped = true;
     clearInterval(activityTimer);
+    clearInterval(drainTimer);
     activity = { microphone: false, speaker: false };
     callbacks.onAudioActivity?.(activity);
     for (const { source, analyser } of meters) {
@@ -310,7 +328,7 @@ export function createVoiceTransport(
       track.enabled = false;
       track.stop();
     }
-    for (const track of remoteTracks) track.stop();
+    for (const track of [...remoteTracks, ...speakerTracks]) track.stop();
     if (!playbackTransferred) audio.pause();
   }
   function close() {
@@ -326,9 +344,50 @@ export function createVoiceTransport(
       audio.removeAttribute('src');
     }
     remoteTracks.clear();
+    speakerTracks.clear();
     live.close();
   }
   return {
+    interruptSpeech() {
+      // Also check the current samples: the activity display updates at 10 Hz.
+      if (!playing || !measuring() || checkInterruptedAudio) return undefined;
+      if (!activity.speaker && !meters.some(({ input, analyser }) => !input && audible(analyser)))
+        return undefined;
+      for (const track of speakerTracks) track.enabled = false;
+      finish(userRow);
+      finish(assistantRow);
+      userRow = assistantRow = undefined;
+      activity = { ...activity, speaker: false };
+      callbacks.onAudioActivity?.(activity);
+
+      const wave = new Uint8Array(quietWindowSize());
+      for (const { analyser, input } of meters) if (!input) analyser.fftSize = wave.length;
+      const rate = audioContext.sampleRate;
+      let lastSound = audioContext.currentTime;
+      let lastRead = lastSound;
+      checkInterruptedAudio = () => {
+        if (!measuring()) return;
+        const now = audioContext.currentTime;
+        // Only credit silence actually covered by the analysers' sample history.
+        // This also handles a throttled timer or a higher device sample rate.
+        if (now - lastRead > wave.length / rate)
+          lastSound = Math.max(lastSound, now - wave.length / rate);
+        lastRead = now;
+        for (const { analyser, input } of meters) {
+          if (input) continue;
+          analyser.getByteTimeDomainData(wave);
+          const last = wave.findLastIndex((value) => Math.abs(value - 128) > 3);
+          if (last >= 0) lastSound = Math.max(lastSound, now - (wave.length - last - 1) / rate);
+        }
+        if (now - lastSound < 0.2) return;
+        clearInterval(drainTimer);
+        drainTimer = undefined;
+        checkInterruptedAudio = undefined;
+        for (const { analyser, input } of meters) if (!input) analyser.fftSize = samples.length;
+        for (const track of speakerTracks) track.enabled = true;
+      };
+      return { inputEndMs: userEnd };
+    },
     suspendInput() {
       paused = true;
       buffered?.capture(false);

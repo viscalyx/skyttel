@@ -455,7 +455,8 @@ till TAL-17/23/24.
 
 ### TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare förslag
 
-**Syfte:** Nå avbrott utan öppen dialog och bevara redan utfört arbete.
+**Syfte:** Avbryt en hörbar replik från kartan och börja rättelsen direkt.
+Kontrollera rättelsens första ord och tidigare utfört arbete.
 
 **Användare:** Alex i den kontrollerade installationen.
 
@@ -476,7 +477,8 @@ TAL-06.
   },
   "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
   "outcomes": [
-    "Nå avbrott utan öppen dialog och bevara redan utfört arbete."
+    "Rättelsens första ord finns i samtalstexten och Lo-förslaget finns kvar.",
+    "Försenat ljud före öppningen tystas och nästa svar hörs från början i det kontrollerade ljudförloppet."
   ]
 }
 ```
@@ -492,19 +494,25 @@ till TAL-17/23/24.
 
 1. Skriv Osänd rättelse utan att skicka. Låt Rätta Lo vänta enligt tidslinjen.
    Stäng textvyn och öppna Karta.
-2. Välj Avbryt i röstrutan. Låt det gamla För sent-förslaget släppas enligt
-   tidslinjen. Öppna textvyn och läs Avbrutet. Föreslagna ändringar ligger kvar
-   i utkastet.
-3. Slå av mikrofonen. Kräv kvarvarande Osänd rättelse. Välj Nytt samtal, läs en
-   osparad ändring och läs hela Lo Exempel-förslaget med Person och Påhittad
-   uppgift.
+2. Välj **Avbryt** i röstrutan medan repliken hörs. Låt den förberedda
+   rättelsen **Jag menar Lo Exempel.** börja vid trycket. Låt det gamla
+   För sent-förslaget och rättelsens svar komma enligt tidslinjen.
+3. Öppna textvyn. Läs rättelsen från första ordet och beskedet
+   **Avbrutet. Föreslagna ändringar ligger kvar i utkastet.**
+   Kontrollera det gamla ljudet och nästa svars första ord enligt tidslinjen.
+4. Slå av mikrofonen. Kräv kvarvarande **Osänd rättelse**. Välj **Nytt samtal**
+   och läs en osparad ändring och hela Lo Exempel-förslaget med Person och
+   Påhittad uppgift.
 
 **Förväntat resultat:**
 
-- Avbrott stoppar det gamla uppdragets sena ändringar, utan att radera förslag.
-- Röst av, uppdragsavbrott och nytt samtal är separata handlingar.
-- Röstresurser avslutas vid avstängning; oskickad text behålls också efter
-  **Nytt samtal**.
+- Mikrofonen förblir på i samma röstanslutning. Samtalet innehåller hela
+  rättelsen och det sena förslaget ändrar inte utkastet.
+- Den avbrutna repliken tystnar. Gamla ljud som kommer medan uppspelningen
+  är tystad stoppas. Efter rättelsens första textfragment och minst 200 ms
+  tystnad kan nästa replik höras från första ordet. Även ett gammalt ord
+  som kommer först efter öppningen kan höras.
+- Nytt samtal behåller oskickad text och tidigare förslag.
 
 ### TAL-07: uppmätt ljudaktivitet skiljs från avstängd mikrofon och består
 
@@ -860,8 +868,9 @@ till TAL-17/23/24.
 3. Låt inkommande aktivitet börja, välj Avbryt och låt det gamla ljudet försöka
    återkomma efter en paus enligt tidslinjen. Mikrofonen ska förbli på och
    Lyssnar visas.
-4. Låt ett nytt inkommande segment börja i den nya anslutningen. Läs Skyttel
-   talar och hela bevarade Lo Exempel-förslaget med Person och Påhittad uppgift.
+4. Öppna textvyn och läs rättelsen enligt tidslinjen. Låt nästa svar börja
+   i samma anslutning. Läs Skyttel talar och hela bevarade Lo Exempel-förslaget
+   med Person och Påhittad uppgift.
 
 **Förväntat resultat:**
 
@@ -871,9 +880,8 @@ till TAL-17/23/24.
   och resursstopp granskas separat enligt tidslinjen.
 - Steg 3: det gamla ljudet tystnar direkt. Samtalets tidigare text finns kvar,
   röstrutan återgår till **Lyssnar**. Förslagen finns kvar.
-- Steg 4: det avbrutna ljudet kan inte återupptas efter en paus.
-  **Skyttel talar** visas för det nya svaret, som ger kontrollerad inkommande
-  ljudaktivitet.
+- Steg 4: den tidigare begäran och rättelsen finns i samtalstexten.
+  **Skyttel talar** visas när det nya svaret hörs.
 
 ### TAL-13: ett skrivet meddelande visar aldrig röstrutan och stänger av
 

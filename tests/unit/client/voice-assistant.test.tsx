@@ -11,6 +11,9 @@ import { StandaloneConversation } from '../../support/conversation-harness.js';
 import { closeVoiceConnection, StandaloneVoice } from '../../support/voice-harness.js';
 
 class Track extends EventTarget {
+  clone() {
+    return new Track();
+  }
   enabled = true;
   stop = vi.fn();
 }
@@ -203,6 +206,10 @@ function meteredAudio() {
   vi.stubGlobal(
     'AudioContext',
     class {
+      sampleRate = 48000;
+      get currentTime() {
+        return performance.now() / 1000;
+      }
       get state() {
         return context.state;
       }
@@ -468,57 +475,42 @@ test("the bars follow the microphone's sound level while the user talks", async 
   await waitFor(() => expect(tallest()).toBe(0));
 });
 
-test('Avbryt discards the interrupted output across long pauses and permits a fresh answer', async () => {
+test('Avbryt keeps capturing the correction while interrupted speech drains', async () => {
   const { signals } = meteredAudio();
-  const cancel = vi.fn(async () => {});
-  const { component, view, audios, changed, track, getUserMedia } = setup();
-  const show = (phase: TextAssistantView['phase']) =>
-    component.rerender(
-      <StandaloneVoice
-        householdId="linden"
-        assistant={{ ...view, phase }}
-        onAssistant={changed}
-        onAccessLost={() => {}}
-        onCancel={cancel}
-      />,
-    );
-  show('ready');
+  const { track, getUserMedia, audios, calls } = setup();
   const { peer, remote } = await startWithAudio();
   signals.set(remote, 22);
   await screen.findByText('Skyttel talar');
   await userEvent.click(screen.getByRole('button', { name: 'Avbryt' }));
-  expect(peer.connectionState).toBe('closed');
-  expect(remote.stop).toHaveBeenCalled();
-  expect((audios[0].srcObject as unknown as Stream)?.getTracks() ?? []).not.toContain(remote);
-  expect(audios).toHaveLength(1);
-  expect(track.stop).not.toHaveBeenCalled();
-  expect(cancel).toHaveBeenCalledOnce();
-  expect(document.activeElement).toBe(microphoneButton());
-  await waitFor(() => expect(Peer.all[1]?.channel.readyState).toBe('open'));
-  vi.useFakeTimers();
-  signals.set(remote, 0);
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(1500);
-  });
-  signals.set(remote, 22);
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(200);
-  });
-  expect(screen.queryByText('Skyttel talar')).toBeNull();
-  vi.useRealTimers();
-  await act(async () =>
-    Peer.all[1].channel.emit({ type: 'session.started', session: { id: 'new-provider-session' } }),
-  );
-  expect(voiceBox()?.textContent).toBe('Lyssnar');
+  expect(peer.connectionState).toBe('connected');
   expect(track.enabled).toBe(true);
   expect(getUserMedia).toHaveBeenCalledOnce();
-  signals.set(Peer.all[1].remote, 22);
-  await screen.findByText('Skyttel talar');
-  signals.set(Peer.all[1].remote, 0);
+  expect(calls.some(({ url }) => url.endsWith('/interrupt'))).toBe(true);
+  const [speaker] = (audios[0].srcObject as unknown as Stream).getTracks();
+  expect(speaker.enabled).toBe(false);
   await screen.findByText('Lyssnar');
-  show('working');
-  await userEvent.click(screen.getByRole('button', { name: 'Avbryt' }));
-  expect(cancel).toHaveBeenCalledTimes(2);
+  expect(document.activeElement).toBe(microphoneButton());
+
+  signals.set(remote, 0);
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  expect(speaker.enabled).toBe(false);
+  signals.set(remote, 22);
+  await act(async () =>
+    peer.channel.emit({
+      type: 'session.input_transcript.delta',
+      delta: 'Jag menar Lo.',
+      start_ms: 200,
+      end_ms: 400,
+    }),
+  );
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  expect(speaker.enabled).toBe(false);
+  signals.set(remote, 0);
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  expect(speaker.enabled).toBe(false);
+  await waitFor(() => expect(speaker.enabled).toBe(true));
+  signals.set(remote, 22);
+  await screen.findByText('Skyttel talar');
 });
 
 test('a screen reader is told Lyssnar once, Skyttel arbetar, and Mikrofonen är av when the box goes', async () => {

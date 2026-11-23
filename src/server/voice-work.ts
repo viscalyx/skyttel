@@ -71,7 +71,7 @@ export function voiceWork({
   let inputVersion = 0;
   let lastInputAt = 0;
   let microphoneActive = false;
-  let collecting: symbol | undefined;
+  let collecting: { id: string | null } | undefined;
   let stopped = false;
   let questionRevision = initial.revision;
   let questionPending = initial.phase === 'ready' && Boolean(initial.questionPending);
@@ -125,14 +125,14 @@ export function voiceWork({
       void collect(null);
   }
 
-  function cancel() {
+  function cancel(revisionIfIdle?: number) {
     commentary.cancel();
     const hadWork = (inFlight.get(generation) ?? 0) > 0;
     generation++;
     collecting = undefined;
     dispatching?.controller.abort();
     dispatching = undefined;
-    const revision = owned ?? (hadWork ? rendered.revision : undefined);
+    const revision = owned ?? (hadWork ? rendered.revision : revisionIfIdle);
     owned = undefined;
     if (revision === undefined) return;
     // A spoken task may already have advanced from the queue, beyond its
@@ -567,7 +567,7 @@ export function voiceWork({
     if (role === 'user') collectReply();
   }
   async function collect(id: string | null) {
-    const collection = Symbol();
+    const collection = { id };
     collecting = collection;
     const task = generation;
     const current = () => !stopped && allowed() && generation === task && collecting === collection;
@@ -668,6 +668,27 @@ export function voiceWork({
     anchor = undefined;
   }
   return {
+    async interruptSpeech(inputEndMs?: number) {
+      if (stopped || !allowed()) throw new Error('voice_session_expired');
+      // Input can reach the sideband before the browser's interrupt request.
+      // Preserve fragments and a delegation for a correction already underway.
+      const collection = collecting;
+      if (inputEndMs !== undefined) pending = pending.filter((item) => item.endMs > inputEndMs);
+      anchor = pending[0]?.anchor;
+      cancel(rendered.revision);
+      channel.send({
+        type: 'session.instructions.append',
+        delegation_id: null,
+        content:
+          'Stop speaking immediately. Listen to the correction and handle it normally in Swedish.',
+      });
+      if (collection && pending.length) void collect(collection.id);
+      const canceled = await canceling;
+      if (!canceled) throw new Error('voice_interruption_failed');
+      answered.add(canceled.view.revision);
+      rendered.revision = Math.max(rendered.revision, canceled.view.revision);
+      return canceled.view;
+    },
     speaker(active: boolean) {
       if (!stopped) commentary.speaker(active);
     },

@@ -89,6 +89,7 @@ type Attempt = {
   contextRenewal?: boolean;
   summaryPausedAt?: number;
   providerGeneration?: number;
+  interrupting?: Promise<void>;
   output?: { text: string; heard: boolean; speaking: boolean; matched?: string };
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
 };
@@ -873,6 +874,7 @@ export function useVoice(options: {
   const silence = useCallback(
     (cancelWork?: () => Promise<TextAssistantView | void>) => {
       const attempt = current.current;
+      if (attempt?.interrupting) return attempt.interrupting;
       const response = voice?.response;
       if (
         response?.receiptOperationId === latest.current.assistant?.receipt?.operationId &&
@@ -881,7 +883,29 @@ export function useVoice(options: {
         completedOutput.current.add(response.id);
         announceSave(response.receiptOperationId);
       }
-      // Live has no output-cancel event. Retire the entire output stream, retaining
+      const interruption = attempt?.voiceId && attempt.transport?.interruptSpeech();
+      if (attempt && interruption) {
+        if (response) completedOutput.current.add(response.id);
+        attempt.output = undefined;
+        attempt.interrupting = request<VoiceAssistantResponse>(
+          `${attempt.path}/${attempt.voiceId}/interrupt`,
+          interruption,
+          attempt.controller.signal,
+        )
+          .then((result) => {
+            if (current.current === attempt) apply(result.assistant, result.voice.replyDelivery);
+          })
+          .catch((failure) => {
+            if (current.current !== attempt) return;
+            latest.current.onRecoveryNeeded?.();
+            return stop(voiceErrorNotice(failure, 'interrupted'));
+          })
+          .finally(() => {
+            attempt.interrupting = undefined;
+          });
+        return attempt.interrupting;
+      }
+      // Stopping work without an audible reply retires its provider context, retaining
       // the authorized input and conversation as historical text in a fresh session.
       const interrupted = renew(async () => {
         const [result, canceled] = await Promise.all([
@@ -911,7 +935,7 @@ export function useVoice(options: {
           setError(voiceErrorNotice(undefined, 'interrupted'));
         });
     },
-    [renew, apply, voice?.response, announceSave, setError],
+    [renew, apply, voice?.response, announceSave, setError, stop],
   );
   const level = useCallback(() => current.current?.transport?.microphoneLevel() ?? 0, []);
   const startHeld = useCallback(() => {

@@ -944,6 +944,21 @@ export function voiceAssistantRoutes({
     if (context.req.param('action') === 'stop') await close(voice);
     voice.assistant = await assistant(path, headers(context.req.raw.headers));
     voice.access();
+    if (context.req.param('action') === 'interrupt') {
+      if (voice.closed || !voice.work) return context.json({ error: 'voice_session_expired' }, 409);
+      const body = await context.req.json().catch(() => null);
+      if (
+        !body ||
+        typeof body !== 'object' ||
+        Array.isArray(body) ||
+        (body.inputEndMs !== undefined &&
+          (!Number.isFinite(body.inputEndMs) || body.inputEndMs < 0))
+      )
+        return context.json({ error: 'invalid_request' }, 400);
+      delete voice.view.response;
+      const canceled = await voice.work.interruptSpeech(body.inputEndMs);
+      return context.json({ voice: voice.view, assistant: canceled });
+    }
     if (context.req.param('action') === 'poll') {
       const body = await context.req.json().catch(() => null);
       if (
