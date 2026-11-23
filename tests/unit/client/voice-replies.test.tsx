@@ -222,6 +222,7 @@ test.each([true, false])(
   'interrupting output acknowledges only its own verified receipt (matching=%s), never a different save',
   async (matching) => {
     const { media, server, tick } = await arrange();
+    const [peer] = media.peers;
     server.assistant = {
       ...initial,
       revision: 1,
@@ -236,10 +237,10 @@ test.each([true, false])(
       receiptOperationId: 'original-save',
     };
     await tick(500);
-    media.signals.set(media.peers[0].remote, 40);
+    media.signals.set(peer.remote, 40);
     await tick(100);
     await act(async () =>
-      media.peers[0].channel.emit({
+      peer.channel.emit({
         type: 'session.output_transcript.delta',
         delta: 'Sparat.',
         start_ms: 0,
@@ -251,13 +252,13 @@ test.each([true, false])(
       fireEvent.click(screen.getByRole('button', { name: 'Avbryt' }));
       await vi.advanceTimersByTimeAsync(0);
     });
-    expect(media.peers[0].remote.stopped).toBe(true);
-    expect(media.peers).toHaveLength(2);
-    await act(async () =>
-      media.peers[1].channel.emit({ type: 'session.started', session: { id: 'fresh-provider' } }),
-    );
+    expect(media.peers).toHaveLength(1);
+    expect(peer.connectionState).toBe('connected');
+    expect(peer.channel.readyState).toBe('open');
+    expect(peer.remote.stopped).toBe(false);
     expect(box()?.textContent).toBe(matching ? 'Sparat' : 'Lyssnar');
     expect(media.microphone.stopped).toBe(false);
+    expect(media.microphone.enabled).toBe(true);
     expect(media.getUserMedia).toHaveBeenCalledOnce();
     await tick(4000);
     expect(box()?.textContent).toBe('Lyssnar');
