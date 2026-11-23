@@ -201,15 +201,28 @@ test('RÖSTTEXT-01: samma cykel och väntande delar följer med mellan röst och
   }
 });
 
-test('RÖSTTEXT-04: ett skrivet obekräftat sparpåstående blir inget verifierat talat sparbesked', async ({
+test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i kartan', async ({
   page,
 }) => {
-  const { app, held, live, commentary, mapPath } = await arrange(page);
+  const vehicleQuestion = 'Vilket fordon finns i mitt utkast?';
+  const { app, held, live, commentary, mapPath } = await arrange(page, (request) => {
+    const { message, draft } = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    if (message === vehicleQuestion)
+      return [modelMessage(`I utkastet finns ${draft.changes[0]?.after?.name}.`)];
+    return bikeDraftReply(request);
+  });
+  const nextReply = async () => {
+    await expect.poll(() => held.length).toBeGreaterThan(0);
+    const pending = held.shift();
+    if (!pending) throw new Error('Missing held model response');
+    return pending;
+  };
   try {
     await turnMicrophoneOn(page);
     await send(page, 'Berätta om utkastet.');
-    await expect.poll(() => held.length).toBe(1);
-    held[0]([modelMessage('Sparat.')]);
+    (await nextReply())([modelMessage('Sparat.')]);
     await expect
       .poll(() => voiceAnswerParts(live.sent).join(''))
       .toContain('Samtal (obekräftat): "Sparat."');
@@ -236,6 +249,42 @@ test('RÖSTTEXT-04: ett skrivet obekräftat sparpåstående blir inget verifiera
     await expect(back).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(voiceBox(page)).toHaveText('Lyssnar');
+
+    speak(live, proposeBike, 1000);
+    await expectVoiceRelease(live, bike);
+    await turnMicrophoneOff(page);
+    const draft = await openConversationDraft(page);
+    const proposal = draft.getByRole('button', { name: `Visa förslaget: ${bike}`, exact: true });
+    await expect(proposal).toBeVisible();
+    await send(page, vehicleQuestion);
+    await expect(log(page)).toContainText(`I utkastet finns ${bike}.`);
+    await expect(proposal).toBeVisible();
+
+    await send(page, 'Spara hela utkastet.');
+    const canceledReply = await nextReply();
+    await field(page).press('Escape');
+    canceledReply([modelMessage('Sparat.')]);
+    await send(page, 'Jag menade den blå cykeln.');
+    (await nextReply())([modelMessage('Jag förstår vilken cykel du menar.')]);
+    await expect(log(page)).toContainText('Jag förstår vilken cykel du menar.');
+    await expect(proposal).toBeVisible();
+    await expect(await openSavedHistory(page)).toContainText('Inga genomförda sparanden.');
+    await back.click();
+
+    await openConversationDraft(page);
+    await expect(proposal).toBeVisible();
+    await send(page, 'Spara hela utkastet.');
+    (await nextReply())([modelMessage('Jag har granskat förslaget.')]);
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+      'Utkastet är sparat',
+    );
+    await expect(draft).toContainText('Utkastet är tomt.');
+    const savedBike = page.getByRole('button', { name: `Välj objekt: ${bike}`, exact: true });
+    await expect(savedBike).toBeVisible();
+    await expect(savedBike).toHaveClass(/\bexisting\b/);
+    const groups = (await openSavedHistory(page)).getByRole('article');
+    await expect(groups).toHaveCount(1);
+    await expect(groups).toContainText(bike);
   } finally {
     for (const release of held) release([]);
     await app.close();

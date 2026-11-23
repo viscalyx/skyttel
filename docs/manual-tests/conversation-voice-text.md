@@ -243,9 +243,10 @@ resurser separat. Utför arbetsflödet en gång.
   väntar på sin tur. Öppnad textvy upprepar inte historiska svar. Ingen kontroll
   får fokus av att ett svar kommer.
 
-### RÖSTTEXT-04: ett skrivet obekräftat sparpåstående blir inget verifierat
+### RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i kartan
 
-**Syfte:** Behålla gränsen mellan ett modellsvar och ett sparkvitto.
+**Syfte:** Följ ett granskat cykelförslag från röst till text. Kontrollera
+att bara ett bekräftat sparande visas i kartan och ändringshistoriken.
 
 **Användare:** Alex.
 
@@ -260,12 +261,26 @@ resurser separat. Utför arbetsflödet en gång.
 ```manual-mapping
 {
   "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
     "spec": "tests/integration/conversation-voice-text.spec.ts",
     "caseId": "RÖSTTEXT-04"
   },
   "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
   "outcomes": [
-    "Behålla gränsen mellan ett modellsvar och ett sparkvitto."
+    "En läsfråga ger inget kvitto även om modellen säger Sparat.",
+    "Efter Avbryt och ett förtydligande finns cykeln kvar i utkastet.",
+    "En ny uttrycklig sparbegäran ger en bekräftelse, cykeln i kartan och en ändringsgrupp."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/conversation-whole-draft-save.test.ts",
+      "title": "an old whole-draft approval with a plain reply cannot save newer proposals and a rejected attempt needs fresh authority",
+      "purpose": "En rättelse under kontrollen av hela utkastet får inte sparas på den tidigare begäran."
+    }
   ]
 }
 ```
@@ -286,13 +301,27 @@ resurser separat. Utför arbetsflödet en gång.
 3. Öppna **Visa utkastet** och läs **Utkastet är tomt.**. Öppna
    **Rapporter → Ändringshistorik** och läs **Inga genomförda sparanden.**.
    Välj **Tillbaka till arbetet**.
+4. Säg **Föreslå Alex blå cykel av typen Fordon.** Öppna utkastet och
+   granska förslaget. Stäng av mikrofonen och skicka **Vilket fordon finns i
+   mitt utkast?** Läs cykelns namn i svaret. Förslaget finns kvar.
+5. Skicka **Spara hela utkastet.** Tryck på **Escape** i meddelandefältet
+   medan Skyttel arbetar.
+   Skicka **Jag menade den blå cykeln.** Läs svaret och kontrollera att
+   cykeln finns kvar i utkastet och att ändringshistoriken är tom.
+6. Välj **Tillbaka till arbetet**, granska cykeln igen och skicka
+   **Spara hela utkastet.** Läs sparbekräftelsen och kontrollera utkastet,
+   cykeln i kartan och ändringshistoriken utan att ladda om sidan.
 
 **Förväntat resultat:**
 
 - Påståendet står i samtalstexten och överlämnas som obekräftad samtalstext till
   rösten. Det är inget verifierat resultat.
 - Ingen grön bock eller **Sparat** -status visas. Röstrutan återgår till
-  **Lyssnar**. Kartan är tom och inga sparförsök eller kvitton har skapats.
+  **Lyssnar** efter läsfrågan.
+- Det sena svaret efter **Avbryt** och förtydligandet lämnar cykeln osparad.
+- Först den nya sparbegäran ger **Utkastet är sparat**. Utkastet är tomt,
+  kartan visar cykeln som sparad och historiken innehåller en ändringsgrupp
+  med **Alex blå cykel**.
 
 ## Tillgänglighetsbedömning
 

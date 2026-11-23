@@ -6,7 +6,13 @@ import { createHousehold, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider } from '../../support/live-provider.js';
-import { modelMessage, modelTool, textModel, verifiedAnswers } from '../../support/text-model.js';
+import {
+  lastToolResult,
+  modelMessage,
+  modelTool,
+  textModel,
+  verifiedAnswers,
+} from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let client: APIRequestContext;
@@ -23,6 +29,40 @@ afterEach(async () => {
   await client?.dispose();
   await app?.close();
 });
+
+test.each(['save tool', 'plain reply'])(
+  'an explicit whole-draft save with a %s confirms the same saved group as history',
+  { tags: ['technical'] },
+  async (response) => {
+    const model = textModel((body) => {
+      if (response === 'plain reply') return [modelMessage('Jag har granskat förslagen.')];
+      const { draft } = JSON.parse(
+        String(body.input.findLast((item) => item.role === 'user')?.content),
+      );
+      return [
+        modelTool('save_draft', { version: draft.version, contentVersion: draft.contentVersion }),
+      ];
+    });
+    await setup(model);
+    const reviewedVersion = session.review.version;
+    const final = await send('Spara hela utkastet.');
+    expect(final.error).toBeUndefined();
+    expect(final.receipt).toMatchObject({
+      draftVersion: reviewedVersion,
+      operationId: expect.any(String),
+    });
+    expect(final.reply).toContain('Sparat.');
+    const state = await map();
+    expect(state.draft.changes).toEqual([]);
+    expect(state.objects.map(({ name }) => name).sort()).toEqual([
+      'Tidigare lampa',
+      'Tidigare stol',
+    ]);
+    expect((await (await client.get(`${base}/map/history`)).json()).history).toEqual([
+      expect.objectContaining({ operationId: final.receipt?.operationId }),
+    ]);
+  },
+);
 
 test('a manual draft change during a plain save response requires a fresh explicit save request', {
   tags: ['technical'],
@@ -64,91 +104,99 @@ test('a manual draft change during a plain save response requires a fresh explic
   expect((await (await client.get(`${base}/map/history`)).json()).history).toEqual([]);
 });
 
-test('an old whole-draft approval cannot save newer proposals and a rejected attempt needs fresh authority', {
-  tags: ['technical'],
-}, async () => {
-  let checking = false;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  const model = textModel(
-    (body) => {
-      const { message, draft } = JSON.parse(
-        String(body.input.findLast((item) => item.role === 'user')?.content),
-      );
-      return message === 'Vad finns i utkastet?'
-        ? [modelMessage('Den manuella rättelsen finns kvar osparad.')]
-        : [
-            modelTool('save_draft', {
-              version: draft.version,
-              contentVersion: draft.contentVersion,
-            }),
-          ];
-    },
-    async (body) => {
-      if (body.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
-        const { current } = JSON.parse(String(body.input[0].content));
+test.each(['save tool', 'plain reply'])(
+  'an old whole-draft approval with a %s cannot save newer proposals and a rejected attempt needs fresh authority',
+  {
+    tags: ['technical'],
+  },
+  async (response) => {
+    let checking = false;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const model = textModel(
+      (body) => {
+        const { message, draft } = JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        );
+        if (message === 'Vad finns i utkastet?')
+          return [modelMessage('Den manuella rättelsen finns kvar osparad.')];
+        if (response === 'plain reply' || lastToolResult(body)?.receipt)
+          return [modelMessage('Jag kontrollerar sparandet.')];
         return [
-          modelMessage(
-            JSON.stringify({
-              mode: current === 'Vad finns i utkastet?' ? 'read' : 'work',
-              request: current,
-            }),
-          ),
+          modelTool('save_draft', {
+            version: draft.version,
+            contentVersion: draft.contentVersion,
+          }),
         ];
-      }
-      checking = true;
-      await held;
-      return [modelMessage('{"decision":"allow","complete":true}')];
-    },
-  );
-  await setup(model);
-  const finishing = send('Spara hela utkastet.');
-  await expect.poll(() => checking).toBe(true);
-  await stage('draft', {
-    id: 'untouched',
-    baseRevision: null,
-    value: {
-      ...(await map()).draft.changes.find((change) => change.id === 'untouched')?.after,
-      name: 'Manuell rättelse',
-    },
-  });
-  release();
-  const rejected = await finishing;
-  expect(rejected.receipt).toBeUndefined();
-  expect(rejected.operations).toEqual([
-    expect.objectContaining({ status: 'rejected', error: 'draft_conflict' }),
-  ]);
-  expect((await map()).objects).toEqual([]);
-  expect((await (await client.get(`${base}/map/history`)).json()).history).toEqual([]);
-  const recovered = await post(`text-assistant/${session.id}/recover`, {});
-  expect(recovered.status(), await recovered.text()).toBe(200);
-  session = await recovered.json();
-  expect(session.workFailure?.request).toBe('Spara hela utkastet.');
-  const retainedDraft = (await map()).draft;
-  const abandoned = await post(`text-assistant/${session.id}/abandon-work`, {
-    revision: session.revision,
-    requestId: session.workFailure?.requestId,
-  });
-  expect(abandoned.status(), await abandoned.text()).toBe(202);
-  session = await abandoned.json();
-  expect(session.workFailure).toBeUndefined();
-  expect(session.receipt).toBeUndefined();
-  expect((await map()).draft).toEqual(retainedDraft);
-  expect((await map()).objects).toEqual([]);
-  expect((await (await client.get(`${base}/map/operations`)).json()).operations).toEqual(
-    rejected.operations,
-  );
-  expect((await (await client.get(`${base}/map/history`)).json()).history).toEqual([]);
-  expect((await send('Vad finns i utkastet?')).receipt).toBeUndefined();
-  expect((await map()).objects).toEqual([]);
-  const saved = await send('Spara hela utkastet.');
-  expect(saved.receipt).toBeDefined();
-  expect((await map()).objects.find((object) => object.id === 'untouched')?.name).toBe(
-    'Manuell rättelse',
-  );
-  expect((await (await client.get(`${base}/map/history`)).json()).history).toHaveLength(1);
-});
+      },
+      async (body) => {
+        if (body.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
+          const { current } = JSON.parse(String(body.input[0].content));
+          return [
+            modelMessage(
+              JSON.stringify({
+                mode: current === 'Vad finns i utkastet?' ? 'read' : 'work',
+                request: current,
+              }),
+            ),
+          ];
+        }
+        checking = true;
+        await held;
+        return [modelMessage('{"decision":"allow","complete":true}')];
+      },
+    );
+    await setup(model);
+    const finishing = send('Spara hela utkastet.');
+    await expect.poll(() => checking).toBe(true);
+    await stage('draft', {
+      id: 'untouched',
+      baseRevision: null,
+      value: {
+        ...(await map()).draft.changes.find((change) => change.id === 'untouched')?.after,
+        name: 'Manuell rättelse',
+      },
+    });
+    release();
+    const rejected = await finishing;
+    expect(rejected.receipt).toBeUndefined();
+    expect(rejected.reply).toContain('underlaget och eventuella konflikter behöver kontrolleras');
+    expect(rejected.operations).toEqual([
+      expect.objectContaining({ status: 'rejected', error: 'draft_conflict' }),
+    ]);
+    expect((await map()).objects).toEqual([]);
+    expect((await (await client.get(`${base}/map/history`)).json()).history).toEqual([]);
+    const recovered = await post(`text-assistant/${session.id}/recover`, {});
+    expect(recovered.status(), await recovered.text()).toBe(200);
+    session = await recovered.json();
+    expect(session.workFailure?.request).toBe('Spara hela utkastet.');
+    const retainedDraft = (await map()).draft;
+    const abandoned = await post(`text-assistant/${session.id}/abandon-work`, {
+      revision: session.revision,
+      requestId: session.workFailure?.requestId,
+    });
+    expect(abandoned.status(), await abandoned.text()).toBe(202);
+    session = await abandoned.json();
+    expect(session.workFailure).toBeUndefined();
+    expect(session.receipt).toBeUndefined();
+    expect((await map()).draft).toEqual(retainedDraft);
+    expect((await map()).objects).toEqual([]);
+    expect((await (await client.get(`${base}/map/operations`)).json()).operations).toEqual(
+      rejected.operations,
+    );
+    expect((await (await client.get(`${base}/map/history`)).json()).history).toEqual([]);
+    expect((await send('Vad finns i utkastet?')).receipt).toBeUndefined();
+    expect((await map()).objects).toEqual([]);
+    const saved = await send('Spara hela utkastet.');
+    expect(saved.error).toBeUndefined();
+    expect(saved.receipt).toBeDefined();
+    expect((await map()).objects.find((object) => object.id === 'untouched')?.name).toBe(
+      'Manuell rättelse',
+    );
+    expect((await (await client.get(`${base}/map/history`)).json()).history).toHaveLength(1);
+  },
+);
 async function setup(
   model: ReturnType<typeof textModel>,
   options: Parameters<typeof createInstallation>[1] = {},

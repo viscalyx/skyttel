@@ -2367,13 +2367,19 @@ export function textAssistantRoutes({
       else nextMessage(session);
     }
   }
+  function hasUnregisteredQuestion(session: Session) {
+    return session.execution.parts
+      .read()
+      .filter((part) => part.kind === 'information' && part.status === 'waiting')
+      .reduce((reply, part) => reply.replaceAll(part.question, ''), session.state.modelReply ?? '')
+      .includes('?');
+  }
   async function run(
     session: Session,
     text: string,
     revision: number,
     task: AbortController,
     expected: { version: number; contentVersion: number },
-    scopeReady: (check: CheckTurnActions, mode: 'read' | 'work', complete: () => boolean) => void,
   ) {
     const serial = session.state.inputSerial ?? 0;
     const currentObservation = observationWork.getStore();
@@ -2536,7 +2542,6 @@ export function textAssistantRoutes({
         }
         admitted = true;
         for (const attempt of attempts) attempt.used = true;
-        scopeReady(checkActions, scope.mode, () => wholeRequestComplete);
         return true;
       };
       const rejectAction = (name: string, reason: 'read_only_turn' | 'outside_requested_work') => {
@@ -2562,9 +2567,7 @@ export function textAssistantRoutes({
       // A read/report round cannot turn a partial checked batch into completed
       // work. Keep its independent verdict within this request, across reads.
       let checkedWorkComplete = false;
-      const checkActions = async (
-        operations: { name: string; arguments: Record<string, unknown> }[],
-      ) => {
+      const checkActions: CheckTurnActions = async (operations) => {
         wholeRequestComplete = false;
         guard();
         if (!operations.length) return;
@@ -2796,6 +2799,68 @@ export function textAssistantRoutes({
         return outdated.map(({ name }) => ({ name }));
       }
       const { tools, draftTools } = mapAgentTools(session.execution.mcp.tools);
+      // Both a Runner tool call and completion of an explicit request use the
+      // same reviewed version, save authority and server-owned operation.
+      const executeSave = async (
+        name: 'prepare_save' | 'save_draft',
+        source: { callId: string; continueResponse?: boolean } | 'completion',
+      ) => {
+        const saveGuard = currentSaveGuard(session, serial, guard);
+        const current: TextAssistantReview = await call(session, 'read_my_draft', {}, saveGuard);
+        if (
+          current.version !== version ||
+          current.version !== (session.state.workVersion ?? expected.version) ||
+          current.contentVersion !== expected.contentVersion
+        )
+          throw new MapError('assistant_draft_changed', 409);
+        if (current.conflicts.length) throw new MapError('assistant_conflict', 409);
+        session.state.review = current;
+        if (source === 'completion' && !draftChangeCount(current)) {
+          session.state.saveIntent = undefined;
+          return;
+        }
+        await checkActions([{ name, arguments: { version, contentVersion } }]);
+        saveGuard();
+        session.state.pendingSave ??= {
+          operationId: randomUUID(),
+          version,
+          contentVersion,
+          messageId: session.state.activeMessage?.id,
+          finishesRequest:
+            wholeRequestComplete && (source === 'completion' || !source.continueResponse),
+        };
+        const pending = session.state.pendingSave;
+        if (observe) saveWork = { operation: { ...pending }, attempts: attempts.slice() };
+        const args = {
+          operationId: pending.operationId,
+          version: pending.version,
+          contentVersion: pending.contentVersion,
+        };
+        if (name === 'save_draft') await call(session, 'prepare_save', args, saveGuard);
+        const value = await call(
+          session,
+          name,
+          args,
+          saveGuard,
+          'shared',
+          source === 'completion' ? undefined : source.callId,
+        );
+        guard();
+        if (name === 'save_draft') {
+          verifyReceipt(session, value.receipt, pending);
+          for (const attempt of attempts) attempt.verified = true;
+          saved(session, value.receipt, true);
+          if (source !== 'completion' && (!wholeRequestComplete || source.continueResponse))
+            session.state.phase = 'working';
+          await refreshConfirmed(session, guard);
+          originalSaveIntent = false;
+        } else {
+          session.state.review = await call(session, 'read_my_draft', {}, guard);
+        }
+        version = session.state.review.version;
+        contentVersion = session.state.review.contentVersion;
+        return value;
+      };
       const callIds = new Set<string>();
       const nextRound = async () => {
         guard();
@@ -3326,29 +3391,37 @@ export function textAssistantRoutes({
           const tool = session.execution.mcp.tools.find((tool) => tool.name === action.name);
           if (!tool) throw new MapError('assistant_unknown_tool', 409);
           checkDiscard(action.name);
-          const isSave = action.name === 'save_draft' || action.name === 'prepare_save';
-          if (isSave && combined) {
-            session.execution.parts.complete(combined.resolves);
-            recordReplyProgress(session, combined.resolves);
-            combined.resolves = [];
-            syncQuestions(session);
+          const { name } = action;
+          if (name === 'save_draft' || name === 'prepare_save') {
+            if (combined) {
+              session.execution.parts.complete(combined.resolves);
+              recordReplyProgress(session, combined.resolves);
+              combined.resolves = [];
+              syncQuestions(session);
+            }
+            if (session.execution.parts.blocked()) {
+              session.state.phase = 'ready';
+              terminalResult = true;
+              return { saved: false };
+            }
+            const superseded = session.state.activeMessage?.saveSuperseded;
+            if (!superseded && !session.state.saveIntent && !originalSaveIntent)
+              throw new MapError('assistant_save_not_requested', 409);
+            if (superseded || !(await saveReady(session, serial, guard))) {
+              session.state.phase = 'ready';
+              session.state.modelReply = undefined;
+              session.state.reply = undefined;
+              terminalResult = true;
+              return { saved: false };
+            }
+            if (args.version !== version || args.contentVersion !== contentVersion)
+              throw new MapError('assistant_draft_changed', 409);
+            return executeSave(name, {
+              callId: action.call_id,
+              continueResponse: combined?.continueResponse,
+            });
           }
           let previousReview: TextAssistantReview | undefined;
-          if (isSave && session.execution.parts.blocked()) {
-            session.state.phase = 'ready';
-            terminalResult = true;
-            return { saved: false };
-          }
-          const superseded = session.state.activeMessage?.saveSuperseded;
-          if (isSave && !superseded && !session.state.saveIntent && !originalSaveIntent)
-            throw new MapError('assistant_save_not_requested', 409);
-          if (isSave && (superseded || !(await saveReady(session, serial, guard)))) {
-            session.state.phase = 'ready';
-            session.state.modelReply = undefined;
-            session.state.reply = undefined;
-            terminalResult = true;
-            return { saved: false };
-          }
           if (tool.annotations?.readOnlyHint !== true) {
             const current = (await call(
               session,
@@ -3363,39 +3436,9 @@ export function textAssistantRoutes({
               args.contentVersion !== contentVersion
             )
               throw new MapError('assistant_draft_changed', 409);
-            if (isSave && current.conflicts.length) throw new MapError('assistant_conflict', 409);
-            if (isSave) {
-              session.state.review = current;
-              // Batch approval precedes its effects. Saving independently
-              // checks the complete resulting draft, including older proposals.
-              await checkActions([{ name: action.name, arguments: args }]);
-              currentSaveGuard(session, serial, guard)();
-            }
             previousReview = current;
           }
-          if (isSave) {
-            session.state.pendingSave ??= {
-              operationId: randomUUID(),
-              version,
-              contentVersion,
-              messageId: session.state.activeMessage?.id,
-              finishesRequest: wholeRequestComplete && !combined?.continueResponse,
-            };
-            Object.assign(args, {
-              operationId: session.state.pendingSave.operationId,
-              version: session.state.pendingSave.version,
-              contentVersion: session.state.pendingSave.contentVersion,
-            });
-            if (observe)
-              saveWork = {
-                operation: { ...session.state.pendingSave },
-                attempts: attempts.slice(),
-              };
-            if (action.name === 'save_draft')
-              await call(session, 'prepare_save', args, currentSaveGuard(session, serial, guard));
-          }
           if (
-            !isSave &&
             (combined || session.state.activeMessage?.continuation) &&
             !session.execution.parts.shouldRun(
               combined?.resolves ?? [],
@@ -3410,7 +3453,7 @@ export function textAssistantRoutes({
             return { alreadyCompleted: true, review: draftFacts(session, text) };
           }
           let value: Awaited<ReturnType<typeof call>>;
-          if (!isSave && draftTools.some((tool) => tool.name === action.name)) {
+          if (draftTools.some((tool) => tool.name === action.name)) {
             const { version: _version, contentVersion: _contentVersion, ...arguments_ } = args;
             const batch = await applyCheckedBatch(
               session,
@@ -3471,26 +3514,12 @@ export function textAssistantRoutes({
               session,
               action.name,
               args,
-              isSave ? currentSaveGuard(session, serial, guard) : guard,
+              guard,
               'shared',
               action.call_id,
               readSignal,
             );
           guard();
-          if (action.name === 'save_draft') {
-            if (!session.state.pendingSave) throw new Error('invalid_receipt');
-            verifyReceipt(session, value.receipt, session.state.pendingSave);
-            for (const attempt of attempts) attempt.verified = true;
-            saved(session, value.receipt, true);
-            if (!wholeRequestComplete || combined?.continueResponse)
-              session.state.phase = 'working';
-            await refreshConfirmed(session, guard);
-            originalSaveIntent = false;
-            version = session.state.review.version;
-            contentVersion = session.state.review.contentVersion;
-            if (!wholeRequestComplete) session.state.phase = 'working';
-            return value;
-          }
           const result =
             tool.annotations?.readOnlyHint === false && Array.isArray(value.changes)
               ? {
@@ -3503,8 +3532,7 @@ export function textAssistantRoutes({
             const before = previousReview ?? session.state.review;
             session.state.review = await call(session, 'read_my_draft', {}, guard);
             version = session.state.review.version;
-            if (!isSave)
-              recordMutation(action.name, args, before, session.state.review, [], value.version);
+            recordMutation(action.name, args, before, session.state.review, [], value.version);
           }
           return result;
         };
@@ -3550,6 +3578,18 @@ export function textAssistantRoutes({
         },
         nextRound,
       );
+      guard();
+      if (
+        admitted &&
+        session.state.phase === 'ready' &&
+        session.state.saveIntent &&
+        view(session).contextSummaryState !== 'failed' &&
+        !session.state.receipt &&
+        !session.state.pendingSave &&
+        !hasUnregisteredQuestion(session) &&
+        (await saveReady(session, serial, guard))
+      )
+        await executeSave('save_draft', 'completion');
     } catch (error) {
       if (!admitted && workContextStarted && session.state.revision === revision)
         rebuildContext(session);
@@ -3577,7 +3617,9 @@ export function textAssistantRoutes({
         ? 'assistant_batch_unknown'
         : error instanceof MapError
           ? error.code
-          : 'assistant_provider_failed';
+          : session.state.pendingSave
+            ? 'assistant_save_unknown'
+            : 'assistant_provider_failed';
       if (session.state.error === 'assistant_context_capacity') pauseCapacity(session);
       const messages = failureMessages(
         session,
@@ -3725,6 +3767,7 @@ export function textAssistantRoutes({
         } else report('discarded', discardReason);
       }
     }
+    return scope?.mode;
   }
   function nextMessage(session: Session) {
     if (closed) return;
@@ -4235,23 +4278,9 @@ export function textAssistantRoutes({
           settleRequests(session, message.id, true);
         }
       } else {
-        let checkTurnActions: CheckTurnActions | undefined;
-        let requestComplete = () => false;
-        let readOnly = false;
-        await run(session, message.text, revision, task, expected, (check, mode, complete) => {
-          checkTurnActions = check;
-          readOnly = mode === 'read';
-          requestComplete = complete;
-        });
+        const mode = await run(session, message.text, revision, task, expected);
         guard();
-        const unregisteredQuestion = session.execution.parts
-          .read()
-          .filter((part) => part.kind === 'information' && part.status === 'waiting')
-          .reduce(
-            (reply, part) => reply.replaceAll(part.question, ''),
-            session.state.modelReply ?? '',
-          )
-          .includes('?');
+        const unregisteredQuestion = hasUnregisteredQuestion(session);
         if (
           (session.execution.parts.blocked() || unregisteredQuestion) &&
           // Speech may omit the sentence boundary before a final save request.
@@ -4265,61 +4294,12 @@ export function textAssistantRoutes({
           session.state.requiredNotice = notice;
           session.state.reply = [session.state.reply, notice].filter(Boolean).join('\n');
           appendConversation(session, { role: 'assistant', text: notice });
-        } else if (
-          session.state.phase === 'ready' &&
-          session.state.saveIntent &&
-          !session.state.receipt &&
-          !session.state.pendingSave
-        ) {
-          const serial = session.state.inputSerial ?? 0;
-          if (await saveReady(session, serial, guard)) {
-            const saveGuard = currentSaveGuard(session, serial, guard);
-            const review = await call(session, 'read_my_draft', {}, saveGuard);
-            if (
-              review.version !== (session.state.workVersion ?? expected.version) ||
-              review.contentVersion !== expected.contentVersion
-            )
-              throw new MapError('assistant_draft_changed', 409);
-            if (review.conflicts.length) throw new MapError('assistant_conflict', 409);
-            if (
-              ![
-                review.changes,
-                review.relationships,
-                review.objectTypes,
-                review.relationshipTypes,
-              ].some((changes) => changes?.length)
-            ) {
-              session.state.saveIntent = undefined;
-              return;
-            }
-            const pendingSave = {
-              operationId: randomUUID(),
-              version: review.version,
-              contentVersion: review.contentVersion,
-            };
-            if (!checkTurnActions) throw new MapError('assistant_scope_unavailable', 409);
-            await checkTurnActions([
-              { name: 'prepare_save', arguments: pendingSave },
-              { name: 'save_draft', arguments: pendingSave },
-            ]);
-            saveGuard();
-            session.state.pendingSave = {
-              ...pendingSave,
-              messageId: message.id,
-              finishesRequest: requestComplete(),
-            };
-            await call(session, 'prepare_save', pendingSave, saveGuard);
-            const value = await call(session, 'save_draft', pendingSave, saveGuard);
-            verifyReceipt(session, value.receipt, session.state.pendingSave);
-            saved(session, value.receipt, true);
-            await refreshConfirmed(session, guard);
-          }
         }
         if (session.state.phase === 'ready' && !unregisteredQuestion)
           settleRequests(
             session,
             message.id,
-            readOnly ||
+            mode === 'read' ||
               (Boolean(
                 session.state.result ||
                   session.state.receipt ||

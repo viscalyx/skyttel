@@ -1159,6 +1159,17 @@ efter fallet och avsluta med `quit`.
    den. Kontrollera röstrutan och det tomma utkastet genom **Visa utkastet** i
    textvyn. Öppna **Rapporter → Ändringshistorik** och kontrollera att inget
    sparande tillkommer. Välj **Tillbaka till arbetet**.
+3. Följ steg 6 i [RÖSTTEXT-01](#tidslinje-rösttext-01) för att föreslå
+   cykeln med rösten och släppa ändringskontrollen. Läs cykelns namn i
+   det hållna anropets utkast när Alex frågar om fordonet. Släpp svaret med
+   `reply REQUEST I utkastet finns Alex blå cykel.`
+4. Håll svaret på den första skrivna sparbegäran medan Alex trycker på
+   **Escape** i meddelandefältet. Om anropet fortfarande kan besvaras, släpp det med
+   `reply REQUEST Sparat.` Besvara sedan Alex förtydligande med
+   `reply REQUEST Jag förstår vilken cykel du menar.`
+5. Besvara den nya sparbegäran enbart med
+   `reply REQUEST Jag har granskat förslaget.` Låt serverns ordinarie
+   kontroll av hela utkastet slutföras.
 
 ## Väntande kontroll NOT-10
 

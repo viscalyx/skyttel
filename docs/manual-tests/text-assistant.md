@@ -789,7 +789,7 @@ TEXT-15.
     "runner": "vitest",
     "suite": "server",
     "spec": "tests/unit/server/conversation-whole-draft-save.test.ts",
-    "title": "an old whole-draft approval cannot save newer proposals and a rejected attempt needs fresh authority",
+    "title": "an old whole-draft approval with a save tool cannot save newer proposals and a rejected attempt needs fresh authority",
     "purpose": "Ändrar utkastet medan den oberoende kontrollen hålls och verifierar beständig avvisning, återhämtning och krav på ny uttrycklig sparbegäran."
   }, {
     "kind": "technical",

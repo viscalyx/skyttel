@@ -491,7 +491,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   med röst när mikrofonen är på, text när den är av, ordnad överlämning av
   långa svar, kvarvarande samtalstext och artig uppläsning bara av nya
   textlevererade Skyttel-rader. Följ Alex blå cykel och dess väntande frågor
-  genom lägesbyte och ljudavbrott. Obekräftad text ger inget sparkvitto.
+  genom lägesbyte och ljudavbrott. Granska cykeln, avbryt en sparbegäran
+  och följ ett nytt bekräftat sparande till kartan och ändringshistoriken.
 - [Samtalets kontext](conversation-context.md): samma samtal
   genom utkast, sparande, avbrott, fel, mikrofon av och på samt byte mellan
   röst och text. Äldre sparbesked ger inget nytt sparande. Skrivna och
