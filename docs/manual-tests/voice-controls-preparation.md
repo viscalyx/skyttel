@@ -497,7 +497,8 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    `user Rätta Lo.` och `delegate` i startguiden. Håll modellanropet.
 2. Stäng textvyn och öppna Karta. Kräv **Skyttel arbetar** i röstrutan.
    Förbered ljudförloppet i Chromium med konsolen. Varje ton motsvarar ett ord.
-   Mätningen läser både inkommande ljud och ljudet från det spelande elementet.
+   Mätningen läser inkommande ljud och ljudet som webbläsaren skickar till
+   högtalaren.
 
    ```javascript
    const f = window.skyttelVoiceFixture;
@@ -507,8 +508,9 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    knapp.addEventListener('click', () => {
      f.setMicrophoneTone(600);
      setTimeout(() => f.setSound('microphone', false), 160);
-     f.remoteTone(640, 0.04, 0.08);
+     f.remoteTone(640, 0, 0.12);
      f.remoteTone(800, 0.22, 0.18);
+     f.remoteTone(1000, 0.601, 0.15);
      setTimeout(() => f.emit({
        type: 'session.input_transcript.delta',
        event_id: crypto.randomUUID(),
@@ -536,9 +538,11 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    f.remoteTone(1200, 0.2, 0.15);
    ```
 
-6. Läs `lasLjud()` efter tonerna. För 640 och 800 Hz finns perioder i
-   `incoming` men inga i `speaker`. För 1200 Hz ska antalen skilja högst två
-   perioder. Även 1600 Hz passerar: båda svaren delar samma omärkta ljudspår.
+6. Läs `lasLjud()` efter tonerna. För 640 Hz finns högst sex perioder i
+   `speaker` efter trycket, för 800 Hz inga alls. För både mellanbeskedets
+   första ord (1000 Hz) och svarets första ord (1200 Hz) ska antalen i
+   `incoming` och `speaker` skilja högst två perioder. Även 1600 Hz passerar
+   eftersom båda svaren delar samma omärkta ljudspår.
 7. Slå av mikrofonen. **Osänd rättelse** ska finnas kvar. Välj **Nytt samtal**.
    Samtalstexten töms, medan **Osänd rättelse** och Lo-förslaget finns kvar.
    Avsluta provinstallationen enligt den allmänna förberedelsen.
@@ -662,18 +666,25 @@ Resurskontrollen vid UI-steg 2 och 4 använder
 2. Gå med Tab till **Avbryt** i röstrutan och tryck Enter.
 3. Släpp det gamla anropet med ett `propose_object` som byter namnet till
    **För sent**.
-4. Kör `setSound('remote', true)` och välj **Avbryt** medan Skyttel talar.
+4. Kör `setSound('remote', true)` och skicka replikens fragment i konsolen:
+
+   ```javascript
+   const f = window.skyttelVoiceFixture;
+   const fragment = (role, delta, start, end) => f.emit({
+     type: 'session.' + role + '_transcript.delta',
+     event_id: crypto.randomUUID(), delta, start_ms: start, end_ms: end
+   });
+   fragment('output', 'Jag läser upp förslaget.', 1000, 1250);
+   ```
+
+   Välj **Avbryt** medan Skyttel talar.
    Kör `setSound('remote', false)`. Vänta mer än en sekund. Jämför `stats()`
    före och efter detta avbrott: samma mikrofon och inkommande spår lever,
    antalet anslutningar är oförändrat och röstrutan visar **Lyssnar**.
-5. Skicka rättelsens textfragment i konsolen:
-
-   ```javascript
-   window.skyttelVoiceFixture.emit({
-     type: 'session.input_transcript.delta', event_id: crypto.randomUUID(),
-     delta: 'Jag menar Lo.', start_ms: 2100, end_ms: 2300
-   });
-   ```
+5. Kör `fragment('input', 'Tidigare ord.', 0, 100)` och
+   `f.setSound('remote', true)`. Röstrutan ska fortsätta visa **Lyssnar**.
+   Kör `f.setSound('remote', false)` och skicka den faktiska rättelsen med
+   `fragment('input', 'Jag menar Lo.', 2100, 2300)`.
 
 6. Öppna textvyn och läs både **Rätta namnet.** och **Jag menar Lo.**
    Kör `setSound('remote', true)` för nästa svar och läs **Skyttel talar**.

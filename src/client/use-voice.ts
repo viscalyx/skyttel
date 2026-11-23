@@ -90,6 +90,7 @@ type Attempt = {
   summaryPausedAt?: number;
   providerGeneration?: number;
   interrupting?: Promise<void>;
+  inputVersion?: number;
   output?: { text: string; heard: boolean; speaking: boolean; matched?: string };
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
 };
@@ -474,10 +475,12 @@ export function useVoice(options: {
               microphoneOn: !offRef.current,
               microphoneActive: !offRef.current && activityRef.current.microphone,
               speakerActive: activityRef.current.speaker,
+              confirmedInputVersion: attempt.interrupting ? undefined : attempt.inputVersion,
             },
             attempt.controller.signal,
           );
           if (!active()) return;
+          attempt.inputVersion = result.voice.inputVersion;
           observeDelivery(result);
           apply(result.assistant, result.voice.replyDelivery);
           if ((result.assistant.contextRevision ?? 0) > (initial.contextRevision ?? 0)) {
@@ -655,6 +658,7 @@ export function useVoice(options: {
                 path,
                 {
                   sdp,
+                  confirmBrowserInput: true,
                   deliveryConnectionId: attempt.delivery?.id,
                   ...anchor(),
                   microphoneOn: !(reuse?.paused ?? attempt.held?.released ?? false),

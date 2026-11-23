@@ -11,9 +11,6 @@ import type { SavedConversationConsent } from '../../../src/shared/conversation-
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 
 class Track extends EventTarget {
-  clone() {
-    return new Track();
-  }
   enabled = true;
   stop = vi.fn();
 }

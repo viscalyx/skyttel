@@ -3,9 +3,6 @@ import { vi } from 'vitest';
 /** Browser media boundaries; the real transport and held-input code stay in the test. */
 export function voiceMedia() {
   class Track extends EventTarget {
-    clone() {
-      return new Track();
-    }
     enabled = true;
     stopped = false;
     stop() {
@@ -37,9 +34,9 @@ export function voiceMedia() {
       close: vi.fn(),
     };
     onprocessorerror = () => {};
-    constructor() {
+    constructor(_context: unknown, name: string) {
       super();
-      Processor.all.push(this);
+      if (name === 'skyttel-held-input') Processor.all.push(this);
     }
   }
   const microphone = new Track();

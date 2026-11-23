@@ -17,6 +17,7 @@ type VoiceCompletionView = TextAssistantView & Pick<ConversationReply, 'failed'>
  * Only new user deltas can authorize a save; conversation context cannot. */
 export function voiceWork({
   channel,
+  confirmBrowserInput = false,
   initial,
   request,
   interrupt,
@@ -33,6 +34,7 @@ export function voiceWork({
   allowed?: () => boolean;
   now?: () => number;
   channel: LiveSideband;
+  confirmBrowserInput?: boolean;
   initial: TextAssistantView;
   request: (
     action?: string,
@@ -69,6 +71,8 @@ export function voiceWork({
   })[] = [];
   let generation = 0;
   let inputVersion = 0;
+  let confirmedInput = 0;
+  let interruptedThrough = -1;
   let lastInputAt = 0;
   let microphoneActive = false;
   let collecting: { id: string | null } | undefined;
@@ -544,6 +548,7 @@ export function voiceWork({
     });
     transcript?.(role, event.delta);
     if (role === 'user') {
+      if (event.end_ms <= interruptedThrough) return;
       inputVersion++;
       lastInputAt = now();
       input?.(true, event.delta);
@@ -574,7 +579,14 @@ export function voiceWork({
     // A delegation offset is not a completed utterance. Accumulate late deltas
     // before sending a task, including corrections made while still speaking.
     // Further delegations during collection share this input, consumed once.
-    while (current() && (microphoneActive || now() - lastInputAt < 2000))
+    // A poll acknowledging this input was sent after it reached Skyttel. The
+    // browser withholds that acknowledgement while its interrupt is in flight.
+    while (
+      current() &&
+      (microphoneActive ||
+        now() - lastInputAt < 2000 ||
+        (confirmBrowserInput && confirmedInput < inputVersion))
+    )
       await new Promise((resolve) => setTimeout(resolve, 50));
     if (!current()) return;
     collecting = undefined;
@@ -668,12 +680,19 @@ export function voiceWork({
     anchor = undefined;
   }
   return {
+    confirmInput(version: unknown) {
+      if (!confirmBrowserInput) return undefined;
+      if (typeof version === 'number' && Number.isSafeInteger(version) && version <= inputVersion)
+        confirmedInput = Math.max(confirmedInput, version);
+      return inputVersion;
+    },
     async interruptSpeech(inputEndMs?: number) {
       if (stopped || !allowed()) throw new Error('voice_session_expired');
       // Input can reach the sideband before the browser's interrupt request.
       // Preserve fragments and a delegation for a correction already underway.
       const collection = collecting;
-      if (inputEndMs !== undefined) pending = pending.filter((item) => item.endMs > inputEndMs);
+      if (inputEndMs !== undefined) interruptedThrough = Math.max(interruptedThrough, inputEndMs);
+      pending = pending.filter((item) => item.endMs > interruptedThrough);
       anchor = pending[0]?.anchor;
       cancel(rendered.revision);
       channel.send({

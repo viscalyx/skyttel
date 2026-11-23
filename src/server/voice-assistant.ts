@@ -736,6 +736,7 @@ export function voiceAssistantRoutes({
       const deliveryConnectionId = body.deliveryConnectionId;
       voice.work = voiceWork({
         now,
+        confirmBrowserInput: body.confirmBrowserInput === true,
         allowed: () => {
           if (voice.closed) return false;
           try {
@@ -970,6 +971,7 @@ export function voiceAssistantRoutes({
         body.contentVersion < 1
       )
         return context.json({ error: 'invalid_request' }, 400);
+      voice.view.inputVersion = voice.work?.confirmInput(body.confirmedInputVersion);
       voice.work?.rendered(body);
       voice.work?.activity(body.microphoneActive === true && body.microphoneOn === true);
       voice.work?.speaker(body.speakerActive === true);

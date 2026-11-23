@@ -141,21 +141,12 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
           fixture.setMicrophoneTone(600);
           setTimeout(() => fixture.setSound('microphone', false), 160);
           // The original reply continues, pauses briefly, then delivers a late word.
-          fixture.remoteTone(640, 0.04, 0.08);
+          fixture.remoteTone(640, 0, 0.12);
           fixture.remoteTone(800, 0.22, 0.18);
+          fixture.remoteTone(1000, 0.601, 0.15);
         },
         { once: true },
       );
-    });
-    // Deliver the correction to the sideband before the interrupt HTTP request.
-    // This ordering must preserve both its first fragment and its delegation.
-    let resumeInterrupt!: () => void;
-    const correctionReceived = new Promise<void>((resolve) => {
-      resumeInterrupt = resolve;
-    });
-    await page.route('**/voice/*/interrupt', async (route) => {
-      await correctionReceived;
-      await route.continue();
     });
     const captureBoundary = await page.evaluate(
       () => window.skyttelVoiceFixture.captureChanges().length,
@@ -181,7 +172,6 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
       offset_ms: 350,
       delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
     });
-    resumeInterrupt();
     await expect
       .poll(() =>
         live.sent.some(
@@ -226,7 +216,10 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
       .toBeGreaterThan(earlierCycles + 20);
     const { incoming, speaker } = await levels.evaluate((read) => read());
     expect(incoming[640]).toBeGreaterThan(40);
-    expect(speaker[640] ?? 0).toBe(0);
+    // At most 10 ms of the tone that begins on the click can reach output.
+    expect(speaker[640] ?? 0).toBeLessThanOrEqual(6);
+    expect(incoming[1000]).toBeGreaterThan(130);
+    expect(Math.abs(incoming[1000] - speaker[1000])).toBeLessThanOrEqual(2);
     expect(incoming[800]).toBeGreaterThan(120);
     expect(speaker[800] ?? 0).toBe(0);
     expect(speaker[1600], JSON.stringify({ incoming, speaker })).toBeGreaterThan(100);

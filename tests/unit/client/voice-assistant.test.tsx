@@ -11,9 +11,6 @@ import { StandaloneConversation } from '../../support/conversation-harness.js';
 import { closeVoiceConnection, StandaloneVoice } from '../../support/voice-harness.js';
 
 class Track extends EventTarget {
-  clone() {
-    return new Track();
-  }
   enabled = true;
   stop = vi.fn();
 }
@@ -206,10 +203,7 @@ function meteredAudio() {
   vi.stubGlobal(
     'AudioContext',
     class {
-      sampleRate = 48000;
-      get currentTime() {
-        return performance.now() / 1000;
-      }
+      audioWorklet = { async addModule() {} };
       get state() {
         return context.state;
       }
@@ -477,7 +471,7 @@ test("the bars follow the microphone's sound level while the user talks", async 
 
 test('Avbryt keeps capturing the correction while interrupted speech drains', async () => {
   const { signals } = meteredAudio();
-  const { track, getUserMedia, audios, calls } = setup();
+  const { track, getUserMedia, calls } = setup();
   const { peer, remote } = await startWithAudio();
   signals.set(remote, 22);
   await screen.findByText('Skyttel talar');
@@ -486,31 +480,9 @@ test('Avbryt keeps capturing the correction while interrupted speech drains', as
   expect(track.enabled).toBe(true);
   expect(getUserMedia).toHaveBeenCalledOnce();
   expect(calls.some(({ url }) => url.endsWith('/interrupt'))).toBe(true);
-  const [speaker] = (audios[0].srcObject as unknown as Stream).getTracks();
-  expect(speaker.enabled).toBe(false);
   await screen.findByText('Lyssnar');
   expect(document.activeElement).toBe(microphoneButton());
-
-  signals.set(remote, 0);
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  expect(speaker.enabled).toBe(false);
-  signals.set(remote, 22);
-  await act(async () =>
-    peer.channel.emit({
-      type: 'session.input_transcript.delta',
-      delta: 'Jag menar Lo.',
-      start_ms: 200,
-      end_ms: 400,
-    }),
-  );
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  expect(speaker.enabled).toBe(false);
-  signals.set(remote, 0);
-  await new Promise((resolve) => setTimeout(resolve, 120));
-  expect(speaker.enabled).toBe(false);
-  await waitFor(() => expect(speaker.enabled).toBe(true));
-  signals.set(remote, 22);
-  await screen.findByText('Skyttel talar');
+  expect(remote.stop).not.toHaveBeenCalled();
 });
 
 test('a screen reader is told Lyssnar once, Skyttel arbetar, and Mikrofonen är av when the box goes', async () => {
@@ -877,6 +849,7 @@ test('voice starts only on request, gates microphone on protocol readiness and s
   expect(calls[0].body).toBeUndefined();
   expect(calls[1].body).toEqual({
     sdp: 'synthetic-offer',
+    confirmBrowserInput: true,
     revision: 2,
     draftVersion: 3,
     contentVersion: 1,

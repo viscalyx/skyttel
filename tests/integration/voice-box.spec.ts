@@ -334,12 +334,21 @@ test('TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men behåll
       .toEqual(before.draft);
     expect(answers(live)).toBe(0);
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
-    await expect.poll(async () => (await media(page)).silencedAudioElements).toBe(0);
+    await expect.poll(async () => (await media(page)).openPeers).toBe(1);
 
     // During an audible reply the same connection carries the correction.
     await sound(page, 'remote', 0.2);
     await expect(voiceBox(page)).toHaveText('Skyttel talar');
-    expect((await media(page)).silencedAudioElements).toBe(0);
+    expect((await media(page)).audioElements).toBe(1);
+    await page.evaluate(() =>
+      window.skyttelVoiceFixture.emit({
+        type: 'session.output_transcript.delta',
+        event_id: crypto.randomUUID(),
+        delta: 'Jag läser upp förslaget.',
+        start_ms: 1000,
+        end_ms: 1250,
+      }),
+    );
     const beforeInterruption = await media(page);
     await stopIcon(page).click();
     await expect(voiceBox(page)).toHaveText('Lyssnar');
@@ -350,6 +359,20 @@ test('TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men behåll
     await expect(voiceBox(page)).toHaveText('Lyssnar');
     expect((await media(page)).peers).toBe(beforeInterruption.peers);
     expect((await media(page)).remoteTracks).toEqual(beforeInterruption.remoteTracks);
+    // A delayed transcript of earlier speech is not the correction.
+    await page.evaluate(() =>
+      window.skyttelVoiceFixture.emit({
+        type: 'session.input_transcript.delta',
+        event_id: crypto.randomUUID(),
+        delta: 'Tidigare ord.',
+        start_ms: 0,
+        end_ms: 100,
+      }),
+    );
+    await sound(page, 'remote', 0.2);
+    await page.waitForTimeout(350);
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
+    await sound(page, 'remote', 0);
     await page.evaluate(() =>
       window.skyttelVoiceFixture.emit({
         type: 'session.input_transcript.delta',
@@ -362,6 +385,7 @@ test('TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men behåll
     await openConversationText(page);
     await expect(panel(page).getByRole('log')).toContainText('Rätta namnet.');
     await expect(panel(page).getByRole('log')).toContainText('Jag menar Lo.');
+    await page.waitForTimeout(250);
     await sound(page, 'remote', 0.2);
     await expect(voiceBox(page)).toHaveText('Skyttel talar');
     expect((await (await page.request.get(path)).json()).draft).toEqual(before.draft);

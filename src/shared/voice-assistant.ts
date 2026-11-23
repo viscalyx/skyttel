@@ -13,6 +13,8 @@ export interface VoiceAssistantView {
   seconds: number | null;
   /** No delegated work or incomplete utterance will be canceled by a context handoff. */
   summaryReady?: boolean;
+  /** Latest input fragment received on the server side of this voice connection. */
+  inputVersion?: number;
   usageFinal: boolean;
   /** Ephemeral typed reply handoffs; OFF completions are consumed without speech. */
   replyDelivery?: { id: string; voiced: boolean }[];

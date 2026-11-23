@@ -865,9 +865,8 @@ till TAL-17/23/24.
 2. Röstrutan visar Lyssnar utan stoppknapp, och fokus går till Prata med
    Skyttel. Släpp det sena För sent-förslaget enligt tidslinjen; det får inte
    ändra Lo.
-3. Låt inkommande aktivitet börja, välj Avbryt och låt det gamla ljudet försöka
-   återkomma efter en paus enligt tidslinjen. Mikrofonen ska förbli på och
-   Lyssnar visas.
+3. Välj Avbryt medan Skyttel talar. Prova de äldre orden och det sena ljudet
+   efter pausen enligt tidslinjen. Mikrofonen ska förbli på och Lyssnar visas.
 4. Öppna textvyn och läs rättelsen enligt tidslinjen. Låt nästa svar börja
    i samma anslutning. Läs Skyttel talar och hela bevarade Lo Exempel-förslaget
    med Person och Påhittad uppgift.

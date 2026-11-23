@@ -174,6 +174,18 @@ export const liveBrowserFixtureSource = `
       return stream;
     }
   });
+  // Observe the final nodes connected to the device output. This records the
+  // same rendered PCM that Web Audio supplies to the browser's audio device.
+  const speakerNodes = new Set();
+  const incomingNodes = new Set();
+  const connectNode = AudioNode.prototype.connect;
+  AudioNode.prototype.connect = function (target, ...ports) {
+    const result = connectNode.call(this, target, ...ports);
+    if (target === this.context.destination) speakerNodes.add(this);
+    if (this instanceof MediaStreamAudioSourceNode &&
+        this.mediaStream.getAudioTracks().some(track => remoteTracks.includes(track))) incomingNodes.add(this);
+    return result;
+  };
   const nativePlay = HTMLMediaElement.prototype.play;
   const nativePause = HTMLMediaElement.prototype.pause;
   HTMLMediaElement.prototype.play = function () {
@@ -213,16 +225,18 @@ export const liveBrowserFixtureSource = `
       signal.analyser.getFloatTimeDomainData(microphoneWave);
       return Math.max(...microphoneWave.map(Math.abs));
     },
-    // Capture the playing element in Chromium, downstream of the app's audio
-    // controls. Count full cycles in marked tones so a clipped onset is visible.
+    // Count complete cycles in both signals so a clipped onset is visible.
     observeSpeaker: async () => {
       const element = [...audioElements].find(element => element.srcObject);
       await nativePlay.call(element);
-      const remote = signals.get(remoteTracks);
-      const context = remote.context;
+      if (!element.muted || speakerNodes.size !== 1) throw new Error('Expected one device output and a muted receiver');
+      const [played] = speakerNodes;
+      const context = played.context;
+      const raw = [...incomingNodes].find(node => node.context === context);
+      if (!raw) throw new Error('Missing receiver audio in the output context');
+      // Compare both branches in the same render quantum. A second media
+      // stream or audio context would introduce independent jitter/resampling.
       const merger = context.createChannelMerger(2);
-      const raw = context.createMediaStreamSource(remote.stream);
-      const played = context.createMediaStreamSource(element.captureStream());
       raw.connect(merger, 0, 0);
       played.connect(merger, 0, 1);
       const recorder = context.createScriptProcessor(4096, 2, 1);
@@ -238,7 +252,7 @@ export const liveBrowserFixtureSource = `
           for (let i = 0; i < samples.length; i++) {
             if (samples[i] > 0.01 && lastSample[ch] <= 0.01) {
               const hz = context.sampleRate / (frames + i - lastCrossing[ch]);
-              const marker = [440, 640, 800, 1200, 1600].find(word => Math.abs(hz - word) < word * 0.05);
+              const marker = [440, 640, 800, 1000, 1200, 1600].find(word => Math.abs(hz - word) < word * 0.05);
               // A discontinuity between words can make one half-wave look like
               // another frequency. Require consecutive cycles of the same tone.
               if (marker && marker === previousMarker[ch]) counts[ch][marker] = (counts[ch][marker] || 0) + 1;

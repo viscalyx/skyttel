@@ -8,7 +8,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function arrange() {
+function arrange(confirmBrowserInput = false) {
   vi.useFakeTimers();
   const initial: TextAssistantView = {
     id: 'collect-voice',
@@ -36,6 +36,7 @@ function arrange() {
     initial,
     request,
     response,
+    confirmBrowserInput,
     delivered,
     update: vi.fn(),
     interrupt: vi.fn(),
@@ -149,6 +150,26 @@ test('a delegation inside a word waits for the late suffix and delivers the comp
   for (const part of parts)
     channel.emit('session.thinking.appended', { client_event_id: part.event_id });
   expect(work.readyForSummary()).toBe(true);
+});
+
+test('a delayed browser interruption preserves the first words and delegation of the correction', {
+  tags: ['technical'],
+}, async () => {
+  const { work, fragment, delegate, messages } = arrange(true);
+  fragment('old', 'Rätta namnet.', 0, 100);
+  delegate('old', 100);
+  fragment('first-word', 'Jag ', 1200, 1300);
+  fragment('correction', 'menar Lo.', 1300, 1500);
+  delegate('corrected', 1500);
+  expect(work.confirmInput(1)).toBe(3);
+  await vi.advanceTimersByTimeAsync(3500);
+  expect(messages()).toEqual([]);
+  await work.interruptSpeech(100);
+  work.confirmInput(3);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(messages()).toHaveLength(1);
+  expect(messages()[0][1]).toMatchObject({ text: 'Jag menar Lo.' });
+  work.retire();
 });
 
 test('continued speech and repeated delegations form one complete task without reusing its approval', {
