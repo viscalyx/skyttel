@@ -466,6 +466,8 @@ RÖSTTEXT-07.
 ```manual-mapping
 {
   "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
     "spec": "tests/integration/conversation-voice-text.spec.ts",
     "caseId": "RÖSTTEXT-07"
   },
