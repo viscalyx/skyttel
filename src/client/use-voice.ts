@@ -912,8 +912,11 @@ export function useVoice(options: {
         completedOutput.current.add(response.id);
         announceSave(response.receiptOperationId);
       }
+      const playedBeforeInterrupt = attempt?.playedResponseId;
       const interruption = attempt?.voiceId && attempt.transport?.interruptSpeech();
       if (attempt && interruption) {
+        // Muting publishes silence synchronously. It cannot prove the reply drained.
+        attempt.playedResponseId = playedBeforeInterrupt;
         if (response) completedOutput.current.add(response.id);
         attempt.output = undefined;
         attempt.interrupting = request<VoiceAssistantResponse>(
