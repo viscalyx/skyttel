@@ -53,6 +53,10 @@ test.each(['save tool', 'plain reply'])(
       draftVersion: reviewedVersion,
       operationId: expect.any(String),
     });
+    expect(final.receipt?.changes.map(({ after }) => after?.id).sort()).toEqual([
+      'earlier',
+      'untouched',
+    ]);
     expect(final.reply).toContain('Sparat.');
     const state = await map();
     expect(state.draft.changes).toEqual([]);
@@ -61,7 +65,7 @@ test.each(['save tool', 'plain reply'])(
       'Tidigare stol',
     ]);
     expect((await (await client.get(`${base}/map/history`)).json()).history).toEqual([
-      expect.objectContaining({ operationId: final.receipt?.operationId }),
+      final.receipt,
     ]);
   },
 );

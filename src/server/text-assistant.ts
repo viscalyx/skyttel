@@ -989,7 +989,11 @@ export function textAssistantRoutes({
     ];
     session.execution.capacity.resetText();
   }
-  function refreshContext(session: Session, outdated: { name: string; currentCalls?: string[] }[]) {
+  function refreshContext(
+    session: Session,
+    outdated: { name: string; currentCalls?: string[] }[],
+    latestRound: ReadonlySet<string>,
+  ) {
     const rereadable = new Set([
       'read_map',
       'read_type_catalog',
@@ -1008,7 +1012,8 @@ export function textAssistantRoutes({
         // Preserve malformed provider input for its ordinary validation path.
       }
       const previous = latest.get(key);
-      if (previous) removed.add(previous);
+      // Deliver each call's output once before compacting identical older reads.
+      if (previous && !latestRound.has(previous)) removed.add(previous);
       latest.set(key, item.call_id);
       // Invalid facts are removed together with their call association. The
       // current envelope or an explicit new read supplies their replacement.
@@ -2437,6 +2442,7 @@ export function textAssistantRoutes({
     let scopeOutcome: { scope: Scope } | { error: unknown } | undefined;
     let scopeJob: Promise<NonNullable<typeof scopeOutcome>> | undefined;
     let admitted = false;
+    let wholeRequestComplete = false;
     let workContextStarted = false;
     let initialDraft: TextAssistantReview | undefined;
     const attempts: {
@@ -2588,7 +2594,6 @@ export function textAssistantRoutes({
         );
         throw new MapError('assistant_action_out_of_scope', 409);
       };
-      let wholeRequestComplete = false;
       // A read/report round cannot turn a partial checked batch into completed
       // work. Keep its independent verdict within this request, across reads.
       let checkedWorkComplete = false;
@@ -2814,13 +2819,14 @@ export function textAssistantRoutes({
             : undefined,
         }),
       });
+      const latestRound = new Set<string>();
       async function refreshCurrentDraft() {
         const current = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
         if (current.version !== version || current.contentVersion !== contentVersion)
           throw new MapError('assistant_draft_changed', 409);
         session.state.review = current;
         const outdated = session.execution.reads.outdated();
-        refreshContext(session, outdated);
+        refreshContext(session, outdated, latestRound);
         return outdated.map(({ name }) => ({ name }));
       }
       const { tools, draftTools } = mapAgentTools(session.execution.mcp.tools);
@@ -2963,9 +2969,11 @@ export function textAssistantRoutes({
           throw new MapError('assistant_draft_changed', 409);
         if (response.status !== 'completed') throw new Error('assistant_incomplete');
         const calls = response.output.filter((item) => item.type === 'function_call');
+        latestRound.clear();
         for (const { call_id } of calls) {
           if (callIds.has(call_id)) throw new MapError('invalid_request', 400);
           callIds.add(call_id);
+          latestRound.add(call_id);
         }
         const onlyReads =
           calls.length > 0 &&
@@ -3776,7 +3784,7 @@ export function textAssistantRoutes({
         } else report('discarded', discardReason);
       }
     }
-    return scope?.mode;
+    return { mode: scope?.mode, wholeRequestComplete };
   }
   function nextMessage(session: Session) {
     if (closed) return;
@@ -4287,7 +4295,7 @@ export function textAssistantRoutes({
           settleRequests(session, message.id, true);
         }
       } else {
-        const mode = await run(session, message.text, revision, task, expected);
+        const outcome = await run(session, message.text, revision, task, expected);
         guard();
         const unregisteredQuestion = hasUnregisteredQuestion(session);
         if (
@@ -4304,16 +4312,18 @@ export function textAssistantRoutes({
           session.state.reply = [session.state.reply, notice].filter(Boolean).join('\n');
           appendConversation(session, { role: 'assistant', text: notice });
         }
-        if (session.state.phase === 'ready' && !unregisteredQuestion)
+        const verifiedSave =
+          session.state.receipt || (message.continuation && message.completedSaveOperationId);
+        if (
+          session.state.phase === 'ready' &&
+          !unregisteredQuestion &&
+          (outcome?.mode !== 'work' || outcome.wholeRequestComplete || verifiedSave)
+        )
           settleRequests(
             session,
             message.id,
-            mode === 'read' ||
-              (Boolean(
-                session.state.result ||
-                  session.state.receipt ||
-                  (message.continuation && message.completedSaveOperationId),
-              ) &&
+            outcome?.mode === 'read' ||
+              (Boolean(session.state.result || verifiedSave) &&
                 !session.execution.parts
                   .read()
                   .some((part) => part.status === 'waiting' || part.status === 'ready')),

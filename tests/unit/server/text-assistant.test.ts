@@ -1,6 +1,7 @@
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, expect, test, vi } from 'vitest';
 import { conversationCompletion } from '../../../src/client/conversation-completion.js';
+import * as mapAgent from '../../../src/server/map-agent.js';
 import type { TextModelAttempt, TextModelUsage } from '../../../src/server/text-assistant-model.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { controlledBatchDelivery } from '../../support/batch-response-delivery.js';
@@ -298,10 +299,92 @@ test('a relevant verified map read answers a follow-up without another tool roun
   expect(model.requests).toHaveLength(5);
 });
 
+test.each([false, true])(
+  'draft work settles only with a whole-request verdict: complete=%s',
+  async (complete) => {
+    const work = complete ? 'Lägg till Lina.' : 'Lägg till Lina och Lo.';
+    const question = 'Vad finns i utkastet?';
+    let typeId: string;
+    const model = textModel(
+      (request) => {
+        const input = JSON.parse(
+          String(request.input.findLast((item) => item.role === 'user')?.content),
+        );
+        if (input.message === question || lastToolResult(request))
+          return [modelMessage('Lina finns i utkastet.')];
+        return [
+          modelTool('submit_changes', {
+            version: input.draft.version,
+            contentVersion: input.draft.contentVersion,
+            completion: 'draft',
+            operations: [
+              {
+                name: 'propose_object',
+                arguments: { id: 'lina', baseRevision: null, value: { name: 'Lina', typeId } },
+              },
+            ],
+          }),
+        ];
+      },
+      (request) => {
+        if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
+          if (JSON.parse(String(request.input[0].content)).current === question)
+            return readOnlyScope();
+          return [
+            modelMessage(JSON.stringify({ mode: 'work', request: work, responseRequired: false })),
+          ];
+        }
+        return [
+          modelMessage(
+            JSON.stringify({ decision: 'allow', complete: true, fulfillsRequest: complete }),
+          ),
+        ];
+      },
+    );
+    await setup(model.provider);
+    const savedMap = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
+    typeId = savedMap.types.find((type: { name: string }) => type.name === 'Person').id;
+    const final = await message(await start(), work);
+    expect(final).toMatchObject({ phase: 'ready', review: { changes: [{ id: 'lina' }] } });
+    expect(final.unfinishedRequests.map((item: { text: string }) => item.text)).toEqual(
+      complete ? [] : [work],
+    );
+    const read = await message(final, question);
+    expect(read.modelReply).toBe('Lina finns i utkastet.');
+    expect(read.unfinishedRequests).toEqual(final.unfinishedRequests);
+  },
+);
+
 test('independent reads overlap and identical concurrent reads share one authorized result', () =>
   checkConcurrentReads(false));
 
-test('a draft report waits for its concurrent companion reads', () => checkConcurrentReads(true));
+test('a draft report waits for its concurrent companion reads', async () => {
+  const order: string[] = [];
+  const run = mapAgent.runMapAgent;
+  const spy = vi
+    .spyOn(mapAgent, 'runMapAgent')
+    .mockImplementationOnce((tools, signal, record, next) =>
+      run(tools, signal, record, async () => {
+        const round = await next();
+        if (!round || !('execute' in round)) return round;
+        return {
+          ...round,
+          async execute(call, signal) {
+            if (call.name === 'report_result') order.push('report started');
+            const result = await round.execute(call, signal);
+            if (call.name === 'read_type_catalog') order.push('catalog returned');
+            return result;
+          },
+        };
+      }),
+    );
+  try {
+    await checkConcurrentReads(true);
+    expect(order).toEqual(['catalog returned', 'report started']);
+  } finally {
+    spy.mockRestore();
+  }
+});
 
 test('a failed read ends the assignment while a sibling MCP response is still held', async () => {
   let release = () => {};
@@ -354,32 +437,31 @@ async function checkConcurrentReads(report: boolean) {
   const mapGate = readGate();
   const catalogGate = readGate();
   let mapReturned = false;
+  const mapCalls = [
+    modelTool('read_map', { query: 'Lina' }),
+    modelTool('read_map', { query: 'Lina' }),
+  ];
+  const catalogCall = modelTool('read_type_catalog', {});
   const model = textModel((request) => {
     if (model.requests.length === 1)
       return [
         ...(report
           ? [modelTool('report_result', { source: 'draft', continueResponse: true })]
           : []),
-        modelTool('read_map', { query: 'Lina' }),
-        modelTool('read_map', { query: 'Lina' }),
-        modelTool('read_type_catalog', {}),
+        ...mapCalls,
+        catalogCall,
       ];
-    const result = (name: string) => {
-      const call = request.input.find(
-        (item) => item.type === 'function_call' && item.name === name,
+    const result = (call: ReturnType<typeof modelTool>) => {
+      const outputs = request.input.filter(
+        (item) => item.type === 'function_call_output' && item.call_id === call.call_id,
       );
-      return JSON.parse(
-        String(
-          request.input.find(
-            (item) => item.type === 'function_call_output' && item.call_id === call?.call_id,
-          )?.output,
-        ),
-      );
+      expect(outputs).toHaveLength(1);
+      return JSON.parse(String(outputs[0].output));
     };
-    const lina = result('read_map').objects[0];
-    const type = result('read_type_catalog').types.find(
-      (item: { id: string }) => item.id === lina.typeId,
-    );
+    const [firstMap, secondMap] = mapCalls.map(result);
+    expect(secondMap).toEqual(firstMap);
+    const lina = firstMap.objects[0];
+    const type = result(catalogCall).types.find((item: { id: string }) => item.id === lina.typeId);
     return [modelMessage(`${lina.name} är ${type.name}.`)];
   });
   await setup(model.provider, undefined, async (request, dispatch) => {
@@ -432,10 +514,12 @@ async function checkConcurrentReads(report: boolean) {
     mapGate.release();
     await expect.poll(() => mapReturned).toBe(true);
     if (report) {
-      const pending = await (await browser.get(`${path}/${session.id}`)).json();
+      const status = async () => (await browser.get(`${path}/${session.id}`)).json();
+      const pending = await status();
       expect(pending.phase).toBe('working');
       expect(pending.result).toBeUndefined();
       expect(model.requests).toHaveLength(1);
+      expect((await status()).result).toBeUndefined();
     }
     catalogGate.release();
     await expect
