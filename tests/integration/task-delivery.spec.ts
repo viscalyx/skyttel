@@ -36,11 +36,12 @@ async function prepareMissingDelivery(page: Page) {
 }
 
 async function readMapLayout(page: Page) {
-  const [map, tools] = await Promise.all([
-    // The narrow text view covers the map, which keeps its layout underneath.
-    page.getByRole('region', { name: 'Rymdkarta', exact: true, includeHidden: true }).boundingBox(),
-    page.getByRole('navigation', { name: 'Kartans verktyg', exact: true }).boundingBox(),
-  ]);
+  // The narrow text view covers the map. Returning from Settings restores
+  // its layout after the retained region has already reappeared in the DOM.
+  const region = page.getByRole('region', { name: 'Rymdkarta', exact: true, includeHidden: true });
+  const navigation = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
+  await Promise.all([expect(region).toBeVisible(), expect(navigation).toBeVisible()]);
+  const [map, tools] = await Promise.all([region.boundingBox(), navigation.boundingBox()]);
   if (!map || !tools) throw new Error('Missing map or map tools');
   return {
     mapSize: { width: map.width, height: map.height },
