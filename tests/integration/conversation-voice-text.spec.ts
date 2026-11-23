@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 import type { SaveOperation } from '../../src/shared/map.js';
 import {
   bike,
@@ -115,6 +115,15 @@ async function expectVoiceRelease(live: ReturnType<typeof liveProvider>, text: s
       return false;
     })
     .toBe(true);
+}
+
+async function readSingleCommittedReceipt(request: APIRequestContext, mapPath: string) {
+  const { operations }: { operations: SaveOperation[] } = await (
+    await request.get(`${mapPath}/operations`)
+  ).json();
+  const completed = operations.filter((operation) => operation.status === 'succeeded');
+  expect(completed).toHaveLength(1);
+  return completed[0].receipt;
 }
 
 test('RÖSTTEXT-01: samma cykel och väntande delar följer med mellan röst och text efter ljudavbrott', async ({
@@ -306,12 +315,7 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
     await expect(draft).toContainText('Utkastet är tomt.');
     await expect(mapBike).toBeVisible();
     await expect(mapBike).toHaveClass(/\bexisting\b/);
-    const { operations }: { operations: SaveOperation[] } = await (
-      await page.request.get(`${mapPath}/operations`)
-    ).json();
-    const completed = operations.filter((operation) => operation.status === 'succeeded');
-    expect(completed).toHaveLength(1);
-    const [{ receipt: committedReceipt }] = completed;
+    const committedReceipt = await readSingleCommittedReceipt(page.request, mapPath);
     expect(committedReceipt.actorName).toBe('Alex Exempel');
     const history = await openSavedHistory(page);
     await expect(history.getByRole('article')).toHaveCount(1);
