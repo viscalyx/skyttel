@@ -64,13 +64,16 @@ uppdraget och lämnar förslaget i utkastet när användaren ställer en följdf
 **Användare:** Alex i ett nytt provhushåll med tom karta och tomt utkast.
 
 **Förberedelse:** Använd ett nytt hushåll för varje körning. För prov med
-verklig modell krävs godkända modellkostnader. Öppna nätverksloggen i
-webbläsarens utvecklarverktyg för att kunna jämföra objektets id och
-utkastets version i de två slutförda statussvaren.
+verklig modell krävs godkända modellkostnader.
 
 **Automatiskt motsvarande test:**
 [text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
 TEXT-20. Testet använder en kontrollerad modell och hushållets databas.
+
+**Ytterligare underlag:**
+[text-assistant.test.ts](../../tests/unit/server/text-assistant.test.ts)
+jämför id:t i följdsvaret med cykelns id i utkastet och kontrollerar att
+utkastets innehåll och version samt den sparade kartan är oförändrade.
 
 <!-- markdownlint-disable MD013 -->
 <!--
@@ -85,7 +88,17 @@ TEXT-20. Testet använder en kontrollerad modell och hushållets databas.
   "reference": "Textvy på dator med tom karta och tomt utkast, GPT-6.1 Terra och hög resonemangsnivå.",
   "outcomes": [
     "Ett enda förslag visar Blå cykeln med objekttypen Fordon.",
-    "Följdsvaret anger förslagets namn och id. Utkastet har samma version och innehåll och kartan saknar sparade objekt."
+    "Följdsvaret visar Blå cykeln och ett id. Samma förslag finns kvar i utkastet och ändringshistoriken är tom."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/text-assistant.test.ts",
+      "title": "a follow-up identifies the blue bike from the checked change and leaves the draft intact",
+      "purpose": "Verifierar att följdsvaret anger samma objekt-id och att utkastets innehåll och version samt den sparade kartan är oförändrade."
+    }
   ]
 }
 ```
@@ -98,20 +111,18 @@ TEXT-20. Testet använder en kontrollerad modell och hushållets databas.
    modellvalet är **GPT-6.1 Terra** med resonemangsnivån **Hög**.
 2. Skicka ”Lägg till ett objekt av typen Fordon med namnet Blå cykeln i
    mitt utkast. Lämna det i utkastet.” Invänta svaret och välj **Visa
-   utkastet**. Kontrollera förslagets namn och typ. Anteckna objektets
-   `id` i `review.changes` och utkastets `review.version` i statussvaret.
+   utkastet**. Kontrollera förslagets namn och typ.
 3. Skicka ”Vad ändrade du precis? Ange objektets namn och id.” i samma
-   samtal. Jämför svaret med förslaget och det antecknade id:t. Jämför
-   utkastets version med det första statussvaret och läs utkastet igen.
-4. Öppna **Rapporter** och kontrollera ändringshistoriken.
+   samtal. Läs följdsvaret. Välj **Visa utkastet** om utkastet är stängt och
+   kontrollera förslaget igen.
+4. Öppna **Rapporter** och läs **Ändringshistorik**.
 
 **Förväntat resultat:**
 
 - Utkastet visar ett enda tillägg, **Blå cykeln** av typen **Fordon**.
-- Följdsvaret anger **Blå cykeln** och samma id. Utkastet visar samma
-  förslag och har kvar sin version.
-- Ändringshistoriken visar **Inga genomförda sparanden.** Den gemensamma
-  kartan är fortfarande tom.
+- Följdsvaret anger **Blå cykeln** och ett id. Utkastet visar fortfarande
+  ett enda förslag med samma namn och typ.
+- Ändringshistoriken visar **Inga genomförda sparanden.**
 
 ### TEXT-18: återförsök och avstående fortsätter bara återstående arbete
 
