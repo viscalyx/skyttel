@@ -24,13 +24,23 @@ when the process exits, including after interruption. Use the npm scripts
 instead of launching test runners directly. These commands require Python 3
 on Linux or macOS; Python is included in the devcontainer.
 
-Before execution, verification checks the checkout's dependency setup.
-Exit status 78 and `Skyttel dependency setup failed` identify an environment
-failure: follow the diagnostic and rerun the selected command after preparing
-that checkout. The expensive child command has not started. Verification
-never repairs dependencies automatically. Test assertions and coverage failures
-keep their child exit status; interrupted or incomplete runs are not passes,
-and partial coverage is not evidence of a coverage regression.
+Before execution, verification checks the checkout's dependency setup. The
+workflow gates and manual mapping also check that pinned headless Chromium
+launches from the configured Playwright cache. Exit status 78 identifies a
+setup failure. Follow the diagnostic, then rerun the command. Test assertions
+and coverage failures keep their child exit status. Treat interrupted runs as
+incomplete and compare coverage only after a complete run.
+
+Use compact output for a human-readable local run with a retained log:
+
+```sh
+SKYTTEL_TEST_COMPACT_OUTPUT=1 npm run test:unit -- \
+  tests/unit/server/text-assistant.test.ts -t 'selecting a map item hidden' --bail=1
+```
+
+The runner prints a unique log path under `logs/tests/`. The file contains the
+child command's combined output. The terminal shows the test runner output
+with structured security events omitted.
 
 ## Check staged files before committing
 
@@ -743,15 +753,16 @@ optional debugging tools; integration tests create their own fixtures.
 
 ## Complete the development checks
 
-After focused tests pass, run the development checks:
+When the change requires full verification, use the completed CI jobs for the
+exact commit or run the development checks locally:
 
 ```sh
 npm run check
 ```
 
 This runs typechecking, Biome, documentation checks, workflow gate tests,
-manual-case mapping, the build and unit-test coverage. Run Playwright
-integration tests separately:
+manual-case mapping, the build, unit-test coverage and technical browser tests.
+Run Playwright integration tests separately:
 
 ```sh
 npm run test:integration

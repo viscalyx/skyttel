@@ -94,3 +94,32 @@ test('a surviving test child holds the lock after its wrapper is killed', async 
   });
   assert.equal(competing.status, 75);
 });
+
+test('compact verification retains raw audit events and the child exit status', (t) => {
+  const fixture = dependencyFixture(t);
+  const audit = JSON.stringify({ event: 'security_operation', operation: 'grant_approve' });
+  const result = fixture.run(
+    [
+      process.execPath,
+      '-e',
+      `console.log('RUN focused test');
+       console.error(process.argv[1]);
+       console.error('AssertionError: expected visible (4ms)');
+       console.log('Tests  1 failed');
+       process.exitCode = process.env.SKYTTEL_TEST_COMPACT_OUTPUT === undefined ? 23 : 1;`,
+      audit,
+    ],
+    { env: { ...fixture.env, SKYTTEL_TEST_COMPACT_OUTPUT: '1' } },
+  );
+  assert.equal(result.status, 23, result.stdout + result.stderr);
+  assert.equal(
+    result.stdout,
+    'RUN focused test\nAssertionError: expected visible (4ms)\nTests  1 failed\n',
+  );
+  const logPath = result.stderr.match(/^Full verification log: (.+)$/m)?.[1];
+  assert.ok(logPath, result.stderr);
+  assert.equal(
+    readFileSync(logPath, 'utf8'),
+    `RUN focused test\n${audit}\nAssertionError: expected visible (4ms)\nTests  1 failed\n`,
+  );
+});
