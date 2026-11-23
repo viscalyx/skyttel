@@ -1618,8 +1618,15 @@ test('an older voice reply cannot overwrite a newer displayed text revision', as
   expect(changed).not.toHaveBeenCalled();
 });
 
-test('a refused spoken request is announced once without audio or a text panel', async () => {
+test('a refused spoken request replaces an earlier unconfirmed reply and is announced once', async () => {
   const { view } = setup();
+  let refused = false;
+  const response = {
+    id: 'earlier-reply',
+    revision: view.revision,
+    text: 'Det tidigare svaret.',
+    questionPending: false,
+  };
   const refusal = {
     id: 'refused-request',
     text: 'Uppdraget startade inte. Säg uppdraget igen när anslutningen fungerar.',
@@ -1635,7 +1642,7 @@ test('a refused spoken request is announced once without audio or a text panel',
         phase: 'listening',
         seconds: null,
         usageFinal: false,
-        ...(path.endsWith('/poll') ? { refusal } : {}),
+        ...(path.endsWith('/poll') ? { response, ...(refused ? { refusal } : {}) } : {}),
       },
     });
   });
@@ -1646,6 +1653,13 @@ test('a refused spoken request is announced once without audio or a text panel',
   expect(Peer.all[0]?.channel.readyState).toBe('open');
   await act(async () => {
     Peer.all[0].channel.emit({ type: 'session.started', session: { id: 'provider-session' } });
+    await vi.advanceTimersByTimeAsync(16_000);
+  });
+  expect(screen.getByRole('region', { name: 'Samtalsnotis' }).textContent).toContain(
+    'Uppläsningen kunde inte bekräftas.',
+  );
+  refused = true;
+  await act(async () => {
     await vi.advanceTimersByTimeAsync(1000);
   });
   expect(screen.getByRole('region', { name: 'Samtalsnotis' }).textContent).toContain(refusal.text);
@@ -1656,6 +1670,11 @@ test('a refused spoken request is announced once without audio or a text panel',
     await vi.advanceTimersByTimeAsync(16_000);
   });
   expect(live?.firstElementChild).toBe(announcement);
+  refused = false;
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(1000);
+  });
+  expect(screen.queryByRole('region', { name: 'Samtalsnotis' })).toBeNull();
   expect(microphoneButton().getAttribute('aria-pressed')).toBe('true');
   expect(voiceBox()?.textContent).not.toContain('Sparat');
 });

@@ -65,7 +65,13 @@ export function useConversationNotice({
     }`;
   // Dismissing one event must not suppress a different later event. The map
   // retains at most one identity per known notice kind, rather than a history.
-  const visibleConditions = { ...conditions, voiceRequestRefused: Boolean(voiceRefusal) };
+  const visibleConditions = {
+    ...conditions,
+    voiceRequestRefused: Boolean(voiceRefusal),
+    // Keep recovery actions available while a new refusal takes precedence
+    // over an informational task failure.
+    taskFailed: conditions.taskFailed && (!voiceRefusal || Boolean(workFailure)),
+  };
   for (const definition of conversationNoticeDefinitions)
     if (
       !(definition.id === 'taskFailed' && workFailure) &&

@@ -98,6 +98,7 @@ type Attempt = {
   inputVersion?: number;
   output?: { text: string; heard: boolean; speaking: boolean; matched?: string };
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
+  refusalId?: string;
 };
 async function stopRemote(path: string, id: string) {
   const controller = new AbortController();
@@ -527,13 +528,24 @@ export function useVoice(options: {
             return;
           }
           setVoice(result.voice);
+          const refusal = result.voice.refusal;
+          const newRefusal = refusal && refusal.id !== attempt.refusalId;
+          if (newRefusal) {
+            attempt.refusalId = refusal.id;
+            // This newer outcome supersedes the playback warning. Actual
+            // playback may still be verified by the audio path.
+            if (attempt.acknowledgement) attempt.acknowledgement.notified = true;
+            setFailure((previous) =>
+              previous?.noticeId === 'voiceReplyUnconfirmed' ? null : previous,
+            );
+          }
           const response = result.voice.response;
           if (response && !completedOutput.current.has(response.id)) {
             if (attempt.acknowledgement?.id !== response.id)
               attempt.acknowledgement = {
                 id: response.id,
                 lastActivity: Date.now(),
-                notified: false,
+                notified: Boolean(newRefusal),
               };
             const acknowledgement = attempt.acknowledgement;
             if (activityRef.current.speaker || activityRef.current.microphone)

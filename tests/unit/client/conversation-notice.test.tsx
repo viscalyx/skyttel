@@ -10,6 +10,7 @@ import {
   firstConversationNotice,
 } from '../../../src/client/conversation-notice.js';
 import { VoiceSessionContext } from '../../../src/client/voice-session-context.js';
+import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 
 afterEach(cleanup);
 
@@ -74,6 +75,41 @@ test('draft recovery and registered-save recovery announce their distinct outcom
     'Det är oklart om utkastet sparades. Skyttel kontrollerar det.',
   );
 });
+
+test.each([false, true])(
+  'a new spoken refusal yields only to a task notice that still needs recovery: %s',
+  (recoverable) => {
+    const refusal = { id: 'new-refusal', text: 'Det nya talade uppdraget kunde inte starta.' };
+    const workFailure: TextAssistantView['workFailure'] = recoverable
+      ? {
+          requestId: 'older-task',
+          request: 'Läs kartan.',
+          code: 'assistant_provider_failed',
+          message: 'Det tidigare uppdraget behöver ett nytt försök.',
+          retry: 'Försök igen',
+        }
+      : undefined;
+    function Screen({ refused }: { refused: boolean }) {
+      const state = useConversationNotice({
+        conditions: { taskFailed: true },
+        workFailure,
+        voiceRefusal: refused ? refusal : undefined,
+        ongoing: true,
+        requested: 0,
+        eventKey: 'older-task',
+      });
+      return <ConversationNoticeAnnouncements announcement={state.announcement} />;
+    }
+    const { rerender } = render(<Screen refused={false} />);
+    const polite = document.querySelector('[aria-live="polite"]');
+    const priorNotice = recoverable
+      ? 'Det tidigare uppdraget behöver ett nytt försök.'
+      : 'Skyttel kunde inte slutföra uppdraget.';
+    expect(polite?.textContent).toContain(priorNotice);
+    rerender(<Screen refused />);
+    expect(polite?.textContent).toContain(recoverable ? priorNotice : refusal.text);
+  },
+);
 
 test('all conversation situations follow the single priority order, including future notices', () => {
   const order = [

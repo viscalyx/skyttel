@@ -37,6 +37,7 @@ const refusals = {
     status: 409,
     message: 'Samtalet är pausat. Återuppta det innan du lämnar ett nytt uppdrag.',
   },
+  operation_pending: { status: 409 },
 } as const;
 
 export type VoiceMessageRefusalCode = keyof typeof refusals;

@@ -10,6 +10,7 @@ import { createInstallation } from '../../support/installation.js';
 import {
   isVoiceAnswerRelease,
   liveProvider,
+  speak,
   voiceAnswerParts,
 } from '../../support/live-provider.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
@@ -87,6 +88,81 @@ async function poll(microphoneOn = true) {
 afterEach(async () => {
   await client?.dispose();
   await app?.close();
+});
+
+test('a voice request refused during save recovery leaves queued work intact', {
+  tags: ['technical'],
+  timeout: 15_000,
+}, async () => {
+  const releaseSave = Promise.withResolvers<void>();
+  const releaseVoiceAdmission = Promise.withResolvers<void>();
+  let reachedSave = false;
+  let reachedVoiceAdmission = false;
+  let refused: { status: number; body: unknown } | undefined;
+  let cancellation = false;
+  const model = textModel(() => [modelMessage('Kontrollerar utkastet.')]);
+  await setup(model.provider, async (incoming, dispatch) => {
+    const pathname = new URL(incoming.url).pathname;
+    if (incoming.method === 'POST' && pathname === '/mcp') {
+      const rpc = await incoming.clone().json();
+      if (rpc?.params?.name === 'save_draft') {
+        reachedSave = true;
+        await releaseSave.promise;
+        throw new TypeError('Synthetic save response lost');
+      }
+    }
+    if (incoming.method === 'POST' && pathname.endsWith('/messages')) {
+      reachedVoiceAdmission = true;
+      await releaseVoiceAdmission.promise;
+      const result = await dispatch(incoming);
+      refused = { status: result.status, body: await result.clone().json() };
+      return result;
+    }
+    if (incoming.method === 'POST' && pathname.endsWith('/cancel')) cancellation = true;
+    return dispatch(incoming);
+  });
+  const conversation = `text-assistant/${session.id}`;
+  const readConversation = async (): Promise<TextAssistantView> =>
+    (await client.get(`${path}/${conversation}`)).json();
+  const send = async (requestId: string, text: string) => {
+    const view = await readConversation();
+    return post(`${conversation}/messages`, {
+      requestId,
+      text,
+      revision: view.revision,
+      draftVersion: view.review.version,
+      contentVersion: view.review.contentVersion,
+    });
+  };
+  await start();
+  try {
+    expect((await send('save', 'Spara hela utkastet.')).status()).toBe(202);
+    await expect.poll(() => reachedSave).toBe(true);
+    expect((await send('queued', 'Berätta vad som finns på kartan.')).status()).toBe(202);
+    speak(live, 'Vad är kvar att göra?');
+    await expect.poll(() => reachedVoiceAdmission).toBe(true);
+    releaseSave.resolve();
+    await expect.poll(async () => (await readConversation()).phase).toBe('recovery');
+    releaseVoiceAdmission.resolve();
+    await expect
+      .poll(() => refused)
+      .toEqual({
+        status: 409,
+        body: { error: 'operation_pending' },
+      });
+    await expect.poll(() => voiceAnswerParts(live.sent).join('')).toMatch(/spar/iu);
+    const queued = await (await client.get(`${path}/${conversation}/messages/queued`)).json();
+    expect(queued.taskStatus).toBe('queued');
+    expect(cancellation).toBe(false);
+    expect((await poll()).voice.refusal?.text).toContain(
+      'Det tidigare sparförsöket behöver kontrolleras',
+    );
+    expect(model.requests).toHaveLength(1);
+    expect((await readMap()).objects).toEqual([]);
+  } finally {
+    releaseSave.resolve();
+    releaseVoiceAdmission.resolve();
+  }
 });
 
 test('a spoken proposal reaches a retained draft when the request counter is missing', {
