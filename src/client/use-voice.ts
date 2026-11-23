@@ -97,10 +97,42 @@ type Attempt = {
   interrupting?: Promise<void>;
   inputVersion?: number;
   playedResponseId?: string;
-  output?: { text: string; heard: boolean; speaking: boolean; matched?: string };
+  output?: {
+    text: string;
+    audibleTextLength?: number;
+    heard: boolean;
+    speaking: boolean;
+    matched?: string;
+  };
+  observedReadoutId?: string;
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
   refusalId?: string;
 };
+function spokenWords(text: string) {
+  return text
+    .toLocaleLowerCase('sv')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+function reflectsOrdinaryReply(expected: string, spoken: string) {
+  const expectedText = spokenWords(expected);
+  const expectedWords = expectedText.split(' ');
+  if (expectedWords.length >= 3 && ` ${spoken} `.includes(` ${expectedText} `)) return true;
+  const spokenTerms = new Set(spoken.split(' '));
+  const mainWords = expectedWords.filter((word) => word.length >= 4);
+  const terms = [...new Set(mainWords)];
+  const matched = terms.filter((word) => spokenTerms.has(word)).length;
+  // A brief acknowledgement or an opening fragment should still leave the
+  // text-view notice available. Look for substantial overlap including the end.
+  return (
+    matched >= 3 &&
+    matched * 3 >= terms.length * 2 &&
+    spoken.split(' ').length * 4 >= expectedWords.length * 3 &&
+    mainWords.slice(-2).some((word) => spokenTerms.has(word))
+  );
+}
+
 async function stopRemote(path: string, id: string) {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -218,17 +250,33 @@ export function useVoice(options: {
     const response = voice?.response;
     const output = attempt?.output;
     if (!attempt || !response || !output || completedOutput.current.has(response.id)) return;
-    const words = (text: string) =>
-      text
-        .toLocaleLowerCase('sv')
-        .replace(/[^\p{L}\p{N}]+/gu, ' ')
-        .trim();
-    if (!response.text || !words(output.text).includes(words(response.text))) return;
+    const expected = spokenWords(response.text);
+    const spoken = spokenWords(output.text);
+    const audible = spokenWords(output.text.slice(0, output.audibleTextLength ?? 0));
+    if (!expected) return;
+    if (!` ${spoken} `.includes(` ${expected} `)) {
+      if (
+        !output.speaking &&
+        response.conversationalText &&
+        !response.questionPending &&
+        !response.receiptOperationId &&
+        reflectsOrdinaryReply(response.conversationalText, audible)
+      ) {
+        // This observation only controls the playback warning. Content and
+        // the server's preceding-response acknowledgement still require an
+        // exact transcript, including when verifying a save or question.
+        attempt.observedReadoutId = response.id;
+        setFailure((previous) =>
+          previous?.noticeId === 'voiceReplyUnconfirmed' ? null : previous,
+        );
+      }
+      return;
+    }
     if (output.matched !== response.id) {
       output.matched = response.id;
       // Earlier audio and a pause before the final word do not prove that the
       // audio associated with a newly delivered transcript has even started.
-      output.heard = output.speaking;
+      output.heard = output.speaking || ` ${audible} `.includes(` ${expected} `);
     }
     if (!output.heard || output.speaking) return;
     // A matching transcript alone never starts the timer: audio must first be
@@ -543,7 +591,11 @@ export function useVoice(options: {
             );
           }
           const response = result.voice.response;
-          if (response && !completedOutput.current.has(response.id)) {
+          if (
+            response &&
+            !completedOutput.current.has(response.id) &&
+            attempt.observedReadoutId !== response.id
+          ) {
             if (attempt.acknowledgement?.id !== response.id)
               attempt.acknowledgement = {
                 id: response.id,
@@ -641,6 +693,8 @@ export function useVoice(options: {
               if (!active() || !attempt.output) return;
               if (attempt.acknowledgement) attempt.acknowledgement.lastActivity = Date.now();
               attempt.output.text += text;
+              if (attempt.output.speaking)
+                attempt.output.audibleTextLength = attempt.output.text.length;
               checkOutput.current();
             },
             onAudioActivity: (value) => {
@@ -650,6 +704,7 @@ export function useVoice(options: {
               if (attempt.output) {
                 attempt.output.speaking = value.speaker;
                 attempt.output.heard ||= value.speaker;
+                if (value.speaker) attempt.output.audibleTextLength = attempt.output.text.length;
                 checkOutput.current();
               }
             },

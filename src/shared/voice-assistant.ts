@@ -27,6 +27,8 @@ export interface VoiceAssistantView {
     text: string;
     questionPending: boolean;
     receiptOperationId?: string;
+    /** Ordinary conversation words that can be paraphrased in the voice. */
+    conversationalText?: string;
   };
 }
 

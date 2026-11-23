@@ -201,6 +201,28 @@ test('short receipt text is sent directly and long answers retain submission ord
   scene.output.close();
 });
 
+test('a plain checked map status gets a speakable release without waiting for silent context', {
+  tags: ['technical'],
+}, () => {
+  const scene = arrange();
+  scene.output.send(
+    'status',
+    [{ kind: 'status', text: 'Utkast: 2 osparade förslag.' }],
+    () => true,
+    'unconfirmed',
+  );
+  expect(scene.spoken()).toEqual([
+    {
+      type: 'session.commentary.append',
+      delegation_id: 'status',
+      content: 'Utkast: 2 osparade förslag.',
+    },
+  ]);
+  expect(scene.parts()).toEqual([]);
+  expect(scene.instructions()).toEqual([]);
+  scene.output.close();
+});
+
 test('completed replies wait for preceding speech and release in order with current-answer checks', {
   tags: ['technical'],
 }, () => {

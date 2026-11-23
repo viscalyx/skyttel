@@ -107,6 +107,63 @@ const receipt = (operationId: string): SaveReceipt => ({
   changes: [],
 });
 
+test.each([
+  {
+    name: 'a paraphrased answer with speaker audio',
+    spoken: 'Den blå cykeln finns i garaget, bredvid den gamla kajaken.',
+    audible: true,
+    warned: false,
+  },
+  {
+    name: 'only a neutral spoken acknowledgement',
+    spoken: 'Ja, jag letar.',
+    audible: true,
+    warned: true,
+  },
+  {
+    name: 'only the beginning of the requested answer',
+    spoken: 'Den blå cykeln står i garaget.',
+    audible: true,
+    warned: true,
+  },
+  {
+    name: 'the full transcript with no speaker audio',
+    spoken: 'Den blå cykeln finns i garaget, bredvid den gamla kajaken.',
+    audible: false,
+    warned: true,
+  },
+])('playback evidence distinguishes $name', async ({ spoken, audible, warned }) => {
+  const { media, server, tick, playedResponses } = await arrange();
+  const answer = 'Den blå cykeln står i garaget intill den gamla kajaken.';
+  server.assistant = { ...initial, revision: 1, taskId: 'read-task', modelReply: answer };
+  server.response = {
+    id: 'read-reply',
+    revision: 1,
+    text: answer,
+    questionPending: false,
+    conversationalText: answer,
+  };
+  await tick(500);
+  if (audible) {
+    media.signals.set(media.peers[0].remote, 40);
+    await tick(100);
+    expect(box()?.textContent).toContain('Skyttel talar');
+  }
+  await act(async () =>
+    media.peers[0].channel.emit({
+      type: 'session.output_transcript.delta',
+      delta: spoken,
+      start_ms: 500,
+      end_ms: 3100,
+    }),
+  );
+  media.signals.set(media.peers[0].remote, 0);
+  await tick(16_000);
+  expect(screen.queryAllByText(/Uppläsningen kunde inte bekräftas/).length > 0).toBe(warned);
+  expect(playedResponses).toEqual([]);
+  expect(button().getAttribute('aria-pressed')).toBe('true');
+});
+
 test('an unconfirmed reply is shown with a notice after fifteen idle seconds while the voice remains connected', {
   tags: ['technical'],
 }, async () => {

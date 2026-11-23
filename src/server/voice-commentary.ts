@@ -127,7 +127,9 @@ export function voiceCommentary(channel: LiveSideband, observe?: (event: unknown
       }
       // Commentary is speakable. Source labels belong to background context,
       // and the request to render that context belongs to instructions.
-      if (typeof value === 'string' && !saveStatus && Buffer.byteLength(content, 'utf8') <= 480) {
+      const directStatus =
+        typeof value === 'string' ? !saveStatus : source.every(({ kind }) => kind === 'status');
+      if (directStatus && Buffer.byteLength(content, 'utf8') <= 480) {
         queue.push({
           type: 'session.commentary.append',
           remaining: 0,

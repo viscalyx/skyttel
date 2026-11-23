@@ -306,6 +306,18 @@ export function voiceWork({
     answered.add(view.revision);
     if (publishResponse) {
       const id = `${view.id}:${view.revision}`;
+      const conversationalText =
+        typeof answer !== 'string' &&
+        answer.every(({ kind }) => kind === 'conversation' || kind === 'status') &&
+        view.phase === 'ready' &&
+        !view.questionPending &&
+        !view.receipt &&
+        !view.saveCheck &&
+        !view.requiredNotice &&
+        !view.error &&
+        !view.failed
+          ? answer.find(({ kind }) => kind === 'conversation')?.text
+          : undefined;
       precedingResponse =
         view.phase === 'ready' && !view.questionPending && !view.error && !view.failed
           ? { id, acknowledged: false }
@@ -322,6 +334,7 @@ export function voiceWork({
                 .join('\n'),
         questionPending: Boolean(view.questionPending),
         receiptOperationId: view.receipt?.operationId,
+        conversationalText,
       });
     }
   }
