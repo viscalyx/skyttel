@@ -12,6 +12,10 @@ import { type VoiceAnswer, voiceAnswerText, voiceCommentary } from './voice-comm
 type Anchor = { revision: number; draftVersion: number; contentVersion: number };
 type Fragment = { role: 'user' | 'assistant'; text: string; startMs: number; endMs: number };
 type Delegation = { id: string; offsetMs: number };
+type EarlyDelegation = Delegation & {
+  expiresAt: number;
+  noticeTimer?: ReturnType<typeof setTimeout>;
+};
 type VoiceCompletionView = TextAssistantView & Pick<ConversationReply, 'failed'>;
 
 const speechSettleMs = 2000;
@@ -50,9 +54,7 @@ export function voiceWork({
   update: (view: TextAssistantView, working: boolean) => void;
   failed: () => void;
   transcript?: (role: Fragment['role'], text: string) => void;
-  response?: (
-    value: NonNullable<import('../shared/voice-assistant.js').VoiceAssistantView['response']>,
-  ) => void;
+  response?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['response']) => void;
   delivered?: (value: { id: string; voiced: boolean }) => void;
   input?: (pending: boolean, text?: string) => void;
   observe?: (
@@ -69,6 +71,7 @@ export function voiceWork({
   let fragments: Fragment[] = [];
   let pending: (Fragment & {
     inputVersion: number;
+    receivedAt: number;
     anchor: Anchor;
     answerTo?: PendingPartReference[];
   })[] = [];
@@ -76,12 +79,11 @@ export function voiceWork({
   let inputVersion = 0;
   let confirmedInput = 0;
   let interruptedThrough = -1;
+  let awaitingCorrectionAfterRevision: number | undefined;
   let lastInputAt = 0;
   let microphoneActive = false;
   let collecting: { delegation: Delegation | null } | undefined;
-  let awaitingInterrupt:
-    | (Delegation & { expiresAt: number; noticeTimer?: ReturnType<typeof setTimeout> })
-    | undefined;
+  let awaitingInterrupt: EarlyDelegation | undefined;
   let stopped = false;
   let questionRevision = initial.revision;
   let questionPending = initial.phase === 'ready' && Boolean(initial.questionPending);
@@ -140,11 +142,22 @@ export function voiceWork({
     awaitingInterrupt = undefined;
   }
 
+  function hasSpeechAwaitingInterrupt(delegation: EarlyDelegation) {
+    return pending.some(
+      (item) =>
+        item.receivedAt < delegation.expiresAt &&
+        (!confirmBrowserInput || item.inputVersion > confirmedInput) &&
+        item.startMs <= delegation.offsetMs &&
+        item.text.trim(),
+    );
+  }
+
   function cancel(revisionIfIdle?: number) {
     commentary.cancel();
     const hadWork = (inFlight.get(generation) ?? 0) > 0;
     generation++;
     collecting = undefined;
+    awaitingCorrectionAfterRevision = undefined;
     clearAwaitingInterrupt();
     dispatching?.controller.abort();
     dispatching = undefined;
@@ -577,6 +590,7 @@ export function voiceWork({
         startMs: event.start_ms,
         endMs: event.end_ms,
         inputVersion,
+        receivedAt: lastInputAt,
         anchor: { ...rendered },
         answerTo: waitingParts,
       });
@@ -634,6 +648,10 @@ export function voiceWork({
     pending = [];
     anchor = undefined;
     input?.(false);
+    if (text.trim()) {
+      awaitingCorrectionAfterRevision = undefined;
+      clearAwaitingInterrupt();
+    }
     if (
       selected.some(
         (fragment) => JSON.stringify(fragment.answerTo) !== JSON.stringify(selected[0]?.answerTo),
@@ -643,7 +661,6 @@ export function voiceWork({
       return;
     }
     if (text.trim() && expected) {
-      clearAwaitingInterrupt();
       automaticReplyConsumed = id === null;
       commentary.working(id);
       void execute(id, text, expected, JSON.stringify(fragments), task, answerTo);
@@ -684,7 +701,7 @@ export function voiceWork({
     if (activeDelegation && delegation.offsetMs < activeDelegation.offsetMs) return;
     // The sideband can delegate the correction before sending its first delta.
     if (!pending.length) {
-      if (interruptedThrough >= 0) {
+      if (awaitingCorrectionAfterRevision !== undefined) {
         void collect(delegation);
         return;
       }
@@ -697,10 +714,12 @@ export function voiceWork({
         delegation.offsetMs >= awaitingInterrupt.offsetMs
       ) {
         clearAwaitingInterrupt();
-        awaitingInterrupt = { ...delegation, expiresAt: receivedAt + speechSettleMs };
+        const candidate = { ...delegation, expiresAt: receivedAt + speechSettleMs };
+        awaitingInterrupt = candidate;
         if (confirmBrowserInput && !automaticReplyConsumed) {
           const receivedInputVersion = inputVersion;
           awaitingInterrupt.noticeTimer = setTimeout(() => {
+            if (hasSpeechAwaitingInterrupt(candidate)) return;
             clearAwaitingInterrupt();
             if (inputVersion === receivedInputVersion) requestFreshSpeech(delegation.id);
           }, speechSettleMs);
@@ -749,21 +768,26 @@ export function voiceWork({
     },
     async interruptSpeech(interruptedThroughMs?: number) {
       if (stopped || !allowed()) throw new Error('voice_session_expired');
+      if (interruptedThroughMs !== undefined && interruptedThroughMs <= interruptedThrough) {
+        await canceling;
+        return request();
+      }
       // Input can reach the sideband before the browser's interrupt request.
       // Preserve fragments and a delegation for a correction already underway.
       let delegation = collecting?.delegation;
-      if (interruptedThroughMs !== undefined) {
-        interruptedThrough = Math.max(interruptedThrough, interruptedThroughMs);
-        if (
-          awaitingInterrupt &&
-          awaitingInterrupt.expiresAt > now() &&
-          (!delegation || awaitingInterrupt.offsetMs > delegation.offsetMs)
-        )
-          delegation = awaitingInterrupt;
-      }
+      if (interruptedThroughMs !== undefined) interruptedThrough = interruptedThroughMs;
       pending = pending.filter((item) => item.endMs > interruptedThrough);
       anchor = pending[0]?.anchor;
+      if (
+        interruptedThroughMs !== undefined &&
+        awaitingInterrupt &&
+        (awaitingInterrupt.expiresAt > now() || hasSpeechAwaitingInterrupt(awaitingInterrupt)) &&
+        (!delegation || awaitingInterrupt.offsetMs > delegation.offsetMs)
+      )
+        delegation = awaitingInterrupt;
+      response?.(undefined);
       cancel(rendered.revision);
+      if (interruptedThroughMs !== undefined) awaitingCorrectionAfterRevision = rendered.revision;
       channel.send({
         type: 'session.instructions.append',
         delegation_id: null,
@@ -776,6 +800,11 @@ export function voiceWork({
       if (!canceled) throw new Error('voice_interruption_failed');
       answered.add(canceled.view.revision);
       rendered.revision = Math.max(rendered.revision, canceled.view.revision);
+      if (
+        interruptedThroughMs === interruptedThrough &&
+        awaitingCorrectionAfterRevision !== undefined
+      )
+        awaitingCorrectionAfterRevision = rendered.revision;
       return canceled.view;
     },
     speaker(active: boolean) {
@@ -804,6 +833,13 @@ export function voiceWork({
       collectReply();
       for (const reply of view.completedReplies ?? []) {
         if (answeredReplies.has(reply.id)) continue;
+        if (
+          awaitingCorrectionAfterRevision !== undefined &&
+          reply.source === 'text' &&
+          reply.revision !== undefined &&
+          reply.revision > awaitingCorrectionAfterRevision
+        )
+          awaitingCorrectionAfterRevision = undefined;
         if (reply.saveCheck && reply.revision !== undefined && answered.has(reply.revision)) {
           answeredReplies.add(reply.id);
           delivered?.({ id: reply.id, voiced: true });

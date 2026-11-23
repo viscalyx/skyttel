@@ -249,6 +249,8 @@ test('a delegation for a correction can arrive before any of its transcript delt
 test.each([
   { order: 'interrupt first', offset: 1500, delay: 300, forwarded: true },
   { order: 'transcript first', offset: 1500, delay: 1500, forwarded: true },
+  { order: 'transcript first', offset: 1500, delay: 3500, forwarded: true },
+  { order: 'transcript first', offset: 1100, delay: 3500, forwarded: false },
   { order: 'interrupt first', offset: 100, delay: 300, forwarded: false },
   { order: 'no interruption', offset: 1500, delay: 300, forwarded: false },
   { order: 'interrupt first', offset: 1500, delay: 2100, forwarded: false },
@@ -290,6 +292,71 @@ test.each([
     work.retire();
   },
 );
+
+test.each(['next interrupt', 'normal speech', 'replayed cutoff'] as const)(
+  'a new empty delegation after a correction is not activated by the prior cutoff: %s',
+  { tags: ['technical'] },
+  async (next) => {
+    const { work, fragment, delegate, messages, response, channel } = arrange(true);
+    await work.interruptSpeech(100);
+    delegate('first-delegation', 500);
+    fragment('first-correction', 'Jag menar Lo.', 200, 500);
+    work.confirmInput(1);
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(messages()).toHaveLength(1);
+    delegate('second-delegation', 4000);
+    delegate('old-duplicate', 100);
+    fragment('second-correction', 'Jag menar Alex.', 3200, 4000);
+    await vi.advanceTimersByTimeAsync(3500);
+    expect(messages()).toHaveLength(1);
+    if (next === 'next interrupt') await work.interruptSpeech(3000);
+    if (next === 'replayed cutoff') await work.interruptSpeech(100);
+    work.confirmInput(2);
+    await vi.advanceTimersByTimeAsync(100);
+    if (next !== 'next interrupt') {
+      expect(messages()).toHaveLength(1);
+      delegate('proper', 4000);
+      await vi.advanceTimersByTimeAsync(100);
+    }
+    delegate('second-delegation', 4000);
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(messages().map(([, body]) => body)).toEqual([
+      expect.objectContaining({ text: 'Jag menar Lo.' }),
+      expect.objectContaining({ text: 'Jag menar Alex.' }),
+    ]);
+    const interruptions = next === 'next interrupt' ? 2 : 1;
+    expect(response.mock.calls.filter(([value]) => value === undefined)).toHaveLength(
+      interruptions,
+    );
+    expect(
+      channel.send.mock.calls.filter(([event]) => event.content?.startsWith('Stop speaking')),
+    ).toHaveLength(interruptions);
+    work.retire();
+  },
+);
+
+test('a written correction also ends the previous early voice correction window', {
+  tags: ['technical'],
+}, async () => {
+  const { work, fragment, delegate, messages, initial } = arrange(true);
+  await work.interruptSpeech(100);
+  work.answer({
+    ...initial,
+    revision: 1,
+    completedReplies: [
+      { id: 'typed-correction', revision: 1, source: 'text', text: 'Jag förstår.' },
+    ],
+  });
+  delegate('later-empty-delegation', 4000);
+  fragment('later-speech', 'Vad finns i utkastet?', 3200, 4000);
+  work.confirmInput(1);
+  await vi.advanceTimersByTimeAsync(2100);
+  expect(messages()).toEqual([]);
+  delegate('proper', 4000);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(messages()[0][1]).toMatchObject({ text: 'Vad finns i utkastet?' });
+  work.retire();
+});
 
 test('an empty browser delegation requests fresh speech once without collecting work', {
   tags: ['technical'],

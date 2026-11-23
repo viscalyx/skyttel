@@ -956,7 +956,6 @@ export function voiceAssistantRoutes({
           (!Number.isFinite(body.interruptedThroughMs) || body.interruptedThroughMs < 0))
       )
         return context.json({ error: 'invalid_request' }, 400);
-      delete voice.view.response;
       const canceled = await voice.work.interruptSpeech(body.interruptedThroughMs);
       return context.json({ voice: voice.view, assistant: canceled });
     }
