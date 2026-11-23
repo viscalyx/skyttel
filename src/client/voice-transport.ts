@@ -75,6 +75,7 @@ export function createVoiceTransport(
   let microphone: MediaStream | undefined;
   let connected = false;
   let started = false;
+  let sessionStart = 0;
   let stopped = false;
   let playbackTransferred = false;
   let closed = false;
@@ -148,6 +149,8 @@ export function createVoiceTransport(
     if (role === 'user') {
       if (muted && !correctionStarted && event.delta.trim() && event.end_ms > interruptedThrough) {
         correctionStarted = true;
+        finish(userRow);
+        userRow = undefined;
         output?.port.postMessage('correction');
       }
       const gap =
@@ -288,6 +291,7 @@ export function createVoiceTransport(
     }),
     live.on('session.started', (event) => {
       if (typeof event.session?.id !== 'string' || !event.session.id) return;
+      if (!started) sessionStart = performance.now();
       started = true;
       ready();
     }),
@@ -357,14 +361,16 @@ export function createVoiceTransport(
         return undefined;
       muted = true;
       correctionStarted = false;
-      interruptedThrough = Math.max(outputStart, userEnd ?? -1);
+      // The provider timeline already runs when its started event arrives.
+      // This lower bound also works when RTP leads the output transcript.
+      interruptedThrough = Math.max(outputStart, userEnd ?? -1, performance.now() - sessionStart);
       output.port.postMessage('interrupt');
       finish(userRow);
       finish(assistantRow);
       userRow = assistantRow = undefined;
       activity = { ...activity, speaker: false };
       callbacks.onAudioActivity?.(activity);
-      return { inputEndMs: interruptedThrough >= 0 ? interruptedThrough : undefined };
+      return { interruptedThroughMs: interruptedThrough };
     },
     suspendInput() {
       paused = true;

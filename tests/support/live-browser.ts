@@ -127,6 +127,7 @@ export const liveBrowserFixtureSource = `
       this.dispatchEvent(new Event('connectionstatechange'));
     }
     started() {
+      this.startedAt ??= performance.now();
       this.channel.emit({
         type: 'session.started', event_id: crypto.randomUUID(),
         session: { id: 'synthetic-live', model: 'gpt-live-1', status: 'active' }
@@ -226,6 +227,31 @@ export const liveBrowserFixtureSource = `
       return Math.max(...microphoneWave.map(Math.abs));
     },
     // Count complete cycles in both signals so a clipped onset is visible.
+    sessionMs: () => Math.ceil(performance.now() - latest().startedAt),
+    // Arm the tones on the actual button, so capture begins in the same click
+    // as interruption even when the UI or the control request is delayed.
+    armCorrection: (button) => {
+      const fixture = window.skyttelVoiceFixture;
+      return new Promise(resolve => button.addEventListener('click', () => {
+        const start = fixture.sessionMs();
+        const sentFrom = sentAudio.length;
+        fixture.setMicrophoneTone(600);
+        setTimeout(() => fixture.setSound('microphone', false), 160);
+        fixture.remoteTone(640, 0, 0.12);
+        fixture.remoteTone(800, 0.22, 0.18);
+        fixture.remoteTone(1000, 0.601, 0.15);
+        const timer = setInterval(() => {
+          if (!sentAudio.slice(sentFrom).some(sample => Math.abs(sample.frequency - 600) < 40)) return;
+          clearInterval(timer);
+          clearTimeout(deadline);
+          const event = { type: 'session.input_transcript.delta', event_id: crypto.randomUUID(),
+            delta: 'Jag menar Lo Exempel.', start_ms: start, end_ms: start + 160 };
+          fixture.emit(event);
+          resolve(event);
+        }, 10);
+        const deadline = setTimeout(() => { clearInterval(timer); resolve(null); }, 1500);
+      }, { once: true }));
+    },
     observeSpeaker: async () => {
       const element = [...audioElements].find(element => element.srcObject);
       await nativePlay.call(element);
@@ -345,6 +371,10 @@ declare global {
       sentAudio(): { peak: number; frequency: number; at: number }[];
       captureChanges(): { enabled: boolean; at: number }[];
       microphoneLevel(): number;
+      sessionMs(): number;
+      armCorrection(button: Element): Promise<{
+        type: string; event_id: string; delta: string; start_ms: number; end_ms: number;
+      } | null>;
       observeSpeaker(): Promise<
         () => {
           incoming: Record<number, number>;

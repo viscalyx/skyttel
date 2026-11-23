@@ -133,43 +133,20 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
       .poll(() => levels.evaluate((read) => read().speaker[440] ?? 0))
       .toBeGreaterThan(20);
     const stop = voiceBox(page).getByRole('button', { name: 'Avbryt', exact: true });
-    await stop.evaluate((button) => {
-      button.addEventListener(
-        'click',
-        () => {
-          const fixture = window.skyttelVoiceFixture;
-          fixture.setMicrophoneTone(600);
-          setTimeout(() => fixture.setSound('microphone', false), 160);
-          // The original reply continues, pauses briefly, then delivers a late word.
-          fixture.remoteTone(640, 0, 0.12);
-          fixture.remoteTone(800, 0.22, 0.18);
-          fixture.remoteTone(1000, 0.601, 0.15);
-        },
-        { once: true },
-      );
-    });
+    const prepared = await stop.evaluateHandle((button) => ({
+      correction: window.skyttelVoiceFixture.armCorrection(button),
+    }));
     const captureBoundary = await page.evaluate(
       () => window.skyttelVoiceFixture.captureChanges().length,
     );
     await stop.click();
-    await page.waitForFunction(() =>
-      window.skyttelVoiceFixture
-        .sentAudio()
-        .some(({ frequency }) => Math.abs(frequency - 600) < 40),
-    );
-    const fragment = {
-      type: 'session.input_transcript.delta',
-      event_id: crypto.randomUUID(),
-      delta: correction,
-      start_ms: 200,
-      end_ms: 350,
-    };
-    await page.evaluate((event) => window.skyttelVoiceFixture.emit(event), fragment);
+    const fragment = await prepared.evaluate(({ correction }) => correction);
+    if (!fragment) throw new Error('The first correction tone did not reach the outgoing connection');
     live.emit(session, fragment);
     live.emit(session, {
       type: 'session.delegation.created',
       event_id: crypto.randomUUID(),
-      offset_ms: 350,
+      offset_ms: fragment.end_ms,
       delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
     });
     await expect

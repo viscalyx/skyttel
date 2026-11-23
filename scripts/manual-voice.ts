@@ -186,6 +186,7 @@ async function main() {
               'seed-family',
               'identity alex|robin',
               'sessions',
+              'user-at MILLISECONDS TEXT',
               'voice-failure startup|administration|off',
               'user TEXT',
               'assistant TEXT',
@@ -312,15 +313,23 @@ async function main() {
           emit('restarted', { origin: app.origin });
           continue;
         }
-        if (command === 'user' || command === 'assistant') {
-          const delta = line.slice(command.length).trim();
+        if (command === 'user' || command === 'assistant' || command === 'user-at') {
+          // Match a timed browser microphone fixture on the provider session timeline.
+          let delta = line.slice(command.length).trim();
+          let start = offset;
+          if (command === 'user-at') {
+            start = Number(id);
+            if (!id || !Number.isSafeInteger(start) || start < 0)
+              throw new Error('Supply a session offset in milliseconds.');
+            delta = delta.slice(id.length).trim();
+          }
           if (!delta) throw new Error('Supply a synthetic transcript fragment.');
-          voiceEvent(`session.${command === 'user' ? 'input' : 'output'}_transcript.delta`, {
+          voiceEvent(`session.${command === 'assistant' ? 'output' : 'input'}_transcript.delta`, {
             delta,
-            start_ms: offset,
-            end_ms: offset + 100,
+            start_ms: start,
+            end_ms: start + 100,
           });
-          offset += 100;
+          offset = start + 100;
         } else if (command === 'delegate') {
           voiceEvent('session.delegation.created', {
             offset_ms: offset,

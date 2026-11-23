@@ -686,12 +686,12 @@ export function voiceWork({
         confirmedInput = Math.max(confirmedInput, version);
       return inputVersion;
     },
-    async interruptSpeech(inputEndMs?: number) {
+    async interruptSpeech(interruptedThroughMs?: number) {
       if (stopped || !allowed()) throw new Error('voice_session_expired');
       // Input can reach the sideband before the browser's interrupt request.
       // Preserve fragments and a delegation for a correction already underway.
       const collection = collecting;
-      if (inputEndMs !== undefined) interruptedThrough = Math.max(interruptedThrough, inputEndMs);
+      if (interruptedThroughMs !== undefined) interruptedThrough = Math.max(interruptedThrough, interruptedThroughMs);
       pending = pending.filter((item) => item.endMs > interruptedThrough);
       anchor = pending[0]?.anchor;
       cancel(rendered.revision);

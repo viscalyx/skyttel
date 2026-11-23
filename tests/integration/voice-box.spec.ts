@@ -340,15 +340,6 @@ test('TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men behåll
     await sound(page, 'remote', 0.2);
     await expect(voiceBox(page)).toHaveText('Skyttel talar');
     expect((await media(page)).audioElements).toBe(1);
-    await page.evaluate(() =>
-      window.skyttelVoiceFixture.emit({
-        type: 'session.output_transcript.delta',
-        event_id: crypto.randomUUID(),
-        delta: 'Jag läser upp förslaget.',
-        start_ms: 1000,
-        end_ms: 1250,
-      }),
-    );
     const beforeInterruption = await media(page);
     await stopIcon(page).click();
     await expect(voiceBox(page)).toHaveText('Lyssnar');
@@ -366,7 +357,7 @@ test('TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men behåll
         event_id: crypto.randomUUID(),
         delta: 'Tidigare ord.',
         start_ms: 0,
-        end_ms: 100,
+        end_ms: 5,
       }),
     );
     await sound(page, 'remote', 0.2);
@@ -378,8 +369,8 @@ test('TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men behåll
         type: 'session.input_transcript.delta',
         event_id: crypto.randomUUID(),
         delta: 'Jag menar Lo.',
-        start_ms: 2100,
-        end_ms: 2300,
+        start_ms: window.skyttelVoiceFixture.sessionMs(),
+        end_ms: window.skyttelVoiceFixture.sessionMs() + 160,
       }),
     );
     await openConversationText(page);

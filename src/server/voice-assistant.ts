@@ -952,12 +952,12 @@ export function voiceAssistantRoutes({
         !body ||
         typeof body !== 'object' ||
         Array.isArray(body) ||
-        (body.inputEndMs !== undefined &&
-          (!Number.isFinite(body.inputEndMs) || body.inputEndMs < 0))
+        (body.interruptedThroughMs !== undefined &&
+          (!Number.isFinite(body.interruptedThroughMs) || body.interruptedThroughMs < 0))
       )
         return context.json({ error: 'invalid_request' }, 400);
       delete voice.view.response;
-      const canceled = await voice.work.interruptSpeech(body.inputEndMs);
+      const canceled = await voice.work.interruptSpeech(body.interruptedThroughMs);
       return context.json({ voice: voice.view, assistant: canceled });
     }
     if (context.req.param('action') === 'poll') {
