@@ -4418,9 +4418,13 @@ test.each(['requested', 'omitted'])(
   },
 );
 
-test.each(['available', 'interrupted'])(
-  'original save request replays its own receipt after another member saves and its lookup is %s',
-  async (lookup) => {
+test.each([
+  { lookup: 'available', recovery: 'replay' },
+  { lookup: 'interrupted', recovery: 'replay' },
+  { lookup: 'interrupted', recovery: 'retry' },
+])(
+  'original save request returns its own receipt after another member saves ($lookup lookup, $recovery)',
+  async ({ lookup, recovery }) => {
     let releaseSaveReply!: () => void;
     const heldReply = new Promise<void>((resolve) => {
       releaseSaveReply = resolve;
@@ -4438,7 +4442,7 @@ test.each(['available', 'interrupted'])(
         request.method === 'POST' && new URL(request.url).pathname === '/mcp'
           ? await request.clone().json()
           : null;
-      if (rpc?.params?.name === 'read_save_operation' && lookup === 'interrupted')
+      if (rpc?.params?.name === 'read_save_operation' && lookup !== 'available')
         throw new TypeError('Lookup response unavailable');
       const response = await dispatch(request);
       if (rpc?.params?.name === 'save_draft') {
@@ -4489,7 +4493,7 @@ test.each(['available', 'interrupted'])(
       releaseSaveReply();
       const poll = async () => (await browser.get(`${route}/messages/save-bike`)).json();
       await expect.poll(async () => (await poll()).taskStatus).toBe('completed');
-      if (lookup === 'interrupted') {
+      if (lookup !== 'available') {
         const unknown = await poll();
         expect(unknown.phase).toBe('recovery');
         expect(unknown.receipt).toBeUndefined();
@@ -4506,7 +4510,11 @@ test.each(['available', 'interrupted'])(
       } else {
         expect((await poll()).receipt).toEqual(bike);
       }
-      const checked = await (await post(browser, `${route}/recover`, {})).json();
+      const replay =
+        recovery === 'retry'
+          ? await post(browser, `${route}/retry`, { operationId: bike.operationId })
+          : await post(browser, `${route}/messages`, original);
+      const checked = await replay.json();
       expect(checked.receipt).toEqual(bike);
       expect(model.requests).toHaveLength(1);
       await message(checked, 'Hej igen.');
@@ -4517,10 +4525,23 @@ test.each(['available', 'interrupted'])(
       expect(await history()).toEqual([lamp, bike]);
       const objects: { id: string }[] = (await (await browser.get(mapPath)).json()).objects;
       expect(objects.map(({ id }) => id).sort()).toEqual(['bike', 'lamp']);
+      const privateCheck = await post(other, `${path}/recover`, {
+        operationIds: [bike.operationId],
+      });
+      expect((await privateCheck.json()).operations).toEqual([]);
+      const { connections } = await (
+        await browser.get(`${app.origin}/api/assistants/context`)
+      ).json();
+      expect(
+        (
+          await post(browser, `${app.origin}/api/assistants/${connections[0].id}/revoke`, {})
+        ).status(),
+      ).toBe(200);
       for (const suffix of ['recover', 'messages']) {
         const body = suffix === 'messages' ? original : {};
         for (const denied of [
           await post(other, `${route}/${suffix}`, body),
+          await post(browser, `${route}/${suffix}`, body),
           await post(
             browser,
             `${route.replace(/households\/[^/]+/, 'households/other-household')}/${suffix}`,

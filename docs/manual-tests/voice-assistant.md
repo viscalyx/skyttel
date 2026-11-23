@@ -250,7 +250,7 @@ TAL-03.
     "spec": "tests/integration/voice-assistant.spec.ts",
     "caseId": "TAL-03"
   },
-  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse. Samtalet återkommer pausat efter faktisk serveromstart; sparutfallet läses före Nytt samtal. Faktisk röst eller uppläsning bedöms separat.",
+  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse. Samtalet återkommer pausat efter faktisk serveromstart; sparutfallet läses före Nytt samtal. I ett separat textsamtal tappas webbläsarsvaret med kvittot för Mira efter genomfört sparande för att prova kontrollen utan omladdning. Faktisk röst eller uppläsning bedöms separat.",
   "outcomes": [
     "Bekräfta verklig markering och återhämta samma beständiga sparförsök.",
     "Beskrivningen går att läsa i korta uppgiftsfönster efter hela svaret.",
@@ -262,7 +262,7 @@ TAL-03.
       "runner": "vitest",
       "suite": "server",
       "spec": "tests/unit/server/text-assistant.test.ts",
-      "title": "original save request replays its own receipt after another member saves and its lookup is interrupted",
+      "title": "original save request returns its own receipt after another member saves (interrupted lookup, replay)",
       "purpose": "Kontrollera samma kvitto efter ett annat sparande, spärren vid okänt utfall och åtkomst vid uppslag och omsändning."
     }
   ]
@@ -270,6 +270,11 @@ TAL-03.
 ```
 -->
 <!-- markdownlint-enable MD013 -->
+
+**Ytterligare underlag:** [Serverprovet](../../tests/unit/server/text-assistant.test.ts)
+kontrollerar att en omsändning efter en annan medlems sparande ger samma
+kvitto. Det provar även avbrutet uppslag, spärren för nya sparförsök och
+åtkomst till utfallet.
 
 **Separat förberedelse:** Följ
 [tidslinje TAL-03](voice-controls-preparation.md#tidslinje-tal-03) vid de
@@ -308,8 +313,10 @@ till TAL-17/23/24.
    stäng**. Välj **Karta** och se Mira som förslag. Börja ett nytt samtal i
    textvyn och granska Mira i utkastet. Förbered det tappade webbläsarsvaret
    enligt tidslinjen. Skicka **Spara hela utkastet.**
-8. När samtalsnotisen visas, släpp blockeringen och välj **Kontrollera om
-   utkastet sparades**. Läs resultatet i samtalstexten och stäng textvyn.
+8. Vänta tills samtalsnotisen visar **Skyttel kunde inte kontrollera om
+   utkastet sparades.** och knappen **Kontrollera om utkastet sparades**.
+   Släpp blockeringen och välj knappen. Läs resultatet i samtalstexten och
+   stäng textvyn.
    Kontrollera att Mira syns som sparad i samma kartvy utan omladdning.
    Slå på mikrofonen igen och logga ut.
 
@@ -322,6 +329,8 @@ till TAL-17/23/24.
   kontrolleras separat och slutförs exakt en gång. Läs dess utfall före ett
   uttryckligt nytt samtal; korta ja eller nya allmänna uppdrag ersätter inte
   försöket.
+- Efter ett tappat kvittosvar kan du läsa sparbeskedet med samtalsnotisens
+  kontroll och se Mira som sparad i kartvyn utan omladdning.
 - Avbrutet ljud återtar inget genomfört sparande. Saknad slutlig mätning förblir
   osäker: 12 följt av 15 är 15 kända sekunder, inte 27 eller säkert noll.
 

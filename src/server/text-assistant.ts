@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, type UUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { RunContext, tool } from '@openai/agents';
 import type Database from 'better-sqlite3';
@@ -2176,11 +2176,35 @@ export function textAssistantRoutes({
         if (request) request.paused = true;
       }
     }
-    if (pending?.messageId && checked.receipt) {
+    if (pending?.messageId) {
       const accepted = session.state.accepted.get(pending.messageId);
       if (accepted) accepted.result = captureAssistantResult(view(session), 'prefix');
     }
     return changed;
+  }
+  async function recoverSave(session: Session, ids?: string[], checkId?: UUID, guard?: () => void) {
+    guard?.();
+    checkViewAccess(session);
+    const revision = session.state.revision;
+    const pending = session.state.pendingSave;
+    const checked = checkSaves(
+      database,
+      session.state.actorId,
+      session.state.householdId,
+      ids,
+      checkId,
+    );
+    await refresh(session, guard);
+    if (session.state.revision !== revision || session.state.pendingSave !== pending) return;
+    if (applyCheckedSave(session, checked)) {
+      appendConversation(session, { role: 'assistant', text: checked.reply });
+    }
+    session.state.modelReply = undefined;
+    syncQuestions(session);
+    session.state.newQuestions = [];
+    session.state.answers = [];
+    session.state.requiredNotice = undefined;
+    session.state.result = undefined;
   }
   async function refreshConfirmed(session: Session, guard?: () => void) {
     try {
@@ -5204,10 +5228,23 @@ export function textAssistantRoutes({
     if (accepted) {
       if (accepted.hash !== requestHash)
         return context.json({ error: 'assistant_turn_changed' }, 409);
+      const pending = session.state.pendingSave;
+      if (
+        accepted.result &&
+        pending &&
+        pending.messageId === body.requestId &&
+        !session.execution.task
+      ) {
+        await recoverSave(session, [pending.operationId], undefined, () =>
+          checkPreparation(preparation),
+        );
+      }
       checkViewAccess(session);
       const current = view(session);
       return context.json(
-        accepted.result ? restoreAssistantResult(accepted.result, current) : current,
+        accepted.result?.view.receipt || accepted.result?.view.saveCheck
+          ? restoreAssistantResult(accepted.result, current)
+          : current,
         202,
       );
     }
@@ -5489,23 +5526,7 @@ export function textAssistantRoutes({
           : session.state.receipt
             ? [session.state.receipt.operationId]
             : undefined;
-        const checked = checkSaves(
-          database,
-          session.state.actorId,
-          session.state.householdId,
-          ids,
-          body.checkId,
-        );
-        await refresh(session);
-        if (applyCheckedSave(session, checked)) {
-          appendConversation(session, { role: 'assistant', text: checked.reply });
-        }
-        session.state.modelReply = undefined;
-        syncQuestions(session);
-        session.state.newQuestions = [];
-        session.state.answers = [];
-        session.state.requiredNotice = undefined;
-        session.state.result = undefined;
+        await recoverSave(session, ids, body.checkId);
         finish('completed', observationResult(session));
         nextMessage(session);
         return context.json(view(session));
@@ -5615,7 +5636,13 @@ export function textAssistantRoutes({
             (item) => item.operationId === body?.operationId,
           );
           if (!operation) throw new MapError('operation_conflict', 409);
-          if (operation.status === 'succeeded') {
+          const pending = session.state.pendingSave;
+          if (pending && pending.operationId !== operation.operationId)
+            throw new MapError('operation_conflict', 409);
+          if (pending?.messageId) {
+            await recoverSave(session, [pending.operationId], undefined, guard);
+            revision = session.state.revision;
+          } else if (operation.status === 'succeeded') {
             verifyReceipt(session, operation.receipt, {
               operationId: operation.operationId,
               version: operation.draftVersion,

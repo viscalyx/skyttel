@@ -1,12 +1,16 @@
+import { readFile } from 'node:fs/promises';
+import type { Response as BrowserResponse, Page } from '@playwright/test';
+import type { SaveReceipt } from '../../src/shared/map.js';
+
 /** Persistent, development-only browser delivery control; the server is unchanged. */
 export const manualTextDeliverySource = `(() => {
   const original = window.fetch.bind(window);
   let armed;
   let result = { phase: 'idle' };
   window.skyttelTextDelivery = {
-    arm(boundary = 'acceptance') {
+    arm() {
       if (armed || result.phase === 'waiting') throw Error('Finish the previous delivery first');
-      armed = boundary;
+      armed = true;
       result = { phase: 'armed' };
     },
     status: () => ({ ...result }),
@@ -19,18 +23,7 @@ export const manualTextDeliverySource = `(() => {
   window.fetch = async (input, init) => {
     const request = new Request(input, init);
     const url = new URL(request.url);
-    if (armed === 'receipt' && request.method === 'GET' &&
-        /^\\/api\\/households\\/[^/]+\\/text-assistant\\/[^/]+$/.test(url.pathname)) {
-      const response = await original(input, init);
-      const receipt = response.ok && (await response.clone().json()).receipt;
-      if (armed === 'receipt' && receipt?.operationId) {
-        armed = undefined;
-        result = { phase: 'dropped-after-commit', operationId: receipt.operationId, status: response.status };
-        throw new TypeError('Controlled lost conversation response containing the save receipt');
-      }
-      return response;
-    }
-    const selected = armed === 'acceptance' && request.method === 'POST' &&
+    const selected = armed && request.method === 'POST' &&
       /^\\/api\\/households\\/[^/]+\\/text-assistant\\/[^/]+\\/messages$/.test(url.pathname);
     if (!selected) return original(input, init);
     armed = undefined;
@@ -66,3 +59,35 @@ export const manualTextDeliverySource = `(() => {
     throw Error('No completed save: do not report an applied lost reply');
   };
 })();`;
+
+/** Use the manual case's delivery controls on the completed conversation response. */
+export async function dropConversationReceipt(page: Page) {
+  const preparation = await readFile(
+    new URL('../../docs/manual-tests/save-preparation.md', import.meta.url),
+    'utf8',
+  );
+  const delivery = [...preparation.matchAll(/```javascript\n([\s\S]*?)\n```/g)]
+    .map((match) => match[1])
+    .find((script) => script.includes('window.skyttelSaveDelivery ='));
+  if (!delivery) throw new Error('Missing receipt delivery control in save preparation');
+  await page.evaluate(delivery);
+  await page.evaluate(
+    "skyttelSaveDelivery.arm('reply', 'drop-after'); skyttelSaveDelivery.block('session-recover', true)",
+  );
+  const lostReceipt = page.waitForResponse(
+    async (response) =>
+      response.request().method() === 'GET' &&
+      /\/text-assistant\/[^/]+$/.test(response.url()) &&
+      response.ok() &&
+      Boolean((await response.json()).receipt),
+  );
+  const readReceipt = async (response: BrowserResponse): Promise<SaveReceipt> =>
+    (await response.json()).receipt;
+  return {
+    allowCheck: () => page.evaluate("skyttelSaveDelivery.block('session-recover', false)"),
+    droppedReceipt: lostReceipt.then(readReceipt),
+    checkedReceipt: page
+      .waitForResponse((response) => response.url().endsWith('/recover'))
+      .then(readReceipt),
+  };
+}

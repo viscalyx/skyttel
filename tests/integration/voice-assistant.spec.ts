@@ -31,7 +31,7 @@ import { familySaveSequence } from '../support/family-save-model.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { isVoiceAnswerRelease, liveProvider, voiceAnswerParts } from '../support/live-provider.js';
-import { manualTextDeliverySource } from '../support/manual-text-delivery.js';
+import { dropConversationReceipt } from '../support/manual-text-delivery.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 import { exposedTextLines } from '../support/object-property-reading.js';
 import { expect, test } from '../support/test.js';
@@ -1221,13 +1221,7 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     await assistant(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
     await expect(assistant(page)).toHaveAttribute('data-session-active', 'true');
     await expect(await openConversationDraft(page)).toContainText('Mira Exempel');
-    await page.route('**/text-assistant/*/recover', (route) => route.abort());
-    await page.evaluate(manualTextDeliverySource);
-    await page.evaluate(() => {
-      (
-        window as unknown as { skyttelTextDelivery: { arm(boundary: 'receipt'): void } }
-      ).skyttelTextDelivery.arm('receipt');
-    });
+    const delivery = await dropConversationReceipt(page);
     await assistant(page).getByLabel('Meddelande till Skyttel').fill('Spara hela utkastet.');
     await assistant(page).getByRole('button', { name: 'Skicka', exact: true }).click();
     const check = page.getByRole('button', {
@@ -1235,18 +1229,9 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
       exact: true,
     });
     await expect(check).toBeVisible();
-    const dropped = await page.evaluate(() =>
-      (
-        window as unknown as {
-          skyttelTextDelivery: { status(): { phase: string; operationId: string } };
-        }
-      ).skyttelTextDelivery.status(),
-    );
-    expect(dropped.phase).toBe('dropped-after-commit');
-    await page.unroute('**/text-assistant/*/recover');
-    const checked = page.waitForResponse((response) => response.url().endsWith('/recover'));
+    await delivery.allowCheck();
     await check.click();
-    expect((await (await checked).json()).receipt.operationId).toBe(dropped.operationId);
+    expect(await delivery.checkedReceipt).toEqual(await delivery.droppedReceipt);
     await expect(page.getByRole('log', { name: 'Samtalstext' })).toContainText(
       'Kontrollen visar att hela utkastet sparades.',
     );

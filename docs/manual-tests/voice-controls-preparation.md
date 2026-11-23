@@ -373,16 +373,18 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    `voice.phase:"closed"`, `voice.seconds:15` och `voice.usageFinal:false`.
    Återställ `finalize on` och välj **Avsluta samtalet**.
 7. Lägg Mira i utkastet och öppna ett nytt textsamtal enligt testfallet.
-   Aktivera nätblockeringen från steg 2 igen och kör
-   `window.skyttelTextDelivery.arm('receipt')` i webbläsarens konsol. Skicka
+   Installera konsolblocket för
+   [samtals- och kontrollsvar](save-preparation.md#samtals--och-kontrollsvar).
+   Kör `skyttelSaveDelivery.arm('reply', 'drop-after')` och
+   `skyttelSaveDelivery.block('session-recover', true)`. Skicka
    sparbegäran i textvyn. Släpp terminalens hållna anrop med
    `tool REQUEST save_draft {"version":VERSION,"contentVersion":CONTENT,"operationId":"mira"}`.
    Ersätt REQUEST, VERSION och CONTENT med värdena från `held`. Släpp vid
    behov nästa modellsvar med `reply REQUEST Klart.`. Kontrollera
-   med `window.skyttelTextDelivery.status()` att fasen är
-   `dropped-after-commit`. Webbläsaren har då tagit emot och tappat svaret
-   som innehåller kvittot för Mira.
-8. Ta bort nätblockeringen och använd kontrollknappen i samtalsnotisen.
+   att konsolen visar `application-completed reply 200` när webbläsaren
+   tappar svaret som innehåller kvittot för Mira.
+8. Kör `skyttelSaveDelivery.block('session-recover', false)` och använd
+   kontrollknappen i samtalsnotisen. Kör sedan `skyttelSaveDelivery.clear()`.
    Kontrollera Mira i kartvyn och slå på mikrofonen enligt testfallet.
    Öppna **Din profil → Inloggningssätt**, öppna
    **Välj inställning** om menyn är hopfälld och välj **Logga ut**. Alla
