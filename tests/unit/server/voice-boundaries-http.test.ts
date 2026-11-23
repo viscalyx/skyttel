@@ -404,6 +404,91 @@ test('an explicit typed cancellation consumes the outstanding spoken task withou
   expect(await readMap()).toEqual(before);
 });
 
+test('new speech can supersede a spoken reply without keeping its finished draft work active', {
+  tags: ['technical'],
+  timeout: 15_000,
+}, async () => {
+  let finish: () => void = () => {};
+  const held = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  let typeId: string;
+  const typedAnswer = 'Förslagen finns kvar i ditt utkast.';
+  const model = textModel(async (body) => {
+    if (model.requests.length > 1) return [modelMessage(typedAnswer)];
+    const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    await held;
+    return [
+      modelTool('submit_changes', {
+        version: turn.draft.version,
+        contentVersion: turn.draft.contentVersion,
+        completion: 'draft',
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: 'finished-voice-proposal',
+              baseRevision: null,
+              value: { typeId, name: 'Blå cykel' },
+            },
+          },
+        ],
+      }),
+    ];
+  });
+  await setup(model.provider);
+  const before = await readMap();
+  typeId = before.types[0].id;
+  await start();
+  try {
+    speak(live, 'Lägg till en blå cykel i utkastet.');
+    await expect.poll(async () => (await poll()).voice.phase).toBe('working');
+    live.emit(providerId, {
+      type: 'session.input_transcript.delta',
+      event_id: 'unfinished-follow-up',
+      delta: 'Jag skulle vilja koppla…',
+      start_ms: 3000,
+      end_ms: 3400,
+    });
+    finish();
+    await expect
+      .poll(async () => (await poll()).assistant)
+      .toMatchObject({
+        phase: 'ready',
+        result: { changes: [expect.objectContaining({ objectId: 'finished-voice-proposal' })] },
+      });
+    await expect
+      .poll(async () => (await poll()).voice)
+      .toMatchObject({
+        phase: 'listening',
+        summaryReady: false,
+      });
+    expect((await poll()).voice.response).toBeUndefined();
+    expect(voiceAnswerParts(live.sent)).toEqual([]);
+    const updated = await readMap();
+    expect(updated.draft.changes.map((change) => change.id)).toEqual([
+      'independent',
+      'finished-voice-proposal',
+    ]);
+    expect(updated.objects).toEqual(before.objects);
+
+    const { assistant } = await poll();
+    const response = await post(`text-assistant/${session.id}/messages`, {
+      revision: assistant.revision,
+      draftVersion: assistant.review.version,
+      contentVersion: assistant.review.contentVersion,
+      requestId: 'typed-follow-up',
+      text: 'Finns förslagen kvar i mitt utkast?',
+    });
+    expect(response.status(), await response.text()).toBe(202);
+    await expect.poll(async () => (await poll()).voice.response?.text).toBe(typedAnswer);
+    expect(model.requests).toHaveLength(2);
+    expect(await readMap()).toEqual(updated);
+  } finally {
+    finish();
+  }
+});
+
 test.each([Number.NaN, 7])(
   'external usage %s at close cannot reduce checked voice usage or claim a finalized charge',
   async (closingSeconds) => {

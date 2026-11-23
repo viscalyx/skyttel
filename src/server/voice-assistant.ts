@@ -830,9 +830,8 @@ export function voiceAssistantRoutes({
           return result;
         },
         update: (view, working) => {
-          voice.assistant = view;
-          // The voice works only with a task that was said. A written message
-          // is the conversation's work.
+          // A spoken task can finish after the current conversation has advanced.
+          // Polls read the current conversation independently of this task's view.
           if (!voice.closed)
             voice.view.phase = working
               ? 'working'

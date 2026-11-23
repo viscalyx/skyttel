@@ -19,6 +19,7 @@ type EarlyDelegation = Delegation & {
   noticeTimer?: ReturnType<typeof setTimeout>;
 };
 type VoiceCompletionView = TextAssistantView & Pick<ConversationReply, 'failed'>;
+type VoiceDispatch = { controller: AbortController; requestId?: string; revision?: number };
 
 const speechSettleMs = 2000;
 
@@ -102,8 +103,7 @@ export function voiceWork({
     .map(({ id, revision }) => ({ id, revision }));
   let questionInputVersion = 0;
   let automaticReplyConsumed = false;
-  let owned: number | undefined;
-  let dispatching: { controller: AbortController; requestId?: string } | undefined;
+  let dispatching: VoiceDispatch | undefined;
   let canceling: Promise<{ revision: number; view: TextAssistantView } | undefined> =
     Promise.resolve(undefined);
   const inFlight = new Map<number, number>();
@@ -192,10 +192,9 @@ export function voiceWork({
     collecting = undefined;
     awaitingCorrectionAfterRevision = undefined;
     clearAwaitingInterrupt();
+    const revision = dispatching?.revision ?? (hadWork ? rendered.revision : revisionIfIdle);
     dispatching?.controller.abort();
     dispatching = undefined;
-    const revision = owned ?? (hadWork ? rendered.revision : revisionIfIdle);
-    owned = undefined;
     if (revision === undefined) return;
     // A spoken task may already have advanced from the queue, beyond its
     // last observed revision. A stop covers the conversation's current work.
@@ -250,6 +249,7 @@ export function voiceWork({
     answer: VoiceAnswer,
     view?: VoiceCompletionView,
     settled?: (voiced: boolean) => void,
+    publishResponse = true,
   ) {
     if (!allowed()) return;
     const content = voiceAnswerText(answer);
@@ -271,8 +271,9 @@ export function voiceWork({
         : undefined,
       settled,
     );
-    if (view) {
-      answered.add(view.revision);
+    if (!view) return;
+    answered.add(view.revision);
+    if (publishResponse)
       response?.({
         id: `${view.id}:${view.revision}`,
         revision: view.revision,
@@ -286,7 +287,6 @@ export function voiceWork({
         questionPending: Boolean(view.questionPending),
         receiptOperationId: view.receipt?.operationId,
       });
-    }
   }
   function completion(view: VoiceCompletionView): VoiceAnswer {
     if (view.saveCheck) return view.saveCheck.reply + (view.receipt ? ' Sparat.' : '');
@@ -353,6 +353,14 @@ export function voiceWork({
   ) {
     const acceptedInput = inputVersion;
     let requestId: string | undefined;
+    let dispatch: VoiceDispatch | undefined;
+    const release = (view: TextAssistantView) => {
+      if (dispatching !== dispatch) return false;
+      dispatching = undefined;
+      rendered.revision = Math.max(rendered.revision, view.revision);
+      update(view, false);
+      return true;
+    };
     let resultObserved = false;
     let resultStatus: 'failed' | 'canceled' | 'incomplete' = 'incomplete';
     const result = (
@@ -445,7 +453,8 @@ export function voiceWork({
         const pending = view.operations.filter((operation) => operation.status === 'pending');
         if (pending.length === 1 && /^slutför samma sparförsök[.!]?$/iu.test(text.trim())) {
           const controller = new AbortController();
-          dispatching = { controller };
+          dispatch = { controller };
+          dispatching = dispatch;
           view = await recover(
             'retry',
             { operationId: pending[0].operationId, revision: view.revision },
@@ -455,9 +464,13 @@ export function voiceWork({
       } else {
         const controller = new AbortController();
         requestId = randomUUID();
-        dispatching = { controller, requestId };
+        dispatch = {
+          controller,
+          requestId,
+          revision: view.phase === 'working' ? view.revision : view.revision + 1,
+        };
+        dispatching = dispatch;
         observe?.('backend_request', { delegationId: id, requestId, text, context });
-        owned = view.phase === 'working' ? view.revision : view.revision + 1;
         view = await request(
           'messages',
           {
@@ -481,9 +494,9 @@ export function voiceWork({
           }).catch(() => {});
           return;
         }
-        owned = view.revision;
+        dispatch.revision = view.revision;
         while (current() && (view.taskStatus === 'queued' || view.taskStatus === 'working')) {
-          update(view, true);
+          if (dispatching === dispatch) update(view, true);
           await new Promise((resolve) => setTimeout(resolve, 50));
           view = await request(`messages/${requestId}`);
         }
@@ -491,11 +504,7 @@ export function voiceWork({
           resultStatus = 'canceled';
           // The task was stopped or replaced in the conversation, outside the
           // voice. The voice no longer works with it and says nothing about it.
-          if (current()) {
-            owned = undefined;
-            dispatching = undefined;
-            update(view, false);
-          }
+          if (current()) release(view);
           return;
         }
       }
@@ -509,23 +518,26 @@ export function voiceWork({
       )
         await new Promise((resolve) => setTimeout(resolve, 50));
       if (!current()) return;
-      if (inputVersion !== acceptedInput || pending.length) {
+      const released = release(view);
+      if (!released || inputVersion !== acceptedInput || pending.length) {
         // New speech supersedes the answer, but cannot undo a verified save.
-        // Deliver only its receipt; leave the newer input and view untouched.
+        // Keep its receipt tied to this task without replacing a later response.
         if (view.receipt)
-          append(id, 'Sparat.', {
-            ...view,
-            saveCheck: undefined,
-            modelReply: undefined,
-            reply: undefined,
-            questionPending: false,
-          });
+          append(
+            id,
+            'Sparat.',
+            {
+              ...view,
+              saveCheck: undefined,
+              modelReply: undefined,
+              reply: undefined,
+              questionPending: false,
+            },
+            undefined,
+            released,
+          );
         return;
       }
-      owned = undefined;
-      dispatching = undefined;
-      rendered = { ...rendered, revision: Math.max(rendered.revision, view.revision) };
-      update(view, false);
       append(id, completion(view), view);
     } catch (error) {
       if (!current()) {
@@ -535,10 +547,7 @@ export function voiceWork({
       resultStatus = 'failed';
       if (error instanceof VoiceMessageRefusal) {
         result('failed', undefined, error.code);
-        if (requestId && dispatching?.requestId === requestId) {
-          owned = undefined;
-          dispatching = undefined;
-        }
+        if (dispatch && dispatching === dispatch) dispatching = undefined;
         if (!current() || inputVersion !== acceptedInput) return;
         const text = error.userMessage();
         refusal?.({ id: requestId ?? randomUUID(), text });
@@ -567,7 +576,7 @@ export function voiceWork({
         if (!stopped && allowed() && generation === recoveryGeneration) failed();
       }
     } finally {
-      if (requestId && dispatching?.requestId === requestId) dispatching = undefined;
+      if (dispatch && dispatching === dispatch) dispatching = undefined;
       if (!resultObserved && (requestId || resultStatus === 'failed'))
         result(
           resultStatus === 'incomplete' && (stopped || generation !== task)
@@ -788,7 +797,6 @@ export function voiceWork({
       dispatching?.controller.abort();
       dispatching = undefined;
     }
-    owned = undefined;
     fragments = [];
     pending = [];
     anchor = undefined;
@@ -857,7 +865,7 @@ export function voiceWork({
     retire,
     readyForSummary: () =>
       !microphoneActive &&
-      owned === undefined &&
+      dispatching === undefined &&
       inFlight.size === 0 &&
       !collecting &&
       pending.length === 0 &&
@@ -894,7 +902,7 @@ export function voiceWork({
           if (reply.revision !== undefined) answered.add(reply.revision);
           continue;
         }
-        if (owned !== undefined) continue;
+        if (dispatching) continue;
         answeredReplies.add(reply.id);
         const completed: VoiceCompletionView = {
           ...view,
@@ -936,7 +944,7 @@ export function voiceWork({
         if (view.phase !== 'working') answered.add(view.revision);
         return;
       }
-      if (owned !== undefined || answered.has(view.revision) || view.phase !== 'ready') return;
+      if (dispatching || answered.has(view.revision) || view.phase !== 'ready') return;
       if (!view.questionPending && !view.receipt) return;
       append(null, completion(view), view);
     },
