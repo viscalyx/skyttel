@@ -246,6 +246,71 @@ test('a delegation for a correction can arrive before any of its transcript delt
   work.retire();
 });
 
+test.each([
+  { order: 'interrupt first', offset: 1500, delay: 300, forwarded: true },
+  { order: 'transcript first', offset: 1500, delay: 1500, forwarded: true },
+  { order: 'interrupt first', offset: 100, delay: 300, forwarded: false },
+  { order: 'no interruption', offset: 1500, delay: 300, forwarded: false },
+  { order: 'interrupt first', offset: 1500, delay: 2100, forwarded: false },
+] as const)(
+  'an empty delegation can collect a correction only after its interruption (order $order, offset $offset, delay $delay)',
+  { tags: ['technical'] },
+  async ({ order, offset, delay, forwarded }) => {
+    const { work, fragment, delegate, messages, channel } = arrange(true);
+    fragment('old', 'Läs kartan.', 0, 100);
+    delegate('old-task', 100);
+    work.confirmInput(1);
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(messages()).toHaveLength(1);
+    delegate('early', offset);
+    const correction = () => {
+      fragment('first-word', 'Jag ', 1200, 1300);
+      fragment('correction', 'menar Lo.', 1300, 1500);
+    };
+    if (order === 'transcript first') correction();
+    await vi.advanceTimersByTimeAsync(delay);
+    if (order !== 'no interruption') await work.interruptSpeech(100);
+    if (order !== 'transcript first') correction();
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(messages()).toHaveLength(1);
+    work.confirmInput(3);
+    await vi.advanceTimersByTimeAsync(100);
+    if (!forwarded) {
+      expect(messages()).toHaveLength(1);
+      delegate('proper', 1500);
+      await vi.advanceTimersByTimeAsync(100);
+    }
+    expect(messages()).toHaveLength(2);
+    expect(messages()[1][1]).toMatchObject({ text: 'Jag menar Lo.' });
+    if (forwarded) {
+      expect(channel.send).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'session.commentary.append', delegation_id: 'early' }),
+      );
+    }
+    work.retire();
+  },
+);
+
+test('an empty browser delegation requests fresh speech once without collecting work', {
+  tags: ['technical'],
+}, async () => {
+  const { work, delegate, messages, channel } = arrange(true);
+  delegate('empty', 100);
+  delegate('empty', 100);
+  expect(work.readyForSummary()).toBe(true);
+  expect(channel.send).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(2100);
+  expect(messages()).toEqual([]);
+  expect(channel.send).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({
+      type: 'session.commentary.append',
+      delegation_id: 'empty',
+      content: expect.stringContaining('Be om ett nytt tydligt uppdrag.'),
+    }),
+  );
+  work.retire();
+});
+
 test('a correction delegation expires when its transcript does not arrive', {
   tags: ['technical'],
 }, async () => {

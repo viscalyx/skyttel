@@ -79,6 +79,9 @@ export function voiceWork({
   let lastInputAt = 0;
   let microphoneActive = false;
   let collecting: { delegation: Delegation | null } | undefined;
+  let awaitingInterrupt:
+    | (Delegation & { expiresAt: number; noticeTimer?: ReturnType<typeof setTimeout> })
+    | undefined;
   let stopped = false;
   let questionRevision = initial.revision;
   let questionPending = initial.phase === 'ready' && Boolean(initial.questionPending);
@@ -132,11 +135,17 @@ export function voiceWork({
       void collect(null);
   }
 
+  function clearAwaitingInterrupt() {
+    clearTimeout(awaitingInterrupt?.noticeTimer);
+    awaitingInterrupt = undefined;
+  }
+
   function cancel(revisionIfIdle?: number) {
     commentary.cancel();
     const hadWork = (inFlight.get(generation) ?? 0) > 0;
     generation++;
     collecting = undefined;
+    clearAwaitingInterrupt();
     dispatching?.controller.abort();
     dispatching = undefined;
     const revision = owned ?? (hadWork ? rendered.revision : revisionIfIdle);
@@ -281,6 +290,12 @@ export function voiceWork({
       },
       { kind: 'conversation', text: view.modelReply ?? '' },
     ];
+  }
+  function requestFreshSpeech(id: string) {
+    append(
+      id,
+      'Be om ett nytt tydligt uppdrag. En paus eller tidigare repliker är inget nytt sparbesked.',
+    );
   }
   async function execute(
     id: string | null,
@@ -628,6 +643,7 @@ export function voiceWork({
       return;
     }
     if (text.trim() && expected) {
+      clearAwaitingInterrupt();
       automaticReplyConsumed = id === null;
       commentary.working(id);
       void execute(id, text, expected, JSON.stringify(fragments), task, answerTo);
@@ -667,9 +683,31 @@ export function voiceWork({
     const activeDelegation = collecting?.delegation;
     if (activeDelegation && delegation.offsetMs < activeDelegation.offsetMs) return;
     // The sideband can delegate the correction before sending its first delta.
-    if (interruptedThrough >= 0 && !pending.length) {
-      void collect(delegation);
-      return;
+    if (!pending.length) {
+      if (interruptedThrough >= 0) {
+        void collect(delegation);
+        return;
+      }
+      // A browser interrupt may still be in transit. Until its cutoff arrives,
+      // this delegation cannot collect speech or block a context handoff.
+      const receivedAt = now();
+      if (
+        !awaitingInterrupt ||
+        awaitingInterrupt.expiresAt <= receivedAt ||
+        delegation.offsetMs >= awaitingInterrupt.offsetMs
+      ) {
+        clearAwaitingInterrupt();
+        awaitingInterrupt = { ...delegation, expiresAt: receivedAt + speechSettleMs };
+        if (confirmBrowserInput && !automaticReplyConsumed) {
+          const receivedInputVersion = inputVersion;
+          awaitingInterrupt.noticeTimer = setTimeout(() => {
+            clearAwaitingInterrupt();
+            if (inputVersion === receivedInputVersion) requestFreshSpeech(delegation.id);
+          }, speechSettleMs);
+          awaitingInterrupt.noticeTimer.unref();
+        }
+      }
+      if (confirmBrowserInput) return;
     }
     const selected = pending.filter((item) => item.startMs <= event.offset_ms);
     if (!anchor || !selected.some((item) => item.text.trim())) {
@@ -679,10 +717,7 @@ export function voiceWork({
       pending = pending.filter((item) => !selected.includes(item));
       if (!pending.length) anchor = undefined;
       input?.(pending.length > 0 || microphoneActive);
-      append(
-        event.delegation.id,
-        'Be om ett nytt tydligt uppdrag. En paus eller tidigare repliker är inget nytt sparbesked.',
-      );
+      requestFreshSpeech(event.delegation.id);
       return;
     }
     void collect(delegation);
@@ -693,6 +728,7 @@ export function voiceWork({
     input?.(false);
     generation++;
     collecting = undefined;
+    clearAwaitingInterrupt();
     // The validated reset owns retirement of this executor. Keep only its
     // own dispatch alive, and reachable by a later Stop or newer reset.
     if (!resetRequestId || dispatching?.requestId !== resetRequestId) {
@@ -715,9 +751,16 @@ export function voiceWork({
       if (stopped || !allowed()) throw new Error('voice_session_expired');
       // Input can reach the sideband before the browser's interrupt request.
       // Preserve fragments and a delegation for a correction already underway.
-      const collection = collecting;
-      if (interruptedThroughMs !== undefined)
+      let delegation = collecting?.delegation;
+      if (interruptedThroughMs !== undefined) {
         interruptedThrough = Math.max(interruptedThrough, interruptedThroughMs);
+        if (
+          awaitingInterrupt &&
+          awaitingInterrupt.expiresAt > now() &&
+          (!delegation || awaitingInterrupt.offsetMs > delegation.offsetMs)
+        )
+          delegation = awaitingInterrupt;
+      }
       pending = pending.filter((item) => item.endMs > interruptedThrough);
       anchor = pending[0]?.anchor;
       cancel(rendered.revision);
@@ -727,8 +770,7 @@ export function voiceWork({
         content:
           'Stop speaking immediately. Listen to the correction and handle it normally in Swedish.',
       });
-      if (collection?.delegation && collection.delegation.offsetMs > interruptedThrough)
-        void collect(collection.delegation);
+      if (delegation && delegation.offsetMs > interruptedThrough) void collect(delegation);
       else collectReply();
       const canceled = await canceling;
       if (!canceled) throw new Error('voice_interruption_failed');
