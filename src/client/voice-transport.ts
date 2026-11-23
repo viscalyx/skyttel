@@ -71,11 +71,10 @@ export function createVoiceTransport(
   let muted = false;
   let correctionStarted = false;
   let interruptedThrough = -1;
-  let outputStart = -1;
   let microphone: MediaStream | undefined;
   let connected = false;
   let started = false;
-  let sessionStart = 0;
+  let timelineOrigin = Number.POSITIVE_INFINITY;
   let stopped = false;
   let playbackTransferred = false;
   let closed = false;
@@ -135,6 +134,11 @@ export function createVoiceTransport(
   let assistantAt = 0;
   const turnGap = 2000;
   const audioTime = (value: number) => Number.isFinite(value) && value >= 0;
+  // At receipt, the provider has already reached this position. Keep the
+  // earliest inferred origin so delayed events cannot move the cutoff back.
+  function observePosition(position: number, receivedAt: number) {
+    if (audioTime(position)) timelineOrigin = Math.min(timelineOrigin, receivedAt - position);
+  }
   function finish(row: TranscriptRow | undefined) {
     if (!row?.partial) return;
     row.partial = false;
@@ -170,10 +174,12 @@ export function createVoiceTransport(
         audioTime(event.end_ms) && (!audioTime(event.start_ms) || event.end_ms >= event.start_ms)
           ? event.end_ms
           : undefined;
+      if (userEnd !== undefined) observePosition(userEnd, now);
       assistantSince = false;
       callbacks.onTranscript?.({ ...userRow });
     } else {
-      if (audioTime(event.start_ms)) outputStart = Math.max(outputStart, event.start_ms);
+      // The output fragment can extend beyond what has played.
+      observePosition(event.start_ms, now);
       assistantSince = true;
       finish(userRow);
       if (!assistantRow || (assistantBoundary && now - assistantAt >= turnGap)) {
@@ -284,14 +290,15 @@ export function createVoiceTransport(
       transcript('assistant', event);
       if (!closed && !stopped && event.delta) callbacks.onOutputTranscript?.(event.delta);
     }),
-    live.on('session.delegation.created', () => {
+    live.on('session.delegation.created', (event) => {
+      observePosition(event.offset_ms, performance.now());
       assistantBoundary = true;
       finish(assistantRow);
       if (!closed && !stopped) callbacks.onDelegation?.();
     }),
     live.on('session.started', (event) => {
       if (typeof event.session?.id !== 'string' || !event.session.id) return;
-      if (!started) sessionStart = performance.now();
+      if (!started) observePosition(0, performance.now());
       started = true;
       ready();
     }),
@@ -361,9 +368,7 @@ export function createVoiceTransport(
         return undefined;
       muted = true;
       correctionStarted = false;
-      // The provider timeline already runs when its started event arrives.
-      // This lower bound also works when RTP leads the output transcript.
-      interruptedThrough = Math.max(outputStart, userEnd ?? -1, performance.now() - sessionStart);
+      interruptedThrough = performance.now() - timelineOrigin;
       output.port.postMessage('interrupt');
       finish(userRow);
       finish(assistantRow);

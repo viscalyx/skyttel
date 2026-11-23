@@ -485,6 +485,51 @@ test('Avbryt keeps capturing the correction while interrupted speech drains', as
   expect(remote.stop).not.toHaveBeenCalled();
 });
 
+test('Avbryt uses the provider timeline when output transcripts lag playback', async () => {
+  const { signals } = meteredAudio();
+  const { calls } = setup();
+  const postMessage = vi.fn();
+  vi.stubGlobal(
+    'AudioWorkletNode',
+    class {
+      port = { postMessage, close() {} };
+      connect() {}
+      disconnect() {}
+    },
+  );
+  const clock = vi.spyOn(performance, 'now').mockReturnValue(10_000);
+  const { peer, remote } = await startWithAudio();
+  const input = (end: number) =>
+    peer.channel.emit({
+      type: 'session.input_transcript.delta',
+      start_ms: end - 10,
+      end_ms: end,
+      delta: 'Ord ',
+    });
+  clock.mockReturnValue(10_100);
+  await act(async () => input(5100));
+  clock.mockReturnValue(10_400);
+  await act(async () =>
+    peer.channel.emit({
+      type: 'session.output_transcript.delta',
+      start_ms: 5050,
+      end_ms: 6000,
+      delta: 'Svar.',
+    }),
+  );
+  signals.set(remote, 22);
+  await screen.findByText('Skyttel talar');
+  clock.mockReturnValue(10_500);
+  await userEvent.click(screen.getByRole('button', { name: 'Avbryt' }));
+  expect(calls.find(({ url }) => url.endsWith('/interrupt'))?.body).toEqual({
+    interruptedThroughMs: 5500,
+  });
+  await act(async () => input(5500));
+  expect(postMessage).not.toHaveBeenCalledWith('correction');
+  await act(async () => input(5501));
+  expect(postMessage).toHaveBeenCalledWith('correction');
+});
+
 test('a screen reader is told Lyssnar once, Skyttel arbetar, and Mikrofonen är av when the box goes', async () => {
   const { signals } = meteredAudio();
   const { track, view } = setup();

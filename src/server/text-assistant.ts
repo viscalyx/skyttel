@@ -3172,6 +3172,7 @@ export function textAssistantRoutes({
             data: { name: action.name, arguments: action.arguments, callId: action.call_id },
           });
         if (!calls.length) {
+          wholeRequestComplete = checkedWorkComplete && Boolean(response.output_text.trim());
           session.state.modelReply = turnReply(session, response.output_text, '\n');
           if (response.output_text)
             appendConversation(session, { role: 'assistant', text: response.output_text });
@@ -3245,12 +3246,15 @@ export function textAssistantRoutes({
           // Multiple draft mutations must name their shared atomic boundary.
           // Individual MCP calls remain available for one-operation work and
           // saving remains a separate step after committed draft changes.
+          const draftMutations = operations.filter((operation) =>
+            draftTools.some((tool) => tool.name === operation.name),
+          );
+          if (draftMutations.length > 1) throw new MapError('assistant_batch_required', 409);
           if (
-            operations.filter((operation) =>
-              draftTools.some((tool) => tool.name === operation.name),
-            ).length > 1
+            draftMutations.length &&
+            operations.some(({ name }) => ['save_draft', 'prepare_save'].includes(name))
           )
-            throw new MapError('assistant_batch_required', 409);
+            throw new MapError('invalid_request', 400);
           await checkActions(
             operations.filter(
               (operation) =>
@@ -3534,6 +3538,7 @@ export function textAssistantRoutes({
                 scope.responseRequired ||
                 (scope.mode === 'work' && (!checkedWorkComplete || hasReadyPendingParts(session))),
             );
+            if (terminalResult) wholeRequestComplete = checkedWorkComplete;
             return session.state.result;
           }
           const selection = mapSelections.get(action.call_id);

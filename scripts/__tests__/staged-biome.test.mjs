@@ -29,6 +29,7 @@ test('the commit hook checks staged blobs and configuration in a partially stage
   mkdirSync(join(cwd, 'node_modules/.bin'), { recursive: true });
   symlinkSync(resolve('node_modules/.bin/biome'), join(cwd, 'node_modules/.bin/biome'));
   copyFileSync('biome.json', join(cwd, 'biome.json'));
+  copyFileSync('package.json', join(cwd, 'package.json'));
   copyFileSync('.gitignore', join(cwd, '.gitignore'));
   mkdirSync(join(cwd, 'src'));
   const file = 'src/staged example.ts';
@@ -36,7 +37,7 @@ test('the commit hook checks staged blobs and configuration in a partially stage
   const bad = 'export const value=1\n';
   const write = (contents) => writeFileSync(join(cwd, file), contents);
   write(bad);
-  git('add', '.gitignore', 'biome.json', file);
+  git('add', '.gitignore', 'biome.json', 'package.json', file);
   write(good);
   const rejected = commit();
   assert.notEqual(rejected.status, 0);
@@ -52,4 +53,15 @@ test('the commit hook checks staged blobs and configuration in a partially stage
   assert.equal(git('show', `HEAD:${file}`), good);
   assert.equal(git('show', `:${file}`), good);
   assert.equal(readFileSync(join(cwd, file), 'utf8'), bad);
+
+  writeFileSync(join(cwd, 'package.json'), '{}\n');
+  const component = 'src/Example.tsx';
+  writeFileSync(
+    join(cwd, component),
+    "import { useState } from 'react';\n\nexport function Example({ ready }: { ready: boolean }) {\n  if (ready) useState(0);\n  return null;\n}\n",
+  );
+  git('add', component);
+  const react = commit();
+  assert.notEqual(react.status, 0);
+  assert.match(react.stderr + react.stdout, /useHookAtTopLevel/);
 });

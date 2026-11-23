@@ -172,6 +172,23 @@ test('a delayed browser interruption preserves the first words and delegation of
   work.retire();
 });
 
+test.each([true, false])(
+  'interruption restarts collection after filtering every fragment: correction=%s',
+  { tags: ['technical'] },
+  async (correction) => {
+    const { work, fragment, delegate, messages } = arrange();
+    fragment('old', 'Spara.', 0, 100);
+    delegate('task', 100);
+    await work.interruptSpeech(100);
+    if (correction) fragment('new', 'Läs bara.', 120, 190);
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(messages().map(([, body]) => body)).toEqual(
+      correction ? [expect.objectContaining({ text: 'Läs bara.' })] : [],
+    );
+    work.retire();
+  },
+);
+
 test('continued speech and repeated delegations form one complete task without reusing its approval', {
   tags: ['technical'],
 }, async () => {

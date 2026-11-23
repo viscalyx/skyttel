@@ -702,7 +702,7 @@ export function voiceWork({
         content:
           'Stop speaking immediately. Listen to the correction and handle it normally in Swedish.',
       });
-      if (collection && pending.length) void collect(collection.id);
+      if (collection) void collect(collection.id);
       const canceled = await canceling;
       if (!canceled) throw new Error('voice_interruption_failed');
       answered.add(canceled.view.revision);

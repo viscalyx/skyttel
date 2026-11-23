@@ -409,9 +409,15 @@ test('a relevant verified map read answers a follow-up without another tool roun
   expect(model.requests).toHaveLength(5);
 });
 
-test.each([false, true])(
-  'draft work settles only with a whole-request verdict: complete=%s',
-  async (complete) => {
+test.each([
+  { complete: false, followUp: 'none' },
+  { complete: true, followUp: 'none' },
+  { complete: true, followUp: 'report' },
+  { complete: false, followUp: 'explanation' },
+  { complete: true, followUp: 'explanation' },
+])(
+  'draft work settles only with a whole-request verdict: complete=$complete, follow-up=$followUp',
+  async ({ complete, followUp }) => {
     const work = complete ? 'Lägg till Lina.' : 'Lägg till Lina och Lo.';
     const question = 'Vad finns i utkastet?';
     let typeId: string;
@@ -420,6 +426,8 @@ test.each([false, true])(
         const input = JSON.parse(
           String(request.input.findLast((item) => item.role === 'user')?.content),
         );
+        if (input.message !== question && followUp !== 'none' && model.requests.length === 2)
+          return [modelTool('report_result', { source: 'draft' })];
         if (input.message === question || lastToolResult(request))
           return [modelMessage('Lina finns i utkastet.')];
         return [
@@ -427,6 +435,7 @@ test.each([false, true])(
             version: input.draft.version,
             contentVersion: input.draft.contentVersion,
             completion: 'draft',
+            continueResponse: followUp === 'report',
             operations: [
               {
                 name: 'propose_object',
@@ -441,7 +450,13 @@ test.each([false, true])(
           if (JSON.parse(String(request.input[0].content)).current === question)
             return readOnlyScope();
           return [
-            modelMessage(JSON.stringify({ mode: 'work', request: work, responseRequired: false })),
+            modelMessage(
+              JSON.stringify({
+                mode: 'work',
+                request: work,
+                responseRequired: followUp === 'explanation',
+              }),
+            ),
           ];
         }
         return [
@@ -456,6 +471,8 @@ test.each([false, true])(
     typeId = savedMap.types.find((type: { name: string }) => type.name === 'Person').id;
     const final = await message(await start(), work);
     expect(final).toMatchObject({ phase: 'ready', review: { changes: [{ id: 'lina' }] } });
+    if (followUp === 'report') expect(model.requests).toHaveLength(2);
+    if (followUp === 'explanation') expect(final.modelReply).toContain('Lina finns i utkastet.');
     expect(final.unfinishedRequests.map((item: { text: string }) => item.text)).toEqual(
       complete ? [] : [work],
     );
