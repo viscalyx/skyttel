@@ -269,8 +269,9 @@ hur kartan skiljer förslaget från ett bekräftat sparande i historiken.
   "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
   "outcomes": [
     "En läsfråga ger inget kvitto även om modellen säger Sparat.",
-    "Efter Avbryt och ett förtydligande finns cykeln kvar i utkastet.",
-    "En ny uttrycklig sparbegäran ger en bekräftelse, cykeln i kartan och en ändringsgrupp."
+    "Efter Avbryt och ett förtydligande finns cykeln kvar i utkastet och ingen sparbekräftelse visas.",
+    "En ny sparbegäran ger en bekräftelse och cykeln visas som sparad i kartan utan omladdning.",
+    "Ändringshistoriken visar ett enda tillagt objekt av typen Fordon, tidpunkten och Alex Exempel."
   ],
   "evidence": [
     {
@@ -308,11 +309,13 @@ resurser separat. Utför arbetsflödet en gång.
 5. Skicka **Spara hela utkastet.** Tryck på **Escape** i meddelandefältet
    medan Skyttel arbetar.
    Skicka **Jag menade den blå cykeln.** Läs svaret och kontrollera att
-   cykeln finns kvar i utkastet. Kartan visar fortfarande cykeln med
-   förslagets plustecken och ändringshistoriken är tom.
+   cykeln finns kvar i utkastet utan sparbekräftelse. Kartan visar fortfarande
+   cykeln med förslagets plustecken och ändringshistoriken är tom.
 6. Välj **Tillbaka till arbetet**, granska cykeln igen och skicka
    **Spara hela utkastet.** Läs sparbekräftelsen och kontrollera utkastet,
-   cykeln i kartan och ändringshistoriken utan att ladda om sidan.
+   cykeln i kartan och ändringshistoriken utan att ladda om sidan. Läs
+   tidpunkten och vem som sparade. Välj **Visa ändringarna** och läs
+   uppgifterna före och efter sparandet.
 
 **Förväntat resultat:**
 
@@ -322,8 +325,10 @@ resurser separat. Utför arbetsflödet en gång.
   **Lyssnar** efter läsfrågan.
 - Det sena svaret efter **Avbryt** och förtydligandet lämnar cykeln osparad.
 - Först den nya sparbegäran ger **Utkastet är sparat**. Utkastet är tomt,
-  kartan visar cykeln som sparad och historiken innehåller en ändringsgrupp
-  med **Alex blå cykel**.
+  kartan visar cykeln som sparad och historiken innehåller en ändringsgrupp.
+  Gruppen visar tidpunkten och **Alex Exempel** samt **1 objekt**. Det står
+  **Fanns inte i kartan** före sparandet. Efter sparandet visas namnet
+  **Alex blå cykel** och objekttypen **Fordon**.
 
 ## Tillgänglighetsbedömning
 

@@ -495,6 +495,7 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   textlevererade Skyttel-rader. Följ Alex blå cykel och dess väntande frågor
   genom lägesbyte och ljudavbrott. Granska cykeln, avbryt en sparbegäran
   och följ ett nytt bekräftat sparande till kartan och ändringshistoriken.
+  Läs sparkvittots tidpunkt, vem som sparade och uppgifterna om cykeln.
 - [Samtalets kontext](conversation-context.md): samma samtal
   genom utkast, sparande, avbrott, fel, mikrofon av och på samt byte mellan
   röst och text. Äldre sparbesked ger inget nytt sparande. Skrivna och

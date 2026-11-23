@@ -285,6 +285,8 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
     await send(page, 'Jag menade den blå cykeln.');
     (await nextReply())([modelMessage('Jag förstår vilken cykel du menar.')]);
     await expect(log(page)).toContainText('Jag förstår vilken cykel du menar.');
+    const confirmation = page.getByRole('status', { name: 'Sparbekräftelse' });
+    await expect(confirmation).toBeEmpty();
     await expect(proposal).toBeVisible();
     await expect(mapBike).toHaveClass(/\badded\b/);
     await expect(await openSavedHistory(page)).toContainText('Inga genomförda sparanden.');
@@ -294,15 +296,19 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
     await reviewBike();
     await send(page, 'Spara hela utkastet.');
     (await nextReply())([modelMessage('Jag har granskat förslaget.')]);
-    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
-      'Utkastet är sparat',
-    );
+    await expect(confirmation).toContainText('Utkastet är sparat');
     await expect(draft).toContainText('Utkastet är tomt.');
     await expect(mapBike).toBeVisible();
     await expect(mapBike).toHaveClass(/\bexisting\b/);
-    const groups = (await openSavedHistory(page)).getByRole('article');
-    await expect(groups).toHaveCount(1);
-    await expect(groups).toContainText(bike);
+    const receipt = (await openSavedHistory(page)).getByRole('article');
+    await expect(receipt).toHaveCount(1);
+    await expect(receipt.getByRole('heading', { level: 3 })).toContainText('Alex Exempel');
+    await expect(receipt.locator('time')).toBeVisible();
+    await expect(receipt.getByText('1 objekt', { exact: true })).toBeVisible();
+    await receipt.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(receipt.getByText('Fanns inte i kartan', { exact: true })).toBeVisible();
+    await expect(receipt.getByText(`Namn: ${bike}.`, { exact: true })).toBeVisible();
+    await expect(receipt.getByText('Objekttyp: Fordon.', { exact: true })).toBeVisible();
   } finally {
     for (const release of held) release([]);
     await app.close();
