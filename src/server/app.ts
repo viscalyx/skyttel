@@ -480,7 +480,7 @@ export function createApp({
     liveUsage,
     recordUsage: costs.live,
     interrupt: textAssistant.interrupt,
-    conversation: textAssistant.conversation,
+    liveHandoff: textAssistant.liveHandoff,
     transcript: textAssistant.transcript,
     voiceInput: textAssistant.voiceInput,
     observe,

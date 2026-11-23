@@ -182,6 +182,95 @@ test('a voice request refused during save recovery leaves queued work intact', {
   }
 });
 
+test('oversized waiting work keeps its exact parts available to a new voice connection', {
+  tags: ['technical'],
+  timeout: 15_000,
+}, async () => {
+  const answer = 'Den första inventeringen gäller hallen.';
+  const firstQuestion = 'I vilket rum gäller inventering 1?';
+  const model = textModel((body) => {
+    const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+    if (turn.message === answer) {
+      const part = turn.pendingParts.find(
+        ({ question }: { question: string }) => question === firstQuestion,
+      );
+      expect(turn.answerTo).toContainEqual({ id: part.id, revision: part.revision });
+      return [
+        modelTool('ask_questions', {
+          questions: [],
+          updates: [
+            {
+              id: part.id,
+              revision: part.revision,
+              messageId: turn.messageId,
+              action: 'clarify',
+              evidence: answer,
+              answer: 'Hallen.',
+            },
+          ],
+        }),
+      ];
+    }
+    const sequence = Number(turn.message.split(' ')[1]);
+    return [
+      modelTool('ask_questions', {
+        questions: [
+          {
+            kind: 'information',
+            request: `Beskriv inventering ${sequence}.`,
+            question: `I vilket rum gäller inventering ${sequence}?`,
+            dependsOnDraft: false,
+          },
+        ],
+      }),
+    ];
+  });
+  await setup(model.provider);
+  const conversation = `text-assistant/${session.id}`;
+  const read = async (): Promise<TextAssistantView> =>
+    (await client.get(`${path}/${conversation}`)).json();
+  for (let sequence = 1; sequence <= 5; sequence++) {
+    const requestId = `inventory-${sequence}`;
+    const text = `Inventering ${sequence} har dessa syntetiska artikelnummer: ${'Å#7$çµ,4 '.repeat(390)}`;
+    const sent = await post(`${conversation}/messages`, {
+      ...startBody(),
+      text,
+      requestId,
+    });
+    expect(sent.status(), await sent.text()).toBe(202);
+    await expect
+      .poll(
+        async () =>
+          (await (await client.get(`${path}/${conversation}/messages/${requestId}`)).json())
+            .taskStatus,
+      )
+      .toBe('completed');
+    session = await read();
+  }
+  const outstanding = session.pendingParts?.filter(({ status }) => status === 'waiting') ?? [];
+  expect(outstanding).toHaveLength(5);
+  await start();
+  expect(JSON.stringify(live.requests.at(-1)?.session.input)).toContain(
+    'Delegera frågor om pågående uppdrag',
+  );
+  live.emit(providerId, {
+    type: 'session.input_transcript.delta',
+    event_id: 'answer-first-question',
+    delta: answer,
+    start_ms: 0,
+    end_ms: 100,
+  });
+  await expect
+    .poll(
+      async () =>
+        (await read()).pendingParts?.find(({ question }) => question === firstQuestion)?.status,
+    )
+    .toBe('completed');
+  expect((await read()).pendingParts?.filter(({ status }) => status === 'waiting')).toEqual(
+    outstanding.slice(1),
+  );
+});
+
 test.each(['large receipt', 'many fragments'])(
   'voice reconnects with recent conversation and verified save references after %s',
   { tags: ['technical'], timeout: 12_000 },

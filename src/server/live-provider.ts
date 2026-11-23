@@ -20,11 +20,27 @@ const limitedHistory: InitialItem = {
     },
   ],
 };
+const limitedState: InitialItem = {
+  role: 'developer',
+  content: [
+    {
+      type: 'input_text',
+      text: 'Utdraget är begränsat. Delegera frågor om pågående uppdrag, utkast, tidigare repliker och sparanden till Skyttel.',
+    },
+  ],
+};
+
+export type LiveHistoryRow = {
+  role: 'user' | 'assistant';
+  text: string;
+  partial?: boolean;
+};
+export type LiveHandoff = { dialogue: LiveHistoryRow[]; currentState?: string };
 
 export function boundedLiveHistory(
   history: readonly InitialItem[],
   current: InitialItem | undefined,
-): InitialItem[] | undefined {
+): InitialItem[] {
   if (!history.length && !current) return [];
   function bytes(item: InitialItem) {
     return Buffer.byteLength(JSON.stringify(item)) + 1;
@@ -33,25 +49,32 @@ export function boundedLiveHistory(
     encoder ??= new Tiktoken(ranks);
     return encoder.encode(item.content[0].text, [], []).length + 8;
   }
-  // Reserve room for the history notice even when the current state fills
-  // the rest of the budget. Preserve the open questions and save references.
-  let usedBytes = 2 + bytes(limitedHistory) + (current ? bytes(current) : 0);
-  if (usedBytes > initialHistoryBytes) return undefined;
-  let usedTokens = tokens(limitedHistory) + (current ? tokens(current) : 0);
-  if (usedTokens > initialHistoryTokens) return undefined;
+  // A large snapshot can stay entirely with the delegated backend. Its
+  // current draft, waiting parts, and save operation references remain exact.
+  const stateBytes = current ? bytes(current) : 0;
+  const stateTokens =
+    current && 2 + bytes(limitedHistory) + stateBytes <= initialHistoryBytes
+      ? tokens(current)
+      : Infinity;
+  const preserveState = current && tokens(limitedHistory) + stateTokens <= initialHistoryTokens;
+  const stateDeferred = Boolean(current && !preserveState);
+  const notice = stateDeferred ? limitedState : limitedHistory;
+  const state = preserveState ? current : undefined;
+  let usedBytes = 2 + bytes(notice) + (state ? stateBytes : 0);
+  let usedTokens = tokens(notice) + (state ? stateTokens : 0);
   const recent: InitialItem[] = [];
   for (let index = history.length - 1; index >= 0; index--) {
     const item = history[index];
     usedBytes += bytes(item);
-    if (usedBytes > initialHistoryBytes || recent.length >= initialHistoryItems - (current ? 2 : 1))
+    if (usedBytes > initialHistoryBytes || recent.length >= initialHistoryItems - (state ? 2 : 1))
       break;
     usedTokens += tokens(item);
     if (usedTokens > initialHistoryTokens) break;
     recent.push(item);
   }
-  if (recent.length < history.length) recent.push(limitedHistory);
+  if (stateDeferred || recent.length < history.length) recent.push(notice);
   recent.reverse();
-  if (current) recent.push(current);
+  if (state) recent.push(state);
   return recent;
 }
 

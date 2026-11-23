@@ -97,6 +97,7 @@ import {
 import { draftUpdateDetails } from './draft-completion.js';
 import { draftDiscards } from './draft-discards.js';
 import { householdAccess } from './households.js';
+import type { LiveHandoff } from './live-provider.js';
 import { householdMap, MapError } from './map.js';
 import { type MapAgentCall, runMapAgent } from './map-agent.js';
 import { mapAgentTools, submittedChanges } from './map-agent-tools.js';
@@ -911,7 +912,14 @@ export function textAssistantRoutes({
     );
   }
   function providerConversation(session: Session) {
-    if (!session.state.conversation.length && !session.state.unfinishedRequests.length) return [];
+    const { dialogue, currentState } = liveHandoff(session);
+    return currentState
+      ? [...dialogue, { role: 'assistant' as const, text: currentState }]
+      : dialogue;
+  }
+  function liveHandoff(session: Session): LiveHandoff {
+    if (!session.state.conversation.length && !session.state.unfinishedRequests.length)
+      return { dialogue: [] };
     const draft = draftFacts(
       session,
       session.state.activeMessage?.text ?? session.state.userRequests.at(-1) ?? '',
@@ -923,7 +931,7 @@ export function textAssistantRoutes({
       Buffer.byteLength(JSON.stringify(draft)) <= 2500
         ? draft
         : { version, contentVersion, readyToSave, complete: false };
-    return [
+    const dialogue = [
       ...(session.state.summary
         ? [
             {
@@ -955,29 +963,29 @@ export function textAssistantRoutes({
               : text,
         }),
       ),
-      // Current draft is independently read by the server; a summary is never
-      // the authority for its state or for any new action.
-      {
-        role: 'assistant' as const,
-        text: JSON.stringify({
-          currentDraft,
-          unfinishedRequests: activeRequests(session),
-          pendingParts: contextParts(session)
-            .filter(({ status }) => status === 'waiting' || status === 'ready')
-            .map(({ id, revision, request, question, status }) => ({
-              id,
-              revision,
-              request,
-              question,
-              status,
-            })),
-          // Receipts can include both full before and after versions of objects.
-          // A voice restart needs the verified operation reference for lookup.
-          saveOperations: saveOperationReferences(session),
-          historical: true,
-        }),
-      },
     ];
+    // Current draft is independently read by the server; a summary is never
+    // the authority for its state or for any new action.
+    return {
+      dialogue,
+      currentState: JSON.stringify({
+        currentDraft,
+        unfinishedRequests: activeRequests(session),
+        pendingParts: contextParts(session)
+          .filter(({ status }) => status === 'waiting' || status === 'ready')
+          .map(({ id, revision, request, question, status }) => ({
+            id,
+            revision,
+            request,
+            question,
+            status,
+          })),
+        // Receipts can include both full before and after versions of objects.
+        // A voice restart needs the verified operation reference for lookup.
+        saveOperations: saveOperationReferences(session),
+        historical: true,
+      }),
+    };
   }
   function saveOperationReferences(session: Session) {
     return session.state.operations.map(
@@ -6046,9 +6054,9 @@ export function textAssistantRoutes({
      * Never expose it in status responses or write it to the household. */
     observationResetGeneration: (sessionId: string) =>
       sessions.get(sessionId)?.state.resetGeneration,
-    conversation: (sessionId: string) => {
+    liveHandoff: (sessionId: string) => {
       const session = sessions.get(sessionId);
-      return session ? providerConversation(session) : [];
+      return session ? liveHandoff(session) : { dialogue: [] };
     },
     /** Export eligibility belongs to the original conversation, never later saved consent. */
     consentVersion: (sessionId: string) => sessions.get(sessionId)?.state.consentTextVersion,

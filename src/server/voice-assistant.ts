@@ -21,6 +21,7 @@ import { voiceConversationModel } from './conversation-capacity.js';
 import type { ConversationConsentProvenance } from './conversation-consent.js';
 import {
   boundedLiveHistory,
+  type LiveHandoff,
   type LiveModelProfile,
   type LiveSideband,
   type LiveSidebandFactory,
@@ -79,7 +80,7 @@ export function voiceAssistantRoutes({
   liveUsage,
   recordUsage,
   interrupt,
-  conversation,
+  liveHandoff,
   transcript,
   contextUsage,
   prepareVoiceContext,
@@ -108,9 +109,7 @@ export function voiceAssistantRoutes({
   liveUsage?: LiveUsage;
   recordUsage?: LiveUsage;
   interrupt: (sessionId: string, revision?: number) => void;
-  conversation?: (
-    sessionId: string,
-  ) => { role: 'user' | 'assistant'; text: string; partial?: boolean }[];
+  liveHandoff?: (sessionId: string) => LiveHandoff;
   transcript?: (sessionId: string, role: 'user' | 'assistant', text: string) => void;
   contextUsage?: (
     sessionId: string,
@@ -544,11 +543,11 @@ export function voiceAssistantRoutes({
         return context.json({ error: 'assistant_context_summary_failed' }, 409);
       if (current.contextSummaryState === 'summarizing')
         return context.json({ error: 'assistant_busy' }, 409);
-      const retained = conversation?.(context.req.param('sessionId'));
+      const retained = liveHandoff?.(sessionId);
       let currentHistoryItem: InitialItem | undefined;
       if (retained) {
-        history = retained.length
-          ? retained.map(({ role, text, partial }) =>
+        history = retained.dialogue.length
+          ? retained.dialogue.map(({ role, text, partial }) =>
               role === 'user'
                 ? {
                     role,
@@ -562,10 +561,14 @@ export function voiceAssistantRoutes({
                   },
             )
           : undefined;
-        currentHistoryItem = history?.pop();
+        if (retained.currentState)
+          currentHistoryItem = {
+            role: 'assistant',
+            content: [{ type: 'output_text', text: retained.currentState }],
+            status: 'completed',
+          };
       }
       const initialHistory = boundedLiveHistory(history ?? [], currentHistoryItem);
-      if (!initialHistory) throw new MapError('voice_context_capacity', 409);
       stage = 'create';
       const liveSession: LiveCreateParams['session'] = {
         model: liveProfile.model,
@@ -925,8 +928,7 @@ export function voiceAssistantRoutes({
       report(usage);
       if (error instanceof MapError && error.code === conversationConsentRevoked)
         return context.json({ error: error.code }, 403);
-      const capacity = error instanceof MapError && error.code === 'voice_context_capacity';
-      const code = expired ? endReason : capacity ? error.code : startupErrorCode(error);
+      const code = expired ? endReason : startupErrorCode(error);
       console.error(
         JSON.stringify({
           event: 'voice_start_failed',
@@ -944,7 +946,7 @@ export function voiceAssistantRoutes({
       );
       return context.json(
         { error: code, voiceErrorGroup: voiceErrorGroup(code), diagnosticId: usage.attemptId },
-        expired ? 401 : capacity ? 409 : 503,
+        expired ? 401 : 503,
       );
     } finally {
       starting.delete(check);
