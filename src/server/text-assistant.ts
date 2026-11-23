@@ -2373,7 +2373,9 @@ export function textAssistantRoutes({
       .filter((part) => part.kind === 'information' && part.status === 'waiting')
       .reduce((text, part) => text.replaceAll(part.question, ''), session.state.modelReply ?? '');
     if (!reply.includes('?')) return false;
-    const { changes, objectTypes, relationshipTypes } = session.state.review;
+    // A verified save consumes the draft before the request is settled.
+    const { changes, objectTypes, relationshipTypes } =
+      session.state.receipt ?? session.state.review;
     const names = new Set(
       [...changes, ...(objectTypes ?? []), ...(relationshipTypes ?? [])].flatMap(
         ({ before, after }) => [before?.name, after?.name],
@@ -2381,7 +2383,7 @@ export function textAssistantRoutes({
     );
     // A question mark inside a quoted draft name is part of the reviewed data.
     return reply
-      .replace(/"[^"]*"|“[^”]*”|”[^”]*”|«[^»]*»/gu, (quote) =>
+      .replace(/"[^"]*"|'[^']*'|[“”][^”]*”|[‘’][^’]*’|«[^»]*»|»[^«»]*[«»]/gu, (quote) =>
         names.has(quote.slice(1, -1)) ? '' : quote,
       )
       .includes('?');

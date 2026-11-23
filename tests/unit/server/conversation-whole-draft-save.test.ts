@@ -30,6 +30,10 @@ afterEach(async () => {
   await app?.close();
 });
 
+function saveTool({ version, contentVersion }: TextAssistantView['review']) {
+  return [modelTool('save_draft', { version, contentVersion })];
+}
+
 test.each(['save tool', 'plain reply'])(
   'an explicit whole-draft save with a %s confirms the same saved group as history',
   { tags: ['technical'] },
@@ -39,9 +43,7 @@ test.each(['save tool', 'plain reply'])(
       const { draft } = JSON.parse(
         String(body.input.findLast((item) => item.role === 'user')?.content),
       );
-      return [
-        modelTool('save_draft', { version: draft.version, contentVersion: draft.contentVersion }),
-      ];
+      return saveTool(draft);
     });
     await setup(model);
     const reviewedVersion = session.review.version;
@@ -77,8 +79,10 @@ test('a quoted object name in a plain reply can contain a question mark', async 
   const waiting = await send('Spara hela utkastet.');
   expect(waiting.requiredNotice).toContain('Be om sparande igen');
   expect(waiting.receipt).toBeUndefined();
-  reply = `Jag har granskat objektet ”${name}”.`;
-  const saved = await send('Spara hela utkastet.');
+  reply = `Jag har granskat objektet ’${name}’.`;
+  const request = 'Spara hela utkastet nu.';
+  const saved = await send(request);
+  expect(saved.unfinishedRequests?.map((item) => item.text)).not.toContain(request);
   expect(saved.receipt).toBeDefined();
   expect((await map()).objects.find((item) => item.id === 'earlier')?.name).toBe(name);
 });
@@ -142,12 +146,7 @@ test.each(['save tool', 'plain reply'])(
           return [modelMessage('Den manuella rättelsen finns kvar osparad.')];
         if (response === 'plain reply' || lastToolResult(body)?.receipt)
           return [modelMessage('Jag kontrollerar sparandet.')];
-        return [
-          modelTool('save_draft', {
-            version: draft.version,
-            contentVersion: draft.contentVersion,
-          }),
-        ];
+        return saveTool(draft);
       },
       async (body) => {
         if (body.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
@@ -311,9 +310,7 @@ test('checker clarification retains its request identity through a rephrased ans
             },
           }),
         ];
-      return [
-        modelTool('save_draft', { version: draft.version, contentVersion: draft.contentVersion }),
-      ];
+      return saveTool(draft);
     },
     (body) => {
       const input = JSON.parse(String(body.input[0].content));
