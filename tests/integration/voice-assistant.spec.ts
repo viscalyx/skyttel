@@ -141,7 +141,8 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
     );
     await stop.click();
     const fragment = await prepared.evaluate(({ correction }) => correction);
-    if (!fragment) throw new Error('The first correction tone did not reach the outgoing connection');
+    if (!fragment)
+      throw new Error('The first correction tone did not reach the outgoing connection');
     live.emit(session, fragment);
     live.emit(session, {
       type: 'session.delegation.created',

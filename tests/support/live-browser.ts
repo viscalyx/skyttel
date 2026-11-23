@@ -373,7 +373,11 @@ declare global {
       microphoneLevel(): number;
       sessionMs(): number;
       armCorrection(button: Element): Promise<{
-        type: string; event_id: string; delta: string; start_ms: number; end_ms: number;
+        type: string;
+        event_id: string;
+        delta: string;
+        start_ms: number;
+        end_ms: number;
       } | null>;
       observeSpeaker(): Promise<
         () => {

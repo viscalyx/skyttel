@@ -691,7 +691,8 @@ export function voiceWork({
       // Input can reach the sideband before the browser's interrupt request.
       // Preserve fragments and a delegation for a correction already underway.
       const collection = collecting;
-      if (interruptedThroughMs !== undefined) interruptedThrough = Math.max(interruptedThrough, interruptedThroughMs);
+      if (interruptedThroughMs !== undefined)
+        interruptedThrough = Math.max(interruptedThrough, interruptedThroughMs);
       pending = pending.filter((item) => item.endMs > interruptedThrough);
       anchor = pending[0]?.anchor;
       cancel(rendered.revision);
