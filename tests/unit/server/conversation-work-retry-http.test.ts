@@ -527,7 +527,7 @@ test.each(['retry', 'abandon'] as const)(
 test.each([true, false])(
   'an unavailable save receipt lookup requires recovery before any unfinished explanation can resume: explanation=%s',
   async (explanation) => {
-    let lostOperationId: string | undefined;
+    let operationIdWithDroppedReply: string | undefined;
     const unavailableLookups = new Set<string>();
     const model = textModel(
       (body) => {
@@ -567,15 +567,15 @@ test.each([true, false])(
                 .json()
                 .catch(() => null)
             : null;
-        if (rpc?.params?.name === 'read_save_operation' && lostOperationId) {
+        if (rpc?.params?.name === 'read_save_operation' && operationIdWithDroppedReply) {
           unavailableLookups.add(rpc.params.arguments.operationId);
           throw new TypeError('Controlled save receipt lookup unavailable');
         }
         const response = await dispatch(incoming);
-        if (rpc?.params?.name === 'save_draft' && !lostOperationId) {
+        if (rpc?.params?.name === 'save_draft' && !operationIdWithDroppedReply) {
           const envelope = await response.clone().json();
           expect(envelope.result.isError).not.toBe(true);
-          lostOperationId = rpc.params.arguments.operationId;
+          operationIdWithDroppedReply = rpc.params.arguments.operationId;
           throw new TypeError('Controlled committed save response loss');
         }
         return response;
@@ -619,8 +619,8 @@ test.each([true, false])(
       })
       .toBe('completed');
     expect(view.phase).toBe('recovery');
-    expect(lostOperationId).toBeDefined();
-    expect(unavailableLookups).toEqual(new Set([lostOperationId]));
+    expect(operationIdWithDroppedReply).toBeDefined();
+    expect(unavailableLookups).toEqual(new Set([operationIdWithDroppedReply]));
     expect(view.receipt).toBeUndefined();
     expect(view.workFailure).toBeUndefined();
     expect(
@@ -628,7 +628,10 @@ test.each([true, false])(
     ).toBe(409);
     expect(model.requests).toHaveLength(1);
     const operation = (await (await browser.get(`${map}/operations`)).json()).operations[0];
-    expect(operation).toMatchObject({ status: 'succeeded', operationId: lostOperationId });
+    expect(operation).toMatchObject({
+      status: 'succeeded',
+      operationId: operationIdWithDroppedReply,
+    });
     const { history } = await (await browser.get(`${map}/history`)).json();
     expect(history).toEqual([operation.receipt]);
     const check = await post(`${endpoint}/recover`, { operationIds: [operation.operationId] });
