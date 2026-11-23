@@ -42,7 +42,7 @@ export function ConversationTranscript({
   useEffect(() => {
     const text: string[] = [];
     for (const row of rows) {
-      if (seen.current.has(row.id) || row.partial || row.voicePending) continue;
+      if (seen.current.has(row.id) || row.partial || row.voicePending || !row.text.trim()) continue;
       seen.current.add(row.id);
       if (row.role === 'assistant' && !row.voiced) text.push(`Skyttel: ${row.text}`);
     }
@@ -52,6 +52,7 @@ export function ConversationTranscript({
       setAnnouncement(({ count }) => ({ count: count + 1, text: text.join(' ') }));
     else if (!announce) setAnnouncement((value) => (value.text ? { ...value, text: '' } : value));
   }, [rows, working, announce, announceWorking]);
+  const visibleRows = rows.filter((row) => row.text.trim());
   return (
     <>
       <p
@@ -62,10 +63,10 @@ export function ConversationTranscript({
         <span key={announcement.count}>{announcement.text}</span>
       </p>
       <ol role="log" aria-live="off" aria-label="Samtalstext" className="conversation-transcript">
-        {!rows.length && !working && (
+        {!visibleRows.length && !working && (
           <li className="conversation-empty">Här visas det du och Skyttel säger och skriver.</li>
         )}
-        {rows.map((row) => (
+        {visibleRows.map((row) => (
           <li key={row.id} className={`conversation-row ${row.role}`}>
             <span className="visually-hidden">{row.role === 'user' ? 'Du: ' : 'Skyttel: '}</span>
             {row.text}

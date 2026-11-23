@@ -797,10 +797,11 @@ export function textAssistantRoutes({
       paused: session.state.paused,
       expiresAt: session.state.expiresAt,
       conversation: session.state.conversation.map(
-        ({ role, text, partial, notice, requestId }) => ({
+        ({ role, text, partial, utteranceStart, notice, requestId }) => ({
           role,
           text,
           partial,
+          utteranceStart,
           // Older retained conversations have no presentation marker. Match only
           // the same failed task's recorded notice, never arbitrary quoted text.
           notice:
@@ -907,7 +908,9 @@ export function textAssistantRoutes({
         instructions: `${session.execution.mcp.instructions}\n\n${textAssistantInstructions}`,
         tools: session.execution.mcp.tools,
         input: session.state.input,
-        dialogue: session.state.conversation.slice(session.state.contextOffset),
+        dialogue: session.state.conversation
+          .slice(session.state.contextOffset)
+          .map(modelTranscriptEntry),
       }),
     );
   }
@@ -1081,13 +1084,21 @@ export function textAssistantRoutes({
   }
   function contextConversation(session: Session) {
     const unfinished = new Set(activeRequests(session).map((request) => request.id));
-    return session.state.conversation.filter(
-      (entry, index) =>
-        index >= (session.state.scopeOffset ?? 0) &&
-        (index >= (session.state.summaryOffset ?? 0) ||
-          (entry.requestId !== undefined && unfinished.has(entry.requestId)) ||
-          (entry.partial && entry.requestId === undefined)),
-    );
+    return session.state.conversation
+      .filter(
+        (entry, index) =>
+          index >= (session.state.scopeOffset ?? 0) &&
+          (index >= (session.state.summaryOffset ?? 0) ||
+            (entry.requestId !== undefined && unfinished.has(entry.requestId)) ||
+            (entry.partial && entry.requestId === undefined)),
+      )
+      .map(modelTranscriptEntry);
+  }
+  function modelTranscriptEntry({
+    utteranceStart: _utteranceStart,
+    ...entry
+  }: ConversationState['conversation'][number]) {
+    return entry;
   }
   function completedDiscussion(session: Session, conversation = session.state.conversation) {
     const unfinished = new Set(session.state.unfinishedRequests.map((request) => request.id));
@@ -2958,7 +2969,9 @@ export function textAssistantRoutes({
       }
       let contentVersion = review.contentVersion;
       finishInterruptedInput(session);
-      const dialogue = session.state.conversation.slice(session.state.contextOffset);
+      const dialogue = session.state.conversation
+        .slice(session.state.contextOffset)
+        .map(modelTranscriptEntry);
       session.state.contextOffset = session.state.conversation.length;
       let turnStart = session.state.input.length;
       workContextStarted = true;
@@ -6094,11 +6107,21 @@ export function textAssistantRoutes({
           session.state.contextSummaryState = 'needed';
       }
     },
-    transcript: (sessionId: string, role: 'user' | 'assistant', text: string) => {
+    transcript: (
+      sessionId: string,
+      role: 'user' | 'assistant',
+      text: string,
+      utteranceStart: boolean,
+    ) => {
       const session = sessions.get(sessionId);
       if (session) {
         if (role === 'user' && text.trim()) session.state.expiresAt = now() + conversationLifetime;
-        appendConversation(session, { role, text, partial: true });
+        appendConversation(session, {
+          role,
+          text,
+          partial: true,
+          ...(utteranceStart ? { utteranceStart: true } : {}),
+        });
       }
     },
     // Interrupt current in-memory work synchronously. The normal HTTP cancel

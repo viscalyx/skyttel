@@ -24,6 +24,34 @@ import { useVoice, type Voice } from './use-voice.js';
 const deliveryUnavailableMessage =
   'Instruktionen skickades inte. Skyttel kunde inte öppna anslutningen för hela svaret. Texten finns kvar; försök igen när kontakten fungerar.';
 
+/** Rebuild display turns from retained provider fragments without changing their text. */
+function restoreConversationTranscript(
+  sessionId: string,
+  conversation: TextAssistantView['conversation'] = [],
+): TranscriptRow[] {
+  const rows: TranscriptRow[] = [];
+  let utterance: TranscriptRow | undefined;
+  for (const [index, row] of conversation.entries()) {
+    if (row.notice || !row.partial || row.utteranceStart || utterance?.role !== row.role)
+      utterance = undefined;
+    if (row.notice) continue;
+    if (utterance) {
+      utterance.text += row.text;
+      continue;
+    }
+    const entry = {
+      id: `restored-${sessionId}-${index}`,
+      role: row.role,
+      text: row.text,
+      partial: row.partial,
+      voicePending: false,
+    };
+    rows.push(entry);
+    if (row.partial) utterance = entry;
+  }
+  return rows;
+}
+
 function resetReplyId(view: Pick<TextAssistantView, 'id' | 'contextRevision'>) {
   return `new-${view.id}-${view.contextRevision ?? 0}`;
 }
@@ -311,13 +339,7 @@ export function useConversation({
           (next.completedReplies ?? []).map((reply) => [reply.id, reply.revision]),
         );
         setTranscript([
-          ...(next.conversation ?? [])
-            .filter((row) => !row.notice)
-            .map((row, index) => ({
-              ...row,
-              id: `restored-${next.id}-${index}`,
-              voicePending: false,
-            })),
+          ...restoreConversationTranscript(next.id, next.conversation),
           ...(next.queuedRequests ?? [])
             .filter(({ source }) => source !== 'voice')
             .map(({ id, text }) => ({

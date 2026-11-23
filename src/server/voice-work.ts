@@ -79,7 +79,7 @@ export function voiceWork({
   /** The conversation as the voice last saw it, and whether the voice has a task in progress. */
   update: (view: TextAssistantView, working: boolean) => void;
   failed: () => void;
-  transcript?: (role: Fragment['role'], text: string) => void;
+  transcript?: (role: Fragment['role'], text: string, utteranceStart: boolean) => void;
   response?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['response']) => void;
   refusal?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['refusal']) => void;
   delivered?: (value: { id: string; voiced: boolean }) => void;
@@ -90,6 +90,8 @@ export function voiceWork({
   ) => void;
 }) {
   let rendered = draftAnchor(initial);
+  let previousFragment: { role: Fragment['role']; endMs: number } | undefined;
+  let nextUserUtterance = false;
   let anchor: Anchor | undefined;
   let fragments: Fragment[] = [];
   let pending: (Fragment & {
@@ -690,7 +692,16 @@ export function voiceWork({
       start_ms: event.start_ms,
       end_ms: event.end_ms,
     });
-    transcript?.(role, event.delta);
+    if (event.delta) {
+      const utteranceStart =
+        !previousFragment ||
+        previousFragment.role !== role ||
+        event.start_ms - previousFragment.endMs >= speechSettleMs ||
+        (role === 'user' && nextUserUtterance);
+      transcript?.(role, event.delta, utteranceStart);
+      previousFragment = { role, endMs: event.end_ms };
+      if (role === 'user') nextUserUtterance = false;
+    }
     if (role === 'user') {
       if (event.end_ms <= interruptedThrough) return;
       if (event.delta.trim()) refusal?.(undefined);
@@ -782,6 +793,7 @@ export function voiceWork({
     anchor = undefined;
     input?.(false);
     if (text.trim()) {
+      nextUserUtterance = true;
       for (const item of selected)
         consumedInputThroughMs = Math.max(consumedInputThroughMs, item.endMs);
       precedingResponse = undefined;

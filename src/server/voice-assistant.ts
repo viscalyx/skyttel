@@ -110,7 +110,12 @@ export function voiceAssistantRoutes({
   recordUsage?: LiveUsage;
   interrupt: (sessionId: string, revision?: number) => void;
   liveHandoff?: (sessionId: string) => LiveHandoff;
-  transcript?: (sessionId: string, role: 'user' | 'assistant', text: string) => void;
+  transcript?: (
+    sessionId: string,
+    role: 'user' | 'assistant',
+    text: string,
+    utteranceStart: boolean,
+  ) => void;
   contextUsage?: (
     sessionId: string,
     contextRevision: number,
@@ -791,7 +796,8 @@ export function voiceAssistantRoutes({
           voice.view.replyDelivery ??= [];
           voice.view.replyDelivery.push(value);
         },
-        transcript: (role, text) => transcript?.(context.req.param('sessionId'), role, text),
+        transcript: (role, text, utteranceStart) =>
+          transcript?.(sessionId, role, text, utteranceStart),
         input: (pending, text) => voiceInput?.(context.req.param('sessionId'), pending, text),
         interrupt: (revision) => interrupt(context.req.param('sessionId'), revision),
         request: async (action, body, signal, observation) => {

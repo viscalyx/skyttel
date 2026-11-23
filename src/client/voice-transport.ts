@@ -131,6 +131,7 @@ export function createVoiceTransport(
   let userAt = 0;
   let assistantSince = false;
   let assistantBoundary = false;
+  let assistantEnd: number | undefined;
   let assistantAt = 0;
   const turnGap = 2000;
   const audioTime = (value: number) => Number.isFinite(value) && value >= 0;
@@ -161,12 +162,16 @@ export function createVoiceTransport(
         finish(userRow);
         userRow = undefined;
       }
-      const gap =
+      const mediaGap =
         userEnd !== undefined && audioTime(event.start_ms) && event.start_ms >= userEnd
           ? event.start_ms - userEnd
-          : now - userAt;
+          : undefined;
       finish(assistantRow);
-      if (!userRow || (assistantSince && gap >= turnGap)) {
+      if (
+        !userRow ||
+        (mediaGap ?? 0) >= turnGap ||
+        (assistantSince && (mediaGap ?? now - userAt) >= turnGap)
+      ) {
         finish(userRow);
         userRow = { id: crypto.randomUUID(), role, text: '' };
         assistantRow = undefined;
@@ -186,7 +191,13 @@ export function createVoiceTransport(
       observePosition(event.start_ms, now);
       assistantSince = true;
       finish(userRow);
-      if (!assistantRow || (assistantBoundary && now - assistantAt >= turnGap)) {
+      if (
+        !assistantRow ||
+        (assistantEnd !== undefined &&
+          audioTime(event.start_ms) &&
+          event.start_ms - assistantEnd >= turnGap) ||
+        (assistantBoundary && now - assistantAt >= turnGap)
+      ) {
         finish(assistantRow);
         assistantRow = { id: crypto.randomUUID(), role, text: '', voiced: true };
       }
@@ -194,6 +205,7 @@ export function createVoiceTransport(
       assistantRow.partial = true;
       assistantBoundary = false;
       assistantAt = now;
+      assistantEnd = audioTime(event.end_ms) ? event.end_ms : undefined;
       callbacks.onTranscript?.({ ...assistantRow });
     }
   }
