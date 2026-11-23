@@ -21,7 +21,11 @@ const refusals = {
     message:
       'Anslutningen för hela svaret försvann. Uppdraget startade inte. Säg uppdraget igen när anslutningen fungerar.',
   },
-  assistant_draft_changed: { status: 409 },
+  assistant_draft_changed: {
+    status: 409,
+    message:
+      'Utkastet eller kartan har ändrats. Säg hela uppdraget igen utifrån det aktuella utkastet.',
+  },
   assistant_pending_part_changed: { status: 409 },
   assistant_turn_changed: {
     status: 409,

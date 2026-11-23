@@ -454,7 +454,8 @@ export function textAssistantRoutes({
     for (const candidate of sessions.values())
       if (draftKey(candidate) === draftKey(session))
         for (const message of candidate.state.queue)
-          if (message.draftVersion === before) message.draftVersion = after;
+          if (!message.continuedVoiceRead && message.draftVersion === before)
+            message.draftVersion = after;
     const predecessor = session.state.activeMessage;
     if (!predecessor) return;
     for (const preparation of preparations)
@@ -2682,6 +2683,8 @@ export function textAssistantRoutes({
           throw outcome.error;
         }
         scope = outcome.scope;
+        if (session.state.activeMessage?.continuedVoiceRead && scope.mode !== 'read')
+          throw new MapError('assistant_voice_restate_edit', 409);
         if (scope.mode === 'read') {
           session.state.saveIntent = undefined;
           originalSaveIntent = false;
@@ -4359,6 +4362,7 @@ export function textAssistantRoutes({
     if (
       !message.saveSuperseded &&
       !message.saveScopeChanged &&
+      !message.continuedVoiceRead &&
       requestsSave(message.text) &&
       !withdrawsSave(message.text)
     ) {
@@ -4448,7 +4452,8 @@ export function textAssistantRoutes({
           throw new MapError('content_conflict', 409);
         if (current.version !== message.draftVersion) invalidateQueuedSaves(session);
         if (
-          ((requestsSave(message.text) && !message.saveSuperseded && !message.saveScopeChanged) ||
+          (message.continuedVoiceRead ||
+            (requestsSave(message.text) && !message.saveSuperseded && !message.saveScopeChanged) ||
             (!message.resetDiscard && conversationCommand(message.text)?.discard)) &&
           current.version !== message.draftVersion
         )
@@ -5342,6 +5347,7 @@ export function textAssistantRoutes({
       body.text.length > 4000 ||
       (body.restate !== undefined && typeof body.restate !== 'boolean') ||
       (body.queue !== undefined && typeof body.queue !== 'boolean') ||
+      (body.continuedVoiceRead !== undefined && typeof body.continuedVoiceRead !== 'boolean') ||
       (body.voiceContext !== undefined &&
         (typeof body.voiceContext !== 'string' || body.voiceContext.length > 8000)) ||
       !Number.isSafeInteger(body.draftVersion) ||
@@ -5364,6 +5370,7 @@ export function textAssistantRoutes({
           restate: body.restate === true,
           voiceContext: body.voiceContext,
           answerTo: answerTo.data,
+          ...(body.continuedVoiceRead === true ? { continuedVoiceRead: true } : {}),
         }),
       )
       .digest('hex');
@@ -5433,11 +5440,24 @@ export function textAssistantRoutes({
     if (answerTo.data) session.execution.parts.validateReply(answerTo.data);
     if (
       body.contentVersion !== current.contentVersion ||
+      (body.continuedVoiceRead === true &&
+        (body.revision !== session.state.revision ||
+          body.draftVersion !== current.version ||
+          session.state.phase !== 'ready')) ||
       (session.state.phase !== 'working' && draftVersion !== current.version)
     )
       return context.json({ error: 'assistant_draft_changed' }, 409);
     if (context.req.raw.signal.aborted) return context.json({ error: 'assistant_canceled' }, 409);
     const control = conversationCommand(body.text);
+    if (
+      body.continuedVoiceRead === true &&
+      (body.voiceContext === undefined ||
+        body.restate === true ||
+        answerTo.data ||
+        control ||
+        requestsSave(body.text, 'clarification'))
+    )
+      return context.json({ error: 'assistant_draft_changed' }, 409);
     if (control?.reset) {
       await startOver(
         session,
@@ -5475,6 +5495,7 @@ export function textAssistantRoutes({
           ? (preparation.original?.reference ?? null)
           : undefined,
       voice: body.voiceContext !== undefined,
+      continuedVoiceRead: body.continuedVoiceRead === true || undefined,
       answerTo: answerTo.data,
       contentVersion: current.contentVersion,
       draftVersion,

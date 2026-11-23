@@ -11,6 +11,8 @@ export type ConversationMessage = Partial<ConversationConsentProvenance> & {
   id: string;
   text: string;
   voice: boolean;
+  /** Speech that continued across a checked own proposal admits only a read. */
+  continuedVoiceRead?: boolean;
   /** An explicit continuation keeps its original instruction and identity. */
   continuation?: boolean;
   /** Verified earlier save by this exact request; never new saving authority. */

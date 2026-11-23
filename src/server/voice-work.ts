@@ -19,7 +19,28 @@ type EarlyDelegation = Delegation & {
   noticeTimer?: ReturnType<typeof setTimeout>;
 };
 type VoiceCompletionView = TextAssistantView & Pick<ConversationReply, 'failed'>;
-type VoiceDispatch = { controller: AbortController; requestId?: string; revision?: number };
+type VoiceDispatch = {
+  controller: AbortController;
+  requestId?: string;
+  revision?: number;
+  draftAdvance?: { from: Anchor; to: Anchor; inputVersion: number };
+};
+
+function draftAnchor(view: TextAssistantView): Anchor {
+  return {
+    revision: view.revision,
+    draftVersion: view.review.version,
+    contentVersion: view.review.contentVersion,
+  };
+}
+
+function sameDraftAnchor(left: Anchor, right: Anchor) {
+  return (
+    left.revision === right.revision &&
+    left.draftVersion === right.draftVersion &&
+    left.contentVersion === right.contentVersion
+  );
+}
 
 const speechSettleMs = 2000;
 
@@ -67,17 +88,14 @@ export function voiceWork({
     data: unknown,
   ) => void;
 }) {
-  let rendered: Anchor = {
-    revision: initial.revision,
-    draftVersion: initial.review.version,
-    contentVersion: initial.review.contentVersion,
-  };
+  let rendered = draftAnchor(initial);
   let anchor: Anchor | undefined;
   let fragments: Fragment[] = [];
   let pending: (Fragment & {
     inputVersion: number;
     receivedAt: number;
     anchor: Anchor;
+    predecessor?: VoiceDispatch;
     answerTo?: PendingPartReference[];
   })[] = [];
   let generation = 0;
@@ -350,6 +368,7 @@ export function voiceWork({
     context: string,
     task: number,
     answerTo?: PendingPartReference[],
+    continuedVoiceRead?: boolean,
   ) {
     const acceptedInput = inputVersion;
     let requestId: string | undefined;
@@ -430,6 +449,11 @@ export function voiceWork({
         expected = { ...expected, revision: canceled.view.revision };
       let view = await request();
       if (!current()) return;
+      if (
+        continuedVoiceRead &&
+        (view.phase !== 'ready' || !sameDraftAnchor(expected, draftAnchor(view)))
+      )
+        throw new VoiceMessageRefusal('assistant_draft_changed');
       if (answerTo) {
         if (
           (view.contextRevision ?? 0) !== (initial.contextRevision ?? 0) ||
@@ -463,6 +487,7 @@ export function voiceWork({
         }
       } else {
         const controller = new AbortController();
+        const from = draftAnchor(view);
         requestId = randomUUID();
         dispatch = {
           controller,
@@ -480,6 +505,7 @@ export function voiceWork({
             text,
             voiceContext: context,
             answerTo,
+            continuedVoiceRead,
           },
           controller.signal,
         );
@@ -506,6 +532,19 @@ export function voiceWork({
           // voice. The voice no longer works with it and says nothing about it.
           if (current()) release(view);
           return;
+        }
+        if (
+          dispatching === dispatch &&
+          view.taskStatus === 'completed' &&
+          view.phase === 'ready' &&
+          !view.error &&
+          !view.receipt &&
+          view.result?.kind === 'draft' &&
+          view.result.changes?.length &&
+          view.review.contentVersion === from.contentVersion &&
+          view.review.version === from.draftVersion + 1
+        ) {
+          dispatch.draftAdvance = { from, to: draftAnchor(view), inputVersion };
         }
       }
       if (!current()) return;
@@ -635,6 +674,7 @@ export function voiceWork({
         inputVersion,
         receivedAt: lastInputAt,
         anchor: { ...rendered },
+        predecessor: dispatching,
         answerTo: waitingParts,
       });
       if (pending.map((item) => item.text).join('').length > 4000) {
@@ -685,8 +725,25 @@ export function voiceWork({
       ? pending.filter((item) => item.inputVersion > questionInputVersion)
       : pending;
     const text = selected.map((item) => item.text).join('');
-    const expected = delegation ? anchor : selected[0]?.anchor;
+    let expected = delegation ? anchor : selected[0]?.anchor;
     const answerTo = selected[0]?.answerTo?.length ? selected[0].answerTo : undefined;
+    const advance = selected[0]?.predecessor?.draftAdvance;
+    // A continued utterance can follow one checked proposal of its own voice.
+    // Its first fragment must precede that commit and fresh audio must follow it.
+    // A browser poll must have confirmed the new view before collection ends.
+    const continuedVoiceRead = Boolean(
+      delegation &&
+        !answerTo &&
+        expected &&
+        advance &&
+        advance.from.contentVersion === expected.contentVersion &&
+        advance.from.draftVersion === expected.draftVersion &&
+        (expected.revision === advance.from.revision ||
+          expected.revision === advance.to.revision) &&
+        sameDraftAnchor(rendered, advance.to) &&
+        selected.some((part) => part.inputVersion > advance.inputVersion && part.text.trim()),
+    );
+    if (continuedVoiceRead && advance) expected = advance.to;
     const id = delegation?.id ?? null;
     pending = [];
     anchor = undefined;
@@ -706,7 +763,15 @@ export function voiceWork({
     if (text.trim() && expected) {
       automaticReplyConsumed = id === null;
       commentary.working(id);
-      void execute(id, text, expected, JSON.stringify(fragments), task, answerTo);
+      void execute(
+        id,
+        text,
+        expected,
+        JSON.stringify(fragments),
+        task,
+        answerTo,
+        continuedVoiceRead || undefined,
+      );
     }
   }
   channel.on('session.input_transcript.delta', (event) => fragment('user', event));

@@ -16,7 +16,13 @@ import {
   speak,
   voiceAnswerParts,
 } from '../../support/live-provider.js';
-import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
+import {
+  lastToolResult,
+  modelMessage,
+  modelTool,
+  readOnlyScope,
+  textModel,
+} from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
 vi.setConfig({ expect: { poll: { timeout: 5000 } } });
@@ -576,6 +582,137 @@ test('new speech can supersede a spoken reply without keeping its finished draft
     finish();
   }
 });
+
+test.each(['read', 'external edit', 'spoken edit', 'save'])(
+  'a spoken follow-up across a checked proposal preserves its authority: %s',
+  { tags: ['technical'], timeout: 15_000 },
+  async (followUp) => {
+    let finish: () => void = () => {};
+    const held = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    let typeId: string;
+    const initialRequest = 'Lägg till Blå cykel i mitt utkast.';
+    const read = 'Var finns Blå cykel?';
+    const edit = 'Lägg till en ny lampa.';
+    const model = textModel(
+      async (body) => {
+        const turn = JSON.parse(
+          String(body.input.findLast(({ role }) => role === 'user')?.content),
+        );
+        if (turn.message === read) return [modelMessage('Blå cykel ligger i ditt utkast.')];
+        if (turn.message === initialRequest) await held;
+        const first = turn.message === initialRequest;
+        return [
+          modelTool('submit_changes', {
+            version: turn.draft.version,
+            contentVersion: turn.draft.contentVersion,
+            completion: 'draft',
+            operations: [
+              {
+                name: 'propose_object',
+                arguments: {
+                  id: first ? 'new-bike' : 'new-lamp',
+                  baseRevision: null,
+                  value: { typeId, name: first ? 'Blå cykel' : 'Ny lampa' },
+                },
+              },
+            ],
+          }),
+        ];
+      },
+      (body) => {
+        if (!body.instructions.startsWith('SKYTTEL_TURN_SCOPE'))
+          return [modelMessage('{"decision":"allow","complete":true,"fulfillsRequest":true}')];
+        const { current } = JSON.parse(String(body.input[0].content));
+        return current === read
+          ? readOnlyScope()
+          : [
+              modelMessage(
+                JSON.stringify({ mode: 'work', request: current, responseRequired: false }),
+              ),
+            ];
+      },
+    );
+    await setup(model.provider);
+    const before = await readMap();
+    typeId = before.types[0].id;
+    await start();
+    const fragment = (delta: string, startMs: number) =>
+      live.emit(providerId, {
+        type: 'session.input_transcript.delta',
+        event_id: crypto.randomUUID(),
+        delta,
+        start_ms: startMs,
+        end_ms: startMs + 100,
+      });
+    try {
+      speak(live, initialRequest);
+      await expect.poll(async () => (await poll()).voice.phase).toBe('working');
+      const [first, rest] =
+        followUp === 'save'
+          ? ['Spara ', 'hela utkastet.']
+          : followUp === 'spoken edit'
+            ? ['Lägg till ', 'en ny lampa.']
+            : ['Var finns ', 'Blå cykel?'];
+      fragment(first, 1000);
+      finish();
+      await expect.poll(async () => (await poll()).voice.phase).toBe('listening');
+      if (followUp === 'external edit') {
+        const { draft } = await readMap();
+        const changed = await post('map/draft', {
+          version: draft.version,
+          id: 'outside-voice',
+          baseRevision: null,
+          value: { typeId, name: 'Svart cykel' },
+        });
+        expect(changed.status(), await changed.text()).toBe(200);
+      }
+      await poll();
+      fragment(rest, 2000);
+      live.emit(providerId, {
+        type: 'session.delegation.created',
+        offset_ms: 2100,
+        delegation: { id: 'follow-up', target: 'client' },
+      });
+      if (followUp === 'read') {
+        await expect
+          .poll(async () => (await poll()).voice.response?.text)
+          .toContain('Blå cykel ligger i ditt utkast.');
+        expect(model.requests).toHaveLength(2);
+        const turn = JSON.parse(
+          String(model.requests[1].input.findLast(({ role }) => role === 'user')?.content),
+        );
+        expect(turn).toMatchObject({ message: read });
+      } else {
+        await expect
+          .poll(async () => {
+            const { voice } = await poll();
+            return voice.refusal?.text ?? voice.response?.text;
+          })
+          .toContain('Säg hela uppdraget igen');
+        expect(model.requests).toHaveLength(1);
+        expect((await readMap()).draft.changes.map(({ id }) => id)).not.toContain('new-lamp');
+        if (followUp === 'spoken edit') {
+          speak(live, edit, 4000);
+          await expect
+            .poll(async () => (await readMap()).draft.changes.map(({ id }) => id))
+            .toContain('new-lamp');
+          expect(model.requests).toHaveLength(2);
+        }
+      }
+      const current = await readMap();
+      expect(current.draft.changes.map(({ id }) => id)).toContain('new-bike');
+      expect(current.objects).toEqual(before.objects);
+      const final = await poll();
+      expect(final.assistant.operations).toEqual([]);
+      expect(final.assistant.saving).toBe(false);
+      expect(final.assistant.phase).not.toBe('recovery');
+    } finally {
+      finish();
+    }
+  },
+);
 
 test.each([Number.NaN, 7])(
   'external usage %s at close cannot reduce checked voice usage or claim a finalized charge',
