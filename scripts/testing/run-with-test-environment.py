@@ -4,11 +4,33 @@ import argparse
 import fcntl
 from html import escape
 import json
+import math
 import os
 from pathlib import Path
 import signal
 import subprocess
 import sys
+import time
+
+
+def acquire_lock(lock, wait_seconds):
+    deadline = time.monotonic() + wait_seconds
+    reported = False
+    while True:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return True
+        except BlockingIOError:
+            if not reported:
+                owner = lock.read().strip() or "another build or test process"
+                action = (f"Waiting up to {wait_seconds:g}s." if wait_seconds
+                          else "Retry after it finishes.")
+                print(f"Skyttel test lock is busy: {owner}. {action}", file=sys.stderr)
+                reported = True
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return False
+            time.sleep(min(0.1, remaining))
 
 
 def run(command, environment, descriptor):
@@ -36,11 +58,16 @@ def run(command, environment, descriptor):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--wait-seconds", type=float,
+                        default=os.environ.get("SKYTTEL_TEST_LOCK_WAIT_SECONDS", "0"),
+                        help="maximum lock wait (default: SKYTTEL_TEST_LOCK_WAIT_SECONDS or 0)")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--ci-fonts", action="store_true")
     mode.add_argument("--prepare", action="store_true")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    if not math.isfinite(args.wait_seconds) or args.wait_seconds < 0:
+        parser.error("lock wait must be a finite, nonnegative number of seconds")
     if args.prepare and args.command:
         parser.error("--prepare does not accept a child command")
     if not args.prepare and not args.command:
@@ -52,11 +79,7 @@ def main():
     )
     descriptor = os.open(lock_path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     with os.fdopen(descriptor, "r+") as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            owner = lock.read().strip() or "another build or test process"
-            print(f"Skyttel test lock is busy: {owner}. Retry after it finishes.", file=sys.stderr)
+        if not acquire_lock(lock, args.wait_seconds):
             return 75
 
         lock.seek(0)

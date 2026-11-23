@@ -14,9 +14,12 @@ workflow gate tests run one file at a time. This reduces resource contention
 at the cost of longer test runs.
 
 Dependency preparation, builds and verification commands share an
-operating-system lock across the user's worktrees. A second command exits
-with status 75 and identifies the
-active command; rerun it after that command finishes. The lock is released
+operating-system lock across the user's worktrees. By default a competing
+command identifies the owner and exits with status 75. To wait for up to
+five minutes, run `SKYTTEL_TEST_LOCK_WAIT_SECONDS=300 npm run typecheck`.
+The same variable works with other verification and preparation commands.
+The runner reports the owner once, starts the command when it acquires the
+lock, and exits with status 75 if the wait expires. The lock is released
 when the process exits, including after interruption. Use the npm scripts
 instead of launching test runners directly. These commands require Python 3
 on Linux or macOS; Python is included in the devcontainer.
@@ -28,6 +31,18 @@ that checkout. The expensive child command has not started. Verification
 never repairs dependencies automatically. Test assertions and coverage failures
 keep their child exit status; interrupted or incomplete runs are not passes,
 and partial coverage is not evidence of a coverage regression.
+
+## Check staged files before committing
+
+Enable the repository's pre-commit hook once per clone with
+`git config --local core.hooksPath .githooks`. If you use a custom hooks
+directory, call `.githooks/pre-commit` from its existing pre-commit hook.
+Run `git hook run pre-commit` to check your index before committing.
+
+The hook runs the checkout's Biome against the staged files and staged
+configuration. For a partially staged file, fix the reported lines and stage
+the intended changes again. The hook leaves the index and working files as
+they are.
 
 ## Model evaluation history
 
