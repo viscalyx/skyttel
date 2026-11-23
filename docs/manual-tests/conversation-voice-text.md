@@ -243,10 +243,10 @@ resurser separat. Utför arbetsflödet en gång.
   väntar på sin tur. Öppnad textvy upprepar inte historiska svar. Ingen kontroll
   får fokus av att ett svar kommer.
 
-### RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i kartan
+### RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto för cykeln
 
 **Syfte:** Följ ett granskat cykelförslag från röst till text. Kontrollera
-att bara ett bekräftat sparande visas i kartan och ändringshistoriken.
+hur kartan skiljer förslaget från ett bekräftat sparande i historiken.
 
 **Användare:** Alex.
 
@@ -301,13 +301,15 @@ resurser separat. Utför arbetsflödet en gång.
 3. Öppna **Visa utkastet** och läs **Utkastet är tomt.**. Öppna
    **Rapporter → Ändringshistorik** och läs **Inga genomförda sparanden.**.
    Välj **Tillbaka till arbetet**.
-4. Säg **Föreslå Alex blå cykel av typen Fordon.** Öppna utkastet och
-   granska förslaget. Stäng av mikrofonen och skicka **Vilket fordon finns i
-   mitt utkast?** Läs cykelns namn i svaret. Förslaget finns kvar.
+4. Säg **Föreslå Alex blå cykel av typen Fordon.** Öppna utkastet och välj
+   **Visa förslaget: Alex blå cykel**. Läs typen **Fordon**, stäng dialogen
+   och stäng av mikrofonen. Skicka **Vilket fordon finns i mitt utkast?**
+   Läs cykelns namn i svaret. Förslaget finns kvar.
 5. Skicka **Spara hela utkastet.** Tryck på **Escape** i meddelandefältet
    medan Skyttel arbetar.
    Skicka **Jag menade den blå cykeln.** Läs svaret och kontrollera att
-   cykeln finns kvar i utkastet och att ändringshistoriken är tom.
+   cykeln finns kvar i utkastet. Kartan visar fortfarande cykeln med
+   förslagets plustecken och ändringshistoriken är tom.
 6. Välj **Tillbaka till arbetet**, granska cykeln igen och skicka
    **Spara hela utkastet.** Läs sparbekräftelsen och kontrollera utkastet,
    cykeln i kartan och ändringshistoriken utan att ladda om sidan.

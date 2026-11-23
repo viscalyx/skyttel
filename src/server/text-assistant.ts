@@ -2368,11 +2368,34 @@ export function textAssistantRoutes({
     }
   }
   function hasUnregisteredQuestion(session: Session) {
-    return session.execution.parts
+    const reply = session.execution.parts
       .read()
       .filter((part) => part.kind === 'information' && part.status === 'waiting')
-      .reduce((reply, part) => reply.replaceAll(part.question, ''), session.state.modelReply ?? '')
+      .reduce((text, part) => text.replaceAll(part.question, ''), session.state.modelReply ?? '');
+    if (!reply.includes('?')) return false;
+    const { changes, objectTypes, relationshipTypes } = session.state.review;
+    const names = new Set(
+      [...changes, ...(objectTypes ?? []), ...(relationshipTypes ?? [])].flatMap(
+        ({ before, after }) => [before?.name, after?.name],
+      ),
+    );
+    // A question mark inside a quoted draft name is part of the reviewed data.
+    return reply
+      .replace(/"[^"]*"|“[^”]*”|”[^”]*”|«[^»]*»/gu, (quote) =>
+        names.has(quote.slice(1, -1)) ? '' : quote,
+      )
       .includes('?');
+  }
+  function canCompleteSave(session: Session) {
+    return (
+      session.state.phase === 'ready' &&
+      session.state.saveIntent &&
+      session.state.contextSummaryState !== 'failed' &&
+      !session.state.receipt &&
+      !session.state.pendingSave &&
+      !session.execution.parts.blocked() &&
+      !hasUnregisteredQuestion(session)
+    );
   }
   async function run(
     session: Session,
@@ -2803,7 +2826,7 @@ export function textAssistantRoutes({
       // same reviewed version, save authority and server-owned operation.
       const executeSave = async (
         name: 'prepare_save' | 'save_draft',
-        source: { callId: string; continueResponse?: boolean } | 'completion',
+        runnerCall?: { callId: string; continueResponse?: boolean },
       ) => {
         const saveGuard = currentSaveGuard(session, serial, guard);
         const current: TextAssistantReview = await call(session, 'read_my_draft', {}, saveGuard);
@@ -2815,7 +2838,7 @@ export function textAssistantRoutes({
           throw new MapError('assistant_draft_changed', 409);
         if (current.conflicts.length) throw new MapError('assistant_conflict', 409);
         session.state.review = current;
-        if (source === 'completion' && !draftChangeCount(current)) {
+        if (!runnerCall && !draftChangeCount(current)) {
           session.state.saveIntent = undefined;
           return;
         }
@@ -2826,8 +2849,7 @@ export function textAssistantRoutes({
           version,
           contentVersion,
           messageId: session.state.activeMessage?.id,
-          finishesRequest:
-            wholeRequestComplete && (source === 'completion' || !source.continueResponse),
+          finishesRequest: wholeRequestComplete && !runnerCall?.continueResponse,
         };
         const pending = session.state.pendingSave;
         if (observe) saveWork = { operation: { ...pending }, attempts: attempts.slice() };
@@ -2837,20 +2859,13 @@ export function textAssistantRoutes({
           contentVersion: pending.contentVersion,
         };
         if (name === 'save_draft') await call(session, 'prepare_save', args, saveGuard);
-        const value = await call(
-          session,
-          name,
-          args,
-          saveGuard,
-          'shared',
-          source === 'completion' ? undefined : source.callId,
-        );
+        const value = await call(session, name, args, saveGuard, 'shared', runnerCall?.callId);
         guard();
         if (name === 'save_draft') {
           verifyReceipt(session, value.receipt, pending);
           for (const attempt of attempts) attempt.verified = true;
           saved(session, value.receipt, true);
-          if (source !== 'completion' && (!wholeRequestComplete || source.continueResponse))
+          if (runnerCall && (!wholeRequestComplete || runnerCall.continueResponse))
             session.state.phase = 'working';
           await refreshConfirmed(session, guard);
           originalSaveIntent = false;
@@ -3579,17 +3594,13 @@ export function textAssistantRoutes({
         nextRound,
       );
       guard();
-      if (
-        admitted &&
-        session.state.phase === 'ready' &&
-        session.state.saveIntent &&
-        view(session).contextSummaryState !== 'failed' &&
-        !session.state.receipt &&
-        !session.state.pendingSave &&
-        !hasUnregisteredQuestion(session) &&
-        (await saveReady(session, serial, guard))
-      )
-        await executeSave('save_draft', 'completion');
+      if (admitted && canCompleteSave(session)) {
+        // Keep Stop available during the voice quiet period and the final check.
+        session.state.phase = 'working';
+        if (await saveReady(session, serial, guard)) await executeSave('save_draft');
+        guard();
+        session.state.phase = 'ready';
+      }
     } catch (error) {
       if (!admitted && workContextStarted && session.state.revision === revision)
         rebuildContext(session);

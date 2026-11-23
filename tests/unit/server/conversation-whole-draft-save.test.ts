@@ -64,6 +64,25 @@ test.each(['save tool', 'plain reply'])(
   },
 );
 
+test('a quoted object name in a plain reply can contain a question mark', async () => {
+  const name = 'Var är cykeln?';
+  let reply = `Jag har granskat objektet ”${name}”. Ska även lampan sparas?`;
+  await setup(textModel(() => [modelMessage(reply)]));
+  const draft = await map();
+  await stage('draft', {
+    id: 'earlier',
+    baseRevision: null,
+    value: { typeId: draft.types[0].id, name },
+  });
+  const waiting = await send('Spara hela utkastet.');
+  expect(waiting.requiredNotice).toContain('Be om sparande igen');
+  expect(waiting.receipt).toBeUndefined();
+  reply = `Jag har granskat objektet ”${name}”.`;
+  const saved = await send('Spara hela utkastet.');
+  expect(saved.receipt).toBeDefined();
+  expect((await map()).objects.find((item) => item.id === 'earlier')?.name).toBe(name);
+});
+
 test('a manual draft change during a plain save response requires a fresh explicit save request', {
   tags: ['technical'],
 }, async () => {
@@ -150,6 +169,7 @@ test.each(['save tool', 'plain reply'])(
     await setup(model);
     const finishing = send('Spara hela utkastet.');
     await expect.poll(() => checking).toBe(true);
+    const phaseDuringCheck = (await read()).phase;
     await stage('draft', {
       id: 'untouched',
       baseRevision: null,
@@ -160,6 +180,7 @@ test.each(['save tool', 'plain reply'])(
     });
     release();
     const rejected = await finishing;
+    expect(phaseDuringCheck).toBe('working');
     expect(rejected.receipt).toBeUndefined();
     expect(rejected.reply).toContain('underlaget och eventuella konflikter behöver kontrolleras');
     expect(rejected.operations).toEqual([

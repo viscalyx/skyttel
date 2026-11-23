@@ -34,7 +34,13 @@ import {
   voiceAnswerParts,
 } from '../support/live-provider.js';
 import { expect, test } from '../support/test.js';
-import { type ModelRequest, modelMessage, textModel } from '../support/text-model.js';
+import {
+  lastToolResult,
+  type ModelRequest,
+  modelMessage,
+  modelTool,
+  textModel,
+} from '../support/text-model.js';
 
 const region = (page: Page) =>
   page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
@@ -206,11 +212,14 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
 }) => {
   const vehicleQuestion = 'Vilket fordon finns i mitt utkast?';
   const { app, held, live, commentary, mapPath } = await arrange(page, (request) => {
-    const { message, draft } = JSON.parse(
+    const { message } = JSON.parse(
       String(request.input.findLast((item) => item.role === 'user')?.content),
     );
-    if (message === vehicleQuestion)
-      return [modelMessage(`I utkastet finns ${draft.changes[0]?.after?.name}.`)];
+    if (message === vehicleQuestion) {
+      const review = lastToolResult(request);
+      if (!review?.changes) return [modelTool('read_my_draft', {})];
+      return [modelMessage(`I utkastet finns ${review.changes[0]?.after?.name}.`)];
+    }
     return bikeDraftReply(request);
   });
   const nextReply = async () => {
@@ -252,10 +261,16 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
 
     speak(live, proposeBike, 1000);
     await expectVoiceRelease(live, bike);
-    await turnMicrophoneOff(page);
     const draft = await openConversationDraft(page);
     const proposal = draft.getByRole('button', { name: `Visa förslaget: ${bike}`, exact: true });
-    await expect(proposal).toBeVisible();
+    const reviewBike = async () => {
+      await proposal.click();
+      await expect(page.getByRole('dialog', { name: bike, exact: true })).toContainText('Fordon');
+      await closeSupportDialog(page, bike);
+    };
+    const mapBike = page.getByRole('button', { name: `Välj objekt: ${bike}`, exact: true });
+    await reviewBike();
+    await turnMicrophoneOff(page);
     await send(page, vehicleQuestion);
     await expect(log(page)).toContainText(`I utkastet finns ${bike}.`);
     await expect(proposal).toBeVisible();
@@ -263,25 +278,28 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
     await send(page, 'Spara hela utkastet.');
     const canceledReply = await nextReply();
     await field(page).press('Escape');
+    await expect(region(page)).toContainText(
+      'Avbrutet. Föreslagna ändringar ligger kvar i utkastet.',
+    );
     canceledReply([modelMessage('Sparat.')]);
     await send(page, 'Jag menade den blå cykeln.');
     (await nextReply())([modelMessage('Jag förstår vilken cykel du menar.')]);
     await expect(log(page)).toContainText('Jag förstår vilken cykel du menar.');
     await expect(proposal).toBeVisible();
+    await expect(mapBike).toHaveClass(/\badded\b/);
     await expect(await openSavedHistory(page)).toContainText('Inga genomförda sparanden.');
     await back.click();
 
     await openConversationDraft(page);
-    await expect(proposal).toBeVisible();
+    await reviewBike();
     await send(page, 'Spara hela utkastet.');
     (await nextReply())([modelMessage('Jag har granskat förslaget.')]);
     await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
       'Utkastet är sparat',
     );
     await expect(draft).toContainText('Utkastet är tomt.');
-    const savedBike = page.getByRole('button', { name: `Välj objekt: ${bike}`, exact: true });
-    await expect(savedBike).toBeVisible();
-    await expect(savedBike).toHaveClass(/\bexisting\b/);
+    await expect(mapBike).toBeVisible();
+    await expect(mapBike).toHaveClass(/\bexisting\b/);
     const groups = (await openSavedHistory(page)).getByRole('article');
     await expect(groups).toHaveCount(1);
     await expect(groups).toContainText(bike);
