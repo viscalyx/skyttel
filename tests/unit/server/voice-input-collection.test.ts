@@ -304,6 +304,12 @@ test.each([
     work.confirmInput(1);
     await vi.advanceTimersByTimeAsync(2100);
     expect(messages()).toHaveLength(1);
+    const previousParts = channel.send.mock.calls
+      .map(([event]) => event)
+      .filter((event) => event.type === 'session.thinking.append');
+    for (const part of previousParts)
+      channel.emit('session.thinking.appended', { client_event_id: part.event_id });
+
     delegate('early', offset);
     const correction = () => {
       fragment('first-word', 'Jag ', 1200, 1300);
