@@ -94,8 +94,14 @@ test('a voice request refused during save recovery leaves queued work intact', {
   tags: ['technical'],
   timeout: 15_000,
 }, async () => {
-  const releaseSave = Promise.withResolvers<void>();
-  const releaseVoiceAdmission = Promise.withResolvers<void>();
+  let releaseSave!: () => void;
+  const heldSave = new Promise<void>((resolve) => {
+    releaseSave = resolve;
+  });
+  let releaseVoiceAdmission!: () => void;
+  const heldVoiceAdmission = new Promise<void>((resolve) => {
+    releaseVoiceAdmission = resolve;
+  });
   let reachedSave = false;
   let reachedVoiceAdmission = false;
   let refused: { status: number; body: unknown } | undefined;
@@ -107,13 +113,13 @@ test('a voice request refused during save recovery leaves queued work intact', {
       const rpc = await incoming.clone().json();
       if (rpc?.params?.name === 'save_draft') {
         reachedSave = true;
-        await releaseSave.promise;
+        await heldSave;
         throw new TypeError('Synthetic save response lost');
       }
     }
     if (incoming.method === 'POST' && pathname.endsWith('/messages')) {
       reachedVoiceAdmission = true;
-      await releaseVoiceAdmission.promise;
+      await heldVoiceAdmission;
       const result = await dispatch(incoming);
       refused = { status: result.status, body: await result.clone().json() };
       return result;
@@ -141,9 +147,9 @@ test('a voice request refused during save recovery leaves queued work intact', {
     expect((await send('queued', 'Berätta vad som finns på kartan.')).status()).toBe(202);
     speak(live, 'Vad är kvar att göra?');
     await expect.poll(() => reachedVoiceAdmission).toBe(true);
-    releaseSave.resolve();
+    releaseSave();
     await expect.poll(async () => (await readConversation()).phase).toBe('recovery');
-    releaseVoiceAdmission.resolve();
+    releaseVoiceAdmission();
     await expect
       .poll(() => refused)
       .toEqual({
@@ -160,8 +166,8 @@ test('a voice request refused during save recovery leaves queued work intact', {
     expect(model.requests).toHaveLength(1);
     expect((await readMap()).objects).toEqual([]);
   } finally {
-    releaseSave.resolve();
-    releaseVoiceAdmission.resolve();
+    releaseSave();
+    releaseVoiceAdmission();
   }
 });
 
