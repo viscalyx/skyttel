@@ -51,26 +51,26 @@ export function useConversationNotice({
   const voiceSession = useContext(VoiceSessionContext);
   const [dismissed, setDismissed] = useState<Partial<Record<ConversationNotice['id'], string>>>({});
   const [usedRequest, setUsedRequest] = useState(0);
+  const refusalIdentity = `voiceRequestRefused:${voiceRefusal?.id}`;
   const identityFor = (notice: ConversationNotice) =>
-    `${notice.id}:${notice.id.startsWith('saveCheck') && batchPending ? 'batch:' : ''}${
-      notice.id === 'actionBlocked' && securityReference
-        ? securityReference
-        : notice.id === 'voiceRequestRefused'
-          ? voiceRefusal?.id
-          : notice.kind === 'event'
-            ? ((diagnostic?.noticeId === notice.id ? diagnostic.eventKey : undefined) ?? eventKey)
-            : ongoing
-              ? 'active'
-              : requested
-    }`;
+    notice.id === 'voiceRequestRefused'
+      ? refusalIdentity
+      : `${notice.id}:${notice.id.startsWith('saveCheck') && batchPending ? 'batch:' : ''}${
+          notice.id === 'actionBlocked' && securityReference
+            ? securityReference
+            : notice.kind === 'event'
+              ? ((diagnostic?.noticeId === notice.id ? diagnostic.eventKey : undefined) ?? eventKey)
+              : ongoing
+                ? 'active'
+                : requested
+        }`;
   // Dismissing one event must not suppress a different later event. The map
   // retains at most one identity per known notice kind, rather than a history.
   const visibleConditions = {
     ...conditions,
-    voiceRequestRefused: Boolean(voiceRefusal),
-    // Keep recovery actions available while a new refusal takes precedence
-    // over an informational task failure.
-    taskFailed: conditions.taskFailed && (!voiceRefusal || Boolean(workFailure)),
+    voiceRequestRefused: Boolean(
+      voiceRefusal && !conditions.consentRevoked && !conditions.voiceSessionExpired,
+    ),
   };
   for (const definition of conversationNoticeDefinitions)
     if (
@@ -78,6 +78,9 @@ export function useConversationNotice({
       dismissed[definition.id] === identityFor(definition)
     )
       visibleConditions[definition.id] = false;
+  // Keep recovery actions available while a new refusal takes precedence
+  // over an informational task failure.
+  if (visibleConditions.voiceRequestRefused && !workFailure) visibleConditions.taskFailed = false;
   const selected = firstConversationNotice(visibleConditions);
   const definition =
     selected?.id === 'saveChecking' && batchPending
@@ -120,6 +123,7 @@ export function useConversationNotice({
     candidate && (candidate.kind === 'event' || ongoing || requested > usedRequest)
       ? candidate
       : null;
+  const visibleRefusal = notice && visibleConditions.voiceRequestRefused ? voiceRefusal : undefined;
   useEffect(() => {
     if (!candidate) setUsedRequest(requested);
   }, [candidate, requested]);
@@ -130,7 +134,13 @@ export function useConversationNotice({
     notice: null,
     identity: '',
   });
-  const [announcement, setAnnouncement] = useState({ count: 0, polite: '', assertive: '' });
+  const announcedRefusal = useRef<string>(undefined);
+  const [announcement, setAnnouncement] = useState<{
+    count: number;
+    polite: string;
+    assertive: string;
+    refusal?: VoiceAssistantView['refusal'];
+  }>({ count: 0, polite: '', assertive: '' });
   useEffect(() => {
     const previous = before.current;
     before.current = { notice, identity: notice ? identity : '' };
@@ -138,6 +148,7 @@ export function useConversationNotice({
     let live: 'polite' | 'assertive' = 'polite';
     if (
       notice &&
+      notice.id !== 'voiceRequestRefused' &&
       previous.identity !== identity &&
       !(voiceSession && notice.id === 'voiceSessionExpired')
     ) {
@@ -153,20 +164,40 @@ export function useConversationNotice({
       )
         ? previous.notice.resolved
         : '';
-    if (text || resolved)
+    // The same refusal can move between the primary notice and its text.
+    // Announce it by request identity so that moving it does not repeat it.
+    const newRefusal = visibleRefusal?.id === announcedRefusal.current ? undefined : visibleRefusal;
+    if (newRefusal) announcedRefusal.current = newRefusal.id;
+    if (text || resolved || newRefusal)
       setAnnouncement(({ count }) => ({
         count: count + 1,
         polite: [resolved, live === 'polite' ? text : ''].filter(Boolean).join(' '),
         assertive: live === 'assertive' ? text : '',
+        refusal: newRefusal,
       }));
-  }, [notice, identity, conditions, voiceSession]);
+  }, [notice, identity, conditions, voiceSession, visibleRefusal]);
   return {
-    notice,
+    notice:
+      notice && visibleRefusal && notice.id !== 'voiceRequestRefused'
+        ? { ...notice, text: `${notice.text} ${visibleRefusal.text}` }
+        : notice,
     closable,
     dismiss: () => {
-      if (notice) setDismissed((previous) => ({ ...previous, [notice.id]: identity }));
+      if (notice)
+        setDismissed((previous) => ({
+          ...previous,
+          [notice.id]: identity,
+          ...(visibleRefusal ? { voiceRequestRefused: refusalIdentity } : {}),
+        }));
     },
-    announcement,
+    announcement: {
+      count: announcement.count,
+      assertive: announcement.assertive,
+      polite:
+        announcement.refusal && announcement.refusal.id !== visibleRefusal?.id
+          ? ''
+          : [announcement.polite, announcement.refusal?.text].filter(Boolean).join(' '),
+    },
   };
 }
 

@@ -1102,7 +1102,7 @@ export function useVoice(options: {
     ),
     saved,
     savedId,
-    refusal: voice?.refusal,
+    refusal: state === 'listening' && current.current?.path === path ? voice?.refusal : undefined,
     error,
     failure: failure ?? undefined,
     playbackBlocked,
