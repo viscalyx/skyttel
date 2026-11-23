@@ -253,7 +253,18 @@ TAL-03.
   "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse. Samtalet återkommer pausat efter faktisk serveromstart; sparutfallet läses före Nytt samtal. Faktisk röst eller uppläsning bedöms separat.",
   "outcomes": [
     "Bekräfta verklig markering och återhämta samma beständiga sparförsök.",
-    "Beskrivningen går att läsa i korta uppgiftsfönster efter hela svaret."
+    "Beskrivningen går att läsa i korta uppgiftsfönster efter hela svaret.",
+    "Efter ett tappat webbläsarsvar kan användaren kontrollera sparandet och se Mira Exempel som sparad i kartvyn utan omladdning."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "vitest",
+      "suite": "server",
+      "spec": "tests/unit/server/text-assistant.test.ts",
+      "title": "original save request replays its own receipt after another member saves and its lookup is interrupted",
+      "purpose": "Kontrollera samma kvitto efter ett annat sparande, spärren vid okänt utfall och åtkomst vid uppslag och omsändning."
+    }
   ]
 }
 ```
@@ -292,7 +303,15 @@ till TAL-17/23/24.
    användaren och läs samma sparande.
 6. Välj Tillbaka till arbetet, starta rösten och följ den separata preliminära
    användningsmätningen i tidslinjen. Nytt samtal ska bevara mikrofonvalet och
-   samma genomförda sparande. Logga ut.
+   samma genomförda sparande. Välj **Avsluta samtalet**.
+7. Skapa **Mira Exempel** med typen **Person** och välj **Lägg i utkastet och
+   stäng**. Välj **Karta** och se Mira som förslag. Börja ett nytt samtal i
+   textvyn och granska Mira i utkastet. Förbered det tappade webbläsarsvaret
+   enligt tidslinjen. Skicka **Spara hela utkastet.**
+8. När samtalsnotisen visas, släpp blockeringen och välj **Kontrollera om
+   utkastet sparades**. Läs resultatet i samtalstexten och stäng textvyn.
+   Kontrollera att Mira syns som sparad i samma kartvy utan omladdning.
+   Slå på mikrofonen igen och logga ut.
 
 **Förväntat resultat:**
 

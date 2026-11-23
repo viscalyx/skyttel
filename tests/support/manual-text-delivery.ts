@@ -4,9 +4,9 @@ export const manualTextDeliverySource = `(() => {
   let armed;
   let result = { phase: 'idle' };
   window.skyttelTextDelivery = {
-    arm() {
+    arm(boundary = 'acceptance') {
       if (armed || result.phase === 'waiting') throw Error('Finish the previous delivery first');
-      armed = true;
+      armed = boundary;
       result = { phase: 'armed' };
     },
     status: () => ({ ...result }),
@@ -19,7 +19,18 @@ export const manualTextDeliverySource = `(() => {
   window.fetch = async (input, init) => {
     const request = new Request(input, init);
     const url = new URL(request.url);
-    const selected = armed && request.method === 'POST' &&
+    if (armed === 'receipt' && request.method === 'GET' &&
+        /^\\/api\\/households\\/[^/]+\\/text-assistant\\/[^/]+$/.test(url.pathname)) {
+      const response = await original(input, init);
+      const receipt = response.ok && (await response.clone().json()).receipt;
+      if (armed === 'receipt' && receipt?.operationId) {
+        armed = undefined;
+        result = { phase: 'dropped-after-commit', operationId: receipt.operationId, status: response.status };
+        throw new TypeError('Controlled lost conversation response containing the save receipt');
+      }
+      return response;
+    }
+    const selected = armed === 'acceptance' && request.method === 'POST' &&
       /^\\/api\\/households\\/[^/]+\\/text-assistant\\/[^/]+\\/messages$/.test(url.pathname);
     if (!selected) return original(input, init);
     armed = undefined;

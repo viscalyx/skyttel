@@ -4362,39 +4362,181 @@ test('content replacement invalidates cached conversation and held provider work
   expect(model.requests).toHaveLength(1);
 });
 
-test('a lost automatic save response enters recovery and verifies the original operation without resaving', {
-  tags: ['technical'],
-}, async () => {
-  const model = textModel(() => [modelMessage('Utkastet är klart.')]);
-  let lost = false;
-  await setup(model.provider, undefined, async (request, dispatch) => {
-    const rpc =
-      request.method === 'POST' && new URL(request.url).pathname === '/mcp'
-        ? await request.clone().json()
-        : null;
-    const response = await dispatch(request);
-    if (rpc?.params?.name === 'save_draft' && !lost) {
-      lost = true;
-      throw new TypeError('Lost automatic save response after commit');
-    }
-    return response;
-  });
-  await webProposal();
-  const view = await message(await start(), 'Spara hela utkastet.');
-  expect(lost).toBe(true);
-  expect(view).toMatchObject({ phase: 'recovery', error: 'assistant_save_unknown' });
-  const mapPath = path.replace('/text-assistant', '/map');
-  const history = (await (await browser.get(`${mapPath}/history`)).json()).history;
-  expect(history).toHaveLength(1);
-  const recovered = await browser.post(`${path}/${view.id}/recover`, {
+async function admitRobin(other: APIRequestContext) {
+  app.setIdentity(robin);
+  await signIn(other, app.origin, 'microsoft');
+  const { user } = await (await other.get(`${app.origin}/api/bootstrap`)).json();
+  const householdPath = path.replace('/text-assistant', '');
+  const invitation = await browser.post(`${householdPath}/invitations`, {
     headers: { origin: app.origin },
-    data: {},
+    data: { userId: user.id },
   });
-  expect(recovered.status()).toBe(200);
-  expect(await recovered.json()).toMatchObject({ phase: 'ready', receipt: history[0] });
-  expect((await (await browser.get(`${mapPath}/history`)).json()).history).toEqual(history);
-  expect(model.requests).toHaveLength(1);
-});
+  expect(invitation.status()).toBe(201);
+  const accepted = await other.post(`${app.origin}/api/invitations/accept`, {
+    headers: { origin: app.origin },
+    data: { code: (await invitation.json()).code },
+  });
+  expect(accepted.status()).toBe(200);
+  return { user, householdPath };
+}
+
+test.each(['requested', 'omitted'])(
+  'a lost %s save tool reply returns the registered receipt without a recovery turn',
+  async (tool) => {
+    const model = textModel(
+      () =>
+        tool === 'omitted'
+          ? [modelMessage('Utkastet är klart.')]
+          : [modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'model-id' })],
+      completeSaveAuthorization,
+    );
+    let lostId: string | undefined;
+    const lookups: string[] = [];
+    await setup(model.provider, undefined, async (request, dispatch) => {
+      const rpc =
+        request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+          ? await request.clone().json()
+          : null;
+      const response = await dispatch(request);
+      if (rpc?.params?.name === 'save_draft') {
+        lostId = rpc.params.arguments.operationId;
+        throw new TypeError('Lost save response after commit');
+      }
+      if (rpc?.params?.name === 'read_save_operation')
+        lookups.push(rpc.params.arguments.operationId);
+      return response;
+    });
+    await webProposal();
+    const view = await message(await start(), 'Spara hela utkastet.');
+    const mapPath = path.replace('/text-assistant', '/map');
+    const history = (await (await browser.get(`${mapPath}/history`)).json()).history;
+    expect(history).toHaveLength(1);
+    expect(lostId).toBe(history[0].operationId);
+    expect(lookups).toContain(lostId);
+    expect(view).toMatchObject({ phase: 'ready', receipt: history[0] });
+    expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each(['available', 'interrupted'])(
+  'original save request replays its own receipt after another member saves and its lookup is %s',
+  async (lookup) => {
+    let releaseSaveReply!: () => void;
+    const heldReply = new Promise<void>((resolve) => {
+      releaseSaveReply = resolve;
+    });
+    let workTurns = 0;
+    const model = textModel(
+      () =>
+        ++workTurns === 1
+          ? [modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'untrusted' })]
+          : [modelMessage('Jag är här.')],
+      completeSaveAuthorization,
+    );
+    await setup(model.provider, undefined, async (request, dispatch) => {
+      const rpc =
+        request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+          ? await request.clone().json()
+          : null;
+      if (rpc?.params?.name === 'read_save_operation' && lookup === 'interrupted')
+        throw new TypeError('Lookup response unavailable');
+      const response = await dispatch(request);
+      if (rpc?.params?.name === 'save_draft') {
+        await heldReply;
+        throw new TypeError('Save reply unavailable');
+      }
+      return response;
+    });
+    const other = await request.newContext();
+    try {
+      await admitRobin(other);
+      const mapPath = path.replace('/text-assistant', '/map');
+      const value = await webProposal('Blå cykeln', 'bike');
+      const session = await start();
+      const post = (client: APIRequestContext, route: string, data: object) =>
+        client.post(route, { headers: { origin: app.origin }, data });
+      const original = {
+        revision: session.revision,
+        ...displayedVersion(session),
+        text: 'Spara hela utkastet.',
+        requestId: 'save-bike',
+      };
+      const route = `${path}/${session.id}`;
+      expect((await post(browser, `${route}/messages`, original)).status()).toBe(202);
+      const history = async () => (await (await browser.get(`${mapPath}/history`)).json()).history;
+      await expect.poll(history).toHaveLength(1);
+      const [bike] = await history();
+      expect(bike.changes).toMatchObject([{ after: { id: 'bike', name: 'Blå cykeln' } }]);
+      expect(
+        (
+          await post(other, `${mapPath}/draft`, {
+            version: 0,
+            contentVersion: 1,
+            id: 'lamp',
+            baseRevision: null,
+            value: { ...value, name: 'Lampa' },
+          })
+        ).status(),
+      ).toBe(200);
+      const { receipt: lamp } = await (
+        await post(other, `${mapPath}/save`, {
+          version: 1,
+          contentVersion: 1,
+          operationId: 'later-member-save',
+        })
+      ).json();
+      expect(lamp.userId).not.toBe(bike.userId);
+      releaseSaveReply();
+      const poll = async () => (await browser.get(`${route}/messages/save-bike`)).json();
+      await expect.poll(async () => (await poll()).taskStatus).toBe('completed');
+      if (lookup === 'interrupted') {
+        const unknown = await poll();
+        expect(unknown.phase).toBe('recovery');
+        expect(unknown.receipt).toBeUndefined();
+        expect(
+          await (
+            await post(browser, `${route}/messages`, {
+              ...original,
+              revision: unknown.revision,
+              ...displayedVersion(unknown),
+              requestId: 'new-save',
+            })
+          ).json(),
+        ).toEqual({ error: 'operation_pending' });
+      } else {
+        expect((await poll()).receipt).toEqual(bike);
+      }
+      const checked = await (await post(browser, `${route}/recover`, {})).json();
+      expect(checked.receipt).toEqual(bike);
+      expect(model.requests).toHaveLength(1);
+      await message(checked, 'Hej igen.');
+      expect((await (await post(browser, `${route}/messages`, original)).json()).receipt).toEqual(
+        bike,
+      );
+      expect(model.requests).toHaveLength(2);
+      expect(await history()).toEqual([lamp, bike]);
+      const objects: { id: string }[] = (await (await browser.get(mapPath)).json()).objects;
+      expect(objects.map(({ id }) => id).sort()).toEqual(['bike', 'lamp']);
+      for (const suffix of ['recover', 'messages']) {
+        const body = suffix === 'messages' ? original : {};
+        for (const denied of [
+          await post(other, `${route}/${suffix}`, body),
+          await post(
+            browser,
+            `${route.replace(/households\/[^/]+/, 'households/other-household')}/${suffix}`,
+            body,
+          ),
+        ]) {
+          expect([403, 404]).toContain(denied.status());
+          expect(await denied.text()).not.toContain(bike.operationId);
+        }
+      }
+    } finally {
+      releaseSaveReply();
+      await other.dispose();
+    }
+  },
+);
 
 test('a new authorized session finds an interrupted persistent save before accepting work and retries only that exact operation', async () => {
   const model = textModel(() => [modelMessage('Fortsätt.')]);
@@ -5517,20 +5659,7 @@ test('household recovery ignores a working session whose other actor lost member
   await setup(model.provider);
   const other = await request.newContext();
   try {
-    app.setIdentity(robin);
-    await signIn(other, app.origin, 'microsoft');
-    const { user } = await (await other.get(`${app.origin}/api/bootstrap`)).json();
-    const householdPath = path.replace('/text-assistant', '');
-    const invitation = await browser.post(`${householdPath}/invitations`, {
-      headers: { origin: app.origin },
-      data: { userId: user.id },
-    });
-    expect(invitation.status()).toBe(201);
-    const accepted = await other.post(`${app.origin}/api/invitations/accept`, {
-      headers: { origin: app.origin },
-      data: { code: (await invitation.json()).code },
-    });
-    expect(accepted.status()).toBe(200);
+    const { user, householdPath } = await admitRobin(other);
     const started = await other.post(path, {
       headers: { origin: app.origin },
       data: approvedForVisit,

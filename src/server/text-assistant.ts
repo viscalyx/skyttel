@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { createHash, randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
+import { RunContext, tool } from '@openai/agents';
 import type Database from 'better-sqlite3';
 import { Hono } from 'hono';
 import { toResponseInputItems } from 'openai/lib/responses/ResponseInputItems';
@@ -2133,11 +2134,15 @@ export function textAssistantRoutes({
       if (!operation) throw new MapError('assistant_provider_failed', 503);
       // A queued request supplies current access while its result is delivered
       // to the conversation that originally registered the attempt.
-      verifyReceipt(verificationSession, checked.receipt, {
-        operationId: operation.operationId,
-        version: operation.draftVersion,
-        contentVersion: operation.contentVersion,
-      });
+      verifyReceipt(
+        verificationSession,
+        checked.receipt,
+        pending ?? {
+          operationId: operation.operationId,
+          version: operation.draftVersion,
+          contentVersion: operation.contentVersion,
+        },
+      );
       saved(session, checked.receipt);
     }
     const changed = session.state.saveCheck?.id !== checked.id;
@@ -2170,6 +2175,10 @@ export function textAssistantRoutes({
         const request = session.state.unfinishedRequests.find(({ id }) => id === failed.message.id);
         if (request) request.paused = true;
       }
+    }
+    if (pending?.messageId && checked.receipt) {
+      const accepted = session.state.accepted.get(pending.messageId);
+      if (accepted) accepted.result = captureAssistantResult(view(session), 'prefix');
     }
     return changed;
   }
@@ -2866,10 +2875,32 @@ export function textAssistantRoutes({
           version: pending.version,
           contentVersion: pending.contentVersion,
         };
-        if (name === 'save_draft') await call(session, 'prepare_save', args, saveGuard);
-        const value = await call(session, name, args, saveGuard, 'shared', runnerCall?.callId);
-        guard();
+        const dispatch = () => call(session, name, args, saveGuard, 'shared', runnerCall?.callId);
+        let value: Awaited<ReturnType<typeof call>>;
         if (name === 'save_draft') {
+          await call(session, 'prepare_save', args, saveGuard);
+          // Bind the SDK failure handler to the registered operation for both
+          // model-requested saves and saves completed at the end of the turn.
+          const save = tool({
+            name,
+            description: 'Save the registered whole draft',
+            parameters: z.object({}),
+            execute: async () => JSON.stringify(await dispatch()),
+            errorFunction: async (_context, error) => {
+              if (error instanceof MapError && error.code !== 'result_unknown') throw error;
+              const { operation } = await call(
+                session,
+                'read_save_operation',
+                { operationId: pending.operationId },
+                guard,
+                'lifecycle',
+              );
+              if (operation?.status !== 'succeeded') throw error;
+              return JSON.stringify({ receipt: operation.receipt });
+            },
+          });
+          value = JSON.parse(await save.invoke(new RunContext(), '{}', { signal: task.signal }));
+          guard();
           verifyReceipt(session, value.receipt, pending);
           for (const attempt of attempts) attempt.verified = true;
           saved(session, value.receipt, true);
@@ -2878,6 +2909,8 @@ export function textAssistantRoutes({
           await refreshConfirmed(session, guard);
           originalSaveIntent = false;
         } else {
+          value = await dispatch();
+          guard();
           session.state.review = await call(session, 'read_my_draft', {}, guard);
         }
         version = session.state.review.version;
@@ -5168,10 +5201,16 @@ export function textAssistantRoutes({
       .digest('hex');
     await waitForOriginalPreparation(preparation, body.requestId);
     const accepted = session.state.accepted.get(body.requestId);
-    if (accepted)
-      return accepted.hash === requestHash
-        ? context.json(view(session), 202)
-        : context.json({ error: 'assistant_turn_changed' }, 409);
+    if (accepted) {
+      if (accepted.hash !== requestHash)
+        return context.json({ error: 'assistant_turn_changed' }, 409);
+      checkViewAccess(session);
+      const current = view(session);
+      return context.json(
+        accepted.result ? restoreAssistantResult(accepted.result, current) : current,
+        202,
+      );
+    }
     if (body.restate === true && !session.state.capacityPaused)
       return context.json({ error: 'assistant_turn_changed' }, 409);
     if (body.restate === true && session.execution.task && !session.execution.task.signal.aborted)

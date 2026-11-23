@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import {
   createHousehold,
   openMap,
+  openNewObject,
   openProfile,
   openSettings,
   openTable,
@@ -30,6 +31,7 @@ import { familySaveSequence } from '../support/family-save-model.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { isVoiceAnswerRelease, liveProvider, voiceAnswerParts } from '../support/live-provider.js';
+import { manualTextDeliverySource } from '../support/manual-text-delivery.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 import { exposedTextLines } from '../support/object-property-reading.js';
 import { expect, test } from '../support/test.js';
@@ -1012,7 +1014,7 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 390, height: 844 });
   let step = 0;
-  const model = textModel(() => {
+  const model = textModel((request) => {
     step++;
     if (step === 1) return [modelTool('show_map_object', { objectId: 'lo' })];
     if (step === 2) return [modelMessage('Objektet visas.')];
@@ -1020,7 +1022,17 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
       return [
         modelTool('prepare_save', { version: 1, contentVersion: 1, operationId: 'provider-id' }),
       ];
-    return [modelMessage('Försöket är förberett.')];
+    if (step === 4) return [modelMessage('Försöket är förberett.')];
+    const { draft } = JSON.parse(
+      String(request.input.findLast((item) => item.role === 'user')?.content),
+    );
+    return [
+      modelTool('save_draft', {
+        version: draft.version,
+        contentVersion: draft.contentVersion,
+        operationId: 'provider-id',
+      }),
+    ];
   });
   const live = liveProvider();
   const app = await createInstallation(undefined, {
@@ -1195,6 +1207,53 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
       operations,
     );
     live.configure({ finalize: true });
+    await openConversationText(page);
+    await assistant(page).getByRole('button', { name: 'Avsluta samtalet', exact: true }).click();
+    await expect(assistant(page)).toHaveAttribute('data-session-active', 'false');
+    const form = await openNewObject(page);
+    await form.getByLabel('Namn', { exact: true }).fill('Mira Exempel');
+    await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Person' });
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await openMap(page);
+    const mira = page.getByRole('button', { name: 'Välj objekt: Mira Exempel', exact: true });
+    await expect(mira).toHaveClass(/\badded\b/);
+    await openConversationText(page);
+    await assistant(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+    await expect(assistant(page)).toHaveAttribute('data-session-active', 'true');
+    await expect(await openConversationDraft(page)).toContainText('Mira Exempel');
+    await page.route('**/text-assistant/*/recover', (route) => route.abort());
+    await page.evaluate(manualTextDeliverySource);
+    await page.evaluate(() => {
+      (
+        window as unknown as { skyttelTextDelivery: { arm(boundary: 'receipt'): void } }
+      ).skyttelTextDelivery.arm('receipt');
+    });
+    await assistant(page).getByLabel('Meddelande till Skyttel').fill('Spara hela utkastet.');
+    await assistant(page).getByRole('button', { name: 'Skicka', exact: true }).click();
+    const check = page.getByRole('button', {
+      name: 'Kontrollera om utkastet sparades',
+      exact: true,
+    });
+    await expect(check).toBeVisible();
+    const dropped = await page.evaluate(() =>
+      (
+        window as unknown as {
+          skyttelTextDelivery: { status(): { phase: string; operationId: string } };
+        }
+      ).skyttelTextDelivery.status(),
+    );
+    expect(dropped.phase).toBe('dropped-after-commit');
+    await page.unroute('**/text-assistant/*/recover');
+    const checked = page.waitForResponse((response) => response.url().endsWith('/recover'));
+    await check.click();
+    expect((await (await checked).json()).receipt.operationId).toBe(dropped.operationId);
+    await expect(page.getByRole('log', { name: 'Samtalstext' })).toContainText(
+      'Kontrollen visar att hela utkastet sparades.',
+    );
+    await closeConversationText(page);
+    await expect(mira).toBeVisible();
+    await expect(mira).toHaveClass(/\bexisting\b/);
+    await startVoice(page);
     await signOut(page);
     await expect.poll(() => openVoiceConnections(page)).toBe(0);
   } finally {

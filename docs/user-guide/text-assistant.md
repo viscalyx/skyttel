@@ -739,7 +739,9 @@ kontrollen är klar. Textvyn öppnas inte av förklaringen.
 Bara om kontrollen misslyckas visas **Skyttel kunde inte kontrollera om
 utkastet sparades.** med **Kontrollera om utkastet sparades**. Försök igen
 med den knappen. **Rapporter → Ändringshistorik** innehåller
-även kvitton från andra enheter. Ett avvisat försök behåller utkastet och
+även kvitton från andra enheter. Kontrollen visar ditt sparförsök även om
+en annan användare har sparat sedan dess. När sparandet är bekräftat visas
+ändringarna i kartvyn utan omladdning. Ett avvisat försök behåller utkastet och
 behöver ett nytt underlag och ett nytt sparbesked.
 
 Fråga **Vad var felet?** för att höra det senaste registrerade felet i

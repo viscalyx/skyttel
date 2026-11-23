@@ -6,6 +6,7 @@ import { controlledBatchDelivery } from '../tests/support/batch-response-deliver
 import { alex, createInstallation, robin } from '../tests/support/installation.js';
 import { liveBrowserFixtureSource } from '../tests/support/live-browser.js';
 import { liveProvider } from '../tests/support/live-provider.js';
+import { manualTextDeliverySource } from '../tests/support/manual-text-delivery.js';
 import {
   lastToolResult,
   type ModelRequest,
@@ -131,7 +132,7 @@ async function main() {
           )
         : live.provider(url, init),
     liveSideband: live.attach,
-    browserProviderScript: liveBrowserFixtureSource,
+    browserProviderScript: `${manualTextDeliverySource}\n${liveBrowserFixtureSource}`,
     assistantDispatch: async (request, dispatch) => {
       const body =
         request.method === 'POST'
