@@ -8,6 +8,7 @@ import type {
 import { assistantFailureMessage } from './assistant-feedback.js';
 import type { LiveSideband } from './live-provider.js';
 import { type VoiceAnswer, voiceAnswerText, voiceCommentary } from './voice-commentary.js';
+import { VoiceMessageRefusal, type VoiceMessageRefusalCode } from './voice-message-refusal.js';
 
 type Anchor = { revision: number; draftVersion: number; contentVersion: number };
 type Fragment = { role: 'user' | 'assistant'; text: string; startMs: number; endMs: number };
@@ -325,6 +326,7 @@ export function voiceWork({
     const result = (
       status: 'completed' | 'failed' | 'canceled' | 'incomplete',
       view?: TextAssistantView,
+      refusal?: VoiceMessageRefusalCode,
     ) => {
       if (resultObserved) return;
       resultObserved = true;
@@ -334,7 +336,7 @@ export function voiceWork({
         status,
         ...(view ? { view } : {}),
         ...(status !== 'completed'
-          ? { error: status === 'failed' ? 'backend_failed' : `task_${status}` }
+          ? { error: status === 'failed' ? (refusal ?? 'backend_failed') : `task_${status}` }
           : {}),
       });
     };
@@ -401,7 +403,7 @@ export function voiceWork({
               ),
           )
         )
-          throw new Error('assistant_pending_part_changed');
+          throw new VoiceMessageRefusal('assistant_pending_part_changed');
         expected = { ...expected, revision: view.revision };
       }
       if (view.phase === 'recovery') {
@@ -499,23 +501,19 @@ export function voiceWork({
         return;
       }
       resultStatus = 'failed';
-      if (
-        answerTo &&
-        error instanceof Error &&
-        [
-          'assistant_pending_part_changed',
-          'assistant_turn_changed',
-          'assistant_draft_changed',
-        ].includes(error.message)
-      ) {
-        owned = undefined;
-        dispatching = undefined;
+      if (error instanceof VoiceMessageRefusal) {
+        result('failed', undefined, error.code);
+        if (requestId && dispatching?.requestId === requestId) {
+          owned = undefined;
+          dispatching = undefined;
+        }
         const view = await request().catch(() => undefined);
-        if (view && current()) {
+        if (!current() || inputVersion !== acceptedInput) return;
+        if (view && !dispatching) {
           rememberQuestion(view);
           update(view, false);
         }
-        if (current()) append(id, assistantFailureMessage(error.message));
+        append(id, error.userMessage());
         return;
       }
       cancel();

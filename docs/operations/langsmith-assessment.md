@@ -74,7 +74,9 @@ health when investigating a failure or changing configuration.
    delegation links to backend tasks. Use the recorded conversation, request,
    task, delegation, provider-call, tool-execution, and span identities as
    applicable. Do not infer parentage from nearby timestamps or count shared
-   backend spans twice.
+   backend spans twice. If a recognized admission refusal ends a voice
+   delegation, its output carries the error code. For `backend_failed`,
+   use the last confirmed step to locate the failure when possible.
 3. Inspect the relevant exact text, model action, model attempt, MCP work,
    and backend result in LangSmith. Distinguish failure, cancellation,
    disconnection, incomplete work, and a successful observed ending. A start

@@ -28,6 +28,7 @@ import type {
 } from './live-provider.js';
 import { MapError } from './map.js';
 import type { LocalDispatch } from './text-assistant-mcp.js';
+import { VoiceMessageRefusal } from './voice-message-refusal.js';
 import { voiceWork } from './voice-work.js';
 
 type Voice = Partial<ConversationConsentProvenance> & {
@@ -798,8 +799,14 @@ export function voiceAssistantRoutes({
             : dispatch(request));
           check();
           if (!response.ok) {
-            const refusal = await response.json().catch(() => null);
-            throw new Error(refusal?.error ?? 'voice_request_failed');
+            const body = (await response.json().catch(() => null)) as { error?: unknown } | null;
+            const code = body?.error;
+            const refusal =
+              action === 'messages'
+                ? VoiceMessageRefusal.fromResponse(response.status, code)
+                : undefined;
+            if (refusal) throw refusal;
+            throw new Error(typeof code === 'string' ? code : 'voice_request_failed');
           }
           const result = await response.json();
           check();
