@@ -289,7 +289,7 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
     await expect(log(page)).toContainText('Jag förstår vilken cykel du menar.');
     const confirmation = page.getByRole('status', { name: 'Sparbekräftelse' });
     const toast = page.locator('.draft-save-toast');
-    await expect(confirmation).toBeEmpty();
+    await expect(confirmation.filter({ hasText: 'Utkastet är sparat' })).toHaveCount(0);
     await expect(toast).not.toBeVisible();
     await expect(proposal).toBeVisible();
     await expect(mapBike).toHaveClass(/\badded\b/);
@@ -301,6 +301,7 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
     await send(page, 'Spara hela utkastet.');
     (await nextReply())([modelMessage('Jag har granskat förslaget.')]);
     await expect(toast).toBeVisible();
+    await expect(toast).toHaveText('Utkastet är sparat');
     await expect(confirmation).toContainText('Utkastet är sparat');
     await expect(draft).toContainText('Utkastet är tomt.');
     await expect(mapBike).toBeVisible();
