@@ -490,7 +490,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Röst och text i samma samtal](conversation-voice-text.md): skrivna svar
   med röst när mikrofonen är på, text när den är av, ordnad överlämning av
   långa svar, kvarvarande samtalstext och artig uppläsning bara av nya
-  textlevererade Skyttel-rader. Obekräftad text ger inget sparkvitto.
+  textlevererade Skyttel-rader. Följ Alex blå cykel och dess väntande frågor
+  genom lägesbyte och ljudavbrott. Obekräftad text ger inget sparkvitto.
 - [Samtalets kontext](conversation-context.md): samma samtal
   genom utkast, sparande, avbrott, fel, mikrofon av och på samt byte mellan
   röst och text. Äldre sparbesked ger inget nytt sparande. Skrivna och

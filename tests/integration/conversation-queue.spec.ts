@@ -14,7 +14,7 @@ import {
 import { readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
-import { isVoiceAnswerRelease, liveProvider } from '../support/live-provider.js';
+import { isVoiceAnswerRelease, liveProvider, speak } from '../support/live-provider.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
 import { readVoiceProposal } from '../support/voice-work-reading.js';
@@ -79,23 +79,6 @@ async function send(page: Page, text: string) {
   await field(page).fill(text);
   await region(page).getByRole('button', { name: 'Skicka', exact: true }).click();
   await expect(field(page)).toHaveValue('');
-}
-function speak(live: ReturnType<typeof liveProvider>, text: string) {
-  const id = [...live.channels.keys()].at(-1);
-  if (!id) throw new Error('Missing live session');
-  live.emit(id, {
-    type: 'session.input_transcript.delta',
-    event_id: crypto.randomUUID(),
-    delta: text,
-    start_ms: 0,
-    end_ms: 100,
-  });
-  live.emit(id, {
-    type: 'session.delegation.created',
-    event_id: crypto.randomUUID(),
-    offset_ms: 100,
-    delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
-  });
 }
 
 test('KÖ-01: datorn besvarar serverns kö i ordning och Escape avbryter bara i textvyn', async ({

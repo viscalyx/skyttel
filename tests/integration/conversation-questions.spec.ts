@@ -17,7 +17,12 @@ import {
 import { readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
-import { isVoiceAnswerRelease, liveProvider, voiceAnswerParts } from '../support/live-provider.js';
+import {
+  isVoiceAnswerRelease,
+  liveProvider,
+  speak,
+  voiceAnswerParts,
+} from '../support/live-provider.js';
 import { createPreparedContext, expect, test } from '../support/test.js';
 import {
   lastToolResult,
@@ -74,23 +79,6 @@ async function fixture(page: Page, model: ReturnType<typeof textModel>, unresolv
   await page.addInitScript({ content: liveBrowserFixtureSource });
   await page.goto(app.origin);
   return { app, live, path, value, views, responses };
-}
-function speak(live: ReturnType<typeof liveProvider>, text: string) {
-  const id = [...live.channels.keys()].at(-1);
-  if (!id) throw new Error('Voice has not started');
-  live.emit(id, {
-    type: 'session.input_transcript.delta',
-    event_id: crypto.randomUUID(),
-    delta: text,
-    start_ms: 0,
-    end_ms: 100,
-  });
-  live.emit(id, {
-    type: 'session.delegation.created',
-    event_id: crypto.randomUUID(),
-    offset_ms: 100,
-    delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
-  });
 }
 const commentary = (live: ReturnType<typeof liveProvider>) =>
   live.sent.filter(({ event }) => isVoiceAnswerRelease(event));

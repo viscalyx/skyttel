@@ -1,9 +1,25 @@
 import type { Page } from '@playwright/test';
-import { createHousehold, openDraftReview, signIn, utilityButton } from '../support/client.js';
+import {
+  bike,
+  bikeDraftReply,
+  brandQuestion,
+  chooseBike,
+  colorQuestion,
+  proposeBike,
+} from '../support/bike-draft-model.js';
+import {
+  closeSupportDialog,
+  createHousehold,
+  openDraftReview,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
 import {
   closeConversationText,
   microphoneButton,
+  openConversationDraft,
   openConversationText,
+  openSavedHistory,
   startConversationWithText,
   turnMicrophoneOff,
   turnMicrophoneOn,
@@ -11,9 +27,14 @@ import {
 } from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
-import { isVoiceAnswerRelease, liveProvider, voiceAnswerParts } from '../support/live-provider.js';
+import {
+  isVoiceAnswerRelease,
+  liveProvider,
+  speak,
+  voiceAnswerParts,
+} from '../support/live-provider.js';
 import { expect, test } from '../support/test.js';
-import { modelMessage, textModel } from '../support/text-model.js';
+import { type ModelRequest, modelMessage, textModel } from '../support/text-model.js';
 
 const region = (page: Page) =>
   page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
@@ -21,9 +42,11 @@ const field = (page: Page) =>
   region(page).getByRole('textbox', { name: 'Meddelande till Skyttel' });
 const log = (page: Page) => region(page).getByRole('log', { name: 'Samtalstext' });
 const announcement = (page: Page) => region(page).locator('.conversation-announcement');
-async function arrange(page: Page) {
+async function arrange(page: Page, reply?: (request: ModelRequest) => unknown[] | undefined) {
   const held: ((output: unknown[]) => void)[] = [];
-  const model = textModel(() => new Promise<unknown[]>((resolve) => held.push(resolve)));
+  const model = textModel(
+    (request) => reply?.(request) ?? new Promise<unknown[]>((resolve) => held.push(resolve)),
+  );
   const live = liveProvider();
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
@@ -65,10 +88,31 @@ async function output(page: Page, text: string) {
   }, text);
 }
 
-test('RÖSTTEXT-01: skrivet uppdrag med mikrofonen på får röst och text utan att öppna textvyn', async ({
+async function expectVoiceRelease(live: ReturnType<typeof liveProvider>, text: string) {
+  await expect
+    .poll(() => {
+      const answers = new Map<string, string>();
+      for (const { event } of live.sent) {
+        if (event.type === 'session.thinking.append') {
+          const { answerId, text: part } = JSON.parse(event.content);
+          if (answerId && typeof part === 'string')
+            answers.set(answerId, (answers.get(answerId) ?? '') + part);
+        } else if (isVoiceAnswerRelease(event)) {
+          if (event.type === 'session.commentary.append' && event.content.includes(text))
+            return true;
+          for (const [id, answer] of answers)
+            if (answer.includes(text) && event.content.includes(id)) return true;
+        }
+      }
+      return false;
+    })
+    .toBe(true);
+}
+
+test('RÖSTTEXT-01: samma cykel och väntande delar följer med mellan röst och text efter ljudavbrott', async ({
   page,
 }) => {
-  const { app, held, live, commentary } = await arrange(page);
+  const { app, held, live, commentary } = await arrange(page, bikeDraftReply);
   try {
     await turnMicrophoneOn(page);
     await send(page, 'Berätta om ordningen.');
@@ -95,25 +139,62 @@ test('RÖSTTEXT-01: skrivet uppdrag med mikrofonen på får röst och text utan 
     await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
     await region(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
     await expect(log(page)).toHaveText('Skyttel: Nytt samtal. Utkastet är tomt.');
-    await expect
-      .poll(() => {
-        const text = 'Nytt samtal. Utkastet är tomt.';
-        const answerIds = live.sent.flatMap(({ event }) => {
-          if (event.type !== 'session.thinking.append') return [];
-          const part = JSON.parse(event.content);
-          return part.text.includes(text) ? [part.answerId] : [];
-        });
-        return (
-          voiceAnswerParts(live.sent).join('').includes(text) &&
-          commentary().some((event) =>
-            event.type === 'session.commentary.append'
-              ? event.content.includes(text)
-              : answerIds.some((id) => event.content.includes(id)),
-          )
-        );
-      })
-      .toBe(true);
+    await expectVoiceRelease(live, 'Nytt samtal. Utkastet är tomt.');
     await expect(announcement(page)).toBeEmpty();
+
+    await closeConversationText(page);
+    speak(live, proposeBike, 1000);
+    await expectVoiceRelease(live, bike);
+    await expect(region(page)).toHaveCount(0);
+    const draft = await openConversationDraft(page);
+    const proposal = draft.getByRole('button', { name: `Visa förslaget: ${bike}`, exact: true });
+    await expect(proposal).toBeVisible();
+    await turnMicrophoneOff(page);
+    await send(page, chooseBike);
+    await expect(log(page)).toContainText(colorQuestion);
+    await expect(log(page)).toContainText(brandQuestion);
+
+    await turnMicrophoneOn(page);
+    await closeConversationText(page);
+    speak(live, 'Vilken cykel väljer jag till utflykten?', 2000);
+    const answer = 'Till utflykten väljer du Alex blå cykel.';
+    await expectVoiceRelease(live, answer);
+    await output(page, answer);
+    await expect(voiceBox(page)).toHaveText('Skyttel talar');
+    await openConversationText(page);
+    await expect(log(page)).toContainText(answer);
+    await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
+
+    speak(live, 'Den har ett grönt lås.', 3000);
+    await expect(log(page)).toContainText('Låsfärg för Alex blå cykel sattes till Grönt.');
+    await page.evaluate(() => window.skyttelVoiceFixture.fail());
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByRole('region', { name: 'Samtalsnotis' })).toContainText(
+      'Rösten avbröts',
+    );
+    await send(page, 'Vad ändrades i förslaget och vilken fråga återstår?');
+    const summary = 'Alex blå cykel har nu låsfärgen grönt. Kvar: Vilket märke har cykeln?';
+    await expect(log(page).getByRole('listitem').filter({ hasText: summary })).toBeVisible();
+    await expect(announcement(page)).toHaveText(`Skyttel: ${summary}`);
+    await openConversationDraft(page);
+    await expect(draft.getByRole('rowheader')).toHaveCount(1);
+    await proposal.click();
+    const dialog = page.getByRole('dialog', { name: bike, exact: true });
+    await expect(dialog.getByText('Grönt (Text)', { exact: true })).toBeVisible();
+    await closeSupportDialog(page, bike);
+    const save = draft.getByRole('button', { name: 'Spara hela utkastet', exact: true });
+    await expect(save).toBeDisabled();
+    await send(page, 'Strunta i märket.');
+    await expect(save).toBeEnabled();
+    await expect(await openSavedHistory(page)).toContainText('Inga genomförda sparanden.');
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    await openConversationDraft(page);
+    await expect(proposal).toBeVisible();
+    await save.click();
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+      'Utkastet är sparat',
+    );
+    await expect(await openSavedHistory(page)).toContainText(bike);
   } finally {
     for (const release of held) release([]);
     await app.close();

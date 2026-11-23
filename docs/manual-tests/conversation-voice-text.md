@@ -1,9 +1,9 @@
 # Manuella testfall för röst och text i samma samtal
 
-Fallen provar skrivna uppdrag med mikrofonen på och av, ordnade svar och
-uppläsning av samtalstexten. Anteckna commit, webbläsare och godkänt eller
-underkänt resultat vid körning. Kontrollerade ljudspår är tysta; faktiskt hört
-tal och skärmläsarens uppläsning redovisas separat.
+Fallen provar samma utkast i röst och text, fortsatt arbete efter ljudavbrott,
+ordnade svar och uppläsning av samtalstexten. Anteckna commit, webbläsare och
+godkänt eller underkänt resultat vid körning. Kontrollerade ljudspår är tysta.
+Faktiskt hört tal och skärmläsarens uppläsning redovisas separat.
 
 ## Konfigurerade användare
 
@@ -36,9 +36,10 @@ loggar in med Google i den kontrollerade installationen.
 
 ## Gemensamma svar
 
-### RÖSTTEXT-01: skrivet uppdrag med mikrofonen på får röst och text utan
+### RÖSTTEXT-01: följ samma cykel i röst och text efter ljudavbrott
 
-**Syfte:** Få svar med röst på ett skrivet uppdrag och läsa svaret senare.
+**Syfte:** Följ Alex blå cykel i samma samtal och granska utkastet efter att
+ljudet bryts.
 
 **Användare:** Alex.
 
@@ -58,7 +59,10 @@ loggar in med Google i den kontrollerade installationen.
   },
   "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
   "outcomes": [
-    "Få svar med röst på ett skrivet uppdrag och läsa svaret senare."
+    "Ett skrivet svar går till rösten och kan läsas när textvyn öppnas igen.",
+    "Röstens cykelförslag syns i utkastet och den muntliga följdfrågan besvaras utifrån det skrivna valet.",
+    "Den talade låsfärgen hör till rätt cykel och frågan om märket väntar.",
+    "Efter ljudavbrottet kan Alex fortsätta i text och granska ett enda osparat förslag."
   ]
 }
 ```
@@ -70,6 +74,14 @@ loggar in med Google i den kontrollerade installationen.
 vid respektive UI-steg. Operatören sköter dess svar/fel och läser tekniska
 resurser separat. Utför arbetsflödet en gång.
 
+För separat lyssning, använd den riktiga utrustningen i den allmänna
+förberedelsen. Följ steg 5–8 i ett nytt samtal med tomt utkast. Lyssna efter
+cykelns namn när förslaget görs med stängd textvy. Med mikrofonen av ska
+frågorna komma i text. När du slår på den igen, ställ följdfrågan och jämför
+namnet du hör med textsvaret. Svara om låset och lyssna efter ändringen på
+rätt cykel. Anteckna vad som faktiskt hörs. Använd den kontrollerade
+installationen för att bryta ljudet vid den angivna ändringen.
+
 **Steg:**
 
 1. Slå på **Prata med Skyttel**. Skicka **Berätta om ordningen.** och låt
@@ -80,6 +92,20 @@ resurser separat. Utför arbetsflödet en gång.
 4. Välj **Nytt samtal** med mikrofonen på och läs beskedet om tomt utkast.
    Teknisk kommentaröverlämning granskas separat; faktiskt ljud hör till
    RÖSTTEXT-05.
+5. Stäng textvyn. Säg **Föreslå Alex blå cykel av typen Fordon.** Öppna
+   textvyn och välj **Visa utkastet**. Läs cykelns namn i förslaget.
+6. Slå av mikrofonen. Skriv **Till utflykten väljer jag Alex blå cykel. Fråga
+   om låsets färg och cykelns märke.** Läs båda frågorna.
+7. Slå på mikrofonen, stäng textvyn och fråga **Vilken cykel väljer jag till
+   utflykten?** Lyssna på svaret vid verkligt talprov. Öppna textvyn igen.
+8. Säg **Den har ett grönt lås.** Bryt ljudet enligt förberedelsen så snart
+   samtalstexten visar den genomförda ändringen. Skriv **Vad ändrades i
+   förslaget och vilken fråga återstår?** med mikrofonen av.
+9. Öppna cykelns förslag i utkastet och läs låsfärgen. Stäng dialogen och
+   kontrollera sparknappen. Skriv **Strunta i märket.** och kontrollera den
+   igen. Öppna **Rapporter** och läs ändringshistoriken.
+10. Välj **Tillbaka till arbetet**, öppna utkastet och välj **Spara hela
+    utkastet**. Läs sparbekräftelsen och ändringshistoriken.
 
 **Förväntat resultat:**
 
@@ -93,6 +119,14 @@ resurser separat. Utför arbetsflödet en gång.
   gamla svar. Faktiskt hört tal kräver en verklig ljudkontroll.
 - Nytt samtals besked överlämnas till rösten när mikrofonen är på och dubbleras
   inte av samtalstextens uppläsning.
+- Det talade förslaget finns i utkastet. Den muntliga följdfrågan besvaras med
+  **Till utflykten väljer du Alex blå cykel.** Samma svar går att läsa.
+- Efter **Rösten avbröts** går det att skriva vidare. Svaret anger grönt lås
+  på Alex blå cykel och bara frågan **Vilket märke har cykeln?** återstår.
+- Utkastet visar en cykel med **Grönt (Text)** som låsfärg. Sparknappen är
+  spärrad medan märket väntar. När Alex avstår från märket går det att spara.
+  Ändringshistoriken är tom tills Alex väljer att spara. Därefter visas
+  sparbekräftelsen och cykeln finns i ändringshistoriken.
 
 ### RÖSTTEXT-02: mikrofonen av ger bara text och gamla svar spelas inte upp
 

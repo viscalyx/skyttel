@@ -1052,6 +1052,78 @@ efter fallet och avsluta med `quit`.
    lyssna på svaret. Öppna den igen och jämför vad som hördes.
 5. Välj **Nytt samtal** med mikrofonen på. Kontrollera dess besked i
    samtalstexten och kommentarerna.
+6. Kör `response-required off`. Med textvyn stängd, kör
+   `user Föreslå Alex blå cykel av typen Fordon.` och `delegate`.
+   Släpp det hållna anropet med
+   `tool REQUEST read_type_catalog {}`. Läs ID för **Fordon** i
+   `lastToolResult.types`. Kör `hold-check on` och föreslå cykeln med
+   kommandot nedan. Byt ut `TYPE`, `VERSION` och `CONTENT` mot typens ID
+   och det hållna utkastets båda versioner. Använd det nya anrops-ID:t för
+   varje `REQUEST` och ändringskontrollens eget ID för `CHECK`.
+
+   <!-- markdownlint-disable MD013 -->
+   ```text
+   tool REQUEST submit_changes {"version":VERSION,"contentVersion":CONTENT,"completion":"draft","operations":[{"name":"propose_object","arguments":{"id":"bike","baseRevision":null,"value":{"name":"Alex blå cykel","typeId":"TYPE"}}}]}
+   ```
+   <!-- markdownlint-enable MD013 -->
+
+   Släpp ändringskontrollen och kör sedan `hold-check off`.
+
+   ```text
+   reply CHECK {"decision":"allow","complete":true,"fulfillsRequest":true}
+   ```
+
+7. Öppna utkastet. När Alex har skickat sitt val av cykel i text med
+   mikrofonen av, ställ båda frågorna med följande kommando.
+
+   <!-- markdownlint-disable MD013 -->
+   ```text
+   tool REQUEST ask_questions {"questions":["Vilken färg har låset?","Vilket märke har cykeln?"]}
+   ```
+   <!-- markdownlint-enable MD013 -->
+
+8. Med mikrofonen på och textvyn stängd, kör
+   `user Vilken cykel väljer jag till utflykten?` och `delegate`.
+   Läs valet av cykel i den tidigare skrivna repliken i `held.input`.
+   Släpp med `reply REQUEST Till utflykten väljer du Alex blå cykel.`
+   och kontrollera överlämningen med `sessions`. Skicka svaret som
+   transportfragment med ljudaktivitet som i steg 3. Öppna textvyn och
+   stäng av ljudaktiviteten.
+9. Kör `user Den har ett grönt lås.` och `delegate`. Läs låsfrågans
+   `id` och `revision` i `pendingParts` samt svarets `messageId`.
+   Ersätt `PART`, `REV` och `MSG` och kör följande kommando.
+
+   <!-- markdownlint-disable MD013 -->
+   ```text
+   tool REQUEST ask_questions {"questions":[],"updates":[{"id":"PART","revision":REV,"action":"clarify","messageId":"MSG","evidence":"Den har ett grönt lås."}],"continueResponse":true}
+   ```
+   <!-- markdownlint-enable MD013 -->
+
+10. Använd låsfrågans nya revision från `lastToolResult.pendingParts`.
+    Kör `hold-check on`, byt ut versioner och typ som i steg 6 och släpp
+    ändringskontrollen på samma sätt efter verktygsanropet.
+
+    <!-- markdownlint-disable MD013 -->
+    ```text
+    tool REQUEST submit_changes {"version":VERSION,"contentVersion":CONTENT,"completion":"draft","resolves":[{"id":"PART","revision":REV}],"operations":[{"name":"propose_object","arguments":{"id":"bike","baseRevision":null,"value":{"name":"Alex blå cykel","typeId":"TYPE","properties":[{"id":"lock-color","label":"Låsfärg","kind":"text","value":"Grönt"}]}}}]}
+    ```
+    <!-- markdownlint-enable MD013 -->
+
+11. När ändringen av låsfärgen syns, kör
+    `window.skyttelVoiceFixture.fail()` i webbläsarkonsolen. Låt mikrofonen
+    vara av. När Alex frågar i text vad som ändrades, läs låsfärgen i
+    `draft.changes` och den återstående frågan i `pendingParts`.
+    Kör `reply REQUEST` följt av **Alex blå cykel har nu låsfärgen grönt.
+    Kvar: Vilket märke har cykeln?** på samma rad.
+12. När Alex skriver **Strunta i märket.**, använd märkesfrågans ID och
+    revision samt det nya meddelandets ID. Kontrollera att knappen för att
+    spara aktiveras och att sparandet syns först efter Alex uttryckliga val.
+
+    <!-- markdownlint-disable MD013 -->
+    ```text
+    tool REQUEST ask_questions {"questions":[],"updates":[{"id":"PART","revision":REV,"action":"withdraw","messageId":"MSG","evidence":"Strunta i märket."}]}
+    ```
+    <!-- markdownlint-enable MD013 -->
 
 ### Tidslinje RÖSTTEXT-02
 
