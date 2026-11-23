@@ -151,6 +151,34 @@ const resultReport = z.discriminatedUnion('source', [
     })
     .strict(),
 ]);
+const selectionId = z.string().regex(/^[\w-]{1,128}$/);
+const objectSelection = z
+  .strictObject({ objectId: selectionId })
+  .transform(({ objectId }) => ({ kind: 'object' as const, id: objectId }));
+const itemSelection = z.strictObject({
+  kind: z.enum(['object', 'relationship']),
+  id: selectionId,
+});
+
+class MissingMapSelection extends MapError {
+  constructor() {
+    super('invalid_request', 400);
+  }
+}
+
+function parseMapSelection(action: MapAgentCall): MapSelection {
+  let args: unknown;
+  try {
+    args = JSON.parse(action.arguments);
+  } catch {
+    throw new MapError('invalid_request', 400);
+  }
+  const parsed = (action.name === 'show_map_object' ? objectSelection : itemSelection).safeParse(
+    args,
+  );
+  if (!parsed.success) throw new MapError('invalid_request', 400);
+  return parsed.data;
+}
 
 export function textAssistantRoutes({
   database,
@@ -1898,13 +1926,13 @@ export function textAssistantRoutes({
       ? ' Ändringarna ligger kvar osparade i ditt utkast.'
       : '';
   }
-  function failureMessages(session: Session, error: string, clarification?: ActionClarification) {
+  function failureMessages(session: Session, error: string, detail?: string) {
     const saveRequested = !!session.state.saveIntent;
     const unsavedNotice = saveRequested ? unsavedDraftNotice(session) : '';
     const failure =
       error === 'operation_conflict' && !session.state.pendingSave
         ? 'Ändringsuppdraget stämmer inte med den tidigare begäran. Granska ditt aktuella utkast innan du fortsätter.'
-        : (clarification?.question ?? assistantFailureMessage(error));
+        : (detail ?? assistantFailureMessage(error));
     return {
       ordinary:
         failure +
@@ -1984,14 +2012,19 @@ export function textAssistantRoutes({
     selection: MapSelection,
     review: TextAssistantReview,
     guard?: () => void,
+    mayRestore = false,
   ) {
     const changes = selection.kind === 'object' ? review.changes : review.relationships;
     const change = changes?.find(({ id }) => id === selection.id);
-    if (change) return change.after;
+    if (change) {
+      if (change.after || !mayRestore) return change.after;
+      if (change.suppressed?.after) return change.suppressed.after;
+    }
     const map = await call(
       session,
       'read_map',
-      selection.kind === 'object' ? { objectId: selection.id } : {},
+      // The filtered read accepts shorter IDs than the map's proposal tools.
+      selection.kind === 'object' && selection.id.length <= 100 ? { objectId: selection.id } : {},
       guard,
     );
     return (selection.kind === 'object' ? map.objects : map.relationships).find(
@@ -3089,14 +3122,34 @@ export function textAssistantRoutes({
           ? submittedChanges.safeParse(JSON.parse(calls[0].arguments))
           : undefined;
         if (submission && !submission.success) throw new MapError('invalid_request', 400);
+        const mapSelections = new Map<string, MapSelection>();
         if (!submits) {
           const operations = [];
           for (const action of calls) {
             if (!tools.some((tool) => tool.name === action.name))
               throw new MapError('assistant_unknown_tool', 409);
+            if (action.name === 'show_map_object' || action.name === 'show_map_item') {
+              const selection = parseMapSelection(action);
+              const proposal = operations.find(
+                ({ name, arguments: args }) =>
+                  name === `propose_${selection.kind}` && args.id === selection.id,
+              );
+              // A preceding edit may introduce the target or restore a hidden item.
+              const mayRestore = operations.some(({ name }) =>
+                draftTools.some((tool) => tool.name === name),
+              );
+              if (
+                proposal
+                  ? proposal.arguments.value === null
+                  : !(await selectedItem(session, selection, afterProvider, guard, mayRestore))
+              )
+                throw new MissingMapSelection();
+              mapSelections.set(action.call_id, selection);
+              continue;
+            }
             const args = JSON.parse(action.arguments) as Record<string, unknown>;
             const tool = session.execution.mcp.tools.find((tool) => tool.name === action.name);
-            if (!tool) continue; // Local conversation/display tools do not mutate the draft.
+            if (!tool) continue; // Local conversation tools do not mutate the draft.
             // Internal saving supplies its own operation identity at dispatch.
             // Validate the same server-owned field here without registering work.
             const checkedArgs = ['save_draft', 'prepare_save'].includes(action.name)
@@ -3416,19 +3469,10 @@ export function textAssistantRoutes({
             );
             return session.state.result;
           }
-          if (action.name === 'show_map_object' || action.name === 'show_map_item') {
-            const item =
-              action.name === 'show_map_object' ? { kind: 'object', id: args.objectId } : args;
-            if (
-              typeof item.id !== 'string' ||
-              !/^[\w-]{1,128}$/.test(item.id) ||
-              (item.kind !== 'object' && item.kind !== 'relationship') ||
-              Object.keys(args).length !== (action.name === 'show_map_object' ? 1 : 2)
-            )
-              throw new MapError('invalid_request', 400);
-            const selection = { kind: item.kind, id: item.id } as MapSelection;
+          const selection = mapSelections.get(action.call_id);
+          if (selection) {
             const selected = await selectedItem(session, selection, session.state.review, guard);
-            if (!selected) throw new MapError('assistant_object_missing', 409);
+            if (!selected) throw new MissingMapSelection();
             guard();
             session.state.selection = {
               ...selection,
@@ -3698,7 +3742,11 @@ export function textAssistantRoutes({
       const messages = failureMessages(
         session,
         session.state.error,
-        error instanceof ActionClarification ? error : undefined,
+        error instanceof ActionClarification
+          ? error.question
+          : error instanceof MissingMapSelection && session.state.error === error.code
+            ? assistantFailureMessage('assistant_object_missing')
+            : undefined,
       );
       session.state.previousFailure = messages.ordinary;
       if (session.state.saveIntent) session.state.saveIntent = undefined;
@@ -4499,7 +4547,7 @@ export function textAssistantRoutes({
         const messages = failureMessages(
           session,
           session.state.error,
-          error instanceof ActionClarification ? error : undefined,
+          error instanceof ActionClarification ? error.question : undefined,
         );
         session.state.reply = messages.ordinary;
         session.state.saveIntent = undefined;

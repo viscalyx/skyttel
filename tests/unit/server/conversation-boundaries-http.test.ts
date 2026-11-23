@@ -231,18 +231,19 @@ test.each([
   [
     'missing selected object',
     [modelTool('show_map_item', { kind: 'object', id: 'missing' })],
+    'invalid_request',
     'assistant_object_missing',
   ],
 ] as const)(
   '%s provider command cannot mutate the household or claim a verified result',
-  async (_name, output, error) => {
+  async (_name, output, error, notice?: string) => {
     const model = textModel(() => [...output]);
     await setup(model.provider);
     await object();
     const before = await map();
     const result = await message('Läs mitt utkast.');
     expect(result).toMatchObject({ phase: 'error', error });
-    expect(result.reply).toBe(assistantFailureMessage(error));
+    expect(result.reply).toBe(assistantFailureMessage(notice ?? error));
     expect(result.receipt).toBeUndefined();
     expect(result.selection).toBeUndefined();
     expect(await map()).toEqual(before);

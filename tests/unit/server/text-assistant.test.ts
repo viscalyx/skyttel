@@ -228,10 +228,14 @@ test('a repeated tool call identity stops work before another edit can run', asy
   expect((await readMap()).draft).toEqual(before.draft);
 });
 
-test('malformed selection arguments stop the proposed companion edit', async () => {
+test.each([
+  ['malformed JSON', { ...modelTool('show_map_item', {}), arguments: '{' }],
+  ['invalid arguments', modelTool('show_map_object', { objectId: 42 })],
+  ['missing object', modelTool('show_map_object', { objectId: 'missing' })],
+  ['missing relationship', modelTool('show_map_item', { kind: 'relationship', id: 'bike' })],
+] as const)('%s in a selection stops the preceding proposal', async (_name, selection) => {
   let typeId: string;
   const model = textModel(() => [
-    { ...modelTool('show_map_item', {}), arguments: '{' },
     modelTool('propose_object', {
       version: 0,
       contentVersion: 1,
@@ -239,13 +243,15 @@ test('malformed selection arguments stop the proposed companion edit', async () 
       baseRevision: null,
       value: { name: 'Blå cykeln', typeId },
     }),
+    selection,
   ]);
   await setup(model.provider);
   const readMap = async () => (await browser.get(path.replace('/text-assistant', '/map'))).json();
   const before = await readMap();
   typeId = before.types[0].id;
   const failed = await message(await start(), 'Lägg till och visa Blå cykeln i utkastet.');
-  expect(failed.phase).toBe('error');
+  expect(failed).toMatchObject({ phase: 'error', error: 'invalid_request' });
+  expect(failed.selection).toBeUndefined();
   expect((await readMap()).draft).toEqual(before.draft);
 });
 
@@ -4669,6 +4675,64 @@ test('a marking is confirmed only after the current browser acknowledges the act
   expect(view).toMatchObject({ reply: 'Markerat i kartan.', displayedSelection: 'web-object' });
 });
 
+test('a proposal and selection in one response can display the newly proposed object', async () => {
+  let typeId: string;
+  let first = true;
+  const model = textModel(() => {
+    if (!first) return [modelMessage('Markerat!')];
+    first = false;
+    return [
+      modelTool('propose_object', {
+        version: 0,
+        contentVersion: 1,
+        id: 'bike',
+        baseRevision: null,
+        value: { name: 'Blå cykeln', typeId },
+      }),
+      modelTool('show_map_item', { kind: 'object', id: 'bike' }),
+    ];
+  });
+  await setup(model.provider);
+  const mapPath = path.replace('/text-assistant', '/map');
+  typeId = (await (await browser.get(mapPath)).json()).types[0].id;
+  const session = await start();
+  const submitted = await browser.post(`${path}/${session.id}/messages`, {
+    headers: { origin: app.origin },
+    data: {
+      revision: session.revision,
+      ...displayedVersion(session),
+      requestId: 'propose-and-select',
+      text: 'Lägg till och visa Blå cykeln i utkastet.',
+    },
+  });
+  expect(submitted.status()).toBe(202);
+  const read = async (): Promise<TextAssistantView> =>
+    (await browser.get(`${path}/${session.id}`)).json();
+  await expect
+    .poll(async () => {
+      const current = await read();
+      return current.error ?? current.selection?.id;
+    })
+    .toBe('bike');
+  const current = await read();
+  const acknowledged = await browser.post(`${path}/${session.id}/selection`, {
+    headers: { origin: app.origin },
+    data: {
+      revision: current.revision,
+      ...displayedVersion(current),
+      kind: 'object',
+      id: 'bike',
+      displayed: true,
+    },
+  });
+  expect(acknowledged.status()).toBe(200);
+  await expect.poll(async () => (await read()).phase).toBe('ready');
+  expect(await read()).toMatchObject({
+    displayedItem: { kind: 'object', id: 'bike' },
+    review: { changes: [{ id: 'bike', after: { name: 'Blå cykeln' } }] },
+  });
+});
+
 test.each(['before', 'after'])(
   'requested draft details and selection can share a response with the report %s selection',
   async (order) => {
@@ -5509,7 +5573,7 @@ test('a conflicting draft is fully refreshed after refusal so the next explicit 
 
 test.each([
   ['unknown_tool', {}, 'assistant_unknown_tool'],
-  ['show_map_object', { objectId: 'missing' }, 'assistant_object_missing'],
+  ['show_map_object', { objectId: 'missing' }, 'invalid_request'],
   ['show_map_object', { objectId: 42 }, 'invalid_request'],
   [
     'save_draft',
