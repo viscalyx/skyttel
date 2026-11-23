@@ -525,9 +525,10 @@ test.each(['retry', 'abandon'] as const)(
 );
 
 test.each([true, false])(
-  'a lost registered save response keeps only its unfinished explanation behind an explicit continuation action: explanation=%s',
+  'an unavailable save receipt lookup requires recovery before any unfinished explanation can resume: explanation=%s',
   async (explanation) => {
-    let dropped = false;
+    let lostOperationId: string | undefined;
+    const unavailableLookups = new Set<string>();
     const model = textModel(
       (body) => {
         if (model.requests.length > 1)
@@ -566,12 +567,16 @@ test.each([true, false])(
                 .json()
                 .catch(() => null)
             : null;
+        if (rpc?.params?.name === 'read_save_operation' && lostOperationId) {
+          unavailableLookups.add(rpc.params.arguments.operationId);
+          throw new TypeError('Controlled save receipt lookup unavailable');
+        }
         const response = await dispatch(incoming);
-        if (rpc?.params?.name === 'save_draft' && !dropped) {
+        if (rpc?.params?.name === 'save_draft' && !lostOperationId) {
           const envelope = await response.clone().json();
           expect(envelope.result.isError).not.toBe(true);
-          dropped = true;
-          throw new Error('Controlled committed save response loss');
+          lostOperationId = rpc.params.arguments.operationId;
+          throw new TypeError('Controlled committed save response loss');
         }
         return response;
       },
@@ -609,20 +614,27 @@ test.each([true, false])(
     });
     await expect
       .poll(async () => {
-        view = await (await browser.get(endpoint)).json();
-        return [dropped, view.phase];
+        view = await (await browser.get(`${endpoint}/messages/${requestId}`)).json();
+        return view.taskStatus;
       })
-      .toEqual([true, 'recovery']);
+      .toBe('completed');
+    expect(view.phase).toBe('recovery');
+    expect(lostOperationId).toBeDefined();
+    expect(unavailableLookups).toEqual(new Set([lostOperationId]));
+    expect(view.receipt).toBeUndefined();
     expect(view.workFailure).toBeUndefined();
     expect(
       (await post(`${endpoint}/retry-work`, { revision: view.revision, requestId })).status(),
     ).toBe(409);
     expect(model.requests).toHaveLength(1);
     const operation = (await (await browser.get(`${map}/operations`)).json()).operations[0];
-    expect(operation.status).toBe('succeeded');
+    expect(operation).toMatchObject({ status: 'succeeded', operationId: lostOperationId });
+    const { history } = await (await browser.get(`${map}/history`)).json();
+    expect(history).toEqual([operation.receipt]);
     const check = await post(`${endpoint}/recover`, { operationIds: [operation.operationId] });
     expect(check.status(), await check.text()).toBe(200);
     view = await check.json();
+    expect(view.receipt).toEqual(operation.receipt);
     if (!explanation) {
       expect(view.workFailure).toBeUndefined();
       expect(view.phase).toBe('ready');
@@ -650,7 +662,7 @@ test.each([true, false])(
     expect(view.receipt).toBeUndefined();
     expect(model.requests).toHaveLength(2);
     expect((await (await browser.get(`${map}/operations`)).json()).operations).toHaveLength(1);
-    expect((await (await browser.get(`${map}/history`)).json()).history).toHaveLength(1);
+    expect((await (await browser.get(`${map}/history`)).json()).history).toEqual(history);
     expect(await (await browser.get(map)).json()).toMatchObject({
       objects: [{ id: 'lo', name: 'Lo' }],
       draft: { changes: [] },
