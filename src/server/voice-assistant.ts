@@ -1034,10 +1034,11 @@ export function voiceAssistantRoutes({
         voice.deliveryConnection.id = body.deliveryConnectionId;
         voice.deliveryConnection.events.dispatchEvent(new Event('change'));
       }
-      voice.view.inputVersion = voice.work?.confirmInput(body.confirmedInputVersion);
       voice.work?.rendered(body);
       voice.work?.activity(body.microphoneActive === true && body.microphoneOn === true);
       voice.work?.speaker(body.speakerActive === true);
+      // Confirming input can start collection using this poll's media state.
+      voice.view.inputVersion = voice.work?.confirmInput(body.confirmedInputVersion);
       voice.work?.answer(voice.assistant, body.microphoneOn === true);
       voice.quietAt =
         body.microphoneActive !== true && body.speakerActive !== true ? now() : undefined;

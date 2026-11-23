@@ -15,6 +15,7 @@ type Fragment = { role: 'user' | 'assistant'; text: string; startMs: number; end
 type Delegation = { id: string; offsetMs: number };
 type EarlyDelegation = Delegation & {
   expiresAt: number;
+  firstUtterance: boolean;
   noticeTimer?: ReturnType<typeof setTimeout>;
 };
 type VoiceCompletionView = TextAssistantView & Pick<ConversationReply, 'failed'>;
@@ -151,6 +152,34 @@ export function voiceWork({
         item.startMs <= delegation.offsetMs &&
         item.text.trim(),
     );
+  }
+
+  function settleEarlyDelegation() {
+    const candidate = awaitingInterrupt;
+    if (!candidate) return;
+    // An acknowledged first utterance can establish the association when its
+    // audio covers the delegation's offset. Later empty delegations can also
+    // belong to the prior turn, so they still require a fresh cutoff.
+    if (
+      candidate.firstUtterance &&
+      !collecting &&
+      confirmedInput === inputVersion &&
+      pending.some(
+        (item) =>
+          item.receivedAt < candidate.expiresAt &&
+          item.startMs <= candidate.offsetMs &&
+          candidate.offsetMs <= item.endMs &&
+          item.text.trim(),
+      )
+    ) {
+      clearAwaitingInterrupt();
+      void collect(candidate);
+      return;
+    }
+    if (microphoneActive || now() < candidate.expiresAt || hasSpeechAwaitingInterrupt(candidate))
+      return;
+    clearAwaitingInterrupt();
+    if (!collecting && !automaticReplyConsumed) requestFreshSpeech(candidate.id);
   }
 
   function cancel(revisionIfIdle?: number) {
@@ -704,8 +733,8 @@ export function voiceWork({
         void collect(delegation);
         return;
       }
-      // A browser interrupt may still be in transit. Until its cutoff arrives,
-      // this delegation cannot collect speech or block a context handoff.
+      // A browser interrupt may still be in transit. An empty delegation
+      // cannot block a context handoff while it waits for evidence of speech.
       const receivedAt = now();
       if (
         !awaitingInterrupt ||
@@ -713,15 +742,14 @@ export function voiceWork({
         delegation.offsetMs >= awaitingInterrupt.offsetMs
       ) {
         clearAwaitingInterrupt();
-        const candidate = { ...delegation, expiresAt: receivedAt + speechSettleMs };
+        const candidate = {
+          ...delegation,
+          expiresAt: receivedAt + speechSettleMs,
+          firstUtterance: inputVersion === 0 && interruptedThrough < 0,
+        };
         awaitingInterrupt = candidate;
         if (confirmBrowserInput && !automaticReplyConsumed) {
-          const receivedInputVersion = inputVersion;
-          awaitingInterrupt.noticeTimer = setTimeout(() => {
-            if (hasSpeechAwaitingInterrupt(candidate)) return;
-            clearAwaitingInterrupt();
-            if (inputVersion === receivedInputVersion) requestFreshSpeech(delegation.id);
-          }, speechSettleMs);
+          awaitingInterrupt.noticeTimer = setTimeout(settleEarlyDelegation, speechSettleMs);
           awaitingInterrupt.noticeTimer.unref();
         }
       }
@@ -761,8 +789,10 @@ export function voiceWork({
   return {
     confirmInput(version: unknown) {
       if (!confirmBrowserInput) return undefined;
-      if (typeof version === 'number' && Number.isSafeInteger(version) && version <= inputVersion)
+      if (typeof version === 'number' && Number.isSafeInteger(version) && version <= inputVersion) {
         confirmedInput = Math.max(confirmedInput, version);
+        settleEarlyDelegation();
+      }
       return inputVersion;
     },
     async interruptSpeech(interruptedThroughMs?: number) {

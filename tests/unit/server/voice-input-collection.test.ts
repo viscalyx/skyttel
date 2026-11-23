@@ -247,6 +247,46 @@ test('a delegation for a correction can arrive before any of its transcript delt
 });
 
 test.each([
+  { offset: 1400, finalPollDelay: 1600, forwarded: true },
+  { offset: 1400, finalPollDelay: 2200, forwarded: true },
+  { offset: 900, finalPollDelay: 1600, forwarded: false },
+  { offset: 1900, finalPollDelay: 1600, forwarded: false },
+])(
+  'an early browser delegation needs matching first speech and browser confirmation (offset $offset, poll $finalPollDelay)',
+  { tags: ['technical'] },
+  async ({ offset, finalPollDelay, forwarded }) => {
+    const { work, fragment, delegate, messages, channel } = arrange(true);
+    delegate('early', offset);
+    await vi.advanceTimersByTimeAsync(300);
+    fragment('prefix', 'Läs ', 1100, 1300);
+    work.confirmInput(1);
+    await vi.advanceTimersByTimeAsync(50);
+    fragment('suffix', 'utkastet.', 1300, 1500);
+    await vi.advanceTimersByTimeAsync(finalPollDelay);
+    expect(messages()).toHaveLength(0);
+
+    work.confirmInput(2);
+    await vi.advanceTimersByTimeAsync(500);
+    if (forwarded) {
+      expect(messages()).toHaveLength(1);
+      expect(messages()[0][1]).toMatchObject({ text: 'Läs utkastet.' });
+      expect(channel.send).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'session.thinking.append', delegation_id: 'early' }),
+      );
+    } else {
+      expect(messages()).toHaveLength(0);
+      expect(channel.send).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'session.commentary.append', delegation_id: 'early' }),
+      );
+    }
+    delegate('early', offset);
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(messages()).toHaveLength(forwarded ? 1 : 0);
+    work.retire();
+  },
+);
+
+test.each([
   { order: 'interrupt first', offset: 1500, delay: 300, forwarded: true },
   { order: 'transcript first', offset: 1500, delay: 1500, forwarded: true },
   { order: 'transcript first', offset: 1500, delay: 3500, forwarded: true },
@@ -279,6 +319,10 @@ test.each([
     await vi.advanceTimersByTimeAsync(100);
     if (!forwarded) {
       expect(messages()).toHaveLength(1);
+      if (order === 'no interruption')
+        expect(channel.send).toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'session.commentary.append', delegation_id: 'early' }),
+        );
       delegate('proper', 1500);
       await vi.advanceTimersByTimeAsync(100);
     }
@@ -361,7 +405,7 @@ test('a written correction also ends the previous early voice correction window'
 test('an empty browser delegation requests fresh speech once without collecting work', {
   tags: ['technical'],
 }, async () => {
-  const { work, delegate, messages, channel } = arrange(true);
+  const { work, fragment, delegate, messages, channel } = arrange(true);
   delegate('empty', 100);
   delegate('empty', 100);
   expect(work.readyForSummary()).toBe(true);
@@ -375,6 +419,10 @@ test('an empty browser delegation requests fresh speech once without collecting 
       content: expect.stringContaining('Be om ett nytt tydligt uppdrag.'),
     }),
   );
+  fragment('late', 'Läs utkastet.', 0, 100);
+  work.confirmInput(1);
+  await vi.advanceTimersByTimeAsync(2100);
+  expect(messages()).toHaveLength(0);
   work.retire();
 });
 
