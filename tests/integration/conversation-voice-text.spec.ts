@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import type { SaveOperation } from '../../src/shared/map.js';
 import {
   bike,
   bikeDraftReply,
@@ -20,6 +21,7 @@ import {
   openConversationDraft,
   openConversationText,
   openSavedHistory,
+  readCommittedHistoryCard,
   startConversationWithText,
   turnMicrophoneOff,
   turnMicrophoneOn,
@@ -286,7 +288,9 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
     (await nextReply())([modelMessage('Jag förstår vilken cykel du menar.')]);
     await expect(log(page)).toContainText('Jag förstår vilken cykel du menar.');
     const confirmation = page.getByRole('status', { name: 'Sparbekräftelse' });
+    const toast = page.locator('.draft-save-toast');
     await expect(confirmation).toBeEmpty();
+    await expect(toast).not.toBeVisible();
     await expect(proposal).toBeVisible();
     await expect(mapBike).toHaveClass(/\badded\b/);
     await expect(await openSavedHistory(page)).toContainText('Inga genomförda sparanden.');
@@ -296,13 +300,21 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
     await reviewBike();
     await send(page, 'Spara hela utkastet.');
     (await nextReply())([modelMessage('Jag har granskat förslaget.')]);
+    await expect(toast).toBeVisible();
     await expect(confirmation).toContainText('Utkastet är sparat');
     await expect(draft).toContainText('Utkastet är tomt.');
     await expect(mapBike).toBeVisible();
     await expect(mapBike).toHaveClass(/\bexisting\b/);
-    const receipt = (await openSavedHistory(page)).getByRole('article');
-    await expect(receipt).toHaveCount(1);
-    await expect(receipt.getByRole('heading', { level: 3 })).toContainText('Alex Exempel');
+    const { operations }: { operations: SaveOperation[] } = await (
+      await page.request.get(`${mapPath}/operations`)
+    ).json();
+    const completed = operations.filter((operation) => operation.status === 'succeeded');
+    expect(completed).toHaveLength(1);
+    const [{ receipt: committedReceipt }] = completed;
+    expect(committedReceipt.actorName).toBe('Alex Exempel');
+    const history = await openSavedHistory(page);
+    await expect(history.getByRole('article')).toHaveCount(1);
+    const receipt = await readCommittedHistoryCard(history, committedReceipt);
     await expect(receipt.locator('time')).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
     await expect(receipt.getByText('1 objekt', { exact: true })).toBeVisible();
     await receipt.getByText('Visa ändringarna', { exact: true }).click();
