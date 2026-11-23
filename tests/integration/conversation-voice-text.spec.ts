@@ -303,7 +303,7 @@ test('RÖSTTEXT-04: bara en aktuell sparbegäran ger kvitto och visar cykeln i k
     const receipt = (await openSavedHistory(page)).getByRole('article');
     await expect(receipt).toHaveCount(1);
     await expect(receipt.getByRole('heading', { level: 3 })).toContainText('Alex Exempel');
-    await expect(receipt.locator('time')).toBeVisible();
+    await expect(receipt.locator('time')).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
     await expect(receipt.getByText('1 objekt', { exact: true })).toBeVisible();
     await receipt.getByText('Visa ändringarna', { exact: true }).click();
     await expect(receipt.getByText('Fanns inte i kartan', { exact: true })).toBeVisible();
