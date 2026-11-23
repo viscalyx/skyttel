@@ -432,6 +432,41 @@ test('an empty browser delegation requests fresh speech once without collecting 
   work.retire();
 });
 
+test.each([
+  { playback: 'completed', start: 1200, end: 1500, offset: 1500, forwarded: true },
+  { playback: 'wrong id', start: 1200, end: 1500, offset: 1500, forwarded: false },
+  { playback: 'unconfirmed', start: 1200, end: 1500, offset: 1500, forwarded: false },
+  { playback: 'completed', start: 50, end: 100, offset: 100, forwarded: false },
+  { playback: 'completed', start: 1200, end: 1500, offset: 1600, forwarded: false },
+])(
+  'early follow-up delegation requires playback $playback and a fresh interval $start–$end covering $offset',
+  { tags: ['technical'] },
+  async ({ playback, start, end, offset, forwarded }) => {
+    const { work, fragment, delegate, messages, response } = arrange(true);
+    fragment('first-input', 'Läs kartan.', 0, 100);
+    delegate('first-task', 100);
+    work.confirmInput(1);
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(messages()).toHaveLength(1);
+    expect(response).toHaveBeenCalledWith(expect.objectContaining({ id: 'collect-voice:1' }));
+    const playedResponse =
+      playback === 'completed'
+        ? 'collect-voice:1'
+        : playback === 'wrong id'
+          ? 'other:1'
+          : undefined;
+    delegate('early-follow-up', offset);
+    fragment('second-input', 'Vad gäller för Lo?', start, end);
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(messages()).toHaveLength(1);
+    work.confirmInput(2, playedResponse);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(messages()).toHaveLength(forwarded ? 2 : 1);
+    if (forwarded) expect(messages()[1][1]).toMatchObject({ text: 'Vad gäller för Lo?' });
+    work.retire();
+  },
+);
+
 test('a correction delegation expires when its transcript does not arrive', {
   tags: ['technical'],
 }, async () => {

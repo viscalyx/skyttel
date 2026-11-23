@@ -12,10 +12,11 @@ import { VoiceMessageRefusal, type VoiceMessageRefusalCode } from './voice-messa
 
 type Anchor = { revision: number; draftVersion: number; contentVersion: number };
 type Fragment = { role: 'user' | 'assistant'; text: string; startMs: number; endMs: number };
-type Delegation = { id: string; offsetMs: number };
+type Delegation = { id: string; offsetMs: number; afterInputMs?: number };
 type EarlyDelegation = Delegation & {
   expiresAt: number;
   firstUtterance: boolean;
+  precedingResponseId?: string;
   noticeTimer?: ReturnType<typeof setTimeout>;
 };
 type VoiceCompletionView = TextAssistantView & Pick<ConversationReply, 'failed'>;
@@ -101,6 +102,8 @@ export function voiceWork({
   let generation = 0;
   let inputVersion = 0;
   let confirmedInput = 0;
+  let consumedInputThroughMs = -1;
+  let precedingResponse: { id: string; acknowledged: boolean } | undefined;
   let interruptedThrough = -1;
   let awaitingCorrectionAfterRevision: number | undefined;
   let lastInputAt = 0;
@@ -177,11 +180,17 @@ export function voiceWork({
   function settleEarlyDelegation() {
     const candidate = awaitingInterrupt;
     if (!candidate) return;
-    // An acknowledged first utterance can establish the association when its
-    // audio covers the delegation's offset. Later empty delegations can also
-    // belong to the prior turn, so they still require a fresh cutoff.
+    // A later delegation can belong to the previous turn. Its new media
+    // interval must follow consumed speech and the browser must have heard
+    // the exact response that preceded this delegation.
+    const followsPlayback =
+      precedingResponse?.acknowledged &&
+      precedingResponse.id === candidate.precedingResponseId &&
+      !inFlight.size &&
+      !questionPending &&
+      pending.every((item) => item.startMs > consumedInputThroughMs);
     if (
-      candidate.firstUtterance &&
+      (candidate.firstUtterance || followsPlayback) &&
       !collecting &&
       confirmedInput === inputVersion &&
       pending.some(
@@ -193,7 +202,10 @@ export function voiceWork({
       )
     ) {
       clearAwaitingInterrupt();
-      void collect(candidate);
+      void collect({
+        ...candidate,
+        afterInputMs: followsPlayback ? consumedInputThroughMs : undefined,
+      });
       return;
     }
     if (microphoneActive || now() < candidate.expiresAt || hasSpeechAwaitingInterrupt(candidate))
@@ -208,6 +220,7 @@ export function voiceWork({
     const hadWork = (inFlight.get(generation) ?? 0) > 0;
     generation++;
     collecting = undefined;
+    precedingResponse = undefined;
     awaitingCorrectionAfterRevision = undefined;
     clearAwaitingInterrupt();
     const revision = dispatching?.revision ?? (hadWork ? rendered.revision : revisionIfIdle);
@@ -291,9 +304,14 @@ export function voiceWork({
     );
     if (!view) return;
     answered.add(view.revision);
-    if (publishResponse)
+    if (publishResponse) {
+      const id = `${view.id}:${view.revision}`;
+      precedingResponse =
+        view.phase === 'ready' && !view.questionPending && !view.error && !view.failed
+          ? { id, acknowledged: false }
+          : undefined;
       response?.({
-        id: `${view.id}:${view.revision}`,
+        id,
         revision: view.revision,
         text:
           typeof answer === 'string'
@@ -305,6 +323,7 @@ export function voiceWork({
         questionPending: Boolean(view.questionPending),
         receiptOperationId: view.receipt?.operationId,
       });
+    }
   }
   function completion(view: VoiceCompletionView): VoiceAnswer {
     if (view.saveCheck) return view.saveCheck.reply + (view.receipt ? ' Sparat.' : '');
@@ -714,7 +733,8 @@ export function voiceWork({
     // Require some retained speech at its offset before collecting the suffix.
     if (
       delegation &&
-      !pending.some((item) => item.startMs <= delegation.offsetMs && item.text.trim())
+      (!pending.some((item) => item.startMs <= delegation.offsetMs && item.text.trim()) ||
+        pending.some((item) => item.startMs <= (delegation.afterInputMs ?? -1)))
     ) {
       collectReply();
       return;
@@ -749,6 +769,9 @@ export function voiceWork({
     anchor = undefined;
     input?.(false);
     if (text.trim()) {
+      for (const item of selected)
+        consumedInputThroughMs = Math.max(consumedInputThroughMs, item.endMs);
+      precedingResponse = undefined;
       awaitingCorrectionAfterRevision = undefined;
       clearAwaitingInterrupt();
     }
@@ -826,6 +849,7 @@ export function voiceWork({
           ...delegation,
           expiresAt: receivedAt + speechSettleMs,
           firstUtterance: inputVersion === 0 && interruptedThrough < 0,
+          precedingResponseId: precedingResponse?.id,
         };
         awaitingInterrupt = candidate;
         if (confirmBrowserInput && !automaticReplyConsumed) {
@@ -867,8 +891,10 @@ export function voiceWork({
     anchor = undefined;
   }
   return {
-    confirmInput(version: unknown) {
+    confirmInput(version: unknown, playedResponseId?: unknown) {
       if (!confirmBrowserInput) return undefined;
+      if (precedingResponse && playedResponseId === precedingResponse.id)
+        precedingResponse.acknowledged = true;
       if (typeof version === 'number' && Number.isSafeInteger(version) && version <= inputVersion) {
         confirmedInput = Math.max(confirmedInput, version);
         settleEarlyDelegation();

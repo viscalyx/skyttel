@@ -96,6 +96,7 @@ type Attempt = {
   providerGeneration?: number;
   interrupting?: Promise<void>;
   inputVersion?: number;
+  playedResponseId?: string;
   output?: { text: string; heard: boolean; speaking: boolean; matched?: string };
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
   refusalId?: string;
@@ -234,6 +235,7 @@ export function useVoice(options: {
     // observed, and then drain. Live offers no complete-turn event; future
     // unsolicited output cannot be ruled out by this bounded-word check.
     completedOutput.current.add(response.id);
+    attempt.playedResponseId = response.id;
     setFailure((previous) => (previous?.noticeId === 'voiceReplyUnconfirmed' ? null : previous));
     attempt.output = { text: '', heard: false, speaking: false };
     if (response.questionPending) setSpokenQuestion(response.revision);
@@ -486,6 +488,7 @@ export function useVoice(options: {
               microphoneActive: !offRef.current && activityRef.current.microphone,
               speakerActive: activityRef.current.speaker,
               confirmedInputVersion: attempt.interrupting ? undefined : attempt.inputVersion,
+              playedResponseId: attempt.interrupting ? undefined : attempt.playedResponseId,
               deliveryConnectionId: responseDelivery?.id,
             },
             attempt.controller.signal,

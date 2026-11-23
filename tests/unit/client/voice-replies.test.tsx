@@ -48,8 +48,13 @@ async function arrange() {
   } = {
     assistant: initial,
   };
-  vi.stubGlobal('fetch', async (url: string) =>
-    url === `/api/households/linden/text-assistant/${initial.id}`
+  const playedResponses: string[] = [];
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (url.endsWith('/poll') && typeof init?.body === 'string') {
+      const { playedResponseId } = JSON.parse(init.body);
+      if (playedResponseId) playedResponses.push(playedResponseId);
+    }
+    return url === `/api/households/linden/text-assistant/${initial.id}`
       ? Response.json(server.assistant)
       : Response.json({
           assistant: server.assistant,
@@ -62,8 +67,8 @@ async function arrange() {
             replyDelivery: server.replyDelivery,
           },
           sdp: 'synthetic-answer',
-        }),
-  );
+        });
+  });
   render(<Voice />);
   await act(async () => {
     fireEvent.click(button());
@@ -76,6 +81,7 @@ async function arrange() {
   return {
     media,
     server,
+    playedResponses,
     async tick(ms: number) {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(ms);
@@ -180,7 +186,7 @@ test('an explicit necessary question waits only after its matching voice audio i
 });
 
 test('verified saved feedback lasts four seconds after its spoken acknowledgement drains, and repeated polls never extend it', async () => {
-  const { media, server, tick } = await arrange();
+  const { media, server, tick, playedResponses } = await arrange();
   server.assistant = {
     ...initial,
     revision: 1,
@@ -207,11 +213,13 @@ test('verified saved feedback lasts four seconds after its spoken acknowledgemen
   media.signals.set(media.peers[0].remote, 40);
   await tick(100);
   expect(box()?.textContent).toContain('Skyttel talar');
+  expect(playedResponses).toEqual([]);
   media.signals.set(media.peers[0].remote, 0);
   await tick(100);
   expect(box()?.textContent).toBe('Sparat');
   await tick(3900);
   expect(box()?.textContent).toBe('Sparat');
+  expect(new Set(playedResponses)).toEqual(new Set(['saved-reply']));
   await tick(100);
   expect(box()?.textContent).toBe('Lyssnar');
   await tick(1000);
@@ -221,7 +229,7 @@ test('verified saved feedback lasts four seconds after its spoken acknowledgemen
 test.each([true, false])(
   'interrupting output acknowledges only its own verified receipt (matching=%s), never a different save',
   async (matching) => {
-    const { media, server, tick } = await arrange();
+    const { media, server, tick, playedResponses } = await arrange();
     const [peer] = media.peers;
     server.assistant = {
       ...initial,
@@ -262,6 +270,7 @@ test.each([true, false])(
     expect(media.getUserMedia).toHaveBeenCalledOnce();
     await tick(4000);
     expect(box()?.textContent).toBe('Lyssnar');
+    expect(playedResponses).toEqual([]);
   },
 );
 
