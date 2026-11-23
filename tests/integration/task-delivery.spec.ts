@@ -35,9 +35,27 @@ async function prepareMissingDelivery(page: Page) {
   };
 }
 
+async function readMapLayout(page: Page) {
+  const [map, tools] = await Promise.all([
+    // The narrow text view covers the map, which keeps its layout underneath.
+    page.getByRole('region', { name: 'Rymdkarta', exact: true, includeHidden: true }).boundingBox(),
+    page.getByRole('navigation', { name: 'Kartans verktyg', exact: true }).boundingBox(),
+  ]);
+  if (!map || !tools) throw new Error('Missing map or map tools');
+  return {
+    mapSize: { width: map.width, height: map.height },
+    toolsPosition: { x: tools.x, y: tools.y },
+  };
+}
+
 test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text och röst', async ({
   page,
 }) => {
+  const viewports = [
+    { width: 1280, height: 800 },
+    { width: 390, height: 800 },
+    { width: 320, height: 600 },
+  ];
   const full = `${'Svaret efter ditt uttryckliga återförsök. '.repeat(80)}Sista raden i hela svaret.`;
   const voiceReply = 'Hela röstsvarstexten efter återanslutning.';
   const model = textModel(() => [modelMessage(model.requests.length === 1 ? full : voiceReply)]);
@@ -57,7 +75,10 @@ test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text oc
     const delivery = await prepareMissingDelivery(page);
     await signIn(page.request, app.origin);
     await createHousehold(page.request, app.origin, 'Leveransprov');
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.setViewportSize(viewports[0]);
     await page.goto(app.origin);
+    await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'dark');
     await startConversationWithText(page);
     const textView = page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
     const input = textView.getByRole('textbox', { name: 'Meddelande till Skyttel' });
@@ -89,27 +110,34 @@ test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text oc
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
     expect(messages).toEqual([]);
     expect(live.requests).toEqual([]);
+    const openLayouts = new Map<number, Awaited<ReturnType<typeof readMapLayout>>>();
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await expect(textView).toBeInViewport({ ratio: 1 });
+      openLayouts.set(viewport.width, await readMapLayout(page));
+    }
+    await page.setViewportSize(viewports[0]);
     await send.click();
     await expect(input).toHaveValue('');
     const delivered = textView.getByRole('log', { name: 'Samtalstext' });
     await expect(delivered).toContainText(full);
     expect(messages).toHaveLength(1);
     expect(model.requests).toHaveLength(1);
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'dark');
-    for (const width of [1280, 390, 320]) {
-      await page.setViewportSize({ width, height: width === 320 ? 600 : 800 });
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
       await expect(textView).toBeInViewport({ ratio: 1 });
       await expect(delivered).toContainText(full);
       await delivered.getByText(/Sista raden i hela svaret/).scrollIntoViewIfNeeded();
       await expect(
         textView.getByRole('textbox', { name: 'Meddelande till Skyttel' }),
       ).toBeVisible();
+      await expect.poll(() => readMapLayout(page)).toEqual(openLayouts.get(viewport.width));
       await (await utilityButton(page, 'Inställningar')).click();
       const heading = page.getByRole('heading', { level: 1, name: 'Inställningar', exact: true });
       await expect(heading).toBeFocused();
       await expect(heading).toBeInViewport({ ratio: 1 });
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+      await expect.poll(() => readMapLayout(page)).toEqual(openLayouts.get(viewport.width));
     }
     await turnMicrophoneOn(page);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
@@ -131,10 +159,12 @@ test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text oc
     await expect(input).toHaveValue('Skapa inget nytt.');
     expect(model.requests).toHaveLength(2);
     expect(live.requests).toHaveLength(1);
+    const { toolsPosition } = await readMapLayout(page);
     await closeConversationText(page);
+    await expect(textView).not.toBeVisible();
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
     await expect(tools).toBeInViewport({ ratio: 1 });
-    await expect.poll(async () => (await tools.boundingBox())?.y).toBeLessThan(50);
+    await expect.poll(() => readMapLayout(page)).toMatchObject({ toolsPosition });
   } finally {
     await page.close();
     await app.close();

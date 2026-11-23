@@ -1211,10 +1211,24 @@ efter fallet och avsluta med `quit`.
 
 1. Skicka **Det gamla svaret.** som utgående textfragment och börja en
    inkommande ton på 440 Hz. Kontrollera att tonen når högtalaren.
-2. Efter att Alex väljer **Avbryt**, stoppa tonen. Förbered en ton på
-   800 Hz efter 400 ms med `remoteTone(800, 0.4, 0.15)`. Kontrollera
-   med `observeSpeaker()` enligt [TAL-06](#tidslinje-tal-06) att
-   den sena tonen kommer in men inte når högtalaren.
+2. Direkt efter att Alex väljer **Avbryt**, kör följande i webbläsarkonsolen.
+   Det gamla inkommande textfragmentet har en sluttid före avbrottet.
+   Tonen på 800 Hz kommer 400 ms senare. Kontrollera med `observeSpeaker()`
+   enligt [TAL-06](#tidslinje-tal-06) att tonen kommer in och att
+   högtalaren förblir tyst.
+
+   ```javascript
+   window.skyttelVoiceFixture.setSound('remote', false);
+   window.skyttelVoiceFixture.emit({
+     type: 'session.input_transcript.delta',
+     event_id: crypto.randomUUID(),
+     delta: 'Tidigare ord.',
+     start_ms: 0,
+     end_ms: 5,
+   });
+   window.skyttelVoiceFixture.remoteTone(800, 0.4, 0.15);
+   ```
+
 3. Besvara Alex skrivna förtydligande med **Jag förstår att du menar
    cykeln.** Vänta på nästa fullständiga uppspelningsbesked enligt
    [TAL-04](#tidslinje-tal-04) och skicka en ton på 1200 Hz i 200 ms.

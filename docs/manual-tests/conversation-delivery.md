@@ -271,9 +271,11 @@ Fysisk mikrofon och skärmläsare bedöms separat.
    starta och att mikrofonen är av.
 3. Återställ anslutningsstödet enligt förberedelsen. Kontrollera att
    texten finns kvar och att rösten inte startar automatiskt.
-4. Välj **Skicka**. Släpp ett långt modellsvar enligt den allmänna
-   förberedelsen och läs hela svaret i **Skriv till Skyttel**. Rulla till
-   sista raden. Kartans storlek och verktygens placering ska bestå.
+4. Låt textvyn vara öppen och lägg märke till kartans storlek och verktygens
+   placering vid varje bredd i steg 5. Välj **Skicka** och släpp ett långt
+   modellsvar enligt den allmänna förberedelsen. Läs hela svaret i **Skriv
+   till Skyttel**. Rulla till sista raden. Jämför med kartans storlek och
+   verktygens placering före svaret vid samma bredd.
 5. Öppna **Inställningar**. Rubriken ska få fokus och vara synlig.
    Välj **Tillbaka till kartan**. Upprepa steg 4:s läsning och steg 5 vid
    1280, 390 och 320 pixlars bredd utan att skicka instruktionen igen.
@@ -284,7 +286,8 @@ Fysisk mikrofon och skärmläsare bedöms separat.
 8. Ge uppdraget **Beskriv cykeln med rösten.** enligt förberedelsen.
    Läs hela svaret i textvyn. Kontrollera att mikrofonen fortfarande är
    på och att **Skapa inget nytt.** finns kvar i meddelandefältet.
-9. Stäng textvyn. Kartans verktyg ska behålla sin placering.
+9. Lägg märke till var kartans verktyg står innan du stänger textvyn.
+   Stäng textvyn och jämför placeringen.
 
 **Förväntat resultat:**
 
