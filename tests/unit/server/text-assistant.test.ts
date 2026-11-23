@@ -4,6 +4,7 @@ import { conversationCompletion } from '../../../src/client/conversation-complet
 import type { TextModelAttempt, TextModelUsage } from '../../../src/server/text-assistant-model.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { controlledBatchDelivery } from '../../support/batch-response-delivery.js';
+import { bikeQuestion, blueBikeModel } from '../../support/blue-bike-model.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation, robin } from '../../support/installation.js';
@@ -180,68 +181,20 @@ test('a conversation reuses identical MCP reads across messages and refreshes ch
 });
 
 test('a follow-up identifies the blue bike from the checked change and leaves the draft intact', async () => {
-  const question = 'Vad ändrade du precis? Ange objektets namn och id.';
   const bikeId = crypto.randomUUID();
   let typeId: string;
-  const model = textModel(
-    (request) => {
-      const envelope = JSON.parse(
-        String(request.input.findLast((item) => item.role === 'user')?.content),
-      );
-      if (envelope.message === question) {
-        const history = request.input.find((item) => item.role === 'assistant');
-        const conversation = JSON.parse(String(history?.content)).recentConversation;
-        const change = conversation.findLast((entry: { result?: unknown }) => entry.result)?.result
-          .changes[0];
-        return [modelMessage(`${change?.subject} (${change?.objectId})`)];
-      }
-      return [
-        modelTool('submit_changes', {
-          version: envelope.draft.version,
-          contentVersion: envelope.draft.contentVersion,
-          completion: 'draft',
-          operations: [
-            {
-              name: 'propose_object',
-              arguments: {
-                id: bikeId,
-                baseRevision: null,
-                value: { name: 'Blå cykeln', typeId, properties: [] },
-              },
-            },
-          ],
-        }),
-      ];
-    },
-    (request) => {
-      if (request.instructions.startsWith('SKYTTEL_TURN_SCOPE')) {
-        const { current } = JSON.parse(String(request.input[0].content));
-        return current === question
-          ? readOnlyScope()
-          : [
-              modelMessage(
-                JSON.stringify({
-                  mode: 'work',
-                  request: current,
-                  responseRequired: false,
-                }),
-              ),
-            ];
-      }
-      return [modelMessage('{"decision":"allow","complete":true,"fulfillsRequest":true}')];
-    },
-  );
+  const model = blueBikeModel(bikeId, () => typeId);
   await setup(model.provider);
   const readMap = async () => (await browser.get(path.replace('/text-assistant', '/map'))).json();
   const initial = await readMap();
-  typeId = initial.types[0].id;
+  typeId = initial.types.find((type: { name: string }) => type.name === 'Fordon').id;
   const proposed = await message(await start(), 'Lägg till Blå cykeln i mitt utkast.');
   expect(proposed.error).toBeUndefined();
   const beforeQuestion = await readMap();
   expect(beforeQuestion.draft.changes).toMatchObject([
     { id: bikeId, after: { name: 'Blå cykeln' } },
   ]);
-  const answer = await message(proposed, question);
+  const answer = await message(proposed, bikeQuestion);
   expect(answer.modelReply).toBe(`Blå cykeln (${bikeId})`);
   expect(await readMap()).toMatchObject({ objects: initial.objects, draft: beforeQuestion.draft });
 });
@@ -388,12 +341,19 @@ test('a failed read ends the assignment while a sibling MCP response is still he
   }
 });
 
-async function checkConcurrentReads(report: boolean) {
-  const entered = new Map<string, number>();
+function readGate() {
   let release = () => {};
   const held = new Promise<void>((resolve) => {
     release = resolve;
   });
+  return { held, release };
+}
+
+async function checkConcurrentReads(report: boolean) {
+  const entered = new Map<string, number>();
+  const mapGate = readGate();
+  const catalogGate = readGate();
+  let mapReturned = false;
   const model = textModel((request) => {
     if (model.requests.length === 1)
       return [
@@ -432,7 +392,13 @@ async function checkConcurrentReads(report: boolean) {
       ['read_map', 'read_type_catalog'].includes(rpc.params.name)
     ) {
       entered.set(rpc.params.name, (entered.get(rpc.params.name) ?? 0) + 1);
-      await held;
+      if (rpc.params.name === 'read_map') {
+        await mapGate.held;
+        const response = await dispatch(request);
+        mapReturned = true;
+        return response;
+      }
+      await catalogGate.held;
     }
     return dispatch(request);
   });
@@ -463,7 +429,15 @@ async function checkConcurrentReads(report: boolean) {
     await expect
       .poll(() => [...entered.keys()].sort(), { timeout: 1000 })
       .toEqual(['read_map', 'read_type_catalog']);
-    release();
+    mapGate.release();
+    await expect.poll(() => mapReturned).toBe(true);
+    if (report) {
+      const pending = await (await browser.get(`${path}/${session.id}`)).json();
+      expect(pending.phase).toBe('working');
+      expect(pending.result).toBeUndefined();
+      expect(model.requests).toHaveLength(1);
+    }
+    catalogGate.release();
     await expect
       .poll(async () => (await (await browser.get(`${path}/${session.id}`)).json()).phase)
       .toBe('ready');
@@ -472,12 +446,59 @@ async function checkConcurrentReads(report: boolean) {
     expect(entered.get('read_map')).toBe(1);
     expect(entered.get('read_type_catalog')).toBe(1);
     expect(model.requests).toHaveLength(2);
+    if (report) {
+      const { input } = model.requests[1];
+      const call = input.find(
+        (item) => item.type === 'function_call' && item.name === 'report_result',
+      );
+      expect(call?.call_id).toEqual(expect.any(String));
+      const output = input.find(
+        (item) => item.type === 'function_call_output' && item.call_id === call?.call_id,
+      );
+      expect(JSON.parse(String(output?.output))).toEqual({
+        kind: 'draft',
+        message: 'Utkastet är tomt.',
+      });
+    }
     expect(model.requests[0]).toMatchObject({ parallel_tool_calls: true });
     expect(final.review).toEqual(session.review);
   } finally {
-    release();
+    mapGate.release();
+    catalogGate.release();
   }
 }
+
+test('a report cannot publish if the draft changes while it reads history', async () => {
+  const history = readGate();
+  let historyHeld = false;
+  const model = textModel(() => [
+    modelTool('read_map', { query: 'Lina' }),
+    modelTool('report_result', { source: 'latest_save' }),
+  ]);
+  await setup(model.provider, undefined, async (request, dispatch) => {
+    const rpc =
+      request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+        ? await request.clone().json()
+        : null;
+    const response = await dispatch(request);
+    if (rpc?.params?.name === 'read_history') {
+      historyHeld = true;
+      await history.held;
+    }
+    return response;
+  });
+  const completion = message(await start(), 'Läs Lina och beskriv det senaste sparandet.');
+  try {
+    await expect.poll(() => historyHeld).toBe(true);
+    await webProposal('Lina');
+  } finally {
+    history.release();
+  }
+  const final = await completion;
+  expect(final).toMatchObject({ phase: 'error', error: 'assistant_draft_changed' });
+  expect(final.result).toBeUndefined();
+  expect(model.requests).toHaveLength(1);
+});
 
 test('parallel reads that cross a manual draft change cannot supply a mixed snapshot to the model', async () => {
   let release = () => {};

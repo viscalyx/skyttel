@@ -21,6 +21,7 @@ export type MapAgentCall = Pick<ResponseFunctionToolCall, 'name' | 'call_id' | '
 interface ToolRound {
   calls: MapAgentCall[];
   parallelReadCount: number;
+  checkSnapshot?: () => void;
   usage?: ResponseUsage;
   execute: (action: MapAgentCall, signal?: AbortSignal) => Promise<unknown>;
   finish: () => boolean;
@@ -40,7 +41,7 @@ export async function runMapAgent(
 ) {
   const toolExecution = { maxFunctionToolConcurrency: 1 };
   let execute: (call: MapAgentCall, signal?: AbortSignal) => Promise<unknown>;
-  let finish: ToolRound['finish'];
+  let currentRound: ToolRound;
   const model: Model = {
     async getResponse() {
       const round = await next();
@@ -57,7 +58,7 @@ export async function runMapAgent(
             },
           ],
         };
-      finish = round.finish;
+      currentRound = round;
       execute = (call) => round.execute(call);
       // Only server-declared independent reads may share a snapshot in parallel.
       // Reports follow their companion reads and map selections in order.
@@ -127,6 +128,7 @@ export async function runMapAgent(
     model,
     tools,
     toolUseBehavior: (_context, results) => {
+      currentRound.checkSnapshot?.();
       recordResults(
         results.map((result) => {
           if (result.type !== 'function_output') throw new MapError('invalid_request', 400);
@@ -141,7 +143,7 @@ export async function runMapAgent(
           return { type: 'function_call_output', call_id: item.callId, output: item.output.text };
         }),
       );
-      return finish()
+      return currentRound.finish()
         ? { isFinalOutput: true, isInterrupted: undefined, finalOutput: '' }
         : { isFinalOutput: false, isInterrupted: undefined };
     },

@@ -539,6 +539,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   skild från resultat samt synliga samband, typer och före-/eftervärden
   i hela ändringslistan och begärda samtalsdetaljer från utkast och kvitto.
   TEXT-07 är pensionerat till SAMTALSUTKAST-01 utan återanvänt ID.
+  [TEXT-20](text-assistant.md#text-20-följdfrågan-identifierar-cykeln-i-utkastet)
+  kontrollerar att en följdfråga ger det nya objektets namn och id medan
+  förslaget ligger kvar osparat.
   TEXT-04 återfinner den verkliga sparidentifieraren efter genomfört
   sparande med tappat svar och omstart. Varje TEXT-08-storlek har eget ID.
   TEXT-16 återfinner osparade ändringar efter tappat verktygssvar och

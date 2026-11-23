@@ -2115,7 +2115,7 @@ export function textAssistantRoutes({
       receipt.householdId !== session.state.householdId ||
       receipt.userId !== contentOwner(database, session.state.householdId, session.state.actorId)
     )
-      throw new Error('invalid_receipt');
+      throw new MapError('assistant_provider_failed', 503);
   }
   function applyCheckedSave(
     session: Session,
@@ -2125,7 +2125,7 @@ export function textAssistantRoutes({
     const pending = session.state.pendingSave;
     if (checked.receipt) {
       const operation = checked.operations.find((item) => item.status === 'succeeded');
-      if (!operation) throw new Error('invalid_receipt');
+      if (!operation) throw new MapError('assistant_provider_failed', 503);
       // A queued request supplies current access while its result is delivered
       // to the conversation that originally registered the attempt.
       verifyReceipt(verificationSession, checked.receipt, {
@@ -3107,9 +3107,7 @@ export function textAssistantRoutes({
             ]
           : calls;
         const checkSnapshot =
-          guardReadSnapshot || terminal?.name === 'ask_questions'
-            ? session.execution.reads.snapshotGuard()
-            : undefined;
+          guardReadSnapshot || terminal ? session.execution.reads.snapshotGuard() : undefined;
         let terminalResult: boolean | undefined;
         function continueAfterResult(required: boolean) {
           terminalResult = !required;
@@ -3335,11 +3333,11 @@ export function textAssistantRoutes({
                 const latest = history.history[0];
                 if (latest) identity = { operationId: latest.operationId, userId: latest.userId };
               }
-              session.state.result = historyResult(
-                identity
-                  ? (await call(session, 'read_history', identity, guard)).receipt
-                  : undefined,
-              );
+              const receipt = identity
+                ? (await call(session, 'read_history', identity, guard)).receipt
+                : undefined;
+              checkSnapshot?.();
+              session.state.result = historyResult(receipt);
             }
             guard();
             session.state.reply = session.state.result.message;
@@ -3555,23 +3553,21 @@ export function textAssistantRoutes({
         };
         return {
           calls: orderedCalls,
+          checkSnapshot,
           parallelReadCount: guardReadSnapshot ? readCalls.length : 0,
           usage: response.usage,
           async execute(action: MapAgentCall, signal?: AbortSignal) {
             guard();
             checkViewAccess(session);
-            checkSnapshot?.();
             if (terminalResult) return { interrupted: true };
             if (submission?.success) return submitChanges(action, submission.data);
             const companionRead =
               guardReadSnapshot && readCalls.some((read) => read.call_id === action.call_id);
-            const value = await executeTool(action, undefined, companionRead ? signal : undefined);
-            if (companionRead) checkSnapshot?.();
-            return value;
+            if (!companionRead) checkSnapshot?.();
+            return executeTool(action, undefined, companionRead ? signal : undefined);
           },
           finish() {
             guard();
-            if (onlyReads) checkSnapshot?.();
             if (terminalResult !== undefined) return terminalResult;
             if (!wholeRequestComplete || hasReadyPendingParts(session)) return false;
             if (session.state.receipt) return true;
@@ -5598,7 +5594,10 @@ export function textAssistantRoutes({
               if (authorityLost(error)) await stop(session);
               if (sessions.has(session.state.id) && session.state.revision === revision) {
                 session.state.phase = 'recovery';
-                session.state.error = 'assistant_save_unknown';
+                session.state.error =
+                  error instanceof MapError && error.code === 'assistant_provider_failed'
+                    ? error.code
+                    : 'assistant_save_unknown';
                 session.state.previousFailure = assistantFailureMessage(session.state.error);
               }
             }
