@@ -968,34 +968,44 @@ test('free Live can deliver whole text before expiry but its outstanding receipt
   expect(fixture.channel.messages.some((item) => item.state === 'received')).toBe(false);
 });
 
-test.each([
-  { reconnected: 'before', superseded: false },
-  { reconnected: 'after', superseded: false },
-  { reconnected: 'after', superseded: true },
-] as const)(
-  'a spoken proposal when answers reconnect $reconnected admission starts (newer speech $superseded)',
-  async ({ reconnected, superseded }) => {
+test.each(['before', 'after'] as const)(
+  'a spoken proposal when answers reconnect %s admission starts',
+  async (reconnected) => {
     const live = liveProvider();
     let typeId = '';
-    const model = textModel(() => [
-      modelTool('submit_changes', {
-        version: 1,
-        contentVersion: 1,
-        completion: 'draft',
-        operations: [
-          {
-            name: 'propose_object',
-            arguments: {
-              id: 'new-voice-proposal',
-              baseRevision: null,
-              value: { typeId, name: 'Musiktjänst' },
+    let completeTyped = () => {};
+    const model = textModel((body) => {
+      const turn = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content));
+      if (turn.message === 'Beskriv utkastet i text.') {
+        return new Promise<unknown[]>((resolve) => {
+          completeTyped = () => resolve([modelMessage('Det tidigare förslaget finns kvar.')]);
+        });
+      }
+      return [
+        modelTool('submit_changes', {
+          version: 1,
+          contentVersion: 1,
+          completion: 'draft',
+          operations: [
+            {
+              name: 'propose_object',
+              arguments: {
+                id: 'new-voice-proposal',
+                baseRevision: null,
+                value: { typeId, name: 'Musiktjänst' },
+              },
             },
-          },
-        ],
-      }),
-    ]);
+          ],
+        }),
+      ];
+    });
     const admissions: number[] = [];
-    const { endpoint, channel, advance } = await arrange(model, 60_000, {
+    const {
+      endpoint,
+      channel,
+      advance,
+      post: sendText,
+    } = await arrange(model, 60_000, {
       liveFetch: live.provider,
       liveSideband: live.attach,
       async assistantDispatch(request, dispatch) {
@@ -1031,60 +1041,85 @@ test.each([
     await closed;
     const replacement = await connect(`${endpoint}/delivery`);
     expect(replacement.id).not.toBe(channel.id);
-    const pollWithConnection = async (deliveryConnectionId: unknown) => {
+    const pollWithConnection = async (deliveryConnectionId: unknown, revision = 0) => {
       const polled = await post(`${endpoint}/voice/${voice.id}/poll`, {
         ...view,
+        revision,
         microphoneOn: true,
         deliveryConnectionId,
       });
       expect(polled.status(), await polled.text()).toBe(200);
+      return polled.json();
     };
-    if (reconnected === 'before') await pollWithConnection(replacement.id);
+    if (reconnected === 'before') {
+      await pollWithConnection(replacement.id);
+      await pollWithConnection(otherSocket.id);
+    }
     const id = [...live.channels.keys()][0];
-    live.emit(id, {
-      type: 'session.input_transcript.delta',
-      event_id: 'new-spoken-turn',
-      delta: 'Lägg till Musiktjänst i mitt utkast.',
-      start_ms: 10,
-      end_ms: 20,
-    });
-    live.emit(id, {
-      type: 'session.delegation.created',
-      delegation: { id: 'new-spoken-work', target: 'client' },
-      offset_ms: 20,
-    });
-    advance(2000);
+    function speak(at: number) {
+      live.emit(id, {
+        type: 'session.input_transcript.delta',
+        event_id: `spoken-turn-${at}`,
+        delta: 'Lägg till Musiktjänst i mitt utkast.',
+        start_ms: at - 10,
+        end_ms: at,
+      });
+      live.emit(id, {
+        type: 'session.delegation.created',
+        delegation: { id: `spoken-work-${at}`, target: 'client' },
+        offset_ms: at,
+      });
+      advance(2000);
+    }
+    speak(20);
     if (reconnected === 'after') {
       await expect.poll(() => admissions).toEqual([409]);
       expect(model.requests).toHaveLength(0);
-    }
-    // A socket for another conversation cannot replace either the working
-    // channel or the connection that a refused admission is waiting for.
-    await pollWithConnection(otherSocket.id);
-    if (superseded) {
-      live.emit(id, {
-        type: 'session.input_transcript.delta',
-        event_id: 'superseding-words',
-        delta: 'Vänta. Ändra inget.',
-        start_ms: 30,
-        end_ms: 40,
+      const typed = await sendText('later-written-work', {
+        text: 'Beskriv utkastet i text.',
+        draftVersion: 1,
+        deliveryConnectionId: replacement.id,
       });
-    }
-    if (reconnected === 'after') await pollWithConnection(replacement.id);
-    if (superseded) {
-      await expect.poll(() => voiceAnswerParts(live.sent).join('')).not.toBe('');
+      expect(typed.status(), await typed.text()).toBe(202);
+      const { revision } = await typed.json();
+      try {
+        await expect.poll(() => model.requests.length).toBe(1);
+        // Another conversation's socket is never accepted as a replacement.
+        await pollWithConnection(otherSocket.id, revision);
+        await pollWithConnection(replacement.id, revision);
+        await expect
+          .poll(async () => {
+            const status = await pollWithConnection(replacement.id, revision);
+            return { admissions: [...admissions], refusal: status.voice.refusal };
+          })
+          .toMatchObject({
+            admissions: [409],
+            refusal: { text: expect.stringContaining('Uppdraget startade inte.') },
+          });
+      } finally {
+        completeTyped();
+      }
+      await expect
+        .poll(
+          async () =>
+            (await (await browser.get(`${endpoint}/messages/later-written-work`)).json())
+              .taskStatus,
+        )
+        .toBe('completed');
       expect(admissions).toEqual([409]);
-      expect(model.requests).toEqual([]);
-      expect(replacement.messages).toHaveLength(1);
       expect((await readMap()).draft.version).toBe(1);
-      return;
+      const latest = await (await browser.get(endpoint)).json();
+      await pollWithConnection(replacement.id, latest.revision);
+      speak(40);
     }
     await expect
-      .poll(() => replacement.messages.find((item) => item.state === 'awaiting-receipt'))
+      .poll(() =>
+        replacement.messages.find((item) => item.audio && item.state === 'awaiting-receipt'),
+      )
       .toMatchObject({ audio: true, text: expect.stringContaining('Utkastet är uppdaterat.') });
     await expect.poll(() => voiceAnswerParts(live.sent).join('')).toContain('Musiktjänst');
     expect(voiceAnswerParts(live.sent).join('')).not.toContain('uppdraget kunde inte slutföras');
-    expect(model.requests).toHaveLength(1);
+    expect(model.requests).toHaveLength(reconnected === 'after' ? 2 : 1);
     expect(otherSocket.messages).toHaveLength(1);
     expect(await readMap()).toMatchObject({
       objects: [],

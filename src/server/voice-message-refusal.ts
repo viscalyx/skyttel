@@ -19,7 +19,7 @@ const refusals = {
   assistant_delivery_unavailable: {
     status: 409,
     message:
-      'Anslutningen för hela svaret försvann. Uppdraget startade inte. Försök igen när anslutningen fungerar.',
+      'Anslutningen för hela svaret försvann. Uppdraget startade inte. Säg uppdraget igen när anslutningen fungerar.',
   },
   assistant_draft_changed: { status: 409 },
   assistant_pending_part_changed: { status: 409 },

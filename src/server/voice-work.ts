@@ -34,6 +34,7 @@ export function voiceWork({
   failed,
   transcript,
   response,
+  refusal,
   delivered,
   input,
   observe,
@@ -49,7 +50,7 @@ export function voiceWork({
     action?: string,
     body?: unknown,
     signal?: AbortSignal,
-    options?: { requestId?: string; canRetry?: () => boolean },
+    observation?: { requestId: string },
   ) => Promise<TextAssistantView>;
   interrupt: (revision?: number) => void;
   /** The conversation as the voice last saw it, and whether the voice has a task in progress. */
@@ -57,6 +58,7 @@ export function voiceWork({
   failed: () => void;
   transcript?: (role: Fragment['role'], text: string) => void;
   response?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['response']) => void;
+  refusal?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['refusal']) => void;
   delivered?: (value: { id: string; voiced: boolean }) => void;
   input?: (pending: boolean, text?: string) => void;
   observe?: (
@@ -184,6 +186,7 @@ export function voiceWork({
 
   function cancel(revisionIfIdle?: number) {
     commentary.cancel();
+    refusal?.(undefined);
     const hadWork = (inFlight.get(generation) ?? 0) > 0;
     generation++;
     collecting = undefined;
@@ -466,7 +469,6 @@ export function voiceWork({
             answerTo,
           },
           controller.signal,
-          { canRetry: () => current() && inputVersion === acceptedInput },
         );
         // A spoken reset retires this executor. Its new revision must not be
         // mistaken for stale work and cancelled after the reset completes.
@@ -537,13 +539,16 @@ export function voiceWork({
           owned = undefined;
           dispatching = undefined;
         }
+        if (!current() || inputVersion !== acceptedInput) return;
+        const text = error.userMessage();
+        refusal?.({ id: requestId ?? randomUUID(), text });
+        append(id, text);
         const view = await request().catch(() => undefined);
         if (!current() || inputVersion !== acceptedInput) return;
         if (view && !dispatching) {
           rememberQuestion(view);
           update(view, false);
         }
-        append(id, error.userMessage());
         return;
       }
       cancel();
@@ -608,6 +613,7 @@ export function voiceWork({
     transcript?.(role, event.delta);
     if (role === 'user') {
       if (event.end_ms <= interruptedThrough) return;
+      if (event.delta.trim()) refusal?.(undefined);
       inputVersion++;
       lastInputAt = now();
       input?.(true, event.delta);
@@ -770,6 +776,7 @@ export function voiceWork({
   });
   function retire(resetRequestId?: string) {
     commentary.close();
+    refusal?.(undefined);
     stopped = true;
     input?.(false);
     generation++;

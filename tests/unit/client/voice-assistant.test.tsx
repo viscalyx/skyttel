@@ -1618,6 +1618,48 @@ test('an older voice reply cannot overwrite a newer displayed text revision', as
   expect(changed).not.toHaveBeenCalled();
 });
 
+test('a refused spoken request is announced once without audio or a text panel', async () => {
+  const { view } = setup();
+  const refusal = {
+    id: 'refused-request',
+    text: 'Uppdraget startade inte. Säg uppdraget igen när anslutningen fungerar.',
+  };
+  vi.mocked(fetch).mockImplementation(async (url) => {
+    const path = String(url);
+    if (path === base.replace(/\/voice$/, '')) return Response.json(view);
+    return Response.json({
+      sdp: 'synthetic-answer',
+      assistant: view,
+      voice: {
+        id: 'voice-session',
+        phase: 'listening',
+        seconds: null,
+        usageFinal: false,
+        ...(path.endsWith('/poll') ? { refusal } : {}),
+      },
+    });
+  });
+  await userEvent.click(microphoneButton());
+  await waitFor(() => expect(Peer.all[0]?.channel.readyState).toBe('open'));
+  await act(async () =>
+    Peer.all[0].channel.emit({ type: 'session.started', session: { id: 'provider-session' } }),
+  );
+  vi.useFakeTimers();
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(1000);
+  });
+  expect(screen.getByRole('region', { name: 'Samtalsnotis' }).textContent).toContain(refusal.text);
+  const live = document.querySelector('.notice-announcement[aria-live="polite"]');
+  const announcement = live?.firstElementChild;
+  expect(announcement?.textContent).toBe(refusal.text);
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(16_000);
+  });
+  expect(live?.firstElementChild).toBe(announcement);
+  expect(microphoneButton().getAttribute('aria-pressed')).toBe('true');
+  expect(voiceBox()?.textContent).not.toContain('Sparat');
+});
+
 test('expired login authority stops capture and asks for the entire voice instruction again', async () => {
   const { track, accessLost } = setup();
   vi.mocked(fetch).mockResolvedValueOnce(

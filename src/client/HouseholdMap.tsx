@@ -1186,6 +1186,7 @@ export function HouseholdMap({
   const workFailure = !conversation.session?.paused ? conversation.session?.workFailure : undefined;
   const noticeState = useConversationNotice({
     workFailure,
+    voiceRefusal: conversation.voice.refusal,
     batchPending: conversation.session?.batchPending,
     contextSummaryFailure: conversation.session?.contextSummaryFailure,
     conditions: {

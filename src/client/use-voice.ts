@@ -38,6 +38,7 @@ export type Voice = {
   savedId?: string;
   error: string;
   failure?: VoiceFailure & { occurrence: number };
+  refusal?: VoiceAssistantView['refusal'];
   playbackBlocked: boolean;
   disconnected: boolean;
   /** The microphone cannot be turned on: Skyttel works with a written message. */
@@ -1089,6 +1090,7 @@ export function useVoice(options: {
     ),
     saved,
     savedId,
+    refusal: voice?.refusal,
     error,
     failure: failure ?? undefined,
     playbackBlocked,

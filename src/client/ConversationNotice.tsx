@@ -1,5 +1,6 @@
 import { type ReactNode, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { TextAssistantView } from '../shared/text-assistant.js';
+import type { VoiceAssistantView } from '../shared/voice-assistant.js';
 import { ConversationDiagnostic } from './ConversationDiagnostic.js';
 import {
   type ConversationNotice,
@@ -34,6 +35,7 @@ export function useConversationNotice({
   contextSummaryFailure,
   batchPending,
   workFailure,
+  voiceRefusal,
 }: {
   conditions: ConversationNoticeConditions;
   ongoing: boolean;
@@ -44,6 +46,7 @@ export function useConversationNotice({
   contextSummaryFailure?: TextAssistantView['contextSummaryFailure'];
   batchPending?: boolean;
   workFailure?: TextAssistantView['workFailure'];
+  voiceRefusal?: VoiceAssistantView['refusal'];
 }) {
   const voiceSession = useContext(VoiceSessionContext);
   const [dismissed, setDismissed] = useState<Partial<Record<ConversationNotice['id'], string>>>({});
@@ -52,15 +55,17 @@ export function useConversationNotice({
     `${notice.id}:${notice.id.startsWith('saveCheck') && batchPending ? 'batch:' : ''}${
       notice.id === 'actionBlocked' && securityReference
         ? securityReference
-        : notice.kind === 'event'
-          ? ((diagnostic?.noticeId === notice.id ? diagnostic.eventKey : undefined) ?? eventKey)
-          : ongoing
-            ? 'active'
-            : requested
+        : notice.id === 'voiceRequestRefused'
+          ? voiceRefusal?.id
+          : notice.kind === 'event'
+            ? ((diagnostic?.noticeId === notice.id ? diagnostic.eventKey : undefined) ?? eventKey)
+            : ongoing
+              ? 'active'
+              : requested
     }`;
   // Dismissing one event must not suppress a different later event. The map
   // retains at most one identity per known notice kind, rather than a history.
-  const visibleConditions = { ...conditions };
+  const visibleConditions = { ...conditions, voiceRequestRefused: Boolean(voiceRefusal) };
   for (const definition of conversationNoticeDefinitions)
     if (
       !(definition.id === 'taskFailed' && workFailure) &&
@@ -91,7 +96,9 @@ export function useConversationNotice({
                 text: `${workFailure.message} Det oavslutade arbetet och senare kö väntar. Genomförda ändringar finns kvar.`,
                 action: workFailure.retry,
               }
-            : selected;
+            : selected?.id === 'voiceRequestRefused' && voiceRefusal
+              ? { ...selected, text: voiceRefusal.text }
+              : selected;
   const reference =
     definition?.id === 'actionBlocked'
       ? securityReference
