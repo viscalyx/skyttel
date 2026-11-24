@@ -167,8 +167,14 @@ test('actual restart restores the exact conversation and choice without starting
 test.each(['start', 'restore'] as const)(
   'a conversation %s still opening during shutdown is unavailable until the next server',
   async (action) => {
-    const opening = Promise.withResolvers<void>();
-    const release = Promise.withResolvers<void>();
+    let reportOpening!: () => void;
+    const opening = new Promise<void>((resolve) => {
+      reportOpening = resolve;
+    });
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     const reply = 'Cykeln finns i garaget.';
     const model = textModel(() => [modelMessage(reply)]);
     let hold = false;
@@ -183,8 +189,8 @@ test.each(['start', 'restore'] as const)(
         const response = await dispatch(incoming);
         if (listTools) {
           hold = false;
-          opening.resolve();
-          await release.promise;
+          reportOpening();
+          await held;
         }
         return response;
       },
@@ -225,7 +231,7 @@ test.each(['start', 'restore'] as const)(
     hold = true;
     const pending = open();
     await Promise.race([
-      opening.promise,
+      opening,
       pending.then(async (response) => {
         throw new Error(
           `Conversation opened before shutdown: ${response.status()} ${await response.text()}`,
@@ -245,7 +251,7 @@ test.each(['start', 'restore'] as const)(
         )
         .toBeUndefined();
     } finally {
-      release.resolve();
+      release();
       await restarted;
     }
     const refused = await pending;
