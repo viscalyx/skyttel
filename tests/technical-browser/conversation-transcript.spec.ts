@@ -5,6 +5,7 @@ import {
   startConversationWithText,
   turnMicrophoneOff,
   turnMicrophoneOn,
+  voiceBox,
 } from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
@@ -16,7 +17,8 @@ test('speech fragments form the same transcript rows during voice and after rest
   tag: '@technical',
 }, async ({ page }) => {
   const live = liveProvider();
-  const model = textModel(() => [modelMessage('Lampan finns i garaget.')]);
+  let answer = 'Lampan finns i garaget.';
+  const model = textModel(() => [modelMessage(answer)]);
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
     liveFetch: live.provider,
@@ -58,6 +60,7 @@ test('speech fragments form the same transcript rows during voice and after rest
     await emit('input', 3600, ['Ja, den.']);
     await emit('output', 3900, ['Den passar där.']);
     await emit('output', 6100, [' ']);
+    await emit('output', 8400, ['Det gamla svaret.']);
     const active = [
       ...typed,
       'Skyttel: Berätta gärna.',
@@ -66,10 +69,27 @@ test('speech fragments form the same transcript rows during voice and after rest
       'Skyttel: Den i hallen.',
       'Du: Ja, den.',
       'Skyttel: Den passar där.',
+      'Skyttel: Det gamla svaret.',
     ];
     await expect(rows).toHaveText(active);
+    await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', true));
+    const box = voiceBox(page);
+    await expect(box).toHaveText('Skyttel talar');
+    await box.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
+    await expect(box).toHaveText('Lyssnar');
+
+    answer = 'Jag förstår att du menar hallen.';
+    const correction = 'Jag menar lampan i hallen.';
+    await text.getByRole('textbox', { name: 'Meddelande till Skyttel' }).fill(correction);
+    await text.getByRole('button', { name: 'Skicka', exact: true }).click();
+    const corrected = [...active, `Du: ${correction}`, `Skyttel: ${answer}`];
+    await expect(rows).toHaveText(corrected);
+    await emit('output', 8800, ['Nu förstår jag.']);
+    corrected.push('Skyttel: Nu förstår jag.');
+    await expect(rows).toHaveText(corrected);
     await turnMicrophoneOff(page);
-    await expect(rows).toHaveText(active);
+    await expect(rows).toHaveText(corrected);
     await app.restart();
     // Older saved fragments have the same text without a turn marker.
     await page.route('**/text-assistant/restore', async (route) => {
@@ -82,7 +102,11 @@ test('speech fragments form the same transcript rows during voice and after rest
     await page.reload();
     await openConversationText(page);
     await expect(text).toContainText('Samtalet är pausat');
-    await expect(rows).toHaveText(active);
+    await expect(rows).toHaveText([
+      ...active,
+      'Skyttel: Avbrutet. Föreslagna ändringar ligger kvar i utkastet.',
+      ...corrected.slice(active.length),
+    ]);
   } finally {
     await app.close();
   }

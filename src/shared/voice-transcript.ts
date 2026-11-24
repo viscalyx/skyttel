@@ -24,8 +24,8 @@ export function voiceTranscriptBoundaries() {
       previous[speaker] = { endMs };
       return starts;
     },
-    reset() {
-      delete previous.user;
+    reset({ preserveUser = false } = {}) {
+      if (!preserveUser) delete previous.user;
       delete previous.assistant;
     },
   };

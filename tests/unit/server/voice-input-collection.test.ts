@@ -31,6 +31,7 @@ function arrange(confirmBrowserInput = false) {
   );
   const response = vi.fn();
   const delivered = vi.fn();
+  const transcript = vi.fn();
   const work = voiceWork({
     channel: channel as unknown as LiveSideband,
     initial,
@@ -38,6 +39,7 @@ function arrange(confirmBrowserInput = false) {
     response,
     confirmBrowserInput,
     delivered,
+    transcript,
     update: vi.fn(),
     interrupt: vi.fn(),
     failed: vi.fn(),
@@ -55,7 +57,18 @@ function arrange(confirmBrowserInput = false) {
       delegation: { id, target: 'client' },
     });
   const messages = () => request.mock.calls.filter(([action]) => action === 'messages');
-  return { work, fragment, delegate, messages, request, response, channel, initial, delivered };
+  return {
+    work,
+    fragment,
+    delegate,
+    messages,
+    request,
+    response,
+    channel,
+    initial,
+    delivered,
+    transcript,
+  };
 }
 
 test('a repeated interruption cutoff preserves the cancellation outcome', async () => {
@@ -66,6 +79,33 @@ test('a repeated interruption cutoff preserves the cancellation outcome', async 
   await expect(work.interruptSpeech(200)).resolves.toEqual(initial);
   await expect(work.interruptSpeech(200)).resolves.toEqual(initial);
   expect(request.mock.calls.filter(([action]) => action === 'cancel')).toHaveLength(2);
+});
+
+test('an interruption keeps an early correction together and a retry keeps the next reply together', async () => {
+  const { work, fragment, channel, transcript } = arrange();
+  const output = (id: string, delta: string, start: number, end: number) =>
+    channel.emit('session.output_transcript.delta', {
+      event_id: id,
+      delta,
+      start_ms: start,
+      end_ms: end,
+    });
+
+  output('previous', 'Det gamla svaret.', 0, 90);
+  fragment('early', 'Jag menar ', 110, 130);
+  await work.interruptSpeech(100);
+  fragment('correction', 'cykeln.', 130, 150);
+  output('reply-start', 'Vilken ', 160, 180);
+  await work.interruptSpeech(100);
+  output('reply-end', 'cykel?', 180, 200);
+
+  expect(transcript.mock.calls).toEqual([
+    ['assistant', 'Det gamla svaret.', true],
+    ['user', 'Jag menar ', true],
+    ['user', 'cykeln.', false],
+    ['assistant', 'Vilken ', true],
+    ['assistant', 'cykel?', false],
+  ]);
 });
 
 test.each(['timeout', 'error'] as const)(

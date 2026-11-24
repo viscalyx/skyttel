@@ -938,6 +938,7 @@ export function voiceWork({
       let delegation = collecting?.delegation;
       if (interruptedThroughMs !== undefined) interruptedThrough = interruptedThroughMs;
       pending = pending.filter((item) => item.endMs > interruptedThrough);
+      transcriptBoundaries.reset({ preserveUser: pending.some(({ text }) => text.length > 0) });
       anchor = pending[0]?.anchor;
       if (
         interruptedThroughMs !== undefined &&
