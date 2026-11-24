@@ -700,6 +700,75 @@ test('with the microphone off the connection stays while Skyttel finishes, and t
   expect(calls.some((call) => call.url.endsWith('/stop'))).toBe(false);
 });
 
+test.each(['resume', 'cancel'] as const)(
+  'the paused microphone waits for voice to see the written reply before capture (%s)',
+  async (action) => {
+    const { track, view, component, changed, accessLost } = setup();
+    await startWithAudio();
+    fireEvent.click(microphoneButton());
+    expect(track.enabled).toBe(false);
+
+    const writtenReply: TextAssistantView = {
+      ...view,
+      revision: view.revision + 1,
+      questionPending: true,
+    };
+    component.rerender(
+      <StandaloneVoice
+        householdId="linden"
+        assistant={writtenReply}
+        onAssistant={changed}
+        onAccessLost={accessLost}
+      />,
+    );
+    let answerPoll: ((response: Response) => void) | undefined;
+    const pausedPoll = vi.fn();
+    vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
+      const response = Response.json({
+        assistant: writtenReply,
+        voice: {
+          id: 'voice-session',
+          phase: url.endsWith('/stop') ? 'closed' : 'listening',
+          seconds: null,
+          usageFinal: false,
+        },
+      });
+      if (!url.endsWith('/poll') || answerPoll) return response;
+      pausedPoll(JSON.parse(String(init.body)));
+      return new Promise<Response>((resolve) => {
+        answerPoll = resolve;
+      });
+    });
+
+    fireEvent.click(microphoneButton());
+    expect(track.enabled).toBe(false);
+    expect(microphoneButton().getAttribute('aria-pressed')).toBe('false');
+    await waitFor(() =>
+      expect(pausedPoll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          revision: writtenReply.revision,
+          draftVersion: writtenReply.review.version,
+          contentVersion: writtenReply.review.contentVersion,
+          microphoneOn: false,
+        }),
+      ),
+    );
+    expect(track.enabled).toBe(false);
+    if (action === 'cancel') fireEvent.click(microphoneButton());
+    await act(async () =>
+      answerPoll?.(
+        Response.json({
+          assistant: writtenReply,
+          voice: { id: 'voice-session', phase: 'listening', seconds: null, usageFinal: false },
+        }),
+      ),
+    );
+    expect(track.enabled).toBe(action === 'resume');
+    expect(microphoneButton().getAttribute('aria-pressed')).toBe(String(action === 'resume'));
+    expect(Peer.all).toHaveLength(1);
+  },
+);
+
 test('the muted connection outlasts delayed delegation and quiet gaps in the answer', async () => {
   const { track, calls } = setup();
   await userEvent.click(microphoneButton());
