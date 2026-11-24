@@ -119,6 +119,7 @@ test('a delayed end from the previous household cannot clear the replacement con
   await act(async () => {
     await Promise.resolve();
   });
+  await act(async () => requiredCommand(result.current.openRetained)('original'));
   onMapChange.mockClear();
   await act(async () => {
     waiting.resolve(Response.json({}));

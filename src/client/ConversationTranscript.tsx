@@ -18,6 +18,9 @@ export type TranscriptRow = {
  */
 export function ConversationTranscript({
   rows,
+  interruptedRequestId,
+  onContinue,
+  pending,
   working,
   computer = false,
   announce = true,
@@ -26,6 +29,9 @@ export function ConversationTranscript({
   activitySteps = [],
 }: {
   rows: TranscriptRow[];
+  interruptedRequestId?: string;
+  onContinue?: (id: string) => void;
+  pending?: boolean;
   /** Skyttel is working on a spoken or a written task. */
   working: boolean;
   computer?: boolean;
@@ -70,6 +76,14 @@ export function ConversationTranscript({
           <li key={row.id} className={`conversation-row ${row.role}`}>
             <span className="visually-hidden">{row.role === 'user' ? 'Du: ' : 'Skyttel: '}</span>
             {row.text}
+            {row.id === interruptedRequestId && (
+              <div>
+                Arbetet avbröts.{' '}
+                <button type="button" disabled={pending} onClick={() => onContinue?.(row.id)}>
+                  Fortsätt arbetet
+                </button>
+              </div>
+            )}
           </li>
         ))}
         {working && (

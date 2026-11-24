@@ -332,17 +332,14 @@ testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”
    öppet läge. Öppna **Visa förslaget: Lo Exempel**, läs **Person** och
    **Påhittad uppgift** och stäng uppgifterna. Hela sidan ryms utan
    horisontell sidrullning.
-4. Dölj utkastet och ladda om. Öppna **Skriv till Skyttel** och läs
-   **Samtalet är pausat** samt utgångstiden överst i samtalets rullbara del.
-   Rulla vid behov till **Avsluta samtalet** och välj knappen.
-   Kontrollera att svaret tas bort och fokus hamnar på **Nytt samtal**.
+4. Dölj utkastet och ladda om. Öppna den tomma textvyn. Välj
+   **Samtal** och raden **Ett vanligt uppdrag.** Läs svaret och utgångstiden.
 
 **Förväntat resultat:**
 
 - På bred dator syns sidofält och karta bredvid; fältet får startfokus.
 - Skicka behåller fältfokus, svaret syns och hela Lo-utkastet går att öppna.
-- Återkomsten visar paus och utgångstid. Avslut går att nå även i korta
-  fönster och flyttar fokus till **Nytt samtal**.
+- Det valda samtalet visar svaret och utgångstiden även i korta fönster.
 - Ingen horisontell sidrullning behövs. Kvarvarande smala/pekade/
   korta konfigurationer har egna identiteter nedan.
 

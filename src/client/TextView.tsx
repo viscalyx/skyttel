@@ -1,10 +1,10 @@
-import { type ReactNode, useEffect, useId, useLayoutEffect, useRef } from 'react';
-import { conversationModels, reasoningLabels } from '../shared/conversation-model.js';
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   conversationWidths,
   defaultConversationPreferences,
 } from '../shared/conversation-preferences.js';
 import { ContextMeter } from './ConversationContext.js';
+import { ConversationList } from './ConversationList.js';
 import { ConversationModel } from './ConversationModel.js';
 import { ConversationTranscript } from './ConversationTranscript.js';
 import { ConversationWidthHandle } from './ConversationWidthHandle.js';
@@ -13,7 +13,7 @@ import type { useConversationPreferences } from './use-conversation-preferences.
 import { useConversationViewport } from './use-conversation-viewport.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 
-export type TextOpeningFocus = 'text' | 'draft' | 'resume';
+export type TextOpeningFocus = 'text' | 'draft';
 
 /**
  * The text view: the conversation text and the message field. It reads the
@@ -70,26 +70,16 @@ export function TextView({
   const initialComputer = useRef(computer);
   const stop = working && !computer;
   const stopFocused = useRef(false);
-  const endFocused = useRef(false);
-  const retainedOpening = useRef<string | null>(null);
-  const resumeFocused = useRef(false);
-  const resume = useRef<HTMLButtonElement>(null);
-  const newConversation = useRef<HTMLButtonElement>(null);
+  const [listOpen, setListOpen] = useState(false);
+  const compact =
+    !computer ||
+    viewport.width <
+      widths.textWidth + (draftOpen ? widths.draftWidth : 0) + (listOpen ? 280 : 0) + 100;
   const id = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
-  useLayoutEffect(() => {
-    if (retainedOpening.current === session?.id && session?.paused) {
-      retainedOpening.current = null;
-      resume.current?.focus();
-    }
-    if (resumeFocused.current && !session?.paused) {
-      resumeFocused.current = false;
-      field.current?.focus();
-    }
-  }, [session]);
   const firstMessage = useRef<{ text: string; asked: boolean } | null>(null);
   useEffect(() => {
     const first = firstMessage.current;
@@ -112,8 +102,7 @@ export function TextView({
     // On a mobile device and a narrow screen it does not, so that the on-screen
     // keyboard stays down. The focus then stays in the toolbar or goes to the heading.
     if (hidden || openingFocus === 'draft') return;
-    if (openingFocus === 'resume') (resume.current ?? heading.current)?.focus();
-    else if (initialComputer.current) field.current?.focus();
+    if (initialComputer.current) field.current?.focus();
     else if (!document.activeElement?.closest('.workspace-tools')) heading.current?.focus();
     // Opening is the only focus trigger; resizing or revealing a keyboard must
     // preserve the user's current focus.
@@ -148,15 +137,9 @@ export function TextView({
       field.current?.focus();
     }
   }, [stop]);
-  useLayoutEffect(() => {
-    if (pending) return;
-    if (!session && endFocused.current && document.activeElement === document.body)
-      newConversation.current?.focus();
-    endFocused.current = false;
-  }, [session, pending]);
   const blocked =
     conversation.inputBlocked ||
-    session?.paused ||
+    Boolean(session?.interruptedRequestId) ||
     session?.workFailure?.code === 'assistant_draft_changed' ||
     pending ||
     unknown ||
@@ -185,6 +168,8 @@ export function TextView({
     <section
       ref={root}
       className={`text-view${draftOpen ? ' draft-open' : ''}`}
+      data-compact={compact}
+      data-list-open={listOpen}
       data-short={short}
       data-mobile={mobile}
       aria-labelledby={`${id}-title`}
@@ -207,10 +192,9 @@ export function TextView({
               <ContextMeter percentage={session?.contextPercentage} />
             </div>
             <button
-              ref={newConversation}
               type="button"
               className="text-view-new"
-              disabled={conversation.inputBlocked || pending}
+              disabled={conversation.inputBlocked || pending || conversation.switchBlocked}
               onClick={() => (session ? void conversation.newConversation() : startConversation())}
             >
               Nytt samtal
@@ -229,29 +213,71 @@ export function TextView({
             !widthPreferences.widthFeedback.includes('återställda') && (
               <p role="status">{widthPreferences.widthFeedback}</p>
             )}
-          {onToggleDraft && (
-            <button
-              type="button"
-              className="text-view-draft-toggle"
-              aria-expanded={draftOpen}
-              aria-label={`${draftOpen ? 'Dölj utkastet' : 'Visa utkastet'} (${draftCount})`}
-              aria-controls={`${id}-draft`}
-              onClick={onToggleDraft}
-            >
-              <span aria-hidden="true" className="draft-direction">
-                {draftOpen ? '▸' : '◂'}
-              </span>
-              <WorkspaceIcon name="draft" />
-              <span>{short ? 'Utkast' : draftOpen ? 'Dölj utkastet' : 'Visa utkastet'}</span>
-              <span className="text-view-draft-count">
-                {short
-                  ? draftCount
-                  : `${draftCount} ${draftCount === 1 ? 'osparad ändring' : 'osparade ändringar'}`}
-              </span>
-            </button>
-          )}
+          <div className="conversation-panel-buttons">
+            {conversation.listRetained && (
+              <button
+                type="button"
+                aria-expanded={listOpen}
+                onClick={() => {
+                  if (compact && !listOpen && draftOpen) onToggleDraft?.();
+                  setListOpen(!listOpen);
+                }}
+              >
+                Samtal
+              </button>
+            )}
+            {compact && (
+              <button
+                type="button"
+                aria-pressed={!listOpen && !draftOpen}
+                onClick={() => {
+                  setListOpen(false);
+                  if (draftOpen) onToggleDraft?.();
+                }}
+              >
+                Text
+              </button>
+            )}
+            {onToggleDraft && (
+              <button
+                type="button"
+                className="text-view-draft-toggle"
+                aria-expanded={draftOpen}
+                aria-label={`${draftOpen ? 'Dölj utkastet' : 'Visa utkastet'} (${draftCount})`}
+                aria-controls={`${id}-draft`}
+                onClick={() => {
+                  if (compact) setListOpen(false);
+                  onToggleDraft();
+                }}
+              >
+                <span aria-hidden="true" className="draft-direction">
+                  {draftOpen ? '▸' : '◂'}
+                </span>
+                <WorkspaceIcon name="draft" />
+                <span>
+                  {short || compact ? 'Utkast' : draftOpen ? 'Dölj utkastet' : 'Visa utkastet'}
+                </span>
+                <span className="text-view-draft-count">
+                  {short
+                    ? draftCount
+                    : `${draftCount} ${draftCount === 1 ? 'osparad ändring' : 'osparade ändringar'}`}
+                </span>
+              </button>
+            )}
+          </div>
         </div>
-        {computer && widthPreferences?.known && draftOpen && (
+        {listOpen && !hidden && (
+          <ConversationList
+            conversation={conversation}
+            onSelected={() => {
+              if (compact) {
+                setListOpen(false);
+                heading.current?.focus();
+              }
+            }}
+          />
+        )}
+        {computer && !compact && widthPreferences?.known && draftOpen && (
           <ConversationWidthHandle
             name="Ändra utkastlistans bredd"
             value={widths.draftWidth}
@@ -269,7 +295,7 @@ export function TextView({
           id={`${id}-draft`}
           className="text-view-draft"
           aria-label="Utkastet"
-          hidden={!draftOpen}
+          hidden={!draftOpen || (compact && listOpen)}
         >
           <h3>Utkast</h3>
           {draftContent}
@@ -299,97 +325,20 @@ export function TextView({
               follow.current = scrollHeight - scrollTop - clientHeight < 80;
             }}
           >
-            {session && (
-              <div className="text-view-lifetime">
-                {session.expiresAt && (
-                  <p role="status" aria-label="Samtalets livslängd">
-                    {session.paused && 'Samtalet är pausat. '}
-                    Löper ut{' '}
-                    <time dateTime={new Date(session.expiresAt).toISOString()}>
-                      {new Date(session.expiresAt).toLocaleString('sv-SE')}
-                    </time>{' '}
-                    efter sju dygn utan ditt meddelande eller uttrycklig återupptagning.
-                    {session.paused &&
-                      ' Nytt samtal tar bort det tidigare samtalet; utkastet ligger kvar.'}
-                  </p>
-                )}
-                {session.paused && conversation.resumeConversation && (
-                  <button
-                    ref={resume}
-                    type="button"
-                    disabled={pending}
-                    onClick={(event) => {
-                      resumeFocused.current = document.activeElement === event.currentTarget;
-                      void conversation.resumeConversation?.();
-                    }}
-                  >
-                    Återuppta samtalet
-                  </button>
-                )}
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={(event) => {
-                    endFocused.current = document.activeElement === event.currentTarget;
-                    void conversation.endConversation();
-                  }}
-                >
-                  Avsluta samtalet
-                </button>
-              </div>
-            )}
-            {conversation.listRetained && (
-              <div className="text-view-lifetime">
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => void conversation.listRetained?.()}
-                >
-                  Bevarade samtal
-                </button>
-                {conversation.retainedConversations && (
-                  <section aria-label="Bevarade samtal">
-                    {conversation.retainedConversations.length ? (
-                      <ul>
-                        {conversation.retainedConversations.map((retained) => (
-                          <li key={retained.id}>
-                            <p>
-                              {retained.paused ? 'Pausat samtal.' : 'Pågående samtal.'}{' '}
-                              {
-                                conversationModels.find(
-                                  (model) => model.id === retained.modelChoice.model,
-                                )?.name
-                              }
-                              , {reasoningLabels[retained.modelChoice.effort]}. Löper ut{' '}
-                              <time dateTime={new Date(retained.expiresAt).toISOString()}>
-                                {new Date(retained.expiresAt).toLocaleString('sv-SE')}
-                              </time>
-                              .
-                            </p>
-                            <button
-                              type="button"
-                              disabled={pending}
-                              onClick={() => {
-                                retainedOpening.current = retained.id;
-                                void conversation.openRetained?.(retained.id).then((opened) => {
-                                  if (!opened) retainedOpening.current = null;
-                                });
-                              }}
-                            >
-                              Öppna {retained.title}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>Inga bevarade samtal.</p>
-                    )}
-                  </section>
-                )}
-              </div>
+            {session?.expiresAt && (
+              <p className="text-view-lifetime" role="status" aria-label="Samtalets livslängd">
+                Löper ut{' '}
+                <time dateTime={new Date(session.expiresAt).toISOString()}>
+                  {new Date(session.expiresAt).toLocaleString('sv-SE')}
+                </time>
+                .
+              </p>
             )}
             {children}
             <ConversationTranscript
+              interruptedRequestId={session?.interruptedRequestId}
+              onContinue={(id) => void conversation.resumeConversation?.(id)}
+              pending={pending}
               rows={transcript}
               working={working}
               activity={

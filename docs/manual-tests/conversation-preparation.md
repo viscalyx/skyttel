@@ -13,6 +13,10 @@ För KONTEXT-25 används två separata webbläsarprofiler eller enheter,
 inloggade som Alex i samma kontrollerade installation. Börja med ett tomt
 utkast. Lämna installationen igång mellan profilerna.
 
+Kör `hold-title on` före garagets begäran. När utdraget syns i listan,
+svara på `held.kind: title` med `reply TITEL-ID Fråga om garaget`. Kör
+`hold-title off` före nästa samtal.
+
 Efter **Beskriv garaget utan att ändra något.** skickas följande till
 det nya REQUEST som `held` visar:
 
@@ -22,7 +26,7 @@ tool REQUEST ask_questions {"questions":[{"kind":"information","request":"Beskri
 ```
 <!-- markdownlint-enable MD013 -->
 
-Omladdning och **Återuppta samtalet** ska inte skapa ett nytt modelluppdrag
+Omladdning och val i **Samtal** ska inte skapa ett nytt modelluppdrag
 när bara frågan väntar. Kör `scope-read` innan det andra samtalets
 uppdrag skickas. Efter det uppdraget används dess nya REQUEST:
 
@@ -31,7 +35,7 @@ reply REQUEST Det andra samtalet gäller cykeln.
 ```
 
 Kör `scope-work` när svaret är klart, före garagets förtydligande.
-Efter **Återuppta samtalet** slår användaren på mikrofonen. Ange den
+Efter valet i **Samtal** slår användaren på mikrofonen. Ange den
 kontrollerade repliken med `user Det västra garaget.` följt av `delegate`
 i terminalen.
 
@@ -461,8 +465,7 @@ verkliga ID:t. Kör följande hela Console-paket för varje egen anslutning:
 ```
 
 Läs status 200 och `voice.phase:"closed"` för varje ID. Transportstoppet
-bevarar samtalet, som återställs pausat vid omladdning. Välj därför
-**Avsluta samtalet** i textvyn innan nästa självständiga fall.
+bevarar samtalet i **Samtal**.
 Ladda därefter om sidan och öppna **Skriv till Skyttel**. Kontrollera noll kontext,
 borttagen tidigare samtalstext och samma hela sparade karta, historik
 och Robins privata förslag. Gör nästa rättelse i det vanliga

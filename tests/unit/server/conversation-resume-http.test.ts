@@ -208,6 +208,17 @@ test('another device discovers separate retained conversations and opens the sel
       })
     ).status(),
   ).toBe(200);
+  const accepted = await post(first, `${path}/${second.id}/messages`, {
+    requestId: crypto.randomUUID(),
+    revision: second.revision,
+    draftVersion: second.review.version,
+    contentVersion: second.review.contentVersion,
+    text: 'Beskriv cykeln.',
+  });
+  expect(accepted.status()).toBe(202);
+  await expect
+    .poll(async () => (await (await first.get(`${path}/${second.id}`)).json()).phase)
+    .toBe('ready');
   const activeList = await first.get(`${path}/retained`);
   expect(
     (await activeList.json()).conversations.find((item: { id: string }) => item.id === second.id),
@@ -243,7 +254,7 @@ test('another device discovers separate retained conversations and opens the sel
   });
 });
 
-test('only explicit approved resume renews the retained lifetime and enables the same conversation', async () => {
+test('approved resume enables work without renewing the retained lifetime', async () => {
   let time = Date.now();
   const model = textModel(() => [modelMessage('Du kan fortsätta i samma samtal.')]);
   app = await createInstallation(undefined, { modelFetch: model.provider, now: () => time });
@@ -271,7 +282,7 @@ test('only explicit approved resume renews the retained lifetime and enables the
   expect(await resumed.json()).toMatchObject({
     id: original.id,
     paused: false,
-    expiresAt: time + 604_800_000,
+    expiresAt: original.expiresAt,
   });
   expect(model.requests).toHaveLength(0);
   const sent = await post(`${path}/${original.id}/messages`, {

@@ -35,6 +35,7 @@ import type {
   TextAssistantView,
 } from '../shared/text-assistant.js';
 import { reconcileDraftRemovals } from '../shared/type-removal.js';
+import { voiceTranscriptGapMs } from '../shared/voice-transcript.js';
 import {
   assistantFailureMessage,
   blockedActionMessage,
@@ -80,6 +81,7 @@ import {
   type ConversationMessage,
   type ConversationState,
   discardConversationDraftParts,
+  firstRequest,
   syncConversationQuestions,
 } from './conversation-state.js';
 import {
@@ -126,6 +128,7 @@ type ConversationExecution = {
   parts: ReturnType<typeof pendingParts>;
   timer: NodeJS.Timeout;
   messageTimers: Map<Message, NodeJS.Timeout>;
+  titleTimer?: NodeJS.Timeout;
   deliveries: Map<string, ReturnType<ReturnType<typeof taskDeliveries>['bind']>>;
   task?: AbortController;
   capacity: ConversationCapacity;
@@ -256,6 +259,7 @@ export function textAssistantRoutes({
   voiceTokens = voiceConversationModel.tokens,
   observe,
   onStop,
+  hasVoice,
   onResetStart,
   onNewConversation,
   onSummary,
@@ -274,6 +278,7 @@ export function textAssistantRoutes({
   voiceTokens?: number;
   observe?: ObserveAssistant;
   onStop?: (sessionId: string) => void;
+  hasVoice?: (sessionId: string) => boolean;
   onResetStart?: (sessionId: string, requestId?: string) => void;
   onSummary?: (sessionId: string, signal: AbortSignal) => Promise<void> | undefined;
   onWork?: (browserSessionId: string, until: number | undefined) => void;
@@ -288,6 +293,58 @@ export function textAssistantRoutes({
   const storage = conversationStorage(database, now);
   function checkConversationOpening() {
     if (closed) throw new MapError('assistant_unavailable', 503);
+  }
+  function generateTitle(session: Session, first: string) {
+    const state = session.state;
+    if (
+      !config.openaiApiKey ||
+      state.consentTextVersion < 5 ||
+      session.execution.approvedVersion !== consents.textVersion ||
+      !state.storageConsentVersion ||
+      state.titleRequested ||
+      state.createdAt === undefined ||
+      !state.expiresAt ||
+      state.expiresAt <= now() ||
+      !canRetainConversation(state)
+    )
+      return;
+    state.firstRequest = first;
+    state.titleRequested = true;
+    persist(session);
+    const titleModel = textModel(
+      config.openaiApiKey,
+      modelFetch,
+      modelUsage,
+      modelProfile,
+      undefined,
+      () => conversationModelProfile(state.modelChoice),
+    );
+    void titleModel(
+      'SKYTTEL_TITLE: Skriv en kort svensk samtalstitel på högst 80 tecken utifrån begäran. Svara med bara titeln.',
+      [{ role: 'user', content: first }],
+      [],
+      AbortSignal.timeout(30_000),
+      256,
+    )
+      .then((result) => {
+        const title = result.output_text?.trim();
+        if (
+          closed ||
+          result.status !== 'completed' ||
+          !title ||
+          title.length > 80 ||
+          /[\r\n]/.test(title)
+        )
+          return;
+        if (!storage.updateTitle(state.id, first, title)) return;
+        const live = sessions.get(state.id);
+        if (live) live.state.title = title;
+      })
+      .catch(() => {});
+  }
+  function recordRequest(state: ConversationState) {
+    state.lastRequestAt = now();
+    state.expiresAt = state.lastRequestAt + conversationLifetime;
   }
   function canRetainConversation(state: ConversationState) {
     if (!householdAccess(database, state.actorId, state.householdId)) return false;
@@ -654,9 +711,14 @@ export function textAssistantRoutes({
       delivery = 'retire',
     }: { conversation?: 'pause' | 'end'; delivery?: 'retire' | 'close' } = {},
   ) {
+    clearTimeout(session.execution.titleTimer);
     const task = ownedDraftTask(session);
-    if (conversation === 'pause') checkpointPause(session);
-    else storage.erase(session.state.id);
+    if (conversation === 'pause') {
+      const first = firstRequest(session.state);
+      if (!closed && first && session.execution.approvedVersion === consents.textVersion)
+        generateTitle(session, first);
+      checkpointPause(session);
+    } else storage.erase(session.state.id);
     sessions.delete(session.state.id);
     retirePreparations(session);
     if (![...sessions.values()].some((candidate) => draftKey(candidate) === draftKey(session)))
@@ -772,6 +834,9 @@ export function textAssistantRoutes({
       displayedSelection,
       displayedItem,
     } = session.state;
+    const interrupted = session.state.paused
+      ? (session.state.activeMessage ?? session.state.queue[0])
+      : undefined;
     const failure = session.state.failedWork;
     const workFailure =
       failure &&
@@ -798,11 +863,17 @@ export function textAssistantRoutes({
       id,
       workFailure,
       paused: session.state.paused,
+      interruptedRequestId: interrupted?.id,
+      interruptedSpeech: interrupted?.voice ? interrupted.text : undefined,
       expiresAt: session.state.expiresAt,
       conversation: session.state.conversation.map(
         ({ role, text, partial, utteranceStart, notice, requestId }) => ({
           role,
           text,
+          requestId:
+            role === 'user' && session.state.paused && requestId === session.state.activeMessage?.id
+              ? requestId
+              : undefined,
           partial,
           utteranceStart,
           // Older retained conversations have no presentation marker. Match only
@@ -2440,6 +2511,10 @@ export function textAssistantRoutes({
   ) {
     checkPreparation(preparation);
     session.state.paused = false;
+    session.state.titleRequested = undefined;
+    session.state.firstRequest = undefined;
+    session.state.title = undefined;
+    session.state.lastRequestAt = undefined;
     session.state.expiresAt = now() + conversationLifetime;
     session.state.modelChoice = personalModelChoice(database, session.state.actorId).read();
     session.state.modelChoiceRevision = (session.state.modelChoiceRevision ?? 0) + 1;
@@ -4028,6 +4103,10 @@ export function textAssistantRoutes({
       .sort((left, right) => left.message.sequence - right.message.sequence);
     let next = queued[0];
     if (!next) return;
+    if (next.message.awaitingContinuation) {
+      if (!next.session.state.paused) checkpointPause(next.session);
+      return;
+    }
     if (
       next.session.state.paused ||
       storage.pausedWork(
@@ -4279,7 +4358,6 @@ export function textAssistantRoutes({
     if (session.state.paused) throw new MapError('assistant_work_paused', 409);
     // Speech already renews retention when its transcript arrives. A delayed
     // delegation starts backend work without moving that user-message anchor.
-    if (!message.voice) session.state.expiresAt = now() + conversationLifetime;
     session.execution.mcp.acceptTask(message.deadline);
     session.state.accepted.set(message.id, {
       hash: requestHash,
@@ -4288,6 +4366,9 @@ export function textAssistantRoutes({
       receivedAt: message.receivedAt,
       deadline: message.deadline,
     });
+    if (!message.voice || !firstRequest(session.state)) recordRequest(session.state);
+    if (!session.state.titleRequested)
+      generateTitle(session, firstRequest(session.state) ?? message.text);
     bindMessageResources(session, message, deliveryConnectionId, message.voice || deliveryAudio);
     syncWork();
     session.state.inputSerial = (session.state.inputSerial ?? 0) + 1;
@@ -4323,6 +4404,7 @@ export function textAssistantRoutes({
     const receivedAt = now();
     const message: Message = {
       ...original,
+      awaitingContinuation: undefined,
       continuation:
         original.continuation ||
         session.state.unfinishedRequests.some((request) => request.id === original.id),
@@ -4908,22 +4990,25 @@ export function textAssistantRoutes({
   routes.get(`${base}/retained`, (context) => {
     const conversations: RetainedConversation[] = storage
       .list(context.get('actorId'), context.req.param('id'))
-      .filter(
-        (state): state is ConversationState & { expiresAt: number } =>
-          canRetainConversation(state) && state.expiresAt !== undefined,
-      )
-      .map((state) => ({
-        id: state.id,
-        title:
-          state.conversation.find((row) => row.role === 'user')?.text.slice(0, 100) ??
-          'Samtal utan meddelande',
-        expiresAt: state.expiresAt,
-        paused: sessions.has(state.id) ? Boolean(sessions.get(state.id)?.state.paused) : true,
-        modelChoice: state.modelChoice,
-      }));
+      .flatMap((state) => {
+        const first = firstRequest(state);
+        if (!first || !state.expiresAt || !canRetainConversation(state)) return [];
+        return [
+          {
+            id: state.id,
+            title: state.title ?? first.slice(0, 100),
+            createdAt: state.createdAt,
+            lastRequestAt: state.lastRequestAt ?? [...state.accepted.values()].at(-1)?.receivedAt,
+            expiresAt: state.expiresAt,
+            paused: sessions.get(state.id)?.state.paused ?? !sessions.has(state.id),
+            modelChoice: state.modelChoice,
+          },
+        ];
+      })
+      .sort((a, b) => (b.lastRequestAt ?? 0) - (a.lastRequestAt ?? 0));
     return context.json({ conversations });
   });
-  routes.post(`${base}/retained/:conversationId/open`, async (context) => {
+  routes.on(['GET', 'POST'], `${base}/retained/:conversationId/open`, async (context) => {
     const actorId = context.get('actorId');
     const browserSessionId = context.get('browserSessionId');
     const householdId = context.req.param('id');
@@ -4931,10 +5016,25 @@ export function textAssistantRoutes({
     const binding = storage.binding(browserSessionId);
     if (!binding) return context.json({ error: 'assistant_session_expired' }, 404);
     const retained = storage.read(actorId, householdId, binding, id);
-    if (!retained || !canRetainConversation(retained))
+    if (!retained || !firstRequest(retained) || !canRetainConversation(retained))
       return context.json({ error: 'assistant_session_expired' }, 404);
     const current = sessions.get(id);
-    if (current) await stop(current, { conversation: 'pause', delivery: 'close' });
+    const body = context.req.method === 'POST' ? await context.req.json().catch(() => null) : null;
+    if (context.req.method === 'GET' || (!body?.activate && current && !current.state.paused)) {
+      const selected =
+        current ??
+        (await restoreSession(actorId, browserSessionId, householdId, context.req.raw.headers, id));
+      if (!selected || !canRetainConversation(selected.state))
+        return context.json({ error: 'assistant_session_expired' }, 404);
+      return context.json({ ...view(selected), requiresActivation: true });
+    }
+    if (body?.activate && !consents.valid(actorId, householdId, body.consent))
+      return context.json({ error: conversationConsentRequired }, 403);
+    if (current && current.execution.browserSessionId !== browserSessionId) {
+      if (current.state.phase === 'working' || current.execution.summaryTask || hasVoice?.(id))
+        return context.json({ error: 'assistant_conversation_busy' }, 409);
+      await stop(current, { conversation: 'pause', delivery: 'close' });
+    }
     const session = await restoreSession(
       actorId,
       browserSessionId,
@@ -4945,6 +5045,15 @@ export function textAssistantRoutes({
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
     if (sessions.get(id) !== session || session.execution.browserSessionId !== browserSessionId)
       return context.json({ error: 'assistant_turn_changed' }, 409);
+    if (body?.activate) {
+      currentConsent(session, body.consent);
+      if (
+        !session.state.activeMessage &&
+        !session.state.queue.length &&
+        !hasPendingOutcome(session)
+      )
+        session.state.paused = false;
+    }
     storage.move(actorId, householdId, id, binding);
     return context.json(view(session));
   });
@@ -5023,12 +5132,16 @@ export function textAssistantRoutes({
     if (!consents.valid(actorId, householdId, body?.consent))
       return context.json({ error: conversationConsentRequired }, 403);
     const revocationsAtStart = revocations.get(consentKey(actorId, householdId));
-    for (const previous of sessions.values())
-      if (
-        previous.execution.browserSessionId === browserSessionId &&
-        previous.state.householdId === householdId
-      )
-        await stop(previous);
+    const previous = sessions.get(body?.previousId);
+    if (
+      previous &&
+      previous.state.actorId === actorId &&
+      previous.state.householdId === householdId &&
+      previous.execution.browserSessionId === browserSessionId &&
+      !previous.state.paused &&
+      (previous.state.phase === 'working' || previous.execution.summaryTask)
+    )
+      return context.json({ error: 'assistant_turn_changed' }, 409);
     let contentVersion: number | undefined;
     const guard = (generation?: number) => {
       checkConversationOpening();
@@ -5069,6 +5182,7 @@ export function textAssistantRoutes({
           consents.textVersion >= conversationStorageConsentVersion
             ? consents.textVersion
             : undefined,
+        createdAt: now(),
         expiresAt: now() + conversationLifetime,
         modelChoice,
         consentTextVersion: consents.textVersion,
@@ -5116,6 +5230,19 @@ export function textAssistantRoutes({
       if (revocations.get(consentKey(actorId, householdId)) !== revocationsAtStart) {
         await stop(session);
         return context.json({ error: conversationConsentRequired }, 403);
+      }
+      if (
+        previous &&
+        sessions.get(previous.state.id) === previous &&
+        previous.state.actorId === actorId &&
+        previous.state.householdId === householdId &&
+        previous.execution.browserSessionId === browserSessionId
+      ) {
+        if (previous.state.phase === 'working' || previous.execution.summaryTask) {
+          await mcp.close();
+          return context.json({ error: 'assistant_turn_changed' }, 409);
+        }
+        void stop(previous, { conversation: 'pause', delivery: 'close' });
       }
       sessions.set(session.state.id, session);
       return context.json(view(session), 201);
@@ -5298,6 +5425,10 @@ export function textAssistantRoutes({
         throw new MapError('assistant_turn_changed', 409);
     };
     guard();
+    const retry = await context.req.json().catch(() => null);
+    const interruptedId = session.state.activeMessage?.id ?? session.state.queue[0]?.id;
+    if (retry?.requestId !== undefined && retry.requestId !== interruptedId)
+      return context.json({ error: 'assistant_turn_changed' }, 409);
     const pendingBatch = session.state.pendingBatch;
     if (pendingBatch) await recoverBatch(session);
     guard();
@@ -5351,14 +5482,16 @@ export function textAssistantRoutes({
     session.state.paused = false;
     session.state.saveIntent = undefined;
     session.state.saveIntentDeadline = undefined;
-    session.state.expiresAt = now() + conversationLifetime;
-    for (const message of [interrupted, ...queued])
+    for (const message of [interrupted, ...queued]) {
       if (
-        message &&
-        message.id !== completedRequest &&
-        message.id !== session.state.failedWork?.message.id
+        !message ||
+        message.id === completedRequest ||
+        message.id === session.state.failedWork?.message.id
       )
-        continueMessage(session, message);
+        continue;
+      if (retry?.requestId && message.id !== retry.requestId) message.awaitingContinuation = true;
+      else continueMessage(session, message);
+    }
     if (completedRequest) {
       for (const request of session.state.unfinishedRequests)
         if (request.id === completedRequest) request.paused = false;
@@ -6137,13 +6270,24 @@ export function textAssistantRoutes({
     ) => {
       const session = sessions.get(sessionId);
       if (!session) return;
-      if (role === 'user' && text.trim()) session.state.expiresAt = now() + conversationLifetime;
+      if (role === 'user' && text.trim()) recordRequest(session.state);
+      if (!session.state.titleRequested && role === 'user' && utteranceStart) {
+        const first = firstRequest(session.state);
+        if (first) generateTitle(session, first);
+      }
       const retained = appendConversation(session, {
         role,
         text,
         partial: true,
         utteranceStart,
       });
+      if (role === 'user' && !session.state.titleRequested && text.trim()) {
+        clearTimeout(session.execution.titleTimer);
+        session.execution.titleTimer = setTimeout(() => {
+          const first = firstRequest(session.state);
+          if (sessions.get(sessionId) === session && first) generateTitle(session, first);
+        }, voiceTranscriptGapMs).unref();
+      }
       if (role !== 'user' || utteranceStart) return;
       return () => {
         if (

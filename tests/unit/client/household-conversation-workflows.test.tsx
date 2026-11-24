@@ -262,22 +262,17 @@ test('canceling a toolbar conversation returns to its chosen entry and preserves
   expect((await home.read()).draft.changes).toEqual([]);
 });
 
-test('the toolbar microphone opens a restored conversation at its resume button', async () => {
+test('after reload the microphone starts a fresh conversation without opening text', async () => {
   const home = await household();
   await home.open();
   await startConversationWithText({ remember: true });
   cleanup();
   await home.open();
-  const workspace = screen.getByRole('region', { name: 'Arbetsyta' });
-  await waitFor(() => expect(workspace.getAttribute('data-session-active')).toBe('true'));
-
-  await userEvent.click(home.microphone());
-
-  const text = await screen.findByRole('region', { name: 'Skriv till Skyttel' });
-  const resume = within(text).getByRole('button', { name: 'Återuppta samtalet' });
-  expect(document.activeElement).toBe(resume);
-  expect(home.commands.some((url) => url.endsWith('/resume'))).toBe(false);
   expect(home.media.getUserMedia).not.toHaveBeenCalled();
+  await userEvent.click(home.microphone());
+  await screen.findByRole('group', { name: 'Röstruta' });
+  await waitFor(() => expect(home.media.getUserMedia).toHaveBeenCalled());
+  expect(screen.queryByRole('region', { name: 'Skriv till Skyttel' })).toBeNull();
 });
 
 test('voice survives closing text and visiting Settings with its microphone choice and unsent work unchanged', async () => {
@@ -557,8 +552,8 @@ test('a new conversation clears the dialogue but keeps the draft, unsent input a
       'En vanlig fråga',
     ),
   );
-  expect(screen.getByRole('log', { name: 'Samtalstext' }).textContent).toContain(
-    '1 osparad ändring',
+  expect(screen.getByRole('log', { name: 'Samtalstext' }).textContent).toBe(
+    'Här visas det du och Skyttel säger och skriver.',
   );
   expect(home.media.microphone.enabled).toBe(false);
   expect(home.media.getUserMedia).toHaveBeenCalledTimes(1);

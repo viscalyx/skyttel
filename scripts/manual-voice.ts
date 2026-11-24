@@ -29,6 +29,7 @@ async function main() {
   const conversationWorkMode = process.env.SKYTTEL_CONVERSATION_WORK_MODE ?? 'sequential';
   if (conversationWorkMode !== 'sequential' && conversationWorkMode !== 'overlap')
     throw new Error('Use sequential or overlap for SKYTTEL_CONVERSATION_WORK_MODE.');
+  let holdTitle = false;
   let holdScope = false;
   let holdCheck = false;
   let scopeMode: 'read' | 'work' | undefined;
@@ -45,6 +46,8 @@ async function main() {
     | undefined;
   let voiceFailureStatus: 401 | 503 | undefined;
   function describe(id: string, item: Pending) {
+    if (item.request.instructions.startsWith('SKYTTEL_TITLE'))
+      return { id, kind: 'title', input: item.request.input };
     const user = item.request.input.findLast((part) => part.role === 'user');
     const current = user && typeof user.content === 'string' ? JSON.parse(user.content) : {};
     return {
@@ -100,6 +103,7 @@ async function main() {
   });
   const app = await createInstallation(undefined, {
     conversationWorkMode,
+    titleFetch: textModel((request) => (holdTitle ? holdRequest(request) : [])).provider,
     modelFetch: async (input, init) => {
       let response: Response;
       try {
@@ -206,6 +210,7 @@ async function main() {
               'hold-save on|off',
               'hold-check on|off',
               'hold-scope on|off',
+              'hold-title on|off',
               'scope-read | scope-work',
               'response-required on|off',
               'release-save',
@@ -218,6 +223,12 @@ async function main() {
               'quit',
             ],
           });
+          continue;
+        }
+        if (command === 'hold-title') {
+          if (id !== 'on' && id !== 'off') throw new Error('Use hold-title on or off.');
+          holdTitle = id === 'on';
+          emit('title-hold', { active: holdTitle });
           continue;
         }
         if (command === 'hold-scope') {

@@ -164,7 +164,7 @@ export function VoiceBox({
   announce = true,
 }: {
   conversation: Pick<Conversation, 'voice' | 'working' | 'cancel'> &
-    Partial<Pick<Conversation, 'session' | 'configureModel'>>;
+    Partial<Pick<Conversation, 'session' | 'configureModel' | 'switchBlocked' | 'newConversation'>>;
   microphoneButton?: () => HTMLElement | null;
   focusAfterStop?: () => HTMLElement | null;
   notice?: ReactNode;
@@ -228,6 +228,19 @@ export function VoiceBox({
             }}
           />
           <ContextSymbol percentage={conversation.session?.contextPercentage ?? 0} />
+          {conversation.newConversation && voice.state === 'listening' && (
+            <button
+              type="button"
+              aria-label="Nytt samtal"
+              title="Nytt samtal"
+              disabled={conversation.switchBlocked}
+              onClick={() => void conversation.newConversation?.()}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+                <path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" strokeWidth="2" />
+              </svg>
+            </button>
+          )}
           {status.stop && !hideStop && (
             <button
               type="button"

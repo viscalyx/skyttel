@@ -84,8 +84,7 @@ export function ConversationWorkspace({
   const previousConversation = useRef('');
   useEffect(() => {
     if (previousConversation.current !== conversationKey) {
-      const keepManualReview =
-        manuallyToggled.current && !previousConversation.current && Boolean(session);
+      const keepManualReview = manuallyToggled.current && Boolean(session);
       previousConversation.current = conversationKey;
       if (!keepManualReview) manuallyToggled.current = false;
       initialChoice.current = null;

@@ -196,6 +196,7 @@ export function useVoice(options: {
   const path = options.assistant
     ? `/api/households/${encodeURIComponent(options.householdId)}/text-assistant/${encodeURIComponent(options.assistant.id)}/voice`
     : null;
+  const transfer = useRef<{ id: string; input?: RetainedInput } | null>(null);
   const latest = useRef(options);
   latest.current = options;
   // Permission promises and transport callbacks must read the same current
@@ -862,8 +863,19 @@ export function useVoice(options: {
     [path, apply, stop, setError, inputAllowed, delivery, pauseCapture],
   );
   useEffect(() => {
-    if (options.autoStart) void start();
-  }, [options.autoStart, start]);
+    const next = transfer.current;
+    if (next && next.id === options.assistant?.id) {
+      transfer.current = null;
+      void start(next.input);
+    } else if (options.autoStart) void start();
+  }, [options.autoStart, options.assistant?.id, start]);
+  useEffect(
+    () => () => {
+      for (const track of transfer.current?.input?.stream.getTracks() ?? []) track.stop();
+      transfer.current = null;
+    },
+    [],
+  );
   const starting = state === 'connecting' || state === 'permission';
   const working = state === 'listening' && voice?.phase === 'working';
   const speaking = state === 'listening' && activity.speaker;
@@ -936,6 +948,13 @@ export function useVoice(options: {
         }
         if (mounted.current && current.current === continuation) {
           current.current = null;
+          if (assistant.id !== latest.current.assistant?.id) {
+            transfer.current = {
+              id: assistant.id,
+              input: stream ? { stream, paused: offRef.current } : undefined,
+            };
+            return assistant;
+          }
           await start(
             stream ? { stream, paused: offRef.current } : undefined,
             assistant,

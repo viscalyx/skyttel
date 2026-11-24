@@ -170,7 +170,7 @@ export function WorkspaceTools({
     return () => query.removeEventListener('change', change);
   }, []);
   const microphoneDescription = conversationPaused
-    ? 'Öppna det pausade samtalet för att återuppta det.'
+    ? 'Starta mikrofonen i det valda samtalet.'
     : voiceControl?.starting
       ? 'Avbryt starten av rösten'
       : `Prata med Skyttel (${microphoneShortcut()}). Håll in för att tala tills du släpper.`;

@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
 import {
-  giveConversationConsent,
   microphoneButton,
   openConversationText,
+  selectConversation,
   startConversationWithText,
   turnMicrophoneOn,
 } from '../support/conversation-page.js';
@@ -18,6 +18,15 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
   browser,
 }) => {
   let calls = 0;
+  let releaseTitle!: () => void;
+  const waitingForTitle = new Promise<void>((resolve) => {
+    releaseTitle = resolve;
+  });
+  const title = textModel(async (request) => {
+    if (request.input[0].content !== 'Beskriv garaget utan att ändra något.') return [];
+    await waitingForTitle;
+    return [modelMessage('Fråga om garaget')];
+  });
   const live = liveProvider();
   const model = textModel(
     (body) => {
@@ -64,6 +73,7 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
   );
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
+    titleFetch: title.provider,
     liveFetch: live.provider,
     liveSideband: live.attach,
   });
@@ -93,19 +103,33 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
     await page.keyboard.press('Escape');
     await send(page, 'Beskriv garaget utan att ändra något.');
     await expect(log(page)).toContainText('Vilket garage?');
+    await view(page).getByRole('button', { name: 'Samtal', exact: true }).click();
+    const list = view(page).getByRole('region', { name: 'Samtal', exact: true });
+    await expect(
+      list.getByRole('button', { name: 'Beskriv garaget utan att ändra något.' }),
+    ).toHaveAttribute('aria-current', 'true');
+    releaseTitle();
+    await expect(list.getByRole('button', { name: 'Fråga om garaget' })).toBeVisible();
+    await list.getByRole('button', { name: 'Samtalsinformation' }).press('Enter');
+    const info = page.getByRole('dialog', { name: 'Samtalsinformation' });
+    await expect(info).toContainText('Fråga om garaget');
+    await expect(info.locator('time')).toHaveCount(2);
+    await page
+      .context()
+      .grantPermissions(['clipboard-read', 'clipboard-write'], { origin: app.origin });
+    await info.getByRole('button', { name: 'Kopiera samtals-ID' }).click();
+    const id = await page.evaluate(() => navigator.clipboard.readText());
+    expect(id).toMatch(/^[a-f0-9-]{36}$/);
+    await info.getByRole('button', { name: 'Kopiera LangSmith-filter' }).click();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      `and(eq(metadata_key, "conversation_id"), eq(metadata_value, "${id}"))`,
+    );
+    await page.keyboard.press('Escape');
+    await expect(list.getByRole('button', { name: 'Samtalsinformation' })).toBeFocused();
     await page.reload();
     await openConversationText(page);
-    await expect(view(page).getByRole('status', { name: 'Samtalets livslängd' })).toContainText(
-      'Samtalet är pausat.',
-    );
-    await expect(
-      view(page).getByRole('button', { name: 'Återuppta samtalet', exact: true }),
-    ).toBeVisible();
-    await view(page).getByRole('button', { name: 'Återuppta samtalet', exact: true }).click();
-    await giveConversationConsent(page);
-    await expect(
-      view(page).getByRole('textbox', { name: 'Meddelande till Skyttel' }),
-    ).toBeEnabled();
+    await expect(log(page)).not.toContainText('Vilket garage?');
+    await selectConversation(page, 'Fråga om garaget');
     await expect(log(page)).toContainText('Vilket garage?');
     const other = await otherContext.newPage();
     await other.addInitScript({ content: liveBrowserFixtureSource });
@@ -132,12 +156,9 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
     await other.keyboard.press('Escape');
     await send(other, 'Beskriv cykeln utan att ändra något.');
     await expect(log(other)).toContainText('Det andra samtalet gäller cykeln.');
-    await view(other).getByRole('button', { name: 'Bevarade samtal', exact: true }).click();
-    const retained = view(other).getByRole('region', { name: 'Bevarade samtal', exact: true });
-    await expect(retained).toContainText('Löper ut');
-    await retained
-      .getByRole('button', { name: 'Öppna Beskriv garaget utan att ändra något.', exact: true })
-      .click();
+    await view(other).getByRole('textbox').fill('Min oskickade text');
+    await selectConversation(other, 'Fråga om garaget');
+    await expect(view(other).getByRole('textbox')).toHaveValue('Min oskickade text');
     await expect(log(other)).toContainText('Vilket garage?');
     await expect(
       log(other).getByRole('listitem').filter({ hasText: 'Vilket garage?' }),
@@ -149,9 +170,6 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
         exact: true,
       }),
     ).toBeVisible();
-    const resume = view(other).getByRole('button', { name: 'Återuppta samtalet', exact: true });
-    await expect(resume).toBeFocused();
-    await other.keyboard.press('Enter');
     await turnMicrophoneOn(other);
     await expect(microphoneButton(other)).toHaveAttribute('aria-pressed', 'true');
     const liveId = [...live.channels.keys()].at(-1);
@@ -170,10 +188,7 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
       delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
     });
     await expect(log(other)).toContainText('Garaget heter Västra.');
-    await view(other).getByRole('button', { name: 'Bevarade samtal', exact: true }).click();
-    await retained
-      .getByRole('button', { name: 'Öppna Beskriv cykeln utan att ändra något.', exact: true })
-      .click();
+    await selectConversation(other, 'Beskriv cykeln utan att ändra något.');
     await expect(microphoneButton(other)).toHaveAttribute('aria-pressed', 'false');
     await expect(log(other)).toContainText('Det andra samtalet gäller cykeln.');
     await expect(log(other)).not.toContainText('Garaget heter Västra.');
@@ -185,6 +200,7 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
       }),
     ).toBeVisible();
   } finally {
+    releaseTitle();
     await otherContext.close().catch(() => undefined);
     await app.close();
   }

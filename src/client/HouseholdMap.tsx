@@ -359,7 +359,7 @@ export function HouseholdMap({
       return;
     }
     if (target === 'voice' && conversation.session) {
-      if (conversation.session.paused) showConversation('resume');
+      if (conversation.session.requiresActivation) conversation.begin('voice');
       else conversation.voice.activate();
       return;
     }
@@ -1410,7 +1410,7 @@ export function HouseholdMap({
           <WorkspaceTools
             conversationUnavailable={Boolean(conversation.inputBlocked)}
             conversationOngoing={ongoing}
-            conversationPaused={conversation.session?.paused}
+            conversationPaused={conversation.session?.requiresActivation}
             voiceControl={
               conversation.session ||
               conversation.voice.microphone === 'on' ||

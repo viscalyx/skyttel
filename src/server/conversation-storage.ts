@@ -222,6 +222,15 @@ export function conversationStorage(database: Database.Database, now: () => numb
         return state ? [state] : [];
       });
     },
+    updateTitle(id: string, firstRequest: string, title: string) {
+      return (
+        enabled &&
+        database
+          .prepare(`UPDATE conversation SET state = json_set(state, '$.title', ?)
+        WHERE id = ? AND expiresAt > ? AND json_extract(state, '$.firstRequest') = ?`)
+          .run(title, id, now(), firstRequest).changes === 1
+      );
+    },
     move(actorId: string, householdId: string, id: string, browserBindingId: string) {
       if (enabled)
         database

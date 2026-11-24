@@ -32,7 +32,7 @@ const earlier = {
   ],
 };
 
-test('the retained list prevents concurrent opening and rejects unsent text before any switch', async () => {
+test('opening a listed conversation preserves unsent text and list order', async () => {
   const waiting = deferredResponse();
   let reads = 0;
   const { result, commands } = await conversationCommands((path) => {
@@ -40,14 +40,12 @@ test('the retained list prevents concurrent opening and rejects unsent text befo
       reads++;
       return waiting.promise;
     }
-    if (path.endsWith('/open')) return Response.json(earlier);
+    if (path.endsWith('/earlier/open')) return Response.json(earlier);
   });
   let reading!: Promise<void>;
   act(() => {
     reading = requiredCommand(result.current.listRetained)();
   });
-  await act(async () => requiredCommand(result.current.listRetained)());
-  expect(await requiredCommand(result.current.openRetained)('earlier')).toBe(false);
   expect(reads).toBe(1);
   await act(async () => {
     waiting.resolve(Response.json({ conversations: retained }));
@@ -59,22 +57,15 @@ test('the retained list prevents concurrent opening and rejects unsent text befo
   await act(async () => {
     opened = await requiredCommand(result.current.openRetained)('earlier');
   });
-  expect(opened).toBe(false);
-  expect(result.current.error).toContain('Skicka eller töm meddelandefältet');
   expect(result.current.text).toBe('Jag har inte skickat detta.');
-  expect(commands).toEqual([]);
-  act(() => result.current.setText(''));
-  await act(async () => {
-    opened = await requiredCommand(result.current.openRetained)('earlier');
-  });
   expect(opened).toBe(true);
-  expect(commands.map((entry) => entry.path.split('/').at(-1))).toEqual(['pause', 'open']);
+  expect(commands.map((entry) => entry.path.split('/').at(-1))).toEqual(['pause']);
   expect(result.current.session?.id).toBe('earlier');
   expect(result.current.session?.paused).toBe(true);
   expect(result.current.transcript.map((row) => row.text)).toEqual([
     'Det valda tidigare samtalet.',
   ]);
-  expect(result.current.retainedConversations).toBeUndefined();
+  expect(result.current.retainedConversations).toEqual(retained);
 });
 
 test('a rejected retained-list read can be explicitly retried without erasing the current conversation', async () => {
@@ -86,7 +77,7 @@ test('a rejected retained-list read can be explicitly retried without erasing th
         : Response.json({ conversations: retained });
   });
   await act(async () => requiredCommand(result.current.listRetained)());
-  expect(result.current.unknown).toBe(true);
+  expect(result.current.error).toContain('Samtalslistan');
   expect(result.current.pending).toBe(false);
   expect(result.current.retainedConversations).toBeUndefined();
   expect(result.current.session?.id).toBe('original');
@@ -117,7 +108,9 @@ test.each([403, 404])(
   'opening a retained conversation rejected with %s removes inaccessible private text',
   async (status) => {
     const { result, onAccessLost } = await conversationCommands((path) =>
-      path.endsWith('/open') ? Response.json({ error: 'not_found' }, { status }) : undefined,
+      path.endsWith('/earlier/open')
+        ? Response.json({ error: 'not_found' }, { status })
+        : undefined,
     );
     let opened!: boolean;
     await act(async () => {
@@ -134,7 +127,7 @@ test.each([403, 404])(
 test('a delayed retained opening cannot insert the previous household transcript into a replacement', async () => {
   const waiting = deferredResponse();
   const { result, rerender } = await conversationCommands((path) =>
-    path.endsWith('/open') ? waiting.promise : undefined,
+    path.endsWith('/earlier/open') ? waiting.promise : undefined,
   );
   let opening!: Promise<boolean>;
   act(() => {
@@ -148,8 +141,8 @@ test('a delayed retained opening cannot insert the previous household transcript
     waiting.resolve(Response.json(earlier));
     expect(await opening).toBe(false);
   });
-  expect(result.current.session?.id).toBe('original');
-  expect(result.current.transcript.map((row) => row.text)).toEqual(['Tidigare privat samtal.']);
+  expect(result.current.session).toBeNull();
+  expect(result.current.transcript).toEqual([]);
 });
 
 test('resuming a paused conversation waits for explicit consent and resumes only after approval', async () => {
@@ -174,7 +167,7 @@ test('resuming a paused conversation waits for explicit consent and resumes only
   expect(commands).toEqual([
     {
       path: '/api/households/linden/text-assistant/original/resume',
-      body: { consent: { textVersion: 4 } },
+      body: { consent: { textVersion: 5 } },
     },
   ]);
   expect(result.current.transcript.map((row) => row.text)).toEqual(['Tidigare privat samtal.']);
@@ -212,6 +205,6 @@ test('a paused resume ignores repeat presses and a late result after household d
     waiting.resolve(Response.json({ ...commandConversation, paused: false }));
     await resuming;
   });
-  expect(result.current.session?.paused).toBe(true);
+  expect(result.current.session).toBeNull();
   expect(result.current.pending).toBe(false);
 });

@@ -62,6 +62,8 @@ export type ConversationReply = {
 export type RetainedConversation = {
   id: string;
   title: string;
+  createdAt?: number;
+  lastRequestAt?: number;
   expiresAt: number;
   paused: boolean;
   modelChoice: ConversationModelChoice;
@@ -75,6 +77,9 @@ export interface TextAssistantView {
     message: string;
     retry?: string;
   };
+  requiresActivation?: boolean;
+  interruptedRequestId?: string;
+  interruptedSpeech?: string;
   /** Restored work never starts automatically. */
   paused?: boolean;
   expiresAt?: number;
@@ -83,6 +88,7 @@ export interface TextAssistantView {
     text: string;
     partial?: boolean;
     utteranceStart?: boolean;
+    requestId?: string;
     /** Automatic failure shown in the notice; retained as model context only. */
     notice?: boolean;
   }[];

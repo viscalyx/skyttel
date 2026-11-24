@@ -12,9 +12,8 @@ inte
 
 Starta en ny installation. Skapa Tryckprov, välj **Skriv till Skyttel** och
 **Nytt samtal**, markera **Fråga inte igen för det här hushållet** och välj
-**Godkänn och starta**. Ladda om sidan. Öppna textvyn och kontrollera att
-det återställda samtalet är pausat. Välj **Avsluta samtalet** och stäng
-textvyn så att nästa mikrofontryck startar ett nytt samtal. Utkastet
+**Godkänn och starta**. Ladda om sidan. Öppna den tomma textvyn och stäng
+den igen. Nästa mikrofontryck startar röstläget. Utkastet
 behålls. Öppna Console och kör hela blocket:
 
 <!-- markdownlint-disable MD013 -->
@@ -139,9 +138,8 @@ await fetch('VOICE-ADRESS/VOICE-ID/stop', {
 ```
 
 Kräv status 200 och `voice.phase: 'closed'` innan omladdning så att just
-provets transport har verifierad städning. Omladdningen återställer samtalet
-pausat. Öppna textvyn, läs dess pausade status, välj **Avsluta samtalet** och
-stäng textvyn före nästa fristående startprov. Installera därefter blocken på
+provets transport har verifierad städning. Efter omladdning börjar nästa
+fristående startprov med tomt samtal och avstängd mikrofon. Installera därefter blocken på
 nytt. Avsluta launchern med `quit` och kontrollera borttagen katalog enligt
 röstguiden.
 
@@ -371,7 +369,7 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    kroppen till `"{}"`; behåll anropets rubriker. Kör det i konsolen och läs
    JSON-svaret. Det bekräftar den redan stängda anslutningen och ska visa
    `voice.phase:"closed"`, `voice.seconds:15` och `voice.usageFinal:false`.
-   Återställ `finalize on` och välj **Avsluta samtalet**.
+   Återställ `finalize on` och ladda om sidan.
 7. Lägg Mira i utkastet och öppna ett nytt textsamtal enligt testfallet.
    Installera konsolblocket för
    [samtals- och kontrollsvar](save-preparation.md#samtals--och-kontrollsvar).

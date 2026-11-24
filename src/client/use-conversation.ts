@@ -46,7 +46,7 @@ function restoreConversationTranscript(
     adjacentUtterance = undefined;
     if (row.notice) continue;
     const entry = {
-      id: `restored-${sessionId}-${index}`,
+      id: row.role === 'user' && row.requestId ? row.requestId : `restored-${sessionId}-${index}`,
       role: row.role,
       text: row.text,
       partial: row.partial,
@@ -83,10 +83,11 @@ export type ConversationMode = 'voice' | 'text';
  * owns the conversation, so it survives whichever of them is shown.
  */
 export type Conversation = {
+  switchBlocked?: boolean;
   retainedConversations?: RetainedConversation[];
   listRetained?: () => Promise<void>;
   openRetained?: (id: string) => Promise<boolean>;
-  resumeConversation?: () => Promise<void>;
+  resumeConversation?: (requestId?: string) => Promise<void>;
   configureModel?: (choice: ConversationModelChoice) => Promise<boolean>;
   /** Conversation input is stopped; the unsent text remains editable. */
   inputBlocked?: boolean;
@@ -238,6 +239,11 @@ export function useConversation({
   const [session, setSession] = useState<TextAssistantView | null>(null);
   const [retainedConversations, setRetainedConversations] = useState<RetainedConversation[]>();
   const resumeRequested = useRef(false);
+  const selectedAction = useRef<{ type: 'send' | 'voice' | 'retry'; requestId?: string } | null>(
+    null,
+  );
+  const sendSelected = useRef<(view: TextAssistantView) => Promise<void>>(async () => {});
+  const listRead = useRef(0);
   const deliverySessionId = session?.id;
   useEffect(() => {
     if (deliverySessionId) void delivery?.connect(`${path}/${deliverySessionId}`);
@@ -342,13 +348,26 @@ export function useConversation({
       }
       active.current = next;
       setSession(next);
-      if (next.paused) {
+      if (next.paused || next.requiresActivation || (!previous && next.conversation?.length)) {
         completion.current = conversationCompletion(next);
         hydratedReplies.current = new Map(
           (next.completedReplies ?? []).map((reply) => [reply.id, reply.revision]),
         );
+        const rows = restoreConversationTranscript(next.id, next.conversation);
+        if (next.interruptedSpeech && next.interruptedRequestId) {
+          const row = rows.findLast(
+            (entry) => entry.role === 'user' && entry.text === next.interruptedSpeech,
+          );
+          if (row) row.id = next.interruptedRequestId;
+          else
+            rows.push({
+              role: 'user',
+              id: next.interruptedRequestId,
+              text: next.interruptedSpeech,
+            });
+        }
         setTranscript([
-          ...restoreConversationTranscript(next.id, next.conversation),
+          ...rows,
           ...(next.queuedRequests ?? [])
             .filter(({ source }) => source !== 'voice')
             .map(({ id, text }) => ({
@@ -639,23 +658,22 @@ export function useConversation({
         // Without an answer the consent box asks. The server decides what is valid.
         if (!controller.signal.aborted) setSavedConsent(null);
       });
-    void request<{ conversation?: TextAssistantView }>(
-      `${path}/restore`,
-      undefined,
-      controller.signal,
-    )
-      .then((result) => {
-        if (!controller.signal.aborted && !active.current && result.conversation)
-          update(result.conversation);
-      })
-      .catch(() => {});
+    const leave = () => {
+      const current = active.current;
+      if (current && !current.requiresActivation)
+        void request(`${path}/${current.id}/pause`, {}, undefined, true).catch(() => {});
+    };
+    window.addEventListener('pagehide', leave);
     return () => {
+      window.removeEventListener('pagehide', leave);
+      selectedAction.current = null;
       mounted.current = false;
       requestEpoch.current++;
       consentEpoch.current++;
       controller.abort();
       const current = active.current;
-      if (current) void request(`${path}/${current.id}/pause`, {}).catch(() => undefined);
+      if (current && !current.requiresActivation)
+        void request(`${path}/${current.id}/pause`, {}).catch(() => undefined);
       // A conversation that is enabled again starts as it does the first time.
       clear();
       setAvailable(null);
@@ -673,7 +691,7 @@ export function useConversation({
       revoking.current = false;
       setError('');
     };
-  }, [path, consentPath, enabled, clear, update]);
+  }, [path, consentPath, enabled, clear]);
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
@@ -719,7 +737,27 @@ export function useConversation({
       active.current?.id === session.id;
     const timer = setTimeout(
       () => {
-        void request<TextAssistantView>(`${path}/${session.id}`, undefined, controller.signal)
+        void request<TextAssistantView>(
+          session.requiresActivation
+            ? `${path}/retained/${session.id}/open`
+            : `${path}/${session.id}`,
+          undefined,
+          controller.signal,
+        )
+          .catch((error) => {
+            if (
+              relevant() &&
+              !session.requiresActivation &&
+              error instanceof MapRequestError &&
+              error.code === 'assistant_session_expired'
+            )
+              return request<TextAssistantView>(
+                `${path}/retained/${session.id}/open`,
+                undefined,
+                controller.signal,
+              );
+            throw error;
+          })
           .then((result) => {
             if (relevant()) update(result);
           })
@@ -958,6 +996,44 @@ export function useConversation({
   }, [path, visitConsent, consentValid, pending, update, fail]);
   const start = useCallback(
     async (mode: ConversationMode) => {
+      const action = selectedAction.current;
+      selectedAction.current = null;
+      if (action && active.current) {
+        const current = active.current;
+        const epoch = ++requestEpoch.current;
+        const consent = visitConsent
+          ? { consent: { textVersion: conversationConsentTextVersion } }
+          : {};
+        setPending(true);
+        try {
+          const activated = await request<TextAssistantView>(
+            `${path}/retained/${current.id}/open`,
+            { activate: true, ...consent },
+          );
+          if (!mounted.current || epoch !== requestEpoch.current) return;
+          update(activated);
+          if (action.type === 'retry' && action.requestId === activated.interruptedRequestId) {
+            const next = await request<TextAssistantView>(`${path}/${current.id}/resume`, {
+              requestId: action.requestId,
+              ...consent,
+            });
+            if (epoch === requestEpoch.current) update(next);
+          } else if (action.type === 'voice' && !activated.paused) setStartWithVoice(true);
+          else if (action.type === 'send' && !activated.paused)
+            await sendSelected.current(activated);
+        } catch (error) {
+          if (epoch === requestEpoch.current) {
+            if (error instanceof MapRequestError && error.code === 'assistant_conversation_busy')
+              setError(
+                'Samtalet används på en annan enhet. Vänta tills arbetet är klart och mikrofonen är avstängd.',
+              );
+            else fail(error);
+          }
+        } finally {
+          if (mounted.current && epoch === requestEpoch.current) setPending(false);
+        }
+        return;
+      }
       if (resumeRequested.current) {
         await resumeConversation();
         return;
@@ -977,7 +1053,7 @@ export function useConversation({
           return;
         }
         // This start follows the user's explicit new-conversation action.
-        if (active.current?.paused) {
+        if (active.current) {
           active.current = null;
           completion.current = conversationCompletion();
           hydratedReplies.current.clear();
@@ -1142,8 +1218,12 @@ export function useConversation({
     },
     [path, update, fail],
   );
-  async function send(queue = true) {
-    const current = session;
+  async function send(queue = true, current = session) {
+    if (current?.requiresActivation && !current.interruptedRequestId) {
+      selectedAction.current = { type: 'send' };
+      setRequested('text');
+      return;
+    }
     if (
       !current ||
       current.paused ||
@@ -1159,7 +1239,7 @@ export function useConversation({
     const control = conversationCommand(text);
     if (control?.reset) {
       const sent = text;
-      await newConversation(control.discard);
+      await resetContext(control.discard);
       if (
         active.current?.id === current.id &&
         (active.current.contextRevision ?? 0) > (current.contextRevision ?? 0)
@@ -1237,6 +1317,7 @@ export function useConversation({
       if (mounted.current && epoch === requestEpoch.current) setPending(false);
     }
   }
+  sendSelected.current = (view) => send(true, view);
   async function resolveWork(action: 'retry' | 'abandon') {
     const current = active.current;
     if (!current?.workFailure || current.paused || pending || revoking.current) return;
@@ -1270,7 +1351,7 @@ export function useConversation({
       if (mounted.current && epoch === requestEpoch.current) setPending(false);
     }
   }
-  async function newConversation(discard = false) {
+  async function resetContext(discard = false) {
     const current = active.current;
     if (!current || resetInProgress.current || saveChecking || revoking.current) return;
     if (current.paused && !consentValid) {
@@ -1309,6 +1390,46 @@ export function useConversation({
             ]
           : [],
       );
+    } catch (failure) {
+      if (epoch === requestEpoch.current) fail(failure);
+    } finally {
+      resetInProgress.current = false;
+      if (mounted.current && epoch === requestEpoch.current) setPending(false);
+    }
+  }
+  const switchBlocked = Boolean(
+    pending ||
+      (!session?.requiresActivation && session?.phase === 'working') ||
+      voice.working ||
+      voice.speaking ||
+      voice.starting ||
+      session?.contextSummaryState === 'summarizing',
+  );
+  async function newConversation() {
+    if (switchBlocked || resetInProgress.current || revoking.current) return;
+    if (!consentValid) {
+      setRequested('text');
+      return;
+    }
+    const epoch = ++requestEpoch.current;
+    resetInProgress.current = true;
+    setPending(true);
+    setStartWithVoice(false);
+    try {
+      const next = await voice.newConversation(() =>
+        request<TextAssistantView>(path, {
+          previousId: active.current?.requiresActivation ? undefined : active.current?.id,
+          ...(visitConsent ? { consent: { textVersion: conversationConsentTextVersion } } : {}),
+        }),
+      );
+      if (epoch !== requestEpoch.current) return;
+      active.current = null;
+      completion.current = conversationCompletion();
+      hydratedReplies.current.clear();
+      setTranscript([]);
+      setUnknown(false);
+      setError('');
+      update(next);
     } catch (failure) {
       if (epoch === requestEpoch.current) fail(failure);
     } finally {
@@ -1370,42 +1491,37 @@ export function useConversation({
       error: consentError,
     },
     session,
+    switchBlocked,
     retainedConversations,
     listRetained: async () => {
-      if (pending) return;
+      const read = ++listRead.current;
       const epoch = requestEpoch.current;
-      setPending(true);
-      setError('');
       try {
         const result = await request<{ conversations: RetainedConversation[] }>(`${path}/retained`);
-        if (mounted.current && epoch === requestEpoch.current)
+        if (mounted.current && epoch === requestEpoch.current && read === listRead.current)
           setRetainedConversations(result.conversations);
-      } catch (failure) {
-        if (epoch === requestEpoch.current) fail(failure);
-      } finally {
-        if (mounted.current && epoch === requestEpoch.current) setPending(false);
+      } catch {
+        if (mounted.current && epoch === requestEpoch.current && read === listRead.current)
+          setError('Samtalslistan kunde inte hämtas.');
       }
     },
     openRetained: async (id) => {
-      if (pending) return false;
-      if (text.trim()) {
-        setError('Skicka eller töm meddelandefältet innan du öppnar ett annat samtal.');
-        return false;
-      }
+      if (switchBlocked) return false;
       const epoch = ++requestEpoch.current;
       setPending(true);
       setError('');
       try {
+        setStartWithVoice(false);
         await voice.stop();
         const current = active.current;
-        if (current && current.id !== id) await request(`${path}/${current.id}/pause`, {});
-        const next = await request<TextAssistantView>(`${path}/retained/${id}/open`, {});
+        if (current && !current.requiresActivation && current.id !== id)
+          await request(`${path}/${current.id}/pause`, {});
+        const next = await request<TextAssistantView>(`${path}/retained/${id}/open`);
         if (!mounted.current || epoch !== requestEpoch.current) return false;
         active.current = null;
         completion.current = conversationCompletion();
         hydratedReplies.current.clear();
         setTranscript([]);
-        setRetainedConversations(undefined);
         setUnknown(false);
         update(next);
         return true;
@@ -1416,7 +1532,12 @@ export function useConversation({
         if (mounted.current && epoch === requestEpoch.current) setPending(false);
       }
     },
-    resumeConversation,
+    resumeConversation: async (requestId) => {
+      if (!requestId) return resumeConversation();
+      if (active.current?.interruptedRequestId !== requestId) return;
+      selectedAction.current = { type: 'retry', requestId };
+      setRequested('text');
+    },
     transcript,
     configureModel: async (choice: ConversationModelChoice) => {
       const current = active.current;
@@ -1452,7 +1573,11 @@ export function useConversation({
         callbacks.current.onUnavailable?.();
         return;
       }
-      if (!session && !pending) {
+      if (mode === 'voice' && session?.requiresActivation && !pending) {
+        selectedAction.current = { type: 'voice' };
+        voice.prepareAudio?.();
+        setRequested(mode);
+      } else if (!session && !pending) {
         if (mode === 'voice' && consentValid && available === true) voice.prepareAudio?.();
         setRequested(mode);
       }
@@ -1462,6 +1587,7 @@ export function useConversation({
       // The user has approved, and the save is on its way: it cannot be taken back here.
       if (savingConsent) return;
       resumeRequested.current = false;
+      selectedAction.current = null;
       void voice.stop();
       setRequested(null);
       setConsentError('');

@@ -220,7 +220,7 @@ test('MEDGIVANDE-03: sparat medgivande följer användaren men inte andra medlem
     const { saved } = await (
       await page.request.get(`${householdPath}/conversation-consent`)
     ).json();
-    expect(saved).toEqual({ textVersion: 4, savedAt: expect.any(String) });
+    expect(saved).toEqual({ textVersion: 5, savedAt: expect.any(String) });
     expect(Date.parse(saved.savedAt)).toBeGreaterThanOrEqual(before);
 
     // Return is paused. An explicit new conversation can use saved consent.

@@ -18,6 +18,7 @@ import {
   openConversationDraft,
   openConversationText,
   openSavedHistory,
+  selectConversation,
   startConversationWithText,
   turnMicrophoneOff,
   turnMicrophoneOn,
@@ -502,17 +503,16 @@ test('TAL-05: samtalstexten håller ihop talet både under samtalet och efter om
     await app.restart();
     await page.reload();
     await openConversationText(page);
-    await expect(assistant(page)).toContainText('Samtalet är pausat');
+    await selectConversation(page, /^Kim betalar/);
     await expect(log.getByRole('listitem')).toHaveText([
       ...dialogue,
       'Du: Kontrollera utkastet.',
       'Skyttel: Vem använder musiken?',
     ]);
-    await assistant(page).getByRole('button', { name: 'Återuppta samtalet' }).click();
-    await giveConversationConsent(page);
     await expect(assistant(page).getByLabel('Meddelande till Skyttel')).toBeEnabled();
     await assistant(page).getByRole('button', { name: 'Nytt samtal' }).click();
-    await expect(log).toHaveText(/^Skyttel: Nytt samtal\./);
+    await giveConversationConsent(page);
+    await expect(log).toContainText('Här visas det du och Skyttel');
     await expect(await openConversationDraft(page)).toContainText('Lo Exempel');
     await readVoiceProposal(page);
   } finally {
@@ -1159,18 +1159,18 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     ];
   });
   const live = liveProvider();
+  const provisional = new Set<string>();
   const app = await createInstallation(undefined, {
     modelFetch: model.provider,
     liveFetch: live.provider,
     liveSideband: live.attach,
+    liveUsage: (usage) => {
+      if (usage.endedAt && usage.sessionId && usage.seconds === 15 && !usage.final)
+        provisional.add(usage.sessionId);
+    },
   });
   try {
-    const conversationStarted = page.waitForResponse(
-      (response) =>
-        response.url().endsWith('/text-assistant') && response.request().method() === 'POST',
-    );
     const { path } = await simpleMap(page, app);
-    const originalConversation = await (await conversationStarted).json();
     speak(live, 'Markera Lo Exempel.');
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }),
@@ -1246,14 +1246,7 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
     await app.restart();
     await page.unroute('**/text-assistant/*/recover');
-    const conversationRestored = page.waitForResponse((response) =>
-      response.url().endsWith('/text-assistant/restore'),
-    );
     await page.reload();
-    expect((await (await conversationRestored).json()).conversation).toMatchObject({
-      id: originalConversation.id,
-      paused: true,
-    });
     await openTable(page);
     await expect
       .poll(
@@ -1263,8 +1256,10 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
       .toBe('succeeded');
     await expect(microphoneButton(page)).toBeEnabled();
     await openConversationText(page);
-    await expect(page.getByRole('status', { name: 'Samtalets livslängd' })).toContainText(
-      'Samtalet är pausat.',
+    await selectConversation(page, 'Markera Lo Exempel.');
+    await expect(page.getByRole('region', { name: 'Arbetsyta' })).toHaveAttribute(
+      'data-session-active',
+      'true',
     );
     await expect(page.getByRole('log', { name: 'Samtalstext' })).toContainText(
       'Kontrollen visar att hela utkastet sparades. Ändringarna finns i hushållets karta.',
@@ -1301,12 +1296,7 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
       .click();
     await expect(recoveredHistory).toContainText(operation.operationId);
     await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
-    const voiceStarted = page.waitForResponse(
-      (response) => response.url().endsWith('/voice') && response.request().method() === 'POST',
-    );
     await startVoice(page);
-    const started = await voiceStarted;
-    const { voice } = await started.json();
     const usageSession = [...live.channels.keys()].at(-1);
     if (!usageSession) throw new Error('Missing new voice for provisional usage');
     for (const seconds of [12, 15])
@@ -1320,19 +1310,14 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     const previousStarts = live.requests.length;
     await assistant(page).getByRole('button', { name: 'Nytt samtal' }).click();
     await expect.poll(() => live.requests.length).toBe(previousStarts + 1);
-    const closed = await page.request.post(`${started.url()}/${voice.id}/stop`, {
-      headers: { origin: app.origin },
-    });
-    expect(await closed.json()).toMatchObject({
-      voice: { phase: 'closed', seconds: 15, usageFinal: false },
-    });
+    await expect.poll(() => provisional.has(usageSession)).toBe(true);
     await expect.poll(() => openVoiceConnections(page), { timeout: 15_000 }).toBe(1);
     expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual(
       operations,
     );
     live.configure({ finalize: true });
     await openConversationText(page);
-    await assistant(page).getByRole('button', { name: 'Avsluta samtalet', exact: true }).click();
+    await page.reload();
     await expect(assistant(page)).toHaveAttribute('data-session-active', 'false');
     const form = await openNewObject(page);
     await form.getByLabel('Namn', { exact: true }).fill('Mira Exempel');

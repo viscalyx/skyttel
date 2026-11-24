@@ -41,7 +41,7 @@ for (const [width, caseId] of [
       await expect(
         serverStorage.getByRole('heading', { name: 'conversation', exact: true }),
       ).toBeVisible();
-      await expect(serverStorage).toContainText('samtalsmedgivande version 4');
+      await expect(serverStorage).toContainText('samtalsmedgivande version 5');
       await expect(serverStorage).toContainText('Sju dygn efter ditt senaste meddelande');
       await expect(serverStorage).toContainText(
         'Registrerade sparförsök och sparkvitton består separat',

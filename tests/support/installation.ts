@@ -46,6 +46,7 @@ export async function createInstallation(
     legacyAuthCallbacks?: boolean;
     databasePath?: string;
     modelFetch?: typeof fetch;
+    titleFetch?: typeof fetch;
     providerApiKey?: string;
     modelUsage?: TextModelUsage;
     liveFetch?: typeof fetch;
@@ -215,11 +216,29 @@ export async function createInstallation(
         };
       };
     }
+    const { modelFetch } = databaseOptions;
     const app = createApp({
       config,
       database,
       auth,
-      modelFetch: databaseOptions.modelFetch,
+      modelFetch:
+        modelFetch &&
+        (async (input, init) => {
+          // Title generation has its own provider turn, independent of scripted dialogue.
+          if (
+            !databaseOptions.providerApiKey &&
+            JSON.parse(String(init?.body)).instructions?.startsWith('SKYTTEL_TITLE')
+          ) {
+            if (databaseOptions.titleFetch) return databaseOptions.titleFetch(input, init);
+            return Response.json({
+              id: 'synthetic-title',
+              status: 'completed',
+              output: [],
+              model: JSON.parse(String(init?.body)).model,
+            });
+          }
+          return modelFetch(input, init);
+        }),
       modelUsage: databaseOptions.modelUsage,
       liveFetch: databaseOptions.liveFetch,
       liveSideband: databaseOptions.liveSideband,

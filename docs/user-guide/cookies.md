@@ -128,9 +128,9 @@ Google och Microsoft styr lagringen på sina egna webbplatser.
 **Samtalsmedgivande** till OpenAI är ett separat val under
 **Samtal med Skyttel**; information om kakor ger inget sådant medgivande.
 
-Efter medgivande version 4 bevaras samtalstext och oavslutat arbete på
+Efter medgivande version 5 bevaras titel, samtalstext och oavslutat arbete på
 installationen, åtskilt per användare och hushåll. Samtalet löper ut sju
-dygn efter ditt senaste meddelande eller uttryckliga återupptagning.
+dygn efter ditt senaste begäran.
 Modellarbete, statuskontroller och serveromstart flyttar inte tidpunkten.
 Omladdning, omstart och utloggning återställer arbetet pausat. Avslut och
 utgång raderar samtalet och dess sparhinder utan att spara eller kasta

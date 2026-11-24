@@ -6,6 +6,15 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Conversation retention and diagnostic IDs
+
+New work requires conversation consent version 5. Each conversation keeps
+its ID and expiry across the upgrade. Historical conversations can lack a
+creation time. The conversation list displays known dates and the first
+request excerpt. Each new conversation can issue one additional model call
+for its title. Use the conversation ID from the information dialog to
+filter text and voice traces for the same conversation.
+
 ### Restore archives that include the Milky Way background
 
 Use a destination that supports the Milky Way background when you restore a

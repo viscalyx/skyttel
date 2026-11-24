@@ -454,8 +454,6 @@ for (const seeded of [false, true]) {
         body: JSON.stringify(retired, null, 2),
         contentType: 'application/json',
       });
-      await page.getByRole('button', { name: 'Avsluta samtalet', exact: true }).click();
-      await expect(log).not.toContainText('Vad gjorde vi?');
       await page.reload();
       await openConversationText(page);
       await expect(log).not.toContainText('Vad gjorde vi?');

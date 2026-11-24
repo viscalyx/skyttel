@@ -15,6 +15,7 @@ export type ConversationMessage = Partial<ConversationConsentProvenance> & {
   continuedVoiceRead?: boolean;
   /** An explicit continuation keeps its original instruction and identity. */
   continuation?: boolean;
+  awaitingContinuation?: boolean;
   /** Verified earlier save by this exact request; never new saving authority. */
   completedSaveOperationId?: string;
   restate?: boolean;
@@ -48,6 +49,11 @@ type AcceptedMessage = {
 };
 /** The single owner of recoverable conversation data; no live process resources. */
 export type ConversationState = Omit<TextAssistantView, 'conversation' | 'unfinishedRequests'> & {
+  createdAt?: number;
+  lastRequestAt?: number;
+  firstRequest?: string;
+  titleRequested?: boolean;
+  title?: string;
   /** Storage approval is independent of the original provider information. */
   storageConsentVersion?: number;
   modelChoice: ConversationModelChoice;
@@ -137,6 +143,23 @@ export type ConversationState = Omit<TextAssistantView, 'conversation' | 'unfini
   voiceInputPending?: boolean;
   lastVoiceInputAt?: number;
 };
+
+/** The first spoken request can span multiple interleaved transcript fragments. */
+export function firstRequest(state: ConversationState) {
+  if (state.firstRequest) return state.firstRequest;
+  const start = state.conversation.findIndex((row) => row.role === 'user' && row.text.trim());
+  if (start === -1) return state.queue[0]?.text;
+  const first = state.conversation[start];
+  let text = first.text;
+  if (first.partial) {
+    for (const row of state.conversation.slice(start + 1)) {
+      if (row.role !== 'user') continue;
+      if (!row.partial || row.utteranceStart !== false) break;
+      text += row.text;
+    }
+  }
+  return text;
+}
 
 export function syncConversationQuestions(state: ConversationState, questions: string[]) {
   state.questions = questions.length ? questions : undefined;

@@ -1050,6 +1050,8 @@ export function voiceAssistantRoutes({
         }
       }
     },
+    hasVoice: (id: string) =>
+      [...voices.values()].some((voice) => voice.assistant.id === id && !voice.closed),
     retireSessionWork: (sessionId: string, requestId?: string) => {
       for (const voice of voices.values())
         if (voice.assistant.id === sessionId && !voice.closed) voice.work?.retire(requestId);

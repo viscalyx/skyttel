@@ -298,7 +298,7 @@ till TAL-17/23/24.
    utkastet sparades. Mikrofonen är av.
 3. Startoperatören behåller samma databas och startar om enligt tidslinjen.
    Efter borttagen blockering, ladda om och välj Tabell. Öppna **Skriv till
-   Skyttel** och läs att samtalet är pausat och när det löper ut.
+   Skyttel** och välj **Samtal → Markera Lo Exempel.**.
 4. Läs Kontrollen visar att hela utkastet sparades. Ändringarna finns i
    hushållets karta. Läs hela sparade Lo Exempel, typ Person och beskrivningen
    Påhittad uppgift. Välj därefter **Nytt samtal**, godkänn medgivandet om det
@@ -308,7 +308,7 @@ till TAL-17/23/24.
    användaren och läs samma sparande.
 6. Välj Tillbaka till arbetet, starta rösten och följ den separata preliminära
    användningsmätningen i tidslinjen. Nytt samtal ska bevara mikrofonvalet och
-   samma genomförda sparande. Välj **Avsluta samtalet**.
+   samma genomförda sparande. Ladda om sidan.
 7. Skapa **Mira Exempel** med typen **Person** och välj **Lägg i utkastet och
    stäng**. Välj **Karta** och se Mira som förslag. Börja ett nytt samtal i
    textvyn och granska Mira i utkastet. Förbered det tappade webbläsarsvaret
@@ -453,9 +453,9 @@ till TAL-17/23/24.
    frågan Vem använder musiken? tillkomma; arbetsraden ska försvinna.
 4. Slå av mikrofonen. Kontrollera att tidigare dialog finns kvar. Följ
    tidslinjen för omstart, ladda om sidan och välj **Skriv till Skyttel**.
-   Läs **Samtalet är pausat** och läs samma repliker i samma ordning.
-5. Välj **Återuppta samtalet** och **Godkänn och starta** i medgivanderutan.
-   Välj **Nytt samtal** och läs beskedet om kvarvarande osparad ändring.
+   Välj **Samtal → Kim betalar för musiken.** och läs samma repliker i samma ordning.
+5. Välj **Nytt samtal** och **Godkänn och starta** om medgivanderutan visas.
+   Kontrollera att den nya samtalstexten är tom.
    Läs hela Lo-förslaget.
 
 **Förväntat resultat:**

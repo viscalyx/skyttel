@@ -419,6 +419,7 @@ export function createApp({
   app.route('/api', profileImageRoutes(database, auth, config.origin));
   app.route('/api', themePreferenceRoutes(database, auth, config.origin));
   app.route('/', assistantRoutes(database, auth, config.origin));
+  let hasVoice: ((id: string) => boolean) | undefined;
   let stopVoice: ((sessionId: string) => void) | undefined;
   let retireVoiceWork: ((sessionId: string, requestId?: string) => void) | undefined;
   let summarizeVoice: ((sessionId: string, signal: AbortSignal) => Promise<void>) | undefined;
@@ -434,6 +435,7 @@ export function createApp({
     consents,
     now,
     dispatch: dispatchAssistant,
+    hasVoice: (id) => hasVoice?.(id) ?? false,
     onWork: (id, until) => {
       if (bindings?.work(id, until)) revalidateVoice?.();
     },
@@ -488,6 +490,7 @@ export function createApp({
     prepareVoiceContext: textAssistant.prepareVoiceContext,
   });
   revalidateVoice = voiceAssistant.revalidate;
+  hasVoice = voiceAssistant.hasVoice;
   stopVoice = voiceAssistant.stopSession;
   retireVoiceWork = voiceAssistant.retireSessionWork;
   summarizeVoice = voiceAssistant.summarizeSession;

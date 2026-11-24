@@ -164,8 +164,8 @@ for (const mode of ['sequential', 'overlap'] as const) {
     const unknown = events.find((event) => event.kind === 'work_result');
     expect(unknown).toMatchObject({
       taskId: 'controlled',
-      consentTextVersion: 4,
-      conversationConsentTextVersion: 4,
+      consentTextVersion: 5,
+      conversationConsentTextVersion: 5,
       status: 'incomplete',
       data: { disposition: 'unknown', reason: 'batch_outcome_unknown' },
     });
@@ -189,8 +189,8 @@ for (const mode of ['sequential', 'overlap'] as const) {
     expect(results).toHaveLength(2);
     expect(results[1]).toMatchObject({
       taskId: 'controlled',
-      consentTextVersion: 4,
-      conversationConsentTextVersion: 4,
+      consentTextVersion: 5,
+      conversationConsentTextVersion: 5,
       status: 'completed',
       context: {
         providerCallId: unknown?.context?.providerCallId,
