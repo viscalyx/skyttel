@@ -777,12 +777,18 @@ test.each(['read', 'external edit', 'spoken edit', 'save'])(
         );
         expect(turn).toMatchObject({ message: read });
       } else {
+        // A poll can surface the external edit through the conversation
+        // revision or through the draft version before dispatch.
+        const refusalMessage =
+          followUp === 'external edit'
+            ? /Säg hela uppdraget igen|Samtalet har hunnit ändras/u
+            : /Säg hela uppdraget igen/u;
         await expect
           .poll(async () => {
             const { voice } = await poll();
-            return voice.refusal?.text ?? voice.response?.text;
+            return voice.refusal?.text ?? voice.response?.text ?? '';
           })
-          .toContain('Säg hela uppdraget igen');
+          .toMatch(refusalMessage);
         expect(model.requests).toHaveLength(1);
         expect((await readMap()).draft.changes.map(({ id }) => id)).not.toContain('new-lamp');
         if (followUp === 'spoken edit') {

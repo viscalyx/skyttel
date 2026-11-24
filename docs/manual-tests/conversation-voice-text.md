@@ -313,7 +313,8 @@ och tidpunkten i historiken med det bekräftade utfallet från servern.
    medan Skyttel arbetar.
    Skicka **Jag menade den blå cykeln.** Läs svaret och kontrollera att
    cykeln finns kvar i utkastet utan sparbekräftelse. Kartan visar fortfarande
-   cykeln med förslagets plustecken och ändringshistoriken är tom.
+   cykeln med förslagets plustecken. Öppna **Rapporter → Ändringshistorik**
+   och läs **Inga genomförda sparanden.**.
 6. Välj **Tillbaka till arbetet**, granska cykeln igen och skicka
    **Spara hela utkastet.** Läs sparbekräftelsen och kontrollera utkastet,
    cykeln i kartan och ändringshistoriken utan att ladda om sidan. Läs

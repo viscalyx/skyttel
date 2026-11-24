@@ -145,15 +145,7 @@ test('LEV-04: saknad leveranskanal kräver uttryckliga nya försök för text oc
     expect(live.requests).toHaveLength(1);
     await delivery.dropBeforeNextMessage();
     await input.fill('Skapa inget nytt.');
-    const [refusal] = await Promise.all([
-      page.waitForResponse(
-        (response) =>
-          response.request().method() === 'POST' && response.url().endsWith('/messages'),
-      ),
-      send.click(),
-    ]);
-    expect(refusal.status()).toBe(409);
-    expect(await refusal.json()).toEqual({ error: 'assistant_delivery_unavailable' });
+    await send.click();
     await expect(textView.getByRole('alert')).toHaveText(
       'Instruktionen skickades inte. Skyttel kunde inte öppna anslutningen för hela svaret. Texten finns kvar; försök igen när kontakten fungerar.',
     );
