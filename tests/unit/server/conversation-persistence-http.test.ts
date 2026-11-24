@@ -164,6 +164,109 @@ test('actual restart restores the exact conversation and choice without starting
   expect(await taskStatus.json()).toMatchObject({ paused: true, phase: 'ready' });
 });
 
+test.each(['start', 'restore'] as const)(
+  'a conversation %s still opening during shutdown is unavailable until the next server',
+  async (action) => {
+    const opening = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<void>();
+    const reply = 'Cykeln finns i garaget.';
+    const model = textModel(() => [modelMessage(reply)]);
+    let hold = false;
+    app = await createInstallation(undefined, {
+      modelFetch: model.provider,
+      assistantDispatch: async (incoming, dispatch) => {
+        const listTools =
+          hold &&
+          incoming.method === 'POST' &&
+          new URL(incoming.url).pathname === '/mcp' &&
+          (await incoming.clone().json()).method === 'tools/list';
+        const response = await dispatch(incoming);
+        if (listTools) {
+          hold = false;
+          opening.resolve();
+          await release.promise;
+        }
+        return response;
+      },
+    });
+    browser = await request.newContext();
+    await signIn(browser, app.origin);
+    const { household } = await (await createHousehold(browser, app.origin)).json();
+    const path = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const post = (url: string, data: object) =>
+      browser.post(url, { headers: { origin: app.origin }, data });
+    if (action === 'restore') {
+      const started = await post(path, approvedForVisit);
+      expect(started.status()).toBe(201);
+      const state: TextAssistantView = await started.json();
+      const conversation = `${path}/${state.id}`;
+      expect(
+        (
+          await post(`${conversation}/messages`, {
+            revision: state.revision,
+            draftVersion: state.review.version,
+            contentVersion: state.review.contentVersion,
+            requestId: crypto.randomUUID(),
+            text: 'Var finns cykeln?',
+          })
+        ).status(),
+      ).toBe(202);
+      await expect
+        .poll(
+          async () =>
+            ((await (await browser.get(conversation)).json()) as TextAssistantView).modelReply,
+        )
+        .toBe(reply);
+      await restart();
+    }
+
+    const open = () =>
+      action === 'start' ? post(path, approvedForVisit) : browser.get(`${path}/restore`);
+    hold = true;
+    const pending = open();
+    await Promise.race([
+      opening.promise,
+      pending.then(async (response) => {
+        throw new Error(
+          `Conversation opened before shutdown: ${response.status()} ${await response.text()}`,
+        );
+      }),
+    ]);
+    const restarted = app.restart();
+    try {
+      // The old listener stops accepting new connections after the app closes.
+      // The admitted HTTP request still owns its connection until released.
+      await expect
+        .poll(async () =>
+          fetch(`${app.origin}/healthz`, { headers: { connection: 'close' } }).then(
+            (response) => response.status,
+            () => undefined,
+          ),
+        )
+        .toBeUndefined();
+    } finally {
+      release.resolve();
+      await restarted;
+    }
+    const refused = await pending;
+    expect(refused.status()).toBe(503);
+    expect(await refused.json()).toEqual({ error: 'assistant_unavailable' });
+    browser = await restartWithSession(browser, () => restarted);
+    const reopened = await open();
+    expect(reopened.status()).toBe(action === 'start' ? 201 : 200);
+    if (action === 'restore')
+      expect(await reopened.json()).toMatchObject({
+        conversation: {
+          paused: true,
+          conversation: [
+            { role: 'user', text: 'Var finns cykeln?' },
+            { role: 'assistant', text: reply },
+          ],
+        },
+      });
+  },
+);
+
 test('a model response after shutdown leaves restored work paused and never starts its queue', async () => {
   let release!: (output: unknown[]) => void;
   const held = new Promise<unknown[]>((resolve) => {

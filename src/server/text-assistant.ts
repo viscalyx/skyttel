@@ -286,6 +286,9 @@ export function textAssistantRoutes({
   const sessions = new Map<string, Session>();
   let closed = false;
   const storage = conversationStorage(database, now);
+  function checkConversationOpening() {
+    if (closed) throw new MapError('assistant_unavailable', 503);
+  }
   function canRetainConversation(state: ConversationState) {
     if (!householdAccess(database, state.actorId, state.householdId)) return false;
     const current = database
@@ -4811,6 +4814,7 @@ export function textAssistantRoutes({
     headers: Headers,
     id?: string,
   ) {
+    checkConversationOpening();
     const binding = storage.binding(browserSessionId);
     if (!binding) return;
     let state = storage.read(actorId, householdId, binding, id);
@@ -4822,6 +4826,7 @@ export function textAssistantRoutes({
       return;
     }
     const guard = (generation?: number) => {
+      checkConversationOpening();
       authorize(actorId, browserSessionId, householdId);
       if (contentOwner(database, householdId, actorId) !== owner)
         throw new MapError('forbidden', 403);
@@ -4837,8 +4842,14 @@ export function textAssistantRoutes({
       householdId,
       dispatch,
       authorize: guard,
+    }).catch((error) => {
+      checkConversationOpening();
+      throw error;
     });
     try {
+      // Shutdown takes ownership of published sessions. This connection is
+      // still local to the request and must close if shutdown has started.
+      checkConversationOpening();
       // Connecting can cross explicit end, withdrawal or content replacement.
       // A captured snapshot is never permission to recreate a retired row.
       const latest = storage.read(actorId, householdId, binding, state.id);
@@ -4999,6 +5010,7 @@ export function textAssistantRoutes({
     );
   });
   routes.post(base, async (context) => {
+    checkConversationOpening();
     if (!config.openaiApiKey) return context.json({ error: 'assistant_unavailable' }, 503);
     const body = await context.req.json().catch(() => null);
     const actorId = context.get('actorId');
@@ -5017,6 +5029,7 @@ export function textAssistantRoutes({
         await stop(previous);
     let contentVersion: number | undefined;
     const guard = (generation?: number) => {
+      checkConversationOpening();
       authorize(actorId, browserSessionId, householdId);
       if (generation !== undefined && contentVersion !== undefined && generation !== contentVersion)
         throw new MapError('assistant_content_changed', 409);
@@ -5031,8 +5044,12 @@ export function textAssistantRoutes({
       dispatch,
       authorize: guard,
     }).catch(() => null);
-    if (!mcp) return context.json({ error: 'assistant_connection_failed' }, 503);
+    if (!mcp) {
+      checkConversationOpening();
+      return context.json({ error: 'assistant_connection_failed' }, 503);
+    }
     try {
+      checkConversationOpening();
       const owner = contentOwner(database, householdId, actorId);
       const reads = assistantReadCache(database, householdId, owner);
       const review = await reads.read('read_my_draft', {}, async () => {
@@ -5042,6 +5059,7 @@ export function textAssistantRoutes({
         if (!text || typeof text.text !== 'string') throw new Error('draft_unavailable');
         return JSON.parse(text.text) as TextAssistantReview;
       });
+      checkConversationOpening();
       contentVersion = review.contentVersion;
       const modelChoice = personalModelChoice(database, actorId).read();
       const state: ConversationState = {
@@ -5084,7 +5102,8 @@ export function textAssistantRoutes({
         state.expiresAt ?? mcp.expiresAt,
       );
       try {
-        await refresh(session);
+        await refresh(session, checkConversationOpening);
+        checkConversationOpening();
       } catch (error) {
         await stop(session);
         throw error;
@@ -5100,6 +5119,7 @@ export function textAssistantRoutes({
       return context.json(view(session), 201);
     } catch {
       await mcp.close();
+      checkConversationOpening();
       return context.json({ error: 'assistant_connection_failed' }, 503);
     }
   });
