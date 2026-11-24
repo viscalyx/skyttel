@@ -66,8 +66,8 @@ export type ConversationState = Omit<TextAssistantView, 'conversation' | 'unfini
     role: 'user' | 'assistant';
     text: string;
     partial?: boolean;
-    /** Presentation boundary between voice utterances. Legacy rows lack it. */
-    utteranceStart?: true;
+    /** Presentation boundary or explicit continuation. Legacy rows can omit it. */
+    utteranceStart?: boolean;
     /** Failure guidance is displayed in the notice, not again in the transcript. */
     notice?: boolean;
     /** Server-owned causal identity, independent of repeated transcript text. */

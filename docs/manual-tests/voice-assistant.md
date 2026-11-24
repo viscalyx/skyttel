@@ -396,8 +396,8 @@ till TAL-17/23/24.
 
 ### TAL-05: dialog, avstängd mikrofon och arbetsraden finns kvar under samtalet
 
-**Syfte:** Följa båda talarna, stänga av mikrofonen utan att tappa samtalet och
-se att Skyttel arbetar med ett talat uppdrag.
+**Syfte:** Följa båda talarna, se att Skyttel arbetar med ett talat uppdrag
+och läsa samma sammanhållna repliker efter omstart.
 
 **Användare:** Alex i den kontrollerade installationen.
 
@@ -417,9 +417,20 @@ TAL-05.
     "spec": "tests/integration/voice-assistant.spec.ts",
     "caseId": "TAL-05"
   },
-  "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
+  "reference": "Chromium och kontrollerade textfragment till både webbläsaren och servern. Återställning efter faktisk serveromstart; verkligt tal eller uppläsning bedöms separat.",
   "outcomes": [
-    "Följa båda talarna, stänga av mikrofonen utan att tappa samtalet och se att Skyttel arbetar med ett talat uppdrag."
+    "Båda talarnas repliker hålls ihop. Samtalet finns kvar när mikrofonen stängs av och en egen rad visar när Skyttel arbetar.",
+    "Efter omstart visar det pausade samtalet samma hela repliker i samma ordning. Nytt samtal bevarar utkastet."
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "runner": "playwright",
+      "suite": "technical-browser",
+      "spec": "tests/technical-browser/conversation-transcript.spec.ts",
+      "title": "speech fragments form the same transcript rows during voice and after restoration",
+      "purpose": "Kontrollerar att både nya fragment och äldre fragment utan markörer bildar läsbara rader efter omstart."
+    }
   ]
 }
 ```
@@ -440,8 +451,12 @@ till TAL-17/23/24.
    fortfarande av. Slå själv på den; samma dialog ska finnas kvar.
 3. Låt Kontrollera utkastet vänta. Läs Skyttel arbetar sist i samtalstexten. Låt
    frågan Vem använder musiken? tillkomma; arbetsraden ska försvinna.
-4. Slå av mikrofonen. Tidigare dialog finns kvar. Välj Nytt samtal och läs
-   beskedet om kvarvarande osparad ändring. Läs hela Lo-förslaget.
+4. Slå av mikrofonen. Kontrollera att tidigare dialog finns kvar. Följ
+   tidslinjen för omstart, ladda om sidan och välj **Skriv till Skyttel**.
+   Läs **Samtalet är pausat** och läs samma repliker i samma ordning.
+5. Välj **Återuppta samtalet** och **Godkänn och starta** i medgivanderutan.
+   Välj **Nytt samtal** och läs beskedet om kvarvarande osparad ändring.
+   Läs hela Lo-förslaget.
 
 **Förväntat resultat:**
 
@@ -450,6 +465,8 @@ till TAL-17/23/24.
 - Paus behåller samtal och ljuduppspelning. En återhämtad anslutning startar
   inte en mikrofon som användaren har pausat.
 - Raden **Skyttel arbetar…** skiljer väntan från ett färdigt svar.
+- Efter omstart visas hela repliker i samma ordning, även när fragment från de
+  två talarna kommer om vartannat under en kort paus.
 - Samtalstexten är tillfällig och är inte ett sparkvitto. **Nytt samtal** tömmer
   den men bevarar utkastet.
 

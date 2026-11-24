@@ -13,6 +13,7 @@ import {
   closeConversationText,
   consentBox,
   consentBoxFor,
+  giveConversationConsent,
   microphoneButton,
   openConversationDraft,
   openConversationText,
@@ -30,7 +31,12 @@ import {
 import { familySaveSequence } from '../support/family-save-model.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
-import { isVoiceAnswerRelease, liveProvider, voiceAnswerParts } from '../support/live-provider.js';
+import {
+  isVoiceAnswerRelease,
+  liveProvider,
+  speak as sendSpeech,
+  voiceAnswerParts,
+} from '../support/live-provider.js';
 import { dropConversationReceipt } from '../support/manual-text-delivery.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 import { exposedTextLines } from '../support/object-property-reading.js';
@@ -402,7 +408,7 @@ test('TAL-09: starten kräver medgivande och återhämtar mikrofonavbrott', asyn
   }
 });
 
-test('TAL-05: dialog, avstängd mikrofon och arbetsraden finns kvar under samtalet', async ({
+test('TAL-05: samtalstexten håller ihop talet både under samtalet och efter omstart', async ({
   page,
 }) => {
   let release!: (output: unknown[]) => void;
@@ -422,46 +428,49 @@ test('TAL-05: dialog, avstängd mikrofon och arbetsraden finns kvar under samtal
   });
   try {
     await simpleMap(page, app);
+    const providerId = [...live.channels.keys()][0];
     const events = [
-      { type: 'session.input_transcript.delta', delta: 'Kim betalar', start_ms: 0, end_ms: 1000 },
+      { type: 'session.input_transcript.delta', delta: 'Kim be', start_ms: 0, end_ms: 100 },
       {
         type: 'session.output_transcript.delta',
-        delta: 'Jag lyssnar.',
-        start_ms: 1100,
-        end_ms: 1300,
+        delta: 'Jag lyss',
+        start_ms: 100,
+        end_ms: 200,
       },
       {
         type: 'session.input_transcript.delta',
-        delta: ' för musiken.',
-        start_ms: 1500,
-        end_ms: 1900,
+        delta: 'talar för musiken.',
+        start_ms: 300,
+        end_ms: 400,
       },
       {
         type: 'session.output_transcript.delta',
-        delta: ' Berätta mer.',
-        start_ms: 2000,
-        end_ms: 2600,
+        delta: 'nar. Berätta mer.',
+        start_ms: 400,
+        end_ms: 500,
       },
       {
         type: 'session.input_transcript.delta',
         delta: 'Rätta till Lo.',
         start_ms: 5000,
-        end_ms: 6000,
+        end_ms: 5100,
       },
     ];
     for (const event of events) {
       expect(live.requests[0].session.client?.data_channel?.allowed_server_events).toContainEqual({
         type: event.type,
       });
-      await page.evaluate(
-        (event) => window.skyttelVoiceFixture.emit({ ...event, event_id: crypto.randomUUID() }),
-        event,
-      );
+      const fragment = { ...event, event_id: crypto.randomUUID() };
+      live.emit(providerId, fragment);
+      await page.evaluate((fragment) => window.skyttelVoiceFixture.emit(fragment), fragment);
     }
     const log = assistant(page).getByRole('log', { name: 'Samtalstext' });
-    await expect(log.getByRole('listitem')).toHaveCount(3);
-    await expect(log.getByRole('listitem').nth(0)).toHaveText('Du: Kim betalar för musiken.');
-    await expect(log.getByRole('listitem').nth(1)).toHaveText('Skyttel: Jag lyssnar. Berätta mer.');
+    const dialogue = [
+      'Du: Kim betalar för musiken.',
+      'Skyttel: Jag lyssnar. Berätta mer.',
+      'Du: Rätta till Lo.',
+    ];
+    await expect(log.getByRole('listitem')).toHaveText(dialogue);
     // The microphone is turned off and on again while the voice connection stays.
     await chooseConversationVoice(page);
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
@@ -478,7 +487,7 @@ test('TAL-05: dialog, avstängd mikrofon och arbetsraden finns kvar under samtal
       { enabled: true, state: 'live' },
     ]);
     expect(live.requests).toHaveLength(1);
-    speak(live, 'Kontrollera utkastet.');
+    sendSpeech(live, 'Kontrollera utkastet.', 7500);
     await expect.poll(() => held).toBe(true);
     await expect(voiceBox(page)).toHaveText('Skyttel arbetar');
     // A spoken task shows the working row last in the conversation text.
@@ -490,6 +499,18 @@ test('TAL-05: dialog, avstängd mikrofon och arbetsraden finns kvar under samtal
     await expect(log.getByText('Skyttel arbetar…')).toHaveCount(0);
     await turnMicrophoneOff(page);
     await expect(log).toContainText('Kim betalar för musiken.');
+    await app.restart();
+    await page.reload();
+    await openConversationText(page);
+    await expect(assistant(page)).toContainText('Samtalet är pausat');
+    await expect(log.getByRole('listitem')).toHaveText([
+      ...dialogue,
+      'Du: Kontrollera utkastet.',
+      'Skyttel: Vem använder musiken?',
+    ]);
+    await assistant(page).getByRole('button', { name: 'Återuppta samtalet' }).click();
+    await giveConversationConsent(page);
+    await expect(assistant(page).getByLabel('Meddelande till Skyttel')).toBeEnabled();
     await assistant(page).getByRole('button', { name: 'Nytt samtal' }).click();
     await expect(log).toHaveText(/^Skyttel: Nytt samtal\./);
     await expect(await openConversationDraft(page)).toContainText('Lo Exempel');

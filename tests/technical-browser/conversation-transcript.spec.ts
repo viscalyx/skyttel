@@ -12,9 +12,9 @@ import { liveProvider } from '../support/live-provider.js';
 import { expect, test } from '../support/test.js';
 import { modelMessage, textModel } from '../support/text-model.js';
 
-test('speech fragments form complete bubbles during voice and after restoring the conversation', async ({
-  page,
-}) => {
+test('speech fragments form the same transcript rows during voice and after restoration', {
+  tag: '@technical',
+}, async ({ page }) => {
   const live = liveProvider();
   const model = textModel(() => [modelMessage('Lampan finns i garaget.')]);
   const app = await createInstallation(undefined, {
@@ -50,27 +50,33 @@ test('speech fragments form complete bubbles during voice and after restoring th
       }, events);
     };
     await emit('output', 0, ['Berätta ', 'gärna.']);
-    await emit('input', 200, ['Jag vill kop', 'pla', ' ', 'lampan.']);
-    await emit('output', 800, ['Vil', 'ken ', 'lampa?']);
-    await emit('output', 3200, ['Den i ', 'hallen.']);
-    await emit('output', 5700, [' ']);
+    await emit('input', 200, ['Jag vill kop']);
+    await emit('output', 400, ['Vil', 'ken ']);
+    await emit('input', 650, ['pla', ' ', 'lampan.']);
+    await emit('output', 1100, ['lampa?']);
+    await emit('output', 3300, ['Den i ', 'hallen.']);
+    await emit('input', 3600, ['Ja, den.']);
+    await emit('output', 3900, ['Den passar där.']);
+    await emit('output', 6100, [' ']);
     const active = [
       ...typed,
       'Skyttel: Berätta gärna.',
       'Du: Jag vill koppla lampan.',
       'Skyttel: Vilken lampa?',
       'Skyttel: Den i hallen.',
+      'Du: Ja, den.',
+      'Skyttel: Den passar där.',
     ];
     await expect(rows).toHaveText(active);
     await turnMicrophoneOff(page);
     await expect(rows).toHaveText(active);
     await app.restart();
-    // Older saved user fragments have the same text without a turn marker.
+    // Older saved fragments have the same text without a turn marker.
     await page.route('**/text-assistant/restore', async (route) => {
       const response = await route.fetch();
       const body: { conversation?: TextAssistantView } = await response.json();
       for (const row of body.conversation?.conversation ?? [])
-        if (row.role === 'user') delete row.utteranceStart;
+        if (row.text === 'Berätta ' || row.text === 'gärna.') delete row.utteranceStart;
       await route.fulfill({ response, json: body });
     });
     await page.reload();

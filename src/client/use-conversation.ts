@@ -30,15 +30,21 @@ function restoreConversationTranscript(
   conversation: TextAssistantView['conversation'] = [],
 ): TranscriptRow[] {
   const rows: TranscriptRow[] = [];
-  let utterance: TranscriptRow | undefined;
+  const spokenRows: Partial<Record<TranscriptRow['role'], TranscriptRow>> = {};
+  let adjacentUtterance: TranscriptRow | undefined;
   for (const [index, row] of conversation.entries()) {
-    if (row.notice || !row.partial || row.utteranceStart || utterance?.role !== row.role)
-      utterance = undefined;
-    if (row.notice) continue;
-    if (utterance) {
-      utterance.text += row.text;
-      continue;
+    if (row.partial && !row.notice && row.utteranceStart !== true) {
+      // Only an explicit continuation can cross an interleaved row. Older
+      // fragments may have no boundary metadata and join only adjacent speech.
+      const utterance = row.utteranceStart === false ? spokenRows[row.role] : adjacentUtterance;
+      if (utterance?.role === row.role) {
+        utterance.text += row.text;
+        adjacentUtterance = utterance;
+        continue;
+      }
     }
+    adjacentUtterance = undefined;
+    if (row.notice) continue;
     const entry = {
       id: `restored-${sessionId}-${index}`,
       role: row.role,
@@ -47,7 +53,10 @@ function restoreConversationTranscript(
       voicePending: false,
     };
     rows.push(entry);
-    if (row.partial) utterance = entry;
+    if (row.partial) {
+      spokenRows[row.role] = entry;
+      adjacentUtterance = entry;
+    }
   }
   return rows;
 }

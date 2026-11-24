@@ -1,4 +1,5 @@
 import { type ExchangeSdp, OpenAILiveWebRTC } from 'openai/live/webrtc';
+import { voiceTranscriptBoundaries, voiceTranscriptGapMs } from '../shared/voice-transcript.js';
 import type { TranscriptRow } from './ConversationTranscript.js';
 import type { HeldInput } from './voice-held-input.js';
 import outputWorkletUrl from './voice-output-worklet.ts?worker&url';
@@ -127,13 +128,11 @@ export function createVoiceTransport(
   let disconnectTimer: ReturnType<typeof setTimeout> | undefined;
   let userRow: TranscriptRow | undefined;
   let assistantRow: TranscriptRow | undefined;
-  let userEnd: number | undefined;
+  const transcriptBoundaries = voiceTranscriptBoundaries();
   let userAt = 0;
   let assistantSince = false;
   let assistantBoundary = false;
-  let assistantEnd: number | undefined;
   let assistantAt = 0;
-  const turnGap = 2000;
   const audioTime = (value: number) => Number.isFinite(value) && value >= 0;
   // At receipt, the provider has already reached this position. Keep the
   // earliest inferred origin so delayed events cannot move the cutoff back.
@@ -158,20 +157,18 @@ export function createVoiceTransport(
     if (closed || stopped || !event.delta) return;
     const now = performance.now();
     if (role === 'user') {
-      if (event.delta.trim() && event.end_ms > interruptedThrough && startCorrection()) {
-        finish(userRow);
-        userRow = undefined;
-      }
-      const mediaGap =
-        userEnd !== undefined && audioTime(event.start_ms) && event.start_ms >= userEnd
-          ? event.start_ms - userEnd
+      const correction =
+        Boolean(event.delta.trim()) && event.end_ms > interruptedThrough && startCorrection();
+      const userEnd =
+        audioTime(event.end_ms) && (!audioTime(event.start_ms) || event.end_ms >= event.start_ms)
+          ? event.end_ms
           : undefined;
+      const starts = transcriptBoundaries.append(role, event.start_ms, userEnd, {
+        newUtterance: correction,
+        fallbackGapMs: assistantSince ? now - userAt : 0,
+      });
       finish(assistantRow);
-      if (
-        !userRow ||
-        (mediaGap ?? 0) >= turnGap ||
-        (assistantSince && (mediaGap ?? now - userAt) >= turnGap)
-      ) {
+      if (!userRow || starts) {
         finish(userRow);
         userRow = { id: crypto.randomUUID(), role, text: '' };
         assistantRow = undefined;
@@ -179,10 +176,6 @@ export function createVoiceTransport(
       userRow.text += event.delta;
       userRow.partial = true;
       userAt = now;
-      userEnd =
-        audioTime(event.end_ms) && (!audioTime(event.start_ms) || event.end_ms >= event.start_ms)
-          ? event.end_ms
-          : undefined;
       if (userEnd !== undefined) observePosition(userEnd, now);
       assistantSince = false;
       callbacks.onTranscript?.({ ...userRow });
@@ -191,13 +184,11 @@ export function createVoiceTransport(
       observePosition(event.start_ms, now);
       assistantSince = true;
       finish(userRow);
-      if (
-        !assistantRow ||
-        (assistantEnd !== undefined &&
-          audioTime(event.start_ms) &&
-          event.start_ms - assistantEnd >= turnGap) ||
-        (assistantBoundary && now - assistantAt >= turnGap)
-      ) {
+      const assistantEnd = audioTime(event.end_ms) ? event.end_ms : undefined;
+      const starts = transcriptBoundaries.append(role, event.start_ms, assistantEnd, {
+        newUtterance: assistantBoundary && now - assistantAt >= voiceTranscriptGapMs,
+      });
+      if (!assistantRow || starts) {
         finish(assistantRow);
         assistantRow = { id: crypto.randomUUID(), role, text: '', voiced: true };
       }
@@ -205,7 +196,6 @@ export function createVoiceTransport(
       assistantRow.partial = true;
       assistantBoundary = false;
       assistantAt = now;
-      assistantEnd = audioTime(event.end_ms) ? event.end_ms : undefined;
       callbacks.onTranscript?.({ ...assistantRow });
     }
   }
@@ -396,6 +386,7 @@ export function createVoiceTransport(
       finish(userRow);
       finish(assistantRow);
       userRow = assistantRow = undefined;
+      transcriptBoundaries.reset();
       activity = { ...activity, speaker: false };
       callbacks.onAudioActivity?.(activity);
       return { interruptedThroughMs: interruptedThrough };

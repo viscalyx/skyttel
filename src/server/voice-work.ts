@@ -5,6 +5,7 @@ import type {
   PendingPartReference,
   TextAssistantView,
 } from '../shared/text-assistant.js';
+import { voiceTranscriptBoundaries } from '../shared/voice-transcript.js';
 import { assistantFailureMessage } from './assistant-feedback.js';
 import type { LiveSideband } from './live-provider.js';
 import { type VoiceAnswer, voiceAnswerText, voiceCommentary } from './voice-commentary.js';
@@ -90,7 +91,7 @@ export function voiceWork({
   ) => void;
 }) {
   let rendered = draftAnchor(initial);
-  let previousFragment: { role: Fragment['role']; endMs: number } | undefined;
+  const transcriptBoundaries = voiceTranscriptBoundaries();
   let nextUserUtterance = false;
   let anchor: Anchor | undefined;
   let fragments: Fragment[] = [];
@@ -695,13 +696,10 @@ export function voiceWork({
       end_ms: event.end_ms,
     });
     if (event.delta) {
-      const utteranceStart =
-        !previousFragment ||
-        previousFragment.role !== role ||
-        event.start_ms - previousFragment.endMs >= speechSettleMs ||
-        (role === 'user' && nextUserUtterance);
+      const utteranceStart = transcriptBoundaries.append(role, event.start_ms, event.end_ms, {
+        newUtterance: role === 'user' && nextUserUtterance,
+      });
       transcript?.(role, event.delta, utteranceStart);
-      previousFragment = { role, endMs: event.end_ms };
       if (role === 'user') nextUserUtterance = false;
     }
     if (role === 'user') {

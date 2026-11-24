@@ -82,7 +82,7 @@ export interface TextAssistantView {
     role: 'user' | 'assistant';
     text: string;
     partial?: boolean;
-    utteranceStart?: true;
+    utteranceStart?: boolean;
     /** Automatic failure shown in the notice; retained as model context only. */
     notice?: boolean;
   }[];

@@ -6140,7 +6140,7 @@ export function textAssistantRoutes({
           role,
           text,
           partial: true,
-          ...(utteranceStart ? { utteranceStart: true } : {}),
+          utteranceStart,
         });
       }
     },

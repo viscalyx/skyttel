@@ -453,17 +453,27 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
 
    ```javascript
    for (const [role, delta, start_ms, end_ms] of [
-     ['input', 'Kim betalar', 0, 1000],
-     ['output', 'Jag lyssnar.', 1100, 1300],
-     ['input', ' för musiken.', 1500, 1900],
-     ['output', ' Berätta mer.', 2000, 2600],
-     ['input', 'Rätta till Lo.', 5000, 6000],
+     ['input', 'Kim be', 0, 100],
+     ['output', 'Jag lyss', 100, 200],
+     ['input', 'talar för musiken.', 300, 400],
+     ['output', 'nar. Berätta mer.', 400, 500],
+     ['input', 'Rätta till Lo.', 5000, 5100],
    ]) {
      window.skyttelVoiceFixture.emit({
        type: `session.${role}_transcript.delta`,
        event_id: crypto.randomUUID(), delta, start_ms, end_ms,
      });
    }
+   ```
+
+   Skicka samma fragment till servern i startguidens terminal:
+
+   ```text
+   user-at 0 Kim be
+   assistant Jag lyss
+   user-at 300 talar för musiken.
+   assistant nar. Berätta mer.
+   user-at 5000 Rätta till Lo.
    ```
 
 2. Läs samtalstexten. Din sammanhållna rad **Kim betalar för musiken.** står i
@@ -482,14 +492,12 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
 4. Mikrofonspåret ska fortfarande ha `enabled: false` och `state: 'live'`. Välj
    **Prata med Skyttel** igen och kontrollera `enabled: true`, samma antal
    anslutningar och kvarvarande dialog.
-5. Kör `user Kontrollera utkastet.` och `delegate` i terminalen. Låt
+5. Kör `user-at 7500 Kontrollera utkastet.` och `delegate` i terminalen. Låt
    modellanropet vara hållet och kontrollera att raden **Skyttel arbetar…** står
    sist i samtalstexten. Släpp sedan det hållna anropet med
    `reply REQUEST Vem använder musiken?`, där `REQUEST` är dess ID.
-6. Kräv frågan i dialogen och avslutad arbetsindikering. Stäng rösten: tidigare
-   dialog finns kvar. Välj **Nytt samtal**: samtalstexten töms och Skyttel
-   säger hur många osparade ändringar som finns, medan Lo-förslaget finns kvar i
-   utkastet.
+6. Vänta tills frågan visas och arbetsraden försvinner. Slå av mikrofonen,
+   kör `restart` i terminalen och vänta på `restarted` innan sidan laddas om.
 
 ### Tidslinje TAL-06
 

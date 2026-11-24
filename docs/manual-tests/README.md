@@ -433,10 +433,10 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   på båda sidor om pausen och nästa repliks första ord. Övriga fall provar
   avbrott i långa samtal med bevarad kontext och mikrofonval,
   faktisk markering, exakt sparåterhämtning och tydlig skillnad mellan
-  samtalstext och verifierade resultat, löpande dialog och
-  raden Skyttel arbetar. TAL-03 skyddar läsbar beskrivning i korta
-  uppgiftsfönster även efter hela svaret som text och läser sparutfallet i
-  det pausade samtalet efter omstart. Ett tappat webbläsarsvar följs upp från
+  samtalstext och verifierade resultat. TAL-05 följer hela talade repliker
+  i det pågående samtalet och efter omstart. TAL-03 skyddar läsbar beskrivning
+  i korta uppgiftsfönster även efter hela svaret som text och läser sparutfallet
+  i det pausade samtalet efter omstart. Ett tappat webbläsarsvar följs upp från
   samtalsnotisen med det sparade objektet synligt utan omladdning. Kontrollerat
   familjeunderlag och verkligt tal redovisas separat. TAL-18/19 skiljer mikrofonlägena;
   TAL-20–22 skiljer placeringarna och TAL-17/23–26 kräver verkliga
