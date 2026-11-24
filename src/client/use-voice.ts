@@ -103,7 +103,6 @@ type Attempt = {
     speaking: boolean;
     matched?: string;
   };
-  observedReadoutId?: string;
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
   refusalId?: string;
 };
@@ -254,34 +253,23 @@ export function useVoice(options: {
     const spoken = spokenWords(output.text);
     const audible = spokenWords(output.text.slice(0, output.audibleTextLength ?? 0));
     if (!expected) return;
-    if (!` ${spoken} `.includes(` ${expected} `)) {
-      if (
-        !output.speaking &&
-        response.conversationalText &&
-        !response.questionPending &&
-        !response.receiptOperationId &&
-        reflectsOrdinaryReply(response.conversationalText, audible)
-      ) {
-        // This observation only controls the playback warning. Content and
-        // the server's preceding-response acknowledgement still require an
-        // exact transcript, including when verifying a save or question.
-        attempt.observedReadoutId = response.id;
-        setFailure((previous) =>
-          previous?.noticeId === 'voiceReplyUnconfirmed' ? null : previous,
-        );
-      }
-      return;
-    }
-    if (output.matched !== response.id) {
+    const exactMatch = ` ${spoken} `.includes(` ${expected} `);
+    if (exactMatch && output.matched !== response.id) {
       output.matched = response.id;
       // Earlier audio and a pause before the final word do not prove that the
       // audio associated with a newly delivered transcript has even started.
       output.heard = output.speaking || ` ${audible} `.includes(` ${expected} `);
     }
-    if (!output.heard || output.speaking) return;
-    // A matching transcript alone never starts the timer: audio must first be
-    // observed, and then drain. Live offers no complete-turn event; future
-    // unsolicited output cannot be ruled out by this bounded-word check.
+    if (output.speaking) return;
+    const replyHeard = exactMatch
+      ? output.heard
+      : response.conversationalText &&
+        !response.questionPending &&
+        !response.receiptOperationId &&
+        reflectsOrdinaryReply(response.conversationalText, audible);
+    if (!replyHeard) return;
+    // Live offers no complete-turn event. Acknowledge the words matched to
+    // observed audio after playback drains.
     completedOutput.current.add(response.id);
     attempt.playedResponseId = response.id;
     setFailure((previous) => (previous?.noticeId === 'voiceReplyUnconfirmed' ? null : previous));
@@ -593,11 +581,7 @@ export function useVoice(options: {
             );
           }
           const response = result.voice.response;
-          if (
-            response &&
-            !completedOutput.current.has(response.id) &&
-            attempt.observedReadoutId !== response.id
-          ) {
+          if (response && !completedOutput.current.has(response.id)) {
             if (attempt.acknowledgement?.id !== response.id)
               attempt.acknowledgement = {
                 id: response.id,

@@ -114,26 +114,30 @@ test.each([
     spoken: 'Den blå cykeln finns i garaget, bredvid den gamla kajaken.',
     audible: true,
     warned: false,
+    acknowledged: true,
   },
   {
     name: 'only a neutral spoken acknowledgement',
     spoken: 'Ja, jag letar.',
     audible: true,
     warned: true,
+    acknowledged: false,
   },
   {
     name: 'only the beginning of the requested answer',
     spoken: 'Den blå cykeln står i garaget.',
     audible: true,
     warned: true,
+    acknowledged: false,
   },
   {
     name: 'the full transcript with no speaker audio',
     spoken: answer,
     audible: false,
     warned: true,
+    acknowledged: false,
   },
-])('playback evidence distinguishes $name', async ({ spoken, audible, warned }) => {
+])('playback evidence distinguishes $name', async ({ spoken, audible, warned, acknowledged }) => {
   const { media, server, tick, playedResponses } = await arrange();
   server.assistant = { ...initial, revision: 1, taskId: 'read-task', modelReply: answer };
   server.response = {
@@ -157,10 +161,13 @@ test.each([
       end_ms: 3100,
     }),
   );
+  await tick(500);
+  expect(playedResponses).toEqual([]);
   media.signals.set(media.peers[0].remote, 0);
+  await tick(600);
+  expect(new Set(playedResponses)).toEqual(new Set(acknowledged ? ['read-reply'] : []));
   await tick(16_000);
   expect(screen.queryAllByText(/Uppläsningen kunde inte bekräftas/).length > 0).toBe(warned);
-  expect(playedResponses).toEqual([]);
   expect(button().getAttribute('aria-pressed')).toBe('true');
 });
 

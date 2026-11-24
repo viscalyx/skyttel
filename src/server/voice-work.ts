@@ -185,8 +185,8 @@ export function voiceWork({
     const candidate = awaitingInterrupt;
     if (!candidate) return;
     // A later delegation can belong to the previous turn. Its new media
-    // interval must follow consumed speech and the browser must have heard
-    // the exact response that preceded this delegation.
+    // interval must follow consumed speech and the browser must have
+    // acknowledged playback of the response that preceded this delegation.
     const followsPlayback =
       precedingResponse?.acknowledged &&
       precedingResponse.id === candidate.precedingResponseId &&
