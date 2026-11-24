@@ -700,7 +700,7 @@ test('with the microphone off the connection stays while Skyttel finishes, and t
   expect(calls.some((call) => call.url.endsWith('/stop'))).toBe(false);
 });
 
-test.each(['resume', 'cancel'] as const)(
+test.each(['resume', 'cancel', 'written work', 'spoken work'] as const)(
   'the paused microphone waits for voice to see the written reply before capture (%s)',
   async (action) => {
     const { track, view, component, changed, accessLost } = setup();
@@ -708,33 +708,41 @@ test.each(['resume', 'cancel'] as const)(
     fireEvent.click(microphoneButton());
     expect(track.enabled).toBe(false);
 
-    const writtenReply: TextAssistantView = {
+    let shown: TextAssistantView = {
       ...view,
       revision: view.revision + 1,
       questionPending: true,
     };
-    component.rerender(
-      <StandaloneVoice
-        householdId="linden"
-        assistant={writtenReply}
-        onAssistant={changed}
-        onAccessLost={accessLost}
-      />,
-    );
+    const show = () =>
+      component.rerender(
+        <StandaloneVoice
+          householdId="linden"
+          assistant={shown}
+          onAssistant={changed}
+          onAccessLost={accessLost}
+        />,
+      );
+    show();
     let answerPoll: ((response: Response) => void) | undefined;
     const pausedPoll = vi.fn();
-    vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
-      const response = Response.json({
-        assistant: writtenReply,
+    const response = (url: string) =>
+      Response.json({
+        assistant: shown,
         voice: {
           id: 'voice-session',
-          phase: url.endsWith('/stop') ? 'closed' : 'listening',
+          phase: url.endsWith('/stop')
+            ? 'closed'
+            : shown.taskSource === 'voice'
+              ? 'working'
+              : 'listening',
           seconds: null,
           usageFinal: false,
         },
       });
-      if (!url.endsWith('/poll') || answerPoll) return response;
+    vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
+      if (!url.endsWith('/poll')) return response(url);
       pausedPoll(JSON.parse(String(init.body)));
+      if (answerPoll) return response(url);
       return new Promise<Response>((resolve) => {
         answerPoll = resolve;
       });
@@ -746,25 +754,44 @@ test.each(['resume', 'cancel'] as const)(
     await waitFor(() =>
       expect(pausedPoll).toHaveBeenCalledWith(
         expect.objectContaining({
-          revision: writtenReply.revision,
-          draftVersion: writtenReply.review.version,
-          contentVersion: writtenReply.review.contentVersion,
+          revision: shown.revision,
+          draftVersion: shown.review.version,
+          contentVersion: shown.review.contentVersion,
           microphoneOn: false,
         }),
       ),
     );
     expect(track.enabled).toBe(false);
     if (action === 'cancel') fireEvent.click(microphoneButton());
-    await act(async () =>
-      answerPoll?.(
-        Response.json({
-          assistant: writtenReply,
-          voice: { id: 'voice-session', phase: 'listening', seconds: null, usageFinal: false },
-        }),
-      ),
-    );
-    expect(track.enabled).toBe(action === 'resume');
-    expect(microphoneButton().getAttribute('aria-pressed')).toBe(String(action === 'resume'));
+    const workStarted = action === 'written work' || action === 'spoken work';
+    if (workStarted) {
+      shown = {
+        ...shown,
+        revision: shown.revision + 1,
+        phase: 'working',
+        taskSource: action === 'written work' ? 'text' : 'voice',
+      };
+      show();
+    }
+    await act(async () => answerPoll?.(response('poll')));
+    if (workStarted) {
+      changed.mockClear();
+      await waitFor(() => {
+        expect(pausedPoll).toHaveBeenLastCalledWith(
+          expect.objectContaining({ revision: shown.revision, microphoneOn: false }),
+        );
+        expect(changed).toHaveBeenCalledWith(shown);
+      });
+    }
+    const resumes = action === 'resume' || action === 'spoken work';
+    expect(track.enabled).toBe(resumes);
+    expect(microphoneButton().getAttribute('aria-pressed')).toBe(String(resumes));
+    if (action === 'written work') {
+      shown = { ...shown, phase: 'ready' };
+      show();
+      await waitFor(() => expect(changed).toHaveBeenCalledWith(shown));
+      expect(track.enabled).toBe(false);
+    }
     expect(Peer.all).toHaveLength(1);
   },
 );

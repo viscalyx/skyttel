@@ -125,6 +125,10 @@ function matchesVoiceAnchor(anchor: ReturnType<typeof voiceAnchor>, view: TextAs
   );
 }
 
+function workingOnWrittenMessage(view: TextAssistantView | null) {
+  return view?.phase === 'working' && view.taskSource === 'text';
+}
+
 function spokenWords(text: string) {
   return text
     .toLocaleLowerCase('sv')
@@ -246,6 +250,10 @@ export function useVoice(options: {
     offRef.current = true;
     setOff(true);
   }, []);
+  const writtenWork = workingOnWrittenMessage(options.assistant);
+  useEffect(() => {
+    if (writtenWork && current.current) current.current.resumeRequested = false;
+  }, [writtenWork]);
   const [activity, setActivity] = useState({ microphone: false, speaker: false });
   const activityRef = useRef(activity);
   activityRef.current = activity;
@@ -563,6 +571,7 @@ export function useVoice(options: {
             attempt.controller.signal,
           );
           if (!active()) return;
+          if (workingOnWrittenMessage(result.assistant)) attempt.resumeRequested = false;
           // A successful poll has registered both the displayed anchor and
           // the server's current pending questions on this voice connection.
           synchronized = matchesVoiceAnchor(rendered, result.assistant)
@@ -656,7 +665,11 @@ export function useVoice(options: {
         }
       };
       attempt.resumeMicrophone = (mode = 'resume') => {
-        if (!inputAllowed() || attempt.summaryPausedAt !== undefined) {
+        if (
+          !inputAllowed() ||
+          attempt.summaryPausedAt !== undefined ||
+          workingOnWrittenMessage(latest.current.assistant)
+        ) {
           attempt.resumeRequested = false;
           return;
         }
@@ -1228,7 +1241,10 @@ export function useVoice(options: {
     disabled:
       contextPaused ||
       state === 'closing' ||
-      (microphone === 'off' && !starting && !working && options.assistant?.phase === 'working'),
+      (microphone === 'off' &&
+        !starting &&
+        options.assistant?.phase === 'working' &&
+        (!working || writtenWork)),
     level,
     activate,
     start: () => {
