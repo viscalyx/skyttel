@@ -13,7 +13,7 @@ import type { useConversationPreferences } from './use-conversation-preferences.
 import { useConversationViewport } from './use-conversation-viewport.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 
-export type TextOpeningFocus = 'text' | 'draft';
+export type TextOpeningFocus = 'text' | 'draft' | 'resume';
 
 /**
  * The text view: the conversation text and the message field. It reads the
@@ -112,7 +112,8 @@ export function TextView({
     // On a mobile device and a narrow screen it does not, so that the on-screen
     // keyboard stays down. The focus then stays in the toolbar or goes to the heading.
     if (hidden || openingFocus === 'draft') return;
-    if (initialComputer.current) field.current?.focus();
+    if (openingFocus === 'resume') (resume.current ?? heading.current)?.focus();
+    else if (initialComputer.current) field.current?.focus();
     else if (!document.activeElement?.closest('.workspace-tools')) heading.current?.focus();
     // Opening is the only focus trigger; resizing or revealing a keyboard must
     // preserve the user's current focus.

@@ -262,6 +262,24 @@ test('canceling a toolbar conversation returns to its chosen entry and preserves
   expect((await home.read()).draft.changes).toEqual([]);
 });
 
+test('the toolbar microphone opens a restored conversation at its resume button', async () => {
+  const home = await household();
+  await home.open();
+  await startConversationWithText({ remember: true });
+  cleanup();
+  await home.open();
+  const workspace = screen.getByRole('region', { name: 'Arbetsyta' });
+  await waitFor(() => expect(workspace.getAttribute('data-session-active')).toBe('true'));
+
+  await userEvent.click(home.microphone());
+
+  const text = await screen.findByRole('region', { name: 'Skriv till Skyttel' });
+  const resume = within(text).getByRole('button', { name: 'Återuppta samtalet' });
+  expect(document.activeElement).toBe(resume);
+  expect(home.commands.some((url) => url.endsWith('/resume'))).toBe(false);
+  expect(home.media.getUserMedia).not.toHaveBeenCalled();
+});
+
 test('voice survives closing text and visiting Settings with its microphone choice and unsent work unchanged', async () => {
   const home = await household();
   await home.open();

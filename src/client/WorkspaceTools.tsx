@@ -97,12 +97,14 @@ export function WorkspaceTools({
   onExpandedChange,
   conversationUnavailable = false,
   conversationOngoing = false,
+  conversationPaused = false,
   hasDraft = false,
 }: {
   surface?: 'map' | 'table' | 'reports';
   workDisabled?: boolean;
   conversationUnavailable?: boolean;
   conversationOngoing?: boolean;
+  conversationPaused?: boolean;
   hasDraft?: boolean;
   /** Opens a tool. The chosen button is where a conversation's consent box opens. */
   onOpen: (target: WorkspaceTarget, chosen: HTMLElement) => void;
@@ -136,24 +138,27 @@ export function WorkspaceTools({
       tools.current?.querySelector<HTMLButtonElement>('.workspace-text')?.focus();
     }
   }, [hasDraft]);
+  const canUseVoiceControl = !conversationUnavailable && !conversationPaused;
   const microphonePress = useMicrophonePress({
     button: microphoneButton,
     canHold: () =>
       Boolean(
         holdVoice?.canHold &&
-          !conversationUnavailable &&
+          canUseVoiceControl &&
           !voiceControl?.disabled &&
           !voiceControl?.starting &&
           voiceControl?.microphone !== 'on' &&
           navigator.onLine !== false,
       ),
-    prepare: () => holdVoice?.prepare(),
+    prepare: () => {
+      if (!conversationPaused) holdVoice?.prepare();
+    },
     startHeld: () => holdVoice?.start(),
     releaseHeld: () => holdVoice?.release(),
     short: () => {
       onExpandedChange(false);
       setUtility(null);
-      if (voiceControl && !conversationUnavailable) voiceControl.activate();
+      if (voiceControl && canUseVoiceControl) voiceControl.activate();
       else if (microphoneButton.current) onOpen('voice', microphoneButton.current);
     },
   });
@@ -164,9 +169,11 @@ export function WorkspaceTools({
     query.addEventListener('change', change);
     return () => query.removeEventListener('change', change);
   }, []);
-  const microphoneDescription = voiceControl?.starting
-    ? 'Avbryt starten av rösten'
-    : `Prata med Skyttel (${microphoneShortcut()}). Håll in för att tala tills du släpper.`;
+  const microphoneDescription = conversationPaused
+    ? 'Öppna det pausade samtalet för att återuppta det.'
+    : voiceControl?.starting
+      ? 'Avbryt starten av rösten'
+      : `Prata med Skyttel (${microphoneShortcut()}). Håll in för att tala tills du släpper.`;
   const voiceDescription = `${microphoneDescription}${conversationUnavailable ? ' Inte tillgängligt just nu.' : ''}`;
   const utilityPanel = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -241,7 +248,7 @@ export function WorkspaceTools({
                   : label
               }
               aria-description={
-                target === 'voice' && !touch
+                target === 'voice' && (!touch || conversationPaused)
                   ? voiceDescription
                   : conversationUnavailable &&
                       (target === 'voice' || (target === 'conversation' && !conversationOngoing))
@@ -265,7 +272,7 @@ export function WorkspaceTools({
                 target === 'new'
                   ? workDisabled
                   : target === 'voice' && conversationOngoing
-                    ? !conversationUnavailable && voiceControl?.disabled
+                    ? canUseVoiceControl && voiceControl?.disabled
                     : undefined
               }
               aria-pressed={

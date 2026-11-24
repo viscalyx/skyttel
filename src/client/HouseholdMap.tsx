@@ -346,7 +346,7 @@ export function HouseholdMap({
     }
     workTrigger.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    if (target === 'voice' && conversation.inputBlocked && (target === 'voice' || !ongoing)) {
+    if (target === 'voice' && conversation.inputBlocked) {
       conversation.showNotice?.();
       return;
     }
@@ -359,8 +359,8 @@ export function HouseholdMap({
       return;
     }
     if (target === 'voice' && conversation.session) {
-      // The microphone opens no panel. The voice box shows what it does.
-      conversation.voice.activate();
+      if (conversation.session.paused) showConversation('resume');
+      else conversation.voice.activate();
       return;
     }
     if (target === 'conversation') {
@@ -1158,10 +1158,10 @@ export function HouseholdMap({
   }
   // The household work owns the conversation. Views only choose where to
   // show its text, voice, notice and controls.
-  function showConversation() {
+  function showConversation(openingFocus: TextOpeningFocus = 'text') {
     if (workspaceSurface === 'reports') setWorkspaceSurface(reportReturnSurface.current);
     setRevealRequest(undefined);
-    setTextOpeningFocus('text');
+    setTextOpeningFocus(openingFocus);
     setTextViewOpen(true);
     setWorkspaceView('text');
     setTextFocusRequest((previous) => previous + 1);
@@ -1410,6 +1410,7 @@ export function HouseholdMap({
           <WorkspaceTools
             conversationUnavailable={Boolean(conversation.inputBlocked)}
             conversationOngoing={ongoing}
+            conversationPaused={conversation.session?.paused}
             voiceControl={
               conversation.session ||
               conversation.voice.microphone === 'on' ||
