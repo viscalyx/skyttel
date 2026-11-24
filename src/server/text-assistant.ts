@@ -1066,7 +1066,7 @@ export function textAssistantRoutes({
     return session.execution.parts.read().some((part) => part.status === 'ready');
   }
   function appendConversation(session: Session, entry: Session['state']['conversation'][number]) {
-    session.state.conversation.push({
+    const retained = {
       ...entry,
       // Raw voice fragments have no authenticated task provenance. Retain them
       // conservatively rather than assigning them to whichever task is active.
@@ -1082,8 +1082,10 @@ export function textAssistantRoutes({
             },
           }
         : {}),
-    });
+    };
+    session.state.conversation.push(retained);
     persist(session);
+    return retained;
   }
   function contextConversation(session: Session) {
     const unfinished = new Set(activeRequests(session).map((request) => request.id));
@@ -6134,15 +6136,25 @@ export function textAssistantRoutes({
       utteranceStart: boolean,
     ) => {
       const session = sessions.get(sessionId);
-      if (session) {
-        if (role === 'user' && text.trim()) session.state.expiresAt = now() + conversationLifetime;
-        appendConversation(session, {
-          role,
-          text,
-          partial: true,
-          utteranceStart,
-        });
-      }
+      if (!session) return;
+      if (role === 'user' && text.trim()) session.state.expiresAt = now() + conversationLifetime;
+      const retained = appendConversation(session, {
+        role,
+        text,
+        partial: true,
+        utteranceStart,
+      });
+      if (role !== 'user' || utteranceStart) return;
+      return () => {
+        if (
+          retained.utteranceStart ||
+          sessions.get(sessionId) !== session ||
+          !session.state.conversation.includes(retained)
+        )
+          return;
+        retained.utteranceStart = true;
+        persist(session);
+      };
     },
     // Interrupt current in-memory work synchronously. The normal HTTP cancel
     // route refreshes status; durable operations remain available for recovery.

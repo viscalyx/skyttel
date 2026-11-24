@@ -115,7 +115,7 @@ export function voiceAssistantRoutes({
     role: 'user' | 'assistant',
     text: string,
     utteranceStart: boolean,
-  ) => void;
+  ) => (() => void) | undefined;
   contextUsage?: (
     sessionId: string,
     contextRevision: number,

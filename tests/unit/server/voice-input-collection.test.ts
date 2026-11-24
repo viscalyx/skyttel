@@ -222,6 +222,28 @@ test('a delayed browser interruption preserves the first words and delegation of
   work.retire();
 });
 
+test('a transcript write failure leaves interruption and correction collection available', async () => {
+  const { work, fragment, delegate, messages, request, transcript, channel, initial } =
+    arrange(true);
+  const mark = vi.fn(() => {
+    throw new Error('Conversation storage unavailable');
+  });
+  transcript.mockImplementation((_role, text) => (text === 'Jag menar cykeln.' ? mark : undefined));
+  fragment('old', 'Spara.', 0, 100);
+  fragment('correction', 'Jag menar cykeln.', 120, 190);
+  delegate('corrected', 190);
+
+  await expect(work.interruptSpeech(100)).resolves.toEqual(initial);
+  expect(mark).toHaveBeenCalledOnce();
+  expect(request.mock.invocationCallOrder[0]).toBeLessThan(mark.mock.invocationCallOrder[0]);
+  expect(channel.send.mock.invocationCallOrder[0]).toBeLessThan(mark.mock.invocationCallOrder[0]);
+  work.confirmInput(2);
+  await vi.advanceTimersByTimeAsync(2100);
+  expect(messages()).toHaveLength(1);
+  expect(messages()[0][1]).toMatchObject({ text: 'Jag menar cykeln.' });
+  work.retire();
+});
+
 test.each([true, false])(
   'interruption restarts collection after filtering every fragment: correction=%s',
   { tags: ['technical'] },

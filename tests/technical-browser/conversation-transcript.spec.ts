@@ -111,3 +111,83 @@ test('speech fragments form the same transcript rows during voice and after rest
     await app.close();
   }
 });
+
+test('a spoken correction received before the interruption restores as a separate row', {
+  tag: '@technical',
+}, async ({ page }) => {
+  const live = liveProvider();
+  const app = await createInstallation(undefined, {
+    modelFetch: textModel(() => [modelMessage('Jag lyssnar.')]).provider,
+    liveFetch: live.provider,
+    liveSideband: live.attach,
+  });
+  try {
+    await signIn(page.request, app.origin);
+    await createHousehold(page.request, app.origin, 'Samtalstextprov');
+    await page.addInitScript({ content: liveBrowserFixtureSource });
+    await page.goto(app.origin);
+    await startConversationWithText(page);
+    await turnMicrophoneOn(page);
+    const providerId = [...live.channels.keys()][0];
+    const inputFragment = (delta: string, start_ms: number, end_ms: number) => ({
+      type: 'session.input_transcript.delta',
+      event_id: crypto.randomUUID(),
+      delta,
+      start_ms,
+      end_ms,
+    });
+    const previous = inputFragment('Före avbrottet.', 0, 10);
+    const early = inputFragment('Jag menar ', 0, 0);
+    await page.evaluate((event) => {
+      window.skyttelVoiceFixture.emit(event);
+      window.skyttelVoiceFixture.setSound('remote', true);
+    }, previous);
+    await page.route('**/interrupt', async (route) => {
+      const { interruptedThroughMs } = route.request().postDataJSON() as {
+        interruptedThroughMs: number;
+      };
+      // Deliver both fragments to the server before its cutoff arrives. Only
+      // the correction follows that cutoff, and the two fragments are close.
+      live.emit(providerId, {
+        ...previous,
+        start_ms: Math.max(0, interruptedThroughMs - 10),
+        end_ms: interruptedThroughMs,
+      });
+      early.start_ms = interruptedThroughMs + 10;
+      early.end_ms = early.start_ms + 100;
+      live.emit(providerId, early);
+      await route.continue();
+    });
+
+    const box = voiceBox(page);
+    await expect(box).toHaveText('Skyttel talar');
+    const interrupted = page.waitForResponse((response) => response.url().endsWith('/interrupt'));
+    await box.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    expect((await interrupted).ok()).toBe(true);
+    const suffix = inputFragment('cykeln.', early.end_ms, early.end_ms + 100);
+    live.emit(providerId, suffix);
+    await page.evaluate(
+      (events) => {
+        window.skyttelVoiceFixture.setSound('remote', false);
+        for (const event of events) window.skyttelVoiceFixture.emit(event);
+      },
+      [early, suffix],
+    );
+
+    const text = page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
+    const speech = text
+      .getByRole('log', { name: 'Samtalstext' })
+      .getByRole('listitem')
+      .filter({ hasText: /^Du:/u });
+    const expected = ['Du: Före avbrottet.', 'Du: Jag menar cykeln.'];
+    await expect(speech).toHaveText(expected);
+    await turnMicrophoneOff(page);
+    await app.restart();
+    await page.reload();
+    await openConversationText(page);
+    await expect(text).toContainText('Samtalet är pausat');
+    await expect(speech).toHaveText(expected);
+  } finally {
+    await app.close();
+  }
+});

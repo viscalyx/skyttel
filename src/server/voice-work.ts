@@ -80,7 +80,11 @@ export function voiceWork({
   /** The conversation as the voice last saw it, and whether the voice has a task in progress. */
   update: (view: TextAssistantView, working: boolean) => void;
   failed: () => void;
-  transcript?: (role: Fragment['role'], text: string, utteranceStart: boolean) => void;
+  transcript?: (
+    role: Fragment['role'],
+    text: string,
+    utteranceStart: boolean,
+  ) => (() => void) | undefined;
   response?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['response']) => void;
   refusal?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['refusal']) => void;
   delivered?: (value: { id: string; voiced: boolean }) => void;
@@ -101,6 +105,7 @@ export function voiceWork({
     anchor: Anchor;
     predecessor?: VoiceDispatch;
     answerTo?: PendingPartReference[];
+    startTranscriptUtterance?: () => void;
   })[] = [];
   let generation = 0;
   let inputVersion = 0;
@@ -695,11 +700,12 @@ export function voiceWork({
       start_ms: event.start_ms,
       end_ms: event.end_ms,
     });
+    let startTranscriptUtterance: (() => void) | undefined;
     if (event.delta) {
       const utteranceStart = transcriptBoundaries.append(role, event.start_ms, event.end_ms, {
         newUtterance: role === 'user' && nextUserUtterance,
       });
-      transcript?.(role, event.delta, utteranceStart);
+      startTranscriptUtterance = transcript?.(role, event.delta, utteranceStart);
       if (role === 'user') nextUserUtterance = false;
     }
     if (role === 'user') {
@@ -719,6 +725,7 @@ export function voiceWork({
         anchor: { ...rendered },
         predecessor: dispatching,
         answerTo: waitingParts,
+        startTranscriptUtterance,
       });
       if (pending.map((item) => item.text).join('').length > 4000) {
         failed();
@@ -938,7 +945,8 @@ export function voiceWork({
       let delegation = collecting?.delegation;
       if (interruptedThroughMs !== undefined) interruptedThrough = interruptedThroughMs;
       pending = pending.filter((item) => item.endMs > interruptedThrough);
-      transcriptBoundaries.reset({ preserveUser: pending.some(({ text }) => text.length > 0) });
+      const correction = pending.find(({ text }) => text.length > 0);
+      transcriptBoundaries.reset({ preserveUser: correction !== undefined });
       anchor = pending[0]?.anchor;
       if (
         interruptedThroughMs !== undefined &&
@@ -959,6 +967,13 @@ export function voiceWork({
         content:
           'Stop speaking immediately. Listen to the correction and handle it normally in Swedish.',
       });
+      if (interruptedThroughMs !== undefined) {
+        try {
+          correction?.startTranscriptUtterance?.();
+        } catch {
+          // Keep the cancellation and speech collection independent of the display write.
+        }
+      }
       if (delegation && delegation.offsetMs > interruptedThrough) void collect(delegation);
       else collectReply();
       const canceled = await canceling;
