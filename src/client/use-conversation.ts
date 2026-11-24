@@ -1124,6 +1124,7 @@ export function useConversation({
         if (epoch !== requestEpoch.current) return;
         setUnknown(false);
         update(result);
+        return result;
       } catch (failure) {
         if (epoch === requestEpoch.current) fail(failure);
       } finally {
@@ -1188,9 +1189,10 @@ export function useConversation({
       }
       // Wait for the stop to cancel the preceding work. Keep the draft versions
       // that the person saw when they wrote the new message.
-      if (correction?.interruption) await correction.interruption;
+      const confirmed = correction?.interruption ? await correction.interruption : true;
       const latest = active.current;
       if (epoch !== requestEpoch.current || latest?.id !== current.id) return;
+      if (!confirmed) return;
       showTranscript({ id: messageId, role: 'user', text: sent });
       // The user's fresh submission arms the silence gate before any reply can
       // reach Live, even if the response to this POST is delayed.
@@ -1461,15 +1463,18 @@ export function useConversation({
     cancel: async () => {
       const current = active.current;
       if (!current) return;
-      const cancelWork = async () => {
-        await command('cancel', {
+      const cancelWork = () =>
+        command('cancel', {
           revision: current.revision,
           contextRevision: current.contextRevision ?? 0,
           all: true,
         });
-        return active.current ?? undefined;
-      };
-      if (voice.state === 'listening' || voice.starting) await voice.silence(cancelWork);
+      if (voice.state === 'listening' || voice.starting)
+        await voice.silence(async () => {
+          const canceled = await cancelWork();
+          if (!canceled) throw new Error('Conversation cancellation could not be confirmed');
+          return canceled;
+        });
       else await cancelWork();
     },
     newConversation,
@@ -1497,7 +1502,9 @@ export function useConversation({
       }
     },
     recover,
-    retry: (operationId) => command('retry', { operationId }),
+    retry: async (operationId) => {
+      await command('retry', { operationId });
+    },
     retryWork: () => resolveWork('retry'),
     abandonWork: () => resolveWork('abandon'),
   };

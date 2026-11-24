@@ -55,8 +55,18 @@ function arrange(confirmBrowserInput = false) {
       delegation: { id, target: 'client' },
     });
   const messages = () => request.mock.calls.filter(([action]) => action === 'messages');
-  return { work, fragment, delegate, messages, response, channel, initial, delivered };
+  return { work, fragment, delegate, messages, request, response, channel, initial, delivered };
 }
+
+test('a repeated interruption cutoff preserves the cancellation outcome', async () => {
+  const { work, request, initial } = arrange();
+  request.mockRejectedValueOnce(new Error('Cancellation unavailable'));
+  await expect(work.interruptSpeech(100)).rejects.toThrow('voice_interruption_failed');
+  await expect(work.interruptSpeech(100)).rejects.toThrow('voice_interruption_failed');
+  await expect(work.interruptSpeech(200)).resolves.toEqual(initial);
+  await expect(work.interruptSpeech(200)).resolves.toEqual(initial);
+  expect(request.mock.calls.filter(([action]) => action === 'cancel')).toHaveLength(2);
+});
 
 test.each(['timeout', 'error'] as const)(
   'typed reply survives thinking %s and unblocks only its context handoff',

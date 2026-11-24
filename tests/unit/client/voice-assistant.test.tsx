@@ -8,6 +8,7 @@ import {
   startConversationWithVoice,
 } from '../../support/conversation-dom.js';
 import { StandaloneConversation } from '../../support/conversation-harness.js';
+import { deferredResponse } from '../../support/conversation-hook.js';
 import { closeVoiceConnection, StandaloneVoice } from '../../support/voice-harness.js';
 
 class Track extends EventTarget {
@@ -484,6 +485,76 @@ test('Avbryt keeps capturing the correction while interrupted speech drains', as
   expect(document.activeElement).toBe(microphoneButton());
   expect(remote.stop).not.toHaveBeenCalled();
 });
+
+test.each([
+  { action: 'interrupt', success: false },
+  { action: 'interrupt', success: true },
+  { action: 'stop', success: false },
+  { action: 'stop', success: true },
+])(
+  'a typed correction waits for confirmed interruption: $action success=$success',
+  async ({ action, success }) => {
+    const { signals } = meteredAudio();
+    const { component, view } = setup();
+    component.unmount();
+    const heldResponse = deferredResponse();
+    const messages: unknown[] = [];
+    const voiceResult = (phase: string) => ({
+      voice: { id: 'voice', phase, seconds: null, usageFinal: false },
+      assistant: view,
+      sdp: 'answer',
+    });
+    const fetch = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith(`/${action}`)) return heldResponse.promise;
+      if (url.endsWith('/stop')) return Response.json({}, { status: 503 });
+      if (url.includes('/voice'))
+        return Response.json(voiceResult(action === 'stop' ? 'working' : 'listening'));
+      if (url.endsWith('/messages')) messages.push(JSON.parse(String(init?.body)));
+      return Response.json(
+        init?.method === 'POST' || url.endsWith('/text-session') ? view : { available: true },
+      );
+    });
+    vi.stubGlobal('fetch', fetch);
+    render(
+      <StandaloneConversation
+        householdId="linden"
+        onMapChange={vi.fn()}
+        onAccessLost={vi.fn()}
+        onSelectItem={async () => false}
+      />,
+    );
+    await startConversationWithVoice();
+    await openConversationText();
+    await waitFor(() => expect(Peer.all[0]?.channel.readyState).toBe('open'));
+    const peer = Peer.all[0];
+    await act(async () =>
+      peer.channel.emit({ type: 'session.started', session: { id: 'provider' } }),
+    );
+    if (action === 'interrupt') signals.set(peer.remote, 22);
+    await screen.findByText(action === 'interrupt' ? 'Skyttel talar' : 'Skyttel arbetar');
+    const input = screen.getByRole<HTMLTextAreaElement>('textbox', {
+      name: 'Meddelande till Skyttel',
+    });
+    const text = 'Jag menar cykeln.';
+    fireEvent.change(input, { target: { value: text } });
+    await userEvent.click(screen.getByRole('button', { name: 'Avbryt' }));
+    expect(fetch.mock.calls.some(([url]) => url.endsWith(`/${action}`))).toBe(true);
+    await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
+    expect(messages).toEqual([]);
+    await act(async () =>
+      heldResponse.resolve(
+        success
+          ? Response.json(voiceResult(action === 'stop' ? 'closed' : 'listening'))
+          : Response.json({}, { status: 503 }),
+      ),
+    );
+    expect(messages).toEqual(success ? [expect.objectContaining({ text })] : []);
+    expect(input.value).toBe(success ? '' : text);
+    expect(screen.getByRole('log', { name: 'Samtalstext' }).textContent?.includes(text)).toBe(
+      success,
+    );
+  },
+);
 
 test('Avbryt uses the provider timeline when output transcripts lag playback', async () => {
   const { signals } = meteredAudio();

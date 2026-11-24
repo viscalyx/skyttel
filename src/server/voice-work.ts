@@ -129,6 +129,8 @@ export function voiceWork({
   let dispatching: VoiceDispatch | undefined;
   let canceling: Promise<{ revision: number; view: TextAssistantView } | undefined> =
     Promise.resolve(undefined);
+  let cutoffCancellation = canceling;
+  let canceledThroughMs = -1;
   const inFlight = new Map<number, number>();
   const events = new Set<string>();
   const delegations = new Set<string>();
@@ -929,7 +931,8 @@ export function voiceWork({
     async interruptSpeech(interruptedThroughMs?: number) {
       if (stopped || !allowed()) throw new Error('voice_session_expired');
       if (interruptedThroughMs !== undefined && interruptedThroughMs <= interruptedThrough) {
-        await canceling;
+        if (interruptedThroughMs > canceledThroughMs && !(await cutoffCancellation))
+          throw new Error('voice_interruption_failed');
         return request();
       }
       // Input can reach the sideband before the browser's interrupt request.
@@ -947,7 +950,10 @@ export function voiceWork({
         delegation = awaitingInterrupt;
       response?.(undefined);
       cancel(rendered.revision);
-      if (interruptedThroughMs !== undefined) awaitingCorrectionAfterRevision = rendered.revision;
+      if (interruptedThroughMs !== undefined) {
+        cutoffCancellation = canceling;
+        awaitingCorrectionAfterRevision = rendered.revision;
+      }
       channel.send({
         type: 'session.instructions.append',
         delegation_id: null,
@@ -958,6 +964,8 @@ export function voiceWork({
       else collectReply();
       const canceled = await canceling;
       if (!canceled) throw new Error('voice_interruption_failed');
+      if (interruptedThroughMs !== undefined)
+        canceledThroughMs = Math.max(canceledThroughMs, interruptedThroughMs);
       answered.add(canceled.view.revision);
       rendered.revision = Math.max(rendered.revision, canceled.view.revision);
       if (

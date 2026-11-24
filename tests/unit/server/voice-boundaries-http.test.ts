@@ -289,8 +289,8 @@ test.each(['large receipt', 'many fragments'])(
         return Response.json({ error: { message: 'Initial history too large.' } }, { status: 400 });
     });
     const map = await readMap();
-    const description =
-      condition === 'large receipt' ? 'Påhittad data, fält 42. '.repeat(410) : 'Kort beskrivning.';
+    const archivedMarker = 'Arkivfält 73.';
+    const description = `${archivedMarker} ${condition === 'large receipt' ? 'Påhittad data, fält 42. '.repeat(410) : 'Kort beskrivning.'}`;
     expect(
       (
         await post('map/draft', {
@@ -345,7 +345,7 @@ test.each(['large receipt', 'many fragments'])(
     const seeded = JSON.stringify(live.requests.at(-1)?.session.input);
     expect(seeded).toContain(latest);
     expect(seeded).toContain('previous-map-save');
-    expect(seeded).not.toContain(description);
+    expect(seeded).not.toContain(archivedMarker);
     if (condition === 'many fragments')
       expect(seeded).toContain('Delegera frågor om äldre uppgifter');
     speak(live, 'Vad finns i kartan?');
@@ -747,6 +747,7 @@ test.each(['read', 'external edit', 'spoken edit', 'save'])(
       fragment(first, 1000);
       finish();
       await expect.poll(async () => (await poll()).voice.phase).toBe('listening');
+      let externallyEditedDraft: MapState['draft'] | undefined;
       if (followUp === 'external edit') {
         const { draft } = await readMap();
         const changed = await post('map/draft', {
@@ -756,6 +757,8 @@ test.each(['read', 'external edit', 'spoken edit', 'save'])(
           value: { typeId, name: 'Svart cykel' },
         });
         expect(changed.status(), await changed.text()).toBe(200);
+        externallyEditedDraft = (await readMap()).draft;
+        expect(externallyEditedDraft.changes.map(({ id }) => id)).toContain('outside-voice');
       }
       await poll();
       fragment(rest, 2000);
@@ -791,6 +794,7 @@ test.each(['read', 'external edit', 'spoken edit', 'save'])(
         }
       }
       const current = await readMap();
+      if (followUp === 'external edit') expect(current.draft).toEqual(externallyEditedDraft);
       expect(current.draft.changes.map(({ id }) => id)).toContain('new-bike');
       expect(current.objects).toEqual(before.objects);
       const final = await poll();

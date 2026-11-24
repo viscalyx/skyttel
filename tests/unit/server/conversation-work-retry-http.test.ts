@@ -528,6 +528,7 @@ test.each([true, false])(
   'an unavailable save receipt lookup requires recovery before any unfinished explanation can resume: explanation=%s',
   async (explanation) => {
     let operationIdWithDroppedReply: string | undefined;
+    let blockReceiptLookups = true;
     const unavailableLookups = new Set<string>();
     const model = textModel(
       (body) => {
@@ -567,7 +568,11 @@ test.each([true, false])(
                 .json()
                 .catch(() => null)
             : null;
-        if (rpc?.params?.name === 'read_save_operation' && operationIdWithDroppedReply) {
+        if (
+          blockReceiptLookups &&
+          rpc?.params?.name === 'read_save_operation' &&
+          operationIdWithDroppedReply
+        ) {
           unavailableLookups.add(rpc.params.arguments.operationId);
           throw new TypeError('Controlled save receipt lookup unavailable');
         }
@@ -634,6 +639,7 @@ test.each([true, false])(
     });
     const { history } = await (await browser.get(`${map}/history`)).json();
     expect(history).toEqual([operation.receipt]);
+    blockReceiptLookups = false;
     const check = await post(`${endpoint}/recover`, { operationIds: [operation.operationId] });
     expect(check.status(), await check.text()).toBe(200);
     view = await check.json();

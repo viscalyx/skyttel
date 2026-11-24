@@ -63,7 +63,7 @@ export type Voice = {
   silence: (cancelWork?: () => Promise<TextAssistantView | void>) => Promise<void>;
   /** Captures the current audible interruption for a fresh written correction. */
   prepareTextCorrection?: () =>
-    | { interruption?: Promise<void>; armPlayback?: () => void }
+    | { interruption?: Promise<boolean>; armPlayback?: () => void }
     | undefined;
   /** Replace provider context and queued audio while keeping the authorized microphone. */
   newConversation: (reset: () => Promise<TextAssistantView>) => Promise<TextAssistantView>;
@@ -94,7 +94,6 @@ type Attempt = {
   contextRenewal?: boolean;
   summaryPausedAt?: number;
   providerGeneration?: number;
-  interrupting?: Promise<void>;
   inputVersion?: number;
   playedResponseId?: string;
   output?: {
@@ -188,6 +187,7 @@ export function useVoice(options: {
     );
   }, []);
   const current = useRef<Attempt | null>(null);
+  const interrupting = useRef<{ path: string | null; result: Promise<boolean> } | null>(null);
   const prepared = useRef<VoicePlayback | null>(null);
   const held = useRef<HeldRequest | null>(null);
   const cancelledHeldStart = useRef(false);
@@ -535,8 +535,10 @@ export function useVoice(options: {
               microphoneOn: !offRef.current,
               microphoneActive: !offRef.current && activityRef.current.microphone,
               speakerActive: activityRef.current.speaker,
-              confirmedInputVersion: attempt.interrupting ? undefined : attempt.inputVersion,
-              playedResponseId: attempt.interrupting ? undefined : attempt.playedResponseId,
+              confirmedInputVersion:
+                interrupting.current?.path === path ? undefined : attempt.inputVersion,
+              playedResponseId:
+                interrupting.current?.path === path ? undefined : attempt.playedResponseId,
               deliveryConnectionId: responseDelivery?.id,
             },
             attempt.controller.signal,
@@ -955,10 +957,9 @@ export function useVoice(options: {
         summaryRenewal.current = false;
       });
   };
-  const silence = useCallback(
-    (cancelWork?: () => Promise<TextAssistantView | void>) => {
+  const interrupt = useCallback(
+    async (cancelWork?: () => Promise<TextAssistantView | void>) => {
       const attempt = current.current;
-      if (attempt?.interrupting) return attempt.interrupting;
       const response = voice?.response;
       if (
         response?.receiptOperationId === latest.current.assistant?.receipt?.operationId &&
@@ -974,23 +975,22 @@ export function useVoice(options: {
         attempt.playedResponseId = playedBeforeInterrupt;
         if (response) completedOutput.current.add(response.id);
         attempt.output = undefined;
-        attempt.interrupting = request<VoiceAssistantResponse>(
-          `${attempt.path}/${attempt.voiceId}/interrupt`,
-          interruption,
-          attempt.controller.signal,
-        )
-          .then((result) => {
-            if (current.current === attempt) apply(result.assistant, result.voice.replyDelivery);
-          })
-          .catch((failure) => {
-            if (current.current !== attempt) return;
+        try {
+          const result = await request<VoiceAssistantResponse>(
+            `${attempt.path}/${attempt.voiceId}/interrupt`,
+            interruption,
+            attempt.controller.signal,
+          );
+          if (current.current !== attempt) return false;
+          apply(result.assistant, result.voice.replyDelivery);
+          return true;
+        } catch (failure) {
+          if (current.current === attempt) {
             latest.current.onRecoveryNeeded?.();
-            return stop(voiceErrorNotice(failure, 'interrupted'));
-          })
-          .finally(() => {
-            attempt.interrupting = undefined;
-          });
-        return attempt.interrupting;
+            await stop(voiceErrorNotice(failure, 'interrupted'));
+          }
+          return false;
+        }
       }
       // Stopping work without an audible reply retires its provider context, retaining
       // the authorized input and conversation as historical text in a fresh session.
@@ -1014,15 +1014,34 @@ export function useVoice(options: {
         return assistant;
       });
       const generation = epoch.current;
-      return interrupted
-        .then(() => undefined)
-        .catch(() => {
-          if (!mounted.current || epoch.current !== generation) return;
+      try {
+        await interrupted;
+        return true;
+      } catch {
+        if (mounted.current && epoch.current === generation) {
           latest.current.onRecoveryNeeded?.();
           setError(voiceErrorNotice(undefined, 'interrupted'));
-        });
+        }
+        return false;
+      }
     },
     [renew, apply, voice?.response, announceSave, setError, stop],
+  );
+  const silence = useCallback<Voice['silence']>(
+    async (cancelWork) => {
+      if (interrupting.current?.path === path) {
+        await interrupting.current.result;
+        return;
+      }
+      const result = interrupt(cancelWork);
+      interrupting.current = { path, result };
+      try {
+        await result;
+      } finally {
+        if (interrupting.current?.result === result) interrupting.current = null;
+      }
+    },
+    [interrupt, path],
   );
   const level = useCallback(() => current.current?.transport?.microphoneLevel() ?? 0, []);
   const startHeld = useCallback(() => {
@@ -1194,10 +1213,10 @@ export function useVoice(options: {
     silence,
     prepareTextCorrection: () => {
       const attempt = current.current;
-      if (!attempt || offRef.current) return undefined;
-      const armPlayback = attempt.transport?.prepareTextCorrection();
-      if (armPlayback || attempt.interrupting)
-        return { interruption: attempt.interrupting, armPlayback };
+      const interruption =
+        interrupting.current?.path === path ? interrupting.current.result : undefined;
+      const armPlayback = offRef.current ? undefined : attempt?.transport?.prepareTextCorrection();
+      if (armPlayback || interruption) return { interruption, armPlayback };
     },
     playAudio,
   };

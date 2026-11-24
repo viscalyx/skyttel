@@ -4,7 +4,11 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
-import { liveProvider, voiceAnswerParts } from '../../support/live-provider.js';
+import {
+  isVoiceAnswerRelease,
+  liveProvider,
+  voiceAnswerParts,
+} from '../../support/live-provider.js';
 import { advanceActiveLogin } from '../../support/session-time.js';
 import { modelMessage, modelTool, readOnlyScope, textModel } from '../../support/text-model.js';
 
@@ -1118,6 +1122,17 @@ test.each(['before', 'after'] as const)(
       )
       .toMatchObject({ audio: true, text: expect.stringContaining('Utkastet är uppdaterat.') });
     await expect.poll(() => voiceAnswerParts(live.sent).join('')).toContain('Musiktjänst');
+    const acceptedDelegation = reconnected === 'after' ? 'spoken-work-40' : 'spoken-work-20';
+    await expect
+      .poll(() =>
+        live.sent.some(
+          ({ event }) =>
+            event.type === 'session.instructions.append' &&
+            event.delegation_id === acceptedDelegation &&
+            isVoiceAnswerRelease(event, true),
+        ),
+      )
+      .toBe(true);
     expect(voiceAnswerParts(live.sent).join('')).not.toContain('uppdraget kunde inte slutföras');
     expect(model.requests).toHaveLength(reconnected === 'after' ? 2 : 1);
     expect(otherSocket.messages).toHaveLength(1);

@@ -107,6 +107,7 @@ const receipt = (operationId: string): SaveReceipt => ({
   changes: [],
 });
 
+const answer = 'Den blå cykeln står i garaget intill den gamla kajaken.';
 test.each([
   {
     name: 'a paraphrased answer with speaker audio',
@@ -128,13 +129,12 @@ test.each([
   },
   {
     name: 'the full transcript with no speaker audio',
-    spoken: 'Den blå cykeln finns i garaget, bredvid den gamla kajaken.',
+    spoken: answer,
     audible: false,
     warned: true,
   },
 ])('playback evidence distinguishes $name', async ({ spoken, audible, warned }) => {
   const { media, server, tick, playedResponses } = await arrange();
-  const answer = 'Den blå cykeln står i garaget intill den gamla kajaken.';
   server.assistant = { ...initial, revision: 1, taskId: 'read-task', modelReply: answer };
   server.response = {
     id: 'read-reply',
