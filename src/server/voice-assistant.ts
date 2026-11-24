@@ -41,6 +41,8 @@ type Voice = Partial<ConversationConsentProvenance> & {
   assistant: TextAssistantView;
   channel: LiveSideband;
   heartbeat: number;
+  microphoneOn: boolean;
+  playbackPending?: boolean;
   deliveryConnectionId?: string;
   finalized: boolean;
   timer: NodeJS.Timeout;
@@ -115,7 +117,7 @@ export function voiceAssistantRoutes({
     role: 'user' | 'assistant',
     text: string,
     utteranceStart: boolean,
-  ) => (() => void) | undefined;
+  ) => ((requestId?: string) => void) | undefined;
   contextUsage?: (
     sessionId: string,
     contextRevision: number,
@@ -632,6 +634,7 @@ export function voiceAssistantRoutes({
         channel,
         usage,
         heartbeat: now(),
+        microphoneOn: body.microphoneOn !== false,
         deliveryConnectionId: body.deliveryConnectionId,
         finalized: false,
         timer: setInterval(() => {
@@ -761,6 +764,12 @@ export function voiceAssistantRoutes({
         voice.finish?.();
       });
       voice.work = voiceWork({
+        requestNewConversation:
+          body.freshConversationControls === true
+            ? () => {
+                voice.view.newConversationRequested = true;
+              }
+            : undefined,
         now,
         confirmBrowserInput: body.confirmBrowserInput === true,
         allowed: () => {
@@ -1015,6 +1024,10 @@ export function voiceAssistantRoutes({
       ) {
         voice.deliveryConnectionId = body.deliveryConnectionId;
       }
+      voice.microphoneOn = body.microphoneOn !== false;
+      voice.playbackPending =
+        body.speakerActive === true ||
+        Boolean(voice.view.response && body.playedResponseId !== voice.view.response.id);
       voice.work?.rendered(body);
       voice.work?.activity(body.microphoneActive === true && body.microphoneOn === true);
       voice.work?.speaker(body.speakerActive === true);
@@ -1050,8 +1063,14 @@ export function voiceAssistantRoutes({
         }
       }
     },
-    hasVoice: (id: string) =>
-      [...voices.values()].some((voice) => voice.assistant.id === id && !voice.closed),
+    hasActiveVoice: (id: string) =>
+      [...voices.values()].some(
+        (voice) =>
+          voice.assistant.id === id &&
+          !voice.closed &&
+          (voice.microphoneOn || voice.playbackPending || !voice.work?.readyForSummary()),
+      ),
+
     retireSessionWork: (sessionId: string, requestId?: string) => {
       for (const voice of voices.values())
         if (voice.assistant.id === sessionId && !voice.closed) voice.work?.retire(requestId);
@@ -1079,9 +1098,10 @@ export function voiceAssistantRoutes({
         if (!deferVoiceClose) void close(voice);
       }
     },
-    stopSession: (sessionId: string) => {
+    stopSession: (sessionId: string, switched = false) => {
       for (const voice of voices.values())
-        if (voice.assistant.id === sessionId) void close(voice, 'voice_access_lost');
+        if (voice.assistant.id === sessionId)
+          void close(voice, switched ? undefined : 'voice_access_lost');
     },
     close: async () => {
       await Promise.all([...voices.values()].map((voice) => close(voice)));

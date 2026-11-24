@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { assistantChangeSummary } from '../shared/assistant-change-summary.js';
+import { conversationCommand } from '../shared/conversation-command.js';
 import type {
   ConversationReply,
   PendingPartReference,
@@ -51,6 +52,7 @@ const speechSettleMs = 2000;
 export function voiceWork({
   channel,
   confirmBrowserInput = false,
+  requestNewConversation,
   initial,
   request,
   interrupt,
@@ -69,6 +71,7 @@ export function voiceWork({
   now?: () => number;
   channel: LiveSideband;
   confirmBrowserInput?: boolean;
+  requestNewConversation?: () => void;
   initial: TextAssistantView;
   request: (
     action?: string,
@@ -84,7 +87,7 @@ export function voiceWork({
     role: Fragment['role'],
     text: string,
     utteranceStart: boolean,
-  ) => (() => void) | undefined;
+  ) => ((requestId?: string) => void) | undefined;
   response?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['response']) => void;
   refusal?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['refusal']) => void;
   delivered?: (value: { id: string; voiced: boolean }) => void;
@@ -105,7 +108,7 @@ export function voiceWork({
     anchor: Anchor;
     predecessor?: VoiceDispatch;
     answerTo?: PendingPartReference[];
-    startTranscriptUtterance?: () => void;
+    startTranscriptUtterance?: (requestId?: string) => void;
   })[] = [];
   let generation = 0;
   let inputVersion = 0;
@@ -411,6 +414,7 @@ export function voiceWork({
     task: number,
     answerTo?: PendingPartReference[],
     continuedVoiceRead?: boolean,
+    markRequest?: (id: string) => void,
   ) {
     const acceptedInput = inputVersion;
     let requestId: string | undefined;
@@ -531,6 +535,7 @@ export function voiceWork({
         const controller = new AbortController();
         const from = draftAnchor(view);
         requestId = randomUUID();
+        markRequest?.(requestId);
         dispatch = {
           controller,
           requestId,
@@ -700,7 +705,7 @@ export function voiceWork({
       start_ms: event.start_ms,
       end_ms: event.end_ms,
     });
-    let startTranscriptUtterance: (() => void) | undefined;
+    let startTranscriptUtterance: ((requestId?: string) => void) | undefined;
     if (event.delta) {
       const utteranceStart = transcriptBoundaries.append(role, event.start_ms, event.end_ms, {
         newUtterance: role === 'user' && nextUserUtterance,
@@ -816,6 +821,11 @@ export function voiceWork({
       return;
     }
     if (text.trim() && expected) {
+      const command = conversationCommand(text);
+      if (requestNewConversation && command?.reset && !command.discard) {
+        requestNewConversation();
+        return;
+      }
       automaticReplyConsumed = id === null;
       commentary.working(id);
       void execute(
@@ -826,6 +836,7 @@ export function voiceWork({
         task,
         answerTo,
         continuedVoiceRead || undefined,
+        selected[0]?.startTranscriptUtterance,
       );
     }
   }

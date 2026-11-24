@@ -139,7 +139,8 @@ await fetch('VOICE-ADRESS/VOICE-ID/stop', {
 
 Kräv status 200 och `voice.phase: 'closed'` innan omladdning så att just
 provets transport har verifierad städning. Efter omladdning börjar nästa
-fristående startprov med tomt samtal och avstängd mikrofon. Installera därefter blocken på
+fristående startprov med tomt samtal och avstängd mikrofon. Installera
+därefter blocken på
 nytt. Avsluta launchern med `quit` och kontrollera borttagen katalog enligt
 röstguiden.
 
@@ -347,12 +348,11 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    kontrollen. Kör `restart` i terminalen.
 4. Ta bort nätblockeringen och ladda om webbläsaren. Skyttel kontrollerar och
    slutför själv det registrerade försöket, innan något nytt samtal startas
-   eller något medgivande ges. Öppna **Skriv till Skyttel**. Kräv det pausade
-   samtalet med utgångstid och förklaringen
-**Kontrollen visar att hela utkastet
-   sparades. Ändringarna finns i hushållets karta.**
-   i samtalstexten. Välj därefter **Nytt samtal**, godkänn medgivandet om det
-   behövs och slå på mikrofonen för resten av fallet.
+   eller något medgivande ges. Öppna **Skriv till Skyttel** och välj samtalet
+   **Markera Lo Exempel.** i **Samtal**. Läs utgångstiden och **Kontrollen
+   visar att hela utkastet sparades. Ändringarna finns i hushållets karta.**
+   Välj **Avstå från det oavslutade arbetet**, godkänn vid behov och läs
+   bekräftelsen. Välj **Nytt samtal** och slå på mikrofonen.
 5. Kontrollera ett genomfört kvitto med samma operation-ID och Lo i kartan. Kör
    `drop` efter sparandet; kontrollera att det genomförda kvittot finns kvar
    även om ett ljudsvar inte hördes. Vänta på avstängd röst, ladda om och välj
@@ -362,13 +362,11 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
    kvitto igen.
 6. Välj **Tillbaka till arbetet** och slå på mikrofonen igen. Kör `usage 12`,
    `usage 15` och `finalize off`. Anteckna adressen och svarets `voice.id` för
-   det senaste POST-anropet till `/voice` i nätverkspanelen. Öppna textvyn och
-   välj **Nytt samtal**. Den gamla röstanslutningen stängs, och en ny behåller
-   mikrofonens läge. Kopiera det gamla startanropet som `fetch` från
-   nätverkspanelen. Ändra adressen till `GAMLA-ADRESSEN/GAMLA-ID/stop` och
-   kroppen till `"{}"`; behåll anropets rubriker. Kör det i konsolen och läs
-   JSON-svaret. Det bekräftar den redan stängda anslutningen och ska visa
-   `voice.phase:"closed"`, `voice.seconds:15` och `voice.usageFinal:false`.
+   det senaste POST-anropet till `/voice` i nätverkspanelen. Kontrollera
+   `voice.seconds:15` och `voice.usageFinal:false` i svaret från nästa
+   statuskontroll. Öppna textvyn och välj **Nytt samtal**. Kontrollera det nya
+   samtalets och röstanslutningens ID i nätverkspanelen. Mikrofonen behåller
+   sitt läge och `window.skyttelVoiceFixture.stats().openPeers` visar 1.
    Återställ `finalize on` och ladda om sidan.
 7. Lägg Mira i utkastet och öppna ett nytt textsamtal enligt testfallet.
    Installera konsolblocket för
@@ -1114,8 +1112,8 @@ efter fallet och avsluta med `quit`.
    förberedelsen. Öppna textvyn först efter att svaret har kommit.
 4. På verklig utrustning: upprepa uppdraget med mikrofonen på, stäng textvyn och
    lyssna på svaret. Öppna den igen och jämför vad som hördes.
-5. Välj **Nytt samtal** med mikrofonen på. Kontrollera dess besked i
-   samtalstexten och kommentarerna.
+5. Vänta tills uppläsningen har avslutats och välj **Nytt samtal**.
+   Läs den tomma samtalstexten och kontrollera att mikrofonen är på.
 6. Kör `response-required off`. Med textvyn stängd, kör
    `user Föreslå Alex blå cykel av typen Fordon.` och `delegate`.
    Släpp det hållna anropet med
@@ -1197,7 +1195,8 @@ efter fallet och avsluta med `quit`.
    mikrofonen igen. Kontrollera kommentarerna en gång till.
 3. Skicka **Stäng av innan svaret är klart.**. Stäng av mikrofonen medan svaret
    hålls. Släpp **Även detta svar finns bara i text.**.
-4. Skriv **Nytt samtal** med mikrofonen av och läs beskedet.
+4. Skriv **Nytt samtal** med mikrofonen av. Kontrollera att samtalstexten
+   är tom och att mikrofonen är av.
 
 ### Tidslinje RÖSTTEXT-03
 

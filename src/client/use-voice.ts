@@ -27,6 +27,7 @@ export type Voice = {
   starting: boolean;
   /** Skyttel is heard. */
   speaking: boolean;
+  playbackPending?: boolean;
   /** The user is heard, with the microphone on. */
   userSpeaking: boolean;
   /** Skyttel works with a task that the user gave with the voice. */
@@ -107,6 +108,7 @@ type Attempt = {
   };
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
   refusalId?: string;
+  newConversationHandled?: boolean;
 };
 
 function voiceAnchor(view: TextAssistantView) {
@@ -184,6 +186,7 @@ export function useVoice(options: {
   /** The server refuses the voice work. The failure says why. */
   onAccessLost: (failure: MapRequestError) => void;
   onRecoveryNeeded?: () => void;
+  onNewConversation?: () => boolean;
   autoStart?: boolean;
   onTranscript?: (row: TranscriptRow) => void;
   /** Network or service conditions forbid sending microphone input. */
@@ -572,6 +575,9 @@ export function useVoice(options: {
             attempt.controller.signal,
           );
           if (!active()) return;
+          if (result.voice.newConversationRequested && !attempt.newConversationHandled)
+            attempt.newConversationHandled = latest.current.onNewConversation?.();
+          if (!active()) return;
           if (workingOnWrittenMessage(result.assistant)) attempt.resumeRequested = false;
           // A successful poll has registered both the displayed anchor and
           // the server's current pending questions on this voice connection.
@@ -800,6 +806,7 @@ export function useVoice(options: {
                 {
                   sdp,
                   confirmBrowserInput: true,
+                  freshConversationControls: true,
                   deliveryConnectionId: attempt.delivery?.id,
                   ...rendered,
                   microphoneOn: !(reuse?.paused ?? attempt.held?.released ?? false),
@@ -1245,6 +1252,12 @@ export function useVoice(options: {
         : microphone,
     starting,
     speaking,
+    playbackPending: Boolean(
+      state === 'listening' &&
+        voice?.response &&
+        !completedOutput.current.has(voice.response.id) &&
+        !current.current?.acknowledgement?.notified,
+    ),
     userSpeaking: microphone === 'on' && activity.microphone,
     working,
     waitingForAnswer: Boolean(

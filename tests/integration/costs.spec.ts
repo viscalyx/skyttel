@@ -73,7 +73,7 @@ test('KOST-01: separata kostnader och månadens antaganden återläses efter oms
     await turnMicrophoneOff(page);
     await openCosts(page);
     const overview = category(page, 'Månadens kostnadsöversikt');
-    await expect(overview).toContainText('77,59 SEK');
+    await expect(overview).toContainText('79,76 SEK');
     const totalBounds = await overview.boundingBox();
     const renderBounds = await category(page, 'Render – hel månad').boundingBox();
     expect(
@@ -87,19 +87,19 @@ test('KOST-01: separata kostnader och månadens antaganden återläses efter oms
       '90 sekunder rapporterade',
     );
     await expect(category(page, 'Textmodell – uppmätt hittills')).toContainText(
-      '4,34 SEK (0,434 USD)',
+      '6,51 SEK (0,651 USD)',
     );
-    await expect(category(page, 'Textmodell – uppmätt hittills')).toContainText('200 000 token');
+    await expect(category(page, 'Textmodell – uppmätt hittills')).toContainText('300 000 token');
     const terra = category(page, 'Textmodell – uppmätt hittills');
     const usage = terra.locator('dd');
     await expect(usage).toHaveText([
-      '200 000 token',
-      '40 000 token',
-      '20 000 token',
-      '10 000 token',
-      '4 000 token',
+      '300 000 token',
+      '60 000 token',
+      '30 000 token',
+      '15 000 token',
+      '6 000 token',
     ]);
-    await expect(page.locator('.cost-total')).toContainText('77,59 SEK (7,759 USD)');
+    await expect(page.locator('.cost-total')).toContainText('79,76 SEK (7,976 USD)');
     await expect(page.getByText(/Cirka 200 kronor per månad/)).toBeVisible();
     await category(page, 'Prisunderlag')
       .getByText(/Modellpriser kontrollerade/)
@@ -122,7 +122,7 @@ test('KOST-01: separata kostnader och månadens antaganden återläses efter oms
     await page.getByText('Ändra månadens antaganden', { exact: true }).click();
     await page.getByLabel('SEK per USD', { exact: true }).fill('11');
     await page.getByRole('button', { name: 'Spara månadens antaganden' }).click();
-    await expect(page.locator('.cost-total')).toContainText('85,35 SEK (7,759 USD)');
+    await expect(page.locator('.cost-total')).toContainText('87,74 SEK (7,976 USD)');
     const month = await page.getByLabel('Månad (UTC)').inputValue();
     const previous = new Date(`${month}-01T00:00:00Z`);
     previous.setUTCMonth(previous.getUTCMonth() - 1);
@@ -130,25 +130,25 @@ test('KOST-01: separata kostnader och månadens antaganden återläses efter oms
     await expect(category(page, 'Prisunderlag')).toContainText('1 USD = 10 SEK');
     await expect(page.getByText(/tidigare förbrukning är okänd/)).toBeVisible();
     await page.getByLabel('Månad (UTC)').fill(month);
-    await expect(page.locator('.cost-total')).toContainText('85,35 SEK');
+    await expect(page.locator('.cost-total')).toContainText('87,74 SEK');
     await app.command('restart', 'restarted');
     await page.reload();
     await page.getByText('Visa mätvärden för Live', { exact: true }).click();
     await page.getByText('Visa mätvärden för textmodell', { exact: true }).click();
-    await expect(page.locator('.cost-total')).toContainText('85,35 SEK (7,759 USD)');
+    await expect(page.locator('.cost-total')).toContainText('87,74 SEK (7,976 USD)');
     await expect(category(page, 'Prisunderlag')).toContainText('1 USD = 11 SEK');
     await expect(category(page, 'Render – hel månad')).toContainText('79,75 SEK (7,25 USD)');
     await expect(category(page, 'Live – uppmätt hittills')).toContainText(
       '90 sekunder rapporterade',
     );
     await expect(category(page, 'Live – uppmätt hittills')).toContainText('0,83 SEK (0,075 USD)');
-    await expect(terra).toContainText('4,77 SEK (0,434 USD)');
+    await expect(terra).toContainText('7,16 SEK (0,651 USD)');
     await expect(usage).toHaveText([
-      '200 000 token',
-      '40 000 token',
-      '20 000 token',
-      '10 000 token',
-      '4 000 token',
+      '300 000 token',
+      '60 000 token',
+      '30 000 token',
+      '15 000 token',
+      '6 000 token',
     ]);
   } finally {
     await app.close();
@@ -177,7 +177,7 @@ test('KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan
     await expect(live).toContainText('1 registrerade försök; 1 med osäkert underlag');
     await expect(live).toContainText('0,13 SEK (0,0125 USD)');
     await expect(terra).toContainText('Belopp saknas');
-    await expect(terra).toContainText('2 saknar mätvärde');
+    await expect(terra).toContainText('3 saknar mätvärde');
     await expect(page.locator('.cost-total')).toContainText('Delsumma för beräkningsbara delar');
     await expect(page.getByText(/deras belopp är inte noll/)).toBeVisible();
     const known = await page.locator('.cost-total').innerText();

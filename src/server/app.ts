@@ -419,8 +419,8 @@ export function createApp({
   app.route('/api', profileImageRoutes(database, auth, config.origin));
   app.route('/api', themePreferenceRoutes(database, auth, config.origin));
   app.route('/', assistantRoutes(database, auth, config.origin));
-  let hasVoice: ((id: string) => boolean) | undefined;
-  let stopVoice: ((sessionId: string) => void) | undefined;
+  let hasActiveVoice: ((id: string) => boolean) | undefined;
+  let stopVoice: ((sessionId: string, switched?: boolean) => void) | undefined;
   let retireVoiceWork: ((sessionId: string, requestId?: string) => void) | undefined;
   let summarizeVoice: ((sessionId: string, signal: AbortSignal) => Promise<void>) | undefined;
   let newVoiceConversation:
@@ -435,7 +435,7 @@ export function createApp({
     consents,
     now,
     dispatch: dispatchAssistant,
-    hasVoice: (id) => hasVoice?.(id) ?? false,
+    hasActiveVoice: (id) => hasActiveVoice?.(id) ?? false,
     onWork: (id, until) => {
       if (bindings?.work(id, until)) revalidateVoice?.();
     },
@@ -450,7 +450,7 @@ export function createApp({
       costs.model(attempt);
       modelUsage?.(attempt);
     },
-    onStop: (sessionId) => stopVoice?.(sessionId),
+    onStop: (sessionId, switched) => stopVoice?.(sessionId, switched),
     onResetStart: (sessionId, requestId) => retireVoiceWork?.(sessionId, requestId),
     onSummary: (sessionId, signal) => summarizeVoice?.(sessionId, signal),
     onNewConversation: (view, deferVoiceClose) => newVoiceConversation?.(view, deferVoiceClose),
@@ -490,7 +490,7 @@ export function createApp({
     prepareVoiceContext: textAssistant.prepareVoiceContext,
   });
   revalidateVoice = voiceAssistant.revalidate;
-  hasVoice = voiceAssistant.hasVoice;
+  hasActiveVoice = voiceAssistant.hasActiveVoice;
   stopVoice = voiceAssistant.stopSession;
   retireVoiceWork = voiceAssistant.retireSessionWork;
   summarizeVoice = voiceAssistant.summarizeSession;

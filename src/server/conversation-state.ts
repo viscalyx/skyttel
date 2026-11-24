@@ -78,6 +78,8 @@ export type ConversationState = Omit<TextAssistantView, 'conversation' | 'unfini
     notice?: boolean;
     /** Server-owned causal identity, independent of repeated transcript text. */
     requestId?: string;
+    /** Presentation anchor for a delegated utterance. */
+    speechRequestId?: string;
     /** Checked outcomes survive replacement of provider-native tool history. */
     result?: TextAssistantView['result'];
     receipt?: Pick<
@@ -148,7 +150,7 @@ export type ConversationState = Omit<TextAssistantView, 'conversation' | 'unfini
 export function firstRequest(state: ConversationState) {
   if (state.firstRequest) return state.firstRequest;
   const start = state.conversation.findIndex((row) => row.role === 'user' && row.text.trim());
-  if (start === -1) return state.queue[0]?.text;
+  if (start === -1) return state.activeMessage?.text ?? state.queue[0]?.text;
   const first = state.conversation[start];
   let text = first.text;
   if (first.partial) {

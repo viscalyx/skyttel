@@ -323,9 +323,7 @@ test('KONTEXT-03: skrivna och talade kommandon börjar om samtalet och kastar ut
     await turnMicrophoneOn(page);
     await field(page).fill('Oskickat');
     speak(live, 'Nytt samtal');
-    await expect(log(page)).toHaveText(
-      'Skyttel: Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
-    );
+    await expect(log(page)).toHaveText('Här visas det du och Skyttel säger och skriver.');
     await expect.poll(() => live.requests.length).toBe(2);
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
     await expect(field(page)).toHaveValue('Oskickat');
@@ -353,7 +351,7 @@ test('KONTEXT-03: skrivna och talade kommandon börjar om samtalet och kastar ut
     await expect.poll(() => live.requests.length).toBe(4);
     await expect
       .poll(() => live.sent.filter(({ event }) => isVoiceAnswerRelease(event)).length)
-      .toBe(commentsBeforeTypedReset + 1);
+      .toBe(commentsBeforeTypedReset);
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
     await expect(field(page)).toHaveValue('Oskickat under avstängning');
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([

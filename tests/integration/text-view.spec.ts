@@ -271,9 +271,15 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
     );
     await messageField(page).fill('Oskickat');
 
+    const fresh = textView(page).getByRole('button', { name: 'Nytt samtal', exact: true });
+    await expect(fresh).toBeDisabled();
+    await messageField(page).press('Escape');
+    await expect(fresh).toBeEnabled();
+    const connectionsBeforeNew = live.requests.length;
+    const stopsBeforeNew = [...stops];
     await textView(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
     await expect(conversationText(page)).toHaveText(
-      'Skyttel: Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+      'Här visas det du och Skyttel säger och skriver.',
     );
     await expect(consentBox(page)).toHaveCount(0);
     await expect(messageField(page)).toHaveValue('Oskickat');
@@ -288,7 +294,7 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
       }),
     ]);
     await expect(conversationText(page)).toHaveText(
-      'Skyttel: Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+      'Här visas det du och Skyttel säger och skriver.',
     );
     expect((await (await page.request.get(path)).json()).draft).toEqual(before);
     {
@@ -306,19 +312,19 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([
       { enabled: true, state: 'live' },
     ]);
-    expect(live.requests).toHaveLength(2);
-    expect(live.requests[1].session.input).toBeUndefined();
+    expect(live.requests).toHaveLength(connectionsBeforeNew + 1);
+    expect(live.requests.at(-1)?.session.input).toBeUndefined();
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().openPeers)).toBe(1);
     expect(
       await page.evaluate(() => window.skyttelVoiceFixture.stats().remoteTracks[0].state),
     ).toBe('ended');
-    expect(live.sent.map(({ event }) => event)).toContainEqual({
-      type: 'session.commentary.append',
-      delegation_id: null,
-      content: 'Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
-    });
+    expect(live.sent.map(({ event }) => event)).not.toContainEqual(
+      expect.objectContaining({
+        content: 'Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+      }),
+    );
     expect(live.sent.map(({ event }) => event.type)).toContain('session.close');
-    expect(stops.filter((stop) => stop.endsWith('/stop'))).toEqual([]);
+    expect(stops).toEqual(stopsBeforeNew);
 
     // The next message starts without what was said before.
     await messageField(page).fill('Vad finns i utkastet?');
@@ -342,7 +348,8 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
       releaseReset = resolve;
     });
     let resetRequests = 0;
-    await page.route('**/text-assistant/*/new', async (route) => {
+    await page.route('**/text-assistant', async (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
       resetRequests++;
       await resetHeld;
       await route.continue();
@@ -350,12 +357,12 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
     await textView(page).getByRole('button', { name: 'Nytt samtal', exact: true }).dblclick();
     await expect.poll(() => resetRequests).toBe(1);
     releaseReset();
-    await expect.poll(() => live.requests.length).toBe(3);
+    await expect.poll(() => live.requests.length).toBe(connectionsBeforeNew + 2);
     await expect
       .poll(() => page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks))
       .toEqual([{ enabled: false, state: 'live' }]);
     await expect(conversationText(page)).toHaveText(
-      'Skyttel: Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+      'Här visas det du och Skyttel säger och skriver.',
     );
     await expect(messageField(page)).toHaveValue('Oskickat vid omstart');
     expect((await (await page.request.get(path)).json()).draft).toEqual(before);

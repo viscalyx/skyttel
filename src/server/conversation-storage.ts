@@ -297,17 +297,19 @@ export function conversationStorage(database: Database.Database, now: () => numb
         return state.unfinishedRequests.some((request) => {
           if (messages.some((message) => message.id === request.id)) return false;
           const accepted = state.accepted.find(([id]) => id === request.id)?.[1];
+          if (accepted?.status === 'canceled' && !state.pendingBatch && !state.pendingSave)
+            return false;
           const parts = state.pendingPartsLedger.parts.filter(
             (part) => part.messageId === request.id || part.evidence?.messageId === request.id,
           );
-          // A verified completed task may await a question's answer without
-          // owning the draft executor. Its pending parts still block saving.
+          // A terminal reply or refusal has released the executor. Failed work
+          // with an explicit retry, unknown outcomes and ready edits still hold it.
+          const phase = accepted?.result?.view.phase;
           return !(
-            !request.paused &&
             accepted?.status === 'completed' &&
-            accepted.result?.view.phase === 'ready' &&
-            !accepted.result.view.error &&
-            parts.some((part) => part.status === 'waiting') &&
+            (phase === 'ready' || phase === 'error') &&
+            !state.pendingBatch &&
+            !state.pendingSave &&
             !parts.some((part) => part.status === 'ready')
           );
         });

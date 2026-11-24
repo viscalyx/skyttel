@@ -16,6 +16,7 @@ export interface VoiceAssistantView {
   /** Latest input fragment received on the server side of this voice connection. */
   inputVersion?: number;
   usageFinal: boolean;
+  newConversationRequested?: boolean;
   /** A server rejection before work was accepted, independent of audio. */
   refusal?: { id: string; text: string };
   /** Ephemeral typed reply handoffs; OFF completions are consumed without speech. */

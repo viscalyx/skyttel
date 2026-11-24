@@ -77,7 +77,7 @@ test('a rejected retained-list read can be explicitly retried without erasing th
         : Response.json({ conversations: retained });
   });
   await act(async () => requiredCommand(result.current.listRetained)());
-  expect(result.current.error).toContain('Samtalslistan');
+  expect(result.current.listError).toContain('Samtalslistan');
   expect(result.current.pending).toBe(false);
   expect(result.current.retainedConversations).toBeUndefined();
   expect(result.current.session?.id).toBe('original');
@@ -105,7 +105,7 @@ test('a retained-list response from a departed household cannot expose its priva
 });
 
 test.each([403, 404])(
-  'opening a retained conversation rejected with %s removes inaccessible private text',
+  'opening a retained conversation rejected with %s preserves the current view only when access remains',
   async (status) => {
     const { result, onAccessLost } = await conversationCommands((path) =>
       path.endsWith('/earlier/open')
@@ -117,8 +117,12 @@ test.each([403, 404])(
       opened = await requiredCommand(result.current.openRetained)('earlier');
     });
     expect(opened).toBe(false);
-    expect(result.current.session).toBeNull();
-    expect(result.current.transcript).toEqual([]);
+    if (status === 403) {
+      expect(result.current.session).toBeNull();
+      expect(result.current.transcript).toEqual([]);
+    } else {
+      expect(result.current.session?.id).toBe('original');
+    }
     expect(result.current.pending).toBe(false);
     expect(onAccessLost).toHaveBeenCalledTimes(status === 403 ? 1 : 0);
   },

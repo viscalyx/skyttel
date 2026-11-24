@@ -203,9 +203,11 @@ mikrofon”.
 
 1. Starta med röst och öppna textvyn. Skicka **Rätta namnet.**, håll svaret
    enligt separat förberedelse och skriv **Oskickat** utan att skicka.
-2. Välj **Nytt samtal**. Läs endast det nya beskedet om en osparad ändring,
+2. Kontrollera att **Nytt samtal** är spärrat. Avbryt uppdraget med Escape
+   och välj **Nytt samtal**. Läs den tomma samtalstexten,
    kvarvarande Oskickat och mikrofonen på. Ingen ny medgivanderuta behövs.
-3. Låt operatören släppa den gamla rättelsen. Läs samma nya samtalsbesked
+3. Låt operatören släppa den gamla rättelsen. Kontrollera den tomma
+   samtalstexten
    och öppna **Visa utkastet → Visa förslaget: Lo Exempel**. Läs Person och
    **Påhittad uppgift**, stäng uppgifterna och dölj utkastet. Skicka därefter
    **Vad finns i utkastet?** och låt operatören leverera **Lo Exempel.**
@@ -217,10 +219,8 @@ mikrofon”.
 
 **Förväntat resultat:**
 
-- Samtalstexten töms och visar bara
-  **Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.**
-  Samma verifierbara besked skickas i kommentarspaketet.
-  Paketet och de tysta spåren bevisar inte att tal hörs.
+- Det nya samtalet börjar med tom samtalstext. Det tidigare samtalet
+  finns kvar i **Samtal**.
 - Ingen medgivanderuta visas. Mikrofonen är fortfarande på.
 - **Oskickat** står kvar i fältet. Lo-förslaget är oförändrat, också
   efter att det stoppade svaret har släppts.
@@ -314,7 +314,7 @@ testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”
   },
   "reference": "1280 × 900, mus; bred datorreferens med sidofält och automatiskt fältfokus.",
   "outcomes": [
-    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
     "Läsa, skriva och öppna utkastet på telefon, surfplatta och dator."
   ]
 }
@@ -896,7 +896,7 @@ TEXTMOBIL-06.
   },
   "reference": "390 × 844, emulerad pekare CSS-pixlar; smal stående vy.",
   "outcomes": [
-    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
     "Fältet får inget automatiskt startfokus; textvyn fyller bredden.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -943,7 +943,7 @@ TEXTMOBIL-07.
   },
   "reference": "844 × 390, emulerad pekare CSS-pixlar; kort liggande vy.",
   "outcomes": [
-    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
     "Kompakt rad och fält på en rad; sidofält med karta bredvid.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -990,7 +990,7 @@ TEXTMOBIL-08.
   },
   "reference": "820 × 1180, emulerad pekare CSS-pixlar; bred stående pekare.",
   "outcomes": [
-    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
     "Fast sidofält och inget automatiskt startfokus.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -1037,7 +1037,7 @@ TEXTMOBIL-09.
   },
   "reference": "320 × 250, mus CSS-pixlar; ytterst kort smal dator.",
   "outcomes": [
-    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
     "Kompakt rad och fält på en rad; inget automatiskt startfokus.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -1084,7 +1084,7 @@ TEXTMOBIL-10.
   },
   "reference": "700 × 500, mus CSS-pixlar; smal kort dator.",
   "outcomes": [
-    "Paus och utgångstid visas vid återkomst; avslut kan nås och ger fokus till Nytt samtal.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
     "Kompakt rad, full bredd och inget automatiskt startfokus.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]

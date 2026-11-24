@@ -71,10 +71,13 @@ export function TextView({
   const stop = working && !computer;
   const stopFocused = useRef(false);
   const [listOpen, setListOpen] = useState(false);
+  const textWidth = computer ? widths.textWidth : 400;
+  const draftWidth = computer ? widths.draftWidth : 340;
+  const sidePanelsFit = viewport.width >= textWidth + draftWidth + 280 + 100;
   const compact =
-    !computer ||
-    viewport.width <
-      widths.textWidth + (draftOpen ? widths.draftWidth : 0) + (listOpen ? 280 : 0) + 100;
+    viewport.narrow ||
+    viewport.width < textWidth + (draftOpen ? draftWidth : 0) + (listOpen ? 280 : 0) + 100;
+  const draftVisible = draftOpen && (!compact || !listOpen);
   const id = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
@@ -175,7 +178,12 @@ export function TextView({
       aria-labelledby={`${id}-title`}
       hidden={hidden}
       onKeyDown={(event) => {
-        if (event.key === 'Escape' && working && !mobile) {
+        if (
+          event.key === 'Escape' &&
+          working &&
+          !mobile &&
+          !(event.target instanceof Element && event.target.closest('dialog'))
+        ) {
           event.preventDefault();
           event.stopPropagation();
           void conversation.cancel();
@@ -194,7 +202,12 @@ export function TextView({
             <button
               type="button"
               className="text-view-new"
-              disabled={conversation.inputBlocked || pending || conversation.switchBlocked}
+              disabled={
+                conversation.disconnected ||
+                conversation.available === false ||
+                pending ||
+                conversation.switchBlocked
+              }
               onClick={() => (session ? void conversation.newConversation() : startConversation())}
             >
               Nytt samtal
@@ -242,12 +255,12 @@ export function TextView({
               <button
                 type="button"
                 className="text-view-draft-toggle"
-                aria-expanded={draftOpen}
-                aria-label={`${draftOpen ? 'Dölj utkastet' : 'Visa utkastet'} (${draftCount})`}
+                aria-expanded={draftVisible}
+                aria-label={`${draftVisible ? 'Dölj utkastet' : 'Visa utkastet'} (${draftCount})`}
                 aria-controls={`${id}-draft`}
                 onClick={() => {
-                  if (compact) setListOpen(false);
-                  onToggleDraft();
+                  if (compact || !sidePanelsFit) setListOpen(false);
+                  if (!draftOpen || draftVisible) onToggleDraft();
                 }}
               >
                 <span aria-hidden="true" className="draft-direction">
@@ -267,15 +280,23 @@ export function TextView({
           </div>
         </div>
         {listOpen && !hidden && (
-          <ConversationList
-            conversation={conversation}
-            onSelected={() => {
-              if (compact) {
-                setListOpen(false);
-                heading.current?.focus();
-              }
-            }}
-          />
+          <>
+            {compact && children}
+            <ConversationList
+              conversation={conversation}
+              onSelected={() => {
+                if (compact) {
+                  setListOpen(false);
+                  if (draftOpen) onToggleDraft?.();
+                  root.current
+                    ?.querySelector<HTMLButtonElement>(
+                      '.conversation-panel-buttons button[aria-pressed]',
+                    )
+                    ?.focus();
+                }
+              }}
+            />
+          </>
         )}
         {computer && !compact && widthPreferences?.known && draftOpen && (
           <ConversationWidthHandle
@@ -295,7 +316,7 @@ export function TextView({
           id={`${id}-draft`}
           className="text-view-draft"
           aria-label="Utkastet"
-          hidden={!draftOpen || (compact && listOpen)}
+          hidden={!draftVisible}
         >
           <h3>Utkast</h3>
           {draftContent}
@@ -334,10 +355,17 @@ export function TextView({
                 .
               </p>
             )}
-            {children}
+            {!(compact && listOpen) && children}
+            {session?.waitingForRetainedWork && (
+              <p>Välj det tidigare samtalet i Samtal och fortsätt det avbrutna arbetet där.</p>
+            )}
             <ConversationTranscript
+              key={session?.id}
               interruptedRequestId={session?.interruptedRequestId}
-              onContinue={(id) => void conversation.resumeConversation?.(id)}
+              onContinue={(id) => {
+                field.current?.focus();
+                void conversation.resumeConversation?.(id);
+              }}
               pending={pending}
               rows={transcript}
               working={working}

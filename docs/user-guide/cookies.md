@@ -130,9 +130,9 @@ Google och Microsoft styr lagringen på sina egna webbplatser.
 
 Efter medgivande version 5 bevaras titel, samtalstext och oavslutat arbete på
 installationen, åtskilt per användare och hushåll. Samtalet löper ut sju
-dygn efter ditt senaste begäran.
+dygn efter din senaste begäran.
 Modellarbete, statuskontroller och serveromstart flyttar inte tidpunkten.
-Omladdning, omstart och utloggning återställer arbetet pausat. Avslut och
+Efter omladdning kan du välja tidigare samtal i listan. Återkallelse och
 utgång raderar samtalet och dess sparhinder utan att spara eller kasta
 utkastet. Registrerade sparförsök och sparkvitton har egen lagring.
 

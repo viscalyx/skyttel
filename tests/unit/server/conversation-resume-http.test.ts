@@ -216,9 +216,7 @@ test('another device discovers separate retained conversations and opens the sel
     text: 'Beskriv cykeln.',
   });
   expect(accepted.status()).toBe(202);
-  await expect
-    .poll(async () => (await (await first.get(`${path}/${second.id}`)).json()).phase)
-    .toBe('ready');
+
   const activeList = await first.get(`${path}/retained`);
   expect(
     (await activeList.json()).conversations.find((item: { id: string }) => item.id === second.id),

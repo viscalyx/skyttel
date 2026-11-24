@@ -756,7 +756,8 @@ Utloggning, återkallat medgivande eller återkallad åtkomst stoppar fortsatt
 arbete. Återimport eller byte av innehållsägare kräver en ny anslutning.
 Redan lagrade förslag finns i ditt utkast efter ny inloggning. Sparade
 uppgifter och kvitton finns också kvar. Vid serveromstart fortsätter inget
-modellarbete. Du kan välja den bevarade samtalstexten i **Samtal**. Uppgifter som redan
+modellarbete. Du kan välja den bevarade samtalstexten i **Samtal**.
+Uppgifter som redan
 skickats till LangSmith kan finnas kvar där. Ett svar som servern gör klart
 är ingen bekräftelse på att det har nått din webbläsare.
 

@@ -77,8 +77,9 @@ Att bara behålla strängar ger varken säker omformulering eller tillräckligt
 underlag för selektivt avslut. Delarna är strukturerat tillstånd inom
 samtalet, utan en separat uppgiftslista. Efter uttryckligt medgivande till
 lagringen bevaras samtalet på installationen, åtskilt per användare och
-hushåll, med en fast utgångstid efter användarens senaste begäran. Modellarbete och statuskontroller förnyar inte
-tiden. Utkast och registrerade sparförsök har egna livslängder.
+hushåll, med en fast utgångstid efter användarens senaste begäran.
+Modellarbete och statuskontroller förnyar inte tiden. Utkast och
+registrerade sparförsök har egna livslängder.
 
 ## Tillstånd och ansvar
 
@@ -108,8 +109,8 @@ och modellens tolkning ska kunna granskas mot aktuell användaruppgift.
 Regler för enskilda testmeningar ska inte avgöra övergångar.
 
 Avslutade delar behålls under samtalets livslängd,
-så att återlevererade anrop inte återupplivar dem. Nya samtal får ny
-identitet genom `contextRevision` och nya del-ID. Tillståndet ligger
+så att återlevererade anrop inte återupplivar dem. Nya samtal får
+ett eget samtals-ID och nya del-ID. Tillståndet ligger
 utanför den text som sammanfattas och
 bifogas på nytt inför varje modellomgång.
 

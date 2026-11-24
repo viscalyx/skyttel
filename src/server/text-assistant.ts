@@ -259,7 +259,7 @@ export function textAssistantRoutes({
   voiceTokens = voiceConversationModel.tokens,
   observe,
   onStop,
-  hasVoice,
+  hasActiveVoice,
   onResetStart,
   onNewConversation,
   onSummary,
@@ -277,8 +277,8 @@ export function textAssistantRoutes({
   modelProfile?: TextModelProfile;
   voiceTokens?: number;
   observe?: ObserveAssistant;
-  onStop?: (sessionId: string) => void;
-  hasVoice?: (sessionId: string) => boolean;
+  onStop?: (sessionId: string, switched?: boolean) => void;
+  hasActiveVoice?: (sessionId: string) => boolean;
   onResetStart?: (sessionId: string, requestId?: string) => void;
   onSummary?: (sessionId: string, signal: AbortSignal) => Promise<void> | undefined;
   onWork?: (browserSessionId: string, until: number | undefined) => void;
@@ -297,7 +297,7 @@ export function textAssistantRoutes({
   function generateTitle(session: Session, first: string) {
     const state = session.state;
     if (
-      !config.openaiApiKey ||
+      !titleModel ||
       state.consentTextVersion < 5 ||
       session.execution.approvedVersion !== consents.textVersion ||
       !state.storageConsentVersion ||
@@ -311,21 +311,16 @@ export function textAssistantRoutes({
     state.firstRequest = first;
     state.titleRequested = true;
     persist(session);
-    const titleModel = textModel(
-      config.openaiApiKey,
-      modelFetch,
-      modelUsage,
-      modelProfile,
-      undefined,
-      () => conversationModelProfile(state.modelChoice),
-    );
-    void titleModel(
-      'SKYTTEL_TITLE: Skriv en kort svensk samtalstitel på högst 80 tecken utifrån begäran. Svara med bara titeln.',
-      [{ role: 'user', content: first }],
-      [],
-      AbortSignal.timeout(30_000),
-      256,
-    )
+    void modelWork
+      .run(conversationModelProfile(state.modelChoice), () =>
+        titleModel(
+          'SKYTTEL_TITLE: Skriv en kort svensk samtalstitel på högst 80 tecken utifrån begäran. Svara med bara titeln.',
+          [{ role: 'user', content: first }],
+          [],
+          AbortSignal.timeout(30_000),
+          256,
+        ),
+      )
       .then((result) => {
         const title = result.output_text?.trim();
         if (
@@ -450,6 +445,26 @@ export function textAssistantRoutes({
   function hasEarlierPreparation(session: Session, sequence: number) {
     return [...preparations].some(
       (item) => item.sequence < sequence && draftKey(item.session) === draftKey(session),
+    );
+  }
+  function waitingForRetainedWork(session: Session) {
+    const first = session.state.queue[0];
+    return Boolean(
+      first &&
+        !session.state.activeMessage &&
+        !session.execution.task &&
+        storage.pausedWork(
+          session.state.actorId,
+          session.state.householdId,
+          session.state.id,
+          first.sequence,
+        ),
+    );
+  }
+  function switchingWouldInterrupt(session: Session) {
+    return (
+      session.execution.summaryTask ||
+      (session.state.phase === 'working' && !waitingForRetainedWork(session))
     );
   }
   function waitsForDraft(session: Session, sequence: number, current: TextAssistantReview) {
@@ -630,6 +645,21 @@ export function textAssistantRoutes({
   const consentKey = (actorId: string, householdId: string) =>
     JSON.stringify([householdId, actorId]);
   const modelWork = new AsyncLocalStorage<TextModelProfile>();
+  const selectedProfile = () => {
+    const profile = modelWork.getStore();
+    if (!profile) throw new MapError('assistant_model_unsupported', 409);
+    return profile;
+  };
+  const titleModel = config.openaiApiKey
+    ? textModel(
+        config.openaiApiKey,
+        modelFetch,
+        modelUsage,
+        modelProfile,
+        undefined,
+        selectedProfile,
+      )
+    : null;
   const workAttempt = new AsyncLocalStorage<{ id?: string }>();
   const respond = config.openaiApiKey
     ? textModel(
@@ -683,11 +713,7 @@ export function textAssistantRoutes({
             },
           });
         },
-        () => {
-          const selected = modelWork.getStore();
-          if (!selected) throw new MapError('assistant_model_unsupported', 409);
-          return selected;
-        },
+        selectedProfile,
       )
     : null;
   function authorityLost(error: unknown) {
@@ -709,7 +735,8 @@ export function textAssistantRoutes({
     {
       conversation = 'end',
       delivery = 'retire',
-    }: { conversation?: 'pause' | 'end'; delivery?: 'retire' | 'close' } = {},
+      switched = false,
+    }: { conversation?: 'pause' | 'end'; delivery?: 'retire' | 'close'; switched?: boolean } = {},
   ) {
     clearTimeout(session.execution.titleTimer);
     const task = ownedDraftTask(session);
@@ -719,6 +746,7 @@ export function textAssistantRoutes({
         generateTitle(session, first);
       checkpointPause(session);
     } else storage.erase(session.state.id);
+    onStop?.(session.state.id, switched);
     sessions.delete(session.state.id);
     retirePreparations(session);
     if (![...sessions.values()].some((candidate) => draftKey(candidate) === draftKey(session)))
@@ -738,7 +766,6 @@ export function textAssistantRoutes({
     session.state.accepted.clear();
     session.execution.deliveries.clear();
     syncWork();
-    onStop?.(session.state.id);
     session.execution.displayed?.(false);
     session.state.input = [];
     session.execution.reads.clear();
@@ -867,12 +894,12 @@ export function textAssistantRoutes({
       interruptedSpeech: interrupted?.voice ? interrupted.text : undefined,
       expiresAt: session.state.expiresAt,
       conversation: session.state.conversation.map(
-        ({ role, text, partial, utteranceStart, notice, requestId }) => ({
+        ({ role, text, partial, utteranceStart, notice, requestId, speechRequestId }) => ({
           role,
           text,
           requestId:
-            role === 'user' && session.state.paused && requestId === session.state.activeMessage?.id
-              ? requestId
+            role === 'user' && interrupted && (speechRequestId ?? requestId) === interrupted.id
+              ? interrupted.id
               : undefined,
           partial,
           utteranceStart,
@@ -950,6 +977,7 @@ export function textAssistantRoutes({
       ),
       batchPending: Boolean(session.state.pendingBatch && !session.execution.task),
       phase,
+      waitingForRetainedWork: (phase === 'working' && waitingForRetainedWork(session)) || undefined,
       activity: phase === 'working' ? session.state.activity : undefined,
       activitySteps: session.state.canceled ? undefined : session.state.activitySteps,
       review,
@@ -1172,6 +1200,7 @@ export function textAssistantRoutes({
   }
   function modelTranscriptEntry({
     utteranceStart: _utteranceStart,
+    speechRequestId: _speechRequestId,
     ...entry
   }: ConversationState['conversation'][number]) {
     return entry;
@@ -5018,20 +5047,35 @@ export function textAssistantRoutes({
     const retained = storage.read(actorId, householdId, binding, id);
     if (!retained || !firstRequest(retained) || !canRetainConversation(retained))
       return context.json({ error: 'assistant_session_expired' }, 404);
-    const current = sessions.get(id);
     const body = context.req.method === 'POST' ? await context.req.json().catch(() => null) : null;
+    const current = sessions.get(id);
     if (context.req.method === 'GET' || (!body?.activate && current && !current.state.paused)) {
       const selected =
         current ??
         (await restoreSession(actorId, browserSessionId, householdId, context.req.raw.headers, id));
       if (!selected || !canRetainConversation(selected.state))
         return context.json({ error: 'assistant_session_expired' }, 404);
+      const registered = selected.state.paused && selected.state.pendingSave;
+      if (registered) {
+        const outcome = householdMap(database, actorId, householdId).operation(
+          registered.operationId,
+        ).operation;
+        if (outcome && outcome.status !== 'pending') {
+          const checked = checkSaves(database, actorId, householdId, [registered.operationId]);
+          if (applyCheckedSave(selected, checked))
+            appendConversation(selected, { role: 'assistant', text: checked.reply });
+        }
+      }
       return context.json({ ...view(selected), requiresActivation: true });
     }
     if (body?.activate && !consents.valid(actorId, householdId, body.consent))
       return context.json({ error: conversationConsentRequired }, 403);
     if (current && current.execution.browserSessionId !== browserSessionId) {
-      if (current.state.phase === 'working' || current.execution.summaryTask || hasVoice?.(id))
+      if (
+        current.state.phase === 'working' ||
+        current.execution.summaryTask ||
+        hasActiveVoice?.(id)
+      )
         return context.json({ error: 'assistant_conversation_busy' }, 409);
       await stop(current, { conversation: 'pause', delivery: 'close' });
     }
@@ -5133,14 +5177,13 @@ export function textAssistantRoutes({
       return context.json({ error: conversationConsentRequired }, 403);
     const revocationsAtStart = revocations.get(consentKey(actorId, householdId));
     const previous = sessions.get(body?.previousId);
-    if (
+    const ownsPrevious = () =>
       previous &&
+      sessions.get(previous.state.id) === previous &&
       previous.state.actorId === actorId &&
       previous.state.householdId === householdId &&
-      previous.execution.browserSessionId === browserSessionId &&
-      !previous.state.paused &&
-      (previous.state.phase === 'working' || previous.execution.summaryTask)
-    )
+      previous.execution.browserSessionId === browserSessionId;
+    if (previous && ownsPrevious() && !previous.state.paused && switchingWouldInterrupt(previous))
       return context.json({ error: 'assistant_turn_changed' }, 409);
     let contentVersion: number | undefined;
     const guard = (generation?: number) => {
@@ -5231,18 +5274,12 @@ export function textAssistantRoutes({
         await stop(session);
         return context.json({ error: conversationConsentRequired }, 403);
       }
-      if (
-        previous &&
-        sessions.get(previous.state.id) === previous &&
-        previous.state.actorId === actorId &&
-        previous.state.householdId === householdId &&
-        previous.execution.browserSessionId === browserSessionId
-      ) {
-        if (previous.state.phase === 'working' || previous.execution.summaryTask) {
+      if (previous && ownsPrevious()) {
+        if (switchingWouldInterrupt(previous)) {
           await mcp.close();
           return context.json({ error: 'assistant_turn_changed' }, 409);
         }
-        void stop(previous, { conversation: 'pause', delivery: 'close' });
+        void stop(previous, { conversation: 'pause', delivery: 'close', switched: true });
       }
       sessions.set(session.state.id, session);
       return context.json(view(session), 201);
@@ -6288,15 +6325,13 @@ export function textAssistantRoutes({
           if (sessions.get(sessionId) === session && first) generateTitle(session, first);
         }, voiceTranscriptGapMs).unref();
       }
-      if (role !== 'user' || utteranceStart) return;
-      return () => {
-        if (
-          retained.utteranceStart ||
-          sessions.get(sessionId) !== session ||
-          !session.state.conversation.includes(retained)
-        )
+      if (role !== 'user') return;
+      return (requestId?: string) => {
+        if (sessions.get(sessionId) !== session || !session.state.conversation.includes(retained))
           return;
-        retained.utteranceStart = true;
+        if (requestId) retained.speechRequestId = requestId;
+        else if (!retained.utteranceStart) retained.utteranceStart = true;
+        else return;
         persist(session);
       };
     },

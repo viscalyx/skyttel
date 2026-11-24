@@ -58,6 +58,7 @@ export async function selectConversation(page: Page, title: string | RegExp) {
   const row = view
     .getByRole('region', { name: 'Samtal', exact: true })
     .getByRole('button', { name: title, exact: true });
+  await expect(row).toBeEnabled();
   await row.focus();
   await row.press('Enter');
 }

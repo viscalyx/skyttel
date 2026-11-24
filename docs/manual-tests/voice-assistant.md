@@ -301,8 +301,9 @@ till TAL-17/23/24.
    Skyttel** och välj **Samtal → Markera Lo Exempel.**.
 4. Läs Kontrollen visar att hela utkastet sparades. Ändringarna finns i
    hushållets karta. Läs hela sparade Lo Exempel, typ Person och beskrivningen
-   Påhittad uppgift. Välj därefter **Nytt samtal**, godkänn medgivandet om det
-   behövs och slå på mikrofonen.
+   Påhittad uppgift. Öppna textvyn och välj **Avstå från det oavslutade
+   arbetet** för den återstående uppgiften. Godkänn vid behov och läs
+   bekräftelsen. Välj **Nytt samtal** och slå på mikrofonen.
 5. Bryt den kontrollerade leverantörskontakten efter sparandet. Ladda om och
    öppna Rapporter → Ändringshistorik. Öppna Identifiera sparandet och
    användaren och läs samma sparande.
@@ -325,8 +326,9 @@ till TAL-17/23/24.
 - Markering bekräftas först efter den verkliga webbläsarens återkoppling. Ett
   accepterat kommentarspaket är inte bevis för hörbart tal.
 - Beskrivningens text går att läsa även i det kortaste uppgiftsfönstret.
-- Omstart återställer samtalet pausat. Det registrerade sparförsöket
-  kontrolleras separat och slutförs exakt en gång. Läs dess utfall före ett
+- Efter omstart väljer användaren samtalet från listan. Det registrerade
+  sparförsöket kontrolleras separat och slutförs exakt en gång. Läs dess
+  utfall före ett
   uttryckligt nytt samtal; korta ja eller nya allmänna uppdrag ersätter inte
   försöket.
 - Efter ett tappat kvittosvar kan du läsa sparbeskedet med samtalsnotisens
@@ -465,7 +467,8 @@ till TAL-17/23/24.
 - Paus behåller samtal och ljuduppspelning. En återhämtad anslutning startar
   inte en mikrofon som användaren har pausat.
 - Raden **Skyttel arbetar…** skiljer väntan från ett färdigt svar.
-- Efter omstart visas hela repliker i samma ordning, även när fragment från de
+- Efter omstart och val i **Samtal** visas hela repliker i samma ordning,
+  även när fragment från de
   två talarna kommer om vartannat under en kort paus.
 - Samtalstexten är tillfällig och är inte ett sparkvitto. **Nytt samtal** tömmer
   den men bevarar utkastet.

@@ -507,8 +507,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   Kontextmätaren följer serverns procenttal, röstrutan visar procent från
   85 och ger en enda artig uppläsning, även på smal pekskärm. Nytt samtal
   återställer mätaren och gamla mätningar ignoreras.
-  Omladdning återställer bevarad text och modellval med arbetet pausat;
-  utgångstid visas och uttryckligt avslut lämnar utkastet kvar.
+  Efter omladdning väljer användaren tidigare samtal i listan. En avbruten
+  begäran kan fortsättas från sin rad. Utkastet består vid samtalsbyte.
   Egna talade repliker förnyar tiden från mottagandet; senare modellarbete
   och kontroller flyttar inte gränsen.
   KONTEXT-25 läser samtalsinformation och väljer tidigare samtal på samma och annan

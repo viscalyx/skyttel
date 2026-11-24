@@ -146,6 +146,7 @@ export interface TextAssistantView {
   batchPending?: boolean;
   phase: 'ready' | 'working' | 'error' | 'recovery';
   /** Current public executor stage and recent actual MCP steps in this task. */
+  waitingForRetainedWork?: boolean;
   activity?: string;
   activitySteps?: { id: string; text: string }[];
   review: TextAssistantReview;

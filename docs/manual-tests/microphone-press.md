@@ -430,7 +430,8 @@ MIKROFONTRYCK-08.
    **Nytt samtal** vid röstrutan. Den nya anslutningen
    ska behålla mikrofonen på. Startoperatören kontrollerar fortsatt
    ljudöverföring.
-3. Slå av mikrofonen, öppna textvyn och välj **Nytt samtal** igen. Mikrofonen ska förbli av utan ny
+3. Slå av mikrofonen, öppna textvyn och välj **Nytt samtal** igen.
+   Mikrofonen ska förbli av utan ny
    tillståndsfråga.
 
 **Förväntat resultat:**

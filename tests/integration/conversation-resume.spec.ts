@@ -188,6 +188,30 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
       delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
     });
     await expect(log(other)).toContainText('Garaget heter Västra.');
+    await other.evaluate(() => {
+      window.skyttelVoiceFixture.emit({
+        type: 'session.output_transcript.delta',
+        delta: 'Garaget heter Västra.',
+        event_id: crypto.randomUUID(),
+        start_ms: 110,
+        end_ms: 210,
+      });
+      window.skyttelVoiceFixture.setSound('remote', true, 0.7);
+    });
+    await expect(other.getByRole('group', { name: 'Röstruta' })).toContainText('Skyttel talar');
+    await view(other)
+      .getByRole('button', { name: 'Samtal', exact: true })
+      .getAttribute('aria-expanded')
+      .then(async (expanded) => {
+        if (expanded !== 'true')
+          await view(other).getByRole('button', { name: 'Samtal', exact: true }).click();
+      });
+    const bicycle = view(other)
+      .getByRole('region', { name: 'Samtal', exact: true })
+      .getByRole('button', { name: 'Beskriv cykeln utan att ändra något.' });
+    await expect(bicycle).toBeDisabled();
+    await other.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
+    await expect(bicycle).toBeEnabled();
     await selectConversation(other, 'Beskriv cykeln utan att ändra något.');
     await expect(microphoneButton(other)).toHaveAttribute('aria-pressed', 'false');
     await expect(log(other)).toContainText('Det andra samtalet gäller cykeln.');

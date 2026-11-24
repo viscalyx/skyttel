@@ -282,8 +282,8 @@ efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
    samtalet eller kasta utkastet. Slå på mikrofonen och skriv **Oskickat** utan
    att skicka.
 2. Be operatören leverera det talade nytt-samtal-kommandot och invänta
-   bekräftelse. Kräv en tömd samtalstext med **Nytt samtal. 1 osparad ändring
-   ligger kvar i ditt utkast.**, kvarvarande Lo-förslag, mikrofon på och
+   den nya röstanslutningen. Kräv tom samtalstext, kvarvarande Lo-förslag,
+   mikrofon på och
    **Oskickat** kvar.
 3. Slå av mikrofonen och skicka **Nytt samtal** i textvyn. Kontrollera samma
    resultat med mikrofonen av. Ingen medgivanderuta visas. Kontrollera att inget
@@ -2025,7 +2025,8 @@ teman och vid zoom.
 ### KONTEXT-24: välj avbrutet arbete efter omladdning och börja ett nytt samtal
 
 **Syfte:** Återfå samtalets text, fråga och modellval efter omladdning,
-utloggning och omstart utan fortsatt arbete, och kunna fortsätta en avbruten begäran från dess rad.
+utloggning och omstart utan fortsatt arbete, och kunna fortsätta
+en avbruten begäran från dess rad.
 
 **Användare:** Alex.
 
@@ -2141,7 +2142,7 @@ och verifierar sjudygnsgränsen genom verklig omstart.
 **Förväntat resultat:**
 
 - Varje besök börjar med tom text och avstängd mikrofon. Val av den gamla
-  raden visar samtalets egen historik, modell och avbrutna begäran.
+  raden visar tidigare samtalstext, modell och avbrutna begäran.
 - Återförsöket gäller den valda begäran. Det köade meddelandet väntar.
   Nytt samtal behåller anteckningen, utkastet och det tidigare samtalet.
 

@@ -165,7 +165,7 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
     // Nytt samtal empties the conversation text. The unsent text and the draft stay.
     await assistant(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
     await expect(assistant(page).getByRole('log', { name: 'Samtalstext' })).toHaveText(
-      'Skyttel: Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+      'Här visas det du och Skyttel säger och skriver.',
     );
     await expect(assistant(page).getByLabel('Meddelande till Skyttel')).toHaveValue(
       'Osänd rättelse',
@@ -326,7 +326,7 @@ test('TAL-08: nödvändiga frågor finns i samtalet och fel visas i en samtalsno
     await openConversationText(page);
     await panel.getByRole('button', { name: 'Nytt samtal' }).click();
     await expect(panel.getByRole('log', { name: 'Samtalstext' })).toHaveText(
-      /^Skyttel: Nytt samtal\./,
+      'Här visas det du och Skyttel säger och skriver.',
     );
     expect(
       (await (await page.request.get(map.path)).json()).draft.changes[0].after.properties[0].value,
@@ -1276,9 +1276,16 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     await expect(savedLo).toContainText('Påhittad uppgift');
     expect(model.requests).toHaveLength(4);
     expect(live.requests).toHaveLength(1);
+    await openConversationText(page);
+    await page
+      .getByRole('button', { name: 'Avstå från det oavslutade arbetet', exact: true })
+      .click();
+    await giveConversationConsent(page);
+    await expect(assistant(page).getByRole('log')).toContainText('Du har avstått');
     // Reading the recovered result starts no work. Start the next conversation
     // deliberately before testing a fresh provider connection.
-    await consent(page);
+    await assistant(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+    await expect(assistant(page).getByRole('log')).toContainText('Här visas det du och Skyttel');
     await startVoice(page);
     const providerId = [...live.channels.keys()].at(-1);
     if (!providerId) throw new Error('Missing active voice after saved receipt');
@@ -1318,7 +1325,7 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     live.configure({ finalize: true });
     await openConversationText(page);
     await page.reload();
-    await expect(assistant(page)).toHaveAttribute('data-session-active', 'false');
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
     const form = await openNewObject(page);
     await form.getByLabel('Namn', { exact: true }).fill('Mira Exempel');
     await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Person' });
@@ -1328,8 +1335,10 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     await expect(mira).toHaveClass(/\badded\b/);
     await openConversationText(page);
     await assistant(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+    await giveConversationConsent(page);
     await expect(assistant(page)).toHaveAttribute('data-session-active', 'true');
     await expect(await openConversationDraft(page)).toContainText('Mira Exempel');
+    await assistant(page).getByRole('button', { name: 'Text', exact: true }).click();
     const delivery = await dropConversationReceipt(page);
     await assistant(page).getByLabel('Meddelande till Skyttel').fill('Spara hela utkastet.');
     await assistant(page).getByRole('button', { name: 'Skicka', exact: true }).click();

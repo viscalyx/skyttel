@@ -374,7 +374,7 @@
   transform: rotate(-90deg);
 }
 :is([data-narrow="true"], [data-mobile="true"]) .text-view-draft {
-  max-height: 45%;
+  max-height: none;
 }
 
 [data-narrow="false"][data-mobile="false"] .draft-open .text-view-columns {
@@ -488,8 +488,8 @@
   min-width: 0;
 }
 .household-map.workspace-shell .text-view[data-short="true"] .text-view-draft-toggle {
-  grid-column: 2;
-  grid-row: 1;
+  grid-column: 3 / 5;
+  grid-row: 2;
   align-self: center;
   width: auto;
   margin: 0;
@@ -669,9 +669,6 @@
 .text-view[data-compact="true"] .text-view-text-handle {
   display: none;
 }
-.text-view[data-compact="true"] .text-view-draft {
-  max-height: none;
-}
 
 .text-view[data-short="true"] .conversation-panel-buttons {
   display: contents;
@@ -679,4 +676,20 @@
 .text-view[data-short="true"] .conversation-panel-buttons > button {
   grid-row: 2;
   min-height: 32px;
+}
+
+/* A landscape keyboard leaves room for one header row above the composer. */
+@media (min-width: 701px) and (max-height: 230px) {
+  .household-map.workspace-shell .text-view[data-short="true"] .text-view-header {
+    display: flex;
+  }
+  .text-view[data-short="true"] .conversation-context-meter {
+    flex: 1;
+  }
+  .text-view[data-short="true"] .text-view-new {
+    order: 1;
+  }
+  .text-view[data-short="true"] .text-view-close {
+    order: 2;
+  }
 }

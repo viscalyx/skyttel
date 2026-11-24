@@ -232,6 +232,14 @@ export async function createInstallation(
             if (databaseOptions.titleFetch) return databaseOptions.titleFetch(input, init);
             return Response.json({
               id: 'synthetic-title',
+              service_tier: 'default',
+              usage: {
+                input_tokens: 8,
+                input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+                output_tokens: 2,
+                output_tokens_details: { reasoning_tokens: 0 },
+                total_tokens: 10,
+              },
               status: 'completed',
               output: [],
               model: JSON.parse(String(init?.body)).model,

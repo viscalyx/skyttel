@@ -1183,7 +1183,10 @@ export function HouseholdMap({
     conversation.session?.securityReference ??
     conversation.session?.completedReplies?.findLast((reply) => reply.securityReference)
       ?.securityReference;
-  const workFailure = !conversation.session?.paused ? conversation.session?.workFailure : undefined;
+  const workFailure =
+    conversation.session?.requiresActivation || !conversation.session?.paused
+      ? conversation.session?.workFailure
+      : undefined;
   const noticeState = useConversationNotice({
     workFailure,
     voiceRefusal: conversation.voice.refusal,
@@ -1258,13 +1261,15 @@ export function HouseholdMap({
           >
             Avstå från det oavslutade arbetet
           </button>
-          <button
-            type="button"
-            disabled={conversation.pending}
-            onClick={() => void conversation.cancel()}
-          >
-            Stoppa allt
-          </button>
+          {!conversation.session?.requiresActivation && (
+            <button
+              type="button"
+              disabled={conversation.pending}
+              onClick={() => void conversation.cancel()}
+            >
+              Stoppa allt
+            </button>
+          )}
         </>
       )}
     </ConversationNoticeCard>

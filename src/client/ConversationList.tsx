@@ -89,8 +89,9 @@ export function ConversationList({
   return (
     <section className="conversation-list" aria-label="Samtal">
       <h3>Samtal</h3>
+      {conversation.listError && <p role="alert">{conversation.listError}</p>}
       {rows === undefined ? (
-        <p>Hämtar samtal…</p>
+        !conversation.listError && <p>Hämtar samtal…</p>
       ) : rows.length === 0 ? (
         <p>Inga samtal ännu.</p>
       ) : (

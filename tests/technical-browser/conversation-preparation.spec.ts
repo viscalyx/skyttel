@@ -435,8 +435,8 @@ for (const seeded of [false, true]) {
       expect(await (await page.request.get(path)).json()).toEqual(savedState);
       expect(await (await page.request.get(`${path}/history`)).json()).toEqual(savedHistory);
       // Individual manual cases start afresh. Retire every actual owned voice
-      // transport, then explicitly end the retained conversation before the
-      // next text-only case. Transport stop alone preserves its conversation.
+      // transport before reloading into the next text-only case. The previous
+      // conversation remains available in the list.
       expect(voiceStarts.length).toBeGreaterThan(0);
       const retired = [];
       for (const response of voiceStarts) {
@@ -521,7 +521,7 @@ for (const seeded of [false, true]) {
       await page.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
       // This combined proof still has an active visit consent. Resetting that
       // conversation completes directly, without another consent dialog.
-      await expect(log).toContainText('Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.');
+      await expect(log).toContainText('Här visas det du och Skyttel');
       await expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
         'data-session-active',
         'true',

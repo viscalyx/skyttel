@@ -1346,8 +1346,8 @@ test.each(['healthy', 'disabled', 'failing'])(
           )
         ).json()
       ).terra,
-      // Three scope interpretations, three worker calls and two edit/save comparisons.
-    ).toMatchObject({ attempts: 8 });
+      // One title, three scope interpretations, three worker calls and two edit/save comparisons.
+    ).toMatchObject({ attempts: 9 });
     await client.post(`${path}/text-assistant/${session.id}/voice/${voice.id}/stop`, {
       headers: { origin: app.origin },
       data: {},
@@ -2088,7 +2088,7 @@ test('voice startup and exact transcripts reach a separate trace without transpo
         owner: 'voice',
         conversation_id: session.id,
         voice_session_id: voice.id,
-        consent_text_version: 4,
+        consent_text_version: 5,
         status: 'incomplete',
       },
     },
@@ -2236,7 +2236,7 @@ test('complete text evidence preserves the exact model exchange and all actions 
   ).not.toMatch(
     /Lina|Eken|excluded-provider|excluded-raw-audio|synthetic-model-key|synthetic-trace-secret/,
   );
-  expect(costs).toHaveLength(6);
+  expect(costs).toHaveLength(8);
   expect(JSON.stringify(costs)).not.toMatch(/instructions|Lina|Eken|arguments|excluded-provider/);
 });
 
@@ -2475,8 +2475,8 @@ test.each(['healthy', 'disabled', 'failing'])(
         )
       ).json(),
     ).toMatchObject({
-      // Three scope interpretations, three worker calls and two edit/save comparisons.
-      terra: { attempts: 8, usage: { input: { known: 960 }, output: { known: 240 } } },
+      // One title, three scope interpretations, three worker calls and two edit/save comparisons.
+      terra: { attempts: 9, usage: { input: { known: 968 }, output: { known: 242 } } },
     });
     if (delivery === 'healthy') {
       await expect
@@ -2698,10 +2698,10 @@ test('an authenticated task reaches ingestion through the real SDK with one back
     ).json(),
   ).toMatchObject({
     terra: {
-      attempts: 3,
+      attempts: 4,
       usage: {
-        input: { known: 360 },
-        output: { known: 90 },
+        input: { known: 368 },
+        output: { known: 92 },
       },
     },
   });
@@ -2739,10 +2739,10 @@ test('disabled sending survives restart while the same task outcome and costs re
     ).json(),
   ).toMatchObject({
     terra: {
-      attempts: 3,
+      attempts: 4,
       usage: {
-        input: { known: 360 },
-        output: { known: 90 },
+        input: { known: 368 },
+        output: { known: 92 },
       },
     },
   });
@@ -2796,10 +2796,10 @@ test('temporary ingestion failure gets at most two retries per event without cha
       )
     ).json();
     expect(costs.terra).toMatchObject({
-      attempts: 3,
+      attempts: 4,
       usage: {
-        input: { known: 360 },
-        output: { known: 90 },
+        input: { known: 368 },
+        output: { known: 92 },
       },
     });
     const health = await (await client.get(`${app.origin}/api/operator/tracing`)).json();

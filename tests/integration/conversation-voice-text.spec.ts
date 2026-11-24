@@ -155,8 +155,8 @@ test('RÖSTTEXT-01: samma cykel och väntande delar följer med mellan röst och
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
     await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
     await region(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
-    await expect(log(page)).toHaveText('Skyttel: Nytt samtal. Utkastet är tomt.');
-    await expectVoiceRelease(live, 'Nytt samtal. Utkastet är tomt.');
+    await expect(log(page)).toHaveText('Här visas det du och Skyttel säger och skriver.');
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
     await expect(announcement(page)).toBeEmpty();
 
     await closeConversationText(page);
@@ -371,8 +371,8 @@ test('RÖSTTEXT-02: mikrofonen av ger bara text och gamla svar spelas inte upp n
     await expect(voiceBox(page)).toHaveCount(0);
     expect(commentary()).toHaveLength(0);
     await send(page, 'Nytt samtal');
-    await expect(log(page)).toHaveText('Skyttel: Nytt samtal. Utkastet är tomt.');
-    await expect(announcement(page)).toHaveText('Skyttel: Nytt samtal. Utkastet är tomt.');
+    await expect(log(page)).toHaveText('Här visas det du och Skyttel säger och skriver.');
+    await expect(announcement(page)).toBeEmpty();
     await expect(voiceBox(page)).toHaveCount(0);
     expect(commentary()).toHaveLength(0);
   } finally {

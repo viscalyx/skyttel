@@ -2,6 +2,7 @@ import type { TextAssistantView } from '../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../support/client.js';
 import {
   openConversationText,
+  selectConversation,
   startConversationWithText,
   turnMicrophoneOff,
   turnMicrophoneOn,
@@ -92,16 +93,16 @@ test('speech fragments form the same transcript rows during voice and after rest
     await expect(rows).toHaveText(corrected);
     await app.restart();
     // Older saved fragments have the same text without a turn marker.
-    await page.route('**/text-assistant/restore', async (route) => {
+    await page.route('**/text-assistant/retained/*/open', async (route) => {
       const response = await route.fetch();
-      const body: { conversation?: TextAssistantView } = await response.json();
-      for (const row of body.conversation?.conversation ?? [])
+      const body: TextAssistantView = await response.json();
+      for (const row of body.conversation ?? [])
         if (row.text === 'Berätta ' || row.text === 'gärna.') delete row.utteranceStart;
       await route.fulfill({ response, json: body });
     });
     await page.reload();
     await openConversationText(page);
-    await expect(text).toContainText('Samtalet är pausat');
+    await selectConversation(page, 'Var finns lampan?');
     await expect(rows).toHaveText([
       ...active,
       'Skyttel: Avbrutet. Föreslagna ändringar ligger kvar i utkastet.',
@@ -185,7 +186,7 @@ test('a spoken correction received before the interruption restores as a separat
     await app.restart();
     await page.reload();
     await openConversationText(page);
-    await expect(text).toContainText('Samtalet är pausat');
+    await selectConversation(page, /^Före avbrottet/);
     await expect(speech).toHaveText(expected);
   } finally {
     await app.close();

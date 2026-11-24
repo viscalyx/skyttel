@@ -5211,16 +5211,26 @@ test('usage emits stable scope and worker attempts with bounded metadata without
   });
   await setup(model.provider, (attempt) => attempts.push(structuredClone(attempt)));
   await message(await start(), 'Privat påhittad samtalstext');
-  expect(attempts).toHaveLength(4);
-  for (const index of [0, 2]) {
-    expect(attempts[index + 1]).toMatchObject({
-      attemptId: attempts[index].attemptId,
-      outcome: 'completed',
-      completeness: 'complete',
-      usage: { input: 120, cached: 20, cacheWrite: 0, output: 30, reasoning: 10 },
-    });
-    expect(attempts[index + 1].requestId).toMatch(/^request_/);
-    expect(attempts[index + 1].responseId).toMatch(/^resp_/);
+  expect(attempts).toHaveLength(6);
+  const completed = attempts.filter((attempt) => attempt.outcome === 'completed');
+  expect(completed).toHaveLength(3);
+  for (const final of completed) {
+    expect(attempts).toContainEqual(
+      expect.objectContaining({
+        attemptId: final.attemptId,
+        outcome: 'started',
+      }),
+    );
+    if (final.responseId === 'synthetic-title') {
+      expect(final.usage).toMatchObject({ input: 8, output: 2 });
+    } else {
+      expect(final).toMatchObject({
+        completeness: 'complete',
+        usage: { input: 120, cached: 20, cacheWrite: 0, output: 30, reasoning: 10 },
+      });
+      expect(final.requestId).toMatch(/^request_/);
+      expect(final.responseId).toMatch(/^resp_/);
+    }
   }
   expect(JSON.stringify(attempts)).not.toMatch(/Privat|samtalstext|synthetic-model-key/);
 });
@@ -5240,7 +5250,7 @@ test('provider failure preserves the draft, emits unknown usage, and allows norm
     error: 'assistant_model_temporary',
     review: { changes: [{ id: 'web-object' }] },
   });
-  expect(attempts.at(-1)).toMatchObject({
+  expect(attempts.find((attempt) => attempt.outcome === 'failed')).toMatchObject({
     outcome: 'failed',
     completeness: 'unknown',
     usage: { input: null, cached: null, cacheWrite: null, output: null, reasoning: null },
@@ -5429,7 +5439,7 @@ test('an incomplete provider response cannot execute a save and retains only kno
   expect(view.receipt).toBeUndefined();
   expect(view.review.changes).toHaveLength(1);
   expect(view.operations).toEqual([]);
-  expect(attempts.at(-1)).toMatchObject({
+  expect(attempts.find((attempt) => attempt.outcome === 'incomplete')).toMatchObject({
     outcome: 'incomplete',
     completeness: 'partial',
     requestId: 'request_partial',
@@ -5750,7 +5760,7 @@ test('an HTTP provider refusal records its request identity without exposing its
   const view = await message(await start(), 'Läs mitt utkast.');
   expect(view).toMatchObject({ phase: 'error', error: 'assistant_model_temporary' });
   expect(JSON.stringify(view)).not.toContain('Private provider body');
-  expect(attempts.at(-1)).toMatchObject({
+  expect(attempts.find((attempt) => attempt.outcome === 'failed')).toMatchObject({
     outcome: 'failed',
     requestId: 'request_refused',
     completeness: 'unknown',

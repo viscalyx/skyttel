@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
@@ -893,18 +893,19 @@ test.each(['a new conversation', 'revoked access'])(
   async (ending) => {
     const { component } = setup();
     component.unmount();
+    let view = assistant();
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/text-assistant') && init?.body && JSON.parse(String(init.body)).previousId)
+        view = { ...assistant(), id: 'next-text-session' };
       if (url.endsWith('/messages')) return Response.json({ error: 'forbidden' }, { status: 403 });
       if (url.includes('/voice'))
         return Response.json({
           voice: { id: 'voice', phase: 'listening', seconds: null, usageFinal: false },
-          assistant: assistant(),
+          assistant: view,
           sdp: 'answer',
         });
       return Response.json(
-        init?.method === 'POST' || url.endsWith('/text-session')
-          ? assistant()
-          : { available: true },
+        init?.method === 'POST' || url.endsWith(`/${view.id}`) ? view : { available: true },
       );
     });
     render(
@@ -947,7 +948,9 @@ test.each(['a new conversation', 'revoked access'])(
     expect(screen.getByRole('status').textContent).toContain('Nya förslag är osparade');
     expect(voiceBox()?.textContent).toBe('Lyssnar');
     const newConversation = () =>
-      screen.getByRole('button', { name: 'Nytt samtal' }) as HTMLButtonElement;
+      within(
+        screen.getByRole('region', { name: 'Skriv till Skyttel' }),
+      ).getByRole<HTMLButtonElement>('button', { name: 'Nytt samtal' });
     if (ending === 'a new conversation') {
       expect(log.textContent).toContain('Kim betalar för musiken.');
       await userEvent.click(newConversation());
@@ -957,8 +960,9 @@ test.each(['a new conversation', 'revoked access'])(
       await userEvent.type(screen.getByLabelText('Meddelande till Skyttel'), 'Privat text');
       await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
     }
+    const currentLog = () => screen.getByRole('log', { name: 'Samtalstext' });
     const emptied = 'Här visas det du och Skyttel säger och skriver.';
-    await waitFor(() => expect(log.textContent).toBe(emptied));
+    await waitFor(() => expect(currentLog().textContent).toBe(emptied));
     if (ending === 'revoked access') {
       expect(newConversation().disabled).toBe(false);
       // The consent for the visit still applies, so the next conversation starts directly.
@@ -966,7 +970,7 @@ test.each(['a new conversation', 'revoked access'])(
       await waitFor(() => expect(newConversation().disabled).toBe(false));
     }
     expect(queryConsentBox()).toBeNull();
-    expect(log.textContent).toBe(emptied);
+    expect(currentLog().textContent).toBe(emptied);
   },
 );
 
@@ -1062,6 +1066,7 @@ test('voice starts only on request, gates microphone on protocol readiness and s
   expect(calls[1].body).toEqual({
     sdp: 'synthetic-offer',
     confirmBrowserInput: true,
+    freshConversationControls: true,
     revision: 2,
     draftVersion: 3,
     contentVersion: 1,
