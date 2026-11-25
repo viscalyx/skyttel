@@ -318,11 +318,13 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
     expect(
       await page.evaluate(() => window.skyttelVoiceFixture.stats().remoteTracks[0].state),
     ).toBe('ended');
-    expect(live.sent.map(({ event }) => event)).not.toContainEqual(
-      expect.objectContaining({
-        content: 'Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
-      }),
-    );
+    const resetAcknowledgements = () =>
+      live.sent.filter(
+        ({ event }) =>
+          event.type === 'session.commentary.append' &&
+          event.content === 'Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+      );
+    expect(resetAcknowledgements()).toHaveLength(1);
     expect(live.sent.map(({ event }) => event.type)).toContain('session.close');
     expect(stops).toEqual(stopsBeforeNew);
 
@@ -381,6 +383,7 @@ test('TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon'
     );
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().openPeers)).toBe(1);
     expect(resetRequests).toBe(1);
+    expect(resetAcknowledgements()).toHaveLength(1);
   } finally {
     await app.close();
   }

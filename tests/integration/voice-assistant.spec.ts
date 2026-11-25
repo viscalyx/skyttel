@@ -691,10 +691,21 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
       )
         return false;
       const result = await response.json().catch(() => null);
-      return Boolean(result?.assistant?.receipt);
+      return Boolean(result?.assistant?.receipt && result.voice?.response?.receiptOperationId);
     });
     speak(live, 'Behåll Lo-förslaget, rätta priset till 189 kr och spara.');
-    await saved;
+    const { voice } = await (await saved).json();
+    expect(voice.response.text).toContain('Sparat.');
+    await page.evaluate((delta) => {
+      window.skyttelVoiceFixture.emit({
+        type: 'session.output_transcript.delta',
+        event_id: crypto.randomUUID(),
+        delta,
+        start_ms: 200,
+        end_ms: 300,
+      });
+      window.skyttelVoiceFixture.remoteTone(800, 0, 0.5);
+    }, voice.response.text);
     expect(
       (await (await page.request.get(`${app.origin}/api/households/${household.id}/map`)).json())
         .draft.changes,

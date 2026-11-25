@@ -166,7 +166,11 @@ test('KÖ-01: datorn besvarar serverns kö i ordning och Escape avbryter bara i 
     await expect(region(page).locator('.text-view-canceled')).toBeEmpty();
     await send(page, 'Bort med kön.');
     await expect(log(page)).toContainText('Skyttel arbetar…');
-    await region(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+    const startNew = region(page).getByRole('button', { name: 'Nytt samtal', exact: true });
+    await expect(startNew).toBeDisabled();
+    await field(page).press('Escape');
+    await expect(startNew).toBeEnabled();
+    await startNew.click();
     await expect(log(page)).not.toContainText('Skyttel arbetar…');
     fixtures.held[4].release([modelMessage('För sent igen.')]);
     await send(page, 'Efter nytt samtal.');
@@ -309,6 +313,7 @@ test('KÖ-02: smal dator visar stopp, behåller oskickad text och tillåter Esca
     await expect.poll(async () => (await read()).draft).toEqual(before);
     await readVoiceProposal(page);
     fixtures.held[0].release([modelMessage('Ett sent svar.')]);
+    await region(page).getByRole('button', { name: 'Text', exact: true }).click();
     await expect(log(page)).not.toContainText('Ett sent svar.');
     await send(page, 'Avbryt med tangentbord.');
     await expect.poll(() => fixtures.held.length).toBe(2);

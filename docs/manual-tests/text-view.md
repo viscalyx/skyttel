@@ -221,11 +221,13 @@ mikrofon”.
 
 - Det nya samtalet börjar med tom samtalstext. Det tidigare samtalet
   finns kvar i **Samtal**.
-- Ingen medgivanderuta visas. Mikrofonen är fortfarande på.
+- Ingen medgivanderuta visas. Mikrofonen är fortfarande på. Den syntetiska
+  röstleverantören får ett besked om nystarten och det kvarvarande förslaget.
 - **Oskickat** står kvar i fältet. Lo-förslaget är oförändrat, också
   efter att det stoppade svaret har släppts.
 - Nästa uppdrag bär inget av det som sades före **Nytt samtal**.
-- När mikrofonen är av förblir den av efter **Nytt samtal**.
+- När mikrofonen är av förblir den av efter **Nytt samtal**. Då får
+  röstleverantören inget nytt besked om nystarten.
   Även ett dubbelklick med fördröjt svar bevarar läget, Lo-förslaget och
   **Oskickat vid omstart**. Spårjämförelser finns i separat tekniskt underlag.
 

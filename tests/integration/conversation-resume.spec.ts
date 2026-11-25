@@ -210,7 +210,8 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
       .getByRole('region', { name: 'Samtal', exact: true })
       .getByRole('button', { name: 'Beskriv cykeln utan att ändra något.' });
     await expect(bicycle).toBeDisabled();
-    await other.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
+    // Finish the audible word before the provider stream falls silent.
+    await other.evaluate(() => window.skyttelVoiceFixture.remoteTone(800, 0, 0.5));
     await expect(bicycle).toBeEnabled();
     await selectConversation(other, 'Beskriv cykeln utan att ändra något.');
     await expect(microphoneButton(other)).toHaveAttribute('aria-pressed', 'false');

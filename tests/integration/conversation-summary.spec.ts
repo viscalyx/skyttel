@@ -680,11 +680,10 @@ test('KONTEXT-11: sammanfattning väntar på talat sparande och dess hörda kvit
     );
     await expect(meter(page)).toHaveAttribute('value', '89');
     expect(live.requests).toHaveLength(1);
-    await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', true));
+    await page.evaluate(() => window.skyttelVoiceFixture.remoteTone(800, 0, 0.5));
     await expect(page.getByRole('group', { name: 'Röstruta', exact: true })).toContainText(
       'Skyttel talar',
     );
-    await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
     await expect(log(page).getByRole('listitem').filter({ hasText: summaryLine })).toHaveCount(1);
     await expect.poll(() => live.requests.length).toBe(2);
     expect((await read()).draft.changes).toEqual([]);
