@@ -22,6 +22,8 @@ for (const seeded of [false, true]) {
   test(`literal context preparation completes batch, questions, save, rejection and admitted revoke on ${seeded ? 'seeded' : 'empty'} public installation`, {
     tag: '@technical',
   }, async ({ page, browser }) => {
+    // These public workflows run consecutively in one installation, including launcher shutdown.
+    test.slow();
     const document = await readFile('docs/manual-tests/conversation-preparation.md', 'utf8');
     const questions = await readFile('docs/manual-tests/conversation-questions.md', 'utf8');
     const heardSavePreparation = document.split('## Ljudfragment och tid för sparbesked')[1];

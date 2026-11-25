@@ -4,7 +4,7 @@ import type {
   RetainedConversation,
   TextAssistantView,
 } from '../../../src/shared/text-assistant.js';
-import { createHousehold, signIn } from '../../support/client.js';
+import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { modelMessage, textModel } from '../../support/text-model.js';
@@ -159,6 +159,125 @@ test('reading from another device leaves admitted work in place and a late title
     finishWork();
     finishTitle();
     await writer.dispose();
+    await reader.dispose();
+    await app.close();
+  }
+});
+
+test('unusable generated titles retain the original request and list order across a restart', async () => {
+  const alternatives = [' ', 'Första raden\nAndra raden', 'x'.repeat(81)];
+  const model = textModel(() => [modelMessage('Klart.')]);
+  const titles = textModel(() => [modelMessage(alternatives.shift() ?? '')]);
+  const titleIds = new Set<string>();
+  const completedTitles = new Set<string>();
+  let time = Date.now();
+  const app = await createInstallation(undefined, {
+    now: () => time,
+    modelFetch: model.provider,
+    titleFetch: async (url, init) => {
+      const response = await titles.provider(url, init);
+      const id = response.headers.get('x-request-id');
+      if (id) titleIds.add(id);
+      return response;
+    },
+    modelUsage(attempt) {
+      if (attempt.requestId && titleIds.has(attempt.requestId))
+        completedTitles.add(attempt.requestId);
+    },
+  });
+  let client = await request.newContext();
+  try {
+    await signIn(client, app.origin);
+    const { household } = await (await createHousehold(client, app.origin)).json();
+    const path = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const headers = { origin: app.origin };
+    const requests = ['Var ligger nyckeln?', 'Beskriv cykeln.', 'Var ligger garaget?'];
+    const ids: string[] = [];
+    for (const text of requests) {
+      time += 60_000;
+      const session: TextAssistantView = await (
+        await client.post(path, { headers, data: approvedForVisit })
+      ).json();
+      ids.push(session.id);
+      const message = await client.post(`${path}/${session.id}/messages`, {
+        headers,
+        data: {
+          text,
+          requestId: crypto.randomUUID(),
+          revision: session.revision,
+          draftVersion: session.review.version,
+          contentVersion: session.review.contentVersion,
+        },
+      });
+      expect(message.status()).toBe(202);
+      await expect
+        .poll(async () => (await (await client.get(`${path}/${session.id}`)).json()).modelReply)
+        .toBe('Klart.');
+    }
+    const list = async (): Promise<RetainedConversation[]> =>
+      (await (await client.get(`${path}/retained`)).json()).conversations;
+    await expect.poll(() => completedTitles.size).toBe(requests.length);
+    const ordered = requests.map((title, index) => ({ title, id: ids[index] })).reverse();
+    expect((await list()).map(({ id, title }) => ({ id, title }))).toEqual(ordered);
+    client = await restartWithSession(client, () => app.restart());
+    const stored = await list();
+    expect(stored.map(({ id, title }) => ({ id, title }))).toEqual(ordered);
+    expect(stored.every((row) => row.paused)).toBe(true);
+  } finally {
+    await client.dispose();
+    await app.close();
+  }
+});
+
+test('reading an idle conversation on a second browser leaves ownership in place until consented activation', async () => {
+  const model = textModel(() => [modelMessage('I garaget.')]);
+  const app = await createInstallation(undefined, { modelFetch: model.provider });
+  const owner = await request.newContext();
+  const reader = await request.newContext();
+  try {
+    await signIn(owner, app.origin);
+    const { household } = await (await createHousehold(owner, app.origin)).json();
+    await signIn(reader, app.origin);
+    const path = `${app.origin}/api/households/${household.id}/text-assistant`;
+    const headers = { origin: app.origin };
+    const session: TextAssistantView = await (
+      await owner.post(path, { headers, data: approvedForVisit })
+    ).json();
+    const open = `${path}/retained/${session.id}/open`;
+    expect((await reader.get(open)).status()).toBe(404);
+    const sent = await owner.post(`${path}/${session.id}/messages`, {
+      headers,
+      data: {
+        requestId: crypto.randomUUID(),
+        text: 'Var står cykeln?',
+        revision: session.revision,
+        draftVersion: session.review.version,
+        contentVersion: session.review.contentVersion,
+      },
+    });
+    expect(sent.status()).toBe(202);
+    await expect
+      .poll(async () => (await (await owner.get(`${path}/${session.id}`)).json()).modelReply)
+      .toBe('I garaget.');
+    const selected = await reader.post(open, { headers, data: {} });
+    expect(await selected.json()).toMatchObject({ id: session.id, requiresActivation: true });
+    const refused = await reader.post(open, { headers, data: { activate: true } });
+    expect(refused.status()).toBe(403);
+    expect((await owner.get(`${path}/${session.id}`)).status()).toBe(200);
+    const active = await reader.post(open, {
+      headers,
+      data: { activate: true, ...approvedForVisit },
+    });
+    expect(active.status()).toBe(200);
+    const view: TextAssistantView = await active.json();
+    expect(view.id).toBe(session.id);
+    expect(view.paused).toBe(false);
+    expect(view.conversation?.map((row) => row.text)).toEqual(['Var står cykeln?', 'I garaget.']);
+    expect((await reader.get(`${path}/${session.id}`)).status()).toBe(200);
+    expect((await owner.get(`${path}/${session.id}`)).status()).toBe(404);
+    expect(model.requests).toHaveLength(1);
+  } finally {
+    await owner.dispose();
     await reader.dispose();
     await app.close();
   }

@@ -138,7 +138,10 @@ export async function createInstallation(
       fetch: clientAddressBoundary(config.clientAddress, (request) => handle(request)),
       hostname: config.host,
       port: config.port,
-      ...(tls ? { createServer: createHttpsServer, serverOptions: tls } : {}),
+      // Browser workflows reuse HTTP connections across long interactions. Keep idle sockets
+      // until this installation closes them, so a resumed read or write cannot race idle expiry.
+      serverOptions: { ...tls, keepAliveTimeout: 0 },
+      ...(tls ? { createServer: createHttpsServer } : {}),
     });
     server.on('connection', (socket) => {
       sockets.add(socket);

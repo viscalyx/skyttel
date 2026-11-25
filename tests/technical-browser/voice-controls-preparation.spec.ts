@@ -121,13 +121,12 @@ for (const { seeded, viewport } of references)
         )
         .toBe(true);
       await page.waitForTimeout(1100);
-      expect(
-        await page.evaluate(() =>
-          window.skyttelVoiceFixture
-            .sentAudio()
-            .some(({ frequency }) => frequency > 820 && frequency < 940),
-        ),
-      ).toBe(false);
+      const releasedAudio = await page.evaluate(() =>
+        window.skyttelVoiceFixture
+          .sentAudio()
+          .filter(({ frequency }) => frequency > 820 && frequency < 940),
+      );
+      expect(releasedAudio).toEqual([]);
       await page.evaluate(() => window.voiceToneCleanup?.());
       await page.evaluate(() => window.skyttelVoicePreparation?.restore());
       expect(

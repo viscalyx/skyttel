@@ -65,3 +65,22 @@ describe.each([44_100, 48_000])('speaker interruption at %i Hz', (sampleRate) =>
     expect(posted.mock.calls).toEqual([['open']]);
   });
 });
+
+it('keeps a live speaker connected through missing channels, passes normal audio and stops on close', () => {
+  vi.stubGlobal('sampleRate', 48_000);
+  const processor = new VoiceOutput();
+  const input = Float32Array.from([0.25, -0.75]);
+  const output = new Float32Array(input.length);
+  expect(processor.process([], [[output]])).toBe(true);
+  expect(processor.process([[]], [[output]])).toBe(true);
+  expect(processor.process([[input]], [])).toBe(true);
+  expect(processor.process([[input]], [[]])).toBe(true);
+  expect([...output]).toEqual([0, 0]);
+  processor.port.onmessage({ data: 'unrecognized' });
+  expect(processor.process([[input]], [[output]])).toBe(true);
+  expect(output).toEqual(input);
+  processor.port.onmessage({ data: 'close' });
+  output.fill(0);
+  expect(processor.process([[input]], [[output]])).toBe(false);
+  expect([...output]).toEqual([0, 0]);
+});
