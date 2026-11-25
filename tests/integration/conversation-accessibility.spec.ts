@@ -96,8 +96,8 @@ for (const width of [1280, 390])
       await page.locator('.notice-announcement[aria-live="polite"] span').evaluate((span) => {
         span.dataset.occurrence = 'first';
       });
-      const checkOrder = async () => {
-        const readingOrder = await page.evaluate(() => {
+      const readingOrder = () =>
+        page.evaluate(() => {
           const controls = [
             '.workspace-tools [aria-label="Navigera"]',
             '.workspace-talk',
@@ -122,7 +122,8 @@ for (const width of [1280, 390])
                 )),
           );
         });
-        expect(readingOrder).toBe(true);
+      const checkOrder = async () => {
+        await expect.poll(readingOrder).toBe(true);
         await microphoneButton(page).focus();
         await page.keyboard.press('Tab');
         await expect(await utilityButton(page, 'Skriv till Skyttel')).toBeFocused();
