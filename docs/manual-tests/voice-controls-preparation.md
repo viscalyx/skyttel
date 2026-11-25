@@ -349,7 +349,7 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
 4. Ta bort nätblockeringen och ladda om webbläsaren. Skyttel kontrollerar och
    slutför själv det registrerade försöket, innan något nytt samtal startas
    eller något medgivande ges. Öppna **Skriv till Skyttel** och välj samtalet
-   **Markera Lo Exempel.** i **Samtal**. Läs utgångstiden och **Kontrollen
+   **Markera Lo Exempel.** i **Samtal**. Läs **Kontrollen
    visar att hela utkastet sparades. Ändringarna finns i hushållets karta.**
    Välj **Avstå från det oavslutade arbetet**, godkänn vid behov och läs
    bekräftelsen. Välj **Nytt samtal** och slå på mikrofonen.
@@ -497,8 +497,21 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
 
 ### Tidslinje TAL-06
 
-1. Skriv **Osänd rättelse** i samtalets textfält utan att skicka. Kör
-   `user Rätta Lo.` och `delegate` i startguiden. Håll modellanropet.
+1. Skriv **Osänd rättelse** i samtalets textfält utan att skicka. Lägg in
+   det första textfragmentet i webbläsaren från konsolen:
+
+   ```javascript
+   window.skyttelVoiceFixture.emit({
+     type: 'session.input_transcript.delta',
+     event_id: crypto.randomUUID(),
+     delta: 'Rätta Lo.',
+     start_ms: 0,
+     end_ms: 100,
+   });
+   ```
+
+   Kör `user Rätta Lo.` och `delegate` i startguiden. Släpp modellanropet
+   med `tool REQUEST read_map {"query":"Lo"}`. Håll det följande modellanropet.
 2. Stäng textvyn och öppna Karta. Läs **Arbetar** i röstrutan.
    Förbered ljudförloppet i Chromium med konsolen. Varje ton motsvarar ett ord.
    Mätningen läser inkommande ljud och ljudet som webbläsaren skickar till

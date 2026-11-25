@@ -57,7 +57,8 @@ kartans symboler”.
   },
   "reference": "Dator; hela serverstödda utkastet och det angivna personliga valet/felutfallet.",
   "outcomes": [
-    "Läsa osparade ändringar i en tabell utan att ändra eller spara dem."
+    "Läsa osparade ändringar i en tabell utan att ändra eller spara dem.",
+    "Hela raden får samma bakgrund vid hovring över namnet eller statusen. Ett klick på statusen öppnar förslaget. När dialogen stängs försvinner radens markering och fokus återgår till namnet."
   ]
 }
 ```
@@ -74,9 +75,10 @@ kartans symboler”.
    objekt, **Sista fyra: 1111 (Text) → Sista fyra: 2222 (Text)**,
    gammal/ny inloggningsadress,
    **Lo Rättad → Betalar → Kortet**, Provtyp och Förvaras.
-3. Läs kolumnerna Symbol, Namn, Typ och Vad som ändras. Penna, kryss och
-   plus har textalternativen Ändra, Ta bort och Lägg till. Namn och typer
-   går att läsa utan bokstavskolumner. Inget sparas genom läsningen.
+3. Läs kolumnerna Namn, Typ och Vad som ändras. För pekaren över
+   **Tas bort** och över namnet på Kims rad. Klicka på **Tas bort**, läs
+   förslaget och tryck Escape utan att flytta pekaren. Flytta sedan
+   pekaren från raden och tillbaka.
 4. Dölj utkastet, stäng och öppna textvyn och kontrollera att det fortfarande
    är hopfällt. Öppna det och välj **Nytt samtal**. Kontrollera att utkastet syns.
 5. Öppna samma baslinjesparande i Rapporter igen. Välj **Visa ändringarna**
@@ -88,11 +90,14 @@ kartans symboler”.
 - Knappen står ovanför samtalstexten, anger åtta osparade ändringar och
   visar en pil åt öppningsriktningen. Den heter **Dölj utkastet** när
   tabellen visas. Tangentbord och skärmläsare når knappen och dess läge.
-- Tabellen har kolumnerna Symbol, Namn, Typ och Vad som ändras, en rad
-  per ändring. Penna, kryss och plus motsvarar kartans symboler och har
-  textalternativen Ändra, Ta bort och Lägg till. Rättelsen visar
+- Tabellen har tre kolumner och en rad per ändring. Penna, kryss och plus
+  motsvarar kartans symboler och står före texten i **Vad som ändras**.
+  Rättelsen visar
   **Namn: Lo Exempel → Lo Rättad**. Sambandets ändring visar den gamla
   och nya e-postadressen utan att upprepa hela sambandets namn.
+- Hovring över namnet och statusen ger samma bakgrund på hela raden.
+  Klicket på statusen öppnar Kims förslag. Escape tar bort radens markering
+  och återför fokus till namnet. Hovring över raden färgar den igen.
 - På dator börjar utkastet vid panelens överkant med rubriken **Utkast**,
   till vänster om samtalsrubriken och samtalstexten. Namn och typer går
   att läsa utan att enskilda ord bryts till bokstavskolumner.

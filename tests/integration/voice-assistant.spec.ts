@@ -74,12 +74,17 @@ async function startVoice(page: Page) {
     )
     .toBe(true);
 }
-function speak(live: ReturnType<typeof liveProvider>, text: string, id = crypto.randomUUID()) {
+function speak(
+  live: ReturnType<typeof liveProvider>,
+  text: string,
+  id = crypto.randomUUID(),
+  eventId = crypto.randomUUID(),
+) {
   const session = [...live.channels.keys()].at(-1);
   if (!session) throw new Error('Missing live session');
   live.emit(session, {
     type: 'session.input_transcript.delta',
-    event_id: crypto.randomUUID(),
+    event_id: eventId,
     delta: text,
     start_ms: 0,
     end_ms: 100,
@@ -97,6 +102,7 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
 }) => {
   let release!: (output: unknown[]) => void;
   let held = false;
+  let read = false;
   const correction = 'Jag menar Lo Exempel.';
   const answer = 'Lo Exempel finns i ditt utkast.';
   const model = textModel((request) => {
@@ -104,6 +110,10 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
       String(request.input.findLast((item) => item.role === 'user')?.content),
     );
     if (input.message === correction) return [modelMessage(answer)];
+    if (!read) {
+      read = true;
+      return [modelTool('read_map', { query: 'Lo' })];
+    }
     return new Promise<unknown[]>((resolve) => {
       held = true;
       release = resolve;
@@ -119,17 +129,24 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
     const { path, value } = await simpleMap(page, app);
     const before = await (await page.request.get(path)).json();
     await assistant(page).getByLabel('Meddelande till Skyttel').fill('Osänd rättelse');
-    await page.evaluate(() =>
-      window.skyttelVoiceFixture.emit({
-        type: 'session.input_transcript.delta',
-        event_id: crypto.randomUUID(),
-        delta: 'Rätta Lo.',
-        start_ms: 0,
-        end_ms: 100,
-      }),
+    const fragmentId = crypto.randomUUID();
+    await page.evaluate(
+      (eventId) =>
+        window.skyttelVoiceFixture.emit({
+          type: 'session.input_transcript.delta',
+          event_id: eventId,
+          delta: 'Rätta Lo.',
+          start_ms: 0,
+          end_ms: 100,
+        }),
+      fragmentId,
     );
-    speak(live, 'Rätta Lo.');
+    speak(live, 'Rätta Lo.', undefined, fragmentId);
     await expect.poll(() => held).toBe(true);
+    const log = assistant(page).getByRole('log');
+    const voiceWork = log.getByRole('listitem').filter({ hasText: 'Läser kartan' });
+    await expect(voiceWork).toBeVisible();
+    await expect(voiceWork.locator('xpath=preceding-sibling::li[1]')).toContainText('Rätta Lo.');
     await closeConversationText(page);
     await openMap(page);
     await expect(voiceBox(page)).toHaveText('Arbetar');
@@ -153,8 +170,8 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
     await expect
       .poll(async () => (await (await page.request.get(path)).json()).draft)
       .toEqual(before.draft);
-    const log = assistant(page).getByRole('log');
     await expect(log).toContainText('Rätta Lo.');
+    await expect(voiceWork).toBeVisible();
     await expect(log).toContainText(correction);
     await audio.expectPlaybackAndContinuousCapture(answer);
     await turnMicrophoneOff(page);

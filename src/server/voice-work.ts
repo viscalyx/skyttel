@@ -87,6 +87,7 @@ export function voiceWork({
     role: Fragment['role'],
     text: string,
     utteranceStart: boolean,
+    eventId: string,
   ) => ((requestId?: string) => void) | undefined;
   response?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['response']) => void;
   refusal?: (value: import('../shared/voice-assistant.js').VoiceAssistantView['refusal']) => void;
@@ -725,7 +726,7 @@ export function voiceWork({
       const utteranceStart = transcriptBoundaries.append(role, event.start_ms, event.end_ms, {
         newUtterance: role === 'user' && nextUserUtterance,
       });
-      startTranscriptUtterance = transcript?.(role, event.delta, utteranceStart);
+      startTranscriptUtterance = transcript?.(role, event.delta, utteranceStart, event.event_id);
       if (role === 'user') nextUserUtterance = false;
     }
     if (role === 'user') {
@@ -853,7 +854,7 @@ export function voiceWork({
         task,
         answerTo,
         continuedVoiceRead || undefined,
-        selected[0]?.startTranscriptUtterance,
+        selected.find((item) => item.startTranscriptUtterance)?.startTranscriptUtterance,
       );
     }
   }

@@ -29,6 +29,7 @@ import {
 } from '../shared/relationship-identity.js';
 import { assistantSaveState, completeAssistantText } from '../shared/task-delivery.js';
 import type {
+  ConversationWorkStep,
   MapSelection,
   RetainedConversation,
   TextAssistantReview,
@@ -278,7 +279,7 @@ export function textAssistantRoutes({
   voiceTokens?: number;
   observe?: ObserveAssistant;
   onStop?: (sessionId: string, switched?: boolean) => void;
-  hasActiveVoice?: (sessionId: string) => boolean;
+  hasActiveVoice?: (sessionId: string, includeListening?: boolean) => boolean;
   onResetStart?: (sessionId: string, requestId?: string) => void;
   onSummary?: (sessionId: string, signal: AbortSignal) => Promise<void> | undefined;
   onWork?: (browserSessionId: string, until: number | undefined) => void;
@@ -467,6 +468,13 @@ export function textAssistantRoutes({
       (session.state.phase === 'working' && !waitingForRetainedWork(session))
     );
   }
+  function deletionWouldInterrupt(session: Session) {
+    return Boolean(
+      switchingWouldInterrupt(session) ||
+        hasActiveVoice?.(session.state.id, false) ||
+        [...preparations].some((item) => item.session === session),
+    );
+  }
   function waitsForDraft(session: Session, sequence: number, current: TextAssistantReview) {
     return (
       hasEarlierPreparation(session, sequence) ||
@@ -637,11 +645,14 @@ export function textAssistantRoutes({
       revision: number;
       deadline: number;
       providerCallId?: string;
+      recordTool?: (name: string, kind: ConversationWorkStep['kind'], text: string) => void;
     }
   >();
-  // The conversations that a revoked consent has ended, until the time they
-  // would have expired by themselves. Work with them is refused with the reason.
-  const revoked = new Map<string, { actorId: string; householdId: string }>();
+  // Keep the reason until the conversation would otherwise have expired.
+  const endings = new Map<
+    string,
+    { actorId: string; householdId: string; reason: 'deleted' | 'revoked' }
+  >();
   // How many times each user has revoked the consent for each household, so
   // that a start can tell whether a revocation came while it connected. It
   // holds one number for each user and household that has revoked.
@@ -774,6 +785,7 @@ export function textAssistantRoutes({
     session.state.input = [];
     session.execution.reads.clear();
     session.state.conversation = [];
+    session.state.workSteps = undefined;
     session.state.contextOffset = 0;
     session.state.reply = undefined;
     session.state.modelReply = undefined;
@@ -898,13 +910,20 @@ export function textAssistantRoutes({
       interruptedSpeech: interrupted?.voice ? interrupted.text : undefined,
       expiresAt: session.state.expiresAt,
       conversation: session.state.conversation.map(
-        ({ role, text, partial, utteranceStart, notice, requestId, speechRequestId }) => ({
+        ({
           role,
           text,
-          requestId:
-            role === 'user' && interrupted && (speechRequestId ?? requestId) === interrupted.id
-              ? interrupted.id
-              : undefined,
+          partial,
+          utteranceStart,
+          notice,
+          requestId,
+          speechRequestId,
+          speechEventId,
+        }) => ({
+          role,
+          text,
+          requestId: speechRequestId ?? requestId,
+          speechEventId,
           partial,
           utteranceStart,
           // Older retained conversations have no presentation marker. Match only
@@ -983,7 +1002,7 @@ export function textAssistantRoutes({
       phase,
       waitingForRetainedWork: (phase === 'working' && waitingForRetainedWork(session)) || undefined,
       activity: phase === 'working' ? session.state.activity : undefined,
-      activitySteps: session.state.canceled ? undefined : session.state.activitySteps,
+      workSteps: session.state.workSteps,
       review,
       reply,
       modelReply,
@@ -1205,6 +1224,7 @@ export function textAssistantRoutes({
   function modelTranscriptEntry({
     utteranceStart: _utteranceStart,
     speechRequestId: _speechRequestId,
+    speechEventId: _speechEventId,
     ...entry
   }: ConversationState['conversation'][number]) {
     return entry;
@@ -1509,7 +1529,7 @@ export function textAssistantRoutes({
         session.state.revision !== revision
       )
         throw new MapError('assistant_canceled', 409);
-      if (revoked.has(session.state.id)) throw new MapError('forbidden', 403);
+      if (endings.has(session.state.id)) throw new MapError('forbidden', 403);
       authorize(
         session.state.actorId,
         session.execution.browserSessionId,
@@ -1654,15 +1674,8 @@ export function textAssistantRoutes({
         context,
         ...(!parent ? { evidenceGap: 'unknown_parent' as const } : {}),
       };
-      if (work?.session === session && session.state.phase === 'working') {
-        session.state.activity = assistantToolActivity(name);
-        const steps = session.state.activitySteps ?? [];
-        if (steps.at(-1)?.text !== session.state.activity)
-          session.state.activitySteps = [
-            ...steps,
-            { id: randomUUID(), text: session.state.activity },
-          ].slice(-8);
-      }
+      if (observed?.session === session)
+        observed.recordTool?.(name, 'mcp', assistantToolActivity(name));
       observe?.({
         at,
         ...identity,
@@ -2606,7 +2619,7 @@ export function textAssistantRoutes({
     session.state.contextSummaries = [];
     session.execution.reads.clear();
     session.state.activity = undefined;
-    session.state.activitySteps = [];
+    session.state.workSteps = undefined;
     session.state.contextGeneration = 0;
     session.state.queue = [];
     for (const id of session.state.accepted.keys()) session.execution.deliveries.get(id)?.stop();
@@ -3740,6 +3753,7 @@ export function textAssistantRoutes({
             const selected = await selectedItem(session, selection, session.state.review, guard);
             if (!selected) throw new MissingMapSelection();
             guard();
+            observationWork.getStore()?.recordTool?.(action.name, 'tool', 'Markerar i kartan');
             session.state.selection = {
               ...selection,
               ...(action.name === 'show_map_object' ? { objectId: selection.id } : {}),
@@ -4365,7 +4379,7 @@ export function textAssistantRoutes({
     return true;
   }
   function messageAccess(session: Session, message: Message) {
-    if (sessions.get(session.state.id) !== session || revoked.has(session.state.id))
+    if (sessions.get(session.state.id) !== session || endings.has(session.state.id))
       throw new MapError('forbidden', 403);
     if (!Number.isFinite(message.deadline) || now() >= message.deadline)
       throw new MapError('assistant_task_expired', 409);
@@ -4546,7 +4560,6 @@ export function textAssistantRoutes({
     session.state.revision++;
     session.state.phase = 'working';
     session.state.activity = 'Förbereder uppgiften';
-    session.state.activitySteps = [];
     if (!message.resetDiscard) session.state.resetSource = undefined;
     session.state.canceled = undefined;
     session.state.error = undefined;
@@ -4735,6 +4748,7 @@ export function textAssistantRoutes({
     };
     let observationStatus: ObservationStatus = 'incomplete';
     const selectedModel = { ...session.state.modelChoice };
+    let previousTool: { name: string; kind: ConversationWorkStep['kind'] } | undefined;
     const executing = modelWork.run(conversationModelProfile(selectedModel), () =>
       observationWork.run(
         {
@@ -4744,6 +4758,24 @@ export function textAssistantRoutes({
           context: observationContext,
           revision,
           deadline: message.deadline,
+          recordTool: (name, kind, text) => {
+            if (
+              task.signal.aborted ||
+              session.state.revision !== revision ||
+              session.execution.task !== task ||
+              session.state.phase !== 'working'
+            )
+              return;
+            const steps = session.state.workSteps ?? [];
+            const last = steps.at(-1);
+            session.state.workSteps =
+              last && previousTool?.name === name && previousTool.kind === kind
+                ? [...steps.slice(0, -1), { ...last, count: last.count + 1 }]
+                : [...steps, { id: randomUUID(), requestId: message.id, kind, text, count: 1 }];
+            previousTool = { name, kind };
+            session.state.activity = undefined;
+            persist(session);
+          },
         },
         async () => {
           try {
@@ -5060,6 +5092,7 @@ export function textAssistantRoutes({
       .flatMap((state) => {
         const first = firstRequest(state);
         if (!first || !state.expiresAt || !canRetainConversation(state)) return [];
+        const session = sessions.get(state.id);
         return [
           {
             id: state.id,
@@ -5067,13 +5100,45 @@ export function textAssistantRoutes({
             createdAt: state.createdAt,
             lastRequestAt: state.lastRequestAt ?? [...state.accepted.values()].at(-1)?.receivedAt,
             expiresAt: state.expiresAt,
-            paused: sessions.get(state.id)?.state.paused ?? !sessions.has(state.id),
+            paused: session?.state.paused ?? !session,
+            busy: session ? deletionWouldInterrupt(session) : false,
             modelChoice: state.modelChoice,
           },
         ];
       })
       .sort((a, b) => (b.lastRequestAt ?? 0) - (a.lastRequestAt ?? 0));
     return context.json({ conversations });
+  });
+  routes.post(`${base}/retained/:conversationId/delete`, async (context) => {
+    const actorId = context.get('actorId');
+    const householdId = context.req.param('id');
+    const id = context.req.param('conversationId');
+    const binding = storage.binding(context.get('browserSessionId'));
+    const retained = binding && storage.read(actorId, householdId, binding, id);
+    if (!retained || !firstRequest(retained) || !canRetainConversation(retained)) {
+      const { error, status } = ended(id, actorId, householdId);
+      if (error === 'assistant_conversation_deleted') return context.json({ deleted: true });
+      return context.json({ error }, status);
+    }
+    const session = sessions.get(id);
+    if (session && deletionWouldInterrupt(session))
+      return context.json({ error: 'assistant_conversation_busy' }, 409);
+    endings.set(id, { actorId, householdId, reason: 'deleted' });
+    setTimeout(
+      () => endings.delete(id),
+      Math.max(5_000, (retained.expiresAt ?? now()) - now()),
+    ).unref();
+    if (session) {
+      await stop(session, { switched: true });
+    } else {
+      storage.erase(id);
+      const waiting = [...sessions.values()].find(
+        (candidate) =>
+          candidate.state.householdId === householdId && candidate.state.owner === retained.owner,
+      );
+      if (waiting) nextMessage(waiting);
+    }
+    return context.json({ deleted: true });
   });
   routes.on(['GET', 'POST'], `${base}/retained/:conversationId/open`, async (context) => {
     const actorId = context.get('actorId');
@@ -5083,8 +5148,10 @@ export function textAssistantRoutes({
     const binding = storage.binding(browserSessionId);
     if (!binding) return context.json({ error: 'assistant_session_expired' }, 404);
     const retained = storage.read(actorId, householdId, binding, id);
-    if (!retained || !firstRequest(retained) || !canRetainConversation(retained))
-      return context.json({ error: 'assistant_session_expired' }, 404);
+    if (!retained || !firstRequest(retained) || !canRetainConversation(retained)) {
+      const { error, status } = ended(id, actorId, householdId);
+      return context.json({ error: status === 404 ? error : 'assistant_session_expired' }, 404);
+    }
     const body = context.req.method === 'POST' ? await context.req.json().catch(() => null) : null;
     const current = sessions.get(id);
     if (context.req.method === 'GET' || (!body?.activate && current && !current.state.paused)) {
@@ -5124,7 +5191,10 @@ export function textAssistantRoutes({
       context.req.raw.headers,
       id,
     );
-    if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    if (!session) {
+      const { error, status } = ended(id, actorId, householdId);
+      return context.json({ error: status === 404 ? error : 'assistant_session_expired' }, 404);
+    }
     if (sessions.get(id) !== session || session.execution.browserSessionId !== browserSessionId)
       return context.json({ error: 'assistant_turn_changed' }, 409);
     if (body?.activate) {
@@ -5342,10 +5412,13 @@ export function textAssistantRoutes({
   }
   /** Why the user cannot work with a conversation that is not going on. */
   function ended(sessionId: string, actorId: string, householdId: string) {
-    const ending = revoked.get(sessionId);
-    return ending?.actorId === actorId && ending.householdId === householdId
-      ? ({ error: conversationConsentRevoked, status: 403 } as const)
-      : ({ error: 'assistant_session_expired', status: 404 } as const);
+    const ending = endings.get(sessionId);
+    if (ending?.actorId === actorId && ending.householdId === householdId) {
+      if (ending.reason === 'revoked')
+        return { error: conversationConsentRevoked, status: 403 } as const;
+      return { error: 'assistant_conversation_deleted', status: 404 } as const;
+    }
+    return { error: 'assistant_session_expired', status: 404 } as const;
   }
   routes.use(`${base}/:sessionId/*`, async (context, next) => {
     const sessionId = context.req.param('sessionId') ?? '';
@@ -6380,6 +6453,7 @@ export function textAssistantRoutes({
       role: 'user' | 'assistant',
       text: string,
       utteranceStart: boolean,
+      eventId: string,
     ) => {
       const session = sessions.get(sessionId);
       if (!session) return;
@@ -6405,8 +6479,10 @@ export function textAssistantRoutes({
       return (requestId?: string) => {
         if (sessions.get(sessionId) !== session || !session.state.conversation.includes(retained))
           return;
-        if (requestId) retained.speechRequestId = requestId;
-        else if (!retained.utteranceStart) retained.utteranceStart = true;
+        if (requestId) {
+          retained.speechRequestId = requestId;
+          retained.speechEventId = eventId;
+        } else if (!retained.utteranceStart) retained.utteranceStart = true;
         else return;
         persist(session);
       };
@@ -6430,7 +6506,7 @@ export function textAssistantRoutes({
       currentConsent(session);
       const guard = () =>
         textWork.exit(() => {
-          if (sessions.get(sessionId) !== session || revoked.has(sessionId))
+          if (sessions.get(sessionId) !== session || endings.has(sessionId))
             throw new MapError('forbidden', 403);
           authorize(
             session.state.actorId,
@@ -6502,10 +6578,10 @@ export function textAssistantRoutes({
         (session) => session.state.actorId === actorId && session.state.householdId === householdId,
       );
       for (const session of ending) {
-        revoked.set(session.state.id, { actorId, householdId });
+        endings.set(session.state.id, { actorId, householdId, reason: 'revoked' });
         session.execution.summaryTask?.abort();
         setTimeout(
-          () => revoked.delete(session.state.id),
+          () => endings.delete(session.state.id),
           Math.max(1, session.execution.mcp.expiresAt - now()),
         ).unref();
       }

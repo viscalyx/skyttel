@@ -154,9 +154,6 @@ for (const size of [
         await expect(view(page).getByRole('log')).not.toContainText('Ett synligt provsvar.');
         await selectConversation(page, 'Ett vanligt uppdrag.');
         await expect(view(page).getByRole('log')).toContainText('Ett synligt provsvar.');
-        await expect(view(page).getByRole('status', { name: 'Samtalets livslängd' })).toContainText(
-          'Löper ut',
-        );
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );

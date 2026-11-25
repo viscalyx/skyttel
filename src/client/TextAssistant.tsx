@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { conversationListWidth } from '../shared/conversation-preferences.js';
 import type { MapDraft } from '../shared/map.js';
 import { ConversationDraft, draftCount } from './ConversationDraft.js';
 import './voice.css';
@@ -68,6 +69,7 @@ export function ConversationWorkspace({
   const visibleDraft = draft && (!review || draft.version >= review.version) ? draft : review;
   const count = draftCount(visibleDraft);
   const [draftOpen, setDraftOpen] = useState(false);
+  const [listWidth, setListWidth] = useState(conversationListWidth);
   useLayoutEffect(() => {
     if (draftOpenRequest) {
       manuallyToggled.current = true;
@@ -116,6 +118,8 @@ export function ConversationWorkspace({
           conversation={conversation}
           onStartConversation={onStartConversation}
           widthPreferences={widthPreferences}
+          listWidth={listWidth}
+          onListWidthChange={setListWidth}
           hidden={!workVisible || textViewHidden}
           focusRequest={textFocusRequest}
           openingFocus={textOpeningFocus}

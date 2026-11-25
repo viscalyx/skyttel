@@ -120,6 +120,7 @@ test('reading from another device leaves admitted work in place and a late title
     ).json();
     const endpoint = `${path}/${session.id}`;
     const opened = `${path}/retained/${session.id}/open`;
+    const deletion = `${path}/retained/${session.id}/delete`;
     const admitted = await writer.post(`${endpoint}/messages`, {
       headers,
       data: {
@@ -142,6 +143,9 @@ test('reading from another device leaves admitted work in place and a late title
       data: { ...approvedForVisit, activate: true },
     });
     expect(busy.status()).toBe(409);
+    const blockedDeletion = await reader.post(deletion, { headers, data: {} });
+    expect(blockedDeletion.status()).toBe(409);
+    expect(await blockedDeletion.json()).toEqual({ error: 'assistant_conversation_busy' });
     const stillWorking = await (await writer.get(endpoint)).json();
     expect(stillWorking).toMatchObject({ id: session.id, phase: 'working' });
     expect(stillWorking.paused).not.toBe(true);
@@ -149,7 +153,16 @@ test('reading from another device leaves admitted work in place and a late title
     await expect
       .poll(async () => (await (await writer.get(endpoint)).json()).modelReply)
       .toBe('Klart.');
-    expect((await writer.post(`${endpoint}/stop`, { headers, data: {} })).status()).toBe(200);
+    const { user } = await (await reader.get(`${app.origin}/api/bootstrap`)).json();
+    app.seedMembership(user.id, 'other-household', 'Annat hushåll');
+    const wrongHousehold = deletion.replace(`/${household.id}/`, '/other-household/');
+    expect((await reader.post(wrongHousehold, { headers, data: {} })).status()).toBe(404);
+    expect((await writer.get(endpoint)).status()).toBe(200);
+    expect((await reader.post(deletion, { headers, data: {} })).status()).toBe(200);
+    expect((await reader.post(deletion, { headers, data: {} })).status()).toBe(200);
+    const removed = await writer.get(endpoint);
+    expect(removed.status()).toBe(404);
+    expect(await removed.json()).toEqual({ error: 'assistant_conversation_deleted' });
     finishTitle();
     await expect.poll(() => titleCompleted).toBe(true);
     expect((await reader.get(opened)).status()).toBe(404);

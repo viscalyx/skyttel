@@ -66,20 +66,46 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     await toggle(page).click();
     await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
     const table = draft(page).getByRole('table', { name: 'Osparade ändringar' });
-    await expect(table.getByRole('columnheader')).toHaveText([
-      'Symbol',
-      'Namn',
-      'Typ',
-      'Vad som ändras',
-    ]);
+    await expect(table.getByRole('columnheader')).toHaveText(['Namn', 'Typ', 'Vad som ändras']);
     await expect(table.locator('tbody tr')).toHaveCount(8);
-    await expect(table.getByRole('row', { name: /Ändra.*Lo Rättad/ })).toContainText(
-      'Namn: Lo Exempel → Lo Rättad',
-    );
-    await expect(table.getByRole('row', { name: /Ta bort.*Kim/ })).toContainText('Tas bort');
-    expect(
-      await table.locator('tbody td:first-child > span[aria-hidden]').allTextContents(),
-    ).toEqual(['✎', '×', '+', '✎', '✎', '+', '+', '+']);
+    const proposalRow = (name: string) =>
+      table.getByRole('row').filter({
+        has: page.getByRole('button', { name: `Visa förslaget: ${name}`, exact: true }),
+      });
+    await expect(proposalRow('Lo Rättad')).toContainText('Namn: Lo Exempel → Lo Rättad');
+    const removalRow = proposalRow('Kim');
+    const removalStatus = removalRow.getByText('Tas bort', { exact: true });
+    await expect(removalStatus).toBeVisible();
+    await expect(table.locator('td:last-child .conversation-draft-symbol')).toHaveText([
+      '✎',
+      '×',
+      '+',
+      '✎',
+      '✎',
+      '+',
+      '+',
+      '+',
+    ]);
+    await removalStatus.hover();
+    const highlight = await removalRow.evaluate((row) => getComputedStyle(row).backgroundColor);
+    expect(highlight).not.toBe('rgba(0, 0, 0, 0)');
+    const removalName = removalRow.getByRole('button', {
+      name: 'Visa förslaget: Kim',
+      exact: true,
+    });
+    await removalName.hover();
+    await expect(removalName).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(removalRow).toHaveCSS('background-color', highlight);
+    await removalStatus.click();
+    const removalDetails = page.getByRole('dialog', { name: 'Kim', exact: true });
+    await expect(removalDetails).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(removalDetails).toBeHidden();
+    await expect(removalName).toBeFocused();
+    await expect(removalRow).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await toggle(page).hover();
+    await removalStatus.hover();
+    await expect(removalRow).toHaveCSS('background-color', highlight);
     for (const line of [
       'Sista fyra: 1111 (Text) → Sista fyra: 2222 (Text)',
       'Lo Rättad → Betalar → Kortet',
@@ -94,7 +120,9 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     });
     expect((await read()).draft.relationships).toHaveLength(2);
     expect(await read()).toEqual(beforeReview);
-    const relationship = table.getByRole('row', { name: /Ändra.*Familjens gemensamma musikkonto/ });
+    const relationship = table.getByRole('row', {
+      name: /Familjens gemensamma musikkonto.*Ändras/,
+    });
     await expect(relationship).toContainText('familjen@example.test');
     await expect(relationship).toContainText('musik@example.test');
     const typeCell = relationship.getByRole('cell').filter({ hasText: /^Inloggningsadress$/ });

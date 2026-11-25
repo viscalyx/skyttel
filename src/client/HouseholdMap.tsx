@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { conversationWidths } from '../shared/conversation-preferences.js';
+import { conversationPanelGap, conversationWidths } from '../shared/conversation-preferences.js';
 import { type DraftConflict, draftConflicts } from '../shared/draft-conflicts.js';
 import { hasEnded } from '../shared/lifecycle.js';
 import type {
@@ -297,7 +297,7 @@ export function HouseholdMap({
     ? viewport.width
     : viewport.mobile
       ? 400
-      : widths.textWidth + (draftViewOpen ? widths.draftWidth : 0);
+      : widths.textWidth + (draftViewOpen ? widths.draftWidth + conversationPanelGap : 0);
   const exclusiveViews = narrow || viewport.width - textViewWidth < 350;
   const textViewVisible =
     workspaceSurface !== 'reports' &&
@@ -488,15 +488,9 @@ export function HouseholdMap({
         if (column && composer && header) {
           // The notice slot can push the composer down. Use the bounded
           // column height so expanding a report cannot grow its own limit.
-          const modelControl = column.querySelector('.text-view-model');
-          const modelHeight =
-            modelControl && getComputedStyle(modelControl).position !== 'absolute'
-              ? modelControl.getBoundingClientRect().height
-              : 0;
           const available =
             column.getBoundingClientRect().bottom -
             composer.getBoundingClientRect().height -
-            modelHeight -
             Math.max(column.getBoundingClientRect().top, header.getBoundingClientRect().bottom);
           card.style.setProperty('--notice-available-height', `${Math.max(46, available - 28)}px`);
         }

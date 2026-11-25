@@ -119,6 +119,7 @@ export function voiceAssistantRoutes({
     role: 'user' | 'assistant',
     text: string,
     utteranceStart: boolean,
+    eventId: string,
   ) => ((requestId?: string) => void) | undefined;
   contextUsage?: (
     sessionId: string,
@@ -809,10 +810,10 @@ export function voiceAssistantRoutes({
           voice.view.replyDelivery ??= [];
           voice.view.replyDelivery.push(value);
         },
-        transcript: (role, text, utteranceStart) => {
+        transcript: (role, text, utteranceStart, eventId) => {
           if (role === 'assistant' && voice.playbackPendingSince !== undefined)
             voice.playbackPendingSince = now();
-          return transcript?.(sessionId, role, text, utteranceStart);
+          return transcript?.(sessionId, role, text, utteranceStart, eventId);
         },
         input: (pending, text) => voiceInput?.(context.req.param('sessionId'), pending, text),
         interrupt: (revision) => interrupt(context.req.param('sessionId'), revision),
@@ -1075,12 +1076,12 @@ export function voiceAssistantRoutes({
         }
       }
     },
-    hasActiveVoice: (id: string) =>
+    hasActiveVoice: (id: string, includeListening = true) =>
       [...voices.values()].some(
         (voice) =>
           voice.assistant.id === id &&
           !voice.closed &&
-          (voice.microphoneOn ||
+          ((includeListening && voice.microphoneOn) ||
             voice.speakerActive ||
             (voice.playbackPendingSince !== undefined &&
               now() - voice.playbackPendingSince < unconfirmedPlaybackIdleMs) ||

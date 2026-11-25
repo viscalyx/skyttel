@@ -39,6 +39,8 @@ function restoreConversationTranscript(
       const utterance = row.utteranceStart === false ? spokenRows[row.role] : adjacentUtterance;
       if (utterance?.role === row.role) {
         if (row.requestId) utterance.id = row.requestId;
+        if (row.speechEventId)
+          utterance.speechEventIds = [...(utterance.speechEventIds ?? []), row.speechEventId];
         utterance.text += row.text;
         adjacentUtterance = utterance;
         continue;
@@ -46,11 +48,13 @@ function restoreConversationTranscript(
     }
     adjacentUtterance = undefined;
     if (row.notice) continue;
-    const entry = {
+    const entry: TranscriptRow = {
       id: row.role === 'user' && row.requestId ? row.requestId : `restored-${sessionId}-${index}`,
       role: row.role,
       text: row.text,
       partial: row.partial,
+      requestId: row.requestId,
+      speechEventIds: row.speechEventId ? [row.speechEventId] : undefined,
       voicePending: false,
     };
     rows.push(entry);
@@ -89,6 +93,7 @@ export type Conversation = {
   listError?: string;
   listRetained?: () => Promise<void>;
   openRetained?: (id: string) => Promise<boolean>;
+  deleteRetained?: (id: string) => Promise<string | undefined>;
   resumeConversation?: (requestId?: string) => Promise<void>;
   configureModel?: (choice: ConversationModelChoice) => Promise<boolean>;
   /** Conversation input is stopped; the unsent text remains editable. */
@@ -283,6 +288,7 @@ export function useConversation({
             item.id === row.id
               ? {
                   ...row,
+                  requestId: row.requestId ?? item.requestId,
                   voiced: row.voiced ?? item.voiced,
                   voicePending: (row.voiced ?? item.voiced) === undefined && row.voicePending,
                 }
@@ -338,6 +344,18 @@ export function useConversation({
             next.review.version < previous.review.version))
       )
         return;
+      // A poll and a message response can arrive in reverse order at the
+      // same revision. Work steps only grow within a conversation context.
+      const previousSteps = previous?.workSteps ?? [];
+      const nextSteps = next.workSteps ?? [];
+      if (
+        previous?.id === next.id &&
+        (previous.contextRevision ?? 0) === (next.contextRevision ?? 0) &&
+        (previousSteps.length > nextSteps.length ||
+          (previousSteps.length === nextSteps.length &&
+            (previousSteps.at(-1)?.count ?? 0) > (nextSteps.at(-1)?.count ?? 0)))
+      )
+        next = { ...next, workSteps: previousSteps };
       if (previous) {
         const knownReceipts = new Set([
           previous.receipt?.operationId,
@@ -453,6 +471,7 @@ export function useConversation({
         if (reply.saveCheck)
           showTranscript({
             id: `check-${reply.saveCheck.id}`,
+            requestId: reply.id,
             role: 'assistant',
             text: reply.saveCheck.reply,
             voiced,
@@ -469,6 +488,7 @@ export function useConversation({
               reply.revision === undefined
                 ? `queued-${next.id}-${reply.id}`
                 : `text-${next.id}-${reply.revision}`,
+            requestId: reply.id,
             role: 'assistant',
             text: reply.text,
             voiced,
@@ -477,6 +497,7 @@ export function useConversation({
         if (reply.receipt && !reply.saveCheck)
           showTranscript({
             id: `saved-${next.id}-${reply.receipt.operationId}`,
+            requestId: reply.id,
             role: 'assistant',
             text: 'Sparat.',
             voiced,
@@ -488,6 +509,7 @@ export function useConversation({
               reply.resetContextRevision === undefined
                 ? `result-${next.id}-${reply.revision}`
                 : resetReplyId({ id: next.id, contextRevision: reply.resetContextRevision }),
+            requestId: reply.id,
             role: 'assistant',
             text: resultReply,
             voiced,
@@ -501,6 +523,7 @@ export function useConversation({
         checkedReplies.current.add(next.saveCheck.id);
         showTranscript({
           id: `check-${next.saveCheck.id}`,
+          requestId: next.taskId,
           role: 'assistant',
           text: next.saveCheck.reply,
           voicePending: voiceConnected.current,
@@ -521,6 +544,7 @@ export function useConversation({
       )
         showTranscript({
           id: `saved-${next.id}-${next.receipt.operationId}`,
+          requestId: next.taskId,
           role: 'assistant',
           text: 'Sparat.',
           voiced,
@@ -541,6 +565,7 @@ export function useConversation({
             next.resetSource && next.discarded
               ? resetReplyId(next)
               : `result-${next.id}-${next.revision}`,
+          requestId: next.taskId,
           role: 'assistant',
           text: resultReply,
           voiced,
@@ -556,6 +581,7 @@ export function useConversation({
       )
         showTranscript({
           id: `text-${next.id}-${next.revision}`,
+          requestId: next.taskId,
           role: 'assistant',
           text: next.modelReply,
           voiced,
@@ -597,15 +623,17 @@ export function useConversation({
     },
     [update],
   );
-  const clear = useCallback(() => {
+  const clear = useCallback((keepListAndText = false) => {
     active.current = null;
     completion.current = conversationCompletion();
     hydratedReplies.current.clear();
     setSession(null);
-    setRetainedConversations(undefined);
-    setListError('');
+    if (!keepListAndText) {
+      setRetainedConversations(undefined);
+      setListError('');
+      setText('');
+    }
     resumeRequested.current = false;
-    setText('');
     setTranscript([]);
     setUnknown(false);
     setDiscovered(null);
@@ -613,6 +641,25 @@ export function useConversation({
     checkedReplies.current.clear();
     checkOccurrence.current = null;
   }, []);
+  const removeDeletedConversation = useCallback(
+    (id: string) => {
+      // A list response sent before deletion must not restore its old row.
+      listRead.current++;
+      setRetainedConversations((rows) => rows?.filter((row) => row.id !== id));
+      if (active.current?.id !== id) return;
+      requestEpoch.current++;
+      selectedAction.current = null;
+      clear(true);
+      setError('');
+      setTaskFailed(false);
+      setStartWithVoice(false);
+      setPending(false);
+      setRequested(null);
+      endVoice.current();
+      callbacks.current.onMapChange();
+    },
+    [clear],
+  );
   const fail = useCallback(
     (failure: unknown) => {
       if (!mounted.current) return;
@@ -636,6 +683,11 @@ export function useConversation({
         callbacks.current.onMapChange();
       } else if (
         failure instanceof MapRequestError &&
+        failure.code === 'assistant_conversation_deleted'
+      ) {
+        if (active.current) removeDeletedConversation(active.current.id);
+      } else if (
+        failure instanceof MapRequestError &&
         failure.code === conversationConsentRequired
       ) {
         // The server has no valid consent, whatever this client last knew.
@@ -657,7 +709,7 @@ export function useConversation({
         setSaveCheckFailed(false);
       }
     },
-    [clear],
+    [clear, removeDeletedConversation],
   );
   useEffect(() => {
     if (!enabled) return;
@@ -1575,6 +1627,17 @@ export function useConversation({
         if (mounted.current && epoch === requestEpoch.current && read === listRead.current)
           setListError('Samtalslistan kunde inte hämtas.');
       }
+    },
+    deleteRetained: async (id) => {
+      try {
+        await request(`${path}/retained/${id}/delete`, {});
+      } catch (failure) {
+        if (failure instanceof MapRequestError && failure.code === 'assistant_conversation_busy')
+          return 'Skyttel arbetar eller talar i samtalet. Vänta tills det är klart.';
+        if (!(failure instanceof MapRequestError && failure.code === 'assistant_session_expired'))
+          return 'Samtalet kunde inte tas bort. Försök igen.';
+      }
+      if (mounted.current) removeDeletedConversation(id);
     },
     openRetained: async (id) => {
       if (switchBlocked) return false;

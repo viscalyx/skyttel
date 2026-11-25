@@ -80,6 +80,8 @@ export type ConversationState = Omit<TextAssistantView, 'conversation' | 'unfini
     requestId?: string;
     /** Presentation anchor for a delegated utterance. */
     speechRequestId?: string;
+    /** Matches the request's first speech fragment in the browser. */
+    speechEventId?: string;
     /** Checked outcomes survive replacement of provider-native tool history. */
     result?: TextAssistantView['result'];
     receipt?: Pick<

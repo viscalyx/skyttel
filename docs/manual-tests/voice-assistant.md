@@ -497,6 +497,7 @@ TAL-06.
   },
   "reference": "Chromium och kontrollerade text-/mediesvar enligt angiven separat förberedelse; faktisk röst eller uppläsning bedöms separat.",
   "outcomes": [
+    "Kartläsningen syns under den talade instruktionen och ligger kvar efter avbrottet.",
     "Rättelsens första ord finns i samtalstexten och Lo-förslaget finns kvar.",
     "Försenat ljud före öppningen tystas och nästa svar hörs från början i det kontrollerade ljudförloppet."
   ]
@@ -512,12 +513,13 @@ till TAL-17/23/24.
 
 **Steg:**
 
-1. Skriv Osänd rättelse utan att skicka. Låt Rätta Lo vänta enligt tidslinjen.
+1. Skriv Osänd rättelse utan att skicka. Låt Rätta Lo vänta efter
+   kartläsningen enligt tidslinjen. Läs **Läser kartan** under **Rätta Lo.**.
    Stäng textvyn och öppna Karta.
 2. Välj **Avbryt** i röstrutan medan repliken hörs. Låt den förberedda
    rättelsen **Jag menar Lo Exempel.** börja vid trycket. Låt det gamla
    För sent-förslaget och rättelsens svar komma enligt tidslinjen.
-3. Öppna textvyn. Läs rättelsen från första ordet och beskedet
+3. Öppna textvyn. Läs **Läser kartan**, rättelsen från första ordet och beskedet
    **Avbrutet. Föreslagna ändringar ligger kvar i utkastet.**
    Kontrollera det gamla ljudet och nästa svars första ord enligt tidslinjen.
 4. Slå av mikrofonen. Kräv kvarvarande **Osänd rättelse**. Välj **Nytt samtal**

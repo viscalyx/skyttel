@@ -448,8 +448,9 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
 - [Utkastet i samtalet](conversation-draft.md): tabellen och dess symboler,
   personligt val mellan hushåll och enheter, första förslaget, tomt utkast,
   sparåterkoppling och kvittots plats i Rapporter → Ändringshistorik.
-  SAMTALSUTKAST-01 läser fältvärden före/efter och bevarad sparad historik
-  med [exakt läsförberedelse](conversation-review-preparation.md).
+  SAMTALSUTKAST-01 provar öppning från ändringstexten, läser fältvärden
+  före och efter samt kontrollerar sparad historik med
+  [exakt läsförberedelse](conversation-review-preparation.md).
   SAMTALSUTKAST-04 är pensionerat till TEXT-04 utan återanvänt ID;
   smal dator och bred emulerad pekare har varsin motsvarighet.
 
@@ -463,19 +464,22 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   textvyn utan att samtalet avslutas. Textvyn ligger ovanpå kartan med
   stilla bakgrund och kartan panorerar vid behov för att visa markeringen.
   Samtalstexten visar vem som skriver och raden Skyttel arbetar sist med en
-  roterande ring som följer valet för minskad rörelse. Aktuellt arbetssteg
-  och utfällbara MCP-steg visar
-  vad som händer. **Nytt samtal** behåller utkast, mikrofon
-  och oskickad text även vid dubbelklick under fördröjd omstart, och textvyn
-  går att använda på pekskärm och smal skärm. Textknappens överlagrade
+  roterande ring som följer valet för minskad rörelse. Verktygsstegen
+  visas i samtalstexten och räknas när samma anrop upprepas i följd.
+  **Modell och resonemang** ligger bredvid **Nytt samtal**, som behåller
+  utkast, mikrofon och oskickad text även vid dubbelklick under fördröjd
+  omstart. Textvyn går att använda på pekskärm och smal skärm.
+  Samtalslistan visar titel,
+  datum och radåtgärder. Ett samtal kan tas bort med bekräftelse när
+  Skyttel varken arbetar eller talar i det. Textknappens överlagrade
   markeringar visar skrivet arbete, olästa svar och väntande frågor med
   en enda artig uppläsning, fasta mått och minskad rörelse. Kommentarspaket
   och faktiskt hört tal provas separat. Mobilfallen har separata ID för
   varje kvarvarande emulerad konfiguration, fast sidofält på bred pekare,
-  kompakt rad vid kort synlig höjd, paus och utgångstid vid återkomst,
+  kompakt rad vid kort synlig höjd, samtalsval efter omladdning,
   nåbart avslut med fokusåtergång, bibehållet fokus, 190 px synlig höjd med
   rösten på, fria kartkontroller och långa rullbara notiser. Datorfallen
-  provar oberoende breddhandtag
+  provar breddhandtagen på de tre panelernas vänsterkanter
   med mus och piltangenter, personliga bredder mellan hushåll och enheter,
   visningsbegränsning utan ändrat sparat val samt återställning även utan
   tillgängligt samtal. Mobil enhet och smal skärm behåller sina bredder.

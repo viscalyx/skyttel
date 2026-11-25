@@ -41,13 +41,16 @@ test('conversation information displays and copies only the selected row and off
     retainedConversations: rows,
     listRetained: vi.fn(async () => {}),
   };
-  render(<ConversationList conversation={conversation} onSelected={vi.fn()} />);
+  render(<ConversationList id="conversations" conversation={conversation} onSelected={vi.fn()} />);
   const info = screen.getAllByRole('button', { name: 'Samtalsinformation' });
   await user.click(info[0]);
   const dialog = within(screen.getByRole('dialog', { name: 'Samtalsinformation' }));
   expect(dialog.getByText(rows[0].title)).toBeDefined();
   expect(dialog.getByText('Datum saknas')).toBeDefined();
-  expect(dialog.getByRole('time').getAttribute('datetime')).toBe('2026-10-01T00:00:00.000Z');
+  expect(dialog.getAllByRole('time').map((time) => time.getAttribute('datetime'))).toEqual([
+    '2026-10-01T00:00:00.000Z',
+    '2026-12-01T00:00:00.000Z',
+  ]);
   await user.click(dialog.getByRole('button', { name: 'Kopiera samtals-ID' }));
   expect(write).toHaveBeenLastCalledWith('original');
   expect(dialog.getByRole('status').textContent).toBe('Kopierat.');
@@ -57,7 +60,9 @@ test('conversation information displays and copies only the selected row and off
   expect(dialog.getByRole('status').textContent).toContain('kopiera den manuellt');
   await user.click(dialog.getByRole('button', { name: 'Stäng' }));
   await user.click(info[1]);
-  expect(within(screen.getByRole('dialog')).getByText(rows[1].title)).toBeDefined();
+  const previous = within(screen.getByRole('dialog'));
+  expect(previous.getByText(rows[1].title)).toBeDefined();
+  expect(previous.getByRole('time').getAttribute('datetime')).toBe('2026-11-01T00:00:00.000Z');
   fireEvent(screen.getByRole('dialog'), new Event('cancel'));
   expect(screen.queryByRole('dialog')).toBeNull();
 });
@@ -68,7 +73,11 @@ test('retained rows expose selection, blocked switching, read errors and unsucce
   const onSelected = vi.fn();
   const base = { ...result.current, openRetained, listRetained: vi.fn(async () => {}) };
   const show = (changes: Partial<Conversation>) => (
-    <ConversationList conversation={{ ...base, ...changes }} onSelected={onSelected} />
+    <ConversationList
+      id="conversations"
+      conversation={{ ...base, ...changes }}
+      onSelected={onSelected}
+    />
   );
   const list = render(show({}));
   expect(screen.getByText('Hämtar samtal…')).toBeDefined();

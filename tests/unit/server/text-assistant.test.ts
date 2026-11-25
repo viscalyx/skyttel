@@ -779,13 +779,14 @@ test('public activity follows the model and actual MCP work without exposing too
     return dispatch(request);
   });
   const session = await start();
+  const requestId = crypto.randomUUID();
   try {
     const sent = await browser.post(`${path}/${session.id}/messages`, {
       headers: { origin: app.origin },
       data: {
         revision: session.revision,
         ...displayedVersion(session),
-        requestId: crypto.randomUUID(),
+        requestId,
         text: 'Läs kartan.',
       },
     });
@@ -795,20 +796,21 @@ test('public activity follows the model and actual MCP work without exposing too
     releaseModel([modelTool('read_map', { query: 'private-query-value' })]);
     await expect.poll(() => toolStarted).toBe(true);
     const reading = await status();
-    expect(reading.activity).toBe('Läser kartan via MCP');
-    expect(reading.activitySteps).toEqual([
-      { id: expect.any(String), text: 'Läser kartan via MCP' },
-    ]);
-    expect(JSON.stringify([reading.activity, reading.activitySteps])).not.toContain(
-      'private-query-value',
-    );
+    expect(reading.workSteps).toContainEqual({
+      id: expect.any(String),
+      requestId,
+      kind: 'mcp',
+      text: 'Läser kartan',
+      count: 1,
+    });
+    expect(JSON.stringify(reading.workSteps)).not.toContain('private-query-value');
     releaseTool();
     await expect.poll(() => model.requests.length).toBe(2);
     await expect.poll(async () => (await status()).activity).toBe('Bearbetar uppgiften');
     releaseModel([modelMessage('Kartläsningen är klar.')]);
     await expect.poll(async () => (await status()).phase).toBe('ready');
     expect((await status()).activity).toBeUndefined();
-    expect((await status()).activitySteps).toEqual(reading.activitySteps);
+    expect((await status()).workSteps).toEqual(expect.arrayContaining(reading.workSteps));
   } finally {
     releaseTool();
     releaseModel([modelMessage('Klart.')]);

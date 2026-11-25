@@ -106,14 +106,15 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
     await view(page).getByRole('button', { name: 'Samtal', exact: true }).click();
     const list = view(page).getByRole('region', { name: 'Samtal', exact: true });
     await expect(
-      list.getByRole('button', { name: 'Beskriv garaget utan att ändra något.' }),
+      list.getByRole('button', { name: 'Beskriv garaget utan att ändra något.', exact: true }),
     ).toHaveAttribute('aria-current', 'true');
     releaseTitle();
-    await expect(list.getByRole('button', { name: 'Fråga om garaget' })).toBeVisible();
+    await expect(list.getByRole('button', { name: 'Fråga om garaget', exact: true })).toBeVisible();
     await list.getByRole('button', { name: 'Samtalsinformation' }).press('Enter');
     const info = page.getByRole('dialog', { name: 'Samtalsinformation' });
     await expect(info).toContainText('Fråga om garaget');
-    await expect(info.locator('time')).toHaveCount(2);
+    await expect(info.getByText('Löper ut', { exact: true })).toBeVisible();
+    await expect(info.locator('time')).toHaveCount(3);
     await page
       .context()
       .grantPermissions(['clipboard-read', 'clipboard-write'], { origin: app.origin });
@@ -208,7 +209,7 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
       });
     const bicycle = view(other)
       .getByRole('region', { name: 'Samtal', exact: true })
-      .getByRole('button', { name: 'Beskriv cykeln utan att ändra något.' });
+      .getByRole('button', { name: 'Beskriv cykeln utan att ändra något.', exact: true });
     await expect(bicycle).toBeDisabled();
     // Finish the audible word before the provider stream falls silent.
     await other.evaluate(() => window.skyttelVoiceFixture.remoteTone(800, 0, 0.5));

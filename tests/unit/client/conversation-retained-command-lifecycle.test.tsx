@@ -255,6 +255,7 @@ test('review regression: list polling serializes slow and failed reads until unm
     const list = render(
       <StrictMode>
         <ConversationList
+          id="conversations"
           conversation={{ ...result.current, listRetained: read }}
           onSelected={() => {}}
         />
@@ -317,6 +318,32 @@ test('an expired selection removes only its own row and preserves the visible co
   });
   expect(result.current.retainedConversations?.map((row) => row.id)).toEqual(['other']);
   expect(result.current.session?.id).toBe('original');
+});
+
+test('deleting the selected conversation preserves unsent text and ignores a stale list response', async () => {
+  const stale = deferredResponse();
+  const rows = [...retained, { ...retained[0], id: 'original' }];
+  let reads = 0;
+  const { result } = await conversationCommands((path) => {
+    if (path.endsWith('/retained'))
+      return reads++ === 0 ? Response.json({ conversations: rows }) : stale.promise;
+    if (path.endsWith('/retained/original/delete')) return Response.json({ deleted: true });
+  });
+  await act(async () => requiredCommand(result.current.listRetained)());
+  act(() => result.current.setText('Min oskickade text'));
+  let reading!: Promise<void>;
+  act(() => {
+    reading = requiredCommand(result.current.listRetained)();
+  });
+  await act(async () => {
+    expect(await requiredCommand(result.current.deleteRetained)('original')).toBeUndefined();
+    stale.resolve(Response.json({ conversations: rows }));
+    await reading;
+  });
+  expect(result.current.session).toBeNull();
+  expect(result.current.transcript).toEqual([]);
+  expect(result.current.retainedConversations).toEqual(retained);
+  expect(result.current.text).toBe('Min oskickade text');
 });
 
 test.each(['busy', 'paused', 'ready'] as const)(

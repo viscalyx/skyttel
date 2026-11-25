@@ -2119,8 +2119,8 @@ och verifierar sjudygnsgränsen genom verklig omstart.
 
 **Steg:**
 
-1. Öppna **Modell och resonemang** vid textfältet, välj **Låg**, öppna
-   modellnamnet och välj **GPT-6.2 Sol**. Stäng dialogen med Escape.
+1. Öppna **Modell och resonemang** bredvid **Nytt samtal**, välj **Låg**,
+   öppna modellnamnet och välj **GPT-6.2 Sol**. Stäng dialogen med Escape.
 2. Skriv **Byt cykelns namn till Blå, men ändra inte ägaren.** och välj
    **Skicka**. Släpp den kontrollerade frågan enligt förberedelsen.
    Läs **Vilken cykel?** i samtalstexten.
@@ -2128,13 +2128,13 @@ och verifierar sjudygnsgränsen genom verklig omstart.
    hållet i terminalen. Skicka sedan **Förklara vem som använder cykeln,
    men ändra eller spara ingenting.** medan arbetet pågår.
 4. Ladda om och öppna textvyn. Den är tom. Välj **Samtal** och välj
-   cykelns begäran. Läs instruktionen, frågan, det köade meddelandet,
-   utgångstiden och modellvalet **GPT-6.2 Sol, Låg**.
+   cykelns begäran. Läs instruktionen, frågan, det köade meddelandet
+   och modellvalet **GPT-6.2 Sol, Låg**.
 5. Logga ut via **Din profil** och logga in med Google igen. Öppna
    samtalet från listan. Kör `restart` i terminalen, invänta `restarted`
    och upprepa omladdning och val. Kontrollera att modellens kö är tyst.
-6. Skriv en anteckning i meddelandefältet. Välj **Fortsätt arbetet** på
-   garageinstruktionens rad och godkänn vid behov. Svara på det nya
+6. Skriv en anteckning i meddelandefältet. Välj **Fortsätt arbetet** under
+   garageinstruktionen och godkänn vid behov. Svara på det nya
    modelluppdraget i terminalen. Kontrollera en enda garageinstruktion,
    den orörda anteckningen och det osparade Lo-förslaget.
 7. Välj **Nytt samtal** med tangentbordet. Läs den tomma samtalstexten.
@@ -2331,8 +2331,8 @@ batchsvaret efter genomförandet och verifierar samma utfall efter omstart.
    **Beskriv garaget utan att ändra något.**. Läs **Vilket garage?**.
 2. Öppna **Samtal**. Läs utdraget från begäran och släpp titeln enligt
    förberedelsen. Öppna **Samtalsinformation** med Enter. Läs titeln,
-   skapandetid och senaste begäran. Kopiera samtals-ID och LangSmith-filter
-   och klistra in dem i en tom lokal anteckning. Samma ID ska finnas i båda.
+   skapandetiden, senaste begäran och **Löper ut**. Kopiera samtals-ID och
+   LangSmith-filter till en tom lokal anteckning. Samma ID ska finnas i båda.
    Tryck Escape och kontrollera att informationsknappen åter får fokus.
 3. Ladda om. Öppna den tomma textvyn och välj garagets samtal i listan.
    Läs **Vilket garage?** en gång. Mikrofonen ska vara av.

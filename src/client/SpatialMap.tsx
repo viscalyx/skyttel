@@ -934,15 +934,11 @@ export function SpatialMap({
   useLayoutEffect(() => {
     // Only a new or wider text view can trigger automatic panning.
     const width = textView?.width ?? 0;
-    const previous = previousTextWidth.current;
-    previousTextWidth.current = width;
-    if (
-      !textOverlay ||
-      !canvas.current ||
-      width <= previous ||
-      (revealRequest && !revealRequest.complete)
-    )
+    if (width <= previousTextWidth.current) {
+      previousTextWidth.current = width;
       return;
+    }
+    if (!textOverlay || !canvas.current || (revealRequest && !revealRequest.complete)) return;
 
     const marker = (point: Pick<ProjectedPoint, 'x' | 'y' | 'depth'>): PanTarget => ({
       ...point,
@@ -972,8 +968,11 @@ export function SpatialMap({
         const point = locations.get(id);
         return point ? [marker(point)] : [];
       });
-      covered = targets.length === selectedIds.length && targets.some(coveredByTextView);
+      if (!targets.length || targets.length !== selectedIds.length) return;
+      covered = targets.some(coveredByTextView);
     }
+    // Leave the width pending until the selection has been projected.
+    previousTextWidth.current = width;
     if (covered)
       scene.current?.panIntoView(
         targets,

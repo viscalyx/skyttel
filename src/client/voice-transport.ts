@@ -235,7 +235,7 @@ export function createVoiceTransport(
   }
   function transcript(
     role: TranscriptRow['role'],
-    event: { delta: string; start_ms: number; end_ms: number },
+    event: { event_id: string; delta: string; start_ms: number; end_ms: number },
   ) {
     if (closed || stopped || !event.delta) return;
     const now = performance.now();
@@ -262,6 +262,7 @@ export function createVoiceTransport(
         assistantRow = undefined;
       }
       userRow.text += event.delta;
+      userRow.speechEventIds = [...(userRow.speechEventIds ?? []), event.event_id];
       userRow.partial = true;
       userAt = now;
       if (userEnd !== undefined) observePosition(userEnd, now);

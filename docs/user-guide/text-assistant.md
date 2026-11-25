@@ -11,8 +11,8 @@ Utkastets granskning och kartans formulär fungerar även när samtal saknas.
 
 ## Modell och resonemang
 
-I ett pågående samtal öppnar ikonen **Modell och resonemang** ovanför
-meddelandefältet och till höger om röstindikatorn samma val. Dialogens
+I ett pågående samtal finns **Modell och resonemang** direkt till höger om
+**Nytt samtal** i textvyns rubrikrad och även vid röstrutan. Dialogens
 slider har stegen **Låg**, **Medium** och **Hög**. Använd piltangenterna
 eller de tre knapparna för att välja utan att dra. Modellnamnet öppnar
 ett separat val mellan **GPT-6.1 Terra** och **GPT-6.2 Sol**. Modellbyte
@@ -161,27 +161,39 @@ lagringssamtycke är separata från detta bevarande.
 
 När du öppnar hushållet eller laddar om sidan börjar du med ett tomt
 samtal och mikrofonen av. Välj **Prata med Skyttel** för att tala. Du kan
-öppna och stänga textvyn oberoende av mikrofonen. Karta, tabell och
-inställningar använder samma samtal under ditt besök.
+öppna och stänga textvyn oberoende av mikrofonen. Stäng textvyn med
+krysset i övre högra hörnet. Karta, tabell och inställningar använder
+samma samtal under ditt besök.
 
-Öppna **Samtal** i textvyn för att hitta dina samtal i hushållet. Den
-senaste begäran ligger först. När du väljer en rad visas samtalstexten och
-mikrofonen stängs av på den enheten. Din oskickade text ligger kvar.
+Öppna **Samtal** med pratbubblorna i textvyns övre rad för att hitta dina
+samtal i hushållet. Varje rad visar titeln och datumet för den senaste
+begäran, när datumet finns. Den senaste begäran ligger först. När du väljer
+en rad visas samtalstexten och mikrofonen stängs av på den enheten.
+Din oskickade text ligger kvar.
 På en bred skärm kan du läsa samtalslistan, utkastet och texten samtidigt.
 På en smal skärm väljer du vilken vy du vill se.
 
 Ett samtal kommer med i listan när du lämnar din första begäran. Först
 visas ett utdrag. Skyttel ber OpenAI att ge begäran en kort titel.
-Öppna **Samtalsinformation** på raden för att se datum, kopiera
-**Samtals-ID** eller kopiera ett LangSmith-filter för felsökning.
+Öppna **Samtalsinformation** på raden för att se när samtalet löper ut.
+Där kan du också kopiera **Samtals-ID** eller ett LangSmith-filter
+för felsökning.
 Äldre samtal kan sakna datum. Sökningen kan ge få eller inga träffar
 beroende på vilka spår som levereras.
 
-**Nytt samtal** finns i textvyn och som plusknapp vid röstrutan. Du får
+**Nytt samtal** finns som plusknapp i textvyn och vid röstrutan. Du får
 tom samtalstext, ny kontext och ditt senaste personliga modellval.
 Mikrofonen behåller sitt läge. Det tidigare samtalet finns kvar med sina
 väntande frågor. Du kan öppna listan medan Skyttel arbetar. Du kan välja
 ett samtal eller börja ett nytt när bearbetning och uppläsning är klara.
+
+Välj papperskorgen på en rad i **Samtal** och bekräfta med **Ta bort**.
+Skyttel tar bort samtalstexten, kontexten och det oavslutade arbetet från
+installationen. Dina utkaständringar, sparade kartändringar, registrerade
+sparförsök och sparkvitton finns kvar. Om Skyttel arbetar eller talar i det
+valda samtalet, vänta tills aktiviteten är klar. Du kan ta bort ett annat
+samtal under tiden. När du tar bort det öppna samtalet visas en tom
+textvy med mikrofonen av. Texten i meddelandefältet finns kvar.
 
 Om arbete avbryts kan du välja **Fortsätt arbetet** vid begäran.
 Skyttel kontrollerar utkastet, tidigare ändringar och registrerade
@@ -243,14 +255,14 @@ samtalstexten och meddelandefältet **Meddelande till Skyttel**.
   ger en ny rad. Fältet behåller fokus efter att meddelandet har skickats.
 - I samtalstexten står det du skriver i en tonad ruta till höger och det
   Skyttel svarar utan ruta. Det du och Skyttel säger med rösten står där
-  också. Raden **Skyttel arbetar…** står sist medan Skyttel arbetar.
-  En roterande ring visar arbetet. Ringen är stilla när du har valt
-  minskad rörelse i systemet. Arbetsraden beskriver aktuellt steg, till
-  exempel **Bearbetar uppgiften** eller **Läser kartan via MCP**.
-  **Visa arbetssteg** visar de senaste stegen i uppdraget, även snabba
-  anrop. Stegen finns kvar efter svaret tills nästa uppdrag börjar.
-  MCP är anslutningen som Skyttel använder för att läsa och ändra
-  hushållets uppgifter.
+  också. När Skyttel använder ett verktyg visas arbetssteget direkt efter
+  din fråga eller instruktion. Kontaktsymbolen visar anrop via MCP, som
+  Skyttel använder för att läsa och ändra hushållets uppgifter.
+  Om samma verktyg anropas två gånger i följd står det till exempel
+  **Läser kartan (2)**. Stegen finns kvar efter svar och avbrott och visas
+  igen när du öppnar ett sparat samtal. Raden **Skyttel arbetar…** visas
+  medan arbetet pågår. Ringen är stilla om du har valt minskad rörelse
+  i systemet.
 - **Stäng textvyn** eller **Skriv till Skyttel** stänger textvyn. Samtalet,
   mikrofonen och din oskickade text finns kvar tills du öppnar den igen.
 - **Nytt samtal** öppnar en tom samtalstext med ny kontext. Ditt utkast
@@ -266,22 +278,23 @@ flyttas bort.
 
 ## Textvyns bredd
 
-På dator kan du ändra samtalstextens och utkastets bredd var för sig.
-Dra gränsen vid respektive vänsterkant, eller nå **Ändra samtalstextens
-bredd** och **Ändra utkastlistans bredd** med Tab och använd vänster- och
-högerpil. Varje piltryck flyttar gränsen 24 px. Samtalstexten börjar med
-400 px och utkastet med 340 px; de blir som minst 300 respektive 260 px.
-Kartan lämnas alltid synlig.
+På dator kan du ändra bredden för samtalstexten, utkastet och samtalslistan
+var för sig. Dra i panelens vänsterkant eller nå dess breddhandtag med Tab
+och använd vänster- eller högerpil. Varje piltryck flyttar gränsen 24 px.
+Grundbredderna är 400 px för samtalstexten, 340 px för utkastet och 280 px
+för samtalslistan. Kartan lämnas synlig.
 
-Bredderna sparas direkt för dig i alla dina hushåll och på alla dina
-enheter. På mindre skärm begränsas bara visningen; de sparade bredderna
-kommer tillbaka när de ryms igen. På mobil enhet och smal skärm finns inga
-breddhandtag. Bred pekskärm behåller sidofältet på 400 px.
+Samtalstextens och utkastets bredder sparas för dig i alla dina hushåll
+och på alla dina enheter. Samtalslistan behåller sin bredd under besöket
+i hushållets arbetsyta. På en mindre skärm anpassas visningen efter
+utrymmet. På mobil enhet och smal skärm visas panelerna utan breddhandtag.
+Bred pekskärm behåller sidofältet på 400 px.
 
 I **Inställningar**, **Samtal med Skyttel**, finns **Textvyns bredd** på
-dator, även i ett smalt fönster. **Återställ bredderna** återställer båda
-bredderna och säger **Bredderna är återställda**. Knappen visas bara när
-du har ändrat någon bredd; annars står **Du har inte ändrat bredderna.**
+dator, även i ett smalt fönster. **Återställ bredderna** återställer
+samtalstextens och utkastets bredder och säger **Bredderna är återställda**.
+Knappen visas bara när du har ändrat någon av de sparade bredderna.
+Annars står **Du har inte ändrat bredderna.**
 Det går att återställa även när samtalet inte är tillgängligt. Delen visas
 inte på mobil enhet. Återställning ändrar inte utkastets startval.
 

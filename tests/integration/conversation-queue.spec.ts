@@ -483,7 +483,12 @@ test('KÖ-09: nytt samtal köar kastandet och stopp bevarar andra enhetens arbet
       }),
     ]);
     await expect(log(page)).toContainText('Lo Exempel bytte namn till Lo Lind.');
-    await expect(log(other)).toHaveText('Skyttel: Nytt samtal. Utkastet är tomt.');
+    const restarted = log(other);
+    await expect(restarted.getByRole('listitem').last()).toHaveText(
+      'Skyttel: Nytt samtal. Utkastet är tomt.',
+    );
+    await expect(restarted.getByRole('listitem').first()).toContainText('Kontrollerar utkastet');
+    await expect(restarted).not.toContainText('Nytt samtal och kasta utkastet.');
     await expect(log(other)).not.toContainText('Hållet uppdrag.');
     await expect(log(other)).not.toContainText('Skyttel arbetar…');
     await expect(log(page)).not.toContainText('kunde inte genomföras');

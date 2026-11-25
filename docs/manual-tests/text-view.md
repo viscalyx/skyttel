@@ -19,7 +19,7 @@ vid körning.
 
 1. För TEXTVY-01, TEXTVY-02, TEXTVY-04 och TEXTVY-07: starta den
    [kontrollerade installationen för text](text-assistant.md#controlled-text-fixture).
-   För TEXTVY-03, TEXTMOBIL-01–05 och TEXTBREDD-01–05: starta i stället
+   För TEXTVY-03, TEXTVY-08, TEXTMOBIL-01–05 och TEXTBREDD-01–05: starta i stället
    [den kontrollerade röstinstallationen](voice-assistant.md#controlled-voice-fixture)
    med `npm run test:env -- node --import tsx scripts/manual-voice.ts` efter
    bygget. Följ guidens
@@ -38,6 +38,79 @@ vid körning.
    faktiskt hört tal redovisas separat i TEXTVY-06.
 
 ## Textvyn
+
+### TEXTVY-08: ta bort valda samtal och behåll utkast och oskickad text
+
+**Syfte:** Läsa och hantera samtal från listan medan utkastet visas.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Den kontrollerade röstinstallationen, Lo Exempel i
+utkastet och ett fönster på 1280 × 900 px.
+
+**Automatiskt motsvarande test:**
+[text-view.spec.ts](../../tests/integration/text-view.spec.ts), TEXTVY-08.
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/text-view.spec.ts",
+    "caseId": "TEXTVY-08"
+  },
+  "reference": "1280 × 900, kontrollerade modellsvar och mikrofon.",
+  "outcomes": [
+    "Samtalslistan har datum, radåtgärder och plats bredvid utkastet.",
+    "Hovring över titeln eller informationsknappen färgar hela raden.",
+    "Informationsknappen får en egen bakgrund vid hovring.",
+    "Det aktuella samtalet är markerat utan hovring.",
+    "Bekräftelsen skyddar pågående arbete i det valda samtalet.",
+    "Borttagning av det öppna samtalet bevarar utkast och oskickad text."
+  ]
+}
+```
+-->
+
+**Steg:**
+
+1. Öppna **Skriv till Skyttel** och skicka **Beskriv cykeln.**. Släpp
+   modellanropet med svaret **Det första svaret.**. Öppna utkastet och
+   **Samtal** med pratbubblorna.
+2. För pekaren över titeln och informationsknappen för cykelsamtalet.
+   Välj papperskorgen, läs titeln i dialogen och tryck Escape. Välj
+   plusknappen **Nytt samtal**, skicka **Beskriv garaget.** och håll
+   modellanropet. För pekaren över cykelsamtalets informationsknapp igen.
+3. Välj papperskorgen för garagesamtalet. Läs beskedet om arbetet, välj
+   **Avbryt** och ta sedan bort cykelsamtalet.
+4. Släpp modellanropet med svaret **Det andra svaret.**. Slå på mikrofonen,
+   skriv **Min oskickade text** utan att skicka och starta inkommande
+   ljud enligt röstförberedelsen. Öppna garagesamtalets bekräftelse.
+   Stoppa ljudet, välj **Ta bort** och öppna utkastet vid behov.
+5. Ladda om, öppna textvyn och visa samtalslistan.
+
+**Förväntat resultat:**
+
+- Samtal och Utkast har rundade hörn och mellanrum. Ikonerna för listan,
+  nytt samtal, modellval och stängning finns i textvyns övre rad. Krysset
+  sitter nära hörnet och får en liten markering när muspekaren förs över
+  det. Den aktuella samtalsraden visar en titel, ett datum och en markering.
+- Hela samtalsraden får samma ton när pekaren är över titeln och
+  informationsknappen. Informationsknappen får också en egen bakgrund
+  under pekaren. Det gäller även cykelsamtalet när garagesamtalet är
+  aktuellt. Markeringen för det aktuella samtalet syns utan hovring.
+- Utkastets värden och ikoner är centrerade på varje rad. Spara och
+  kasta hela utkastet sitter något lägre än rubriken.
+- Papperskorgarna i Utkast och Samtal får samma bakgrund när muspekaren
+  förs över dem.
+- Escape återför fokus till papperskorgen. Så länge Skyttel arbetar i
+  garagesamtalet är **Ta bort** otillgängligt för det samtalet.
+  Cykelsamtalet kan tas bort medan arbetet fortsätter. När Skyttel talar
+  i garagesamtalet väntar **Ta bort** tills ljudet tystnar.
+- När garagesamtalet har tagits bort är samtalstexten tom, mikrofonen är av
+  och fokus står på rubriken **Samtal**. Den oskickade texten och Lo Exempel
+  i utkastet finns kvar. Listan är tom efter omladdning.
 
 ### TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att avsluta samtalet
 
@@ -64,7 +137,8 @@ avsluta samtalet”.
   },
   "reference": "1280 × 800, mus; öppning, stängning och snabblänk med bevarad oskickad text.",
   "outcomes": [
-    "Öppna och stänga textvyn med samma knapp, utan att samtalet, mikrofonen eller den oskickade texten går förlorade."
+    "Öppna och stänga textvyn med samma knapp, utan att samtalet, mikrofonen eller den oskickade texten går förlorade.",
+    "Modell och resonemang ligger direkt till höger om Nytt samtal."
   ]
 }
 ```
@@ -75,8 +149,9 @@ avsluta samtalet”.
 
 1. Välj **Skriv till Skyttel** i **Kartans verktyg**. Textvyn öppnas utan
    samtalsstart. Välj **Nytt samtal** och **Godkänn och starta**.
-2. Läs textvyn: rubriken **Skriv till Skyttel** med **Nytt samtal** och
-   stängknappen **Stäng textvyn**, samtalstexten och meddelandefältet.
+2. Läs rubriken **Skriv till Skyttel**, samtalstexten och meddelandefältet.
+   Kontrollera att **Modell och resonemang** ligger direkt till höger om
+   **Nytt samtal** och före **Stäng textvyn**.
 3. Skriv **Oskickat** i fältet utan att skicka. Välj **Stäng textvyn**.
 4. Välj **Skriv till Skyttel** två gånger.
 5. Gå med Tab från sidans början till snabblänken
@@ -174,9 +249,10 @@ Skyttel arbetar sist”.
     "spec": "tests/integration/text-view.spec.ts",
     "caseId": "TEXTVY-02"
   },
-  "reference": "Dator; tre hållna modellsvar med en kartläsning via MCP, klick och Enter samt Shift+Enter. Normal och minskad rörelse.",
+  "reference": "Dator; hållna modellsvar med kartläsningar och sparhistorik via MCP, klick och Retur samt Skift+Retur. Normal och minskad rörelse. Omladdning och val av sparat samtal.",
   "outcomes": [
-    "Skilja din text från Skyttels text och se när Skyttel arbetar. Arbetsraden visar aktuellt steg och en roterande ring som är stilla vid minskad rörelse. Visa arbetssteg visar kartläsningen via MCP."
+    "Skilja din text från Skyttels text och se när Skyttel arbetar. Arbetsraden visar en roterande ring som är stilla vid minskad rörelse.",
+    "MCP-steg visas i samtalstexten, räknas vid upprepning i följd och finns kvar efter svar och omladdning."
   ]
 }
 ```
@@ -185,19 +261,30 @@ Skyttel arbetar sist”.
 
 **Steg:**
 
-1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn och läs tom samtalstext.
+1. Välj **Skriv till Skyttel → Nytt samtal** och godkänn med sparat
+   medgivande. Läs den tomma samtalstexten.
 2. Skriv **Vem betalar musiken?**, klicka Skicka och läs den sista
    arbetsraden medan operatören håller svaret. Kontrollera att ringen
    bredvid **Skyttel arbetar…** roterar. Aktivera minskad rörelse i
    systemet och kontrollera att ringen är stilla. Återställ normal rörelse
    och kontrollera att den roterar igen. Fältet har kvar fokus.
 3. Låt operatören köra `tool <id> read_map {"query":"musik"}` med det
-   hållna svarets ID i terminalen. Vänta på nästa hållna svar. Välj
-   **Visa arbetssteg** och läs **Läser kartan via MCP**.
+   hållna svarets ID i terminalen. Läs **Läser kartan** med kontaktsymbol
+   under din fråga. Kör sedan verktygen nedan med nästa hållna svars ID
+   efter varje anrop. Läs arbetsstegen efter varje anrop.
+
+   ```text
+   tool <id> read_map {"query":"piano"}
+   tool <id> read_history {"limit":1}
+   tool <id> read_map {"query":"radio"}
+   ```
+
 4. Låt operatören leverera **Kim betalar musiken.** Läs dina och Skyttels
    olika rader med respektive talarnamn.
 5. Skriv **Rad ett**, Skift+Retur, **rad två**, Retur. Läs samma meddelandes
    två rader och arbetsraden sist. Släpp **Klart.** och läs slutraden.
+6. Ladda om sidan. Öppna textvyn och välj **Vem betalar musiken?** i
+   **Samtal**. Läs de två meddelandena, arbetsstegen och svaren.
 
 **Förväntat resultat:**
 
@@ -207,9 +294,10 @@ Skyttel arbetar sist”.
 - Raden **Skyttel arbetar…** står sist medan Skyttel arbetar.
   En roterande ring visar arbetet och är stilla vid minskad rörelse.
   **Bearbetar uppgiften** visas medan modellsvar inväntas.
-  **Visa arbetssteg** visar **Läser kartan via MCP** efter kartläsningen.
-  Steget finns kvar efter svaret tills nästa uppdrag börjar.
   På dator visar raden även **Tryck på Escape för att avbryta.**
+- **Läser kartan (2)**, **Läser sparhistoriken** och **Läser kartan** står
+  mellan den första frågan och Skyttels svar. Stegen och antalet finns
+  kvar när nästa svar kommer och när samtalet öppnas efter omladdning.
 - Din text och Skyttels text går att skilja åt genom radens utseende.
   Skift+Retur ger en ny rad i samma meddelande.
 - De semantiska talarnamnen finns. Faktiskt hörda talare har separat
@@ -367,7 +455,7 @@ testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”
   },
   "reference": "1280 × 900, mus; bred datorreferens med sidofält och automatiskt fältfokus.",
   "outcomes": [
-    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar igen.",
     "Läsa, skriva och öppna utkastet på telefon, surfplatta och dator."
   ]
 }
@@ -386,13 +474,13 @@ testfallet “TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad”
    **Påhittad uppgift** och stäng uppgifterna. Hela sidan ryms utan
    horisontell sidrullning.
 4. Dölj utkastet och ladda om. Öppna den tomma textvyn. Välj
-   **Samtal** och raden **Ett vanligt uppdrag.** Läs svaret och utgångstiden.
+   **Samtal** och raden **Ett vanligt uppdrag.** Läs svaret.
 
 **Förväntat resultat:**
 
 - På bred dator syns sidofält och karta bredvid; fältet får startfokus.
 - Skicka behåller fältfokus, svaret syns och hela Lo-utkastet går att öppna.
-- Det valda samtalet visar svaret och utgångstiden även i korta fönster.
+- Det valda samtalet visar svaret även i korta fönster.
 - Ingen horisontell sidrullning behövs. Kvarvarande smala/pekade/
   korta konfigurationer har egna identiteter nedan.
 
@@ -647,7 +735,7 @@ avbryta samtalet”.
   },
   "reference": "1600 × 900, mus; individuella bredder, dragning och pilar med bevarad native textarea/mikrofon.",
   "outcomes": [
-    "Ändra en bredd med mus eller tangentbord och behålla samtalet."
+    "Ändra varje bredd med mus eller tangentbord från panelens vänsterkant och behålla samtalet."
   ]
 }
 ```
@@ -658,6 +746,9 @@ avbryta samtalet”.
 
 1. Välj **Skriv till Skyttel → Nytt samtal → Godkänn och starta**
    och sedan **Visa utkastet**.
+   Öppna **Samtal**, dra listans vänsterkant åt vänster och tryck
+   vänsterpil när handtaget har fokus. Stäng och öppna listan för att
+   kontrollera bredden. Stäng listan igen.
    Läs **Visa förslaget: Lo Exempel → Osparad breddprovuppgift**, stäng
    uppgifterna och slå på **Prata med Skyttel**. Skriv
    **Oskickat medan bredden ändras**
@@ -675,13 +766,15 @@ avbryta samtalet”.
 
 **Förväntat resultat:**
 
-- Samtalstext och utkast ändras var för sig. Dragning behåller fokus i
+- Samtalstext, utkast och samtalslista ändras var för sig. Dragning börjar
+  vid respektive vänsterkant. Dragning behåller fokus i
   fältet; piltangenter behåller fokus på handtaget. Oskickad text,
   mikrofonläge, samtal och Lo-förslag finns kvar. Ingen ny mikrofon begärs.
-- Handtagen heter **Ändra samtalstextens bredd** och
+- Handtagen heter **Ändra samtalslistans bredd**,
+  **Ändra samtalstextens bredd** och
   **Ändra utkastlistans bredd** och har rollen avskiljare med aktuellt,
   minsta och största värde. Piltangenter ger ett alternativ till dragning.
-- Automationen mäter grundbredderna 400/340 px, steget 24 px och
+- Automationen mäter grundbredderna 400/340/280 px, steget 24 px och
   minimibredderna 300/260 px. Största bredd lämnar kartan synlig.
   Den kontrollerar samma fält och oförändrade mikrofonspår under ändring.
 - Verklig uppläsning, synligt fokus och kontrast provas separat manuellt.
@@ -950,7 +1043,7 @@ TEXTMOBIL-06.
   },
   "reference": "390 × 844, emulerad pekare CSS-pixlar; smal stående vy.",
   "outcomes": [
-    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar igen.",
     "Fältet får inget automatiskt startfokus; textvyn fyller bredden.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -997,7 +1090,7 @@ TEXTMOBIL-07.
   },
   "reference": "844 × 390, emulerad pekare CSS-pixlar; kort liggande vy.",
   "outcomes": [
-    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar igen.",
     "Kompakt rad och fält på en rad; sidofält med karta bredvid.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -1044,7 +1137,7 @@ TEXTMOBIL-08.
   },
   "reference": "820 × 1180, emulerad pekare CSS-pixlar; bred stående pekare.",
   "outcomes": [
-    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar igen.",
     "Fast sidofält och inget automatiskt startfokus.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -1091,7 +1184,7 @@ TEXTMOBIL-09.
   },
   "reference": "320 × 250, mus CSS-pixlar; ytterst kort smal dator.",
   "outcomes": [
-    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar igen.",
     "Kompakt rad och fält på en rad; inget automatiskt startfokus.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -1138,7 +1231,7 @@ TEXTMOBIL-10.
   },
   "reference": "700 × 500, mus CSS-pixlar; smal kort dator.",
   "outcomes": [
-    "Omladdning ger en tom textvy. Val i Samtal visar samma svar och utgångstid.",
+    "Omladdning ger en tom textvy. Val i Samtal visar samma svar igen.",
     "Kompakt rad, full bredd och inget automatiskt startfokus.",
     "Hela den kvarvarande native arbetsföljden genomförs i denna konfiguration."
   ]
@@ -1847,8 +1940,9 @@ automationen visar bara det som anges. Ingen skärmläsare och ingen fysisk enhe
 <!-- markdownlint-disable MD013 -->
 | Kriterium | Utformning | Automatisk kontroll | Återstår att prova manuellt |
 | --- | --- | --- | --- |
-| 1.3.1, 4.1.2 Namn, roll och relationer | Textvyn är en region med rubriken **Skriv till Skyttel** som namn. Samtalstexten är en logg med namnet **Samtalstext**. Varje rad börjar med en dold talare, **Du:** eller **Skyttel:**. **Skriv till Skyttel** säger med sitt utfällda läge om textvyn är öppen. | Namn på region, logg, fält och knappar, dolda talare och knappens läge. | Uppläsning med NVDA och VoiceOver, och hur loggens nya rader erbjuds som DOM-status. |
-| 1.3.2, 2.4.3 Ordning och fokus | Rubriken, **Nytt samtal** och **Stäng textvyn** står först, samtalstexten därefter och fältet sist. På dator får fältet fokus när textvyn öppnas, och **Stäng textvyn** ger fokus till **Skriv till Skyttel**. På mobil enhet och smal skärm stannar fokus i verktygsraden eller går till rubriken. | Fokus vid öppning på dator och pekskärm, efter **Skicka** och efter stängning. | Fokusordning med skärmläsare och på fysisk pekskärm. |
+| 1.3.1, 4.1.2 Namn, roll och relationer | Textvyn är en region med rubriken **Skriv till Skyttel** som namn. Samtalstexten är en logg med namnet **Samtalstext**. Meddelanden har talarnamn och arbetssteg har verktygstyp i text för hjälpmedel. **Fortsätt arbetet** hänvisar till det avbrutna meddelandet. **Skriv till Skyttel** säger med sitt utfällda läge om textvyn är öppen. | Namn på region, logg, fält och knappar, dolda talare och verktygstyper, avbrottets koppling och knappens läge. | Uppläsning med NVDA och VoiceOver. |
+| 4.1.3 Statusmeddelanden | Nya arbetssteg, ändrade antal och skrivna svar kan läsas upp via textvyns statusregion. Tidigare rader kan läsas i samtalstexten. | Ändrad text i statusregionen vid ett nytt MCP-steg och ett ändrat antal. | Faktisk uppläsning under snabbt följande verktygsanrop. |
+| 1.3.2, 2.4.3 Ordning och fokus | Rubriken, **Samtal**, **Nytt samtal**, **Modell och resonemang** och **Stäng textvyn** står först, samtalstexten därefter och fältet sist. På dator får fältet fokus när textvyn öppnas, och **Stäng textvyn** ger fokus till **Skriv till Skyttel**. På mobil enhet och smal skärm stannar fokus i verktygsraden eller går till rubriken. | Fokus vid öppning på dator och pekskärm, efter **Skicka** och efter stängning. | Fokusordning med skärmläsare och på fysisk pekskärm. |
 | 1.4.1 Färg | Din text står i en tonad ruta med kant. Talaren finns också i text för hjälpmedel. | Rutan och den dolda talaren. | – |
 | 1.4.3, 1.4.11 Kontrast | Textvyn använder kartans färger för text, ytor, kanter och fokus i ljust och mörkt tema. | Ingen. | Kontrast för samtalstexten, platshållaren och den tonade rutan i båda teman. |
 | 1.4.4, 1.4.10 Förstoring och omflöde | På smal skärm fyller textvyn skärmen under verktygsraden, och bara samtalstexten rullar. | Textvyn ryms på 390 px utan rullning i sidled, med rubrik, fält och **Skicka** synliga. | Verklig webbläsarzoom och textförstoring. |

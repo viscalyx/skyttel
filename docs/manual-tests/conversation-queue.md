@@ -719,7 +719,7 @@ KÖ-09. Leverantören är kontrollerad; server och SQLite är riktiga.
 6. Läs väntestatusen i andra profilen. Släpp första profilens ändringsbatch
    enligt förberedelsen, med namnet Lo Lind och bevarad Beskrivning.
 7. Läs **Lo Exempel bytte namn till Lo Lind.** i första profilen och därefter
-   **Nytt samtal. Utkastet är tomt.** i andra.
+   arbetsstegen och **Nytt samtal. Utkastet är tomt.** i andra.
 
 **Förväntat resultat:**
 

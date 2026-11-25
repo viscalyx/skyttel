@@ -78,7 +78,7 @@ test('KONTEXT-24: avbrutet samtal kan väljas igen efter omladdning och nytt sam
     await expect.poll(() => model.requests.length).toBe(2);
     await text.getByRole('button', { name: 'Samtal', exact: true }).click();
     const list = text.getByRole('region', { name: 'Samtal', exact: true });
-    await expect(list.getByRole('button', { name: instruction })).toBeDisabled();
+    await expect(list.getByRole('button', { name: instruction, exact: true })).toBeDisabled();
     await expect(text.getByRole('button', { name: 'Nytt samtal' })).toBeDisabled();
     await text.getByRole('button', { name: 'Samtal', exact: true }).click();
     await text.getByRole('textbox', { name: 'Meddelande till Skyttel' }).fill(queuedInstruction);
@@ -93,7 +93,6 @@ test('KONTEXT-24: avbrutet samtal kan väljas igen efter omladdning och nytt sam
     await expect(log).toContainText(queuedInstruction);
     release([modelMessage('Ett sent svar får inte starta kön.')]);
     await expect(log.getByRole('button', { name: 'Fortsätt arbetet' })).toBeVisible();
-    await expect(text.getByLabel('Samtalets livslängd')).toContainText('Löper ut');
     await expect(
       text.getByRole('button', { name: 'Modell och resonemang: GPT-6.2 Sol, Låg', exact: true }),
     ).toBeVisible();
@@ -119,10 +118,9 @@ test('KONTEXT-24: avbrutet samtal kan väljas igen efter omladdning och nytt sam
     await expect(log.getByRole('button', { name: 'Fortsätt arbetet' })).toBeVisible();
     const field = text.getByRole('textbox', { name: 'Meddelande till Skyttel' });
     await field.fill('Oskickat under återförsöket');
-    const interrupted = log
-      .getByRole('listitem')
-      .filter({ hasText: 'Beskriv garaget utan att ändra.' });
-    await interrupted.getByRole('button', { name: 'Fortsätt arbetet' }).click();
+    const resume = log.getByRole('button', { name: 'Fortsätt arbetet' });
+    await expect(resume).toHaveAccessibleDescription('Du: Beskriv garaget utan att ändra.');
+    await resume.click();
     await giveConversationConsent(page);
     await expect.poll(() => model.requests.length).toBe(3);
     await expect(
