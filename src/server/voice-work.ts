@@ -231,7 +231,7 @@ export function voiceWork({
     commentary.cancel();
     refusal?.(undefined);
     const hadWork = (inFlight.get(generation) ?? 0) > 0;
-    generation++;
+    const cancellation = ++generation;
     collecting = undefined;
     precedingResponse = undefined;
     awaitingCorrectionAfterRevision = undefined;
@@ -249,7 +249,7 @@ export function voiceWork({
       contextRevision: initial.contextRevision ?? 0,
     })
       .then((view) => {
-        update(view, false);
+        if (!stopped && generation === cancellation && !dispatching) update(view, false);
         return { revision, view };
       })
       .catch(() => undefined);
@@ -535,7 +535,11 @@ export function voiceWork({
         const controller = new AbortController();
         const from = draftAnchor(view);
         requestId = randomUUID();
-        markRequest?.(requestId);
+        try {
+          markRequest?.(requestId);
+        } catch {
+          // Transcript storage can fail independently of the authorized voice request.
+        }
         dispatch = {
           controller,
           requestId,
@@ -543,8 +547,12 @@ export function voiceWork({
         };
         dispatching = dispatch;
         observe?.('backend_request', { delegationId: id, requestId, text, context });
+        // A legacy peer can renew only its existing context. Modern peers
+        // hand a plain reset to the browser before dispatching a message.
+        const command = conversationCommand(text);
+        const legacyReset = command?.reset && !command.discard;
         view = await request(
-          'messages',
+          legacyReset ? 'new' : 'messages',
           {
             ...expected,
             revision: view.phase === 'working' ? view.revision : expected.revision,
@@ -555,6 +563,7 @@ export function voiceWork({
             continuedVoiceRead,
           },
           controller.signal,
+          legacyReset ? { requestId } : undefined,
         );
         // A spoken reset retires this executor. Its new revision must not be
         // mistaken for stale work and cancelled after the reset completes.
@@ -705,6 +714,7 @@ export function voiceWork({
       start_ms: event.start_ms,
       end_ms: event.end_ms,
     });
+    if (role === 'user' && event.end_ms <= interruptedThrough) return;
     let startTranscriptUtterance: ((requestId?: string) => void) | undefined;
     if (event.delta) {
       const utteranceStart = transcriptBoundaries.append(role, event.start_ms, event.end_ms, {
@@ -714,7 +724,6 @@ export function voiceWork({
       if (role === 'user') nextUserUtterance = false;
     }
     if (role === 'user') {
-      if (event.end_ms <= interruptedThrough) return;
       if (event.delta.trim()) refusal?.(undefined);
       inputVersion++;
       lastInputAt = now();
@@ -987,7 +996,9 @@ export function voiceWork({
       }
       if (delegation && delegation.offsetMs > interruptedThrough) void collect(delegation);
       else collectReply();
-      const canceled = await canceling;
+      const cancellation = canceling;
+      const canceled = await cancellation;
+      if (canceling !== cancellation) return request();
       if (!canceled) throw new Error('voice_interruption_failed');
       if (interruptedThroughMs !== undefined)
         canceledThroughMs = Math.max(canceledThroughMs, interruptedThroughMs);

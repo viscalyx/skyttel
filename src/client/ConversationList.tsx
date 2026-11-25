@@ -80,9 +80,21 @@ export function ConversationList({
   const read = useRef(conversation.listRetained);
   read.current = conversation.listRetained;
   useEffect(() => {
-    void read.current?.();
-    const timer = window.setInterval(() => void read.current?.(), 3000);
-    return () => window.clearInterval(timer);
+    let closed = false;
+    let timer: number | undefined;
+    function schedule() {
+      if (!closed) timer = window.setTimeout(poll, 3000);
+    }
+    function poll() {
+      void read.current?.().then(schedule, schedule);
+    }
+    queueMicrotask(() => {
+      if (!closed) poll();
+    });
+    return () => {
+      closed = true;
+      window.clearTimeout(timer);
+    };
   }, []);
   const rows = conversation.retainedConversations;
   const detail = rows?.find((row) => row.id === information);

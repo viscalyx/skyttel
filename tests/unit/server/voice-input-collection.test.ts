@@ -32,6 +32,7 @@ function arrange(confirmBrowserInput = false) {
   const response = vi.fn();
   const delivered = vi.fn();
   const transcript = vi.fn();
+  const update = vi.fn();
   const work = voiceWork({
     channel: channel as unknown as LiveSideband,
     initial,
@@ -40,7 +41,7 @@ function arrange(confirmBrowserInput = false) {
     confirmBrowserInput,
     delivered,
     transcript,
-    update: vi.fn(),
+    update,
     interrupt: vi.fn(),
     failed: vi.fn(),
   });
@@ -59,6 +60,7 @@ function arrange(confirmBrowserInput = false) {
   const messages = () => request.mock.calls.filter(([action]) => action === 'messages');
   return {
     work,
+    update,
     fragment,
     delegate,
     messages,
@@ -94,6 +96,7 @@ test('an interruption keeps an early correction together and a retry keeps the n
   output('previous', 'Det gamla svaret.', 0, 90);
   fragment('early', 'Jag menar ', 110, 130);
   await work.interruptSpeech(100);
+  fragment('late-old', 'För sent.', 60, 100);
   fragment('correction', 'cykeln.', 130, 150);
   output('reply-start', 'Vilken ', 160, 180);
   await work.interruptSpeech(100);
@@ -608,3 +611,19 @@ test.each(['stop', 'retire'] as const)(
     expect(work.readyForSummary()).toBe(true);
   },
 );
+
+test('review regression: a late cancellation cannot publish an older working state', async () => {
+  const { work, initial, request, update } = arrange();
+  let finish!: (view: TextAssistantView) => void;
+  request.mockReturnValueOnce(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  const interrupted = work.interruptSpeech(100);
+  request.mockResolvedValueOnce({ ...initial, revision: 2 });
+  await work.interruptSpeech(200);
+  finish({ ...initial, revision: 1 });
+  await interrupted;
+  expect(update.mock.calls.map(([view]) => view.revision)).toEqual([2]);
+});

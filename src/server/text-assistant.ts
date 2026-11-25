@@ -3,7 +3,7 @@ import { createHash, randomUUID, type UUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { RunContext, tool } from '@openai/agents';
 import type Database from 'better-sqlite3';
-import { Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import { toResponseInputItems } from 'openai/lib/responses/ResponseInputItems';
 import type { ResponseInputItem, Tool } from 'openai/resources/responses/responses';
 import { z } from 'zod';
@@ -5169,14 +5169,22 @@ export function textAssistantRoutes({
     if (!config.openaiApiKey) return context.json({ error: 'assistant_unavailable' }, 503);
     const body = await context.req.json().catch(() => null);
     const actorId = context.get('actorId');
-    const browserSessionId = context.get('browserSessionId');
     const householdId = context.req.param('id');
     // A conversation is the only way to conversation work, spoken or written.
     // Without a valid consent none starts, and the client is told why.
     if (!consents.valid(actorId, householdId, body?.consent))
       return context.json({ error: conversationConsentRequired }, 403);
+    return openConversation(context, householdId, sessions.get(body?.previousId));
+  });
+  async function openConversation(
+    context: Context<{ Variables: { actorId: string; browserSessionId: string } }>,
+    householdId: string,
+    previous?: Session,
+    validate?: () => void,
+  ) {
+    const actorId = context.get('actorId');
+    const browserSessionId = context.get('browserSessionId');
     const revocationsAtStart = revocations.get(consentKey(actorId, householdId));
-    const previous = sessions.get(body?.previousId);
     const ownsPrevious = () =>
       previous &&
       sessions.get(previous.state.id) === previous &&
@@ -5263,6 +5271,7 @@ export function textAssistantRoutes({
       try {
         await refresh(session, checkConversationOpening);
         checkConversationOpening();
+        validate?.();
       } catch (error) {
         await stop(session);
         throw error;
@@ -5276,19 +5285,20 @@ export function textAssistantRoutes({
       }
       if (previous && ownsPrevious()) {
         if (switchingWouldInterrupt(previous)) {
-          await mcp.close();
+          await stop(session);
           return context.json({ error: 'assistant_turn_changed' }, 409);
         }
         void stop(previous, { conversation: 'pause', delivery: 'close', switched: true });
       }
       sessions.set(session.state.id, session);
       return context.json(view(session), 201);
-    } catch {
+    } catch (error) {
       await mcp.close();
+      if (error instanceof MapError) throw error;
       checkConversationOpening();
       return context.json({ error: 'assistant_connection_failed' }, 503);
     }
-  });
+  }
   /** Why the user cannot work with a conversation that is not going on. */
   function ended(sessionId: string, actorId: string, householdId: string) {
     const ending = revoked.get(sessionId);
@@ -5672,6 +5682,11 @@ export function textAssistantRoutes({
     )
       return context.json({ error: 'assistant_draft_changed' }, 409);
     if (control?.reset) {
+      if (!control.discard)
+        return openConversation(context, session.state.householdId, session, () => {
+          checkPreparation(preparation);
+          if (!currentTurn()) throw new MapError('assistant_turn_changed', 409);
+        });
       await startOver(
         session,
         preparation,
@@ -5847,7 +5862,16 @@ export function textAssistantRoutes({
     checkPreparation(preparation);
     if (body.discard !== undefined && typeof body.discard !== 'boolean')
       return context.json({ error: 'invalid_request' }, 400);
-    await startOver(session, preparation, body.discard === true);
+    const voiceReset = backendObservationRequest()?.requestId;
+    if (
+      voiceReset &&
+      (voiceReset !== body.requestId ||
+        body.revision !== session.state.revision ||
+        body.draftVersion !== session.state.review.version ||
+        body.contentVersion !== session.state.review.contentVersion)
+    )
+      return context.json({ error: 'assistant_turn_changed' }, 409);
+    await startOver(session, preparation, body.discard === true, Boolean(voiceReset), voiceReset);
     return context.json(view(session));
   });
   routes.post(`${base}/:sessionId/recover`, async (context) => {

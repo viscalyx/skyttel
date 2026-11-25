@@ -78,7 +78,7 @@ kartans symboler”.
    plus har textalternativen Ändra, Ta bort och Lägg till. Namn och typer
    går att läsa utan bokstavskolumner. Inget sparas genom läsningen.
 4. Dölj utkastet, stäng och öppna textvyn och kontrollera att det fortfarande
-   är hopfällt. Öppna det och välj **Nytt samtal**. Läs det hopfällda läget.
+   är hopfällt. Öppna det och välj **Nytt samtal**. Kontrollera att utkastet syns.
 5. Öppna samma baslinjesparande i Rapporter igen. Välj **Visa ändringarna**
    om uppgifterna är hopfällda. Läs fortfarande
    **Sista fyra: 1111 (Text)**. Det föreslagna 2222 hör till utkastet, inte kvittot.
@@ -97,7 +97,7 @@ kartans symboler”.
   till vänster om samtalsrubriken och samtalstexten. Namn och typer går
   att läsa utan att enskilda ord bryts till bokstavskolumner.
   Inget sparas genom att läsa tabellen.
-- Efter **Nytt samtal** är utkastet hopfällt enligt grundvalet; samma
+- Efter **Nytt samtal** är utkastet fortfarande öppet på bred skärm. Samma
   osparade ändringar ligger kvar.
 
 ### SAMTALSUTKAST-02: valet följer användaren mellan hushåll och enheter

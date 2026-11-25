@@ -50,7 +50,17 @@ test('only an accepted request lists a conversation and a delayed title follows 
       .poll(async () => (await (await client.get(`${path}/${first.id}`)).json()).modelReply)
       .toBe('I garaget.');
     const [before] = await list();
-    const second = await (await post(path, approvedForVisit)).json();
+    const reset = await post(`${path}/${first.id}/messages`, {
+      text: 'Nytt samtal',
+      revision: (await (await client.get(`${path}/${first.id}`)).json()).revision,
+      requestId: crypto.randomUUID(),
+      draftVersion: first.review.version,
+      contentVersion: first.review.contentVersion,
+    });
+    expect(reset.status()).toBe(201);
+    const second = await reset.json();
+    expect(second.review).toEqual(first.review);
+    expect(second.conversation ?? []).toEqual([]);
     expect(second.id).not.toBe(first.id);
     expect(await list()).toHaveLength(1);
     release();
@@ -83,9 +93,19 @@ test('reading from another device leaves admitted work in place and a late title
     await pendingTitle;
     return [modelMessage('Sen titel')];
   });
+  let titleRequestId: string | null = null;
+  let titleCompleted = false;
   const app = await createInstallation(undefined, {
     modelFetch: dialogue.provider,
-    titleFetch: title.provider,
+    titleFetch: async (url, init) => {
+      const response = await title.provider(url, init);
+      titleRequestId = response.headers.get('x-request-id');
+      return response;
+    },
+    modelUsage: (attempt) => {
+      if (titleRequestId && attempt.requestId === titleRequestId && attempt.outcome === 'completed')
+        titleCompleted = true;
+    },
   });
   const writer = await request.newContext();
   const reader = await request.newContext();
@@ -131,6 +151,7 @@ test('reading from another device leaves admitted work in place and a late title
       .toBe('Klart.');
     expect((await writer.post(`${endpoint}/stop`, { headers, data: {} })).status()).toBe(200);
     finishTitle();
+    await expect.poll(() => titleCompleted).toBe(true);
     expect((await reader.get(opened)).status()).toBe(404);
     expect(await (await reader.get(`${path}/retained`)).json()).toEqual({ conversations: [] });
     expect(title.requests).toHaveLength(1);

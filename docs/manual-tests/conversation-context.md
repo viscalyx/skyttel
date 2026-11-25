@@ -315,7 +315,8 @@ efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
 - Tidigare samtalsord och pågående arbete följer inte med till det nya
   samtalet. Utkast, mikrofonläge och annan oskickad text bevaras vid
   nytt samtal utan kastkommando. Redan sparade uppgifter påverkas inte.
-- Logga ut avslutar samtalet. Samtalsord och ljud lagras inte.
+- Utloggning pausar samtalet. Samtalstexten finns kvar tills samtalet raderas
+  eller löper ut. Ljud lagras inte.
   Faktiskt hört tal, mikrofon och skärmläsare återstår att prova manuellt
   enligt
   [förberedelsen i TAL-17](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare).

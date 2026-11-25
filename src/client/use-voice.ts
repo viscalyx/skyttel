@@ -1,7 +1,11 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { conversationConsentRevoked } from '../shared/conversation-consent.js';
 import type { TextAssistantView } from '../shared/text-assistant.js';
-import type { VoiceAssistantResponse, VoiceAssistantView } from '../shared/voice-assistant.js';
+import {
+  unconfirmedPlaybackIdleMs,
+  type VoiceAssistantResponse,
+  type VoiceAssistantView,
+} from '../shared/voice-assistant.js';
 import type { TranscriptRow } from './ConversationTranscript.js';
 import { MapRequestError, request } from './map-request.js';
 import { type TaskDeliveryConnection, TaskDeliveryContext } from './task-delivery.js';
@@ -102,9 +106,8 @@ type Attempt = {
   output?: {
     text: string;
     audibleTextLength?: number;
-    heard: boolean;
+    evidence?: { from: number; remainingMs: number; mediaEnd: number };
     speaking: boolean;
-    matched?: string;
   };
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
   refusalId?: string;
@@ -199,7 +202,11 @@ export function useVoice(options: {
   const path = options.assistant
     ? `/api/households/${encodeURIComponent(options.householdId)}/text-assistant/${encodeURIComponent(options.assistant.id)}/voice`
     : null;
-  const transfer = useRef<{ id: string; input?: RetainedInput } | null>(null);
+  const transfer = useRef<{
+    id: string;
+    input?: RetainedInput;
+    resetConversation?: boolean;
+  } | null>(null);
   const latest = useRef(options);
   latest.current = options;
   // Permission promises and transport callbacks must read the same current
@@ -282,7 +289,7 @@ export function useVoice(options: {
     // A typed task has no Live delegation event. Output from a preceding task
     // must not prove completion of this task's question or save response.
     const attempt = current.current;
-    if (attempt) attempt.output = { text: '', heard: false, speaking: false };
+    if (attempt) attempt.output = { text: '', speaking: false };
   }, [options.assistant?.taskId]);
   checkOutput.current = () => {
     const attempt = current.current;
@@ -290,30 +297,22 @@ export function useVoice(options: {
     const output = attempt?.output;
     if (!attempt || !response || !output || completedOutput.current.has(response.id)) return;
     const expected = spokenWords(response.text);
-    const spoken = spokenWords(output.text);
     const audible = spokenWords(output.text.slice(0, output.audibleTextLength ?? 0));
-    if (!expected) return;
-    const exactMatch = ` ${spoken} `.includes(` ${expected} `);
-    if (exactMatch && output.matched !== response.id) {
-      output.matched = response.id;
-      // Earlier audio and a pause before the final word do not prove that the
-      // audio associated with a newly delivered transcript has even started.
-      output.heard = output.speaking || ` ${audible} `.includes(` ${expected} `);
-    }
-    if (output.speaking) return;
-    const replyHeard = exactMatch
-      ? output.heard
-      : response.conversationalText &&
+    if (!expected || output.speaking) return;
+    const replyHeard =
+      ` ${audible} `.includes(` ${expected} `) ||
+      (output.audibleTextLength === output.text.length &&
+        response.conversationalText &&
         !response.questionPending &&
         !response.receiptOperationId &&
-        reflectsOrdinaryReply(response.conversationalText, audible);
+        reflectsOrdinaryReply(response.conversationalText, audible));
     if (!replyHeard) return;
     // Live offers no complete-turn event. Acknowledge the words matched to
     // observed audio after playback drains.
     completedOutput.current.add(response.id);
     attempt.playedResponseId = response.id;
     setFailure((previous) => (previous?.noticeId === 'voiceReplyUnconfirmed' ? null : previous));
-    attempt.output = { text: '', heard: false, speaking: false };
+    attempt.output = { text: '', speaking: false };
     if (response.questionPending) setSpokenQuestion(response.revision);
     if (
       response.receiptOperationId &&
@@ -502,7 +501,7 @@ export function useVoice(options: {
         controller: new AbortController(),
         held: held.current ?? undefined,
         contextRenewal: summaryRenewal.current,
-        output: { text: '', heard: false, speaking: false },
+        output: { text: '', speaking: false },
       };
       current.current = attempt;
       epoch.current++;
@@ -643,7 +642,10 @@ export function useVoice(options: {
             const acknowledgement = attempt.acknowledgement;
             if (activityRef.current.speaker || activityRef.current.microphone)
               acknowledgement.lastActivity = Date.now();
-            if (!acknowledgement.notified && Date.now() - acknowledgement.lastActivity >= 15_000) {
+            if (
+              !acknowledgement.notified &&
+              Date.now() - acknowledgement.lastActivity >= unconfirmedPlaybackIdleMs
+            ) {
               acknowledgement.notified = true;
               setError({ noticeId: 'voiceReplyUnconfirmed' });
             }
@@ -755,13 +757,33 @@ export function useVoice(options: {
             onTranscript: (row) => {
               if (active()) latest.current.onTranscript?.(row);
             },
-            onOutputTranscript: (text) => {
-              if (!active() || !attempt.output) return;
+            onOutputTranscript: (text, interval) => {
+              const output = attempt.output;
+              if (!active() || !output) return;
               if (attempt.acknowledgement) attempt.acknowledgement.lastActivity = Date.now();
-              attempt.output.text += text;
-              if (attempt.output.speaking)
-                attempt.output.audibleTextLength = attempt.output.text.length;
+              output.text += text;
+              const previous = output.evidence;
+              if (interval && (!previous || interval.end >= previous.mediaEnd)) {
+                const from = Math.max(interval.start, previous?.mediaEnd ?? interval.start);
+                output.evidence = {
+                  from: performance.now(),
+                  remainingMs: (previous?.remainingMs ?? 0) + interval.end - from,
+                  mediaEnd: interval.end,
+                };
+              } else output.evidence = undefined;
               checkOutput.current();
+            },
+            onSpeakerSample: (at, sampledMs) => {
+              const output = attempt.output;
+              const evidence = output?.evidence;
+              if (!active() || !output || !evidence) return;
+              // A silence interval or a stalled meter cannot count as rendered speech.
+              evidence.remainingMs -= Math.min(sampledMs, Math.max(0, at - evidence.from));
+              evidence.from = at;
+              if (evidence.remainingMs <= 0) {
+                evidence.remainingMs = 0;
+                output.audibleTextLength = output.text.length;
+              }
             },
             onAudioActivity: (value) => {
               activityRef.current = value;
@@ -769,13 +791,11 @@ export function useVoice(options: {
               setActivity(value);
               if (attempt.output) {
                 attempt.output.speaking = value.speaker;
-                attempt.output.heard ||= value.speaker;
-                if (value.speaker) attempt.output.audibleTextLength = attempt.output.text.length;
                 checkOutput.current();
               }
             },
             onDelegation: () => {
-              attempt.output = { text: '', heard: false, speaking: false };
+              attempt.output = { text: '', speaking: false };
             },
           },
           playback,
@@ -873,7 +893,7 @@ export function useVoice(options: {
     const next = transfer.current;
     if (next && next.id === options.assistant?.id) {
       transfer.current = null;
-      void start(next.input);
+      void start(next.input, undefined, next.resetConversation);
     } else if (options.autoStart) void start();
   }, [options.autoStart, options.assistant?.id, start]);
   useEffect(
@@ -958,6 +978,7 @@ export function useVoice(options: {
           if (assistant.id !== latest.current.assistant?.id) {
             transfer.current = {
               id: assistant.id,
+              resetConversation,
               input: stream ? { stream, paused: offRef.current } : undefined,
             };
             return assistant;

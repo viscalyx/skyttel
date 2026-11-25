@@ -55,7 +55,8 @@ export function createVoiceTransport(
     onTranscript?: (row: TranscriptRow) => void;
     onAudioActivity?: (activity: { microphone: boolean; speaker: boolean }) => void;
     /** Text aligned with provider output audio; it does not define a complete turn. */
-    onOutputTranscript?: (text: string) => void;
+    onOutputTranscript?: (text: string, interval?: { start: number; end: number }) => void;
+    onSpeakerSample?: (at: number, sampledMs: number) => void;
     /** Skyttel has taken on a task from what the user said. */
     onDelegation?: () => void;
     inputAllowed?: () => boolean;
@@ -110,7 +111,12 @@ export function createVoiceTransport(
   const audible = (analyser: AnalyserNode) => peak(analyser) > 3 / 128;
   // Observe only the already-authorized streams. Incoming audio remains
   // independent of the microphone being off, and transcripts never imply playback.
+  const meterIntervalMs = 100;
+  let lastSample = performance.now();
   const activityTimer = setInterval(() => {
+    const at = performance.now();
+    const sampledMs = Math.min(meterIntervalMs, at - lastSample);
+    lastSample = at;
     const next = { microphone: false, speaker: false };
     if (measuring()) {
       for (const { analyser, input } of meters) {
@@ -119,11 +125,12 @@ export function createVoiceTransport(
         else next.speaker ||= !muted && audible(analyser);
       }
     }
+    if (next.speaker) callbacks.onSpeakerSample?.(at, sampledMs);
     if (next.microphone !== activity.microphone || next.speaker !== activity.speaker) {
       activity = next;
       callbacks.onAudioActivity?.(next);
     }
-  }, 100);
+  }, meterIntervalMs);
   let startupTimer: ReturnType<typeof setTimeout> | undefined;
   let disconnectTimer: ReturnType<typeof setTimeout> | undefined;
   let userRow: TranscriptRow | undefined;
@@ -158,7 +165,12 @@ export function createVoiceTransport(
     const now = performance.now();
     if (role === 'user') {
       const correction =
-        Boolean(event.delta.trim()) && event.end_ms > interruptedThrough && startCorrection();
+        Boolean(event.delta.trim()) &&
+        audioTime(event.start_ms) &&
+        audioTime(event.end_ms) &&
+        event.end_ms >= event.start_ms &&
+        event.end_ms > interruptedThrough &&
+        startCorrection();
       const userEnd =
         audioTime(event.end_ms) && (!audioTime(event.start_ms) || event.end_ms >= event.start_ms)
           ? event.end_ms
@@ -294,7 +306,13 @@ export function createVoiceTransport(
     live.on('session.input_transcript.delta', (event) => transcript('user', event)),
     live.on('session.output_transcript.delta', (event) => {
       transcript('assistant', event);
-      if (!closed && !stopped && event.delta) callbacks.onOutputTranscript?.(event.delta);
+      if (!closed && !stopped && event.delta) {
+        const interval =
+          audioTime(event.start_ms) && audioTime(event.end_ms) && event.end_ms > event.start_ms
+            ? { start: event.start_ms, end: event.end_ms }
+            : undefined;
+        callbacks.onOutputTranscript?.(event.delta, interval);
+      }
     }),
     live.on('session.delegation.created', (event) => {
       observePosition(event.offset_ms, performance.now());

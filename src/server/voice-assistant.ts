@@ -6,8 +6,9 @@ import { SidebandWS } from 'openai/resources/live/sideband/ws';
 import { conversationConsentRevoked } from '../shared/conversation-consent.js';
 import { sessionWarningMessage } from '../shared/session-activity.js';
 import type { TextAssistantView } from '../shared/text-assistant.js';
-import type { VoiceAssistantView } from '../shared/voice-assistant.js';
+import { unconfirmedPlaybackIdleMs, type VoiceAssistantView } from '../shared/voice-assistant.js';
 import { voiceErrorGroup } from '../shared/voice-error.js';
+import { newConversationMessage } from './assistant-feedback.js';
 import { voiceAssistantInstructions } from './assistant-instructions.js';
 import {
   type AssistantObservationContext,
@@ -42,7 +43,8 @@ type Voice = Partial<ConversationConsentProvenance> & {
   channel: LiveSideband;
   heartbeat: number;
   microphoneOn: boolean;
-  playbackPending?: boolean;
+  speakerActive?: boolean;
+  playbackPendingSince?: number;
   deliveryConnectionId?: string;
   finalized: boolean;
   timer: NodeJS.Timeout;
@@ -796,6 +798,8 @@ export function voiceAssistantRoutes({
               }
             : current,
         response: (value) => {
+          if (value?.id !== voice.view.response?.id)
+            voice.playbackPendingSince = value ? now() : undefined;
           voice.view.response = value;
         },
         refusal: (value) => {
@@ -805,8 +809,11 @@ export function voiceAssistantRoutes({
           voice.view.replyDelivery ??= [];
           voice.view.replyDelivery.push(value);
         },
-        transcript: (role, text, utteranceStart) =>
-          transcript?.(sessionId, role, text, utteranceStart),
+        transcript: (role, text, utteranceStart) => {
+          if (role === 'assistant' && voice.playbackPendingSince !== undefined)
+            voice.playbackPendingSince = now();
+          return transcript?.(sessionId, role, text, utteranceStart);
+        },
         input: (pending, text) => voiceInput?.(context.req.param('sessionId'), pending, text),
         interrupt: (revision) => interrupt(context.req.param('sessionId'), revision),
         request: async (action, body, signal, observation) => {
@@ -903,11 +910,11 @@ export function voiceAssistantRoutes({
         check();
         if (voice.closed) throw new Error('live_start_interrupted');
         voice.view.phase = voice.assistant.phase === 'recovery' ? 'recovery' : 'listening';
-        if (body.newConversation === true && voice.assistant.reply) {
+        if (body.newConversation === true) {
           // A spoken reset retains its reply after release. Typed/toolbar
           // resets follow the retained capture mode instead.
           const voiced = voice.assistant.resetSource === 'voice' || body.microphoneOn !== false;
-          const reply = voice.assistant.reply;
+          const reply = voice.assistant.reply ?? newConversationMessage(voice.assistant.review);
           voice.assistant = { ...voice.assistant, replyVoiced: voiced };
           const completedReset = voice.assistant.completedReplies?.some(
             (reply) =>
@@ -1025,9 +1032,14 @@ export function voiceAssistantRoutes({
         voice.deliveryConnectionId = body.deliveryConnectionId;
       }
       voice.microphoneOn = body.microphoneOn !== false;
-      voice.playbackPending =
-        body.speakerActive === true ||
-        Boolean(voice.view.response && body.playedResponseId !== voice.view.response.id);
+      voice.speakerActive = body.speakerActive === true;
+      if (!voice.view.response || body.playedResponseId === voice.view.response.id)
+        voice.playbackPendingSince = undefined;
+      else if (
+        voice.playbackPendingSince !== undefined &&
+        (voice.speakerActive || body.microphoneActive === true)
+      )
+        voice.playbackPendingSince = now();
       voice.work?.rendered(body);
       voice.work?.activity(body.microphoneActive === true && body.microphoneOn === true);
       voice.work?.speaker(body.speakerActive === true);
@@ -1068,7 +1080,11 @@ export function voiceAssistantRoutes({
         (voice) =>
           voice.assistant.id === id &&
           !voice.closed &&
-          (voice.microphoneOn || voice.playbackPending || !voice.work?.readyForSummary()),
+          (voice.microphoneOn ||
+            voice.speakerActive ||
+            (voice.playbackPendingSince !== undefined &&
+              now() - voice.playbackPendingSince < unconfirmedPlaybackIdleMs) ||
+            !voice.work?.readyForSummary()),
       ),
 
     retireSessionWork: (sessionId: string, requestId?: string) => {

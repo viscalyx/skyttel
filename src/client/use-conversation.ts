@@ -241,6 +241,7 @@ export function useConversation({
   const [session, setSession] = useState<TextAssistantView | null>(null);
   const [retainedConversations, setRetainedConversations] = useState<RetainedConversation[]>();
   const resumeRequested = useRef(false);
+  const resetCommand = useRef<string | null>(null);
   const selectedAction = useRef<{
     type: 'send' | 'voice' | 'retry' | 'retry-work' | 'abandon-work';
     requestId?: string;
@@ -690,6 +691,7 @@ export function useConversation({
     return () => {
       window.removeEventListener('pagehide', leave);
       selectedAction.current = null;
+      resetCommand.current = null;
       mounted.current = false;
       requestEpoch.current++;
       consentEpoch.current++;
@@ -1024,6 +1026,8 @@ export function useConversation({
   }, [path, visitConsent, consentValid, pending, update, fail]);
   const start = useCallback(
     async (mode: ConversationMode) => {
+      const command = resetCommand.current;
+      resetCommand.current = null;
       const action = selectedAction.current;
       selectedAction.current = null;
       if (action && active.current) {
@@ -1090,6 +1094,7 @@ export function useConversation({
           return;
         }
         replaceConversation(result);
+        if (command) setText((value) => (value === command ? '' : value));
         callbacks.current.onStarted?.(mode);
       } catch (failure) {
         if (epoch !== requestEpoch.current) return;
@@ -1248,6 +1253,20 @@ export function useConversation({
     [path, update, fail],
   );
   async function send(queue = true, current = session) {
+    const control = conversationCommand(text);
+    if (current && control?.reset && !control.discard) {
+      if (!navigator.onLine || !connection.current || inputBlocked) return;
+      const sent = text;
+      if (!consentValid) {
+        resetCommand.current = sent;
+        setRequested('text');
+        return;
+      }
+      await newConversation();
+      if (active.current && active.current.id !== current.id)
+        setText((value) => (value === sent ? '' : value));
+      return;
+    }
     if (current?.requiresActivation && !current.interruptedRequestId) {
       selectedAction.current = { type: 'send' };
       setRequested('text');
@@ -1265,15 +1284,8 @@ export function useConversation({
       !navigator.onLine
     )
       return;
-    const control = conversationCommand(text);
     if (control?.reset) {
       const sent = text;
-      if (!control.discard) {
-        await newConversation();
-        if (active.current && active.current.id !== current.id)
-          setText((value) => (value === sent ? '' : value));
-        return;
-      }
       await resetContext(control.discard);
       if (
         active.current?.id === current.id &&
@@ -1646,6 +1658,7 @@ export function useConversation({
       if (savingConsent) return;
       resumeRequested.current = false;
       selectedAction.current = null;
+      resetCommand.current = null;
       void voice.stop();
       setRequested(null);
       setConsentError('');

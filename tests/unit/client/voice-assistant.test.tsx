@@ -595,6 +595,16 @@ test('Avbryt uses the provider timeline when output transcripts lag playback', a
   expect(calls.find(({ url }) => url.endsWith('/interrupt'))?.body).toEqual({
     interruptedThroughMs: 5500,
   });
+  for (const start of [-1, 5600]) {
+    await act(async () =>
+      peer.channel.emit({
+        type: 'session.input_transcript.delta',
+        start_ms: start,
+        end_ms: 5501,
+        delta: 'Ord ',
+      }),
+    );
+  }
   await act(async () => input(5500));
   expect(postMessage).not.toHaveBeenCalledWith('correction');
   await act(async () => input(5501));
@@ -894,9 +904,12 @@ test.each(['a new conversation', 'revoked access'])(
     const { component } = setup();
     component.unmount();
     let view = assistant();
+    let freshVoiceStart: Record<string, unknown> | undefined;
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
       if (url.endsWith('/text-assistant') && init?.body && JSON.parse(String(init.body)).previousId)
         view = { ...assistant(), id: 'next-text-session' };
+      if (url.endsWith('/next-text-session/voice'))
+        freshVoiceStart = JSON.parse(String(init?.body));
       if (url.endsWith('/messages')) return Response.json({ error: 'forbidden' }, { status: 403 });
       if (url.includes('/voice'))
         return Response.json({
@@ -954,6 +967,7 @@ test.each(['a new conversation', 'revoked access'])(
     if (ending === 'a new conversation') {
       expect(log.textContent).toContain('Kim betalar för musiken.');
       await userEvent.click(newConversation());
+      await waitFor(() => expect(freshVoiceStart).toMatchObject({ newConversation: true }));
       await fragment('output', 'För sent.', 7000, 7500);
       expect(log.textContent).not.toContain('För sent.');
     } else {

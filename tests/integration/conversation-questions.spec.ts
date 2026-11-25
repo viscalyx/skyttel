@@ -445,6 +445,7 @@ test('FRAGA-11: egenskapsfrågor och lika namn rättas med text i samma röstsam
     await send(page, 'Spara hela utkastet nu.');
     await expect(transcript).toContainText('Sparat.');
     await expect(await openConversationDraft(page)).toContainText('Utkastet är tomt.');
+    await page.getByRole('button', { name: 'Stäng textvyn' }).click();
     const saved = await readTableObject(page, 'Lo Exempel');
     for (const text of ['Tomt (Text)', 'Arbete', '0700123456', '0012'])
       await expect(saved).toContainText(text);

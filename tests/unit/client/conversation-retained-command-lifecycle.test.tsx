@@ -1,5 +1,7 @@
-import { act, cleanup } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
+import { ConversationList } from '../../../src/client/ConversationList.js';
 import {
   commandConversation,
   conversationCommands,
@@ -211,4 +213,65 @@ test('a paused resume ignores repeat presses and a late result after household d
   });
   expect(result.current.session).toBeNull();
   expect(result.current.pending).toBe(false);
+});
+
+test('review regression: a typed new conversation leaves a passive selection untouched', async () => {
+  const passive = { ...commandConversation, requiresActivation: true, paused: true };
+  const { result, commands } = await conversationCommands(
+    (path, body) =>
+      body && path.endsWith('/text-assistant')
+        ? Response.json({ ...commandConversation, id: 'fresh' })
+        : undefined,
+    passive,
+  );
+  act(() => result.current.setText('Nytt samtal'));
+  await act(async () => result.current.send());
+  expect(commands.map(({ path }) => path)).toEqual(['/api/households/linden/text-assistant']);
+  expect(result.current.session?.id).toBe('fresh');
+  expect(result.current.text).toBe('');
+});
+
+test('review regression: list polling serializes slow and failed reads until unmount', async () => {
+  const { result } = await conversationCommands(() => undefined);
+  let rejectFirst!: (error: Error) => void;
+  let finishSecond!: () => void;
+  const read = vi
+    .fn<() => Promise<void>>()
+    .mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          rejectFirst = reject;
+        }),
+    )
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishSecond = resolve;
+        }),
+    )
+    .mockResolvedValue(undefined);
+  vi.useFakeTimers();
+  try {
+    const list = render(
+      <StrictMode>
+        <ConversationList
+          conversation={{ ...result.current, listRetained: read }}
+          onSelected={() => {}}
+        />
+      </StrictMode>,
+    );
+    await act(async () => vi.advanceTimersByTimeAsync(10_000));
+    expect(read).toHaveBeenCalledTimes(1);
+    rejectFirst(new Error('offline'));
+    await act(async () => vi.advanceTimersByTimeAsync(10_000));
+    expect(read).toHaveBeenCalledTimes(2);
+    finishSecond();
+    await act(async () => vi.advanceTimersByTimeAsync(3000));
+    expect(read).toHaveBeenCalledTimes(3);
+    list.unmount();
+    await act(async () => vi.advanceTimersByTimeAsync(3000));
+    expect(read).toHaveBeenCalledTimes(3);
+  } finally {
+    vi.useRealTimers();
+  }
 });

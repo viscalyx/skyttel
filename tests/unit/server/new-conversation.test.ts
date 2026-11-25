@@ -184,7 +184,11 @@ test.each(['stop', 'newer reset'] as const)(
       liveSideband: live.attach,
       assistantDispatch: async (incoming, dispatch) => {
         const pathname = new URL(incoming.url).pathname;
-        if (incoming.method === 'POST' && pathname.endsWith('/messages')) {
+        if (
+          incoming.method === 'POST' &&
+          pathname.endsWith('/new') &&
+          (await incoming.clone().json()).requestId
+        ) {
           resetting = incoming;
           const response = await dispatch(incoming);
           resetResponse.resolve(response.status);

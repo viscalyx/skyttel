@@ -161,7 +161,7 @@ test.each([
       end_ms: 3100,
     }),
   );
-  await tick(500);
+  await tick(2700);
   expect(playedResponses).toEqual([]);
   media.signals.set(media.peers[0].remote, 0);
   await tick(600);
@@ -212,6 +212,31 @@ test('an unconfirmed reply is shown with a notice after fifteen idle seconds whi
   await tick(100);
   expect(box()?.textContent).toBe('Väntar på ditt svar');
   expect(box()?.textContent).not.toContain('Uppläsningen kunde inte bekräftas.');
+});
+
+test('review regression: a full question transcript over a short audio prefix stays unconfirmed', async () => {
+  const { media, server, tick, playedResponses } = await arrange();
+  const text = 'Vilken cykel menar du?';
+  server.assistant = { ...initial, revision: 1, modelReply: text, questionPending: true };
+  server.response = { id: 'prefix', revision: 1, text, questionPending: true };
+  await tick(500);
+  media.signals.set(media.peers[0].remote, 40);
+  await tick(100);
+  await act(async () =>
+    media.peers[0].channel.emit({
+      type: 'session.output_transcript.delta',
+      delta: text,
+      start_ms: 600,
+      end_ms: 2600,
+    }),
+  );
+  await tick(200);
+  media.signals.set(media.peers[0].remote, 0);
+  await tick(16_000);
+  expect(playedResponses).toEqual([]);
+  expect(box()?.textContent).not.toContain('Väntar på ditt svar');
+  expect(screen.getByLabelText('Levererade svar').textContent).toContain(text);
+  expect(screen.queryAllByText(/Uppläsningen kunde inte bekräftas/).length).toBeGreaterThan(0);
 });
 
 test('an explicit necessary question waits only after its matching voice audio is heard and drains', async () => {

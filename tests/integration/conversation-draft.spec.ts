@@ -132,7 +132,7 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     await expect(toggle(page)).toHaveAttribute('aria-expanded', 'false');
     await toggle(page).click();
     await view(page).getByRole('button', { name: 'Nytt samtal' }).click();
-    await expect(toggle(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
     expect((await read()).draft.changes).toHaveLength(4);
     expect(await read()).toEqual(beforeReview);
     const savedAfter = await openSavedHistory(page);
