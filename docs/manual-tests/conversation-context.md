@@ -299,11 +299,12 @@ efter känt utfall, avsluta med `quit` och starta nytt mellan fallen.
    invänta bekräftelse. Kräv tomt utkast och **Utkastet är kastat.** Stäng av
    mikrofonen och skicka sedan **Kasta utkastet** i textvyn. Utkastet är
    fortsatt tomt.
-6. Skicka **Nytt samtal och kasta utkastet**. Kräv enbart **Nytt samtal.
-   Utkastet är tomt.** och mikrofonen fortsatt av.
+6. Skicka **Nytt samtal och kasta utkastet**. Kontrollera att bara det nya
+   kommandots arbetssteg och svaret **Nytt samtal. Utkastet är tomt.** visas
+   i samtalstexten. Mikrofonen är fortsatt av.
 7. Slå på mikrofonen. Be operatören leverera det kombinerade talade kommandot
-   och invänta bekräftelse. Kräv tomt utkast, nytt samtal och mikrofon fortsatt
-   på.
+   och invänta bekräftelse. Kontrollera samma samtalstext som i steg 6 och
+   att utkastet är tomt. Mikrofonen är fortsatt på.
 8. Skicka **Har vi börjat om?**. Släpp svaret och logga ut via **Din profil**,
    **Inloggningssätt**, **Logga ut**.
 
