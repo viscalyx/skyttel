@@ -275,7 +275,6 @@ test('AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparan
     await page.reload();
     await openTable(page);
     await expect(await openDraftReview(page)).toContainText('Utkastet är tomt.');
-    await closeTextView(page);
     for (const name of ['Lo Exempel', 'Kim Exempel']) {
       const person = await editTableObject(page, name);
       await expect(person.getByLabel('Namn', { exact: true })).toHaveValue(name);

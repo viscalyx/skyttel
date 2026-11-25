@@ -76,11 +76,6 @@ export function TextView({
     viewport.width,
     draftOpen,
   );
-  useLayoutEffect(() => {
-    const map = root.current?.closest<HTMLElement>('.household-map');
-    map?.style.setProperty('--text-view-width', `${computer ? widths.textWidth : 400}px`);
-    map?.style.setProperty('--draft-view-width', `${computer ? widths.draftWidth : 340}px`);
-  }, [computer, widths.textWidth, widths.draftWidth]);
   const initialComputer = useRef(computer);
   const stop = working && !computer;
   const stopFocused = useRef(false);
@@ -104,6 +99,13 @@ export function TextView({
   const resizePanels = computer && !compact;
   const resizeSpace = widths.available - (listOpen && !compact ? listSpace : 0);
   const draftVisible = draftOpen && (!compact || !listOpen);
+  const draftInset = draftVisible && !compact ? draftSpace : 0;
+  useLayoutEffect(() => {
+    const map = root.current?.closest<HTMLElement>('.household-map');
+    map?.style.setProperty('--text-view-width', `${textWidth}px`);
+    map?.style.setProperty('--draft-view-width', `${draftWidth}px`);
+    map?.style.setProperty('--draft-view-space', `${draftInset}px`);
+  }, [textWidth, draftWidth, draftInset]);
   const id = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
